@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,43 +15,44 @@
     limitations under the License.
 
 -->
-<mat-form-field appearance="standard" [formGroup]="lwm2mObjectListFormGroup" class="lwm2m-instances-list mat-block">
-  <mat-label>{{ 'device-profile.lwm2m.instances-list' | translate }}</mat-label>
-  <mat-chip-list #chipList formControlName="instancesIdsList">
-    <mat-chip
-      *ngFor="let instanceIdInputFor of instancesIdsList"
-      [selectable]="true"
-      [removable]="true"
-      (removed)="remove(instanceIdInputFor)">
-      {{instanceIdInputFor}}
-      <mat-icon matChipRemove>close</mat-icon>
-    </mat-chip>
-    <mat-form-field class="mat-block" fxFlexFill style="width: auto">
-      <mat-label>{{ 'device-profile.lwm2m.instances-input' | translate }}</mat-label>
-      <input fxFlexFill matInput type="number"
-             placeholder="{{'device-profile.lwm2m.instances-input-holder' | translate}}"
-             formControlName="instanceIdInput"
-             #instanceIdInput
-             (focusin)="onFocus()"
-             (click)="add(instanceIdInput.valueAsNumber)"
-             (keydown)="onkeydown($event)"
-             [matChipInputFor]="chipList">
-      <mat-error *ngIf="lwm2mObjectListFormGroup.get('instanceIdInput').hasError('min')">
-        {{ translate.get('device-profile.lwm2m.valid-id-instance-no-min', {
-        instance: instanceIdInput.value.toString(), min: instanceIdValueMin.toString()
-      }) | async }}
-      </mat-error>
-      <mat-error *ngIf="lwm2mObjectListFormGroup.get('instanceIdInput').hasError('max')">
-        {{ translate.get('device-profile.lwm2m.valid-id-instance-no-max', {
-        instance: instanceIdInput.value.toString(), max: instanceIdValueMax.toString()
-      }) | async }}
-      </mat-error>
-      <mat-error *ngIf="lwm2mObjectListFormGroup.get('instanceIdInput').errors?.notIsNaNValid">
-        {{ translate.get('device-profile.lwm2m.instances-input-holder', {
-        instance: instanceIdInput.value.toString(), max: instanceIdValueMax.toString()
-      }) | async }}
-      </mat-error>
-    </mat-form-field>
-  </mat-chip-list>
-</mat-form-field>
+<section [formGroup]="instancesListFormGroup" class="lwm2m-instances-list">
+  <mat-form-field class="mat-block">
+    <mat-label>{{ 'device-profile.lwm2m.instances-list' | translate }}</mat-label>
+    <mat-chip-list>
+      <mat-chip
+        *ngFor="let instanceId of instancesId"
+        [selectable]="true"
+        [removable]="true"
+        (removed)="remove(instanceId)">
+        {{instanceId}}
+        <mat-icon matChipRemove>close</mat-icon>
+      </mat-chip>
+    </mat-chip-list>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label>{{ 'device-profile.lwm2m.instances-input' | translate }}</mat-label>
+    <input fxFlexFill matInput type='text'
+           placeholder="{{'device-profile.lwm2m.instances-input-holder' | translate}}"
+           formControlName="instanceIdInput">
+    <button mat-icon-button matSuffix
+            (click)="add()" type="button">
+      <mat-icon>add</mat-icon>
+    </button>
+    <mat-error *ngIf="instancesListFormGroup.get('instanceIdInput').hasError('min')">
+      {{ 'device-profile.lwm2m.valid-id-instance' | translate: {
+      count: 2, instance: instanceId, min: instanceIdValueMin
+    } }}
+    </mat-error>
+    <mat-error *ngIf="instancesListFormGroup.get('instanceIdInput').hasError('max')">
+      {{ 'device-profile.lwm2m.valid-id-instance' | translate: {
+      count: 1, instance: instanceId, max: instanceIdValueMax
+    } }}
+    </mat-error>
+    <mat-error *ngIf="instancesListFormGroup.get('instanceIdInput').hasError('pattern')">
+      {{ 'device-profile.lwm2m.valid-id-instance' | translate: {
+      count: 0, instance: instanceId, max: instanceIdValueMax
+    } }}
+    </mat-error>
+  </mat-form-field>
+</section>
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -827,10 +827,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
                     .getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getValue());
         }
         List<String> deviceTemperatures = temperatures.stream().map(aDouble -> Double.toString(aDouble)).collect(Collectors.toList());
-        if (DaoTestUtil.getSqlDbType(template) == SqlDbType.H2) {
-            // in H2 double values are stored with E0 in the end of the string
-            loadedTemperatures = loadedTemperatures.stream().map(s -> s.substring(0, s.length() - 2)).collect(Collectors.toList());
-        }
+
         Assert.assertEquals(deviceTemperatures, loadedTemperatures);
 
         pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
@@ -858,10 +855,6 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
                 entityData.getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getValue()).collect(Collectors.toList());
         List<String> deviceHighTemperatures = highTemperatures.stream().map(aDouble -> Double.toString(aDouble)).collect(Collectors.toList());
 
-        if (DaoTestUtil.getSqlDbType(template) == SqlDbType.H2) {
-            // in H2 double values are stored with E0 in the end of the string
-            loadedHighTemperatures = loadedHighTemperatures.stream().map(s -> s.substring(0, s.length() - 2)).collect(Collectors.toList());
-        }
         Assert.assertEquals(deviceHighTemperatures, loadedHighTemperatures);
 
         deviceService.deleteDevicesByTenantId(tenantId);

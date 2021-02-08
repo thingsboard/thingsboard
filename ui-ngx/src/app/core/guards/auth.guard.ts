@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { Injectable, NgZone } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivate, CanActivateChild, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, CanActivate, CanActivateChild, Router, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '../core.state';
@@ -28,6 +28,7 @@ import { Authority } from '@shared/models/authority.enum';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { UtilsService } from '@core/services/utils.service';
+import { isObject } from '@core/utils';
 
 @Injectable({
   providedIn: 'root'
@@ -35,6 +36,7 @@ import { UtilsService } from '@core/services/utils.service';
 export class AuthGuard implements CanActivate, CanActivateChild {
 
   constructor(private store: Store<AppState>,
+              private router: Router,
               private authService: AuthService,
               private dialogService: DialogService,
               private utils: UtilsService,
@@ -115,6 +117,14 @@ export class AuthGuard implements CanActivate, CanActivateChild {
             if (data.auth && data.auth.indexOf(authority) === -1) {
               this.dialogService.forbidden();
               return of(false);
+            } else if (data.redirectTo) {
+              let redirect;
+              if (isObject(data.redirectTo)) {
+                redirect = data.redirectTo[authority];
+              } else {
+                redirect = data.redirectTo;
+              }
+              return of(this.router.parseUrl(redirect));
             } else {
               return of(true);
             }

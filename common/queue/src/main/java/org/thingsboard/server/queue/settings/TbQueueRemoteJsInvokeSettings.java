@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,6 @@ public class TbQueueRemoteJsInvokeSettings {
 
     @Value("${queue.js.response_poll_interval}")
     private int responsePollInterval;
-
-    @Value("${queue.js.response_auto_commit_interval}")
-    private int autoCommitInterval;
 
     @Value("${queue.js.max_requests_timeout}")
     private long maxRequestsTimeout;

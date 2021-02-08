@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,6 +69,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_PROFILE_CACHE;
@@ -104,6 +106,8 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
 
     @Autowired
     private CacheManager cacheManager;
+
+    private final Lock findOrCreateLock = new ReentrantLock();
 
     @Cacheable(cacheNames = DEVICE_PROFILE_CACHE, key = "{#deviceProfileId.id}")
     @Override
@@ -224,7 +228,15 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         log.trace("Executing findOrCreateDefaultDeviceProfile");
         DeviceProfile deviceProfile = findDeviceProfileByName(tenantId, name);
         if (deviceProfile == null) {
-            deviceProfile = this.doCreateDefaultDeviceProfile(tenantId, name, name.equals("default"));
+            try {
+                findOrCreateLock.lock();
+                deviceProfile = findDeviceProfileByName(tenantId, name);
+                if (deviceProfile == null) {
+                    deviceProfile = this.doCreateDefaultDeviceProfile(tenantId, name, name.equals("default"));
+                }
+            } finally {
+                findOrCreateLock.unlock();
+            }
         }
         return deviceProfile;
     }

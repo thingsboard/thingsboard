@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Device;
@@ -87,6 +86,9 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
             case MQTT_BASIC:
                 formatSimpleMqttCredentials(deviceCredentials);
                 break;
+            case LWM2M_CREDENTIALS:
+                formatSimpleLwm2mCredentials(deviceCredentials);
+                break;
         }
         log.trace("Executing updateDeviceCredentials [{}]", deviceCredentials);
         credentialsValidator.validate(deviceCredentials, id -> tenantId);
@@ -129,11 +131,16 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         deviceCredentials.setCredentialsValue(JacksonUtil.toString(mqttCredentials));
     }
 
+
     private void formatCertData(DeviceCredentials deviceCredentials) {
         String cert = EncryptionUtil.trimNewLines(deviceCredentials.getCredentialsValue());
         String sha3Hash = EncryptionUtil.getSha3Hash(cert);
         deviceCredentials.setCredentialsId(sha3Hash);
         deviceCredentials.setCredentialsValue(cert);
+    }
+
+    private void formatSimpleLwm2mCredentials(DeviceCredentials deviceCredentials) {
+
     }
 
     @Override

@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2020 The Thingsboard Authors
+# Copyright © 2016-2021 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -64,9 +64,9 @@ server:
       # Minimum value of the server side RPC timeout. May override value provided in the REST API call.
       # Since 2.5 migration to queues, the RPC delay depends on the size of the pending messages in the queue,
       # so default UI parameter of 500ms may not be sufficient for loaded environments.
-      min_timeout:  "${MIN_SERVER_SIDE_RPC_TIMEOUT:5000}"
+      min_timeout: "${MIN_SERVER_SIDE_RPC_TIMEOUT:5000}"
       # Default value of the server side RPC timeout.
-      default_timeout:  "${DEFAULT_SERVER_SIDE_RPC_TIMEOUT:10000}"
+      default_timeout: "${DEFAULT_SERVER_SIDE_RPC_TIMEOUT:10000}"
 
 # Zookeeper connection parameters. Used for service discovery.
 zk:
@@ -192,8 +192,9 @@ cassandra:
     read_consistency_level: "${CASSANDRA_READ_CONSISTENCY_LEVEL:ONE}"
     write_consistency_level: "${CASSANDRA_WRITE_CONSISTENCY_LEVEL:ONE}"
     default_fetch_size: "${CASSANDRA_DEFAULT_FETCH_SIZE:2000}"
-    # Specify partitioning size for timestamp key-value storage. Example: MINUTES, HOURS, DAYS, MONTHS,INDEFINITE
+    # Specify partitioning size for timestamp key-value storage. Example: MINUTES, HOURS, DAYS, MONTHS, INDEFINITE
     ts_key_value_partitioning: "${TS_KV_PARTITIONING:MONTHS}"
+    ts_key_value_partitions_max_cache_size: "${TS_KV_PARTITIONS_MAX_CACHE_SIZE:100000}"
     ts_key_value_ttl: "${TS_KV_TTL:0}"
     events_ttl: "${TS_EVENTS_TTL:0}"
     # Specify TTL of debug log in seconds. The current value corresponds to one week
@@ -433,7 +434,7 @@ spring:
     database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
   datasource:
     driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
-    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard_ce_3_2_2}"
+    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
     username: "${SPRING_DATASOURCE_USERNAME:postgres}"
     password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
     hikari:
@@ -522,7 +523,7 @@ transport:
     # Maximum allowed string value length when processing Telemetry/Attributes JSON (0 value disables string value length check)
     max_string_value_length: "${JSON_MAX_STRING_VALUE_LENGTH:0}"
   client_side_rpc:
-    timeout:  "${CLIENT_SIDE_RPC_TIMEOUT:60000}"
+    timeout: "${CLIENT_SIDE_RPC_TIMEOUT:60000}"
   # Enable/disable http/mqtt/coap transport protocols (has higher priority than certain protocol's 'enabled' property)
   api_enabled: "${TB_TRANSPORT_API_ENABLED:true}"
   # Local HTTP transport parameters
@@ -575,7 +576,13 @@ transport:
     timeout: "${LWM2M_TIMEOUT:120000}"
 #    model_path_file: "${LWM2M_MODEL_PATH_FILE:./common/transport/lwm2m/src/main/resources/models/}"
     model_path_file: "${LWM2M_MODEL_PATH_FILE:}"
-    support_deprecated_ciphers_enable: "${LWM2M_SUPPORT_DEPRECATED_CIPHERS_ENABLED:true}"
+    recommended_ciphers: "${LWM2M_RECOMMENDED_CIPHERS:false}"
+    recommended_supported_groups: "${LWM2M_RECOMMENDED_SUPPORTED_GROUPS:false}"
+    request_pool_size: "${LWM2M_REQUEST_POOL_SIZE:100}"
+    request_error_pool_size: "${LWM2M_REQUEST_ERROR_POOL_SIZE:10}"
+    registered_pool_size: "${LWM2M_REGISTERED_POOL_SIZE:10}"
+    update_registered_pool_size: "${LWM2M_UPDATE_REGISTERED_POOL_SIZE:10}"
+    un_registered_pool_size: "${LWM2M_UN_REGISTERED_POOL_SIZE:10}"
     secure:
       # Only Certificate_x509:
       # To get helps about files format and how to generate it, see: https://github.com/eclipse/leshan/wiki/Credential-files-format
@@ -588,24 +595,19 @@ transport:
       root_alias: "${LWM2M_SERVER_ROOT_CA:rootca}"
       enable_gen_psk_rpk: "${ENABLE_GEN_PSK_RPK:true}"
     server:
+      id: "${LWM2M_SERVER_ID:123}"
       bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
-      bind_port: "${LWM2M_BIND_PORT:5685}"
-      bind_port_cert: "${LWM2M_BIND_PORT_CERT:5687}"
+      bind_port_no_sec_psk: "${LWM2M_BIND_PORT_NO_SEC_PSK:5685}"
+      bind_port_no_sec_rpk: "${LWM2M_BIND_PORT_NO_SEC_RPK:5687}"
+      bind_port_no_sec_x509: "${LWM2M_BIND_PORT_NO_SEC_X509:5689}"
       secure:
-        start_all: "${START_SERVER_ALL:true}"
-        #leshan.core (V1_1)
-        #DTLS security modes:
-        #0: Pre-Shared Key mode
-        #1: Raw Public Key mode
-        #2: Certificate mode X509
-        #3: NoSec mode  *
-        #OMA-TS-LightweightM2M_Core-V1_1_1-20190617-A (add)
-        #4: Certificate mode X509 with EST
-        # If only startAll == false
-        dtls_mode: "${LWM2M_SECURITY_MODE:1}"
         bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
-        bind_port: "${LWM2M_BIND_PORT_SEC:5686}"
-        bind_port_cert: "${LWM2M_BIND_PORT_SEC_CERT:5688}"
+        start_psk: "${START_SERVER_PSK:true}"
+        start_rpk: "${START_SERVER_RPK:true}"
+        start_x509: "${START_SERVER_X509:true}"
+        bind_port_psk: "${LWM2M_BIND_PORT_SEC_PSK:5686}"
+        bind_port_rpk: "${LWM2M_BIND_PORT_SEC_RPK:5688}"
+        bind_port_x509: "${LWM2M_BIND_PORT_SEC_X509:5690}"
         # Only RPK: Public & Private Key
 #        create_rpk: "${CREATE_RPK:}"
         public_x: "${LWM2M_SERVER_PUBLIC_X:405354ea8893471d9296afbc8b020a5c6201b0bb25812a53b849d4480fa5f069}"
@@ -615,23 +617,26 @@ transport:
         alias: "${LWM2M_KEYSTORE_ALIAS_SERVER:server}"
     bootstrap:
       enable: "${BOOTSTRAP:true}"
+      id: "${LWM2M_SERVER_ID:111}"
       bind_address: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
-      bind_port: "${LWM2M_BIND_PORT_BS:5689}"
-      bind_port_cert: "${LWM2M_BIND_PORT_SER_BS:5691}"
+      bind_port_no_sec_psk: "${LWM2M_BIND_PORT_NO_SEC_BS:5691}"
+      bind_port_no_sec_rpk: "${LWM2M_BIND_PORT_NO_SEC_BS:5693}"
+      bind_port_no_sec_x509: "${LWM2M_BIND_PORT_NO_SEC_BS:5695}"
       secure:
-        start_all: "${START_BOOTSTRAP_ALL:true}"
-        # If only startAll == false
-        dtls_mode: "${LWM2M_SECURITY_MODE_BS:1}"
         bind_address: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
-        bind_port: "${LWM2M_BIND_PORT_SEC_BS:5690}"
-        bind_port_cert: "${LWM2M_BIND_PORT_SEC_CERT_BS:5692}"
+        start_psk: "${START_SERVER_PSK_BS:true}"
+        start_rpk: "${START_SERVER_RPK_BS:true}"
+        start_x509: "${START_SERVER_X509_BS:true}"
+        bind_port_psk: "${LWM2M_BIND_PORT_SEC_PSK_BS:5692}"
+        bind_port_rpk: "${LWM2M_BIND_PORT_SER_RPK_BS:5694}"
+        bind_port_x509: "${LWM2M_BIND_PORT_SEC_X509_BS:5696}"
         # Only RPK: Public & Private Key
         public_x: "${LWM2M_SERVER_PUBLIC_X_BS:993ef2b698c6a9c0c1d8be78b13a9383c0854c7c7c7a504d289b403794648183}"
         public_y: "${LWM2M_SERVER_PUBLIC_Y_BS:267412d5fc4e5ceb2257cb7fd7f76ebdac2fa9aa100afb162e990074cc0bfaa2}"
         private_s: "${LWM2M_SERVER_PRIVATE_S_BS:9dbdbb073fc63570693a9aaf1013414e261c571f27e27fc6a8c1c2ad9347875a}"
         # Only Certificate_x509:
         alias: "${LWM2M_KEYSTORE_ALIAS_BOOTSTRAP:bootstrap}"
-      # Redis
+    # Redis
     redis_url: "${LWM2M_REDIS_URL:''}"
 
 swagger:
@@ -663,7 +668,7 @@ queue:
     linger.ms: "${TB_KAFKA_LINGER_MS:1}"
     buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
     replication_factor: "${TB_QUEUE_KAFKA_REPLICATION_FACTOR:1}"
-    max_poll_interval_ms: "${TB_QUEUE_KAFKA_MAX_POLL_INTERVAL_MS:0}"
+    max_poll_interval_ms: "${TB_QUEUE_KAFKA_MAX_POLL_INTERVAL_MS:300000}"
     max_poll_records: "${TB_QUEUE_KAFKA_MAX_POLL_RECORDS:8192}"
     max_partition_fetch_bytes: "${TB_QUEUE_KAFKA_MAX_PARTITION_FETCH_BYTES:16777216}"
     fetch_max_bytes: "${TB_QUEUE_KAFKA_FETCH_MAX_BYTES:134217728}"
@@ -763,8 +768,6 @@ queue:
     max_requests_timeout: "${REMOTE_JS_MAX_REQUEST_TIMEOUT:10000}"
     # JS response poll interval
     response_poll_interval: "${REMOTE_JS_RESPONSE_POLL_INTERVAL_MS:25}"
-    # JS response auto commit interval
-    response_auto_commit_interval: "${REMOTE_JS_RESPONSE_AUTO_COMMIT_INTERVAL_MS:100}"
   rule-engine:
     topic: "${TB_QUEUE_RULE_ENGINE_TOPIC:tb_rule_engine}"
     poll-interval: "${TB_QUEUE_RULE_ENGINE_POLL_INTERVAL_MS:25}"
@@ -825,6 +828,10 @@ queue:
     # For high priority notifications that require minimum latency and processing time
     notifications_topic: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_TOPIC:tb_transport.notifications}"
     poll_interval: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_POLL_INTERVAL_MS:25}"
+
+event:
+  debug:
+    max-symbols: "${TB_MAX_DEBUG_EVENT_SYMBOLS:4096}"
 
 service:
   type: "${TB_SERVICE_TYPE:monolith}" # monolith or tb-core or tb-rule-engine

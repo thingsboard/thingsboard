@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -63,6 +63,20 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
+          <section class="tb-home-dashboard" fxFlex fxLayout="column" fxLayout.gt-sm="row">
+            <tb-dashboard-autocomplete
+              fxFlex
+              placeholder="{{ 'dashboard.home-dashboard' | translate }}"
+              formControlName="homeDashboardId"
+              [dashboardsScope]="user?.authority === authorities.TENANT_ADMIN ? 'tenant' : 'customer'"
+              [tenantId]="user?.tenantId?.id"
+              [customerId]="user?.customerId?.id"
+              [selectFirstDashboard]="false"
+            ></tb-dashboard-autocomplete>
+            <mat-checkbox fxFlex formControlName="homeDashboardHideToolbar">
+              {{ 'dashboard.home-dashboard-hide-toolbar' | translate }}
+            </mat-checkbox>
+          </section>
           <div fxLayout="row" style="padding-bottom: 16px;">
             <button mat-button mat-raised-button color="primary"
                     type="button"

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,22 @@
     .profile-last-login-ts {
       font-size: 16px;
       font-weight: 400;
+    }
+    .tb-home-dashboard {
+      tb-dashboard-autocomplete {
+        @media #{$mat-gt-sm} {
+          padding-right: 12px;
+        }
+
+        @media #{$mat-lt-md} {
+          padding-bottom: 12px;
+        }
+      }
+      mat-checkbox {
+        @media #{$mat-gt-sm} {
+          margin-top: 16px;
+        }
+      }
     }
   }
 }
