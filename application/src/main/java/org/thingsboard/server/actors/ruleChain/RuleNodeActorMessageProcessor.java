@@ -147,7 +147,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         TbNode tbNode = null;
         if (ruleNode != null) {
             Class<?> componentClazz = Class.forName(ruleNode.getType());
-            tbNode = (TbNode) (componentClazz.newInstance());
+            tbNode = (TbNode) (componentClazz.getDeclaredConstructor().newInstance());
             tbNode.init(defaultCtx, new TbNodeConfiguration(ruleNode.getConfiguration()));
         }
         return tbNode;

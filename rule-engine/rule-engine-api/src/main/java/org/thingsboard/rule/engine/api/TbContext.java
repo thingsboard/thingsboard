@@ -225,9 +225,6 @@ public interface TbContext {
 
     TbResultSetFuture submitCassandraTask(CassandraStatementTask task);
 
-    @Deprecated
-    RedisTemplate<String, Object> getRedisTemplate();
-
     PageData<RuleNodeState> findRuleNodeStates(PageLink pageLink);
 
     RuleNodeState findRuleNodeStateForEntity(EntityId entityId);

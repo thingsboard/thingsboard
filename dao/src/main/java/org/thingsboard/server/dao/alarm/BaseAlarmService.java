@@ -306,7 +306,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                 ));
             }
             return Futures.transform(Futures.successfulAsList(alarmFutures),
-                    alarmInfos -> new PageData(alarmInfos, alarms.getTotalPages(), alarms.getTotalElements(),
+                    alarmInfos -> new PageData<>(alarmInfos, alarms.getTotalPages(), alarms.getTotalElements(),
                             alarms.hasNext()), MoreExecutors.directExecutor());
         }
         return Futures.immediateFuture(alarms);
