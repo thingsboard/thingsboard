@@ -103,7 +103,7 @@ public class TbGetTelemetryNode implements TbNode {
                 if (config.isUseMetadataIntervalPatterns()) {
                     checkMetadataKeyPatterns(msg);
                 }
-                List<String> keys = TbNodeUtils.processPatterns(tsKeyNames, msg.getMetaData());
+                List<String> keys = TbNodeUtils.processPatterns(tsKeyNames, msg);
                 ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(msg, keys));
                 DonAsynchron.withCallback(list, data -> {
                     process(data, msg, keys);
@@ -197,10 +197,10 @@ public class TbGetTelemetryNode implements TbNode {
         Interval interval = new Interval();
         if (config.isUseMetadataIntervalPatterns()) {
             if (isParsable(msg, config.getStartIntervalPattern())) {
-                interval.setStartTs(Long.parseLong(TbNodeUtils.processPattern(config.getStartIntervalPattern(), msg.getMetaData())));
+                interval.setStartTs(Long.parseLong(TbNodeUtils.processPattern(config.getStartIntervalPattern(), msg)));
             }
             if (isParsable(msg, config.getEndIntervalPattern())) {
-                interval.setEndTs(Long.parseLong(TbNodeUtils.processPattern(config.getEndIntervalPattern(), msg.getMetaData())));
+                interval.setEndTs(Long.parseLong(TbNodeUtils.processPattern(config.getEndIntervalPattern(), msg)));
             }
         } else {
             long ts = System.currentTimeMillis();
@@ -211,7 +211,7 @@ public class TbGetTelemetryNode implements TbNode {
     }
 
     private boolean isParsable(TbMsg msg, String pattern) {
-        return NumberUtils.isParsable(TbNodeUtils.processPattern(pattern, msg.getMetaData()));
+        return NumberUtils.isParsable(TbNodeUtils.processPattern(pattern, msg));
     }
 
     private void checkMetadataKeyPatterns(TbMsg msg) {
