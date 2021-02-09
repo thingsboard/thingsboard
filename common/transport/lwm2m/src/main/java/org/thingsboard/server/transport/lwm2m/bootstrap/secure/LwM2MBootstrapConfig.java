@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
-import lombok.Builder;
 import lombok.Data;
 import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.request.BindingMode;
@@ -40,7 +39,6 @@ public class LwM2MBootstrapConfig {
      *   notifIfDisabled: boolean,
      *   binding: string
      * */
-    @Builder.Default
     LwM2MBootstrapServers servers;
 
     /** -bootstrapServer, lwm2mServer

@@ -312,6 +312,7 @@ public class LwM2MTransportHandler {
         return object;
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> Optional<T> decode(byte[] byteArray) {
         try {
             FSTConfiguration config = FSTConfiguration.createDefaultConfiguration();

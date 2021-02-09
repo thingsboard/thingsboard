@@ -15,19 +15,13 @@
  */
 package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
-import lombok.Builder;
 import lombok.Data;
 
 @Data
 public class LwM2MBootstrapServers {
-    @Builder.Default
     private Integer shortId = 123;
-    @Builder.Default
     private Integer lifetime = 300;
-    @Builder.Default
     private Integer defaultMinPeriod = 1;
-    @Builder.Default
     private boolean notifIfDisabled = true;
-    @Builder.Default
     private String binding = "U";
 }

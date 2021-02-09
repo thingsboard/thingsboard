@@ -232,6 +232,7 @@ public class LwM2MTransportRequest {
      * @param timeoutInMs -
      */
 
+    @SuppressWarnings("unchecked")
     private void sendRequest(LeshanServer lwServer, Registration registration, DownlinkRequest request, long timeoutInMs) {
         LwM2MClient lwM2MClient = this.service.lwM2mInMemorySecurityStore.getLwM2MClientWithReg(registration, null);
         lwServer.send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
