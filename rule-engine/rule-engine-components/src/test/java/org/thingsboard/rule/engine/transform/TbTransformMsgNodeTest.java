@@ -22,9 +22,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.ScriptEngine;
@@ -42,12 +42,10 @@ import java.util.Collections;
 import java.util.concurrent.Callable;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.same;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TbTransformMsgNodeTest {
@@ -72,7 +70,6 @@ public class TbTransformMsgNodeTest {
         RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
         TbMsg msg = TbMsg.newMsg( "USER", null, metaData, TbMsgDataType.JSON,rawJson, ruleChainId, ruleNodeId);
         TbMsg transformedMsg = TbMsg.newMsg( "USER", null, metaData, TbMsgDataType.JSON, "{new}", ruleChainId, ruleNodeId);
-        mockJsExecutor();
         when(scriptEngine.executeUpdateAsync(msg)).thenReturn(Futures.immediateFuture(Collections.singletonList(transformedMsg)));
 
         node.onMsg(ctx, msg);
@@ -93,7 +90,6 @@ public class TbTransformMsgNodeTest {
         RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
         RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
         TbMsg msg = TbMsg.newMsg( "USER", null, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
-        mockJsExecutor();
         when(scriptEngine.executeUpdateAsync(msg)).thenReturn(Futures.immediateFailedFuture(new IllegalStateException("error")));
 
         node.onMsg(ctx, msg);
@@ -110,18 +106,6 @@ public class TbTransformMsgNodeTest {
 
         node = new TbTransformMsgNode();
         node.init(ctx, nodeConfiguration);
-    }
-
-    private void mockJsExecutor() {
-        when(ctx.getJsExecutor()).thenReturn(executor);
-        doAnswer((Answer<ListenableFuture<TbMsg>>) invocationOnMock -> {
-            try {
-                Callable task = (Callable) (invocationOnMock.getArguments())[0];
-                return Futures.immediateFuture((TbMsg) task.call());
-            } catch (Throwable th) {
-                return Futures.immediateFailedFuture(th);
-            }
-        }).when(executor).executeAsync(Matchers.any(Callable.class));
     }
 
     private void verifyError(TbMsg msg, String message, Class expectedClass) {

@@ -206,7 +206,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
         addItemsToArrayNode(json.putArray("entityTypes"), types);
         addItemsToArrayNode(json.putArray("timeseries"), timeseriesKeys);
         addItemsToArrayNode(json.putArray("attribute"), attributesKeys);
-        response.setResult(new ResponseEntity(json, HttpStatus.OK));
+        response.setResult(new ResponseEntity<>(json, HttpStatus.OK));
     }
 
     private void replyWithEmptyResponse(DeferredResult<ResponseEntity> response) {

@@ -45,12 +45,12 @@ public class JpaDashboardInfoDao extends JpaAbstractSearchTextDao<DashboardInfoE
     private DashboardInfoRepository dashboardInfoRepository;
 
     @Override
-    protected Class getEntityClass() {
+    protected Class<DashboardInfoEntity> getEntityClass() {
         return DashboardInfoEntity.class;
     }
 
     @Override
-    protected CrudRepository getCrudRepository() {
+    protected CrudRepository<DashboardInfoEntity, UUID> getCrudRepository() {
         return dashboardInfoRepository;
     }
 
