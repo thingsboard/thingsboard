@@ -41,7 +41,7 @@ public class TbNodeUtils {
 
     private static final String METADATA_VARIABLE_TEMPLATE = "${%s}";
 
-    private static final Pattern DATA_PATTERN = Pattern.compile("(\\$\\[)(.*?)(\\])");
+    private static final Pattern DATA_PATTERN = Pattern.compile("(\\$\\[)(.*?)(])");
 
     private static final String DATA_VARIABLE_TEMPLATE = "$[%s]";
 
@@ -66,7 +66,6 @@ public class TbNodeUtils {
             JsonNode json = mapper.readTree(tbMsg.getData());
             if (json.isObject()) {
                 Matcher matcher = DATA_PATTERN.matcher(result);
-
                 while (matcher.find()) {
                     String group = matcher.group(2);
                     String[] keys = group.split("\\.");
