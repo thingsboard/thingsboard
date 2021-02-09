@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mObject;
@@ -564,7 +566,7 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
      * @return true if path isPresent in postAttributeProfile
      */
     private boolean validatePathInAttrProfile(LwM2MClientProfile profile, String path) {
-        Set<String> attributesSet = new Gson().fromJson(profile.getPostAttributeProfile(), Set.class);
+        Set<String> attributesSet = new Gson().fromJson(profile.getPostAttributeProfile(), new TypeToken<>(){}.getType());
         return attributesSet.stream().filter(p -> p.equals(path)).findFirst().isPresent();
     }
 
@@ -574,7 +576,7 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
      * @return true if path isPresent in postAttributeProfile
      */
     private boolean validatePathInTelemetryProfile(LwM2MClientProfile profile, String path) {
-        Set<String> telemetriesSet = new Gson().fromJson(profile.getPostTelemetryProfile(), Set.class);
+        Set<String> telemetriesSet = new Gson().fromJson(profile.getPostTelemetryProfile(), new TypeToken<>(){}.getType());
         return telemetriesSet.stream().filter(p -> p.equals(path)).findFirst().isPresent();
     }
 
@@ -592,10 +594,10 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
             Set<String> clientInstances = this.getAllInstancesInClient(registration);
             Set<String> result;
             if (GET_TYPE_OPER_READ.equals(typeOper)) {
-                result = new ObjectMapper().readValue(lwM2MClientProfile.getPostAttributeProfile().getAsJsonArray().toString().getBytes(), Set.class);
-                result.addAll(new ObjectMapper().readValue(lwM2MClientProfile.getPostTelemetryProfile().getAsJsonArray().toString().getBytes(), Set.class));
+                result = new ObjectMapper().readValue(lwM2MClientProfile.getPostAttributeProfile().getAsJsonArray().toString().getBytes(), new TypeReference<>() {});
+                result.addAll(new ObjectMapper().readValue(lwM2MClientProfile.getPostTelemetryProfile().getAsJsonArray().toString().getBytes(), new TypeReference<>() {}));
             } else {
-                result = new ObjectMapper().readValue(lwM2MClientProfile.getPostObserveProfile().getAsJsonArray().toString().getBytes(), Set.class);
+                result = new ObjectMapper().readValue(lwM2MClientProfile.getPostObserveProfile().getAsJsonArray().toString().getBytes(), new TypeReference<>() {});
             }
             Set<String> pathSent = ConcurrentHashMap.newKeySet();
             result.forEach(p -> {
@@ -794,17 +796,17 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
 
             // #1
             JsonArray attributeOld = lwM2MClientProfileOld.getPostAttributeProfile();
-            Set attributeSetOld = new Gson().fromJson(attributeOld, Set.class);
+            Set<String> attributeSetOld = new Gson().fromJson(attributeOld, new TypeToken<>(){}.getType());
             JsonArray telemetryOld = lwM2MClientProfileOld.getPostTelemetryProfile();
-            Set telemetrySetOld = new Gson().fromJson(telemetryOld, Set.class);
+            Set<String> telemetrySetOld = new Gson().fromJson(telemetryOld, new TypeToken<>(){}.getType());
             JsonArray observeOld = lwM2MClientProfileOld.getPostObserveProfile();
             JsonObject keyNameOld = lwM2MClientProfileOld.getPostKeyNameProfile();
 
             LwM2MClientProfile lwM2MClientProfileNew = lwM2mInMemorySecurityStore.getProfiles().get(deviceProfile.getUuidId());
             JsonArray attributeNew = lwM2MClientProfileNew.getPostAttributeProfile();
-            Set attributeSetNew = new Gson().fromJson(attributeNew, Set.class);
+            Set<String> attributeSetNew = new Gson().fromJson(attributeNew, new TypeToken<>(){}.getType());
             JsonArray telemetryNew = lwM2MClientProfileNew.getPostTelemetryProfile();
-            Set telemetrySetNew = new Gson().fromJson(telemetryNew, Set.class);
+            Set<String> telemetrySetNew = new Gson().fromJson(telemetryNew, new TypeToken<>(){}.getType());
             JsonArray observeNew = lwM2MClientProfileNew.getPostObserveProfile();
             JsonObject keyNameNew = lwM2MClientProfileNew.getPostKeyNameProfile();
 
@@ -812,20 +814,20 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
             ResultsAnalyzerParameters sentAttrToThingsboard = new ResultsAnalyzerParameters();
             // #3.1
             if (!attributeOld.equals(attributeNew)) {
-                ResultsAnalyzerParameters postAttributeAnalyzer = this.getAnalyzerParameters(new Gson().fromJson(attributeOld, Set.class), attributeSetNew);
+                ResultsAnalyzerParameters postAttributeAnalyzer = this.getAnalyzerParameters(new Gson().fromJson(attributeOld, new TypeToken<Set<String>>(){}.getType()), attributeSetNew);
                 sentAttrToThingsboard.getPathPostParametersAdd().addAll(postAttributeAnalyzer.getPathPostParametersAdd());
                 sentAttrToThingsboard.getPathPostParametersDel().addAll(postAttributeAnalyzer.getPathPostParametersDel());
             }
             // #3.2
             if (!attributeOld.equals(attributeNew)) {
-                ResultsAnalyzerParameters postTelemetryAnalyzer = this.getAnalyzerParameters(new Gson().fromJson(telemetryOld, Set.class), telemetrySetNew);
+                ResultsAnalyzerParameters postTelemetryAnalyzer = this.getAnalyzerParameters(new Gson().fromJson(telemetryOld, new TypeToken<Set<String>>(){}.getType()), telemetrySetNew);
                 sentAttrToThingsboard.getPathPostParametersAdd().addAll(postTelemetryAnalyzer.getPathPostParametersAdd());
                 sentAttrToThingsboard.getPathPostParametersDel().addAll(postTelemetryAnalyzer.getPathPostParametersDel());
             }
             // #3.3
             if (!keyNameOld.equals(keyNameNew)) {
-                ResultsAnalyzerParameters keyNameChange = this.getAnalyzerKeyName(new Gson().fromJson(keyNameOld.toString(), ConcurrentHashMap.class),
-                        new Gson().fromJson(keyNameNew.toString(), ConcurrentHashMap.class));
+                ResultsAnalyzerParameters keyNameChange = this.getAnalyzerKeyName(new Gson().fromJson(keyNameOld.toString(), new TypeToken<ConcurrentHashMap<String, String>>(){}.getType()),
+                        new Gson().fromJson(keyNameNew.toString(), new TypeToken<ConcurrentHashMap<String, String>>(){}.getType()));
                 sentAttrToThingsboard.getPathPostParametersAdd().addAll(keyNameChange.getPathPostParametersAdd());
             }
 
@@ -849,8 +851,8 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
 
             // #5.1
             if (!observeOld.equals(observeNew)) {
-                Set observeSetOld = new Gson().fromJson(observeOld, Set.class);
-                Set observeSetNew = new Gson().fromJson(observeNew, Set.class);
+                Set<String> observeSetOld = new Gson().fromJson(observeOld, new TypeToken<>(){}.getType());
+                Set<String> observeSetNew = new Gson().fromJson(observeNew, new TypeToken<>(){}.getType());
                 //#5.2 add
                 //  path Attr/Telemetry includes newObserve
                 attributeSetOld.addAll(telemetrySetOld);
@@ -1120,7 +1122,7 @@ public class LwM2MTransportServiceImpl implements LwM2MTransportService {
     private List<String> getNamesAttrFromProfileIsWritable(LwM2MClient lwM2MClient) {
         LwM2MClientProfile profile = lwM2mInMemorySecurityStore.getProfile(lwM2MClient.getProfileUuid());
         Set attrSet = new Gson().fromJson(profile.getPostAttributeProfile(), Set.class);
-        ConcurrentMap<String, String> keyNamesMap = new Gson().fromJson(profile.getPostKeyNameProfile().toString(), ConcurrentHashMap.class);
+        ConcurrentMap<String, String> keyNamesMap = new Gson().fromJson(profile.getPostKeyNameProfile().toString(), new TypeToken<ConcurrentHashMap<String, String>>(){}.getType());
 
         ConcurrentMap<String, String> keyNamesIsWritable = keyNamesMap.entrySet()
                 .stream()
