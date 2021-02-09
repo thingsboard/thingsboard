@@ -79,7 +79,7 @@ public class TbNodeUtils {
                         }
                     }
 
-                    if (jsonNode != null && !jsonNode.isObject() && !jsonNode.isArray()) {
+                    if (jsonNode != null && jsonNode.isValueNode()) {
                         result = result.replace(String.format(DATA_VARIABLE_TEMPLATE, group), jsonNode.asText());
                     }
                 }
