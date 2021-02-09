@@ -171,8 +171,8 @@ public class TbHttpClient {
     }
 
     public void processMessage(TbContext ctx, TbMsg msg) {
-        String endpointUrl = TbNodeUtils.processPattern(config.getRestEndpointUrlPattern(), msg.getMetaData());
-        HttpHeaders headers = prepareHeaders(msg.getMetaData());
+        String endpointUrl = TbNodeUtils.processPattern(config.getRestEndpointUrlPattern(), msg);
+        HttpHeaders headers = prepareHeaders(msg);
         HttpMethod method = HttpMethod.valueOf(config.getRequestMethod());
         HttpEntity<String> entity = new HttpEntity<>(msg.getData(), headers);
 
@@ -231,9 +231,9 @@ public class TbHttpClient {
         return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
     }
 
-    private HttpHeaders prepareHeaders(TbMsgMetaData metaData) {
+    private HttpHeaders prepareHeaders(TbMsg msg) {
         HttpHeaders headers = new HttpHeaders();
-        config.getHeaders().forEach((k, v) -> headers.add(TbNodeUtils.processPattern(k, metaData), TbNodeUtils.processPattern(v, metaData)));
+        config.getHeaders().forEach((k, v) -> headers.add(TbNodeUtils.processPattern(k, msg), TbNodeUtils.processPattern(v, msg)));
         ClientCredentials credentials = config.getCredentials();
         if (CredentialsType.BASIC == credentials.getType()) {
             BasicCredentials basicCredentials = (BasicCredentials) credentials;
