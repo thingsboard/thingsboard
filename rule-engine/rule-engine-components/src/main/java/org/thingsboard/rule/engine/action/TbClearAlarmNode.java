@@ -56,7 +56,7 @@ public class TbClearAlarmNode extends TbAbstractAlarmNode<TbClearAlarmNodeConfig
 
     @Override
     protected ListenableFuture<TbAlarmResult> processAlarm(TbContext ctx, TbMsg msg) {
-        String alarmType = TbNodeUtils.processPattern(this.config.getAlarmType(), msg.getMetaData());
+        String alarmType = TbNodeUtils.processPattern(this.config.getAlarmType(), msg);
         ListenableFuture<Alarm> alarmFuture;
         if (msg.getOriginator().getEntityType().equals(EntityType.ALARM)) {
             alarmFuture = ctx.getAlarmService().findAlarmByIdAsync(ctx.getTenantId(), new AlarmId(msg.getOriginator().getId()));

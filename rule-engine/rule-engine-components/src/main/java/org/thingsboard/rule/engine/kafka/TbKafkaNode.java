@@ -94,7 +94,7 @@ public class TbKafkaNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        String topic = TbNodeUtils.processPattern(config.getTopicPattern(), msg.getMetaData());
+        String topic = TbNodeUtils.processPattern(config.getTopicPattern(), msg);
         try {
             ctx.getExternalCallExecutor().executeAsync(() -> {
                 publish(ctx, msg, topic);
