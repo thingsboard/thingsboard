@@ -318,6 +318,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         return ctx;
     }
 
+    @SuppressWarnings("unchecked")
     private <T extends TbAbstractDataSubCtx> T getSubCtx(String sessionId, int cmdId) {
         Map<Integer, TbAbstractDataSubCtx> sessionSubs = subscriptionsBySessionId.get(sessionId);
         if (sessionSubs != null) {

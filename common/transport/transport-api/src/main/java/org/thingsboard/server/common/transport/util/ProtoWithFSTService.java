@@ -32,6 +32,7 @@ public class ProtoWithFSTService implements DataDecodingEncodingService {
     @Override
     public <T> Optional<T> decode(byte[] byteArray) {
         try {
+            @SuppressWarnings("unchecked")
             T msg = (T) config.asObject(byteArray);
             return Optional.of(msg);
         } catch (IllegalArgumentException e) {

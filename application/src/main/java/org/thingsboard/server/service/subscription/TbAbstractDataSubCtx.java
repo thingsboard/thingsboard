@@ -264,6 +264,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
         }, MoreExecutors.directExecutor());
     }
 
+    @SuppressWarnings("unchecked")
     private void updateDynamicValuesByKey(DynamicValueKeySub sub, TsValue tsValue) {
         DynamicValueKey dvk = sub.getKey();
         switch (dvk.getPredicateType()) {
@@ -285,6 +286,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void registerDynamicValues(KeyFilterPredicate predicate) {
         switch (predicate.getType()) {
             case STRING:

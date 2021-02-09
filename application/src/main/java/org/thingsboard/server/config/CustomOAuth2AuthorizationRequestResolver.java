@@ -91,6 +91,7 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
         return action;
     }
 
+    @SuppressWarnings("deprecation")
     private OAuth2AuthorizationRequest resolve(HttpServletRequest request, String registrationId, String redirectUriAction) {
         if (registrationId == null) {
             return null;

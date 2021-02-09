@@ -645,6 +645,7 @@ public abstract class BaseController {
         return ruleNode;
     }
 
+    @SuppressWarnings("unchecked")
     protected <I extends EntityId> I emptyId(EntityType entityType) {
         return (I) EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
     }
@@ -759,6 +760,7 @@ public abstract class BaseController {
                     entityNode = json.createObjectNode();
                     if (actionType == ActionType.ATTRIBUTES_UPDATED) {
                         String scope = extractParameter(String.class, 0, additionalInfo);
+                        @SuppressWarnings("unchecked")
                         List<AttributeKvEntry> attributes = extractParameter(List.class, 1, additionalInfo);
                         metaData.putValue("scope", scope);
                         if (attributes != null) {
@@ -768,6 +770,7 @@ public abstract class BaseController {
                         }
                     } else if (actionType == ActionType.ATTRIBUTES_DELETED) {
                         String scope = extractParameter(String.class, 0, additionalInfo);
+                        @SuppressWarnings("unchecked")
                         List<String> keys = extractParameter(List.class, 1, additionalInfo);
                         metaData.putValue("scope", scope);
                         ArrayNode attrsArrayNode = entityNode.putArray("attributes");
@@ -775,9 +778,11 @@ public abstract class BaseController {
                             keys.forEach(attrsArrayNode::add);
                         }
                     } else if (actionType == ActionType.TIMESERIES_UPDATED) {
+                        @SuppressWarnings("unchecked")
                         List<TsKvEntry> timeseries = extractParameter(List.class, 0, additionalInfo);
                         addTimeseries(entityNode, timeseries);
                     } else if (actionType == ActionType.TIMESERIES_DELETED) {
+                        @SuppressWarnings("unchecked")
                         List<String> keys = extractParameter(List.class, 0, additionalInfo);
                         if (keys != null) {
                             ArrayNode timeseriesArrayNode = entityNode.putArray("timeseries");
