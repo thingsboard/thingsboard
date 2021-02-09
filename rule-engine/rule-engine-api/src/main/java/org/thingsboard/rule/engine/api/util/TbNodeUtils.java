@@ -18,8 +18,8 @@ package org.thingsboard.rule.engine.api.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -71,7 +71,7 @@ public class TbNodeUtils {
                     String[] keys = group.split("\\.");
                     JsonNode jsonNode = json;
                     for (String key : keys) {
-                        if (StringUtils.isNotEmpty(key) && jsonNode != null) {
+                        if (!StringUtils.isEmpty(key) && jsonNode != null) {
                             jsonNode = jsonNode.get(key);
                         } else {
                             jsonNode = null;
