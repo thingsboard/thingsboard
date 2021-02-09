@@ -198,7 +198,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     private void processEdge(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
         try {
             EdgeEventActionType actionType = EdgeEventActionType.valueOf(edgeNotificationMsg.getAction());
-            EdgeId edgeId = new EdgeId(new UUID(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB()));
+            EdgeId edgeId = new EdgeId(new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
             ListenableFuture<Edge> edgeFuture;
             switch (actionType) {
                 case ASSIGNED_TO_CUSTOMER:
@@ -263,19 +263,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
             case ADDED:
             case UPDATED:
             case DELETED:
-                TextPageLink pageLink = new TextPageLink(DEFAULT_LIMIT);
-                TextPageData<Edge> pageData;
-                do {
-                    pageData = edgeService.findEdgesByTenantId(tenantId, pageLink);
-                    if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                        for (Edge edge : pageData.getData()) {
-                            saveEdgeEvent(tenantId, edge.getId(), type, actionType, entityId, null);
-                        }
-                        if (pageData.hasNext()) {
-                            pageLink = pageData.getNextPageLink();
-                        }
-                    }
-                } while (pageData != null && pageData.hasNext());
+                processActionForAllEdges(tenantId, type, actionType, entityId);
                 break;
         }
     }
@@ -300,6 +288,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                         }
                     }
                 } while (pageData != null && pageData.hasNext());
+                break;
             case DELETED:
                 EdgeId edgeId = new EdgeId(new UUID(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB()));
                 saveEdgeEvent(tenantId, edgeId, type, actionType, customerId, null);
@@ -500,6 +489,22 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                 }
             }, dbCallbackExecutorService);
         }
+    }
+
+    private void processActionForAllEdges(TenantId tenantId, EdgeEventType type, EdgeEventActionType actionType, EntityId entityId) {
+        TextPageLink pageLink = new TextPageLink(DEFAULT_LIMIT);
+        TextPageData<Edge> pageData;
+        do {
+            pageData = edgeService.findEdgesByTenantId(tenantId, pageLink);
+            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                for (Edge edge : pageData.getData()) {
+                    saveEdgeEvent(tenantId, edge.getId(), type, actionType, entityId, null);
+                }
+                if (pageData.hasNext()) {
+                    pageLink = pageData.getNextPageLink();
+                }
+            }
+        } while (pageData != null && pageData.hasNext());
     }
 }
 
