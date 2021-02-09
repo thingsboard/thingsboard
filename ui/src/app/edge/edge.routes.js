@@ -21,8 +21,6 @@ import devicesTemplate from "../device/devices.tpl.html";
 import assetsTemplate from "../asset/assets.tpl.html";
 import dashboardsTemplate from "../dashboard/dashboards.tpl.html";
 import dashboardTemplate from "../dashboard/dashboard.tpl.html";
-import ruleChainsTemplate from "../rulechain/rulechains.tpl.html";
-import ruleChainTemplate from "../rulechain/rulechain.tpl.html";
 
 /* eslint-enable import/no-unresolved, import/default */
 
@@ -179,63 +177,6 @@ export default function EdgeRoutes($stateProvider, types) {
             },
             ncyBreadcrumb: {
                 label: '{"icon": "router", "label": "{{ vm.customerEdgesTitle }}", "translate": "false"}'
-            }
-        }).state('home.edges.ruleChains', {
-            url: '/:edgeId/ruleChains',
-            params: {'topIndex': 0},
-            module: 'private',
-            auth: ['TENANT_ADMIN'],
-            views: {
-                "content@home": {
-                    templateUrl: ruleChainsTemplate,
-                    controllerAs: 'vm',
-                    controller: 'RuleChainsController'
-                }
-            },
-            data: {
-                searchEnabled: true,
-                pageTitle: 'edge.rulechain-templates',
-                ruleChainsType: 'edge'
-            },
-            ncyBreadcrumb: {
-                label: '{"icon": "settings_ethernet", "label": "edge.rulechain-templates"}'
-            }
-        }).state('home.edges.ruleChains.ruleChain', {
-            url: '/:ruleChainId',
-            reloadOnSearch: false,
-            module: 'private',
-            auth: ['SYS_ADMIN', 'TENANT_ADMIN'],
-            views: {
-                "content@home": {
-                    templateUrl: ruleChainTemplate,
-                    controller: 'RuleChainController',
-                    controllerAs: 'vm'
-                }
-            },
-            resolve: {
-                ruleChain:
-                /*@ngInject*/
-                    function($stateParams, ruleChainService) {
-                        return ruleChainService.getRuleChain($stateParams.ruleChainId);
-                    },
-                ruleChainMetaData:
-                /*@ngInject*/
-                    function($stateParams, ruleChainService) {
-                        return ruleChainService.getRuleChainMetaData($stateParams.ruleChainId);
-                    },
-                ruleNodeComponents:
-                /*@ngInject*/
-                    function($stateParams, ruleChainService) {
-                        return ruleChainService.getRuleNodeComponents(types.ruleChainType.edge);
-                    }
-            },
-            data: {
-                import: false,
-                searchEnabled: false,
-                pageTitle: 'edge.rulechain-templates'
-            },
-            ncyBreadcrumb: {
-                label: '{"icon": "settings_ethernet", "label": "{{ vm.ruleChain.name }}", "translate": "false"}'
             }
         });
 }

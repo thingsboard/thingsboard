@@ -57,8 +57,8 @@ function EdgesOverviewWidgetController($scope, $translate, types, utils, entityS
         types.entityType.device,
         types.entityType.entityView,
         types.entityType.dashboard,
-        types.entityType.rulechain,
-    ]
+        types.entityType.rulechain
+    ];
 
     vm.onNodeSelected = onNodeSelected;
 
@@ -121,7 +121,7 @@ function EdgesOverviewWidgetController($scope, $translate, types, utils, entityS
                         cb([]);
                     }
                 }
-            )
+            );
         } else {
             cb([]);
         }
