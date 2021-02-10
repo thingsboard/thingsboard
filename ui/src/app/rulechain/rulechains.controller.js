@@ -354,12 +354,11 @@ export default function RuleChainsController(ruleChainService, userService, impo
                     return ruleChain;
                 });
                 ruleChains.data = data;
-
                 deferred.resolve(ruleChains);
             }, function fail() {
                 deferred.reject();
             }
-        )
+        );
         return deferred.promise;
     }
 
@@ -368,19 +367,13 @@ export default function RuleChainsController(ruleChainService, userService, impo
             return ruleChainService.getRuleChains(pageLink, null, type);
         } else if (vm.ruleChainsScope === 'edges') {
             var deferred = $q.defer();
-            ruleChainService.getRuleChains(pageLink, null, type).then(
-                function success(ruleChains) {
-                    mapRuleChainsWithDefaultEdges(ruleChains).then(
-                        function success(response) {
-                            deferred.resolve(response);
-                        }, function fail() {
-                            deferred.reject();
-                        }
-                    );
-                }, function fail() {
-                    deferred.reject();
-                }
-            );
+            ruleChainService.getRuleChains(pageLink, null, type)
+                .then(function (ruleChains) {
+                    return mapRuleChainsWithDefaultEdges(ruleChains);
+                })
+                .then(function (ruleChains) {
+                    deferred.resolve(ruleChains);
+                });
             return deferred.promise;
         }
     }
