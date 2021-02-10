@@ -368,12 +368,8 @@ export default function RuleChainsController(ruleChainService, userService, impo
         } else if (vm.ruleChainsScope === 'edges') {
             var deferred = $q.defer();
             ruleChainService.getRuleChains(pageLink, null, type)
-                .then(function (ruleChains) {
-                    return mapRuleChainsWithDefaultEdges(ruleChains);
-                })
-                .then(function (ruleChains) {
-                    deferred.resolve(ruleChains);
-                });
+                .then(ruleChains => mapRuleChainsWithDefaultEdges(ruleChains))
+                .then(ruleChains => deferred.resolve(ruleChains));
             return deferred.promise;
         }
     }
