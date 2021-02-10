@@ -24,8 +24,11 @@
                class="md-raised md-primary">{{ 'rulechain.delete' | translate }}</md-button>
 </div>
 <div layout="row"><md-button ng-click="onSetRootRuleChain({event: $event})"
-                             ng-show="!isEdit && !ruleChain.root && ruleChainsScope == 'tenant'"
+                             ng-show="!isEdit && ((!ruleChain.root && ruleChainsScope == 'tenant')  || (ruleChainsScope == 'edge' && edge.rootRuleChainId.id !== ruleChain.id.id))"
                              class="md-raised md-primary">{{ 'rulechain.set-root' | translate }}</md-button>
+    <md-button ng-click="onUnassignFromEdge({event: $event})"
+               ng-show="!isEdit && ruleChainsScope == 'edge' && edge.rootRuleChainId.id !== ruleChain.id.id"
+               class="md-raised md-primary">{{ 'edge.unassign-from-edge' | translate }}</md-button>
     <md-button ng-click="onSetRootRuleChain({event: $event})"
                ng-show="!isEdit && !ruleChain.root && ruleChainsScope == 'edges'"
                class="md-raised md-primary">{{ 'rulechain.set-edge-template-root-rulechain' | translate }}</md-button>
@@ -36,9 +39,7 @@
                ng-show="!isEdit && !ruleChain.root && ruleChain.isDefault && ruleChainsScope == 'edges'"
                class="md-raised md-primary">{{ 'rulechain.unset-auto-assign-to-edge' | translate }}</md-button>
 
-    <md-button ng-click="onSetRootRuleChain({event: $event})"
-               ng-show="!isEdit && ruleChainsScope == 'edge' && edge.rootRuleChainId.id !== ruleChain.id.id"
-               class="md-raised md-primary">{{ 'rulechain.set-root' | translate }}</md-button>
+
 </div>
 <div layout="row">
     <md-button ngclipboard data-clipboard-action="copy"
