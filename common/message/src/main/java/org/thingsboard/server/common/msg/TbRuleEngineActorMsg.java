@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.stats;
+package org.thingsboard.server.common.msg;
 
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.TbActorMsg;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
-public final class StatsPersistTick implements TbActorMsg {
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.STATS_PERSIST_TICK_MSG;
+@EqualsAndHashCode
+public abstract class TbRuleEngineActorMsg implements TbActorMsg {
+
+    @Getter
+    protected final TbMsg msg;
+
+    public TbRuleEngineActorMsg(TbMsg msg) {
+        this.msg = msg;
     }
 }

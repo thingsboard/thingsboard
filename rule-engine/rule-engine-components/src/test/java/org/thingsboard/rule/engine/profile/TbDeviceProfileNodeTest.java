@@ -435,6 +435,10 @@ public class TbDeviceProfileNodeTest {
     }
 
     private void init() throws TbNodeException {
+
+        UUID uuid = new UUID(6041557255264276971L, -9019477126543226049L);
+        System.out.println(uuid);
+
         Mockito.when(ctx.getTenantId()).thenReturn(tenantId);
         Mockito.when(ctx.getDeviceProfileCache()).thenReturn(cache);
         Mockito.when(ctx.getTimeseriesService()).thenReturn(timeseriesService);

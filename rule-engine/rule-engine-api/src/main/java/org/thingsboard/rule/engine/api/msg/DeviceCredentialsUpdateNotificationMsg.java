@@ -31,6 +31,8 @@ import java.util.Set;
 @Data
 public class DeviceCredentialsUpdateNotificationMsg implements ToDeviceActorNotificationMsg {
 
+    private static final long serialVersionUID = -3956907402411126990L;
+
     private final TenantId tenantId;
     private final DeviceId deviceId;
 
