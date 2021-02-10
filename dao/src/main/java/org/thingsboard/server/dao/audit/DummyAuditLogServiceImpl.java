@@ -36,22 +36,22 @@ public class DummyAuditLogServiceImpl implements AuditLogService {
 
     @Override
     public PageData<AuditLog> findAuditLogsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, List<ActionType> actionTypes, TimePageLink pageLink) {
-        return new PageData();
+        return new PageData<>();
     }
 
     @Override
     public PageData<AuditLog> findAuditLogsByTenantIdAndUserId(TenantId tenantId, UserId userId, List<ActionType> actionTypes, TimePageLink pageLink) {
-        return new PageData();
+        return new PageData<>();
     }
 
     @Override
     public PageData<AuditLog> findAuditLogsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId, List<ActionType> actionTypes, TimePageLink pageLink) {
-        return new PageData();
+        return new PageData<>();
     }
 
     @Override
     public PageData<AuditLog> findAuditLogsByTenantId(TenantId tenantId, List<ActionType> actionTypes, TimePageLink pageLink) {
-        return new PageData();
+        return new PageData<>();
     }
 
     @Override

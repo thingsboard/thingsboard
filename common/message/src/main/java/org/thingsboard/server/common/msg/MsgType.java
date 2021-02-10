@@ -67,11 +67,6 @@ public enum MsgType {
     REMOTE_TO_RULE_CHAIN_TELL_NEXT_MSG,
 
     /**
-     * Message that is sent by RuleActor implementation to RuleActor itself to log the error.
-     */
-    RULE_TO_SELF_ERROR_MSG,
-
-    /**
      * Message that is sent by RuleActor implementation to RuleActor itself to process the message.
      */
     RULE_TO_SELF_MSG,

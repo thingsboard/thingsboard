@@ -54,7 +54,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         this.ruleChainName = ruleChainName;
         this.self = self;
         this.ruleNode = systemContext.getRuleChainService().findRuleNodeById(tenantId, entityId);
-        this.defaultCtx = new DefaultTbContext(systemContext, new RuleNodeCtx(tenantId, parent, self, ruleNode));
+        this.defaultCtx = new DefaultTbContext(systemContext, ruleChainName, new RuleNodeCtx(tenantId, parent, self, ruleNode));
         this.info = new RuleNodeInfo(ruleNodeId, ruleChainName, ruleNode != null ? ruleNode.getName() : "Unknown");
     }
 
@@ -147,7 +147,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         TbNode tbNode = null;
         if (ruleNode != null) {
             Class<?> componentClazz = Class.forName(ruleNode.getType());
-            tbNode = (TbNode) (componentClazz.newInstance());
+            tbNode = (TbNode) (componentClazz.getDeclaredConstructor().newInstance());
             tbNode.init(defaultCtx, new TbNodeConfiguration(ruleNode.getConfiguration()));
         }
         return tbNode;

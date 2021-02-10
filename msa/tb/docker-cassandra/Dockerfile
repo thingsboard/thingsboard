@@ -14,14 +14,15 @@
 # limitations under the License.
 #
 
-FROM thingsboard/openjdk8
+FROM thingsboard/openjdk11
 
 RUN apt-get update
 RUN apt-get install -y curl nmap procps
-RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ stretch-pgdg main' | tee --append /etc/apt/sources.list.d/pgdg.list > /dev/null
+RUN echo 'deb http://ftp.us.debian.org/debian sid main' | tee --append /etc/apt/sources.list.d/debian.list > /dev/null
+RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ sid-pgdg main' | tee --append /etc/apt/sources.list.d/pgdg.list > /dev/null
 RUN curl -L https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
-RUN echo 'deb http://www.apache.org/dist/cassandra/debian 311x main' | tee --append /etc/apt/sources.list.d/cassandra.list > /dev/null
-RUN curl -L https://www.apache.org/dist/cassandra/KEYS | apt-key add -
+RUN echo 'deb http://downloads.apache.org/cassandra/debian 40x main' | tee --append /etc/apt/sources.list.d/cassandra.list > /dev/null
+RUN curl -L https://downloads.apache.org/cassandra/KEYS | apt-key add -
 ENV PG_MAJOR=11
 RUN apt-get update
 RUN apt-get install -y cassandra cassandra-tools postgresql-11

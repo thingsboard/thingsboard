@@ -35,7 +35,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsAsyncClientHttpRequestFactory;
 import org.springframework.http.client.Netty4ClientHttpRequestFactory;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.util.StringUtils;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
@@ -58,12 +57,12 @@ import java.net.PasswordAuthentication;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.Deque;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 
 @Data
 @Slf4j
+@SuppressWarnings("deprecation")
 public class TbHttpClient {
 
     private static final String STATUS = "status";
@@ -172,8 +171,8 @@ public class TbHttpClient {
     }
 
     public void processMessage(TbContext ctx, TbMsg msg) {
-        String endpointUrl = TbNodeUtils.processPattern(config.getRestEndpointUrlPattern(), msg.getMetaData());
-        HttpHeaders headers = prepareHeaders(msg.getMetaData());
+        String endpointUrl = TbNodeUtils.processPattern(config.getRestEndpointUrlPattern(), msg);
+        HttpHeaders headers = prepareHeaders(msg);
         HttpMethod method = HttpMethod.valueOf(config.getRequestMethod());
         HttpEntity<String> entity = new HttpEntity<>(msg.getData(), headers);
 
@@ -232,9 +231,9 @@ public class TbHttpClient {
         return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
     }
 
-    private HttpHeaders prepareHeaders(TbMsgMetaData metaData) {
+    private HttpHeaders prepareHeaders(TbMsg msg) {
         HttpHeaders headers = new HttpHeaders();
-        config.getHeaders().forEach((k, v) -> headers.add(TbNodeUtils.processPattern(k, metaData), TbNodeUtils.processPattern(v, metaData)));
+        config.getHeaders().forEach((k, v) -> headers.add(TbNodeUtils.processPattern(k, msg), TbNodeUtils.processPattern(v, msg)));
         ClientCredentials credentials = config.getCredentials();
         if (CredentialsType.BASIC == credentials.getType()) {
             BasicCredentials basicCredentials = (BasicCredentials) credentials;
