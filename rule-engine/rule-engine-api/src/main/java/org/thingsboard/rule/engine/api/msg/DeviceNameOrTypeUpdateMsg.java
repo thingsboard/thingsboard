@@ -24,6 +24,9 @@ import org.thingsboard.server.common.msg.MsgType;
 @Data
 @AllArgsConstructor
 public class DeviceNameOrTypeUpdateMsg implements ToDeviceActorNotificationMsg {
+
+    private static final long serialVersionUID = -5738949227650536685L;
+
     private final TenantId tenantId;
     private final DeviceId deviceId;
     private final String deviceName;

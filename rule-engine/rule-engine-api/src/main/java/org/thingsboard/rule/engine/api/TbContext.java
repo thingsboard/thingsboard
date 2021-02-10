@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -160,6 +161,10 @@ public interface TbContext {
     boolean isLocalEntity(EntityId entityId);
 
     RuleNodeId getSelfId();
+
+    RuleNode getSelf();
+
+    String getRuleChainName();
 
     TenantId getTenantId();
 

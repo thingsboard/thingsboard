@@ -34,6 +34,8 @@ import java.util.UUID;
 @Data
 public class TransportToDeviceActorMsgWrapper implements TbActorMsg, DeviceAwareMsg, TenantAwareMsg, Serializable {
 
+    private static final long serialVersionUID = 7191333353202935941L;
+
     private final TenantId tenantId;
     private final DeviceId deviceId;
     private final TransportToDeviceActorMsg msg;
