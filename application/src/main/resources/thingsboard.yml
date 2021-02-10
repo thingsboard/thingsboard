@@ -616,7 +616,7 @@ transport:
         # Only Certificate_x509:
         alias: "${LWM2M_KEYSTORE_ALIAS_SERVER:server}"
     bootstrap:
-      enable: "${BOOTSTRAP:true}"
+      enable: "${LWM2M_BOOTSTRAP_ENABLED:true}"
       id: "${LWM2M_SERVER_ID:111}"
       bind_address: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
       bind_port_no_sec_psk: "${LWM2M_BIND_PORT_NO_SEC_BS:5691}"
