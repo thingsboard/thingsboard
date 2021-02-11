@@ -47,7 +47,7 @@
   </div>
   <div fxFlex fxLayout="column" [fxShow]="dynamicMode">
     <div formGroupName="dynamicValue" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-      <div fxFlex fxLayout="column">
+      <div fxFlex="35" fxLayout="column">
         <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
           <mat-label></mat-label>
           <mat-select formControlName="sourceType" placeholder="{{'filter.dynamic-source-type' | translate}}">
@@ -61,21 +61,20 @@
         </mat-form-field>
         <div class="tb-hint" translate>filter.dynamic-source-type</div>
       </div>
-      <div *ngIf="!allow"
-           [ngClass]="{invisible: !inheritMode}"
-           fxLayout="column"
-           fxLayoutAlign="center center">
-        <mat-checkbox formControlName="inherit"
-                      style="min-width: 35px;"
-        ></mat-checkbox>
-        <div class="tb-hint">Inherit from owner</div>
-      </div>
       <div fxFlex fxLayout="column">
         <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
           <mat-label></mat-label>
           <input matInput formControlName="sourceAttribute" placeholder="{{'filter.source-attribute' | translate}}">
         </mat-form-field>
         <div class="tb-hint" translate>filter.source-attribute</div>
+      </div>
+      <div *ngIf="!allow && inheritMode"
+           fxLayout="column"
+           style="padding-top: 6px">
+        <mat-checkbox formControlName="inherit">
+          {{ 'filter.inherit-owner' | translate}}
+        </mat-checkbox>
+        <div class="tb-hint" translate>filter.source-attribute-not-set</div>
       </div>
     </div>
   </div>
