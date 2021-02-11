@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
@@ -72,41 +73,45 @@ public class CalculateDeltaNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        JsonNode json = JacksonUtil.toJsonNode(msg.getData());
-        String inputKey = config.getInputValueKey();
-        if (json.has(inputKey)) {
-            DonAsynchron.withCallback(getLastValue(msg.getOriginator()),
-                    previousData -> {
-                        double currentValue = json.get(inputKey).asDouble();
-                        long currentTs = TbMsgTimeseriesNode.getTs(msg);
+        if (msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
+            JsonNode json = JacksonUtil.toJsonNode(msg.getData());
+            String inputKey = config.getInputValueKey();
+            if (json.has(inputKey)) {
+                DonAsynchron.withCallback(getLastValue(msg.getOriginator()),
+                        previousData -> {
+                            double currentValue = json.get(inputKey).asDouble();
+                            long currentTs = TbMsgTimeseriesNode.getTs(msg);
 
-                        if (useCache) {
-                            cache.put(msg.getOriginator(), new ValueWithTs(currentTs, currentValue));
-                        }
+                            if (useCache) {
+                                cache.put(msg.getOriginator(), new ValueWithTs(currentTs, currentValue));
+                            }
 
-                        BigDecimal delta = BigDecimal.valueOf(previousData != null ? currentValue - previousData.value : 0.0);
+                            BigDecimal delta = BigDecimal.valueOf(previousData != null ? currentValue - previousData.value : 0.0);
 
-                        if (config.isTellFailureIfDeltaIsNegative() && delta.doubleValue() < 0) {
-                            ctx.tellNext(msg, TbRelationTypes.FAILURE);
-                            return;
-                        }
+                            if (config.isTellFailureIfDeltaIsNegative() && delta.doubleValue() < 0) {
+                                ctx.tellNext(msg, TbRelationTypes.FAILURE);
+                                return;
+                            }
 
-                        if (config.getRound() != null) {
-                            delta = delta.setScale(config.getRound(), RoundingMode.HALF_UP);
-                        }
+                            if (config.getRound() != null) {
+                                delta = delta.setScale(config.getRound(), RoundingMode.HALF_UP);
+                            }
 
-                        ObjectNode result = (ObjectNode) json;
-                        result.put(config.getOutputValueKey(), delta);
+                            ObjectNode result = (ObjectNode) json;
+                            result.put(config.getOutputValueKey(), delta);
 
-                        if (config.isAddPeriodBetweenMsgs()) {
-                            long period = previousData != null ? currentTs - previousData.ts : 0;
-                            result.put(config.getPeriodValueKey(), period);
-                        }
-                        ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(result)));
-                    },
-                    t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
-        } else if (config.isTellFailureIfInputValueKeyIsAbsent()) {
-            ctx.tellNext(msg, TbRelationTypes.FAILURE);
+                            if (config.isAddPeriodBetweenMsgs()) {
+                                long period = previousData != null ? currentTs - previousData.ts : 0;
+                                result.put(config.getPeriodValueKey(), period);
+                            }
+                            ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(result)));
+                        },
+                        t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
+            } else if (config.isTellFailureIfInputValueKeyIsAbsent()) {
+                ctx.tellNext(msg, TbRelationTypes.FAILURE);
+            } else {
+                ctx.tellSuccess(msg);
+            }
         } else {
             ctx.tellSuccess(msg);
         }
