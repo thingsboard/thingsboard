@@ -27,7 +27,6 @@ export default function RuleChainsController(ruleChainService, userService, impo
                                              $document, $q, edgeService) {
 
     var vm = this;
-    var edgeId = $stateParams.edgeId;
 
     vm.ruleChainsScope = $state.$current.data.ruleChainsType;
 
@@ -52,6 +51,9 @@ export default function RuleChainsController(ruleChainService, userService, impo
 
     var ruleChainGroupActionsList = [];
     vm.types = types;
+
+    var edgeId = $stateParams.edgeId;
+    vm.edge = null;
 
     vm.ruleChainGridConfig = {
 
@@ -99,6 +101,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
     vm.setRootRuleChain = setRootRuleChain;
     vm.setAutoAssignToEdgeRuleChain = setAutoAssignToEdgeRuleChain;
     vm.unsetAutoAssignToEdgeRuleChain = unsetAutoAssignToEdgeRuleChain;
+    vm.unassignFromEdge = unassignFromEdge;
     
     initController();
 
@@ -277,7 +280,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
             ruleChainActionsList.push(
                 {
                     onAction: function ($event, item) {
-                        unassignFromEdge($event, item, edgeId);
+                        unassignFromEdge($event, item);
                     },
                     name: function() { return $translate.instant('action.unassign') },
                     details: function() { return $translate.instant('edge.unassign-from-edge') },
@@ -289,7 +292,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
             ruleChainGroupActionsList.push(
                 {
                     onAction: function ($event, items) {
-                        unassignRuleChainsFromEdge($event, items, edgeId);
+                        unassignRuleChainsFromEdge($event, items);
                     },
                     name: function() { return $translate.instant('rulechain.unassign-rulechains') },
                     details: function(selectedCount) {
@@ -351,12 +354,11 @@ export default function RuleChainsController(ruleChainService, userService, impo
                     return ruleChain;
                 });
                 ruleChains.data = data;
-
                 deferred.resolve(ruleChains);
             }, function fail() {
                 deferred.reject();
             }
-        )
+        );
         return deferred.promise;
     }
 
@@ -365,19 +367,9 @@ export default function RuleChainsController(ruleChainService, userService, impo
             return ruleChainService.getRuleChains(pageLink, null, type);
         } else if (vm.ruleChainsScope === 'edges') {
             var deferred = $q.defer();
-            ruleChainService.getRuleChains(pageLink, null, type).then(
-                function success(ruleChains) {
-                    mapRuleChainsWithDefaultEdges(ruleChains).then(
-                        function success(response) {
-                            deferred.resolve(response);
-                        }, function fail() {
-                            deferred.reject();
-                        }
-                    );
-                }, function fail() {
-                    deferred.reject();
-                }
-            );
+            ruleChainService.getRuleChains(pageLink, null, type)
+                .then(ruleChains => mapRuleChainsWithDefaultEdges(ruleChains))
+                .then(ruleChains => deferred.resolve(ruleChains));
             return deferred.promise;
         }
     }
@@ -399,7 +391,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
         }
         var ruleChainParams = {ruleChainId: ruleChain.id.id};
         if (vm.ruleChainsScope === 'edge') {
-            $state.go('home.edges.ruleChains.ruleChain', Object.assign(ruleChainParams, edgeId = vm.edge.id.id));
+            $state.go('home.edges.ruleChains.ruleChain', ruleChainParams);
         } else if (vm.ruleChainsScope === 'edges') {
             $state.go('home.edges.ruleChains.ruleChain', ruleChainParams);
         } else {
@@ -416,7 +408,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
     }
 
     function isRootRuleChain(ruleChain) {
-        if (angular.isDefined(vm.edge) && vm.edge != null) {
+        if (vm.edge != null) {
             return angular.isDefined(vm.edge.rootRuleChainId) && vm.edge.rootRuleChainId != null && vm.edge.rootRuleChainId.id === ruleChain.id.id;
         } else {
             return ruleChain && ruleChain.root;
@@ -424,7 +416,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
     }
 
     function isNonRootRuleChain(ruleChain) {
-        if (angular.isDefined(vm.edge) && vm.edge != null) {
+        if (vm.edge != null) {
             return angular.isDefined(vm.edge.rootRuleChainId) && vm.edge.rootRuleChainId != null && vm.edge.rootRuleChainId.id !== ruleChain.id.id;
         } else {
             return ruleChain && !ruleChain.root;
@@ -454,7 +446,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
             .cancel($translate.instant('action.no'))
             .ok($translate.instant('action.yes'));
         $mdDialog.show(confirm).then(function () {
-            if (angular.isDefined(vm.edge) && vm.edge != null) {
+            if (vm.edge != null) {
                 edgeService.setRootRuleChain(vm.edge.id.id, ruleChain.id.id).then(
                     (edge) => {
                         vm.edge = edge;
@@ -525,7 +517,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
         });
     }
 
-    function unassignRuleChainsFromEdge($event, items, edgeId) {
+    function unassignRuleChainsFromEdge($event, items) {
         var confirm = $mdDialog.confirm()
             .targetEvent($event)
             .title($translate.instant('rulechain.unassign-rulechains-title', {count: items.selectedCount}, 'messageformat'))
@@ -567,7 +559,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
                     controller: 'AddRuleChainsToEdgeController',
                     controllerAs: 'vm',
                     templateUrl: addRuleChainsToEdgeTemplate,
-                    locals: {edgeId: edgeId, ruleChains: ruleChains},
+                    locals: {edgeId, ruleChains},
                     parent: angular.element($document[0].body),
                     fullscreen: true,
                     targetEvent: $event
@@ -604,7 +596,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
             });
     }
 
-    function unassignFromEdge($event, ruleChain, edgeId) {
+    function unassignFromEdge($event, ruleChain) {
         if ($event) {
             $event.stopPropagation();
         }
