@@ -40,48 +40,20 @@ public class LwM2MTransportConfigBootstrap {
     private Integer bootstrapServerId;
 
     @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.start_psk:}")
-    private Boolean bootstrapStartPsk;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.start_rpk:}")
-    private Boolean bootstrapStartRpk;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.start_x509:}")
-    private Boolean bootstrapStartX509;
-
-    @Getter
     @Value("${transport.lwm2m.bootstrap.bind_address:}")
     private String bootstrapHost;
 
     @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.bind_address:}")
-    private String bootstrapSecureHost;
+    @Value("${transport.lwm2m.bootstrap.bind_port_no_sec:}")
+    private Integer bootstrapPortNoSec;
 
     @Getter
-    @Value("${transport.lwm2m.bootstrap.bind_port_no_sec_psk:}")
-    private Integer bootstrapPortNoSecPsk;
+    @Value("${transport.lwm2m.bootstrap.secure.bind_address_security:}")
+    private String bootstrapHostSecurity;
 
     @Getter
-    @Value("${transport.lwm2m.bootstrap.bind_port_no_sec_rpk:}")
-    private Integer bootstrapPortNoSecRpk;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.bind_port_no_sec_x509:}")
-    private Integer bootstrapPortNoSecX509;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.bind_port_psk:}")
-    private Integer bootstrapSecurePortPsk;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.bind_port_rpk:}")
-    private Integer bootstrapSecurePortRpk;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.bind_port_x509:}")
-    private Integer bootstrapSecurePortX509;
+    @Value("${transport.lwm2m.bootstrap.secure.bind_port_security:}")
+    private Integer bootstrapPortSecurity;
 
     @Getter
     @Value("${transport.lwm2m.bootstrap.secure.public_x:}")

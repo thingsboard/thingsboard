@@ -18,7 +18,6 @@ package org.thingsboard.server.transport.lwm2m.bootstrap;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 
@@ -31,39 +30,20 @@ import javax.annotation.PreDestroy;
 public class LwM2MTransportBootstrapServerInitializer {
 
     @Autowired(required = false)
-    @Qualifier("leshanBootstrapX509")
-    private LeshanBootstrapServer lhBServerCert;
-
-    @Autowired(required = false)
-    @Qualifier("leshanBootstrapPsk")
-    private LeshanBootstrapServer lhBServerPsk;
-
-    @Autowired(required = false)
-    @Qualifier("leshanBootstrapRpk")
-    private LeshanBootstrapServer lhBServerRpk;
+    private LeshanBootstrapServer lhBServer;
 
     @Autowired
     private LwM2MTransportContextBootstrap contextBS;
 
     @PostConstruct
     public void init() {
-        if (this.contextBS.getCtxBootStrap().getBootstrapStartPsk()) {
-            this.lhBServerPsk.start();
-        }
-        if (this.contextBS.getCtxBootStrap().getBootstrapStartRpk()) {
-            this.lhBServerRpk.start();
-        }
-        if (this.contextBS.getCtxBootStrap().getBootstrapStartX509()) {
-            this.lhBServerCert.start();
-        }
+        this.lhBServer.start();
     }
 
     @PreDestroy
     public void shutdown() throws InterruptedException {
         log.info("Stopping LwM2M transport Bootstrap Server!");
-        lhBServerPsk.destroy();
-        lhBServerRpk.destroy();
-        lhBServerCert.destroy();
+        lhBServer.destroy();
         log.info("LwM2M transport Bootstrap Server stopped!");
     }
 }
