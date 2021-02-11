@@ -16,7 +16,7 @@
 
 -->
 <div fxFlex fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="8px" [formGroup]="stringFilterPredicateFormGroup">
-  <div fxFlex="40" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+  <div fxFlex="30" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
     <mat-form-field floatLabel="always" hideRequiredMarker fxFlex class="mat-block">
       <mat-label></mat-label>
       <mat-select required formControlName="operation" placeholder="{{'filter.operation.operation' | translate}}">
@@ -29,7 +29,7 @@
     </mat-checkbox>
   </div>
   <tb-filter-predicate-value [allowUserDynamicSource]="allowUserDynamicSource"
-                             fxFlex="60"
+                             fxFlex="70"
                              [valueType]="valueTypeEnum.STRING"
                              formControlName="value">
   </tb-filter-predicate-value>
