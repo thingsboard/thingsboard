@@ -61,6 +61,15 @@
         </mat-form-field>
         <div class="tb-hint" translate>filter.dynamic-source-type</div>
       </div>
+      <div *ngIf="!allow"
+           [ngClass]="{invisible: !inheritMode}"
+           fxLayout="column"
+           fxLayoutAlign="center center">
+        <mat-checkbox formControlName="inherit"
+                      style="min-width: 35px;"
+        ></mat-checkbox>
+        <div class="tb-hint">Inherit from owner</div>
+      </div>
       <div fxFlex fxLayout="column">
         <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
           <mat-label></mat-label>

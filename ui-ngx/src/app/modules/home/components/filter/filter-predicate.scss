@@ -17,6 +17,10 @@
   .tb-hint {
     padding-bottom: 0;
   }
+
+  .invisible{
+    visibility: hidden;
+  }
 }
 
 :host ::ng-deep {
