@@ -60,7 +60,7 @@ transport:
     update_registered_pool_size: "${LWM2M_UPDATE_REGISTERED_POOL_SIZE:10}"
     un_registered_pool_size: "${LWM2M_UN_REGISTERED_POOL_SIZE:10}"
     secure:
-      # Only Certificate_x509:
+      # Certificate_x509:
       # To get helps about files format and how to generate it, see: https://github.com/eclipse/leshan/wiki/Credential-files-format
       # Create new X509 Certificates: common/transport/lwm2m/src/main/resources/credentials/shell/lwM2M_credentials.sh
       key_store_type: "${LWM2M_KEYSTORE_TYPE:JKS}"
@@ -73,18 +73,11 @@ transport:
     server:
       id: "${LWM2M_SERVER_ID:123}"
       bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
-      bind_port_no_sec_psk: "${LWM2M_BIND_PORT_NO_SEC_PSK:5685}"
-      bind_port_no_sec_rpk: "${LWM2M_BIND_PORT_NO_SEC_RPK:5687}"
-      bind_port_no_sec_x509: "${LWM2M_BIND_PORT_NO_SEC_X509:5689}"
+      bind_port_no_sec: "${LWM2M_BIND_PORT_NO_SEC:5685}"
       secure:
-        bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
-        start_psk: "${START_SERVER_PSK:true}"
-        start_rpk: "${START_SERVER_RPK:true}"
-        start_x509: "${START_SERVER_X509:true}"
-        bind_port_psk: "${LWM2M_BIND_PORT_SEC_PSK:5686}"
-        bind_port_rpk: "${LWM2M_BIND_PORT_SEC_RPK:5688}"
-        bind_port_x509: "${LWM2M_BIND_PORT_SEC_X509:5690}"
-        # Only RPK: Public & Private Key
+        bind_address_security: "${LWM2M_BIND_ADDRESS_SECURITY:0.0.0.0}"
+        bind_port_security: "${LWM2M_BIND_PORT_SECURITY:5686}"
+        # Only for RPK: Public & Private Key. If the keystore file is missing or not working
         #        create_rpk: "${CREATE_RPK:}"
         public_x: "${LWM2M_SERVER_PUBLIC_X:405354ea8893471d9296afbc8b020a5c6201b0bb25812a53b849d4480fa5f069}"
         public_y: "${LWM2M_SERVER_PUBLIC_Y:30c9237e946a3a1692c1cafaa01a238a077f632c99371348337512363f28212b}"
@@ -92,28 +85,22 @@ transport:
         # Only Certificate_x509:
         alias: "${LWM2M_KEYSTORE_ALIAS_SERVER:server}"
     bootstrap:
-      enable: "${BOOTSTRAP:true}"
+      enable: "${LWM2M_BOOTSTRAP_ENABLED:true}"
       id: "${LWM2M_SERVER_ID:111}"
       bind_address: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
-      bind_port_no_sec_psk: "${LWM2M_BIND_PORT_NO_SEC_BS:5691}"
-      bind_port_no_sec_rpk: "${LWM2M_BIND_PORT_NO_SEC_BS:5693}"
-      bind_port_no_sec_x509: "${LWM2M_BIND_PORT_NO_SEC_BS:5695}"
+      bind_port_no_sec: "${LWM2M_BIND_PORT_NO_SEC_BS:5687}"
       secure:
-        bind_address: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
-        start_psk: "${START_SERVER_PSK_BS:true}"
-        start_rpk: "${START_SERVER_RPK_BS:true}"
-        start_x509: "${START_SERVER_X509_BS:true}"
-        bind_port_psk: "${LWM2M_BIND_PORT_SEC_PSK_BS:5692}"
-        bind_port_rpk: "${LWM2M_BIND_PORT_SER_RPK_BS:5694}"
-        bind_port_x509: "${LWM2M_BIND_PORT_SEC_X509_BS:5696}"
-        # Only RPK: Public & Private Key
+        bind_address_security: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
+        bind_port_security: "${LWM2M_BIND_PORT_SEC_BS:5688}"
+        #  Only for RPK: Public & Private Key. If the keystore file is missing or not working
         public_x: "${LWM2M_SERVER_PUBLIC_X_BS:993ef2b698c6a9c0c1d8be78b13a9383c0854c7c7c7a504d289b403794648183}"
         public_y: "${LWM2M_SERVER_PUBLIC_Y_BS:267412d5fc4e5ceb2257cb7fd7f76ebdac2fa9aa100afb162e990074cc0bfaa2}"
         private_s: "${LWM2M_SERVER_PRIVATE_S_BS:9dbdbb073fc63570693a9aaf1013414e261c571f27e27fc6a8c1c2ad9347875a}"
         # Only Certificate_x509:
         alias: "${LWM2M_KEYSTORE_ALIAS_BOOTSTRAP:bootstrap}"
-      # Redis
+    # Redis
     redis_url: "${LWM2M_REDIS_URL:''}"
+
   sessions:
     inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
     report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:30000}"
