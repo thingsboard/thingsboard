@@ -31,6 +31,8 @@ import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 @RequiredArgsConstructor
 public class ToDeviceRpcRequestActorMsg implements ToDeviceActorNotificationMsg {
 
+    private static final long serialVersionUID = -8592877558138716589L;
+
     @Getter
     private final String serviceId;
     @Getter

@@ -16,28 +16,27 @@
 package org.thingsboard.server.actors.ruleChain;
 
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.Getter;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorStopReason;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbRuleEngineActorMsg;
 import org.thingsboard.server.common.msg.queue.RuleNodeException;
 
-/**
- * Created by ashvayka on 19.03.18.
- */
 @EqualsAndHashCode(callSuper = true)
-@ToString
-final class RuleNodeToSelfMsg extends TbToRuleNodeActorMsg {
+public abstract class TbToRuleNodeActorMsg extends TbRuleEngineActorMsg {
 
-    public RuleNodeToSelfMsg(TbContext ctx, TbMsg tbMsg) {
-        super(ctx, tbMsg);
+    @Getter
+    private final TbContext ctx;
+
+    public TbToRuleNodeActorMsg(TbContext ctx, TbMsg tbMsg) {
+        super(tbMsg);
+        this.ctx = ctx;
     }
 
     @Override
-    public MsgType getMsgType() {
-        return MsgType.RULE_TO_SELF_MSG;
+    public void onTbActorStopped(TbActorStopReason reason) {
+        String message = reason == TbActorStopReason.STOPPED ? "Rule node stopped" : "Failed to initialize rule node!";
+        msg.getCallback().onFailure(new RuleNodeException(message, ctx.getRuleChainName(), ctx.getSelf()));
     }
-
 }

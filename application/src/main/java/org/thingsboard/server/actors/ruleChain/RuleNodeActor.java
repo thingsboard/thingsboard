@@ -59,9 +59,6 @@ public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessa
             case RULE_CHAIN_TO_RULE_MSG:
                 onRuleChainToRuleNodeMsg((RuleChainToRuleNodeMsg) msg);
                 break;
-            case RULE_TO_SELF_ERROR_MSG:
-                onRuleNodeToSelfErrorMsg((RuleNodeToSelfErrorMsg) msg);
-                break;
             case RULE_TO_SELF_MSG:
                 onRuleNodeToSelfMsg((RuleNodeToSelfMsg) msg);
                 break;
@@ -99,10 +96,6 @@ public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessa
         } catch (Exception e) {
             logAndPersist("onRuleMsg", e);
         }
-    }
-
-    private void onRuleNodeToSelfErrorMsg(RuleNodeToSelfErrorMsg msg) {
-        logAndPersist("onRuleMsg", ActorSystemContext.toException(msg.getError()));
     }
 
     public static class ActorCreator extends ContextBasedCreator {

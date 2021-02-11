@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.stats;
+package org.thingsboard.rule.engine.profile;
 
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.TbActorMsg;
+public interface DynamicPredicateValueCtx {
 
-public final class StatsPersistTick implements TbActorMsg {
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.STATS_PERSIST_TICK_MSG;
-    }
+    EntityKeyValue getTenantValue(String key);
+
+    EntityKeyValue getCustomerValue(String key);
+
+    void resetCustomer();
 }
