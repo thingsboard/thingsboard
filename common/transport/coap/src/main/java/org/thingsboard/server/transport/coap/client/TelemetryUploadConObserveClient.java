@@ -15,29 +15,24 @@
  */
 package org.thingsboard.server.transport.coap.client;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.core.CoapClient;
+import org.eclipse.californium.core.CoapResponse;
+import org.eclipse.californium.core.coap.MediaTypeRegistry;
+import org.thingsboard.server.common.msg.session.FeatureType;
+
 import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import lombok.extern.slf4j.Slf4j;
-import org.eclipse.californium.core.CoapClient;
-import org.eclipse.californium.core.CoapHandler;
-import org.eclipse.californium.core.CoapResponse;
-import org.eclipse.californium.core.coap.MediaTypeRegistry;
-import org.thingsboard.server.common.msg.session.FeatureType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 @Slf4j
-public class DeviceEmulator {
+public class TelemetryUploadConObserveClient {
 
     public static final String SN = "SN-" + new Random().nextInt(1000);
     public static final String MODEL = "Model " + new Random().nextInt(1000);
@@ -49,19 +44,19 @@ public class DeviceEmulator {
 
     private CoapClient attributesClient;
     private CoapClient telemetryClient;
-    private CoapClient rpcClient;
     private String[] keys;
     private ExecutorService executor = Executors.newFixedThreadPool(1);
     private AtomicInteger seq = new AtomicInteger(100);
 
-    private DeviceEmulator(String host, int port, String token, String keys) {
+    private TelemetryUploadConObserveClient(String host, int port, String token, String keys) {
         this.host = host;
         this.port = port;
         this.token = token;
         this.attributesClient = new CoapClient(getFeatureTokenUrl(host, port, token, FeatureType.ATTRIBUTES));
         this.telemetryClient = new CoapClient(getFeatureTokenUrl(host, port, token, FeatureType.TELEMETRY));
-        this.rpcClient = new CoapClient(getFeatureTokenUrl(host, port, token, FeatureType.RPC));
-        this.keys = keys.split(",");
+        this.attributesClient.useCONs();
+        this.telemetryClient.useCONs();
+        this.keys = (keys != null && !keys.isEmpty()) ?  keys.split(",") : null;
     }
 
     public void start() {
@@ -70,7 +65,6 @@ public class DeviceEmulator {
             @Override
             public void run() {
                 try {
-                    sendObserveRequest(rpcClient);
                     while (!Thread.interrupted()) {
 
 
@@ -155,9 +149,18 @@ public class DeviceEmulator {
 
     public static void main(String args[]) {
         if (args.length != 4) {
-            System.out.println("Usage: java -jar " + DeviceEmulator.class.getSimpleName() + ".jar host port device_token keys");
+            System.out.println("Usage: java -jar " + TelemetryUploadConObserveClient.class.getSimpleName() + ".jar host port device_token keys");
         }
-        final DeviceEmulator emulator = new DeviceEmulator(args[0], Integer.parseInt(args[1]), args[2], args[3]);
+        /**
+         * DeviceEmulator(String host, int port, String token, String keys)
+         * args[]:
+         * host = "localhost",
+         * port = 0,
+         * token = "{Tokrn device from thingboard}"), kSzbDRGwaZqZ6Y25gTLF
+         * keys = "{Telemetry}"
+         *
+         */
+        final TelemetryUploadConObserveClient emulator = new TelemetryUploadConObserveClient(args[0], Integer.parseInt(args[1]), args[2], args[3]);
         emulator.start();
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override

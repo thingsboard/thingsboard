@@ -93,7 +93,7 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
     @Override
     public TransportProtos.ProvisionDeviceRequestMsg convertToProvisionRequestMsg(UUID sessionId, Request inbound) throws AdaptorException {
         try {
-            return ProtoConverter.convertToProvisionRequestMsg(inbound.getBytes());
+            return ProtoConverter.convertToProvisionRequestMsg(inbound.getPayload());
         } catch (InvalidProtocolBufferException ex) {
             throw new AdaptorException(ex);
         }
