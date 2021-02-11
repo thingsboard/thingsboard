@@ -15,30 +15,25 @@
  */
 package org.thingsboard.server.transport.coap.client;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.core.CoapClient;
+import org.eclipse.californium.core.CoapResponse;
+import org.eclipse.californium.core.coap.MediaTypeRegistry;
+import org.eclipse.californium.elements.exception.ConnectorException;
+import org.thingsboard.server.common.msg.session.FeatureType;
+
 import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import lombok.extern.slf4j.Slf4j;
-import org.eclipse.californium.core.CoapClient;
-import org.eclipse.californium.core.CoapHandler;
-import org.eclipse.californium.core.CoapResponse;
-import org.eclipse.californium.core.coap.MediaTypeRegistry;
-import org.eclipse.californium.elements.exception.ConnectorException;
-import org.thingsboard.server.common.msg.session.FeatureType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 @Slf4j
-public class DeviceEmulator {
+public class TelemetryUploadConObserveClient {
 
     public static final String SN = "SN-" + new Random().nextInt(1000);
     public static final String MODEL = "Model " + new Random().nextInt(1000);
@@ -50,18 +45,18 @@ public class DeviceEmulator {
 
     private CoapClient attributesClient;
     private CoapClient telemetryClient;
-    private CoapClient rpcClient;
     private String[] keys;
     private ExecutorService executor = Executors.newFixedThreadPool(1);
     private AtomicInteger seq = new AtomicInteger(100);
 
-    private DeviceEmulator(String host, int port, String token, String keys) {
+    private TelemetryUploadConObserveClient(String host, int port, String token, String keys) {
         this.host = host;
         this.port = port;
         this.token = token;
         this.attributesClient = new CoapClient(getFeatureTokenUrl(host, port, token, FeatureType.ATTRIBUTES));
         this.telemetryClient = new CoapClient(getFeatureTokenUrl(host, port, token, FeatureType.TELEMETRY));
-        this.rpcClient = new CoapClient(getFeatureTokenUrl(host, port, token, FeatureType.RPC));
+        this.attributesClient.useCONs();
+        this.telemetryClient.useCONs();
         this.keys = (keys != null && !keys.isEmpty()) ?  keys.split(",") : null;
     }
 
@@ -71,7 +66,6 @@ public class DeviceEmulator {
             @Override
             public void run() {
                 try {
-                    sendObserveRequest(rpcClient);
                     while (!Thread.interrupted()) {
                         sendRequest(attributesClient, createAttributesRequest());
                         sendRequest(telemetryClient, createTelemetryRequest());
@@ -87,47 +81,6 @@ public class DeviceEmulator {
                         MediaTypeRegistry.APPLICATION_JSON);
                 log.info("Response: {}, {}", telemetryResponse.getCode(), telemetryResponse.getResponseText());
             }
-
-            private void sendObserveRequest(CoapClient client) throws JsonProcessingException {
-                client.observe(new CoapHandler() {
-                    @Override
-                    public void onLoad(CoapResponse coapResponse) {
-                        log.info("Command: {}, {}", coapResponse.getCode(), coapResponse.getResponseText());
-                        try {
-                            JsonNode node = mapper.readTree(coapResponse.getResponseText());
-                            int requestId = node.get("id").asInt();
-                            String method = node.get("method").asText();
-                            ObjectNode params = (ObjectNode) node.get("params");
-                            ObjectNode response = mapper.createObjectNode();
-                            response.put("id", requestId);
-                            response.set("response", params);
-                            log.info("Command Response: {}, {}", requestId, mapper.writeValueAsString(response));
-                            CoapClient commandResponseClient = new CoapClient(getFeatureTokenUrl(host, port, token, FeatureType.RPC));
-                            commandResponseClient.post(new CoapHandler() {
-                                @Override
-                                public void onLoad(CoapResponse response) {
-                                    log.info("Command Response Ack: {}, {}", response.getCode(), response.getResponseText());
-                                }
-
-                                @Override
-                                public void onError() {
-                                    log.info("Command Response Ack Error, No connect");
-                                    //Do nothing
-                                }
-                            }, mapper.writeValueAsString(response), MediaTypeRegistry.APPLICATION_JSON);
-
-                        } catch (IOException e) {
-                            log.error("Error occurred while processing COAP response", e);
-                        }
-                    }
-
-                    @Override
-                    public void onError() {
-                        //Do nothing
-                    }
-                });
-            }
-
         });
     }
 
@@ -154,7 +107,7 @@ public class DeviceEmulator {
 
     public static void main(String args[]) {
         if (args.length != 4) {
-            System.out.println("Usage: java -jar " + DeviceEmulator.class.getSimpleName() + ".jar host port device_token keys");
+            System.out.println("Usage: java -jar " + TelemetryUploadConObserveClient.class.getSimpleName() + ".jar host port device_token keys");
         }
         /**
          * DeviceEmulator(String host, int port, String token, String keys)
@@ -165,7 +118,7 @@ public class DeviceEmulator {
          * keys = "{Telemetry}"
          *
          */
-        final DeviceEmulator emulator = new DeviceEmulator(args[0], Integer.parseInt(args[1]), args[2], args[3]);
+        final TelemetryUploadConObserveClient emulator = new TelemetryUploadConObserveClient(args[0], Integer.parseInt(args[1]), args[2], args[3]);
         emulator.start();
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
