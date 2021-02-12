@@ -207,6 +207,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
                     state.setActive(true);
                     save(deviceId, ACTIVITY_STATE, state.isActive());
                     stateData.getMetaData().putValue("scope", SERVER_SCOPE);
+                    stateData.getMetaData().putValue(DataConstants.PERSIST_STATE_TO_TELEMETRY, String.valueOf(persistToTelemetry));
                     pushRuleEngineMessage(stateData, ACTIVITY_EVENT);
                 }
             }
@@ -385,6 +386,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
                 state.setActive(ts < state.getLastActivityTime() + state.getInactivityTimeout());
                 if (!state.isActive() && (state.getLastInactivityAlarmTime() == 0L || state.getLastInactivityAlarmTime() < state.getLastActivityTime()) && stateData.getDeviceCreationTime() + state.getInactivityTimeout() < ts) {
                     state.setLastInactivityAlarmTime(ts);
+                    stateData.getMetaData().putValue(DataConstants.PERSIST_STATE_TO_TELEMETRY, String.valueOf(persistToTelemetry));
                     pushRuleEngineMessage(stateData, INACTIVITY_EVENT);
                     save(deviceId, INACTIVITY_ALARM_TIME, ts);
                     save(deviceId, ACTIVITY_STATE, state.isActive());

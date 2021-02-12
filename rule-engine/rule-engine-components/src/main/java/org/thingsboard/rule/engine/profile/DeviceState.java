@@ -161,8 +161,11 @@ class DeviceState {
     }
 
     private boolean processDeviceActivityEvent(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
-        //TODO: Add handling a case when device state is saved in telemetry
-        return processAttributesUpdate(ctx, msg, msg.getMetaData().getValue("scope"));
+        String deviceStateIsPersistedToTelemetry = msg.getMetaData().getValue(DataConstants.PERSIST_STATE_TO_TELEMETRY);
+        if (Boolean.TRUE.toString().equals(deviceStateIsPersistedToTelemetry)) {
+            return processTelemetry(ctx, msg);
+        }
+        return processAttributes(ctx, msg, msg.getMetaData().getValue("scope"));
     }
 
     private boolean processAlarmClearNotification(TbContext ctx, TbMsg msg) {
@@ -192,7 +195,7 @@ class DeviceState {
         if (StringUtils.isEmpty(scope)) {
             scope = DataConstants.CLIENT_SCOPE;
         }
-        return processAttributesUpdate(ctx, msg, scope);
+        return processAttributes(ctx, msg, scope);
     }
 
     private boolean processAttributesDeleteNotification(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
@@ -217,10 +220,10 @@ class DeviceState {
     }
 
     protected boolean processAttributesUpdateRequest(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
-        return processAttributesUpdate(ctx, msg, DataConstants.CLIENT_SCOPE);
+        return processAttributes(ctx, msg, DataConstants.CLIENT_SCOPE);
     }
 
-    private boolean processAttributesUpdate(TbContext ctx, TbMsg msg, String scope) throws ExecutionException, InterruptedException {
+    private boolean processAttributes(TbContext ctx, TbMsg msg, String scope) throws ExecutionException, InterruptedException {
         boolean stateChanged = false;
         Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(msg.getData()));
         if (!attributes.isEmpty()) {
