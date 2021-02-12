@@ -134,12 +134,8 @@ public class TbDeviceProfileNode implements TbNode {
                     if (deviceState != null) {
                         deviceState.process(ctx, msg);
                     } else {
-                        if (ctx.getDeviceService().findDeviceById(ctx.getTenantId(), deviceId) != null) {
-                            ctx.tellFailure(msg, new IllegalStateException("Device profile for device [" + deviceId + "] not found!"));
-                        } else {
-                            log.warn("Device was not found! Most probably device [" + deviceId + "] has been removed from the database. Acknowledging msg.");
-                            ctx.ack(msg);
-                        }
+                        log.info("Device was not found! Most probably device [" + deviceId + "] has been removed from the database. Acknowledging msg.");
+                        ctx.ack(msg);
                     }
                 }
             } else {
