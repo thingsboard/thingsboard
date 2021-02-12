@@ -97,11 +97,11 @@ public class TbRabbitMqNode implements TbNode {
     private TbMsg publishMessage(TbContext ctx, TbMsg msg) throws Exception {
         String exchangeName = "";
         if (!StringUtils.isEmpty(this.config.getExchangeNamePattern())) {
-            exchangeName = TbNodeUtils.processPattern(this.config.getExchangeNamePattern(), msg.getMetaData());
+            exchangeName = TbNodeUtils.processPattern(this.config.getExchangeNamePattern(), msg);
         }
         String routingKey = "";
         if (!StringUtils.isEmpty(this.config.getRoutingKeyPattern())) {
-            routingKey = TbNodeUtils.processPattern(this.config.getRoutingKeyPattern(), msg.getMetaData());
+            routingKey = TbNodeUtils.processPattern(this.config.getRoutingKeyPattern(), msg);
         }
         AMQP.BasicProperties properties = null;
         if (!StringUtils.isEmpty(this.config.getMessageProperties())) {

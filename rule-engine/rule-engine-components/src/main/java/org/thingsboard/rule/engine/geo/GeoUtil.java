@@ -62,7 +62,7 @@ public class GeoUtil {
         }
         polygonBuilder.pointXY(jtsCtx.getShapeFactory().normX(firstLng), jtsCtx.getShapeFactory().normY(firstLat));
         Shape shape = polygonBuilder.buildOrRect();
-        Point point = jtsCtx.makePoint(coordinates.getLongitude(), coordinates.getLatitude());
+        Point point = jtsCtx.getShapeFactory().pointXY(coordinates.getLongitude(), coordinates.getLatitude());
         return shape.relate(point).equals(SpatialRelation.CONTAINS);
     }
 }

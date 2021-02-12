@@ -44,7 +44,7 @@
     </mat-option>
     <mat-option *ngIf="!(filteredObjectsList | async)?.length" [value]="null">
       <span>
-          {{ translate.get('device-profile.lwm2m.no-objects-matching', {object: searchText}) | async }}
+          {{ 'device-profile.lwm2m.no-objects-matching' | translate: {object: searchText} }}
       </span>
     </mat-option>
   </mat-autocomplete>

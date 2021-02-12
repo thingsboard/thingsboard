@@ -13,35 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.client;
+package org.thingsboard.server.common.data;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.thingsboard.server.common.data.id.DashboardId;
 
 @Data
-public class AttrTelemetryObserveValue {
-    /**
-     * {"keyName": {
-     *       "/3/0/1": "modelNumber",
-     *       "/3/0/0": "manufacturer",
-     *       "/3/0/2": "serialNumber"
-     *       }
-    **/
-    JsonObject postKeyNameProfile;
-
-    /**
-     * [ "/2/0/0", "/2/0/1"]
-     */
-    JsonArray postAttributeProfile;
-
-    /**
-     * [ "/2/0/0", "/2/0/1"]
-     */
-    JsonArray postTelemetryProfile;
-
-    /**
-     * [ "/2/0/0", "/2/0/1"]
-     */
-    JsonArray postObserveProfile;
+@AllArgsConstructor
+public class HomeDashboardInfo {
+    private DashboardId dashboardId;
+    private boolean hideDashboardToolbar;
 }

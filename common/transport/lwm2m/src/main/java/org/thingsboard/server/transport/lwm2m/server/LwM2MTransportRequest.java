@@ -39,7 +39,6 @@ import org.eclipse.leshan.core.response.DeleteResponse;
 import org.eclipse.leshan.core.response.DiscoverResponse;
 import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.eclipse.leshan.core.response.LwM2mResponse;
-import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.core.response.ResponseCallback;
 import org.eclipse.leshan.core.response.WriteAttributesResponse;
@@ -96,7 +95,7 @@ public class LwM2MTransportRequest {
         this.converter = LwM2mValueConverterImpl.getInstance();
         executorResponse = Executors.newFixedThreadPool(this.context.getCtxServer().getRequestPoolSize(),
                 new NamedThreadFactory(String.format("LwM2M %s channel response", RESPONSE_CHANNEL)));
-        executorResponseError =  Executors.newFixedThreadPool(this.context.getCtxServer().getRequestErrorPoolSize(),
+        executorResponseError = Executors.newFixedThreadPool(this.context.getCtxServer().getRequestErrorPoolSize(),
                 new NamedThreadFactory(String.format("LwM2M %s channel response Error", RESPONSE_CHANNEL)));
     }
 
@@ -112,16 +111,15 @@ public class LwM2MTransportRequest {
     /**
      * Device management and service enablement, including Read, Write, Execute, Discover, Create, Delete and Write-Attributes
      *
-     * @param lwServer
-     * @param registration
-     * @param target
-     * @param typeOper
-     * @param contentFormatParam
-     * @param lwM2MClient
-     * @param observation
+     * @param lwServer -
+     * @param registration -
+     * @param target -
+     * @param typeOper -
+     * @param contentFormatParam -
+     * @param observation -
      */
-    public void sendAllRequest(LeshanServer lwServer, Registration registration, String target, String typeOper, String contentFormatParam,
-                               LwM2MClient lwM2MClient, Observation observation, Object params, long timeoutInMs, boolean isDelayedUpdate) {
+    public void sendAllRequest(LeshanServer lwServer, Registration registration, String target, String typeOper,
+                               String contentFormatParam, Observation observation, Object params, long timeoutInMs) {
         LwM2mPath resultIds = new LwM2mPath(target);
         if (registration != null && resultIds.getObjectId() >= 0) {
             DownlinkRequest request = null;
@@ -221,13 +219,7 @@ public class LwM2MTransportRequest {
             }
 
             if (request != null) {
-                this.sendRequest(lwServer, registration, request, lwM2MClient, timeoutInMs, isDelayedUpdate);
-            } else if (isDelayedUpdate) {
-                String msg = String.format(LOG_LW2M_ERROR + ": sendRequest: Resource path - %s msg  No  SendRequest to Client", target);
-                service.sentLogsToThingsboard(msg, registration);
-                log.error("[{}] - [{}] No SendRequest", target);
-                this.handleResponseError(registration, target, lwM2MClient, isDelayedUpdate);
-
+                this.sendRequest(lwServer, registration, request, timeoutInMs);
             }
         }
     }
@@ -237,45 +229,42 @@ public class LwM2MTransportRequest {
      * @param lwServer -
      * @param registration -
      * @param request -
-     * @param lwM2MClient -
      * @param timeoutInMs -
      */
 
-    private void sendRequest(LeshanServer lwServer, Registration registration, DownlinkRequest request, LwM2MClient lwM2MClient, long timeoutInMs, boolean isDelayedUpdate) {
+    @SuppressWarnings("unchecked")
+    private void sendRequest(LeshanServer lwServer, Registration registration, DownlinkRequest request, long timeoutInMs) {
+        LwM2MClient lwM2MClient = this.service.lwM2mInMemorySecurityStore.getLwM2MClientWithReg(registration, null);
         lwServer.send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
+            if (!lwM2MClient.isInit()) {
+                lwM2MClient.initValue(this.service, request.getPath().toString());
+            }
             if (isSuccess(((Response) response.getCoapResponse()).getCode())) {
-                this.handleResponse(registration, request.getPath().toString(), response, request, lwM2MClient, isDelayedUpdate);
+                this.handleResponse(registration, request.getPath().toString(), response, request);
                 if (request instanceof WriteRequest && ((WriteRequest) request).isReplaceRequest()) {
-                    String delayedUpdateStr = "";
-                    if (isDelayedUpdate) {
-                        delayedUpdateStr = " (delayedUpdate) ";
-                    }
-                    String msg = String.format(LOG_LW2M_INFO + ": sendRequest Replace%s: CoapCde - %s Lwm2m code - %d name - %s Resource path - %s value - %s SendRequest to Client",
-                            delayedUpdateStr, ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString(),
+                    String msg = String.format("%s: sendRequest Replace: CoapCde - %s Lwm2m code - %d name - %s Resource path - %s value - %s SendRequest to Client",
+                            LOG_LW2M_INFO, ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString(),
                             ((LwM2mSingleResource) ((WriteRequest) request).getNode()).getValue().toString());
                     service.sentLogsToThingsboard(msg, registration);
-                    log.info("[{}] - [{}] [{}] [{}] Update SendRequest[{}]", ((Response) response.getCoapResponse()).getCode(), response.getCode(), request.getPath().toString(),
-                            ((LwM2mSingleResource) ((WriteRequest) request).getNode()).getValue(), delayedUpdateStr);
+                    log.info("[{}] [{}] - [{}] [{}] Update SendRequest[{}]", registration.getEndpoint(), ((Response) response.getCoapResponse()).getCode(), response.getCode(), request.getPath().toString(),
+                            ((LwM2mSingleResource) ((WriteRequest) request).getNode()).getValue());
                 }
             } else {
-                String msg = String.format(LOG_LW2M_ERROR + ": sendRequest: CoapCode - %s Lwm2m code - %d name - %s Resource path - %s  SendRequest to Client",
+                String msg = String.format("%s: sendRequest: CoapCode - %s Lwm2m code - %d name - %s Resource path - %s  SendRequest to Client", LOG_LW2M_ERROR,
                         ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString());
                 service.sentLogsToThingsboard(msg, registration);
                 log.error("[{}] - [{}] [{}] error SendRequest", ((Response) response.getCoapResponse()).getCode(), response.getCode(), request.getPath().toString());
-                if (request instanceof WriteRequest && ((WriteRequest) request).isReplaceRequest() && isDelayedUpdate) {
-                    this.handleResponseError(registration, request.getPath().toString(), lwM2MClient, isDelayedUpdate);
-                }
             }
-
         }, e -> {
-            String msg = String.format(LOG_LW2M_ERROR + ": sendRequest: Resource path - %s msg error - %s  SendRequest to Client",
-                    request.getPath().toString(), e.toString());
+            if (!lwM2MClient.isInit()) {
+                lwM2MClient.initValue(this.service, request.getPath().toString());
+            }
+            String msg = String.format("%s: sendRequest: Resource path - %s msg error - %s  SendRequest to Client",
+                    LOG_LW2M_ERROR, request.getPath().toString(), e.toString());
             service.sentLogsToThingsboard(msg, registration);
             log.error("[{}] - [{}] error SendRequest", request.getPath().toString(), e.toString());
-            if (request instanceof WriteRequest && ((WriteRequest) request).isReplaceRequest() && isDelayedUpdate) {
-                this.handleResponseError(registration, request.getPath().toString(), lwM2MClient, isDelayedUpdate);
-            }
         });
+
     }
 
     private WriteRequest getWriteRequestSingleResource(ContentFormat contentFormat, Integer objectId, Integer instanceId, Integer resourceId, Object value, ResourceModel.Type type, Registration registration) {
@@ -308,22 +297,12 @@ public class LwM2MTransportRequest {
         }
     }
 
-    private void handleResponse(Registration registration, final String path, LwM2mResponse response, DownlinkRequest request, LwM2MClient lwM2MClient, boolean isDelayedUpdate) {
+    private void handleResponse(Registration registration, final String path, LwM2mResponse response, DownlinkRequest request) {
         executorResponse.submit(() -> {
             try {
-                sendResponse(registration, path, response, request, lwM2MClient, isDelayedUpdate);
+                sendResponse(registration, path, response, request);
             } catch (Exception e) {
                 log.error("[{}] endpoint [{}] path [{}] Exception Unable to after send response.", registration.getEndpoint(), path, e);
-            }
-        });
-    }
-
-    private void handleResponseError(Registration registration, final String path, LwM2MClient lwM2MClient, boolean isDelayedUpdate) {
-        executorResponseError.submit(() -> {
-            try {
-                if (isDelayedUpdate) lwM2MClient.onSuccessOrErrorDelayedRequests(path);
-            } catch (RuntimeException t) {
-                log.error("[{}] endpoint [{}] path [{}] RuntimeException Unable to after send response.", registration.getEndpoint(), path, t);
             }
         });
     }
@@ -333,29 +312,12 @@ public class LwM2MTransportRequest {
      * @param registration -
      * @param path -
      * @param response -
-     * @param lwM2MClient -
      */
-    private void sendResponse(Registration registration, String path, LwM2mResponse response, DownlinkRequest request, LwM2MClient lwM2MClient, boolean isDelayedUpdate) {
-        if (response instanceof ObserveResponse) {
+    private void sendResponse(Registration registration, String path, LwM2mResponse response, DownlinkRequest request) {
+        if (response instanceof ReadResponse) {
             service.onObservationResponse(registration, path, (ReadResponse) response);
         } else if (response instanceof CancelObservationResponse) {
             log.info("[{}] Path [{}] CancelObservationResponse 3_Send", path, response);
-        } else if (response instanceof ReadResponse) {
-            /**
-             * Use only at the first start after registration
-             * Fill with data -> Model client
-             */
-            if (lwM2MClient != null) {
-                if (lwM2MClient.getPendingRequests().size() > 0) {
-                    lwM2MClient.onSuccessHandler(path, response);
-                }
-            }
-            /**
-             * Use after registration on request
-             */
-            else {
-                service.onObservationResponse(registration, path, (ReadResponse) response);
-            }
         } else if (response instanceof DeleteResponse) {
             log.info("[{}] Path [{}] DeleteResponse 5_Send", path, response);
         } else if (response instanceof DiscoverResponse) {
@@ -366,7 +328,7 @@ public class LwM2MTransportRequest {
             log.info("[{}] Path [{}] WriteAttributesResponse 8_Send", path, response);
         } else if (response instanceof WriteResponse) {
             log.info("[{}] Path [{}] WriteAttributesResponse 9_Send", path, response);
-            service.onAttributeUpdateOk(registration, path, (WriteRequest) request, isDelayedUpdate);
+            service.onWriteResponseOk(registration, path, (WriteRequest) request);
         }
     }
 }

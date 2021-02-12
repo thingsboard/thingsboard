@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.security.KeyStore;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.CountDownLatch;
@@ -154,7 +155,7 @@ public class MqttSslHandlerProvider {
             String credentialsBody = null;
             for (X509Certificate cert : chain) {
                 try {
-                    String strCert = SslUtil.getX509CertificateString(cert);
+                    String strCert = SslUtil.getCertificateString(cert);
                     String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
                     final String[] credentialsBodyHolder = new String[1];
                     CountDownLatch latch = new CountDownLatch(1);
@@ -179,7 +180,7 @@ public class MqttSslHandlerProvider {
                         credentialsBody = credentialsBodyHolder[0];
                         break;
                     }
-                } catch (InterruptedException | IOException e) {
+                } catch (InterruptedException | CertificateEncodingException e) {
                     log.error(e.getMessage(), e);
                 }
             }

@@ -39,9 +39,9 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
+import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
@@ -59,7 +59,6 @@ import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -306,7 +305,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                 ));
             }
             return Futures.transform(Futures.successfulAsList(alarmFutures),
-                    alarmInfos -> new PageData(alarmInfos, alarms.getTotalPages(), alarms.getTotalElements(),
+                    alarmInfos -> new PageData<>(alarmInfos, alarms.getTotalPages(), alarms.getTotalElements(),
                             alarms.hasNext()), MoreExecutors.directExecutor());
         }
         return Futures.immediateFuture(alarms);
@@ -315,37 +314,16 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     @Override
     public AlarmSeverity findHighestAlarmSeverity(TenantId tenantId, EntityId entityId, AlarmSearchStatus alarmSearchStatus,
                                                   AlarmStatus alarmStatus) {
-        TimePageLink nextPageLink = new TimePageLink(100);
-        boolean hasNext = true;
-        AlarmSeverity highestSeverity = null;
-        AlarmQuery query;
-        while (hasNext && AlarmSeverity.CRITICAL != highestSeverity) {
-            query = new AlarmQuery(entityId, nextPageLink, alarmSearchStatus, alarmStatus, false, null);
-            PageData<AlarmInfo> alarms = alarmDao.findAlarms(tenantId, query);
-            if (alarms.hasNext()) {
-                nextPageLink = nextPageLink.nextPageLink();
-            }
-            AlarmSeverity severity = detectHighestSeverity(alarms.getData());
-            if (severity == null) {
-                continue;
-            }
-            if (severity == AlarmSeverity.CRITICAL || highestSeverity == null) {
-                highestSeverity = severity;
-            } else {
-                highestSeverity = highestSeverity.compareTo(severity) < 0 ? highestSeverity : severity;
-            }
+        Set<AlarmStatus> statusList = null;
+        if (alarmSearchStatus != null) {
+            statusList = alarmSearchStatus.getStatuses();
+        } else if (alarmStatus != null) {
+            statusList = Collections.singleton(alarmStatus);
         }
-        return highestSeverity;
-    }
 
-    private AlarmSeverity detectHighestSeverity(List<AlarmInfo> alarms) {
-        if (!alarms.isEmpty()) {
-            List<AlarmInfo> sorted = new ArrayList(alarms);
-            sorted.sort(Comparator.comparing(Alarm::getSeverity));
-            return sorted.get(0).getSeverity();
-        } else {
-            return null;
-        }
+        Set<AlarmSeverity> alarmSeverities = alarmDao.findAlarmSeverities(tenantId, entityId, statusList);
+
+        return alarmSeverities.stream().min(AlarmSeverity::compareTo).orElse(null);
     }
 
     private Alarm merge(Alarm existing, Alarm alarm) {

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.lwm2m;
 
-import lombok.Builder;
 import lombok.Data;
 
 @Data
@@ -23,12 +22,8 @@ public class ServerSecurityConfig {
     String host;
     Integer port;
     String serverPublicKey;
-    @Builder.Default
     boolean bootstrapServerIs = true;
-    @Builder.Default
     Integer clientHoldOffTime = 1;
-    @Builder.Default
     Integer serverId = 111;
-    @Builder.Default
     Integer bootstrapServerAccountTimeout = 0;
 }

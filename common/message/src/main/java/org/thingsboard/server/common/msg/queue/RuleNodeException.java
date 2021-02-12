@@ -24,6 +24,9 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 
 @Slf4j
 public class RuleNodeException extends RuleEngineException {
+
+    private static final long serialVersionUID = -1776681087370749776L;
+
     @Getter
     private final String ruleChainName;
     @Getter
@@ -32,6 +35,7 @@ public class RuleNodeException extends RuleEngineException {
     private final RuleChainId ruleChainId;
     @Getter
     private final RuleNodeId ruleNodeId;
+
 
     public RuleNodeException(String message, String ruleChainName, RuleNode ruleNode) {
         super(message);

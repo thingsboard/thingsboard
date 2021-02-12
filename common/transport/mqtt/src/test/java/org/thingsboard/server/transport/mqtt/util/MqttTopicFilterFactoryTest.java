@@ -17,7 +17,7 @@ package org.thingsboard.server.transport.mqtt.util;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.script.ScriptException;
 

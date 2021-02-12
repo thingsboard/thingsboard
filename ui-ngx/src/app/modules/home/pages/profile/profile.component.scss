@@ -38,5 +38,21 @@
       font-size: 16px;
       font-weight: 400;
     }
+    .tb-home-dashboard {
+      tb-dashboard-autocomplete {
+        @media #{$mat-gt-sm} {
+          padding-right: 12px;
+        }
+
+        @media #{$mat-lt-md} {
+          padding-bottom: 12px;
+        }
+      }
+      mat-checkbox {
+        @media #{$mat-gt-sm} {
+          margin-top: 16px;
+        }
+      }
+    }
   }
 }

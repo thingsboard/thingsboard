@@ -23,11 +23,12 @@ import { ActionNotificationShow } from '@app/core/notification/notification.acti
 import { TranslateService } from '@ngx-translate/core';
 import { ContactBasedComponent } from '../../components/entity/contact-based.component';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-tenant',
   templateUrl: './tenant.component.html',
-  styleUrls: []
+  styleUrls: ['./tenant.component.scss']
 })
 export class TenantComponent extends ContactBasedComponent<TenantInfo> {
 
@@ -54,7 +55,10 @@ export class TenantComponent extends ContactBasedComponent<TenantInfo> {
         tenantProfileId: [entity ? entity.tenantProfileId : null, [Validators.required]],
         additionalInfo: this.fb.group(
           {
-            description: [entity && entity.additionalInfo ? entity.additionalInfo.description : '']
+            description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],
+            homeDashboardId: [entity && entity.additionalInfo ? entity.additionalInfo.homeDashboardId : null],
+            homeDashboardHideToolbar: [entity && entity.additionalInfo &&
+            isDefinedAndNotNull(entity.additionalInfo.homeDashboardHideToolbar) ? entity.additionalInfo.homeDashboardHideToolbar : true]
           }
         )
       }
@@ -65,6 +69,11 @@ export class TenantComponent extends ContactBasedComponent<TenantInfo> {
     this.entityForm.patchValue({title: entity.title});
     this.entityForm.patchValue({tenantProfileId: entity.tenantProfileId});
     this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
+    this.entityForm.patchValue({additionalInfo:
+        {homeDashboardId: entity.additionalInfo ? entity.additionalInfo.homeDashboardId : null}});
+    this.entityForm.patchValue({additionalInfo:
+        {homeDashboardHideToolbar: entity.additionalInfo &&
+          isDefinedAndNotNull(entity.additionalInfo.homeDashboardHideToolbar) ? entity.additionalInfo.homeDashboardHideToolbar : true}});
   }
 
   updateFormState() {

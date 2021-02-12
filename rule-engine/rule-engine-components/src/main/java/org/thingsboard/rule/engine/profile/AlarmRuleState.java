@@ -55,8 +55,9 @@ class AlarmRuleState {
     private final Set<EntityKey> entityKeys;
     private PersistedAlarmRuleState state;
     private boolean updateFlag;
+    private final DynamicPredicateValueCtx dynamicPredicateValueCtx;
 
-    AlarmRuleState(AlarmSeverity severity, AlarmRule alarmRule, Set<EntityKey> entityKeys, PersistedAlarmRuleState state) {
+    AlarmRuleState(AlarmSeverity severity, AlarmRule alarmRule, Set<EntityKey> entityKeys, PersistedAlarmRuleState state, DynamicPredicateValueCtx dynamicPredicateValueCtx) {
         this.severity = severity;
         this.alarmRule = alarmRule;
         this.entityKeys = entityKeys;
@@ -80,6 +81,7 @@ class AlarmRuleState {
         }
         this.requiredDurationInMs = requiredDurationInMs;
         this.requiredRepeats = requiredRepeats;
+        this.dynamicPredicateValueCtx = dynamicPredicateValueCtx;
     }
 
     public boolean validateTsUpdate(Set<EntityKey> changedKeys) {
@@ -385,15 +387,24 @@ class AlarmRuleState {
     private <T> EntityKeyValue getDynamicPredicateValue(DataSnapshot data, FilterPredicateValue<T> value) {
         EntityKeyValue ekv = null;
         if (value.getDynamicValue() != null) {
-            ekv = data.getValue(new EntityKey(EntityKeyType.ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
-            if (ekv == null) {
-                ekv = data.getValue(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
-                if (ekv == null) {
-                    ekv = data.getValue(new EntityKey(EntityKeyType.SHARED_ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
+            switch (value.getDynamicValue().getSourceType()) {
+                case CURRENT_TENANT:
+                    ekv = dynamicPredicateValueCtx.getTenantValue(value.getDynamicValue().getSourceAttribute());
+                    break;
+                case CURRENT_CUSTOMER:
+                    ekv = dynamicPredicateValueCtx.getCustomerValue(value.getDynamicValue().getSourceAttribute());
+                    break;
+                case CURRENT_DEVICE:
+                    ekv = data.getValue(new EntityKey(EntityKeyType.ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
                     if (ekv == null) {
-                        ekv = data.getValue(new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
+                        ekv = data.getValue(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
+                        if (ekv == null) {
+                            ekv = data.getValue(new EntityKey(EntityKeyType.SHARED_ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
+                            if (ekv == null) {
+                                ekv = data.getValue(new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
+                            }
+                        }
                     }
-                }
             }
         }
         return ekv;

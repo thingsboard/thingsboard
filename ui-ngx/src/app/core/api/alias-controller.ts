@@ -53,8 +53,8 @@ export class AliasController implements IAliasController {
               private stateControllerHolder: StateControllerHolder,
               private origEntityAliases: EntityAliases,
               private origFilters: Filters) {
-    this.entityAliases = deepClone(this.origEntityAliases);
-    this.filters = deepClone(this.origFilters);
+    this.entityAliases = deepClone(this.origEntityAliases) || {};
+    this.filters = deepClone(this.origFilters) || {};
     this.userFilters = {};
   }
 

@@ -169,11 +169,11 @@ public class LwM2MModelsRepository {
      * PageNumber = 1, PageSize = List<LwM2mObject>.size()
      */
     public PageData<LwM2mObject> findLwm2mListObjects(PageLink pageLink) {
-        PageImpl page = new PageImpl(getLwm2mObjects(getObjectIdFromTextSearch(pageLink.getTextSearch()),
+        PageImpl<LwM2mObject> page = new PageImpl<>(getLwm2mObjects(getObjectIdFromTextSearch(pageLink.getTextSearch()),
                                                                                pageLink.getTextSearch(),
                                                                                pageLink.getSortOrder().getProperty(),
                                                                                pageLink.getSortOrder().getDirection().name()));
-        PageData pageData = new PageData(page.getContent(), page.getTotalPages(), page.getTotalElements(), page.hasNext());
+        PageData<LwM2mObject> pageData = new PageData<>(page.getContent(), page.getTotalPages(), page.getTotalElements(), page.hasNext());
         return pageData;
     }
 

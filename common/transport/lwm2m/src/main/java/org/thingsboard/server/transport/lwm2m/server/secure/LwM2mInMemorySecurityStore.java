@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.secure;
 
-import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.californium.LeshanServer;
@@ -32,8 +31,8 @@ import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.secure.ReadResultSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler;
-import org.thingsboard.server.transport.lwm2m.server.client.AttrTelemetryObserveValue;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClientProfile;
 import org.thingsboard.server.transport.lwm2m.utils.TypeServer;
 
 import java.util.Collection;
@@ -60,7 +59,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
     private final Lock readLock = readWriteLock.readLock();
     private final Lock writeLock = readWriteLock.writeLock();
     private final Map<String /** registrationId */, LwM2MClient> sessions = new ConcurrentHashMap<>();
-    private Map<UUID /** profileUUid */, AttrTelemetryObserveValue> profiles = new ConcurrentHashMap<>();
+    private Map<UUID /** profileUUid */, LwM2MClientProfile> profiles = new ConcurrentHashMap<>();
     private SecurityStoreListener listener;
 
     @Autowired
@@ -77,7 +76,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         try {
             String registrationId = this.getByRegistrationId(endPoint, null);
             return (registrationId != null && sessions.size() > 0 && sessions.get(registrationId) != null) ?
-                    sessions.get(registrationId).getInfo() : this.addLwM2MClientToSession(endPoint);
+                    sessions.get(registrationId).getSecurityInfo() : this.addLwM2MClientToSession(endPoint);
         } finally {
             readLock.unlock();
         }
@@ -93,7 +92,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         readLock.lock();
         try {
             String integrationId = this.getByRegistrationId(null, identity);
-            return (integrationId != null) ? sessions.get(integrationId).getInfo() : this.addLwM2MClientToSession(identity);
+            return (integrationId != null) ? sessions.get(integrationId).getSecurityInfo() : this.addLwM2MClientToSession(identity);
         } finally {
             readLock.unlock();
         }
@@ -103,7 +102,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
     public Collection<SecurityInfo> getAll() {
         readLock.lock();
         try {
-            return Collections.unmodifiableCollection(this.sessions.values().stream().map(LwM2MClient::getInfo).collect(Collectors.toList()));
+            return Collections.unmodifiableCollection(this.sessions.values().stream().map(LwM2MClient::getSecurityInfo).collect(Collectors.toList()));
         } finally {
             readLock.unlock();
         }
@@ -119,7 +118,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
             LwM2MClient lwM2MClient = (sessions.get(registrationId) != null) ? sessions.get(registrationId) : null;
             if (lwM2MClient != null) {
                 if (listener != null) {
-                    listener.securityInfoRemoved(INFOS_ARE_COMPROMISED, lwM2MClient.getInfo());
+                    listener.securityInfoRemoved(INFOS_ARE_COMPROMISED, lwM2MClient.getSecurityInfo());
                 }
                 sessions.remove(registrationId);
             }
@@ -169,9 +168,9 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
             LwM2MClient lwM2MClient = this.sessions.get(registration.getEndpoint());
             lwM2MClient.setLwServer(lwServer);
             lwM2MClient.setRegistration(registration);
-            lwM2MClient.setAttributes(registration.getAdditionalRegistrationAttributes());
-            this.sessions.put(registration.getId(), lwM2MClient);
+            lwM2MClient.getAttributes().putAll(registration.getAdditionalRegistrationAttributes());
             this.sessions.remove(registration.getEndpoint());
+            this.sessions.put(registration.getId(), lwM2MClient);
             return lwM2MClient;
         } finally {
             writeLock.unlock();
@@ -204,9 +203,9 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
             UUID profileUuid = (store.getDeviceProfile() != null && addUpdateProfileParameters(store.getDeviceProfile())) ? store.getDeviceProfile().getUuidId() : null;
             if (store.getSecurityInfo() != null && profileUuid != null) {
                 String endpoint = store.getSecurityInfo().getEndpoint();
-                sessions.put(endpoint, new LwM2MClient(endpoint, store.getSecurityInfo().getIdentity(), store.getSecurityInfo(), store.getMsg(), profileUuid));
+                sessions.put(endpoint, new LwM2MClient(endpoint, store.getSecurityInfo().getIdentity(), store.getSecurityInfo(), store.getMsg(), profileUuid, UUID.randomUUID()));
             } else if (store.getSecurityMode() == NO_SEC.code && profileUuid != null) {
-                sessions.put(identity, new LwM2MClient(identity, null, null, store.getMsg(), profileUuid));
+                sessions.put(identity, new LwM2MClient(identity, null, null, store.getMsg(), profileUuid, UUID.randomUUID()));
             } else {
                     log.error("Registration failed: FORBIDDEN/profileUuid/device [{}] , endpointId: [{}]", profileUuid, identity);
                     /**
@@ -228,23 +227,29 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         return this.sessions;
     }
 
-    public Map<UUID, AttrTelemetryObserveValue> getProfiles() {
+    public Map<UUID, LwM2MClientProfile> getProfiles() {
         return this.profiles;
     }
 
-    public AttrTelemetryObserveValue getProfile(UUID profileUuId) {
+    public LwM2MClientProfile getProfile(UUID profileUuId) {
         return this.profiles.get(profileUuId);
     }
 
-    public Map<UUID, AttrTelemetryObserveValue> setProfiles(Map<UUID, AttrTelemetryObserveValue> profiles) {
+    public LwM2MClientProfile getProfile(String registrationId) {
+        UUID profileUUid = this.getSessions().get(registrationId).getProfileUuid();
+        return this.getProfiles().get(profileUUid);
+    }
+
+    public Map<UUID, LwM2MClientProfile> setProfiles(Map<UUID, LwM2MClientProfile> profiles) {
         return this.profiles = profiles;
     }
 
     public boolean addUpdateProfileParameters(DeviceProfile deviceProfile) {
-        JsonObject profilesConfigData = LwM2MTransportHandler.getObserveAttrTelemetryFromThingsboard(deviceProfile);
-        if (profilesConfigData != null) {
-            profiles.put(deviceProfile.getUuidId(), LwM2MTransportHandler.getNewProfileParameters(profilesConfigData));
+        LwM2MClientProfile lwM2MClientProfile = LwM2MTransportHandler.getLwM2MClientProfileFromThingsboard(deviceProfile);
+        if (lwM2MClientProfile != null) {
+            profiles.put(deviceProfile.getUuidId(), lwM2MClientProfile);
+            return true;
         }
-        return (profilesConfigData != null);
+        return false;
     }
 }
