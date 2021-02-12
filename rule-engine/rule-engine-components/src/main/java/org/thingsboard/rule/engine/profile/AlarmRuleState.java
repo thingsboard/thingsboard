@@ -393,7 +393,7 @@ class AlarmRuleState {
                     break;
                 case CURRENT_CUSTOMER:
                     ekv = dynamicPredicateValueCtx.getCustomerValue(value.getDynamicValue().getSourceAttribute());
-                    if(ekv == null && value.getDynamicValue().getInheritMode()) {
+                    if(ekv == null && value.getDynamicValue().isInherit()) {
                         ekv = dynamicPredicateValueCtx.getTenantValue(value.getDynamicValue().getSourceAttribute());
                     }
                     break;
@@ -408,7 +408,7 @@ class AlarmRuleState {
                             }
                         }
                     }
-                    if(ekv == null && value.getDynamicValue().getInheritMode()) {
+                    if(ekv == null && value.getDynamicValue().isInherit()) {
                         ekv = dynamicPredicateValueCtx.getCustomerValue(value.getDynamicValue().getSourceAttribute());
                         if(ekv == null) {
                             ekv = dynamicPredicateValueCtx.getTenantValue(value.getDynamicValue().getSourceAttribute());
