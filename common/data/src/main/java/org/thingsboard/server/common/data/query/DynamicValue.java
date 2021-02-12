@@ -30,7 +30,7 @@ public class DynamicValue<T> {
     public DynamicValue(DynamicValueSourceType sourceType, String sourceAttribute) {
         this.sourceAttribute = sourceAttribute;
         this.sourceType = sourceType;
-        this.inheritMode = false;
+        this.inherit = false;
     }
 
     @Getter
@@ -38,6 +38,6 @@ public class DynamicValue<T> {
     @Getter
     private final String sourceAttribute;
     @Getter
-    private final boolean inheritMode;
+    private final boolean inherit;
 
 }
