@@ -206,7 +206,6 @@ public class DefaultDeviceStateService implements DeviceStateService {
                 if (!state.isActive()) {
                     state.setActive(true);
                     save(deviceId, ACTIVITY_STATE, state.isActive());
-                    stateData.getMetaData().putValue("scope", SERVER_SCOPE);
                     pushRuleEngineMessage(stateData, ACTIVITY_EVENT);
                 }
             }
@@ -447,7 +446,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
     }
 
     private <T extends KvEntry> Function<List<T>, DeviceStateData> extractDeviceStateData(Device device) {
-        return new Function<List<T>, DeviceStateData>() {
+        return new Function<>() {
             @Nullable
             @Override
             public DeviceStateData apply(@Nullable List<T> data) {
@@ -503,7 +502,11 @@ public class DefaultDeviceStateService implements DeviceStateService {
             } else {
                 data = JacksonUtil.toString(state);
             }
-            TbMsg tbMsg = TbMsg.newMsg(msgType, stateData.getDeviceId(), stateData.getMetaData().copy(), TbMsgDataType.JSON, data);
+            TbMsgMetaData md = stateData.getMetaData().copy();
+            if(!persistToTelemetry){
+                md.putValue(DataConstants.SCOPE, SERVER_SCOPE);
+            }
+            TbMsg tbMsg = TbMsg.newMsg(msgType, stateData.getDeviceId(), md, TbMsgDataType.JSON, data);
             clusterService.pushMsgToRuleEngine(stateData.getTenantId(), stateData.getDeviceId(), tbMsg, null);
         } catch (Exception e) {
             log.warn("[{}] Failed to push inactivity alarm: {}", stateData.getDeviceId(), state, e);
