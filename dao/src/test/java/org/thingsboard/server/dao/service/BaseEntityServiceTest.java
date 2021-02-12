@@ -1193,7 +1193,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
 
         EntityDataPageLink pageLink = new EntityDataPageLink(100, 0, null, sortOrder);
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, null, deviceTypeFilters);
-        PageData data = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), query);
+        PageData<EntityData> data = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), query);
         List<EntityData> loadedEntities = getLoadedEntities(data, query);
         Assert.assertEquals(devices.size(), loadedEntities.size());
 
@@ -1220,7 +1220,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         return A.containsAll(B) && B.containsAll(A);
     }
 
-    private List<EntityData> getLoadedEntities(PageData data, EntityDataQuery query) {
+    private List<EntityData> getLoadedEntities(PageData<EntityData> data, EntityDataQuery query) {
         List<EntityData> loadedEntities = new ArrayList<>(data.getData());
 
         while (data.hasNext()) {

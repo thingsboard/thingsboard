@@ -301,6 +301,7 @@ public class BaseRelationService implements RelationService {
         fromAndTypeGroup.add(EntitySearchDirection.FROM.name());
 
         Cache cache = cacheManager.getCache(RELATIONS_CACHE);
+        @SuppressWarnings("unchecked")
         List<EntityRelation> fromCache = cache.get(fromAndTypeGroup, List.class);
         if (fromCache != null) {
             return Futures.immediateFuture(fromCache);
@@ -382,6 +383,7 @@ public class BaseRelationService implements RelationService {
         toAndTypeGroup.add(EntitySearchDirection.TO.name());
 
         Cache cache = cacheManager.getCache(RELATIONS_CACHE);
+        @SuppressWarnings("unchecked")
         List<EntityRelation> fromCache = cache.get(toAndTypeGroup, List.class);
         if (fromCache != null) {
             return Futures.immediateFuture(fromCache);

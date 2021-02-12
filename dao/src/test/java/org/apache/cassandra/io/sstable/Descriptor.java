@@ -244,6 +244,7 @@ public class Descriptor
      *
      * @return A Descriptor for the SSTable, and the Component remainder.
      */
+    @SuppressWarnings("deprecation")
     public static Pair<Descriptor, String> fromFilename(File directory, String name, boolean skipComponent)
     {
         File parentDirectory = directory != null ? directory : new File(".");
@@ -319,6 +320,7 @@ public class Descriptor
                 component);
     }
 
+    @SuppressWarnings("deprecation")
     public IMetadataSerializer getMetadataSerializer()
     {
         if (version.hasNewStatsFile())

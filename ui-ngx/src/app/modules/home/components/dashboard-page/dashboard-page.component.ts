@@ -124,6 +124,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   hideToolbar: boolean;
 
   @Input()
+  syncStateWithQueryParam = true;
+
+  @Input()
   dashboard: Dashboard;
   dashboardConfiguration: DashboardConfiguration;
 

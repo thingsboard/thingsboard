@@ -15,18 +15,25 @@
  */
 package org.thingsboard.server.actors.ruleChain;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.TbActorStopReason;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbRuleEngineActorMsg;
+import org.thingsboard.server.common.msg.queue.RuleNodeException;
 
 /**
  * Created by ashvayka on 19.03.18.
  */
-@Data
-final class RuleNodeToSelfMsg implements TbActorMsg {
+@EqualsAndHashCode(callSuper = true)
+@ToString
+final class RuleNodeToSelfMsg extends TbToRuleNodeActorMsg {
 
-    private final TbMsg msg;
+    public RuleNodeToSelfMsg(TbContext ctx, TbMsg tbMsg) {
+        super(ctx, tbMsg);
+    }
 
     @Override
     public MsgType getMsgType() {

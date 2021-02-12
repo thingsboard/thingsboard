@@ -47,6 +47,7 @@ public class DefaultTbApiUsageClient implements TbApiUsageClient {
     @Value("${usage.stats.report.interval:10}")
     private int interval;
 
+    @SuppressWarnings("unchecked")
     private final ConcurrentMap<TenantId, AtomicLong>[] values = new ConcurrentMap[ApiUsageRecordKey.values().length];
     private final PartitionService partitionService;
     private final SchedulerComponent scheduler;
