@@ -393,6 +393,9 @@ class AlarmRuleState {
                     break;
                 case CURRENT_CUSTOMER:
                     ekv = dynamicPredicateValueCtx.getCustomerValue(value.getDynamicValue().getSourceAttribute());
+                    if(ekv == null && value.getDynamicValue().getUseInherit()) {
+                        ekv = dynamicPredicateValueCtx.getTenantValue(value.getDynamicValue().getSourceAttribute());
+                    }
                     break;
                 case CURRENT_DEVICE:
                     ekv = data.getValue(new EntityKey(EntityKeyType.ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
@@ -403,6 +406,12 @@ class AlarmRuleState {
                             if (ekv == null) {
                                 ekv = data.getValue(new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
                             }
+                        }
+                    }
+                    if(ekv == null && value.getDynamicValue().getUseInherit()) {
+                        ekv = dynamicPredicateValueCtx.getCustomerValue(value.getDynamicValue().getSourceAttribute());
+                        if(ekv == null) {
+                            ekv = dynamicPredicateValueCtx.getTenantValue(value.getDynamicValue().getSourceAttribute());
                         }
                     }
             }
