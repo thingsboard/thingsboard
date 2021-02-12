@@ -51,6 +51,7 @@ public class DataConstants {
     public static final String CONNECT_EVENT = "CONNECT_EVENT";
     public static final String DISCONNECT_EVENT = "DISCONNECT_EVENT";
     public static final String ACTIVITY_EVENT = "ACTIVITY_EVENT";
+    public static final String PERSIST_STATE_TO_TELEMETRY = "persistStateToTelemetry";
 
     public static final String ENTITY_CREATED = "ENTITY_CREATED";
     public static final String ENTITY_UPDATED = "ENTITY_UPDATED";
