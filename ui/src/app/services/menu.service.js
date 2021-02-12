@@ -202,7 +202,7 @@ function Menu(userService, $state, $rootScope) {
                                     {
                                         name: 'edge.rulechain-templates',
                                         type: 'link',
-                                        state: 'home.edges.edgeRuleChains',
+                                        state: 'home.edges.ruleChains',
                                         icon: 'settings_ethernet'
                                     }
                                 ]
@@ -293,7 +293,7 @@ function Menu(userService, $state, $rootScope) {
                                 {
                                     name: 'edge.rulechain-templates',
                                     icon: 'settings_ethernet',
-                                    state: 'home.edges.edgeRuleChains'
+                                    state: 'home.edges.ruleChains'
                                 }
                             ]
 

@@ -42,7 +42,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         getRelatedEntity: getRelatedEntity,
         deleteRelatedEntity: deleteRelatedEntity,
         moveEntity: moveEntity,
-        copyEntity: copyEntity
+        copyEntity: copyEntity,
+        getAssignedToEdgeEntitiesByType: getAssignedToEdgeEntitiesByType
     };
 
     return service;
@@ -1682,6 +1683,28 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         } else {
             return null;
         }
+    }
+
+    function getAssignedToEdgeEntitiesByType(edgeId, entityType, pageLink) {
+        var promise;
+        switch (entityType) {
+            case types.entityType.device:
+                promise = deviceService.getEdgeDevices(edgeId, pageLink, null);
+                break;
+            case types.entityType.asset:
+                promise = assetService.getEdgeAssets(edgeId, pageLink, null);
+                break;
+            case types.entityType.entityView:
+                promise = entityViewService.getEdgeEntityViews(edgeId, pageLink, null);
+                break;
+            case types.entityType.dashboard:
+                promise = dashboardService.getEdgeDashboards(edgeId, pageLink, null);
+                break;
+            case types.entityType.rulechain:
+                promise = ruleChainService.getEdgeRuleChains(edgeId, pageLink, null);
+                break;
+        }
+        return promise;
     }
 
 }

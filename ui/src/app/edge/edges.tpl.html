@@ -65,7 +65,7 @@
                             default-event-type="{{vm.types.eventType.error.value}}">
             </tb-event-table>
         </md-tab>
-        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'edge.downlinks' | translate }}">
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && vm.grid.isTenantAdmin()" md-on-select="vm.grid.triggerResize()" label="{{ 'edge.downlinks' | translate }}">
             <tb-edge-downlinks-table flex entity-type="vm.types.entityType.edge"
                                      entity-id="vm.grid.operatingItem().id.id"
                                      tenant-id="vm.grid.operatingItem().tenantId.id">

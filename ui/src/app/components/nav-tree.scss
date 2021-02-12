@@ -131,6 +131,12 @@
           content: "supervisor_account";
         }
       }
+
+      &.tb-rule-chain-group {
+        &::before {
+          content: "settings_ethernet";
+        }
+      }
     }
   }
 }

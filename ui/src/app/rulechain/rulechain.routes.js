@@ -125,7 +125,7 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
         ncyBreadcrumb: {
             label: '{"icon": "settings_ethernet", "label": "{{ (\'rulechain.import\' | translate) + \': \'+ vm.ruleChain.name }}", "translate": "false"}'
         }
-    }).state('home.edges.edgeRuleChains', {
+    }).state('home.edges.ruleChains', {
         url: '/ruleChains',
         params: {'topIndex': 0},
         module: 'private',
@@ -145,7 +145,7 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
         ncyBreadcrumb: {
             label: '{"icon": "settings_ethernet", "label": "edge.rulechain-templates"}'
         }
-    }).state('home.edges.edgeRuleChains.ruleChain', {
+    }).state('home.edges.ruleChains.ruleChain', {
         url: '/:ruleChainId',
         reloadOnSearch: false,
         module: 'private',
@@ -182,7 +182,7 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
         ncyBreadcrumb: {
             label: '{"icon": "settings_ethernet", "label": "{{ vm.ruleChain.name }}", "translate": "false"}'
         }
-    }).state('home.edges.edgeRuleChains.importRuleChain', {
+    }).state('home.edges.ruleChains.importRuleChain', {
         url: '/edges/ruleChains/import',
         reloadOnSearch: false,
         module: 'private',
