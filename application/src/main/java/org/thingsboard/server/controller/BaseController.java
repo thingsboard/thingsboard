@@ -762,7 +762,7 @@ public abstract class BaseController {
                         String scope = extractParameter(String.class, 0, additionalInfo);
                         @SuppressWarnings("unchecked")
                         List<AttributeKvEntry> attributes = extractParameter(List.class, 1, additionalInfo);
-                        metaData.putValue("scope", scope);
+                        metaData.putValue(DataConstants.SCOPE, scope);
                         if (attributes != null) {
                             for (AttributeKvEntry attr : attributes) {
                                 addKvEntry(entityNode, attr);
@@ -772,7 +772,7 @@ public abstract class BaseController {
                         String scope = extractParameter(String.class, 0, additionalInfo);
                         @SuppressWarnings("unchecked")
                         List<String> keys = extractParameter(List.class, 1, additionalInfo);
-                        metaData.putValue("scope", scope);
+                        metaData.putValue(DataConstants.SCOPE, scope);
                         ArrayNode attrsArrayNode = entityNode.putArray("attributes");
                         if (keys != null) {
                             keys.forEach(attrsArrayNode::add);

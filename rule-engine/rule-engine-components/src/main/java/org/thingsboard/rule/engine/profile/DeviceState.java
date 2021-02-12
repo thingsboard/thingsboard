@@ -161,11 +161,12 @@ class DeviceState {
     }
 
     private boolean processDeviceActivityEvent(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
-        String deviceStateIsPersistedToTelemetry = msg.getMetaData().getValue(DataConstants.PERSIST_STATE_TO_TELEMETRY);
-        if (Boolean.TRUE.toString().equals(deviceStateIsPersistedToTelemetry)) {
+        String scope = msg.getMetaData().getValue(DataConstants.SCOPE);
+        if (StringUtils.isEmpty(scope)) {
             return processTelemetry(ctx, msg);
+        } else {
+            return processAttributes(ctx, msg, scope);
         }
-        return processAttributes(ctx, msg, msg.getMetaData().getValue("scope"));
     }
 
     private boolean processAlarmClearNotification(TbContext ctx, TbMsg msg) {
@@ -191,7 +192,7 @@ class DeviceState {
     }
 
     private boolean processAttributesUpdateNotification(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
-        String scope = msg.getMetaData().getValue("scope");
+        String scope = msg.getMetaData().getValue(DataConstants.SCOPE);
         if (StringUtils.isEmpty(scope)) {
             scope = DataConstants.CLIENT_SCOPE;
         }
@@ -202,7 +203,7 @@ class DeviceState {
         boolean stateChanged = false;
         List<String> keys = new ArrayList<>();
         new JsonParser().parse(msg.getData()).getAsJsonObject().get("attributes").getAsJsonArray().forEach(e -> keys.add(e.getAsString()));
-        String scope = msg.getMetaData().getValue("scope");
+        String scope = msg.getMetaData().getValue(DataConstants.SCOPE);
         if (StringUtils.isEmpty(scope)) {
             scope = DataConstants.CLIENT_SCOPE;
         }
