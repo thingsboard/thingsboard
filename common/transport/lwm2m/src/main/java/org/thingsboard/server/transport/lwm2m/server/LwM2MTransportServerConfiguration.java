@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeDecoder;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeEncoder;
-import org.eclipse.leshan.core.node.codec.LwM2mNodeDecoder;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.californium.LeshanServerBuilder;
@@ -54,7 +53,15 @@ import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256;
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM;
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256;
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA;
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384;
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CCM;
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8;
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CBC_SHA256;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.getCoapConfig;
 
@@ -64,6 +71,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandle
 public class LwM2MTransportServerConfiguration {
     private PublicKey publicKey;
     private PrivateKey privateKey;
+    private boolean pskMode = false;
 
     @Autowired
     private LwM2MTransportContextServer context;
@@ -81,9 +89,8 @@ public class LwM2MTransportServerConfiguration {
         LeshanServerBuilder builder = new LeshanServerBuilder();
         builder.setLocalAddress(this.context.getCtxServer().getServerHost(), serverPortNoSec);
         builder.setLocalSecureAddress(this.context.getCtxServer().getServerHostSecurity(), serverSecurePort);
-        builder.setEncoder(new DefaultLwM2mNodeEncoder());
-        LwM2mNodeDecoder decoder = new DefaultLwM2mNodeDecoder();
-        builder.setDecoder(decoder);
+        builder.setDecoder(new DefaultLwM2mNodeDecoder());
+        /** Use a magic converter to support bad type send by the UI. */
         builder.setEncoder(new DefaultLwM2mNodeEncoder(LwM2mValueConverterImpl.getInstance()));
 
         /** Create CoAP Config */
@@ -102,16 +109,29 @@ public class LwM2MTransportServerConfiguration {
 
         /** Create DTLS Config */
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
-        dtlsConfig.setRecommendedSupportedGroupsOnly(!this.context.getCtxServer().isRecommendedSupportedGroups());
+        dtlsConfig.setRecommendedSupportedGroupsOnly(this.context.getCtxServer().isRecommendedSupportedGroups());
         dtlsConfig.setRecommendedCipherSuitesOnly(this.context.getCtxServer().isRecommendedCiphers());
-        dtlsConfig.setSupportedCipherSuites(TLS_PSK_WITH_AES_128_CBC_SHA256, TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256);
+        if (this.pskMode) {
+            dtlsConfig.setSupportedCipherSuites(TLS_PSK_WITH_AES_128_CBC_SHA256);
+        }
+        else {
+//            dtlsConfig.setSupportedCipherSuites(TLS_PSK_WITH_AES_128_CBC_SHA256,
+//                    TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256);
+            dtlsConfig.setSupportedCipherSuites(TLS_PSK_WITH_AES_128_CBC_SHA256,
+                    TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+                    TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+                    TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
+                    TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8,
+                    TLS_ECDHE_ECDSA_WITH_AES_128_CCM,
+                    TLS_ECDHE_ECDSA_WITH_AES_256_CCM,
+                    TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+                    TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
+                    TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384);
+        }
+
 
         /** Set DTLS Config */
         builder.setDtlsConfig(dtlsConfig);
-
-        /** Use a magic converter to support bad type send by the UI. */
-        builder.setEncoder(new DefaultLwM2mNodeEncoder(LwM2mValueConverterImpl.getInstance()));
-
 
         /** Create LWM2M server */
         return builder.build();
@@ -138,14 +158,16 @@ public class LwM2MTransportServerConfiguration {
                             return endpoint.startsWith(expectedX509CommonName);
                         }
                     }));
-                } else if (this.setServerRPK(builder)) {
-                    this.infoParamsServerRPK();
-                } else {
-                    /** by default trust all */
-                    builder.setTrustedCertificates(new X509Certificate[0]);
-                    log.info("Unable to load X509 files for LWM2MServer");
-                    this.infoParamsServerPSK();
                 }
+            } else if (this.setServerRPK(builder)) {
+                this.infoPramsUri("RPK");
+                this.infoParamsServerKey(this.publicKey, this.privateKey);
+            } else {
+                /** by default trust all */
+                builder.setTrustedCertificates(new X509Certificate[0]);
+                log.info("Unable to load X509 files for LWM2MServer");
+                this.pskMode = true;
+                this.infoPramsUri("PSK");
             }
         } catch (KeyStoreException ex) {
             log.error("[{}] Unable to load X509 files server", ex.getMessage());
@@ -169,8 +191,7 @@ public class LwM2MTransportServerConfiguration {
                 builder.setCertificateChain(new X509Certificate[]{serverCertificate});
                 this.infoParamsServerX509(serverCertificate, publicKey, privateKey);
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         } catch (Exception ex) {
@@ -181,13 +202,20 @@ public class LwM2MTransportServerConfiguration {
 
     private void infoParamsServerX509(X509Certificate certificate, PublicKey publicKey, PrivateKey privateKey) {
         try {
-            log.info("Server uses X509 : \n X509 Certificate (Hex): [{}] \n Public Key (Hex): [{}] \n Private Key (Hex): [{}]",
-                    Hex.encodeHexString(certificate.getEncoded()),
-                    Hex.encodeHexString(publicKey.getEncoded()),
-                    Hex.encodeHexString(privateKey.getEncoded()));
+            infoPramsUri("X509");
+            log.info("\n- X509 Certificate (Hex): [{}]",
+                    Hex.encodeHexString(certificate.getEncoded()));
+            this.infoParamsServerKey(publicKey, privateKey);
         } catch (CertificateEncodingException e) {
             log.error("", e);
         }
+    }
+
+    private void infoPramsUri(String mode) {
+        log.info("Server uses [{}]: serverNoSecureURI : [{}], serverSecureURI : [{}]",
+                mode,
+                this.context.getCtxServer().getServerHost() + ":" + this.context.getCtxServer().getServerPortNoSec(),
+                this.context.getCtxServer().getServerHostSecurity() + ":" + this.context.getCtxServer().getServerPortSecurity());
     }
 
     private boolean setServerRPK(LeshanServerBuilder builder) {
@@ -207,7 +235,7 @@ public class LwM2MTransportServerConfiguration {
 
 
     /**
-     * From yml^ server
+     * From yml: server
      * public_x: "${LWM2M_SERVER_PUBLIC_X:405354ea8893471d9296afbc8b020a5c6201b0bb25812a53b849d4480fa5f069}"
      * public_y: "${LWM2M_SERVER_PUBLIC_Y:30c9237e946a3a1692c1cafaa01a238a077f632c99371348337512363f28212b}"
      * private_s: "${LWM2M_SERVER_PRIVATE_S:274671fe40ce937b8a6352cf0a418e8a39e4bf0bb9bf74c910db953c20c73802}"
@@ -241,41 +269,32 @@ public class LwM2MTransportServerConfiguration {
         }
     }
 
-    private void infoParamsServerRPK() {
+    private void infoParamsServerKey(PublicKey publicKey, PrivateKey privateKey) {
         /** Get x coordinate */
-        byte[] x = ((ECPublicKey) this.publicKey).getW().getAffineX().toByteArray();
+        byte[] x = ((ECPublicKey) publicKey).getW().getAffineX().toByteArray();
         if (x[0] == 0)
             x = Arrays.copyOfRange(x, 1, x.length);
 
         /** Get Y coordinate */
-        byte[] y = ((ECPublicKey) this.publicKey).getW().getAffineY().toByteArray();
+        byte[] y = ((ECPublicKey) publicKey).getW().getAffineY().toByteArray();
         if (y[0] == 0)
             y = Arrays.copyOfRange(y, 1, y.length);
 
         /** Get Curves params */
-        String params = ((ECPublicKey) this.publicKey).getParams().toString();
-        String privHex = Hex.encodeHexString(this.privateKey.getEncoded());
-        log.info("Server uses RPK -> serverNoSecureURI : [{}], serverSecureURI : [{}], \n" +
-                        "Public Key (Hex): [{}] \n" +
-                        "Private Key (Hex): [{}], \n" +
-                        "- public_x :  [{}] \n" +
-                        "- public_y :  [{}] \n" +
-                        "- private_s : [{}] \n" +
+        String params = ((ECPublicKey) publicKey).getParams().toString();
+        String privHex = Hex.encodeHexString(privateKey.getEncoded());
+        log.info(" \n- Public Key (Hex): [{}] \n" +
+                        "- Private Key (Hex): [{}], \n" +
+                        "public_x: \"${LWM2M_SERVER_PUBLIC_X:{}}\" \n" +
+                        "public_y: \"${LWM2M_SERVER_PUBLIC_Y:{}}\" \n" +
+                        "private_s: \"${LWM2M_SERVER_PRIVATE_S:{}}\" \n" +
                         "- Elliptic Curve parameters  : [{}]",
-                this.context.getCtxServer().getServerHost() + ":" + this.context.getCtxServer().getServerPortNoSec(),
-                this.context.getCtxServer().getServerHostSecurity() + ":" + this.context.getCtxServer().getServerPortSecurity(),
-                Hex.encodeHexString(this.publicKey.getEncoded()),
-                Hex.encodeHexString(this.privateKey.getEncoded()),
+                Hex.encodeHexString(publicKey.getEncoded()),
+                privHex,
                 Hex.encodeHexString(x),
                 Hex.encodeHexString(y),
                 privHex.substring(privHex.length() - 64),
                 params);
-    }
-
-    private void infoParamsServerPSK() {
-        log.info("Server uses PSK -> serverNoSecureURI : [{}], serverSecureURI : [{}]",
-                this.context.getCtxServer().getServerHost() + ":" + Integer.toString(this.context.getCtxServer().getServerPortNoSec()),
-                this.context.getCtxServer().getServerHostSecurity() + ":" + Integer.toString(this.context.getCtxServer().getServerPortSecurity()));
     }
 
 }

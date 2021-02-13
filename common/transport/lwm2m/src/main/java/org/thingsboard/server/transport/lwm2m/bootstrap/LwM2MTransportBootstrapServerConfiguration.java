@@ -52,7 +52,15 @@ import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256;
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM;
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256;
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA;
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384;
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CCM;
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8;
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CBC_SHA256;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.getCoapConfig;
 
@@ -62,6 +70,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandle
 public class LwM2MTransportBootstrapServerConfiguration {
     private PublicKey publicKey;
     private PrivateKey privateKey;
+    private boolean pskMode = false;
 
     @Autowired
     private LwM2MTransportContextBootstrap contextBs;
@@ -105,9 +114,24 @@ public class LwM2MTransportBootstrapServerConfiguration {
 
         /** Create and Set DTLS Config */
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
-        dtlsConfig.setRecommendedSupportedGroupsOnly(!this.contextS.getCtxServer().isRecommendedSupportedGroups());
+        dtlsConfig.setRecommendedSupportedGroupsOnly(this.contextS.getCtxServer().isRecommendedSupportedGroups());
         dtlsConfig.setRecommendedCipherSuitesOnly(this.contextS.getCtxServer().isRecommendedCiphers());
-        dtlsConfig.setSupportedCipherSuites(TLS_PSK_WITH_AES_128_CBC_SHA256, TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256);
+        if (this.pskMode) {
+            dtlsConfig.setSupportedCipherSuites(TLS_PSK_WITH_AES_128_CBC_SHA256);
+        }
+        else {
+//            dtlsConfig.setSupportedCipherSuites(TLS_PSK_WITH_AES_128_CBC_SHA256, TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256);
+            dtlsConfig.setSupportedCipherSuites(TLS_PSK_WITH_AES_128_CBC_SHA256,
+                    TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+                    TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+                    TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
+                    TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8,
+                    TLS_ECDHE_ECDSA_WITH_AES_128_CCM,
+                    TLS_ECDHE_ECDSA_WITH_AES_256_CCM,
+                    TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+                    TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
+                    TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384);
+        }
 
         /** Set DTLS Config */
         builder.setDtlsConfig(dtlsConfig);
@@ -133,14 +157,16 @@ public class LwM2MTransportBootstrapServerConfiguration {
                         /** by default trust all */
                         builder.setTrustedCertificates(new X509Certificate[0]);
                     }
-                } else if (this.setServerRPK(builder)) {
-                    this.infoParamsServerRPK();
-                } else {
-                    /** by default trust all */
-                    builder.setTrustedCertificates(new X509Certificate[0]);
-                    log.info("Unable to load X509 files for BootStrapServer");
-                    this.infoParamsServerPSK();
                 }
+            } else if (this.setServerRPK(builder)) {
+                this.infoPramsUri("RPK");
+                this.infoParamsBootstrapServerKey(this.publicKey, this.privateKey);
+            } else {
+                /** by default trust all */
+                builder.setTrustedCertificates(new X509Certificate[0]);
+                log.info("Unable to load X509 files for BootStrapServer");
+                this.pskMode = true;
+                this.infoPramsUri("PSK");
             }
         } catch (KeyStoreException ex) {
             log.error("[{}] Unable to load X509 files server", ex.getMessage());
@@ -175,14 +201,22 @@ public class LwM2MTransportBootstrapServerConfiguration {
 
     private void infoParamsServerX509(X509Certificate certificate, PublicKey publicKey, PrivateKey privateKey) {
         try {
-            log.info("Bootstrap Server uses X509 : \n X509 Certificate (Hex): [{}] \n Public Key (Hex): [{}] \n Private Key (Hex): [{}]",
-                    Hex.encodeHexString(certificate.getEncoded()),
-                    Hex.encodeHexString(publicKey.getEncoded()),
-                    Hex.encodeHexString(privateKey.getEncoded()));
+            this.infoPramsUri("X509");
+            log.info("\n- X509 Certificate (Hex): [{}]",
+                    Hex.encodeHexString(certificate.getEncoded()));
+            this.infoParamsBootstrapServerKey(publicKey, privateKey);
         } catch (CertificateEncodingException e) {
             log.error("", e);
         }
     }
+
+    private void infoPramsUri(String mode) {
+        log.info("Bootstrap Server uses [{}]: serverNoSecureURI : [{}], serverSecureURI : [{}]",
+                mode,
+                this.contextBs.getCtxBootStrap().getBootstrapHost() + ":" + this.contextBs.getCtxBootStrap().getBootstrapPortNoSec(),
+                this.contextBs.getCtxBootStrap().getBootstrapHostSecurity() + ":" + this.contextBs.getCtxBootStrap().getBootstrapPortSecurity());
+    }
+
 
     private boolean setServerRPK(LeshanBootstrapServerBuilder builder) {
         try {
@@ -231,41 +265,31 @@ public class LwM2MTransportBootstrapServerConfiguration {
         }
     }
 
-    private void infoParamsServerRPK() {
+    private void infoParamsBootstrapServerKey(PublicKey publicKey, PrivateKey privateKey) {
         /** Get x coordinate */
-        byte[] x = ((ECPublicKey) this.publicKey).getW().getAffineX().toByteArray();
+        byte[] x = ((ECPublicKey) publicKey).getW().getAffineX().toByteArray();
         if (x[0] == 0)
             x = Arrays.copyOfRange(x, 1, x.length);
 
         /** Get Y coordinate */
-        byte[] y = ((ECPublicKey) this.publicKey).getW().getAffineY().toByteArray();
+        byte[] y = ((ECPublicKey) publicKey).getW().getAffineY().toByteArray();
         if (y[0] == 0)
             y = Arrays.copyOfRange(y, 1, y.length);
 
         /** Get Curves params */
-        String params = ((ECPublicKey) this.publicKey).getParams().toString();
-        String privHex = Hex.encodeHexString(this.privateKey.getEncoded());
-        log.info("Server uses RPK -> serverNoSecureURI : [{}], serverSecureURI : [{}], \n" +
-                        "Public Key (Hex): [{}] \n" +
-                        "Private Key (Hex): [{}], \n" +
-                        "- public_x :  [{}] \n" +
-                        "- public_y :  [{}] \n" +
-                        "- private_s : [{}] \n" +
+        String params = ((ECPublicKey) publicKey).getParams().toString();
+        String privHex = Hex.encodeHexString(privateKey.getEncoded());
+        log.info("\n- Public Key (Hex): [{}] \n" +
+                        "- Private Key (Hex): [{}], \n" +
+                        "public_x: \"${LWM2M_SERVER_PUBLIC_X_BS:{}}\" \n" +
+                        "public_y: \"${LWM2M_SERVER_PUBLIC_Y_BS:{}}\" \n" +
+                        "private_s: \"${LWM2M_SERVER_PRIVATE_S_BS:{}}\" \n" +
                         "- Elliptic Curve parameters  : [{}]",
-                this.contextBs.getCtxBootStrap().getBootstrapHost() + ":" + this.contextBs.getCtxBootStrap().getBootstrapPortNoSec(),
-                this.contextBs.getCtxBootStrap().getBootstrapHostSecurity() + ":" + this.contextBs.getCtxBootStrap().getBootstrapPortSecurity(),
-                Hex.encodeHexString(this.publicKey.getEncoded()),
-                Hex.encodeHexString(this.privateKey.getEncoded()),
+                Hex.encodeHexString(publicKey.getEncoded()),
+                Hex.encodeHexString(privateKey.getEncoded()),
                 Hex.encodeHexString(x),
                 Hex.encodeHexString(y),
                 privHex.substring(privHex.length() - 64),
                 params);
     }
-
-    private void infoParamsServerPSK() {
-        log.info("Server uses PSK -> serverNoSecureURI : [{}], serverSecureURI : [{}]",
-                this.contextBs.getCtxBootStrap().getBootstrapHost() + ":" + this.contextBs.getCtxBootStrap().getBootstrapPortNoSec(),
-                this.contextBs.getCtxBootStrap().getBootstrapHostSecurity() + ":" + this.contextBs.getCtxBootStrap().getBootstrapPortSecurity());
-    }
-
 }

@@ -147,8 +147,8 @@ public class LwM2MTransportConfigServer {
     private String rootAlias;
 
     @Getter
-    @Value("${transport.lwm2m.secure.enable_gen_psk_rpk:}")
-    private Boolean enableGenPskRpk;
+    @Value("${transport.lwm2m.secure.enable_gen_new_key_psk_rpk:}")
+    private Boolean enableGenNewKeyPskRpk;
 
     @Getter
     @Value("${transport.lwm2m.server.id:}")
