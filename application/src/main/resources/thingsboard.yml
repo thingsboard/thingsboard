@@ -577,7 +577,7 @@ transport:
 #    model_path_file: "${LWM2M_MODEL_PATH_FILE:./common/transport/lwm2m/src/main/resources/models/}"
     model_path_file: "${LWM2M_MODEL_PATH_FILE:}"
     recommended_ciphers: "${LWM2M_RECOMMENDED_CIPHERS:false}"
-    recommended_supported_groups: "${LWM2M_RECOMMENDED_SUPPORTED_GROUPS:false}"
+    recommended_supported_groups: "${LWM2M_RECOMMENDED_SUPPORTED_GROUPS:true}"
     request_pool_size: "${LWM2M_REQUEST_POOL_SIZE:100}"
     request_error_pool_size: "${LWM2M_REQUEST_ERROR_POOL_SIZE:10}"
     registered_pool_size: "${LWM2M_REGISTERED_POOL_SIZE:10}"
@@ -593,7 +593,7 @@ transport:
       key_store_path_file: "${KEY_STORE_PATH_FILE:}"
       key_store_password: "${LWM2M_KEYSTORE_PASSWORD_SERVER:server_ks_password}"
       root_alias: "${LWM2M_SERVER_ROOT_CA:rootca}"
-      enable_gen_psk_rpk: "${ENABLE_GEN_PSK_RPK:true}"
+      enable_gen_new_key_psk_rpk: "${ENABLE_GEN_NEW_KEY_PSK_RPK:false}"
     server:
       id: "${LWM2M_SERVER_ID:123}"
       bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
@@ -602,11 +602,14 @@ transport:
         bind_address_security: "${LWM2M_BIND_ADDRESS_SECURITY:0.0.0.0}"
         bind_port_security: "${LWM2M_BIND_PORT_SECURITY:5686}"
         # Only for RPK: Public & Private Key. If the keystore file is missing or not working
-#        create_rpk: "${CREATE_RPK:}"
-        public_x: "${LWM2M_SERVER_PUBLIC_X:405354ea8893471d9296afbc8b020a5c6201b0bb25812a53b849d4480fa5f069}"
-        public_y: "${LWM2M_SERVER_PUBLIC_Y:30c9237e946a3a1692c1cafaa01a238a077f632c99371348337512363f28212b}"
-        private_s: "${LWM2M_SERVER_PRIVATE_S:274671fe40ce937b8a6352cf0a418e8a39e4bf0bb9bf74c910db953c20c73802}"
-        # Only Certificate_x509:
+        #        create_rpk: "${CREATE_RPK:}"
+#          - Public Key (Hex): [ 3059301306072a8648ce3d020106082a8648ce3d03010703420004b47a14ea87ab31cce28f24df0ae0a4cfcdb845134bcd088f2fac393b4d4843d140ebc1bfd8f5e0ec402fb8308c5c07bc380783276a385f89ef0da0b1a2545c25 ]
+#          - Private Key (Hex): [ 3041020100301306072a8648ce3d020106082a8648ce3d030107042730250201010420b65b265abfb9e67be12a7699c13123cf081c72c974688fb4faba82be129ef367 ],
+#          - Elliptic Curve parameters: [ secp256r1 [ NIST P-256, X9.62 prime256v1 ] (1.2.840.10045.3.1.7) ]
+        public_x: "${LWM2M_SERVER_PUBLIC_X:b47a14ea87ab31cce28f24df0ae0a4cfcdb845134bcd088f2fac393b4d4843d1}"
+        public_y: "${LWM2M_SERVER_PUBLIC_Y:40ebc1bfd8f5e0ec402fb8308c5c07bc380783276a385f89ef0da0b1a2545c25}"
+        private_s: "${LWM2M_SERVER_PRIVATE_S:b65b265abfb9e67be12a7699c13123cf081c72c974688fb4faba82be129ef367}"
+  # Only Certificate_x509:
         alias: "${LWM2M_KEYSTORE_ALIAS_SERVER:server}"
     bootstrap:
       enable: "${LWM2M_BOOTSTRAP_ENABLED:true}"
@@ -617,10 +620,10 @@ transport:
         bind_address_security: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
         bind_port_security: "${LWM2M_BIND_PORT_SEC_BS:5688}"
         #  Only for RPK: Public & Private Key. If the keystore file is missing or not working
-        public_x: "${LWM2M_SERVER_PUBLIC_X_BS:993ef2b698c6a9c0c1d8be78b13a9383c0854c7c7c7a504d289b403794648183}"
-        public_y: "${LWM2M_SERVER_PUBLIC_Y_BS:267412d5fc4e5ceb2257cb7fd7f76ebdac2fa9aa100afb162e990074cc0bfaa2}"
-        private_s: "${LWM2M_SERVER_PRIVATE_S_BS:9dbdbb073fc63570693a9aaf1013414e261c571f27e27fc6a8c1c2ad9347875a}"
-        # Only Certificate_x509:
+        public_x: "${LWM2M_SERVER_PUBLIC_X_BS:f6e4e77f76296472bd72acfb6b2dd26fd858042f9075b44b45e2ebeb41cae387}"
+        public_y: "${LWM2M_SERVER_PUBLIC_Y_BS:3e97534c6b833639f71916041b0596ecd616748d81174d19c59ef02bbb21c822}"
+        private_s: "${LWM2M_SERVER_PRIVATE_S_BS:3e97534c6b833639f71916041b0596ecd616748d81174d19c59ef02bbb21c822}"
+  # Only Certificate_x509:
         alias: "${LWM2M_KEYSTORE_ALIAS_BOOTSTRAP:bootstrap}"
     # Redis
     redis_url: "${LWM2M_REDIS_URL:''}"
