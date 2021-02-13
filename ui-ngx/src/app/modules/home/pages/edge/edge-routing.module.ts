@@ -34,7 +34,7 @@ import {
   importRuleChainBreadcumbLabelFunction,
   ResolvedRuleChainMetaDataResolver,
   ruleChainBreadcumbLabelFunction, RuleChainImportGuard,
-  RuleChainResolver, RuleNodeComponentsResolver
+  RuleChainResolver, RuleNodeComponentsResolver, TooltipsterResolver
 } from '@home/pages/rulechain/rulechain-routing.module';
 
 const routes: Routes = [
@@ -194,7 +194,8 @@ const routes: Routes = [
             resolve: {
               ruleChain: RuleChainResolver,
               ruleChainMetaData: ResolvedRuleChainMetaDataResolver,
-              ruleNodeComponents: RuleNodeComponentsResolver
+              ruleNodeComponents: RuleNodeComponentsResolver,
+              tooltipster: TooltipsterResolver
             }
           },
           {
@@ -213,7 +214,8 @@ const routes: Routes = [
               ruleChainType: RuleChainType.EDGE
             },
             resolve: {
-              ruleNodeComponents: RuleNodeComponentsResolver
+              ruleNodeComponents: RuleNodeComponentsResolver,
+              tooltipster: TooltipsterResolver
             }
           }
         ]
