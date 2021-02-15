@@ -118,6 +118,15 @@ security:
     githubMapper:
       emailUrl: "${SECURITY_OAUTH2_GITHUB_MAPPER_EMAIL_URL_KEY:https://api.github.com/user/emails}"
 
+# Usage statistics parameters
+usage:
+  stats:
+    report:
+      enabled: "${USAGE_STATS_REPORT_ENABLED:true}"
+      interval: "${USAGE_STATS_REPORT_INTERVAL:10}"
+    check:
+      cycle: "${USAGE_STATS_CHECK_CYCLE:60000}"
+
 # Dashboard parameters
 dashboard:
   # Maximum allowed datapoints fetched by widgets

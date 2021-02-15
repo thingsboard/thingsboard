@@ -126,7 +126,7 @@ public class HashPartitionService implements PartitionService {
     }
 
     @Override
-    public void recalculatePartitions(ServiceInfo currentService, List<ServiceInfo> otherServices) {
+    public synchronized void recalculatePartitions(ServiceInfo currentService, List<ServiceInfo> otherServices) {
         logServiceInfo(currentService);
         otherServices.forEach(this::logServiceInfo);
         Map<ServiceQueueKey, List<ServiceInfo>> queueServicesMap = new HashMap<>();
@@ -134,7 +134,7 @@ public class HashPartitionService implements PartitionService {
         for (ServiceInfo other : otherServices) {
             addNode(queueServicesMap, other);
         }
-        queueServicesMap.values().forEach(list -> list.sort((a, b) -> a.getServiceId().compareTo(b.getServiceId())));
+        queueServicesMap.values().forEach(list -> list.sort(Comparator.comparing(ServiceInfo::getServiceId)));
 
         ConcurrentMap<ServiceQueueKey, List<Integer>> oldPartitions = myPartitions;
         TenantId myIsolatedOrSystemTenantId = getSystemOrIsolatedTenantId(currentService);

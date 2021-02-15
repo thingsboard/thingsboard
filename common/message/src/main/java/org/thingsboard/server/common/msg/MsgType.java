@@ -40,6 +40,11 @@ public enum MsgType {
     COMPONENT_LIFE_CYCLE_MSG,
 
     /**
+     * Special message to indicate rule node update request
+     */
+    RULE_NODE_UPDATED_MSG,
+
+    /**
      * Misc messages consumed from the Queue and forwarded to Rule Engine Actor.
      *
      * See {@link QueueToRuleEngineMsg}

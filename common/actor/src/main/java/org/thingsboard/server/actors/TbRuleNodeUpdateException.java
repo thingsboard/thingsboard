@@ -13,24 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.discovery;
+package org.thingsboard.server.actors;
 
-import lombok.Getter;
-import org.springframework.context.ApplicationEvent;
-import org.thingsboard.server.common.msg.queue.ServiceQueueKey;
+public class TbRuleNodeUpdateException extends RuntimeException {
 
-import java.util.Set;
+    private static final long serialVersionUID = 8209771144711980882L;
 
-
-public class ClusterTopologyChangeEvent extends TbApplicationEvent {
-
-    private static final long serialVersionUID = -2441739930040282254L;
-
-    @Getter
-    private final Set<ServiceQueueKey> serviceQueueKeys;
-
-    public ClusterTopologyChangeEvent(Object source, Set<ServiceQueueKey> serviceQueueKeys) {
-        super(source);
-        this.serviceQueueKeys = serviceQueueKeys;
+    public TbRuleNodeUpdateException(String message, Throwable cause) {
+        super(message, cause);
     }
 }
+

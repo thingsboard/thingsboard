@@ -76,7 +76,7 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
             if (!msg.getMetaData().getData().isEmpty()) {
                 long now = System.currentTimeMillis();
                 String scope = msg.getType().equals(SessionMsgType.POST_ATTRIBUTES_REQUEST.name()) ?
-                        DataConstants.CLIENT_SCOPE : msg.getMetaData().getValue("scope");
+                        DataConstants.CLIENT_SCOPE : msg.getMetaData().getValue(DataConstants.SCOPE);
 
                 ListenableFuture<List<EntityView>> entityViewsFuture =
                         ctx.getEntityViewService().findEntityViewsByTenantIdAndEntityIdAsync(ctx.getTenantId(), msg.getOriginator());

@@ -476,7 +476,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     public void cancelAllSessionSubscriptions(String sessionId) {
         Map<Integer, TbAbstractDataSubCtx> sessionSubs = subscriptionsBySessionId.remove(sessionId);
         if (sessionSubs != null) {
-            sessionSubs.values().stream().filter(sub -> sub instanceof TbEntityDataSubCtx).map(sub -> (TbEntityDataSubCtx) sub).forEach(this::cleanupAndCancel);
+            sessionSubs.values().forEach(this::cleanupAndCancel);
         }
     }
 
