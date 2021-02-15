@@ -895,6 +895,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         hasDataPageLink: this.typeParameters.hasDataPageLink,
         singleEntity: this.typeParameters.singleEntity,
         warnOnPageDataOverflow: this.typeParameters.warnOnPageDataOverflow,
+        reloadOnlyOnDataUpdated: this.typeParameters.reloadOnlyOnDataUpdated,
         comparisonEnabled: comparisonSettings.comparisonEnabled,
         timeForComparison: comparisonSettings.timeForComparison
       };

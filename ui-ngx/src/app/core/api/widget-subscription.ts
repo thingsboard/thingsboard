@@ -83,6 +83,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   hasDataPageLink: boolean;
   singleEntity: boolean;
   warnOnPageDataOverflow: boolean;
+  reloadOnlyOnDataUpdated: boolean;
 
   datasourcePages: PageData<Datasource>[];
   dataPages: PageData<Array<DatasourceData>>[];
@@ -200,6 +201,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.hasDataPageLink = options.hasDataPageLink;
       this.singleEntity = options.singleEntity;
       this.warnOnPageDataOverflow = options.warnOnPageDataOverflow;
+      this.reloadOnlyOnDataUpdated = options.reloadOnlyOnDataUpdated;
       this.datasourcePages = [];
       this.datasources = [];
       this.dataPages = [];
@@ -423,7 +425,7 @@ export class WidgetSubscription implements IWidgetSubscription {
         }
       };
       this.entityDataListeners.push(listener);
-      return this.ctx.entityDataService.prepareSubscription(listener);
+      return this.ctx.entityDataService.prepareSubscription(listener, this.reloadOnlyOnDataUpdated);
     });
     return forkJoin(resolveResultObservables).pipe(
       map((resolveResults) => {
@@ -815,7 +817,7 @@ export class WidgetSubscription implements IWidgetSubscription {
         }
       };
       this.entityDataListeners[datasourceIndex] = entityDataListener;
-      return this.ctx.entityDataService.subscribeForPaginatedData(entityDataListener, pageLink, keyFilters);
+      return this.ctx.entityDataService.subscribeForPaginatedData(entityDataListener, pageLink, keyFilters, this.reloadOnlyOnDataUpdated);
     } else {
       return of(null);
     }

@@ -40,7 +40,7 @@ import {
 } from '@shared/models/widget.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { hashCode, isDefined, isEqual, isNumber } from '@core/utils';
+import { hashCode, isDefined, isNumber } from '@core/utils';
 import cssjs from '@core/css/css';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
@@ -578,8 +578,7 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
 
   private fetchRows(pageLink: PageLink): Observable<PageData<TimeseriesRow>> {
     return this.allRows$.pipe(
-      map((data) => pageLink.filterData(data)),
-      distinctUntilChanged((prev, curr) => isEqual(prev, curr))
+      map((data) => pageLink.filterData(data))
     );
   }
 }

@@ -226,6 +226,7 @@ export interface WidgetSubscriptionOptions {
   hasDataPageLink?: boolean;
   singleEntity?: boolean;
   warnOnPageDataOverflow?: boolean;
+  reloadOnlyOnDataUpdated?: boolean;
   targetDeviceAliasIds?: Array<string>;
   targetDeviceIds?: Array<string>;
   useDashboardTimewindow?: boolean;

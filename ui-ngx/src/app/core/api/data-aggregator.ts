@@ -71,6 +71,7 @@ export class DataAggregator {
 
   private dataReceived = false;
   private resetPending = false;
+  private updatedData = false;
 
   private noAggregation = this.aggregationType === AggregationType.NONE;
   private aggregationTimeout = Math.max(this.interval, 1000);
@@ -90,7 +91,8 @@ export class DataAggregator {
               private timeWindow: number,
               private interval: number,
               private stateData: boolean,
-              private utils: UtilsService) {
+              private utils: UtilsService,
+              private isReloadOnlyOnDataUpdated: boolean) {
     this.tsKeyNames.forEach((key) => {
       this.dataBuffer[key] = [];
     });
@@ -140,6 +142,7 @@ export class DataAggregator {
     this.elapsed = 0;
     this.aggregationTimeout = Math.max(this.interval, 1000);
     this.resetPending = true;
+    this.updatedData = false;
     this.intervalTimeoutHandle = setTimeout(this.onInterval.bind(this), this.aggregationTimeout);
   }
 
@@ -180,6 +183,7 @@ export class DataAggregator {
         this.onInterval(history, detectChanges);
       }
     }
+    this.updatedData = true;
   }
 
   private onInterval(history?: boolean, detectChanges?: boolean) {
@@ -201,8 +205,9 @@ export class DataAggregator {
     } else {
       this.data = this.updateData();
     }
-    if (this.onDataCb) {
+    if (this.onDataCb && (!this.isReloadOnlyOnDataUpdated || this.updatedData)) {
       this.onDataCb(this.data, detectChanges);
+      this.updatedData = false;
     }
     if (!history) {
       this.intervalTimeoutHandle = setTimeout(this.onInterval.bind(this), this.aggregationTimeout);
@@ -223,6 +228,7 @@ export class DataAggregator {
             this.lastPrevKvPairData[key] = [aggTimestamp, aggData.aggValue];
           }
           aggKeyData.delete(aggTimestamp);
+          this.updatedData = true;
         } else if (aggTimestamp <= this.endTs) {
           const kvPair: [number, any] = [aggTimestamp, aggData.aggValue];
           keyData.push(kvPair);
