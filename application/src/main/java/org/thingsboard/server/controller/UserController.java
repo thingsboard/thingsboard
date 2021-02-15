@@ -53,7 +53,6 @@ import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
-import org.thingsboard.server.utils.MiscUtils;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -88,12 +87,22 @@ public class UserController extends BaseController {
     @ResponseBody
     public User getUserById(@PathVariable(USER_ID) String strUserId) throws ThingsboardException {
         checkParameter(USER_ID, strUserId);
+        User user;
         try {
             UserId userId = new UserId(toUUID(strUserId));
-            return checkUserId(userId, Operation.READ);
+            user = checkUserId(userId, Operation.READ);
         } catch (Exception e) {
             throw handleException(e);
         }
+
+        if(user != null && !user.getAdditionalInfo().isNull()) {
+            JsonNode additionalInfo = user.getAdditionalInfo();
+            additionalInfo = processDashboardIdFromAdditionalInfo(additionalInfo, DEFAULT_DASHBOARD);
+            additionalInfo = processDashboardIdFromAdditionalInfo(additionalInfo, HOME_DASHBOARD);
+            user.setAdditionalInfo(additionalInfo);
+        }
+
+        return user;
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
@@ -329,4 +338,5 @@ public class UserController extends BaseController {
             throw handleException(e);
         }
     }
+
 }

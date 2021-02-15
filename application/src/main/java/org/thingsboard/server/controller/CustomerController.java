@@ -53,12 +53,19 @@ public class CustomerController extends BaseController {
     @ResponseBody
     public Customer getCustomerById(@PathVariable(CUSTOMER_ID) String strCustomerId) throws ThingsboardException {
         checkParameter(CUSTOMER_ID, strCustomerId);
+        Customer customer;
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-            return checkCustomerId(customerId, Operation.READ);
+            customer = checkCustomerId(customerId, Operation.READ);
         } catch (Exception e) {
             throw handleException(e);
         }
+
+        if(customer != null && !customer.getAdditionalInfo().isNull()) {
+            customer.setAdditionalInfo(processDashboardIdFromAdditionalInfo(customer.getAdditionalInfo(), HOME_DASHBOARD));
+        }
+
+        return customer;
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")

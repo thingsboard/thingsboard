@@ -57,12 +57,19 @@ public class TenantController extends BaseController {
     @ResponseBody
     public Tenant getTenantById(@PathVariable("tenantId") String strTenantId) throws ThingsboardException {
         checkParameter("tenantId", strTenantId);
+        Tenant tenant;
         try {
             TenantId tenantId = new TenantId(toUUID(strTenantId));
-            return checkTenantId(tenantId, Operation.READ);
+            tenant = checkTenantId(tenantId, Operation.READ);
         } catch (Exception e) {
             throw handleException(e);
         }
+
+        if(tenant != null && !tenant.getAdditionalInfo().isNull()) {
+            tenant.setAdditionalInfo(processDashboardIdFromAdditionalInfo(tenant.getAdditionalInfo(), HOME_DASHBOARD));
+        }
+
+        return tenant;
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")

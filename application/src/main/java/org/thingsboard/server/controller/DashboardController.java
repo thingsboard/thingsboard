@@ -87,12 +87,14 @@ public class DashboardController extends BaseController {
     @ResponseBody
     public DashboardInfo getDashboardInfoById(@PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
         checkParameter(DASHBOARD_ID, strDashboardId);
+        DashboardInfo info;
         try {
             DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-            return checkDashboardInfoId(dashboardId, Operation.READ);
+            info = checkDashboardInfoId(dashboardId, Operation.READ);
         } catch (Exception e) {
-            throw handleException(e);
+            return null;
         }
+        return info;
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -100,12 +102,15 @@ public class DashboardController extends BaseController {
     @ResponseBody
     public Dashboard getDashboardById(@PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
         checkParameter(DASHBOARD_ID, strDashboardId);
+        Dashboard dashboard;
         try {
             DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-            return checkDashboardId(dashboardId, Operation.READ);
+            dashboard = checkDashboardId(dashboardId, Operation.READ);
         } catch (Exception e) {
             throw handleException(e);
         }
+
+        return dashboard;
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")

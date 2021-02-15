@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -48,6 +49,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
+import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
@@ -122,6 +124,9 @@ public abstract class BaseController {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION = "You don't have permission to perform this operation!";
+
+    protected static final String DEFAULT_DASHBOARD = "defaultDashboardId";
+    protected static final String HOME_DASHBOARD = "homeDashboardId";
 
     private static final ObjectMapper json = new ObjectMapper();
 
@@ -858,4 +863,21 @@ public abstract class BaseController {
             }
         }
     }
+
+    protected JsonNode processDashboardIdFromAdditionalInfo(JsonNode additionalInfo, String requiredFields) {
+        if(additionalInfo == null) {
+            return null;
+        }
+        ObjectNode resultJson = additionalInfo.deepCopy();
+        String dashboardId = resultJson.has(requiredFields) ? resultJson.get(requiredFields).asText() : null;
+        if(dashboardId != null && !dashboardId.isBlank() && !dashboardId.isEmpty()) {
+            try {
+                checkDashboardId(new DashboardId(UUID.fromString(dashboardId)), Operation.READ);
+            } catch (Exception e) {
+                resultJson.remove(requiredFields);
+            }
+        }
+        return resultJson;
+    }
+
 }
