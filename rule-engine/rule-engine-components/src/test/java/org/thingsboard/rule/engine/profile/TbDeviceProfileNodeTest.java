@@ -453,8 +453,6 @@ public class TbDeviceProfileNodeTest {
         AttributeKvEntry entry = attributeKvEntity.toData();
         ListenableFuture<List<AttributeKvEntry>> listListenableFutureWithLess =
                 Futures.immediateFuture(Collections.singletonList(entry));
-        ListenableFuture<Optional<AttributeKvEntry>> optionalListenableFutureWithLess =
-                Futures.immediateFuture(Optional.of(entry));
 
         KeyFilter lowTempFilter = new KeyFilter();
         lowTempFilter.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "temperature"));
@@ -490,8 +488,6 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
-        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(DataConstants.SERVER_SCOPE),  Mockito.anyString()))
-                .thenReturn(optionalListenableFutureWithLess);
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
         Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.anyString()))

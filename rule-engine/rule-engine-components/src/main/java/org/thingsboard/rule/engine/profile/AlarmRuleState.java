@@ -388,15 +388,6 @@ class AlarmRuleState {
         EntityKeyValue ekv = null;
         if (value.getDynamicValue() != null) {
             switch (value.getDynamicValue().getSourceType()) {
-                case CURRENT_TENANT:
-                    ekv = dynamicPredicateValueCtx.getTenantValue(value.getDynamicValue().getSourceAttribute());
-                    break;
-                case CURRENT_CUSTOMER:
-                    ekv = dynamicPredicateValueCtx.getCustomerValue(value.getDynamicValue().getSourceAttribute());
-                    if(ekv == null && value.getDynamicValue().isInherit()) {
-                        ekv = dynamicPredicateValueCtx.getTenantValue(value.getDynamicValue().getSourceAttribute());
-                    }
-                    break;
                 case CURRENT_DEVICE:
                     ekv = data.getValue(new EntityKey(EntityKeyType.ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
                     if (ekv == null) {
@@ -408,12 +399,16 @@ class AlarmRuleState {
                             }
                         }
                     }
-                    if(ekv == null && value.getDynamicValue().isInherit()) {
-                        ekv = dynamicPredicateValueCtx.getCustomerValue(value.getDynamicValue().getSourceAttribute());
-                        if(ekv == null) {
-                            ekv = dynamicPredicateValueCtx.getTenantValue(value.getDynamicValue().getSourceAttribute());
-                        }
+                    if(ekv != null || !value.getDynamicValue().isInherit()) {
+                        break;
                     }
+                case CURRENT_CUSTOMER:
+                    ekv = dynamicPredicateValueCtx.getCustomerValue(value.getDynamicValue().getSourceAttribute());
+                    if(ekv != null || !value.getDynamicValue().isInherit()) {
+                       break;
+                    }
+                case CURRENT_TENANT:
+                    ekv = dynamicPredicateValueCtx.getTenantValue(value.getDynamicValue().getSourceAttribute());
             }
         }
         return ekv;
