@@ -465,7 +465,15 @@ export class WidgetSubscription implements IWidgetSubscription {
         entityName = this.targetDeviceName;
       }
     } else if (this.type === widgetType.alarm) {
-      if (this.alarms && this.alarms.data.length) {
+      if (this.alarmSource && this.alarmSource.entityType && this.alarmSource.entityId) {
+        entityId = {
+          entityType: this.alarmSource.entityType,
+          id: this.alarmSource.entityId
+        };
+        entityName = this.alarmSource.entityName;
+        entityLabel = this.alarmSource.entityLabel;
+        entityDescription = this.alarmSource.entityDescription;
+      } else if (this.alarms && this.alarms.data.length) {
         const data = this.alarms.data[0];
         entityId = data.originator;
         entityName = data.originatorName;
