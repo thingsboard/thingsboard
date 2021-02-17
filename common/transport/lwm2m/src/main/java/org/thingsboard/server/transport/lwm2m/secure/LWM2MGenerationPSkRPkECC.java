@@ -103,18 +103,18 @@ public class LWM2MGenerationPSkRPkECC {
             /** Get Curves params */
             String privHex = Hex.encodeHexString(privKey.getEncoded());
             log.info("\nCreating new RPK for the next start... \n" +
-                    " Elliptic Curve parameters  : [{}] \n" +
+                    " Public Key (Hex): [{}]\n" +
+                    " Private Key (Hex): [{}]" +
                     " public_x :  [{}] \n" +
                     " public_y :  [{}] \n" +
-                    " private_s : [{}] \n" +
-                    " Public Key (Hex): [{}]\n" +
-                    " Private Key (Hex): [{}]",
-                    ecPublicKey.getParams().toString(),
+                    " private_encode : [{}] \n" +
+                    " Elliptic Curve parameters  : [{}] \n",
+                    Hex.encodeHexString(pubKey.getEncoded()),
+                    privHex,
                     Hex.encodeHexString(x),
                     Hex.encodeHexString(y),
-                    privHex.substring(privHex.length() - 64),
-                    Hex.encodeHexString(pubKey.getEncoded()),
-                    Hex.encodeHexString(privKey.getEncoded()));
+                    privHex,
+                    ecPublicKey.getParams().toString());
         }
     }
 }

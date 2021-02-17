@@ -68,8 +68,8 @@ public class LwM2MTransportConfigBootstrap {
     private PublicKey bootstrapPublicKey;
 
     @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.private_s:}")
-    private String bootstrapPrivateS;
+    @Value("${transport.lwm2m.bootstrap.secure.private_encoded:}")
+    private String bootstrapPrivateEncoded;
 
     @Getter
     @Value("${transport.lwm2m.bootstrap.secure.alias:}")

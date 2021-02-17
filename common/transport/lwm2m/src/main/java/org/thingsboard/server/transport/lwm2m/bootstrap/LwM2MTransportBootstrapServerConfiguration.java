@@ -45,11 +45,11 @@ import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.ECPoint;
-import java.security.spec.ECPrivateKeySpec;
 import java.security.spec.ECPublicKeySpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
 
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256;
@@ -118,9 +118,7 @@ public class LwM2MTransportBootstrapServerConfiguration {
         dtlsConfig.setRecommendedCipherSuitesOnly(this.contextS.getCtxServer().isRecommendedCiphers());
         if (this.pskMode) {
             dtlsConfig.setSupportedCipherSuites(TLS_PSK_WITH_AES_128_CBC_SHA256);
-        }
-        else {
-//            dtlsConfig.setSupportedCipherSuites(TLS_PSK_WITH_AES_128_CBC_SHA256, TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256);
+        } else {
             dtlsConfig.setSupportedCipherSuites(TLS_PSK_WITH_AES_128_CBC_SHA256,
                     TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
                     TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
@@ -224,6 +222,9 @@ public class LwM2MTransportBootstrapServerConfiguration {
             if (this.publicKey != null && this.publicKey.getEncoded().length > 0 &&
                     this.privateKey != null && this.privateKey.getEncoded().length > 0) {
                 builder.setPublicKey(this.publicKey);
+//                builder.setCertificateChain(new X509Certificate[] { serverCertificate });
+                /// Trust all certificates.
+                builder.setTrustedCertificates(new X509Certificate[0]);
                 builder.setPrivateKey(this.privateKey);
                 return true;
             }
@@ -235,10 +236,10 @@ public class LwM2MTransportBootstrapServerConfiguration {
 
 
     /**
-     * From yml^ bootstrap
+     * From yml: bootstrap
      * public_x: "${LWM2M_SERVER_PUBLIC_X_BS:993ef2b698c6a9c0c1d8be78b13a9383c0854c7c7c7a504d289b403794648183}"
      * public_y: "${LWM2M_SERVER_PUBLIC_Y_BS:267412d5fc4e5ceb2257cb7fd7f76ebdac2fa9aa100afb162e990074cc0bfaa2}"
-     * private_s: "${LWM2M_SERVER_PRIVATE_S_BS:9dbdbb073fc63570693a9aaf1013414e261c571f27e27fc6a8c1c2ad9347875a}"
+     * private_encoded: "${LWM2M_SERVER_PRIVATE_ENCODED_BS:9dbdbb073fc63570693a9aaf1013414e261c571f27e27fc6a8c1c2ad9347875a}"
      */
     private void generateKeyForBootstrapRPK() throws NoSuchAlgorithmException, InvalidParameterSpecException, InvalidKeySpecException {
         /** Get Elliptic Curve Parameter spec for secp256r1 */
@@ -252,16 +253,17 @@ public class LwM2MTransportBootstrapServerConfiguration {
             /** Create key specs */
             KeySpec publicKeySpec = new ECPublicKeySpec(new ECPoint(new BigInteger(publicX), new BigInteger(publicY)),
                     parameterSpec);
-            /** Get keys */
+            /** Get public key */
             this.publicKey = KeyFactory.getInstance("EC").generatePublic(publicKeySpec);
         }
-        if (this.contextBs.getCtxBootStrap().getBootstrapPrivateS() != null && !this.contextBs.getCtxBootStrap().getBootstrapPrivateS().isEmpty()) {
-            /** Get point values */
-            byte[] privateS = Hex.decodeHex(this.contextBs.getCtxBootStrap().getBootstrapPrivateS().toCharArray());
-            /** Create key specs */
-            KeySpec privateKeySpec = new ECPrivateKeySpec(new BigInteger(privateS), parameterSpec);
-            /** Get keys */
-            this.privateKey = KeyFactory.getInstance("EC").generatePrivate(privateKeySpec);
+        if (this.contextBs.getCtxBootStrap().getBootstrapPrivateEncoded() != null && !this.contextBs.getCtxBootStrap().getBootstrapPrivateEncoded().isEmpty()) {
+            /** Get private key */
+            byte[] privateS = Hex.decodeHex(this.contextBs.getCtxBootStrap().getBootstrapPrivateEncoded().toCharArray());
+            try {
+                this.privateKey = KeyFactory.getInstance("EC").generatePrivate(new PKCS8EncodedKeySpec(privateS));
+            } catch (InvalidKeySpecException ignore2) {
+                log.error("Invalid Bootstrap Server rpk.PrivateKey.getEncoded () [{}}]. PrivateKey has no EC algorithm", this.contextBs.getCtxBootStrap().getBootstrapPrivateEncoded());
+            }
         }
     }
 
@@ -283,13 +285,13 @@ public class LwM2MTransportBootstrapServerConfiguration {
                         "- Private Key (Hex): [{}], \n" +
                         "public_x: \"${LWM2M_SERVER_PUBLIC_X_BS:{}}\" \n" +
                         "public_y: \"${LWM2M_SERVER_PUBLIC_Y_BS:{}}\" \n" +
-                        "private_s: \"${LWM2M_SERVER_PRIVATE_S_BS:{}}\" \n" +
+                        "private_encoded: \"${LWM2M_SERVER_PRIVATE_ENCODED_BS:{}}\" \n" +
                         "- Elliptic Curve parameters  : [{}]",
                 Hex.encodeHexString(publicKey.getEncoded()),
-                Hex.encodeHexString(privateKey.getEncoded()),
+                privHex,
                 Hex.encodeHexString(x),
                 Hex.encodeHexString(y),
-                privHex.substring(privHex.length() - 64),
+                privHex,
                 params);
     }
 }

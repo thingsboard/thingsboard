@@ -46,11 +46,11 @@ import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.ECPoint;
-import java.security.spec.ECPrivateKeySpec;
 import java.security.spec.ECPublicKeySpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
 
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256;
@@ -238,7 +238,7 @@ public class LwM2MTransportServerConfiguration {
      * From yml: server
      * public_x: "${LWM2M_SERVER_PUBLIC_X:405354ea8893471d9296afbc8b020a5c6201b0bb25812a53b849d4480fa5f069}"
      * public_y: "${LWM2M_SERVER_PUBLIC_Y:30c9237e946a3a1692c1cafaa01a238a077f632c99371348337512363f28212b}"
-     * private_s: "${LWM2M_SERVER_PRIVATE_S:274671fe40ce937b8a6352cf0a418e8a39e4bf0bb9bf74c910db953c20c73802}"
+     * private_encoded: "${LWM2M_SERVER_PRIVATE_ENCODED:274671fe40ce937b8a6352cf0a418e8a39e4bf0bb9bf74c910db953c20c73802}"
      */
     private void generateKeyForRPK() throws NoSuchAlgorithmException, InvalidParameterSpecException, InvalidKeySpecException {
         /** Get Elliptic Curve Parameter spec for secp256r1 */
@@ -258,14 +258,15 @@ public class LwM2MTransportServerConfiguration {
             /** Get keys */
             this.publicKey = KeyFactory.getInstance("EC").generatePublic(publicKeySpec);
         }
-        if (this.context.getCtxServer().getServerPrivateS() != null &&
-                !this.context.getCtxServer().getServerPrivateS().isEmpty()) {
-            /** Get point values */
-            byte[] privateS = Hex.decodeHex(this.context.getCtxServer().getServerPrivateS().toCharArray());
-            /** Create key specs */
-            KeySpec privateKeySpec = new ECPrivateKeySpec(new BigInteger(privateS), parameterSpec);
-            /** Get keys */
-            this.privateKey = KeyFactory.getInstance("EC").generatePrivate(privateKeySpec);
+        if (this.context.getCtxServer().getServerPrivateEncoded() != null &&
+                !this.context.getCtxServer().getServerPrivateEncoded().isEmpty()) {
+            /** Get private key */
+            byte[] privateS = Hex.decodeHex(this.context.getCtxServer().getServerPrivateEncoded().toCharArray());
+            try {
+                this.privateKey = KeyFactory.getInstance("EC").generatePrivate(new PKCS8EncodedKeySpec(privateS));
+            } catch (InvalidKeySpecException ignore2) {
+                log.error("Invalid Server rpk.PrivateKey.getEncoded () [{}}]. PrivateKey has no EC algorithm", this.context.getCtxServer().getServerPrivateEncoded());
+            }
         }
     }
 
@@ -287,13 +288,13 @@ public class LwM2MTransportServerConfiguration {
                         "- Private Key (Hex): [{}], \n" +
                         "public_x: \"${LWM2M_SERVER_PUBLIC_X:{}}\" \n" +
                         "public_y: \"${LWM2M_SERVER_PUBLIC_Y:{}}\" \n" +
-                        "private_s: \"${LWM2M_SERVER_PRIVATE_S:{}}\" \n" +
+                        "private_encoded: \"${LWM2M_SERVER_PRIVATE_ENCODED:{}}\" \n" +
                         "- Elliptic Curve parameters  : [{}]",
                 Hex.encodeHexString(publicKey.getEncoded()),
                 privHex,
                 Hex.encodeHexString(x),
                 Hex.encodeHexString(y),
-                privHex.substring(privHex.length() - 64),
+                privHex,
                 params);
     }
 
