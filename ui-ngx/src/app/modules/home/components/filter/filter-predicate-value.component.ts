@@ -44,6 +44,10 @@ import {
 })
 export class FilterPredicateValueComponent implements ControlValueAccessor, OnInit {
 
+  private readonly inheritModeForSources: DynamicValueSourceType[] = [
+    DynamicValueSourceType.CURRENT_CUSTOMER,
+    DynamicValueSourceType.CURRENT_DEVICE];
+
   @Input() disabled: boolean;
 
   @Input()
@@ -71,6 +75,8 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, OnIn
   filterPredicateValueFormGroup: FormGroup;
 
   dynamicMode = false;
+
+  inheritMode = false;
 
   allow = true;
 
@@ -105,7 +111,8 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, OnIn
       dynamicValue: this.fb.group(
         {
           sourceType: [null],
-          sourceAttribute: [null]
+          sourceAttribute: [null],
+          inherit: [false]
         }
       )
     });
@@ -114,6 +121,7 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, OnIn
         if (!sourceType) {
           this.filterPredicateValueFormGroup.get('dynamicValue').get('sourceAttribute').patchValue(null, {emitEvent: false});
         }
+        this.updateShowInheritMode(sourceType);
       }
     );
     this.filterPredicateValueFormGroup.valueChanges.subscribe(() => {
@@ -139,10 +147,13 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, OnIn
 
   writeValue(predicateValue: FilterPredicateValue<string | number | boolean>): void {
     this.filterPredicateValueFormGroup.get('defaultValue').patchValue(predicateValue.defaultValue, {emitEvent: false});
-    this.filterPredicateValueFormGroup.get('dynamicValue').get('sourceType').patchValue(predicateValue.dynamicValue ?
+    this.filterPredicateValueFormGroup.get('dynamicValue.sourceType').patchValue(predicateValue.dynamicValue ?
       predicateValue.dynamicValue.sourceType : null, {emitEvent: false});
-    this.filterPredicateValueFormGroup.get('dynamicValue').get('sourceAttribute').patchValue(predicateValue.dynamicValue ?
+    this.filterPredicateValueFormGroup.get('dynamicValue.sourceAttribute').patchValue(predicateValue.dynamicValue ?
       predicateValue.dynamicValue.sourceAttribute : null, {emitEvent: false});
+    this.filterPredicateValueFormGroup.get('dynamicValue.inherit').patchValue(predicateValue.dynamicValue ?
+      predicateValue.dynamicValue.inherit : false, {emitEvent: false});
+    this.updateShowInheritMode(predicateValue?.dynamicValue?.sourceType);
   }
 
   private updateModel() {
@@ -158,4 +169,12 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, OnIn
     this.propagateChange(predicateValue);
   }
 
+  private updateShowInheritMode(sourceType: DynamicValueSourceType) {
+    if (this.inheritModeForSources.includes(sourceType)) {
+      this.inheritMode = true;
+    } else {
+      this.filterPredicateValueFormGroup.get('dynamicValue.inherit').patchValue(false, {emitEvent: false});
+      this.inheritMode = false;
+    }
+  }
 }

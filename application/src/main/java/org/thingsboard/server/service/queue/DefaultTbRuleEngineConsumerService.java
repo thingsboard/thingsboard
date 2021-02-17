@@ -140,11 +140,11 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     }
 
     @Override
-    public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
-        if (partitionChangeEvent.getServiceType().equals(getServiceType())) {
-            ServiceQueue serviceQueue = partitionChangeEvent.getServiceQueueKey().getServiceQueue();
-            log.info("[{}] Subscribing to partitions: {}", serviceQueue.getQueue(), partitionChangeEvent.getPartitions());
-            consumers.get(serviceQueue.getQueue()).subscribe(partitionChangeEvent.getPartitions());
+    protected void onTbApplicationEvent(PartitionChangeEvent event) {
+        if (event.getServiceType().equals(getServiceType())) {
+            ServiceQueue serviceQueue = event.getServiceQueueKey().getServiceQueue();
+            log.info("[{}] Subscribing to partitions: {}", serviceQueue.getQueue(), event.getPartitions());
+            consumers.get(serviceQueue.getQueue()).subscribe(event.getPartitions());
         }
     }
 
