@@ -179,8 +179,8 @@ public class LwM2MTransportConfigServer {
     private String serverPublicY;
 
     @Getter
-    @Value("${transport.lwm2m.server.secure.private_s:}")
-    private String serverPrivateS;
+    @Value("${transport.lwm2m.server.secure.private_encoded:}")
+    private String serverPrivateEncoded;
 
     @Getter
     @Value("${transport.lwm2m.server.secure.alias:}")
