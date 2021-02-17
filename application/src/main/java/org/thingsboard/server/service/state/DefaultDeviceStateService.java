@@ -56,6 +56,7 @@ import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
@@ -90,7 +91,7 @@ import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 @Service
 @TbCoreComponent
 @Slf4j
-public class DefaultDeviceStateService implements DeviceStateService {
+public class DefaultDeviceStateService extends TbApplicationEventListener<PartitionChangeEvent> implements DeviceStateService {
 
     public static final String ACTIVITY_STATE = "active";
     public static final String LAST_CONNECT_TIME = "lastConnectTime";
@@ -294,7 +295,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
     }
 
     @Override
-    public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
+    protected void onTbApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
         if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceType())) {
             deduplicationExecutor.submit(partitionChangeEvent.getPartitions());
         }

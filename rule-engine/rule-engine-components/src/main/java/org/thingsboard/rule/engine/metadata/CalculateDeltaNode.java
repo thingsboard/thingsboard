@@ -93,12 +93,17 @@ public class CalculateDeltaNode implements TbNode {
                                 return;
                             }
 
+
                             if (config.getRound() != null) {
                                 delta = delta.setScale(config.getRound(), RoundingMode.HALF_UP);
                             }
 
                             ObjectNode result = (ObjectNode) json;
-                            result.put(config.getOutputValueKey(), delta);
+                            if (delta.stripTrailingZeros().scale() > 0) {
+                                result.put(config.getOutputValueKey(), delta.doubleValue());
+                            } else {
+                                result.put(config.getOutputValueKey(), delta.longValueExact());
+                            }
 
                             if (config.isAddPeriodBetweenMsgs()) {
                                 long period = previousData != null ? currentTs - previousData.ts : 0;
