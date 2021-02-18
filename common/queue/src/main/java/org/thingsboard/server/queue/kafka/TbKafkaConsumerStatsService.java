@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.queue.kafka;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -50,7 +49,6 @@ import java.util.concurrent.TimeUnit;
 @ConditionalOnProperty(prefix = "queue", value = "type", havingValue = "kafka")
 public class TbKafkaConsumerStatsService {
     private final Set<String> monitoredGroups = ConcurrentHashMap.newKeySet();
-    private final ObjectMapper mapper = new ObjectMapper();
 
     private final TbKafkaSettings kafkaSettings;
     private final TbKafkaConsumerStatisticConfig statsConfig;
@@ -78,26 +76,26 @@ public class TbKafkaConsumerStatsService {
     private void startLogScheduling() {
         Duration timeoutDuration = Duration.ofMillis(statsConfig.getKafkaResponseTimeoutMs());
         statsPrintScheduler.scheduleWithFixedDelay(() -> {
+            if (!log.isInfoEnabled()) {
+                return;
+            }
             for (String groupId : monitoredGroups) {
                 try {
                     Map<TopicPartition, OffsetAndMetadata> groupOffsets = adminClient.listConsumerGroupOffsets(groupId).partitionsToOffsetAndMetadata()
                             .get(statsConfig.getKafkaResponseTimeoutMs(), TimeUnit.MILLISECONDS);
                     Map<TopicPartition, Long> endOffsets = consumer.endOffsets(groupOffsets.keySet(), timeoutDuration);
 
-                    List<GroupTopicStats> consumerGroupStats = new ArrayList<>();
-                    for (TopicPartition topicPartition : groupOffsets.keySet()) {
-                        Long endOffset = endOffsets.get(topicPartition);
-                        long committedOffset = groupOffsets.get(topicPartition).offset();
-                        GroupTopicStats groupTopicStats = GroupTopicStats.builder()
-                                .topic(topicPartition.topic())
-                                .partition(topicPartition.partition())
-                                .committedOffset(committedOffset)
-                                .endOffset(endOffset)
-                                .lag(endOffset - committedOffset)
-                                .build();
-                        consumerGroupStats.add(groupTopicStats);
+                    List<GroupTopicStats> lagTopicsStats = getTopicsStatsWithLag(groupOffsets, endOffsets);
+                    if (!lagTopicsStats.isEmpty()) {
+                        StringBuilder builder = new StringBuilder();
+                        for (int i = 0; i < lagTopicsStats.size(); i++) {
+                            builder.append(lagTopicsStats.get(i).toString());
+                            if (i != lagTopicsStats.size() - 1) {
+                                builder.append(", ");
+                            }
+                        }
+                        log.info("[{}] Topic partitions with lag: [{}].", groupId, builder.toString());
                     }
-                    log.debug("[{}] Stats: [{}].", groupId, mapper.writeValueAsString(consumerGroupStats));
                 } catch (Exception e) {
                     log.warn("[{}] Failed to get consumer group stats. Reason - {}.", groupId, e.getMessage());
                     log.trace("Detailed error: ", e);
@@ -105,6 +103,26 @@ public class TbKafkaConsumerStatsService {
             }
 
         }, statsConfig.getPrintIntervalMs(), statsConfig.getPrintIntervalMs(), TimeUnit.MILLISECONDS);
+    }
+
+    private List<GroupTopicStats> getTopicsStatsWithLag(Map<TopicPartition, OffsetAndMetadata> groupOffsets, Map<TopicPartition, Long> endOffsets) {
+        List<GroupTopicStats> consumerGroupStats = new ArrayList<>();
+        for (TopicPartition topicPartition : groupOffsets.keySet()) {
+            long endOffset = endOffsets.get(topicPartition);
+            long committedOffset = groupOffsets.get(topicPartition).offset();
+            long lag = endOffset - committedOffset;
+            if (lag != 0) {
+                GroupTopicStats groupTopicStats = GroupTopicStats.builder()
+                        .topic(topicPartition.topic())
+                        .partition(topicPartition.partition())
+                        .committedOffset(committedOffset)
+                        .endOffset(endOffset)
+                        .lag(lag)
+                        .build();
+                consumerGroupStats.add(groupTopicStats);
+            }
+        }
+        return consumerGroupStats;
     }
 
     public void registerClientGroup(String groupId) {
@@ -141,5 +159,16 @@ public class TbKafkaConsumerStatsService {
         private long committedOffset;
         private long endOffset;
         private long lag;
+
+        @Override
+        public String toString() {
+            return "[" +
+                    "topic=[" + topic + ']' +
+                    ", partition=[" + partition + "]" +
+                    ", committedOffset=[" + committedOffset + "]" +
+                    ", endOffset=[" + endOffset + "]" +
+                    ", lag=[" + lag + "]" +
+                    "]";
+        }
     }
 }

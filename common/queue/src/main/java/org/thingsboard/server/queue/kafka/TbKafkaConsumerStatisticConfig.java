@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TbKafkaConsumerStatisticConfig {
-    @Value("${queue.kafka.consumer-stats.enabled:false}")
+    @Value("${queue.kafka.consumer-stats.enabled:true}")
     private Boolean enabled;
     @Value("${queue.kafka.consumer-stats.print-interval-ms:60000}")
     private Long printIntervalMs;
