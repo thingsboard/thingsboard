@@ -99,7 +99,6 @@ public class DeviceProcessor extends BaseProcessor {
                                 ObjectNode body = mapper.createObjectNode();
                                 body.put("conflictName", deviceName);
                                 saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.ENTITY_MERGE_REQUEST, device.getId(), body);
-                                deviceService.assignDeviceToEdge(edge.getTenantId(), device.getId(), edge.getId());
                             }
                             futureToSet.set(null);
                         }
@@ -115,7 +114,6 @@ public class DeviceProcessor extends BaseProcessor {
                     log.info("[{}] Creating new device and replacing device entity on the edge [{}]", tenantId, deviceUpdateMsg);
                     device = createDevice(tenantId, edge, deviceUpdateMsg, deviceUpdateMsg.getName());
                     saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.ENTITY_MERGE_REQUEST, device.getId(), null);
-                    deviceService.assignDeviceToEdge(edge.getTenantId(), device.getId(), edge.getId());
                 }
                 break;
             case ENTITY_UPDATED_RPC_MESSAGE:
@@ -201,6 +199,7 @@ public class DeviceProcessor extends BaseProcessor {
             createRelationFromEdge(tenantId, edge.getId(), device.getId());
             deviceStateService.onDeviceAdded(device);
             pushDeviceCreatedEventToRuleEngine(tenantId, edge, device);
+            deviceService.assignDeviceToEdge(edge.getTenantId(), device.getId(), edge.getId());
         } finally {
             deviceCreationLock.unlock();
         }
