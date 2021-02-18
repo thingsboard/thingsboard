@@ -21,6 +21,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.TopicPartition;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.common.AbstractTbQueueConsumerTemplate;
@@ -30,7 +31,12 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by ashvayka on 24.09.18.
@@ -42,16 +48,24 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
     private final KafkaConsumer<String, byte[]> consumer;
     private final TbKafkaDecoder<T> decoder;
 
+    private final String clientId;
+    private final String groupId;
+    private final TbKafkaConsumerStatisticConfig statsConfig;
+
     @Builder
     private TbKafkaConsumerTemplate(TbKafkaSettings settings, TbKafkaDecoder<T> decoder,
                                     String clientId, String groupId, String topic,
-                                    TbQueueAdmin admin) {
+                                    TbQueueAdmin admin, TbKafkaConsumerStatisticConfig statsConfig) {
         super(topic);
         Properties props = settings.toConsumerProps();
         props.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
         if (groupId != null) {
             props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         }
+
+        this.clientId = clientId;
+        this.groupId = groupId;
+        this.statsConfig = statsConfig;
 
         this.admin = admin;
         this.consumer = new KafkaConsumer<>(props);
@@ -66,11 +80,13 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
         } else {
             consumer.unsubscribe();
         }
+        processConsumerStats();
     }
 
     @Override
     protected List<ConsumerRecord<String, byte[]>> doPoll(long durationInMillis) {
         ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(durationInMillis));
+        processConsumerStats();
         if (records.isEmpty()) {
             return Collections.emptyList();
         } else {
@@ -98,4 +114,36 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
         }
     }
 
+    private final AtomicLong previousLogTime = new AtomicLong();
+
+    private void processConsumerStats() {
+        if (statsConfig == null || !statsConfig.getStatsEnabled()) {
+            return;
+        }
+        try {
+            long now = System.currentTimeMillis();
+            long msSinceLastPrint = now - previousLogTime.get();
+            if (msSinceLastPrint > statsConfig.getMinimumPrintIntervalMs()) {
+                previousLogTime.getAndSet(now);
+                Duration timeoutDuration = Duration.ofMillis(statsConfig.getKafkaResponseTimeoutMs());
+                Set<TopicPartition> consumerTopicPartitions = consumer.assignment();
+                Map<TopicPartition, Long> endOffsets = consumer.endOffsets(consumerTopicPartitions, timeoutDuration);
+
+                StringBuilder statsStringBuilder = new StringBuilder();
+                for (TopicPartition topicPartition : consumerTopicPartitions) {
+                    Long endOffset = endOffsets.get(topicPartition);
+                    long currentOffset = consumer.position(topicPartition, timeoutDuration);
+                    statsStringBuilder.append("[topic:[").append(topicPartition.topic()).append("],")
+                            .append("partition:[").append(topicPartition.partition()).append("],")
+                            .append("currentOffset:[").append(currentOffset).append("],")
+                            .append("endOffset:[").append(endOffset).append("],")
+                            .append("lag:[").append(endOffset - currentOffset).append("]],");
+                }
+                log.debug("[{}][{}] Stats: {}. Seconds between prints: {}", groupId, clientId, statsStringBuilder.toString(), msSinceLastPrint / 1000);
+            }
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to load consumer stats. Reason: {}", groupId, clientId, e.getMessage());
+            log.trace("Detailed error: ", e);
+        }
+    }
 }
