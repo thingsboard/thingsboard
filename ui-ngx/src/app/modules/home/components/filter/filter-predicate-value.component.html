@@ -47,7 +47,7 @@
   </div>
   <div fxFlex fxLayout="column" [fxShow]="dynamicMode">
     <div formGroupName="dynamicValue" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-      <div fxFlex fxLayout="column">
+      <div fxFlex="35" fxLayout="column">
         <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
           <mat-label></mat-label>
           <mat-select formControlName="sourceType" placeholder="{{'filter.dynamic-source-type' | translate}}">
@@ -67,6 +67,14 @@
           <input matInput formControlName="sourceAttribute" placeholder="{{'filter.source-attribute' | translate}}">
         </mat-form-field>
         <div class="tb-hint" translate>filter.source-attribute</div>
+      </div>
+      <div *ngIf="!allow && inheritMode"
+           fxLayout="column"
+           style="padding-top: 6px">
+        <mat-checkbox formControlName="inherit">
+          {{ 'filter.inherit-owner' | translate}}
+        </mat-checkbox>
+        <div class="tb-hint" translate>filter.source-attribute-not-set</div>
       </div>
     </div>
   </div>
