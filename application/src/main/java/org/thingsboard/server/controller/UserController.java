@@ -87,20 +87,17 @@ public class UserController extends BaseController {
     @ResponseBody
     public User getUserById(@PathVariable(USER_ID) String strUserId) throws ThingsboardException {
         checkParameter(USER_ID, strUserId);
-        User user;
         try {
             UserId userId = new UserId(toUUID(strUserId));
-            user = checkUserId(userId, Operation.READ);
+            User user = checkUserId(userId, Operation.READ);
+            if(user.getAdditionalInfo() != null) {
+                processDashboardIdFromAdditionalInfo((ObjectNode) user.getAdditionalInfo(), DEFAULT_DASHBOARD);
+                processDashboardIdFromAdditionalInfo((ObjectNode) user.getAdditionalInfo(), HOME_DASHBOARD);
+            }
+            return user;
         } catch (Exception e) {
             throw handleException(e);
         }
-
-        if(user != null && !user.getAdditionalInfo().isNull()) {
-            processDashboardIdFromAdditionalInfo((ObjectNode) user.getAdditionalInfo(), DEFAULT_DASHBOARD);
-            processDashboardIdFromAdditionalInfo((ObjectNode) user.getAdditionalInfo(), HOME_DASHBOARD);
-        }
-
-        return user;
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
