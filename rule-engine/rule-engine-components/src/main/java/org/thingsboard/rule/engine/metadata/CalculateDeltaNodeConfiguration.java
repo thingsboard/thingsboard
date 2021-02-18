@@ -15,10 +15,12 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 @Data
+@JsonIgnoreProperties
 public class CalculateDeltaNodeConfiguration implements NodeConfiguration<CalculateDeltaNodeConfiguration> {
     private String inputValueKey;
     private String outputValueKey;
