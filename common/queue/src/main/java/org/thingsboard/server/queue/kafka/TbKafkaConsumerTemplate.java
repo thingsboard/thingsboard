@@ -42,16 +42,24 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
     private final KafkaConsumer<String, byte[]> consumer;
     private final TbKafkaDecoder<T> decoder;
 
+    private final TbKafkaConsumerStatsService statsService;
+    private final String groupId;
+
     @Builder
     private TbKafkaConsumerTemplate(TbKafkaSettings settings, TbKafkaDecoder<T> decoder,
                                     String clientId, String groupId, String topic,
-                                    TbQueueAdmin admin) {
+                                    TbQueueAdmin admin, TbKafkaConsumerStatsService statsService) {
         super(topic);
         Properties props = settings.toConsumerProps();
         props.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
         if (groupId != null) {
             props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         }
+
+        this.statsService = statsService;
+        this.groupId = groupId;
+
+        statsService.registerClientGroup(groupId);
 
         this.admin = admin;
         this.consumer = new KafkaConsumer<>(props);
@@ -95,7 +103,7 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
         if (consumer != null) {
             consumer.unsubscribe();
             consumer.close();
+            statsService.unregisterClientGroup(groupId);
         }
     }
-
 }
