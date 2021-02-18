@@ -61,7 +61,7 @@ public class TenantController extends BaseController {
         try {
             TenantId tenantId = new TenantId(toUUID(strTenantId));
             Tenant tenant = checkTenantId(tenantId, Operation.READ);
-            if(tenant.getAdditionalInfo() != null) {
+            if(!tenant.getAdditionalInfo().isNull()) {
                 processDashboardIdFromAdditionalInfo((ObjectNode) tenant.getAdditionalInfo(), HOME_DASHBOARD);
             }
             return tenant;

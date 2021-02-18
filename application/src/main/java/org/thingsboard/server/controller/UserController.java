@@ -90,7 +90,7 @@ public class UserController extends BaseController {
         try {
             UserId userId = new UserId(toUUID(strUserId));
             User user = checkUserId(userId, Operation.READ);
-            if(user.getAdditionalInfo() != null) {
+            if(!user.getAdditionalInfo().isNull()) {
                 processDashboardIdFromAdditionalInfo((ObjectNode) user.getAdditionalInfo(), DEFAULT_DASHBOARD);
                 processDashboardIdFromAdditionalInfo((ObjectNode) user.getAdditionalInfo(), HOME_DASHBOARD);
             }

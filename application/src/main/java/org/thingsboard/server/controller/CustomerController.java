@@ -56,7 +56,7 @@ public class CustomerController extends BaseController {
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             Customer customer = checkCustomerId(customerId, Operation.READ);
-            if(customer.getAdditionalInfo() != null) {
+            if(!customer.getAdditionalInfo().isNull()) {
                 processDashboardIdFromAdditionalInfo((ObjectNode) customer.getAdditionalInfo(), HOME_DASHBOARD);
             }
             return customer;
