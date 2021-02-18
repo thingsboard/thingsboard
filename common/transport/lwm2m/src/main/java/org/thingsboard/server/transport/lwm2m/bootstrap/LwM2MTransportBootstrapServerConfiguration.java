@@ -53,15 +53,9 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
 
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256;
-import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
-import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256;
-import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA;
-import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384;
-import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CCM;
-import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8;
-import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CBC_SHA256;
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CCM_8;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.getCoapConfig;
 
 @Slf4j
@@ -117,18 +111,16 @@ public class LwM2MTransportBootstrapServerConfiguration {
         dtlsConfig.setRecommendedSupportedGroupsOnly(this.contextS.getCtxServer().isRecommendedSupportedGroups());
         dtlsConfig.setRecommendedCipherSuitesOnly(this.contextS.getCtxServer().isRecommendedCiphers());
         if (this.pskMode) {
-            dtlsConfig.setSupportedCipherSuites(TLS_PSK_WITH_AES_128_CBC_SHA256);
-        } else {
-            dtlsConfig.setSupportedCipherSuites(TLS_PSK_WITH_AES_128_CBC_SHA256,
-                    TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-                    TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+            dtlsConfig.setSupportedCipherSuites(
+                    TLS_PSK_WITH_AES_128_CCM_8,
+                    TLS_PSK_WITH_AES_128_CBC_SHA256);
+        }
+        else {
+            dtlsConfig.setSupportedCipherSuites(
+                    TLS_PSK_WITH_AES_128_CCM_8,
+                    TLS_PSK_WITH_AES_128_CBC_SHA256,
                     TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
-                    TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8,
-                    TLS_ECDHE_ECDSA_WITH_AES_128_CCM,
-                    TLS_ECDHE_ECDSA_WITH_AES_256_CCM,
-                    TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-                    TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
-                    TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384);
+                    TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256);
         }
 
         /** Set DTLS Config */
