@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.AmazonSNSClient;
+import com.amazonaws.services.sns.model.MessageAttributeValue;
 import com.amazonaws.services.sns.model.PublishRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -28,8 +29,19 @@ import org.thingsboard.rule.engine.api.sms.exception.SmsException;
 import org.thingsboard.rule.engine.api.sms.exception.SmsSendException;
 import org.thingsboard.server.service.sms.AbstractSmsSender;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Slf4j
 public class AwsSmsSender extends AbstractSmsSender {
+
+    private static final Map<String, MessageAttributeValue> SMS_ATTRIBUTES = new HashMap<>();
+
+    static {
+        SMS_ATTRIBUTES.put("AWS.SNS.SMS.SMSType", new MessageAttributeValue()
+                .withStringValue("Transactional")
+                .withDataType("String"));
+    }
 
     private AmazonSNS snsClient;
 
@@ -51,6 +63,7 @@ public class AwsSmsSender extends AbstractSmsSender {
         message = this.prepareMessage(message);
         try {
             PublishRequest publishRequest = new PublishRequest()
+                    .withMessageAttributes(SMS_ATTRIBUTES)
                     .withPhoneNumber(numberTo)
                     .withMessage(message);
             this.snsClient.publish(publishRequest);

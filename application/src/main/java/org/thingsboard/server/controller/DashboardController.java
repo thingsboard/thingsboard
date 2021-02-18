@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -31,7 +32,10 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HomeDashboard;
+import org.thingsboard.server.common.data.HomeDashboardInfo;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -41,7 +45,10 @@ import org.thingsboard.server.common.data.id.EntityConfigId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -54,6 +61,9 @@ import java.util.Set;
 public class DashboardController extends BaseController {
 
     public static final String DASHBOARD_ID = "dashboardId";
+
+    private static final String HOME_DASHBOARD_ID = "homeDashboardId";
+    private static final String HOME_DASHBOARD_HIDE_TOOLBAR = "homeDashboardHideToolbar";
 
     @Value("${dashboard.max_datapoints_limit}")
     private long maxDatapointsLimit;
@@ -258,7 +268,7 @@ public class DashboardController extends BaseController {
     @RequestMapping(value = "/dashboard/{dashboardId}/customers", method = RequestMethod.POST)
     @ResponseBody
     public Dashboard updateDashboardCustomers(@PathVariable(DASHBOARD_ID) String strDashboardId,
-                                              @RequestBody String[] strCustomerIds) throws ThingsboardException {
+                                              @RequestBody(required = false) String[] strCustomerIds) throws ThingsboardException {
         checkParameter(DASHBOARD_ID, strDashboardId);
         try {
             DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
@@ -517,5 +527,101 @@ public class DashboardController extends BaseController {
         } catch (Exception e) {
             throw handleException(e);
         }
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @RequestMapping(value = "/dashboard/home", method = RequestMethod.GET)
+    @ResponseBody
+    public HomeDashboard getHomeDashboard() throws ThingsboardException {
+        try {
+            SecurityUser securityUser = getCurrentUser();
+            if (securityUser.isSystemAdmin()) {
+                return null;
+            }
+            User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
+            JsonNode additionalInfo = user.getAdditionalInfo();
+            HomeDashboard homeDashboard;
+            homeDashboard = extractHomeDashboardFromAdditionalInfo(additionalInfo);
+            if (homeDashboard == null) {
+                if (securityUser.isCustomerUser()) {
+                    Customer customer = customerService.findCustomerById(securityUser.getTenantId(), securityUser.getCustomerId());
+                    additionalInfo = customer.getAdditionalInfo();
+                    homeDashboard = extractHomeDashboardFromAdditionalInfo(additionalInfo);
+                }
+                if (homeDashboard == null) {
+                    Tenant tenant = tenantService.findTenantById(securityUser.getTenantId());
+                    additionalInfo = tenant.getAdditionalInfo();
+                    homeDashboard = extractHomeDashboardFromAdditionalInfo(additionalInfo);
+                }
+            }
+            return homeDashboard;
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/dashboard/home/info", method = RequestMethod.GET)
+    @ResponseBody
+    public HomeDashboardInfo getTenantHomeDashboardInfo() throws ThingsboardException {
+        try {
+            Tenant tenant = tenantService.findTenantById(getTenantId());
+            JsonNode additionalInfo = tenant.getAdditionalInfo();
+            DashboardId dashboardId = null;
+            boolean hideDashboardToolbar = true;
+            if (additionalInfo != null && additionalInfo.has(HOME_DASHBOARD_ID) && !additionalInfo.get(HOME_DASHBOARD_ID).isNull()) {
+                String strDashboardId = additionalInfo.get(HOME_DASHBOARD_ID).asText();
+                dashboardId = new DashboardId(toUUID(strDashboardId));
+                if (additionalInfo.has(HOME_DASHBOARD_HIDE_TOOLBAR)) {
+                    hideDashboardToolbar = additionalInfo.get(HOME_DASHBOARD_HIDE_TOOLBAR).asBoolean();
+                }
+            }
+            return new HomeDashboardInfo(dashboardId, hideDashboardToolbar);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/dashboard/home/info", method = RequestMethod.POST)
+    @ResponseStatus(value = HttpStatus.OK)
+    public void setTenantHomeDashboardInfo(@RequestBody HomeDashboardInfo homeDashboardInfo) throws ThingsboardException {
+        try {
+            if (homeDashboardInfo.getDashboardId() != null) {
+                checkDashboardId(homeDashboardInfo.getDashboardId(), Operation.READ);
+            }
+            Tenant tenant = tenantService.findTenantById(getTenantId());
+            JsonNode additionalInfo = tenant.getAdditionalInfo();
+            if (additionalInfo == null || !(additionalInfo instanceof ObjectNode)) {
+                additionalInfo = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+            }
+            if (homeDashboardInfo.getDashboardId() != null) {
+                ((ObjectNode) additionalInfo).put(HOME_DASHBOARD_ID, homeDashboardInfo.getDashboardId().getId().toString());
+                ((ObjectNode) additionalInfo).put(HOME_DASHBOARD_HIDE_TOOLBAR, homeDashboardInfo.isHideDashboardToolbar());
+            } else {
+                ((ObjectNode) additionalInfo).remove(HOME_DASHBOARD_ID);
+                ((ObjectNode) additionalInfo).remove(HOME_DASHBOARD_HIDE_TOOLBAR);
+            }
+            tenant.setAdditionalInfo(additionalInfo);
+            tenantService.saveTenant(tenant);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    private HomeDashboard extractHomeDashboardFromAdditionalInfo(JsonNode additionalInfo) {
+        try {
+            if (additionalInfo != null && additionalInfo.has(HOME_DASHBOARD_ID) && !additionalInfo.get(HOME_DASHBOARD_ID).isNull()) {
+                String strDashboardId = additionalInfo.get(HOME_DASHBOARD_ID).asText();
+                DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+                Dashboard dashboard = checkDashboardId(dashboardId, Operation.READ);
+                boolean hideDashboardToolbar = true;
+                if (additionalInfo.has(HOME_DASHBOARD_HIDE_TOOLBAR)) {
+                    hideDashboardToolbar = additionalInfo.get(HOME_DASHBOARD_HIDE_TOOLBAR).asBoolean();
+                }
+                return new HomeDashboard(dashboard, hideDashboardToolbar);
+            }
+        } catch (Exception e) {}
+        return null;
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ public class TbMsgDelayNode implements TbNode {
         int periodInSeconds;
         if (config.isUseMetadataPeriodInSecondsPatterns()) {
             if (isParsable(msg, config.getPeriodInSecondsPattern())) {
-                periodInSeconds = Integer.parseInt(TbNodeUtils.processPattern(config.getPeriodInSecondsPattern(), msg.getMetaData()));
+                periodInSeconds = Integer.parseInt(TbNodeUtils.processPattern(config.getPeriodInSecondsPattern(), msg));
             } else {
                 throw new RuntimeException("Can't parse period in seconds from metadata using pattern: " + config.getPeriodInSecondsPattern());
             }
@@ -95,7 +95,7 @@ public class TbMsgDelayNode implements TbNode {
     }
 
     private boolean isParsable(TbMsg msg, String pattern) {
-        return NumberUtils.isParsable(TbNodeUtils.processPattern(pattern, msg.getMetaData()));
+        return NumberUtils.isParsable(TbNodeUtils.processPattern(pattern, msg));
     }
 
     @Override

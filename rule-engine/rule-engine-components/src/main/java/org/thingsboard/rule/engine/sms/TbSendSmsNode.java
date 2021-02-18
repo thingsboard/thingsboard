@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,8 +72,8 @@ public class TbSendSmsNode implements TbNode {
     }
 
     private void sendSms(TbContext ctx, TbMsg msg) throws Exception {
-        String numbersTo = TbNodeUtils.processPattern(this.config.getNumbersToTemplate(), msg.getMetaData());
-        String message = TbNodeUtils.processPattern(this.config.getSmsMessageTemplate(), msg.getMetaData());
+        String numbersTo = TbNodeUtils.processPattern(this.config.getNumbersToTemplate(), msg);
+        String message = TbNodeUtils.processPattern(this.config.getSmsMessageTemplate(), msg);
         String[] numbersToList = numbersTo.split(",");
         if (this.config.isUseSystemSmsSettings()) {
             ctx.getSmsService().sendSms(ctx.getTenantId(), numbersToList, message);

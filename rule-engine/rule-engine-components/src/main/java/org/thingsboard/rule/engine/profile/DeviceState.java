@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,11 +63,15 @@ class DeviceState {
     private PersistedDeviceState pds;
     private DataSnapshot latestValues;
     private final ConcurrentMap<String, AlarmState> alarmStates = new ConcurrentHashMap<>();
+    private final DynamicPredicateValueCtx dynamicPredicateValueCtx;
 
     DeviceState(TbContext ctx, TbDeviceProfileNodeConfiguration config, DeviceId deviceId, ProfileState deviceProfile, RuleNodeState state) {
         this.persistState = config.isPersistAlarmRulesState();
         this.deviceId = deviceId;
         this.deviceProfile = deviceProfile;
+
+        this.dynamicPredicateValueCtx = new DynamicPredicateValueCtxImpl(ctx.getTenantId(), deviceId, ctx);
+
         if (config.isPersistAlarmRulesState()) {
             if (state != null) {
                 this.state = state;
@@ -87,7 +91,7 @@ class DeviceState {
         if (pds != null) {
             for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
                 alarmStates.computeIfAbsent(alarm.getId(),
-                        a -> new AlarmState(deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm)));
+                        a -> new AlarmState(deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
             }
         }
     }
@@ -108,7 +112,7 @@ class DeviceState {
             if (alarmStates.containsKey(alarm.getId())) {
                 alarmStates.get(alarm.getId()).updateState(alarm, getOrInitPersistedAlarmState(alarm));
             } else {
-                alarmStates.putIfAbsent(alarm.getId(), new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm)));
+                alarmStates.putIfAbsent(alarm.getId(), new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
             }
         }
     }
@@ -140,7 +144,12 @@ class DeviceState {
             stateChanged = processAttributesDeleteNotification(ctx, msg);
         } else if (msg.getType().equals(DataConstants.ALARM_CLEAR)) {
             stateChanged = processAlarmClearNotification(ctx, msg);
+        } else if (msg.getType().equals(DataConstants.ALARM_ACK)) {
+            processAlarmAckNotification(ctx, msg);
         } else {
+            if (msg.getType().equals(DataConstants.ENTITY_ASSIGNED) || msg.getType().equals(DataConstants.ENTITY_UNASSIGNED)) {
+                dynamicPredicateValueCtx.resetCustomer();
+            }
             ctx.tellSuccess(msg);
         }
         if (persistState && stateChanged) {
@@ -154,11 +163,21 @@ class DeviceState {
         Alarm alarmNf = JacksonUtil.fromString(msg.getData(), Alarm.class);
         for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
             AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
-                    a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm)));
+                    a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
             stateChanged |= alarmState.processAlarmClear(ctx, alarmNf);
         }
         ctx.tellSuccess(msg);
         return stateChanged;
+    }
+
+    private void processAlarmAckNotification(TbContext ctx, TbMsg msg) {
+        Alarm alarmNf = JacksonUtil.fromString(msg.getData(), Alarm.class);
+        for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
+            AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
+                    a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
+            alarmState.processAckAlarm(alarmNf);
+        }
+        ctx.tellSuccess(msg);
     }
 
     private boolean processAttributesUpdateNotification(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
@@ -183,7 +202,7 @@ class DeviceState {
             keys.forEach(key -> latestValues.removeValue(new EntityKey(keyType, key)));
             for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
                 AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
-                        a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm)));
+                        a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
                 stateChanged |= alarmState.process(ctx, msg, latestValues, null);
             }
         }
@@ -202,7 +221,7 @@ class DeviceState {
             SnapshotUpdate update = merge(latestValues, attributes, scope);
             for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
                 AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
-                        a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm)));
+                        a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
                 stateChanged |= alarmState.process(ctx, msg, latestValues, update);
             }
         }
@@ -221,7 +240,7 @@ class DeviceState {
             if (update.hasUpdate()) {
                 for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
                     AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
-                            a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm)));
+                            a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
                     stateChanged |= alarmState.process(ctx, msg, latestValues, update);
                 }
             }
@@ -362,7 +381,7 @@ class DeviceState {
         }
     }
 
-    private EntityKeyValue toEntityValue(KvEntry entry) {
+    public static EntityKeyValue toEntityValue(KvEntry entry) {
         switch (entry.getDataType()) {
             case STRING:
                 return EntityKeyValue.fromString(entry.getStrValue().get());

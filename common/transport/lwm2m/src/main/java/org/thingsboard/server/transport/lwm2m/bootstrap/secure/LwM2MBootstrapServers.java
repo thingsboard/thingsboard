@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,13 @@
  */
 package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
-import lombok.Builder;
 import lombok.Data;
 
 @Data
 public class LwM2MBootstrapServers {
-    @Builder.Default
     private Integer shortId = 123;
-    @Builder.Default
     private Integer lifetime = 300;
-    @Builder.Default
     private Integer defaultMinPeriod = 1;
-    @Builder.Default
     private boolean notifIfDisabled = true;
-    @Builder.Default
     private String binding = "U";
 }

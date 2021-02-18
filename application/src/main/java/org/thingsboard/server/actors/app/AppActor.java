@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,12 +134,12 @@ public class AppActor extends ContextAwareActor {
 
     private void onQueueToRuleEngineMsg(QueueToRuleEngineMsg msg) {
         if (TenantId.SYS_TENANT_ID.equals(msg.getTenantId())) {
-            msg.getTbMsg().getCallback().onFailure(new RuleEngineException("Message has system tenant id!"));
+            msg.getMsg().getCallback().onFailure(new RuleEngineException("Message has system tenant id!"));
         } else {
             if (!deletedTenants.contains(msg.getTenantId())) {
                 getOrCreateTenantActor(msg.getTenantId()).tell(msg);
             } else {
-                msg.getTbMsg().getCallback().onSuccess();
+                msg.getMsg().getCallback().onSuccess();
             }
         }
     }

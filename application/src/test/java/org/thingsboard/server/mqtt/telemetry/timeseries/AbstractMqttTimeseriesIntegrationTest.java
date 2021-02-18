@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.mqtt.telemetry.timeseries;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -25,6 +26,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
@@ -107,7 +109,7 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
 
         List<String> actualKeys = null;
         while (start <= end) {
-            actualKeys = doGetAsync("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/timeseries", List.class);
+            actualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/timeseries", new TypeReference<>() {});
             if (actualKeys.size() == expectedKeys.size()) {
                 break;
             }
@@ -129,13 +131,13 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         }
         start = System.currentTimeMillis();
         end = System.currentTimeMillis() + 5000;
-        Map<String, List<Map<String, String>>> values = null;
+        Map<String, List<Map<String, Object>>> values = null;
         while (start <= end) {
-            values = doGetAsync(getTelemetryValuesUrl, Map.class);
+            values = doGetAsyncTyped(getTelemetryValuesUrl, new TypeReference<>() {});
             boolean valid = values.size() == expectedKeys.size();
             if (valid) {
                 for (String key : expectedKeys) {
-                    List<Map<String, String>> tsValues = values.get(key);
+                    List<Map<String, Object>> tsValues = values.get(key);
                     if (tsValues != null && tsValues.size() > 0) {
                         Object ts = tsValues.get(0).get("ts");
                         if (ts == null) {
@@ -181,10 +183,10 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
 
         Thread.sleep(2000);
 
-        List<String> firstDeviceActualKeys = doGetAsync("/api/plugins/telemetry/DEVICE/" + firstDevice.getId() + "/keys/timeseries", List.class);
+        List<String> firstDeviceActualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + firstDevice.getId() + "/keys/timeseries", new TypeReference<>() {});
         Set<String> firstDeviceActualKeySet = new HashSet<>(firstDeviceActualKeys);
 
-        List<String> secondDeviceActualKeys = doGetAsync("/api/plugins/telemetry/DEVICE/" + secondDevice.getId() + "/keys/timeseries", List.class);
+        List<String> secondDeviceActualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + secondDevice.getId() + "/keys/timeseries", new TypeReference<>() {});
         Set<String> secondDeviceActualKeySet = new HashSet<>(secondDeviceActualKeys);
 
         Set<String> expectedKeySet = new HashSet<>(expectedKeys);
@@ -195,8 +197,8 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         String getTelemetryValuesUrlFirstDevice = getTelemetryValuesUrl(firstDevice.getId(), firstDeviceActualKeySet);
         String getTelemetryValuesUrlSecondDevice = getTelemetryValuesUrl(firstDevice.getId(), secondDeviceActualKeySet);
 
-        Map<String, List<Map<String, String>>> firstDeviceValues = doGetAsync(getTelemetryValuesUrlFirstDevice, Map.class);
-        Map<String, List<Map<String, String>>> secondDeviceValues = doGetAsync(getTelemetryValuesUrlSecondDevice, Map.class);
+        Map<String, List<Map<String, Object>>> firstDeviceValues = doGetAsyncTyped(getTelemetryValuesUrlFirstDevice, new TypeReference<>() {});
+        Map<String, List<Map<String, Object>>> secondDeviceValues = doGetAsyncTyped(getTelemetryValuesUrlSecondDevice, new TypeReference<>() {});
 
         assertGatewayDeviceData(firstDeviceValues, expectedKeys);
         assertGatewayDeviceData(secondDeviceValues, expectedKeys);
@@ -212,7 +214,7 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         return "/api/plugins/telemetry/DEVICE/" + deviceId + "/values/timeseries?startTs=0&endTs=25000&keys=" + String.join(",", actualKeySet);
     }
 
-    private void assertGatewayDeviceData(Map<String, List<Map<String, String>>> deviceValues, List<String> expectedKeys) {
+    private void assertGatewayDeviceData(Map<String, List<Map<String, Object>>> deviceValues, List<String> expectedKeys) {
 
         assertEquals(2, deviceValues.get(expectedKeys.get(0)).size());
         assertEquals(2, deviceValues.get(expectedKeys.get(1)).size());
@@ -228,11 +230,11 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
 
     }
 
-    private void assertValues(Map<String, List<Map<String, String>>> deviceValues, int arrayIndex) {
-        for (Map.Entry<String, List<Map<String, String>>> entry : deviceValues.entrySet()) {
+    private void assertValues(Map<String, List<Map<String, Object>>> deviceValues, int arrayIndex) {
+        for (Map.Entry<String, List<Map<String, Object>>> entry : deviceValues.entrySet()) {
             String key = entry.getKey();
-            List<Map<String, String>> tsKv = entry.getValue();
-            String value = tsKv.get(arrayIndex).get("value");
+            List<Map<String, Object>> tsKv = entry.getValue();
+            String value = (String) tsKv.get(arrayIndex).get("value");
             switch (key) {
                 case "key1":
                     assertEquals("value1", value);
@@ -253,7 +255,7 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         }
     }
 
-    private void assertTs(Map<String, List<Map<String, String>>> deviceValues, List<String> expectedKeys, int ts, int arrayIndex) {
+    private void assertTs(Map<String, List<Map<String, Object>>> deviceValues, List<String> expectedKeys, int ts, int arrayIndex) {
         assertEquals(ts, deviceValues.get(expectedKeys.get(0)).get(arrayIndex).get("ts"));
         assertEquals(ts, deviceValues.get(expectedKeys.get(1)).get(arrayIndex).get("ts"));
         assertEquals(ts, deviceValues.get(expectedKeys.get(2)).get(arrayIndex).get("ts"));

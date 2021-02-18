@@ -74,6 +74,7 @@
     "admin": {
         "general": "General",
         "general-settings": "General Settings",
+        "home-settings": "Home Settings",
         "outgoing-mail": "Mail Server",
         "outgoing-mail-settings": "Outgoing Mail Server Settings",
         "system-settings": "System Settings",
@@ -527,7 +528,9 @@
         "type-assigned-from-tenant": "Assigned from Tenant",
         "type-assigned-to-tenant": "Assigned to Tenant",
         "type-provision-success": "Device provisioned",
-        "type-provision-failure": "Device provisioning was failed"
+        "type-provision-failure": "Device provisioning was failed",
+        "type-timeseries-updated": "Telemetry updated",
+        "type-timeseries-deleted": "Telemetry deleted"
     },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
@@ -762,7 +765,9 @@
         "select-state": "Select target state",
         "state-controller": "State controller",
         "search": "Search dashboards",
-        "selected-dashboards": "{ count, plural, 1 {1 dashboard} other {# dashboards} } selected"
+        "selected-dashboards": "{ count, plural, 1 {1 dashboard} other {# dashboards} } selected",
+        "home-dashboard": "Home dashboard",
+        "home-dashboard-hide-toolbar": "Hide home dashboard toolbar"
     },
     "datakey": {
         "settings": "Settings",
@@ -893,9 +898,8 @@
           "lwm2m-server": "LwM2M Server",
           "client-publicKey-or-id": "Client Public Key or Id",
           "client-secret-key": "Client Secret Key",
-           "config-json-tab": "Json Client Security Config",
-          "pattern_hex_dec_64": "must be hex decimal format and 64 characters",
-          "pattern_hex_dec_182": "must be hex decimal format and 182 characters"
+          "config-json-tab": "Json Client Security Config",
+          "pattern_hex_dec": "{ count, plural, 0 {must be hex decimal format} other {must be # characters} }"
         },
         "client-id": "Client ID",
         "client-id-pattern": "Contains invalid character.",
@@ -929,6 +933,7 @@
         "unable-delete-device-alias-title": "Unable to delete device alias",
         "unable-delete-device-alias-text": "Device alias '{{deviceAlias}}' can't be deleted as it used by the following widget(s):<br/>{{widgetsList}}",
         "is-gateway": "Is gateway",
+        "overwrite-activity-time": "Overwrite activity time for connected device",
         "public": "Public",
         "device-public": "Device is public",
         "select-device": "Select device",
@@ -1098,11 +1103,16 @@
         "schedule-time-to": "To",
         "schedule-days-of-week-required": "At least one day of week should be selected.",
         "lwm2m": {
+            "client-only-observe-after-connect": "{ count, plural, 1 {Only Observe Request to the client after registration} other {Read&Observe Request to the client after registration} }",
+            "client-only-observe-after-connect-tip": "{ count, plural, 1 {Only Observe Request to the client marked as observe from the profile configuration.} other {Read Request to the client after registration to read the values of the resources then Observe Request to the client marked as observe from the profile configuration.} }",
+            "client-update-value-after-connect": "{ count, plural, 1 {Request to the client after registration for All resource values} other {Request to the client after registration to read values only as attributes or telemetry} }",
+            "client-update-value-after-connect-tip": "{ count, plural, 1 {Request to the client after registration to read all resource values for all objects} other {Request to the client after registration to read the values of the resources marked as attribute or telemetry from the profile configuration.} }",
             "object-list": "Object list",
             "object-list-empty": "No objects selected.",
             "no-objects-matching": "No objects matching '{{object}}' were found.",
             "valid-id-instance-no-min": "Instance number '{{instance}}' no validated. Min value='{{min}}'",
             "valid-id-instance-no-max": "Instance number '{{instance}}' no validated. Max value='{{max}}'",
+            "valid-id-instance":  "Instance number '{{instance}}' no validated. { count, plural, 1 {Max value='{{max}}'} 2 {Min value='{{min}}'} other {Must be only number} }",
             "model-tab": "LWM2M Model",
             "add-instances-tip": "Add new instances",
             "instances-list": "Instances list",
@@ -1121,10 +1131,7 @@
             "key-name_label": "Key Name in Camel format",
             "required": " value is required.",
             "mode": "Security config mode",
-            "pattern_hex_dec_64": "must be hex decimal format and 64 characters",
-            "pattern_hex_dec_134": "must be hex decimal format and 134 characters",
-            "pattern_hex_dec_182": "must be hex decimal format and 182 characters",
-            "pattern_hex_dec": "must be hex decimal format",
+            "pattern_hex_dec": "{ count, plural, 0 {must be hex decimal format} other {must be # characters} }",
             "bootstrap-tab": "Bootstrap",
             "servers": "Servers",
             "short-id": "Short ID",
@@ -1794,6 +1801,7 @@
             "entity-field": "Entity field",
             "access-token": "Access token",
             "isgateway": "Is Gateway",
+            "activity-time-from-gateway-device": "Activity time from gateway device",
             "description": "Description"
         },
         "stepper-text":{
@@ -2330,7 +2338,14 @@
         "target-dashboard-state-required": "Target dashboard state is required",
         "set-entity-from-widget": "Set entity from widget",
         "target-dashboard": "Target dashboard",
-        "open-right-layout": "Open right dashboard layout (mobile view)"
+        "open-right-layout": "Open right dashboard layout (mobile view)",
+        "open-in-separate-dialog": "Open in separate dialog",
+        "dialog-title": "Dialog title",
+        "dialog-hide-dashboard-toolbar": "Hide dashboard toolbar in dialog",
+        "dialog-width": "Dialog width in percents relative to viewport width",
+        "dialog-height": "Dialog height in percents relative to viewport height",
+        "dialog-size-range-error": "Dialog size percent value should be in a range from 1 to 100.",
+        "open-new-browser-tab": "Open in a new browser tab"
     },
     "widgets-bundle": {
         "current": "Current bundle",
@@ -2557,7 +2572,7 @@
             "zh_TW": "繁體中文",
             "en_US": "English",
             "it_IT": "Italiano",
-            "ko_KR": "한글",
+            "ko_KR": "한국어",
             "ru_RU": "Русский",
             "es_ES": "Español",
             "ja_JA": "日本語",
@@ -2569,7 +2584,8 @@
             "ro_RO": "Română",
             "lv_LV": "Latviešu",
             "ka_GE": "ქართული",
-            "pt_BR": "Português do Brasil"
+            "pt_BR": "Português do Brasil",
+            "sl_SI": "Slovenščina"
         }
     }
 }

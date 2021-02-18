@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.eclipse.californium.core.network.Endpoint;
 import org.eclipse.californium.core.network.Exchange;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
+import org.eclipse.californium.elements.EndpointContext;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
@@ -264,12 +265,15 @@ public class CoapTransportResource extends CoapResource {
     }
 
     private TransportProtos.SessionInfoProto lookupAsyncSessionInfo(Request request) {
-        String token = request.getSource().getHostAddress() + ":" + request.getSourcePort() + ":" + request.getTokenString();
+        EndpointContext sourceContext = request.getSourceContext();
+        String token = sourceContext.getPeerAddress().getAddress().getHostAddress() + ":" + sourceContext.getPeerAddress().getPort() + ":" + request.getTokenString();
         return tokenToSessionIdMap.remove(token);
+
     }
 
     private String registerAsyncCoapSession(CoapExchange exchange, Request request, TransportProtos.SessionInfoProto sessionInfo, UUID sessionId) {
-        String token = request.getSource().getHostAddress() + ":" + request.getSourcePort() + ":" + request.getTokenString();
+        EndpointContext sourceContext = request.getSourceContext();
+        String token = sourceContext.getPeerAddress().getAddress().getHostAddress() + ":" + sourceContext.getPeerAddress().getPort() + ":" + request.getTokenString();
         tokenToSessionIdMap.putIfAbsent(token, sessionInfo);
         CoapSessionListener attrListener = new CoapSessionListener(sessionId, exchange);
         transportService.registerAsyncSession(sessionInfo, attrListener);

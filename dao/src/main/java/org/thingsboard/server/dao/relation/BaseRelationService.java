@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -301,6 +301,7 @@ public class BaseRelationService implements RelationService {
         fromAndTypeGroup.add(EntitySearchDirection.FROM.name());
 
         Cache cache = cacheManager.getCache(RELATIONS_CACHE);
+        @SuppressWarnings("unchecked")
         List<EntityRelation> fromCache = cache.get(fromAndTypeGroup, List.class);
         if (fromCache != null) {
             return Futures.immediateFuture(fromCache);
@@ -382,6 +383,7 @@ public class BaseRelationService implements RelationService {
         toAndTypeGroup.add(EntitySearchDirection.TO.name());
 
         Cache cache = cacheManager.getCache(RELATIONS_CACHE);
+        @SuppressWarnings("unchecked")
         List<EntityRelation> fromCache = cache.get(toAndTypeGroup, List.class);
         if (fromCache != null) {
             return Futures.immediateFuture(fromCache);

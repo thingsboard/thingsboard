@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +107,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
     public void setAndResolveQuery(T query) {
         dynamicValues.clear();
         this.query = query;
-        if (query.getKeyFilters() != null) {
+        if (query != null && query.getKeyFilters() != null) {
             for (KeyFilter filter : query.getKeyFilters()) {
                 registerDynamicValues(filter.getPredicate());
             }
@@ -264,6 +264,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
         }, MoreExecutors.directExecutor());
     }
 
+    @SuppressWarnings("unchecked")
     private void updateDynamicValuesByKey(DynamicValueKeySub sub, TsValue tsValue) {
         DynamicValueKey dvk = sub.getKey();
         switch (dvk.getPredicateType()) {
@@ -285,6 +286,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void registerDynamicValues(KeyFilterPredicate predicate) {
         switch (predicate.getType()) {
             case STRING:

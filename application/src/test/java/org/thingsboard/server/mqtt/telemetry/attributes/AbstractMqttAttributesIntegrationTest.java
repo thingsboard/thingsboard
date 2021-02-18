@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.mqtt.telemetry.attributes;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.junit.After;
@@ -80,7 +81,7 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
 
         List<String> actualKeys = null;
         while (start <= end) {
-            actualKeys = doGetAsync("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/attributes/CLIENT_SCOPE", List.class);
+            actualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/attributes/CLIENT_SCOPE", new TypeReference<>() {});
             if (actualKeys.size() == expectedKeys.size()) {
                 break;
             }
@@ -96,7 +97,7 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
         assertEquals(expectedKeySet, actualKeySet);
 
         String getAttributesValuesUrl = getAttributesValuesUrl(deviceId, actualKeySet);
-        List<Map<String, Object>> values = doGetAsync(getAttributesValuesUrl, List.class);
+        List<Map<String, Object>> values = doGetAsyncTyped(getAttributesValuesUrl, new TypeReference<>() {});
         assertAttributesValues(values, expectedKeySet);
         String deleteAttributesUrl = "/api/plugins/telemetry/DEVICE/" + deviceId + "/CLIENT_SCOPE?keys=" + String.join(",", actualKeySet);
         doDelete(deleteAttributesUrl);
@@ -121,10 +122,10 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
 
         Thread.sleep(2000);
 
-        List<String> firstDeviceActualKeys = doGetAsync("/api/plugins/telemetry/DEVICE/" + firstDevice.getId() + "/keys/attributes/CLIENT_SCOPE", List.class);
+        List<String> firstDeviceActualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + firstDevice.getId() + "/keys/attributes/CLIENT_SCOPE", new TypeReference<>() {});
         Set<String> firstDeviceActualKeySet = new HashSet<>(firstDeviceActualKeys);
 
-        List<String> secondDeviceActualKeys = doGetAsync("/api/plugins/telemetry/DEVICE/" + secondDevice.getId() + "/keys/attributes/CLIENT_SCOPE", List.class);
+        List<String> secondDeviceActualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + secondDevice.getId() + "/keys/attributes/CLIENT_SCOPE", new TypeReference<>() {});
         Set<String> secondDeviceActualKeySet = new HashSet<>(secondDeviceActualKeys);
 
         Set<String> expectedKeySet = new HashSet<>(expectedKeys);
@@ -135,14 +136,15 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
         String getAttributesValuesUrlFirstDevice = getAttributesValuesUrl(firstDevice.getId(), firstDeviceActualKeySet);
         String getAttributesValuesUrlSecondDevice = getAttributesValuesUrl(firstDevice.getId(), secondDeviceActualKeySet);
 
-        List<Map<String, Object>> firstDeviceValues = doGetAsync(getAttributesValuesUrlFirstDevice, List.class);
-        List<Map<String, Object>> secondDeviceValues = doGetAsync(getAttributesValuesUrlSecondDevice, List.class);
+        List<Map<String, Object>> firstDeviceValues = doGetAsyncTyped(getAttributesValuesUrlFirstDevice, new TypeReference<>() {});
+        List<Map<String, Object>> secondDeviceValues = doGetAsyncTyped(getAttributesValuesUrlSecondDevice, new TypeReference<>() {});
 
         assertAttributesValues(firstDeviceValues, expectedKeySet);
         assertAttributesValues(secondDeviceValues, expectedKeySet);
 
     }
 
+    @SuppressWarnings("unchecked")
     protected void assertAttributesValues(List<Map<String, Object>> deviceValues, Set<String> expectedKeySet) throws JsonProcessingException {
         for (Map<String, Object> map : deviceValues) {
             String key = (String) map.get("key");

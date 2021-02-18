@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.dao.model.sql.AlarmEntity;
 import org.thingsboard.server.dao.model.sql.AlarmInfoEntity;
@@ -74,5 +75,13 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
                                      @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses,
                                      @Param("searchText") String searchText,
                                      Pageable pageable);
+
+    @Query("SELECT alarm.severity FROM AlarmEntity alarm" +
+            " WHERE alarm.tenantId = :tenantId" +
+            " AND alarm.originatorId = :entityId" +
+            " AND ((:status) IS NULL OR alarm.status in (:status))")
+    Set<AlarmSeverity> findAlarmSeverities(@Param("tenantId") UUID tenantId,
+                                           @Param("entityId") UUID entityId,
+                                           @Param("status") Set<AlarmStatus> status);
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,14 +91,14 @@ public class TbSqsNode implements TbNode {
     }
 
     private TbMsg publishMessage(TbContext ctx, TbMsg msg) {
-        String queueUrl = TbNodeUtils.processPattern(this.config.getQueueUrlPattern(), msg.getMetaData());
+        String queueUrl = TbNodeUtils.processPattern(this.config.getQueueUrlPattern(), msg);
         SendMessageRequest sendMsgRequest =  new SendMessageRequest();
         sendMsgRequest.withQueueUrl(queueUrl);
         sendMsgRequest.withMessageBody(msg.getData());
         Map<String, MessageAttributeValue> messageAttributes = new HashMap<>();
         this.config.getMessageAttributes().forEach((k,v) -> {
-            String name = TbNodeUtils.processPattern(k, msg.getMetaData());
-            String val = TbNodeUtils.processPattern(v, msg.getMetaData());
+            String name = TbNodeUtils.processPattern(k, msg);
+            String val = TbNodeUtils.processPattern(v, msg);
             messageAttributes.put(name, new MessageAttributeValue().withDataType("String").withStringValue(val));
         });
         sendMsgRequest.setMessageAttributes(messageAttributes);

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ public final class InMemoryStorage {
     public <T extends TbQueueMsg> List<T> get(String topic) throws InterruptedException {
         if (storage.containsKey(topic)) {
             List<T> entities;
+            @SuppressWarnings("unchecked")
             T first = (T) storage.get(topic).poll();
             if (first != null) {
                 entities = new ArrayList<>();
@@ -67,7 +68,9 @@ public final class InMemoryStorage {
                 List<TbQueueMsg> otherList = new ArrayList<>();
                 storage.get(topic).drainTo(otherList, 999);
                 for (TbQueueMsg other : otherList) {
-                    entities.add((T) other);
+                    @SuppressWarnings("unchecked")
+                    T entity = (T) other;
+                    entities.add(entity);
                 }
             } else {
                 entities = Collections.emptyList();

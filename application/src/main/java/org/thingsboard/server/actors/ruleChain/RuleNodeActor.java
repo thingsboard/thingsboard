@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,9 +59,6 @@ public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessa
             case RULE_CHAIN_TO_RULE_MSG:
                 onRuleChainToRuleNodeMsg((RuleChainToRuleNodeMsg) msg);
                 break;
-            case RULE_TO_SELF_ERROR_MSG:
-                onRuleNodeToSelfErrorMsg((RuleNodeToSelfErrorMsg) msg);
-                break;
             case RULE_TO_SELF_MSG:
                 onRuleNodeToSelfMsg((RuleNodeToSelfMsg) msg);
                 break;
@@ -99,10 +96,6 @@ public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessa
         } catch (Exception e) {
             logAndPersist("onRuleMsg", e);
         }
-    }
-
-    private void onRuleNodeToSelfErrorMsg(RuleNodeToSelfErrorMsg msg) {
-        logAndPersist("onRuleMsg", ActorSystemContext.toException(msg.getError()));
     }
 
     public static class ActorCreator extends ContextBasedCreator {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.actors.TbEntityActorId;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
-import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -56,6 +55,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -196,11 +196,11 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     }
 
     void onQueueToRuleEngineMsg(QueueToRuleEngineMsg envelope) {
-        TbMsg msg = envelope.getTbMsg();
+        TbMsg msg = envelope.getMsg();
         log.trace("[{}][{}] Processing message [{}]: {}", entityId, firstId, msg.getId(), msg);
         if (envelope.getRelationTypes() == null || envelope.getRelationTypes().isEmpty()) {
             try {
-                checkActive(envelope.getTbMsg());
+                checkActive(envelope.getMsg());
                 RuleNodeId targetId = msg.getRuleNodeId();
                 RuleNodeCtx targetCtx;
                 if (targetId == null) {
@@ -217,12 +217,12 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                     msg.getCallback().onSuccess();
                 }
             } catch (RuleNodeException rne) {
-                envelope.getTbMsg().getCallback().onFailure(rne);
+                envelope.getMsg().getCallback().onFailure(rne);
             } catch (Exception e) {
-                envelope.getTbMsg().getCallback().onFailure(new RuleEngineException(e.getMessage()));
+                envelope.getMsg().getCallback().onFailure(new RuleEngineException(e.getMessage()));
             }
         } else {
-            onTellNext(envelope.getTbMsg(), envelope.getTbMsg().getRuleNodeId(), envelope.getRelationTypes(), envelope.getFailureMessage());
+            onTellNext(envelope.getMsg(), envelope.getMsg().getRuleNodeId(), envelope.getRelationTypes(), envelope.getFailureMessage());
         }
     }
 
@@ -288,10 +288,10 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     private void putToQueue(TopicPartitionInfo tpi, TbMsg msg, TbQueueCallback callbackWrapper, EntityId target) {
         switch (target.getEntityType()) {
             case RULE_NODE:
-                putToQueue(tpi, msg.copyWithRuleNodeId(entityId, new RuleNodeId(target.getId())), callbackWrapper);
+                putToQueue(tpi, msg.copyWithRuleNodeId(entityId, new RuleNodeId(target.getId()), UUID.randomUUID()), callbackWrapper);
                 break;
             case RULE_CHAIN:
-                putToQueue(tpi, msg.copyWithRuleChainId(new RuleChainId(target.getId())), callbackWrapper);
+                putToQueue(tpi, msg.copyWithRuleChainId(new RuleChainId(target.getId()), UUID.randomUUID()), callbackWrapper);
                 break;
         }
     }
@@ -334,7 +334,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     private void pushMsgToNode(RuleNodeCtx nodeCtx, TbMsg msg, String fromRelationType) {
         if (nodeCtx != null) {
-            nodeCtx.getSelfActor().tell(new RuleChainToRuleNodeMsg(new DefaultTbContext(systemContext, nodeCtx), msg, fromRelationType));
+            nodeCtx.getSelfActor().tell(new RuleChainToRuleNodeMsg(new DefaultTbContext(systemContext, ruleChainName, nodeCtx), msg, fromRelationType));
         } else {
             log.error("[{}][{}] RuleNodeCtx is empty", entityId, ruleChainName);
             msg.getCallback().onFailure(new RuleEngineException("Rule Node CTX is empty"));

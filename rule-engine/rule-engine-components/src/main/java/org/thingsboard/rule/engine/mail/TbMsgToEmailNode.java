@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,18 +72,18 @@ public class TbMsgToEmailNode implements TbNode {
 
     private EmailPojo convert(TbMsg msg) throws IOException {
         EmailPojo.EmailPojoBuilder builder = EmailPojo.builder();
-        builder.from(fromTemplate(this.config.getFromTemplate(), msg.getMetaData()));
-        builder.to(fromTemplate(this.config.getToTemplate(), msg.getMetaData()));
-        builder.cc(fromTemplate(this.config.getCcTemplate(), msg.getMetaData()));
-        builder.bcc(fromTemplate(this.config.getBccTemplate(), msg.getMetaData()));
-        builder.subject(fromTemplate(this.config.getSubjectTemplate(), msg.getMetaData()));
-        builder.body(fromTemplate(this.config.getBodyTemplate(), msg.getMetaData()));
+        builder.from(fromTemplate(this.config.getFromTemplate(), msg));
+        builder.to(fromTemplate(this.config.getToTemplate(), msg));
+        builder.cc(fromTemplate(this.config.getCcTemplate(), msg));
+        builder.bcc(fromTemplate(this.config.getBccTemplate(), msg));
+        builder.subject(fromTemplate(this.config.getSubjectTemplate(), msg));
+        builder.body(fromTemplate(this.config.getBodyTemplate(), msg));
         return builder.build();
     }
 
-    private String fromTemplate(String template, TbMsgMetaData metaData) {
+    private String fromTemplate(String template, TbMsg msg) {
         if (!StringUtils.isEmpty(template)) {
-            return TbNodeUtils.processPattern(template, metaData);
+            return TbNodeUtils.processPattern(template, msg);
         } else {
             return null;
         }

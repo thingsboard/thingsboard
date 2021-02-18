@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,8 @@ public class DataConstants {
     public static final String ENTITY_UNASSIGNED = "ENTITY_UNASSIGNED";
     public static final String ATTRIBUTES_UPDATED = "ATTRIBUTES_UPDATED";
     public static final String ATTRIBUTES_DELETED = "ATTRIBUTES_DELETED";
+    public static final String TIMESERIES_UPDATED = "TIMESERIES_UPDATED";
+    public static final String TIMESERIES_DELETED = "TIMESERIES_DELETED";
     public static final String ALARM_ACK = "ALARM_ACK";
     public static final String ALARM_CLEAR = "ALARM_CLEAR";
     public static final String ENTITY_ASSIGNED_FROM_TENANT = "ENTITY_ASSIGNED_FROM_TENANT";

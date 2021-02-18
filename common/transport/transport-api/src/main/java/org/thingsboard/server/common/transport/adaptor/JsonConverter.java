@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -425,6 +424,8 @@ public class JsonConverter {
                     break;
                 case MQTT_BASIC:
                     result.add("credentialsValue", JSON_PARSER.parse(payload.getCredentialsValue()).getAsJsonObject());
+                    break;
+                case LWM2M_CREDENTIALS:
                     break;
             }
             result.addProperty("credentialsType", payload.getCredentialsType().name());

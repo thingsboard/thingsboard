@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.metadata;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.json.JsonWriteFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -90,7 +91,7 @@ public class TbGetTelemetryNode implements TbNode {
             orderByFetchAll = ASC_ORDER;
         }
         mapper = new ObjectMapper();
-        mapper.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, false);
+        mapper.configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false);
         mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
     }
 
@@ -103,7 +104,7 @@ public class TbGetTelemetryNode implements TbNode {
                 if (config.isUseMetadataIntervalPatterns()) {
                     checkMetadataKeyPatterns(msg);
                 }
-                List<String> keys = TbNodeUtils.processPatterns(tsKeyNames, msg.getMetaData());
+                List<String> keys = TbNodeUtils.processPatterns(tsKeyNames, msg);
                 ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(msg, keys));
                 DonAsynchron.withCallback(list, data -> {
                     process(data, msg, keys);
@@ -197,10 +198,10 @@ public class TbGetTelemetryNode implements TbNode {
         Interval interval = new Interval();
         if (config.isUseMetadataIntervalPatterns()) {
             if (isParsable(msg, config.getStartIntervalPattern())) {
-                interval.setStartTs(Long.parseLong(TbNodeUtils.processPattern(config.getStartIntervalPattern(), msg.getMetaData())));
+                interval.setStartTs(Long.parseLong(TbNodeUtils.processPattern(config.getStartIntervalPattern(), msg)));
             }
             if (isParsable(msg, config.getEndIntervalPattern())) {
-                interval.setEndTs(Long.parseLong(TbNodeUtils.processPattern(config.getEndIntervalPattern(), msg.getMetaData())));
+                interval.setEndTs(Long.parseLong(TbNodeUtils.processPattern(config.getEndIntervalPattern(), msg)));
             }
         } else {
             long ts = System.currentTimeMillis();
@@ -211,7 +212,7 @@ public class TbGetTelemetryNode implements TbNode {
     }
 
     private boolean isParsable(TbMsg msg, String pattern) {
-        return NumberUtils.isParsable(TbNodeUtils.processPattern(pattern, msg.getMetaData()));
+        return NumberUtils.isParsable(TbNodeUtils.processPattern(pattern, msg));
     }
 
     private void checkMetadataKeyPatterns(TbMsg msg) {

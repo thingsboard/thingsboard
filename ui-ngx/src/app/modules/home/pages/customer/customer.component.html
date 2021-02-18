@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -72,6 +72,21 @@
           <mat-label translate>customer.description</mat-label>
           <textarea matInput formControlName="description" rows="2"></textarea>
         </mat-form-field>
+        <section class="tb-default-dashboard" fxFlex fxLayout="column" *ngIf="entity?.id">
+          <section fxFlex fxLayout="column" fxLayout.gt-sm="row">
+            <tb-dashboard-autocomplete
+              fxFlex
+              placeholder="{{ 'dashboard.home-dashboard' | translate }}"
+              formControlName="homeDashboardId"
+              [dashboardsScope]="'customer'"
+              [customerId]="entity?.id.id"
+              [selectFirstDashboard]="false"
+            ></tb-dashboard-autocomplete>
+            <mat-checkbox fxFlex formControlName="homeDashboardHideToolbar">
+              {{ 'dashboard.home-dashboard-hide-toolbar' | translate }}
+            </mat-checkbox>
+          </section>
+        </section>
       </div>
       <tb-contact [parentForm]="entityForm" [isEdit]="isEdit"></tb-contact>
     </fieldset>

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -53,7 +53,9 @@ export enum ActionType {
   ASSIGNED_FROM_TENANT = 'ASSIGNED_FROM_TENANT',
   ASSIGNED_TO_TENANT = 'ASSIGNED_TO_TENANT',
   PROVISION_SUCCESS = 'PROVISION_SUCCESS',
-  PROVISION_FAILURE = 'PROVISION_FAILURE'
+  PROVISION_FAILURE = 'PROVISION_FAILURE',
+  TIMESERIES_UPDATED = 'TIMESERIES_UPDATED',
+  TIMESERIES_DELETED = 'TIMESERIES_DELETED'
 }
 
 export enum ActionStatus {
@@ -87,7 +89,9 @@ export const actionTypeTranslations = new Map<ActionType, string>(
     [ActionType.ASSIGNED_FROM_TENANT, 'audit-log.type-assigned-from-tenant'],
     [ActionType.ASSIGNED_TO_TENANT, 'audit-log.type-assigned-to-tenant'],
     [ActionType.PROVISION_SUCCESS, 'audit-log.type-provision-success'],
-    [ActionType.PROVISION_FAILURE, 'audit-log.type-provision-failure']
+    [ActionType.PROVISION_FAILURE, 'audit-log.type-provision-failure'],
+    [ActionType.TIMESERIES_UPDATED, 'audit-log.type-timeseries-updated'],
+    [ActionType.TIMESERIES_DELETED, 'audit-log.type-timeseries-deleted']
   ]
 );
 

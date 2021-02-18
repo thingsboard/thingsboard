@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form [formGroup]="jsonFormGroup" (ngSubmit)="add()" style="min-width: 400px;">
+<form [formGroup]="instancesFormGroup" (ngSubmit)="add()" style="min-width: 400px;">
   <mat-toolbar fxLayout="row" color="primary">
     <b><i>{{data.objectName}}</i></b> &nbsp;&nbsp; (object&nbsp;[<b>{{data.objectId}}</b>])
     <span fxFlex></span>
@@ -30,24 +30,21 @@
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
-      <div class="mat-padding">
-        <tb-profile-lwm2m-object-add-instances-list
-          formControlName="instancesIds">
-        </tb-profile-lwm2m-object-add-instances-list>
-      </div>
+      <tb-profile-lwm2m-object-add-instances-list
+        formControlName="instancesIds">
+      </tb-profile-lwm2m-object-add-instances-list>
     </fieldset>
   </div>
   <div mat-dialog-actions fxLayout="row" fxLayoutAlign="end center">
-    <span fxFlex></span>
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
-            (click)="cancel()" cdkFocusInitial>
+            (click)="cancel()">
       {{ 'action.cancel' | translate }}
     </button>
-    <button mat-button mat-raised-button color="primary"
+    <button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || jsonFormGroup.invalid || !jsonFormGroup.dirty">
+            [disabled]="(isLoading$ | async) || instancesFormGroup.invalid || !instancesFormGroup.dirty">
       {{ 'action.save' | translate }}
     </button>
   </div>

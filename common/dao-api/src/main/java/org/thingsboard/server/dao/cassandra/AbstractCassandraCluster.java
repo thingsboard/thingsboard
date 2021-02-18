@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.thingsboard.server.dao.cassandra.guava.GuavaSession;
 import org.thingsboard.server.dao.cassandra.guava.GuavaSessionBuilder;
 import org.thingsboard.server.dao.cassandra.guava.GuavaSessionUtils;
@@ -77,7 +78,7 @@ public abstract class AbstractCassandraCluster {
     }
 
     private boolean isInstall() {
-        return environment.acceptsProfiles("install");
+        return environment.acceptsProfiles(Profiles.of("install"));
     }
 
     private void initSession() {
