@@ -62,7 +62,7 @@ public class CustomerController extends BaseController {
         }
 
         if(customer != null && !customer.getAdditionalInfo().isNull()) {
-            customer.setAdditionalInfo(processDashboardIdFromAdditionalInfo(customer.getAdditionalInfo(), HOME_DASHBOARD));
+            processDashboardIdFromAdditionalInfo((ObjectNode) customer.getAdditionalInfo(), HOME_DASHBOARD);
         }
 
         return customer;

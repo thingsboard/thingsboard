@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -66,7 +67,7 @@ public class TenantController extends BaseController {
         }
 
         if(tenant != null && !tenant.getAdditionalInfo().isNull()) {
-            tenant.setAdditionalInfo(processDashboardIdFromAdditionalInfo(tenant.getAdditionalInfo(), HOME_DASHBOARD));
+            processDashboardIdFromAdditionalInfo((ObjectNode) tenant.getAdditionalInfo(), HOME_DASHBOARD);
         }
 
         return tenant;

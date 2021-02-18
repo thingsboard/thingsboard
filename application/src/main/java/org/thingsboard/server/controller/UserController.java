@@ -96,10 +96,8 @@ public class UserController extends BaseController {
         }
 
         if(user != null && !user.getAdditionalInfo().isNull()) {
-            JsonNode additionalInfo = user.getAdditionalInfo();
-            additionalInfo = processDashboardIdFromAdditionalInfo(additionalInfo, DEFAULT_DASHBOARD);
-            additionalInfo = processDashboardIdFromAdditionalInfo(additionalInfo, HOME_DASHBOARD);
-            user.setAdditionalInfo(additionalInfo);
+            processDashboardIdFromAdditionalInfo((ObjectNode) user.getAdditionalInfo(), DEFAULT_DASHBOARD);
+            processDashboardIdFromAdditionalInfo((ObjectNode) user.getAdditionalInfo(), HOME_DASHBOARD);
         }
 
         return user;

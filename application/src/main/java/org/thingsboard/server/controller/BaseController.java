@@ -864,18 +864,13 @@ public abstract class BaseController {
         }
     }
 
-    protected JsonNode processDashboardIdFromAdditionalInfo(JsonNode additionalInfo, String requiredFields) throws ThingsboardException {
-        if(additionalInfo == null) {
-            return null;
-        }
-        ObjectNode resultJson = additionalInfo.deepCopy();
-        String dashboardId = resultJson.has(requiredFields) ? resultJson.get(requiredFields).asText() : null;
+    protected void processDashboardIdFromAdditionalInfo(ObjectNode additionalInfo, String requiredFields) throws ThingsboardException {
+        String dashboardId = additionalInfo.has(requiredFields) ? additionalInfo.get(requiredFields).asText() : null;
         if(dashboardId != null && !dashboardId.equals("null")) {
             if(dashboardService.findDashboardById(getTenantId(), new DashboardId(UUID.fromString(dashboardId))) == null) {
-                resultJson.remove(requiredFields);
+                additionalInfo.remove(requiredFields);
             }
         }
-        return resultJson;
     }
 
 }
