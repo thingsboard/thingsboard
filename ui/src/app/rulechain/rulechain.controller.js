@@ -1272,7 +1272,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                                 if (vm.ruleChain.type === vm.types.ruleChainType.core) {
                                     $state.go('home.ruleChains.ruleChain', {ruleChainId: vm.ruleChain.id.id});
                                 } else {
-                                    $state.go('home.edges.edgeRuleChains.ruleChain', {ruleChainId: vm.ruleChain.id.id});
+                                    $state.go('home.edges.ruleChains.ruleChain', {ruleChainId: vm.ruleChain.id.id});
                                 }
                             });
                         } else {

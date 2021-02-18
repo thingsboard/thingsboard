@@ -30,6 +30,7 @@
                      edge="vm.edge"
                      on-set-auto-assign-to-edge-rule-chain="vm.setAutoAssignToEdgeRuleChain(event, vm.grid.detailsConfig.currentItem)"
                      on-unset-auto-assign-to-edge-rule-chain="vm.unsetAutoAssignToEdgeRuleChain(event, vm.grid.detailsConfig.currentItem)"
+                     on-unassign-from-edge="vm.unassignFromEdge(event, vm.grid.detailsConfig.currentItem)"
                      on-set-root-rule-chain="vm.setRootRuleChain(event, vm.grid.detailsConfig.currentItem)"
                      on-export-rule-chain="vm.exportRuleChain(event, vm.grid.detailsConfig.currentItem)"
                      on-delete-rule-chain="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)">

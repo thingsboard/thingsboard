@@ -44,7 +44,7 @@
                class="md-raised md-primary">{{ 'edge.dashboards' | translate }}</md-button>
     <md-button ng-click="onManageEdgeRuleChains({event: $event})"
                ng-show="!isEdit && edgeScope === 'tenant'"
-               class="md-raised md-primary">{{ 'edge.rulechain-templates' | translate }}</md-button>
+               class="md-raised md-primary">{{ 'edge.manage-edge-rulechains' | translate }}</md-button>
 
 </div>
 <div layout="row">
@@ -57,20 +57,25 @@
     </md-button>
     <md-button ngclipboard data-clipboard-action="copy"
                ngclipboard-success="onEdgeInfoCopied('key')"
-               data-clipboard-text="{{edge.routingKey}}" ng-show="!isEdit"
+               data-clipboard-text="{{edge.routingKey}}"
+               ng-show="!isEdit"
+               ng-if="isTenantAdmin"
                class="md-raised">
         <md-icon md-svg-icon="mdi:clipboard-arrow-left"></md-icon>
         <span translate>edge.copy-edge-key</span>
     </md-button>
     <md-button ngclipboard data-clipboard-action="copy"
                ngclipboard-success="onEdgeInfoCopied('secret')"
-               data-clipboard-text="{{edge.secret}}" ng-show="!isEdit"
+               data-clipboard-text="{{edge.secret}}"
+               ng-show="!isEdit"
+               ng-if="isTenantAdmin"
                class="md-raised">
         <md-icon md-svg-icon="mdi:clipboard-arrow-left"></md-icon>
         <span translate>edge.copy-edge-secret</span>
     </md-button>
     <md-button ng-click="onEdgeSync(edge.id)"
                ng-show="!isEdit"
+               ng-if="isTenantAdmin"
                class="md-raised">
         <md-icon md-svg-icon="mdi:sync"></md-icon>
         <span translate>edge.sync</span>
@@ -102,16 +107,16 @@
                 ng-model="edge.type"
                 entity-type="types.entityType.edge">
         </tb-entity-subtype-autocomplete>
-        <div translate class="tb-hint">edge.license-key-hint</div>
-        <md-input-container class="md-block">
+        <div translate class="tb-hint" ng-if="isTenantAdmin">edge.license-key-hint</div>
+        <md-input-container class="md-block" ng-if="isTenantAdmin">
             <label translate>edge.edge-license-key</label>
             <input required name="edgeLicenseKey" ng-model="edge.edgeLicenseKey">
             <div ng-messages="theForm.edgeLicenseKey.$error">
                 <div translate ng-message="required">edge.edge-license-key-required</div>
             </div>
         </md-input-container>
-        <div translate class="tb-hint">edge.cloud-endpoint-hint</div>
-        <md-input-container class="md-block">
+        <div translate class="tb-hint" ng-if="isTenantAdmin">edge.cloud-endpoint-hint</div>
+        <md-input-container class="md-block" ng-if="isTenantAdmin">
             <label translate>edge.cloud-endpoint</label>
             <input required name="cloudEndpoint" ng-model="edge.cloudEndpoint">
             <div ng-messages="theForm.cloudEndpoint.$error">
@@ -119,7 +124,7 @@
             </div>
         </md-input-container>
     </fieldset>
-    <div layout="row">
+    <div layout="row" ng-if="isTenantAdmin">
         <md-input-container class="md-block" flex>
             <label translate>edge.edge-key</label>
             <input ng-model="edge.routingKey" disabled>
@@ -134,7 +139,7 @@
             </md-tooltip>
         </md-button>
     </div>
-    <div layout="row">
+    <div layout="row" ng-if="isTenantAdmin">
         <md-input-container class="md-block" flex>
             <label translate>edge.edge-secret</label>
             <input ng-model="edge.secret" disabled>

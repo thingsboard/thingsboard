@@ -769,7 +769,6 @@
         "management": "Edge management",
         "no-edges-matching": "No edges matching '{{entity}}' were found.",
         "add": "Add Edge",
-        "view": "View Edge",
         "no-edges-text": "No edges found",
         "edge-details": "Edge details",
         "add-edge-text": "Add new edge",
@@ -794,7 +793,6 @@
         "id-copied-message": "Edge Id has been copied to clipboard",
         "sync": "Sync Edge",
         "sync-message": "Edge has been synchronized",
-        "permissions": "Permissions",
         "edge-required": "Edge required",
         "edge-type": "Edge type",
         "edge-type-required": "Edge type is required.",
@@ -856,7 +854,9 @@
         "missing-related-rule-chains-title": "Edge has missing related rule chain(s)",
         "missing-related-rule-chains-text": "Assigned to edge rule chain(s) use rule nodes that forward message(s) to rule chain(s) that are not assigned to this edge. <br><br> List of missing rule chain(s): <br> {{missingRuleChains}}",
         "downlinks": "Downlinks",
-        "no-downlinks-prompt": "No downlinks found"
+        "no-downlinks-prompt": "No downlinks found",
+        "assigned-to-customer-widget": "Assigned to: {{customerTitle}}",
+        "widget-datasource-error": "This widget supports only EDGE entity datasource"
     },
     "edge-event": {
       "type-dashboard": "Dashboard",
