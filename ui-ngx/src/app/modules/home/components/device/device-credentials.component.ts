@@ -196,8 +196,14 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
         this.deviceCredentialsFormGroup.get('credentialsBasic').disable({emitEvent: false});
         break;
       case DeviceCredentialsType.X509_CERTIFICATE:
-      case DeviceCredentialsType.LWM2M_CREDENTIALS:
         this.deviceCredentialsFormGroup.get('credentialsValue').setValidators([Validators.required]);
+        this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity({emitEvent: false});
+        this.deviceCredentialsFormGroup.get('credentialsId').setValidators([]);
+        this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity({emitEvent: false});
+        this.deviceCredentialsFormGroup.get('credentialsBasic').disable({emitEvent: false});
+        break;
+      case DeviceCredentialsType.LWM2M_CREDENTIALS:
+        this.deviceCredentialsFormGroup.get('credentialsValue').setValidators([Validators.required, this.jsonValidator]);
         this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity({emitEvent: false});
         this.deviceCredentialsFormGroup.get('credentialsId').setValidators([]);
         this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity({emitEvent: false});
@@ -247,7 +253,11 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
     if (credentialsValue === null || credentialsValue.length === 0) {
       credentialsValue = getDefaultSecurityConfig();
     } else {
-      credentialsValue = JSON.parse(credentialsValue);
+      try {
+        credentialsValue = JSON.parse(credentialsValue);
+      } catch (e) {
+        credentialsValue = getDefaultSecurityConfig();
+      }
     }
     const credentialsId = this.deviceCredentialsFormGroup.get('credentialsId').value || DEFAULT_END_POINT;
     this.dialog.open<SecurityConfigComponent, DeviceCredentialsDialogLwm2mData, object>(SecurityConfigComponent, {
@@ -272,5 +282,19 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
 
   private isDefautLw2mResponse(response: object): boolean {
     return Object.keys(response).length === 0 || JSON.stringify(response) === '[{}]';
+  }
+
+  private jsonValidator(control: FormControl) {
+    try {
+      debugger;
+      JSON.parse(control.value);
+      return null
+    } catch (e) {
+      return {
+        jsonError: {
+          parsedJson: "error"
+        }
+      }
+    }
   }
 }
