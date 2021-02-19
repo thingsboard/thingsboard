@@ -87,6 +87,7 @@ BEGIN
                         IF partition_to_delete IS NOT NULL THEN
                             RAISE NOTICE 'Partition to delete by max ttl: %', partition_to_delete;
                             EXECUTE format('DROP TABLE IF EXISTS %I', partition_to_delete);
+                            partition_to_delete := NULL;
                             deleted := deleted + 1;
                         END IF;
                     END IF;
