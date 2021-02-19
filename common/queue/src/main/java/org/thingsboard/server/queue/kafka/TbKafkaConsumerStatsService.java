@@ -29,6 +29,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.queue.discovery.PartitionService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -52,6 +55,7 @@ public class TbKafkaConsumerStatsService {
 
     private final TbKafkaSettings kafkaSettings;
     private final TbKafkaConsumerStatisticConfig statsConfig;
+    private final PartitionService partitionService;
 
     private AdminClient adminClient;
     private Consumer<String, byte[]> consumer;
@@ -76,7 +80,7 @@ public class TbKafkaConsumerStatsService {
     private void startLogScheduling() {
         Duration timeoutDuration = Duration.ofMillis(statsConfig.getKafkaResponseTimeoutMs());
         statsPrintScheduler.scheduleWithFixedDelay(() -> {
-            if (!log.isInfoEnabled()) {
+            if (!isStatsPrintRequired()) {
                 return;
             }
             for (String groupId : monitoredGroups) {
@@ -103,6 +107,12 @@ public class TbKafkaConsumerStatsService {
             }
 
         }, statsConfig.getPrintIntervalMs(), statsConfig.getPrintIntervalMs(), TimeUnit.MILLISECONDS);
+    }
+
+    private boolean isStatsPrintRequired() {
+        boolean isMyRuleEnginePartition = partitionService.resolve(ServiceType.TB_RULE_ENGINE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID).isMyPartition();
+        boolean isMyCorePartition = partitionService.resolve(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID).isMyPartition();
+        return log.isInfoEnabled() && (isMyRuleEnginePartition || isMyCorePartition);
     }
 
     private List<GroupTopicStats> getTopicsStatsWithLag(Map<TopicPartition, OffsetAndMetadata> groupOffsets, Map<TopicPartition, Long> endOffsets) {

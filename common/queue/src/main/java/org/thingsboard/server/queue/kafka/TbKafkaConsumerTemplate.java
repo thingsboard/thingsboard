@@ -59,7 +59,9 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
         this.statsService = statsService;
         this.groupId = groupId;
 
-        statsService.registerClientGroup(groupId);
+        if (statsService != null) {
+            statsService.registerClientGroup(groupId);
+        }
 
         this.admin = admin;
         this.consumer = new KafkaConsumer<>(props);
@@ -103,6 +105,8 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
         if (consumer != null) {
             consumer.unsubscribe();
             consumer.close();
+        }
+        if (statsService != null) {
             statsService.unregisterClientGroup(groupId);
         }
     }
