@@ -196,6 +196,7 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
                 }
                 break;
             case "3.1.1":
+            case "3.2.1":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Load TTL functions ...");
                     loadSql(conn, LOAD_TTL_FUNCTIONS_SQL);
