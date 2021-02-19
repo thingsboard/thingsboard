@@ -45,11 +45,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
-        name = "calculate delta",
+        name = "calculate delta", relationTypes = {"Success", "Failure", "Other"},
         configClazz = CalculateDeltaNodeConfiguration.class,
         nodeDescription = "Calculates and adds 'delta' value into message based on the incoming and previous value",
         nodeDetails = "Calculates delta and period based on the previous time-series reading and current data. " +
-                "Delta calculation is done in scope of the message originator, e.g. device, asset or customer.",
+                "Delta calculation is done in scope of the message originator, e.g. device, asset or customer. " +
+                "If there is input key, the output relation will be 'Success' unless delta is negative and corresponding configuration parameter is set. " +
+                "If there is no input value key in the incoming message, the output relation will be 'Other'.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeCalculateDeltaConfig")
 public class CalculateDeltaNode implements TbNode {
@@ -112,13 +114,11 @@ public class CalculateDeltaNode implements TbNode {
                             ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(result)));
                         },
                         t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
-            } else if (config.isTellFailureIfInputValueKeyIsAbsent()) {
-                ctx.tellNext(msg, TbRelationTypes.FAILURE);
             } else {
-                ctx.tellSuccess(msg);
+                ctx.tellNext(msg, "Other");
             }
         } else {
-            ctx.tellSuccess(msg);
+            ctx.tellNext(msg, "Other");
         }
     }
 
