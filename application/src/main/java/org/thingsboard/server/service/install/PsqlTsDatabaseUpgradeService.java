@@ -196,6 +196,7 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
                 }
                 break;
             case "2.5.4":
+            case "2.5.5":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Load Drop Partitions functions ...");
                     loadSql(conn, LOAD_DROP_PARTITIONS_FUNCTIONS_SQL);
