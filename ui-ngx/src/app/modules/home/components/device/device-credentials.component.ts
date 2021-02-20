@@ -286,7 +286,6 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
 
   private jsonValidator(control: FormControl) {
     try {
-      debugger;
       JSON.parse(control.value);
       return null
     } catch (e) {
