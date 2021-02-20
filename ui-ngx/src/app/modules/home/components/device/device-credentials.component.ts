@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
+import {Component, forwardRef, Input, OnDestroy, OnInit} from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -33,9 +33,9 @@ import {
   DeviceCredentials,
   DeviceCredentialsType
 } from '@shared/models/device.models';
-import { Subscription } from 'rxjs';
-import { distinctUntilChanged } from 'rxjs/operators';
-import { SecurityConfigComponent } from '@home/pages/device/lwm2m/security-config.component';
+import {Subscription} from 'rxjs';
+import {distinctUntilChanged} from 'rxjs/operators';
+import {SecurityConfigComponent} from '@home/pages/device/lwm2m/security-config.component';
 import {
   DEFAULT_END_POINT,
   DeviceCredentialsDialogLwm2mData,
@@ -43,9 +43,9 @@ import {
   getDefaultSecurityConfig,
   JSON_ALL_CONFIG
 } from '@home/pages/device/lwm2m/security-config.models';
-import { TranslateService } from '@ngx-translate/core';
-import { MatDialog } from '@angular/material/dialog';
-import { isDefinedAndNotNull } from '@core/utils';
+import {TranslateService} from '@ngx-translate/core';
+import {MatDialog} from '@angular/material/dialog';
+import {isDefinedAndNotNull} from '@core/utils';
 
 @Component({
   selector: 'tb-device-credentials',
