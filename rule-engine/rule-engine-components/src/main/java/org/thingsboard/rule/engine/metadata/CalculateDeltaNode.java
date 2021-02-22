@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
@@ -44,11 +45,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
-        name = "calculate delta",
+        name = "calculate delta", relationTypes = {"Success", "Failure", "Other"},
         configClazz = CalculateDeltaNodeConfiguration.class,
         nodeDescription = "Calculates and adds 'delta' value into message based on the incoming and previous value",
         nodeDetails = "Calculates delta and period based on the previous time-series reading and current data. " +
-                "Delta calculation is done in scope of the message originator, e.g. device, asset or customer.",
+                "Delta calculation is done in scope of the message originator, e.g. device, asset or customer. " +
+                "If there is input key, the output relation will be 'Success' unless delta is negative and corresponding configuration parameter is set. " +
+                "If there is no input value key in the incoming message, the output relation will be 'Other'.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeCalculateDeltaConfig")
 public class CalculateDeltaNode implements TbNode {
@@ -72,43 +75,50 @@ public class CalculateDeltaNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        JsonNode json = JacksonUtil.toJsonNode(msg.getData());
-        String inputKey = config.getInputValueKey();
-        if (json.has(inputKey)) {
-            DonAsynchron.withCallback(getLastValue(msg.getOriginator()),
-                    previousData -> {
-                        double currentValue = json.get(inputKey).asDouble();
-                        long currentTs = TbMsgTimeseriesNode.getTs(msg);
+        if (msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
+            JsonNode json = JacksonUtil.toJsonNode(msg.getData());
+            String inputKey = config.getInputValueKey();
+            if (json.has(inputKey)) {
+                DonAsynchron.withCallback(getLastValue(msg.getOriginator()),
+                        previousData -> {
+                            double currentValue = json.get(inputKey).asDouble();
+                            long currentTs = TbMsgTimeseriesNode.getTs(msg);
 
-                        if (useCache) {
-                            cache.put(msg.getOriginator(), new ValueWithTs(currentTs, currentValue));
-                        }
+                            if (useCache) {
+                                cache.put(msg.getOriginator(), new ValueWithTs(currentTs, currentValue));
+                            }
 
-                        BigDecimal delta = BigDecimal.valueOf(previousData != null ? currentValue - previousData.value : 0.0);
+                            BigDecimal delta = BigDecimal.valueOf(previousData != null ? currentValue - previousData.value : 0.0);
 
-                        if (config.isTellFailureIfDeltaIsNegative() && delta.doubleValue() < 0) {
-                            ctx.tellNext(msg, TbRelationTypes.FAILURE);
-                            return;
-                        }
+                            if (config.isTellFailureIfDeltaIsNegative() && delta.doubleValue() < 0) {
+                                ctx.tellNext(msg, TbRelationTypes.FAILURE);
+                                return;
+                            }
 
-                        if (config.getRound() != null) {
-                            delta = delta.setScale(config.getRound(), RoundingMode.HALF_UP);
-                        }
 
-                        ObjectNode result = (ObjectNode) json;
-                        result.put(config.getOutputValueKey(), delta);
+                            if (config.getRound() != null) {
+                                delta = delta.setScale(config.getRound(), RoundingMode.HALF_UP);
+                            }
 
-                        if (config.isAddPeriodBetweenMsgs()) {
-                            long period = previousData != null ? currentTs - previousData.ts : 0;
-                            result.put(config.getPeriodValueKey(), period);
-                        }
-                        ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(result)));
-                    },
-                    t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
-        } else if (config.isTellFailureIfInputValueKeyIsAbsent()) {
-            ctx.tellNext(msg, TbRelationTypes.FAILURE);
+                            ObjectNode result = (ObjectNode) json;
+                            if (delta.stripTrailingZeros().scale() > 0) {
+                                result.put(config.getOutputValueKey(), delta.doubleValue());
+                            } else {
+                                result.put(config.getOutputValueKey(), delta.longValueExact());
+                            }
+
+                            if (config.isAddPeriodBetweenMsgs()) {
+                                long period = previousData != null ? currentTs - previousData.ts : 0;
+                                result.put(config.getPeriodValueKey(), period);
+                            }
+                            ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(result)));
+                        },
+                        t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
+            } else {
+                ctx.tellNext(msg, "Other");
+            }
         } else {
-            ctx.tellSuccess(msg);
+            ctx.tellNext(msg, "Other");
         }
     }
 

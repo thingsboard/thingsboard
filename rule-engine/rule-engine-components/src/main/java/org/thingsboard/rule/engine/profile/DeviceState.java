@@ -138,6 +138,8 @@ class DeviceState {
             stateChanged = processTelemetry(ctx, msg);
         } else if (msg.getType().equals(SessionMsgType.POST_ATTRIBUTES_REQUEST.name())) {
             stateChanged = processAttributesUpdateRequest(ctx, msg);
+        } else if (msg.getType().equals(DataConstants.ACTIVITY_EVENT) || msg.getType().equals(DataConstants.INACTIVITY_EVENT)) {
+            stateChanged = processDeviceActivityEvent(ctx, msg);
         } else if (msg.getType().equals(DataConstants.ATTRIBUTES_UPDATED)) {
             stateChanged = processAttributesUpdateNotification(ctx, msg);
         } else if (msg.getType().equals(DataConstants.ATTRIBUTES_DELETED)) {
@@ -155,6 +157,15 @@ class DeviceState {
         if (persistState && stateChanged) {
             state.setStateData(JacksonUtil.toString(pds));
             state = ctx.saveRuleNodeState(state);
+        }
+    }
+
+    private boolean processDeviceActivityEvent(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
+        String scope = msg.getMetaData().getValue(DataConstants.SCOPE);
+        if (StringUtils.isEmpty(scope)) {
+            return processTelemetry(ctx, msg);
+        } else {
+            return processAttributes(ctx, msg, scope);
         }
     }
 
@@ -181,19 +192,18 @@ class DeviceState {
     }
 
     private boolean processAttributesUpdateNotification(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
-        Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(msg.getData()));
-        String scope = msg.getMetaData().getValue("scope");
+        String scope = msg.getMetaData().getValue(DataConstants.SCOPE);
         if (StringUtils.isEmpty(scope)) {
             scope = DataConstants.CLIENT_SCOPE;
         }
-        return processAttributesUpdate(ctx, msg, attributes, scope);
+        return processAttributes(ctx, msg, scope);
     }
 
     private boolean processAttributesDeleteNotification(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
         boolean stateChanged = false;
         List<String> keys = new ArrayList<>();
         new JsonParser().parse(msg.getData()).getAsJsonObject().get("attributes").getAsJsonArray().forEach(e -> keys.add(e.getAsString()));
-        String scope = msg.getMetaData().getValue("scope");
+        String scope = msg.getMetaData().getValue(DataConstants.SCOPE);
         if (StringUtils.isEmpty(scope)) {
             scope = DataConstants.CLIENT_SCOPE;
         }
@@ -211,12 +221,12 @@ class DeviceState {
     }
 
     protected boolean processAttributesUpdateRequest(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
-        Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(msg.getData()));
-        return processAttributesUpdate(ctx, msg, attributes, DataConstants.CLIENT_SCOPE);
+        return processAttributes(ctx, msg, DataConstants.CLIENT_SCOPE);
     }
 
-    private boolean processAttributesUpdate(TbContext ctx, TbMsg msg, Set<AttributeKvEntry> attributes, String scope) throws ExecutionException, InterruptedException {
+    private boolean processAttributes(TbContext ctx, TbMsg msg, String scope) throws ExecutionException, InterruptedException {
         boolean stateChanged = false;
+        Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(msg.getData()));
         if (!attributes.isEmpty()) {
             SnapshotUpdate update = merge(latestValues, attributes, scope);
             for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {

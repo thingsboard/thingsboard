@@ -20,6 +20,7 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActor;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorException;
+import org.thingsboard.server.actors.TbRuleNodeUpdateException;
 import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
 import org.thingsboard.server.actors.stats.StatsPersistMsg;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -123,6 +124,9 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
         } catch (Exception e) {
             logAndPersist("onLifecycleMsg", e, true);
             logLifecycleEvent(msg.getEvent(), e);
+            if (e instanceof TbRuleNodeUpdateException) {
+                throw (TbRuleNodeUpdateException) e;
+            }
         }
     }
 
