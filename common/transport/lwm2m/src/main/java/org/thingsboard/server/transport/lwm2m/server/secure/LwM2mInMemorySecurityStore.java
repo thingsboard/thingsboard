@@ -74,7 +74,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
     public SecurityInfo getByEndpoint(String endPoint) {
         readLock.lock();
         try {
-            String registrationId = this.getByRegistrationId(endPoint, null);
+            String registrationId = this.getRegistrationId(endPoint, null);
             return (registrationId != null && sessions.size() > 0 && sessions.get(registrationId) != null) ?
                     sessions.get(registrationId).getSecurityInfo() : this.addLwM2MClientToSession(endPoint);
         } finally {
@@ -91,7 +91,7 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
     public SecurityInfo getByIdentity(String identity) {
         readLock.lock();
         try {
-            String integrationId = this.getByRegistrationId(null, identity);
+            String integrationId = this.getRegistrationId(null, identity);
             return (integrationId != null) ? sessions.get(integrationId).getSecurityInfo() : this.addLwM2MClientToSession(identity);
         } finally {
             readLock.unlock();
@@ -177,10 +177,10 @@ public class LwM2mInMemorySecurityStore extends InMemorySecurityStore {
         }
     }
 
-    private String getByRegistrationId(String endPoint, String identity) {
+    private String getRegistrationId(String endPoint, String identity) {
         List<String> registrationIds = (endPoint != null) ?
-                this.sessions.entrySet().stream().filter(model -> endPoint.equals(model.getValue().getEndPoint())).map(model -> model.getKey()).collect(Collectors.toList()) :
-                this.sessions.entrySet().stream().filter(model -> identity.equals(model.getValue().getIdentity())).map(model -> model.getKey()).collect(Collectors.toList());
+                this.sessions.entrySet().stream().filter(model -> endPoint.equals(model.getValue().getEndPoint())).map(Map.Entry::getKey).collect(Collectors.toList()) :
+                this.sessions.entrySet().stream().filter(model -> identity.equals(model.getValue().getIdentity())).map(Map.Entry::getKey).collect(Collectors.toList());
         return (registrationIds != null && registrationIds.size() > 0) ? registrationIds.get(0) : null;
     }
 
