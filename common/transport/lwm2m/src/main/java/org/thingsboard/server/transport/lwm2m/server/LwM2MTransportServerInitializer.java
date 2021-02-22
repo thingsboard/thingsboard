@@ -18,7 +18,6 @@ package org.thingsboard.server.transport.lwm2m.server;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.transport.lwm2m.secure.LWM2MGenerationPSkRPkECC;
@@ -31,69 +30,35 @@ import javax.annotation.PreDestroy;
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' ) || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2MTransportServerInitializer {
 
-
     @Autowired
     private LwM2MTransportServiceImpl service;
 
     @Autowired(required = false)
-    @Qualifier("leshanServerX509")
-    private LeshanServer lhServerX509;
-
-    @Autowired(required = false)
-    @Qualifier("leshanServerPsk")
-    private LeshanServer lhServerPsk;
-
-    @Autowired(required = false)
-    @Qualifier("leshanServerRpk")
-    private LeshanServer lhServerRpk;
+    private LeshanServer leshanServer;
 
     @Autowired
     private LwM2MTransportContextServer context;
 
     @PostConstruct
     public void init() {
-        if (this.context.getCtxServer().getEnableGenPskRpk()) new LWM2MGenerationPSkRPkECC();
-        if (this.context.getCtxServer().isServerStartPsk()) {
-            this.startLhServerPsk();
+        if (this.context.getCtxServer().getEnableGenNewKeyPskRpk()) {
+            new LWM2MGenerationPSkRPkECC();
         }
-        if (this.context.getCtxServer().isServerStartRpk()) {
-            this.startLhServerRpk();
-        }
-        if (this.context.getCtxServer().isServerStartX509()) {
-            this.startLhServerX509();
-        }
+        this.startLhServer();
     }
 
-    private void startLhServerPsk() {
-        this.lhServerPsk.start();
-        LwM2mServerListener lhServerPskListener = new LwM2mServerListener(this.lhServerPsk, service);
-        this.lhServerPsk.getRegistrationService().addListener(lhServerPskListener.registrationListener);
-        this.lhServerPsk.getPresenceService().addListener(lhServerPskListener.presenceListener);
-        this.lhServerPsk.getObservationService().addListener(lhServerPskListener.observationListener);
-    }
-
-    private void startLhServerRpk() {
-        this.lhServerRpk.start();
-        LwM2mServerListener lhServerRpkListener = new LwM2mServerListener(this.lhServerRpk, service);
-        this.lhServerRpk.getRegistrationService().addListener(lhServerRpkListener.registrationListener);
-        this.lhServerRpk.getPresenceService().addListener(lhServerRpkListener.presenceListener);
-        this.lhServerRpk.getObservationService().addListener(lhServerRpkListener.observationListener);
-    }
-
-    private void startLhServerX509() {
-        this.lhServerX509.start();
-        LwM2mServerListener lhServerCertListener = new LwM2mServerListener(this.lhServerX509, service);
-        this.lhServerX509.getRegistrationService().addListener(lhServerCertListener.registrationListener);
-        this.lhServerX509.getPresenceService().addListener(lhServerCertListener.presenceListener);
-        this.lhServerX509.getObservationService().addListener(lhServerCertListener.observationListener);
+    private void startLhServer() {
+        this.leshanServer.start();
+        LwM2mServerListener lhServerCertListener = new LwM2mServerListener(this.leshanServer, service);
+        this.leshanServer.getRegistrationService().addListener(lhServerCertListener.registrationListener);
+        this.leshanServer.getPresenceService().addListener(lhServerCertListener.presenceListener);
+        this.leshanServer.getObservationService().addListener(lhServerCertListener.observationListener);
     }
 
     @PreDestroy
     public void shutdown() {
         log.info("Stopping LwM2M transport Server!");
-        lhServerPsk.destroy();
-        lhServerRpk.destroy();
-        lhServerX509.destroy();
+        leshanServer.destroy();
         log.info("LwM2M transport Server stopped!");
     }
 }
