@@ -152,6 +152,12 @@ public class ThingsboardInstallService {
                             databaseTsUpgradeService.upgradeDatabase("2.5.4");
                         }
 
+                    case "2.5.5":
+                        log.info("Upgrading ThingsBoard from version 2.5.5 to 2.5.6 ...");
+                        if (databaseTsUpgradeService != null) {
+                            databaseTsUpgradeService.upgradeDatabase("2.5.5");
+                        }
+
                         log.info("Updating system data...");
 
                         systemDataLoaderService.deleteSystemWidgetBundle("charts");
