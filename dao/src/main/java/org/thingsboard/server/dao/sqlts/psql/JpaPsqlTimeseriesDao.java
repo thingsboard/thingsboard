@@ -19,8 +19,10 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -114,6 +116,17 @@ public class JpaPsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDa
                 partitioningRepository.save(psqlPartition);
                 log.trace("Adding partition to Set: {}", psqlPartition);
                 partitions.put(psqlPartition.getStart(), psqlPartition);
+            } catch (Exception e) {
+                log.trace("Error occurred during partition save:", e);
+                if (e instanceof DataIntegrityViolationException) {
+                    DataIntegrityViolationException ex = (DataIntegrityViolationException) e;
+                    Throwable cause = ex.getCause();
+                    if (cause instanceof ConstraintViolationException) {
+                        ConstraintViolationException constraintViolationException = (ConstraintViolationException) cause;
+                        log.warn("Saving partition [{}] rejected: {}", psqlPartition.getPartitionDate(), constraintViolationException.getCause().getMessage());
+                        partitions.put(psqlPartition.getStart(), psqlPartition);
+                    }
+                }
             } finally {
                 partitionCreationLock.unlock();
             }
