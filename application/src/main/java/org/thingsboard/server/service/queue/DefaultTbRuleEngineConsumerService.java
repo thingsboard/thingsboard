@@ -43,6 +43,8 @@ import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
+import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
+import org.thingsboard.server.service.attributes.TbAttributesCache;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
@@ -63,6 +65,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -108,8 +111,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                                               StatsFactory statsFactory,
                                               TbDeviceProfileCache deviceProfileCache,
                                               TbTenantProfileCache tenantProfileCache,
-                                              TbApiUsageStateService apiUsageStateService) {
-        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, apiUsageStateService, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer());
+                                              TbApiUsageStateService apiUsageStateService,
+                                              Optional<TbAttributesCache> attributesCacheOpt) {
+        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, apiUsageStateService, attributesCacheOpt, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer());
         this.statisticsService = statisticsService;
         this.ruleEngineSettings = ruleEngineSettings;
         this.tbRuleEngineQueueFactory = tbRuleEngineQueueFactory;
@@ -278,6 +282,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
             FromDeviceRpcResponse response = new FromDeviceRpcResponse(new UUID(proto.getRequestIdMSB(), proto.getRequestIdLSB())
                     , proto.getResponse(), error);
             tbDeviceRpcService.processRpcResponseFromDevice(response);
+            callback.onSuccess();
+        } else if (nfMsg.getAttributesCacheUpdatedMsg() != null && !nfMsg.getAttributesCacheUpdatedMsg().isEmpty()) {
+            handleAttributesCacheUpdatedMsg(id, nfMsg.getAttributesCacheUpdatedMsg());
             callback.onSuccess();
         } else {
             log.trace("Received notification with missing handler");

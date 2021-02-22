@@ -322,6 +322,13 @@ actors:
 cache:
   # caffeine or redis
   type: "${CACHE_TYPE:caffeine}"
+  attributes:
+    enabled: "${CACHE_ATTRIBUTES_ENABLED:false}"
+    # caffeine or guava
+    type: "${CACHE_ATTRIBUTES_TYPE:caffeine}"
+    maxSizePerTenant: "${CACHE_ATTRIBUTES_MAX_SIZE_PER_TENANT:100000}"
+    expireAfterAccessInMinutes: "${CACHE_ATTRIBUTES_EXPIRE_AFTER_ACCESS_IN_MINUTES:10}"
+    enableStats: "${CACHE_ATTRIBUTES_ENABLE_STATS:false}"
 
 caffeine:
   specs:

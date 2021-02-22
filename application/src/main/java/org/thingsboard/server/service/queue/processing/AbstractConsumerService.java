@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.cache.AttributesCacheUpdatedMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -38,11 +39,13 @@ import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.service.attributes.TbAttributesCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.TbPackCallback;
 import org.thingsboard.server.service.queue.TbPackProcessingContext;
 
+import javax.annotation.Nullable;
 import javax.annotation.PreDestroy;
 import java.util.List;
 import java.util.Optional;
@@ -69,15 +72,21 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected final TbDeviceProfileCache deviceProfileCache;
     protected final TbApiUsageStateService apiUsageStateService;
 
+    @Nullable
+    private final TbAttributesCache attributesCache;
+
     protected final TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer;
 
     public AbstractConsumerService(ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
-                                   TbTenantProfileCache tenantProfileCache, TbDeviceProfileCache deviceProfileCache, TbApiUsageStateService apiUsageStateService, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
+                                   TbTenantProfileCache tenantProfileCache, TbDeviceProfileCache deviceProfileCache,
+                                   TbApiUsageStateService apiUsageStateService, Optional<TbAttributesCache> attributesCacheOpt,
+                                   TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
         this.actorContext = actorContext;
         this.encodingService = encodingService;
         this.tenantProfileCache = tenantProfileCache;
         this.deviceProfileCache = deviceProfileCache;
         this.apiUsageStateService = apiUsageStateService;
+        this.attributesCache = attributesCacheOpt.orElse(null);
         this.nfConsumer = nfConsumer;
     }
 
@@ -177,6 +186,27 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             }
             log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg);
             actorContext.tellWithHighPriority(actorMsg);
+        }
+    }
+
+    protected void handleAttributesCacheUpdatedMsg(UUID id, ByteString nfMsg) {
+        if (attributesCache == null) {
+            return;
+        }
+        Optional<TbActorMsg> actorMsgOpt = encodingService.decode(nfMsg.toByteArray());
+        if (actorMsgOpt.isPresent()) {
+            TbActorMsg actorMsg = actorMsgOpt.get();
+            if (actorMsg instanceof AttributesCacheUpdatedMsg) {
+                AttributesCacheUpdatedMsg attributesCacheUpdatedMsg = (AttributesCacheUpdatedMsg) actorMsg;
+                if (AttributesCacheUpdatedMsg.INVALIDATE_ALL_CACHE_MSG.equals(attributesCacheUpdatedMsg)) {
+                    log.info("[{}] Clearing all attributes cache", id);
+                    attributesCache.invalidateAll();
+                } else {
+                    log.trace("[{}] Clearing attributes cache for {}", id, attributesCacheUpdatedMsg);
+                    attributesCache.evict(attributesCacheUpdatedMsg.getTenantId(), attributesCacheUpdatedMsg.getEntityId(),
+                            attributesCacheUpdatedMsg.getScope(), attributesCacheUpdatedMsg.getAttributeKeys());
+                }
+            }
         }
     }
 

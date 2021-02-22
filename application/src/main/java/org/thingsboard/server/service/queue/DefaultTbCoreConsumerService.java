@@ -17,6 +17,7 @@ package org.thingsboard.server.service.queue;
 
 import lombok.Getter;
 import lombok.Setter;
+import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -28,9 +29,13 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.cache.AttributesCacheUpdatedMsg;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.stats.StatsFactory;
@@ -56,6 +61,9 @@ import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
+import org.thingsboard.server.service.attributes.CachedAttributesService;
+import org.thingsboard.server.service.attributes.TbAttributesCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
@@ -117,8 +125,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         TbDeviceProfileCache deviceProfileCache,
                                         TbApiUsageStateService statsService,
                                         TbTenantProfileCache tenantProfileCache,
-                                        TbApiUsageStateService apiUsageStateService) {
-        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, apiUsageStateService, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
+                                        TbApiUsageStateService apiUsageStateService,
+                                        Optional<TbAttributesCache> attributesCacheOpt) {
+        super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, apiUsageStateService, attributesCacheOpt, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
         this.mainConsumer = tbCoreQueueFactory.createToCoreMsgConsumer();
         this.usageStatsConsumer = tbCoreQueueFactory.createToUsageStatsServiceMsgConsumer();
         this.stateService = stateService;
@@ -271,6 +280,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             forwardToCoreRpcService(toCoreNotification.getFromDeviceRpcResponse(), callback);
         } else if (toCoreNotification.getComponentLifecycleMsg() != null && !toCoreNotification.getComponentLifecycleMsg().isEmpty()) {
             handleComponentLifecycleMsg(id, toCoreNotification.getComponentLifecycleMsg());
+            callback.onSuccess();
+        } else if (toCoreNotification.getAttributesCacheUpdatedMsg() != null && !toCoreNotification.getAttributesCacheUpdatedMsg().isEmpty()) {
+            handleAttributesCacheUpdatedMsg(id, toCoreNotification.getAttributesCacheUpdatedMsg());
             callback.onSuccess();
         }
         if (statsEnabled) {

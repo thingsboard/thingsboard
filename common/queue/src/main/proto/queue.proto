@@ -549,6 +549,7 @@ message ToCoreNotificationMsg {
   LocalSubscriptionServiceMsgProto toLocalSubscriptionServiceMsg = 1;
   FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
   bytes componentLifecycleMsg = 3;
+  bytes attributesCacheUpdatedMsg = 4;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */
@@ -563,6 +564,7 @@ message ToRuleEngineMsg {
 message ToRuleEngineNotificationMsg {
   bytes componentLifecycleMsg = 1;
   FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
+  bytes attributesCacheUpdatedMsg = 3;
 }
 
 /* Messages that are handled by ThingsBoard Transport Service */

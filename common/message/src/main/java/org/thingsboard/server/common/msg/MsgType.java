@@ -101,6 +101,13 @@ public enum MsgType {
     /**
      * Message that is sent by TransportRuleEngineService to Device Actor. Represents messages from the device itself.
      */
-    TRANSPORT_TO_DEVICE_ACTOR_MSG;
+    TRANSPORT_TO_DEVICE_ACTOR_MSG,
+
+
+    /**
+     * Message that is sent by RuleNode to all nodes.
+     */
+    ATTRIBUTES_CACHE_UPDATED_MSG
+    ;
 
 }

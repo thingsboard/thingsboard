@@ -13,11 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.attributes.sql;
+package org.thingsboard.server.service.attributes;
 
-import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.dao.service.attributes.DaoAttributesServiceTest;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import org.thingsboard.server.common.data.id.EntityId;
 
-@DaoSqlTest
-public class AttributesServiceSqlTest extends DaoAttributesServiceTest {
+@EqualsAndHashCode
+@Getter
+@AllArgsConstructor
+public class AttributesKey {
+    private final String scope;
+    private final EntityId entityId;
+    private final String key;
 }

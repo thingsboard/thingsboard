@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.attributes.sql;
+package org.thingsboard.server.service.attributes;
 
-import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.dao.service.attributes.DaoAttributesServiceTest;
+import org.thingsboard.server.common.data.id.TenantId;
 
-@DaoSqlTest
-public class AttributesServiceSqlTest extends DaoAttributesServiceTest {
+public interface TbCacheStatsService<C> {
+    boolean areCacheStatsEnabled();
+    void registerCacheStats(C cache, TenantId tenantId);
 }

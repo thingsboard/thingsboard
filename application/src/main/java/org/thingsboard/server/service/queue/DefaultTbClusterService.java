@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.cache.AttributesCacheUpdatedMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -56,9 +57,12 @@ import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BooleanSupplier;
+import java.util.function.Function;
 
 @Service
 @Slf4j
@@ -202,6 +206,18 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
+    public void onAttributesCacheUpdated(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys) {
+        log.trace("[{}][{}] Processing attributes cache change: [{}][{}]", tenantId, entityId, scope, attributeKeys);
+        broadcast(new AttributesCacheUpdatedMsg(tenantId, entityId, scope, attributeKeys));
+    }
+
+    @Override
+    public void invalidateAttributesCache() {
+        log.trace("Invalidating attributes cache");
+        broadcast(AttributesCacheUpdatedMsg.INVALIDATE_ALL_CACHE_MSG);
+    }
+
+    @Override
     public void onDeviceProfileChange(DeviceProfile deviceProfile, TbQueueCallback callback) {
         onEntityChange(deviceProfile.getTenantId(), deviceProfile.getId(), deviceProfile, callback);
     }
@@ -301,6 +317,28 @@ public class DefaultTbClusterService implements TbClusterService {
         for (String serviceId : tbRuleEngineServices) {
             TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceId);
             ToRuleEngineNotificationMsg toRuleEngineMsg = ToRuleEngineNotificationMsg.newBuilder().setComponentLifecycleMsg(ByteString.copyFrom(msgBytes)).build();
+            toRuleEngineProducer.send(tpi, new TbProtoQueueMsg<>(msg.getEntityId().getId(), toRuleEngineMsg), null);
+            toRuleEngineNfs.incrementAndGet();
+        }
+    }
+
+    private void broadcast(AttributesCacheUpdatedMsg msg) {
+        byte[] msgBytes = encodingService.encode(msg);
+        TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> toRuleEngineProducer = producerProvider.getRuleEngineNotificationsMsgProducer();
+        Set<String> tbRuleEngineServices = new HashSet<>(partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE));
+        TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toCoreNfProducer = producerProvider.getTbCoreNotificationsMsgProducer();
+        Set<String> tbCoreServices = partitionService.getAllServiceIds(ServiceType.TB_CORE);
+        for (String serviceId : tbCoreServices) {
+            TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_CORE, serviceId);
+            ToCoreNotificationMsg toCoreMsg = ToCoreNotificationMsg.newBuilder().setAttributesCacheUpdatedMsg(ByteString.copyFrom(msgBytes)).build();
+            toCoreNfProducer.send(tpi, new TbProtoQueueMsg<>(msg.getEntityId().getId(), toCoreMsg), null);
+            toCoreNfs.incrementAndGet();
+        }
+        // No need to push notifications twice
+        tbRuleEngineServices.removeAll(tbCoreServices);
+        for (String serviceId : tbRuleEngineServices) {
+            TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceId);
+            ToRuleEngineNotificationMsg toRuleEngineMsg = ToRuleEngineNotificationMsg.newBuilder().setAttributesCacheUpdatedMsg(ByteString.copyFrom(msgBytes)).build();
             toRuleEngineProducer.send(tpi, new TbProtoQueueMsg<>(msg.getEntityId().getId(), toRuleEngineMsg), null);
             toRuleEngineNfs.incrementAndGet();
         }

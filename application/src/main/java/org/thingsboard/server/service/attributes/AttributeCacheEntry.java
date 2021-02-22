@@ -13,11 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.attributes.sql;
+package org.thingsboard.server.service.attributes;
 
-import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.dao.service.attributes.DaoAttributesServiceTest;
+import lombok.Getter;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 
-@DaoSqlTest
-public class AttributesServiceSqlTest extends DaoAttributesServiceTest {
+@Getter
+public class AttributeCacheEntry {
+    private static final AttributeCacheEntry EMPTY = new AttributeCacheEntry(null);
+
+    private final AttributeKvEntry attributeKvEntry;
+
+    public AttributeCacheEntry(AttributeKvEntry attributeKvEntry) {
+        this.attributeKvEntry = attributeKvEntry;
+    }
+
+    public boolean isPresent(){
+        return attributeKvEntry != null;
+    }
+
+    public static AttributeCacheEntry empty(){
+        return EMPTY;
+    }
 }
