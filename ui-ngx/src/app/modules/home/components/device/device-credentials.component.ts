@@ -41,7 +41,7 @@ import {
   DeviceCredentialsDialogLwm2mData,
   END_POINT,
   getDefaultSecurityConfig,
-  JSON_ALL_CONFIG
+  JSON_ALL_CONFIG, SecurityConfigModels, validateSecurityConfig
 } from '@home/pages/device/lwm2m/security-config.models';
 import {TranslateService} from '@ngx-translate/core';
 import {MatDialog} from '@angular/material/dialog';
@@ -285,15 +285,6 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
   }
 
   private jsonValidator(control: FormControl) {
-    try {
-      JSON.parse(control.value);
-      return null
-    } catch (e) {
-      return {
-        jsonError: {
-          parsedJson: "error"
-        }
-      }
-    }
+    return validateSecurityConfig(control.value) ? null: {jsonError: {parsedJson: "error"}};
   }
 }
