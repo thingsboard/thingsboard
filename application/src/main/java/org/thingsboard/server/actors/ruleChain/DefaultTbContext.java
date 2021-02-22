@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -300,7 +301,22 @@ class DefaultTbContext implements TbContext {
     }
 
     public TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, String action) {
-        return entityActionMsg(alarm, alarm.getId(), ruleNodeId, action);
+        RuleChainId ruleChainId = null;
+        String queueName = ServiceQueue.MAIN;
+        if (EntityType.DEVICE.equals(alarm.getOriginator().getEntityType())) {
+            DeviceId deviceId = new DeviceId(alarm.getOriginator().getId());
+            DeviceProfile deviceProfile = mainCtx.getDeviceProfileCache().get(getTenantId(), deviceId);
+            if (deviceProfile == null) {
+                log.warn("[{}] Device profile is null!", deviceId);
+                ruleChainId = null;
+                queueName = ServiceQueue.MAIN;
+            } else {
+                ruleChainId = deviceProfile.getDefaultRuleChainId();
+                String defaultQueueName = deviceProfile.getDefaultQueueName();
+                queueName = defaultQueueName != null ? defaultQueueName : ServiceQueue.MAIN;
+            }
+        }
+        return entityActionMsg(alarm, alarm.getId(), ruleNodeId, action, queueName, ruleChainId);
     }
 
     public <E, I extends EntityId> TbMsg entityActionMsg(E entity, I id, RuleNodeId ruleNodeId, String action) {

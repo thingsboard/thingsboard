@@ -145,7 +145,7 @@ public class DefaultTbClusterService implements TbClusterService {
                 tbMsg = transformMsg(tbMsg, deviceProfileCache.get(tenantId, new DeviceProfileId(entityId.getId())));
             }
         }
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tenantId, entityId);
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueName(), tenantId, entityId);
         log.trace("PUSHING msg: {} to:{}", tbMsg, tpi);
         ToRuleEngineMsg msg = ToRuleEngineMsg.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
