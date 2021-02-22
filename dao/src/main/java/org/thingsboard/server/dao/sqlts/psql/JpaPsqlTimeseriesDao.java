@@ -121,6 +121,8 @@ public class JpaPsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDa
                 if (ex.getCause() instanceof ConstraintViolationException) {
                     log.warn("Saving partition [{}] rejected. Timeseries data will save to the ts_kv_indefinite (DEFAULT) partition.", psqlPartition.getPartitionDate());
                     partitions.put(psqlPartition.getStart(), psqlPartition);
+                } else {
+                    throw new RuntimeException(ex);
                 }
             } finally {
                 partitionCreationLock.unlock();
