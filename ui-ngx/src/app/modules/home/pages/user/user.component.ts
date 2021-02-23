@@ -57,7 +57,7 @@ export class UserComponent extends EntityComponent<User> {
 
   isUserCredentialsEnabled(): boolean {
     if (!this.entity || !this.entity.additionalInfo || isUndefined(this.entity.additionalInfo.userCredentialsEnabled)) {
-      return true;
+      return false;
     } else {
       return this.entity.additionalInfo.userCredentialsEnabled === true;
     }
