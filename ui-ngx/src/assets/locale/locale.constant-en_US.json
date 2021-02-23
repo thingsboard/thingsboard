@@ -1593,7 +1593,9 @@
          "no-dynamic-value": "No dynamic value",
          "source-attribute": "Source attribute",
          "switch-to-dynamic-value": "Switch to dynamic value",
-         "switch-to-default-value": "Switch to default value"
+         "switch-to-default-value": "Switch to default value",
+         "inherit-owner": "Inherit from owner",
+         "source-attribute-not-set": "If source attribute isn't set"
     },
     "fullscreen": {
         "expand": "Expand to fullscreen",

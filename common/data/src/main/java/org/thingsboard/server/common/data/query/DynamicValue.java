@@ -17,17 +17,23 @@ package org.thingsboard.server.common.data.query;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @Data
+@RequiredArgsConstructor
 public class DynamicValue<T> {
 
     @JsonIgnore
     private T resolvedValue;
 
-    @Getter
     private final DynamicValueSourceType sourceType;
-    @Getter
     private final String sourceAttribute;
+    private final boolean inherit;
+
+    public DynamicValue(DynamicValueSourceType sourceType, String sourceAttribute) {
+        this.sourceAttribute = sourceAttribute;
+        this.sourceType = sourceType;
+        this.inherit = false;
+    }
 
 }

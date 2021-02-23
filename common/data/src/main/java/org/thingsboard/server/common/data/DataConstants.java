@@ -24,6 +24,7 @@ public class DataConstants {
     public static final String CUSTOMER = "CUSTOMER";
     public static final String DEVICE = "DEVICE";
 
+    public static final String SCOPE = "scope";
     public static final String CLIENT_SCOPE = "CLIENT_SCOPE";
     public static final String SERVER_SCOPE = "SERVER_SCOPE";
     public static final String SHARED_SCOPE = "SHARED_SCOPE";
