@@ -881,6 +881,7 @@
         "lwm2m-key-required": "LwM2M Security config key is required.",
         "lwm2m-value": "LwM2M Security config",
         "lwm2m-value-required": "LwM2M Security config value is required.",
+        "lwm2m-value-json-error": "LwM2M Security config value is not json format.",
         "lwm2m-endpoint": "Client endpoint/identity",
         "lwm2m-security-info": "Security Config Info",
         "lwm2m-value-edit": "Edit Security config",
