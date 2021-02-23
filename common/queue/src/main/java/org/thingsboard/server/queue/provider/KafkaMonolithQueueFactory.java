@@ -39,6 +39,7 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.kafka.TbKafkaAdmin;
+import org.thingsboard.server.queue.kafka.TbKafkaConsumerStatsService;
 import org.thingsboard.server.queue.kafka.TbKafkaConsumerTemplate;
 import org.thingsboard.server.queue.kafka.TbKafkaProducerTemplate;
 import org.thingsboard.server.queue.kafka.TbKafkaSettings;
@@ -65,6 +66,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
     private final TbQueueRemoteJsInvokeSettings jsInvokeSettings;
+    private final TbKafkaConsumerStatsService consumerStatsService;
 
     private final TbQueueAdmin coreAdmin;
     private final TbQueueAdmin ruleEngineAdmin;
@@ -79,6 +81,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
                                      TbQueueTransportApiSettings transportApiSettings,
                                      TbQueueTransportNotificationSettings transportNotificationSettings,
                                      TbQueueRemoteJsInvokeSettings jsInvokeSettings,
+                                     TbKafkaConsumerStatsService consumerStatsService,
                                      TbKafkaTopicConfigs kafkaTopicConfigs) {
         this.partitionService = partitionService;
         this.kafkaSettings = kafkaSettings;
@@ -88,6 +91,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         this.transportApiSettings = transportApiSettings;
         this.transportNotificationSettings = transportNotificationSettings;
         this.jsInvokeSettings = jsInvokeSettings;
+        this.consumerStatsService = consumerStatsService;
 
         this.coreAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getCoreConfigs());
         this.ruleEngineAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getRuleEngineConfigs());
@@ -156,6 +160,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         consumerBuilder.groupId("re-" + queueName + "-consumer");
         consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineMsg.parseFrom(msg.getData()), msg.getHeaders()));
         consumerBuilder.admin(ruleEngineAdmin);
+        consumerBuilder.statsService(consumerStatsService);
         return consumerBuilder.build();
     }
 
@@ -168,6 +173,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         consumerBuilder.groupId("monolith-rule-engine-notifications-consumer-" + serviceInfoProvider.getServiceId());
         consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
         consumerBuilder.admin(notificationAdmin);
+        consumerBuilder.statsService(consumerStatsService);
         return consumerBuilder.build();
     }
 
@@ -180,6 +186,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         consumerBuilder.groupId("monolith-core-consumer");
         consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreMsg.parseFrom(msg.getData()), msg.getHeaders()));
         consumerBuilder.admin(coreAdmin);
+        consumerBuilder.statsService(consumerStatsService);
         return consumerBuilder.build();
     }
 
@@ -192,6 +199,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         consumerBuilder.groupId("monolith-core-notifications-consumer-" + serviceInfoProvider.getServiceId());
         consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
         consumerBuilder.admin(notificationAdmin);
+        consumerBuilder.statsService(consumerStatsService);
         return consumerBuilder.build();
     }
 
@@ -204,6 +212,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         consumerBuilder.groupId("monolith-transport-api-consumer");
         consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportApiRequestMsg.parseFrom(msg.getData()), msg.getHeaders()));
         consumerBuilder.admin(transportApiAdmin);
+        consumerBuilder.statsService(consumerStatsService);
         return consumerBuilder.build();
     }
 
@@ -237,6 +246,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
                     return new TbProtoQueueMsg<>(msg.getKey(), builder.build(), msg.getHeaders());
                 }
         );
+        responseBuilder.statsService(consumerStatsService);
         responseBuilder.admin(jsExecutorAdmin);
 
         DefaultTbQueueRequestTemplate.DefaultTbQueueRequestTemplateBuilder
@@ -259,6 +269,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         consumerBuilder.groupId("monolith-us-consumer");
         consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToUsageStatsServiceMsg.parseFrom(msg.getData()), msg.getHeaders()));
         consumerBuilder.admin(coreAdmin);
+        consumerBuilder.statsService(consumerStatsService);
         return consumerBuilder.build();
     }
 

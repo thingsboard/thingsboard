@@ -27,7 +27,22 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceInfo;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.EntityViewInfo;
+import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantInfo;
+import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -84,6 +99,7 @@ import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
@@ -95,7 +111,6 @@ import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
@@ -122,6 +137,9 @@ public abstract class BaseController {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION = "You don't have permission to perform this operation!";
+
+    protected static final String DEFAULT_DASHBOARD = "defaultDashboardId";
+    protected static final String HOME_DASHBOARD = "homeDashboardId";
 
     private static final ObjectMapper json = new ObjectMapper();
 
@@ -858,4 +876,14 @@ public abstract class BaseController {
             }
         }
     }
+
+    protected void processDashboardIdFromAdditionalInfo(ObjectNode additionalInfo, String requiredFields) throws ThingsboardException {
+        String dashboardId = additionalInfo.has(requiredFields) ? additionalInfo.get(requiredFields).asText() : null;
+        if(dashboardId != null && !dashboardId.equals("null")) {
+            if(dashboardService.findDashboardById(getTenantId(), new DashboardId(UUID.fromString(dashboardId))) == null) {
+                additionalInfo.remove(requiredFields);
+            }
+        }
+    }
+
 }
