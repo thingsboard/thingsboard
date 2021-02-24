@@ -322,6 +322,8 @@ actors:
 cache:
   # caffeine or redis
   type: "${CACHE_TYPE:caffeine}"
+  attributes:
+    enabled: "${CACHE_ATTRIBUTES_ENABLED:true}"
 
 caffeine:
   specs:
@@ -355,6 +357,9 @@ caffeine:
     deviceProfiles:
       timeToLiveInMinutes: 1440
       maxSize: 0
+    attributes:
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
 
 redis:
   # standalone or cluster
