@@ -446,7 +446,8 @@ export function toWidgetInfo(widgetTypeEntity: WidgetType): WidgetInfo {
   };
 }
 
-export function toWidgetType(widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId: TenantId, bundleAlias: string): WidgetType {
+export function toWidgetType(widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId: TenantId,
+                             bundleAlias: string, createdTime: number): WidgetType {
   const descriptor: WidgetTypeDescriptor = {
     type: widgetInfo.type,
     sizeX: widgetInfo.sizeX,
@@ -462,6 +463,7 @@ export function toWidgetType(widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId:
   return {
     id,
     tenantId,
+    createdTime,
     bundleAlias,
     alias: widgetInfo.alias,
     name: widgetInfo.widgetName,
