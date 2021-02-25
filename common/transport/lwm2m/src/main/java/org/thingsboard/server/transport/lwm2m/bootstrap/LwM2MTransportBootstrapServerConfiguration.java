@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapSecurityStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MInMemoryBootstrapConfigStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2mDefaultBootstrapSessionManager;
-import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContextServer;
 
 import java.math.BigInteger;
 import java.security.AlgorithmParameters;
@@ -56,7 +56,7 @@ import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CBC_SHA256;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CCM_8;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.getCoapConfig;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.getCoapConfig;
 
 @Slf4j
 @Component
@@ -70,7 +70,7 @@ public class LwM2MTransportBootstrapServerConfiguration {
     private LwM2MTransportContextBootstrap contextBs;
 
     @Autowired
-    private LwM2MTransportContextServer contextS;
+    private LwM2mTransportContextServer contextS;
 
     @Autowired
     private LwM2MBootstrapSecurityStore lwM2MBootstrapSecurityStore;

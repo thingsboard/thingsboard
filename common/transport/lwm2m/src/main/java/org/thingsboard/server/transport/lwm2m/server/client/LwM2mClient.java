@@ -20,13 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
-import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
-import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportServiceImpl;
-import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServiceImpl;
 
 import java.util.List;
 import java.util.Map;
@@ -36,42 +34,36 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @Slf4j
 @Data
-public class LwM2MClient implements Cloneable {
+public class LwM2mClient implements Cloneable {
     private String deviceName;
     private String deviceProfileName;
-    private String endPoint;
+    private String endpoint;
     private String identity;
     private SecurityInfo securityInfo;
-    private UUID deviceUuid;
-    private UUID sessionUuid;
-    private UUID profileUuid;
-    private LeshanServer lwServer;
-    private LwM2MTransportServiceImpl lwM2MTransportServiceImpl;
+    private UUID deviceId;
+    private UUID sessionId;
+    private UUID profileId;
     private Registration registration;
     private ValidateDeviceCredentialsResponseMsg credentialsResponse;
-    private final Map<String, String> attributes;
     private final Map<String, ResourceValue> resources;
     private final Map<String, TransportProtos.TsKvProto> delayedRequests;
     private final List<String> pendingRequests;
     private boolean init;
-    private final LwM2mValueConverterImpl converter;
 
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
     }
 
-    public LwM2MClient(String endPoint, String identity, SecurityInfo securityInfo, ValidateDeviceCredentialsResponseMsg credentialsResponse, UUID profileUuid, UUID sessionUuid) {
-        this.endPoint = endPoint;
+    public LwM2mClient(String endpoint, String identity, SecurityInfo securityInfo, ValidateDeviceCredentialsResponseMsg credentialsResponse, UUID profileId, UUID sessionId) {
+        this.endpoint = endpoint;
         this.identity = identity;
         this.securityInfo = securityInfo;
         this.credentialsResponse = credentialsResponse;
-        this.attributes = new ConcurrentHashMap<>();
         this.delayedRequests = new ConcurrentHashMap<>();
         this.pendingRequests = new CopyOnWriteArrayList<>();
         this.resources = new ConcurrentHashMap<>();
-        this.profileUuid = profileUuid;
-        this.sessionUuid = sessionUuid;
-        this.converter = LwM2mValueConverterImpl.getInstance();
+        this.profileId = profileId;
+        this.sessionId = sessionId;
         this.init = false;
     }
 
@@ -83,7 +75,7 @@ public class LwM2MClient implements Cloneable {
         }
     }
 
-    public void initValue(LwM2MTransportServiceImpl lwM2MTransportService, String path) {
+    public void initValue(LwM2mTransportServiceImpl lwM2MTransportService, String path) {
         if (path != null) {
             this.pendingRequests.remove(path);
         }
@@ -93,8 +85,8 @@ public class LwM2MClient implements Cloneable {
         }
     }
 
-    public LwM2MClient copy() {
-        return new LwM2MClient(this.endPoint, this.identity, this.securityInfo, this.credentialsResponse, this.profileUuid, this.sessionUuid);
+    public LwM2mClient copy() {
+        return new LwM2mClient(this.endpoint, this.identity, this.securityInfo, this.credentialsResponse, this.profileId, this.sessionId);
     }
 }
 

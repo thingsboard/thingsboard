@@ -32,11 +32,11 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCre
 import java.util.Optional;
 
 @Slf4j
-public class LwM2MSessionMsgListener implements GenericFutureListener<Future<? super Void>>, SessionMsgListener {
-    private LwM2MTransportServiceImpl service;
+public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? super Void>>, SessionMsgListener {
+    private LwM2mTransportServiceImpl service;
     private TransportProtos.SessionInfoProto sessionInfo;
 
-    public LwM2MSessionMsgListener(LwM2MTransportServiceImpl service, TransportProtos.SessionInfoProto sessionInfo) {
+    public LwM2mSessionMsgListener(LwM2mTransportServiceImpl service, TransportProtos.SessionInfoProto sessionInfo) {
         this.service = service;
         this.sessionInfo = sessionInfo;
     }

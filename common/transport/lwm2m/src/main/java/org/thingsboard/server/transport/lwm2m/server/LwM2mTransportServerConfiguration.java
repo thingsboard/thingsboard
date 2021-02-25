@@ -22,15 +22,17 @@ import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeEncoder;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.californium.LeshanServerBuilder;
+import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.model.VersionedModelProvider;
 import org.eclipse.leshan.server.security.DefaultAuthorizer;
+import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.eclipse.leshan.server.security.SecurityChecker;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.transport.lwm2m.server.secure.LwM2mInMemorySecurityStore;
+import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import java.math.BigInteger;
@@ -57,21 +59,27 @@ import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CBC_SHA256;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CCM_8;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.getCoapConfig;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.getCoapConfig;
 
 @Slf4j
 @Component("LwM2MTransportServerConfiguration")
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' ) || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
-public class LwM2MTransportServerConfiguration {
+@TbLwM2mTransportComponent
+public class LwM2mTransportServerConfiguration {
     private PublicKey publicKey;
     private PrivateKey privateKey;
     private boolean pskMode = false;
 
     @Autowired
-    private LwM2MTransportContextServer context;
+    private LwM2mTransportContextServer context;
 
     @Autowired
-    private LwM2mInMemorySecurityStore lwM2mInMemorySecurityStore;
+    private LwM2mClientContext lwM2mClientContext;
+
+    @Autowired
+    private CaliforniumRegistrationStore registrationStore;
+
+    @Autowired
+    private EditableSecurityStore securityStore;
 
     @Bean
     public LeshanServer getLeshanServer() {
@@ -98,7 +106,8 @@ public class LwM2MTransportServerConfiguration {
         this.setServerWithCredentials(builder);
 
         /** Set securityStore with new registrationStore */
-        builder.setSecurityStore(lwM2mInMemorySecurityStore);
+        builder.setSecurityStore(securityStore);
+        builder.setRegistrationStore(registrationStore);
 
 
         /** Create DTLS Config */
@@ -109,15 +118,13 @@ public class LwM2MTransportServerConfiguration {
             dtlsConfig.setSupportedCipherSuites(
                     TLS_PSK_WITH_AES_128_CCM_8,
                     TLS_PSK_WITH_AES_128_CBC_SHA256);
-        }
-        else {
+        } else {
             dtlsConfig.setSupportedCipherSuites(
                     TLS_PSK_WITH_AES_128_CCM_8,
                     TLS_PSK_WITH_AES_128_CBC_SHA256,
                     TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
                     TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256);
         }
-
 
         /** Set DTLS Config */
         builder.setDtlsConfig(dtlsConfig);
@@ -140,7 +147,7 @@ public class LwM2MTransportServerConfiguration {
                         builder.setTrustedCertificates(new X509Certificate[0]);
                     }
                     /** Set securityStore with registrationStore*/
-                    builder.setAuthorizer(new DefaultAuthorizer(lwM2mInMemorySecurityStore, new SecurityChecker() {
+                    builder.setAuthorizer(new DefaultAuthorizer(securityStore, new SecurityChecker() {
                         @Override
                         protected boolean matchX509Identity(String endpoint, String receivedX509CommonName,
                                                             String expectedX509CommonName) {

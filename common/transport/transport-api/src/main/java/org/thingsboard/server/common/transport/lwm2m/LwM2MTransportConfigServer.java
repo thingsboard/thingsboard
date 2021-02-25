@@ -186,10 +186,6 @@ public class LwM2MTransportConfigServer {
     @Value("${transport.lwm2m.server.secure.alias:}")
     private String serverAlias;
 
-    @Getter
-    @Value("${transport.lwm2m.secure.redis_url:}")
-    private String redisUrl;
-
     @PostConstruct
     public void init() {
         modelsValue = ObjectLoader.loadDefault();

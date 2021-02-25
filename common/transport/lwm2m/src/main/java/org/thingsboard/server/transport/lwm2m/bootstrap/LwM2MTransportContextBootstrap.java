@@ -31,13 +31,10 @@ package org.thingsboard.server.transport.lwm2m.bootstrap;
  */
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigBootstrap;
-
-import javax.annotation.PostConstruct;
 
 
 @Slf4j
@@ -45,13 +42,10 @@ import javax.annotation.PostConstruct;
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true') || '${service.type:null}'=='monolith'")
 public class LwM2MTransportContextBootstrap extends TransportContext {
 
-    private LwM2MTransportConfigBootstrap ctxBootStrap;
-    @Autowired
-    LwM2MTransportConfigBootstrap lwM2MTransportConfigBootstarp;
+    private final LwM2MTransportConfigBootstrap ctxBootStrap;
 
-    @PostConstruct
-    public void init() {
-        this.ctxBootStrap = lwM2MTransportConfigBootstarp;
+    public LwM2MTransportContextBootstrap(LwM2MTransportConfigBootstrap ctxBootStrap) {
+        this.ctxBootStrap = ctxBootStrap;
     }
 
     public LwM2MTransportConfigBootstrap getCtxBootStrap() {

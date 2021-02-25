@@ -26,7 +26,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import java.util.Collection;
 import java.util.Optional;
 
-public interface LwM2MTransportService {
+public interface LwM2mTransportService {
 
     void onRegistered(LeshanServer lwServer, Registration registration, Collection<Observation> previousObsersations);
 
