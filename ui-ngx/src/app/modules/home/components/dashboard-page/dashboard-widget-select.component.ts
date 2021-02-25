@@ -23,6 +23,8 @@ import { Widget } from '@shared/models/widget.models';
 import { toWidgetInfo } from '@home/models/widget-component.models';
 import { share } from 'rxjs/operators';
 import { Observable } from 'rxjs';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-dashboard-widget-select',
@@ -47,7 +49,8 @@ export class DashboardWidgetSelectComponent implements OnInit, OnChanges {
 
   widgetsBundles$: Observable<Array<WidgetsBundle>>;
 
-  constructor(private widgetsService: WidgetService) {
+  constructor(private widgetsService: WidgetService,
+              private sanitizer: DomSanitizer) {
   }
 
   ngOnInit(): void {
@@ -59,7 +62,7 @@ export class DashboardWidgetSelectComponent implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
-      if (change.currentValue !== change.previousValue && change.currentValue) {
+      if (change.currentValue !== change.previousValue && (change.currentValue || change.currentValue === null)) {
         if (propName === 'widgetsBundle') {
           this.loadLibrary();
         }
@@ -69,36 +72,38 @@ export class DashboardWidgetSelectComponent implements OnInit, OnChanges {
 
   private loadLibrary() {
     this.widgets.length = 0;
-    const bundleAlias = this.widgetsBundle.alias;
-    const isSystem = this.widgetsBundle.tenantId.id === NULL_UUID;
-    this.widgetsService.getBundleWidgetTypes(bundleAlias,
-      isSystem).subscribe(
-      (types) => {
-        types = types.sort((a, b) => b.createdTime - a.createdTime);
-        let top = 0;
-        types.forEach((type) => {
-          const widgetTypeInfo = toWidgetInfo(type);
-          const widget: Widget = {
-            typeId: type.id,
-            isSystemType: isSystem,
-            bundleAlias,
-            typeAlias: widgetTypeInfo.alias,
-            type: widgetTypeInfo.type,
-            title: widgetTypeInfo.widgetName,
-            image: widgetTypeInfo.image,
-            description: widgetTypeInfo.description,
-            sizeX: widgetTypeInfo.sizeX,
-            sizeY: widgetTypeInfo.sizeY,
-            row: top,
-            col: 0,
-            config: JSON.parse(widgetTypeInfo.defaultConfig)
-          };
-          widget.config.title = widgetTypeInfo.widgetName;
-          this.widgets.push(widget);
-          top += widget.sizeY;
-        });
-      }
-    );
+    if (this.widgetsBundle !== null) {
+      const bundleAlias = this.widgetsBundle.alias;
+      const isSystem = this.widgetsBundle.tenantId.id === NULL_UUID;
+      this.widgetsService.getBundleWidgetTypes(bundleAlias,
+        isSystem).subscribe(
+        (types) => {
+          types = types.sort((a, b) => b.createdTime - a.createdTime);
+          let top = 0;
+          types.forEach((type) => {
+            const widgetTypeInfo = toWidgetInfo(type);
+            const widget: Widget = {
+              typeId: type.id,
+              isSystemType: isSystem,
+              bundleAlias,
+              typeAlias: widgetTypeInfo.alias,
+              type: widgetTypeInfo.type,
+              title: widgetTypeInfo.widgetName,
+              image: widgetTypeInfo.image,
+              description: widgetTypeInfo.description,
+              sizeX: widgetTypeInfo.sizeX,
+              sizeY: widgetTypeInfo.sizeY,
+              row: top,
+              col: 0,
+              config: JSON.parse(widgetTypeInfo.defaultConfig)
+            };
+            widget.config.title = widgetTypeInfo.widgetName;
+            this.widgets.push(widget);
+            top += widget.sizeY;
+          });
+        }
+      );
+    }
   }
 
   hasWidgetTypes(): boolean {
@@ -119,10 +124,11 @@ export class DashboardWidgetSelectComponent implements OnInit, OnChanges {
     this.widgetsBundleSelected.emit(bundle);
   }
 
-  backToSelectWidgetsBundle() {
-    this.widgetsBundle = null;
-    this.widgets.length = 0;
-    this.widgetsBundleSelected.emit(null);
+  getPreviewImage(imageUrl: string | null): SafeUrl | string {
+    if (isDefinedAndNotNull(imageUrl)) {
+      return this.sanitizer.bypassSecurityTrustUrl(imageUrl);
+    }
+    return '/assets/widget-preview-empty.svg';
   }
 
 }

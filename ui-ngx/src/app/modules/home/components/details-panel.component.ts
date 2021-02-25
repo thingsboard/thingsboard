@@ -32,6 +32,7 @@ export class DetailsPanelComponent extends PageComponent {
   @Input() headerSubtitle = '';
   @Input() isReadOnly = false;
   @Input() isAlwaysEdit = false;
+  @Input() showBackStateIcon = false;
 
   theFormValue: FormGroup;
 
@@ -50,6 +51,8 @@ export class DetailsPanelComponent extends PageComponent {
   toggleDetailsEditMode = new EventEmitter<boolean>();
   @Output()
   applyDetails = new EventEmitter<void>();
+  @Output()
+  backStateDetails = new EventEmitter<void>();
 
   isEditValue = false;
 
@@ -73,6 +76,10 @@ export class DetailsPanelComponent extends PageComponent {
 
   onCloseDetails() {
     this.closeDetails.emit();
+  }
+
+  onBackStateDetails() {
+    this.backStateDetails.emit();
   }
 
   onToggleDetailsEditMode() {

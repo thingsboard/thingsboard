@@ -28,6 +28,11 @@
       .mat-card {
         cursor: pointer;
 
+        .preview-container {
+          text-align: center;
+          margin: auto 0;
+        }
+
         .preview {
           max-width: 100%;
           max-height: 100%;

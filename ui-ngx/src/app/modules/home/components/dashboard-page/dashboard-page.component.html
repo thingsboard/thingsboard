@@ -246,12 +246,13 @@
                           headerHeightPx="120"
                           [isReadOnly]="true"
                           [isEdit]="false"
-                          (closeDetails)="onAddWidgetClosed()">
+                          [showBackStateIcon]="!!widgetsBundle?.title"
+                          (closeDetails)="onAddWidgetClosed()"
+                          (backStateDetails)="widgetBundleSelected(null)">
           <div class="header-pane" *ngIf="isAddingWidget">
             <div fxLayout="row">
-              <span class="tb-details-subtitle">{{ 'widgets-bundle.current' | translate }}</span>
-              <tb-widgets-bundle-select fxFlexOffset="5"
-                                        fxFlex
+<!--              <span class="tb-details-subtitle">{{ 'widgets-bundle.current' | translate }}</span>-->
+              <tb-widgets-bundle-select fxFlex
                                         required
                                         [selectFirstBundle]="false"
                                         [(ngModel)]="widgetsBundle"
