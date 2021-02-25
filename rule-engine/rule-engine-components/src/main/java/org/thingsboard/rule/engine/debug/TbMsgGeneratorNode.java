@@ -104,9 +104,10 @@ public class TbMsgGeneratorNode implements TbNode {
                         }
                     },
                     t -> {
-                        if (initialized) {
+                        if (initialized && (config.getMsgCount() == TbMsgGeneratorNodeConfiguration.UNLIMITED_MSG_COUNT || currentMsgCount < config.getMsgCount())) {
                             ctx.tellFailure(msg, t);
                             scheduleTickMsg(ctx);
+                            currentMsgCount++;
                         }
                     });
         }

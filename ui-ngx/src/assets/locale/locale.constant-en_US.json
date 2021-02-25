@@ -881,6 +881,7 @@
         "lwm2m-key-required": "LwM2M Security config key is required.",
         "lwm2m-value": "LwM2M Security config",
         "lwm2m-value-required": "LwM2M Security config value is required.",
+        "lwm2m-value-json-error": "LwM2M Security config value is not json format.",
         "lwm2m-endpoint": "Client endpoint/identity",
         "lwm2m-security-info": "Security Config Info",
         "lwm2m-value-edit": "Edit Security config",
@@ -1667,7 +1668,9 @@
          "no-dynamic-value": "No dynamic value",
          "source-attribute": "Source attribute",
          "switch-to-dynamic-value": "Switch to dynamic value",
-         "switch-to-default-value": "Switch to default value"
+         "switch-to-default-value": "Switch to default value",
+         "inherit-owner": "Inherit from owner",
+         "source-attribute-not-set": "If source attribute isn't set"
     },
     "fullscreen": {
         "expand": "Expand to fullscreen",
