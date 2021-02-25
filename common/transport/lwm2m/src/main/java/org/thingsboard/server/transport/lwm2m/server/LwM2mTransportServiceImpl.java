@@ -122,12 +122,12 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
 
     @PostConstruct
     public void init() {
-        this.context.getScheduler().scheduleAtFixedRate(this::checkInactivityAndReportActivity, new Random().nextInt((int) context.getCtxServer().getSessionReportTimeout()), context.getCtxServer().getSessionReportTimeout(), TimeUnit.MILLISECONDS);
-        this.executorRegistered = Executors.newFixedThreadPool(this.context.getCtxServer().getRegisteredPoolSize(),
+        this.context.getScheduler().scheduleAtFixedRate(this::checkInactivityAndReportActivity, new Random().nextInt((int) context.getLwM2MTransportConfigServer().getSessionReportTimeout()), context.getLwM2MTransportConfigServer().getSessionReportTimeout(), TimeUnit.MILLISECONDS);
+        this.executorRegistered = Executors.newFixedThreadPool(this.context.getLwM2MTransportConfigServer().getRegisteredPoolSize(),
                 new NamedThreadFactory(String.format("LwM2M %s channel registered", SERVICE_CHANNEL)));
-        this.executorUpdateRegistered = Executors.newFixedThreadPool(this.context.getCtxServer().getUpdateRegisteredPoolSize(),
+        this.executorUpdateRegistered = Executors.newFixedThreadPool(this.context.getLwM2MTransportConfigServer().getUpdateRegisteredPoolSize(),
                 new NamedThreadFactory(String.format("LwM2M %s channel update registered", SERVICE_CHANNEL)));
-        this.executorUnRegistered = Executors.newFixedThreadPool(this.context.getCtxServer().getUnRegisteredPoolSize(),
+        this.executorUnRegistered = Executors.newFixedThreadPool(this.context.getLwM2MTransportConfigServer().getUnRegisteredPoolSize(),
                 new NamedThreadFactory(String.format("LwM2M %s channel un registered", SERVICE_CHANNEL)));
         this.converter = LwM2mValueConverterImpl.getInstance();
     }
@@ -295,11 +295,11 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
                 String value = de.getValue().getAsString();
                 LwM2mClient lwM2MClient = lwM2mClientContext.getLwM2mClient(new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
                 LwM2mClientProfile profile = lwM2mClientContext.getProfile(new UUID(sessionInfo.getDeviceProfileIdMSB(), sessionInfo.getDeviceProfileIdLSB()));
-                ResourceModel resourceModel = context.getCtxServer().getResourceModel(lwM2MClient.getRegistration(), new LwM2mPath(path));
+                ResourceModel resourceModel = context.getLwM2MTransportConfigServer().getResourceModel(lwM2MClient.getRegistration(), new LwM2mPath(path));
                 if (!path.isEmpty() && (this.validatePathInAttrProfile(profile, path) || this.validatePathInTelemetryProfile(profile, path))) {
                     if (resourceModel != null && resourceModel.operations.isWritable()) {
                         lwM2mTransportRequest.sendAllRequest(leshanServer, lwM2MClient.getRegistration(), path, POST_TYPE_OPER_WRITE_REPLACE,
-                                ContentFormat.TLV.getName(), null, value, this.context.getCtxServer().getTimeout());
+                                ContentFormat.TLV.getName(), null, value, this.context.getLwM2MTransportConfigServer().getTimeout());
                     } else {
                         log.error("Resource path - [{}] value - [{}] is not Writable and cannot be updated", path, value);
                         String logMsg = String.format("%s: attributeUpdate: Resource path - %s value - %s is not Writable and cannot be updated",
@@ -355,7 +355,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
     @Override
     public void doTrigger(LeshanServer lwServer, Registration registration, String path) {
         lwM2mTransportRequest.sendAllRequest(lwServer, registration, path, POST_TYPE_OPER_EXECUTE,
-                ContentFormat.TLV.getName(), null, null, this.context.getCtxServer().getTimeout());
+                ContentFormat.TLV.getName(), null, null, this.context.getLwM2MTransportConfigServer().getTimeout());
     }
 
     /**
@@ -473,7 +473,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
                 lwM2MClient.getPendingRequests().addAll(clientObjects);
                 clientObjects.forEach(path -> {
                     lwM2mTransportRequest.sendAllRequest(lwServer, registration, path, GET_TYPE_OPER_READ, ContentFormat.TLV.getName(),
-                            null, null, this.context.getCtxServer().getTimeout());
+                            null, null, this.context.getLwM2MTransportConfigServer().getTimeout());
                 });
             }
         }
@@ -618,7 +618,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
             lwM2MClient.getPendingRequests().addAll(pathSent);
             pathSent.forEach(target -> {
                 lwM2mTransportRequest.sendAllRequest(lwServer, registration, target, typeOper, ContentFormat.TLV.getName(),
-                        null, null, this.context.getCtxServer().getTimeout());
+                        null, null, this.context.getLwM2MTransportConfigServer().getTimeout());
             });
             if (GET_TYPE_OPER_OBSERVE.equals(typeOper)) {
                 lwM2MClient.initValue(this, null);
@@ -746,7 +746,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         LwM2mPath pathIds = new LwM2mPath(path);
         ResourceValue resourceValue = this.returnResourceValueFromLwM2MClient(lwM2MClient, pathIds);
         return resourceValue == null ? null :
-                this.converter.convertValue(resourceValue.getResourceValue(), this.context.getCtxServer().getResourceModelType(lwM2MClient.getRegistration(), pathIds), ResourceModel.Type.STRING, pathIds).toString();
+                this.converter.convertValue(resourceValue.getResourceValue(), this.context.getLwM2MTransportConfigServer().getResourceModelType(lwM2MClient.getRegistration(), pathIds), ResourceModel.Type.STRING, pathIds).toString();
     }
 
     /**
@@ -927,10 +927,10 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
             if (pathIds.isResource()) {
                 if (GET_TYPE_OPER_READ.equals(typeOper)) {
                     lwM2mTransportRequest.sendAllRequest(lwServer, registration, target, typeOper,
-                            ContentFormat.TLV.getName(), null, null, this.context.getCtxServer().getTimeout());
+                            ContentFormat.TLV.getName(), null, null, this.context.getLwM2MTransportConfigServer().getTimeout());
                 } else if (GET_TYPE_OPER_OBSERVE.equals(typeOper)) {
                     lwM2mTransportRequest.sendAllRequest(lwServer, registration, target, typeOper,
-                            null, null, null, this.context.getCtxServer().getTimeout());
+                            null, null, null, this.context.getLwM2MTransportConfigServer().getTimeout());
                 }
             }
         });
@@ -959,7 +959,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
     private void putDelayedUpdateResourcesClient(LwM2mClient lwM2MClient, Object valueOld, Object valueNew, String path) {
         if (valueNew != null && (valueOld == null || !valueNew.toString().equals(valueOld.toString()))) {
             lwM2mTransportRequest.sendAllRequest(leshanServer, lwM2MClient.getRegistration(), path, POST_TYPE_OPER_WRITE_REPLACE,
-                    ContentFormat.TLV.getName(), null, valueNew, this.context.getCtxServer().getTimeout());
+                    ContentFormat.TLV.getName(), null, valueNew, this.context.getLwM2MTransportConfigServer().getTimeout());
         } else {
             log.error("05 delayError");
         }
@@ -1138,8 +1138,8 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
 
         ConcurrentMap<String, String> keyNamesIsWritable = keyNamesMap.entrySet()
                 .stream()
-                .filter(e -> (attrSet.contains(e.getKey()) && context.getCtxServer().getResourceModel(lwM2MClient.getRegistration(), new LwM2mPath(e.getKey())) != null &&
-                        context.getCtxServer().getResourceModel(lwM2MClient.getRegistration(), new LwM2mPath(e.getKey())).operations.isWritable()))
+                .filter(e -> (attrSet.contains(e.getKey()) && context.getLwM2MTransportConfigServer().getResourceModel(lwM2MClient.getRegistration(), new LwM2mPath(e.getKey())) != null &&
+                        context.getLwM2MTransportConfigServer().getResourceModel(lwM2MClient.getRegistration(), new LwM2mPath(e.getKey())).operations.isWritable()))
                 .collect(Collectors.toConcurrentMap(Map.Entry::getKey, Map.Entry::getValue));
 
         Set<String> namesIsWritable = ConcurrentHashMap.newKeySet();

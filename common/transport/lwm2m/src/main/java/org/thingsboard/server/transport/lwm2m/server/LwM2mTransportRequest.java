@@ -97,7 +97,7 @@ public class LwM2mTransportRequest {
     @PostConstruct
     public void init() {
         this.converter = LwM2mValueConverterImpl.getInstance();
-        executorResponse = Executors.newFixedThreadPool(this.context.getCtxServer().getRequestPoolSize(),
+        executorResponse = Executors.newFixedThreadPool(this.context.getLwM2MTransportConfigServer().getRequestPoolSize(),
                 new NamedThreadFactory(String.format("LwM2M %s channel response", RESPONSE_CHANNEL)));
     }
 
@@ -126,7 +126,7 @@ public class LwM2mTransportRequest {
         if (registration != null && resultIds.getObjectId() >= 0) {
             DownlinkRequest request = null;
             ContentFormat contentFormat = contentFormatParam != null ? ContentFormat.fromName(contentFormatParam.toUpperCase()) : null;
-            ResourceModel resource = service.context.getCtxServer().getResourceModel(registration, resultIds);
+            ResourceModel resource = service.context.getLwM2MTransportConfigServer().getResourceModel(registration, resultIds);
             timeoutInMs = timeoutInMs > 0 ? timeoutInMs : DEFAULT_TIMEOUT;
             switch (typeOper) {
                 case GET_TYPE_OPER_READ:

@@ -42,13 +42,13 @@ import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigBootstr
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true') || '${service.type:null}'=='monolith'")
 public class LwM2MTransportContextBootstrap extends TransportContext {
 
-    private final LwM2MTransportConfigBootstrap ctxBootStrap;
+    private final LwM2MTransportConfigBootstrap lwM2MTransportConfigBootstrap;
 
     public LwM2MTransportContextBootstrap(LwM2MTransportConfigBootstrap ctxBootStrap) {
-        this.ctxBootStrap = ctxBootStrap;
+        this.lwM2MTransportConfigBootstrap = ctxBootStrap;
     }
 
     public LwM2MTransportConfigBootstrap getCtxBootStrap() {
-        return this.ctxBootStrap;
+        return this.lwM2MTransportConfigBootstrap;
     }
 }

@@ -94,7 +94,7 @@ public class LwM2MTransportBootstrapServerConfiguration {
         builder.setCoapConfig(getCoapConfig(bootstrapPortNoSec, bootstrapSecurePort));
 
         /** Define model provider (Create Models )*/
-        builder.setModel(new StaticModel(contextS.getCtxServer().getModelsValue()));
+        builder.setModel(new StaticModel(contextS.getLwM2MTransportConfigServer().getModelsValue()));
 
         /**  Create credentials */
         this.setServerWithCredentials(builder);
@@ -108,8 +108,8 @@ public class LwM2MTransportBootstrapServerConfiguration {
 
         /** Create and Set DTLS Config */
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
-        dtlsConfig.setRecommendedSupportedGroupsOnly(this.contextS.getCtxServer().isRecommendedSupportedGroups());
-        dtlsConfig.setRecommendedCipherSuitesOnly(this.contextS.getCtxServer().isRecommendedCiphers());
+        dtlsConfig.setRecommendedSupportedGroupsOnly(this.contextS.getLwM2MTransportConfigServer().isRecommendedSupportedGroups());
+        dtlsConfig.setRecommendedCipherSuitesOnly(this.contextS.getLwM2MTransportConfigServer().isRecommendedCiphers());
         if (this.pskMode) {
             dtlsConfig.setSupportedCipherSuites(
                     TLS_PSK_WITH_AES_128_CCM_8,
@@ -135,10 +135,10 @@ public class LwM2MTransportBootstrapServerConfiguration {
 
     private void setServerWithCredentials(LeshanBootstrapServerBuilder builder) {
         try {
-            if (this.contextS.getCtxServer().getKeyStoreValue() != null) {
-                KeyStore keyStoreServer = this.contextS.getCtxServer().getKeyStoreValue();
+            if (this.contextS.getLwM2MTransportConfigServer().getKeyStoreValue() != null) {
+                KeyStore keyStoreServer = this.contextS.getLwM2MTransportConfigServer().getKeyStoreValue();
                 if (this.setBuilderX509(builder)) {
-                    X509Certificate rootCAX509Cert = (X509Certificate) keyStoreServer.getCertificate(this.contextS.getCtxServer().getRootAlias());
+                    X509Certificate rootCAX509Cert = (X509Certificate) keyStoreServer.getCertificate(this.contextS.getLwM2MTransportConfigServer().getRootAlias());
                     if (rootCAX509Cert != null) {
                         X509Certificate[] trustedCertificates = new X509Certificate[1];
                         trustedCertificates[0] = rootCAX509Cert;
@@ -169,8 +169,8 @@ public class LwM2MTransportBootstrapServerConfiguration {
          * For idea => KeyStorePathResource == common/transport/lwm2m/src/main/resources/credentials: in LwM2MTransportContextServer: credentials/serverKeyStore.jks
          */
         try {
-            X509Certificate serverCertificate = (X509Certificate) this.contextS.getCtxServer().getKeyStoreValue().getCertificate(this.contextBs.getCtxBootStrap().getBootstrapAlias());
-            PrivateKey privateKey = (PrivateKey) this.contextS.getCtxServer().getKeyStoreValue().getKey(this.contextBs.getCtxBootStrap().getBootstrapAlias(), this.contextS.getCtxServer().getKeyStorePasswordServer() == null ? null : this.contextS.getCtxServer().getKeyStorePasswordServer().toCharArray());
+            X509Certificate serverCertificate = (X509Certificate) this.contextS.getLwM2MTransportConfigServer().getKeyStoreValue().getCertificate(this.contextBs.getCtxBootStrap().getBootstrapAlias());
+            PrivateKey privateKey = (PrivateKey) this.contextS.getLwM2MTransportConfigServer().getKeyStoreValue().getKey(this.contextBs.getCtxBootStrap().getBootstrapAlias(), this.contextS.getLwM2MTransportConfigServer().getKeyStorePasswordServer() == null ? null : this.contextS.getLwM2MTransportConfigServer().getKeyStorePasswordServer().toCharArray());
             PublicKey publicKey = serverCertificate.getPublicKey();
             if (serverCertificate != null &&
                     privateKey != null && privateKey.getEncoded().length > 0 &&

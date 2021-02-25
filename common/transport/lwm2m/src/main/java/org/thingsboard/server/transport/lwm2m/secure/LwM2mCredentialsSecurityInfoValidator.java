@@ -26,7 +26,6 @@ import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
-import org.thingsboard.server.transport.lwm2m.bootstrap.LwM2MTransportContextBootstrap;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContextServer;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler;
 import org.thingsboard.server.transport.lwm2m.utils.TypeServer;
@@ -83,7 +82,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
                     }
                 });
         try {
-            latch.await(contextS.getCtxServer().getTimeout(), TimeUnit.MILLISECONDS);
+            latch.await(contextS.getLwM2MTransportConfigServer().getTimeout(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             log.error("Failed to await credentials!", e);
         }

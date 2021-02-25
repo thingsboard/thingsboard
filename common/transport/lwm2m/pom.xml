@@ -59,20 +59,12 @@
             <artifactId>transport-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.common</groupId>
-            <artifactId>cache</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context-support</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.data</groupId>
-            <artifactId>spring-data-redis</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -98,7 +90,6 @@
             <groupId>org.eclipse.leshan</groupId>
             <artifactId>leshan-client-cf</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.eclipse.leshan</groupId>
             <artifactId>leshan-server-redis</artifactId>

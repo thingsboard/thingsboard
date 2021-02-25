@@ -25,7 +25,7 @@ import java.lang.reflect.Method;
 
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CREDENTIALS_CACHE;
 
-@Component
+@Component("previousDeviceCredentialsId")
 public class PreviousDeviceCredentialsIdKeyGenerator implements KeyGenerator {
 
     private static final String NOT_VALID_DEVICE = DEVICE_CREDENTIALS_CACHE + "_notValidDeviceCredentialsId";

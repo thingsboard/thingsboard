@@ -34,7 +34,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportService;
@@ -45,8 +44,6 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
 
-import javax.annotation.PostConstruct;
-
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_TELEMETRY;
 
 @Slf4j
@@ -54,25 +51,22 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandle
 @TbLwM2mTransportComponent
 public class LwM2mTransportContextServer extends TransportContext {
 
-    private LwM2MTransportConfigServer ctxServer;
 
-    @Autowired
-    protected LwM2MTransportConfigServer lwM2MTransportConfigServer;
+    private final LwM2MTransportConfigServer lwM2MTransportConfigServer;
 
-    @Autowired
-    private TransportService transportService;
+    private final TransportService transportService;
 
     @Getter
-    @Autowired
-    private LwM2MJsonAdaptor adaptor;
+    private final LwM2MJsonAdaptor adaptor;
 
-    @PostConstruct
-    public void init() {
-        this.ctxServer = lwM2MTransportConfigServer;
+    public LwM2mTransportContextServer(LwM2MTransportConfigServer lwM2MTransportConfigServer, TransportService transportService, LwM2MJsonAdaptor adaptor) {
+        this.lwM2MTransportConfigServer = lwM2MTransportConfigServer;
+        this.transportService = transportService;
+        this.adaptor = adaptor;
     }
 
-    public LwM2MTransportConfigServer getCtxServer() {
-        return this.ctxServer;
+    public LwM2MTransportConfigServer getLwM2MTransportConfigServer() {
+        return this.lwM2MTransportConfigServer;
     }
 
     /**
