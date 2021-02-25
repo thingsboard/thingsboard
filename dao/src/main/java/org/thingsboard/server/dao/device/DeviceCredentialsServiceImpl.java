@@ -33,7 +33,7 @@ import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.thingsboard.server.dao.util.mapping.JacksonUtil;
+import org.thingsboard.common.util.JacksonUtil;
 
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CREDENTIALS_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
