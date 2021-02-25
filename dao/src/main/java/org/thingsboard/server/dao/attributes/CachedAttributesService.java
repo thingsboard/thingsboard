@@ -37,10 +37,12 @@ import org.thingsboard.server.dao.service.Validator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.CacheConstants.ATTRIBUTES_CACHE;
@@ -106,13 +108,11 @@ public class CachedAttributesService implements AttributesService {
             return Futures.immediateFuture(cachedAttributes);
         }
 
-        ArrayList<String> notFoundAttributeKeys = new ArrayList<>(attributeKeys);
+        Set<String> notFoundAttributeKeys = new HashSet<>(attributeKeys);
         notFoundAttributeKeys.removeAll(wrappedCachedAttributes.keySet());
 
         ListenableFuture<List<AttributeKvEntry>> result = attributesDao.find(tenantId, entityId, scope, notFoundAttributeKeys);
-        return Futures.transform(result, foundInDbAttributes -> {
-            return mergeDbAndCacheAttributes(entityId, scope, cachedAttributes, notFoundAttributeKeys, foundInDbAttributes);
-        }, MoreExecutors.directExecutor());
+        return Futures.transform(result, foundInDbAttributes -> mergeDbAndCacheAttributes(entityId, scope, cachedAttributes, notFoundAttributeKeys, foundInDbAttributes), MoreExecutors.directExecutor());
 
     }
 
@@ -130,7 +130,7 @@ public class CachedAttributesService implements AttributesService {
         return cachedAttributes;
     }
 
-    private List<AttributeKvEntry> mergeDbAndCacheAttributes(EntityId entityId, String scope, List<AttributeKvEntry> cachedAttributes, ArrayList<String> notFoundAttributeKeys, List<AttributeKvEntry> foundInDbAttributes) {
+    private List<AttributeKvEntry> mergeDbAndCacheAttributes(EntityId entityId, String scope, List<AttributeKvEntry> cachedAttributes, Set<String> notFoundAttributeKeys, List<AttributeKvEntry> foundInDbAttributes) {
         for (AttributeKvEntry foundInDbAttribute : foundInDbAttributes) {
             AttributeCacheKey attributeCacheKey = new AttributeCacheKey(scope, entityId, foundInDbAttribute.getKey());
             attributesCache.put(attributeCacheKey, foundInDbAttribute);
