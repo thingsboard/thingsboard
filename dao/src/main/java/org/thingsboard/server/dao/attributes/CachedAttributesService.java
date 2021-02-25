@@ -56,16 +56,15 @@ public class CachedAttributesService implements AttributesService {
     private static final String STATS_NAME = "attributes.cache";
 
     private final AttributesDao attributesDao;
-    private final Cache attributesCache;
-
+    private final AttributesCacheWrapper cacheWrapper;
     private final DefaultCounter hitCounter;
     private final DefaultCounter missCounter;
 
     public CachedAttributesService(AttributesDao attributesDao,
-                                   CacheManager cacheManager,
+                                   AttributesCacheWrapper cacheWrapper,
                                    StatsFactory statsFactory) {
         this.attributesDao = attributesDao;
-        this.attributesCache = cacheManager.getCache(ATTRIBUTES_CACHE);
+        this.cacheWrapper = cacheWrapper;
 
         this.hitCounter = statsFactory.createDefaultCounter(STATS_NAME, "result", "hit");
         this.missCounter = statsFactory.createDefaultCounter(STATS_NAME, "result", "miss");
@@ -77,7 +76,7 @@ public class CachedAttributesService implements AttributesService {
         Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey);
 
         AttributeCacheKey attributeCacheKey = new AttributeCacheKey(scope, entityId, attributeKey);
-        Cache.ValueWrapper cachedAttributeValue = attributesCache.get(attributeCacheKey);
+        Cache.ValueWrapper cachedAttributeValue = cacheWrapper.get(attributeCacheKey);
         if (cachedAttributeValue != null) {
             hitCounter.increment();
             AttributeKvEntry cachedAttributeKvEntry = (AttributeKvEntry) cachedAttributeValue.get();
@@ -87,7 +86,7 @@ public class CachedAttributesService implements AttributesService {
             ListenableFuture<Optional<AttributeKvEntry>> result = attributesDao.find(tenantId, entityId, scope, attributeKey);
             return Futures.transform(result, foundAttrKvEntry -> {
                 // TODO: think if it's a good idea to store 'empty' attributes
-                attributesCache.put(attributeKey, foundAttrKvEntry.orElse(null));
+                cacheWrapper.put(attributeCacheKey, foundAttrKvEntry.orElse(null));
                 return foundAttrKvEntry;
             }, MoreExecutors.directExecutor());
         }
@@ -119,7 +118,7 @@ public class CachedAttributesService implements AttributesService {
     private Map<String, Cache.ValueWrapper> findCachedAttributes(EntityId entityId, String scope, Collection<String> attributeKeys) {
         Map<String, Cache.ValueWrapper> cachedAttributes = new HashMap<>();
         for (String attributeKey : attributeKeys) {
-            Cache.ValueWrapper cachedAttributeValue = attributesCache.get(new AttributeCacheKey(scope, entityId, attributeKey));
+            Cache.ValueWrapper cachedAttributeValue = cacheWrapper.get(new AttributeCacheKey(scope, entityId, attributeKey));
             if (cachedAttributeValue != null) {
                 hitCounter.increment();
                 cachedAttributes.put(attributeKey, cachedAttributeValue);
@@ -133,11 +132,11 @@ public class CachedAttributesService implements AttributesService {
     private List<AttributeKvEntry> mergeDbAndCacheAttributes(EntityId entityId, String scope, List<AttributeKvEntry> cachedAttributes, Set<String> notFoundAttributeKeys, List<AttributeKvEntry> foundInDbAttributes) {
         for (AttributeKvEntry foundInDbAttribute : foundInDbAttributes) {
             AttributeCacheKey attributeCacheKey = new AttributeCacheKey(scope, entityId, foundInDbAttribute.getKey());
-            attributesCache.put(attributeCacheKey, foundInDbAttribute);
+            cacheWrapper.put(attributeCacheKey, foundInDbAttribute);
             notFoundAttributeKeys.remove(foundInDbAttribute.getKey());
         }
         for (String key : notFoundAttributeKeys){
-            attributesCache.put(new AttributeCacheKey(scope, entityId, key), null);
+            cacheWrapper.put(new AttributeCacheKey(scope, entityId, key), null);
         }
         List<AttributeKvEntry> mergedAttributes = new ArrayList<>(cachedAttributes);
         mergedAttributes.addAll(foundInDbAttributes);
@@ -185,7 +184,7 @@ public class CachedAttributesService implements AttributesService {
     private void evictAttributesFromCache(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys) {
         try {
             for (String attributeKey : attributeKeys) {
-                attributesCache.evict(new AttributeCacheKey(scope, entityId, attributeKey));
+                cacheWrapper.evict(new AttributeCacheKey(scope, entityId, attributeKey));
             }
         } catch (Exception e) {
             log.error("[{}][{}] Failed to remove values from cache.", tenantId, entityId, e);
