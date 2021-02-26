@@ -545,6 +545,7 @@ transport:
   http:
     enabled: "${HTTP_ENABLED:true}"
     request_timeout: "${HTTP_REQUEST_TIMEOUT:60000}"
+    max_request_timeout: "${HTTP_MAX_REQUEST_TIMEOUT:300000}"
   # Local MQTT transport parameters
   mqtt:
     # Enable/disable mqtt transport protocol.
