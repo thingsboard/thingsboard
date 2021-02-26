@@ -35,14 +35,16 @@ export enum EntityKeyType {
   SERVER_ATTRIBUTE = 'SERVER_ATTRIBUTE',
   TIME_SERIES = 'TIME_SERIES',
   ENTITY_FIELD = 'ENTITY_FIELD',
-  ALARM_FIELD = 'ALARM_FIELD'
+  ALARM_FIELD = 'ALARM_FIELD',
+  CONSTANT = 'CONSTANT'
 }
 
 export const entityKeyTypeTranslationMap = new Map<EntityKeyType, string>(
   [
     [EntityKeyType.ATTRIBUTE, 'filter.key-type.attribute'],
     [EntityKeyType.TIME_SERIES, 'filter.key-type.timeseries'],
-    [EntityKeyType.ENTITY_FIELD, 'filter.key-type.entity-field']
+    [EntityKeyType.ENTITY_FIELD, 'filter.key-type.entity-field'],
+    [EntityKeyType.CONSTANT, 'filter.key-type.constant']
   ]
 );
 
@@ -344,12 +346,14 @@ export interface KeyFilterPredicateInfo {
 export interface KeyFilter {
   key: EntityKey;
   valueType: EntityKeyValueType;
+  value: string | number | boolean;
   predicate: KeyFilterPredicate;
 }
 
 export interface KeyFilterInfo {
   key: EntityKey;
   valueType: EntityKeyValueType;
+  value: string | number | boolean;
   predicates: Array<KeyFilterPredicateInfo>;
 }
 
@@ -466,6 +470,7 @@ export function keyFilterInfosToKeyFilters(keyFilterInfos: Array<KeyFilterInfo>)
       const keyFilter: KeyFilter = {
         key,
         valueType: keyFilterInfo.valueType,
+        value: keyFilterInfo.value,
         predicate: keyFilterPredicateInfoToKeyFilterPredicate(predicate)
       };
       keyFilters.push(keyFilter);
@@ -486,6 +491,7 @@ export function keyFiltersToKeyFilterInfos(keyFilters: Array<KeyFilter>): Array<
         keyFilterInfo = {
           key,
           valueType: keyFilter.valueType,
+          value: keyFilter.value,
           predicates: []
         };
         keyFilterInfoMap[infoKey] = keyFilterInfo;
@@ -508,6 +514,7 @@ export function filterInfoToKeyFilters(filter: FilterInfo): Array<KeyFilter> {
       const keyFilter: KeyFilter = {
         key,
         valueType: keyFilterInfo.valueType,
+        value: keyFilterInfo.value,
         predicate: keyFilterPredicateInfoToKeyFilterPredicate(predicate)
       };
       keyFilters.push(keyFilter);
