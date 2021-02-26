@@ -13,21 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.profile;
+package org.thingsboard.server.queue.util;
 
-import lombok.Data;
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
-import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
-@Data
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class TbDeviceProfileNodeConfiguration implements NodeConfiguration<TbDeviceProfileNodeConfiguration> {
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-    private boolean persistAlarmRulesState;
-    private boolean fetchAlarmRulesStateOnStart;
-
-    @Override
-    public TbDeviceProfileNodeConfiguration defaultConfiguration() {
-        return new TbDeviceProfileNodeConfiguration();
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' ) || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
+public @interface TbLwM2mTransportComponent {
 }

@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.cache;
+package org.thingsboard.server.cache;
 
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.ConverterRegistry;
@@ -87,11 +86,6 @@ public abstract class TBRedisCacheConfiguration {
         registerDefaultConverters(redisConversionService);
         RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig().withConversionService(redisConversionService);
         return RedisCacheManager.builder(cf).cacheDefaults(configuration).build();
-    }
-
-    @Bean
-    public KeyGenerator previousDeviceCredentialsId() {
-        return new PreviousDeviceCredentialsIdKeyGenerator();
     }
 
     @Bean

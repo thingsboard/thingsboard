@@ -42,6 +42,7 @@
         <module>transport</module>
         <module>dao-api</module>
         <module>stats</module>
+        <module>cache</module>
     </modules>
 
 </project>

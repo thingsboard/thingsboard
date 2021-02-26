@@ -34,8 +34,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportService;
@@ -43,40 +41,32 @@ import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigServer;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
-import org.thingsboard.server.transport.lwm2m.server.secure.LwM2mInMemorySecurityStore;
 
-import javax.annotation.PostConstruct;
-
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.LOG_LW2M_TELEMETRY;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_TELEMETRY;
 
 @Slf4j
 @Component
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true') || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
-public class LwM2MTransportContextServer extends TransportContext {
+@TbLwM2mTransportComponent
+public class LwM2mTransportContextServer extends TransportContext {
 
-    private LwM2MTransportConfigServer ctxServer;
 
-    @Autowired
-    protected LwM2MTransportConfigServer lwM2MTransportConfigServer;
+    private final LwM2MTransportConfigServer lwM2MTransportConfigServer;
 
-    @Autowired
-    private TransportService transportService;
+    private final TransportService transportService;
 
     @Getter
-    @Autowired
-    private LwM2MJsonAdaptor adaptor;
+    private final LwM2MJsonAdaptor adaptor;
 
-    @Autowired
-    LwM2mInMemorySecurityStore lwM2mInMemorySecurityStore;
-
-    @PostConstruct
-    public void init() {
-        this.ctxServer = lwM2MTransportConfigServer;
+    public LwM2mTransportContextServer(LwM2MTransportConfigServer lwM2MTransportConfigServer, TransportService transportService, LwM2MJsonAdaptor adaptor) {
+        this.lwM2MTransportConfigServer = lwM2MTransportConfigServer;
+        this.transportService = transportService;
+        this.adaptor = adaptor;
     }
 
-    public LwM2MTransportConfigServer getCtxServer() {
-        return this.ctxServer;
+    public LwM2MTransportConfigServer getLwM2MTransportConfigServer() {
+        return this.lwM2MTransportConfigServer;
     }
 
     /**
@@ -86,7 +76,7 @@ public class LwM2MTransportContextServer extends TransportContext {
      * @return - dummy
      */
     private <T> TransportServiceCallback<Void> getPubAckCallbackSentAttrTelemetry(final T msg) {
-        return new TransportServiceCallback<Void>() {
+        return new TransportServiceCallback<>() {
             @Override
             public void onSuccess(Void dummy) {
                 log.trace("Success to publish msg: {}, dummy: {}", msg, dummy);
@@ -101,11 +91,11 @@ public class LwM2MTransportContextServer extends TransportContext {
 
     public void sentParametersOnThingsboard(JsonElement msg, String topicName, TransportProtos.SessionInfoProto sessionInfo) {
         try {
-            if (topicName.equals(LwM2MTransportHandler.DEVICE_ATTRIBUTES_TOPIC)) {
+            if (topicName.equals(LwM2mTransportHandler.DEVICE_ATTRIBUTES_TOPIC)) {
                 TransportProtos.PostAttributeMsg postAttributeMsg = adaptor.convertToPostAttributes(msg);
                 TransportServiceCallback call = this.getPubAckCallbackSentAttrTelemetry(postAttributeMsg);
                 transportService.process(sessionInfo, postAttributeMsg, this.getPubAckCallbackSentAttrTelemetry(call));
-            } else if (topicName.equals(LwM2MTransportHandler.DEVICE_TELEMETRY_TOPIC)) {
+            } else if (topicName.equals(LwM2mTransportHandler.DEVICE_TELEMETRY_TOPIC)) {
                 TransportProtos.PostTelemetryMsg postTelemetryMsg = adaptor.convertToPostTelemetry(msg);
                 TransportServiceCallback call = this.getPubAckCallbackSentAttrTelemetry(postTelemetryMsg);
                 transportService.process(sessionInfo, postTelemetryMsg, this.getPubAckCallbackSentAttrTelemetry(call));

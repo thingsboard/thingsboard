@@ -635,8 +635,8 @@ transport:
         public_y: "${LWM2M_SERVER_PUBLIC_Y_BS:3fc4e61bcd8901ec27c424114c3e887ed372497f0c2cf85839b8443e76988b34}"
         private_encoded: "${LWM2M_SERVER_PRIVATE_ENCODED_BS:308193020100301306072a8648ce3d020106082a8648ce3d0301070479307702010104205ecafd90caa7be45c42e1f3f32571632b8409e6e6249d7124f4ba56fab3c8083a00a06082a8648ce3d030107a144034200045017c87a1c1768264656b3b355434b0def6edb8b9bf166a4762d9930cd730f913fc4e61bcd8901ec27c424114c3e887ed372497f0c2cf85839b8443e76988b34}"        # Only Certificate_x509:
         alias: "${LWM2M_KEYSTORE_ALIAS_BOOTSTRAP:bootstrap}"
-    # Redis
-    redis_url: "${LWM2M_REDIS_URL:''}"
+    # Use redis for Security and Registration stores
+    redis.enabled: "${LWM2M_REDIS_ENABLED:false}"
 
 swagger:
   api_path_regex: "${SWAGGER_API_PATH_REGEX:/api.*}"
