@@ -41,13 +41,17 @@ public class HttpTransportContext extends TransportContext {
     @Value("${transport.http.request_timeout}")
     private long defaultTimeout;
 
+    @Getter
+    @Value("${transport.http.max_request_timeout}")
+    private long maxRequestTimeout;
+
     @Bean
     public TomcatConnectorCustomizer tomcatAsyncTimeoutConnectorCustomizer() {
         return connector -> {
             ProtocolHandler handler = connector.getProtocolHandler();
             if (handler instanceof Http11NioProtocol) {
-                log.trace("Setting async timeout {}", defaultTimeout);
-                connector.setAsyncTimeout(defaultTimeout);
+                log.trace("Setting async max request timeout {}", maxRequestTimeout);
+                connector.setAsyncTimeout(maxRequestTimeout);
             }
         };
     }
