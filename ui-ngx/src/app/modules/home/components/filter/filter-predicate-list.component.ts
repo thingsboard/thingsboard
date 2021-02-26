@@ -66,6 +66,8 @@ export class FilterPredicateListComponent implements ControlValueAccessor, OnIni
 
   @Input() allowUserDynamicSource = true;
 
+  @Input() onlyUserDynamicSource = false;
+
   filterListFormGroup: FormGroup;
 
   valueTypeEnum = EntityKeyValueType;
@@ -159,7 +161,8 @@ export class FilterPredicateListComponent implements ControlValueAccessor, OnIni
         key: this.key,
         isAdd: true,
         displayUserParameters: this.displayUserParameters,
-        allowUserDynamicSource: this.allowUserDynamicSource
+        allowUserDynamicSource: this.allowUserDynamicSource,
+        onlyUserDynamicSource: this.onlyUserDynamicSource
       }
     }).afterClosed().pipe(
       map((result) => {

@@ -1564,7 +1564,8 @@
            "key-type": "Key type",
            "attribute": "Attribute",
            "timeseries": "Timeseries",
-           "entity-field": "Entity field"
+           "entity-field": "Entity field",
+           "constant": "Constant"
          },
          "value-type": {
            "value-type": "Value type",
