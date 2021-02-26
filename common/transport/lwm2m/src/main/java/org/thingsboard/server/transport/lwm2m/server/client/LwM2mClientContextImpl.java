@@ -59,6 +59,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         }
     }
 
+    @Override
     public LwM2mClient getLwM2MClient(String endPoint, String identity) {
         Map.Entry<String, LwM2mClient> modelClients = endPoint != null ?
                 this.lwM2mClients.entrySet().stream().filter(model -> endPoint.equals(model.getValue().getEndpoint())).findAny().orElse(null) :
@@ -66,14 +67,17 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         return modelClients != null ? modelClients.getValue() : null;
     }
 
+    @Override
     public LwM2mClient getLwM2MClient(TransportProtos.SessionInfoProto sessionInfo) {
         return getLwM2mClient(new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
     }
 
+    @Override
     public LwM2mClient getLwM2mClient(UUID sessionId) {
         return lwM2mClients.values().stream().filter(c -> c.getSessionId().equals(sessionId)).findAny().get();
     }
 
+    @Override
     public LwM2mClient getLwM2mClientWithReg(Registration registration, String registrationId) {
         LwM2mClient client = registrationId != null ?
                 this.lwM2mClients.get(registrationId) :
@@ -83,12 +87,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         return client != null ? client : updateInSessionsLwM2MClient(registration);
     }
 
-    /**
-     * Update in sessions (LwM2MClient for key registration_Id) after starting registration LwM2MClient in LwM2MTransportServiceImpl
-     * Remove from sessions LwM2MClient with key registration_Endpoint
-     * @param registration -
-     * @return LwM2MClient after adding it to session
-     */
+    @Override
     public LwM2mClient updateInSessionsLwM2MClient(Registration registration) {
         if (this.lwM2mClients.get(registration.getEndpoint()) == null) {
             addLwM2mClientToSession(registration.getEndpoint());
@@ -113,7 +112,8 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
      * - profileUuid - if the device does not have a profile
      * - device - if the thingsboard does not have a device with a name equal to the identity
      */
-    private LwM2mClient addLwM2mClientToSession(String identity) {
+    @Override
+    public LwM2mClient addLwM2mClientToSession(String identity) {
         ReadResultSecurityStore store = lwM2MCredentialsSecurityInfoValidator.createAndValidateCredentialsSecurityInfo(identity, TypeServer.CLIENT);
         if (store.getSecurityMode() < LwM2MSecurityMode.DEFAULT_MODE.code) {
             UUID profileUuid = (store.getDeviceProfile() != null && addUpdateProfileParameters(store.getDeviceProfile())) ? store.getDeviceProfile().getUuidId() : null;
@@ -134,26 +134,32 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         }
     }
 
+    @Override
     public Map<String, LwM2mClient> getLwM2mClients() {
         return lwM2mClients;
     }
 
+    @Override
     public Map<UUID, LwM2mClientProfile> getProfiles() {
         return profiles;
     }
 
+    @Override
     public LwM2mClientProfile getProfile(UUID profileId) {
         return profiles.get(profileId);
     }
 
+    @Override
     public LwM2mClientProfile getProfile(Registration registration) {
         return this.getProfiles().get(getLwM2mClientWithReg(registration, null).getProfileId());
     }
 
+    @Override
     public Map<UUID, LwM2mClientProfile> setProfiles(Map<UUID, LwM2mClientProfile> profiles) {
         return this.profiles = profiles;
     }
 
+    @Override
     public boolean addUpdateProfileParameters(DeviceProfile deviceProfile) {
         LwM2mClientProfile lwM2MClientProfile = LwM2mTransportHandler.getLwM2MClientProfileFromThingsboard(deviceProfile);
         if (lwM2MClientProfile != null) {

@@ -36,6 +36,8 @@ public interface LwM2mClientContext {
 
     LwM2mClient updateInSessionsLwM2MClient(Registration registration);
 
+    LwM2mClient addLwM2mClientToSession(String identity);
+
     Registration getRegistration(String registrationId);
 
     Map<String, LwM2mClient> getLwM2mClients();
