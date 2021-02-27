@@ -51,4 +51,14 @@ public class LwM2mClientProfile {
      * [ "/2/0/0", "/2/0/1"]
      */
     JsonArray postObserveProfile;
+
+    public LwM2mClientProfile clone () {
+        LwM2mClientProfile lwM2mClientProfile = new LwM2mClientProfile();
+        lwM2mClientProfile.postClientLwM2mSettings =this.postClientLwM2mSettings;
+        lwM2mClientProfile.postKeyNameProfile =this.postKeyNameProfile;
+        lwM2mClientProfile.postAttributeProfile =this.postAttributeProfile;
+        lwM2mClientProfile.postTelemetryProfile =this.postTelemetryProfile;
+        lwM2mClientProfile.postObserveProfile =this.postObserveProfile;
+        return lwM2mClientProfile;
+    }
 }
