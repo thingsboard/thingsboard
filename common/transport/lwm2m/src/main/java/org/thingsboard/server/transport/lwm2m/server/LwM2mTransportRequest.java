@@ -25,24 +25,8 @@ import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.node.ObjectLink;
 import org.eclipse.leshan.core.observation.Observation;
-import org.eclipse.leshan.core.request.CancelObservationRequest;
-import org.eclipse.leshan.core.request.ContentFormat;
-import org.eclipse.leshan.core.request.DiscoverRequest;
-import org.eclipse.leshan.core.request.DownlinkRequest;
-import org.eclipse.leshan.core.request.ExecuteRequest;
-import org.eclipse.leshan.core.request.ObserveRequest;
-import org.eclipse.leshan.core.request.ReadRequest;
-import org.eclipse.leshan.core.request.WriteAttributesRequest;
-import org.eclipse.leshan.core.request.WriteRequest;
-import org.eclipse.leshan.core.response.CancelObservationResponse;
-import org.eclipse.leshan.core.response.DeleteResponse;
-import org.eclipse.leshan.core.response.DiscoverResponse;
-import org.eclipse.leshan.core.response.ExecuteResponse;
-import org.eclipse.leshan.core.response.LwM2mResponse;
-import org.eclipse.leshan.core.response.ReadResponse;
-import org.eclipse.leshan.core.response.ResponseCallback;
-import org.eclipse.leshan.core.response.WriteAttributesResponse;
-import org.eclipse.leshan.core.response.WriteResponse;
+import org.eclipse.leshan.core.request.*;
+import org.eclipse.leshan.core.response.*;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.server.californium.LeshanServer;
@@ -55,27 +39,13 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static org.eclipse.californium.core.coap.CoAP.ResponseCode.isSuccess;
 import static org.eclipse.leshan.core.attributes.Attribute.MINIMUM_PERIOD;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.DEFAULT_TIMEOUT;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.GET_TYPE_OPER_DISCOVER;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.GET_TYPE_OPER_OBSERVE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.GET_TYPE_OPER_READ;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_ERROR;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_INFO;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.POST_TYPE_OPER_EXECUTE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.POST_TYPE_OPER_OBSERVE_CANCEL;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.POST_TYPE_OPER_WRITE_REPLACE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.PUT_TYPE_OPER_WRITE_ATTRIBUTES;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.PUT_TYPE_OPER_WRITE_UPDATE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.RESPONSE_CHANNEL;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.*;
 
 @Slf4j
 @Service("LwM2mTransportRequest")
@@ -85,14 +55,20 @@ public class LwM2mTransportRequest {
 
     private LwM2mValueConverterImpl converter;
 
-    @Autowired
-    private LwM2mTransportServiceImpl service;
+    private final LwM2mTransportContextServer context;
+
+    private final LwM2mClientContext lwM2mClientContext;
+
+    private final LeshanServer leshanServer;
 
     @Autowired
-    private LwM2mTransportContextServer context;
+    LwM2mTransportServiceImpl service;
 
-    @Autowired
-    private LwM2mClientContext lwM2mClientContext;
+    public LwM2mTransportRequest(LwM2mTransportContextServer context, LwM2mClientContext lwM2mClientContext, LeshanServer leshanServer) {
+        this.context = context;
+        this.lwM2mClientContext = lwM2mClientContext;
+        this.leshanServer = leshanServer;
+    }
 
     @PostConstruct
     public void init() {
@@ -101,32 +77,22 @@ public class LwM2mTransportRequest {
                 new NamedThreadFactory(String.format("LwM2M %s channel response", RESPONSE_CHANNEL)));
     }
 
-    public Collection<Registration> doGetRegistrations(LeshanServer lwServer) {
-        Collection<Registration> registrations = new ArrayList<>();
-        for (Iterator<Registration> iterator = lwServer.getRegistrationService().getAllRegistrations(); iterator
-                .hasNext(); ) {
-            registrations.add(iterator.next());
-        }
-        return registrations;
-    }
-
     /**
      * Device management and service enablement, including Read, Write, Execute, Discover, Create, Delete and Write-Attributes
      *
-     * @param lwServer -
      * @param registration -
      * @param target -
      * @param typeOper -
      * @param contentFormatParam -
      * @param observation -
      */
-    public void sendAllRequest(LeshanServer lwServer, Registration registration, String target, String typeOper,
+    public void sendAllRequest(Registration registration, String target, String typeOper,
                                String contentFormatParam, Observation observation, Object params, long timeoutInMs) {
         LwM2mPath resultIds = new LwM2mPath(target);
         if (registration != null && resultIds.getObjectId() >= 0) {
             DownlinkRequest request = null;
             ContentFormat contentFormat = contentFormatParam != null ? ContentFormat.fromName(contentFormatParam.toUpperCase()) : null;
-            ResourceModel resource = service.context.getLwM2MTransportConfigServer().getResourceModel(registration, resultIds);
+            ResourceModel resource = service.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getResourceModel(registration, resultIds);
             timeoutInMs = timeoutInMs > 0 ? timeoutInMs : DEFAULT_TIMEOUT;
             switch (typeOper) {
                 case GET_TYPE_OPER_READ:
@@ -156,7 +122,7 @@ public class LwM2mTransportRequest {
                     break;
                 case POST_TYPE_OPER_WRITE_REPLACE:
                     // Request to write a <b>String Single-Instance Resource</b> using the TLV content format.
-                    if (resource != null) {
+                    if (resource != null && contentFormat != null) {
                         if (contentFormat.equals(ContentFormat.TLV) && !resource.multiple) {
                             request = this.getWriteRequestSingleResource(null, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), params, resource.type, registration);
                         }
@@ -168,8 +134,8 @@ public class LwM2mTransportRequest {
                     break;
                 case PUT_TYPE_OPER_WRITE_UPDATE:
                     if (resultIds.getResourceId() >= 0) {
-                        ResourceModel resourceModel = lwServer.getModelProvider().getObjectModel(registration).getObjectModel(resultIds.getObjectId()).resources.get(resultIds.getResourceId());
-                        ResourceModel.Type typeRes = resourceModel.type;
+//                        ResourceModel resourceModel = leshanServer.getModelProvider().getObjectModel(registration).getObjectModel(resultIds.getObjectId()).resources.get(resultIds.getResourceId());
+//                        ResourceModel.Type typeRes = resourceModel.type;
                         LwM2mNode node = LwM2mSingleResource.newStringResource(resultIds.getResourceId(), (String) this.converter.convertValue(params, resource.type, ResourceModel.Type.STRING, resultIds));
                         request = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, target, node);
                     }
@@ -206,7 +172,7 @@ public class LwM2mTransportRequest {
                      *   Attribute pmax = new Attribute(MAXIMUM_PERIOD, "60");
                      *   Attribute [] attrs = {gt, st};
                      */
-                    Attribute pmin = new Attribute(MINIMUM_PERIOD, Integer.toUnsignedLong(Integer.valueOf("1")));
+                    Attribute pmin = new Attribute(MINIMUM_PERIOD, Integer.toUnsignedLong(Integer.parseInt("1")));
                     Attribute[] attrs = {pmin};
                     AttributeSet attrSet = new AttributeSet(attrs);
                     if (resultIds.isResource()) {
@@ -221,23 +187,22 @@ public class LwM2mTransportRequest {
             }
 
             if (request != null) {
-                this.sendRequest(lwServer, registration, request, timeoutInMs);
+                this.sendRequest(registration, request, timeoutInMs);
             }
         }
     }
 
     /**
      *
-     * @param lwServer -
      * @param registration -
      * @param request -
      * @param timeoutInMs -
      */
 
     @SuppressWarnings("unchecked")
-    private void sendRequest(LeshanServer lwServer, Registration registration, DownlinkRequest request, long timeoutInMs) {
+    private void sendRequest(Registration registration, DownlinkRequest request, long timeoutInMs) {
         LwM2mClient lwM2MClient = lwM2mClientContext.getLwM2mClientWithReg(registration, null);
-        lwServer.send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
+        leshanServer.send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
             if (!lwM2MClient.isInit()) {
                 lwM2MClient.initValue(this.service, request.getPath().toString());
             }
@@ -255,7 +220,7 @@ public class LwM2mTransportRequest {
                 String msg = String.format("%s: sendRequest: CoapCode - %s Lwm2m code - %d name - %s Resource path - %s  SendRequest to Client", LOG_LW2M_ERROR,
                         ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString());
                 service.sentLogsToThingsboard(msg, registration);
-                log.error("[{}] - [{}] [{}] error SendRequest", ((Response) response.getCoapResponse()).getCode(), response.getCode(), request.getPath().toString());
+                log.error("[{}], [{}] - [{}] [{}] error SendRequest", registration.getEndpoint(), ((Response) response.getCoapResponse()).getCode(), response.getCode(), request.getPath().toString());
             }
         }, e -> {
             if (!lwM2MClient.isInit()) {
@@ -275,15 +240,17 @@ public class LwM2mTransportRequest {
                 case STRING:    // String
                     return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, value.toString()) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, value.toString());
                 case INTEGER:   // Long
-                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Integer.toUnsignedLong(Integer.valueOf(value.toString()))) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Integer.toUnsignedLong(Integer.valueOf(value.toString())));
+                    final long valueInt = Integer.toUnsignedLong(Integer.parseInt(value.toString()));
+                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, valueInt) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, valueInt);
                 case OBJLNK:    // ObjectLink
                     return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, ObjectLink.fromPath(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, ObjectLink.fromPath(value.toString()));
                 case BOOLEAN:   // Boolean
-                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Boolean.valueOf(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Boolean.valueOf(value.toString()));
+                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Boolean.parseBoolean(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Boolean.parseBoolean(value.toString()));
                 case FLOAT:     // Double
-                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Double.valueOf(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Double.valueOf(value.toString()));
+                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Double.parseDouble(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Double.parseDouble(value.toString()));
                 case TIME:      // Date
-                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, new Date(Long.decode(value.toString()))) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, new Date((Long) Integer.toUnsignedLong(Integer.valueOf(value.toString()))));
+                    Date date =  new Date(Long.decode(value.toString()));
+                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, date) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, date);
                 case OPAQUE:    // byte[] value, base64
                     return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Hex.decodeHex(value.toString().toCharArray())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Hex.decodeHex(value.toString().toCharArray()));
                 default:

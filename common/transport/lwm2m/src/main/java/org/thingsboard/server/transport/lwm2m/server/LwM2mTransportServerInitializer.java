@@ -33,7 +33,7 @@ public class LwM2mTransportServerInitializer {
     @Autowired
     private LwM2mTransportServiceImpl service;
 
-    @Autowired(required = false)
+    @Autowired
     private LeshanServer leshanServer;
 
     @Autowired
@@ -49,7 +49,7 @@ public class LwM2mTransportServerInitializer {
 
     private void startLhServer() {
         this.leshanServer.start();
-        LwM2mServerListener lhServerCertListener = new LwM2mServerListener(this.leshanServer, service);
+        LwM2mServerListener lhServerCertListener = new LwM2mServerListener(service);
         this.leshanServer.getRegistrationService().addListener(lhServerCertListener.registrationListener);
         this.leshanServer.getPresenceService().addListener(lhServerCertListener.presenceListener);
         this.leshanServer.getObservationService().addListener(lhServerCertListener.observationListener);
