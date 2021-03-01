@@ -33,7 +33,7 @@ public class TwilioSmsSender extends AbstractSmsSender {
         if (StringUtils.isEmpty(config.getAccountSid()) || StringUtils.isEmpty(config.getAccountToken()) || StringUtils.isEmpty(config.getNumberFrom())) {
             throw new IllegalArgumentException("Invalid twilio sms provider configuration: accountSid, accountToken and numberFrom should be specified!");
         }
-        this.numberFrom = this.validatePhoneNumber(config.getNumberFrom());
+        this.numberFrom = this.validatePhoneTwilioNumber(config.getNumberFrom());
         this.twilioRestClient = new TwilioRestClient.Builder(config.getAccountSid(), config.getAccountToken()).build();
     }
 

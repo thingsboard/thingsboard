@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
 public abstract class AbstractSmsSender implements SmsSender {
 
     private static final Pattern E_164_PHONE_NUMBER_PATTERN = Pattern.compile("^\\+[1-9]\\d{1,14}$");
+    private static final Pattern PHONE_NUMBERS_SID_MESSAGE_SERVICE_SID = Pattern.compile("^(PN|MG).*$");
 
     private static final int MAX_SMS_MESSAGE_LENGTH = 1600;
     private static final int MAX_SMS_SEGMENT_LENGTH = 70;
@@ -33,6 +34,14 @@ public abstract class AbstractSmsSender implements SmsSender {
         phoneNumber = phoneNumber.trim();
         if (!E_164_PHONE_NUMBER_PATTERN.matcher(phoneNumber).matches()) {
             throw new SmsParseException("Invalid phone number format. Phone number must be in E.164 format.");
+        }
+        return phoneNumber;
+    }
+
+    protected String validatePhoneTwilioNumber(String phoneNumber) throws SmsParseException {
+        phoneNumber = phoneNumber.trim();
+        if (!E_164_PHONE_NUMBER_PATTERN.matcher(phoneNumber).matches() && !PHONE_NUMBERS_SID_MESSAGE_SERVICE_SID.matcher(phoneNumber).matches()) {
+            throw new SmsParseException("Invalid phone number format. Phone number must be in E.164 format/Phone Number's SID/Messaging Service SID.");
         }
         return phoneNumber;
     }
