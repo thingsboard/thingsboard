@@ -90,8 +90,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         AlarmDataUpdate update;
         if (!entitiesMap.isEmpty()) {
             long start = System.currentTimeMillis();
-            PageData<AlarmData> alarms = alarmService.findAlarmDataByQueryForEntities(getTenantId(), getCustomerId(),
-                    query, getOrderedEntityIds());
+            PageData<AlarmData> alarms = alarmService.findAlarmDataByQueryForEntities(getTenantId(), getCustomerId(), query, getOrderedEntityIds());
             long end = System.currentTimeMillis();
             stats.getAlarmQueryInvocationCnt().incrementAndGet();
             stats.getAlarmQueryTimeSpent().addAndGet(end - start);

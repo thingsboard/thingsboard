@@ -249,18 +249,70 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query) {
         EntityType entityType = resolveEntityType(query.getEntityFilter());
         QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, customerId, entityType));
-        ctx.append("select count(e.id) from ");
-        ctx.append(addEntityTableQuery(ctx, query.getEntityFilter()));
-        ctx.append(" e where ");
-        ctx.append(buildEntityWhere(ctx, query.getEntityFilter(), Collections.emptyList()));
-        return transactionTemplate.execute(status -> {
-            long startTs = System.currentTimeMillis();
-            try {
-                return jdbcTemplate.queryForObject(ctx.getQuery(), ctx, Long.class);
-            } finally {
-                queryLog.logQuery(ctx, ctx.getQuery(), System.currentTimeMillis() - startTs);
+        if (query.getKeyFilters() == null || query.getKeyFilters().isEmpty()) {
+            ctx.append("select count(e.id) from ");
+            ctx.append(addEntityTableQuery(ctx, query.getEntityFilter()));
+            ctx.append(" e where ");
+            ctx.append(buildEntityWhere(ctx, query.getEntityFilter(), Collections.emptyList()));
+            return transactionTemplate.execute(status -> {
+                long startTs = System.currentTimeMillis();
+                try {
+                    return jdbcTemplate.queryForObject(ctx.getQuery(), ctx, Long.class);
+                } finally {
+                    queryLog.logQuery(ctx, ctx.getQuery(), System.currentTimeMillis() - startTs);
+                }
+            });
+        } else {
+            List<EntityKeyMapping> mappings = EntityKeyMapping.prepareEntityCountKeyMapping(query);
+
+            List<EntityKeyMapping> selectionMapping = mappings.stream().filter(EntityKeyMapping::isSelection)
+                    .collect(Collectors.toList());
+            List<EntityKeyMapping> entityFieldsSelectionMapping = selectionMapping.stream().filter(mapping -> !mapping.isLatest())
+                    .collect(Collectors.toList());
+
+            List<EntityKeyMapping> filterMapping = mappings.stream().filter(EntityKeyMapping::hasFilter)
+                    .collect(Collectors.toList());
+            List<EntityKeyMapping> entityFieldsFiltersMapping = filterMapping.stream().filter(mapping -> !mapping.isLatest())
+                    .collect(Collectors.toList());
+
+            List<EntityKeyMapping> allLatestMappings = mappings.stream().filter(EntityKeyMapping::isLatest)
+                    .collect(Collectors.toList());
+
+
+            String entityWhereClause = DefaultEntityQueryRepository.this.buildEntityWhere(ctx, query.getEntityFilter(), entityFieldsFiltersMapping);
+            String latestJoinsCnt = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings, true);
+            String entityFieldsSelection = EntityKeyMapping.buildSelections(entityFieldsSelectionMapping, query.getEntityFilter().getType(), entityType);
+            String entityTypeStr;
+            if (query.getEntityFilter().getType().equals(EntityFilterType.RELATIONS_QUERY)) {
+                entityTypeStr = "e.entity_type";
+            } else {
+                entityTypeStr = "'" + entityType.name() + "'";
             }
-        });
+            if (!StringUtils.isEmpty(entityFieldsSelection)) {
+                entityFieldsSelection = String.format("e.id id, %s entity_type, %s", entityTypeStr, entityFieldsSelection);
+            } else {
+                entityFieldsSelection = String.format("e.id id, %s entity_type", entityTypeStr);
+            }
+
+            String fromClauseCount = String.format("from (select %s from (select %s from %s e where %s) entities %s ) result %s",
+                    "entities.*",
+                    entityFieldsSelection,
+                    addEntityTableQuery(ctx, query.getEntityFilter()),
+                    entityWhereClause,
+                    latestJoinsCnt,
+                    "");
+
+            String countQuery = String.format("select count(id) %s", fromClauseCount);
+
+            return transactionTemplate.execute(status -> {
+                long startTs = System.currentTimeMillis();
+                try {
+                    return jdbcTemplate.queryForObject(countQuery, ctx, Long.class);
+                } finally {
+                    queryLog.logQuery(ctx, ctx.getQuery(), System.currentTimeMillis() - startTs);
+                }
+            });
+        }
     }
 
     @Override

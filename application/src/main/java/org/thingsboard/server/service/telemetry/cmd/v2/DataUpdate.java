@@ -15,18 +15,12 @@
  */
 package org.thingsboard.server.service.telemetry.cmd.v2;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.ToString;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.service.telemetry.sub.SubscriptionErrorCode;
 
 import java.util.List;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class DataUpdate<T> extends CmdUpdate {
 
     @Getter
