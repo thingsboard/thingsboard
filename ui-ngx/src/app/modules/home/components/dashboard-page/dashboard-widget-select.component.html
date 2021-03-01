@@ -37,7 +37,7 @@
   <span translate *ngIf="widgetsBundle && !hasWidgetTypes()"
         style="display: flex;"
         fxLayoutAlign="center center"
-        class="mat-headline tb-absolute-fill">widgets-bundle.empty</span>
+        class="mat-headline">widgets-bundle.empty</span>
   <div *ngIf="!widgetsBundle" fxFlexFill fxLayoutGap="12px grid" fxLayout="row wrap">
     <div *ngFor="let widgetsBundle of widgetsBundles$ | async" class="mat-card-container">
       <mat-card fxFlexFill fxLayout="row" fxLayoutGap="16px" (click)="selectBundle($event, widgetsBundle)">

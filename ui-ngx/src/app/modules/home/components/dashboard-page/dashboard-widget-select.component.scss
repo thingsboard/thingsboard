@@ -16,8 +16,12 @@
 @import '../../../../../scss/constants';
 
 :host{
+  min-width: 100%;
+  min-height: 100%;
+  position: absolute;
+  background-color: #cfd8dc;
+
   .widget-select {
-    min-height: 100%;
     padding: 12px 0 12px 12px;
     background-color: #cfd8dc;
 
