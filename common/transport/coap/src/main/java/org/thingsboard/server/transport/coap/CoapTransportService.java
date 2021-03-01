@@ -40,6 +40,8 @@ public class CoapTransportService {
     private static final String API = "api";
     private static final String EFENTO = "efento";
     private static final String MEASUREMENTS = "m";
+    public static final String EFENTO_MEASUREMENTS = EFENTO + "/" + MEASUREMENTS;
+
     @Autowired
     private CoapTransportContext coapTransportContext;
 
@@ -49,7 +51,10 @@ public class CoapTransportService {
     public void init() throws UnknownHostException {
         log.info("Starting CoAP transport...");
         log.info("Starting CoAP transport server");
-        this.server = new CoapServer(NetworkConfig.createStandardWithoutFile());
+
+        CoapTransportRootResource rootResource = new CoapTransportRootResource(coapTransportContext, "");
+        TbCoapServerMessageDeliverer messageDeliverer = new TbCoapServerMessageDeliverer(rootResource);
+        this.server = new TbCoapServer(messageDeliverer);
         createResources();
         InetAddress addr = InetAddress.getByName(coapTransportContext.getHost());
         InetSocketAddress sockAddr = new InetSocketAddress(addr, coapTransportContext.getPort());
@@ -66,8 +71,11 @@ public class CoapTransportService {
         CoapEfentoTransportResource efentoMeasurementsTransportResource = new CoapEfentoTransportResource(coapTransportContext, MEASUREMENTS);
         efento.add(efentoMeasurementsTransportResource);
 
+        CoapEfentoTransportResource efentoMeasurements = new CoapEfentoTransportResource(coapTransportContext, EFENTO_MEASUREMENTS);
+
         server.add(api);
         server.add(efento);
+        server.add(efentoMeasurements);
     }
 
     @PreDestroy

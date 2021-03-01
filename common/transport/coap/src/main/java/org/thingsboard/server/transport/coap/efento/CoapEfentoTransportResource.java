@@ -36,6 +36,7 @@ import org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos;
 import org.thingsboard.server.gen.transport.coap.MeasurementsProtos;
 import org.thingsboard.server.transport.coap.AbstractCoapTransportResource;
 import org.thingsboard.server.transport.coap.CoapTransportContext;
+import org.thingsboard.server.transport.coap.CoapTransportService;
 import org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils;
 
 import java.util.ArrayList;
@@ -55,13 +56,12 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         super(context, name);
         this.setObservable(true); // enable observing
         this.setObserveType(CoAP.Type.CON); // configure the notification type to CONs
-        this.getAttributes().setObservable(); // mark observable in the Link-Format
+//        this.getAttributes().setObservable(); // mark observable in the Link-Format
     }
 
     @Override
     protected void processHandleGet(CoapExchange exchange) {
-        log.trace("[handleGET] exchange: {}", exchange);
-        exchange.respond(CoAP.ResponseCode.NOT_IMPLEMENTED);
+        exchange.respond(CoAP.ResponseCode.METHOD_NOT_ALLOWED);
     }
 
     @Override
@@ -69,17 +69,16 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         Exchange advanced = exchange.advanced();
         Request request = advanced.getRequest();
         List<String> uriPath = request.getOptions().getUriPath();
-        if (!(uriPath.size() == MEASUREMENTS_POSITION && uriPath.get(1).equals(MEASUREMENTS))) {
+        boolean isOneElementEfentoUriPath = uriPath.size() == 1 && uriPath.get(0).equals(CoapTransportService.EFENTO_MEASUREMENTS);
+        boolean isMultiElementsEfentoUriPath = uriPath.size() == MEASUREMENTS_POSITION && uriPath.get(1).equals(MEASUREMENTS);
+        if (!isMultiElementsEfentoUriPath && !isOneElementEfentoUriPath) {
             exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
             return;
         }
         byte[] bytes = request.getPayload();
         try {
             MeasurementsProtos.ProtoMeasurements protoMeasurements = MeasurementsProtos.ProtoMeasurements.parseFrom(bytes);
-            log.info("ProtoMeasurements: {}", protoMeasurements);
-            // TODO: 18.01.21 Replace substring action!
-//            String cloudToken = protoMeasurements.getCloudToken();
-//            String token = cloudToken.substring(0, 20);
+            log.trace("ProtoMeasurements: {}", protoMeasurements);
             String token = protoMeasurements.getCloudToken();
             transportService.process(DeviceTransportType.COAP, TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(token).build(),
                     new CoapDeviceAuthCallback(transportContext, exchange, (sessionInfo, deviceProfile) -> {
@@ -103,7 +102,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
     }
 
     @Override
-    protected Resource getChildResource() {
+    public Resource getChild(String name) {
         return this;
     }
 
