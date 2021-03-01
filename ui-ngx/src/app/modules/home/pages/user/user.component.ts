@@ -60,7 +60,7 @@ export class UserComponent extends EntityComponent<User> {
   }
 
   isUserCredentialPresent(): boolean {
-    return !(!this.entity || !this.entity.additionalInfo || isUndefined(this.entity.additionalInfo.userCredentialsEnabled));
+    return this.entity && this.entity.additionalInfo && isDefinedAndNotNull(this.entity.additionalInfo.userCredentialsEnabled);
   }
 
   buildForm(entity: User): FormGroup {
