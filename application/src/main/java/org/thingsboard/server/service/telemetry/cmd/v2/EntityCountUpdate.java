@@ -26,32 +26,32 @@ import org.thingsboard.server.service.telemetry.sub.SubscriptionErrorCode;
 import java.util.List;
 
 @ToString
-public class EntityDataUpdate extends DataUpdate<EntityData> {
+public class EntityCountUpdate extends CmdUpdate {
 
     @Getter
-    private long allowedEntities;
+    private int count;
 
-    public EntityDataUpdate(int cmdId, PageData<EntityData> data, List<EntityData> update, long allowedEntities) {
-        super(cmdId, data, update, SubscriptionErrorCode.NO_ERROR.getCode(), null);
-        this.allowedEntities = allowedEntities;
+    public EntityCountUpdate(int cmdId, int count) {
+        super(cmdId, SubscriptionErrorCode.NO_ERROR.getCode(), null);
+        this.count = count;
     }
 
-    public EntityDataUpdate(int cmdId, int errorCode, String errorMsg) {
-        super(cmdId, null, null, errorCode, errorMsg);
+    public EntityCountUpdate(int cmdId, int errorCode, String errorMsg) {
+        super(cmdId, errorCode, errorMsg);
     }
 
     @Override
     public CmdUpdateType getCmdUpdateType() {
-        return CmdUpdateType.ENTITY_DATA;
+        return CmdUpdateType.COUNT_DATA;
     }
 
     @JsonCreator
-    public EntityDataUpdate(@JsonProperty("cmdId") int cmdId,
-                            @JsonProperty("data") PageData<EntityData> data,
-                            @JsonProperty("update") List<EntityData> update,
-                            @JsonProperty("errorCode") int errorCode,
-                            @JsonProperty("errorMsg") String errorMsg) {
-        super(cmdId, data, update, errorCode, errorMsg);
+    public EntityCountUpdate(@JsonProperty("cmdId") int cmdId,
+                             @JsonProperty("count") int count,
+                             @JsonProperty("errorCode") int errorCode,
+                             @JsonProperty("errorMsg") String errorMsg) {
+        super(cmdId, errorCode, errorMsg);
+        this.count = count;
     }
 
 }

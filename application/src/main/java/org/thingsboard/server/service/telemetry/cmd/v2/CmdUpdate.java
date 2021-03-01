@@ -15,7 +15,17 @@
  */
 package org.thingsboard.server.service.telemetry.cmd.v2;
 
-public enum DataUpdateType {
-    ENTITY_DATA,
-    ALARM_DATA
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
+public abstract class CmdUpdate {
+
+    private final int cmdId;
+    private final int errorCode;
+    private final String errorMsg;
+
+    public abstract CmdUpdateType getCmdUpdateType();
+
 }
