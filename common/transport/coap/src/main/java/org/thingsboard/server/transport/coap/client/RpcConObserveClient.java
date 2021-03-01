@@ -41,7 +41,7 @@ public class RpcConObserveClient {
 
     private CoapClient client;
     private ExecutorService executor = Executors.newFixedThreadPool(1);
-    private final CountDownLatch responsesLatch = new CountDownLatch(10);
+    private final CountDownLatch responsesLatch = new CountDownLatch(2);
 
     private final String host;
     private final int port;
@@ -83,7 +83,8 @@ public class RpcConObserveClient {
                             int requestId = node.get("id").asInt();
                             ObjectNode response = mapper.createObjectNode();
                             response.put("result", "ok");
-                            log.info("Command Response: {}, {}", requestId, mapper.writeValueAsString(response));
+                            String responseStr = mapper.writeValueAsString(response);
+                            log.info("Command Response: {}, {}", requestId, responseStr);
                             CoapClient commandResponseClient = new CoapClient(getRpcResponseFeatureTokenUrl(host, port, token, requestId));
                             commandResponseClient.post(new CoapHandler() {
                                 @Override
@@ -96,7 +97,7 @@ public class RpcConObserveClient {
                                     log.info("Command Response Ack Error, No connect");
                                     //Do nothing
                                 }
-                            }, mapper.writeValueAsString(response), MediaTypeRegistry.APPLICATION_JSON);
+                            }, responseStr, MediaTypeRegistry.APPLICATION_JSON);
 
                         } catch (IOException e) {
                             log.error("Error occurred while processing COAP response", e);

@@ -30,7 +30,7 @@ import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.adaptor.ProtoConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.transport.coap.CoapTransportResource;
+import org.thingsboard.server.transport.coap.CoapTransportRootResource;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -66,7 +66,7 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
 
     @Override
     public TransportProtos.ToDeviceRpcResponseMsg convertToDeviceRpcResponse(UUID sessionId, Request inbound) throws AdaptorException {
-        Optional<Integer> requestId = CoapTransportResource.getRequestId(inbound);
+        Optional<Integer> requestId = CoapTransportRootResource.getRequestId(inbound);
         return TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId.orElseThrow(() -> new AdaptorException("Request id is missing!")))
                 .setPayload(inbound.getPayloadString()).build();
     }
@@ -100,24 +100,24 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
     }
 
     @Override
-    public Response convertToPublish(CoapTransportResource.CoapSessionListener coapSessionListener, TransportProtos.AttributeUpdateNotificationMsg msg) throws AdaptorException {
-        return getObserveNotification(coapSessionListener.getExchange().advanced().getRequest().isConfirmable(), msg.toByteArray());
+    public Response convertToPublish(boolean isConfirmable, TransportProtos.AttributeUpdateNotificationMsg msg) throws AdaptorException {
+        return getObserveNotification(isConfirmable, msg.toByteArray());
     }
 
     @Override
-    public Response convertToPublish(CoapTransportResource.CoapSessionListener coapSessionListener, TransportProtos.ToDeviceRpcRequestMsg msg) throws AdaptorException {
-        return getObserveNotification(coapSessionListener.getExchange().advanced().getRequest().isConfirmable(), msg.toByteArray());
+    public Response convertToPublish(boolean isConfirmable, TransportProtos.ToDeviceRpcRequestMsg msg) throws AdaptorException {
+        return getObserveNotification(isConfirmable, msg.toByteArray());
     }
 
     @Override
-    public Response convertToPublish(CoapTransportResource.CoapSessionListener coapSessionListener, TransportProtos.ToServerRpcResponseMsg msg) throws AdaptorException {
+    public Response convertToPublish(TransportProtos.ToServerRpcResponseMsg msg) throws AdaptorException {
         Response response = new Response(CoAP.ResponseCode.CONTENT);
         response.setPayload(msg.toByteArray());
         return response;
     }
 
     @Override
-    public Response convertToPublish(CoapTransportResource.CoapSessionListener session, TransportProtos.GetAttributeResponseMsg msg) throws AdaptorException {
+    public Response convertToPublish(TransportProtos.GetAttributeResponseMsg msg) throws AdaptorException {
         if (msg.getClientAttributeListCount() == 0 && msg.getSharedAttributeListCount() == 0) {
             return new Response(CoAP.ResponseCode.NOT_FOUND);
         } else {

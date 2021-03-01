@@ -18,9 +18,7 @@ package org.thingsboard.server.transport.coap;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.coap.CoAP;
-import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.server.resources.CoapExchange;
-import org.eclipse.californium.core.server.resources.Resource;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportService;
@@ -54,16 +52,9 @@ public abstract class AbstractCoapTransportResource extends CoapResource {
         processHandlePost(exchange);
     }
 
-    @Override
-    public Resource getChild(String name) {
-        return getChildResource();
-    }
-
     protected abstract void processHandleGet(CoapExchange exchange);
 
     protected abstract void processHandlePost(CoapExchange exchange);
-
-    protected abstract Resource getChildResource();
 
     protected void reportActivity(TransportProtos.SessionInfoProto sessionInfo, boolean hasAttributeSubscription, boolean hasRpcSubscription) {
         transportContext.getTransportService().process(sessionInfo, TransportProtos.SubscriptionInfoProto.newBuilder()
