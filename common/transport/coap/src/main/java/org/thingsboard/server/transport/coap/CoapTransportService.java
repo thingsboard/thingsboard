@@ -54,7 +54,7 @@ public class CoapTransportService {
 
         CoapTransportRootResource rootResource = new CoapTransportRootResource(coapTransportContext, "");
         TbCoapServerMessageDeliverer messageDeliverer = new TbCoapServerMessageDeliverer(rootResource);
-        this.server = new TbCoapServer(messageDeliverer);
+        this.server = new TbCoapServer(rootResource, messageDeliverer);
         createResources();
         InetAddress addr = InetAddress.getByName(coapTransportContext.getHost());
         InetSocketAddress sockAddr = new InetSocketAddress(addr, coapTransportContext.getPort());

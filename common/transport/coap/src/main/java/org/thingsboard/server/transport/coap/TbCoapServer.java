@@ -17,12 +17,13 @@ package org.thingsboard.server.transport.coap;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapServer;
+import org.eclipse.californium.core.network.config.NetworkConfig;
 
 @Slf4j
 public class TbCoapServer extends CoapServer {
 
-    public TbCoapServer(TbCoapServerMessageDeliverer messageDeliverer) {
-        super(messageDeliverer);
+    public TbCoapServer(CoapTransportRootResource rootResource, TbCoapServerMessageDeliverer messageDeliverer) {
+        super(NetworkConfig.getStandard(), rootResource, messageDeliverer);
     }
 
 }
