@@ -481,6 +481,8 @@ export class EntityService {
           return entityTypes.indexOf(filter.entityType) > -1 ? true : false;
         case AliasFilterType.entityName:
           return entityTypes.indexOf(filter.entityType) > -1 ? true : false;
+        case AliasFilterType.entityType:
+          return entityTypes.indexOf(filter.entityType) > -1 ? true : false;
         case AliasFilterType.stateEntity:
           return true;
         case AliasFilterType.assetType:
@@ -539,6 +541,8 @@ export class EntityService {
       case AliasFilterType.entityList:
         return true;
       case AliasFilterType.entityName:
+        return true;
+      case AliasFilterType.entityType:
         return true;
       case AliasFilterType.stateEntity:
         return true;
@@ -803,6 +807,9 @@ export class EntityService {
         result.entityFilter = deepClone(filter);
         return of(result);
       case AliasFilterType.entityName:
+        result.entityFilter = deepClone(filter);
+        return of(result);
+      case AliasFilterType.entityType:
         result.entityFilter = deepClone(filter);
         return of(result);
       case AliasFilterType.stateEntity:

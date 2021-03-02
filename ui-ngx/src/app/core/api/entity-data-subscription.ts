@@ -155,7 +155,7 @@ export class EntityDataSubscription {
       clearTimeout(this.timer);
       this.timer = null;
     }
-    if (this.datasourceType === DatasourceType.entity) {
+    if (this.datasourceType === DatasourceType.entity || this.datasourceType === DatasourceType.entityCount) {
       if (this.subscriber) {
         this.subscriber.unsubscribe();
         this.subscriber = null;
@@ -318,24 +318,30 @@ export class EntityDataSubscription {
         entityType: null
       };
 
-      const entityData: EntityData = {
-        entityId,
-        timeseries: {},
-        latest: {}
-      };
-      entityData.latest[EntityKeyType.ENTITY_FIELD] = {
-        name: {ts: Date.now(), value: DatasourceType.entityCount},
-      };
-
       const countKey = this.entityDataSubscriptionOptions.dataKeys[0];
+
+      let dataReceived = false;
 
       this.subscriber.entityCount$.subscribe(
         (entityCountUpdate) => {
-          if (!entityData.latest[EntityKeyType.COUNT]) {
-            entityData.latest[EntityKeyType.COUNT] = {};
-            entityData.latest[EntityKeyType.COUNT][countKey.name] = {
-              ts: Date.now(),
-              value: entityCountUpdate.count + ''
+          if (!dataReceived) {
+            const entityData: EntityData = {
+              entityId,
+              latest: {
+                [EntityKeyType.ENTITY_FIELD]: {
+                  name: {
+                    ts: Date.now(),
+                    value: DatasourceType.entityCount
+                  }
+                },
+                [EntityKeyType.COUNT]: {
+                  [countKey.name]: {
+                    ts: Date.now(),
+                    value: entityCountUpdate.count + ''
+                  }
+                }
+              },
+              timeseries: {}
             };
             const pageData: PageData<EntityData> = {
               data: [entityData],
@@ -344,12 +350,20 @@ export class EntityDataSubscription {
               totalPages: 1
             };
             this.onPageData(pageData);
+            dataReceived = true;
           } else {
-            const update = [deepClone(entityData)];
-            update[0].latest[EntityKeyType.COUNT][countKey.name] = {
-              ts: Date.now(),
-              value: entityCountUpdate.count + ''
-            };
+            const update: EntityData[] = [{
+              entityId,
+              latest: {
+                [EntityKeyType.COUNT]: {
+                  [countKey.name]: {
+                    ts: Date.now(),
+                    value: entityCountUpdate.count + ''
+                  }
+                }
+              },
+              timeseries: {}
+            }];
             this.onDataUpdate(update);
           }
         }

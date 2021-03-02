@@ -351,14 +351,14 @@ export interface KeyFilterPredicateInfo {
 export interface KeyFilter {
   key: EntityKey;
   valueType: EntityKeyValueType;
-  value: string | number | boolean;
+  value?: string | number | boolean;
   predicate: KeyFilterPredicate;
 }
 
 export interface KeyFilterInfo {
   key: EntityKey;
   valueType: EntityKeyValueType;
-  value: string | number | boolean;
+  value?: string | number | boolean;
   predicates: Array<KeyFilterPredicateInfo>;
 }
 

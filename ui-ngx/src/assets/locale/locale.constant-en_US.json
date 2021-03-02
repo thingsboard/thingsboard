@@ -299,6 +299,7 @@
         "filter-type-single-entity": "Single entity",
         "filter-type-entity-list": "Entity list",
         "filter-type-entity-name": "Entity name",
+        "filter-type-entity-type": "Entity type",
         "filter-type-state-entity": "Entity from dashboard state",
         "filter-type-state-entity-description": "Entity taken from dashboard state parameters",
         "filter-type-asset-type": "Asset type",
