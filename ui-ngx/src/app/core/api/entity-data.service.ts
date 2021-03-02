@@ -135,11 +135,14 @@ export class EntityDataService {
       dataKeys: subscriptionDataKeys,
       type: subscriptionType
     };
-    if (entityDataSubscriptionOptions.datasourceType === DatasourceType.entity) {
+    if (entityDataSubscriptionOptions.datasourceType === DatasourceType.entity ||
+      entityDataSubscriptionOptions.datasourceType === DatasourceType.entityCount) {
       entityDataSubscriptionOptions.entityFilter = datasource.entityFilter;
-      entityDataSubscriptionOptions.pageLink = pageLink;
       entityDataSubscriptionOptions.keyFilters = keyFilters;
       entityDataSubscriptionOptions.additionalKeyFilters = additionalKeyFilters;
+      if (entityDataSubscriptionOptions.datasourceType === DatasourceType.entity) {
+        entityDataSubscriptionOptions.pageLink = pageLink;
+      }
     }
     entityDataSubscriptionOptions.isPaginatedDataSubscription = isPaginatedDataSubscription;
     return entityDataSubscriptionOptions;

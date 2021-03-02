@@ -6534,6 +6534,13 @@ ngx-daterangepicker-material@^4.0.1:
   dependencies:
     tslib "^1.10.0"
 
+ngx-drag-drop@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/ngx-drag-drop/-/ngx-drag-drop-2.0.0.tgz#65d970229964803726fb7b9af4aec24005c810c7"
+  integrity sha512-t+4/eiC8zaXKqU1ruNfFEfGs1GpMNwpffD0baopvZFKjQHCb5rhNqFilJ54wO4T0OwGp4/RnsVhlcxe1mX6UJg==
+  dependencies:
+    tslib "^1.9.0"
+
 "ngx-flowchart@git://github.com/thingsboard/ngx-flowchart.git#master":
   version "0.0.0"
   resolved "git://github.com/thingsboard/ngx-flowchart.git#078bfd2cedeeab412dee922e8066a19be6da7278"

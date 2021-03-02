@@ -1099,10 +1099,10 @@ export class EntityService {
         dataKeys: []
       };
       this.prepareEntityFilterFromSubscriptionInfo(datasource, subscriptionInfo);
-    } else if (subscriptionInfo.type === DatasourceType.function) {
+    } else if (subscriptionInfo.type === DatasourceType.function || subscriptionInfo.type === DatasourceType.entityCount) {
       datasource = {
         type: subscriptionInfo.type,
-        name: subscriptionInfo.name || DatasourceType.function,
+        name: subscriptionInfo.name || subscriptionInfo.type,
         dataKeys: []
       };
     }
@@ -1118,6 +1118,10 @@ export class EntityService {
       }
       if (subscriptionInfo.alarmFields) {
         this.createDatasourceKeys(subscriptionInfo.alarmFields, DataKeyType.alarm, datasource);
+      }
+      if (subscriptionInfo.type === DatasourceType.entityCount) {
+        const dataKey = this.utils.createKey({ name: 'count'}, DataKeyType.count);
+        datasource.dataKeys.push(dataKey);
       }
     }
     return datasource;

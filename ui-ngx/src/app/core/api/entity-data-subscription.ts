@@ -22,12 +22,14 @@ import {
   EntityFilter,
   EntityKey,
   EntityKeyType,
-  entityKeyTypeToDataKeyType, entityPageDataChanged,
+  entityKeyTypeToDataKeyType,
+  entityPageDataChanged,
   KeyFilter,
   TsValue
 } from '@shared/models/query/query.models';
 import {
   DataKeyType,
+  EntityCountCmd,
   EntityDataCmd,
   SubscriptionData,
   SubscriptionDataHolder,
@@ -42,6 +44,7 @@ import { DataAggregator } from '@core/api/data-aggregator';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityType } from '@shared/models/entity-type.models';
 import { Observable, of, ReplaySubject, Subject } from 'rxjs';
+import { EntityId } from '@shared/models/id/entity-id';
 import Timeout = NodeJS.Timeout;
 
 declare type DataKeyFunction = (time: number, prevValue: any) => any;
@@ -82,6 +85,7 @@ export class EntityDataSubscription {
   private subscriber: TelemetrySubscriber;
   private dataCommand: EntityDataCmd;
   private subsCommand: EntityDataCmd;
+  private countCommand: EntityCountCmd;
 
   private attrFields: Array<EntityKey>;
   private tsFields: Array<EntityKey>;
@@ -91,7 +95,7 @@ export class EntityDataSubscription {
   private pageData: PageData<EntityData>;
   private subsTw: SubscriptionTimewindow;
   private dataAggregators: Array<DataAggregator>;
-  private dataKeys: {[key: string]: Array<SubscriptionDataKey> | SubscriptionDataKey} = {}
+  private dataKeys: {[key: string]: Array<SubscriptionDataKey> | SubscriptionDataKey} = {};
   private datasourceData: {[index: number]: {[key: string]: DataSetHolder}};
   private datasourceOrigData: {[index: number]: {[key: string]: DataSetHolder}};
   private entityIdToDataIndex: {[id: string]: number};
@@ -125,7 +129,8 @@ export class EntityDataSubscription {
         }
       }
       let key: string;
-      if (this.datasourceType === DatasourceType.entity || this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
+      if (this.datasourceType === DatasourceType.entity || this.datasourceType === DatasourceType.entityCount ||
+        this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
         if (this.datasourceType === DatasourceType.function) {
           key = `${dataKey.name}_${dataKey.index}_${dataKey.type}`;
         } else {
@@ -159,7 +164,7 @@ export class EntityDataSubscription {
     if (this.dataAggregators) {
       this.dataAggregators.forEach((aggregator) => {
         aggregator.destroy();
-      })
+      });
       this.dataAggregators = null;
     }
     this.pageData = null;
@@ -291,6 +296,65 @@ export class EntityDataSubscription {
         totalPages: 1
       };
       this.onPageData(pageData);
+    } else if (this.datasourceType === DatasourceType.entityCount) {
+      this.subscriber = new TelemetrySubscriber(this.telemetryService);
+      this.countCommand = new EntityCountCmd();
+      let keyFilters = this.entityDataSubscriptionOptions.keyFilters;
+      if (this.entityDataSubscriptionOptions.additionalKeyFilters) {
+        if (keyFilters) {
+          keyFilters = keyFilters.concat(this.entityDataSubscriptionOptions.additionalKeyFilters);
+        } else {
+          keyFilters = this.entityDataSubscriptionOptions.additionalKeyFilters;
+        }
+      }
+      this.countCommand.query = {
+        entityFilter: this.entityDataSubscriptionOptions.entityFilter,
+        keyFilters
+      };
+      this.subscriber.subscriptionCommands.push(this.countCommand);
+
+      const entityId: EntityId = {
+        id: NULL_UUID,
+        entityType: null
+      };
+
+      const entityData: EntityData = {
+        entityId,
+        timeseries: {},
+        latest: {}
+      };
+      entityData.latest[EntityKeyType.ENTITY_FIELD] = {
+        name: {ts: Date.now(), value: DatasourceType.entityCount},
+      };
+
+      const countKey = this.entityDataSubscriptionOptions.dataKeys[0];
+
+      this.subscriber.entityCount$.subscribe(
+        (entityCountUpdate) => {
+          if (!entityData.latest[EntityKeyType.COUNT]) {
+            entityData.latest[EntityKeyType.COUNT] = {};
+            entityData.latest[EntityKeyType.COUNT][countKey.name] = {
+              ts: Date.now(),
+              value: entityCountUpdate.count + ''
+            };
+            const pageData: PageData<EntityData> = {
+              data: [entityData],
+              hasNext: false,
+              totalElements: 1,
+              totalPages: 1
+            };
+            this.onPageData(pageData);
+          } else {
+            const update = [deepClone(entityData)];
+            update[0].latest[EntityKeyType.COUNT][countKey.name] = {
+              ts: Date.now(),
+              value: entityCountUpdate.count + ''
+            };
+            this.onDataUpdate(update);
+          }
+        }
+      );
+      this.subscriber.subscribe();
     }
     if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
       return of(null);
@@ -347,7 +411,7 @@ export class EntityDataSubscription {
             limit: this.subsTw.aggregation.limit,
             agg: this.subsTw.aggregation.type,
             fetchLatestPreviousPoint: this.subsTw.aggregation.stateData
-          }
+          };
         }
       }
     } else if (this.entityDataSubscriptionOptions.type === widgetType.latest) {
@@ -381,7 +445,7 @@ export class EntityDataSubscription {
     if (this.dataAggregators) {
       this.dataAggregators.forEach((aggregator) => {
         aggregator.destroy();
-      })
+      });
     }
     this.dataAggregators = [];
     this.resetData();
@@ -419,7 +483,8 @@ export class EntityDataSubscription {
       this.datasourceData[dataIndex] = {};
       for (const key of Object.keys(this.dataKeys)) {
         const dataKey = this.dataKeys[key];
-        if (this.datasourceType === DatasourceType.entity || this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
+        if (this.datasourceType === DatasourceType.entity || this.datasourceType === DatasourceType.entityCount ||
+          this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
           const dataKeysList = dataKey as Array<SubscriptionDataKey>;
           for (let index = 0; index < dataKeysList.length; index++) {
             this.datasourceData[dataIndex][key + '_' + index] = {

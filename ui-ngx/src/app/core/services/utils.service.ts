@@ -27,7 +27,8 @@ import {
   deleteNullProperties,
   guid,
   isDefined,
-  isDefinedAndNotNull, isString,
+  isDefinedAndNotNull,
+  isString,
   isUndefined
 } from '@core/utils';
 import { WindowMessage } from '@shared/models/window-message.model';
