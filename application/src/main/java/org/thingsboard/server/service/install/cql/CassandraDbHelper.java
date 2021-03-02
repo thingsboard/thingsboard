@@ -145,17 +145,17 @@ public class CassandraDbHelper {
                 if (row.isNull(index)) {
                     return null;
                 } else if (type.getProtocolCode() == ProtocolConstants.DataType.DOUBLE) {
-                    str = new Double(row.getDouble(index)).toString();
+                    str = Double.valueOf(row.getDouble(index)).toString();
                 } else if (type.getProtocolCode() == ProtocolConstants.DataType.INT) {
-                    str = new Integer(row.getInt(index)).toString();
+                    str = Integer.valueOf(row.getInt(index)).toString();
                 } else if (type.getProtocolCode() == ProtocolConstants.DataType.BIGINT) {
-                    str = new Long(row.getLong(index)).toString();
+                    str = Long.valueOf(row.getLong(index)).toString();
                 } else if (type.getProtocolCode() == ProtocolConstants.DataType.UUID) {
                     str = row.getUuid(index).toString();
                 } else if (type.getProtocolCode() == ProtocolConstants.DataType.TIMEUUID) {
                     str = row.getUuid(index).toString();
                 } else if (type.getProtocolCode() == ProtocolConstants.DataType.FLOAT) {
-                    str = new Float(row.getFloat(index)).toString();
+                    str = Float.valueOf(row.getFloat(index)).toString();
                 } else if (type.getProtocolCode() == ProtocolConstants.DataType.TIMESTAMP) {
                     str = ""+row.getInstant(index).toEpochMilli();
                 } else if (type.getProtocolCode() == ProtocolConstants.DataType.BOOLEAN) {

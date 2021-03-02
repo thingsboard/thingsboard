@@ -15,21 +15,27 @@
  */
 package org.thingsboard.server.actors.ruleChain;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
 
 /**
  * Created by ashvayka on 19.03.18.
  */
-@Data
-final class RuleChainToRuleNodeMsg implements TbActorMsg {
+@EqualsAndHashCode(callSuper = true)
+@ToString
+final class RuleChainToRuleNodeMsg extends TbToRuleNodeActorMsg {
 
-    private final TbContext ctx;
-    private final TbMsg msg;
+    @Getter
     private final String fromRelationType;
+
+    public RuleChainToRuleNodeMsg(TbContext ctx, TbMsg tbMsg, String fromRelationType) {
+        super(ctx, tbMsg);
+        this.fromRelationType = fromRelationType;
+    }
 
     @Override
     public MsgType getMsgType() {

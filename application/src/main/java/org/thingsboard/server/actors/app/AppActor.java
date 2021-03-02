@@ -141,12 +141,12 @@ public class AppActor extends ContextAwareActor {
 
     private void onQueueToRuleEngineMsg(QueueToRuleEngineMsg msg) {
         if (TenantId.SYS_TENANT_ID.equals(msg.getTenantId())) {
-            msg.getTbMsg().getCallback().onFailure(new RuleEngineException("Message has system tenant id!"));
+            msg.getMsg().getCallback().onFailure(new RuleEngineException("Message has system tenant id!"));
         } else {
             if (!deletedTenants.contains(msg.getTenantId())) {
                 getOrCreateTenantActor(msg.getTenantId()).tell(msg);
             } else {
-                msg.getTbMsg().getCallback().onSuccess();
+                msg.getMsg().getCallback().onSuccess();
             }
         }
     }

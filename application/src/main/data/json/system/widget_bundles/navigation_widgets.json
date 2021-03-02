@@ -1,0 +1,41 @@
+{
+  "widgetsBundle": {
+    "alias": "navigation_widgets",
+    "title": "Navigation widgets",
+    "image": null
+  },
+  "widgetTypes": [
+    {
+      "alias": "navigation_cards",
+      "name": "Navigation cards",
+      "descriptor": {
+        "type": "static",
+        "sizeX": 7,
+        "sizeY": 6,
+        "resources": [],
+        "templateHtml": "<tb-navigation-cards-widget [ctx]=\"ctx\"></tb-navigation-cards-widget>",
+        "templateCss": "/*#widget-container {\n    overflow-y: auto;\n    box-sizing: content-box !important;\n    cursor: auto;\n}*/\n\n#widget-container #container {\n    overflow-y: auto;\n    box-sizing: content-box;\n    cursor: auto;\n}",
+        "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.navigationCardsWidget.resize();\n}\n\nself.onResize = function() {\n    self.ctx.$scope.navigationCardsWidget.resize();\n}\n\nself.onDestroy = function() {\n}\n",
+        "settingsSchema": "{\n    \"schema\": {\n        \"type\": \"object\",\n        \"title\": \"Settings\",\n        \"properties\": {\n            \"filterType\": {\n                \"title\": \"Filter type\",\n                \"type\": \"string\",\n                \"default\": \"all\"\n            },\n            \"filter\": {\n                \"title\": \"Items\",\n                \"type\": \"array\"\n            }\n        },\n        \"required\": []\n    },\n    \"form\": [\n        {\n            \"key\": \"filterType\",\n            \"type\": \"radios\",\n            \"direction\": \"row\",\n            \"titleMap\": [\n                {\n                    \"value\": \"all\",\n                    \"name\": \"All items\"\n                },\n                {\n                    \"value\": \"include\",\n                    \"name\": \"Include items\"\n                },\n                                {\n                    \"value\": \"exclude\",\n                    \"name\": \"Exclude items\"\n                }\n            ]\n        },\n        {\n            \"key\": \"filter\",\n            \"type\": \"rc-select\",\n            \"condition\": \"model.filterType !== 'all'\",\n            \"tags\": true,\n            \"placeholder\": \"Enter urls to filter\",\n            \"items\": [{\"value\": \"/devices\", \"label\": \"/devices\"}, {\"value\": \"/assets\", \"label\": \"/assets\"}, {\"value\": \"/deviceProfies\", \"label\": \"/deviceProfies\"}]\n        }\n    ]\n}\n",
+        "dataKeySettingsSchema": "{}\n",
+        "defaultConfig": "{\"datasources\":[{\"type\":\"static\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Random\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.15479322438769105,\"funcBody\":\"var value = prevValue + Math.random() * 100 - 50;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < -1000) {\\n\\tvalue = -1000;\\n} else if (value > 1000) {\\n\\tvalue = 1000;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"rgba(255,255,255,0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{\"filterType\":\"all\"},\"title\":\"Navigation cards\",\"dropShadow\":false,\"showTitleIcon\":false,\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"24px\",\"titleTooltip\":\"\",\"enableFullscreen\":false,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"showLegend\":false}"
+      }
+    },
+    {
+      "alias": "navigation_card",
+      "name": "Navigation card",
+      "descriptor": {
+        "type": "static",
+        "sizeX": 2.5,
+        "sizeY": 2,
+        "resources": [],
+        "templateHtml": "<tb-navigation-card-widget [ctx]=\"ctx\"></tb-navigation-card-widget>",
+        "templateCss": "",
+        "controllerScript": "self.onInit = function() {\n\n}\n\n\nself.onDestroy = function() {\n}\n",
+        "settingsSchema": "{\n    \"schema\": {\n        \"type\": \"object\",\n        \"title\": \"Settings\",\n        \"properties\": {\n            \"name\": {\n                \"title\": \"Title\",\n                \"type\": \"string\",\n                \"default\": \"{i18n:device.devices}\"\n            },\n            \"icon\": {\n                \"title\": \"icon\",\n                \"type\": \"string\",\n                \"default\": \"devices_other\"\n            },\n            \"path\": {\n                \"title\": \"Navigation path\",\n                \"type\": \"string\",\n                \"default\": \"/devices\"\n            }\n        },\n        \"required\": [\"name\", \"icon\", \"path\"]\n    },\n    \"form\": [\n        \"name\",\n        {\n            \"key\": \"icon\",\n            \"type\": \"icon\"\n        },\n        \"path\"\n    ]\n}\n",
+        "dataKeySettingsSchema": "{}\n",
+        "defaultConfig": "{\"datasources\":[{\"type\":\"static\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Random\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.15479322438769105,\"funcBody\":\"var value = prevValue + Math.random() * 100 - 50;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < -1000) {\\n\\tvalue = -1000;\\n} else if (value > 1000) {\\n\\tvalue = 1000;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"rgba(255,255,255,0)\",\"color\":\"rgba(255,255,255,0.87)\",\"padding\":\"8px\",\"settings\":{\"name\":\"{i18n:device.devices}\",\"icon\":\"devices_other\",\"path\":\"/devices\"},\"title\":\"Navigation card\",\"dropShadow\":false,\"showTitleIcon\":false,\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"24px\",\"titleTooltip\":\"\",\"enableFullscreen\":false,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"showLegend\":false}"
+      }
+    }
+  ]
+}

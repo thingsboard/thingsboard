@@ -281,6 +281,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         tenantIdAndEntityId.add(entityId);
 
         Cache cache = cacheManager.getCache(ENTITY_VIEW_CACHE);
+        @SuppressWarnings("unchecked")
         List<EntityView> fromCache = cache.get(tenantIdAndEntityId, List.class);
         if (fromCache != null) {
             return Futures.immediateFuture(fromCache);

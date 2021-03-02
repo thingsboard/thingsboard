@@ -153,7 +153,8 @@ public class CassandraToSqlColumn {
                     sqlInsertStatement.setBoolean(this.sqlIndex, Boolean.parseBoolean(value));
                     break;
                 case ENUM_TO_INT:
-                    Enum enumVal = Enum.valueOf(this.enumClass, value);
+                    @SuppressWarnings("unchecked")
+                    Enum<?> enumVal = Enum.valueOf(this.enumClass, value);
                     int intValue = enumVal.ordinal();
                     sqlInsertStatement.setInt(this.sqlIndex, intValue);
                     break;

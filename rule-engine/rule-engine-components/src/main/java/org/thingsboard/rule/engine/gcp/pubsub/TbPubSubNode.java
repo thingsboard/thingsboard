@@ -93,8 +93,8 @@ public class TbPubSubNode implements TbNode {
         PubsubMessage.Builder pubsubMessageBuilder = PubsubMessage.newBuilder();
         pubsubMessageBuilder.setData(data);
         this.config.getMessageAttributes().forEach((k, v) -> {
-            String name = TbNodeUtils.processPattern(k, msg.getMetaData());
-            String val = TbNodeUtils.processPattern(v, msg.getMetaData());
+            String name = TbNodeUtils.processPattern(k, msg);
+            String val = TbNodeUtils.processPattern(v, msg);
             pubsubMessageBuilder.putAttributes(name, val);
         });
         ApiFuture<String> messageIdFuture = this.pubSubClient.publish(pubsubMessageBuilder.build());

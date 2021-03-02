@@ -82,16 +82,16 @@
                   </mat-error>
                   <mat-error *ngIf="lwm2mConfigFormGroup.get('clientKey').hasError('pattern')">
                     {{ 'device.lwm2m-security-config.client-key' | translate }}
-                    <strong>{{ translate.get('device.lwm2m-security-config.pattern_hex_dec', {
+                    <strong>{{ 'device.lwm2m-security-config.pattern_hex_dec' | translate: {
                       count: 0
-                    }) | async }}</strong>
+                    } }}</strong>
                   </mat-error>
                   <mat-error *ngIf="(lwm2mConfigFormGroup.get('clientKey').hasError('maxlength') ||
                     lwm2mConfigFormGroup.get('clientKey').hasError('minlength'))">
                     {{ 'device.lwm2m-security-config.client-key' | translate }}
-                    <strong>{{ translate.get('device.lwm2m-security-config.pattern_hex_dec', {
+                    <strong>{{ 'device.lwm2m-security-config.pattern_hex_dec' | translate: {
                       count: lenMaxKeyClient
-                    }) | async }}</strong>
+                    } }}</strong>
                   </mat-error>
                 </mat-form-field>
               </div>

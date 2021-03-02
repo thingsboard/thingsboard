@@ -377,6 +377,10 @@ public abstract class AbstractWebTest {
         return readResponse(doGetAsync(urlTemplate, urlVariables).andExpect(status().isOk()), responseClass);
     }
 
+    protected <T> T doGetAsyncTyped(String urlTemplate, TypeReference<T> responseType, Object... urlVariables) throws Exception {
+        return readResponse(doGetAsync(urlTemplate, urlVariables).andExpect(status().isOk()), responseType);
+    }
+
     protected ResultActions doGetAsync(String urlTemplate, Object... urlVariables) throws Exception {
         MockHttpServletRequestBuilder getRequest;
         getRequest = get(urlTemplate, urlVariables);

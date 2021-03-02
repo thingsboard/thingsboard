@@ -14,21 +14,20 @@
 /// limitations under the License.
 ///
 
-import { JsonObject } from '@angular/compiler-cli/ngcc/src/packages/entry_point';
-
 export const INSTANCES = 'instances';
 export const RESOURCES = 'resources';
+export const CLIENT_LWM2M = 'clientLwM2M';
+export const CLIENT_LWM2M_SETTINGS = 'clientLwM2mSettings';
 export const OBSERVE_ATTR_TELEMETRY = 'observeAttrTelemetry';
 export const OBSERVE = 'observe';
 export const ATTRIBUTE = 'attribute';
 export const TELEMETRY = 'telemetry';
 export const KEY_NAME = 'keyName';
-export const CLIENT_LWM2M = 'clientLwM2M';
 export const DEFAULT_ID_SERVER = 123;
 export const DEFAULT_ID_BOOTSTRAP = 111;
 export const DEFAULT_HOST_NAME = 'localhost';
 export const DEFAULT_PORT_SERVER_NO_SEC = 5685;
-export const DEFAULT_PORT_BOOTSTRAP_NO_SEC = 5691;
+export const DEFAULT_PORT_BOOTSTRAP_NO_SEC = 5686;
 export const DEFAULT_CLIENT_HOLD_OFF_TIME = 1;
 export const DEFAULT_LIFE_TIME = 300;
 export const DEFAULT_MIN_PERIOD = 1;
@@ -91,10 +90,16 @@ interface BootstrapSecurityConfig {
 }
 
 export interface ProfileConfigModels {
-  bootstrap: BootstrapSecurityConfig;
+  clientLwM2mSettings: ClientLwM2mSettings;
   observeAttr: ObservableAttributes;
+  bootstrap: BootstrapSecurityConfig;
+
 }
 
+export interface ClientLwM2mSettings {
+  clientOnlyObserveAfterConnect: boolean;
+  clientUpdateValueAfterConnect: boolean;
+}
 export interface ObservableAttributes {
   observe: string[];
   attribute: string[];
@@ -141,15 +146,27 @@ function getDefaultProfileBootstrapSecurityConfig(hostname: any): BootstrapSecur
   };
 }
 
+function getDefaultProfileObserveAttrConfig(): ObservableAttributes {
+  return {
+    observe: [],
+    attribute: [],
+    telemetry: [],
+    keyName: {}
+  };
+}
+
+function getDefaultProfileClientLwM2mSettingsConfig(): ClientLwM2mSettings {
+  return {
+    clientOnlyObserveAfterConnect: true,
+    clientUpdateValueAfterConnect: false
+  };
+}
+
 export function getDefaultProfileConfig(hostname?: any): ProfileConfigModels {
   return {
-    bootstrap: getDefaultProfileBootstrapSecurityConfig((hostname) ? hostname : DEFAULT_HOST_NAME),
-    observeAttr: {
-      observe: [],
-      attribute: [],
-      telemetry: [],
-      keyName: {}
-    }
+    clientLwM2mSettings: getDefaultProfileClientLwM2mSettingsConfig(),
+    observeAttr: getDefaultProfileObserveAttrConfig(),
+    bootstrap: getDefaultProfileBootstrapSecurityConfig((hostname) ? hostname : DEFAULT_HOST_NAME)
   };
 }
 

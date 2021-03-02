@@ -166,13 +166,13 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                 if (this.getValidatedSecurityMode(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap, lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer)) {
                     lwM2MBootstrapConfig.bootstrapServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap);
                     lwM2MBootstrapConfig.lwm2mServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer);
-                    String logMsg = String.format(LOG_LW2M_INFO + ": getParametersBootstrap: %s Access connect client with bootstrap server.", store.getEndPoint());
+                    String logMsg = String.format("%s: getParametersBootstrap: %s Access connect client with bootstrap server.", LOG_LW2M_INFO, store.getEndPoint());
                     context.sentParametersOnThingsboard(context.getTelemetryMsgObject(logMsg), LwM2MTransportHandler.DEVICE_TELEMETRY_TOPIC, sessionInfo);
                     return lwM2MBootstrapConfig;
                 } else {
                     log.error(" [{}] Different values SecurityMode between of client and profile.", store.getEndPoint());
-                    log.error(LOG_LW2M_ERROR + " getParametersBootstrap: [{}] Different values SecurityMode between of client and profile.", store.getEndPoint());
-                    String logMsg = String.format(LOG_LW2M_ERROR + ": getParametersBootstrap: %s Different values SecurityMode between of client and profile.", store.getEndPoint());
+                    log.error("{} getParametersBootstrap: [{}] Different values SecurityMode between of client and profile.", LOG_LW2M_ERROR, store.getEndPoint());
+                    String logMsg = String.format("%s: getParametersBootstrap: %s Different values SecurityMode between of client and profile.", LOG_LW2M_ERROR, store.getEndPoint());
                     context.sentParametersOnThingsboard(context.getTelemetryMsgObject(logMsg), LwM2MTransportHandler.DEVICE_TELEMETRY_TOPIC, sessionInfo);
                     return null;
                 }
@@ -188,6 +188,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
     /**
      * Bootstrap security have to sync between (bootstrapServer in credential and  bootstrapServer in profile)
      * and (lwm2mServer  in credential and lwm2mServer  in profile
+     *
      * @param bootstrapFromCredential - Bootstrap -> Security of bootstrapServer in credential
      * @param profileServerBootstrap  - Bootstrap -> Security of bootstrapServer in profile
      * @param lwm2mFromCredential     - Bootstrap -> Security of lwm2mServer in credential

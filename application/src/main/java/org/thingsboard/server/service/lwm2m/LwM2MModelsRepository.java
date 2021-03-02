@@ -169,11 +169,11 @@ public class LwM2MModelsRepository {
      * PageNumber = 1, PageSize = List<LwM2mObject>.size()
      */
     public PageData<LwM2mObject> findLwm2mListObjects(PageLink pageLink) {
-        PageImpl page = new PageImpl(getLwm2mObjects(getObjectIdFromTextSearch(pageLink.getTextSearch()),
+        PageImpl<LwM2mObject> page = new PageImpl<>(getLwm2mObjects(getObjectIdFromTextSearch(pageLink.getTextSearch()),
                                                                                pageLink.getTextSearch(),
                                                                                pageLink.getSortOrder().getProperty(),
                                                                                pageLink.getSortOrder().getDirection().name()));
-        PageData pageData = new PageData(page.getContent(), page.getTotalPages(), page.getTotalElements(), page.hasNext());
+        PageData<LwM2mObject> pageData = new PageData<>(page.getContent(), page.getTotalPages(), page.getTotalElements(), page.hasNext());
         return pageData;
     }
 
@@ -217,23 +217,19 @@ public class LwM2MModelsRepository {
             switch (mode) {
                 case NO_SEC:
                     bsServ.setHost(contextBootStrap.getBootstrapHost());
-                    bsServ.setPort(contextBootStrap.getBootstrapPortNoSecPsk());
+                    bsServ.setPort(contextBootStrap.getBootstrapPortNoSec());
                     bsServ.setServerPublicKey("");
                     break;
                 case PSK:
-                    bsServ.setHost(contextBootStrap.getBootstrapSecureHost());
-                    bsServ.setPort(contextBootStrap.getBootstrapSecurePortPsk());
+                    bsServ.setHost(contextBootStrap.getBootstrapHostSecurity());
+                    bsServ.setPort(contextBootStrap.getBootstrapPortSecurity());
                     bsServ.setServerPublicKey("");
                     break;
                 case RPK:
-                    bsServ.setHost(contextBootStrap.getBootstrapSecureHost());
-                    bsServ.setPort(contextBootStrap.getBootstrapSecurePortRpk());
-                    bsServ.setServerPublicKey(getRPKPublicKey(this.contextBootStrap.getBootstrapPublicX(), this.contextBootStrap.getBootstrapPublicY()));
-                    break;
                 case X509:
-                    bsServ.setHost(contextBootStrap.getBootstrapSecureHost());
-                    bsServ.setPort(contextBootStrap.getBootstrapSecurePortX509());
-                    bsServ.setServerPublicKey(getServerPublicKeyX509(contextBootStrap.getBootstrapAlias()));
+                    bsServ.setHost(contextBootStrap.getBootstrapHostSecurity());
+                    bsServ.setPort(contextBootStrap.getBootstrapPortSecurity());
+                    bsServ.setServerPublicKey(getPublicKey (contextBootStrap.getBootstrapAlias(), this.contextBootStrap.getBootstrapPublicX(), this.contextBootStrap.getBootstrapPublicY()));
                     break;
                 default:
                     break;
@@ -243,29 +239,30 @@ public class LwM2MModelsRepository {
             switch (mode) {
                 case NO_SEC:
                     bsServ.setHost(contextServer.getServerHost());
-                    bsServ.setPort(contextServer.getServerPortNoSecPsk());
+                    bsServ.setPort(contextServer.getServerPortNoSec());
                     bsServ.setServerPublicKey("");
                     break;
                 case PSK:
-                    bsServ.setHost(contextServer.getServerSecureHost());
-                    bsServ.setPort(contextServer.getServerPortPsk());
+                    bsServ.setHost(contextServer.getServerHostSecurity());
+                    bsServ.setPort(contextServer.getServerPortSecurity());
                     bsServ.setServerPublicKey("");
                     break;
                 case RPK:
-                    bsServ.setHost(contextServer.getServerSecureHost());
-                    bsServ.setPort(contextServer.getServerPortRpk());
-                    bsServ.setServerPublicKey(getRPKPublicKey(this.contextServer.getServerPublicX(), this.contextServer.getServerPublicY()));
-                    break;
                 case X509:
-                    bsServ.setHost(contextServer.getServerSecureHost());
-                    bsServ.setPort(contextServer.getServerPortX509());
-                    bsServ.setServerPublicKey(getServerPublicKeyX509(contextServer.getServerAlias()));
+                    bsServ.setHost(contextServer.getServerHostSecurity());
+                    bsServ.setPort(contextServer.getServerPortSecurity());
+                    bsServ.setServerPublicKey(getPublicKey (contextServer.getServerAlias(), this.contextServer.getServerPublicX(), this.contextServer.getServerPublicY()));
                     break;
                 default:
                     break;
             }
         }
         return bsServ;
+    }
+
+    private String getPublicKey (String alias, String publicServerX, String publicServerY) {
+        String publicKey = getServerPublicKeyX509(alias);
+        return publicKey != null ? publicKey : getRPKPublicKey(publicServerX, publicServerY);
     }
 
     /**

@@ -175,7 +175,7 @@ export class TbFlot {
         autoHighlight: this.tooltipIndividual === true,
         markings: []
       },
-      selection : { mode : ctx.isMobile ? null : 'x' },
+      selection : { mode : 'x' },
       legend : {
         show: false
       }
@@ -702,7 +702,7 @@ export class TbFlot {
   }
 
   public checkMouseEvents() {
-    const enabled = !this.ctx.isMobile &&  !this.ctx.isEdit;
+    const enabled = !this.ctx.isEdit;
     if (isUndefined(this.mouseEventsEnabled) || this.mouseEventsEnabled !== enabled) {
       this.mouseEventsEnabled = enabled;
       if (this.$element) {

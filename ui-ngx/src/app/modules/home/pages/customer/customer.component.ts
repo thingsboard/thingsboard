@@ -23,12 +23,14 @@ import { ActionNotificationShow } from '@app/core/notification/notification.acti
 import { TranslateService } from '@ngx-translate/core';
 import { ContactBasedComponent } from '../../components/entity/contact-based.component';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import { isDefinedAndNotNull } from '@core/utils';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { AuthState } from '@core/auth/auth.models';
 
 @Component({
   selector: 'tb-customer',
-  templateUrl: './customer.component.html'
+  templateUrl: './customer.component.html',
+  styleUrls: ['./customer.component.scss']
 })
 export class CustomerComponent extends ContactBasedComponent<Customer> {
 
@@ -58,7 +60,10 @@ export class CustomerComponent extends ContactBasedComponent<Customer> {
         title: [entity ? entity.title : '', [Validators.required]],
         additionalInfo: this.fb.group(
           {
-            description: [entity && entity.additionalInfo ? entity.additionalInfo.description : '']
+            description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],
+            homeDashboardId: [entity && entity.additionalInfo ? entity.additionalInfo.homeDashboardId : null],
+            homeDashboardHideToolbar: [entity && entity.additionalInfo &&
+            isDefinedAndNotNull(entity.additionalInfo.homeDashboardHideToolbar) ? entity.additionalInfo.homeDashboardHideToolbar : true]
           }
         )
       }
@@ -69,6 +74,11 @@ export class CustomerComponent extends ContactBasedComponent<Customer> {
     this.isPublic = entity.additionalInfo && entity.additionalInfo.isPublic;
     this.entityForm.patchValue({title: entity.title});
     this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
+    this.entityForm.patchValue({additionalInfo:
+        {homeDashboardId: entity.additionalInfo ? entity.additionalInfo.homeDashboardId : null}});
+    this.entityForm.patchValue({additionalInfo:
+        {homeDashboardHideToolbar: entity.additionalInfo &&
+          isDefinedAndNotNull(entity.additionalInfo.homeDashboardHideToolbar) ? entity.additionalInfo.homeDashboardHideToolbar : true}});
   }
 
   onCustomerIdCopied(event) {

@@ -49,7 +49,7 @@ public interface RelationRepository
                                                     String fromType);
 
     @Transactional
-    RelationEntity save(RelationEntity entity);
+    <S extends RelationEntity> S save(S entity);
 
     @Transactional
     void deleteById(RelationCompositeKey id);
