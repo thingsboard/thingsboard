@@ -42,6 +42,16 @@
           max-height: 100%;
           object-fit: contain;
         }
+
+        .mat-card-title {
+          font-size: 20px;
+        }
+
+        .mat-card-content {
+          font-size: 14px;
+          line-height: 18px;
+          color: #666;
+        }
       }
     }
 
