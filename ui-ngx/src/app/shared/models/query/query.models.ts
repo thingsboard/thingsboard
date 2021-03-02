@@ -36,7 +36,8 @@ export enum EntityKeyType {
   TIME_SERIES = 'TIME_SERIES',
   ENTITY_FIELD = 'ENTITY_FIELD',
   ALARM_FIELD = 'ALARM_FIELD',
-  CONSTANT = 'CONSTANT'
+  CONSTANT = 'CONSTANT',
+  COUNT = 'COUNT'
 }
 
 export const entityKeyTypeTranslationMap = new Map<EntityKeyType, string>(
@@ -61,6 +62,8 @@ export function entityKeyTypeToDataKeyType(entityKeyType: EntityKeyType): DataKe
       return DataKeyType.entityField;
     case EntityKeyType.ALARM_FIELD:
       return DataKeyType.alarm;
+    case EntityKeyType.COUNT:
+      return DataKeyType.count;
   }
 }
 
@@ -76,6 +79,8 @@ export function dataKeyTypeToEntityKeyType(dataKeyType: DataKeyType): EntityKeyT
       return EntityKeyType.ALARM_FIELD;
     case DataKeyType.entityField:
       return EntityKeyType.ENTITY_FIELD;
+    case DataKeyType.count:
+      return EntityKeyType.COUNT;
   }
 }
 
@@ -716,13 +721,13 @@ export const defaultEntityDataPageLink: EntityDataPageLink = createDefaultEntity
 
 export interface EntityCountQuery {
   entityFilter: EntityFilter;
+  keyFilters?: Array<KeyFilter>;
 }
 
 export interface AbstractDataQuery<T extends EntityDataPageLink> extends EntityCountQuery {
   pageLink: T;
   entityFields?: Array<EntityKey>;
   latestValues?: Array<EntityKey>;
-  keyFilters?: Array<KeyFilter>;
 }
 
 export interface EntityDataQuery extends AbstractDataQuery<EntityDataPageLink> {
