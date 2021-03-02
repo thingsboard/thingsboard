@@ -61,7 +61,7 @@ export class EntityDataService {
               private utils: UtilsService) {}
 
   public prepareSubscription(listener: EntityDataListener,
-                             isReloadOnlyOnDataUpdated = false): Observable<EntityDataLoadResult> {
+                             ignoreDataUpdateOnIntervalTick = false): Observable<EntityDataLoadResult> {
     const datasource = listener.configDatasource;
     listener.subscriptionOptions = this.createSubscriptionOptions(
       datasource,
@@ -70,7 +70,7 @@ export class EntityDataService {
       datasource.keyFilters,
       null,
       false,
-      isReloadOnlyOnDataUpdated);
+      ignoreDataUpdateOnIntervalTick);
     if (datasource.type === DatasourceType.entity && (!datasource.entityFilter || !datasource.pageLink)) {
       return of(null);
     }
@@ -90,7 +90,7 @@ export class EntityDataService {
   public subscribeForPaginatedData(listener: EntityDataListener,
                                    pageLink: EntityDataPageLink,
                                    keyFilters: KeyFilter[],
-                                   isReloadOnlyOnDataUpdated = false): Observable<EntityDataLoadResult> {
+                                   ignoreDataUpdateOnIntervalTick = false): Observable<EntityDataLoadResult> {
     const datasource = listener.configDatasource;
     listener.subscriptionOptions = this.createSubscriptionOptions(
       datasource,
@@ -99,7 +99,7 @@ export class EntityDataService {
       datasource.keyFilters,
       keyFilters,
       true,
-      isReloadOnlyOnDataUpdated);
+      ignoreDataUpdateOnIntervalTick);
     if (datasource.type === DatasourceType.entity && (!datasource.entityFilter || !pageLink)) {
       listener.dataLoaded(emptyPageData<EntityData>(), [],
         listener.configDatasourceIndex, listener.subscriptionOptions.pageLink);
@@ -124,7 +124,7 @@ export class EntityDataService {
                                     keyFilters: KeyFilter[],
                                     additionalKeyFilters: KeyFilter[],
                                     isPaginatedDataSubscription: boolean,
-                                    isReloadOnlyOnDataUpdated: boolean): EntityDataSubscriptionOptions {
+                                    ignoreDataUpdateOnIntervalTick: boolean): EntityDataSubscriptionOptions {
     const subscriptionDataKeys: Array<SubscriptionDataKey> = [];
     datasource.dataKeys.forEach((dataKey) => {
       const subscriptionDataKey: SubscriptionDataKey = {
@@ -147,7 +147,7 @@ export class EntityDataService {
       entityDataSubscriptionOptions.additionalKeyFilters = additionalKeyFilters;
     }
     entityDataSubscriptionOptions.isPaginatedDataSubscription = isPaginatedDataSubscription;
-    entityDataSubscriptionOptions.isReloadOnlyOnDataUpdated = isReloadOnlyOnDataUpdated;
+    entityDataSubscriptionOptions.ignoreDataUpdateOnIntervalTick = ignoreDataUpdateOnIntervalTick;
     return entityDataSubscriptionOptions;
   }
 }

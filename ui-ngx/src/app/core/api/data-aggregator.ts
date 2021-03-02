@@ -92,7 +92,7 @@ export class DataAggregator {
               private interval: number,
               private stateData: boolean,
               private utils: UtilsService,
-              private isReloadOnlyOnDataUpdated: boolean) {
+              private ignoreDataUpdateOnIntervalTick: boolean) {
     this.tsKeyNames.forEach((key) => {
       this.dataBuffer[key] = [];
     });
@@ -205,7 +205,7 @@ export class DataAggregator {
     } else {
       this.data = this.updateData();
     }
-    if (this.onDataCb && (!this.isReloadOnlyOnDataUpdated || this.updatedData)) {
+    if (this.onDataCb && (!this.ignoreDataUpdateOnIntervalTick || this.updatedData)) {
       this.onDataCb(this.data, detectChanges);
       this.updatedData = false;
     }
