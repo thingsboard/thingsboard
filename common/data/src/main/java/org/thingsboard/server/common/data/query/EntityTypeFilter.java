@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.relation;
+package org.thingsboard.server.common.data.query;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.EntityType;
 
-import java.util.List;
-
-/**
- * Created by ashvayka on 02.05.17.
- */
 @Data
-public class EntityRelationsQuery {
+public class EntityTypeFilter implements EntityFilter {
+    @Override
+    public EntityFilterType getType() {
+        return EntityFilterType.ENTITY_TYPE;
+    }
 
-    private RelationsSearchParameters parameters;
-    private List<RelationEntityTypeFilter> filters;
+    private EntityType entityType;
 
 }

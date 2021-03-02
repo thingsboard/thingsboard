@@ -40,12 +40,13 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityListFilter;
 import org.thingsboard.server.common.data.query.EntityNameFilter;
 import org.thingsboard.server.common.data.query.EntitySearchQueryFilter;
+import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.EntityViewSearchQueryFilter;
 import org.thingsboard.server.common.data.query.EntityViewTypeFilter;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
-import org.thingsboard.server.common.data.relation.EntityTypeFilter;
+import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -488,6 +489,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             case ASSET_SEARCH_QUERY:
             case ENTITY_VIEW_SEARCH_QUERY:
             case API_USAGE_STATE:
+            case ENTITY_TYPE:
                 return "";
             default:
                 throw new RuntimeException("Not implemented!");
@@ -573,7 +575,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         boolean single = entityFilter.getFilters() != null && entityFilter.getFilters().size() == 1;
         if (entityFilter.getFilters() != null && !entityFilter.getFilters().isEmpty()) {
             int entityTypeFilterIdx = 0;
-            for (EntityTypeFilter etf : entityFilter.getFilters()) {
+            for (RelationEntityTypeFilter etf : entityFilter.getFilters()) {
                 String etfCondition = buildEtfCondition(ctx, etf, entityFilter.getDirection(), entityTypeFilterIdx++);
                 if (!etfCondition.isEmpty()) {
                     if (noConditions) {
@@ -622,7 +624,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         return "( " + selectFields + from + ")";
     }
 
-    private String buildEtfCondition(QueryContext ctx, EntityTypeFilter etf, EntitySearchDirection direction, int entityTypeFilterIdx) {
+    private String buildEtfCondition(QueryContext ctx, RelationEntityTypeFilter etf, EntitySearchDirection direction, int entityTypeFilterIdx) {
         StringBuilder whereFilter = new StringBuilder();
         String relationType = etf.getRelationType();
         List<EntityType> entityTypes = etf.getEntityTypes();
@@ -728,6 +730,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 return ((EntityListFilter) entityFilter).getEntityType();
             case ENTITY_NAME:
                 return ((EntityNameFilter) entityFilter).getEntityType();
+            case ENTITY_TYPE:
+                return ((EntityTypeFilter) entityFilter).getEntityType();
             case ASSET_TYPE:
             case ASSET_SEARCH_QUERY:
                 return EntityType.ASSET;
