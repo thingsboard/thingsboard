@@ -13,30 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.query;
+package org.thingsboard.server.service.telemetry.cmd.v2;
 
-import lombok.Getter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-import java.util.Collections;
-import java.util.List;
+@Data
+@AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
+public abstract class CmdUpdate {
 
-public class EntityCountQuery {
+    private final int cmdId;
+    private final int errorCode;
+    private final String errorMsg;
 
-    @Getter
-    private EntityFilter entityFilter;
+    public abstract CmdUpdateType getCmdUpdateType();
 
-    @Getter
-    protected List<KeyFilter> keyFilters;
-
-    public EntityCountQuery() {
-    }
-
-    public EntityCountQuery(EntityFilter entityFilter) {
-        this(entityFilter, Collections.emptyList());
-    }
-
-    public EntityCountQuery(EntityFilter entityFilter, List<KeyFilter> keyFilters) {
-        this.entityFilter = entityFilter;
-        this.keyFilters = keyFilters;
-    }
 }

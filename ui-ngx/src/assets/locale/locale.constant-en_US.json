@@ -299,6 +299,7 @@
         "filter-type-single-entity": "Single entity",
         "filter-type-entity-list": "Entity list",
         "filter-type-entity-name": "Entity name",
+        "filter-type-entity-type": "Entity type",
         "filter-type-state-entity": "Entity from dashboard state",
         "filter-type-state-entity-description": "Entity taken from dashboard state parameters",
         "filter-type-asset-type": "Asset type",
@@ -800,6 +801,7 @@
     "datasource": {
         "type": "Datasource type",
         "name": "Name",
+        "label": "Label",
         "add-datasource-prompt": "Please add datasource"
     },
     "details": {
@@ -1094,6 +1096,7 @@
     "entity": {
         "entity": "Entity",
         "entities": "Entities",
+        "entities-count": "Entities count",
         "aliases": "Entity aliases",
         "entity-alias": "Entity alias",
         "unable-delete-entity-alias-title": "Unable to delete entity alias",

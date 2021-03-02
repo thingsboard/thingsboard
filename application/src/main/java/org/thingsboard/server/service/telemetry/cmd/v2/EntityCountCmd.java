@@ -13,30 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.query;
+package org.thingsboard.server.service.telemetry.cmd.v2;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
+import org.thingsboard.server.common.data.query.EntityCountQuery;
+import org.thingsboard.server.common.data.query.EntityDataQuery;
 
-import java.util.Collections;
-import java.util.List;
-
-public class EntityCountQuery {
-
-    @Getter
-    private EntityFilter entityFilter;
+public class EntityCountCmd extends DataCmd {
 
     @Getter
-    protected List<KeyFilter> keyFilters;
+    private final EntityCountQuery query;
 
-    public EntityCountQuery() {
-    }
-
-    public EntityCountQuery(EntityFilter entityFilter) {
-        this(entityFilter, Collections.emptyList());
-    }
-
-    public EntityCountQuery(EntityFilter entityFilter, List<KeyFilter> keyFilters) {
-        this.entityFilter = entityFilter;
-        this.keyFilters = keyFilters;
+    @JsonCreator
+    public EntityCountCmd(@JsonProperty("cmdId") int cmdId,
+                          @JsonProperty("query") EntityCountQuery query) {
+        super(cmdId);
+        this.query = query;
     }
 }

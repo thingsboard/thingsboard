@@ -107,12 +107,15 @@ export class KeyFilterDialogComponent extends
             key: [this.data.keyFilter.key.key, [Validators.required]]
           }
         ),
-        value: [this.data.keyFilter.value],
         valueType: [this.data.keyFilter.valueType, [Validators.required]],
         predicates: [this.data.keyFilter.predicates, [Validators.required]]
       }
     );
-
+    if (this.data.telemetryKeysOnly) {
+      this.keyFilterFormGroup.addControl(
+        'value', this.fb.control(this.data.keyFilter.value)
+      );
+    }
     if (!this.data.readonly) {
       this.keyFilterFormGroup.get('valueType').valueChanges.pipe(
         takeUntil(this.destroy$)
@@ -144,12 +147,14 @@ export class KeyFilterDialogComponent extends
         } else {
           this.showAutocomplete = false;
         }
-        if (type === EntityKeyType.CONSTANT) {
-          this.keyFilterFormGroup.get('value').setValidators(Validators.required);
-          this.keyFilterFormGroup.get('value').updateValueAndValidity();
-        } else {
-          this.keyFilterFormGroup.get('value').clearValidators();
-          this.keyFilterFormGroup.get('value').updateValueAndValidity();
+        if (this.data.telemetryKeysOnly) {
+          if (type === EntityKeyType.CONSTANT) {
+            this.keyFilterFormGroup.get('value').setValidators(Validators.required);
+            this.keyFilterFormGroup.get('value').updateValueAndValidity();
+          } else {
+            this.keyFilterFormGroup.get('value').clearValidators();
+            this.keyFilterFormGroup.get('value').updateValueAndValidity();
+          }
         }
       });
 
