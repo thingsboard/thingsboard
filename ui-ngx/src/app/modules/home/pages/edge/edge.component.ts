@@ -83,7 +83,7 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
         )
       }
     );
-    this.checkIsNewEdge(entity, form);
+    this.generateRoutingKeyAndSecret(entity, form);
     return form;
   }
 
@@ -100,20 +100,13 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
         description: entity.additionalInfo ? entity.additionalInfo.description : ''
       }
     });
-    this.checkIsNewEdge(entity, this.entityForm);
+    this.generateRoutingKeyAndSecret(entity, this.entityForm);
   }
 
   updateFormState() {
     super.updateFormState();
     this.entityForm.get('routingKey').disable({emitEvent: false});
     this.entityForm.get('secret').disable({emitEvent: false});
-  }
-
-  private checkIsNewEdge(entity: EdgeInfo, form: FormGroup) {
-    if (entity && !entity.id) {
-      form.get('routingKey').patchValue(guid(), {emitEvent: false});
-      form.get('secret').patchValue(generateSecret(20), {emitEvent: false});
-    }
   }
 
   onEdgeIdCopied($event) {
@@ -138,5 +131,12 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
         verticalPosition: 'bottom',
         horizontalPosition: 'right'
       }));
+  }
+
+  private generateRoutingKeyAndSecret(entity: EdgeInfo, form: FormGroup) {
+    if (entity && !entity.id) {
+      form.get('routingKey').patchValue(guid(), {emitEvent: false});
+      form.get('secret').patchValue(generateSecret(20), {emitEvent: false});
+    }
   }
 }
