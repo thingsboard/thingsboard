@@ -414,6 +414,7 @@ export class EntityService {
         {
           key: nameField,
           valueType: EntityKeyValueType.STRING,
+          value: null,
           predicate: {
             type: FilterPredicateType.STRING,
             operation: StringOperation.STARTS_WITH,

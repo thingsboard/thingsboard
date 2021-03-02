@@ -52,6 +52,8 @@ export class ComplexFilterPredicateComponent implements ControlValueAccessor, On
 
   @Input() allowUserDynamicSource = true;
 
+  @Input() onlyUserDynamicSource = false;
+
   private propagateChange = null;
 
   private complexFilterPredicate: ComplexFilterPredicateInfo;
@@ -89,7 +91,8 @@ export class ComplexFilterPredicateComponent implements ControlValueAccessor, On
         isAdd: false,
         key: this.key,
         displayUserParameters: this.displayUserParameters,
-        allowUserDynamicSource: this.allowUserDynamicSource
+        allowUserDynamicSource: this.allowUserDynamicSource,
+        onlyUserDynamicSource: this.onlyUserDynamicSource
       }
     }).afterClosed().subscribe(
       (result) => {
