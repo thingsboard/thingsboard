@@ -17,13 +17,20 @@ package org.thingsboard.rule.engine.profile;
 
 import org.junit.Test;
 import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.device.profile.*;
+import org.thingsboard.server.common.data.device.profile.AlarmCondition;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionSpec;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
+import org.thingsboard.server.common.data.device.profile.AlarmRule;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
+import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
+import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
-import javax.xml.crypto.Data;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 
 public class AlarmStateTest {
@@ -47,7 +54,9 @@ public class AlarmStateTest {
 
     @Test
     public void testSetAlarmConditionMetadata_durationCondition() {
-        AlarmRuleState ruleState = createMockAlarmRuleState(new DurationAlarmConditionSpec(TimeUnit.SECONDS, 0));
+        DurationAlarmConditionSpec spec = new DurationAlarmConditionSpec();
+        spec.setUnit(TimeUnit.SECONDS);
+        AlarmRuleState ruleState = createMockAlarmRuleState(spec);
         int duration = 12;
         ruleState.getState().setDuration(duration);
 

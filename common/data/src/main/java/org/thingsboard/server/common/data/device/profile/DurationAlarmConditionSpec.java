@@ -27,14 +27,6 @@ public class DurationAlarmConditionSpec implements AlarmConditionSpec {
     private TimeUnit unit;
     private long value;
 
-    public DurationAlarmConditionSpec() {
-    }
-
-    public DurationAlarmConditionSpec(TimeUnit unit, long value) {
-        this.unit = unit;
-        this.value = value;
-    }
-
     @Override
     public AlarmConditionSpecType getType() {
         return AlarmConditionSpecType.DURATION;
