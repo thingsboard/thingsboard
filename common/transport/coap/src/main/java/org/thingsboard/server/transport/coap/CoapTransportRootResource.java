@@ -192,20 +192,20 @@ public class CoapTransportRootResource extends AbstractCoapTransportResource {
                                 transportService.process(sessionInfo,
                                         coapTransportAdaptor.convertToPostAttributes(sessionId, request,
                                                 transportConfigurationContainer.getAttributesMsgDescriptor()),
-                                        new CoapOkCallback(exchange, CoAP.ResponseCode.VALID, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
+                                        new CoapOkCallback(exchange, CoAP.ResponseCode.CREATED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
                                 reportActivity(sessionInfo, attributeSubscriptions.contains(sessionId), rpcSubscriptions.contains(sessionId));
                                 break;
                             case POST_TELEMETRY_REQUEST:
                                 transportService.process(sessionInfo,
                                         coapTransportAdaptor.convertToPostTelemetry(sessionId, request,
                                                 transportConfigurationContainer.getTelemetryMsgDescriptor()),
-                                        new CoapOkCallback(exchange, CoAP.ResponseCode.VALID, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
+                                        new CoapOkCallback(exchange, CoAP.ResponseCode.CREATED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
                                 reportActivity(sessionInfo, attributeSubscriptions.contains(sessionId), rpcSubscriptions.contains(sessionId));
                                 break;
                             case CLAIM_REQUEST:
                                 transportService.process(sessionInfo,
                                         coapTransportAdaptor.convertToClaimDevice(sessionId, request, sessionInfo),
-                                        new CoapOkCallback(exchange, CoAP.ResponseCode.VALID, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
+                                        new CoapOkCallback(exchange, CoAP.ResponseCode.CREATED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
                                 break;
                             case SUBSCRIBE_ATTRIBUTES_REQUEST:
                                 TransportProtos.SessionInfoProto currentAttrSession = tokenToSessionIdMap.get(getTokenFromRequest(request));
@@ -226,7 +226,7 @@ public class CoapTransportRootResource extends AbstractCoapTransportResource {
                                     attributeSubscriptions.remove(attrSessionId);
                                     transportService.process(attrSession,
                                             TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().setUnsubscribe(true).build(),
-                                            new CoapOkCallback(exchange, CoAP.ResponseCode.VALID, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
+                                            new CoapOkCallback(exchange, CoAP.ResponseCode.DELETED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
                                     closeAndDeregister(sessionInfo, sessionId);
                                 }
                                 break;
@@ -250,23 +250,23 @@ public class CoapTransportRootResource extends AbstractCoapTransportResource {
                                     rpcSubscriptions.remove(rpcSessionId);
                                     transportService.process(rpcSession,
                                             TransportProtos.SubscribeToRPCMsg.newBuilder().setUnsubscribe(true).build(),
-                                            new CoapOkCallback(exchange, CoAP.ResponseCode.VALID, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
+                                            new CoapOkCallback(exchange, CoAP.ResponseCode.DELETED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
                                     closeAndDeregister(sessionInfo, sessionId);
                                 }
                                 break;
                             case TO_DEVICE_RPC_RESPONSE:
                                 transportService.process(sessionInfo,
                                         coapTransportAdaptor.convertToDeviceRpcResponse(sessionId, request),
-                                        new CoapOkCallback(exchange, CoAP.ResponseCode.VALID, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
+                                        new CoapOkCallback(exchange, CoAP.ResponseCode.CREATED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
                                 break;
                             case TO_SERVER_RPC_REQUEST:
-                                transportService.registerSyncSession(sessionInfo, new CoapSessionListener(this, exchange, coapTransportAdaptor), transportContext.getTimeout());
+                                transportService.registerSyncSession(sessionInfo, getCoapSessionListener(exchange, coapTransportAdaptor), transportContext.getTimeout());
                                 transportService.process(sessionInfo,
                                         coapTransportAdaptor.convertToServerRpcRequest(sessionId, request),
                                         new CoapNoOpCallback(exchange));
                                 break;
                             case GET_ATTRIBUTES_REQUEST:
-                                transportService.registerSyncSession(sessionInfo, new CoapSessionListener(this, exchange, coapTransportAdaptor), transportContext.getTimeout());
+                                transportService.registerSyncSession(sessionInfo, getCoapSessionListener(exchange, coapTransportAdaptor), transportContext.getTimeout());
                                 transportService.process(sessionInfo,
                                         coapTransportAdaptor.convertToGetAttributes(sessionId, request),
                                         new CoapNoOpCallback(exchange));
@@ -285,9 +285,12 @@ public class CoapTransportRootResource extends AbstractCoapTransportResource {
 
     protected void registerAsyncCoapSession(CoapExchange exchange, TransportProtos.SessionInfoProto sessionInfo, CoapTransportAdaptor coapTransportAdaptor, String token) {
         tokenToSessionIdMap.putIfAbsent(token, sessionInfo);
-        CoapSessionListener attrListener = new CoapSessionListener(this, exchange, coapTransportAdaptor);
-        transportService.registerAsyncSession(sessionInfo, attrListener);
+        transportService.registerAsyncSession(sessionInfo, getCoapSessionListener(exchange, coapTransportAdaptor));
         transportService.process(sessionInfo, getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
+    }
+
+    protected CoapSessionListener getCoapSessionListener(CoapExchange exchange, CoapTransportAdaptor coapTransportAdaptor) {
+        return new CoapSessionListener(this, exchange, coapTransportAdaptor);
     }
 
     private String getTokenFromRequest(Request request) {
@@ -449,10 +452,6 @@ public class CoapTransportRootResource extends AbstractCoapTransportResource {
                 log.trace("Failed to reply due to error", e);
                 exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
             }
-        }
-
-        public CoapExchange getExchange() {
-            return exchange;
         }
     }
 

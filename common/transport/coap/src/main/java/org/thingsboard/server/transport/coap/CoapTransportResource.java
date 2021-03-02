@@ -21,7 +21,6 @@ import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
 import org.thingsboard.server.common.msg.session.FeatureType;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.adaptors.CoapTransportAdaptor;
 
 import java.util.List;
@@ -45,6 +44,10 @@ public class CoapTransportResource extends CoapTransportRootResource {
     }
 
     @Override
+    public Resource getChild(String name) {
+        return this;
+    }
+
     protected Optional<FeatureType> processGetFeatureType(Request request) {
         List<String> uriPath = request.getOptions().getUriPath();
         try {
@@ -55,17 +58,8 @@ public class CoapTransportResource extends CoapTransportRootResource {
         return Optional.empty();
     }
 
-    @Override
-    public Resource getChild(String name) {
-        return this;
-    }
-
-    @Override
-    protected void registerAsyncCoapSession(CoapExchange exchange, TransportProtos.SessionInfoProto sessionInfo, CoapTransportAdaptor coapTransportAdaptor, String token) {
-        tokenToSessionIdMap.putIfAbsent(token, sessionInfo);
-        CoapSessionListener attrListener = new CoapSessionListener(this, exchange, coapTransportAdaptor);
-        transportService.registerAsyncSession(sessionInfo, attrListener);
-        transportService.process(sessionInfo, getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
+    protected CoapSessionListener getCoapSessionListener(CoapExchange exchange, CoapTransportAdaptor coapTransportAdaptor) {
+        return new CoapSessionListener(this, exchange, coapTransportAdaptor);
     }
 
     protected Optional<DeviceTokenCredentials> decodeCredentials(Request request) {
