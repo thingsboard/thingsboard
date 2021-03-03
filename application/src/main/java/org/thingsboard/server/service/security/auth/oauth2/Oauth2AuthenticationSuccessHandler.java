@@ -91,6 +91,7 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             clearAuthenticationAttributes(request, response);
             getRedirectStrategy().sendRedirect(request, response, baseUrl + "/?accessToken=" + accessToken.getToken() + "&refreshToken=" + refreshToken.getToken());
         } catch (Exception e) {
+            clearAuthenticationAttributes(request, response);
             getRedirectStrategy().sendRedirect(request, response, baseUrl + "/login?loginError=" +
                     URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8.toString()));
         }
