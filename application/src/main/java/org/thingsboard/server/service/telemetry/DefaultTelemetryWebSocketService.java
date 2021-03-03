@@ -63,7 +63,8 @@ import org.thingsboard.server.service.telemetry.cmd.v1.SubscriptionCmd;
 import org.thingsboard.server.service.telemetry.cmd.v1.TelemetryPluginCmd;
 import org.thingsboard.server.service.telemetry.cmd.v1.TimeseriesSubscriptionCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.DataUpdate;
+import org.thingsboard.server.service.telemetry.cmd.v2.CmdUpdate;
+import org.thingsboard.server.service.telemetry.cmd.v2.EntityCountCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.UnsubscribeCmd;
@@ -225,11 +226,17 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                 if (cmdsWrapper.getAlarmDataCmds() != null) {
                     cmdsWrapper.getAlarmDataCmds().forEach(cmd -> handleWsAlarmDataCmd(sessionRef, cmd));
                 }
+                if (cmdsWrapper.getEntityCountCmds() != null) {
+                    cmdsWrapper.getEntityCountCmds().forEach(cmd -> handleWsEntityCountCmd(sessionRef, cmd));
+                }
                 if (cmdsWrapper.getEntityDataUnsubscribeCmds() != null) {
                     cmdsWrapper.getEntityDataUnsubscribeCmds().forEach(cmd -> handleWsDataUnsubscribeCmd(sessionRef, cmd));
                 }
                 if (cmdsWrapper.getAlarmDataUnsubscribeCmds() != null) {
                     cmdsWrapper.getAlarmDataUnsubscribeCmds().forEach(cmd -> handleWsDataUnsubscribeCmd(sessionRef, cmd));
+                }
+                if (cmdsWrapper.getEntityCountUnsubscribeCmds() != null) {
+                    cmdsWrapper.getEntityCountUnsubscribeCmds().forEach(cmd -> handleWsDataUnsubscribeCmd(sessionRef, cmd));
                 }
             }
         } catch (IOException e) {
@@ -239,6 +246,16 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     }
 
     private void handleWsEntityDataCmd(TelemetryWebSocketSessionRef sessionRef, EntityDataCmd cmd) {
+        String sessionId = sessionRef.getSessionId();
+        log.debug("[{}] Processing: {}", sessionId, cmd);
+
+        if (validateSessionMetadata(sessionRef, cmd.getCmdId(), sessionId)
+                && validateSubscriptionCmd(sessionRef, cmd)) {
+            entityDataSubService.handleCmd(sessionRef, cmd);
+        }
+    }
+
+    private void handleWsEntityCountCmd(TelemetryWebSocketSessionRef sessionRef, EntityCountCmd cmd) {
         String sessionId = sessionRef.getSessionId();
         log.debug("[{}] Processing: {}", sessionId, cmd);
 
@@ -273,7 +290,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     }
 
     @Override
-    public void sendWsMsg(String sessionId, DataUpdate update) {
+    public void sendWsMsg(String sessionId, CmdUpdate update) {
         sendWsMsg(sessionId, update.getCmdId(), update);
     }
 
@@ -682,6 +699,20 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
         } else if (cmd.getQuery() == null && cmd.getLatestCmd() == null && cmd.getHistoryCmd() == null && cmd.getTsCmd() == null) {
             TelemetrySubscriptionUpdate update = new TelemetrySubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.BAD_REQUEST,
                     "Query is empty!");
+            sendWsMsg(sessionRef, update);
+            return false;
+        }
+        return true;
+    }
+
+    private boolean validateSubscriptionCmd(TelemetryWebSocketSessionRef sessionRef, EntityCountCmd cmd) {
+        if (cmd.getCmdId() < 0) {
+            TelemetrySubscriptionUpdate update = new TelemetrySubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.BAD_REQUEST,
+                    "Cmd id is negative value!");
+            sendWsMsg(sessionRef, update);
+            return false;
+        } else if (cmd.getQuery() == null) {
+            TelemetrySubscriptionUpdate update = new TelemetrySubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.BAD_REQUEST, "Query is empty!");
             sendWsMsg(sessionRef, update);
             return false;
         }

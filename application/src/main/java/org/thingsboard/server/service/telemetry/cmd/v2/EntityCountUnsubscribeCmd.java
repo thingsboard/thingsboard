@@ -13,30 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.query;
+package org.thingsboard.server.service.telemetry.cmd.v2;
 
-import lombok.Getter;
+import lombok.Data;
 
-import java.util.Collections;
-import java.util.List;
+@Data
+public class EntityCountUnsubscribeCmd implements UnsubscribeCmd {
 
-public class EntityCountQuery {
+    private final int cmdId;
 
-    @Getter
-    private EntityFilter entityFilter;
-
-    @Getter
-    protected List<KeyFilter> keyFilters;
-
-    public EntityCountQuery() {
-    }
-
-    public EntityCountQuery(EntityFilter entityFilter) {
-        this(entityFilter, Collections.emptyList());
-    }
-
-    public EntityCountQuery(EntityFilter entityFilter, List<KeyFilter> keyFilters) {
-        this.entityFilter = entityFilter;
-        this.keyFilters = keyFilters;
-    }
 }

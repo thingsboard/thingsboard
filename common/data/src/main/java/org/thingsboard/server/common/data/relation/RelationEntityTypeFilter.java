@@ -13,9 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.telemetry.cmd.v2;
+package org.thingsboard.server.common.data.relation;
 
-public enum DataUpdateType {
-    ENTITY_DATA,
-    ALARM_DATA
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import org.thingsboard.server.common.data.EntityType;
+
+import java.util.List;
+
+/**
+ * Created by ashvayka on 02.05.17.
+ */
+@Data
+@AllArgsConstructor
+public class RelationEntityTypeFilter {
+
+    private String relationType;
+
+    private List<EntityType> entityTypes;
 }

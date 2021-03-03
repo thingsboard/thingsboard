@@ -481,6 +481,8 @@ export class EntityService {
           return entityTypes.indexOf(filter.entityType) > -1 ? true : false;
         case AliasFilterType.entityName:
           return entityTypes.indexOf(filter.entityType) > -1 ? true : false;
+        case AliasFilterType.entityType:
+          return entityTypes.indexOf(filter.entityType) > -1 ? true : false;
         case AliasFilterType.stateEntity:
           return true;
         case AliasFilterType.assetType:
@@ -539,6 +541,8 @@ export class EntityService {
       case AliasFilterType.entityList:
         return true;
       case AliasFilterType.entityName:
+        return true;
+      case AliasFilterType.entityType:
         return true;
       case AliasFilterType.stateEntity:
         return true;
@@ -803,6 +807,9 @@ export class EntityService {
         result.entityFilter = deepClone(filter);
         return of(result);
       case AliasFilterType.entityName:
+        result.entityFilter = deepClone(filter);
+        return of(result);
+      case AliasFilterType.entityType:
         result.entityFilter = deepClone(filter);
         return of(result);
       case AliasFilterType.stateEntity:
@@ -1099,10 +1106,10 @@ export class EntityService {
         dataKeys: []
       };
       this.prepareEntityFilterFromSubscriptionInfo(datasource, subscriptionInfo);
-    } else if (subscriptionInfo.type === DatasourceType.function) {
+    } else if (subscriptionInfo.type === DatasourceType.function || subscriptionInfo.type === DatasourceType.entityCount) {
       datasource = {
         type: subscriptionInfo.type,
-        name: subscriptionInfo.name || DatasourceType.function,
+        name: subscriptionInfo.name || subscriptionInfo.type,
         dataKeys: []
       };
     }
@@ -1118,6 +1125,10 @@ export class EntityService {
       }
       if (subscriptionInfo.alarmFields) {
         this.createDatasourceKeys(subscriptionInfo.alarmFields, DataKeyType.alarm, datasource);
+      }
+      if (subscriptionInfo.type === DatasourceType.entityCount) {
+        const dataKey = this.utils.createKey({ name: 'count'}, DataKeyType.count);
+        datasource.dataKeys.push(dataKey);
       }
     }
     return datasource;
