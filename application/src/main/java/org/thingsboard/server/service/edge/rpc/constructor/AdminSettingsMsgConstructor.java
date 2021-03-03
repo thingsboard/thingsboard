@@ -17,7 +17,7 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.AdminSettings;
-import org.thingsboard.server.dao.util.mapping.JacksonUtil;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.gen.edge.AdminSettingsUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 

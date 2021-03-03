@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.dao.util.mapping.JacksonUtil;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.gen.edge.NodeConnectionInfoProto;
 import org.thingsboard.server.gen.edge.RuleChainConnectionInfoProto;
 import org.thingsboard.server.gen.edge.RuleChainMetadataUpdateMsg;
