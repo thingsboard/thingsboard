@@ -59,6 +59,7 @@ export enum EdgeEventType {
   USER = "USER",
   CUSTOMER = "CUSTOMER",
   RELATION = "RELATION",
+  TENANT = "TENANT",
   WIDGETS_BUNDLE = "WIDGETS_BUNDLE",
   WIDGET_TYPE = "WIDGET_TYPE",
   ADMIN_SETTINGS = "ADMIN_SETTINGS"
@@ -105,6 +106,7 @@ export const edgeEventTypeTranslations = new Map<EdgeEventType, string>(
     [EdgeEventType.USER, 'edge-event.type-user'],
     [EdgeEventType.CUSTOMER, 'edge-event.type-customer'],
     [EdgeEventType.RELATION, 'edge-event.type-relation'],
+    [EdgeEventType.TENANT, 'edge-event.type-tenant'],
     [EdgeEventType.WIDGETS_BUNDLE, 'edge-event.type-widgets-bundle'],
     [EdgeEventType.WIDGET_TYPE, 'edge-event.type-widgets-type'],
     [EdgeEventType.ADMIN_SETTINGS, 'edge-event.type-admin-settings']

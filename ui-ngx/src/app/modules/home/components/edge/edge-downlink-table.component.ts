@@ -22,12 +22,9 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
 import { EdgeDownlinkTableConfig } from './edge-downlink-table-config';
 import { DialogService } from '@core/services/dialog.service';
-import { RuleChainService } from '@core/http/rule-chain.service';
 import { AttributeService } from '@core/http/attribute.service';
 import { EdgeService } from '@core/http/edge.service';
-import { DeviceService } from '@core/http/device.service';
-import { AssetService } from '@core/http/asset.service';
-import { EntityViewService } from '@core/http/entity-view.service';
+import { EntityService } from "@core/http/entity.service";
 
 @Component({
   selector: 'tb-edge-downlink-table',
@@ -35,9 +32,6 @@ import { EntityViewService } from '@core/http/entity-view.service';
   styleUrls: ['./edge-downlink-table.component.scss']
 })
 export class EdgeDownlinkTableComponent implements OnInit {
-
-  @Input()
-  tenantId: string;
 
   activeValue = false;
   dirtyValue = false;
@@ -71,13 +65,10 @@ export class EdgeDownlinkTableComponent implements OnInit {
   edgeDownlinkTableConfig: EdgeDownlinkTableConfig;
 
   constructor(private edgeService: EdgeService,
-              private deviceService: DeviceService,
-              private assetService: AssetService,
-              private entityViewService: EntityViewService,
+              private entityService: EntityService,
               private dialogService: DialogService,
               private translate: TranslateService,
               private attributeService: AttributeService,
-              private ruleChainService: RuleChainService,
               private datePipe: DatePipe,
               private dialog: MatDialog) {
   }
@@ -86,17 +77,13 @@ export class EdgeDownlinkTableComponent implements OnInit {
     this.dirtyValue = !this.activeValue;
     this.edgeDownlinkTableConfig = new EdgeDownlinkTableConfig(
       this.edgeService,
+      this.entityService,
       this.dialogService,
       this.translate,
-      this.deviceService,
-      this.assetService,
-      this.entityViewService,
-      this.ruleChainService,
       this.attributeService,
       this.datePipe,
       this.dialog,
-      this.entityIdValue,
-      this.tenantId
+      this.entityIdValue
     );
   }
 

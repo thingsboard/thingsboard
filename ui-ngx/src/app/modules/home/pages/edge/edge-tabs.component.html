@@ -43,7 +43,7 @@
 </mat-tab>
 <mat-tab *ngIf="entity && authUser.authority === authorities.TENANT_ADMIN"
          label="{{ 'edge.downlinks' | translate }}" #downLinksTab="matTab">
-  <tb-edge-downlink-table [active]="downLinksTab.isActive" [tenantId]="entity.tenantId.id"
+  <tb-edge-downlink-table [active]="downLinksTab.isActive"
                   [entityId]="entity.id"></tb-edge-downlink-table>
 </mat-tab>
 <mat-tab *ngIf="entity"
