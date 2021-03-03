@@ -29,7 +29,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.transport.coap.CoapTransportRootResource;
+import org.thingsboard.server.transport.coap.CoapTransportResource;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -67,7 +67,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
 
     @Override
     public TransportProtos.ToDeviceRpcResponseMsg convertToDeviceRpcResponse(UUID sessionId, Request inbound) throws AdaptorException {
-        Optional<Integer> requestId = CoapTransportRootResource.getRequestId(inbound);
+        Optional<Integer> requestId = CoapTransportResource.getRequestId(inbound);
         String payload = validatePayload(sessionId, inbound, false);
         JsonObject response = new JsonParser().parse(payload).getAsJsonObject();
         return TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId.orElseThrow(() -> new AdaptorException("Request id is missing!")))

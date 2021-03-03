@@ -19,7 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.core.network.CoapEndpoint;
-import org.eclipse.californium.core.network.config.NetworkConfig;
+import org.eclipse.californium.core.network.CoapEndpoint.Builder;
+import org.eclipse.californium.core.server.resources.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
@@ -52,10 +53,12 @@ public class CoapTransportService {
         log.info("Starting CoAP transport...");
         log.info("Starting CoAP transport server");
 
-        CoapTransportRootResource rootResource = new CoapTransportRootResource(coapTransportContext, "");
-        TbCoapServerMessageDeliverer messageDeliverer = new TbCoapServerMessageDeliverer(rootResource);
-        this.server = new TbCoapServer(rootResource, messageDeliverer);
+        this.server = new CoapServer();
         createResources();
+        Resource root = this.server.getRoot();
+        TbCoapServerMessageDeliverer messageDeliverer = new TbCoapServerMessageDeliverer(root);
+        this.server.setMessageDeliverer(messageDeliverer);
+
         InetAddress addr = InetAddress.getByName(coapTransportContext.getHost());
         InetSocketAddress sockAddr = new InetSocketAddress(addr, coapTransportContext.getPort());
         server.addEndpoint(new CoapEndpoint(sockAddr));
@@ -71,11 +74,8 @@ public class CoapTransportService {
         CoapEfentoTransportResource efentoMeasurementsTransportResource = new CoapEfentoTransportResource(coapTransportContext, MEASUREMENTS);
         efento.add(efentoMeasurementsTransportResource);
 
-        CoapEfentoTransportResource efentoMeasurements = new CoapEfentoTransportResource(coapTransportContext, EFENTO_MEASUREMENTS);
-
         server.add(api);
         server.add(efento);
-        server.add(efentoMeasurements);
     }
 
     @PreDestroy
