@@ -209,11 +209,11 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
             this.lastActivityTime = System.currentTimeMillis();
         }
 
-        synchronized void sendPing() {
+        synchronized void sendPing(long currentTime) {
             try {
-                if (System.currentTimeMillis() - lastActivityTime >= pingTimeout) {
+                if (currentTime - lastActivityTime >= pingTimeout) {
                     this.asyncRemote.sendPing(ByteBuffer.wrap(new byte[]{}));
-                    lastActivityTime = System.currentTimeMillis();
+                    lastActivityTime = currentTime;
                 }
             } catch (Exception e) {
                 log.trace("[{}] Failed to send ping msg", session.getId(), e);
@@ -313,13 +313,13 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
     }
 
     @Override
-    public void sendPing(TelemetryWebSocketSessionRef sessionRef) throws IOException {
+    public void sendPing(TelemetryWebSocketSessionRef sessionRef, long currentTime) throws IOException {
         String externalId = sessionRef.getSessionId();
         String internalId = externalSessionMap.get(externalId);
         if (internalId != null) {
             SessionMetaData sessionMd = internalSessionMap.get(internalId);
             if (sessionMd != null) {
-                sessionMd.sendPing();
+                sessionMd.sendPing(currentTime);
             } else {
                 log.warn("[{}][{}] Failed to find session by internal id", externalId, internalId);
             }

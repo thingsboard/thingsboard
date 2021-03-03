@@ -754,10 +754,11 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     }
 
     private void sendPing() {
+        long currentTime = System.currentTimeMillis();
         wsSessionsMap.values().forEach(md ->
                 executor.submit(() -> {
                     try {
-                        msgEndpoint.sendPing(md.getSessionRef());
+                        msgEndpoint.sendPing(md.getSessionRef(), currentTime);
                     } catch (IOException e) {
                         log.warn("[{}] Failed to send ping: {}", md.getSessionRef().getSessionId(), e);
                     }

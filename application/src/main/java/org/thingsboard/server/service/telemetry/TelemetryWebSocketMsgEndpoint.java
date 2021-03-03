@@ -26,7 +26,7 @@ public interface TelemetryWebSocketMsgEndpoint {
 
     void send(TelemetryWebSocketSessionRef sessionRef, int subscriptionId, String msg) throws IOException;
 
-    void sendPing(TelemetryWebSocketSessionRef sessionRef) throws IOException;
+    void sendPing(TelemetryWebSocketSessionRef sessionRef, long currentTime) throws IOException;
 
     void close(TelemetryWebSocketSessionRef sessionRef, CloseStatus withReason) throws IOException;
 }
