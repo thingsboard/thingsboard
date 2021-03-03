@@ -146,6 +146,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   isAddingWidget = false;
   isAddingWidgetClosed = true;
   widgetsBundle: WidgetsBundle = null;
+  searchBundle = '';
 
   isToolbarOpened = false;
   isToolbarOpenedAnimate = false;

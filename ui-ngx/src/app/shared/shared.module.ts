@@ -138,6 +138,7 @@ import { QueueTypeListComponent } from '@shared/components/queue/queue-type-list
 import { ContactComponent } from '@shared/components/contact.component';
 import { TimezoneSelectComponent } from '@shared/components/time/timezone-select.component';
 import { FileSizePipe } from '@shared/pipe/file-size.pipe';
+import { WidgetsBundleSearchComponent } from '@shared/components/widgets-bundle-search.component';
 
 @NgModule({
   providers: [
@@ -227,7 +228,8 @@ import { FileSizePipe } from '@shared/pipe/file-size.pipe';
     JsonObjectEditDialogComponent,
     HistorySelectorComponent,
     EntityGatewaySelectComponent,
-    ContactComponent
+    ContactComponent,
+    WidgetsBundleSearchComponent
   ],
   imports: [
     CommonModule,
@@ -395,7 +397,8 @@ import { FileSizePipe } from '@shared/pipe/file-size.pipe';
     JsonObjectEditDialogComponent,
     HistorySelectorComponent,
     EntityGatewaySelectComponent,
-    ContactComponent
+    ContactComponent,
+    WidgetsBundleSearchComponent
   ]
 })
 export class SharedModule { }

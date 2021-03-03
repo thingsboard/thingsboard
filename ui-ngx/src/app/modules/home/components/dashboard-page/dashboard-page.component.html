@@ -242,7 +242,9 @@
           </tb-edit-widget>
         </tb-details-panel>
         <tb-details-panel *ngIf="!isAddingWidgetClosed && !widgetEditMode" fxFlex
-                          headerTitle="{{'dashboard.select-widget-title' | translate}}"
+                          headerTitle="{{
+                            (!widgetsBundle?.title ? 'widget.select-widgets-bundle' : 'dashboard.select-widget-value') | translate: widgetsBundle
+                          }}"
                           headerHeightPx="120"
                           [isReadOnly]="true"
                           [isEdit]="false"
@@ -252,17 +254,17 @@
           <div class="header-pane" *ngIf="isAddingWidget">
             <div fxLayout="row">
 <!--              <span class="tb-details-subtitle">{{ 'widgets-bundle.current' | translate }}</span>-->
-              <tb-widgets-bundle-select fxFlex
-                                        required
-                                        [selectFirstBundle]="false"
-                                        [(ngModel)]="widgetsBundle"
-                                        (ngModelChange)="widgetsBundle = $event">
-              </tb-widgets-bundle-select>
+              <tb-widgets-bundle-search fxFlex
+                                        [(ngModel)]="searchBundle"
+                                        [placeholder]="!widgetsBundle?.title ? 'Search widgets bundle' : 'Search widget'"
+                                        (ngModelChange)="searchBundle = $event">
+              </tb-widgets-bundle-search>
             </div>
           </div>
           <tb-dashboard-widget-select *ngIf="isAddingWidget"
                                       [aliasController]="dashboardCtx.aliasController"
                                       [widgetsBundle]="widgetsBundle"
+                                      [searchBundle]="searchBundle"
                                       (widgetsBundleSelected)="widgetBundleSelected($event)"
                                       (widgetSelected)="addWidgetFromType($event)">
           </tb-dashboard-widget-select>

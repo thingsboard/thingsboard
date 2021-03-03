@@ -21,8 +21,8 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetService } from '@core/http/widget.service';
 import { Widget } from '@shared/models/widget.models';
 import { toWidgetInfo } from '@home/models/widget-component.models';
-import { share } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import { distinctUntilChanged, map, mergeMap, publishReplay, refCount, share } from 'rxjs/operators';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { isDefinedAndNotNull } from '@core/utils';
 
@@ -33,11 +33,18 @@ import { isDefinedAndNotNull } from '@core/utils';
 })
 export class DashboardWidgetSelectComponent implements OnInit, OnChanges {
 
+  private search$ = new BehaviorSubject<string>('');
+
   @Input()
   widgetsBundle: WidgetsBundle;
 
   @Input()
   aliasController: IAliasController;
+
+  @Input()
+  set searchBundle(search: string) {
+    this.search$.next(search);
+  }
 
   @Output()
   widgetSelected: EventEmitter<Widget> = new EventEmitter<Widget>();
@@ -49,13 +56,20 @@ export class DashboardWidgetSelectComponent implements OnInit, OnChanges {
 
   widgetsBundles$: Observable<Array<WidgetsBundle>>;
 
+  widgets$: Observable<Array<Widget>>;
+
   constructor(private widgetsService: WidgetService,
               private sanitizer: DomSanitizer) {
   }
 
   ngOnInit(): void {
-    this.widgetsBundles$ = this.widgetsService.getAllWidgetsBundles().pipe(
-      share()
+    this.widgetsBundles$ = this.search$.asObservable().pipe(
+      distinctUntilChanged(),
+      mergeMap(search => this.fetchWidgetBundle(search))
+    );
+    this.widgets$ = this.search$.asObservable().pipe(
+      distinctUntilChanged(),
+      mergeMap(search => this.fetchWidget(search))
     );
   }
 
@@ -121,6 +135,7 @@ export class DashboardWidgetSelectComponent implements OnInit, OnChanges {
   selectBundle($event: Event, bundle: WidgetsBundle) {
     $event.preventDefault();
     this.widgetsBundle = bundle;
+    this.search$.next('');
     this.widgetsBundleSelected.emit(bundle);
   }
 
@@ -131,4 +146,32 @@ export class DashboardWidgetSelectComponent implements OnInit, OnChanges {
     return '/assets/widget-preview-empty.svg';
   }
 
+  private getWidgetsBundle(): Observable<Array<WidgetsBundle>> {
+    return this.widgetsService.getAllWidgetsBundles().pipe(
+      publishReplay(1),
+      refCount()
+    );
+  }
+
+  private fetchWidgetBundle(search: string): Observable<Array<WidgetsBundle>> {
+    return this.getWidgetsBundle().pipe(
+      map(bundles => search ? bundles.filter(
+        bundle => (
+          bundle.title?.toLowerCase().includes(search.toLowerCase()) ||
+          bundle.description?.toLowerCase().includes(search.toLowerCase())
+        )) : bundles
+      )
+    );
+  }
+
+  private fetchWidget(search: string): Observable<Array<Widget>> {
+    return of(this.widgets).pipe(
+      map(widgets => search ? widgets.filter(
+        widget => (
+          widget.title?.toLowerCase().includes(search.toLowerCase()) ||
+          widget.description?.toLowerCase().includes(search.toLowerCase())
+        )) : widgets
+      )
+    );
+  }
 }

@@ -646,6 +646,7 @@
         "add-widget": "Add new widget",
         "title": "Title",
         "select-widget-title": "Select widget",
+        "select-widget-value": "{{title}}: select widget",
         "select-widget-subtitle": "List of available widget types",
         "delete": "Delete dashboard",
         "title-required": "Title is required.",
