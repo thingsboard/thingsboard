@@ -26,6 +26,8 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 import { AttributeService } from '@core/http/attribute.service';
 import { EdgeService } from '@core/http/edge.service';
 import { EntityService } from "@core/http/entity.service";
+import { WidgetService } from "@core/http/widget.service";
+import { DeviceProfileService } from "@core/http/device-profile.service";
 
 @Component({
   selector: 'tb-edge-downlink-table',
@@ -33,9 +35,6 @@ import { EntityService } from "@core/http/entity.service";
   styleUrls: ['./edge-downlink-table.component.scss']
 })
 export class EdgeDownlinkTableComponent implements OnInit {
-
-  @Input()
-  tenantId: string;
 
   activeValue = false;
   dirtyValue = false;
@@ -73,7 +72,9 @@ export class EdgeDownlinkTableComponent implements OnInit {
               private dialogService: DialogService,
               private translate: TranslateService,
               private attributeService: AttributeService,
+              private deviceProfileService: DeviceProfileService,
               private ruleChainService: RuleChainService,
+              private widgetService: WidgetService,
               private datePipe: DatePipe,
               private dialog: MatDialog) {
   }
@@ -82,15 +83,16 @@ export class EdgeDownlinkTableComponent implements OnInit {
     this.dirtyValue = !this.activeValue;
     this.edgeDownlinkTableConfig = new EdgeDownlinkTableConfig(
       this.edgeService,
+      this.entityService,
       this.dialogService,
       this.translate,
-      this.entityService,
-      this.ruleChainService,
       this.attributeService,
+      this.deviceProfileService,
+      this.ruleChainService,
+      this.widgetService,
       this.datePipe,
       this.dialog,
-      this.entityIdValue,
-      this.tenantId
+      this.entityIdValue
     );
   }
 
