@@ -25,9 +25,7 @@ import { DialogService } from '@core/services/dialog.service';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { AttributeService } from '@core/http/attribute.service';
 import { EdgeService } from '@core/http/edge.service';
-import { DeviceService } from '@core/http/device.service';
-import { AssetService } from '@core/http/asset.service';
-import { EntityViewService } from '@core/http/entity-view.service';
+import { EntityService } from "@core/http/entity.service";
 
 @Component({
   selector: 'tb-edge-downlink-table',
@@ -71,9 +69,7 @@ export class EdgeDownlinkTableComponent implements OnInit {
   edgeDownlinkTableConfig: EdgeDownlinkTableConfig;
 
   constructor(private edgeService: EdgeService,
-              private deviceService: DeviceService,
-              private assetService: AssetService,
-              private entityViewService: EntityViewService,
+              private entityService: EntityService,
               private dialogService: DialogService,
               private translate: TranslateService,
               private attributeService: AttributeService,
@@ -88,9 +84,7 @@ export class EdgeDownlinkTableComponent implements OnInit {
       this.edgeService,
       this.dialogService,
       this.translate,
-      this.deviceService,
-      this.assetService,
-      this.entityViewService,
+      this.entityService,
       this.ruleChainService,
       this.attributeService,
       this.datePipe,

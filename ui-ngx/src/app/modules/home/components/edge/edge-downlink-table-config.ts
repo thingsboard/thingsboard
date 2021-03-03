@@ -21,7 +21,8 @@ import {
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
 import {
-  EdgeEvent, edgeEventActionTypeTranslations,
+  EdgeEvent,
+  edgeEventActionTypeTranslations,
   EdgeEventStatus,
   edgeEventStatusColor,
   EdgeEventType,
@@ -42,17 +43,13 @@ import {
   EventContentDialogComponent,
   EventContentDialogData
 } from '@home/components/event/event-content-dialog.component';
-import { sortObjectKeys } from '@core/utils';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { AttributeService } from '@core/http/attribute.service';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EdgeDownlinkTableHeaderComponent } from '@home/components/edge/edge-downlink-table-header.component';
 import { EdgeService } from '@core/http/edge.service';
 import { map } from 'rxjs/operators';
-import { AssetService } from '@core/http/asset.service';
-import { DeviceService } from '@core/http/device.service';
-import { EntityViewService } from '@core/http/entity-view.service';
-import { EventTableHeaderComponent } from '@home/components/event/event-table-header.component';
+import { EntityService } from "@core/http/entity.service";
 
 export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePageLink> {
 
@@ -61,9 +58,7 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
   constructor(private edgeService: EdgeService,
               private dialogService: DialogService,
               private translate: TranslateService,
-              private deviceService: DeviceService,
-              private assetService: AssetService,
-              private entityViewService: EntityViewService,
+              private entityService: EntityService,
               private ruleChainService: RuleChainService,
               private attributeService: AttributeService,
               private datePipe: DatePipe,
@@ -96,6 +91,24 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
   fetchEvents(pageLink: TimePageLink): Observable<PageData<EdgeEvent>> {
     this.loadEdgeInfo();
     return this.edgeService.getEdgeEvents(this.entityId, pageLink);
+  }
+
+  loadEdgeInfo() {
+    this.attributeService.getEntityAttributes(this.entityId, AttributeScope.SERVER_SCOPE, ['queueStartTs'])
+      .subscribe(
+        attributes => this.onUpdate(attributes)
+      );
+  }
+
+  onUpdate(attributes) {
+    this.queueStartTs = 0;
+    let edge = attributes.reduce(function (map, attribute) {
+      map[attribute.key] = attribute;
+      return map;
+    }, {});
+    if (edge.queueStartTs) {
+      this.queueStartTs = edge.queueStartTs.lastUpdateTs;
+    }
   }
 
   updateColumns(updateTableColumns: boolean = false): void {
@@ -132,94 +145,6 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
     }
   }
 
-  showContent($event: MouseEvent, content: string, title: string, contentType: ContentType = null, sortKeys = false): void {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    if (contentType === ContentType.JSON && sortKeys) {
-      try {
-        content = JSON.stringify(sortObjectKeys(JSON.parse(content)));
-      } catch (e) {
-      }
-    }
-    this.dialog.open<EventContentDialogComponent, EventContentDialogData>(EventContentDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        content,
-        title,
-        contentType
-      }
-    });
-  }
-
-  isEdgeEventHasData(edgeEventType: EdgeEventType) {
-    switch (edgeEventType) {
-      case EdgeEventType.WIDGET_TYPE:
-      case EdgeEventType.WIDGETS_BUNDLE:
-      case EdgeEventType.ADMIN_SETTINGS:
-        return false;
-      default:
-        return true;
-    }
-  }
-
-  prepareEdgeEventContent(entity) {
-    // TODO: voba - extend this function with different cases based on action and entity type
-    switch (entity.type) {
-      case EdgeEventType.RELATION:
-        return of(JSON.stringify(entity.body));
-      case EdgeEventType.ASSET:
-        return this.assetService.getAsset(entity.entityId, null).pipe(
-          map((asset) => {
-            return JSON.stringify(asset);
-          })
-        );
-      case EdgeEventType.DEVICE:
-        return this.deviceService.getDevice(entity.entityId, null).pipe(
-          map((device) => {
-            return JSON.stringify(device);
-          })
-        );
-      case EdgeEventType.ENTITY_VIEW:
-        return this.entityViewService.getEntityView(entity.entityId, null).pipe(
-          map((entityView) => {
-            return JSON.stringify(entityView);
-          })
-        );
-      case EdgeEventType.RULE_CHAIN_METADATA:
-        return this.ruleChainService.getRuleChainMetadata(entity.entityId, null).pipe(
-          map((ruleChainMetaData) => {
-            return JSON.stringify(ruleChainMetaData.nodes);
-          })
-        );
-      default:
-        return of(JSON.stringify(entity));
-    }
-  }
-
-  showEdgeEventContent($event: MouseEvent, content: string, title: string, sortKeys = false): void {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    var contentType = ContentType.JSON;
-    if (contentType === ContentType.JSON && sortKeys) {
-      try {
-        content = JSON.stringify(sortObjectKeys(JSON.parse(content)));
-      } catch (e) {
-      }
-    }
-    this.dialog.open<EventContentDialogComponent, EventContentDialogData>(EventContentDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        content,
-        title,
-        contentType
-      }
-    });
-  }
-
   updateEdgeEventStatus(createdTime) {
     if (this.queueStartTs && createdTime < this.queueStartTs) {
       return this.translate.instant('edge.deployed');
@@ -232,22 +157,63 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
     return createdTime > this.queueStartTs;
   }
 
-  loadEdgeInfo() {
-    this.attributeService.getEntityAttributes(this.entityId, AttributeScope.SERVER_SCOPE, ['queueStartTs'])
-      .subscribe(
-        attributes => this.onUpdate(attributes)
-      );
-  }
-
-  onUpdate(attributes) {
-    this.queueStartTs = 0;
-    let edge = attributes.reduce(function (map, attribute) {
-      map[attribute.key] = attribute;
-      return map;
-    }, {});
-    if (edge.queueStartTs) {
-      this.queueStartTs = edge.queueStartTs.lastUpdateTs;
+  isEdgeEventHasData(edgeEventType: EdgeEventType) {
+    switch (edgeEventType) {
+      case EdgeEventType.DEVICE_PROFILE:
+      case EdgeEventType.WIDGETS_BUNDLE:
+      case EdgeEventType.WIDGET_TYPE:
+      case EdgeEventType.ADMIN_SETTINGS:
+        return false;
+      default:
+        return true;
     }
   }
-}
 
+  prepareEdgeEventContent(entity) {
+    switch (entity.type) {
+      case EdgeEventType.DEVICE:
+      case EdgeEventType.ASSET:
+      case EdgeEventType.EDGE:
+      case EdgeEventType.ENTITY_VIEW:
+      case EdgeEventType.TENANT:
+      case EdgeEventType.CUSTOMER:
+      case EdgeEventType.DASHBOARD:
+      case EdgeEventType.USER:
+      case EdgeEventType.RULE_CHAIN:
+      case EdgeEventType.ALARM:
+        return this.entityService.getEntity(entity.type, entity.entityId, { ignoreLoading: true, ignoreErrors: true }).pipe(
+          map((entity) => {
+            return JSON.stringify(entity);
+          })
+        );
+      case EdgeEventType.RELATION:
+        return of(JSON.stringify(entity.body));
+      case EdgeEventType.RULE_CHAIN_METADATA:
+        return this.ruleChainService.getRuleChainMetadata(entity.entityId, null).pipe(
+          map((ruleChainMetaData) => {
+            return JSON.stringify(ruleChainMetaData.nodes);
+          })
+        );
+      case EdgeEventType.DEVICE_PROFILE:
+      case EdgeEventType.WIDGETS_BUNDLE:
+      case EdgeEventType.WIDGET_TYPE:
+      case EdgeEventType.ADMIN_SETTINGS:
+        return of(null);
+    }
+  }
+
+  showEdgeEventContent($event: MouseEvent, content: string, title: string): void {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialog.open<EventContentDialogComponent, EventContentDialogData>(EventContentDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        content,
+        title,
+        contentType: ContentType.JSON
+      }
+    });
+  }
+}
