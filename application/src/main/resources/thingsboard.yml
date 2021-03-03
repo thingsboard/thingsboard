@@ -322,6 +322,9 @@ actors:
 cache:
   # caffeine or redis
   type: "${CACHE_TYPE:caffeine}"
+  attributes:
+    # make sure that if cache.type is 'redis' and cache.attributes.enabled is 'true' that you change 'maxmemory-policy' Redis config property to 'allkeys-lru', 'allkeys-lfu' or 'allkeys-random'
+    enabled: "${CACHE_ATTRIBUTES_ENABLED:true}"
 
 caffeine:
   specs:
@@ -355,6 +358,9 @@ caffeine:
     deviceProfiles:
       timeToLiveInMinutes: 1440
       maxSize: 0
+    attributes:
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
 
 redis:
   # standalone or cluster
@@ -539,6 +545,7 @@ transport:
   http:
     enabled: "${HTTP_ENABLED:true}"
     request_timeout: "${HTTP_REQUEST_TIMEOUT:60000}"
+    max_request_timeout: "${HTTP_MAX_REQUEST_TIMEOUT:300000}"
   # Local MQTT transport parameters
   mqtt:
     # Enable/disable mqtt transport protocol.

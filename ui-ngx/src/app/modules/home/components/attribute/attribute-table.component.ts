@@ -403,6 +403,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
 
     this.aliasController = new AliasController(this.utils,
       this.entityService,
+      this.translate,
       () => stateController, entitiAliases, filters);
 
     const dataKeyType: DataKeyType = this.attributeScope === LatestTelemetry.LATEST_TELEMETRY ?

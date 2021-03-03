@@ -52,6 +52,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatListModule } from '@angular/material/list';
 import { MatDatetimepickerModule, MatNativeDatetimeModule } from '@mat-datetimepicker/core';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
 import { GridsterModule } from 'angular-gridster2';
@@ -132,6 +133,7 @@ import { TbJsonToStringDirective } from '@shared/components/directives/tb-json-t
 import { JsonObjectEditDialogComponent } from '@shared/components/dialog/json-object-edit-dialog.component';
 import { HistorySelectorComponent } from './components/time/history-selector/history-selector.component';
 import { EntityGatewaySelectComponent } from '@shared/components/entity/entity-gateway-select.component';
+import { DndModule } from 'ngx-drag-drop';
 import { QueueTypeListComponent } from '@shared/components/queue/queue-type-list.component';
 import { ContactComponent } from '@shared/components/contact.component';
 import { TimezoneSelectComponent } from '@shared/components/time/timezone-select.component';
@@ -262,6 +264,7 @@ import { FileSizePipe } from '@shared/pipe/file-size.pipe';
     MatStepperModule,
     MatAutocompleteModule,
     MatChipsModule,
+    MatListModule,
     GridsterModule,
     ClipboardModule,
     FlexLayoutModule.withConfig({addFlexToParent: false}),
@@ -272,6 +275,7 @@ import { FileSizePipe } from '@shared/pipe/file-size.pipe';
     HotkeyModule,
     ColorPickerModule,
     NgxHmCarouselModule,
+    DndModule,
     NgxFlowModule,
     NgxFlowchartModule
   ],
@@ -351,6 +355,7 @@ import { FileSizePipe } from '@shared/pipe/file-size.pipe';
     MatStepperModule,
     MatAutocompleteModule,
     MatChipsModule,
+    MatListModule,
     GridsterModule,
     ClipboardModule,
     FlexLayoutModule,
@@ -361,6 +366,7 @@ import { FileSizePipe } from '@shared/pipe/file-size.pipe';
     HotkeyModule,
     ColorPickerModule,
     NgxHmCarouselModule,
+    DndModule,
     NgxFlowchartModule,
     ConfirmDialogComponent,
     AlertDialogComponent,

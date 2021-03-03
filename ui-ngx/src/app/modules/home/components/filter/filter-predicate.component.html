@@ -20,12 +20,14 @@
     <ng-template [ngSwitchCase]="filterPredicateType.STRING">
       <tb-string-filter-predicate
         [allowUserDynamicSource]="allowUserDynamicSource"
+        [onlyUserDynamicSource]="onlyUserDynamicSource"
         formControlName="predicate">
       </tb-string-filter-predicate>
     </ng-template>
     <ng-template [ngSwitchCase]="filterPredicateType.NUMERIC">
       <tb-numeric-filter-predicate
         [allowUserDynamicSource]="allowUserDynamicSource"
+        [onlyUserDynamicSource]="onlyUserDynamicSource"
         [valueType]="valueType"
         formControlName="predicate">
       </tb-numeric-filter-predicate>
@@ -33,12 +35,14 @@
     <ng-template [ngSwitchCase]="filterPredicateType.BOOLEAN">
       <tb-boolean-filter-predicate
         [allowUserDynamicSource]="allowUserDynamicSource"
+        [onlyUserDynamicSource]="onlyUserDynamicSource"
         formControlName="predicate">
       </tb-boolean-filter-predicate>
     </ng-template>
     <ng-template [ngSwitchCase]="filterPredicateType.COMPLEX">
       <tb-complex-filter-predicate
         [allowUserDynamicSource]="allowUserDynamicSource"
+        [onlyUserDynamicSource]="onlyUserDynamicSource"
         [key]="key"
         [valueType]="valueType"
         [displayUserParameters]="displayUserParameters"

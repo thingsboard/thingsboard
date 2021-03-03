@@ -16,9 +16,13 @@
 package org.thingsboard.rule.engine.profile;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.profile.state.PersistedAlarmRuleState;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.CustomTimeSchedule;
@@ -45,6 +49,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 @Data
+@Slf4j
 class AlarmRuleState {
 
     private final AlarmSeverity severity;
@@ -52,12 +57,12 @@ class AlarmRuleState {
     private final AlarmConditionSpec spec;
     private final long requiredDurationInMs;
     private final long requiredRepeats;
-    private final Set<EntityKey> entityKeys;
+    private final Set<AlarmConditionFilterKey> entityKeys;
     private PersistedAlarmRuleState state;
     private boolean updateFlag;
     private final DynamicPredicateValueCtx dynamicPredicateValueCtx;
 
-    AlarmRuleState(AlarmSeverity severity, AlarmRule alarmRule, Set<EntityKey> entityKeys, PersistedAlarmRuleState state, DynamicPredicateValueCtx dynamicPredicateValueCtx) {
+    AlarmRuleState(AlarmSeverity severity, AlarmRule alarmRule, Set<AlarmConditionFilterKey> entityKeys, PersistedAlarmRuleState state, DynamicPredicateValueCtx dynamicPredicateValueCtx) {
         this.severity = severity;
         this.alarmRule = alarmRule;
         this.entityKeys = entityKeys;
@@ -84,8 +89,8 @@ class AlarmRuleState {
         this.dynamicPredicateValueCtx = dynamicPredicateValueCtx;
     }
 
-    public boolean validateTsUpdate(Set<EntityKey> changedKeys) {
-        for (EntityKey key : changedKeys) {
+    public boolean validateTsUpdate(Set<AlarmConditionFilterKey> changedKeys) {
+        for (AlarmConditionFilterKey key : changedKeys) {
             if (entityKeys.contains(key)) {
                 return true;
             }
@@ -93,18 +98,14 @@ class AlarmRuleState {
         return false;
     }
 
-    public boolean validateAttrUpdate(Set<EntityKey> changedKeys) {
+    public boolean validateAttrUpdate(Set<AlarmConditionFilterKey> changedKeys) {
         //If the attribute was updated, but no new telemetry arrived - we ignore this until new telemetry is there.
-        for (EntityKey key : entityKeys) {
-            if (key.getType().equals(EntityKeyType.TIME_SERIES)) {
+        for (AlarmConditionFilterKey key : entityKeys) {
+            if (key.getType().equals(AlarmConditionKeyType.TIME_SERIES)) {
                 return false;
             }
         }
-        for (EntityKey key : changedKeys) {
-            EntityKeyType keyType = key.getType();
-            if (EntityKeyType.CLIENT_ATTRIBUTE.equals(keyType) || EntityKeyType.SERVER_ATTRIBUTE.equals(keyType) || EntityKeyType.SHARED_ATTRIBUTE.equals(keyType)) {
-                key = new EntityKey(EntityKeyType.ATTRIBUTE, key.getKey());
-            }
+        for (AlarmConditionFilterKey key : changedKeys) {
             if (entityKeys.contains(key)) {
                 return true;
             }
@@ -259,14 +260,44 @@ class AlarmRuleState {
 
     private boolean eval(AlarmCondition condition, DataSnapshot data) {
         boolean eval = true;
-        for (KeyFilter keyFilter : condition.getCondition()) {
-            EntityKeyValue value = data.getValue(keyFilter.getKey());
+        for (var filter : condition.getCondition()) {
+            EntityKeyValue value;
+            if (filter.getKey().getType().equals(AlarmConditionKeyType.CONSTANT)) {
+                try {
+                    value = getConstantValue(filter);
+                } catch (RuntimeException e) {
+                    log.warn("Failed to parse constant value from filter: {}", filter, e);
+                    value = null;
+                }
+            } else {
+                value = data.getValue(filter.getKey());
+            }
             if (value == null) {
                 return false;
             }
-            eval = eval && eval(data, value, keyFilter.getPredicate());
+            eval = eval && eval(data, value, filter.getPredicate());
         }
         return eval;
+    }
+
+    private EntityKeyValue getConstantValue(AlarmConditionFilter filter) {
+        EntityKeyValue value = new EntityKeyValue();
+        String valueStr = filter.getValue().toString();
+        switch (filter.getValueType()) {
+            case STRING:
+                value.setStrValue(valueStr);
+                break;
+            case DATE_TIME:
+                value.setLngValue(Long.valueOf(valueStr));
+                break;
+            case NUMERIC:
+                value.setDblValue(Double.valueOf(valueStr));
+                break;
+            case BOOLEAN:
+                value.setBoolValue(Boolean.valueOf(valueStr));
+                break;
+        }
+        return value;
     }
 
     private boolean eval(DataSnapshot data, EntityKeyValue value, KeyFilterPredicate predicate) {
@@ -389,23 +420,14 @@ class AlarmRuleState {
         if (value.getDynamicValue() != null) {
             switch (value.getDynamicValue().getSourceType()) {
                 case CURRENT_DEVICE:
-                    ekv = data.getValue(new EntityKey(EntityKeyType.ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
-                    if (ekv == null) {
-                        ekv = data.getValue(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
-                        if (ekv == null) {
-                            ekv = data.getValue(new EntityKey(EntityKeyType.SHARED_ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
-                            if (ekv == null) {
-                                ekv = data.getValue(new EntityKey(EntityKeyType.CLIENT_ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
-                            }
-                        }
-                    }
-                    if(ekv != null || !value.getDynamicValue().isInherit()) {
+                    ekv = data.getValue(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
+                    if (ekv != null || !value.getDynamicValue().isInherit()) {
                         break;
                     }
                 case CURRENT_CUSTOMER:
                     ekv = dynamicPredicateValueCtx.getCustomerValue(value.getDynamicValue().getSourceAttribute());
-                    if(ekv != null || !value.getDynamicValue().isInherit()) {
-                       break;
+                    if (ekv != null || !value.getDynamicValue().isInherit()) {
+                        break;
                     }
                 case CURRENT_TENANT:
                     ekv = dynamicPredicateValueCtx.getTenantValue(value.getDynamicValue().getSourceAttribute());

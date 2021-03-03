@@ -26,7 +26,7 @@ import java.util.List;
  */
 @Data
 @AllArgsConstructor
-public class EntityTypeFilter {
+public class RelationEntityTypeFilter {
 
     private String relationType;
 

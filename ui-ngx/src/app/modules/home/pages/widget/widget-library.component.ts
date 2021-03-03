@@ -84,6 +84,7 @@ export class WidgetLibraryComponent extends PageComponent implements OnInit {
 
   aliasController: IAliasController = new AliasController(this.utils,
     this.entityService,
+    this.translate,
     () => { return {
       getStateParams(): StateParams {
         return {};

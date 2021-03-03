@@ -154,6 +154,7 @@ export interface WidgetTypeParameters {
   hasDataPageLink?: boolean;
   singleEntity?: boolean;
   warnOnPageDataOverflow?: boolean;
+  ignoreDataUpdateOnIntervalTick?: boolean;
 }
 
 export interface WidgetControllerDescriptor {
@@ -248,13 +249,15 @@ export interface DataKey extends KeyInfo {
 
 export enum DatasourceType {
   function = 'function',
-  entity = 'entity'
+  entity = 'entity',
+  entityCount = 'entityCount'
 }
 
 export const datasourceTypeTranslationMap = new Map<DatasourceType, string>(
   [
     [ DatasourceType.function, 'function.function' ],
-    [ DatasourceType.entity, 'entity.entity' ]
+    [ DatasourceType.entity, 'entity.entity' ],
+    [ DatasourceType.entityCount, 'entity.entities-count' ]
   ]
 );
 
