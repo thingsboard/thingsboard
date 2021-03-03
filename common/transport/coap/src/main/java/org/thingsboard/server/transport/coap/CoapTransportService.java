@@ -41,7 +41,6 @@ public class CoapTransportService {
     private static final String API = "api";
     private static final String EFENTO = "efento";
     private static final String MEASUREMENTS = "m";
-    public static final String EFENTO_MEASUREMENTS = EFENTO + "/" + MEASUREMENTS;
 
     @Autowired
     private CoapTransportContext coapTransportContext;
