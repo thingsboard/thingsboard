@@ -29,12 +29,16 @@
             mat-button *ngIf="!readonly && !disabled" class="tidy" (click)="minifyJSON()">
       {{'js-func.mini' | translate }}
     </button>
-    <button type='button' mat-button mat-icon-button (click)="fullscreen = !fullscreen"
-            class="tb-mat-32"
-            matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
-            matTooltipPosition="above">
-      <mat-icon class="material-icons">{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-    </button>
+    <fieldset style="width: initial">
+      <div matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+           matTooltipPosition="above"
+           style="border-radius: 50%"
+           (click)="fullscreen = !fullscreen">
+        <button type='button' mat-button mat-icon-button class="tb-mat-32">
+          <mat-icon class="material-icons">{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        </button>
+      </div>
+    </fieldset>
   </div>
   <div id="tb-json-panel" tb-toast toastTarget="{{toastTargetId}}"
        class="tb-json-content-panel" fxLayout="column">
