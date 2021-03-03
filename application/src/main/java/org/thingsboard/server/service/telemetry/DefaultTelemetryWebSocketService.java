@@ -51,22 +51,20 @@ import org.thingsboard.server.service.security.ValidationResult;
 import org.thingsboard.server.service.security.ValidationResultCode;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.subscription.TbAttributeSubscription;
+import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
 import org.thingsboard.server.service.subscription.TbEntityDataSubscriptionService;
 import org.thingsboard.server.service.subscription.TbLocalSubscriptionService;
-import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
-import org.thingsboard.server.service.subscription.TbAttributeSubscription;
 import org.thingsboard.server.service.subscription.TbTimeseriesSubscription;
+import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
 import org.thingsboard.server.service.telemetry.cmd.v1.AttributesSubscriptionCmd;
 import org.thingsboard.server.service.telemetry.cmd.v1.GetHistoryCmd;
 import org.thingsboard.server.service.telemetry.cmd.v1.SubscriptionCmd;
 import org.thingsboard.server.service.telemetry.cmd.v1.TelemetryPluginCmd;
-import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
 import org.thingsboard.server.service.telemetry.cmd.v1.TimeseriesSubscriptionCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataUnsubscribeCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.DataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUnsubscribeCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.UnsubscribeCmd;
 import org.thingsboard.server.service.telemetry.exception.UnauthorizedException;
@@ -89,6 +87,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -151,14 +151,23 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     private ExecutorService executor;
     private String serviceId;
 
+    private ScheduledExecutorService pingExecutor;
+
     @PostConstruct
     public void initExecutor() {
         serviceId = serviceInfoProvider.getServiceId();
         executor = Executors.newWorkStealingPool(50);
+
+        pingExecutor = Executors.newSingleThreadScheduledExecutor();
+        pingExecutor.scheduleWithFixedDelay(this::sendPing, 10000, 10000, TimeUnit.MILLISECONDS);
     }
 
     @PreDestroy
     public void shutdownExecutor() {
+        if (pingExecutor != null) {
+            pingExecutor.shutdownNow();
+        }
+
         if (executor != null) {
             executor.shutdownNow();
         }
@@ -744,6 +753,16 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
         }
     }
 
+    private void sendPing() {
+        wsSessionsMap.values().forEach(md ->
+                executor.submit(() -> {
+                    try {
+                        msgEndpoint.sendPing(md.getSessionRef());
+                    } catch (IOException e) {
+                        log.warn("[{}] Failed to send ping: {}", md.getSessionRef().getSessionId(), e);
+                    }
+                }));
+    }
 
     private static Optional<Set<String>> getKeys(TelemetryPluginCmd cmd) {
         if (!StringUtils.isEmpty(cmd.getKeys())) {
