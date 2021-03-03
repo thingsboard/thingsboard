@@ -47,7 +47,7 @@ import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
@@ -88,13 +88,13 @@ public class LwM2mTransportRequest {
 
     private final LeshanServer leshanServer;
 
-    private final LwM2mTransportServiceImpl serviceImpl;
+    @Autowired
+    private LwM2mTransportServiceImpl serviceImpl;
 
-    public LwM2mTransportRequest(LwM2mTransportContextServer context, LwM2mClientContext lwM2mClientContext, LeshanServer leshanServer, @Lazy LwM2mTransportServiceImpl serviceImpl) {
+    public LwM2mTransportRequest(LwM2mTransportContextServer context, LwM2mClientContext lwM2mClientContext, LeshanServer leshanServer) {
         this.context = context;
         this.lwM2mClientContext = lwM2mClientContext;
         this.leshanServer = leshanServer;
-        this.serviceImpl = serviceImpl;
     }
 
     @PostConstruct

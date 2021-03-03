@@ -36,6 +36,7 @@ import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -115,7 +116,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
 
     private final LwM2mTransportRequest lwM2mTransportRequest;
 
-    public LwM2mTransportServiceImpl(TransportService transportService, LwM2mTransportContextServer lwM2mTransportContextServer, LwM2mClientContext lwM2mClientContext, LeshanServer leshanServer, LwM2mTransportRequest lwM2mTransportRequest) {
+    public LwM2mTransportServiceImpl(TransportService transportService, LwM2mTransportContextServer lwM2mTransportContextServer, LwM2mClientContext lwM2mClientContext, LeshanServer leshanServer, @Lazy LwM2mTransportRequest lwM2mTransportRequest) {
         this.transportService = transportService;
         this.lwM2mTransportContextServer = lwM2mTransportContextServer;
         this.lwM2mClientContext = lwM2mClientContext;
@@ -853,10 +854,8 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
 
             // #5.1
             if (!observeOld.equals(observeNew)) {
-                Set<String> observeSetOld = new Gson().fromJson(observeOld, new TypeToken<>() {
-                }.getType());
-                Set<String> observeSetNew = new Gson().fromJson(observeNew, new TypeToken<>() {
-                }.getType());
+                Set<String> observeSetOld = new Gson().fromJson(observeOld, new TypeToken<>() {}.getType());
+                Set<String> observeSetNew = new Gson().fromJson(observeNew, new TypeToken<>() {}.getType());
                 //#5.2 add
                 //  path Attr/Telemetry includes newObserve
                 attributeSetOld.addAll(telemetrySetOld);
