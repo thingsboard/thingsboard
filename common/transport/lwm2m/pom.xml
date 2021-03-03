@@ -90,7 +90,6 @@
             <groupId>org.eclipse.leshan</groupId>
             <artifactId>leshan-client-cf</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.eclipse.leshan</groupId>
             <artifactId>leshan-server-redis</artifactId>

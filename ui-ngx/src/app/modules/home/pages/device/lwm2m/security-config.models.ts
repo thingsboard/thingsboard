@@ -20,7 +20,6 @@ export const DEFAULT_END_POINT = 'default_client_lwm2m_end_point_no_sec';
 export const BOOTSTRAP_SERVERS = 'servers';
 export const BOOTSTRAP_SERVER = 'bootstrapServer';
 export const LWM2M_SERVER = 'lwm2mServer';
-export const JSON_OBSERVE = 'jsonObserve';
 export const LEN_MAX_PSK = 64;
 export const LEN_MAX_PRIVATE_KEY = 134;
 export const LEN_MAX_PUBLIC_KEY_RPK = 182;
@@ -146,6 +145,43 @@ export function getDefaultSecurityConfig(): SecurityConfigModels {
     bootstrap: getDefaultBootstrapSecurityConfig()
   };
   return securityConfigModels;
+}
+
+const isSecurityConfigModels = (p: any): p is SecurityConfigModels =>
+  p.hasOwnProperty('client') &&
+    isClientSecurityConfigType(p['client']) &&
+  p.hasOwnProperty('bootstrap') &&
+    isBootstrapSecurityConfig(p['bootstrap']);
+
+const isClientSecurityConfigType = (p: any): p is ClientSecurityConfigType =>
+  p.hasOwnProperty('securityConfigClientMode') &&
+  p.hasOwnProperty('endpoint') &&
+  p.hasOwnProperty('identity') &&
+  p.hasOwnProperty('key') &&
+  p.hasOwnProperty('x509');
+
+const isBootstrapSecurityConfig = (p: any): p is BootstrapSecurityConfig =>
+  p.hasOwnProperty('bootstrapServer') &&
+    isServerSecurityConfig(p['bootstrapServer']) &&
+  p.hasOwnProperty('lwm2mServer') &&
+    isServerSecurityConfig(p['lwm2mServer']);
+
+const isServerSecurityConfig = (p: any): p is ServerSecurityConfig =>
+  p.hasOwnProperty('securityMode') &&
+  p.hasOwnProperty('clientPublicKeyOrId') &&
+  p.hasOwnProperty('clientSecretKey');
+
+export function validateSecurityConfig(config: string): boolean {
+  try {
+    const securityConfig= JSON.parse(config);
+    if (isSecurityConfigModels(securityConfig)) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (e) {
+    return false;
+  }
 }
 
 

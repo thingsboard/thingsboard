@@ -36,8 +36,8 @@ import org.nustaq.serialization.FSTConfiguration;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClientProfile;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientProfile;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,7 +49,7 @@ import java.util.Optional;
 @Slf4j
 //@Component("LwM2MTransportHandler")
 //@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' )|| ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
-public class LwM2MTransportHandler {
+public class LwM2mTransportHandler {
 
     // We choose a default timeout a bit higher to the MAX_TRANSMIT_WAIT(62-93s) which is the time from starting to
     // send a Confirmable message to the time when an acknowledgement is no longer expected.
@@ -188,8 +188,8 @@ public class LwM2MTransportHandler {
         return null;
     }
 
-    public static LwM2MClientProfile getNewProfileParameters(JsonObject profilesConfigData) {
-        LwM2MClientProfile lwM2MClientProfile = new LwM2MClientProfile();
+    public static LwM2mClientProfile getNewProfileParameters(JsonObject profilesConfigData) {
+        LwM2mClientProfile lwM2MClientProfile = new LwM2mClientProfile();
         lwM2MClientProfile.setPostClientLwM2mSettings(profilesConfigData.get(CLIENT_LWM2M_SETTINGS).getAsJsonObject());
         lwM2MClientProfile.setPostKeyNameProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(KEY_NAME).getAsJsonObject());
         lwM2MClientProfile.setPostAttributeProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE).getAsJsonArray());
@@ -214,14 +214,14 @@ public class LwM2MTransportHandler {
      * "telemetry":["/1/0/1","/2/0/1","/6/0/1"],
      * "observe":["/2/0","/2/0/0","/4/0/2"]}
      */
-    public static LwM2MClientProfile getLwM2MClientProfileFromThingsboard(DeviceProfile deviceProfile) {
+    public static LwM2mClientProfile getLwM2MClientProfileFromThingsboard(DeviceProfile deviceProfile) {
         if (deviceProfile != null && ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties().size() > 0) {
             Object profile = ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties();
             try {
                 ObjectMapper mapper = new ObjectMapper();
                 String profileStr = mapper.writeValueAsString(profile);
                 JsonObject profileJson = (profileStr  != null) ? validateJson(profileStr) : null;
-                return (getValidateCredentialsBodyFromThingsboard(profileJson)) ? LwM2MTransportHandler.getNewProfileParameters(profileJson) : null;
+                return (getValidateCredentialsBodyFromThingsboard(profileJson)) ? LwM2mTransportHandler.getNewProfileParameters(profileJson) : null;
             } catch (IOException e) {
                 log.error("", e);
             }
@@ -244,12 +244,12 @@ public class LwM2MTransportHandler {
         return null;
     }
 
-    public static boolean getClientUpdateValueAfterConnect (LwM2MClientProfile profile) {
+    public static boolean getClientUpdateValueAfterConnect (LwM2mClientProfile profile) {
         return profile.getPostClientLwM2mSettings().getAsJsonObject().has("clientUpdateValueAfterConnect") &&
                 profile.getPostClientLwM2mSettings().getAsJsonObject().get("clientUpdateValueAfterConnect").getAsBoolean();
     }
 
-    public static boolean getClientOnlyObserveAfterConnect (LwM2MClientProfile profile) {
+    public static boolean getClientOnlyObserveAfterConnect (LwM2mClientProfile profile) {
         return profile.getPostClientLwM2mSettings().getAsJsonObject().has("clientOnlyObserveAfterConnect") &&
                 profile.getPostClientLwM2mSettings().getAsJsonObject().get("clientOnlyObserveAfterConnect").getAsBoolean();
     }
@@ -336,11 +336,11 @@ public class LwM2MTransportHandler {
         return StringUtils.join(linkedListOut, "");
     }
 
-    public static <T> TransportServiceCallback<Void> getAckCallback(LwM2MClient lwM2MClient, int requestId, String typeTopic) {
+    public static <T> TransportServiceCallback<Void> getAckCallback(LwM2mClient lwM2MClient, int requestId, String typeTopic) {
         return new TransportServiceCallback<Void>() {
             @Override
             public void onSuccess(Void dummy) {
-                log.trace("[{}] [{}] - requestId [{}] - EndPoint  , Access AckCallback", typeTopic, requestId, lwM2MClient.getEndPoint());
+                log.trace("[{}] [{}] - requestId [{}] - EndPoint  , Access AckCallback", typeTopic, requestId, lwM2MClient.getEndpoint());
             }
 
             @Override

@@ -395,21 +395,4 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       }
     });
   }
-
-  isPathInJson(path: string): boolean {
-    let isPath = this.findPathInJson(path, ATTRIBUTE);
-    if (!isPath) {
-      isPath = this.findPathInJson(path, TELEMETRY);
-    }
-    return !!isPath;
-  }
-
-  private findPathInJson = (path: string, side: string): string => {
-    if (this.configurationValue.observeAttr) {
-      if (this.configurationValue.observeAttr[side]) {
-        return this.configurationValue.bootstrap[side].find(
-          pathJs => pathJs === path);
-      }
-    }
-  }
 }

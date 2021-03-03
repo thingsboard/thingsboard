@@ -18,8 +18,8 @@ package org.thingsboard.server.transport.lwm2m.server;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.secure.LWM2MGenerationPSkRPkECC;
 
 import javax.annotation.PostConstruct;
@@ -27,21 +27,21 @@ import javax.annotation.PreDestroy;
 
 @Slf4j
 @Component("LwM2MTransportServerInitializer")
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' ) || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
-public class LwM2MTransportServerInitializer {
+@TbLwM2mTransportComponent
+public class LwM2mTransportServerInitializer {
 
     @Autowired
-    private LwM2MTransportServiceImpl service;
+    private LwM2mTransportServiceImpl service;
 
     @Autowired(required = false)
     private LeshanServer leshanServer;
 
     @Autowired
-    private LwM2MTransportContextServer context;
+    private LwM2mTransportContextServer context;
 
     @PostConstruct
     public void init() {
-        if (this.context.getCtxServer().getEnableGenNewKeyPskRpk()) {
+        if (this.context.getLwM2MTransportConfigServer().getEnableGenNewKeyPskRpk()) {
             new LWM2MGenerationPSkRPkECC();
         }
         this.startLhServer();

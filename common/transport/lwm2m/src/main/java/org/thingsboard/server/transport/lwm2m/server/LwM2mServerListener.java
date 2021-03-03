@@ -31,9 +31,9 @@ import java.util.Collection;
 public class LwM2mServerListener {
 
     private final LeshanServer lhServer;
-    private final LwM2MTransportServiceImpl service;
+    private final LwM2mTransportServiceImpl service;
 
-    public LwM2mServerListener(LeshanServer lhServer, LwM2MTransportServiceImpl service) {
+    public LwM2mServerListener(LeshanServer lhServer, LwM2mTransportServiceImpl service) {
         this.lhServer = lhServer;
         this.service = service;
     }

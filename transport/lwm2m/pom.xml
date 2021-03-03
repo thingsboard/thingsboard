@@ -45,9 +45,21 @@
     </properties>
 
     <dependencies>
+<!--        <dependency>-->
+<!--            <groupId>org.thingsboard.common.transport</groupId>-->
+<!--            <artifactId>transport-api</artifactId>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.thingsboard.common.transport</groupId>
-            <artifactId>transport-api</artifactId>
+            <artifactId>lwm2m</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common</groupId>
+            <artifactId>queue</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common</groupId>
+            <artifactId>cache</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>

@@ -20,7 +20,7 @@ import com.google.gson.JsonObject;
 import lombok.Data;
 
 @Data
-public class LwM2MClientProfile {
+public class LwM2mClientProfile {
     /**
      * {"clientLwM2mSettings": {
      *      clientUpdateValueAfterConnect: false;
