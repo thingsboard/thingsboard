@@ -21,6 +21,8 @@ import org.thingsboard.server.service.telemetry.cmd.v1.GetHistoryCmd;
 import org.thingsboard.server.service.telemetry.cmd.v1.TimeseriesSubscriptionCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataUnsubscribeCmd;
+import org.thingsboard.server.service.telemetry.cmd.v2.EntityCountCmd;
+import org.thingsboard.server.service.telemetry.cmd.v2.EntityCountUnsubscribeCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUnsubscribeCmd;
 
@@ -45,5 +47,9 @@ public class TelemetryPluginCmdsWrapper {
     private List<AlarmDataCmd> alarmDataCmds;
 
     private List<AlarmDataUnsubscribeCmd> alarmDataUnsubscribeCmds;
+
+    private List<EntityCountCmd> entityCountCmds;
+
+    private List<EntityCountUnsubscribeCmd> entityCountUnsubscribeCmds;
 
 }

@@ -196,11 +196,17 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
                 }
                 break;
             case "3.1.1":
+            case "3.2.1":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Load TTL functions ...");
                     loadSql(conn, LOAD_TTL_FUNCTIONS_SQL);
                     log.info("Load Drop Partitions functions ...");
                     loadSql(conn, LOAD_DROP_PARTITIONS_FUNCTIONS_SQL);
+
+                    executeQuery(conn, "DROP PROCEDURE IF EXISTS cleanup_timeseries_by_ttl(character varying, bigint, bigint);");
+                    executeQuery(conn, "DROP FUNCTION IF EXISTS delete_asset_records_from_ts_kv(character varying, character varying, bigint);");
+                    executeQuery(conn, "DROP FUNCTION IF EXISTS delete_device_records_from_ts_kv(character varying, character varying, bigint);");
+                    executeQuery(conn, "DROP FUNCTION IF EXISTS delete_customer_records_from_ts_kv(character varying, character varying, bigint);");
                 }
                 break;
             default:
