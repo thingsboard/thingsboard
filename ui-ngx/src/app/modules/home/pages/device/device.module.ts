@@ -25,7 +25,6 @@ import { HomeDialogsModule } from '../../dialogs/home-dialogs.module';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { DeviceTabsComponent } from '@home/pages/device/device-tabs.component';
 import { SecurityConfigComponent } from '@home/pages/device/lwm2m/security-config.component';
-// TODO: @nickAS21 move to device profile
 import { SecurityConfigServerComponent } from '@home/pages/device/lwm2m/security-config-server.component';
 import { DefaultDeviceConfigurationComponent } from './data/default-device-configuration.component';
 import { DeviceConfigurationComponent } from './data/device-configuration.component';

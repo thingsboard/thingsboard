@@ -92,7 +92,12 @@ public class UserController extends BaseController {
         checkParameter(USER_ID, strUserId);
         try {
             UserId userId = new UserId(toUUID(strUserId));
-            return checkUserId(userId, Operation.READ);
+            User user = checkUserId(userId, Operation.READ);
+            if(!user.getAdditionalInfo().isNull()) {
+                processDashboardIdFromAdditionalInfo((ObjectNode) user.getAdditionalInfo(), DEFAULT_DASHBOARD);
+                processDashboardIdFromAdditionalInfo((ObjectNode) user.getAdditionalInfo(), HOME_DASHBOARD);
+            }
+            return user;
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -168,7 +173,7 @@ public class UserController extends BaseController {
                     savedUser.getCustomerId(),
                     user.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
-            sendNotificationMsgToEdgeService(getTenantId(), savedUser.getId(), EntityType.USER,
+            sendEntityNotificationMsg(getTenantId(), savedUser.getId(),
                     user.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
 
             return savedUser;
@@ -249,7 +254,7 @@ public class UserController extends BaseController {
                     user.getCustomerId(),
                     ActionType.DELETED, null, strUserId);
 
-            sendDeleteNotificationMsgToEdgeService(getTenantId(), userId, EntityType.USER, relatedEdgeIds);
+            sendDeleteNotificationMsg(getTenantId(), userId, relatedEdgeIds);
 
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.USER),
@@ -339,4 +344,5 @@ public class UserController extends BaseController {
             throw handleException(e);
         }
     }
+
 }

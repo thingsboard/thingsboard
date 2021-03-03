@@ -176,7 +176,7 @@ public interface AssetDao extends Dao<Asset>, TenantEntityDao {
      * @param pageLink the page link
      * @return the list of asset objects
      */
-    PageData<Asset> findAssetsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, TimePageLink pageLink);
+    PageData<Asset> findAssetsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, PageLink pageLink);
 
     /**
      * Find assets by tenantId, edgeId, type and page link.
@@ -187,5 +187,5 @@ public interface AssetDao extends Dao<Asset>, TenantEntityDao {
      * @param pageLink the page link
      * @return the list of asset objects
      */
-    PageData<Asset> findAssetsByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, TimePageLink pageLink);
+    PageData<Asset> findAssetsByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, PageLink pageLink);
 }

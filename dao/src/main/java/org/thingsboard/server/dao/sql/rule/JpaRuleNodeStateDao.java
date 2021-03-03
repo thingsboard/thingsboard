@@ -39,12 +39,12 @@ public class JpaRuleNodeStateDao extends JpaAbstractDao<RuleNodeStateEntity, Rul
     private RuleNodeStateRepository ruleNodeStateRepository;
 
     @Override
-    protected Class getEntityClass() {
+    protected Class<RuleNodeStateEntity> getEntityClass() {
         return RuleNodeStateEntity.class;
     }
 
     @Override
-    protected CrudRepository getCrudRepository() {
+    protected CrudRepository<RuleNodeStateEntity, UUID> getCrudRepository() {
         return ruleNodeStateRepository;
     }
 

@@ -127,6 +127,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -1106,6 +1107,24 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         return restTemplate.postForEntity(baseURL + "/api/device/credentials", deviceCredentials, DeviceCredentials.class).getBody();
     }
 
+    public Optional<Device> saveDeviceWithCredentials(Device device, DeviceCredentials credentials) {
+        try {
+            Map<Class<?>, Object> deviceCredentials = new ConcurrentHashMap<>();
+            deviceCredentials.put(Device.class, device);
+            deviceCredentials.put(DeviceCredentials.class, credentials);
+//            return restTemplate.postForEntity(baseURL + "/api/lwm2m/device-credentials", deviceCredentials, Device.class).getBody();
+            ResponseEntity<Device> deviceOpt = restTemplate.postForEntity(baseURL + "/api/lwm2m/device-credentials", deviceCredentials, Device.class);
+            return Optional.ofNullable(deviceOpt.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+
     public PageData<Device> getTenantDevices(String type, PageLink pageLink) {
         Map<String, String> params = new HashMap<>();
         params.put("type", type);
@@ -1185,7 +1204,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public List<EntitySubtype> getDeviceTypes() {
         return restTemplate.exchange(
-                baseURL + "/api/devices",
+                baseURL + "/api/device/types",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<EntitySubtype>>() {

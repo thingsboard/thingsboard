@@ -21,11 +21,13 @@ export interface SysParamsState {
   allowedDashboardIds: string[];
   edgesSupportEnabled: boolean;
 }
+
 export interface AuthPayload extends SysParamsState {
   authUser: AuthUser;
   userDetails: User;
   forceFullscreen: boolean;
 }
+
 export interface AuthState extends AuthPayload {
   isAuthenticated: boolean;
   isUserLoaded: boolean;

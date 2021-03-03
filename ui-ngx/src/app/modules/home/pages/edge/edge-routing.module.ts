@@ -24,7 +24,7 @@ import { DevicesTableConfigResolver } from '@home/pages/device/devices-table-con
 import { EntityViewsTableConfigResolver } from '@home/pages/entity-view/entity-views-table-config.resolver';
 import { DashboardsTableConfigResolver } from '@home/pages/dashboard/dashboards-table-config.resolver';
 import { RuleChainsTableConfigResolver } from '@home/pages/rulechain/rulechains-table-config.resolver';
-import { DashboardPageComponent } from '@home/pages/dashboard/dashboard-page.component';
+import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
 import { dashboardBreadcumbLabelFunction, DashboardResolver } from '@home/pages/dashboard/dashboard-routing.module';
 import { BreadCrumbConfig } from '@shared/components/breadcrumb';
 import { RuleChainPageComponent } from '@home/pages/rulechain/rulechain-page.component';
@@ -34,7 +34,7 @@ import {
   importRuleChainBreadcumbLabelFunction,
   ResolvedRuleChainMetaDataResolver,
   ruleChainBreadcumbLabelFunction, RuleChainImportGuard,
-  RuleChainResolver, RuleNodeComponentsResolver
+  RuleChainResolver, RuleNodeComponentsResolver, TooltipsterResolver
 } from '@home/pages/rulechain/rulechain-routing.module';
 
 const routes: Routes = [
@@ -194,7 +194,8 @@ const routes: Routes = [
             resolve: {
               ruleChain: RuleChainResolver,
               ruleChainMetaData: ResolvedRuleChainMetaDataResolver,
-              ruleNodeComponents: RuleNodeComponentsResolver
+              ruleNodeComponents: RuleNodeComponentsResolver,
+              tooltipster: TooltipsterResolver
             }
           },
           {
@@ -213,13 +214,14 @@ const routes: Routes = [
               ruleChainType: RuleChainType.EDGE
             },
             resolve: {
-              ruleNodeComponents: RuleNodeComponentsResolver
+              ruleNodeComponents: RuleNodeComponentsResolver,
+              tooltipster: TooltipsterResolver
             }
           }
         ]
       }
       ]
-  }]
+  }];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],

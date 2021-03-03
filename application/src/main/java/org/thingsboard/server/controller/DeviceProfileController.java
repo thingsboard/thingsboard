@@ -154,7 +154,7 @@ public class DeviceProfileController extends BaseController {
                     null,
                     created ? ActionType.ADDED : ActionType.UPDATED, null);
 
-            sendNotificationMsgToEdgeService(getTenantId(), savedDeviceProfile.getId(), EntityType.DEVICE_PROFILE,
+            sendEntityNotificationMsg(getTenantId(), savedDeviceProfile.getId(),
                     deviceProfile.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
 
             return savedDeviceProfile;
@@ -182,7 +182,7 @@ public class DeviceProfileController extends BaseController {
                     null,
                     ActionType.DELETED, null, strDeviceProfileId);
 
-            sendNotificationMsgToEdgeService(getTenantId(), deviceProfile.getId(), EntityType.DEVICE_PROFILE, EdgeEventActionType.DELETED);
+            sendEntityNotificationMsg(getTenantId(), deviceProfile.getId(), EdgeEventActionType.DELETED);
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE_PROFILE),
                     null,

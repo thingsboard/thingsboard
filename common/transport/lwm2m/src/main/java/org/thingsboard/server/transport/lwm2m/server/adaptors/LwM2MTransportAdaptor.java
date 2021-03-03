@@ -19,9 +19,13 @@ import com.google.gson.JsonElement;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
+import java.util.List;
+
 public interface LwM2MTransportAdaptor {
 
     TransportProtos.PostTelemetryMsg convertToPostTelemetry(JsonElement jsonElement) throws AdaptorException;
 
     TransportProtos.PostAttributeMsg convertToPostAttributes(JsonElement jsonElement) throws AdaptorException;
+
+    TransportProtos.GetAttributeRequestMsg convertToGetAttributes(List<String> clientKeys, List<String> sharedKeys) throws AdaptorException;
 }

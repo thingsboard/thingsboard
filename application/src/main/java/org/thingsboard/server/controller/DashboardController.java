@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,7 +32,11 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HomeDashboard;
+import org.thingsboard.server.common.data.HomeDashboardInfo;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -42,7 +48,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -57,6 +65,9 @@ import java.util.stream.Collectors;
 public class DashboardController extends BaseController {
 
     public static final String DASHBOARD_ID = "dashboardId";
+
+    private static final String HOME_DASHBOARD_ID = "homeDashboardId";
+    private static final String HOME_DASHBOARD_HIDE_TOOLBAR = "homeDashboardHideToolbar";
 
     @Value("${dashboard.max_datapoints_limit}")
     private long maxDatapointsLimit;
@@ -118,7 +129,7 @@ public class DashboardController extends BaseController {
                     dashboard.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
             if (dashboard.getId() != null) {
-                sendNotificationMsgToEdgeService(savedDashboard.getTenantId(), savedDashboard.getId(), EntityType.DASHBOARD, EdgeEventActionType.UPDATED);
+                sendEntityNotificationMsg(savedDashboard.getTenantId(), savedDashboard.getId(), EdgeEventActionType.UPDATED);
             }
 
             return savedDashboard;
@@ -147,7 +158,7 @@ public class DashboardController extends BaseController {
                     null,
                     ActionType.DELETED, null, strDashboardId);
 
-            sendDeleteNotificationMsgToEdgeService(getTenantId(), dashboardId, EntityType.DASHBOARD, relatedEdgeIds);
+            sendDeleteNotificationMsg(getTenantId(), dashboardId, relatedEdgeIds);
         } catch (Exception e) {
 
             logEntityAction(emptyId(EntityType.DASHBOARD),
@@ -179,7 +190,7 @@ public class DashboardController extends BaseController {
                     customerId,
                     ActionType.ASSIGNED_TO_CUSTOMER, null, strDashboardId, strCustomerId, customer.getName());
 
-            sendNotificationMsgToEdgeService(savedDashboard.getTenantId(), savedDashboard.getId(), customerId, EdgeEventActionType.ASSIGNED_TO_CUSTOMER);
+            sendEntityAssignToCustomerNotificationMsg(savedDashboard.getTenantId(), savedDashboard.getId(), customerId, EdgeEventActionType.ASSIGNED_TO_CUSTOMER);
 
             return savedDashboard;
         } catch (Exception e) {
@@ -211,7 +222,7 @@ public class DashboardController extends BaseController {
                     customerId,
                     ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDashboardId, customer.getId().toString(), customer.getName());
 
-            sendNotificationMsgToEdgeService(savedDashboard.getTenantId(), savedDashboard.getId(), customerId, EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER);
+            sendEntityAssignToCustomerNotificationMsg(savedDashboard.getTenantId(), savedDashboard.getId(), customerId, EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER);
 
             return savedDashboard;
         } catch (Exception e) {
@@ -268,7 +279,7 @@ public class DashboardController extends BaseController {
                     logEntityAction(dashboardId, savedDashboard,
                             customerId,
                             ActionType.ASSIGNED_TO_CUSTOMER, null, strDashboardId, customerId.toString(), customerInfo.getTitle());
-                    sendNotificationMsgToEdgeService(savedDashboard.getTenantId(), savedDashboard.getId(), customerId, EdgeEventActionType.ASSIGNED_TO_CUSTOMER);
+                    sendEntityAssignToCustomerNotificationMsg(savedDashboard.getTenantId(), savedDashboard.getId(), customerId, EdgeEventActionType.ASSIGNED_TO_CUSTOMER);
                 }
                 for (CustomerId customerId : removedCustomerIds) {
                     ShortCustomerInfo customerInfo = dashboard.getAssignedCustomerInfo(customerId);
@@ -276,7 +287,7 @@ public class DashboardController extends BaseController {
                     logEntityAction(dashboardId, dashboard,
                             customerId,
                             ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDashboardId, customerId.toString(), customerInfo.getTitle());
-                    sendNotificationMsgToEdgeService(savedDashboard.getTenantId(), savedDashboard.getId(), customerId, EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER);
+                    sendEntityAssignToCustomerNotificationMsg(savedDashboard.getTenantId(), savedDashboard.getId(), customerId, EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER);
                 }
                 return savedDashboard;
             }
@@ -320,7 +331,7 @@ public class DashboardController extends BaseController {
                     logEntityAction(dashboardId, savedDashboard,
                             customerId,
                             ActionType.ASSIGNED_TO_CUSTOMER, null, strDashboardId, customerId.toString(), customerInfo.getTitle());
-                    sendNotificationMsgToEdgeService(savedDashboard.getTenantId(), savedDashboard.getId(), customerId, EdgeEventActionType.ASSIGNED_TO_CUSTOMER);
+                    sendEntityAssignToCustomerNotificationMsg(savedDashboard.getTenantId(), savedDashboard.getId(), customerId, EdgeEventActionType.ASSIGNED_TO_CUSTOMER);
                 }
                 return savedDashboard;
             }
@@ -364,7 +375,7 @@ public class DashboardController extends BaseController {
                     logEntityAction(dashboardId, dashboard,
                             customerId,
                             ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDashboardId, customerId.toString(), customerInfo.getTitle());
-                    sendNotificationMsgToEdgeService(savedDashboard.getTenantId(), savedDashboard.getId(), customerId, EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER);
+                    sendEntityAssignToCustomerNotificationMsg(savedDashboard.getTenantId(), savedDashboard.getId(), customerId, EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER);
                 }
                 return savedDashboard;
             }
@@ -491,6 +502,102 @@ public class DashboardController extends BaseController {
         }
     }
 
+    @PreAuthorize("isAuthenticated()")
+    @RequestMapping(value = "/dashboard/home", method = RequestMethod.GET)
+    @ResponseBody
+    public HomeDashboard getHomeDashboard() throws ThingsboardException {
+        try {
+            SecurityUser securityUser = getCurrentUser();
+            if (securityUser.isSystemAdmin()) {
+                return null;
+            }
+            User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
+            JsonNode additionalInfo = user.getAdditionalInfo();
+            HomeDashboard homeDashboard;
+            homeDashboard = extractHomeDashboardFromAdditionalInfo(additionalInfo);
+            if (homeDashboard == null) {
+                if (securityUser.isCustomerUser()) {
+                    Customer customer = customerService.findCustomerById(securityUser.getTenantId(), securityUser.getCustomerId());
+                    additionalInfo = customer.getAdditionalInfo();
+                    homeDashboard = extractHomeDashboardFromAdditionalInfo(additionalInfo);
+                }
+                if (homeDashboard == null) {
+                    Tenant tenant = tenantService.findTenantById(securityUser.getTenantId());
+                    additionalInfo = tenant.getAdditionalInfo();
+                    homeDashboard = extractHomeDashboardFromAdditionalInfo(additionalInfo);
+                }
+            }
+            return homeDashboard;
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/dashboard/home/info", method = RequestMethod.GET)
+    @ResponseBody
+    public HomeDashboardInfo getTenantHomeDashboardInfo() throws ThingsboardException {
+        try {
+            Tenant tenant = tenantService.findTenantById(getTenantId());
+            JsonNode additionalInfo = tenant.getAdditionalInfo();
+            DashboardId dashboardId = null;
+            boolean hideDashboardToolbar = true;
+            if (additionalInfo != null && additionalInfo.has(HOME_DASHBOARD_ID) && !additionalInfo.get(HOME_DASHBOARD_ID).isNull()) {
+                String strDashboardId = additionalInfo.get(HOME_DASHBOARD_ID).asText();
+                dashboardId = new DashboardId(toUUID(strDashboardId));
+                if (additionalInfo.has(HOME_DASHBOARD_HIDE_TOOLBAR)) {
+                    hideDashboardToolbar = additionalInfo.get(HOME_DASHBOARD_HIDE_TOOLBAR).asBoolean();
+                }
+            }
+            return new HomeDashboardInfo(dashboardId, hideDashboardToolbar);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/dashboard/home/info", method = RequestMethod.POST)
+    @ResponseStatus(value = HttpStatus.OK)
+    public void setTenantHomeDashboardInfo(@RequestBody HomeDashboardInfo homeDashboardInfo) throws ThingsboardException {
+        try {
+            if (homeDashboardInfo.getDashboardId() != null) {
+                checkDashboardId(homeDashboardInfo.getDashboardId(), Operation.READ);
+            }
+            Tenant tenant = tenantService.findTenantById(getTenantId());
+            JsonNode additionalInfo = tenant.getAdditionalInfo();
+            if (additionalInfo == null || !(additionalInfo instanceof ObjectNode)) {
+                additionalInfo = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+            }
+            if (homeDashboardInfo.getDashboardId() != null) {
+                ((ObjectNode) additionalInfo).put(HOME_DASHBOARD_ID, homeDashboardInfo.getDashboardId().getId().toString());
+                ((ObjectNode) additionalInfo).put(HOME_DASHBOARD_HIDE_TOOLBAR, homeDashboardInfo.isHideDashboardToolbar());
+            } else {
+                ((ObjectNode) additionalInfo).remove(HOME_DASHBOARD_ID);
+                ((ObjectNode) additionalInfo).remove(HOME_DASHBOARD_HIDE_TOOLBAR);
+            }
+            tenant.setAdditionalInfo(additionalInfo);
+            tenantService.saveTenant(tenant);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    private HomeDashboard extractHomeDashboardFromAdditionalInfo(JsonNode additionalInfo) {
+        try {
+            if (additionalInfo != null && additionalInfo.has(HOME_DASHBOARD_ID) && !additionalInfo.get(HOME_DASHBOARD_ID).isNull()) {
+                String strDashboardId = additionalInfo.get(HOME_DASHBOARD_ID).asText();
+                DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+                Dashboard dashboard = checkDashboardId(dashboardId, Operation.READ);
+                boolean hideDashboardToolbar = true;
+                if (additionalInfo.has(HOME_DASHBOARD_HIDE_TOOLBAR)) {
+                    hideDashboardToolbar = additionalInfo.get(HOME_DASHBOARD_HIDE_TOOLBAR).asBoolean();
+                }
+                return new HomeDashboard(dashboard, hideDashboardToolbar);
+            }
+        } catch (Exception e) {}
+        return null;
+    }
+
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/dashboard/{dashboardId}", method = RequestMethod.POST)
     @ResponseBody
@@ -511,7 +618,7 @@ public class DashboardController extends BaseController {
                     null,
                     ActionType.ASSIGNED_TO_EDGE, null, strDashboardId, strEdgeId, edge.getName());
 
-            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedDashboard.getId(), EntityType.DASHBOARD, EdgeEventActionType.ASSIGNED_TO_EDGE);
+            sendEntityAssignToEdgeNotificationMsg(getTenantId(), edgeId, savedDashboard.getId(), EdgeEventActionType.ASSIGNED_TO_EDGE);
 
             return savedDashboard;
         } catch (Exception e) {
@@ -543,7 +650,7 @@ public class DashboardController extends BaseController {
                     null,
                     ActionType.UNASSIGNED_FROM_EDGE, null, strDashboardId, strEdgeId, edge.getName());
 
-            sendNotificationMsgToEdgeService(getTenantId(), edgeId, savedDashboard.getId(), EntityType.DASHBOARD, EdgeEventActionType.UNASSIGNED_FROM_EDGE);
+            sendEntityAssignToEdgeNotificationMsg(getTenantId(), edgeId, savedDashboard.getId(), EdgeEventActionType.UNASSIGNED_FROM_EDGE);
 
             return savedDashboard;
         } catch (Exception e) {

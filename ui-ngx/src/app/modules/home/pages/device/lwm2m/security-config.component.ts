@@ -15,37 +15,35 @@
 ///
 
 
-import {Component, Inject, OnInit} from '@angular/core';
-import {DialogComponent} from '@shared/components/dialog.component';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {Router} from '@angular/router';
-import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {TranslateService} from '@ngx-translate/core';
+import { Component, Inject, OnInit } from '@angular/core';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { Router } from '@angular/router';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
 import {
-  SECURITY_CONFIG_MODE_NAMES,
-  SECURITY_CONFIG_MODE,
-  SecurityConfigModels,
-  ClientSecurityConfigPSK,
-  ClientSecurityConfigRPK,
-  JSON_ALL_CONFIG,
-  KEY_IDENT_REGEXP_PSK,
-  KEY_PUBLIC_REGEXP_PSK,
-  DeviceCredentialsDialogLwm2mData,
   BOOTSTRAP_SERVER,
   BOOTSTRAP_SERVERS,
-  LWM2M_SERVER,
+  ClientSecurityConfigNoSEC,
+  ClientSecurityConfigPSK,
+  ClientSecurityConfigRPK,
   ClientSecurityConfigX509,
-  ClientSecurityConfigNO_SEC,
+  DeviceCredentialsDialogLwm2mData,
   getDefaultClientSecurityConfigType,
+  JSON_ALL_CONFIG,
+  KEY_REGEXP_HEX_DEC,
   LEN_MAX_PSK,
-  LEN_MAX_PUBLIC_KEY_RPK
+  LEN_MAX_PUBLIC_KEY_RPK,
+  LWM2M_SERVER,
+  SECURITY_CONFIG_MODE,
+  SECURITY_CONFIG_MODE_NAMES,
+  SecurityConfigModels
 } from './security-config.models';
-import {WINDOW} from '@core/services/window.service';
-import {MatTabChangeEvent, MatTabGroup} from '@angular/material/tabs';
-import {MatTab} from '@angular/material/tabs/tab';
-
+import { WINDOW } from '@core/services/window.service';
+import { MatTabChangeEvent } from '@angular/material/tabs';
+import { MatTab } from '@angular/material/tabs/tab';
 
 @Component({
   selector: 'tb-security-config-lwm2m',
@@ -68,15 +66,15 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
   lwm2mServer: string;
   jsonObserveData: {};
   lenMaxKeyClient = LEN_MAX_PSK;
-  tabPrevious: MatTab
-  tabIndexPrevious = 0 as number;
+  tabPrevious: MatTab;
+  tabIndexPrevious = 0;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: DeviceCredentialsDialogLwm2mData,
               public dialogRef: MatDialogRef<SecurityConfigComponent, object>,
               public fb: FormBuilder,
-              private translate: TranslateService,
+              public translate: TranslateService,
               @Inject(WINDOW) private window: Window) {
     super(store, router, dialogRef);
   }
@@ -85,13 +83,13 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     this.jsonAllConfig = JSON.parse(JSON.stringify(this.data.jsonAllConfig)) as SecurityConfigModels;
     this.initConstants();
     this.lwm2mConfigFormGroup = this.initLwm2mConfigFormGroup();
-    this.title = this.translate.instant('device.lwm2m-security-info') + ": " + this.data.endPoint
+    this.title = this.translate.instant('device.lwm2m-security-info') + ': ' + this.data.endPoint;
     this.lwm2mConfigFormGroup.get('clientCertificate').disable();
     this.initClientSecurityConfig(this.lwm2mConfigFormGroup.get('jsonAllConfig').value);
     this.registerDisableOnLoadFormControl(this.lwm2mConfigFormGroup.get('securityConfigClientMode'));
   }
 
-  initConstants(): void {
+  private initConstants = (): void => {
     this.bootstrapServers = BOOTSTRAP_SERVERS;
     this.bootstrapServer = BOOTSTRAP_SERVER;
     this.lwm2mServer = LWM2M_SERVER;
@@ -112,24 +110,24 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     return this.lwm2mConfigFormGroup.get('observeFormGroup') as FormGroup;
   }
 
-  initClientSecurityConfig(jsonAllConfig: SecurityConfigModels): void {
-    switch (jsonAllConfig.client.securityConfigClientMode.toString()) {
-      case SECURITY_CONFIG_MODE.NO_SEC.toString():
+  private initClientSecurityConfig = (jsonAllConfig: SecurityConfigModels): void =>  {
+    switch (jsonAllConfig.client.securityConfigClientMode) {
+      case SECURITY_CONFIG_MODE.NO_SEC:
         break;
-      case SECURITY_CONFIG_MODE.PSK.toString():
+      case SECURITY_CONFIG_MODE.PSK:
         const clientSecurityConfigPSK = jsonAllConfig.client as ClientSecurityConfigPSK;
         this.lwm2mConfigFormGroup.patchValue({
           identityPSK: clientSecurityConfigPSK.identity,
           clientKey: clientSecurityConfigPSK.key,
         }, {emitEvent: false});
         break;
-      case SECURITY_CONFIG_MODE.RPK.toString():
+      case SECURITY_CONFIG_MODE.RPK:
         const clientSecurityConfigRPK = jsonAllConfig.client as ClientSecurityConfigRPK;
         this.lwm2mConfigFormGroup.patchValue({
           clientKey: clientSecurityConfigRPK.key,
         }, {emitEvent: false});
         break;
-      case SECURITY_CONFIG_MODE.X509.toString():
+      case SECURITY_CONFIG_MODE.X509:
         const clientSecurityConfigX509 = jsonAllConfig.client as ClientSecurityConfigX509;
         this.lwm2mConfigFormGroup.patchValue({
           clientCertificate: clientSecurityConfigX509.x509
@@ -139,106 +137,110 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     this.securityConfigClientUpdateValidators(this.lwm2mConfigFormGroup.get('securityConfigClientMode').value);
   }
 
-  securityConfigClientModeChanged(mode: SECURITY_CONFIG_MODE): void {
+  securityConfigClientModeChanged = (mode: SECURITY_CONFIG_MODE): void => {
     switch (mode) {
       case SECURITY_CONFIG_MODE.NO_SEC:
-        let clientSecurityConfigNO_SEC = getDefaultClientSecurityConfigType(mode) as ClientSecurityConfigNO_SEC;
-        this.jsonAllConfig.client = clientSecurityConfigNO_SEC;
+        const clientSecurityConfigNoSEC = getDefaultClientSecurityConfigType(mode) as ClientSecurityConfigNoSEC;
+        this.jsonAllConfig.client = clientSecurityConfigNoSEC;
         this.lwm2mConfigFormGroup.patchValue({
           jsonAllConfig: this.jsonAllConfig,
           clientCertificate: false
-        }, {emitEvent: true});
+        }, {emitEvent: false});
         break;
       case SECURITY_CONFIG_MODE.PSK:
-        let clientSecurityConfigPSK = getDefaultClientSecurityConfigType(mode, this.lwm2mConfigFormGroup.get('endPoint').value) as ClientSecurityConfigPSK;
+        const clientSecurityConfigPSK = getDefaultClientSecurityConfigType(mode, this.lwm2mConfigFormGroup.get('endPoint')
+          .value) as ClientSecurityConfigPSK;
         clientSecurityConfigPSK.identity = this.data.endPoint;
         clientSecurityConfigPSK.key = this.lwm2mConfigFormGroup.get('clientKey').value;
         this.jsonAllConfig.client = clientSecurityConfigPSK;
         this.lwm2mConfigFormGroup.patchValue({
           identityPSK: clientSecurityConfigPSK.identity,
           clientCertificate: false
-        }, {emitEvent: true});
+        }, {emitEvent: false});
         break;
       case SECURITY_CONFIG_MODE.RPK:
-        let clientSecurityConfigRPK = getDefaultClientSecurityConfigType(mode) as ClientSecurityConfigRPK;
+        const clientSecurityConfigRPK = getDefaultClientSecurityConfigType(mode) as ClientSecurityConfigRPK;
         clientSecurityConfigRPK.key = this.lwm2mConfigFormGroup.get('clientKey').value;
         this.jsonAllConfig.client = clientSecurityConfigRPK;
         this.lwm2mConfigFormGroup.patchValue({
-          jsonAllConfig: this.jsonAllConfig,
           clientCertificate: false
-        }, {emitEvent: true})
+        }, {emitEvent: false});
         break;
       case SECURITY_CONFIG_MODE.X509:
-        let clientSecurityConfigX509 = getDefaultClientSecurityConfigType(mode) as ClientSecurityConfigX509;
-        this.jsonAllConfig.client = clientSecurityConfigX509;
+        this.jsonAllConfig.client = getDefaultClientSecurityConfigType(mode) as ClientSecurityConfigX509;
         this.lwm2mConfigFormGroup.patchValue({
-          jsonAllConfig: this.jsonAllConfig,
           clientCertificate: true
-        }, {emitEvent: true})
+        }, {emitEvent: false});
         break;
     }
     this.securityConfigClientUpdateValidators(mode);
   }
 
-  securityConfigClientUpdateValidators(mode: SECURITY_CONFIG_MODE): void {
+  private securityConfigClientUpdateValidators = (mode: SECURITY_CONFIG_MODE): void => {
     switch (mode) {
       case SECURITY_CONFIG_MODE.NO_SEC:
-        this.lwm2mConfigFormGroup.get('identityPSK').setValidators([]);
-        this.lwm2mConfigFormGroup.get('identityPSK').updateValueAndValidity();
-        this.lwm2mConfigFormGroup.get('clientKey').setValidators([]);
-        this.lwm2mConfigFormGroup.get('clientKey').updateValueAndValidity();
+        this.setValidatorsNoSecX509();
         break;
       case SECURITY_CONFIG_MODE.PSK:
         this.lenMaxKeyClient = LEN_MAX_PSK;
-        this.lwm2mConfigFormGroup.get('identityPSK').setValidators([]);
-        this.lwm2mConfigFormGroup.get('identityPSK').updateValueAndValidity();
-        this.lwm2mConfigFormGroup.get('clientKey').setValidators([Validators.required, Validators.pattern(KEY_IDENT_REGEXP_PSK)]);
-        this.lwm2mConfigFormGroup.get('clientKey').updateValueAndValidity();
+        this.setValidatorsPskRpk(mode);
         break;
       case SECURITY_CONFIG_MODE.RPK:
         this.lenMaxKeyClient = LEN_MAX_PUBLIC_KEY_RPK;
-        this.lwm2mConfigFormGroup.get('identityPSK').setValidators([]);
-        this.lwm2mConfigFormGroup.get('identityPSK').updateValueAndValidity();
-        this.lwm2mConfigFormGroup.get('clientKey').setValidators([Validators.required, Validators.pattern(KEY_PUBLIC_REGEXP_PSK)]);
-        this.lwm2mConfigFormGroup.get('clientKey').updateValueAndValidity();
+        this.setValidatorsPskRpk(mode);
         break;
       case SECURITY_CONFIG_MODE.X509:
         this.lenMaxKeyClient = LEN_MAX_PUBLIC_KEY_RPK;
-        this.lwm2mConfigFormGroup.get('identityPSK').setValidators([]);
-        this.lwm2mConfigFormGroup.get('identityPSK').updateValueAndValidity();
-        this.lwm2mConfigFormGroup.get('clientKey').setValidators([]);
-        this.lwm2mConfigFormGroup.get('clientKey').updateValueAndValidity();
+        this.setValidatorsNoSecX509();
         break;
     }
+    this.lwm2mConfigFormGroup.updateValueAndValidity();
+  }
+
+  private setValidatorsNoSecX509 = (): void => {
+    this.lwm2mConfigFormGroup.get('identityPSK').setValidators([]);
+    this.lwm2mConfigFormGroup.get('clientKey').setValidators([]);
+  }
+
+  private setValidatorsPskRpk = (mode: SECURITY_CONFIG_MODE): void => {
+    if (mode === SECURITY_CONFIG_MODE.PSK) {
+      this.lwm2mConfigFormGroup.get('identityPSK').setValidators([Validators.required]);
+    } else {
+      this.lwm2mConfigFormGroup.get('identityPSK').setValidators([]);
+    }
+    this.lwm2mConfigFormGroup.get('clientKey').setValidators([Validators.required,
+      Validators.pattern(KEY_REGEXP_HEX_DEC),
+      Validators.maxLength(this.lenMaxKeyClient), Validators.minLength(this.lenMaxKeyClient)]);
   }
 
   tabChanged = (tabChangeEvent: MatTabChangeEvent): void => {
-    if (this.tabIndexPrevious !== tabChangeEvent.index) this.upDateValueToJson();
+    if (this.tabIndexPrevious !== tabChangeEvent.index) { this.upDateValueToJson(); }
     this.tabIndexPrevious = tabChangeEvent.index;
   }
 
-  upDateValueToJson(): void {
+  private upDateValueToJson(): void {
     switch (this.tabIndexPrevious) {
       case 0:
-        this.upDateValueToJsonTab_0();
+        this.upDateValueToJsonTab0();
         break;
       case 1:
-        this.upDateValueToJsonTab_1();
+        this.upDateValueToJsonTab1();
         break;
       case 2:
-        this.upDateValueToJsonTab_2();
+        this.upDateValueToJsonTab2();
         break;
     }
   }
 
-  upDateValueToJsonTab_0(): void {
+  private upDateValueToJsonTab0 = (): void => {
     if (this.lwm2mConfigFormGroup !== null) {
       if (!this.lwm2mConfigFormGroup.get('endPoint').pristine && this.lwm2mConfigFormGroup.get('endPoint').valid) {
         this.data.endPoint = this.lwm2mConfigFormGroup.get('endPoint').value;
         // Client mode == PSK
         if (this.lwm2mConfigFormGroup.get('securityConfigClientMode').value === SECURITY_CONFIG_MODE.PSK) {
-          this.jsonAllConfig.client["endpoint"] = this.data.endPoint;
-          this.jsonAllConfig.client["endpoint"].markAsPristine({
+          const endPoint = 'endpoint';
+          this.jsonAllConfig.client[endPoint] = this.data.endPoint;
+          this.jsonAllConfig.client[endPoint].markAsPristine({
             onlySelf: true
           });
           this.upDateJsonAllConfig();
@@ -261,7 +263,7 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     }
   }
 
-  upDateValueToJsonTab_1(): void {
+  private upDateValueToJsonTab1 = (): void => {
     if (this.lwm2mConfigFormGroup !== null) {
       if (this.bootstrapFormGroup !== null && !this.bootstrapFormGroup.pristine && this.bootstrapFormGroup.valid) {
         this.jsonAllConfig.bootstrap.bootstrapServer = this.bootstrapFormGroup.value;
@@ -281,8 +283,9 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     }
   }
 
-  upDateValueToJsonTab_2(): void {
-    if (!this.lwm2mConfigFormGroup.get(this.formControlNameJsonAllConfig).pristine && this.lwm2mConfigFormGroup.get(this.formControlNameJsonAllConfig).valid) {
+  private upDateValueToJsonTab2 = (): void => {
+    if (!this.lwm2mConfigFormGroup.get(this.formControlNameJsonAllConfig).pristine &&
+      this.lwm2mConfigFormGroup.get(this.formControlNameJsonAllConfig).valid) {
       this.jsonAllConfig = this.lwm2mConfigFormGroup.get(this.formControlNameJsonAllConfig).value;
       this.lwm2mConfigFormGroup.get(this.formControlNameJsonAllConfig).markAsPristine({
         onlySelf: true
@@ -290,15 +293,17 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     }
   }
 
-  updateIdentityPSK(): void {
-    if (this.lwm2mConfigFormGroup.get('bootstrapServer').value['securityMode'] === SECURITY_CONFIG_MODE.PSK.toString()) {
+  private updateIdentityPSK = (): void => {
+    const securityMode = 'securityMode';
+    if (this.lwm2mConfigFormGroup.get('bootstrapServer').value[securityMode] === SECURITY_CONFIG_MODE.PSK) {
       this.lwm2mConfigFormGroup.get('bootstrapFormGroup').patchValue({
         clientPublicKeyOrId: this.lwm2mConfigFormGroup.get('identityPSK').value
       });
-      this.jsonAllConfig.client['identity'] = this.lwm2mConfigFormGroup.get('identityPSK').value;
+      const identity = 'identity';
+      this.jsonAllConfig.client[identity] = this.lwm2mConfigFormGroup.get('identityPSK').value;
       this.upDateJsonAllConfig();
     }
-    if (this.lwm2mConfigFormGroup.get('lwm2mServer').value['securityMode'] === SECURITY_CONFIG_MODE.PSK.toString()) {
+    if (this.lwm2mConfigFormGroup.get('lwm2mServer').value[securityMode] === SECURITY_CONFIG_MODE.PSK) {
       this.lwm2mConfigFormGroup.get('lwm2mServerFormGroup').patchValue({
         clientPublicKeyOrId: this.lwm2mConfigFormGroup.get('identityPSK').value
       });
@@ -307,24 +312,26 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     }
   }
 
-  updateClientKey(): void {
-    this.jsonAllConfig.client["key"] = this.lwm2mConfigFormGroup.get('clientKey').value;
-    if (this.lwm2mConfigFormGroup.get('bootstrapServer').value['securityMode'] === SECURITY_CONFIG_MODE.PSK.toString()) {
+  private updateClientKey = (): void => {
+    const key = 'key';
+    const securityMode = 'securityMode';
+    this.jsonAllConfig.client[key] = this.lwm2mConfigFormGroup.get('clientKey').value;
+    if (this.lwm2mConfigFormGroup.get('bootstrapServer').value[securityMode] === SECURITY_CONFIG_MODE.PSK) {
       this.lwm2mConfigFormGroup.get('bootstrapServer').patchValue({
-        clientSecretKey: this.jsonAllConfig.client["key"]
+        clientSecretKey: this.jsonAllConfig.client[key]
       }, {emitEvent: false});
-      this.jsonAllConfig.bootstrap.bootstrapServer.clientSecretKey = this.jsonAllConfig.client["key"];
+      this.jsonAllConfig.bootstrap.bootstrapServer.clientSecretKey = this.jsonAllConfig.client[key];
     }
-    if (this.lwm2mConfigFormGroup.get('lwm2mServer').value['securityMode'] === SECURITY_CONFIG_MODE.PSK.toString()) {
+    if (this.lwm2mConfigFormGroup.get('lwm2mServer').value[securityMode] === SECURITY_CONFIG_MODE.PSK) {
       this.lwm2mConfigFormGroup.get('lwm2mServer').patchValue({
-        clientSecretKey: this.jsonAllConfig.client["key"]
+        clientSecretKey: this.jsonAllConfig.client[key]
       }, {emitEvent: false});
-      this.jsonAllConfig.bootstrap.lwm2mServer.clientSecretKey = this.jsonAllConfig.client["key"];
+      this.jsonAllConfig.bootstrap.lwm2mServer.clientSecretKey = this.jsonAllConfig.client[key];
     }
     this.upDateJsonAllConfig();
   }
 
-  upDateJsonAllConfig(): void {
+  private upDateJsonAllConfig = (): void => {
     this.data.jsonAllConfig = JSON.parse(JSON.stringify(this.jsonAllConfig));
     this.lwm2mConfigFormGroup.patchValue({
       jsonAllConfig: JSON.parse(JSON.stringify(this.jsonAllConfig))
@@ -332,17 +339,10 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     this.lwm2mConfigFormGroup.markAsDirty();
   }
 
-  upDateBootstrapFormGroup(): void {
-    this.data.jsonAllConfig = JSON.parse(JSON.stringify(this.jsonAllConfig));
-    this.lwm2mConfigFormGroup.patchValue({
-      jsonAllConfig: JSON.parse(JSON.stringify(this.jsonAllConfig))
-    }, {emitEvent: false});
-    this.lwm2mConfigFormGroup.markAsDirty();
-  }
-
-  initLwm2mConfigFormGroup(): FormGroup {
+  private initLwm2mConfigFormGroup = (): FormGroup => {
     if (SECURITY_CONFIG_MODE[this.jsonAllConfig.client.securityConfigClientMode.toString()] === SECURITY_CONFIG_MODE.PSK) {
-      this.data.endPoint = this.jsonAllConfig.client['endpoint'];
+      const endpoint = 'endpoint';
+      this.data.endPoint = this.jsonAllConfig.client[endpoint];
     }
     return this.fb.group({
       securityConfigClientMode: [SECURITY_CONFIG_MODE[this.jsonAllConfig.client.securityConfigClientMode.toString()], []],
@@ -351,27 +351,28 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
       clientCertificate: [false, []],
       bootstrapServer: [this.jsonAllConfig.bootstrap[this.bootstrapServer], []],
       lwm2mServer: [this.jsonAllConfig.bootstrap[this.lwm2mServer], []],
-      bootstrapFormGroup: this.getServerGroup(true),
-      lwm2mServerFormGroup: this.getServerGroup(false),
+      bootstrapFormGroup: this.getServerGroup(),
+      lwm2mServerFormGroup: this.getServerGroup(),
       endPoint: [this.data.endPoint, []],
       jsonAllConfig: [this.jsonAllConfig, []]
     });
   }
 
-  getServerGroup(bootstrapServerIs: boolean): FormGroup {
+  private getServerGroup = (): FormGroup => {
     return this.fb.group({
       securityMode: [this.fb.control(SECURITY_CONFIG_MODE.NO_SEC), []],
       clientPublicKeyOrId: ['', []],
       clientSecretKey: ['', []]
-    })
+    });
   }
 
   save(): void {
     this.upDateValueToJson();
-    this.data.endPoint = this.lwm2mConfigFormGroup.get('endPoint').value.split('\"').join('');
+    this.data.endPoint = this.lwm2mConfigFormGroup.get('endPoint').value.split('\'').join('');
     this.data.jsonAllConfig = this.jsonAllConfig;
     if (this.lwm2mConfigFormGroup.get('securityConfigClientMode').value === SECURITY_CONFIG_MODE.PSK) {
-      this.data.endPoint = this.data.jsonAllConfig.client["identity"];
+      const identity = 'identity';
+      this.data.endPoint = this.data.jsonAllConfig.client[identity];
     }
     this.dialogRef.close(this.data);
   }

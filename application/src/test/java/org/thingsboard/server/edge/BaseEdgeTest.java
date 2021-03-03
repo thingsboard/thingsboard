@@ -26,7 +26,7 @@ import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageLite;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -1216,12 +1216,12 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
         // Wait before device attributes saved to database before requesting them from controller
         Thread.sleep(1000);
-        Map<String, List<Map<String, String>>> timeseries = doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/values/timeseries?keys=" + timeseriesKey, Map.class);
+        Map<String, List<Map<String, String>>> timeseries = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/values/timeseries?keys=" + timeseriesKey, new TypeReference<>() {});
         Assert.assertTrue(timeseries.containsKey(timeseriesKey));
         Assert.assertEquals(1, timeseries.get(timeseriesKey).size());
         Assert.assertEquals(timeseriesValue, timeseries.get(timeseriesKey).get(0).get("value"));
 
-        List<Map<String, String>> attributes = doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/attributes/" + DataConstants.SERVER_SCOPE, List.class);
+        List<Map<String, String>> attributes = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/attributes/" + DataConstants.SERVER_SCOPE, new TypeReference<>() {});
         Assert.assertEquals(1, attributes.size());
         Assert.assertEquals(attributes.get(0).get("key"), attributesKey);
         Assert.assertEquals(attributes.get(0).get("value"), attributesValue);

@@ -37,7 +37,6 @@ public class CustomerUserPermissions extends AbstractPermissions {
         put(Resource.CUSTOMER, customerPermissionChecker);
         put(Resource.DASHBOARD, customerDashboardPermissionChecker);
         put(Resource.ENTITY_VIEW, customerEntityPermissionChecker);
-        put(Resource.EDGE, customerEntityPermissionChecker);
         put(Resource.USER, userPermissionChecker);
         put(Resource.WIDGETS_BUNDLE, widgetsPermissionChecker);
         put(Resource.WIDGET_TYPE, widgetsPermissionChecker);
@@ -49,6 +48,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
                     Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY, Operation.RPC_CALL, Operation.CLAIM_DEVICES) {
 
                 @Override
+                @SuppressWarnings("unchecked")
                 public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
 
                     if (!super.hasPermission(user, operation, entityId, entity)) {
@@ -71,6 +71,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
             new PermissionChecker.GenericPermissionChecker(Operation.READ, Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY) {
 
                 @Override
+                @SuppressWarnings("unchecked")
                 public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
                     if (!super.hasPermission(user, operation, entityId, entity)) {
                         return false;
@@ -121,6 +122,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
     private static final PermissionChecker widgetsPermissionChecker = new PermissionChecker.GenericPermissionChecker(Operation.READ) {
 
         @Override
+        @SuppressWarnings("unchecked")
         public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
             if (!super.hasPermission(user, operation, entityId, entity)) {
                 return false;

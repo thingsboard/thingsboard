@@ -59,7 +59,11 @@ public class CustomerController extends BaseController {
         checkParameter(CUSTOMER_ID, strCustomerId);
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-            return checkCustomerId(customerId, Operation.READ);
+            Customer customer = checkCustomerId(customerId, Operation.READ);
+            if(!customer.getAdditionalInfo().isNull()) {
+                processDashboardIdFromAdditionalInfo((ObjectNode) customer.getAdditionalInfo(), HOME_DASHBOARD);
+            }
+            return customer;
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -113,7 +117,7 @@ public class CustomerController extends BaseController {
                     customer.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
             if (customer.getId() != null) {
-                sendNotificationMsgToEdgeService(savedCustomer.getTenantId(), savedCustomer.getId(), EntityType.CUSTOMER, EdgeEventActionType.UPDATED);
+                sendEntityNotificationMsg(savedCustomer.getTenantId(), savedCustomer.getId(), EdgeEventActionType.UPDATED);
             }
 
             return savedCustomer;
@@ -143,7 +147,7 @@ public class CustomerController extends BaseController {
                     customer.getId(),
                     ActionType.DELETED, null, strCustomerId);
 
-            sendDeleteNotificationMsgToEdgeService(getTenantId(), customerId, EntityType.CUSTOMER, relatedEdgeIds);
+            sendDeleteNotificationMsg(getTenantId(), customerId, relatedEdgeIds);
         } catch (Exception e) {
 
             logEntityAction(emptyId(EntityType.CUSTOMER),

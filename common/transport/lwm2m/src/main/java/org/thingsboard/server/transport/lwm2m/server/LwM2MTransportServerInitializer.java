@@ -18,55 +18,47 @@ package org.thingsboard.server.transport.lwm2m.server;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.thingsboard.server.transport.lwm2m.secure.LWM2MGenerationPSkRPkECC;
-import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 @Slf4j
-@Service("LwM2MTransportServerInitializer")
+@Component("LwM2MTransportServerInitializer")
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' ) || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
 public class LwM2MTransportServerInitializer {
 
     @Autowired
-    @Qualifier("LeshanServerCert")
-    private LeshanServer lhServerCert;
+    private LwM2MTransportServiceImpl service;
 
-    @Autowired
-    @Qualifier("leshanServerNoSecPskRpk")
-    private LeshanServer lhServerNoSecPskRpk;
+    @Autowired(required = false)
+    private LeshanServer leshanServer;
 
     @Autowired
     private LwM2MTransportContextServer context;
 
     @PostConstruct
     public void init() {
-        if (this.context.getCtxServer().getEnableGenPskRpk()) new LWM2MGenerationPSkRPkECC();
-        if (this.context.getCtxServer().isServerStartAll()) {
-            this.lhServerCert.start();
-            this.lhServerNoSecPskRpk.start();
+        if (this.context.getCtxServer().getEnableGenNewKeyPskRpk()) {
+            new LWM2MGenerationPSkRPkECC();
         }
-        else {
-            if (this.context.getCtxServer().getServerDtlsMode() == LwM2MSecurityMode.X509.code) {
-                this.lhServerCert.start();
-            }
-            else {
-                this.lhServerNoSecPskRpk.start();
-            }
-        }
+        this.startLhServer();
+    }
+
+    private void startLhServer() {
+        this.leshanServer.start();
+        LwM2mServerListener lhServerCertListener = new LwM2mServerListener(this.leshanServer, service);
+        this.leshanServer.getRegistrationService().addListener(lhServerCertListener.registrationListener);
+        this.leshanServer.getPresenceService().addListener(lhServerCertListener.presenceListener);
+        this.leshanServer.getObservationService().addListener(lhServerCertListener.observationListener);
     }
 
     @PreDestroy
     public void shutdown() {
         log.info("Stopping LwM2M transport Server!");
-        try {
-            lhServerCert.destroy();
-            lhServerNoSecPskRpk.destroy();
-        } finally {
-        }
+        leshanServer.destroy();
         log.info("LwM2M transport Server stopped!");
     }
 }

@@ -347,11 +347,67 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
     }
 
     private AlarmDataQuery toQuery(AlarmDataPageLink pageLink){
-        return toQuery(pageLink, Collections.EMPTY_LIST);
+        return toQuery(pageLink, Collections.emptyList());
     }
 
     private AlarmDataQuery toQuery(AlarmDataPageLink pageLink, List<EntityKey> alarmFields){
         return new AlarmDataQuery(new DeviceTypeFilter(), pageLink, null, null, null, alarmFields);
+    }
+
+    @Test
+    public void testFindHighestAlarmSeverity() throws ExecutionException, InterruptedException {
+        Customer customer = new Customer();
+        customer.setTitle("TestCustomer");
+        customer.setTenantId(tenantId);
+        customer = customerService.saveCustomer(customer);
+
+        Device customerDevice = new Device();
+        customerDevice.setName("TestCustomerDevice");
+        customerDevice.setType("default");
+        customerDevice.setTenantId(tenantId);
+        customerDevice.setCustomerId(customer.getId());
+        customerDevice = deviceService.saveDevice(customerDevice);
+
+        // no one alarms was created
+        Assert.assertNull(alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), null, null));
+
+        Alarm alarm1 = Alarm.builder()
+                .tenantId(tenantId)
+                .originator(customerDevice.getId())
+                .type(TEST_ALARM)
+                .severity(AlarmSeverity.MAJOR)
+                .status(AlarmStatus.ACTIVE_UNACK)
+                .startTs(System.currentTimeMillis())
+                .build();
+        alarm1 = alarmService.createOrUpdateAlarm(alarm1).getAlarm();
+        alarmService.clearAlarm(tenantId, alarm1.getId(), null, System.currentTimeMillis()).get();
+
+        Alarm alarm2 = Alarm.builder()
+                .tenantId(tenantId)
+                .originator(customerDevice.getId())
+                .type(TEST_ALARM)
+                .severity(AlarmSeverity.MINOR)
+                .status(AlarmStatus.ACTIVE_ACK)
+                .startTs(System.currentTimeMillis())
+                .build();
+        alarm2 = alarmService.createOrUpdateAlarm(alarm2).getAlarm();
+        alarmService.clearAlarm(tenantId, alarm2.getId(), null, System.currentTimeMillis()).get();
+
+        Alarm alarm3 = Alarm.builder()
+                .tenantId(tenantId)
+                .originator(customerDevice.getId())
+                .type(TEST_ALARM)
+                .severity(AlarmSeverity.CRITICAL)
+                .status(AlarmStatus.ACTIVE_ACK)
+                .startTs(System.currentTimeMillis())
+                .build();
+        alarm3 = alarmService.createOrUpdateAlarm(alarm3).getAlarm();
+
+        Assert.assertEquals(AlarmSeverity.MAJOR, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), AlarmSearchStatus.UNACK, null));
+        Assert.assertEquals(AlarmSeverity.CRITICAL, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), null, null));
+        Assert.assertEquals(AlarmSeverity.MAJOR, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), null, AlarmStatus.CLEARED_UNACK));
+        Assert.assertEquals(AlarmSeverity.CRITICAL, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), AlarmSearchStatus.ACTIVE, null));
+        Assert.assertEquals(AlarmSeverity.MINOR, alarmService.findHighestAlarmSeverity(tenantId, customerDevice.getId(), null, AlarmStatus.CLEARED_ACK));
     }
 
     @Test

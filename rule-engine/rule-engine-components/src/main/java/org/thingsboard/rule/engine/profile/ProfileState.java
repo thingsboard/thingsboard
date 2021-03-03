@@ -95,7 +95,9 @@ class ProfileState {
             case NUMERIC:
             case BOOLEAN:
                 DynamicValue value = ((SimpleKeyFilterPredicate) predicate).getValue().getDynamicValue();
-                if (value != null && value.getSourceType() == DynamicValueSourceType.CURRENT_DEVICE) {
+                if (value != null && (value.getSourceType() == DynamicValueSourceType.CURRENT_TENANT ||
+                        value.getSourceType() == DynamicValueSourceType.CURRENT_CUSTOMER ||
+                        value.getSourceType() == DynamicValueSourceType.CURRENT_DEVICE)) {
                     EntityKey entityKey = new EntityKey(EntityKeyType.ATTRIBUTE, value.getSourceAttribute());
                     entityKeys.add(entityKey);
                     ruleKeys.add(entityKey);

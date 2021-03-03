@@ -73,15 +73,15 @@ public class LWM2MGenerationPSkRPkECC {
         try {
             kpg = KeyPairGenerator.getInstance(algorithm, provider);
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            log.error("", e);
         } catch (NoSuchProviderException e) {
-            e.printStackTrace();
+            log.error("", e);
         }
         ECGenParameterSpec ecsp = new ECGenParameterSpec(nameParameterSpec);
         try {
             kpg.initialize(ecsp);
         } catch (InvalidAlgorithmParameterException e) {
-            e.printStackTrace();
+            log.error("", e);
         }
 
         KeyPair kp = kpg.genKeyPair();
@@ -103,18 +103,18 @@ public class LWM2MGenerationPSkRPkECC {
             /** Get Curves params */
             String privHex = Hex.encodeHexString(privKey.getEncoded());
             log.info("\nCreating new RPK for the next start... \n" +
-                    " Elliptic Curve parameters  : [{}] \n" +
+                    " Public Key (Hex): [{}]\n" +
+                    " Private Key (Hex): [{}]" +
                     " public_x :  [{}] \n" +
                     " public_y :  [{}] \n" +
-                    " private_s : [{}] \n" +
-                    " Public Key (Hex): [{}]\n" +
-                    " Private Key (Hex): [{}]",
-                    ecPublicKey.getParams().toString(),
+                    " private_encode : [{}] \n" +
+                    " Elliptic Curve parameters  : [{}] \n",
+                    Hex.encodeHexString(pubKey.getEncoded()),
+                    privHex,
                     Hex.encodeHexString(x),
                     Hex.encodeHexString(y),
-                    privHex.substring(privHex.length() - 64),
-                    Hex.encodeHexString(pubKey.getEncoded()),
-                    Hex.encodeHexString(privKey.getEncoded()));
+                    privHex,
+                    ecPublicKey.getParams().toString());
         }
     }
 }

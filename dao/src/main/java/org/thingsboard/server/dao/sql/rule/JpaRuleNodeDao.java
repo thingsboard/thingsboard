@@ -24,6 +24,8 @@ import org.thingsboard.server.dao.model.sql.RuleNodeEntity;
 import org.thingsboard.server.dao.rule.RuleNodeDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
+import java.util.UUID;
+
 @Slf4j
 @Component
 public class JpaRuleNodeDao extends JpaAbstractSearchTextDao<RuleNodeEntity, RuleNode> implements RuleNodeDao {
@@ -32,12 +34,12 @@ public class JpaRuleNodeDao extends JpaAbstractSearchTextDao<RuleNodeEntity, Rul
     private RuleNodeRepository ruleNodeRepository;
 
     @Override
-    protected Class getEntityClass() {
+    protected Class<RuleNodeEntity> getEntityClass() {
         return RuleNodeEntity.class;
     }
 
     @Override
-    protected CrudRepository getCrudRepository() {
+    protected CrudRepository<RuleNodeEntity, UUID> getCrudRepository() {
         return ruleNodeRepository;
     }
 

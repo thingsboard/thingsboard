@@ -19,6 +19,8 @@ import { MenuService } from '@core/services/menu.service';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { HomeSection } from '@core/services/menu.models';
+import { ActivatedRoute } from '@angular/router';
+import { HomeDashboard } from '@shared/models/dashboard.models';
 
 @Component({
   selector: 'tb-home-links',
@@ -31,15 +33,20 @@ export class HomeLinksComponent implements OnInit {
 
   cols = 2;
 
+  homeDashboard: HomeDashboard = this.route.snapshot.data.homeDashboard;
+
   constructor(private menuService: MenuService,
-              public breakpointObserver: BreakpointObserver) {
+              public breakpointObserver: BreakpointObserver,
+              private route: ActivatedRoute) {
   }
 
   ngOnInit() {
-    this.updateColumnCount();
-    this.breakpointObserver
-      .observe([MediaBreakpoints.lg, MediaBreakpoints['gt-lg']])
-      .subscribe((state: BreakpointState) => this.updateColumnCount());
+    if (!this.homeDashboard) {
+      this.updateColumnCount();
+      this.breakpointObserver
+        .observe([MediaBreakpoints.lg, MediaBreakpoints['gt-lg']])
+        .subscribe((state: BreakpointState) => this.updateColumnCount());
+    }
   }
 
   private updateColumnCount() {

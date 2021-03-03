@@ -20,32 +20,33 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ObjectLoader;
 import org.eclipse.leshan.core.model.ObjectModel;
+import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mPath;
+import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true') || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
 public class LwM2MTransportConfigServer {
 
-    @Getter
-    @Value("${transport.lwm2m.timeout:}")
-    private Long timeout;
-
-    @Getter
-    @Value("${transport.sessions.report_timeout}")
-    private long sessionReportTimeout;
 
     @Getter
     private String MODEL_PATH_DEFAULT = "models";
@@ -78,11 +79,7 @@ public class LwM2MTransportConfigServer {
     private String BASE_DIR_PATH = System.getProperty("user.dir");
 
     @Getter
-    @Value("${transport.lwm2m.model_path_file:}")
-    private String modelPathFile;
-
-    @Getter
-//    private String PATH_DATA_MICROSERVICE = "/usr/share/tb-lwm2m-transport/data$";
+    //    private String PATH_DATA_MICROSERVICE = "/usr/share/tb-lwm2m-transport/data$";
     private String PATH_DATA = "data";
 
     @Getter
@@ -90,8 +87,44 @@ public class LwM2MTransportConfigServer {
     private List<ObjectModel> modelsValue;
 
     @Getter
-    @Value("${transport.lwm2m.support_deprecated_ciphers_enable:}")
-    private boolean supportDeprecatedCiphersEnable;
+    @Value("${transport.lwm2m.timeout:}")
+    private Long timeout;
+
+    @Getter
+    @Value("${transport.sessions.report_timeout}")
+    private long sessionReportTimeout;
+
+    @Getter
+    @Value("${transport.lwm2m.model_path_file:}")
+    private String modelPathFile;
+
+    @Getter
+    @Value("${transport.lwm2m.recommended_ciphers:}")
+    private boolean recommendedCiphers;
+
+    @Getter
+    @Value("${transport.lwm2m.recommended_supported_groups:}")
+    private boolean recommendedSupportedGroups;
+
+    @Getter
+    @Value("${transport.lwm2m.request_pool_size:}")
+    private int requestPoolSize;
+
+    @Getter
+    @Value("${transport.lwm2m.request_error_pool_size:}")
+    private int requestErrorPoolSize;
+
+    @Getter
+    @Value("${transport.lwm2m.registered_pool_size:}")
+    private int registeredPoolSize;
+
+    @Getter
+    @Value("${transport.lwm2m.update_registered_pool_size:}")
+    private int updateRegisteredPoolSize;
+
+    @Getter
+    @Value("${transport.lwm2m.un_registered_pool_size:}")
+    private int unRegisteredPoolSize;
 
     @Getter
     @Value("${transport.lwm2m.secure.key_store_type:}")
@@ -114,40 +147,28 @@ public class LwM2MTransportConfigServer {
     private String rootAlias;
 
     @Getter
-    @Value("${transport.lwm2m.secure.enable_gen_psk_rpk:}")
-    private Boolean enableGenPskRpk;
+    @Value("${transport.lwm2m.secure.enable_gen_new_key_psk_rpk:}")
+    private Boolean enableGenNewKeyPskRpk;
+
+    @Getter
+    @Value("${transport.lwm2m.server.id:}")
+    private Integer serverId;
 
     @Getter
     @Value("${transport.lwm2m.server.bind_address:}")
     private String serverHost;
 
     @Getter
-    @Value("${transport.lwm2m.server.bind_port:}")
-    private Integer serverPort;
+    @Value("${transport.lwm2m.server.secure.bind_address_security:}")
+    private String serverHostSecurity;
 
     @Getter
-    @Value("${transport.lwm2m.server.bind_port_cert:}")
-    private Integer serverPortCert;
+    @Value("${transport.lwm2m.server.bind_port_no_sec:}")
+    private Integer serverPortNoSec;
 
     @Getter
-    @Value("${transport.lwm2m.server.secure.start_all:}")
-    private boolean serverStartAll;
-
-    @Getter
-    @Value("${transport.lwm2m.server.secure.dtls_mode:}")
-    private Integer serverDtlsMode;
-
-    @Getter
-    @Value("${transport.lwm2m.server.secure.bind_address:}")
-    private String serverSecureHost;
-
-    @Getter
-    @Value("${transport.lwm2m.server.secure.bind_port:}")
-    private Integer serverSecurePort;
-
-    @Getter
-    @Value("${transport.lwm2m.server.secure.bind_port_cert:}")
-    private Integer serverSecurePortCert;
+    @Value("${transport.lwm2m.server.secure.bind_port_security:}")
+    private Integer serverPortSecurity;
 
     @Getter
     @Value("${transport.lwm2m.server.secure.public_x:}")
@@ -158,16 +179,12 @@ public class LwM2MTransportConfigServer {
     private String serverPublicY;
 
     @Getter
-    @Value("${transport.lwm2m.server.secure.private_s:}")
-    private String serverPrivateS;
+    @Value("${transport.lwm2m.server.secure.private_encoded:}")
+    private String serverPrivateEncoded;
 
     @Getter
     @Value("${transport.lwm2m.server.secure.alias:}")
     private String serverAlias;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.enable:}")
-    private Boolean bootstrapEnable;
 
     @Getter
     @Value("${transport.lwm2m.secure.redis_url:}")
@@ -187,7 +204,7 @@ public class LwM2MTransportConfigServer {
         } else {
             log.error(" [{}] Read Models", path.getAbsoluteFile());
         }
-        getInKeyStore();
+        this.getInKeyStore();
     }
 
     private File getPathModels() {
@@ -237,5 +254,24 @@ public class LwM2MTransportConfigServer {
             FULL_FILE_PATH = Paths.get(BASE_DIR_PATH);
         }
         return FULL_FILE_PATH.toUri().getPath();
+    }
+
+    public ResourceModel getResourceModel(Registration registration, LwM2mPath pathIds) {
+        String pathLink = "/" + pathIds.getObjectId() + "/" + pathIds.getObjectInstanceId();
+        return (Arrays.stream(registration.getObjectLinks()).filter(p-> p.getUrl().equals(pathLink)).findFirst().isPresent() &&
+                this.modelsValue.stream().filter(v -> v.id == pathIds.getObjectId()).collect(Collectors.toList()).size() > 0) &&
+                this.modelsValue.stream().filter(v -> v.id == pathIds.getObjectId()).collect(Collectors.toList()).get(0).resources.containsKey(pathIds.getResourceId()) ?
+                this.modelsValue.stream().filter(v -> v.id == pathIds.getObjectId()).collect(Collectors.toList()).get(0).resources.get(pathIds.getResourceId()) :
+                null;
+    }
+    
+    public ResourceModel.Type getResourceModelType(Registration registration, LwM2mPath pathIds) {
+        ResourceModel resource = this.getResourceModel(registration, pathIds);
+        return (resource == null) ? null : resource.type;
+    }
+
+    public ResourceModel.Operations getOperation(Registration registration, LwM2mPath pathIds) {
+        ResourceModel resource = this.getResourceModel(registration, pathIds);
+        return (resource == null) ? ResourceModel.Operations.NONE : resource.operations;
     }
 }

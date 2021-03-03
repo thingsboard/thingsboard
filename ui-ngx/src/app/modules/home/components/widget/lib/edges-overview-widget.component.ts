@@ -41,6 +41,11 @@ import { BaseData, HasId } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
+import { isDefined } from '@core/utils';
+
+interface EdgesOverviewWidgetSettings {
+  enableDefaultTitle: boolean;
+}
 
 @Component({
   selector: 'tb-edges-overview-widget',
@@ -59,11 +64,9 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
   private datasources: Array<EntityNodeDatasource>;
+  private settings: EdgesOverviewWidgetSettings;
 
   private nodeIdCounter = 0;
-
-  private entityNodesMap: {[parentNodeId: string]: {[edgeId: string]: string}} = {};
-  private entityGroupsNodesMap: {[edgeNodeId: string]: {[groupType: string]: string}} = {};
 
   constructor(protected store: Store<AppState>,
               private edgeService: EdgeService,
@@ -78,6 +81,8 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
     this.widgetConfig = this.ctx.widgetConfig;
     this.subscription = this.ctx.defaultSubscription;
     this.datasources = this.subscription.datasources as Array<EntityNodeDatasource>;
+    this.settings = this.ctx.settings;
+    this.initializeConfig();
     this.ctx.updateWidgetParams();
   }
 
@@ -86,11 +91,11 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
     if (node.id === '#' && datasource) {
       if (datasource.type === DatasourceType.entity && datasource.entity.id.entityType === EntityType.EDGE) {
         var selectedEdge: BaseData<EntityId> = datasource.entity;
+        this.updateTitle(selectedEdge);
         this.getCustomerTitle(selectedEdge.id.id);
-        this.ctx.widgetTitle = selectedEdge.name;
-        cb(this.loadNodesForEdge(selectedEdge.id.id, selectedEdge));
+        cb(this.loadNodesForEdge(selectedEdge));
       } else if (datasource.type === DatasourceType.function) {
-        cb(this.loadNodesForEdge(datasource.entityId, datasource.entity));
+        cb(this.loadNodesForEdge(datasource.entity));
       } else {
         this.edgeIsDatasource = false;
         cb([]);
@@ -103,21 +108,19 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
       this.entityService.getAssignedToEdgeEntitiesByType(edgeId, entityType, pageLink).subscribe(
         (entities) => {
           if (entities.data.length > 0) {
-            cb(this.entitiesToNodes(node.id, entities.data));
+            cb(this.entitiesToNodes(entities.data));
           } else {
             cb([]);
           }
         }
-      )
+      );
     } else {
       cb([]);
     }
   }
 
-  private loadNodesForEdge(parentNodeId: string, entity: BaseData<HasId>): EdgeOverviewNode[] {
+  private loadNodesForEdge(entity: BaseData<HasId>): EdgeOverviewNode[] {
     const nodes: EdgeOverviewNode[] = [];
-    const nodesMap = {};
-    this.entityGroupsNodesMap[parentNodeId] = nodesMap;
     const authUser = getCurrentAuthUser(this.store);
     var allowedGroupTypes: EntityType[] = edgeGroupsTypes;
     if (authUser.authority === Authority.CUSTOMER_USER) {
@@ -136,18 +139,12 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
         } as EdgeGroupNodeData
       };
       nodes.push(node);
-      nodesMap[entityType] = node.id;
     });
     return nodes;
   }
 
-  private createEntityNode(parentNodeId: string, entity: BaseData<HasId>): EdgeOverviewNode {
-    let nodesMap = this.entityNodesMap[parentNodeId];
-    if (!nodesMap) {
-      nodesMap = {};
-      this.entityNodesMap[parentNodeId] = nodesMap;
-    }
-    const node: EdgeOverviewNode = {
+  private createEntityNode(entity: BaseData<HasId>): EdgeOverviewNode {
+    return {
       id: (++this.nodeIdCounter)+'',
       icon: false,
       text: entityNodeText(entity),
@@ -159,17 +156,14 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
         entity: entity,
         internalId: entity.id.id
       } as EntityNodeData
-    };
-    nodesMap[entity.id.id] = node.id;
-    return node;
+    } as EdgeOverviewNode;
   }
 
-  private entitiesToNodes(parentNodeId: string, entities: BaseData<HasId>[]): EdgeOverviewNode[] {
+  private entitiesToNodes(entities: BaseData<HasId>[]): EdgeOverviewNode[] {
     const nodes: EdgeOverviewNode[] = [];
-    this.entityNodesMap[parentNodeId] = {};
     if (entities) {
       entities.forEach((entity) => {
-        const node = this.createEntityNode(parentNodeId, entity);
+        const node = this.createEntityNode(entity);
         nodes.push(node);
       });
     }
@@ -186,5 +180,18 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
         }
         this.cd.detectChanges();
       });
+  }
+
+  private initializeConfig(): void {
+    const edgeIsDatasource: boolean = this.datasources[0] && this.datasources[0].type === DatasourceType.entity && this.datasources[0].entity.id.entityType === EntityType.EDGE;
+    if (edgeIsDatasource) {
+      const edge = this.datasources[0].entity;
+      this.updateTitle(edge);
+    }
+  }
+
+  private updateTitle(edge: BaseData<EntityId>): void {
+    const displayDefaultTitle: boolean = isDefined(this.settings.enableDefaultTitle) ? this.settings.enableDefaultTitle : false;
+    this.ctx.widgetTitle = displayDefaultTitle ? `${edge.name} Quick Overview` : this.widgetConfig.title;
   }
 }

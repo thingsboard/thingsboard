@@ -26,10 +26,18 @@ import org.eclipse.leshan.core.util.StringUtils;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Slf4j
 public class LwM2mValueConverterImpl implements LwM2mValueConverter {
+
+    private static final LwM2mValueConverterImpl INSTANCE = new LwM2mValueConverterImpl();
+
+    public static LwM2mValueConverterImpl getInstance() {
+        return INSTANCE;
+    }
 
     @Override
     public Object convertValue(Object value, Type currentType, Type expectedType, LwM2mPath resourcePath)
@@ -120,6 +128,11 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                     case INTEGER:
                     case FLOAT:
                         return String.valueOf(value);
+                    case TIME:
+                        String DATE_FORMAT = "MMM d, yyyy HH:mm a";
+                        Long timeValue = ((Date) value).getTime();
+                        DateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
+                        return formatter.format(new Date(timeValue));
                     default:
                         break;
                 }

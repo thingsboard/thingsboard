@@ -24,7 +24,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.security.PublicKey;
-import java.security.cert.X509Certificate;
 import java.util.Map;
 
 @Slf4j
@@ -32,39 +31,29 @@ import java.util.Map;
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true') || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
 public class LwM2MTransportConfigBootstrap {
 
+    @Getter
+    @Value("${transport.lwm2m.bootstrap.enable:}")
+    private Boolean bootstrapEnable;
+
+    @Getter
+    @Value("${transport.lwm2m.bootstrap.id:}")
+    private Integer bootstrapServerId;
 
     @Getter
     @Value("${transport.lwm2m.bootstrap.bind_address:}")
     private String bootstrapHost;
 
     @Getter
-    @Value("${transport.lwm2m.bootstrap.bind_port:}")
-    private Integer bootstrapPort;
+    @Value("${transport.lwm2m.bootstrap.bind_port_no_sec:}")
+    private Integer bootstrapPortNoSec;
 
     @Getter
-    @Value("${transport.lwm2m.bootstrap.bind_port_cert:}")
-    private Integer bootstrapPortCert;
-
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.start_all:}")
-    private boolean bootstrapStartAll;
+    @Value("${transport.lwm2m.bootstrap.secure.bind_address_security:}")
+    private String bootstrapHostSecurity;
 
     @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.dtls_mode:}")
-    private Integer bootStrapDtlsMode;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.bind_address:}")
-    private String bootstrapSecureHost;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.bind_port:}")
-    private Integer bootstrapSecurePort;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.bind_port_cert:}")
-    private Integer bootstrapSecurePortCert;
+    @Value("${transport.lwm2m.bootstrap.secure.bind_port_security:}")
+    private Integer bootstrapPortSecurity;
 
     @Getter
     @Value("${transport.lwm2m.bootstrap.secure.public_x:}")
@@ -79,16 +68,12 @@ public class LwM2MTransportConfigBootstrap {
     private PublicKey bootstrapPublicKey;
 
     @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.private_s:}")
-    private String bootstrapPrivateS;
+    @Value("${transport.lwm2m.bootstrap.secure.private_encoded:}")
+    private String bootstrapPrivateEncoded;
 
     @Getter
     @Value("${transport.lwm2m.bootstrap.secure.alias:}")
     private String bootstrapAlias;
-
-    @Getter
-    @Setter
-    private X509Certificate bootstrapCertificate;
 
     @Getter
     @Setter
