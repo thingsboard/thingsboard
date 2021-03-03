@@ -40,7 +40,7 @@ import {
 } from '@shared/models/widget.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { hashCode, isDefined, isNumber } from '@core/utils';
+import { hashCode, isDefined, isNumber, isObject } from '@core/utils';
 import cssjs from '@core/css/css';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
@@ -383,8 +383,16 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
       if (styleInfo.useCellStyleFunction && styleInfo.cellStyleFunction) {
         try {
           style = styleInfo.cellStyleFunction(value);
+          if (!isObject(style)) {
+            throw new TypeError(`${style === null ? 'null' : typeof style} instead of style object`);
+          }
+          if (Array.isArray(style)) {
+            throw new TypeError(`Array instead of style object`);
+          }
         } catch (e) {
           style = {};
+          console.warn(`Cell style function for data key '${source.header[index - 1].dataKey.label}' in widget ` +
+            `'${this.ctx.widgetConfig.title}' returns '${e}'. Please check your cell style function.`);
         }
       }
     }
