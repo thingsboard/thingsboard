@@ -16,9 +16,9 @@
 
 -->
 <div class="widget-select">
-  <div *ngIf="hasWidgetTypes()">
-    <div fxFlexFill fxLayoutGap="12px grid" fxLayout="row wrap">
-      <div *ngFor="let widget of widgets" class="mat-card-container">
+  <div *ngIf="widgetsBundle; else bundles">
+    <div *ngIf="(widgets$ | async)?.length; else emptyBundle" fxFlexFill fxLayoutGap="12px grid" fxLayout="row wrap">
+      <div *ngFor="let widget of widgets$ | async" class="mat-card-container">
         <mat-card fxFlexFill fxLayout="row" fxLayoutGap="16px" (click)="onWidgetClicked($event, widget)">
           <div class="preview-container" fxFlex="45">
             <img class="preview" [src]="getPreviewImage(widget.image)" alt="{{ widget.title }}">
@@ -26,32 +26,36 @@
           <div fxFlex fxLayout="column">
             <mat-card-title>{{widget.title}}</mat-card-title>
             <mat-card-subtitle>{{ 'widget.' + widget.type | translate }}</mat-card-subtitle>
-            <mat-card-content *ngIf="widgetsBundle.description">
+            <mat-card-content *ngIf="widget.description">
               {{ widget.description }}
             </mat-card-content>
           </div>
         </mat-card>
       </div>
     </div>
+    <ng-template #emptyBundle>
+      <span translate
+            style="display: flex;"
+            fxLayoutAlign="center center"
+            class="mat-headline tb-absolute-fill">widgets-bundle.empty</span>
+    </ng-template>
   </div>
-  <span translate *ngIf="widgetsBundle && !hasWidgetTypes()"
-        style="display: flex;"
-        fxLayoutAlign="center center"
-        class="mat-headline">widgets-bundle.empty</span>
-  <div *ngIf="!widgetsBundle" fxFlexFill fxLayoutGap="12px grid" fxLayout="row wrap">
-    <div *ngFor="let widgetsBundle of widgetsBundles$ | async" class="mat-card-container">
-      <mat-card fxFlexFill fxLayout="row" fxLayoutGap="16px" (click)="selectBundle($event, widgetsBundle)">
-        <div class="preview-container" fxFlex="45">
-          <img class="preview" [src]=getPreviewImage(widgetsBundle.image) alt="{{ widgetsBundle.title }}">
-        </div>
-        <div fxFlex fxLayout="column">
-          <mat-card-title>{{ widgetsBundle.title }}</mat-card-title>
-          <mat-card-subtitle *ngIf="isSystem(widgetsBundle)" translate>widgets-bundle.system</mat-card-subtitle>
-          <mat-card-content *ngIf="widgetsBundle.description">
-            {{ widgetsBundle.description }}
-          </mat-card-content>
-        </div>
-      </mat-card>
+  <ng-template #bundles>
+    <div fxFlexFill fxLayoutGap="12px grid" fxLayout="row wrap">
+      <div *ngFor="let widgetsBundle of widgetsBundles$ | async" class="mat-card-container">
+        <mat-card fxFlexFill fxLayout="row" fxLayoutGap="16px" (click)="selectBundle($event, widgetsBundle)">
+          <div class="preview-container" fxFlex="45">
+            <img class="preview" [src]=getPreviewImage(widgetsBundle.image) alt="{{ widgetsBundle.title }}">
+          </div>
+          <div fxFlex fxLayout="column">
+            <mat-card-title>{{ widgetsBundle.title }}</mat-card-title>
+            <mat-card-subtitle *ngIf="isSystem(widgetsBundle)" translate>widgets-bundle.system</mat-card-subtitle>
+            <mat-card-content *ngIf="widgetsBundle.description">
+              {{ widgetsBundle.description }}
+            </mat-card-content>
+          </div>
+        </mat-card>
+      </div>
     </div>
-  </div>
+  </ng-template>
 </div>

@@ -58,7 +58,7 @@ import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
-import { Widget, WidgetConfig, WidgetPosition, widgetTypesData } from '@app/shared/models/widget.models';
+import { Widget, WidgetConfig, WidgetInfo, WidgetPosition, widgetTypesData } from '@app/shared/models/widget.models';
 import { environment as env } from '@env/environment';
 import { Authority } from '@shared/models/authority.enum';
 import { DialogService } from '@core/services/dialog.service';
@@ -857,7 +857,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     }
   }
 
-  addWidgetFromType(widget: Widget) {
+  addWidgetFromType(widget: WidgetInfo) {
     this.onAddWidgetClosed();
     this.widgetComponentService.getWidgetInfo(widget.bundleAlias, widget.typeAlias, widget.isSystemType).subscribe(
       (widgetTypeInfo) => {
@@ -1121,5 +1121,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   widgetBundleSelected(bundle: WidgetsBundle){
     this.widgetsBundle = bundle;
+    this.searchBundle = '';
   }
 }

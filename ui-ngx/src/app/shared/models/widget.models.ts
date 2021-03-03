@@ -401,21 +401,24 @@ export interface WidgetConfig {
   [key: string]: any;
 }
 
-export interface Widget {
-  id?: string;
+export interface Widget extends WidgetInfo{
   typeId?: WidgetTypeId;
+  sizeX: number;
+  sizeY: number;
+  row: number;
+  col: number;
+  config: WidgetConfig;
+}
+
+export interface WidgetInfo {
+  id?: string;
   isSystemType: boolean;
   bundleAlias: string;
   typeAlias: string;
   type: widgetType;
   title: string;
-  sizeX: number;
-  sizeY: number;
-  row: number;
-  col: number;
   image: string;
   description: string;
-  config: WidgetConfig;
 }
 
 export interface GroupInfo {

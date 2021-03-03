@@ -14,14 +14,14 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { IAliasController } from '@core/api/widget-api.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetService } from '@core/http/widget.service';
-import { Widget } from '@shared/models/widget.models';
+import { WidgetInfo } from '@shared/models/widget.models';
 import { toWidgetInfo } from '@home/models/widget-component.models';
-import { distinctUntilChanged, map, mergeMap, publishReplay, refCount, share } from 'rxjs/operators';
+import { distinctUntilChanged, map, publishReplay, refCount, switchMap } from 'rxjs/operators';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { isDefinedAndNotNull } from '@core/utils';
@@ -31,12 +31,24 @@ import { isDefinedAndNotNull } from '@core/utils';
   templateUrl: './dashboard-widget-select.component.html',
   styleUrls: ['./dashboard-widget-select.component.scss']
 })
-export class DashboardWidgetSelectComponent implements OnInit, OnChanges {
+export class DashboardWidgetSelectComponent implements OnInit {
 
   private search$ = new BehaviorSubject<string>('');
+  private widgetsTypes: Observable<Array<WidgetInfo>>;
+  private widgetsBundleValue: WidgetsBundle;
+
+  widgets$: Observable<Array<WidgetInfo>>;
+  widgetsBundles$: Observable<Array<WidgetsBundle>>;
 
   @Input()
-  widgetsBundle: WidgetsBundle;
+  set widgetsBundle(widgetBundle: WidgetsBundle) {
+    this.widgetsTypes = null;
+    this.widgetsBundleValue = widgetBundle;
+  }
+
+  get widgetsBundle(): WidgetsBundle {
+    return this.widgetsBundleValue;
+  }
 
   @Input()
   aliasController: IAliasController;
@@ -47,16 +59,10 @@ export class DashboardWidgetSelectComponent implements OnInit, OnChanges {
   }
 
   @Output()
-  widgetSelected: EventEmitter<Widget> = new EventEmitter<Widget>();
+  widgetSelected: EventEmitter<WidgetInfo> = new EventEmitter<WidgetInfo>();
 
   @Output()
   widgetsBundleSelected: EventEmitter<WidgetsBundle> = new EventEmitter<WidgetsBundle>();
-
-  widgets: Array<Widget> = [];
-
-  widgetsBundles$: Observable<Array<WidgetsBundle>>;
-
-  widgets$: Observable<Array<Widget>>;
 
   constructor(private widgetsService: WidgetService,
               private sanitizer: DomSanitizer) {
@@ -65,66 +71,45 @@ export class DashboardWidgetSelectComponent implements OnInit, OnChanges {
   ngOnInit(): void {
     this.widgetsBundles$ = this.search$.asObservable().pipe(
       distinctUntilChanged(),
-      mergeMap(search => this.fetchWidgetBundle(search))
+      switchMap(search => this.fetchWidgetBundle(search))
     );
     this.widgets$ = this.search$.asObservable().pipe(
       distinctUntilChanged(),
-      mergeMap(search => this.fetchWidget(search))
+      switchMap(search => this.fetchWidget(search))
     );
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    for (const propName of Object.keys(changes)) {
-      const change = changes[propName];
-      if (change.currentValue !== change.previousValue && (change.currentValue || change.currentValue === null)) {
-        if (propName === 'widgetsBundle') {
-          this.loadLibrary();
-        }
-      }
-    }
-  }
-
-  private loadLibrary() {
-    this.widgets.length = 0;
-    if (this.widgetsBundle !== null) {
-      const bundleAlias = this.widgetsBundle.alias;
-      const isSystem = this.widgetsBundle.tenantId.id === NULL_UUID;
-      this.widgetsService.getBundleWidgetTypes(bundleAlias,
-        isSystem).subscribe(
-        (types) => {
-          types = types.sort((a, b) => b.createdTime - a.createdTime);
-          let top = 0;
-          types.forEach((type) => {
+  private getWidgets(): Observable<Array<WidgetInfo>> {
+    if (!this.widgetsTypes) {
+      if (this.widgetsBundle !== null) {
+        const bundleAlias = this.widgetsBundle.alias;
+        const isSystem = this.widgetsBundle.tenantId.id === NULL_UUID;
+        this.widgetsTypes = this.widgetsService.getBundleWidgetTypes(bundleAlias, isSystem).pipe(
+          map(widgets => widgets.sort((a, b) => b.createdTime - a.createdTime)),
+          map(widgets => widgets.map((type) => {
             const widgetTypeInfo = toWidgetInfo(type);
-            const widget: Widget = {
-              typeId: type.id,
+            const widget: WidgetInfo = {
               isSystemType: isSystem,
               bundleAlias,
               typeAlias: widgetTypeInfo.alias,
               type: widgetTypeInfo.type,
               title: widgetTypeInfo.widgetName,
               image: widgetTypeInfo.image,
-              description: widgetTypeInfo.description,
-              sizeX: widgetTypeInfo.sizeX,
-              sizeY: widgetTypeInfo.sizeY,
-              row: top,
-              col: 0,
-              config: JSON.parse(widgetTypeInfo.defaultConfig)
+              description: widgetTypeInfo.description
             };
-            widget.config.title = widgetTypeInfo.widgetName;
-            this.widgets.push(widget);
-            top += widget.sizeY;
-          });
-        }
-      );
+            return widget;
+          })),
+          publishReplay(1),
+          refCount()
+        );
+      } else {
+        this.widgetsTypes = of([]);
+      }
     }
+    return this.widgetsTypes;
   }
 
-  hasWidgetTypes(): boolean {
-    return this.widgets.length > 0;
-  }
-
-  onWidgetClicked($event: Event, widget: Widget): void {
+  onWidgetClicked($event: Event, widget: WidgetInfo): void {
     this.widgetSelected.emit(widget);
   }
 
@@ -164,8 +149,8 @@ export class DashboardWidgetSelectComponent implements OnInit, OnChanges {
     );
   }
 
-  private fetchWidget(search: string): Observable<Array<Widget>> {
-    return of(this.widgets).pipe(
+  private fetchWidget(search: string): Observable<Array<WidgetInfo>> {
+    return this.getWidgets().pipe(
       map(widgets => search ? widgets.filter(
         widget => (
           widget.title?.toLowerCase().includes(search.toLowerCase()) ||

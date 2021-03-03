@@ -253,10 +253,9 @@
                           (backStateDetails)="widgetBundleSelected(null)">
           <div class="header-pane" *ngIf="isAddingWidget">
             <div fxLayout="row">
-<!--              <span class="tb-details-subtitle">{{ 'widgets-bundle.current' | translate }}</span>-->
               <tb-widgets-bundle-search fxFlex
                                         [(ngModel)]="searchBundle"
-                                        [placeholder]="!widgetsBundle?.title ? 'Search widgets bundle' : 'Search widget'"
+                                        placeholder="{{ (!widgetsBundle?.title ? 'widgets-bundle.search' : 'widget.search') | translate }}"
                                         (ngModelChange)="searchBundle = $event">
               </tb-widgets-bundle-search>
             </div>
