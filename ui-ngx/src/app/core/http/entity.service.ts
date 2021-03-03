@@ -1323,8 +1323,8 @@ export class EntityService {
 
   public getEdgeEventContentByEntityType(entity: any): Observable<any> {
     let entityObservable: Observable<any>;
-    const entityId = entity.entityId;
-    const entityType = entity.type;
+    const entityId: string = entity.entityId;
+    const entityType: any = entity.type;
     switch (entityType) {
       case EdgeEventType.DASHBOARD:
       case EdgeEventType.ALARM:
