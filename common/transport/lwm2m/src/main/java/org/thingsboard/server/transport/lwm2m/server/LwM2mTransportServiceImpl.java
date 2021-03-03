@@ -36,7 +36,6 @@ import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -49,20 +48,50 @@ import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotif
 import org.thingsboard.server.gen.transport.TransportProtos.SessionEvent;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
-import org.thingsboard.server.transport.lwm2m.server.client.*;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientProfile;
+import org.thingsboard.server.transport.lwm2m.server.client.ResourceValue;
+import org.thingsboard.server.transport.lwm2m.server.client.ResultsAnalyzerParameters;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.transport.util.JsonUtils.getJsonObject;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.*;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.CLIENT_NOT_AUTHORIZED;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.DEVICE_ATTRIBUTES_REQUEST;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.DEVICE_ATTRIBUTES_TOPIC;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.DEVICE_TELEMETRY_TOPIC;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.GET_TYPE_OPER_OBSERVE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.GET_TYPE_OPER_READ;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_ERROR;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_TELEMETRY;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.POST_TYPE_OPER_EXECUTE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.POST_TYPE_OPER_WRITE_REPLACE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.SERVICE_CHANNEL;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.getAckCallback;
 
 @Slf4j
 @Service
@@ -84,14 +113,14 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
 
     private final LeshanServer leshanServer;
 
-    @Autowired
-    LwM2mTransportRequest lwM2mTransportRequest;
+    private final LwM2mTransportRequest lwM2mTransportRequest;
 
-    public LwM2mTransportServiceImpl(TransportService transportService, LwM2mTransportContextServer lwM2mTransportContextServer, LwM2mClientContext lwM2mClientContext, LeshanServer leshanServer) {
+    public LwM2mTransportServiceImpl(TransportService transportService, LwM2mTransportContextServer lwM2mTransportContextServer, LwM2mClientContext lwM2mClientContext, LeshanServer leshanServer, LwM2mTransportRequest lwM2mTransportRequest) {
         this.transportService = transportService;
         this.lwM2mTransportContextServer = lwM2mTransportContextServer;
         this.lwM2mClientContext = lwM2mClientContext;
         this.leshanServer = leshanServer;
+        this.lwM2mTransportRequest = lwM2mTransportRequest;
     }
 
     @PostConstruct
