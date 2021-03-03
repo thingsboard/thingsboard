@@ -76,8 +76,10 @@ import {
 } from '@shared/models/query/query.models';
 import { alarmFields } from '@shared/models/alarm.models';
 import { EdgeService } from "@core/http/edge.service";
-import { Edge } from '@shared/models/edge.models';
+import { Edge, EdgeEventType } from '@shared/models/edge.models';
 import { RuleChainType } from "@shared/models/rule-chain.models";
+import { WidgetService } from "@core/http/widget.service";
+import { DeviceProfileService } from "@core/http/device-profile.service";
 
 @Injectable({
   providedIn: 'root'
@@ -98,6 +100,8 @@ export class EntityService {
     private dashboardService: DashboardService,
     private entityRelationService: EntityRelationService,
     private attributeService: AttributeService,
+    private widgetService: WidgetService,
+    private deviceProfileService: DeviceProfileService,
     private utils: UtilsService
   ) { }
 
@@ -1315,5 +1319,39 @@ export class EntityService {
         break;
     }
     return entitiesObservable;
+  }
+
+  public getEdgeEventContentByEntityType(entity: any) {
+    let entityObservable: Observable<any>;
+    switch (entity.type) {
+      case EdgeEventType.DASHBOARD:
+      case EdgeEventType.ALARM:
+      case EdgeEventType.RULE_CHAIN:
+      case EdgeEventType.EDGE:
+      case EdgeEventType.USER:
+      case EdgeEventType.CUSTOMER:
+      case EdgeEventType.TENANT:
+      case EdgeEventType.ASSET:
+      case EdgeEventType.DEVICE:
+      case EdgeEventType.ENTITY_VIEW:
+        entityObservable = this.getEntity(entity.type, entity.entityId, { ignoreLoading: true, ignoreErrors: true });
+        break;
+      case EdgeEventType.RULE_CHAIN_METADATA:
+        entityObservable = this.ruleChainService.getRuleChainMetadata(entity.entityId);
+        break;
+      case EdgeEventType.WIDGET_TYPE:
+        entityObservable = this.widgetService.getWidgetTypeById(entity.entityId);
+        break;
+      case EdgeEventType.WIDGETS_BUNDLE:
+        entityObservable = this.widgetService.getWidgetsBundle(entity.entityId);
+        break;
+      case EdgeEventType.DEVICE_PROFILE:
+        entityObservable = this.deviceProfileService.getDeviceProfile(entity.entityId);
+        break;
+      case EdgeEventType.RELATION:
+        entityObservable = of(entity.body);
+        break;
+    }
+    return entityObservable;
   }
 }

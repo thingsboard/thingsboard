@@ -34,7 +34,7 @@ import { DatePipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityTypeResource } from '@shared/models/entity-type.models';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { Direction } from '@shared/models/page/sort-order';
 import { DialogService } from '@core/services/dialog.service';
@@ -43,15 +43,12 @@ import {
   EventContentDialogComponent,
   EventContentDialogData
 } from '@home/components/event/event-content-dialog.component';
-import { RuleChainService } from '@core/http/rule-chain.service';
 import { AttributeService } from '@core/http/attribute.service';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EdgeDownlinkTableHeaderComponent } from '@home/components/edge/edge-downlink-table-header.component';
 import { EdgeService } from '@core/http/edge.service';
 import { map } from 'rxjs/operators';
 import { EntityService } from "@core/http/entity.service";
-import { WidgetService } from "@core/http/widget.service";
-import { DeviceProfileService } from "@core/http/device-profile.service";
 
 export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePageLink> {
 
@@ -62,16 +59,13 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
               private dialogService: DialogService,
               private translate: TranslateService,
               private attributeService: AttributeService,
-              private deviceProfileService: DeviceProfileService,
-              private ruleChainService: RuleChainService,
-              private widgetService: WidgetService,
               private datePipe: DatePipe,
               private dialog: MatDialog,
               public entityId: EntityId) {
     super();
 
-    this.loadDataOnInit = false;
     this.tableTitle = '';
+    this.loadDataOnInit = false;
     this.useTimePageLink = true;
     this.detailsPanelEnabled = false;
     this.selectionEnabled = false;
@@ -95,7 +89,7 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
     return this.edgeService.getEdgeEvents(this.entityId, pageLink);
   }
 
-  loadEdgeInfo() {
+  loadEdgeInfo(): void {
     this.attributeService.getEntityAttributes(this.entityId, AttributeScope.SERVER_SCOPE, ['queueStartTs'])
       .subscribe(
         attributes => this.onUpdate(attributes)
@@ -147,7 +141,7 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
     }
   }
 
-  updateEdgeEventStatus(createdTime) {
+  updateEdgeEventStatus(createdTime): string {
     if (this.queueStartTs && createdTime < this.queueStartTs) {
       return this.translate.instant('edge.deployed');
     } else {
@@ -155,11 +149,11 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
     }
   }
 
-  isPending(createdTime) {
+  isPending(createdTime): boolean {
     return createdTime > this.queueStartTs;
   }
 
-  isEdgeEventHasData(edgeEventType: EdgeEventType) {
+  isEdgeEventHasData(edgeEventType: EdgeEventType): boolean {
     switch (edgeEventType) {
       case EdgeEventType.ADMIN_SETTINGS:
         return false;
@@ -168,42 +162,10 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
     }
   }
 
-  prepareEdgeEventContent(entity) {
-    switch (entity.type) {
-      case EdgeEventType.DEVICE:
-      case EdgeEventType.ASSET:
-      case EdgeEventType.EDGE:
-      case EdgeEventType.ENTITY_VIEW:
-      case EdgeEventType.TENANT:
-      case EdgeEventType.CUSTOMER:
-      case EdgeEventType.DASHBOARD:
-      case EdgeEventType.USER:
-      case EdgeEventType.RULE_CHAIN:
-      case EdgeEventType.ALARM:
-        return this.entityService.getEntity(entity.type, entity.entityId, { ignoreLoading: true, ignoreErrors: true }).pipe(
-          map((entity) => JSON.stringify(entity))
-        );
-      case EdgeEventType.RELATION:
-        return of(JSON.stringify(entity.body));
-      case EdgeEventType.RULE_CHAIN_METADATA:
-        return this.ruleChainService.getRuleChainMetadata(entity.entityId).pipe(
-          map((ruleChainMetaData) => JSON.stringify(ruleChainMetaData.nodes))
-        );
-      case EdgeEventType.WIDGET_TYPE:
-        return this.widgetService.getWidgetTypeById(entity.entityId).pipe(
-          map((widgetType) => JSON.stringify(widgetType))
-        );
-      case EdgeEventType.WIDGETS_BUNDLE:
-        return this.widgetService.getWidgetsBundle(entity.entityId).pipe(
-          map((widgetBundles) => JSON.stringify(widgetBundles))
-        );
-      case EdgeEventType.DEVICE_PROFILE:
-        return this.deviceProfileService.getDeviceProfile(entity.entityId).pipe(
-          map((deviceProfile) => JSON.stringify(deviceProfile))
-        );
-      case EdgeEventType.ADMIN_SETTINGS:
-        return of(null);
-    }
+  prepareEdgeEventContent(entity: any): Observable<string> {
+    return this.entityService.getEdgeEventContentByEntityType(entity).pipe(
+      map((result) => JSON.stringify(result))
+    );
   }
 
   showEdgeEventContent($event: MouseEvent, content: string, title: string): void {

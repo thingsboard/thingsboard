@@ -22,12 +22,9 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
 import { EdgeDownlinkTableConfig } from './edge-downlink-table-config';
 import { DialogService } from '@core/services/dialog.service';
-import { RuleChainService } from '@core/http/rule-chain.service';
 import { AttributeService } from '@core/http/attribute.service';
 import { EdgeService } from '@core/http/edge.service';
 import { EntityService } from "@core/http/entity.service";
-import { WidgetService } from "@core/http/widget.service";
-import { DeviceProfileService } from "@core/http/device-profile.service";
 
 @Component({
   selector: 'tb-edge-downlink-table',
@@ -72,9 +69,6 @@ export class EdgeDownlinkTableComponent implements OnInit {
               private dialogService: DialogService,
               private translate: TranslateService,
               private attributeService: AttributeService,
-              private deviceProfileService: DeviceProfileService,
-              private ruleChainService: RuleChainService,
-              private widgetService: WidgetService,
               private datePipe: DatePipe,
               private dialog: MatDialog) {
   }
@@ -87,9 +81,6 @@ export class EdgeDownlinkTableComponent implements OnInit {
       this.dialogService,
       this.translate,
       this.attributeService,
-      this.deviceProfileService,
-      this.ruleChainService,
-      this.widgetService,
       this.datePipe,
       this.dialog,
       this.entityIdValue
