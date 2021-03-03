@@ -1321,7 +1321,7 @@ export class EntityService {
     return entitiesObservable;
   }
 
-  public getEdgeEventContentByEntityType(entity: any) {
+  public getEdgeEventContentByEntityType(entity: any): Observable<any> {
     let entityObservable: Observable<any>;
     switch (entity.type) {
       case EdgeEventType.DASHBOARD:
