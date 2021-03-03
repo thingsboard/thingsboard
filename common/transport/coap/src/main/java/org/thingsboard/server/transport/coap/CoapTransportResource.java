@@ -47,7 +47,6 @@ import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.adaptors.CoapTransportAdaptor;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -314,17 +313,8 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
     public static Optional<Integer> getRequestId(Request request) {
         List<String> uriPath = request.getOptions().getUriPath();
         try {
-            if (uriPath.size() == 1 && uriPath.get(0).startsWith(API_V_1_PREFIX)) {
-                String uriPathStr = uriPath.get(0);
-                if (uriPathStr.startsWith(SLASH_PREFIX)) {
-                    uriPathStr = uriPathStr.substring(SLASH_PREFIX.length());
-                }
-                List<String> uriPathList = Arrays.asList(uriPathStr.split(SLASH_PREFIX));
-                return Optional.of(Integer.valueOf(uriPathList.get(REQUEST_ID_POSITION - 1)));
-            } else {
-                if (uriPath.size() >= REQUEST_ID_POSITION) {
-                    return Optional.of(Integer.valueOf(uriPath.get(REQUEST_ID_POSITION - 1)));
-                }
+            if (uriPath.size() >= REQUEST_ID_POSITION) {
+                return Optional.of(Integer.valueOf(uriPath.get(REQUEST_ID_POSITION - 1)));
             }
         } catch (RuntimeException e) {
             log.warn("Failed to decode feature type: {}", uriPath);
