@@ -69,7 +69,7 @@ public class TelemetryUploadConObserveClient {
                     while (!Thread.interrupted()) {
                         sendRequest(attributesClient, createAttributesRequest());
                         sendRequest(telemetryClient, createTelemetryRequest());
-                        Thread.sleep(1000);
+                        Thread.sleep(10000);
                     }
                 } catch (Exception e) {
                     log.error("Error occurred while sending COAP requests", e);

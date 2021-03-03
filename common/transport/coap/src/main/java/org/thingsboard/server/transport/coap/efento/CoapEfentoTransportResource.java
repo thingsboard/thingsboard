@@ -69,16 +69,15 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         Exchange advanced = exchange.advanced();
         Request request = advanced.getRequest();
         List<String> uriPath = request.getOptions().getUriPath();
-        boolean isOneElementEfentoUriPath = uriPath.size() == 1 && uriPath.get(0).equals(CoapTransportService.EFENTO_MEASUREMENTS);
-        boolean isMultiElementsEfentoUriPath = uriPath.size() == MEASUREMENTS_POSITION && uriPath.get(1).equals(MEASUREMENTS);
-        if (!isMultiElementsEfentoUriPath && !isOneElementEfentoUriPath) {
+        boolean validPath = uriPath.size() == MEASUREMENTS_POSITION && uriPath.get(1).equals(MEASUREMENTS);
+        if (!validPath) {
             exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
             return;
         }
         byte[] bytes = request.getPayload();
         try {
             MeasurementsProtos.ProtoMeasurements protoMeasurements = MeasurementsProtos.ProtoMeasurements.parseFrom(bytes);
-            log.trace("ProtoMeasurements: {}", protoMeasurements);
+            log.info("Successfully parsed Efento ProtoMeasurements: [{}]", protoMeasurements.getCloudToken());
             String token = protoMeasurements.getCloudToken();
             transportService.process(DeviceTransportType.COAP, TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(token).build(),
                     new CoapDeviceAuthCallback(transportContext, exchange, (sessionInfo, deviceProfile) -> {
@@ -96,7 +95,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                         }
                     }));
         } catch (Exception e) {
-            log.trace("Failed to decode message: ", e);
+            log.info("Failed to decode Efento ProtoMeasurements: ", e);
             exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
         }
     }
