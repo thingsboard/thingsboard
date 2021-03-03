@@ -40,12 +40,12 @@ import {
 } from '@shared/models/widget.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import {hashCode, isDefined, isDefinedAndNotNull, isNumber} from '@core/utils';
+import { hashCode, isDefined, isNumber } from '@core/utils';
 import cssjs from '@core/css/css';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
-import { BehaviorSubject, fromEvent, merge, Observable, of } from 'rxjs';
+import { BehaviorSubject, fromEvent, merge, Observable, of, Subscription } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { catchError, debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
@@ -129,6 +129,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   public showTimestamp = true;
   private dateFormatFilter: string;
 
+  private subscriptions: Subscription[] = [];
+
   private searchAction: WidgetAction = {
     name: 'action.search',
     show: true,
@@ -166,40 +168,27 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         debounceTime(150),
         distinctUntilChanged(),
         tap(() => {
-          if (this.displayPagination) {
-            this.paginators.forEach((paginator) => {
-              paginator.pageIndex = 0;
-            });
-          }
           this.sources.forEach((source) => {
             source.pageLink.textSearch = this.textSearch;
+            if (this.displayPagination) {
+              source.pageLink.page = 0;
+            }
           });
-          this.updateAllData();
+          this.loadCurrentSourceRow();
+          this.ctx.detectChanges();
         })
       )
       .subscribe();
 
-    if (this.displayPagination) {
-      this.sorts.forEach((sort, index) => {
-        sort.sortChange.subscribe(() => this.paginators.toArray()[index].pageIndex = 0);
-      });
-    }
-    this.sorts.forEach((sort, index) => {
-      const paginator = this.displayPagination ? this.paginators.toArray()[index] : null;
-      sort.sortChange.subscribe(() => this.paginators.toArray()[index].pageIndex = 0);
-      ((this.displayPagination ? merge(sort.sortChange, paginator.page) : sort.sortChange) as Observable<any>)
-        .pipe(
-          tap(() => this.updateData(sort, paginator, index))
-        )
-        .subscribe();
+    this.sorts.changes.subscribe(() => {
+      this.initSubscriptionsToSortAndPaginator();
     });
-    this.updateAllData();
+
+    this.initSubscriptionsToSortAndPaginator();
   }
 
   public onDataUpdated() {
-    this.sources.forEach((source) => {
-      source.timeseriesDatasource.dataUpdated(this.data);
-    });
+    this.updateCurrentSourceData();
   }
 
   private initialize() {
@@ -305,7 +294,27 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.ctx.activeEntityInfo = activeEntityInfo;
   }
 
+  private initSubscriptionsToSortAndPaginator() {
+    this.subscriptions.forEach(subscription => subscription.unsubscribe());
+    this.sorts.forEach((sort, index) => {
+      let paginator = null;
+      const observables = [sort.sortChange];
+      if (this.displayPagination) {
+        paginator = this.paginators.toArray()[index];
+        this.subscriptions.push(
+          sort.sortChange.subscribe(() => paginator.pageIndex = 0)
+        );
+        observables.push(paginator.page);
+      }
+      this.updateData(sort, paginator);
+      this.subscriptions.push(merge(...observables).pipe(
+        tap(() => this.updateData(sort, paginator))
+      ).subscribe());
+    });
+  }
+
   onSourceIndexChanged() {
+    this.updateCurrentSourceData();
     this.updateActiveEntityInfo();
   }
 
@@ -326,30 +335,19 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   exitFilterMode() {
     this.textSearchMode = false;
     this.textSearch = null;
-    this.sources.forEach((source, index) => {
+    this.sources.forEach((source) => {
       source.pageLink.textSearch = this.textSearch;
-      const sort = this.sorts.toArray()[index];
-      let paginator = null;
       if (this.displayPagination) {
-        paginator = this.paginators.toArray()[index];
-        paginator.pageIndex = 0;
+        source.pageLink.page = 0;
       }
-      this.updateData(sort, paginator, index);
     });
+    this.loadCurrentSourceRow();
     this.ctx.hideTitlePanel = false;
     this.ctx.detectChanges(true);
   }
 
-  private updateAllData() {
-    this.sources.forEach((source, index) => {
-      const sort = this.sorts.toArray()[index];
-      const paginator = this.displayPagination ? this.paginators.toArray()[index] : null;
-      this.updateData(sort, paginator, index);
-    });
-  }
-
-  private updateData(sort: MatSort, paginator: MatPaginator, index: number) {
-    const source = this.sources[index];
+  private updateData(sort: MatSort, paginator: MatPaginator) {
+    const source = this.sources[this.sourceIndex];
     if (this.displayPagination) {
       source.pageLink.page = paginator.pageIndex;
       source.pageLink.pageSize = paginator.pageSize;
@@ -418,7 +416,6 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
 
       if (!isDefined(content)) {
         return '';
-
       } else {
         switch (typeof content) {
           case 'string':
@@ -462,6 +459,18 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     }
     this.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, row, entityLabel);
   }
+
+  public isActiveTab(index: number): boolean {
+    return index === this.sourceIndex;
+  }
+
+  private updateCurrentSourceData() {
+    this.sources[this.sourceIndex].timeseriesDatasource.dataUpdated(this.data);
+  }
+
+  private loadCurrentSourceRow() {
+    this.sources[this.sourceIndex].timeseriesDatasource.loadRows();
+  }
 }
 
 class TimeseriesDatasource implements DataSource<TimeseriesRow> {
@@ -482,6 +491,10 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
   }
 
   connect(collectionViewer: CollectionViewer): Observable<TimeseriesRow[] | ReadonlyArray<TimeseriesRow>> {
+    if (this.rowsSubject.isStopped) {
+      this.rowsSubject.isStopped = false;
+      this.pageDataSubject.isStopped = false;
+    }
     return this.rowsSubject.asObservable();
   }
 
