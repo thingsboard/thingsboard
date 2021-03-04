@@ -13,26 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.install;
+package org.thingsboard.server.dao.sql.resource;
 
-public interface SystemDataLoaderService {
+import org.springframework.data.repository.CrudRepository;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.model.sql.ResourceCompositeKey;
+import org.thingsboard.server.dao.model.sql.ResourceEntity;
 
-    void createSysAdmin() throws Exception;
+import java.util.List;
 
-    void createDefaultTenantProfiles() throws Exception;
+public interface ResourceRepository extends CrudRepository<ResourceEntity, ResourceCompositeKey> {
 
-    void createAdminSettings() throws Exception;
-
-    void createOAuth2Templates() throws Exception;
-
-    void loadSystemWidgets() throws Exception;
-
-    void updateSystemWidgets() throws Exception;
-
-    void loadDemoData() throws Exception;
-
-    void deleteSystemWidgetBundle(String bundleAlias) throws Exception;
-
-    void loadSystemLwm2mResources() throws Exception;
-
+    List<ResourceEntity> findAllByTenantId(TenantId tenantId);
 }

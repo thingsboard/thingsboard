@@ -13,26 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.install;
+package org.thingsboard.server.common.data.transport.resource;
 
-public interface SystemDataLoaderService {
-
-    void createSysAdmin() throws Exception;
-
-    void createDefaultTenantProfiles() throws Exception;
-
-    void createAdminSettings() throws Exception;
-
-    void createOAuth2Templates() throws Exception;
-
-    void loadSystemWidgets() throws Exception;
-
-    void updateSystemWidgets() throws Exception;
-
-    void loadDemoData() throws Exception;
-
-    void deleteSystemWidgetBundle(String bundleAlias) throws Exception;
-
-    void loadSystemLwm2mResources() throws Exception;
-
+public enum ResourceType {
+    LWM2M_MODEL, LWM2M_KEY_STORE
 }

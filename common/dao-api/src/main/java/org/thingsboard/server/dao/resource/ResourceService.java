@@ -13,26 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.install;
+package org.thingsboard.server.dao.resource;
 
-public interface SystemDataLoaderService {
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.transport.resource.Resource;
+import org.thingsboard.server.common.data.transport.resource.ResourceType;
 
-    void createSysAdmin() throws Exception;
+import java.util.List;
 
-    void createDefaultTenantProfiles() throws Exception;
 
-    void createAdminSettings() throws Exception;
+public interface ResourceService {
+    Resource saveResource(Resource resource);
 
-    void createOAuth2Templates() throws Exception;
+    Resource getResource(TenantId tenantId, ResourceType resourceType, String resourceId);
 
-    void loadSystemWidgets() throws Exception;
+    boolean deleteResource(TenantId tenantId, ResourceType resourceType, String resourceId);
 
-    void updateSystemWidgets() throws Exception;
-
-    void loadDemoData() throws Exception;
-
-    void deleteSystemWidgetBundle(String bundleAlias) throws Exception;
-
-    void loadSystemLwm2mResources() throws Exception;
-
+    List<Resource> findByTenantId(TenantId tenantId);
 }
