@@ -112,6 +112,34 @@ export const transportPayloadTypeTranslationMap = new Map<TransportPayloadType, 
   ]
 );
 
+export const defaultTelemetrySchema =
+  'syntax ="proto3";\n' +
+  'package telemetry;\n' +
+  '\n' +
+  'message SensorDataReading {\n' +
+  '\n' +
+  '  double temperature = 1;\n' +
+  '  double humidity = 2;\n' +
+  '  InnerObject innerObject = 3;\n' +
+  '\n' +
+  '  message InnerObject {\n' +
+  '    string key1 = 1;\n' +
+  '    bool key2 = 2;\n' +
+  '    double key3 = 3;\n' +
+  '    int32 key4 = 4;\n' +
+  '    string key5 = 5;\n' +
+  '  }\n' +
+  '}\n';
+
+export const defaultAttributesSchema =
+  'syntax ="proto3";\n' +
+  'package attributes;\n' +
+  '\n' +
+  'message SensorConfiguration {\n' +
+  '  string firmwareVersion = 1;\n' +
+  '  string serialNumber = 2;\n' +
+  '}';
+
 export const coapDeviceTypeTranslationMap = new Map<CoapTransportDeviceType, string>(
   [
     [CoapTransportDeviceType.DEFAULT, 'device-profile.coap-device-type-default'],
