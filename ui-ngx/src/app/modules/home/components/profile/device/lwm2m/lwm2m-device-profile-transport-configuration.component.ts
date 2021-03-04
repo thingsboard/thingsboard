@@ -219,9 +219,9 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         this.updateObserveAttrTelemetryObjects(telemetryArray, clientObserveAttrTelemetry, TELEMETRY);
       }
       if (isDefinedAndNotNull(keyNameJson)) {
-        this.configurationValue.observeAttr.keyName = deepClone(this.validateKeyNameObjects(keyNameJson, attributeArray, telemetryArray));
-        keyNameJson = this.configurationValue.observeAttr.keyName;
-        this.updateKeyNameObjects(keyNameJson, clientObserveAttrTelemetry);
+        this.configurationValue.observeAttr.keyName = this.validateKeyNameObjects(keyNameJson, attributeArray, telemetryArray);
+        this.upDateJsonAllConfig();
+        this.updateKeyNameObjects(clientObserveAttrTelemetry);
       }
     }
     return {clientLwM2M: clientObserveAttrTelemetry};
@@ -260,14 +260,13 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     });
   }
 
-  private updateKeyNameObjects = (nameJson: JsonObject, clientObserveAttrTelemetry: ObjectLwM2M[]): void => {
-    const keyName = JSON.parse(JSON.stringify(nameJson));
-    Object.keys(keyName).forEach(key => {
+  private updateKeyNameObjects = (clientObserveAttrTelemetry: ObjectLwM2M[]): void => {
+    Object.keys(this.configurationValue.observeAttr.keyName).forEach(key => {
       const [objectId, instanceId, resourceId] = Array.from(key.substring(1).split('/'), Number);
       clientObserveAttrTelemetry.find(objectLwm2m => objectLwm2m.id === objectId)
         .instances.find(instance => instance.id === instanceId)
         .resources.find(resource => resource.id === resourceId)
-        .keyName = keyName[key];
+        .keyName = this.configurationValue.observeAttr.keyName[key];
     });
   }
 
