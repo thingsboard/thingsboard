@@ -38,6 +38,7 @@ import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.transport.TransportService;
@@ -470,10 +471,8 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
             // #3
             else {
                 lwM2MClient.getPendingRequests().addAll(clientObjects);
-                clientObjects.forEach(path -> {
-                    lwM2mTransportRequest.sendAllRequest(registration, path, GET_TYPE_OPER_READ, ContentFormat.TLV.getName(),
-                            null, null, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getTimeout());
-                });
+                clientObjects.forEach(path -> lwM2mTransportRequest.sendAllRequest(registration, path, GET_TYPE_OPER_READ, ContentFormat.TLV.getName(),
+                        null, null, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getTimeout()));
             }
         }
         // #1
@@ -589,38 +588,29 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
      * @param registration -
      */
     private void initReadAttrTelemetryObserveToClient(Registration registration, LwM2mClient lwM2MClient, String typeOper) {
-        try {
-            LwM2mClientProfile lwM2MClientProfile = lwM2mClientContext.getProfile(registration);
-            Set<String> clientInstances = this.getAllInstancesInClient(registration);
-            Set<String> result;
-            if (GET_TYPE_OPER_READ.equals(typeOper)) {
-                result = new ObjectMapper().readValue(lwM2MClientProfile.getPostAttributeProfile().getAsJsonArray().toString().getBytes(), new TypeReference<>() {
-                });
-                result.addAll(new ObjectMapper().readValue(lwM2MClientProfile.getPostTelemetryProfile().getAsJsonArray().toString().getBytes(), new TypeReference<>() {
-                }));
-            } else {
-                result = new ObjectMapper().readValue(lwM2MClientProfile.getPostObserveProfile().getAsJsonArray().toString().getBytes(), new TypeReference<>() {
-                });
+        LwM2mClientProfile lwM2MClientProfile = lwM2mClientContext.getProfile(registration);
+        Set<String> clientInstances = this.getAllInstancesInClient(registration);
+        Set<String> result;
+        if (GET_TYPE_OPER_READ.equals(typeOper)) {
+            result = JacksonUtil.fromString(lwM2MClientProfile.getPostAttributeProfile().toString(), new TypeReference<>() {});
+            result.addAll(JacksonUtil.fromString(lwM2MClientProfile.getPostTelemetryProfile().toString(), new TypeReference<>() {}));
+        } else {
+            result = JacksonUtil.fromString(lwM2MClientProfile.getPostObserveProfile().toString(), new TypeReference<>() {});
+        }
+        Set<String> pathSent = ConcurrentHashMap.newKeySet();
+        result.forEach(target -> {
+            // #1.1
+            String[] resPath = target.split("/");
+            String instance = "/" + resPath[1] + "/" + resPath[2];
+            if (clientInstances != null && clientInstances.size() > 0 && clientInstances.contains(instance)) {
+                pathSent.add(target);
             }
-            Set<String> pathSent = ConcurrentHashMap.newKeySet();
-            result.forEach(target -> {
-                // #1.1
-                String[] resPath = target.split("/");
-                String instance = "/" + resPath[1] + "/" + resPath[2];
-                if (clientInstances != null && clientInstances.size() > 0 && clientInstances.contains(instance)) {
-                    pathSent.add(target);
-                }
-            });
-            lwM2MClient.getPendingRequests().addAll(pathSent);
-            pathSent.forEach(target -> {
-                lwM2mTransportRequest.sendAllRequest(registration, target, typeOper, ContentFormat.TLV.getName(),
-                        null, null, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getTimeout());
-            });
-            if (GET_TYPE_OPER_OBSERVE.equals(typeOper)) {
-                lwM2MClient.initValue(this, null);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        });
+        lwM2MClient.getPendingRequests().addAll(pathSent);
+        pathSent.forEach(target -> lwM2mTransportRequest.sendAllRequest(registration, target, typeOper, ContentFormat.TLV.getName(),
+                null, null, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getTimeout()));
+        if (GET_TYPE_OPER_OBSERVE.equals(typeOper)) {
+            lwM2MClient.initValue(this, null);
         }
     }
 
@@ -796,9 +786,9 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         if (lwM2mClientContext.addUpdateProfileParameters(deviceProfile)) {
             // #1
             JsonArray attributeOld = lwM2MClientProfileOld.getPostAttributeProfile();
-            Set attributeSetOld = this.convertJsonArrayToSet (attributeOld);
+            Set<String> attributeSetOld = this.convertJsonArrayToSet (attributeOld);
             JsonArray telemetryOld = lwM2MClientProfileOld.getPostTelemetryProfile();
-            Set telemetrySetOld = this.convertJsonArrayToSet (telemetryOld);
+            Set<String> telemetrySetOld = this.convertJsonArrayToSet (telemetryOld);
             JsonArray observeOld = lwM2MClientProfileOld.getPostObserveProfile();
             JsonObject keyNameOld = lwM2MClientProfileOld.getPostKeyNameProfile();
 
@@ -806,7 +796,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
             JsonArray attributeNew = lwM2MClientProfileNew.getPostAttributeProfile();
             Set<String> attributeSetNew = this.convertJsonArrayToSet (attributeNew);
             JsonArray telemetryNew = lwM2MClientProfileNew.getPostTelemetryProfile();
-            Set telemetrySetNew =  this.convertJsonArrayToSet (telemetryNew);
+            Set<String> telemetrySetNew =  this.convertJsonArrayToSet (telemetryNew);
             JsonArray observeNew = lwM2MClientProfileNew.getPostObserveProfile();
             JsonObject keyNameNew = lwM2MClientProfileNew.getPostKeyNameProfile();
 
@@ -1036,7 +1026,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
     private SessionInfoProto getNewSessionInfoProto(LwM2mClient lwM2MClient) {
         if (lwM2MClient != null) {
             TransportProtos.ValidateDeviceCredentialsResponseMsg msg = lwM2MClient.getCredentialsResponse();
-            if (msg == null || msg.getDeviceInfo() == null) {
+            if (msg == null) {
                 log.error("[{}] [{}]", lwM2MClient.getEndpoint(), CLIENT_NOT_AUTHORIZED);
                 this.closeClientSession(lwM2MClient.getRegistration());
                 return null;
@@ -1126,9 +1116,8 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
      */
     private List<String> getNamesAttrFromProfileIsWritable(LwM2mClient lwM2MClient) {
         LwM2mClientProfile profile = lwM2mClientContext.getProfile(lwM2MClient.getProfileId());
-        Set attrSet = new Gson().fromJson(profile.getPostAttributeProfile(), Set.class);
-        ConcurrentMap<String, String> keyNamesMap = new Gson().fromJson(profile.getPostKeyNameProfile().toString(), new TypeToken<ConcurrentHashMap<String, String>>() {
-        }.getType());
+        Set<String> attrSet = new Gson().fromJson(profile.getPostAttributeProfile(), new TypeToken<>() {}.getType());
+        ConcurrentMap<String, String> keyNamesMap = new Gson().fromJson(profile.getPostKeyNameProfile().toString(), new TypeToken<ConcurrentHashMap<String, String>>() {}.getType());
 
         ConcurrentMap<String, String> keyNamesIsWritable = keyNamesMap.entrySet()
                 .stream()
