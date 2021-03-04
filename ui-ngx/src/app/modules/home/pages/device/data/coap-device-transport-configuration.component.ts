@@ -20,8 +20,9 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
+  CoapDeviceTransportConfiguration,
   DeviceTransportConfiguration,
-  DeviceTransportType, MqttDeviceTransportConfiguration
+  DeviceTransportType
 } from '@shared/models/device.models';
 
 @Component({
@@ -81,7 +82,7 @@ export class CoapDeviceTransportConfigurationComponent implements ControlValueAc
     }
   }
 
-  writeValue(value: MqttDeviceTransportConfiguration | null): void {
+  writeValue(value: CoapDeviceTransportConfiguration | null): void {
     this.coapDeviceTransportConfigurationFormGroup.patchValue({configuration: value}, {emitEvent: false});
   }
 
@@ -89,7 +90,7 @@ export class CoapDeviceTransportConfigurationComponent implements ControlValueAc
     let configuration: DeviceTransportConfiguration = null;
     if (this.coapDeviceTransportConfigurationFormGroup.valid) {
       configuration = this.coapDeviceTransportConfigurationFormGroup.getRawValue().configuration;
-      configuration.type = DeviceTransportType.MQTT;
+      configuration.type = DeviceTransportType.COAP;
     }
     this.propagateChange(configuration);
   }

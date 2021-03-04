@@ -35,8 +35,6 @@ import org.thingsboard.server.transport.coap.CoapTransportResource;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.thingsboard.server.transport.coap.adaptors.CoapAdaptorUtils.toGetAttributeRequestMsg;
-
 @Component
 @Slf4j
 public class ProtoCoapAdaptor implements CoapTransportAdaptor {
@@ -61,7 +59,7 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
 
     @Override
     public TransportProtos.GetAttributeRequestMsg convertToGetAttributes(UUID sessionId, Request inbound) throws AdaptorException {
-        return toGetAttributeRequestMsg(inbound);
+        return CoapAdaptorUtils.toGetAttributeRequestMsg(inbound);
     }
 
     @Override

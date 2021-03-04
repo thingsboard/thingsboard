@@ -391,15 +391,6 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
 
                 }
 
-                private void validateProtoSchemas(ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration) {
-                    try {
-                        validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceAttributesProtoSchema(), ATTRIBUTES_PROTO_SCHEMA);
-                        validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceTelemetryProtoSchema(), TELEMETRY_PROTO_SCHEMA);
-                    } catch (Exception exception) {
-                        throw new DataValidationException(exception.getMessage());
-                    }
-                }
-
                 @Override
                 protected void validateUpdate(TenantId tenantId, DeviceProfile deviceProfile) {
                     DeviceProfile old = deviceProfileDao.findById(deviceProfile.getTenantId(), deviceProfile.getId().getId());
@@ -419,6 +410,15 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                             }
                             throw new DataValidationException(message);
                         }
+                    }
+                }
+
+                private void validateProtoSchemas(ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration) {
+                    try {
+                        validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceAttributesProtoSchema(), ATTRIBUTES_PROTO_SCHEMA);
+                        validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceTelemetryProtoSchema(), TELEMETRY_PROTO_SCHEMA);
+                    } catch (Exception exception) {
+                        throw new DataValidationException(exception.getMessage());
                     }
                 }
 

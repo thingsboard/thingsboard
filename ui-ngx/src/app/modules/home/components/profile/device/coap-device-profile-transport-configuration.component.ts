@@ -15,23 +15,20 @@
 ///
 
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
-import {
-  ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  NG_VALUE_ACCESSOR,
-  ValidatorFn,
-  Validators
-} from '@angular/forms';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
-  CoapDeviceProfileTransportConfiguration, coapDeviceTypeTranslationMap,
+  CoapDeviceProfileTransportConfiguration,
+  coapDeviceTypeTranslationMap,
   CoapTransportDeviceType,
+  defaultAttributesSchema,
+  defaultTelemetrySchema,
   DeviceProfileTransportConfiguration,
-  DeviceTransportType, TransportPayloadType, transportPayloadTypeTranslationMap,
+  DeviceTransportType,
+  TransportPayloadType,
+  transportPayloadTypeTranslationMap,
 } from '@shared/models/device.models';
 import { isDefinedAndNotNull } from '@core/utils';
 
@@ -59,38 +56,10 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
 
   private requiredValue: boolean;
 
-  private defaultTelemetrySchema =
-    'syntax ="proto3";\n' +
-    'package telemetry;\n' +
-    '\n' +
-    'message SensorDataReading {\n' +
-    '\n' +
-    '  double temperature = 1;\n' +
-    '  double humidity = 2;\n' +
-    '  InnerObject innerObject = 3;\n' +
-    '\n' +
-    '  message InnerObject {\n' +
-    '    string key1 = 1;\n' +
-    '    bool key2 = 2;\n' +
-    '    double key3 = 3;\n' +
-    '    int32 key4 = 4;\n' +
-    '    string key5 = 5;\n' +
-    '  }\n' +
-    '}\n';
-
-  private defaultAttributesSchema =
-    'syntax ="proto3";\n' +
-    'package attributes;\n' +
-    '\n' +
-    'message SensorConfiguration {\n' +
-    '  string firmwareVersion = 1;\n' +
-    '  string serialNumber = 2;\n' +
-    '}';
-
   private transportPayloadTypeConfiguration = this.fb.group({
     transportPayloadType: [TransportPayloadType.JSON, Validators.required],
-    deviceTelemetryProtoSchema: [this.defaultTelemetrySchema, Validators.required],
-    deviceAttributesProtoSchema: [this.defaultAttributesSchema, Validators.required]
+    deviceTelemetryProtoSchema: [defaultTelemetrySchema, Validators.required],
+    deviceAttributesProtoSchema: [defaultAttributesSchema, Validators.required]
   });
 
   get required(): boolean {
