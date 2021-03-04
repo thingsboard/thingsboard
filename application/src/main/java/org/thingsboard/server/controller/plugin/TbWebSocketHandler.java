@@ -229,7 +229,6 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
             if (isSending) {
                 try {
                     msgQueue.add(msg);
-                    lastActivityTime = System.currentTimeMillis();
                 } catch (RuntimeException e) {
                     if (log.isTraceEnabled()) {
                         log.trace("[{}][{}] Session closed due to queue error", sessionRef.getSecurityCtx().getTenantId(), session.getId(), e);
@@ -271,6 +270,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
                     log.trace("[{}] Session transport error", session.getId(), ioe);
                 }
             } else {
+                lastActivityTime = System.currentTimeMillis();
                 String msg = msgQueue.poll();
                 if (msg != null) {
                     sendMsgInternal(msg);
