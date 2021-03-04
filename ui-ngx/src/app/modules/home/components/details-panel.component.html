@@ -19,10 +19,8 @@
   <mat-toolbar class="details-toolbar" color="primary" [ngStyle]="{height: headerHeightPx+'px'}">
     <div class="mat-toolbar-tools" fxLayout="row" fxLayoutAlign="start center" style="height: 100%;">
       <div class="mat-toolbar-tools tb-details-title-header" fxFlex fxLayout="column" fxLayoutAlign="start start">
-        <div class="tb-details-title" fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
-          <button class="tb-mat-28" mat-icon-button type="button" [fxHide]="!showBackStateIcon" (click)="onBackStateDetails()">
-            <mat-icon>arrow_back</mat-icon>
-          </button>
+        <div class="tb-details-title" fxLayout="row" fxLayoutAlign="start center">
+          <ng-content select=".prefix-title-buttons"></ng-content>
           <span>{{ headerTitle }}</span>
         </div>
         <span class="tb-details-subtitle">{{ headerSubtitle }}</span>

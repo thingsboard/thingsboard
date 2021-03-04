@@ -15,10 +15,9 @@
     limitations under the License.
 
 -->
-<div class="input-wrapper" fxLayoutAlign="start center" fxLayoutGap="8px">
-  <mat-icon>search</mat-icon>
-  <input type="text" [(ngModel)]="searchText" (ngModelChange)="updateSearchText()" [placeholder]=placeholder>
-  <button mat-button type="button" *ngIf="searchText" mat-icon-button (click)="clear()">
-    <mat-icon>close</mat-icon>
-  </button>
+<div fxLayout="column" class="mat-content mat-padding">
+  <mat-checkbox style="padding-bottom: 8px;" [(ngModel)]="type.display" *ngFor="let type of types"
+                (ngModelChange)="update()">
+    {{ 'widget.' + type.type | translate }}
+  </mat-checkbox>
 </div>

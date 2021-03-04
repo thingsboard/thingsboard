@@ -248,11 +248,14 @@
                           headerHeightPx="120"
                           [isReadOnly]="true"
                           [isEdit]="false"
-                          [showBackStateIcon]="!!widgetsBundle?.title"
-                          (closeDetails)="onAddWidgetClosed()"
-                          (backStateDetails)="widgetBundleSelected(null)">
+                          (closeDetails)="onAddWidgetClosed()">
+          <div class="prefix-title-buttons" [fxHide]="!widgetsBundle?.title" style="height: 28px; margin-right: 12px">
+            <button class="tb-mat-28" mat-icon-button type="button" (click)="widgetBundleSelected(null)">
+              <mat-icon>arrow_back</mat-icon>
+            </button>
+          </div>
           <div class="header-pane" *ngIf="isAddingWidget">
-            <div fxLayout="row">
+            <div fxLayout="row" fxLayoutGap="12px">
               <tb-widgets-bundle-search fxFlex
                                         [(ngModel)]="searchBundle"
                                         placeholder="{{ (!widgetsBundle?.title ? 'widgets-bundle.search' : 'widget.search') | translate }}"
@@ -260,10 +263,21 @@
               </tb-widgets-bundle-search>
             </div>
           </div>
+          <div class="details-buttons" *ngIf="isAddingWidget">
+            <button mat-button mat-icon-button type="button"
+                    *ngIf="widgetTypes.length > 1"
+                    (click)="editWidgetsTypesToDisplay($event)"
+                    matTooltip="{{ 'widget.filter' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>filter_list</mat-icon>
+            </button>
+          </div>
           <tb-dashboard-widget-select *ngIf="isAddingWidget"
                                       [aliasController]="dashboardCtx.aliasController"
                                       [widgetsBundle]="widgetsBundle"
                                       [searchBundle]="searchBundle"
+                                      [filterWidgetTypes]="filterWidgetTypes"
+                                      (widgetsTypes)="updateWidgetsTypes($event)"
                                       (widgetsBundleSelected)="widgetBundleSelected($event)"
                                       (widgetSelected)="addWidgetFromType($event)">
           </tb-dashboard-widget-select>

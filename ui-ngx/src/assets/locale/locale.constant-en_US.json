@@ -2265,7 +2265,8 @@
         "no-data": "No data to display on widget",
         "data-overflow": "Widget displays {{count}} out of {{total}} entities",
         "alarm-data-overflow": "Widget displays alarms for {{allowedEntities}} (maximum allowed) entities out of {{totalEntities}} entities",
-        "search": "Search widget"
+        "search": "Search widget",
+        "filter": "Widget filter type"
     },
     "widget-action": {
         "header-button": "Widget header button",

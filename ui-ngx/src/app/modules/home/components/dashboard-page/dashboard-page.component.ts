@@ -18,11 +18,14 @@ import {
   ChangeDetectorRef,
   Component,
   Inject,
+  Injector,
   Input,
   NgZone,
   OnDestroy,
   OnInit,
+  StaticProvider,
   ViewChild,
+  ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
@@ -58,7 +61,14 @@ import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
-import { Widget, WidgetConfig, WidgetInfo, WidgetPosition, widgetTypesData } from '@app/shared/models/widget.models';
+import {
+  Widget,
+  WidgetConfig,
+  WidgetInfo,
+  WidgetPosition,
+  widgetType,
+  widgetTypesData
+} from '@shared/models/widget.models';
 import { environment as env } from '@env/environment';
 import { Authority } from '@shared/models/authority.enum';
 import { DialogService } from '@core/services/dialog.service';
@@ -80,7 +90,10 @@ import {
 import { EntityAliases } from '@app/shared/models/alias.models';
 import { EditWidgetComponent } from '@home/components/dashboard-page/edit-widget.component';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
-import { AddWidgetDialogComponent, AddWidgetDialogData } from '@home/components/dashboard-page/add-widget-dialog.component';
+import {
+  AddWidgetDialogComponent,
+  AddWidgetDialogData
+} from '@home/components/dashboard-page/add-widget-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
 import {
   ManageDashboardLayoutsDialogComponent,
@@ -99,6 +112,14 @@ import { ImportExportService } from '@home/components/import-export/import-expor
 import { AuthState } from '@app/core/auth/auth.models';
 import { FiltersDialogComponent, FiltersDialogData } from '@home/components/filter/filters-dialog.component';
 import { Filters } from '@shared/models/query/query.models';
+import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
+import { ComponentPortal } from '@angular/cdk/portal';
+import {
+  DISPLAY_WIDGET_TYPES_PANEL_DATA,
+  DisplayWidgetTypesPanelComponent,
+  DisplayWidgetTypesPanelData,
+  WidgetTypes
+} from '@home/components/dashboard-page/widget-types-panel.component';
 
 // @dynamic
 @Component({
@@ -147,6 +168,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   isAddingWidgetClosed = true;
   widgetsBundle: WidgetsBundle = null;
   searchBundle = '';
+  widgetTypes: WidgetTypes[] = [];
+  filterWidgetTypes: widgetType[] = null;
 
   isToolbarOpened = false;
   isToolbarOpenedAnimate = false;
@@ -261,6 +284,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private dialog: MatDialog,
               private translate: TranslateService,
               private ngZone: NgZone,
+              private overlay: Overlay,
+              private viewContainerRef: ViewContainerRef,
               private cd: ChangeDetectorRef) {
     super(store);
 
@@ -1121,6 +1146,55 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   widgetBundleSelected(bundle: WidgetsBundle){
     this.widgetsBundle = bundle;
+    this.widgetTypes = [];
     this.searchBundle = '';
+  }
+
+  updateWidgetsTypes(types: Set<widgetType>) {
+    this.widgetTypes = Array.from(types.values()).map(type => {
+      return {type, display: true};
+    });
+  }
+
+  editWidgetsTypesToDisplay($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const target = $event.target || $event.currentTarget;
+    const config = new OverlayConfig();
+    config.backdropClass = 'cdk-overlay-transparent-backdrop';
+    config.hasBackdrop = true;
+    const connectedPosition: ConnectedPosition = {
+      originX: 'end',
+      originY: 'bottom',
+      overlayX: 'end',
+      overlayY: 'top'
+    };
+    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
+      .withPositions([connectedPosition]);
+
+    const overlayRef = this.overlay.create(config);
+    overlayRef.backdropClick().subscribe(() => {
+      overlayRef.dispose();
+    });
+
+    const providers: StaticProvider[] = [
+      {
+        provide: DISPLAY_WIDGET_TYPES_PANEL_DATA,
+        useValue: {
+          types: this.widgetTypes,
+          typesUpdated: (newTypes) => {
+            this.filterWidgetTypes = newTypes.filter(type => type.display).map(type => type.type);
+          }
+        } as DisplayWidgetTypesPanelData
+      },
+      {
+        provide: OverlayRef,
+        useValue: overlayRef
+      }
+    ];
+    const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
+    overlayRef.attach(new ComponentPortal(DisplayWidgetTypesPanelComponent, this.viewContainerRef, injector));
+    this.cd.detectChanges();
   }
 }

@@ -19,10 +19,10 @@ import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { IAliasController } from '@core/api/widget-api.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetService } from '@core/http/widget.service';
-import { WidgetInfo } from '@shared/models/widget.models';
+import { WidgetInfo, widgetType } from '@shared/models/widget.models';
 import { toWidgetInfo } from '@home/models/widget-component.models';
-import { distinctUntilChanged, map, publishReplay, refCount, switchMap } from 'rxjs/operators';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { distinctUntilChanged, map, publishReplay, refCount, switchMap, tap } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, Observable, of } from 'rxjs';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { isDefinedAndNotNull } from '@core/utils';
 
@@ -34,15 +34,20 @@ import { isDefinedAndNotNull } from '@core/utils';
 export class DashboardWidgetSelectComponent implements OnInit {
 
   private search$ = new BehaviorSubject<string>('');
-  private widgetsTypes: Observable<Array<WidgetInfo>>;
+  private filterWidgetTypes$ = new BehaviorSubject<Array<widgetType>>(null);
+  private widgetsInfo: Observable<Array<WidgetInfo>>;
   private widgetsBundleValue: WidgetsBundle;
+  private widgetsType = new Set<widgetType>();
 
   widgets$: Observable<Array<WidgetInfo>>;
   widgetsBundles$: Observable<Array<WidgetsBundle>>;
 
   @Input()
   set widgetsBundle(widgetBundle: WidgetsBundle) {
-    this.widgetsTypes = null;
+    this.widgetsInfo = null;
+    this.widgetsType.clear();
+    this.widgetsTypes.emit(this.widgetsType);
+    this.filterWidgetTypes$.next(null);
     this.widgetsBundleValue = widgetBundle;
   }
 
@@ -58,11 +63,19 @@ export class DashboardWidgetSelectComponent implements OnInit {
     this.search$.next(search);
   }
 
+  @Input()
+  set filterWidgetTypes(widgetTypes: Array<widgetType>) {
+    this.filterWidgetTypes$.next(widgetTypes);
+  }
+
   @Output()
   widgetSelected: EventEmitter<WidgetInfo> = new EventEmitter<WidgetInfo>();
 
   @Output()
   widgetsBundleSelected: EventEmitter<WidgetsBundle> = new EventEmitter<WidgetsBundle>();
+
+  @Output()
+  widgetsTypes: EventEmitter<Set<widgetType>> = new EventEmitter<Set<widgetType>>();
 
   constructor(private widgetsService: WidgetService,
               private sanitizer: DomSanitizer) {
@@ -73,21 +86,22 @@ export class DashboardWidgetSelectComponent implements OnInit {
       distinctUntilChanged(),
       switchMap(search => this.fetchWidgetBundle(search))
     );
-    this.widgets$ = this.search$.asObservable().pipe(
-      distinctUntilChanged(),
-      switchMap(search => this.fetchWidget(search))
+    this.widgets$ = combineLatest([this.search$.asObservable(), this.filterWidgetTypes$.asObservable()]).pipe(
+      distinctUntilChanged((oldValue, newValue) => JSON.stringify(oldValue) === JSON.stringify(newValue)),
+      switchMap(search => this.fetchWidget(...search))
     );
   }
 
   private getWidgets(): Observable<Array<WidgetInfo>> {
-    if (!this.widgetsTypes) {
+    if (!this.widgetsInfo) {
       if (this.widgetsBundle !== null) {
         const bundleAlias = this.widgetsBundle.alias;
         const isSystem = this.widgetsBundle.tenantId.id === NULL_UUID;
-        this.widgetsTypes = this.widgetsService.getBundleWidgetTypes(bundleAlias, isSystem).pipe(
+        this.widgetsInfo = this.widgetsService.getBundleWidgetTypes(bundleAlias, isSystem).pipe(
           map(widgets => widgets.sort((a, b) => b.createdTime - a.createdTime)),
           map(widgets => widgets.map((type) => {
             const widgetTypeInfo = toWidgetInfo(type);
+            this.widgetsType.add(widgetTypeInfo.type);
             const widget: WidgetInfo = {
               isSystemType: isSystem,
               bundleAlias,
@@ -99,14 +113,15 @@ export class DashboardWidgetSelectComponent implements OnInit {
             };
             return widget;
           })),
+          tap(() => this.widgetsTypes.emit(this.widgetsType)),
           publishReplay(1),
           refCount()
         );
       } else {
-        this.widgetsTypes = of([]);
+        this.widgetsInfo = of([]);
       }
     }
-    return this.widgetsTypes;
+    return this.widgetsInfo;
   }
 
   onWidgetClicked($event: Event, widget: WidgetInfo): void {
@@ -149,8 +164,9 @@ export class DashboardWidgetSelectComponent implements OnInit {
     );
   }
 
-  private fetchWidget(search: string): Observable<Array<WidgetInfo>> {
+  private fetchWidget(search: string, filter: widgetType[]): Observable<Array<WidgetInfo>> {
     return this.getWidgets().pipe(
+      map(widgets => filter ? widgets.filter((widget) => filter.includes(widget.type)) : widgets),
       map(widgets => search ? widgets.filter(
         widget => (
           widget.title?.toLowerCase().includes(search.toLowerCase()) ||
