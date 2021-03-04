@@ -245,23 +245,24 @@
                           headerTitle="{{
                             (!widgetsBundle?.title ? 'widget.select-widgets-bundle' : 'dashboard.select-widget-value') | translate: widgetsBundle
                           }}"
-                          headerHeightPx="120"
+                          headerHeightPx="64"
+                          [isShowSearch]="true"
                           [isReadOnly]="true"
                           [isEdit]="false"
-                          (closeDetails)="onAddWidgetClosed()">
+                          backgroundColor="#cfd8dc"
+                          (closeDetails)="onAddWidgetClosed()"
+                          (closeSearch)="onCloseSearchBundle()">
           <div class="prefix-title-buttons" [fxHide]="!widgetsBundle?.title" style="height: 28px; margin-right: 12px">
             <button class="tb-mat-28" mat-icon-button type="button" (click)="widgetBundleSelected(null)">
               <mat-icon>arrow_back</mat-icon>
             </button>
           </div>
-          <div class="header-pane" *ngIf="isAddingWidget">
-            <div fxLayout="row" fxLayoutGap="12px">
-              <tb-widgets-bundle-search fxFlex
-                                        [(ngModel)]="searchBundle"
-                                        placeholder="{{ (!widgetsBundle?.title ? 'widgets-bundle.search' : 'widget.search') | translate }}"
-                                        (ngModelChange)="searchBundle = $event">
-              </tb-widgets-bundle-search>
-            </div>
+          <div class="search-pane" *ngIf="isAddingWidget" fxLayout="row">
+            <tb-widgets-bundle-search fxFlex
+                                      [(ngModel)]="searchBundle"
+                                      placeholder="{{ (!widgetsBundle?.title ? 'widgets-bundle.search' : 'widget.search') | translate }}"
+                                      (ngModelChange)="searchBundle = $event">
+            </tb-widgets-bundle-search>
           </div>
           <div class="details-buttons" *ngIf="isAddingWidget">
             <button mat-button mat-icon-button type="button"

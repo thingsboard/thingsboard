@@ -15,10 +15,15 @@
     limitations under the License.
 
 -->
-<div class="input-wrapper" fxLayoutAlign="start center" fxLayoutGap="8px">
+<div class="input-wrapper" [ngClass]="{'focus': focus}" fxLayoutAlign="start center" fxLayoutGap="16px">
   <mat-icon>search</mat-icon>
-  <input type="text" [(ngModel)]="searchText" (ngModelChange)="updateSearchText()" [placeholder]=placeholder>
-  <button mat-button type="button" *ngIf="searchText" mat-icon-button (click)="clear()">
-    <mat-icon>close</mat-icon>
+  <input type="text"
+         [(ngModel)]="searchText"
+         (ngModelChange)="updateSearchText()"
+         (focus)="toggleFocus()"
+         (blur)="toggleFocus()"
+         [placeholder]=placeholder>
+  <button mat-button type="button" *ngIf="searchText" mat-icon-button (click)="clear($event)">
+    <mat-icon class="close">close</mat-icon>
   </button>
 </div>

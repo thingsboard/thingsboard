@@ -15,8 +15,10 @@
  */
 .input-wrapper {
   background: hsla(0, 0%, 100%, .2);
-  padding: 5px 0 5px 10px;
-  height: 40px;
+  border-radius: 8px;
+  color: rgb(255, 255, 255, .84);
+  padding: 5px 8px 5px 16px;
+  height: 46px;
 
   input {
     width: 100%;
@@ -30,8 +32,23 @@
 
     &::placeholder {
       color: #fff;
-      opacity: .8;
+      opacity: .6;
       line-height: 26px;
+    }
+  }
+
+  &.focus {
+    background: #fff;
+    color: rgba(0,0,0,.54);
+
+    input {
+      color: #000;
+      opacity: .60;
+    }
+
+    .close {
+      color: #000 !important;
+      opacity: .54;
     }
   }
 }

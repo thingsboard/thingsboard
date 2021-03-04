@@ -884,6 +884,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   addWidgetFromType(widget: WidgetInfo) {
     this.onAddWidgetClosed();
+    this.widgetTypes = [];
+    this.searchBundle = '';
     this.widgetComponentService.getWidgetInfo(widget.bundleAlias, widget.typeAlias, widget.isSystemType).subscribe(
       (widgetTypeInfo) => {
         const config: WidgetConfig = JSON.parse(widgetTypeInfo.defaultConfig);
@@ -1196,5 +1198,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
     overlayRef.attach(new ComponentPortal(DisplayWidgetTypesPanelComponent, this.viewContainerRef, injector));
     this.cd.detectChanges();
+  }
+
+  onCloseSearchBundle() {
+    this.searchBundle = '';
   }
 }

@@ -31,6 +31,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 export class WidgetsBundleSearchComponent implements ControlValueAccessor {
 
   searchText: string;
+  focus = false;
 
   @Input() placeholder: string;
 
@@ -60,8 +61,14 @@ export class WidgetsBundleSearchComponent implements ControlValueAccessor {
     this.propagateChange(this.searchText);
   }
 
-  clear(): void {
+  clear($event: Event): void {
+    $event.preventDefault();
+    $event.stopPropagation();
     this.searchText = '';
     this.updateView();
+  }
+
+  toggleFocus() {
+    this.focus = !this.focus;
   }
 }
