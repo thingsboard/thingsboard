@@ -13,27 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.model.token;
+package org.thingsboard.server.common.data.security.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.jsonwebtoken.Claims;
-import org.thingsboard.server.common.data.security.model.JwtToken;
+import java.io.Serializable;
 
-public final class AccessJwtToken implements JwtToken {
-    private final String rawToken;
-    @JsonIgnore
-    private transient Claims claims;
-
-    protected AccessJwtToken(final String token, Claims claims) {
-        this.rawToken = token;
-        this.claims = claims;
-    }
-
-    public String getToken() {
-        return this.rawToken;
-    }
-
-    public Claims getClaims() {
-        return claims;
-    }
+public interface JwtToken extends Serializable {
+    String getToken();
 }

@@ -355,6 +355,9 @@ caffeine:
     deviceProfiles:
       timeToLiveInMinutes: 1440
       maxSize: 0
+    tokensOutdatageTime:
+      timeToLiveInMinutes: 20000
+      maxSize: 10000
 
 redis:
   # standalone or cluster

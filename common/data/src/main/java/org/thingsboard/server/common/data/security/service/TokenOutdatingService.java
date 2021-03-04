@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.model.token;
+package org.thingsboard.server.common.data.security.service;
 
-import java.io.Serializable;
+import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.security.model.JwtToken;
 
-public interface JwtToken extends Serializable {
-    String getToken();
+public interface TokenOutdatingService {
+    boolean isOutdated(JwtToken token, UserId userId);
+
+    void outdateOldUserTokens(UserId userId);
 }
