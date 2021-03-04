@@ -18,7 +18,6 @@ package org.thingsboard.server.transport.lwm2m.server;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.response.ObserveResponse;
-import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.observation.ObservationListener;
 import org.eclipse.leshan.server.queue.PresenceListener;
 import org.eclipse.leshan.server.registration.Registration;
@@ -30,11 +29,9 @@ import java.util.Collection;
 @Slf4j
 public class LwM2mServerListener {
 
-    private final LeshanServer lhServer;
     private final LwM2mTransportServiceImpl service;
 
-    public LwM2mServerListener(LeshanServer lhServer, LwM2mTransportServiceImpl service) {
-        this.lhServer = lhServer;
+    public LwM2mServerListener(LwM2mTransportServiceImpl service) {
         this.service = service;
     }
 
@@ -45,7 +42,7 @@ public class LwM2mServerListener {
         @Override
         public void registered(Registration registration, Registration previousReg,
                                Collection<Observation> previousObservations) {
-            service.onRegistered(lhServer, registration, previousObservations);
+            service.onRegistered(registration, previousObservations);
         }
 
         /**
@@ -54,7 +51,7 @@ public class LwM2mServerListener {
         @Override
         public void updated(RegistrationUpdate update, Registration updatedRegistration,
                             Registration previousRegistration) {
-            service.updatedReg(lhServer, updatedRegistration);
+            service.updatedReg(updatedRegistration);
         }
 
         /**
@@ -63,7 +60,7 @@ public class LwM2mServerListener {
         @Override
         public void unregistered(Registration registration, Collection<Observation> observations, boolean expired,
                                  Registration newReg) {
-            service.unReg(lhServer, registration, observations);
+            service.unReg(registration, observations);
         }
 
     };

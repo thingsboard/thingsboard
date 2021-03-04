@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.query.EntityKeyType;
@@ -135,9 +136,9 @@ class AlarmState {
     public boolean validateUpdate(SnapshotUpdate update, AlarmRuleState state) {
         if (update != null) {
             //Check that the update type and that keys match.
-            if (update.getType().equals(EntityKeyType.TIME_SERIES)) {
+            if (update.getType().equals(AlarmConditionKeyType.TIME_SERIES)) {
                 return state.validateTsUpdate(update.getKeys());
-            } else if (update.getType().equals(EntityKeyType.ATTRIBUTE)) {
+            } else if (update.getType().equals(AlarmConditionKeyType.ATTRIBUTE)) {
                 return state.validateAttrUpdate(update.getKeys());
             }
         }
@@ -249,7 +250,7 @@ class AlarmState {
         String alarmDetailsStr = ruleState.getAlarmRule().getAlarmDetails();
 
         if (StringUtils.isNotEmpty(alarmDetailsStr)) {
-            for (KeyFilter keyFilter : ruleState.getAlarmRule().getCondition().getCondition()) {
+            for (var keyFilter : ruleState.getAlarmRule().getCondition().getCondition()) {
                 EntityKeyValue entityKeyValue = dataSnapshot.getValue(keyFilter.getKey());
                 alarmDetailsStr = alarmDetailsStr.replaceAll(String.format("\\$\\{%s}", keyFilter.getKey().getKey()), getValueAsString(entityKeyValue));
             }

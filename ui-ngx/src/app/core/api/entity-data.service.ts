@@ -60,7 +60,8 @@ export class EntityDataService {
   constructor(private telemetryService: TelemetryWebsocketService,
               private utils: UtilsService) {}
 
-  public prepareSubscription(listener: EntityDataListener): Observable<EntityDataLoadResult> {
+  public prepareSubscription(listener: EntityDataListener,
+                             ignoreDataUpdateOnIntervalTick = false): Observable<EntityDataLoadResult> {
     const datasource = listener.configDatasource;
     listener.subscriptionOptions = this.createSubscriptionOptions(
       datasource,
@@ -68,7 +69,8 @@ export class EntityDataService {
       datasource.pageLink,
       datasource.keyFilters,
       null,
-      false);
+      false,
+      ignoreDataUpdateOnIntervalTick);
     if (datasource.type === DatasourceType.entity && (!datasource.entityFilter || !datasource.pageLink)) {
       return of(null);
     }
@@ -87,7 +89,8 @@ export class EntityDataService {
 
   public subscribeForPaginatedData(listener: EntityDataListener,
                                    pageLink: EntityDataPageLink,
-                                   keyFilters: KeyFilter[]): Observable<EntityDataLoadResult> {
+                                   keyFilters: KeyFilter[],
+                                   ignoreDataUpdateOnIntervalTick = false): Observable<EntityDataLoadResult> {
     const datasource = listener.configDatasource;
     listener.subscriptionOptions = this.createSubscriptionOptions(
       datasource,
@@ -95,7 +98,8 @@ export class EntityDataService {
       pageLink,
       datasource.keyFilters,
       keyFilters,
-      true);
+      true,
+      ignoreDataUpdateOnIntervalTick);
     if (datasource.type === DatasourceType.entity && (!datasource.entityFilter || !pageLink)) {
       listener.dataLoaded(emptyPageData<EntityData>(), [],
         listener.configDatasourceIndex, listener.subscriptionOptions.pageLink);
@@ -119,7 +123,8 @@ export class EntityDataService {
                                     pageLink: EntityDataPageLink,
                                     keyFilters: KeyFilter[],
                                     additionalKeyFilters: KeyFilter[],
-                                    isPaginatedDataSubscription: boolean): EntityDataSubscriptionOptions {
+                                    isPaginatedDataSubscription: boolean,
+                                    ignoreDataUpdateOnIntervalTick: boolean): EntityDataSubscriptionOptions {
     const subscriptionDataKeys: Array<SubscriptionDataKey> = [];
     datasource.dataKeys.forEach((dataKey) => {
       const subscriptionDataKey: SubscriptionDataKey = {
@@ -135,13 +140,17 @@ export class EntityDataService {
       dataKeys: subscriptionDataKeys,
       type: subscriptionType
     };
-    if (entityDataSubscriptionOptions.datasourceType === DatasourceType.entity) {
+    if (entityDataSubscriptionOptions.datasourceType === DatasourceType.entity ||
+      entityDataSubscriptionOptions.datasourceType === DatasourceType.entityCount) {
       entityDataSubscriptionOptions.entityFilter = datasource.entityFilter;
-      entityDataSubscriptionOptions.pageLink = pageLink;
       entityDataSubscriptionOptions.keyFilters = keyFilters;
       entityDataSubscriptionOptions.additionalKeyFilters = additionalKeyFilters;
+      if (entityDataSubscriptionOptions.datasourceType === DatasourceType.entity) {
+        entityDataSubscriptionOptions.pageLink = pageLink;
+      }
     }
     entityDataSubscriptionOptions.isPaginatedDataSubscription = isPaginatedDataSubscription;
+    entityDataSubscriptionOptions.ignoreDataUpdateOnIntervalTick = ignoreDataUpdateOnIntervalTick;
     return entityDataSubscriptionOptions;
   }
 }

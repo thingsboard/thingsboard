@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, Inject, OnDestroy, OnInit, SkipSelf, ViewChild } from '@angular/core';
+import { Component, ElementRef, Inject, OnDestroy, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -57,7 +57,7 @@ export interface KeyFilterDialogData {
 })
 export class KeyFilterDialogComponent extends
   DialogComponent<KeyFilterDialogComponent, KeyFilterInfo>
-  implements OnInit, OnDestroy, ErrorStateMatcher {
+  implements OnDestroy, ErrorStateMatcher {
 
   @ViewChild('keyNameInput', {static: true}) private keyNameInput: ElementRef;
 
@@ -69,7 +69,7 @@ export class KeyFilterDialogComponent extends
 
   entityKeyTypes =
     this.data.telemetryKeysOnly ?
-      [EntityKeyType.ATTRIBUTE, EntityKeyType.TIME_SERIES] :
+      [EntityKeyType.ATTRIBUTE, EntityKeyType.TIME_SERIES, EntityKeyType.CONSTANT] :
       [EntityKeyType.ENTITY_FIELD, EntityKeyType.ATTRIBUTE, EntityKeyType.TIME_SERIES];
 
   entityKeyTypeTranslations = entityKeyTypeTranslationMap;
@@ -111,7 +111,11 @@ export class KeyFilterDialogComponent extends
         predicates: [this.data.keyFilter.predicates, [Validators.required]]
       }
     );
-
+    if (this.data.telemetryKeysOnly) {
+      this.keyFilterFormGroup.addControl(
+        'value', this.fb.control(this.data.keyFilter.value)
+      );
+    }
     if (!this.data.readonly) {
       this.keyFilterFormGroup.get('valueType').valueChanges.pipe(
         takeUntil(this.destroy$)
@@ -143,6 +147,15 @@ export class KeyFilterDialogComponent extends
         } else {
           this.showAutocomplete = false;
         }
+        if (this.data.telemetryKeysOnly) {
+          if (type === EntityKeyType.CONSTANT) {
+            this.keyFilterFormGroup.get('value').setValidators(Validators.required);
+            this.keyFilterFormGroup.get('value').updateValueAndValidity();
+          } else {
+            this.keyFilterFormGroup.get('value').clearValidators();
+            this.keyFilterFormGroup.get('value').updateValueAndValidity();
+          }
+        }
       });
 
       this.keyFilterFormGroup.get('key.key').valueChanges.pipe(
@@ -156,17 +169,16 @@ export class KeyFilterDialogComponent extends
           this.keyFilterFormGroup.get('valueType').patchValue(newValueType, {emitEvent: false});
         }
       });
+
+      this.filteredKeysName = this.keyFilterFormGroup.get('key.key').valueChanges
+        .pipe(
+          map(value => value ? value : ''),
+          mergeMap(name => this.fetchEntityName(name)),
+          takeUntil(this.destroy$)
+        );
     } else {
       this.keyFilterFormGroup.disable({emitEvent: false});
     }
-  }
-
-  ngOnInit() {
-    this.filteredKeysName = this.keyFilterFormGroup.get('key.key').valueChanges
-      .pipe(
-        map(value => value ? value : ''),
-        mergeMap(name => this.fetchEntityName(name))
-      );
   }
 
   ngOnDestroy() {
@@ -206,6 +218,10 @@ export class KeyFilterDialogComponent extends
       const keyFilter: KeyFilterInfo = this.keyFilterFormGroup.getRawValue();
       this.dialogRef.close(keyFilter);
     }
+  }
+
+  get isConstantKeyType(): boolean {
+    return this.keyFilterFormGroup.get('key.type').value === EntityKeyType.CONSTANT;
   }
 
   private fetchEntityName(searchText?: string): Observable<Array<string>> {

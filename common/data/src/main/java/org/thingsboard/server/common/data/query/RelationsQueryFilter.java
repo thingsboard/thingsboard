@@ -18,8 +18,7 @@ package org.thingsboard.server.common.data.query;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
-import org.thingsboard.server.common.data.relation.EntityTypeFilter;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 
 import java.util.List;
 
@@ -33,7 +32,7 @@ public class RelationsQueryFilter implements EntityFilter {
 
     private EntityId rootEntity;
     private EntitySearchDirection direction;
-    private List<EntityTypeFilter> filters;
+    private List<RelationEntityTypeFilter> filters;
     private int maxLevel;
     private boolean fetchLastLevelOnly;
 

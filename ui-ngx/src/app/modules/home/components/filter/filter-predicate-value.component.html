@@ -16,7 +16,7 @@
 
 -->
 <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" [formGroup]="filterPredicateValueFormGroup">
-  <div fxFlex fxLayout="column" [fxShow]="!dynamicMode">
+  <div fxFlex fxLayout="column" [fxShow]="!dynamicMode && !onlyUserDynamicSource">
     <div fxLayout="column" [ngSwitch]="valueType">
       <ng-template [ngSwitchCase]="valueTypeEnum.STRING">
         <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
@@ -45,7 +45,7 @@
     </div>
     <div class="tb-hint" translate>filter.default-value</div>
   </div>
-  <div fxFlex fxLayout="column" [fxShow]="dynamicMode">
+  <div fxFlex fxLayout="column" [fxShow]="dynamicMode || onlyUserDynamicSource">
     <div formGroupName="dynamicValue" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
       <div fxFlex="35" fxLayout="column">
         <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
@@ -78,7 +78,7 @@
       </div>
     </div>
   </div>
-  <button mat-icon-button
+  <button mat-icon-button *ngIf="!onlyUserDynamicSource"
           class="mat-elevation-z1 tb-mat-32"
           color="primary"
           type="button"

@@ -24,12 +24,16 @@
     <button type='button' *ngIf="!disabled" mat-button class="tidy" (click)="beautifyJs()">
       {{'js-func.tidy' | translate }}
     </button>
-    <button type='button' mat-button mat-icon-button (click)="fullscreen = !fullscreen"
-            class="tb-mat-32"
-            matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
-            matTooltipPosition="above">
-      <mat-icon class="material-icons">{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-    </button>
+    <fieldset style="width: initial">
+      <div matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+           matTooltipPosition="above"
+           style="border-radius: 50%"
+           (click)="fullscreen = !fullscreen">
+        <button type='button' mat-button mat-icon-button class="tb-mat-32">
+          <mat-icon class="material-icons">{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        </button>
+      </div>
+    </fieldset>
   </div>
   <div id="tb-javascript-panel" class="tb-js-func-panel" fxLayout="column" tb-toast toastTarget="{{toastTargetId}}">
     <div #javascriptEditor id="tb-javascript-input" [ngClass]="{'fill-height': fillHeight}"></div>

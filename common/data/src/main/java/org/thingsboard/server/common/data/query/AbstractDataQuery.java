@@ -29,15 +29,13 @@ public abstract class AbstractDataQuery<T extends EntityDataPageLink> extends En
     protected List<EntityKey> entityFields;
     @Getter
     protected List<EntityKey> latestValues;
-    @Getter
-    protected List<KeyFilter> keyFilters;
 
     public AbstractDataQuery() {
         super();
     }
 
-    public AbstractDataQuery(EntityFilter entityFilter) {
-        super(entityFilter);
+    public AbstractDataQuery(EntityFilter entityFilter, List<KeyFilter> keyFilters) {
+        super(entityFilter, keyFilters);
     }
 
     public AbstractDataQuery(EntityFilter entityFilter,
@@ -45,11 +43,10 @@ public abstract class AbstractDataQuery<T extends EntityDataPageLink> extends En
                              List<EntityKey> entityFields,
                              List<EntityKey> latestValues,
                              List<KeyFilter> keyFilters) {
-        super(entityFilter);
+        super(entityFilter, keyFilters);
         this.pageLink = pageLink;
         this.entityFields = entityFields;
         this.latestValues = latestValues;
-        this.keyFilters = keyFilters;
     }
 
 }
