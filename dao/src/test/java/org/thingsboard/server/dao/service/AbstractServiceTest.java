@@ -38,6 +38,9 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.security.model.JwtToken;
+import org.thingsboard.server.common.data.security.service.TokenOutdatingService;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.audit.AuditLogLevelFilter;
@@ -193,6 +196,20 @@ public abstract class AbstractServiceTest {
             mask.put(entityType.name().toLowerCase(), AuditLogLevelMask.RW.name());
         }
         return new AuditLogLevelFilter(mask);
+    }
+
+    @Bean
+    public TokenOutdatingService mockTokenOutdatingService() {
+        return new TokenOutdatingService() {
+            @Override
+            public boolean isOutdated(JwtToken token, UserId userId) {
+                return false;
+            }
+
+            @Override
+            public void outdateOldUserTokens(UserId userId) {
+            }
+        };
     }
 
     protected DeviceProfile createDeviceProfile(TenantId tenantId, String name) {
