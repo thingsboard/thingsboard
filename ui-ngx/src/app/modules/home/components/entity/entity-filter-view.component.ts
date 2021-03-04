@@ -76,6 +76,10 @@ export class EntityFilterViewComponent implements ControlValueAccessor {
           this.filterDisplayValue = this.translate.instant(entityTypeTranslations.get(entityType).nameStartsWith,
             {prefix});
           break;
+        case AliasFilterType.entityType:
+          entityType = this.filter.entityType;
+          this.filterDisplayValue = this.translate.instant(entityTypeTranslations.get(entityType).typePlural);
+          break;
         case AliasFilterType.stateEntity:
           this.filterDisplayValue = this.translate.instant('alias.filter-type-state-entity-description');
           break;

@@ -40,8 +40,7 @@ import java.security.cert.X509Certificate;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AzureIotHubSasCredentials extends CertPemCredentials {
     private String sasKey;
-    private String caCert;
-    
+
     @Override
     public SslContext initSslContext() {
         try {

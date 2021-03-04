@@ -56,7 +56,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 public class CertPemCredentials implements ClientCredentials {
     private static final String TLS_VERSION = "TLSv1.2";
 
-    private String caCert;
+    protected String caCert;
     private String cert;
     private String privateKey;
     private String password;

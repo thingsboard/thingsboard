@@ -17,7 +17,6 @@ package org.thingsboard.server.transport.lwm2m.server;
 
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.response.ReadResponse;
-import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -28,17 +27,17 @@ import java.util.Optional;
 
 public interface LwM2mTransportService {
 
-    void onRegistered(LeshanServer lwServer, Registration registration, Collection<Observation> previousObsersations);
+    void onRegistered(Registration registration, Collection<Observation> previousObsersations);
 
-    void updatedReg(LeshanServer lwServer, Registration registration);
+    void updatedReg(Registration registration);
 
-    void unReg(LeshanServer lwServer, Registration registration, Collection<Observation> observations);
+    void unReg(Registration registration, Collection<Observation> observations);
 
     void onSleepingDev(Registration registration);
 
-    void setCancelObservations(LeshanServer lwServer, Registration registration);
+    void setCancelObservations(Registration registration);
 
-    void setCancelObservationRecourse(LeshanServer lwServer, Registration registration, String path);
+    void setCancelObservationRecourse(Registration registration, String path);
 
     void onObservationResponse(Registration registration, String path, ReadResponse response);
 
@@ -48,7 +47,7 @@ public interface LwM2mTransportService {
 
     void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt);
 
-    void doTrigger(LeshanServer lwServer, Registration registration, String path);
+    void doTrigger(Registration registration, String path);
 
     void doDisconnect(TransportProtos.SessionInfoProto sessionInfo);
 

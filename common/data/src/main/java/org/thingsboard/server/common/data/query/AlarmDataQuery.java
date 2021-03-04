@@ -30,8 +30,8 @@ public class AlarmDataQuery extends AbstractDataQuery<AlarmDataPageLink> {
     public AlarmDataQuery() {
     }
 
-    public AlarmDataQuery(EntityFilter entityFilter) {
-        super(entityFilter);
+    public AlarmDataQuery(EntityFilter entityFilter, List<KeyFilter> keyFilters) {
+        super(entityFilter, keyFilters);
     }
 
     public AlarmDataQuery(EntityFilter entityFilter, AlarmDataPageLink pageLink, List<EntityKey> entityFields, List<EntityKey> latestValues, List<KeyFilter> keyFilters, List<EntityKey> alarmFields) {

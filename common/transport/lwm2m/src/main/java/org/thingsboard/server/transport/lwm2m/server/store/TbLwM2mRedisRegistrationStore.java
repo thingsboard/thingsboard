@@ -21,9 +21,9 @@ import org.eclipse.californium.elements.EndpointContext;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.core.util.Validate;
-import org.eclipse.leshan.server.Destroyable;
-import org.eclipse.leshan.server.Startable;
-import org.eclipse.leshan.server.Stoppable;
+import org.eclipse.leshan.core.Destroyable;
+import org.eclipse.leshan.core.Startable;
+import org.eclipse.leshan.core.Stoppable;
 import org.eclipse.leshan.server.californium.observation.ObserveUtil;
 import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
 import org.eclipse.leshan.server.redis.JedisLock;
@@ -278,8 +278,8 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
 
     protected class RedisIterator implements Iterator<Registration> {
 
-        private RedisConnectionFactory connectionFactory;
-        private ScanParams scanParams;
+        private final RedisConnectionFactory connectionFactory;
+        private final ScanParams scanParams;
 
         private String cursor;
         private List<Registration> scanResult;
@@ -552,17 +552,16 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
     @Override
     public org.eclipse.californium.core.observe.Observation putIfAbsent(Token token,
                                                                         org.eclipse.californium.core.observe.Observation obs) throws ObservationStoreException {
-        return add(token, obs, true);
+        return add(obs, true);
     }
 
     @Override
     public org.eclipse.californium.core.observe.Observation put(Token token,
                                                                 org.eclipse.californium.core.observe.Observation obs) throws ObservationStoreException {
-        return add(token, obs, false);
+        return add(obs, false);
     }
 
-    private org.eclipse.californium.core.observe.Observation add(Token token,
-                                                                 org.eclipse.californium.core.observe.Observation obs, boolean ifAbsent) throws ObservationStoreException {
+    private org.eclipse.californium.core.observe.Observation add(org.eclipse.californium.core.observe.Observation obs, boolean ifAbsent) throws ObservationStoreException {
         String endpoint = ObserveUtil.validateCoapObservation(obs);
         org.eclipse.californium.core.observe.Observation previousObservation = null;
 
@@ -577,7 +576,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
                     throw new ObservationStoreException("no registration for this Id");
                 byte[] key = toKey(OBS_TKN, obs.getRequest().getToken().getBytes());
                 byte[] serializeObs = serializeObs(obs);
-                byte[] previousValue = null;
+                byte[] previousValue;
                 if (ifAbsent) {
                     previousValue = j.get(key);
                     if (previousValue == null || previousValue.length == 0) {
