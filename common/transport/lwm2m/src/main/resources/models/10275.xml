@@ -37,6 +37,8 @@ POSSIBILITY OF SUCH DAMAGE.
         <Description1><![CDATA[Detects interference from strong magnetic field or other electrical sources. If this is not relevant for ultrasonic meters then the tamper alarm may be used to indicate someone attempting to open the physical enclosure or other options the manufacturer may present.]]></Description1>
         <ObjectID>10275</ObjectID>
         <ObjectURN>urn:oma:lwm2m:x:10275</ObjectURN>
+        <LWM2MVersion>1.0</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
         <MultipleInstances>Multiple</MultipleInstances>
         <Mandatory>Optional</Mandatory>
         <Resources>

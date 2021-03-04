@@ -37,8 +37,8 @@ POSSIBILITY OF SUCH DAMAGE.
         <Description1>This LWM2M Object provides the neighbour cell report. The CrowdBox Measurements Object and the Connected UE Report Object have both Objlnk Resources pointing to this Object.</Description1>
         <ObjectID>10247</ObjectID>
         <ObjectURN>urn:oma:lwm2m:x:10247</ObjectURN>
-        <LWM2MVersion/>
-        <ObjectVersion/>
+		<LWM2MVersion>1.0</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
         <MultipleInstances>Multiple</MultipleInstances>
         <Mandatory>Optional</Mandatory>
         <Resources>

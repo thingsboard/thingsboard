@@ -89,7 +89,7 @@ limitations under the License.
 				<Type>Integer</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units></Units>
-				<Description><![CDATA[System Frame Number]]></Description>
+				<Description><![CDATA[System Frame Number.]]></Description>
 			</Item>	
 			<Item ID="6038"><Name>subFrameNumber</Name>
 				<Operations>R</Operations>
@@ -98,7 +98,7 @@ limitations under the License.
 				<Type>Integer</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units></Units>
-				<Description><![CDATA[Sub Frame Number]]></Description>
+				<Description><![CDATA[Sub Frame Number.]]></Description>
 			</Item>
 			<Item ID="2"><Name>headroom-value</Name>
 				<Operations>R</Operations>

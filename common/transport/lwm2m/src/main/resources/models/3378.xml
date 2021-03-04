@@ -108,7 +108,7 @@ pass=1]]></Description>
 				<Type>Integer</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units></Units>
-				<Description><![CDATA[system frame number when pbch was decoded]]></Description>
+				<Description><![CDATA[System Frame Number.]]></Description>
 			</Item></Resources>
 		<Description2 />
 	</Object>

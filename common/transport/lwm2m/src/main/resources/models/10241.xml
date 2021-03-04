@@ -35,8 +35,8 @@ POSSIBILITY OF SUCH DAMAGE.
 		<Description1><![CDATA[This LWM2M Object provides a range of host device related information which can be queried by the LWM2M Server. The host device is any integrated device with an embedded cellular radio module.]]></Description1>
 		<ObjectID>10241</ObjectID>
 		<ObjectURN>urn:oma:lwm2m:x:10241</ObjectURN>
-		<LWM2MVersion />
-		<ObjectVersion />
+		<LWM2MVersion>1.0</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
 		<MultipleInstances>Multiple</MultipleInstances>
 		<Mandatory>Optional</Mandatory>
 		<Resources>
@@ -47,7 +47,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				<Type>String</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units></Units>
-				<Description><![CDATA[Human readable host device manufacturer name]]></Description>
+				<Description><![CDATA[Human readable host device manufacturer name.]]></Description>
 			</Item>
 			<Item ID="5906"><Name>Host Device Model Number</Name>
 				<Operations>R</Operations>
@@ -56,7 +56,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				<Type>String</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units></Units>
-				<Description><![CDATA[A host device model identifier (manufacturer specified string)]]></Description>
+				<Description><![CDATA[A host device model identifier (manufacturer specified string).]]></Description>
 			</Item>
 			<Item ID="5907"><Name>Host Device Unique ID</Name>
 				<Operations>R</Operations>
@@ -74,7 +74,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				<Type>String</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units></Units>
-				<Description><![CDATA[Current software version of the host device. (manufacturer specified string).]]></Description>
+				<Description><![CDATA[Current software version of the host device (manufacturer specified string).]]></Description>
 			</Item></Resources>
 		<Description2 />
 	</Object>

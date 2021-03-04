@@ -50,7 +50,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <RangeEnumeration>0..100</RangeEnumeration>
         <Units>/100</Units>
         <Description><![CDATA[Referrence to a PM item, similar with Corelnk in LwM2M 1.1, 
-			&lt;/object ID/object instance ID/resoure ID&gt;, for example:&lt;/10315/0/2&gt;]]></Description>
+			</object ID/object instance ID/resource ID>, for example: </10315/0/2>]]></Description>
       </Item>
 
       <Item ID="300">

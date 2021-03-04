@@ -49,7 +49,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			<Type>String</Type>
 			<RangeEnumeration>4..63</RangeEnumeration>
 			<Units/>
-			<Description><![CDATA[Contains the object ID and object instance ID/name, for example: &lt;/10320/2&gt;.]]></Description>
+			<Description><![CDATA[Contains the object ID and object instance ID/name, for example: </10320/2>.]]></Description>
 		</Item>
 		<Item ID="2">
 			<Name>Performance Type</Name>
@@ -60,7 +60,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			<RangeEnumeration/>
 			<Units/>
 			<Description><![CDATA[Referrence to a PM item, similar with Corelnk in LwM2M 1.1, 
-				&lt;/object ID/object instance ID/resoure ID&gt;, for example:/10322/2/4]]></Description>
+				</object ID/object instance ID/resoure ID>, for example:/10322/2/4]]></Description>
 		</Item>
 		<Item ID="3">
 			<Name>High Threshold</Name>

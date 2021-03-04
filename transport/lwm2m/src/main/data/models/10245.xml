@@ -1,20 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
 
-    Copyright © 2016-2021 The Thingsboard Authors
+<!-- BSD-3 Clause License
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Copyright 2019 Vodafone Group. 
 
-        http://www.apache.org/licenses/LICENSE-2.0
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its
+contributors may be used to endorse or promote products derived
+from this software without specific prior written permission.
 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
 -->
 <LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
     <Object ObjectType="MODefinition">
@@ -22,8 +36,8 @@
         <Description1>This LWM2M Object provides a range of eNB related measurements and parameters of which several are changeable. Furthermore, it includes Resources to enable/disable the eNB.</Description1>
         <ObjectID>10245</ObjectID>
         <ObjectURN>urn:oma:lwm2m:x:10245</ObjectURN>
-        <LWM2MVersion/>
-        <ObjectVersion/>
+		<LWM2MVersion>1.0</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
         <MultipleInstances>Single</MultipleInstances>
         <Mandatory>Optional</Mandatory>
         <Resources>
@@ -65,7 +79,7 @@
                 <Type>Integer</Type>
                 <RangeEnumeration>0..65535</RangeEnumeration>
                 <Units></Units>
-                <Description>EARFCN currently used by the eNB. Highest valid value in 3GPP is currently 46589. If the requested EARFCN is not supported by the eNB, the response should be "Bad Request". The CrowdBox shall only apply a change of this resource upon execution of the “Enable eNB” command.</Description>
+                <Description>EARFCN currently used by the eNB. Highest valid value in 3GPP is currently 46589. If the requested EARFCN is not supported by the eNB, the response should be "Bad Request". The CrowdBox shall only apply a change of this resource upon execution of the "Enable eNB" command.</Description>
             </Item>
             <Item ID="4">
                 <Name>eNB Bandwidth</Name>
@@ -75,7 +89,7 @@
                 <Type>Integer</Type>
                 <RangeEnumeration>5, 10, 15, 20</RangeEnumeration>
                 <Units></Units>
-                <Description>Bandwidth of the currently used eNB carrier. If the requested bandwidth is not supported by the eNB, the response should be "Bad Request". The CrowdBox shall only apply a change of this resource upon execution of the “Enable eNB” command.</Description>
+                <Description>Bandwidth of the currently used eNB carrier. If the requested bandwidth is not supported by the eNB, the response should be "Bad Request". The CrowdBox shall only apply a change of this resource upon execution of the "Enable eNB" command.</Description>
             </Item>
             <Item ID="5">
                 <Name>Backhaul Primary EARFCN</Name>
@@ -85,7 +99,7 @@
                 <Type>Integer</Type>
                 <RangeEnumeration>0..65535</RangeEnumeration>
                 <Units></Units>
-                <Description>EARFCN of primary cell used for the backhaul. If the requested EARFCN is not supported by the CrowdBox UE, the response should be "Bad Request". The CrowdBox shall only apply a change of this resource upon execution of the “Enable eNB” command.</Description>
+                <Description>EARFCN of primary cell used for the backhaul. If the requested EARFCN is not supported by the CrowdBox UE, the response should be "Bad Request". The CrowdBox shall only apply a change of this resource upon execution of the "Enable eNB" command.</Description>
             </Item>
             <Item ID="6">
                 <Name>Backhaul Secondary EARFCN</Name>
@@ -95,7 +109,7 @@
                 <Type>Integer</Type>
                 <RangeEnumeration>0..65535</RangeEnumeration>
                 <Units></Units>
-                <Description>EARFCN of any secondary cells used for the backhaul, in the event that carrier aggregation is being used. If the requested EARFCN is not supported by the CrowdBox UE, the response should be "Bad Request". The CrowdBox shall only apply a change of this resource upon execution of the “Enable eNB” command.</Description>
+                <Description>EARFCN of any secondary cells used for the backhaul, in the event that carrier aggregation is being used. If the requested EARFCN is not supported by the CrowdBox UE, the response should be "Bad Request". The CrowdBox shall only apply a change of this resource upon execution of the "Enable eNB" command.</Description>
             </Item>
             <Item ID="7">
                 <Name>Cumulative Measurement Window</Name>
@@ -145,7 +159,7 @@
                 <Type>Integer</Type>
                 <RangeEnumeration>0..63</RangeEnumeration>
                 <Units>dBm</Units>
-                <Description>Maximum power for the eNB measured as the sum of input powers to all antenna connectors. The maximum power per antenna port is equal to the maximum eNB power divided by the number of antenna ports. If the requested power is above or below the maximum or minimum power levels of the eNB, then the power level should be set to the maximum or minimum respectively. The CrowdBox shall only apply a change of this resource upon execution of the “Enable eNB” command.</Description>
+                <Description>Maximum power for the eNB measured as the sum of input powers to all antenna connectors. The maximum power per antenna port is equal to the maximum eNB power divided by the number of antenna ports. If the requested power is above or below the maximum or minimum power levels of the eNB, then the power level should be set to the maximum or minimum respectively. The CrowdBox shall only apply a change of this resource upon execution of the "Enable eNB" command.</Description>
             </Item>
             <Item ID="12">
                 <Name>Backhaul Primary q-OffsetFreq</Name>
@@ -155,7 +169,7 @@
                 <Type>Integer</Type>
                 <RangeEnumeration>-24..24</RangeEnumeration>
                 <Units>dB</Units>
-                <Description>q-OffsetFreq parameter for the backhaul primary EARFCN in SIB5 of the CrowdBox eNB BCCH. See TS 36.331 for details. Range: dB-24; dB-22 .. dB24 The CrowdBox shall only apply a change of this resource upon execution of the “Enable eNB” command.</Description>
+                <Description>q-OffsetFreq parameter for the backhaul primary EARFCN in SIB5 of the CrowdBox eNB BCCH. See TS 36.331 for details. Range: dB-24; dB-22 .. dB24 The CrowdBox shall only apply a change of this resource upon execution of the "Enable eNB" command.</Description>
             </Item>
             <Item ID="13">
                 <Name>Backhaul Secondary q-OffsetFreq</Name>
@@ -165,7 +179,7 @@
                 <Type>Integer</Type>
                 <RangeEnumeration>-24..24</RangeEnumeration>
                 <Units>dB</Units>
-                <Description>q-OffsetFreq parameter for the backhaul secondary EARFCN in SIB5 of the CrowdBox eNB BCCH. See TS 36.331 for details Range: dB-24; dB-22 .. dB24 The CrowdBox shall only apply a change of this resource upon execution of the “Enable eNB” command.</Description>
+                <Description>q-OffsetFreq parameter for the backhaul secondary EARFCN in SIB5 of the CrowdBox eNB BCCH. See TS 36.331 for details Range: dB-24; dB-22 .. dB24 The CrowdBox shall only apply a change of this resource upon execution of the "Enable eNB" command.</Description>
             </Item>
             <Item ID="14">
                 <Name>Neighbour CrowdBox EARFCN</Name>
@@ -185,7 +199,7 @@
                 <Type>Integer</Type>
                 <RangeEnumeration>-24..24</RangeEnumeration>
                 <Units>dB</Units>
-                <Description>q-OffsetFreq parameter of the Neighbour CrowdBox EARFCN in SIB5 of the Neighbour CrowdBox eNB BCCH. See TS 36.331 for details Range: dB-24; dB-22 .. dB24 Each instance of this resource relates to the same instance of resource ID 14. The CrowdBox shall only apply a change of this resource upon execution of the “Enable eNB” command.</Description>
+                <Description>q-OffsetFreq parameter of the Neighbour CrowdBox EARFCN in SIB5 of the Neighbour CrowdBox eNB BCCH. See TS 36.331 for details Range: dB-24; dB-22 .. dB24 Each instance of this resource relates to the same instance of resource ID 14. The CrowdBox shall only apply a change of this resource upon execution of the "Enable eNB" command.</Description>
             </Item>
             <Item ID="16">
                 <Name>Serving Macro eNB cellIndividualOffset</Name>
@@ -195,7 +209,7 @@
                 <Type>Integer</Type>
                 <RangeEnumeration>-24..24</RangeEnumeration>
                 <Units>dB</Units>
-                <Description>Specifies the value of the cellIndividualOffset parameter applicable to the CrowdBox macro serving cell that is to be signalled to connected UEs in their measurement configuration information . See TS 36.331 for details. The CrowdBox shall only apply a change of this resource upon execution of the “Enable eNB” command.</Description>
+                <Description>Specifies the value of the cellIndividualOffset parameter applicable to the CrowdBox macro serving cell that is to be signalled to connected UEs in their measurement configuration information . See TS 36.331 for details. The CrowdBox shall only apply a change of this resource upon execution of the "Enable eNB" command.</Description>
             </Item>
         </Resources>
       <Description2></Description2>

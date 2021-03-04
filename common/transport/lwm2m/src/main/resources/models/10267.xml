@@ -37,6 +37,8 @@ POSSIBILITY OF SUCH DAMAGE.
         <Description1><![CDATA[Measures the maximum flow rate and its time stamp for specified period]]></Description1>
         <ObjectID>10267</ObjectID>
         <ObjectURN>urn:oma:lwm2m:x:10267</ObjectURN>
+        <LWM2MVersion>1.0</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
         <MultipleInstances>Multiple</MultipleInstances>
         <Mandatory>Optional</Mandatory>
         <Resources>

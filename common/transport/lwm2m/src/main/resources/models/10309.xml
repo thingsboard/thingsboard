@@ -20,7 +20,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 <LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.openmobilealliance.org/tech/profiles/LWM2M.xsd">
   <Object ObjectType="MODefinition">
     <Name>Shareparkinglot</Name>
-    <Description1><![CDATA[This LwM2M Object provides the keying material of our technology product——ShareParkingLock.]]></Description1>
+    <Description1><![CDATA[This LwM2M Object provides the keying material of our technology product-ShareParkingLock.]]></Description1>
     <ObjectID>10309</ObjectID>
     <ObjectURN>urn:oma:lwm2m:x:10309</ObjectURN>
     <LWM2MVersion>1.0</LWM2MVersion>

@@ -70,7 +70,7 @@ POSSIBILITY OF SUCH DAMAGE.
                 <Type>Float</Type>
                 <RangeEnumeration>0..100</RangeEnumeration>
                 <Units>/100</Units>
-                <Description>Audio volume control, float value between 0 and 100 as a percentage.</Description>
+                <Description>Used to represent a level control such as audio volume.</Description>
             </Item>
             <Item ID="5524">
                 <Name>Duration</Name>

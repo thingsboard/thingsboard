@@ -87,7 +87,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			<MultipleInstances>Single</MultipleInstances>
 			<Mandatory>Optional</Mandatory>
 			<Type>String</Type>
-			<RangeEnumeration>0-255 bytes</RangeEnumeration>
+			<RangeEnumeration>0..255 bytes</RangeEnumeration>
 			<Units></Units>
 			<Description><![CDATA[URI from where the device can download the software package by an alternative mechanism.]]></Description>
 		</Item>

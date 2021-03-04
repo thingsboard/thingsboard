@@ -147,7 +147,7 @@ This Object provides the information to represent a generic (district) heat or c
         <Type>Float</Type>
         <RangeEnumeration></RangeEnumeration>
         <Units>W</Units>
-        <Description><![CDATA[The current active power]]></Description>
+        <Description><![CDATA[The current active power.]]></Description>
       </Item>
       <Item ID="5802">
         <Name>Max Measured active power</Name>
@@ -157,7 +157,7 @@ This Object provides the information to represent a generic (district) heat or c
         <Type>Float</Type>
         <RangeEnumeration></RangeEnumeration>
         <Units>W</Units>
-        <Description><![CDATA[The maximum active power measured by the sensor since it is ON]]></Description>
+        <Description><![CDATA[The maximum active power measured by the sensor since it is ON.]]></Description>
       </Item>
       <Item ID="5805">
         <Name>Cumulative active power</Name>
@@ -167,7 +167,7 @@ This Object provides the information to represent a generic (district) heat or c
         <Type>Float</Type>
         <RangeEnumeration></RangeEnumeration>
         <Units>Wh</Units>
-        <Description><![CDATA[The cumulative active power since the last cumulative energy reset or device start]]></Description>
+        <Description><![CDATA[The cumulative active power since the last cumulative energy reset or device start.]]></Description>
       </Item>
       <Item ID="12">
         <Name>Flow temperature</Name>

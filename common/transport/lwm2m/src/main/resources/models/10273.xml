@@ -37,6 +37,8 @@ POSSIBILITY OF SUCH DAMAGE.
         <Description1><![CDATA[An alarm indicating reverse flow through the pipe. Also supports delivery of the approximate volume of water flowing in the reverse direction in the preceding period.]]></Description1>
         <ObjectID>10273</ObjectID>
         <ObjectURN>urn:oma:lwm2m:x:10273</ObjectURN>
+        <LWM2MVersion>1.0</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
         <MultipleInstances>Multiple</MultipleInstances>
         <Mandatory>Optional</Mandatory>
         <Resources>

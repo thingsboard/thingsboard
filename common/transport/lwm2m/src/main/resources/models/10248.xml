@@ -37,8 +37,8 @@ POSSIBILITY OF SUCH DAMAGE.
         <Description1>This LWM2M Object provides a range of measurements of connected UEs and provides an Object link to the Connected UE report.</Description1>
         <ObjectID>10248</ObjectID>
         <ObjectURN>urn:oma:lwm2m:x:10248</ObjectURN>
-        <LWM2MVersion/>
-        <ObjectVersion/>
+		<LWM2MVersion>1.0</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
         <MultipleInstances>Single</MultipleInstances>
         <Mandatory>Optional</Mandatory>
         <Resources>

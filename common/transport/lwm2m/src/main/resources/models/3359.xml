@@ -98,7 +98,7 @@ limitations under the License.
 				<Type>Integer</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units></Units>
-				<Description><![CDATA[cell Identity]]></Description>
+				<Description><![CDATA[Cell ID.]]></Description>
 			</Item></Resources>
 		<Description2 />
 	</Object>

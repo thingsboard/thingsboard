@@ -61,7 +61,7 @@ POSSIBILITY OF SUCH DAMAGE.
                 <Type>Integer</Type>
                 <RangeEnumeration></RangeEnumeration>
                 <Units></Units>
-                <Description>The number of times the input transitions from 0 to 1.</Description>
+                <Description>The cumulative value of active state detected.</Description>
             </Item>
             <Item ID="5702">
                 <Name>X Value</Name>

@@ -85,7 +85,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			<RangeEnumeration/>
 			<Units/>
 			<Description>
-			<![CDATA[ Human readable host device manufacturer name ]]>
+			<![CDATA[Human readable host device manufacturer name.]]>
 			</Description>
 		</Item>
 		<Item ID="5906">
@@ -97,7 +97,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			<RangeEnumeration/>
 			<Units/>
 			<Description>
-				<![CDATA[A host device model identifier (manufacturer specified string)]]>
+				<![CDATA[A host device model identifier (manufacturer specified string).]]>
 			</Description>
 		</Item-->
 		<Item ID="100">

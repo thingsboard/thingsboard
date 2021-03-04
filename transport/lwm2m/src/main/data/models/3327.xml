@@ -1,30 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
 
-    Copyright © 2016-2021 The Thingsboard Authors
+<!-- BSD-3 Clause License
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Copyright 2019 Open Mobile Alliance. 
 
-        http://www.apache.org/licenses/LICENSE-2.0
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its
+contributors may be used to endorse or promote products derived
+from this software without specific prior written permission.
 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
 -->
+
 <LWM2M  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M.xsd">
     <Object ObjectType="MODefinition">
         <Name>Conductivity</Name>
         <Description1>This IPSO object should be used to report a measurement of the electric conductivity of a medium or sample. It also provides resources for minimum and maximum measured values, as well as the minimum and maximum range that can be measured by the sensor. An example measurement unit is Siemens.
         </Description1>
         <ObjectID>3327</ObjectID>
-        <ObjectURN>urn:oma:lwm2m:ext:3327</ObjectURN>
+		<ObjectURN>urn:oma:lwm2m:ext:3327:1.1</ObjectURN>
         <LWM2MVersion>1.0</LWM2MVersion>
-        <ObjectVersion>1.0</ObjectVersion>
+		<ObjectVersion>1.1</ObjectVersion>
         <MultipleInstances>Multiple</MultipleInstances>
         <Mandatory>Optional</Mandatory>
         <Resources>
@@ -36,7 +51,7 @@
                 <Type>Float</Type>
                 <RangeEnumeration></RangeEnumeration>
                 <Units></Units>
-                <Description>Last or Current Measured Value from the Sensor</Description>
+                <Description>Last or Current Measured Value from the Sensor.</Description>
             </Item>
             <Item ID="5701">
                 <Name>Sensor Units</Name>
@@ -56,7 +71,7 @@
                 <Type>Float</Type>
                 <RangeEnumeration></RangeEnumeration>
                 <Units></Units>
-                <Description>The minimum value measured by the sensor since power ON or reset</Description>
+                <Description>The minimum value measured by the sensor since power ON or reset.</Description>
             </Item>
             <Item ID="5602">
                 <Name>Max Measured Value</Name>
@@ -66,7 +81,7 @@
                 <Type>Float</Type>
                 <RangeEnumeration></RangeEnumeration>
                 <Units></Units>
-                <Description>The maximum value measured by the sensor since power ON or reset</Description>
+                <Description>The maximum value measured by the sensor since power ON or reset.</Description>
             </Item>
             <Item ID="5603">
                 <Name>Min Range Value</Name>
@@ -76,7 +91,7 @@
                 <Type>Float</Type>
                 <RangeEnumeration></RangeEnumeration>
                 <Units></Units>
-                <Description>The minimum value that can be measured by the sensor</Description>
+                <Description>The minimum value that can be measured by the sensor.</Description>
             </Item>
             <Item ID="5604">
                 <Name>Max Range Value</Name>
@@ -86,7 +101,7 @@
                 <Type>Float</Type>
                 <RangeEnumeration></RangeEnumeration>
                 <Units></Units>
-                <Description>The maximum value that can be measured by the sensor</Description>
+                <Description>The maximum value that can be measured by the sensor.</Description>
             </Item>
             <Item ID="5605">
                 <Name>Reset Min and Max Measured Values</Name>
@@ -96,7 +111,7 @@
                 <Type></Type>
                 <RangeEnumeration></RangeEnumeration>
                 <Units></Units>
-                <Description>Reset the Min and Max Measured Values to Current Value</Description>
+                <Description>Reset the Min and Max Measured Values to Current Value.</Description>
             </Item>
             <Item ID="5821">
                 <Name>Current Calibration</Name>
@@ -106,7 +121,7 @@
                 <Type>Float</Type>
                 <RangeEnumeration></RangeEnumeration>
                 <Units></Units>
-                <Description>Read or Write the current calibration coefficient</Description>
+                <Description>Read or Write the current calibration coefficient.</Description>
             </Item>
             <Item ID="5750">
                 <Name>Application Type</Name>
@@ -116,8 +131,48 @@
                 <Type>String</Type>
                 <RangeEnumeration></RangeEnumeration>
                 <Units></Units>
-                <Description>The application type of the sensor or actuator as a string depending on the use case</Description>
+                <Description>The application type of the sensor or actuator as a string depending on the use case.</Description>
             </Item>
+			<Item ID="5518">
+				<Name>Timestamp</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Time</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>The timestamp of when the measurement was performed.</Description>
+			</Item>
+			<Item ID="6050">
+				<Name>Fractional Timestamp</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration>0..1</RangeEnumeration>
+				<Units>s</Units>
+				<Description>Fractional part of the timestamp when sub-second precision is used (e.g., 0.23 for 230 ms).</Description>
+			</Item>
+			<Item ID="6042">
+				<Name>Measurement Quality Indicator</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration>0..23</RangeEnumeration>
+				<Units></Units>
+				<Description>Measurement quality indicator reported by a smart sensor. 0: UNCHECKED No quality checks were done because they do not exist or can not be applied. 1: REJECTED WITH CERTAINTY The measured value is invalid. 2: REJECTED WITH PROBABILITY The measured value is likely invalid. 3: ACCEPTED BUT SUSPICIOUS The measured value is likely OK. 4: ACCEPTED The measured value is OK. 5-15: Reserved for future extensions. 16-23: Vendor specific measurement quality.</Description>
+			</Item>
+			<Item ID="6049">
+				<Name>Measurement Quality Level</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration>0..100</RangeEnumeration>
+				<Units></Units>
+				<Description>Measurement quality level reported by a smart sensor. Quality level 100 means that the measurement has fully passed quality check algorithms. Smaller quality levels mean that quality has decreased and the measurement has only partially passed quality check algorithms. The smaller the quality level, the more caution should be used by the application when using the measurement. When the quality level is 0 it means that the measurement should certainly be rejected.</Description>
+			</Item>
         </Resources>
         <Description2></Description2>
     </Object>

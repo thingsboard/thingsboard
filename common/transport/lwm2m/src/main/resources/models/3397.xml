@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- BSD-3 Clause License
+
+Copyright 2019 Zumtobel Group. 
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its
+contributors may be used to endorse or promote products derived
+from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M-v1_1.xsd">
+  <Object ObjectType="MODefinition">
+		<Name>oA Physical Colour Temperature Light-Point Actuator</Name>
+		<Description1><![CDATA[The 'oA_Physical_Colour_Temperature_Light-Point_Actuator' represents a physical tunable white light-point actuator. It is necessary to map at least on Logical Light Point Actuator to control the intensity and one Logical Colour Temperature Light-Point to control the colour temperature to the Physical Colour Temperature Light Point.]]></Description1>
+		<ObjectID>3397</ObjectID>
+		<ObjectURN>urn:oma:lwm2m:ext:3397</ObjectURN>
+		<LWM2MVersion>1.1</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
+		<MultipleInstances>Multiple</MultipleInstances>
+		<Mandatory>Optional</Mandatory>
+		<Resources>
+			<Item ID="4001">
+				<Name>ObjectVersion</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[LWM2M Object versioning label.]]></Description>
+			</Item>
+			<Item ID="901">
+				<Name>Documentary Description</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>0..256 bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Resource to hold a documentary text description of the object.]]></Description>
+			</Item>
+			<Item ID="907">
+				<Name>Error Status</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..255</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Error status is a bit coded value that shows all current errors on the object. The error status changes as soon as a new error occurs or an old one is resolved. Bitwise: 0 (LSB): Hardware_Error, 1: Execution_Limit_LED_Temp, 2: Execution_Limit_Power_Restrictions, 3: Light-Point_Malfunction]]></Description>
+			</Item>
+			<Item ID="908">
+				<Name>Mounting Location</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>1..64 bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Describes the location of the device within the building. The content of the string is site specific.]]></Description>
+			</Item>
+			<Item ID="5850">
+				<Name>On/Off</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[On/off control. Boolean value where True is On and False is Off.]]></Description>
+			</Item>
+			<Item ID="100">
+				<Name>Current Intensity</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration>0.0..1.0</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[This Resource represents the current intensity (0-1). This is a 'real-time' value, which is given independently of any ongoing dimming request.]]></Description>
+			</Item>
+			<Item ID="102">
+				<Name>Remaining Transition Time</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..65535</RangeEnumeration>
+				<Units>ms</Units>
+				<Description><![CDATA[Remaining approximated time of any ongoing 'Set Intensity', 'Step' or 'Switch' process which requires a variation of the light output over a period of time higher or equal to one 100ms interval. When the process is started, the value is equal to the time value selected for the process and it is continuously decreased until completed (time=0), or a 'Stop Dimming' request is received.\n\t\t\t\t\n**NOTE:** If during a request the process reaches the Maximum/Minimum Intensity limits, the time is automatically set to '0' as the process is stopped. Scaling is 100ms per unit]]></Description>
+			</Item>
+			
+			
+			<Item ID="137">
+				<Name>Current Colour Temperature</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..65535</RangeEnumeration>
+				<Units>K</Units>
+				<Description><![CDATA[This Resource represents the current colour temperature. This is a 'real-time' value, which is given independently of any ongoing change request.]]></Description>
+			</Item>
+			<Item ID="138">
+				<Name>Remaining Colour Temperature Transition Time</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..65535</RangeEnumeration>
+				<Units>ms</Units>
+				<Description><![CDATA[Remaining approximated time of any ongoing 'Set Temperature', 'Step' or 'Switch' process which requires a variation of the light output over a period of time higher or equal to one 100ms interval. When the process is started, the value is equal to the time value selected for the process and it is continuously decreased until completed (time=0), or a 'Stop' request is received.\n\t\t\t\t\n**NOTE:** If during a request the process reaches the Maximum/Minimum colour temperature limits, the time is automatically set to '0' as the process is stopped. Scaling is 100ms per unit]]></Description>
+			</Item>
+			<Item ID="910">
+				<Name>Total Energy Usage</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..18446744073709551615</RangeEnumeration>
+				<Units>Ws</Units>
+				<Description><![CDATA[The total energy usage of the device (accumulated value)]]></Description>
+			</Item>
+			<Item ID="911">
+				<Name>Actual Power Usage</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration>0..4294967295</RangeEnumeration>
+				<Units>W</Units>
+				<Description><![CDATA[The actual power usage of the device. Scaling is 0.1W per unit]]></Description>
+			</Item>
+			<Item ID="912">
+				<Name>Accuracy Class</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>0..64 bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[The accuracy class of the energy sensor on the device (using either % accuracy or a letter that defines the accuracy class)]]></Description>
+			</Item>
+			<Item ID="930">
+				<Name>Operating Hours</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..4294967295</RangeEnumeration>
+				<Units>h</Units>
+				<Description><![CDATA[The total operating hours where the light point is on.]]></Description>
+			</Item>
+			<Item ID="931">
+				<Name>Adjusted Operating Hours</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..4294967295</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[The total operating hours adjusted by the dim level of the luminaire.]]></Description>
+			</Item>
+			<Item ID="103">
+				<Name>Physical Minimum Intensity</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration>0.000001..1.0</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Minimum intensity that can be set for this instance of a Light Point. This value is factory defined by luminaire or gear manufacturer.]]></Description>
+			</Item>
+			<Item ID="104">
+				<Name>Minimum Intensity</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration>0.000001..1.0</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[The value set in this Resource limits the minimum output of the Light Point. when performing any transition operation (e.g. Switch(ON),'Dim(DOWN)','Step(DOWN)' or Set_Intensity(x)') the minimum intensity value indicated by this Resource will override any other definition or request input parameter value.\nChanging this Resource stops any transition process, and the 'Remaining Transition Time' and 'Current Intensity' are updated.\n\t\t\t\n**Note:** This value must be greater or equal to 'Physical Minimum Intensity' and smaller or equal to 'Maximum Intensity'. If a Light Point with fixed output is used, the 'Minimum Intensity' and 'Maximum Intensity' MUST be defined with the same value.]]></Description>
+			</Item>
+			<Item ID="105">
+				<Name>Maximum Intensity</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration>0.000001..1.0</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[The value set in this Resource limits the maximum output of the Light Point. when performing any transition operation (e.g. Switch(ON),'Dim(UP)','Step(UP)' or Set_Intensity(x)') the maximum intensity value indicated by this Resource will override any other definition or request input parameter value.\nChanging this Resource stops any transition process, and the 'Remaining Transition Time' and 'Current Intensity' are updated.\n\t\t\t\n**Note:** This value must be greater or equal to 'Minimum Intensity'. If a Light Point with fixed output is used, the 'Minimum Intensity' and 'Maximum Intensity' MUST be defined with the same value.]]></Description>
+			</Item>
+			<Item ID="155">
+				<Name>Physical Minimum Colour Temperature</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..65535</RangeEnumeration>
+				<Units>K</Units>
+				<Description><![CDATA[Minimum colour temperature that can be set for this instance of a Light Point. This value is factory defined by luminaire or gear manufacturer.]]></Description>
+			</Item>
+			<Item ID="156">
+				<Name>Physical Maximum Colour Temperature</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..65535</RangeEnumeration>
+				<Units>K</Units>
+				<Description><![CDATA[Maximum colour temperature that can be set for this instance of a Light Point. This value is factory defined by luminaire or gear manufacturer.]]></Description>
+			</Item>
+			<Item ID="157">
+				<Name>Minimum Colour Temperature</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..65535</RangeEnumeration>
+				<Units>K</Units>
+				<Description><![CDATA[The value set in this Resource limits the minimum colour temperature output of the Light Point. When performing any colour temperature transition operation the minimum colour temperature value indicated by this resource will override any other definition or requested input parameter value.\nChanging this resource stops any transition process, and the 'Remaining Colour Temperature Transition Time' and 'Current Colour Temperature' are updated.\n\t\t\t\t\t\n**Note:** This value must be greater or equal to 'Physical Minimum Colour Temperature' and smaller or equal to 'Maximum Colour Temperature'.]]></Description>
+			</Item>
+			<Item ID="158">
+				<Name>Maximum Colour Temperature</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..65535</RangeEnumeration>
+				<Units>K</Units>
+				<Description><![CDATA[The value set in this resource limits the maximum colour temperature output of the Light Point. When performing any colour temperature transition operation the maximum colour temperature value indicated by this resource will override any other definition or requested input parameter value.\nChanging this resource stops any transition process, and the 'Remaining Colour Temperature Transition Time' and 'Current Colour Temperature' are updated.\n\t\t\t\t\t\n**Note:** This value must be smaller or equal to 'Physical Colour Temperature' and greater or equal to 'Minimum Colour Temperature'.]]></Description>
+			</Item>
+			<Item ID="110">
+				<Name>Power On Behaviour</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0: CONFIGURED_ON
+				1: FULL_ON
+				2: RECALL</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Defines the default behaviour of the light point when it is switched 'On'. The following options are possible:\n- *CONFIGURED_ON* intensity goes to the stored default value ('Power On Intensity') [default option]\n- *FULL_ON* intensity always goes to the maximum intensity value allowed\n- *RECALL* if available, the intensity is recalled from 'Stored Intensity', otherwise 'Power On Intensity' is used]]></Description>
+			</Item>
+			<Item ID="111">
+				<Name>Power On Intensity</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration>0.000001..1.0</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Defines the default Intensity used in switch operations that result in a 'On' state. It is used if no intensity is given in the switch request payload and if 'Power On Behaviour' is CONFIGURED_ON. When this Resource is not defined, the value to be used should be '1'.\n\t\t\t\t\n**Note:** When setting this value, the Minimum/Maximum intensity limits must be validated. A write request that requires the final value to be adjusted should send a reply message with the corrected value.]]></Description>
+			</Item>
+			<Item ID="114">
+				<Name>Stored Intensity</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration>0.000001..1.0</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[This Resource represents a copy of the last 'Current Intensity' that is bigger than 0, before a power cycle is triggered. It should be updated in NVM whenever a transition process is completed, and optionally if a power cycle is triggered.]]></Description>
+			</Item>
+			<Item ID="115">
+				<Name>System Failure Intensity</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration>0.000001..1.0</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[This is the intensity value the light point goes to if the connection to the network is lost for longer than 'System Failure Time'.\n\t\t\t\t\n**Note:** When setting the value of this Resource, the limits of 'Minimum Intensity' and 'Maximum Intensity' must be validated. A write operation that requires the final value to be adjusted should result in a reply message with the final corrected value.\nIndependently of the previous limits, a '0' value is allowed and it means, in case of network failure, the 'On/Off Status' is set to 'Off'.]]></Description>
+			</Item>
+		</Resources>
+		<Description2><![CDATA[]]></Description2>
+	</Object>
+</LWM2M>

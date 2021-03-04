@@ -37,6 +37,8 @@ POSSIBILITY OF SUCH DAMAGE.
         <Description1><![CDATA[A binary flag indicating continual usage (e.g. greater than 5 L/h for 24 hours and the flow never returning to zero at any time).]]></Description1>
         <ObjectID>10272</ObjectID>
         <ObjectURN>urn:oma:lwm2m:x:10272</ObjectURN>
+        <LWM2MVersion>1.0</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
         <MultipleInstances>Multiple</MultipleInstances>
         <Mandatory>Optional</Mandatory>
         <Resources>

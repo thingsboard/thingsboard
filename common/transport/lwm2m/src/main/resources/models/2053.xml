@@ -56,7 +56,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				<Type>String</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units></Units>
-				<Description><![CDATA[List of zero or more Local AE-IDs, App-IDs, or the strings “localAE” or “thisCSE”]]></Description>
+				<Description><![CDATA[List of zero or more Local AE-IDs, App-IDs, or the strings "localAE" or "thisCSE"]]></Description>
 			</Item>
 			
 			

@@ -4,6 +4,8 @@
 		<Description1><![CDATA[This Object provides the information to represent a generic VCU(vehicle control unit).]]></Description1>
 		<ObjectID>10244</ObjectID>
 		<ObjectURN>urn:oma:lwm2m:x:10244</ObjectURN>
+		<LWM2MVersion>1.0</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
 		<MultipleInstances>Single</MultipleInstances>
 		<Mandatory>Optional</Mandatory>
 		<Resources>

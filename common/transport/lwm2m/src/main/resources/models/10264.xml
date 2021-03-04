@@ -37,6 +37,8 @@ POSSIBILITY OF SUCH DAMAGE.
         <Description1><![CDATA[The Delivery Schedule object provides a means for controlling the periodic delivery of interval and event data to the LwM2M server.]]></Description1>
         <ObjectID>10264</ObjectID>
         <ObjectURN>urn:oma:lwm2m:x:10264</ObjectURN>
+        <LWM2MVersion>1.0</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
         <MultipleInstances>Multiple</MultipleInstances>
         <Mandatory>Optional</Mandatory>
         <Resources>
