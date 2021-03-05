@@ -455,7 +455,9 @@ function simpleKeyFilterPredicateToText(translate: TranslateService,
       break;
     case FilterPredicateType.BOOLEAN:
       operation = translate.instant(booleanOperationTranslationMap.get(keyFilterPredicate.operation));
-      value = translate.instant(keyFilterPredicate.value.defaultValue ? 'value.true' : 'value.false');
+      if (!dynamicValue) {
+        value = translate.instant(keyFilterPredicate.value.defaultValue ? 'value.true' : 'value.false');
+      }
       break;
   }
   if (!dynamicValue) {
