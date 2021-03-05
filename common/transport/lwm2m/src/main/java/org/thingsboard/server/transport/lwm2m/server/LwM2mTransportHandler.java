@@ -36,8 +36,8 @@ import org.nustaq.serialization.FSTConfiguration;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientProfile;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientProfile;
 
 import java.io.File;
 import java.io.IOException;
@@ -242,11 +242,6 @@ public class LwM2mTransportHandler {
             }
         }
         return null;
-    }
-
-    public static boolean getClientUpdateValueAfterConnect (LwM2mClientProfile profile) {
-        return profile.getPostClientLwM2mSettings().getAsJsonObject().has("clientUpdateValueAfterConnect") &&
-                profile.getPostClientLwM2mSettings().getAsJsonObject().get("clientUpdateValueAfterConnect").getAsBoolean();
     }
 
     public static boolean getClientOnlyObserveAfterConnect (LwM2mClientProfile profile) {
