@@ -31,6 +31,8 @@ public class WidgetType extends BaseData<WidgetTypeId> implements HasTenantId {
     private String bundleAlias;
     private String alias;
     private String name;
+    private String image;
+    private String description;
     private transient JsonNode descriptor;
 
     public WidgetType() {
@@ -47,6 +49,8 @@ public class WidgetType extends BaseData<WidgetTypeId> implements HasTenantId {
         this.bundleAlias = widgetType.getBundleAlias();
         this.alias = widgetType.getAlias();
         this.name = widgetType.getName();
+        this.image = widgetType.getImage();
+        this.description = widgetType.getDescription();
         this.descriptor = widgetType.getDescriptor();
     }
 
@@ -82,6 +86,14 @@ public class WidgetType extends BaseData<WidgetTypeId> implements HasTenantId {
         this.name = name;
     }
 
+    public String getImage() { return image; }
+
+    public void setImage(String image) { this.image = image; }
+
+    public String getDescription() { return description; }
+
+    public void setDescription(String description) { this.description = description; }
+
     public JsonNode getDescriptor() {
         return descriptor;
     }
@@ -97,9 +109,10 @@ public class WidgetType extends BaseData<WidgetTypeId> implements HasTenantId {
         sb.append(", bundleAlias='").append(bundleAlias).append('\'');
         sb.append(", alias='").append(alias).append('\'');
         sb.append(", name='").append(name).append('\'');
+        sb.append(", image='").append(image).append('\'');
+        sb.append(", description='").append(description).append('\'');
         sb.append(", descriptor=").append(descriptor);
         sb.append('}');
         return sb.toString();
     }
-
 }

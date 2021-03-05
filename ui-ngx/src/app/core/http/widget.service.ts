@@ -144,6 +144,8 @@ export class WidgetService {
             typeAlias: widgetTypeInfo.alias,
             type: widgetTypeInfo.type,
             title: widgetTypeInfo.widgetName,
+            image: widgetTypeInfo.image,
+            description: widgetTypeInfo.description,
             sizeX,
             sizeY,
             row: top,
@@ -179,8 +181,9 @@ export class WidgetService {
   public saveWidgetType(widgetInfo: WidgetInfo,
                         id: WidgetTypeId,
                         bundleAlias: string,
+                        createdTime: number,
                         config?: RequestConfig): Observable<WidgetType> {
-    const widgetTypeInstance = toWidgetType(widgetInfo, id, undefined, bundleAlias);
+    const widgetTypeInstance = toWidgetType(widgetInfo, id, undefined, bundleAlias, createdTime);
     return this.http.post<WidgetType>('/api/widgetType', widgetTypeInstance,
       defaultHttpOptionsFromConfig(config)).pipe(
       tap((savedWidgetType) => {

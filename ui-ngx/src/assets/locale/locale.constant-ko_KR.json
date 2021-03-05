@@ -2202,7 +2202,7 @@
         "timeseries": "시계열",
         "search-data": "데이터 검색",
         "no-data-found": "아무 데이터도 없습니다",
-        "latest-values": "최근 값",
+        "latest": "최근 값",
         "rpc": "컨트롤 위젯",
         "alarm": "알람 위젯",
         "static": "상태 위젯",

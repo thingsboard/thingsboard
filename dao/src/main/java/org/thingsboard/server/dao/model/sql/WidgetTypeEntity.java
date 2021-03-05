@@ -52,6 +52,12 @@ public final class WidgetTypeEntity  extends BaseSqlEntity<WidgetType> implement
     @Column(name = ModelConstants.WIDGET_TYPE_NAME_PROPERTY)
     private String name;
 
+    @Column(name = ModelConstants.WIDGET_TYPE_IMAGE_PROPERTY)
+    private String image;
+
+    @Column(name = ModelConstants.WIDGET_TYPE_DESCRIPTION_PROPERTY)
+    private String description;
+
     @Type(type="json")
     @Column(name = ModelConstants.WIDGET_TYPE_DESCRIPTOR_PROPERTY)
     private JsonNode descriptor;
@@ -71,6 +77,8 @@ public final class WidgetTypeEntity  extends BaseSqlEntity<WidgetType> implement
         this.bundleAlias = widgetType.getBundleAlias();
         this.alias = widgetType.getAlias();
         this.name = widgetType.getName();
+        this.image = widgetType.getImage();
+        this.description = widgetType.getDescription();
         this.descriptor = widgetType.getDescriptor();
     }
 
@@ -84,6 +92,8 @@ public final class WidgetTypeEntity  extends BaseSqlEntity<WidgetType> implement
         widgetType.setBundleAlias(bundleAlias);
         widgetType.setAlias(alias);
         widgetType.setName(name);
+        widgetType.setImage(image);
+        widgetType.setDescription(description);
         widgetType.setDescriptor(descriptor);
         return widgetType;
     }

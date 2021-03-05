@@ -274,6 +274,7 @@ export class ImportExportService {
         const isSystem = widgetsBundle.tenantId.id === NULL_UUID;
         this.widgetService.getBundleWidgetTypes(bundleAlias, isSystem).subscribe(
           (widgetTypes) => {
+            widgetTypes = widgetTypes.sort((a, b) => a.createdTime - b.createdTime);
             const widgetsBundleItem: WidgetsBundleItem = {
               widgetsBundle: this.prepareExport(widgetsBundle),
               widgetTypes: []

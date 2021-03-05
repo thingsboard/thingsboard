@@ -516,7 +516,8 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
 
   private commitSaveWidget() {
     const id = (this.widgetType && this.widgetType.id) ? this.widgetType.id : undefined;
-    this.widgetService.saveWidgetType(this.widget, id, this.widgetsBundle.alias).subscribe(
+    const createdTime = (this.widgetType && this.widgetType.createdTime) ? this.widgetType.createdTime : undefined;
+    this.widgetService.saveWidgetType(this.widget, id, this.widgetsBundle.alias, createdTime).subscribe(
       (widgetTypeInstance) => {
         this.setWidgetType(widgetTypeInstance);
         this.saveWidgetPending = false;
@@ -543,7 +544,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
           config.title = this.widget.widgetName;
           this.widget.defaultConfig = JSON.stringify(config);
           this.isDirty = false;
-          this.widgetService.saveWidgetType(this.widget, undefined, saveWidgetAsData.bundleAlias).subscribe(
+          this.widgetService.saveWidgetType(this.widget, undefined, saveWidgetAsData.bundleAlias, undefined).subscribe(
             (widgetTypeInstance) => {
               this.router.navigateByUrl(`/widgets-bundles/${saveWidgetAsData.bundleId}/widgetTypes/${widgetTypeInstance.id.id}`);
             }

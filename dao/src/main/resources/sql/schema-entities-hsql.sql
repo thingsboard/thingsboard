@@ -290,7 +290,9 @@ CREATE TABLE IF NOT EXISTS widget_type (
     bundle_alias varchar(255),
     descriptor varchar(1000000),
     name varchar(255),
-    tenant_id uuid
+    tenant_id uuid,
+    image varchar(1000000),
+    description varchar(255)
 );
 
 CREATE TABLE IF NOT EXISTS widgets_bundle (
@@ -299,7 +301,9 @@ CREATE TABLE IF NOT EXISTS widgets_bundle (
     alias varchar(255),
     search_text varchar(255),
     tenant_id uuid,
-    title varchar(255)
+    title varchar(255),
+    image varchar(1000000),
+    description varchar(255)
 );
 
 CREATE TABLE IF NOT EXISTS entity_view (
