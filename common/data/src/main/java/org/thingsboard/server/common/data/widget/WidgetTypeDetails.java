@@ -20,25 +20,26 @@ import lombok.Data;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 
 @Data
-public class WidgetType extends BaseWidgetType {
+public class WidgetTypeDetails extends WidgetType {
 
-    private transient JsonNode descriptor;
+    private String image;
+    private String description;
 
-    public WidgetType() {
+    public WidgetTypeDetails() {
         super();
     }
 
-    public WidgetType(WidgetTypeId id) {
+    public WidgetTypeDetails(WidgetTypeId id) {
         super(id);
     }
 
-    public WidgetType(BaseWidgetType baseWidgetType) {
+    public WidgetTypeDetails(BaseWidgetType baseWidgetType) {
         super(baseWidgetType);
     }
 
-    public WidgetType(WidgetType widgetType) {
-        super(widgetType);
-        this.descriptor = widgetType.getDescriptor();
+    public WidgetTypeDetails(WidgetTypeDetails widgetTypeDetails) {
+        super(widgetTypeDetails);
+        this.image = widgetTypeDetails.getImage();
+        this.description = widgetTypeDetails.getDescription();
     }
-
 }

@@ -20,8 +20,15 @@ import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
-import { toWidgetInfo, WidgetInfo } from '@home/models/widget-component.models';
-import { Widget, WidgetConfig, WidgetType, widgetType, widgetTypesData } from '@shared/models/widget.models';
+import { detailsToWidgetInfo, toWidgetInfo, WidgetInfo } from '@home/models/widget-component.models';
+import {
+  Widget,
+  WidgetConfig,
+  WidgetType,
+  widgetType,
+  WidgetTypeDetails,
+  widgetTypesData
+} from '@shared/models/widget.models';
 import { ActivatedRoute, Router } from '@angular/router';
 import { deepClone } from '@core/utils';
 import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
@@ -108,7 +115,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   isReadOnly: boolean;
 
   widgetsBundle: WidgetsBundle;
-  widgetType: WidgetType;
+  widgetTypeDetails: WidgetTypeDetails;
   widget: WidgetInfo;
   origWidget: WidgetInfo;
 
@@ -175,14 +182,14 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     } else {
       this.isReadOnly = this.authUser.authority !== Authority.SYS_ADMIN;
     }
-    this.widgetType = data.widgetEditorData.widgetType;
+    this.widgetTypeDetails = data.widgetEditorData.widgetTypeDetails;
     this.widget = data.widgetEditorData.widget;
-    if (this.widgetType) {
+    if (this.widgetTypeDetails) {
       const config = JSON.parse(this.widget.defaultConfig);
       this.widget.defaultConfig = JSON.stringify(config);
     }
     this.origWidget = deepClone(this.widget);
-    if (!this.widgetType) {
+    if (!this.widgetTypeDetails) {
       this.isDirty = true;
     }
   }
@@ -515,11 +522,11 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   }
 
   private commitSaveWidget() {
-    const id = (this.widgetType && this.widgetType.id) ? this.widgetType.id : undefined;
-    const createdTime = (this.widgetType && this.widgetType.createdTime) ? this.widgetType.createdTime : undefined;
-    this.widgetService.saveWidgetType(this.widget, id, this.widgetsBundle.alias, createdTime).subscribe(
-      (widgetTypeInstance) => {
-        this.setWidgetType(widgetTypeInstance);
+    const id = (this.widgetTypeDetails && this.widgetTypeDetails.id) ? this.widgetTypeDetails.id : undefined;
+    const createdTime = (this.widgetTypeDetails && this.widgetTypeDetails.createdTime) ? this.widgetTypeDetails.createdTime : undefined;
+    this.widgetService.saveWidgetTypeDetails(this.widget, id, this.widgetsBundle.alias, createdTime).subscribe(
+      (widgetTypeDetails) => {
+        this.setWidgetTypeDetails(widgetTypeDetails);
         this.saveWidgetPending = false;
         this.store.dispatch(new ActionNotificationShow(
           {message: this.translate.instant('widget.widget-saved'), type: 'success', duration: 500}));
@@ -544,9 +551,9 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
           config.title = this.widget.widgetName;
           this.widget.defaultConfig = JSON.stringify(config);
           this.isDirty = false;
-          this.widgetService.saveWidgetType(this.widget, undefined, saveWidgetAsData.bundleAlias, undefined).subscribe(
-            (widgetTypeInstance) => {
-              this.router.navigateByUrl(`/widgets-bundles/${saveWidgetAsData.bundleId}/widgetTypes/${widgetTypeInstance.id.id}`);
+          this.widgetService.saveWidgetTypeDetails(this.widget, undefined, saveWidgetAsData.bundleAlias, undefined).subscribe(
+            (widgetTypeDetails) => {
+              this.router.navigateByUrl(`/widgets-bundles/${saveWidgetAsData.bundleId}/widgetTypes/${widgetTypeDetails.id.id}`);
             }
           );
         }
@@ -555,9 +562,9 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     );
   }
 
-  private setWidgetType(widgetTypeInstance: WidgetType) {
-    this.widgetType = widgetTypeInstance;
-    this.widget = toWidgetInfo(this.widgetType);
+  private setWidgetTypeDetails(widgetTypeDetails: WidgetTypeDetails) {
+    this.widgetTypeDetails = widgetTypeDetails;
+    this.widget = detailsToWidgetInfo(this.widgetTypeDetails);
     const config = JSON.parse(this.widget.defaultConfig);
     this.widget.defaultConfig = JSON.stringify(config);
     this.origWidget = deepClone(this.widget);

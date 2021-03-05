@@ -470,8 +470,6 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
                   typeAlias: widgetInfo.alias,
                   type: widgetInfo.type,
                   title: widgetInfo.widgetName,
-                  image: widgetInfo.image,
-                  description: widgetInfo.description,
                   sizeX,
                   sizeY,
                   row: 0,

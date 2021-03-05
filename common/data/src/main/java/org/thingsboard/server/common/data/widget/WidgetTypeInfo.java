@@ -15,30 +15,32 @@
  */
 package org.thingsboard.server.common.data.widget;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 
 @Data
-public class WidgetType extends BaseWidgetType {
+public class WidgetTypeInfo extends BaseWidgetType {
 
-    private transient JsonNode descriptor;
+    private String image;
+    private String description;
+    private String widgetType;
 
-    public WidgetType() {
+    public WidgetTypeInfo() {
         super();
     }
 
-    public WidgetType(WidgetTypeId id) {
+    public WidgetTypeInfo(WidgetTypeId id) {
         super(id);
     }
 
-    public WidgetType(BaseWidgetType baseWidgetType) {
+    public WidgetTypeInfo(BaseWidgetType baseWidgetType) {
         super(baseWidgetType);
     }
 
-    public WidgetType(WidgetType widgetType) {
-        super(widgetType);
-        this.descriptor = widgetType.getDescriptor();
+    public WidgetTypeInfo(WidgetTypeInfo widgetTypeInfo) {
+        super(widgetTypeInfo);
+        this.image = widgetTypeInfo.getImage();
+        this.description = widgetTypeInfo.getDescription();
+        this.widgetType = widgetTypeInfo.getWidgetType();
     }
-
 }

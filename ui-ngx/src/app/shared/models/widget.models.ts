@@ -165,14 +165,26 @@ export interface WidgetControllerDescriptor {
   actionSources?: {[actionSourceId: string]: WidgetActionSource};
 }
 
-export interface WidgetType extends BaseData<WidgetTypeId> {
+export interface BaseWidgetType extends BaseData<WidgetTypeId> {
   tenantId: TenantId;
   bundleAlias: string;
   alias: string;
   name: string;
+}
+
+export interface WidgetType extends BaseWidgetType {
+  descriptor: WidgetTypeDescriptor;
+}
+
+export interface WidgetTypeInfo extends BaseWidgetType {
   image: string;
   description: string;
-  descriptor: WidgetTypeDescriptor;
+  widgetType: widgetType;
+}
+
+export interface WidgetTypeDetails extends WidgetType {
+  image: string;
+  description: string;
 }
 
 export enum LegendDirection {
@@ -417,8 +429,8 @@ export interface WidgetInfo {
   typeAlias: string;
   type: widgetType;
   title: string;
-  image: string;
-  description: string;
+  image?: string;
+  description?: string;
 }
 
 export interface GroupInfo {

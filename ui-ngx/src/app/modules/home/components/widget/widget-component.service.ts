@@ -104,8 +104,6 @@ export class WidgetComponentService {
             controllerScript: this.utils.editWidgetInfo.controllerScript,
             settingsSchema: this.utils.editWidgetInfo.settingsSchema,
             dataKeySettingsSchema: this.utils.editWidgetInfo.dataKeySettingsSchema,
-            image: this.utils.editWidgetInfo.image,
-            description: this.utils.editWidgetInfo.description,
             defaultConfig: this.utils.editWidgetInfo.defaultConfig
           }, new WidgetTypeId('1'), new TenantId( NULL_UUID ), 'customWidgetBundle', undefined
         );

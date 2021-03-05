@@ -97,17 +97,16 @@ export class DashboardWidgetSelectComponent implements OnInit {
       if (this.widgetsBundle !== null) {
         const bundleAlias = this.widgetsBundle.alias;
         const isSystem = this.widgetsBundle.tenantId.id === NULL_UUID;
-        this.widgetsInfo = this.widgetsService.getBundleWidgetTypes(bundleAlias, isSystem).pipe(
+        this.widgetsInfo = this.widgetsService.getBundleWidgetTypeInfos(bundleAlias, isSystem).pipe(
           map(widgets => widgets.sort((a, b) => b.createdTime - a.createdTime)),
-          map(widgets => widgets.map((type) => {
-            const widgetTypeInfo = toWidgetInfo(type);
-            this.widgetsType.add(widgetTypeInfo.type);
+          map(widgets => widgets.map((widgetTypeInfo) => {
+            this.widgetsType.add(widgetTypeInfo.widgetType);
             const widget: WidgetInfo = {
               isSystemType: isSystem,
               bundleAlias,
               typeAlias: widgetTypeInfo.alias,
-              type: widgetTypeInfo.type,
-              title: widgetTypeInfo.widgetName,
+              type: widgetTypeInfo.widgetType,
+              title: widgetTypeInfo.name,
               image: widgetTypeInfo.image,
               description: widgetTypeInfo.description
             };

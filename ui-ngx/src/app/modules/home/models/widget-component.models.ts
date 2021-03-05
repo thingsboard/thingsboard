@@ -27,7 +27,7 @@ import {
   WidgetControllerDescriptor,
   WidgetType,
   widgetType,
-  WidgetTypeDescriptor,
+  WidgetTypeDescriptor, WidgetTypeDetails,
   WidgetTypeParameters
 } from '@shared/models/widget.models';
 import { Timewindow, WidgetTimewindow } from '@shared/models/time/time.models';
@@ -347,8 +347,8 @@ export interface WidgetInfo extends WidgetTypeDescriptor, WidgetControllerDescri
   alias: string;
   typeSettingsSchema?: string | any;
   typeDataKeySettingsSchema?: string | any;
-  image: string;
-  description: string;
+  image?: string;
+  description?: string;
   componentFactory?: ComponentFactory<IDynamicWidgetComponent>;
 }
 
@@ -427,11 +427,16 @@ export interface WidgetTypeInstance {
   onDestroy?: () => void;
 }
 
+export function detailsToWidgetInfo(widgetTypeDetailsEntity: WidgetTypeDetails): WidgetInfo {
+  const widgetInfo = toWidgetInfo(widgetTypeDetailsEntity);
+  widgetInfo.image = widgetTypeDetailsEntity.image;
+  widgetInfo.description = widgetTypeDetailsEntity.description;
+  return widgetInfo;
+}
+
 export function toWidgetInfo(widgetTypeEntity: WidgetType): WidgetInfo {
   return {
     widgetName: widgetTypeEntity.name,
-    image: widgetTypeEntity.image,
-    description: widgetTypeEntity.description,
     alias: widgetTypeEntity.alias,
     type: widgetTypeEntity.descriptor.type,
     sizeX: widgetTypeEntity.descriptor.sizeX,
@@ -444,6 +449,16 @@ export function toWidgetInfo(widgetTypeEntity: WidgetType): WidgetInfo {
     dataKeySettingsSchema: widgetTypeEntity.descriptor.dataKeySettingsSchema,
     defaultConfig: widgetTypeEntity.descriptor.defaultConfig
   };
+}
+
+export function toWidgetTypeDetails(widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId: TenantId,
+                                    bundleAlias: string, createdTime: number): WidgetTypeDetails {
+  const widgetTypeEntity = toWidgetType(widgetInfo, id, tenantId, bundleAlias, createdTime);
+  const widgetTypeDetails: WidgetTypeDetails = {...widgetTypeEntity,
+    description: widgetInfo.description,
+    image: widgetInfo.image
+  };
+  return widgetTypeDetails;
 }
 
 export function toWidgetType(widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId: TenantId,
@@ -467,8 +482,6 @@ export function toWidgetType(widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId:
     bundleAlias,
     alias: widgetInfo.alias,
     name: widgetInfo.widgetName,
-    image: widgetInfo.image,
-    description: widgetInfo.description,
     descriptor
   };
 }

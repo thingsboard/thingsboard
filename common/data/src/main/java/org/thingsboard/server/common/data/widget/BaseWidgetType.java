@@ -15,30 +15,35 @@
  */
 package org.thingsboard.server.common.data.widget;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 
 @Data
-public class WidgetType extends BaseWidgetType {
+public class BaseWidgetType extends BaseData<WidgetTypeId> implements HasTenantId {
 
-    private transient JsonNode descriptor;
+    private static final long serialVersionUID = 8388684344603660756L;
 
-    public WidgetType() {
+    private TenantId tenantId;
+    private String bundleAlias;
+    private String alias;
+    private String name;
+
+    public BaseWidgetType() {
         super();
     }
 
-    public WidgetType(WidgetTypeId id) {
+    public BaseWidgetType(WidgetTypeId id) {
         super(id);
     }
 
-    public WidgetType(BaseWidgetType baseWidgetType) {
-        super(baseWidgetType);
-    }
-
-    public WidgetType(WidgetType widgetType) {
+    public BaseWidgetType(BaseWidgetType widgetType) {
         super(widgetType);
-        this.descriptor = widgetType.getDescriptor();
+        this.tenantId = widgetType.getTenantId();
+        this.bundleAlias = widgetType.getBundleAlias();
+        this.alias = widgetType.getAlias();
+        this.name = widgetType.getName();
     }
-
 }
