@@ -190,7 +190,7 @@ public class ThingsboardInstallService {
                             if (databaseTsUpgradeService != null) {
                                 databaseTsUpgradeService.upgradeDatabase("3.2.1");
                             }
-
+                            databaseEntitiesUpgradeService.upgradeDatabase("3.2.1");
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
                             break;

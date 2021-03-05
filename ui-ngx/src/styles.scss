@@ -753,6 +753,9 @@ mat-label {
     &.tb-mat-20 {
       @include tb-mat-icon-size(20);
     }
+    &.tb-mat-28 {
+      @include tb-mat-icon-size(28);
+    }
     &.tb-mat-32 {
       @include tb-mat-icon-size(32);
     }
@@ -762,6 +765,9 @@ mat-label {
   }
 
   .mat-icon-button {
+    &.tb-mat-28 {
+      @include tb-mat-icon-button-size(28);
+    }
     &.tb-mat-32 {
       @include tb-mat-icon-button-size(32);
     }

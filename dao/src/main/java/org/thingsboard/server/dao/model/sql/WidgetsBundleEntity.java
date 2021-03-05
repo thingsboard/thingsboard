@@ -48,6 +48,12 @@ public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> impl
     @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
     private String searchText;
 
+    @Column(name = ModelConstants.WIDGETS_BUNDLE_IMAGE_PROPERTY)
+    private String image;
+
+    @Column(name = ModelConstants.WIDGETS_BUNDLE_DESCRIPTION)
+    private String description;
+
     public WidgetsBundleEntity() {
         super();
     }
@@ -62,6 +68,8 @@ public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> impl
         }
         this.alias = widgetsBundle.getAlias();
         this.title = widgetsBundle.getTitle();
+        this.image = widgetsBundle.getImage();
+        this.description = widgetsBundle.getDescription();
     }
 
     @Override
@@ -83,6 +91,8 @@ public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> impl
         }
         widgetsBundle.setAlias(alias);
         widgetsBundle.setTitle(title);
+        widgetsBundle.setImage(image);
+        widgetsBundle.setDescription(description);
         return widgetsBundle;
     }
 }
