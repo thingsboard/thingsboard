@@ -16,7 +16,6 @@
 package org.thingsboard.server.transport.lwm2m.server;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -58,7 +57,6 @@ import org.thingsboard.server.transport.lwm2m.server.client.ResultsAnalyzerParam
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -446,14 +444,12 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
     }
 
     /**
-     * #1 сlientOnlyObserveAfterConnect == true
+     * #1 clientOnlyObserveAfterConnect == true
      * - Only Observe Request to the client marked as observe from the profile configuration.
-     * #2. сlientOnlyObserveAfterConnect == false & clientUpdateValueAfterConnect == false
-     * - Request to the client after registration to read the values of the resources marked as attribute or telemetry from the profile configuration.
-     * - then Observe Request to the client marked as observe from the profile configuration.
-     * #3. сlientOnlyObserveAfterConnect == false & clientUpdateValueAfterConnect == true
-     * После регистрации отправляю запрос на read  всех ресурсов, котрые послк регистрации, а затем запрос на observe (edited)
-     * - Request to the client after registration to read all resource values for all objects
+     * #2. clientOnlyObserveAfterConnect == false
+     * После регистрации отправляю запрос на read  всех ресурсов, которые после регистрации есть у клиента,
+     * а затем запрос на observe (edited)
+     * - Read Request to the client after registration to read all resource values for all objects
      * - then Observe Request to the client marked as observe from the profile configuration.
      *
      * @param registration - Registration LwM2M Client
@@ -464,16 +460,9 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         Set<String> clientObjects = this.getAllOjectsInClient(registration);
         if (clientObjects != null && !LwM2mTransportHandler.getClientOnlyObserveAfterConnect(lwM2MClientProfile)) {
             // #2
-            if (!LwM2mTransportHandler.getClientUpdateValueAfterConnect(lwM2MClientProfile)) {
-                this.initReadAttrTelemetryObserveToClient(registration, lwM2MClient, GET_TYPE_OPER_READ);
-
-            }
-            // #3
-            else {
-                lwM2MClient.getPendingRequests().addAll(clientObjects);
-                clientObjects.forEach(path -> lwM2mTransportRequest.sendAllRequest(registration, path, GET_TYPE_OPER_READ, ContentFormat.TLV.getName(),
-                        null, null, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getTimeout()));
-            }
+            lwM2MClient.getPendingRequests().addAll(clientObjects);
+            clientObjects.forEach(path -> lwM2mTransportRequest.sendAllRequest(registration, path, GET_TYPE_OPER_READ, ContentFormat.TLV.getName(),
+                    null, null, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getTimeout()));
         }
         // #1
         this.initReadAttrTelemetryObserveToClient(registration, lwM2MClient, GET_TYPE_OPER_OBSERVE);
@@ -786,17 +775,17 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         if (lwM2mClientContext.addUpdateProfileParameters(deviceProfile)) {
             // #1
             JsonArray attributeOld = lwM2MClientProfileOld.getPostAttributeProfile();
-            Set<String> attributeSetOld = this.convertJsonArrayToSet (attributeOld);
+            Set<String> attributeSetOld = this.convertJsonArrayToSet(attributeOld);
             JsonArray telemetryOld = lwM2MClientProfileOld.getPostTelemetryProfile();
-            Set<String> telemetrySetOld = this.convertJsonArrayToSet (telemetryOld);
+            Set<String> telemetrySetOld = this.convertJsonArrayToSet(telemetryOld);
             JsonArray observeOld = lwM2MClientProfileOld.getPostObserveProfile();
             JsonObject keyNameOld = lwM2MClientProfileOld.getPostKeyNameProfile();
 
             LwM2mClientProfile lwM2MClientProfileNew = lwM2mClientContext.getProfiles().get(deviceProfile.getUuidId());
             JsonArray attributeNew = lwM2MClientProfileNew.getPostAttributeProfile();
-            Set<String> attributeSetNew = this.convertJsonArrayToSet (attributeNew);
+            Set<String> attributeSetNew = this.convertJsonArrayToSet(attributeNew);
             JsonArray telemetryNew = lwM2MClientProfileNew.getPostTelemetryProfile();
-            Set<String> telemetrySetNew =  this.convertJsonArrayToSet (telemetryNew);
+            Set<String> telemetrySetNew = this.convertJsonArrayToSet(telemetryNew);
             JsonArray observeNew = lwM2MClientProfileNew.getPostObserveProfile();
             JsonObject keyNameNew = lwM2MClientProfileNew.getPostKeyNameProfile();
 
