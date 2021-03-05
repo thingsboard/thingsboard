@@ -30,6 +30,7 @@ import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import javax.annotation.PostConstruct;
 import java.util.Optional;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Service
@@ -53,7 +54,7 @@ public class TokenOutdatingServiceImpl implements TokenOutdatingService {
         return Optional.ofNullable(tokenOutdatageTimeCache.get(toKey(userId), Long.class))
                 .map(outdatageTime -> {
                     if (System.currentTimeMillis() - outdatageTime <= SECONDS.toMillis(jwtSettings.getRefreshTokenExpTime())) {
-                        return issueTime <= outdatageTime;
+                        return MILLISECONDS.toSeconds(issueTime) < MILLISECONDS.toSeconds(outdatageTime);
                     } else {
                         /*
                          * Means that since the outdating has passed more than
