@@ -49,8 +49,10 @@ public class ResourceController extends BaseController {
     @ResponseBody
     public Resource saveResource(Resource resource) throws ThingsboardException {
         try {
-            resource.setTenantId(getCurrentUser().getTenantId());
-            return checkNotNull(resourceService.saveResource(resource));
+            resource.setTenantId(getTenantId());
+            Resource savedResource = checkNotNull(resourceService.saveResource(resource));
+            tbClusterService.onResourceChange(savedResource, null);
+            return savedResource;
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -61,7 +63,7 @@ public class ResourceController extends BaseController {
     @ResponseBody
     public List<Resource> getResources(@RequestParam(required = false) boolean system) throws ThingsboardException {
         try {
-            return checkNotNull(resourceService.findByTenantId(system ? TenantId.SYS_TENANT_ID : getCurrentUser().getTenantId()));
+            return checkNotNull(resourceService.findResourcesByTenantId(system ? TenantId.SYS_TENANT_ID : getTenantId()));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -70,13 +72,14 @@ public class ResourceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/resource/{resourceType}/{resourceId}", method = RequestMethod.DELETE)
     @ResponseBody
-    public boolean deleteResource(@PathVariable("resourceType") ResourceType resourceType,
-                                  @PathVariable("resourceId") String resourceId) throws ThingsboardException {
+    public void deleteResource(@PathVariable("resourceType") ResourceType resourceType,
+                               @PathVariable("resourceId") String resourceId) throws ThingsboardException {
         try {
-            return resourceService.deleteResource(getCurrentUser().getTenantId(), resourceType, resourceId);
+            Resource resource = checkNotNull(resourceService.getResource(getTenantId(), resourceType, resourceId));
+            resourceService.deleteResource(getTenantId(), resourceType, resourceId);
+            tbClusterService.onResourceDeleted(resource, null);
         } catch (Exception e) {
             throw handleException(e);
         }
     }
-
 }

@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.data.transport.resource.Resource;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -71,4 +72,8 @@ public interface TbClusterService {
     void onDeviceChange(Device device, TbQueueCallback callback);
 
     void onDeviceDeleted(Device device, TbQueueCallback callback);
+
+    void onResourceChange(Resource resource, TbQueueCallback callback);
+
+    void onResourceDeleted(Resource resource, TbQueueCallback callback);
 }

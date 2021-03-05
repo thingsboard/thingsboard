@@ -201,6 +201,25 @@ message LwM2MResponseMsg {
   LwM2MRegistrationResponseMsg registrationMsg = 1;
 }
 
+message ResourceMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string resourceType = 3;
+  string resourceId = 4;
+  string value = 5;
+}
+
+message GetResourcesRequestMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string resourceType = 3;
+  string resourceId = 4;
+}
+
+message GetResourcesResponseMsg {
+  repeated ResourceMsg resources = 1;
+}
+
 message ValidateDeviceLwM2MCredentialsRequestMsg {
   string credentialsId = 1;
 }
@@ -240,6 +259,20 @@ message EntityDeleteMsg {
   string entityType = 1;
   int64 entityIdMSB = 2;
   int64 entityIdLSB = 3;
+}
+
+message ResourceUpdateMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string resourceType = 3;
+  string resourceId = 4;
+}
+
+message ResourceDeleteMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string resourceType = 3;
+  string resourceId = 4;
 }
 
 message SessionCloseNotificationProto {
@@ -525,6 +558,7 @@ message TransportApiRequestMsg {
   ValidateBasicMqttCredRequestMsg validateBasicMqttCredRequestMsg = 6;
   ProvisionDeviceRequestMsg provisionDeviceRequestMsg = 7;
   ValidateDeviceLwM2MCredentialsRequestMsg validateDeviceLwM2MCredentialsRequestMsg = 8;
+  GetResourcesRequestMsg resourcesRequestMsg = 9;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
@@ -534,6 +568,7 @@ message TransportApiResponseMsg {
   GetEntityProfileResponseMsg entityProfileResponseMsg = 3;
   ProvisionDeviceResponseMsg provisionDeviceResponseMsg = 4;
   LwM2MResponseMsg lwM2MResponseMsg = 6;
+  GetResourcesResponseMsg resourcesResponseMsg = 7;
 }
 
 /* Messages that are handled by ThingsBoard Core Service */
@@ -578,6 +613,8 @@ message ToTransportMsg {
   EntityDeleteMsg entityDeleteMsg = 9;
   ProvisionDeviceResponseMsg provisionResponse = 10;
   ToTransportUpdateCredentialsProto toTransportUpdateCredentialsNotification = 11;
+  ResourceUpdateMsg resourceUpdateMsg = 12;
+  ResourceDeleteMsg resourceDeleteMsg = 13;
 }
 
 message UsageStatsKVProto{

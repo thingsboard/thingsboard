@@ -25,6 +25,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestM
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetResourcesRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetResourcesResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.LwM2MRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.LwM2MResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
@@ -50,6 +52,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509Ce
 public interface TransportService {
 
     GetEntityProfileResponseMsg getEntityProfile(GetEntityProfileRequestMsg msg);
+
+    GetResourcesResponseMsg getResources(GetResourcesRequestMsg msg);
 
     void process(DeviceTransportType transportType, ValidateDeviceTokenRequestMsg msg,
                  TransportServiceCallback<ValidateDeviceCredentialsResponse> callback);

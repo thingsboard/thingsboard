@@ -24,6 +24,9 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.List;
 
+import static org.thingsboard.server.dao.device.DeviceServiceImpl.INCORRECT_TENANT_ID;
+import static org.thingsboard.server.dao.service.Validator.validateId;
+
 @Service
 @Slf4j
 public class BaseResourceService implements ResourceService {
@@ -49,16 +52,24 @@ public class BaseResourceService implements ResourceService {
     }
 
     @Override
-    public boolean deleteResource(TenantId tenantId, ResourceType resourceType, String resourceId) {
+    public void deleteResource(TenantId tenantId, ResourceType resourceType, String resourceId) {
         log.trace("Executing deleteResource [{}] [{}] [{}]", tenantId, resourceType, resourceId);
         validate(tenantId, resourceType, resourceId);
-        return resourceDao.deleteResource(tenantId, resourceType, resourceId);
+        resourceDao.deleteResource(tenantId, resourceType, resourceId);
     }
 
     @Override
-    public List<Resource> findByTenantId(TenantId tenantId) {
+    public List<Resource> findResourcesByTenantId(TenantId tenantId) {
         log.trace("Executing findByTenantId [{}]", tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         return resourceDao.findAllByTenantId(tenantId);
+    }
+
+    @Override
+    public void deleteResourcesByTenantId(TenantId tenantId) {
+        log.trace("Executing deleteDevicesByTenantId, tenantId [{}]", tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        resourceDao.removeAllByTenantId(tenantId);
     }
 
     protected void validate(Resource resource) {
@@ -79,12 +90,7 @@ public class BaseResourceService implements ResourceService {
         if (resourceId == null) {
             throw new DataValidationException("Resource id should be specified!");
         }
-        validate(tenantId);
+        validateId(tenantId, "Incorrect tenantId ");
     }
 
-    protected void validate(TenantId tenantId) {
-        if (tenantId == null) {
-            throw new DataValidationException("Tenant id should be specified!");
-        }
-    }
 }

@@ -24,7 +24,6 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -206,7 +205,7 @@ public class InstallScripts {
                             resource.setTenantId(TenantId.SYS_TENANT_ID);
                             resource.setResourceType(ResourceType.LWM2M_MODEL);
                             resource.setResourceId(path.getFileName().toString());
-                            resource.setValue(Files.readString(path));
+                            resource.setValue(Base64.getEncoder().encodeToString(Files.readAllBytes(path)));
                             resourceService.saveResource(resource);
                         } catch (Exception e) {
                             log.error("Unable to load lwm2m model [{}]", path.toString());
@@ -220,7 +219,7 @@ public class InstallScripts {
                         try {
                             Resource resource = new Resource();
                             resource.setTenantId(TenantId.SYS_TENANT_ID);
-                            resource.setResourceType(ResourceType.LWM2M_KEY_STORE);
+                            resource.setResourceType(ResourceType.JKS);
                             resource.setResourceId(jksPath.getFileName().toString());
                             resource.setValue(Base64.getEncoder().encodeToString(Files.readAllBytes(jksPath)));
                             resourceService.saveResource(resource);

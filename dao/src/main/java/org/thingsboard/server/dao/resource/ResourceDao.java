@@ -27,7 +27,9 @@ public interface ResourceDao {
 
     Resource getResource(TenantId tenantId, ResourceType resourceType, String resourceId);
 
-    boolean deleteResource(TenantId tenantId, ResourceType resourceType, String resourceId);
+    void deleteResource(TenantId tenantId, ResourceType resourceType, String resourceId);
 
     List<Resource> findAllByTenantId(TenantId tenantId);
+
+    void removeAllByTenantId(TenantId tenantId);
 }

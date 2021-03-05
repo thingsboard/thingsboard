@@ -56,18 +56,22 @@ public class ResourceDaoImpl implements ResourceDao {
 
     @Override
     @Transactional
-    public boolean deleteResource(TenantId tenantId, ResourceType resourceType, String resourceId) {
+    public void deleteResource(TenantId tenantId, ResourceType resourceType, String resourceId) {
         ResourceCompositeKey key = new ResourceCompositeKey();
         key.setTenantId(tenantId.getId());
         key.setResourceType(resourceType.name());
         key.setResourceId(resourceId);
 
         resourceRepository.deleteById(key);
-        return resourceRepository.existsById(key);
     }
 
     @Override
     public List<Resource> findAllByTenantId(TenantId tenantId) {
-        return DaoUtil.convertDataList(resourceRepository.findAllByTenantId(tenantId));
+        return DaoUtil.convertDataList(resourceRepository.findAllByTenantId(tenantId.getId()));
+    }
+
+    @Override
+    public void removeAllByTenantId(TenantId tenantId) {
+        resourceRepository.removeAllByTenantId(tenantId.getId());
     }
 }

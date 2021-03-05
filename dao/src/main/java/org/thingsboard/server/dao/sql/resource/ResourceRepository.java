@@ -21,8 +21,11 @@ import org.thingsboard.server.dao.model.sql.ResourceCompositeKey;
 import org.thingsboard.server.dao.model.sql.ResourceEntity;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface ResourceRepository extends CrudRepository<ResourceEntity, ResourceCompositeKey> {
 
-    List<ResourceEntity> findAllByTenantId(TenantId tenantId);
+    List<ResourceEntity> findAllByTenantId(UUID tenantId);
+
+    void removeAllByTenantId(UUID tenantId);
 }
