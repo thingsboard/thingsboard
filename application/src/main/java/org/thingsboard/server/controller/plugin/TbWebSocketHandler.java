@@ -63,6 +63,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
 
     private static final ConcurrentMap<String, SessionMetaData> internalSessionMap = new ConcurrentHashMap<>();
     private static final ConcurrentMap<String, String> externalSessionMap = new ConcurrentHashMap<>();
+    private static final ByteBuffer PING_MSG = ByteBuffer.wrap(new byte[]{});
 
     @Autowired
     private TelemetryWebSocketService webSocketService;
@@ -212,7 +213,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         synchronized void sendPing(long currentTime) {
             try {
                 if (currentTime - lastActivityTime >= pingTimeout) {
-                    this.asyncRemote.sendPing(ByteBuffer.wrap(new byte[]{}));
+                    this.asyncRemote.sendPing(PING_MSG);
                     lastActivityTime = currentTime;
                 }
             } catch (Exception e) {
