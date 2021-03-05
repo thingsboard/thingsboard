@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+FILE INFORMATION
+
+OMA Permanent Document
+   File: OMA-SUP-XML_27-V1_0-20201110-A.xml
+   Path: http://www.openmobilealliance.org/release/ObjLwM2M_5GNR_Conn/
+
+OMNA LwM2M Registry
+   Path: https://github.com/OpenMobileAlliance/lwm2m-registry
+   Name: 27.xml
+
+NORMATIVE INFORMATION
+
+  Information about this file can be found in the latest revision of
+
+    OMA-TS-LightweightM2M_Core-V1_2
+
+  This is available at http://www.openmobilealliance.org/release/LightweightM2M/
+
+  Send comments to https://github.com/OpenMobileAlliance/OMA_LwM2M_for_Developers/issues
+
+LEGAL DISCLAIMER
+
+  Copyright 2020 Open Mobile Alliance.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions
+  are met:
+
+  1. Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution.
+  3. Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived
+  from this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+  COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  POSSIBILITY OF SUCH DAMAGE.
+
+  The above license is used as a license under copyright only.  Please
+  reference the OMA IPR Policy for patent licensing terms:
+  https://www.omaspecworks.org/about/intellectual-property-rights/
+
+-->
+
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.openmobilealliance.org/tech/profiles/LWM2M-v1_1.xsd">
+	<Object ObjectType="MODefinition">
+		<Name>5GNR Connectivity</Name>
+		<Description1><![CDATA[This is a device management object that should be used for 5G-NR capable devices.]]></Description1>
+		<ObjectID>27</ObjectID>
+		<ObjectURN>urn:oma:lwm2m:oma:27</ObjectURN>
+		<LWM2MVersion>1.2</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
+		<MultipleInstances>Multiple</MultipleInstances>
+		<Mandatory>Optional</Mandatory>
+		<Resources>
+			<Item ID="0">
+				<Name>Connectivity Option</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Indicates the connectivity option.
+1 = Core Network: EPC; Master RAT: LTE; Secondary RAT: -
+3 = Core Network: EPC; Master RAT: LTE; Secondary RAT: NR
+2 = Core Network: 5GC; Master RAT: NR; Secondary RAT: -
+4 = Core Network: 5GC; Master RAT: NR; Secondary RAT: eLTE
+5 = Core Network: 5GC; Master RAT: eLTE; Secondary RAT: -
+7 = Core Network: 5GC; Master RAT: eLTE; Secondary RAT: NR]]></Description>
+			</Item>
+			<Item ID="1">
+				<Name>NR Band Support available</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Multiple</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Indicates the Operating NR Bands supported by UE in NSA mode. Value represents the integer value of band mentioned in 3GPP  Spec 38.104 (Table: Table 5.2-1 and Table 5.2-2)]]></Description>
+			</Item>
+			<Item ID="2">
+				<Name>NR Band attached</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Multiple</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Indicates the Operating NR Bands on which UE is attached. Value represents the integer value of band mentioned in 3GPP  Spec 38.104 (Table: Table 5.2-1 and Table 5.2-2)]]></Description>
+			</Item>
+			<Item ID="3">
+				<Name>S-NSSAI</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Multiple</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Indicates the Single - Network Slice Selection Assistance Information for 5G Standalone mode
+0 = eMBB
+1 = URLLC
+2 = MIoT
+3 = Custom 
+4-7 = Reserved]]></Description>
+			</Item>
+			<Item ID="4">
+				<Name>DNN Name</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Data Network Name in case of Network Bearer Resource is a 5G SA (FDD/TDD) Cellular Network.]]></Description>
+			</Item>
+			<Item ID="5">
+				<Name>PDU Session Id</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration>1...15</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Indicates the PDU Session ID over which LwM2M session is established for 5G SA (FDD/TDD) Cellular Network.]]></Description>
+			</Item>
+			<Item ID="6">
+				<Name>SSC Mode</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration>1...3</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Indicates the Session and Service Continuity mode for 5G SA (FDD/TDD) Cellular Network.]]></Description>
+			</Item>
+			<Item ID="7">
+				<Name>PDU Session Type</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Indicates the type of PDU session over which LwM2M connection is established for 5G SA (FDD/TDD) Cellular Network.
+1 = IPv4
+2 = IPv6
+3 = IPv4v6
+4 = Unstructured
+5 = Ethernet
+8 = Reserved (Spec Ref.)]]></Description>
+			</Item>
+			<Item ID="8">
+				<Name>5QI</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Indicates the 5G QoS Identifier for 5G SA (FDD/TDD) Cellular Network.
+1-9,65,66,67,69,70,75,79,80,81,82,83,84,85 = Standard
+128 to 254 = Operator specific 0,255 = Reserved 
+Remaining = Spare (Spec Ref.)]]></Description>
+			</Item>
+			<Item ID="9">
+				<Name>SDAP Enablement</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Indicates whether SDAP is enabled or not for 5G SA (FDD/TDD) Cellular Network.
+0 = in UL only
+1 = In DL Only
+2 = In UL and DL both]]></Description>
+			</Item>
+			<Item ID="10">
+				<Name>QFI</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration>1...63</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Indicates the QoS Flow identifier for 5G SA (FDD/TDD) Cellular Network. (Spec Ref.)]]></Description>
+			</Item>
+			<Item ID="11">
+				<Name>Session AMBR</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration>1...25</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Indicates the Session Aggregate Maximum Bit Rate as per the 5G 3GPP Spec for 5G SA (FDD/TDD) Cellular Network.  (Spec Ref.)]]></Description>
+			</Item>
+			<Item ID="12">
+				<Name>APN-AMBR</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>dB</Units>
+				<Description><![CDATA[The Aggregate Maximum Bitrate which is applicable to a given APN over which LwM2M session is established for 5G SA (FDD/TDD) Cellular Network.]]></Description>
+			</Item>
+			<Item ID="13">
+				<Name>NAS Reflective QOS</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Indicates the QoS at NAS layer  for 5G SA (FDD/TDD) Cellular Network.
+0 = Disabled
+1 = Enabled]]></Description>
+			</Item>
+			<Item ID="14">
+				<Name>Access Stratum Reflective QoS</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Indicates the QoS for Access Stratum (RRC) for 5G SA (FDD/TDD) Cellular Network..
+0 = Absent
+1 = Present]]></Description>
+			</Item>
+			<Item ID="15">
+				<Name>P-CSCF Address Index</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Index for the P-CSCF address for 5G SA (FDD/TDD) Cellular Network.]]></Description>
+			</Item>
+			<Item ID="16">
+				<Name>PDU session Authentication</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Indicates the Authentication type for PDU Session
+PDU session Authentication
+0 = Primary
+1 = Secondary
+2 = Both]]></Description>
+			</Item>
+			<Item ID="17">
+				<Name>PLMN ID</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Indicates the PLMN ID over which UE is currently attached for 5G SA (FDD/TDD) Cellular Network.
+Allows server to see the currennt PLMN in string format (e.g. formatted as result of AT+COPS=? as per 3GPP-TS_27.007)]]></Description>
+			</Item>
+			<Item ID="18">
+				<Name>LADN Support</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Indicates whether LADN (Local Area Data Network) is supported or not for 5G SA (FDD/TDD) Cellular Network.
+0 = Not Supported
+1 = Supported]]></Description>
+			</Item>
+			<Item ID="19">
+				<Name>Integrity Protection on DRB</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Current state of the Integrity Protection on Data Radio Bearer for 5G SA (FDD/TDD) Cellular Network.
+0 = Disabled
+1 = Enabled with 64-Kbps
+2 = Enabled with Peak Rate]]></Description>
+			</Item>
+			<Item ID="20">
+				<Name>Access type Preference</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Indicates the Access Type preference for 5G SA (FDD/TDD) Cellular Network.
+0 = 3GPP
+1 = Non-3GPP]]></Description>
+			</Item>
+		</Resources>
+		<Description2 />
+	</Object>
+</LWM2M>

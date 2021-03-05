@@ -98,7 +98,7 @@ limitations under the License.
 				<Type>Integer</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units></Units>
-				<Description><![CDATA[PCI]]></Description>
+				<Description><![CDATA[PCI.]]></Description>
 			</Item>
 			<Item ID="2"><Name>pagingCycle</Name>
 				<Operations>R</Operations>

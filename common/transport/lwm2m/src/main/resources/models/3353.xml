@@ -115,7 +115,7 @@ limitations under the License.--><LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSch
 				<Type>Integer</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units></Units>
-				<Description><![CDATA[Cell ID]]></Description>
+				<Description><![CDATA[Cell ID.]]></Description>
 			</Item>
 			</Resources>
 		<Description2 />

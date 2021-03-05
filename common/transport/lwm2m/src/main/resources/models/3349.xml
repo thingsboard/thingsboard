@@ -36,9 +36,9 @@ POSSIBILITY OF SUCH DAMAGE.
 		<Name>Bitmap</Name>
 		<Description1>Summarize several digital inputs to one value by mapping each bit to a digital input.</Description1>
 		<ObjectID>3349</ObjectID>
-		<ObjectURN>urn:oma:lwm2m:ext:3349</ObjectURN>
+		<ObjectURN>urn:oma:lwm2m:ext:3349:1.1</ObjectURN>
 		<LWM2MVersion>1.0</LWM2MVersion>
-		<ObjectVersion>1.0</ObjectVersion>
+		<ObjectVersion>1.1</ObjectVersion>
 		<MultipleInstances>Multiple</MultipleInstances>
 		<Mandatory>Optional</Mandatory>
 		<Resources>
@@ -81,6 +81,26 @@ POSSIBILITY OF SUCH DAMAGE.
 				<RangeEnumeration></RangeEnumeration>
 				<Units></Units>
 				<Description>The application type of the sensor or actuator as a string depending on the use case.</Description>
+			</Item>
+			<Item ID="5518">
+				<Name>Timestamp</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Time</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>The timestamp of when the measurement was performed.</Description>
+			</Item>
+			<Item ID="6050">
+				<Name>Fractional Timestamp</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration>0..1</RangeEnumeration>
+				<Units>s</Units>
+				<Description>Fractional part of the timestamp when sub-second precision is used (e.g., 0.23 for 230 ms).</Description>
 			</Item>
 		</Resources>
 		<Description2></Description2>

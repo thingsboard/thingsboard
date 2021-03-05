@@ -101,7 +101,7 @@ POSSIBILITY OF SUCH DAMAGE.
                 <Type>Integer</Type>
                 <RangeEnumeration></RangeEnumeration>
                 <Units></Units>
-                <Description>The number of times the input.</Description>
+                <Description>The cumulative value of active state detected.</Description>
             </Item>
             <Item ID="5544">
                 <Name>Cumulative Time</Name>
@@ -141,7 +141,7 @@ POSSIBILITY OF SUCH DAMAGE.
                 <Type>Integer</Type>
                 <RangeEnumeration>0..4</RangeEnumeration>
                 <Units></Units>
-                <Description>Type of timer pattern used by the patterns.</Description>
+                <Description>Type of timer pattern used by the timer. 1: One-shot, 2: On-Time or Interval, 3: Time delay on pick-up, 4: Time Delay on Drop-Out, 0: disables the timer.</Description>
             </Item>
             <Item ID="5750">
                 <Name>Application Type</Name>

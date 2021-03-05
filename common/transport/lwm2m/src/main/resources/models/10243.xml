@@ -35,9 +35,9 @@ POSSIBILITY OF SUCH DAMAGE.
         <![CDATA[This Object provides the information to represent a generic Single-Phase Power Meter.]]>
     </Description1>
     <ObjectID>10243</ObjectID>
-    <ObjectURN>urn:oma:lwm2m:x:10243</ObjectURN>
+    <ObjectURN>urn:oma:lwm2m:x:10243:2.0</ObjectURN>
     <LWM2MVersion>1.0</LWM2MVersion>
-	<ObjectVersion>1.0</ObjectVersion>
+	<ObjectVersion>2.0</ObjectVersion>
     <MultipleInstances>Multiple</MultipleInstances>
     <Mandatory>Optional</Mandatory>
     <Resources>
@@ -94,7 +94,7 @@ POSSIBILITY OF SUCH DAMAGE.
             <Operations>R</Operations>
             <MultipleInstances>Single</MultipleInstances>
             <Mandatory>Mandatory</Mandatory>
-            <Type>String</Type>
+            <Type>Float</Type>
             <RangeEnumeration/>
             <Units>V</Units>
             <Description>

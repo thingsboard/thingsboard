@@ -107,7 +107,7 @@ limitations under the License.
 				<Type>Integer</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units></Units>
-				<Description><![CDATA[Cell Identity]]></Description>
+				<Description><![CDATA[Cell ID.]]></Description>
 			</Item>
 			<Item ID="3"><Name>handoverResult</Name>
 				<Operations>R</Operations>

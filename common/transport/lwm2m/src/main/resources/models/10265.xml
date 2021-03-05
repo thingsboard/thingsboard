@@ -37,6 +37,8 @@ POSSIBILITY OF SUCH DAMAGE.
         <Description1><![CDATA[The leakage detection configuration object provides a means for configuring the timing and sampling frequency of a vibration based network leak detector]]></Description1>
         <ObjectID>10265</ObjectID>
         <ObjectURN>urn:oma:lwm2m:x:10265</ObjectURN>
+        <LWM2MVersion>1.0</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
         <MultipleInstances>Single</MultipleInstances>
         <Mandatory>Optional</Mandatory>
         <Resources>

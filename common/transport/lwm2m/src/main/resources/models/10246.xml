@@ -37,8 +37,8 @@ POSSIBILITY OF SUCH DAMAGE.
         <Description1>This LWM2M Object provides CrowdBox-related measurements such as serving cell parameters, backhaul timing advance, and neighbour cell reports.</Description1>
         <ObjectID>10246</ObjectID>
         <ObjectURN>urn:oma:lwm2m:x:10246</ObjectURN>
-        <LWM2MVersion/>
-        <ObjectVersion/>
+		<LWM2MVersion>1.0</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
         <MultipleInstances>Single</MultipleInstances>
         <Mandatory>Optional</Mandatory>
         <Resources>

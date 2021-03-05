@@ -109,7 +109,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         </RangeEnumeration>
         <Units>
         </Units>
-        <Description><![CDATA[This field specifies the UE Rx–Tx time difference measurement.]]></Description>
+        <Description><![CDATA[This field specifies the UE Rx-Tx time difference measurement.]]></Description>
       </Item>
     </Resources>
     <Description2><![CDATA[]]></Description2>

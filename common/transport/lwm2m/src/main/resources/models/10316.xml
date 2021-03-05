@@ -201,7 +201,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <Type>Integer</Type>
         <RangeEnumeration/>
         <Units>s</Units>
-        <Description><![CDATA[The time in seconds that the device has been turned on. Writing a value of 0 resets the counter.]]></Description>
+        <Description><![CDATA[The time in seconds that the device has been on. Writing a value of 0 resets the counter.]]></Description>
       </Item>
 	  
 	  <Item ID="60">

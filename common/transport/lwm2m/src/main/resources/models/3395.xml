@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- BSD-3 Clause License
+
+Copyright 2019 Zumtobel Group. 
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its
+contributors may be used to endorse or promote products derived
+from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openmobilealliance.org/tech/profiles/LWM2M-v1_1.xsd">
+  <Object ObjectType="MODefinition">
+		<Name>oA Logical Push-Button Sensor</Name>
+		<Description1><![CDATA[The 'oA Logical Push-Button Sensor' represents the logical part of a standard, normally open, push-button input. The corresponding physical device is a button with a spring that returns the button to the un-pushed state once it is released.\nThe Object supports several events such as 'click', 'hold', 'double-click' and 'release'. It also indicates if the button is 'stuck'. For physical devices with multiple push-button inputs, an instance of this Object is required to map each input.]]></Description1>
+		<ObjectID>3395</ObjectID>
+		<ObjectURN>urn:oma:lwm2m:ext:3395</ObjectURN>
+		<LWM2MVersion>1.1</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
+		<MultipleInstances>Multiple</MultipleInstances>
+		<Mandatory>Optional</Mandatory>
+		<Resources>
+			<Item ID="4001">
+				<Name>ObjectVersion</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[LWM2M Object versioning label.]]></Description>
+			</Item>
+			<Item ID="901">
+				<Name>Documentary Description</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration>0..256 bytes</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Resource to hold a documentary text description of the object.]]></Description>
+			</Item>
+			<Item ID="202">
+				<Name>Push-Button Event Value</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0: RELEASE
+				1: CLICK
+				2: HOLD
+				3: DOUBLE-CLICK
+				255: STUCK</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[This Resource represents the last generated Event by the push-button:\n* 0: RELEASE - push-button was released\n* 1: CLICK - single click detected\n* 2: HOLD - long press/hold detected\n* 3: DOUBLE-CLICK - two sequential clicks detected\n* 255: STUCK - button was detected as stuck.\n\t\t\t\n*Note* The Push-Button Event allows to filter part of the behaviour of the press/release actions from a user. Instead of reporting all press/release operations, this resource only reports a new value when a specific operation occurs.]]></Description>
+			</Item>
+			<Item ID="909">
+				<Name>Executing Object</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Corelnk</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Link to the Object Instance in CoRE Link Format [RFC6690](https://tools.ietf.org/html/rfc6690)]]></Description>
+			</Item>
+			<Item ID="203">
+				<Name>Single Click Time</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>100..60000</RangeEnumeration>
+				<Units>ms</Units>
+				<Description><![CDATA[Defines the maximum period of time the push-button can be pressed, in order to be recognized as 'click'. If the button is pressed longer than this time period, it is recognized as 'hold' press. See Resource description of Push-Button Event for details.\n*Note* the maximum limit for this value is 60s, as any press longer than that is considered 'stuck button'.]]></Description>
+			</Item>
+			<Item ID="204">
+				<Name>Hold Repeat Time</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>300..60000</RangeEnumeration>
+				<Units>ms</Units>
+				<Description><![CDATA[Defines the period of time between repetitions of push-button event reporting messages with 'hold' value. After the 'hold' event is triggered and the first message is sent, the 'hold' message is repeated every time the 'Hold Repeat Time' is past, and until a 'release' or 'button stuck' state is reached.This value should always be higher than 'Single Click Time' and small intervals may significantly affect network performance.\n*Note* the maximum limit for this value is 60s, as any press longer than that is considered 'stuck button'.]]></Description>
+			</Item>
+			<Item ID="903">
+				<Name>Application Group ID</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..65535</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[The application group ID that the logical object is part of. This ID will define the application group the status reports are sent to. It is internally used as a pointer to the Group Object instance that hosts all the Group configurations.]]></Description>
+			</Item>
+			<Item ID="904">
+				<Name>Status Resend Time</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>1..600</RangeEnumeration>
+				<Units>s</Units>
+				<Description><![CDATA[The time specified as status resend time is used to resend the actual status to the application group the object is a member of, even if nothing changed.\nThe status resend time is restarted after every event. The actual interval is a random time with the maximum duration given by this resource. Randomization helps to avoid massive ongoing message collisions after system power up.\nFor example: Status resend time is set to 10 seconds;\n* 00:00 status is sent\n* 00:05 status changes and is sent immediatly\n* 00:15 (or before, depending on the randomization) status is sent even though it did not change]]></Description>
+			</Item>
+			<Item ID="919">
+				<Name>Status Report Structure ID</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>Unsigned Integer</Type>
+				<RangeEnumeration>0..255</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[The ID of the status resource structure that is used to code the cyclic status report. See object 4012 'oA Status Report Structure' for more information]]></Description>
+			</Item>
+			<Item ID="905">
+				<Name>Debug Mode Enabled</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Enables the object test mode. The physical representation of the object will be disabled. Stimuli can be injected to test the object remotely using inject test event.]]></Description>
+			</Item>
+			<Item ID="906">
+				<Name>Inject Test Event</Name>
+				<Operations>W</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration>0..65535</RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[Defines the test events to be injected into the system when debug mode is enabled. Event definition is vendor specific.]]></Description>
+			</Item>
+			<Item ID="934">
+				<Name>Object Enabled</Name>
+				<Operations>E</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type></Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[When executed, a test event s specified in 906 will be injected \nIf an object instance is disabled it does process incoming events but does not create outgoing events.]]></Description>
+			</Item>
+			<Item ID="924">
+				<Name>Object Enabled</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description><![CDATA[This resource allows to disable an object instance. \nIf an object instance is disabled it does process incoming events but does not create outgoing events.]]></Description>
+			</Item>
+		</Resources>
+		<Description2><![CDATA[]]></Description2>
+	</Object>
+</LWM2M>

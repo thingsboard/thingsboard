@@ -37,6 +37,8 @@ POSSIBILITY OF SUCH DAMAGE.
         <Description1><![CDATA[Where supported by the meter this is an alarm that should be raised if the meter detects pressure above a pre-configured threshold.]]></Description1>
         <ObjectID>10276</ObjectID>
         <ObjectURN>urn:oma:lwm2m:x:10276</ObjectURN>
+        <LWM2MVersion>1.0</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
         <MultipleInstances>Multiple</MultipleInstances>
         <Mandatory>Optional</Mandatory>
         <Resources>

@@ -59,7 +59,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				<Type>Integer</Type>
 				<RangeEnumeration>0..100</RangeEnumeration>
 				<Units>/100</Units>
-				<Description>This resource represents a light dimmer setting, which has an Integer value between 0 and 100 as a percentage.</Description>
+				<Description>This resource represents a dimmer setting, which has an Integer value between 0 and 100 as a percentage.</Description>
 			</Item>
 			<Item ID="5852">
 				<Name>On time</Name>
@@ -69,7 +69,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				<Type>Integer</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units>s</Units>
-				<Description>The time in seconds that the light has been on. Writing a value of 0 resets the counter.</Description>
+				<Description>The time in seconds that the device has been on. Writing a value of 0 resets the counter.</Description>
 			</Item>
 			<Item ID="5805">
 				<Name>Cumulative active power</Name>
@@ -79,7 +79,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				<Type>Float</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units>Wh</Units>
-				<Description>The total power in Wh that the light has used.</Description>
+				<Description>The cumulative active power since the last cumulative energy reset or device start.</Description>
 			</Item>
 			<Item ID="5820">
 				<Name>Power factor</Name>
@@ -89,7 +89,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				<Type>Float</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units></Units>
-				<Description>The power factor of the light.</Description>
+				<Description>If applicable, the power factor of the current consumption.</Description>
 			</Item>
 			<Item ID="5706">
 				<Name>Colour</Name>
@@ -99,7 +99,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				<Type>String</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units></Units>
-				<Description>A string representing a value in some color space</Description>
+				<Description>A string representing a value in some color space.</Description>
 			</Item>
 			<Item ID="5701">
 				<Name>Sensor Units</Name>
@@ -119,7 +119,7 @@ POSSIBILITY OF SUCH DAMAGE.
                                 <Type>String</Type>
                                 <RangeEnumeration></RangeEnumeration>
                                 <Units></Units>
-                                <Description>The application type of the sensor or actuator as a string, for instance, "Air Pressure"</Description>
+                                <Description>The application type of the sensor or actuator as a string depending on the use case.</Description>
                         </Item>
 		</Resources>
 		<Description2></Description2>

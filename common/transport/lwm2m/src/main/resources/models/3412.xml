@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- BSD-3 Clause License
+
+Copyright 2020 uCIFI Alliance
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its
+contributors may be used to endorse or promote products derived
+from this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+-->
+
+<LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="http://www.openmobilealliance.org/tech/profiles/LWM2M.xsd">
+	<Object ObjectType="MODefinition">
+		<Name>LPWAN Communication</Name>
+		<Description1>The uCIFI communication object provides attributes related to the communication on the LPWAN network, including multicast grouping.</Description1>
+		<ObjectID>3412</ObjectID>
+		<ObjectURN>urn:oma:lwm2m:ext:3412</ObjectURN>
+		<LWM2MVersion>1.0</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
+		<MultipleInstances>Multiple</MultipleInstances>
+		<Mandatory>Optional</Mandatory>
+		<Resources>
+			<Item ID="1">
+				<Name>Type of network</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Type of LPWAN communication network (e.g. LoRaWAN, NB-IoT, wireless mesh, power line).</Description>
+			</Item>
+			<Item ID="2">
+				<Name>IPv4 address</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Multiple</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Device’s IPv4 address.</Description>
+			</Item>
+			<Item ID="3">
+				<Name>IPv6 address</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Multiple</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Device’s IPv6 address.</Description>
+			</Item>
+			<Item ID="4">
+				<Name>Network address</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Multiple</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Address of the device on the LPWAN network.</Description>
+			</Item>
+			<Item ID="5">
+				<Name>Secondary network address</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Multiple</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Secondary address used to communicate with the device on the LPWAN network.</Description>
+			</Item>
+			<Item ID="6">
+				<Name>MAC address</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Mandatory</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>IEEE MAC address of the device.</Description>
+			</Item>
+			<Item ID="7">
+				<Name>Peer address</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Multiple</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Address of a peer (e.g. a router, a mesh node, a gateway).</Description>
+			</Item>
+			<Item ID="8">
+				<Name>Multicast group address</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Multiple</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Group address from which the  device should accept incoming messages and/or commands.</Description>
+			</Item>
+			<Item ID="9">
+				<Name>Multicast group key</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Multiple</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Security key (e.g. AES128) to be shared with other members to be part of a multicast group.</Description>
+			</Item>
+			<Item ID="10">
+				<Name>Data rate</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>B/s</Units>
+				<Description>Data rate of the communication used on the LPWAN network.</Description>
+			</Item>
+			<Item ID="11">
+				<Name>Transmit power</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>dBm</Units>
+				<Description>Transmit power (also called TxPower) used by the device on the LPWAN network in decibel per milliwatt.</Description>
+			</Item>
+			<Item ID="12">
+				<Name>Frequency</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>Hz</Units>
+				<Description>Frequency of the wireless communication used on the LPWAN network.</Description>
+			</Item>
+			<Item ID="13">
+				<Name>Session time</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Time</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Starting time of the multicast session. The device shall not accept incoming messages before this time or after this time + session duration.</Description>
+			</Item>
+			<Item ID="14">
+				<Name>Session duration</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Time</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>s</Units>
+				<Description>Duration of the multicast session. The device shall accept incoming messages only during this session duration time, starting at "Session time".</Description>
+			</Item>
+			<Item ID="15">
+				<Name>Mesh node</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Set to True if the device is a mesh node that should repeat incoming messages on a mesh network.</Description>
+			</Item>
+			<Item ID="16">
+				<Name>Maximum repeat time</Name>
+				<Operations>RW</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Maximum number of times a message should be repeated within a mesh network.</Description>
+			</Item>
+			<Item ID="17">
+				<Name>Number of repeats</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Integer</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Number of mesh nodes between the device and the destination device (e.g. another device or a router) including the destination node, on a mesh network.</Description>
+			</Item>
+			<Item ID="18">
+				<Name>Signal to noise ratio</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>dB</Units>
+				<Description>Ratio of signal power to the noise power.</Description>
+			</Item>
+			<Item ID="19">
+				<Name>Communication failure</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Boolean</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Set to True when the device can't communicate properly.</Description>
+			</Item>
+			<Item ID="20">
+				<Name>Received Signal Strength Indication</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>Float</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units>dBm</Units>
+				<Description>Signal strength of the communication network measured by the device (a.k.a. RSSI or signal level).</Description>
+			</Item>
+			<Item ID="21">
+				<Name>IMSI</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Device’s International Mobile Subscriber Identity.</Description>
+			</Item>
+			<Item ID="22">
+				<Name>IMEI</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Device’s International Mobile Equipment Identity.</Description>
+			</Item>
+			<Item ID="23">
+				<Name>Current Communication Operator</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Device’s current communication operator. Communication operators could be private operators. Thus this resource is free text format and does not use Mobile Network Code or equivalent.</Description>
+			</Item>
+			<Item ID="24">
+				<Name>Integrated Circuit Card Identifier</Name>
+				<Operations>R</Operations>
+				<MultipleInstances>Single</MultipleInstances>
+				<Mandatory>Optional</Mandatory>
+				<Type>String</Type>
+				<RangeEnumeration></RangeEnumeration>
+				<Units></Units>
+				<Description>Unique identifier used to identify a communication SIM card. The ICCID is defined by the ITU-T recommendation E.118 as the Primary Account Number, composed of 19 or 20 characters containing the ISO Industry Identifier, country code, issuer identity, account ID, and other data which allows the network operator to identify the card.</Description>
+			</Item>
+		</Resources>
+		<Description2></Description2>
+	</Object>
+</LWM2M>

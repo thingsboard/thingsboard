@@ -37,6 +37,8 @@ POSSIBILITY OF SUCH DAMAGE.
         <Description1><![CDATA[This binary status should indicate that the meter MCU can no longer communicate with a daughter board]]></Description1>
         <ObjectID>10282</ObjectID>
         <ObjectURN>urn:oma:lwm2m:x:10282</ObjectURN>
+        <LWM2MVersion>1.0</LWM2MVersion>
+		<ObjectVersion>1.0</ObjectVersion>
         <MultipleInstances>Multiple</MultipleInstances>
         <Mandatory>Optional</Mandatory>
         <Resources>
