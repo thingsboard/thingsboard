@@ -19,11 +19,12 @@ import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.security.event.UserAuthDataChangedEvent;
 import org.thingsboard.server.common.data.security.model.JwtToken;
-import org.thingsboard.server.common.data.security.service.TokenOutdatingService;
 import org.thingsboard.server.config.JwtSettings;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
@@ -35,7 +36,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Service
 @RequiredArgsConstructor
-public class TokenOutdatingServiceImpl implements TokenOutdatingService {
+public class TokenOutdatingService {
     private final CacheManager cacheManager;
     private final JwtTokenFactory tokenFactory;
     private final JwtSettings jwtSettings;
@@ -46,7 +47,11 @@ public class TokenOutdatingServiceImpl implements TokenOutdatingService {
         tokenOutdatageTimeCache = cacheManager.getCache(CacheConstants.TOKEN_OUTDATAGE_TIME_CACHE);
     }
 
-    @Override
+    @EventListener(classes = UserAuthDataChangedEvent.class)
+    public void onUserAuthDataChanged(UserAuthDataChangedEvent userAuthDataChangedEvent) {
+        outdateOldUserTokens(userAuthDataChangedEvent.getUserId());
+    }
+
     public boolean isOutdated(JwtToken token, UserId userId) {
         Claims claims = tokenFactory.parseTokenClaims(token).getBody();
         long issueTime = claims.getIssuedAt().getTime();
@@ -70,7 +75,6 @@ public class TokenOutdatingServiceImpl implements TokenOutdatingService {
                 .orElse(false);
     }
 
-    @Override
     public void outdateOldUserTokens(UserId userId) {
         tokenOutdatageTimeCache.put(toKey(userId), System.currentTimeMillis());
     }

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,10 +41,10 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.common.data.security.event.UserAuthDataChangedEvent;
 import org.thingsboard.server.common.data.security.model.JwtToken;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
-import org.thingsboard.server.common.data.security.service.TokenOutdatingService;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
@@ -70,7 +71,7 @@ public class AuthController extends BaseController {
     private final MailService mailService;
     private final SystemSecurityService systemSecurityService;
     private final AuditLogService auditLogService;
-    private final TokenOutdatingService tokenOutdatingService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/auth/user", method = RequestMethod.GET)
@@ -109,7 +110,7 @@ public class AuthController extends BaseController {
             userCredentials.setPassword(passwordEncoder.encode(newPassword));
             userService.replaceUserCredentials(securityUser.getTenantId(), userCredentials);
 
-            tokenOutdatingService.outdateOldUserTokens(securityUser.getId());
+            eventPublisher.publishEvent(new UserAuthDataChangedEvent(securityUser.getId()));
             ObjectNode response = JacksonUtil.newObjectNode();
             response.put("token", tokenFactory.createAccessJwtToken(securityUser).getToken());
             response.put("refreshToken", tokenFactory.createRefreshToken(securityUser).getToken());
@@ -263,7 +264,7 @@ public class AuthController extends BaseController {
                 String email = user.getEmail();
                 mailService.sendPasswordWasResetEmail(loginUrl, email);
 
-                tokenOutdatingService.outdateOldUserTokens(securityUser.getId());
+                eventPublisher.publishEvent(new UserAuthDataChangedEvent(securityUser.getId()));
                 JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
                 JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
 

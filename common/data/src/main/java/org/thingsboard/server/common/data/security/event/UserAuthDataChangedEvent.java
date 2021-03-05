@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.security.service;
+package org.thingsboard.server.common.data.security.event;
 
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.security.model.JwtToken;
 
-public interface TokenOutdatingService {
-    boolean isOutdated(JwtToken token, UserId userId);
+public class UserAuthDataChangedEvent {
+    private final UserId userId;
 
-    void outdateOldUserTokens(UserId userId);
+    public UserAuthDataChangedEvent(UserId userId) {
+        this.userId = userId;
+    }
+
+    public UserId getUserId() {
+        return userId;
+    }
 }

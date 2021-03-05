@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,8 +45,8 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.common.data.security.event.UserAuthDataChangedEvent;
 import org.thingsboard.server.common.data.security.model.JwtToken;
-import org.thingsboard.server.common.data.security.service.TokenOutdatingService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -75,7 +76,7 @@ public class UserController extends BaseController {
     private final JwtTokenFactory tokenFactory;
     private final RefreshTokenRepository refreshTokenRepository;
     private final SystemSecurityService systemSecurityService;
-    private final TokenOutdatingService tokenOutdatingService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/user/{userId}", method = RequestMethod.GET)
@@ -338,7 +339,7 @@ public class UserController extends BaseController {
             userService.setUserCredentialsEnabled(tenantId, userId, userCredentialsEnabled);
 
             if (!userCredentialsEnabled) {
-                tokenOutdatingService.outdateOldUserTokens(userId);
+                eventPublisher.publishEvent(new UserAuthDataChangedEvent(userId));
             }
         } catch (Exception e) {
             throw handleException(e);

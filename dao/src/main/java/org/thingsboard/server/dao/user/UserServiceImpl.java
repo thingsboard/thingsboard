@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
@@ -37,7 +38,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
-import org.thingsboard.server.common.data.security.service.TokenOutdatingService;
+import org.thingsboard.server.common.data.security.event.UserAuthDataChangedEvent;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
@@ -80,20 +81,20 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     private final TenantDao tenantDao;
     private final CustomerDao customerDao;
     private final TbTenantProfileCache tenantProfileCache;
-    private final TokenOutdatingService tokenOutdatingService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public UserServiceImpl(UserDao userDao,
                            UserCredentialsDao userCredentialsDao,
                            TenantDao tenantDao,
                            CustomerDao customerDao,
                            @Lazy TbTenantProfileCache tenantProfileCache,
-                           TokenOutdatingService tokenOutdatingService) {
+                           ApplicationEventPublisher eventPublisher) {
         this.userDao = userDao;
         this.userCredentialsDao = userCredentialsDao;
         this.tenantDao = tenantDao;
         this.customerDao = customerDao;
         this.tenantProfileCache = tenantProfileCache;
-        this.tokenOutdatingService = tokenOutdatingService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -230,7 +231,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         userCredentialsDao.removeById(tenantId, userCredentials.getUuidId());
         deleteEntityRelations(tenantId, userId);
         userDao.removeById(tenantId, userId.getId());
-        tokenOutdatingService.outdateOldUserTokens(userId);
+        eventPublisher.publishEvent(new UserAuthDataChangedEvent(userId));
     }
 
     @Override

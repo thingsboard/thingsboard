@@ -37,8 +37,10 @@ import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.model.token.RawAccessJwtToken;
 
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.DAYS;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -54,7 +56,7 @@ public class TokenOutdatingTest {
     private JwtAuthenticationProvider accessTokenAuthenticationProvider;
     private RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider;
 
-    private TokenOutdatingServiceImpl tokenOutdatingService;
+    private TokenOutdatingService tokenOutdatingService;
     private ConcurrentMapCacheManager cacheManager;
     private JwtTokenFactory tokenFactory;
     private JwtSettings jwtSettings;
@@ -65,13 +67,13 @@ public class TokenOutdatingTest {
     public void setUp() {
         jwtSettings = new JwtSettings();
         jwtSettings.setTokenIssuer("test.io");
-        jwtSettings.setTokenExpirationTime((int) TimeUnit.MINUTES.toSeconds(10));
-        jwtSettings.setRefreshTokenExpTime((int) TimeUnit.DAYS.toSeconds(7));
+        jwtSettings.setTokenExpirationTime((int) MINUTES.toSeconds(10));
+        jwtSettings.setRefreshTokenExpTime((int) DAYS.toSeconds(7));
         jwtSettings.setTokenSigningKey("secret");
         tokenFactory = new JwtTokenFactory(jwtSettings);
 
         cacheManager = new ConcurrentMapCacheManager();
-        tokenOutdatingService = new TokenOutdatingServiceImpl(cacheManager, tokenFactory, jwtSettings);
+        tokenOutdatingService = new TokenOutdatingService(cacheManager, tokenFactory, jwtSettings);
         tokenOutdatingService.initCache();
 
         userId = new UserId(UUID.randomUUID());
@@ -95,23 +97,26 @@ public class TokenOutdatingTest {
     @Test
     public void testOutdateOldUserTokens() throws Exception {
         JwtToken jwtToken = createAccessJwtToken(userId);
+
+        SECONDS.sleep(1); // need to wait before outdating so that outdatage time is strictly after token issue time
         tokenOutdatingService.outdateOldUserTokens(userId);
         assertTrue(tokenOutdatingService.isOutdated(jwtToken, userId));
 
-        TimeUnit.SECONDS.sleep(1);
+        SECONDS.sleep(1);
 
         JwtToken newJwtToken = tokenFactory.createAccessJwtToken(createMockSecurityUser(userId));
         assertFalse(tokenOutdatingService.isOutdated(newJwtToken, userId));
     }
 
     @Test
-    public void testAuthenticateWithOutdatedAccessToken() {
+    public void testAuthenticateWithOutdatedAccessToken() throws InterruptedException {
         RawAccessJwtToken accessJwtToken = getRawJwtToken(createAccessJwtToken(userId));
 
         assertDoesNotThrow(() -> {
             accessTokenAuthenticationProvider.authenticate(new JwtAuthenticationToken(accessJwtToken));
         });
 
+        SECONDS.sleep(1);
         tokenOutdatingService.outdateOldUserTokens(userId);
 
         assertThrows(JwtExpiredTokenException.class, () -> {
@@ -120,13 +125,14 @@ public class TokenOutdatingTest {
     }
 
     @Test
-    public void testAuthenticateWithOutdatedRefreshToken() {
+    public void testAuthenticateWithOutdatedRefreshToken() throws InterruptedException {
         RawAccessJwtToken refreshJwtToken = getRawJwtToken(createRefreshJwtToken(userId));
 
         assertDoesNotThrow(() -> {
             refreshTokenAuthenticationProvider.authenticate(new RefreshAuthenticationToken(refreshJwtToken));
         });
 
+        SECONDS.sleep(1);
         tokenOutdatingService.outdateOldUserTokens(userId);
 
         assertThrows(CredentialsExpiredException.class, () -> {
@@ -138,17 +144,18 @@ public class TokenOutdatingTest {
     public void testTokensOutdatageTimeRemovalFromCache() throws Exception {
         JwtToken jwtToken = createAccessJwtToken(userId);
 
+        SECONDS.sleep(1);
         tokenOutdatingService.outdateOldUserTokens(userId);
 
         int refreshTokenExpirationTime = 5;
         jwtSettings.setRefreshTokenExpTime(refreshTokenExpirationTime);
 
-        TimeUnit.SECONDS.sleep(refreshTokenExpirationTime - 2);
+        SECONDS.sleep(refreshTokenExpirationTime - 2);
 
         assertTrue(tokenOutdatingService.isOutdated(jwtToken, userId));
         assertNotNull(cacheManager.getCache(CacheConstants.TOKEN_OUTDATAGE_TIME_CACHE).get(userId.getId().toString()));
 
-        TimeUnit.SECONDS.sleep(3);
+        SECONDS.sleep(3);
 
         assertFalse(tokenOutdatingService.isOutdated(jwtToken, userId));
         assertNull(cacheManager.getCache(CacheConstants.TOKEN_OUTDATAGE_TIME_CACHE).get(userId.getId().toString()));

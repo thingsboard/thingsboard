@@ -33,7 +33,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.common.data.security.service.TokenOutdatingService;
+import org.thingsboard.server.service.security.auth.TokenOutdatingService;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.user.UserService;
