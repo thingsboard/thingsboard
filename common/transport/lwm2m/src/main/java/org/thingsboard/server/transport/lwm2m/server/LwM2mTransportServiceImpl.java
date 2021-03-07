@@ -153,6 +153,8 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         executorRegistered.submit(() -> {
             try {
                 log.warn("[{}] [{{}] Client: create after Registration", registration.getEndpoint(), registration.getId());
+                ((LwM2mVersionedModelProvider)leshanServer.getModelProvider()).setRepository(this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getModelsValueCommon());
+//                (((VersionedModelProvider) (leshanServer)).modelProvider).repository;
                 LwM2mClient lwM2MClient = this.lwM2mClientContext.updateInSessionsLwM2MClient(registration);
                 if (lwM2MClient != null) {
                     SessionInfoProto sessionInfo = this.getValidateSessionInfo(registration);

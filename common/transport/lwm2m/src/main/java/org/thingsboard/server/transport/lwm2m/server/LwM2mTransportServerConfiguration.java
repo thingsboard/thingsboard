@@ -24,7 +24,6 @@ import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.californium.LeshanServerBuilder;
 import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
-import org.eclipse.leshan.server.model.VersionedModelProvider;
 import org.eclipse.leshan.server.security.DefaultAuthorizer;
 import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.eclipse.leshan.server.security.SecurityChecker;
@@ -32,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import java.math.BigInteger;
@@ -77,6 +77,9 @@ public class LwM2mTransportServerConfiguration {
     @Autowired
     private EditableSecurityStore securityStore;
 
+    @Autowired
+    private LwM2mClientContext lwM2mClientContext;;
+
     @Bean
     public LeshanServer getLeshanServer() {
         log.info("Starting LwM2M transport Server... PostConstruct");
@@ -95,7 +98,8 @@ public class LwM2mTransportServerConfiguration {
         builder.setCoapConfig(getCoapConfig(serverPortNoSec, serverSecurePort));
 
         /** Define model provider (Create Models )*/
-        LwM2mModelProvider modelProvider = new VersionedModelProvider(this.context.getLwM2MTransportConfigServer().getModelsValue());
+//        LwM2mModelProvider modelProvider = new VersionedModelProvider(this.context.getLwM2MTransportConfigServer().getModelsValueCommon());
+        LwM2mModelProvider modelProvider = new LwM2mVersionedModelProvider(this.context.getLwM2MTransportConfigServer().getModelsValueServer(), this.lwM2mClientContext);
         builder.setObjectModelProvider(modelProvider);
 
         /**  Create credentials */

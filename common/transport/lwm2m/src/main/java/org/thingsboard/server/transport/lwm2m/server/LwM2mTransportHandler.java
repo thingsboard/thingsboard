@@ -188,8 +188,9 @@ public class LwM2mTransportHandler {
         return null;
     }
 
-    public static LwM2mClientProfile getNewProfileParameters(JsonObject profilesConfigData) {
+    public static LwM2mClientProfile getNewProfileParameters(JsonObject profilesConfigData, String tenantId) {
         LwM2mClientProfile lwM2MClientProfile = new LwM2mClientProfile();
+        lwM2MClientProfile.setTenantId(tenantId);
         lwM2MClientProfile.setPostClientLwM2mSettings(profilesConfigData.get(CLIENT_LWM2M_SETTINGS).getAsJsonObject());
         lwM2MClientProfile.setPostKeyNameProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(KEY_NAME).getAsJsonObject());
         lwM2MClientProfile.setPostAttributeProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE).getAsJsonArray());
@@ -221,7 +222,7 @@ public class LwM2mTransportHandler {
                 ObjectMapper mapper = new ObjectMapper();
                 String profileStr = mapper.writeValueAsString(profile);
                 JsonObject profileJson = (profileStr  != null) ? validateJson(profileStr) : null;
-                return (getValidateCredentialsBodyFromThingsboard(profileJson)) ? LwM2mTransportHandler.getNewProfileParameters(profileJson) : null;
+                return (getValidateCredentialsBodyFromThingsboard(profileJson)) ? LwM2mTransportHandler.getNewProfileParameters(profileJson, deviceProfile.getTenantId().getId().toString()) : null;
             } catch (IOException e) {
                 log.error("", e);
             }

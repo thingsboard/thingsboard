@@ -26,6 +26,7 @@ import org.eclipse.leshan.core.util.StringUtils;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
+import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -130,7 +131,13 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                         return String.valueOf(value);
                     case TIME:
                         String DATE_FORMAT = "MMM d, yyyy HH:mm a";
-                        Long timeValue = ((Date) value).getTime();
+                        Long timeValue;
+                        try {
+                            timeValue = ((Date) value).getTime();
+                        }
+                        catch (Exception e){
+                           timeValue = new BigInteger((byte [])value).longValue();
+                        }
                         DateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
                         return formatter.format(new Date(timeValue));
                     default:

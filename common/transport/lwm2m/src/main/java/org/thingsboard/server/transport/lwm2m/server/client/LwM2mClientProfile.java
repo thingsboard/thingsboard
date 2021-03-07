@@ -22,12 +22,14 @@ import lombok.Data;
 
 @Data
 public class LwM2mClientProfile {
+
+    private String tenantId;
     /**
      * {"clientLwM2mSettings": {
      *      clientUpdateValueAfterConnect: false;
      *       }
      **/
-    JsonObject postClientLwM2mSettings;
+    private JsonObject postClientLwM2mSettings;
 
     /**
      * {"keyName": {
@@ -36,22 +38,22 @@ public class LwM2mClientProfile {
      *       "/3/0/2": "serialNumber"
      *       }
      **/
-    JsonObject postKeyNameProfile;
+    private JsonObject postKeyNameProfile;
 
     /**
      * [ "/2/0/0", "/2/0/1"]
      */
-    JsonArray postAttributeProfile;
+    private JsonArray postAttributeProfile;
 
     /**
      * [ "/2/0/0", "/2/0/1"]
      */
-    JsonArray postTelemetryProfile;
+    private JsonArray postTelemetryProfile;
 
     /**
      * [ "/2/0/0", "/2/0/1"]
      */
-    JsonArray postObserveProfile;
+    private JsonArray postObserveProfile;
 
     public LwM2mClientProfile clone() {
         LwM2mClientProfile lwM2mClientProfile = new LwM2mClientProfile();

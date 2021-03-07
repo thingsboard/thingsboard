@@ -84,7 +84,11 @@ public class LwM2MTransportConfigServer {
 
     @Getter
     @Setter
-    private List<ObjectModel> modelsValue;
+    private List<ObjectModel> modelsValueCommon;
+
+    @Getter
+    @Setter
+    private List<ObjectModel> modelsValueServer;
 
     @Getter
     @Value("${transport.lwm2m.timeout:}")
@@ -188,11 +192,13 @@ public class LwM2MTransportConfigServer {
 
     @PostConstruct
     public void init() {
-        modelsValue = ObjectLoader.loadDefault();
+        modelsValueServer = ObjectLoader.loadDefault();
+        modelsValueServer.remove(3);
+        modelsValueCommon = ObjectLoader.loadDefault();
         File path = getPathModels();
         if (path.isDirectory()) {
             try {
-                modelsValue.addAll(ObjectLoader.loadObjectsFromDir(path));
+                modelsValueCommon.addAll(ObjectLoader.loadObjectsFromDir(path));
                 log.info(" [{}] Models directory is a directory", path.getAbsoluteFile());
             } catch (Exception e) {
                 log.error(" [{}] Could not parse the resource definition file", e.toString());
@@ -255,9 +261,9 @@ public class LwM2MTransportConfigServer {
     public ResourceModel getResourceModel(Registration registration, LwM2mPath pathIds) {
         String pathLink = "/" + pathIds.getObjectId() + "/" + pathIds.getObjectInstanceId();
         return (Arrays.stream(registration.getObjectLinks()).filter(p-> p.getUrl().equals(pathLink)).findFirst().isPresent() &&
-                this.modelsValue.stream().filter(v -> v.id == pathIds.getObjectId()).collect(Collectors.toList()).size() > 0) &&
-                this.modelsValue.stream().filter(v -> v.id == pathIds.getObjectId()).collect(Collectors.toList()).get(0).resources.containsKey(pathIds.getResourceId()) ?
-                this.modelsValue.stream().filter(v -> v.id == pathIds.getObjectId()).collect(Collectors.toList()).get(0).resources.get(pathIds.getResourceId()) :
+                this.modelsValueCommon.stream().filter(v -> v.id == pathIds.getObjectId()).collect(Collectors.toList()).size() > 0) &&
+                this.modelsValueCommon.stream().filter(v -> v.id == pathIds.getObjectId()).collect(Collectors.toList()).get(0).resources.containsKey(pathIds.getResourceId()) ?
+                this.modelsValueCommon.stream().filter(v -> v.id == pathIds.getObjectId()).collect(Collectors.toList()).get(0).resources.get(pathIds.getResourceId()) :
                 null;
     }
     
