@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.sql.resource;
 
 import org.springframework.data.repository.CrudRepository;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.sql.ResourceCompositeKey;
 import org.thingsboard.server.dao.model.sql.ResourceEntity;
 
@@ -26,6 +25,8 @@ import java.util.UUID;
 public interface ResourceRepository extends CrudRepository<ResourceEntity, ResourceCompositeKey> {
 
     List<ResourceEntity> findAllByTenantId(UUID tenantId);
+
+    List<ResourceEntity> findAllByTenantIdAndResourceType(UUID tenantId, String resourceType);
 
     void removeAllByTenantId(UUID tenantId);
 }

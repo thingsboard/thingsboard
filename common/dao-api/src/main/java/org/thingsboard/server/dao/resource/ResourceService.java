@@ -29,6 +29,8 @@ public interface ResourceService {
 
     List<Resource> findResourcesByTenantId(TenantId tenantId);
 
+    List<Resource> findResourcesByTenantIdResourceType(TenantId tenantId, ResourceType resourceType);
+
     void deleteResource(TenantId tenantId, ResourceType resourceType, String resourceId);
 
     void deleteResourcesByTenantId(TenantId tenantId);

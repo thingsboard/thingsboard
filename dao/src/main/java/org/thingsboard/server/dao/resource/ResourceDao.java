@@ -31,5 +31,7 @@ public interface ResourceDao {
 
     List<Resource> findAllByTenantId(TenantId tenantId);
 
+    List<Resource> findAllByTenantIdResourceType(TenantId tenantId, ResourceType resourceType);
+
     void removeAllByTenantId(TenantId tenantId);
 }

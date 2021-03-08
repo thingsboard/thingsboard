@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.client;
 
-import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.springframework.stereotype.Service;
@@ -105,6 +104,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     /**
      * Add new LwM2MClient to session
+     *
      * @param identity-
      * @return SecurityInfo. If error - SecurityInfoError
      * and log:
@@ -168,4 +168,5 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         }
         return false;
     }
+
 }

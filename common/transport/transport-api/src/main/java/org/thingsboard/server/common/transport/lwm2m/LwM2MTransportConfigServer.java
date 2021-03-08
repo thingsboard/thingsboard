@@ -47,7 +47,6 @@ import java.util.stream.Collectors;
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true') || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
 public class LwM2MTransportConfigServer {
 
-
     @Getter
     private String MODEL_PATH_DEFAULT = "models";
 
@@ -190,6 +189,8 @@ public class LwM2MTransportConfigServer {
     @Value("${transport.lwm2m.server.secure.alias:}")
     private String serverAlias;
 
+
+
     @PostConstruct
     public void init() {
         modelsValueServer = ObjectLoader.loadDefault();
@@ -276,4 +277,5 @@ public class LwM2MTransportConfigServer {
         ResourceModel resource = this.getResourceModel(registration, pathIds);
         return (resource == null) ? ResourceModel.Operations.NONE : resource.operations;
     }
+
 }

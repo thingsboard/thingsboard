@@ -30,6 +30,9 @@ import org.eclipse.leshan.server.security.SecurityChecker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.transport.resource.ResourceType;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
@@ -98,6 +101,7 @@ public class LwM2mTransportServerConfiguration {
         builder.setCoapConfig(getCoapConfig(serverPortNoSec, serverSecurePort));
 
         /** Define model provider (Create Models )*/
+        TransportProtos.GetResourcesResponseMsg responseMsg= this.context.getResourceTenant(TenantId.SYS_TENANT_ID.getId(), ResourceType.LWM2M_MODEL.name());
 //        LwM2mModelProvider modelProvider = new VersionedModelProvider(this.context.getLwM2MTransportConfigServer().getModelsValueCommon());
         LwM2mModelProvider modelProvider = new LwM2mVersionedModelProvider(this.context.getLwM2MTransportConfigServer().getModelsValueServer(), this.lwM2mClientContext);
         builder.setObjectModelProvider(modelProvider);

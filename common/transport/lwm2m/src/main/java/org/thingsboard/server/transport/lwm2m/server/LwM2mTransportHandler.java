@@ -45,6 +45,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 //@Component("LwM2MTransportHandler")
@@ -188,7 +189,7 @@ public class LwM2mTransportHandler {
         return null;
     }
 
-    public static LwM2mClientProfile getNewProfileParameters(JsonObject profilesConfigData, String tenantId) {
+    public static LwM2mClientProfile getNewProfileParameters(JsonObject profilesConfigData, UUID tenantId) {
         LwM2mClientProfile lwM2MClientProfile = new LwM2mClientProfile();
         lwM2MClientProfile.setTenantId(tenantId);
         lwM2MClientProfile.setPostClientLwM2mSettings(profilesConfigData.get(CLIENT_LWM2M_SETTINGS).getAsJsonObject());
@@ -222,7 +223,7 @@ public class LwM2mTransportHandler {
                 ObjectMapper mapper = new ObjectMapper();
                 String profileStr = mapper.writeValueAsString(profile);
                 JsonObject profileJson = (profileStr  != null) ? validateJson(profileStr) : null;
-                return (getValidateCredentialsBodyFromThingsboard(profileJson)) ? LwM2mTransportHandler.getNewProfileParameters(profileJson, deviceProfile.getTenantId().getId().toString()) : null;
+                return (getValidateCredentialsBodyFromThingsboard(profileJson)) ? LwM2mTransportHandler.getNewProfileParameters(profileJson, deviceProfile.getTenantId().getId()) : null;
             } catch (IOException e) {
                 log.error("", e);
             }

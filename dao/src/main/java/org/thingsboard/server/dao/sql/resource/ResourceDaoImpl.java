@@ -71,6 +71,11 @@ public class ResourceDaoImpl implements ResourceDao {
     }
 
     @Override
+    public List<Resource> findAllByTenantIdResourceType(TenantId tenantId, ResourceType resourceType) {
+        return DaoUtil.convertDataList(resourceRepository.findAllByTenantIdAndResourceType(tenantId.getId(), resourceType.name()));
+    }
+
+    @Override
     public void removeAllByTenantId(TenantId tenantId) {
         resourceRepository.removeAllByTenantId(tenantId.getId());
     }

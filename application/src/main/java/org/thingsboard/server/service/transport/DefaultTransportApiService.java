@@ -373,9 +373,14 @@ public class DefaultTransportApiService implements TransportApiService {
 
         List<TransportProtos.ResourceMsg> resources;
 
-        if (resourceType != null && resourceId != null) {
+        if (resourceType != null && resourceId != null && !resourceId.isEmpty()) {
             resources = Collections.singletonList(toProto(
                     resourceService.getResource(tenantId, ResourceType.valueOf(resourceType), resourceId)));
+        } else if (resourceType != null && !resourceType.isEmpty()) {
+            resources = resourceService.findResourcesByTenantIdResourceType(tenantId, ResourceType.valueOf(resourceType))
+                    .stream()
+                    .map(this::toProto)
+                    .collect(Collectors.toList());
         } else {
             resources = resourceService.findResourcesByTenantId(tenantId)
                     .stream()

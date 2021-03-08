@@ -70,6 +70,18 @@ public class ResourceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/resource/{resourceType}", method = RequestMethod.GET)
+    @ResponseBody
+    public List<Resource> getResources(@RequestParam(required = false) boolean system,
+                                       @PathVariable("resourceType") ResourceType resourceType) throws ThingsboardException {
+        try {
+            return checkNotNull(resourceService.findResourcesByTenantIdResourceType(system ? TenantId.SYS_TENANT_ID : getTenantId(), resourceType));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/resource/{resourceType}/{resourceId}", method = RequestMethod.DELETE)
     @ResponseBody
     public void deleteResource(@PathVariable("resourceType") ResourceType resourceType,

@@ -34,15 +34,24 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.model.ObjectModel;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigServer;
-import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.GetResourcesRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetResourcesResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
+
+import java.util.List;
+import java.util.UUID;
 
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_TELEMETRY;
 
@@ -55,6 +64,8 @@ public class LwM2mTransportContextServer extends TransportContext {
     private final LwM2MTransportConfigServer lwM2MTransportConfigServer;
 
     private final TransportService transportService;
+
+    private List<ObjectModel> modelsValueServer;
 
     @Getter
     private final LwM2MJsonAdaptor adaptor;
@@ -89,14 +100,14 @@ public class LwM2mTransportContextServer extends TransportContext {
         };
     }
 
-    public void sentParametersOnThingsboard(JsonElement msg, String topicName, TransportProtos.SessionInfoProto sessionInfo) {
+    public void sentParametersOnThingsboard(JsonElement msg, String topicName, SessionInfoProto sessionInfo) {
         try {
             if (topicName.equals(LwM2mTransportHandler.DEVICE_ATTRIBUTES_TOPIC)) {
-                TransportProtos.PostAttributeMsg postAttributeMsg = adaptor.convertToPostAttributes(msg);
+                PostAttributeMsg postAttributeMsg = adaptor.convertToPostAttributes(msg);
                 TransportServiceCallback call = this.getPubAckCallbackSentAttrTelemetry(postAttributeMsg);
                 transportService.process(sessionInfo, postAttributeMsg, this.getPubAckCallbackSentAttrTelemetry(call));
             } else if (topicName.equals(LwM2mTransportHandler.DEVICE_TELEMETRY_TOPIC)) {
-                TransportProtos.PostTelemetryMsg postTelemetryMsg = adaptor.convertToPostTelemetry(msg);
+                PostTelemetryMsg postTelemetryMsg = adaptor.convertToPostTelemetry(msg);
                 TransportServiceCallback call = this.getPubAckCallbackSentAttrTelemetry(postTelemetryMsg);
                 transportService.process(sessionInfo, postTelemetryMsg, this.getPubAckCallbackSentAttrTelemetry(call));
             }
@@ -115,8 +126,8 @@ public class LwM2mTransportContextServer extends TransportContext {
     /**
      * @return - sessionInfo after access connect client
      */
-    public TransportProtos.SessionInfoProto getValidateSessionInfo(TransportProtos.ValidateDeviceCredentialsResponseMsg msg, long mostSignificantBits, long leastSignificantBits) {
-        return TransportProtos.SessionInfoProto.newBuilder()
+    public SessionInfoProto getValidateSessionInfo(ValidateDeviceCredentialsResponseMsg msg, long mostSignificantBits, long leastSignificantBits) {
+        return SessionInfoProto.newBuilder()
                 .setNodeId(this.getNodeId())
                 .setSessionIdMSB(mostSignificantBits)
                 .setSessionIdLSB(leastSignificantBits)
@@ -129,6 +140,27 @@ public class LwM2mTransportContextServer extends TransportContext {
                 .setDeviceProfileIdLSB(msg.getDeviceInfo().getDeviceProfileIdLSB())
                 .setDeviceProfileIdMSB(msg.getDeviceInfo().getDeviceProfileIdMSB())
                 .build();
+    }
+
+
+
+
+    /**
+     * ResourcesRequestMsg
+     *
+     * @param resourceType
+     * @return
+     */
+    public GetResourcesResponseMsg getResourceTenant (UUID tenantId, String resourceType) {
+
+        GetResourcesResponseMsg responseMsg =
+                this.getTransportService()
+                        .getResources(GetResourcesRequestMsg.newBuilder()
+                                .setResourceType(resourceType)
+                                .setTenantIdLSB(tenantId.getLeastSignificantBits())
+                                .setTenantIdMSB(tenantId.getMostSignificantBits())
+                                .build());
+        return responseMsg;
     }
 
 }

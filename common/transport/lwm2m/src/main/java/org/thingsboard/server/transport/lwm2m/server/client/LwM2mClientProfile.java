@@ -20,10 +20,12 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Data
 public class LwM2mClientProfile {
 
-    private String tenantId;
+    private UUID tenantId;
     /**
      * {"clientLwM2mSettings": {
      *      clientUpdateValueAfterConnect: false;

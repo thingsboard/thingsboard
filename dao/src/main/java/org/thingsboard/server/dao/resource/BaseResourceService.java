@@ -66,6 +66,13 @@ public class BaseResourceService implements ResourceService {
     }
 
     @Override
+    public List<Resource> findResourcesByTenantIdResourceType(TenantId tenantId, ResourceType resourceType) {
+        log.trace("Executing findByTenantId [{}]", tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        return resourceDao.findAllByTenantIdResourceType(tenantId, resourceType);
+    }
+
+    @Override
     public void deleteResourcesByTenantId(TenantId tenantId) {
         log.trace("Executing deleteDevicesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
