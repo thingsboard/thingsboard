@@ -101,7 +101,8 @@ public class LwM2mTransportServerConfiguration {
         builder.setCoapConfig(getCoapConfig(serverPortNoSec, serverSecurePort));
 
         /** Define model provider (Create Models )*/
-        TransportProtos.GetResourcesResponseMsg responseMsg= this.context.getResourceTenant(TenantId.SYS_TENANT_ID.getId(), ResourceType.LWM2M_MODEL.name());
+        TransportProtos.GetResourcesResponseMsg responseMsg= this.context.getResourceTenantProcess(TenantId.SYS_TENANT_ID.getId(), ResourceType.LWM2M_MODEL.name());
+//        TransportProtos.GetResourcesResponseMsg responseMsg= this.context.getResourceTenant(TenantId.SYS_TENANT_ID.getId(), ResourceType.LWM2M_MODEL.name());
 //        LwM2mModelProvider modelProvider = new VersionedModelProvider(this.context.getLwM2MTransportConfigServer().getModelsValueCommon());
         LwM2mModelProvider modelProvider = new LwM2mVersionedModelProvider(this.context.getLwM2MTransportConfigServer().getModelsValueServer(), this.lwM2mClientContext);
         builder.setObjectModelProvider(modelProvider);

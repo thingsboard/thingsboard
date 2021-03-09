@@ -75,8 +75,9 @@ public interface TransportService {
 
     void onProfileUpdate(DeviceProfile deviceProfile);
 
-    void process(LwM2MRequestMsg msg,
-                 TransportServiceCallback<LwM2MResponseMsg> callback);
+    void process(LwM2MRequestMsg msg, TransportServiceCallback<LwM2MResponseMsg> callback);
+
+    void process(GetResourcesRequestMsg msg, TransportServiceCallback<GetResourcesResponseMsg> callback);
 
     void process(SessionInfoProto sessionInfo, SessionEventMsg msg, TransportServiceCallback<Void> callback);
 
