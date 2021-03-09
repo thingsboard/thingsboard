@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
@@ -377,7 +378,9 @@ public class DefaultTransportApiService implements TransportApiService {
             resources = Collections.singletonList(toProto(
                     resourceService.getResource(tenantId, ResourceType.valueOf(resourceType), resourceId)));
         } else {
-            resources = resourceService.findResourcesByTenantId(tenantId)
+            //TODO: add page link params to request proto if need or remove this
+            resources = resourceService.findResourcesByTenantId(tenantId, new PageLink(100))
+                    .getData()
                     .stream()
                     .map(this::toProto)
                     .collect(Collectors.toList());

@@ -15,17 +15,17 @@
  */
 package org.thingsboard.server.dao.sql.resource;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.CrudRepository;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.sql.ResourceCompositeKey;
 import org.thingsboard.server.dao.model.sql.ResourceEntity;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface ResourceRepository extends CrudRepository<ResourceEntity, ResourceCompositeKey> {
 
-    List<ResourceEntity> findAllByTenantId(UUID tenantId);
+    Page<ResourceEntity> findAllByTenantId(UUID tenantId, Pageable pageable);
 
     void removeAllByTenantId(UUID tenantId);
 }

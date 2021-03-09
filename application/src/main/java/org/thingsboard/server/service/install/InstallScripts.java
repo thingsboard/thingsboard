@@ -253,7 +253,6 @@ public class InstallScripts {
         }
     }
 
-
     public void loadDemoRuleChains(TenantId tenantId) throws Exception {
         try {
             createDefaultRuleChains(tenantId);
