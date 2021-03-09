@@ -255,7 +255,9 @@ class AlarmState {
         if (StringUtils.isNotEmpty(alarmDetailsStr)) {
             for (var keyFilter : ruleState.getAlarmRule().getCondition().getCondition()) {
                 EntityKeyValue entityKeyValue = dataSnapshot.getValue(keyFilter.getKey());
-                alarmDetailsStr = alarmDetailsStr.replaceAll(String.format("\\$\\{%s}", keyFilter.getKey().getKey()), getValueAsString(entityKeyValue));
+                if (entityKeyValue != null) {
+                    alarmDetailsStr = alarmDetailsStr.replaceAll(String.format("\\$\\{%s}", keyFilter.getKey().getKey()), getValueAsString(entityKeyValue));
+                }
             }
             ObjectNode newDetails = JacksonUtil.newObjectNode();
             newDetails.put("data", alarmDetailsStr);
