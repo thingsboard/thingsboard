@@ -20,7 +20,7 @@
     <mat-chip
       *ngFor="let key of keys; let $index = index"
       [selectable]="!disabled"
-      [removable]="!disabled && datasourceType !== datasourceTypes.entityCount"
+      [removable]="!disabled && !isEntityCountDatasource"
       (removed)="remove(key)">
       <div fxLayout="row" fxLayoutAlign="start center" class="tb-attribute-chip">
         <div *ngIf="!disabled" class="tb-chip-drag-handle" style="margin-right: 5px;">
@@ -31,7 +31,7 @@
         </div>
         <div class="tb-chip-labels">
           <div class="tb-chip-label">
-            <span *ngIf="datasourceType !== datasourceTypes.function && datasourceType !== datasourceTypes.entityCount">
+            <span *ngIf="datasourceType === datasourceTypes.entity">
               <span *ngIf="key.type === dataKeyTypes.alarm"
                     matTooltip="{{'datakey.alarm' | translate }}"
                     matTooltipPosition="above">
@@ -70,7 +70,7 @@
                 (click)="editDataKey(key, $index)" mat-button mat-icon-button class="tb-mat-32">
           <mat-icon class="tb-mat-20">edit</mat-icon>
         </button>
-        <mat-icon matChipRemove *ngIf="!disabled && datasourceType !== datasourceTypes.entityCount">close</mat-icon>
+        <mat-icon matChipRemove *ngIf="!disabled && !isEntityCountDatasource">close</mat-icon>
       </div>
     </mat-chip>
     <input matInput type="text" placeholder="{{ !disabled ? placeholder : '' }}"
@@ -78,10 +78,12 @@
            #keyInput
            formControlName="key"
            matAutocompleteOrigin
+           [readonly]="isEntityCountDatasource"
            #origin="matAutocompleteOrigin"
            [matAutocompleteConnectedTo]="origin"
            (focusin)="onFocus()"
            [matAutocomplete]="keyAutocomplete"
+           [matAutocompleteDisabled]="isEntityCountDatasource"
            [matChipInputFor]="chipList"
            [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
            (matChipInputTokenEnd)="add($event)">
@@ -91,7 +93,7 @@
                     [displayWith]="displayKeyFn">
     <mat-option *ngFor="let key of filteredKeys | async" [value]="key">
       <span style="white-space: nowrap;">
-        <span *ngIf="datasourceType !== datasourceTypes.function && datasourceType !== datasourceTypes.entityCount">
+        <span *ngIf="datasourceType === datasourceTypes.entity">
           <span *ngIf="key.type === dataKeyTypes.alarm"
                 matTooltip="{{'datakey.alarm' | translate }}"
                 matTooltipPosition="above">
@@ -128,7 +130,7 @@
             {{ translate.get('entity.no-key-matching',
               {key: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
           </span>
-          <span *ngIf="datasourceType === datasourceTypes.function || datasourceType === datasourceTypes.entityCount; else createEntityKey">
+          <span *ngIf="datasourceType !== datasourceTypes.entity; else createEntityKey">
             <a translate (click)="createKey(searchText)">entity.create-new-key</a>
           </span>
           <ng-template #createEntityKey>
