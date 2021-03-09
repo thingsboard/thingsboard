@@ -197,22 +197,24 @@ public class InstallScripts {
 
     public void loadSystemLwm2mResources() throws Exception {
         Path modelsDir = Paths.get(getDataDir(), MODELS_DIR);
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(modelsDir, path -> path.toString().endsWith(XML_EXT))) {
-            dirStream.forEach(
-                    path -> {
-                        try {
-                            Resource resource = new Resource();
-                            resource.setTenantId(TenantId.SYS_TENANT_ID);
-                            resource.setResourceType(ResourceType.LWM2M_MODEL);
-                            resource.setResourceId(path.getFileName().toString());
-                            resource.setValue(Base64.getEncoder().encodeToString(Files.readAllBytes(path)));
-                            resourceService.saveResource(resource);
-                        } catch (Exception e) {
-                            log.error("Unable to load lwm2m model [{}]", path.toString());
-                            throw new RuntimeException("Unable to load lwm2m model", e);
+        if (Files.isDirectory(modelsDir)) {
+            try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(modelsDir, path -> path.toString().endsWith(XML_EXT))) {
+                dirStream.forEach(
+                        path -> {
+                            try {
+                                Resource resource = new Resource();
+                                resource.setTenantId(TenantId.SYS_TENANT_ID);
+                                resource.setResourceType(ResourceType.LWM2M_MODEL);
+                                resource.setResourceId(path.getFileName().toString());
+                                resource.setValue(Base64.getEncoder().encodeToString(Files.readAllBytes(path)));
+                                resourceService.saveResource(resource);
+                            } catch (Exception e) {
+                                log.error("Unable to load lwm2m model [{}]", path.toString());
+                                throw new RuntimeException("Unable to load lwm2m model", e);
+                            }
                         }
-                    }
-            );
+                );
+            }
         }
 
         Path jksPath = Paths.get(getDataDir(), CREDENTIALS_DIR, "serverKeyStore.jks");
