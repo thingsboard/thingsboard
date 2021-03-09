@@ -89,12 +89,12 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                                     new CoapOkCallback(exchange, CoAP.ResponseCode.CREATED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
                             reportActivity(sessionInfo, false, false);
                         } catch (AdaptorException e) {
-                            log.trace("[{}] Failed to decode message: ", sessionId, e);
+                            log.error("[{}] Failed to decode Efento ProtoMeasurements: ", sessionId, e);
                             exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
                         }
                     }));
         } catch (Exception e) {
-            log.trace("Failed to decode Efento ProtoMeasurements: ", e);
+            log.error("Failed to decode Efento ProtoMeasurements: ", e);
             exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
         }
     }
@@ -153,10 +153,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                     int sampleOfssetsListSize = sampleOffsetsList.size();
                     for (int i = 0; i < sampleOfssetsListSize; i++) {
                         int sampleOffset = sampleOffsetsList.get(i);
-                        Integer nextOffset = null;
-                        if (isBinarySensor) {
-                            nextOffset = (i == (sampleOfssetsListSize - 1)) ? null : sampleOffsetsList.get(i + 1);
-                        }
+                        Integer previousSampleOffset = isBinarySensor && i > 0 ? sampleOffsetsList.get(i - 1) : null;
                         if (sampleOffset == -32768) {
                             log.warn("[{}],[{}] Sensor error value! Ignoring.", sessionId, sampleOffset);
                         } else {
@@ -186,25 +183,21 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                                     startTimestampMillis = startTimestampMillis + measurementPeriodMillis;
                                     break;
                                 case OK_ALARM:
-                                    String data = (sampleOffset < 0) ? "OK" : "ALARM";
+                                    boolean currentIsOk = sampleOffset < 0;
+                                    if (previousSampleOffset != null) {
+                                        boolean previousIsOk = previousSampleOffset < 0;
+                                        boolean isOk = previousIsOk && currentIsOk;
+                                        boolean isAlarm = !previousIsOk && !currentIsOk;
+                                        if (isOk || isAlarm) {
+                                            break;
+                                        }
+                                    }
+                                    String data = currentIsOk ? "OK" : "ALARM";
                                     long sampleOffsetMillis = TimeUnit.SECONDS.toMillis(sampleOffset);
                                     long measurementTimestamp = startTimestampMillis + Math.abs(sampleOffsetMillis);
                                     values = valuesMap.computeIfAbsent(measurementTimestamp - 1000, k ->
                                             CoapEfentoUtils.setDefaultMeasurements(serialNumber, batteryStatus, measurementPeriod, nextTransmissionAtMillis, signal, k));
                                     values.addProperty("ok_alarm_" + channel, data);
-                                    if (nextOffset == null) {
-                                        break;
-                                    } else {
-                                        long nextOffsetMillis = TimeUnit.SECONDS.toMillis(nextOffset);
-                                        long insertionTimestamp = measurementTimestamp + TimeUnit.SECONDS.toMillis(measurementPeriodBase);
-                                        long nextMeasurementTimestamp = startTimestampMillis + Math.abs(nextOffsetMillis);
-                                        while (insertionTimestamp < nextMeasurementTimestamp) {
-                                            values = valuesMap.computeIfAbsent(insertionTimestamp - 1000, k ->
-                                                    CoapEfentoUtils.setDefaultMeasurements(serialNumber, batteryStatus, measurementPeriod, nextTransmissionAtMillis, signal, k));
-                                            values.addProperty("ok_alarm_" + channel, data);
-                                            insertionTimestamp += TimeUnit.SECONDS.toMillis(measurementPeriodBase);
-                                        }
-                                    }
                                     break;
                                 case NO_SENSOR:
                                 case UNRECOGNIZED:
