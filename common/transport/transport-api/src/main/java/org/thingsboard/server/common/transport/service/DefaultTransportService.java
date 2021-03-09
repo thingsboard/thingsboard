@@ -255,6 +255,18 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
+    public TransportProtos.GetResourcesResponseMsg getResources(TransportProtos.GetResourcesRequestMsg msg) {
+        TbProtoQueueMsg<TransportProtos.TransportApiRequestMsg> protoMsg =
+                new TbProtoQueueMsg<>(UUID.randomUUID(), TransportProtos.TransportApiRequestMsg.newBuilder().setResourcesRequestMsg(msg).build());
+        try {
+            TbProtoQueueMsg<TransportApiResponseMsg> response = transportApiRequestTemplate.send(protoMsg).get();
+            return response.getValue().getResourcesResponseMsg();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public void process(DeviceTransportType transportType, TransportProtos.ValidateDeviceTokenRequestMsg msg,
                         TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
         log.trace("Processing msg: {}", msg);
@@ -688,12 +700,17 @@ public class DefaultTransportService implements TransportService {
                 } else if (EntityType.DEVICE.equals(entityType)) {
                     rateLimitService.remove(new DeviceId(entityUuid));
                 }
+            } else if (toSessionMsg.hasResourceUpdateMsg()) {
+                //TODO: update resource cache
+            } else if (toSessionMsg.hasResourceDeleteMsg()) {
+                //TODO: remove resource from cache
             } else {
                 //TODO: should we notify the device actor about missed session?
                 log.debug("[{}] Missing session.", sessionId);
             }
         }
     }
+
 
     public void onProfileUpdate(DeviceProfile deviceProfile) {
         long deviceProfileIdMSB = deviceProfile.getId().getId().getMostSignificantBits();

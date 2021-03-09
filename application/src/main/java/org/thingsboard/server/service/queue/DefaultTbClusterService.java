@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.data.transport.resource.Resource;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -245,6 +246,34 @@ public class DefaultTbClusterService implements TbClusterService {
     @Override
     public void onDeviceDeleted(Device entity, TbQueueCallback callback) {
         onEntityDelete(entity.getTenantId(), entity.getId(), entity.getName(), callback);
+    }
+
+    @Override
+    public void onResourceChange(Resource resource, TbQueueCallback callback) {
+        TenantId tenantId = resource.getTenantId();
+        log.trace("[{}][{}][{}] Processing change resource", tenantId, resource.getResourceType(), resource.getResourceId());
+        TransportProtos.ResourceUpdateMsg resourceUpdateMsg = TransportProtos.ResourceUpdateMsg.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setResourceType(resource.getResourceType().name())
+                .setResourceId(resource.getResourceId())
+                .build();
+        ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setResourceUpdateMsg(resourceUpdateMsg).build();
+        broadcast(transportMsg, callback);
+    }
+
+    @Override
+    public void onResourceDeleted(Resource resource, TbQueueCallback callback) {
+        TenantId tenantId = resource.getTenantId();
+        log.trace("[{}][{}][{}] Processing delete resource", tenantId, resource.getResourceType(), resource.getResourceId());
+        TransportProtos.ResourceDeleteMsg resourceUpdateMsg = TransportProtos.ResourceDeleteMsg.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setResourceType(resource.getResourceType().name())
+                .setResourceId(resource.getResourceId())
+                .build();
+        ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setResourceDeleteMsg(resourceUpdateMsg).build();
+        broadcast(transportMsg, callback);
     }
 
     public <T> void onEntityChange(TenantId tenantId, EntityId entityid, T entity, TbQueueCallback callback) {

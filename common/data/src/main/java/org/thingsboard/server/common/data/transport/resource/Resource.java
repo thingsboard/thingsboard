@@ -13,14 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.util;
+package org.thingsboard.server.common.data.transport.resource;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import lombok.Data;
+import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.id.TenantId;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+@Data
+public class Resource implements HasTenantId {
+    private TenantId tenantId;
+    private ResourceType resourceType;
+    private String resourceId;
+    private String value;
 
-@Retention(RetentionPolicy.RUNTIME)
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true') || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
-public @interface TbLwM2mTransportComponent {
+    @Override
+    public String toString() {
+        return "Resource{" +
+                "tenantId=" + tenantId +
+                ", resourceType=" + resourceType +
+                ", resourceId='" + resourceId + '\'' +
+                '}';
+    }
 }

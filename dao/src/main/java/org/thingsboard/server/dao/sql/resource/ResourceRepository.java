@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.util;
+package org.thingsboard.server.dao.sql.resource;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.CrudRepository;
+import org.thingsboard.server.dao.model.sql.ResourceCompositeKey;
+import org.thingsboard.server.dao.model.sql.ResourceEntity;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import java.util.UUID;
 
-@Retention(RetentionPolicy.RUNTIME)
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true') || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
-public @interface TbLwM2mTransportComponent {
+public interface ResourceRepository extends CrudRepository<ResourceEntity, ResourceCompositeKey> {
+
+    Page<ResourceEntity> findAllByTenantId(UUID tenantId, Pageable pageable);
+
+    void removeAllByTenantId(UUID tenantId);
 }
