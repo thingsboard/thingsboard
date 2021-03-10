@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.telemetry;
+package org.thingsboard.server.transport.snmp;
 
-import org.springframework.context.ApplicationListener;
-import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.thingsboard.server.common.data.TransportName;
 
-/**
- * Created by ashvayka on 27.03.18.
- */
-public interface TelemetrySubscriptionService extends InternalTelemetryService, ApplicationListener<PartitionChangeEvent> {
+@Configuration
+public class TransportConfig {
 
+    @Bean
+    public TransportName transportName() {
+        return new TransportName("snmp");
+    }
 }

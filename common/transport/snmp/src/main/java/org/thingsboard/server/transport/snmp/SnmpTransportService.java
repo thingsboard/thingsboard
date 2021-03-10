@@ -16,31 +16,28 @@
 package org.thingsboard.server.transport.snmp;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.snmp4j.Snmp;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.device.profile.SnmpProfileTransportConfiguration;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageDataIterable;
-import org.thingsboard.server.dao.device.DeviceProfileService;
-import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.discovery.ZkDiscoveryService;
 import org.thingsboard.server.transport.snmp.session.DeviceSessionCtx;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -49,21 +46,14 @@ import java.util.concurrent.TimeUnit;
 @Service("SnmpTransportService")
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.snmp.enabled}'=='true')")
 @Slf4j
+@RequiredArgsConstructor
 public class SnmpTransportService {
-
     private static final int ENTITY_PACK_LIMIT = 1024;
+    private UUID transportId;
 
-    @Autowired
-    private SnmpTransportContext snmpTransportContext;
-
-    @Autowired
-    DeviceProfileService deviceProfileService;
-
-    @Autowired
-    TenantService tenantService;
-
-    @Autowired
-    DeviceService deviceService;
+    private final SnmpTransportContext snmpTransportContext;
+    private final TransportService transportService;
+    private final SnmpTransportBalancingService balancingService;
 
     @Getter
     private ExecutorService snmpCallbackExecutor;
@@ -100,9 +90,10 @@ public class SnmpTransportService {
     }
 
     @EventListener(ApplicationReadyEvent.class)
-    @Order(value = 2)
+    @Order(value = 10)
     public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
         log.info("Received application ready event. Starting SNMP polling.");
+        transportId = UUID.randomUUID();
         initSessionCtxList();
         startPolling();
     }
@@ -118,24 +109,31 @@ public class SnmpTransportService {
     }
 
     private void initSessionCtxList() {
+//        transportService.process();
+
         //TODO: This approach works for monolith, in cluster the same data will be fetched by each node.
-        for (Tenant tenant : new PageDataIterable<>(tenantService::findTenants, ENTITY_PACK_LIMIT)) {
-            TenantId tenantId = tenant.getTenantId();
-            for (DeviceProfile deviceProfile : new PageDataIterable<>(pageLink -> deviceProfileService.findDeviceProfiles(tenantId, pageLink), ENTITY_PACK_LIMIT)) {
-                if (DeviceTransportType.SNMP.equals(deviceProfile.getTransportType())) {
-                    snmpTransportContext.getProfileTransportConfig().put(deviceProfile.getId(),
-                            (SnmpProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration());
-                    initDeviceSessions(deviceProfile);
-                }
-            }
-        }
+//        transportService.process();
+
+//        for (Tenant tenant : new PageDataIterable<>(tenantService::findTenants, ENTITY_PACK_LIMIT)) {
+//            TenantId tenantId = tenant.getTenantId();
+//            PageDataIterable<DeviceProfile> assignedDeviceProfiles = new PageDataIterable<>(pageLink -> deviceProfileService.findDeviceProfiles(tenantId, pageLink), ENTITY_PACK_LIMIT);
+//
+//            for (DeviceProfile deviceProfile : assignedDeviceProfiles) {
+//                if (DeviceTransportType.SNMP.equals(deviceProfile.getTransportType())) {
+//                    snmpTransportContext.getProfileTransportConfig().put(deviceProfile.getId(),
+//                            (SnmpProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration());
+//                    initDeviceSessions(deviceProfile);
+//                }
+//            }
+//        }
+
         snmpTransportContext.initPduListPerProfile();
     }
 
     private void initDeviceSessions(DeviceProfile deviceProfile) {
-        for (DeviceInfo deviceInfo : new PageDataIterable<>(pageLink -> deviceService.findDeviceInfosByTenantIdAndDeviceProfileId(deviceProfile.getTenantId(), deviceProfile.getId(), pageLink), ENTITY_PACK_LIMIT)) {
-            snmpTransportContext.updateDeviceSessionCtx(deviceInfo, deviceProfile, snmp);
-        }
+//        for (DeviceInfo deviceInfo : new PageDataIterable<>(pageLink -> deviceService.findDeviceInfosByTenantIdAndDeviceProfileId(deviceProfile.getTenantId(), deviceProfile.getId(), pageLink), ENTITY_PACK_LIMIT)) {
+//            snmpTransportContext.updateDeviceSessionCtx(deviceInfo, deviceProfile, snmp);
+//        }
     }
 
     private void startPolling() {

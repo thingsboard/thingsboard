@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -552,6 +553,11 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             }
         }
         return savedDevice;
+    }
+
+    @Override
+    public PageData<Device> findDevicesByDeviceProfileTransportType(DeviceTransportType transportType) {
+        return deviceDao.findDevicesByDeviceProfileTransportType(transportType);
     }
 
     private DataValidator<Device> deviceValidator =

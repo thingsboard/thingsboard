@@ -19,8 +19,11 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.TransportName;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -32,6 +35,7 @@ import javax.annotation.PostConstruct;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -56,8 +60,11 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
 
     @Autowired(required = false)
     private TbQueueRuleEngineSettings ruleEngineSettings;
+    @Autowired
+    private ApplicationContext applicationContext;
 
     private List<ServiceType> serviceTypes;
+    private List<DeviceTransportType> transportTypes;
     private ServiceInfo serviceInfo;
     private TenantId isolatedTenant;
 
@@ -99,7 +106,15 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
             }
         }
 
+        builder.addAllTransports(getTransports().stream()
+                .map(TransportName::getName)
+                .collect(Collectors.toSet()));
+
         serviceInfo = builder.build();
+    }
+
+    private Collection<TransportName> getTransports() {
+        return applicationContext.getBeansOfType(TransportName.class).values();
     }
 
     @Override

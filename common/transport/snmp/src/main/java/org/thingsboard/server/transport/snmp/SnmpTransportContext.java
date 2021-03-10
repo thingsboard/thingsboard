@@ -23,9 +23,12 @@ import org.snmp4j.smi.OID;
 import org.snmp4j.smi.VariableBinding;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.TransportName;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileKvMapping;
 import org.thingsboard.server.common.data.device.profile.SnmpProfileTransportConfiguration;
@@ -46,7 +49,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
-@Service("SnmpTransportContext")
+@Service
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.snmp.enabled}'=='true')")
 @Slf4j
 public class SnmpTransportContext extends TransportContext {
@@ -54,6 +57,7 @@ public class SnmpTransportContext extends TransportContext {
     DeviceCredentialsService deviceCredentialsService;
 
     @Autowired
+    @Lazy
     SnmpTransportService snmpTransportService;
 
     @Getter

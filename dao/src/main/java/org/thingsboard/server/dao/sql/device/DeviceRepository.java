@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.dao.model.sql.DeviceEntity;
 import org.thingsboard.server.dao.model.sql.DeviceInfoEntity;
 
@@ -170,4 +171,9 @@ public interface DeviceRepository extends PagingAndSortingRepository<DeviceEntit
     Long countByDeviceProfileId(UUID deviceProfileId);
 
     Long countByTenantId(UUID tenantId);
+
+    @Query("SELECT d FROM DeviceEntity d " +
+            "INNER JOIN DeviceProfileEntity p ON d.deviceProfileId = p.id " +
+            "WHERE p.transportType = :transportType")
+    List<DeviceEntity> findByDeviceProfileTransportType(@Param("transportType") DeviceTransportType transportType);
 }

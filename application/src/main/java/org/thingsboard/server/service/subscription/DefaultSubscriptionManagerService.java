@@ -46,7 +46,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionUpdate
 import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionUpdateValueListProto;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
+import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;

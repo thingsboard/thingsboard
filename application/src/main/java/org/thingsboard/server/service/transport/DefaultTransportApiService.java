@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
@@ -57,8 +58,8 @@ import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.device.provision.ProvisionResponse;
 import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileRequestMsg;
@@ -66,6 +67,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileResp
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetResourcesRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetSnmpDevicesRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionResponseStatus;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
@@ -82,6 +84,7 @@ import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
+import java.util.Optional;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -398,6 +401,11 @@ public class DefaultTransportApiService implements TransportApiService {
                 .setResourceId(resource.getResourceId())
                 .setValue(resource.getValue())
                 .build();
+    }
+
+    private ListenableFuture<TransportApiResponseMsg> handle(GetSnmpDevicesRequestMsg requestMsg) {
+        deviceService.findDevicesByDeviceProfileTransportType(DeviceTransportType.SNMP);
+        return null;
     }
 
     private ListenableFuture<TransportApiResponseMsg> getDeviceInfo(DeviceId deviceId, DeviceCredentials credentials) {

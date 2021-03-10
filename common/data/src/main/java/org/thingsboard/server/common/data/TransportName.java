@@ -13,24 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.discovery;
+package org.thingsboard.server.common.data;
 
-import lombok.Getter;
-import org.springframework.context.ApplicationEvent;
-import org.thingsboard.server.common.msg.queue.ServiceQueueKey;
+public class TransportName {
+    private final String name;
 
-import java.util.Set;
+    public TransportName(String name) {
+        this.name = name;
+    }
 
-
-public class ClusterTopologyChangeEvent extends TbApplicationEvent {
-
-    private static final long serialVersionUID = -2441739930040282254L;
-
-    @Getter
-    private final Set<ServiceQueueKey> serviceQueueKeys;
-
-    public ClusterTopologyChangeEvent(Object source, Set<ServiceQueueKey> serviceQueueKeys) {
-        super(source);
-        this.serviceQueueKeys = serviceQueueKeys;
+    public String getName() {
+        return name;
     }
 }

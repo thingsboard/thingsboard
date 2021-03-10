@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.service.SessionMetaData;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileRequestMsg;
@@ -29,6 +30,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.GetResourcesRequestM
 import org.thingsboard.server.gen.transport.TransportProtos.GetResourcesResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.LwM2MRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.LwM2MResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetSnmpDevicesRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetSnmpDevicesResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
@@ -54,6 +57,8 @@ public interface TransportService {
     GetEntityProfileResponseMsg getEntityProfile(GetEntityProfileRequestMsg msg);
 
     GetResourcesResponseMsg getResources(GetResourcesRequestMsg msg);
+
+    GetSnmpDevicesResponseMsg getSnmpDevices(GetSnmpDevicesRequestMsg requestMsg);
 
     void process(DeviceTransportType transportType, ValidateDeviceTokenRequestMsg msg,
                  TransportServiceCallback<ValidateDeviceCredentialsResponse> callback);

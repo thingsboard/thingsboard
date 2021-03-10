@@ -267,6 +267,21 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
+    public TransportProtos.GetSnmpDevicesResponseMsg getSnmpDevices(TransportProtos.GetSnmpDevicesRequestMsg requestMsg) {
+        TbProtoQueueMsg<TransportProtos.TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(
+                UUID.randomUUID(), TransportProtos.TransportApiRequestMsg.newBuilder()
+                .setSnmpDevicesRequestMsg(requestMsg)
+                .build()
+        );
+        try {
+            TbProtoQueueMsg<TransportApiResponseMsg> response = transportApiRequestTemplate.send(protoMsg).get();
+            return response.getValue().getSnmpDevicesResponseMsg();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public void process(DeviceTransportType transportType, TransportProtos.ValidateDeviceTokenRequestMsg msg,
                         TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
         log.trace("Processing msg: {}", msg);
@@ -524,6 +539,11 @@ public class DefaultTransportService implements TransportService {
                     .setClaimDevice(msg).build(), callback);
         }
     }
+
+//    @Override
+//    public void process(SnmpDevicesRequestMsg requestMsg, TransportServiceCallback<SnmpDevicesResponseMsg> callback) {
+//
+//    }
 
     @Override
     public SessionMetaData reportActivity(TransportProtos.SessionInfoProto sessionInfo) {

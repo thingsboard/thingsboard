@@ -34,6 +34,7 @@ message ServiceInfo {
   int64 tenantIdMSB = 3;
   int64 tenantIdLSB = 4;
   repeated QueueInfo ruleEngineQueues = 5;
+  repeated string transports = 6;
 }
 
 /**
@@ -248,6 +249,14 @@ message GetEntityProfileResponseMsg {
   string entityType = 1;
   bytes data = 2;
   bytes apiState = 3;
+}
+
+message GetSnmpDevicesRequestMsg {
+
+}
+
+message GetSnmpDevicesResponseMsg {
+  repeated string ids = 1;
 }
 
 message EntityUpdateMsg {
@@ -559,6 +568,7 @@ message TransportApiRequestMsg {
   ProvisionDeviceRequestMsg provisionDeviceRequestMsg = 7;
   ValidateDeviceLwM2MCredentialsRequestMsg validateDeviceLwM2MCredentialsRequestMsg = 8;
   GetResourcesRequestMsg resourcesRequestMsg = 9;
+  GetSnmpDevicesRequestMsg snmpDevicesRequestMsg = 10;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
@@ -567,6 +577,7 @@ message TransportApiResponseMsg {
   GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
   GetEntityProfileResponseMsg entityProfileResponseMsg = 3;
   ProvisionDeviceResponseMsg provisionDeviceResponseMsg = 4;
+  GetSnmpDevicesResponseMsg snmpDevicesResponseMsg = 5;
   LwM2MResponseMsg lwM2MResponseMsg = 6;
   GetResourcesResponseMsg resourcesResponseMsg = 7;
 }

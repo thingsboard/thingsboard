@@ -15,26 +15,26 @@
  */
 package org.thingsboard.server.queue.discovery;
 
-import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.queue.ServiceQueueKey;
 import org.thingsboard.server.common.msg.queue.ServiceQueue;
+import org.thingsboard.server.common.msg.queue.ServiceQueueKey;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
+import org.thingsboard.server.queue.discovery.event.ClusterTopologyChangeEvent;
+import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 
 import javax.annotation.PostConstruct;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -46,7 +46,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -217,6 +216,26 @@ public class HashPartitionService implements PartitionService {
             default:
                 return buildNotificationsTopicPartitionInfo(serviceType, serviceId);
         }
+    }
+
+    public static int resolvePartition(UUID entityId, int partitions) {
+        HashFunction hashFunction = Hashing.murmur3_128();
+        int hash = hashFunction.newHasher()
+                .putLong(entityId.getMostSignificantBits())
+                .putLong(entityId.getLeastSignificantBits()).hash().asInt();
+        return Math.abs(hash % partitions);
+    }
+
+    public static void main(String[] args) {
+        System.out.println(resolvePartition(UUID.randomUUID(), 1));
+    }
+
+    @Override
+    public int resolvePartitionIndex(UUID entityId, int partitions) {
+        int hash = hashFunction.newHasher()
+                .putLong(entityId.getMostSignificantBits())
+                .putLong(entityId.getLeastSignificantBits()).hash().asInt();
+        return Math.abs(hash % partitions);
     }
 
     private Map<ServiceQueueKey, List<ServiceInfo>> getServiceKeyListMap(List<ServiceInfo> services) {

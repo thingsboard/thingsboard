@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.discovery;
+package org.thingsboard.server.queue.discovery.event;
 
 import lombok.Getter;
-import org.springframework.context.ApplicationEvent;
 import org.thingsboard.server.common.msg.queue.ServiceQueueKey;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.queue.discovery.TbApplicationEvent;
 
 import java.util.Set;
 
