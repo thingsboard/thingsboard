@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AlarmCondition {
 
-    private List<KeyFilter> condition;
+    private List<AlarmConditionFilter> condition;
     private AlarmConditionSpec spec;
 
 }

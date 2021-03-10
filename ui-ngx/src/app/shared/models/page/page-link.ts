@@ -108,7 +108,8 @@ export class PageLink {
   public toQuery(): string {
     let query = `?pageSize=${this.pageSize}&page=${this.page}`;
     if (this.textSearch && this.textSearch.length) {
-      query += `&textSearch=${this.textSearch}`;
+      const textSearch = encodeURIComponent(this.textSearch);
+      query += `&textSearch=${textSearch}`;
     }
     if (this.sortOrder) {
       query += `&sortProperty=${this.sortOrder.property}&sortOrder=${this.sortOrder.direction}`;

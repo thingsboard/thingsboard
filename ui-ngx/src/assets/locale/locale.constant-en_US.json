@@ -74,6 +74,7 @@
     "admin": {
         "general": "General",
         "general-settings": "General Settings",
+        "home-settings": "Home Settings",
         "outgoing-mail": "Mail Server",
         "outgoing-mail-settings": "Outgoing Mail Server Settings",
         "system-settings": "System Settings",
@@ -121,7 +122,9 @@
         "number-to": "Phone Number To",
         "number-to-required": "Phone Number To is required.",
         "phone-number-hint": "Phone Number in E.164 format, ex. +19995550123",
+        "phone-number-hint-twilio": "Phone Number in E.164 format/Phone Number's SID/Messaging Service SID, ex. +19995550123/PNXXX/MGXXX",
         "phone-number-pattern": "Invalid phone number. Should be in E.164 format, ex. +19995550123.",
+        "phone-number-pattern-twilio": "Invalid phone number. Should be in E.164 format/Phone Number's SID/Messaging Service SID, ex. +19995550123/PNXXX/MGXXX.",
         "sms-message": "SMS message",
         "sms-message-required": "SMS message is required.",
         "sms-message-max-length": "SMS message can't be longer 1600 characters",
@@ -298,6 +301,7 @@
         "filter-type-single-entity": "Single entity",
         "filter-type-entity-list": "Entity list",
         "filter-type-entity-name": "Entity name",
+        "filter-type-entity-type": "Entity type",
         "filter-type-state-entity": "Entity from dashboard state",
         "filter-type-state-entity-description": "Entity taken from dashboard state parameters",
         "filter-type-asset-type": "Asset type",
@@ -764,7 +768,9 @@
         "select-state": "Select target state",
         "state-controller": "State controller",
         "search": "Search dashboards",
-        "selected-dashboards": "{ count, plural, 1 {1 dashboard} other {# dashboards} } selected"
+        "selected-dashboards": "{ count, plural, 1 {1 dashboard} other {# dashboards} } selected",
+        "home-dashboard": "Home dashboard",
+        "home-dashboard-hide-toolbar": "Hide home dashboard toolbar"
     },
     "datakey": {
         "settings": "Settings",
@@ -797,6 +803,7 @@
     "datasource": {
         "type": "Datasource type",
         "name": "Name",
+        "label": "Label",
         "add-datasource-prompt": "Please add datasource"
     },
     "details": {
@@ -874,6 +881,31 @@
         "access-token-invalid": "Access token length must be from 1 to 20 characters.",
         "rsa-key": "RSA public key",
         "rsa-key-required": "RSA public key is required.",
+        "lwm2m-key": "LwM2M Security config key",
+        "lwm2m-key-required": "LwM2M Security config key is required.",
+        "lwm2m-value": "LwM2M Security config",
+        "lwm2m-value-required": "LwM2M Security config value is required.",
+        "lwm2m-value-json-error": "LwM2M Security config value is not json format.",
+        "lwm2m-endpoint": "Client endpoint/identity",
+        "lwm2m-security-info": "Security Config Info",
+        "lwm2m-value-edit": "Edit Security config",
+        "lwm2m-value-edit-tip": "Edit security config json editor",
+        "lwm2m-security-config": {
+          "identity": "Client Identity",
+          "client-key": "Client Key",
+          "required": " value is required.",
+          "endpoint": "Endpoint Client Name",
+          "mode": "Security config mode",
+          "client-tab": "Client Security Config",
+          "client-certificate": "Client certificate",
+          "bootstrap-tab": "Bootstrap Client",
+          "bootstrap-server": "Bootstrap Server",
+          "lwm2m-server": "LwM2M Server",
+          "client-publicKey-or-id": "Client Public Key or Id",
+          "client-secret-key": "Client Secret Key",
+          "config-json-tab": "Json Client Security Config",
+          "pattern_hex_dec": "{ count, plural, 0 {must be hex decimal format} other {must be # characters} }"
+        },
         "client-id": "Client ID",
         "client-id-pattern": "Contains invalid character.",
         "user-name": "User Name",
@@ -906,6 +938,7 @@
         "unable-delete-device-alias-title": "Unable to delete device alias",
         "unable-delete-device-alias-text": "Device alias '{{deviceAlias}}' can't be deleted as it used by the following widget(s):<br/>{{widgetsList}}",
         "is-gateway": "Is gateway",
+        "overwrite-activity-time": "Overwrite activity time for connected device",
         "public": "Public",
         "device-public": "Device is public",
         "select-device": "Select device",
@@ -1082,7 +1115,57 @@
         "schedule-time": "Time",
         "schedule-time-from": "From",
         "schedule-time-to": "To",
-        "schedule-days-of-week-required": "At least one day of week should be selected."
+        "schedule-days-of-week-required": "At least one day of week should be selected.",
+        "lwm2m": {
+            "client-only-observe-after-connect": "{ count, plural, 1 {Strategy 1: Only Observe Request to the client after the initial connection} other {Strategy 2: Read All Resources & Observe Request to the client after registration} }",
+            "client-only-observe-after-connect-tip": "{ count, plural, 1 {Strategy 1: After the initial connection of the LWM2M Client, the server sends Observe resources Request to the client, those resources that are marked as observation in the Device profile and which exist on the LWM2M client.} other {Strategy  2: After the registration, request the client to read all the resource values for all objects that the LWM2M client has,\n then execute:  the server sends Observe resources Request to the client, those resources that are marked as observation in the Device profile and which exist on the LWM2M client.} }",
+            "object-list": "Object list",
+            "object-list-empty": "No objects selected.",
+            "no-objects-matching": "No objects matching '{{object}}' were found.",
+            "valid-id-instance-no-min": "Instance number '{{instance}}' no validated. Min value='{{min}}'",
+            "valid-id-instance-no-max": "Instance number '{{instance}}' no validated. Max value='{{max}}'",
+            "valid-id-instance":  "Instance number '{{instance}}' no validated. { count, plural, 1 {Max value='{{max}}'} 2 {Min value='{{min}}'} other {Must be only number} }",
+            "model-tab": "LWM2M Model",
+            "add-instances-tip": "Add new instances",
+            "instances-list": "Instances list",
+            "instances-input": "Input Instance Id value",
+            "instances-input-holder": "Input Instance number...",
+            "resource-label": "Resource",
+            "observe-label": "Observe",
+            "attribute-label": "Attribute",
+            "telemetry-label": "Telemetry",
+            "key-name-label": "Key Name",
+            "is-observe-tip": "Is Observe",
+            "is-attr-tip": "Is Attribute",
+            "is-telemetry-tip": "Is Telemetry",
+            "key-name-tip": "Key Name",
+            "key-name": "Key Name",
+            "key-name_label": "Key Name in Camel format",
+            "required": " value is required.",
+            "mode": "Security config mode",
+            "pattern_hex_dec": "{ count, plural, 0 {must be hex decimal format} other {must be # characters} }",
+            "bootstrap-tab": "Bootstrap",
+            "servers": "Servers",
+            "short-id": "Short ID",
+            "short-id-tip": "Short Server ID",
+            "lifetime": "Lifetime of the registration for this LwM2M client",
+            "default-min-period": "Minimum Period between two notifications (sec)",
+            "notif-if-disabled": "Notification Storing When Disabled or Offline",
+            "binding": "Binding",
+            "bootstrap-server": "Bootstrap Server",
+            "lwm2m-server": "LwM2M Server",
+            "server-host": "Host",
+            "server-host-tip": "Server Host",
+            "server-port": "Port",
+            "server-port-tip": "Server Port",
+            "server-public-key": "Server Public Key",
+            "server-public-key-tip": "Server Public Key only for X509, RPK",
+            "client-hold-off-time": "Hold Off Time",
+            "client-hold-off-time-tip": "Client Hold Off Time for use with a Bootstrap-Server only",
+            "bootstrap-server-account-timeout": "Account after the timeout",
+            "bootstrap-server-account-timeout-tip": "Bootstrap-Server Account after the timeout value given by this resource.",
+            "config-json-tab": "Json Config Profile Device"
+        }
     },
     "dialog": {
         "close": "Close dialog"
@@ -1099,6 +1182,7 @@
     "entity": {
         "entity": "Entity",
         "entities": "Entities",
+        "entities-count": "Entities count",
         "aliases": "Entity aliases",
         "entity-alias": "Entity alias",
         "unable-delete-entity-alias-title": "Unable to delete entity alias",
@@ -1569,7 +1653,8 @@
            "key-type": "Key type",
            "attribute": "Attribute",
            "timeseries": "Timeseries",
-           "entity-field": "Entity field"
+           "entity-field": "Entity field",
+           "constant": "Constant"
          },
          "value-type": {
            "value-type": "Value type",
@@ -1596,7 +1681,9 @@
          "no-dynamic-value": "No dynamic value",
          "source-attribute": "Source attribute",
          "switch-to-dynamic-value": "Switch to dynamic value",
-         "switch-to-default-value": "Switch to default value"
+         "switch-to-default-value": "Switch to default value",
+         "inherit-owner": "Inherit from owner",
+         "source-attribute-not-set": "If source attribute isn't set"
     },
     "fullscreen": {
         "expand": "Expand to fullscreen",
@@ -1730,6 +1817,7 @@
             "entity-field": "Entity field",
             "access-token": "Access token",
             "isgateway": "Is Gateway",
+            "activity-time-from-gateway-device": "Activity time from gateway device",
             "description": "Description"
         },
         "stepper-text":{
@@ -2267,6 +2355,12 @@
         "set-entity-from-widget": "Set entity from widget",
         "target-dashboard": "Target dashboard",
         "open-right-layout": "Open right dashboard layout (mobile view)",
+        "open-in-separate-dialog": "Open in separate dialog",
+        "dialog-title": "Dialog title",
+        "dialog-hide-dashboard-toolbar": "Hide dashboard toolbar in dialog",
+        "dialog-width": "Dialog width in percents relative to viewport width",
+        "dialog-height": "Dialog height in percents relative to viewport height",
+        "dialog-size-range-error": "Dialog size percent value should be in a range from 1 to 100.",
         "open-new-browser-tab": "Open in a new browser tab"
     },
     "widgets-bundle": {

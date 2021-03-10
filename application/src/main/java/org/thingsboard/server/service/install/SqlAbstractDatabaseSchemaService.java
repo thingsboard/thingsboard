@@ -30,7 +30,7 @@ import java.sql.SQLException;
 @Slf4j
 public abstract class SqlAbstractDatabaseSchemaService implements DatabaseSchemaService {
 
-    private static final String SQL_DIR = "sql";
+    protected static final String SQL_DIR = "sql";
 
     @Value("${spring.datasource.url}")
     protected String dbUrl;
@@ -42,7 +42,7 @@ public abstract class SqlAbstractDatabaseSchemaService implements DatabaseSchema
     protected String dbPassword;
 
     @Autowired
-    private InstallScripts installScripts;
+    protected InstallScripts installScripts;
 
     private final String schemaSql;
     private final String schemaIdxSql;

@@ -175,7 +175,7 @@ export class TbFlot {
         autoHighlight: this.tooltipIndividual === true,
         markings: []
       },
-      selection : { mode : ctx.isMobile ? null : 'x' },
+      selection : { mode : 'x' },
       legend : {
         show: false
       }
@@ -702,7 +702,7 @@ export class TbFlot {
   }
 
   public checkMouseEvents() {
-    const enabled = !this.ctx.isMobile &&  !this.ctx.isEdit;
+    const enabled = !this.ctx.isEdit;
     if (isUndefined(this.mouseEventsEnabled) || this.mouseEventsEnabled !== enabled) {
       this.mouseEventsEnabled = enabled;
       if (this.$element) {
@@ -1289,6 +1289,7 @@ export class TbFlot {
     let value: any;
     let lastValue = 0;
     let minDistanceHistorical: number;
+    let deltaX = 0;
     const results: TbFlotHoverInfo[] = [{
       seriesHover: []
     }];
@@ -1296,6 +1297,13 @@ export class TbFlot {
       results.push({
         seriesHover: []
       });
+    }
+    if (this.chartType === 'bar' && this.options.series.bars.align !== 'left') {
+      if (this.options.series.bars.align === 'center') {
+        deltaX = this.options.series.bars.barWidth / 2;
+      } else {
+        deltaX = this.options.series.bars.barWidth;
+      }
     }
     for (i = 0; i < seriesList.length; i++) {
       series = seriesList[i];
@@ -1305,6 +1313,7 @@ export class TbFlot {
       } else {
         posx = pos.x;
       }
+      posx += deltaX;
       hoverIndex = this.findHoverIndexFromData(posx, series);
       if (series.data[hoverIndex] && series.data[hoverIndex][0]) {
         hoverDistance = posx - series.data[hoverIndex][0];

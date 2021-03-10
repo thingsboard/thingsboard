@@ -19,6 +19,6 @@ public enum DeviceCredentialsType {
 
     ACCESS_TOKEN,
     X509_CERTIFICATE,
-    MQTT_BASIC
-
+    MQTT_BASIC,
+    LWM2M_CREDENTIALS
 }

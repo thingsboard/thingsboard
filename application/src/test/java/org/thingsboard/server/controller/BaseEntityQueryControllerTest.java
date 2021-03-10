@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityListFilter;
+import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
@@ -132,6 +133,14 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
 
         count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
         Assert.assertEquals(97, count.longValue());
+
+        EntityTypeFilter filter2 = new EntityTypeFilter();
+        filter2.setEntityType(EntityType.DEVICE);
+
+        EntityCountQuery countQuery2 = new EntityCountQuery(filter2);
+
+        Long count2 = doPostWithResponse("/api/entitiesQuery/count", countQuery2, Long.class);
+        Assert.assertEquals(97, count2.longValue());
     }
 
     @Test
@@ -198,11 +207,31 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
         Assert.assertEquals(11, data.getTotalElements());
         Assert.assertEquals("Device19", data.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue());
 
+
+        EntityTypeFilter filter2 = new EntityTypeFilter();
+        filter2.setEntityType(EntityType.DEVICE);
+
+        EntityDataSortOrder sortOrder2 = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC
+        );
+        EntityDataPageLink pageLink2 = new EntityDataPageLink(10, 0, null, sortOrder2);
+        List<EntityKey> entityFields2 = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
+
+        EntityDataQuery query2 = new EntityDataQuery(filter2, pageLink2, entityFields2, null, null);
+
+        PageData<EntityData> data2 =
+                doPostWithTypedResponse("/api/entitiesQuery/find", query2, new TypeReference<PageData<EntityData>>() {
+                });
+
+        Assert.assertEquals(97, data2.getTotalElements());
+        Assert.assertEquals(10, data2.getTotalPages());
+        Assert.assertTrue(data2.hasNext());
+        Assert.assertEquals(10, data2.getData().size());
+
     }
 
     @Test
     public void testFindEntityDataByQueryWithAttributes() throws Exception {
-
         List<Device> devices = new ArrayList<>();
         List<Long> temperatures = new ArrayList<>();
         List<Long> highTemperatures = new ArrayList<>();

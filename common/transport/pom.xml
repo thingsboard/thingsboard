@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.2.1-SNAPSHOT</version>
+        <version>3.3.0-SNAPSHOT</version>
         <artifactId>common</artifactId>
     </parent>
     <groupId>org.thingsboard.common</groupId>
@@ -39,6 +39,7 @@
         <module>mqtt</module>
         <module>http</module>
         <module>coap</module>
+        <module>lwm2m</module>
         <module>snmp</module>
     </modules>
 

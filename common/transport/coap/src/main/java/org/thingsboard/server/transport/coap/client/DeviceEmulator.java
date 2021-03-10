@@ -28,6 +28,7 @@ import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapHandler;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
+import org.eclipse.californium.elements.exception.ConnectorException;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +62,7 @@ public class DeviceEmulator {
         this.attributesClient = new CoapClient(getFeatureTokenUrl(host, port, token, FeatureType.ATTRIBUTES));
         this.telemetryClient = new CoapClient(getFeatureTokenUrl(host, port, token, FeatureType.TELEMETRY));
         this.rpcClient = new CoapClient(getFeatureTokenUrl(host, port, token, FeatureType.RPC));
-        this.keys = keys.split(",");
+        this.keys = (keys != null && !keys.isEmpty()) ?  keys.split(",") : null;
     }
 
     public void start() {
@@ -72,11 +73,8 @@ public class DeviceEmulator {
                 try {
                     sendObserveRequest(rpcClient);
                     while (!Thread.interrupted()) {
-
-
                         sendRequest(attributesClient, createAttributesRequest());
                         sendRequest(telemetryClient, createTelemetryRequest());
-
                         Thread.sleep(1000);
                     }
                 } catch (Exception e) {
@@ -84,8 +82,8 @@ public class DeviceEmulator {
                 }
             }
 
-            private void sendRequest(CoapClient client, JsonNode request) throws JsonProcessingException {
-                CoapResponse telemetryResponse = client.setTimeout(60000).post(mapper.writeValueAsString(request),
+            private void sendRequest(CoapClient client, JsonNode request) throws IOException, ConnectorException {
+                CoapResponse telemetryResponse = client.setTimeout((long) 60000).post(mapper.writeValueAsString(request),
                         MediaTypeRegistry.APPLICATION_JSON);
                 log.info("Response: {}, {}", telemetryResponse.getCode(), telemetryResponse.getResponseText());
             }
@@ -113,6 +111,7 @@ public class DeviceEmulator {
 
                                 @Override
                                 public void onError() {
+                                    log.info("Command Response Ack Error, No connect");
                                     //Do nothing
                                 }
                             }, mapper.writeValueAsString(response), MediaTypeRegistry.APPLICATION_JSON);
@@ -157,6 +156,15 @@ public class DeviceEmulator {
         if (args.length != 4) {
             System.out.println("Usage: java -jar " + DeviceEmulator.class.getSimpleName() + ".jar host port device_token keys");
         }
+        /**
+         * DeviceEmulator(String host, int port, String token, String keys)
+         * args[]:
+         * host = "localhost",
+         * port = 0,
+         * token = "{Tokrn device from thingboard}"), kSzbDRGwaZqZ6Y25gTLF
+         * keys = "{Telemetry}"
+         *
+         */
         final DeviceEmulator emulator = new DeviceEmulator(args[0], Integer.parseInt(args[1]), args[2], args[3]);
         emulator.start();
         Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -166,7 +174,6 @@ public class DeviceEmulator {
             }
         });
     }
-
 
     private String getFeatureTokenUrl(String host, int port, String token, FeatureType featureType) {
         return getBaseUrl(host, port) + token + "/" + featureType.name().toLowerCase();

@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM thingsboard/openjdk8
+FROM thingsboard/openjdk11
 
 COPY start-tb-mqtt-transport.sh ${pkg.name}.deb /tmp/
 

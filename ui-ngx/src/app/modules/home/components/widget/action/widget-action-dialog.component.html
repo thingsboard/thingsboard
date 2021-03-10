@@ -67,15 +67,13 @@
       </mat-form-field>
       <section fxLayout="column" [formGroup]="actionTypeFormGroup" [ngSwitch]="widgetActionFormGroup.get('type').value">
         <ng-template [ngSwitchCase]="widgetActionType.openDashboard">
-          <div fxLayout="column">
-            <div class="mat-caption tb-required"
-                 style="padding-left: 3px; padding-bottom: 10px; color: rgba(0,0,0,0.57);" translate>widget-action.target-dashboard</div>
-            <tb-dashboard-autocomplete
-              formControlName="targetDashboardId"
-              required
-              [selectFirstDashboard]="true"
-            ></tb-dashboard-autocomplete>
-          </div>
+          <div class="mat-caption tb-required"
+               style="padding-left: 3px; padding-bottom: 10px; color: rgba(0,0,0,0.57);" translate>widget-action.target-dashboard</div>
+          <tb-dashboard-autocomplete
+            formControlName="targetDashboardId"
+            required
+            [selectFirstDashboard]="true"
+          ></tb-dashboard-autocomplete>
         </ng-template>
         <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ||
                                      widgetActionFormGroup.get('type').value === widgetActionType.updateDashboardState ||
@@ -122,19 +120,52 @@
                                      widgetActionFormGroup.get('type').value === widgetActionType.updateDashboardState ||
                                      widgetActionFormGroup.get('type').value === widgetActionType.openDashboard ?
                                      widgetActionFormGroup.get('type').value : ''">
-          <div fxFlex fxLayout="column">
-            <mat-checkbox formControlName="setEntityId">
-              {{ 'widget-action.set-entity-from-widget' | translate }}
-            </mat-checkbox>
-            <mat-form-field *ngIf="actionTypeFormGroup.get('setEntityId').value"
-                            floatLabel="always"
-                            class="mat-block">
-              <mat-label translate>alias.state-entity-parameter-name</mat-label>
-              <input matInput
-                     placeholder="{{ 'alias.default-entity-parameter-name' | translate }}"
-                     formControlName="stateEntityParamName">
+          <mat-checkbox formControlName="setEntityId">
+            {{ 'widget-action.set-entity-from-widget' | translate }}
+          </mat-checkbox>
+          <mat-form-field *ngIf="actionTypeFormGroup.get('setEntityId').value"
+                          floatLabel="always"
+                          class="mat-block">
+            <mat-label translate>alias.state-entity-parameter-name</mat-label>
+            <input matInput
+                   placeholder="{{ 'alias.default-entity-parameter-name' | translate }}"
+                   formControlName="stateEntityParamName">
+          </mat-form-field>
+        </ng-template>
+        <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ?
+                                     widgetActionFormGroup.get('type').value : ''">
+          <mat-checkbox formControlName="openInSeparateDialog">
+            {{ 'widget-action.open-in-separate-dialog' | translate }}
+          </mat-checkbox>
+          <section *ngIf="actionTypeFormGroup.get('openInSeparateDialog').value">
+            <mat-form-field class="mat-block">
+              <mat-label translate>widget-action.dialog-title</mat-label>
+              <input matInput formControlName="dialogTitle">
             </mat-form-field>
-          </div>
+            <mat-checkbox formControlName="dialogHideDashboardToolbar">
+              {{ 'widget-action.dialog-hide-dashboard-toolbar' | translate }}
+            </mat-checkbox>
+            <mat-form-field class="mat-block">
+              <mat-label translate>widget-action.dialog-width</mat-label>
+              <input type="number" min="1" max="100" step="1" matInput formControlName="dialogWidth">
+              <mat-error *ngIf="actionTypeFormGroup.get('dialogWidth').hasError('min')">
+                {{ 'widget-action.dialog-size-range-error' | translate }}
+              </mat-error>
+              <mat-error *ngIf="actionTypeFormGroup.get('dialogWidth').hasError('max')">
+                {{ 'widget-action.dialog-size-range-error' | translate }}
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field class="mat-block">
+              <mat-label translate>widget-action.dialog-height</mat-label>
+              <input type="number" min="1" max="100" step="1" matInput formControlName="dialogHeight">
+              <mat-error *ngIf="actionTypeFormGroup.get('dialogHeight').hasError('min')">
+                {{ 'widget-action.dialog-size-range-error' | translate }}
+              </mat-error>
+              <mat-error *ngIf="actionTypeFormGroup.get('dialogHeight').hasError('max')">
+                {{ 'widget-action.dialog-size-range-error' | translate }}
+              </mat-error>
+            </mat-form-field>
+          </section>
         </ng-template>
         <ng-template [ngSwitchCase]="widgetActionType.custom">
           <tb-js-func

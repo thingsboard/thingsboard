@@ -53,6 +53,7 @@ import { EntityDataService } from '@core/api/entity-data.service';
 import { PageData } from '@shared/models/page/page-data';
 import { TranslateService } from '@ngx-translate/core';
 import { AlarmDataService } from '@core/api/alarm-data.service';
+import { IDashboardController } from '@home/components/dashboard-page/dashboard-page.models';
 
 export interface TimewindowFunctions {
   onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval?: number) => void;
@@ -137,6 +138,7 @@ export interface StateParams {
 export type StateControllerHolder = () => IStateController;
 
 export interface IStateController {
+  dashboardCtrl: IDashboardController;
   getStateParams(): StateParams;
   getStateParamsByStateId(stateId: string): StateParams;
   openState(id: string, params?: StateParams, openRightLayout?: boolean): void;
@@ -224,6 +226,7 @@ export interface WidgetSubscriptionOptions {
   hasDataPageLink?: boolean;
   singleEntity?: boolean;
   warnOnPageDataOverflow?: boolean;
+  ignoreDataUpdateOnIntervalTick?: boolean;
   targetDeviceAliasIds?: Array<string>;
   targetDeviceIds?: Array<string>;
   useDashboardTimewindow?: boolean;

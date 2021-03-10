@@ -199,6 +199,20 @@ services:
       - ./tb-transports/coap/log:/var/log/tb-coap-transport
     depends_on:
       - zookeeper
+  tb-lwm2m-transport:
+    restart: always
+    image: "${DOCKER_REPO}/${LWM2M_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "5685:5685/udp"
+    environment:
+      TB_SERVICE_ID: tb-lwm2m-transport
+    env_file:
+      - tb-lwm2m-transport.env
+    volumes:
+      - ./tb-transports/lwm2m/conf:/config
+      - ./tb-transports/lwm2m/log:/var/log/tb-lwm2m-transport
+    depends_on:
+      - zookeeper
   tb-web-ui1:
     restart: always
     image: "${DOCKER_REPO}/${WEB_UI_DOCKER_NAME}:${TB_VERSION}"

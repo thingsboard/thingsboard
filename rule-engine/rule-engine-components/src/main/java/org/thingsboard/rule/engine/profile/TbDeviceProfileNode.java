@@ -38,7 +38,7 @@ import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
-import org.thingsboard.server.dao.util.mapping.JacksonUtil;
+import org.thingsboard.common.util.JacksonUtil;
 
 import java.util.Map;
 import java.util.UUID;
@@ -134,7 +134,8 @@ public class TbDeviceProfileNode implements TbNode {
                     if (deviceState != null) {
                         deviceState.process(ctx, msg);
                     } else {
-                        ctx.tellFailure(msg, new IllegalStateException("Device profile for device [" + deviceId + "] not found!"));
+                        log.info("Device was not found! Most probably device [" + deviceId + "] has been removed from the database. Acknowledging msg.");
+                        ctx.ack(msg);
                     }
                 }
             } else {

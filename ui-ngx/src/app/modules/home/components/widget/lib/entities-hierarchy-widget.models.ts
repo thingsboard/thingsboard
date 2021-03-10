@@ -153,7 +153,16 @@ export const defaultNodeOpenedFunction: NodeOpenedFunction = nodeCtx => {
 };
 
 export const defaultNodesSortFunction: NodesSortFunction = (nodeCtx1, nodeCtx2) => {
-  let result = nodeCtx1.entity.id.entityType.localeCompare(nodeCtx2.entity.id.entityType);
+  let result = 0;
+  if (!nodeCtx1.entity.id.entityType || !nodeCtx2.entity.id.entityType ) {
+    if (nodeCtx1.entity.id.entityType) {
+      result = 1;
+    } else if (nodeCtx2.entity.id.entityType) {
+      result = -1;
+    }
+  } else {
+    result = nodeCtx1.entity.id.entityType.localeCompare(nodeCtx2.entity.id.entityType);
+  }
   if (result === 0) {
     result = nodeCtx1.entity.name.localeCompare(nodeCtx2.entity.name);
   }

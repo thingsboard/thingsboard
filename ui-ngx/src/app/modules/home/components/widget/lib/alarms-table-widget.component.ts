@@ -19,9 +19,11 @@ import {
   Component,
   ElementRef,
   EventEmitter,
+  Injector,
   Input,
   NgZone,
   OnInit,
+  StaticProvider,
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
@@ -33,7 +35,7 @@ import { DataKey, WidgetActionDescriptor, WidgetConfig } from '@shared/models/wi
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { createLabelFromDatasource, deepClone, hashCode, isDefined, isNumber } from '@core/utils';
+import { createLabelFromDatasource, deepClone, hashCode, isDefined, isNumber, isObject } from '@core/utils';
 import cssjs from '@core/css/css';
 import { sortItems } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
@@ -64,7 +66,7 @@ import {
   widthStyle
 } from '@home/components/widget/lib/table-widget.models';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
-import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';
+import { ComponentPortal } from '@angular/cdk/portal';
 import {
   DISPLAY_COLUMNS_PANEL_DATA,
   DisplayColumnsPanelComponent,
@@ -452,20 +454,26 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       };
     });
 
-    const injectionTokens = new WeakMap<any, any>([
-      [DISPLAY_COLUMNS_PANEL_DATA, {
-        columns,
-        columnsUpdated: (newColumns) => {
-          this.displayedColumns = newColumns.filter(column => column.display).map(column => column.def);
-          if (this.enableSelection) {
-            this.displayedColumns.unshift('select');
+    const providers: StaticProvider[] = [
+      {
+        provide: DISPLAY_COLUMNS_PANEL_DATA,
+        useValue: {
+          columns,
+          columnsUpdated: (newColumns) => {
+            this.displayedColumns = newColumns.filter(column => column.display).map(column => column.def);
+            if (this.enableSelection) {
+              this.displayedColumns.unshift('select');
+            }
+            this.displayedColumns.push('actions');
           }
-          this.displayedColumns.push('actions');
-        }
-      } as DisplayColumnsPanelData],
-      [OverlayRef, overlayRef]
-    ]);
-    const injector = new PortalInjector(this.viewContainerRef.injector, injectionTokens);
+        } as DisplayColumnsPanelData
+      },
+      {
+        provide: OverlayRef,
+        useValue: overlayRef
+      }
+    ];
+    const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
     overlayRef.attach(new ComponentPortal(DisplayColumnsPanelComponent,
       this.viewContainerRef, injector));
     this.ctx.detectChanges();
@@ -492,15 +500,21 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     overlayRef.backdropClick().subscribe(() => {
       overlayRef.dispose();
     });
-    const injectionTokens = new WeakMap<any, any>([
-      [ALARM_FILTER_PANEL_DATA, {
-        statusList: this.pageLink.statusList,
-        severityList: this.pageLink.severityList,
-        typeList: this.pageLink.typeList
-      } as AlarmFilterPanelData],
-      [OverlayRef, overlayRef]
-    ]);
-    const injector = new PortalInjector(this.viewContainerRef.injector, injectionTokens);
+    const providers: StaticProvider[] = [
+      {
+        provide: ALARM_FILTER_PANEL_DATA,
+        useValue: {
+          statusList: this.pageLink.statusList,
+          severityList: this.pageLink.severityList,
+          typeList: this.pageLink.typeList
+        } as AlarmFilterPanelData
+      },
+      {
+        provide: OverlayRef,
+        useValue: overlayRef
+      }
+    ];
+    const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
     const componentRef = overlayRef.attach(new ComponentPortal(AlarmFilterPanelComponent,
       this.viewContainerRef, injector));
     componentRef.onDestroy(() => {
@@ -584,8 +598,16 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       if (styleInfo.useCellStyleFunction && styleInfo.cellStyleFunction) {
         try {
           style = styleInfo.cellStyleFunction(value);
+          if (!isObject(style)) {
+            throw new TypeError(`${style === null ? 'null' : typeof style} instead of style object`);
+          }
+          if (Array.isArray(style)) {
+            throw new TypeError(`Array instead of style object`);
+          }
         } catch (e) {
           style = {};
+          console.warn(`Cell style function for data key '${key.label}' in widget '${this.ctx.widgetTitle}' ` +
+            `returns '${e}'. Please check your cell style function.`);
         }
       } else {
         style = this.defaultStyle(key, value);
