@@ -39,6 +39,7 @@
         <module>mqtt</module>
         <module>http</module>
         <module>coap</module>
+        <module>snmp</module>
     </modules>
 
 </project>

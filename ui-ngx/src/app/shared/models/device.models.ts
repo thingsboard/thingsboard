@@ -29,13 +29,15 @@ import * as _moment from 'moment';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
 
 export enum DeviceProfileType {
-  DEFAULT = 'DEFAULT'
+  DEFAULT = 'DEFAULT',
+  SNMP = 'SNMP'
 }
 
 export enum DeviceTransportType {
   DEFAULT = 'DEFAULT',
   MQTT = 'MQTT',
   // LWM2M = 'LWM2M'
+  SNMP = 'SNMP'
 }
 
 export enum MqttTransportPayloadType {
@@ -68,6 +70,13 @@ export const deviceProfileTypeConfigurationInfoMap = new Map<DeviceProfileType, 
         hasProfileConfiguration: false,
         hasDeviceConfiguration: false,
       }
+    ],
+    [
+      DeviceProfileType.SNMP,
+      {
+        hasProfileConfiguration: true,
+        hasDeviceConfiguration: true,
+      }
     ]
   ]
 );
@@ -77,6 +86,7 @@ export const deviceTransportTypeTranslationMap = new Map<DeviceTransportType, st
     [DeviceTransportType.DEFAULT, 'device-profile.transport-type-default'],
     [DeviceTransportType.MQTT, 'device-profile.transport-type-mqtt'],
     // [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m']
+    [DeviceTransportType.SNMP, 'device-profile.transport-type-snmp'],
   ]
 );
 
@@ -94,6 +104,7 @@ export const deviceTransportTypeHintMap = new Map<DeviceTransportType, string>(
     [DeviceTransportType.DEFAULT, 'device-profile.transport-type-default-hint'],
     [DeviceTransportType.MQTT, 'device-profile.transport-type-mqtt-hint'],
     // [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m-hint']
+    [DeviceTransportType.SNMP, 'device-profile.transport-type-snmp-hint'],
   ]
 );
 
@@ -128,6 +139,13 @@ export const deviceTransportTypeConfigurationInfoMap = new Map<DeviceTransportTy
         hasDeviceConfiguration: false,
       }
     ]*/
+    [
+      DeviceTransportType.SNMP,
+      {
+        hasProfileConfiguration: true,
+        hasDeviceConfiguration: true
+      }
+    ]
   ]
 );
 
@@ -158,9 +176,14 @@ export interface Lwm2mDeviceProfileTransportConfiguration {
   [key: string]: any;
 }
 
+export interface SnmpDeviceProfileTransportConfiguration {
+  [key: string]: any;
+}
+
 export type DeviceProfileTransportConfigurations = DefaultDeviceProfileTransportConfiguration &
                                                    MqttDeviceProfileTransportConfiguration &
-                                                   Lwm2mDeviceProfileTransportConfiguration;
+                                                   Lwm2mDeviceProfileTransportConfiguration &
+                                                   SnmpDeviceProfileTransportConfiguration;
 
 export interface DeviceProfileTransportConfiguration extends DeviceProfileTransportConfigurations {
   type: DeviceTransportType;
@@ -218,6 +241,10 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
         const lwm2mTransportConfiguration: Lwm2mDeviceProfileTransportConfiguration = {};
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
         break;*/
+      case DeviceTransportType.SNMP:
+        const snmpTransportConfiguration: SnmpDeviceProfileTransportConfiguration = {};
+        transportConfiguration = {...snmpTransportConfiguration, type: DeviceTransportType.SNMP};
+        break;
     }
   }
   return transportConfiguration;
@@ -239,6 +266,10 @@ export function createDeviceTransportConfiguration(type: DeviceTransportType): D
         const lwm2mTransportConfiguration: Lwm2mDeviceTransportConfiguration = {};
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
         break;*/
+      case DeviceTransportType.SNMP:
+        const snmpTransportConfiguration: SnmpDeviceTransportConfiguration = {};
+        transportConfiguration = {...snmpTransportConfiguration, type: DeviceTransportType.SNMP};
+        break;
     }
   }
   return transportConfiguration;
@@ -403,9 +434,14 @@ export interface Lwm2mDeviceTransportConfiguration {
   [key: string]: any;
 }
 
+export interface SnmpDeviceTransportConfiguration {
+  [key: string]: any;
+}
+
 export type DeviceTransportConfigurations = DefaultDeviceTransportConfiguration &
   MqttDeviceTransportConfiguration &
-  Lwm2mDeviceTransportConfiguration;
+  Lwm2mDeviceTransportConfiguration &
+  SnmpDeviceTransportConfiguration;
 
 export interface DeviceTransportConfiguration extends DeviceTransportConfigurations {
   type: DeviceTransportType;
