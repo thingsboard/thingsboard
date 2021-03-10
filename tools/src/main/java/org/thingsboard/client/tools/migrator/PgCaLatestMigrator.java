@@ -43,14 +43,21 @@ public class PgCaLatestMigrator {
     private static long castedOk = 0;
 
     private static long currentWriterCount = 1;
-    private static CQLSSTableWriter currentTsWriter = null;
+    private static RelatedEntitiesParser allIdsAndTypes;
+    private static DictionaryParser keyPairs;
 
-    public static void migrateLatest(File sourceFile, File outDir, boolean castStringsIfPossible) throws IOException {
+    public static void migrateLatest(File sourceFile,
+                                     File outDir,
+                                     RelatedEntitiesParser allEntityIdsAndTypes,
+                                     DictionaryParser dictionaryParser,
+                                     boolean castStringsIfPossible) throws IOException {
         long startTs = System.currentTimeMillis();
         long stepLineTs = System.currentTimeMillis();
         long stepOkLineTs = System.currentTimeMillis();
         LineIterator iterator = FileUtils.lineIterator(sourceFile);
-        currentTsWriter = WriterBuilder.getTsWriter(outDir);
+        CQLSSTableWriter currentTsWriter = WriterBuilder.getLatestWriter(outDir);
+        allIdsAndTypes = allEntityIdsAndTypes;
+        keyPairs = dictionaryParser;
 
         boolean isBlockStarted = false;
         boolean isBlockFinished = false;
@@ -107,7 +114,7 @@ public class PgCaLatestMigrator {
                     }
 
                     if (linesMigrated++ % LOG_BATCH == 0) {
-                        System.out.println(new Date() + " migrated = " + linesMigrated + " in " + (System.currentTimeMillis() - stepOkLineTs));
+                        System.out.println(new Date() + " migrated = " + linesMigrated + " in " + (System.currentTimeMillis() - stepOkLineTs) + " ms.");
                         stepOkLineTs = System.currentTimeMillis();
                     }
                 } catch (Exception ex) {
@@ -119,7 +126,7 @@ public class PgCaLatestMigrator {
 
         long endTs = System.currentTimeMillis();
         System.out.println();
-        System.out.println(new Date() + " Migrated rows " + linesMigrated + " in " + (endTs - startTs));
+        System.out.println(new Date() + " Migrated rows " + linesMigrated + " in " + (endTs - startTs) + " ts");
 
         currentTsWriter.close();
         System.out.println();
@@ -146,34 +153,31 @@ public class PgCaLatestMigrator {
 
     private static List<Object> toValues(List<String> raw) {
         //expected Table structure:
-//        COPY public.ts_kv_latest (entity_type, entity_id, key, ts, bool_v, str_v, long_v, dbl_v) FROM stdin;
-
+        //COPY public.ts_kv_latest (entity_type, entity_id, key, ts, bool_v, str_v, long_v, dbl_v) FROM stdin;
 
         List<Object> result = new ArrayList<>();
-        result.add(raw.get(0));
-        result.add(fromString(raw.get(1)));
-        result.add(raw.get(2));
+        result.add(allIdsAndTypes.getEntityType(raw.get(0)));
+        result.add(UUID.fromString(raw.get(0)));
+        result.add(keyPairs.getKeyByKeyId(raw.get(1)));
 
-        long ts = Long.parseLong(raw.get(3));
-        result.add(ts);
+        long ts = Long.parseLong(raw.get(2));
+        result.add(3, ts);
 
-        result.add(raw.get(4).equals("\\N") ? null : raw.get(4).equals("t") ? Boolean.TRUE : Boolean.FALSE);
-        result.add(raw.get(5).equals("\\N") ? null : raw.get(5));
-        result.add(raw.get(6).equals("\\N") ? null : Long.parseLong(raw.get(6)));
-        result.add(raw.get(7).equals("\\N") ? null : Double.parseDouble(raw.get(7)));
+        result.add(raw.get(3).equals("\\N") ? null : raw.get(3).equals("t") ? Boolean.TRUE : Boolean.FALSE);
+        result.add(raw.get(4).equals("\\N") ? null : raw.get(4));
+        result.add(raw.get(5).equals("\\N") ? null : Long.parseLong(raw.get(5)));
+        result.add(raw.get(6).equals("\\N") ? null : Double.parseDouble(raw.get(6)));
+        result.add(raw.get(7).equals("\\N") ? null : raw.get(7));
+
         return result;
     }
 
-    public static UUID fromString(String src) {
-        return UUID.fromString(src.substring(7, 15) + "-" + src.substring(3, 7) + "-1"
-                + src.substring(0, 3) + "-" + src.substring(15, 19) + "-" + src.substring(19));
-    }
-
     private static boolean isBlockStarted(String line) {
-        return line.startsWith("COPY public.ts_kv_latest");
+        return line.startsWith("COPY public.ts_kv_latest (");
     }
 
     private static boolean isBlockFinished(String line) {
         return StringUtils.isBlank(line) || line.equals("\\.");
     }
+
 }

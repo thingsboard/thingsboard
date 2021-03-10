@@ -42,7 +42,6 @@ public class PostgresToCassandraTelemetryMigrator {
     private static final long LOG_BATCH = 1000000;
     private static final long rowPerFile = 1000000;
 
-
     private static long linesProcessed = 0;
     private static long linesMigrated = 0;
     private static long castErrors = 0;
@@ -53,15 +52,23 @@ public class PostgresToCassandraTelemetryMigrator {
     private static CQLSSTableWriter currentPartitionWriter = null;
 
     private static Set<String> partitions = new HashSet<>();
+    private static RelatedEntitiesParser entityIdsAndTypes;
+    private static DictionaryParser keyParser;
 
-
-    public static void migrateTs(File sourceFile, File outTsDir, File outPartitionDir, boolean castStringsIfPossible) throws IOException {
+    public static void migrateTs(File sourceFile,
+                                 File outTsDir,
+                                 File outPartitionDir,
+                                 RelatedEntitiesParser allEntityIdsAndTypes,
+                                 DictionaryParser dictionaryParser,
+                                 boolean castStringsIfPossible) throws IOException {
         long startTs = System.currentTimeMillis();
         long stepLineTs = System.currentTimeMillis();
         long stepOkLineTs = System.currentTimeMillis();
         LineIterator iterator = FileUtils.lineIterator(sourceFile);
         currentTsWriter = WriterBuilder.getTsWriter(outTsDir);
         currentPartitionWriter = WriterBuilder.getPartitionWriter(outPartitionDir);
+        entityIdsAndTypes = allEntityIdsAndTypes;
+        keyParser = dictionaryParser;
 
         boolean isBlockStarted = false;
         boolean isBlockFinished = false;
@@ -182,27 +189,22 @@ public class PostgresToCassandraTelemetryMigrator {
         //expected Table structure:
 //               COPY public.ts_kv (entity_type, entity_id, key, ts, bool_v, str_v, long_v, dbl_v) FROM stdin;
 
-
         List<Object> result = new ArrayList<>();
-        result.add(raw.get(0));
-        result.add(fromString(raw.get(1)));
-        result.add(raw.get(2));
+        result.add(entityIdsAndTypes.getEntityType(raw.get(0)));
+        result.add(UUID.fromString(raw.get(0)));
+        result.add(keyParser.getKeyByKeyId(raw.get(1)));
 
-        long ts = Long.parseLong(raw.get(3));
+        long ts = Long.parseLong(raw.get(2));
         long partition = toPartitionTs(ts);
         result.add(partition);
         result.add(ts);
 
-        result.add(raw.get(4).equals("\\N") ? null : raw.get(4).equals("t") ? Boolean.TRUE : Boolean.FALSE);
-        result.add(raw.get(5).equals("\\N") ? null : raw.get(5));
-        result.add(raw.get(6).equals("\\N") ? null : Long.parseLong(raw.get(6)));
-        result.add(raw.get(7).equals("\\N") ? null : Double.parseDouble(raw.get(7)));
+        result.add(raw.get(3).equals("\\N") ? null : raw.get(3).equals("t") ? Boolean.TRUE : Boolean.FALSE);
+        result.add(raw.get(4).equals("\\N") ? null : raw.get(4));
+        result.add(raw.get(5).equals("\\N") ? null : Long.parseLong(raw.get(5)));
+        result.add(raw.get(6).equals("\\N") ? null : Double.parseDouble(raw.get(6)));
+        result.add(raw.get(7).equals("\\N") ? null : raw.get(7));
         return result;
-    }
-
-    public static UUID fromString(String src) {
-        return UUID.fromString(src.substring(7, 15) + "-" + src.substring(3, 7) + "-1"
-                + src.substring(0, 3) + "-" + src.substring(15, 19) + "-" + src.substring(19));
     }
 
     private static long toPartitionTs(long ts) {
@@ -212,7 +214,7 @@ public class PostgresToCassandraTelemetryMigrator {
     }
 
     private static boolean isBlockStarted(String line) {
-        return line.startsWith("COPY public.ts_kv");
+        return line.startsWith("COPY public.ts_kv (");
     }
 
     private static boolean isBlockFinished(String line) {

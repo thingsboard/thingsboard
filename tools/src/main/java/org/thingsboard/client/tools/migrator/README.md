@@ -21,15 +21,17 @@ It will generate single jar file with all required dependencies inside `target d
 #### Dump data from the source Postgres Database
 *Do not use compression if possible because Tool can only work with uncompressed file
 
-1. Dump table `ts_kv` table:
+*If you want to migrate just `ts_kv` without `ts_kv_latest` just don't dump an unnecessary table and when starting the tool don't use arguments (paths) for input dump and output files*
 
-    `pg_dump -h localhost -U postgres -d thingsboard -t ts_kv > ts_kv.dmp`
+1. Dump related tables that need to correct save telemetry
+   
+   `pg_dump -h localhost -U postgres -d thingsboard -t tenant -t customer -t user -t dashboard -t asset -t device -t alarm -t rule_chain -t rule_node -t entity_view -t widgets_bundle -t widget_type -t tenant_profile -t device_profile -t api_usage_state -t tb_user > related_entities.dmp`
+   
+2. Dump `ts_kv` and child:
+   
+   `pg_dump -h localhost -U postgres -d thingsboard --load-via-partition-root --data-only -t ts_kv* > ts_kv_all.dmp`
 
-2. Dump table `ts_kv_latest` table:
-
-    `pg_dump -h localhost -U postgres -d thingsboard -t ts_kv_latest > ts_kv_latest.dmp`
-
-3. [Optional] move table dumps to the instance where cassandra will be hosted
+3. [Optional] Move table dumps to the instance where cassandra will be hosted
 
 #### Prepare directory structure for SSTables
 Tool use 3 different directories for saving SSTables - `ts_kv_cf`, `ts_kv_latest_cf`, `ts_kv_partitions_cf`
@@ -45,9 +47,8 @@ Create 3 empty directories. For example:
 
 ```
 java -jar ./tools-2.4.1-SNAPSHOT-jar-with-dependencies.jar 
-        -latestFrom ./source/ts_kv_latest.dmp
+        -telemetryFrom ./source/ts_kv_all.dmp
         -latestOut /home/ubunut/migration/ts_latest 
-        -tsFrom ./source/ts_kv.dmp
         -tsOut /home/ubunut/migration/ts  
         -partitionsOut /home/ubunut/migration/ts_partition
         -castEnable false
