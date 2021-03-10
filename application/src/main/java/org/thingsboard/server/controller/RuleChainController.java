@@ -237,7 +237,7 @@ public class RuleChainController extends BaseController {
             ObjectNode additionalInfo = getEntityConfigAdditionalInfo(comment);
             RuleChain ruleChain = checkRuleChain(ruleChainMetaData.getRuleChainId(), Operation.WRITE);
             RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData));
-            entityConfigService.saveEntityConfigForEntity(getTenantId(), ruleChain.getId(), json.valueToTree(savedRuleChainMetaData), additionalInfo);
+            entityConfigService.saveEntityConfigForEntity(getTenantId(), ruleChain.getId(), objectMapper.valueToTree(savedRuleChainMetaData), additionalInfo);
             tbClusterService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(ruleChain.getId(), ruleChain,
@@ -328,7 +328,7 @@ public class RuleChainController extends BaseController {
         RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.saveRuleChainMetaData(tenantId, restoredRuleChainMetadata));
 
         ObjectNode additionalInfo = getEntityConfigAdditionalInfo(comment);
-        entityConfigService.saveEntityConfigForEntity(getTenantId(), savedRuleChain.getId(), json.valueToTree(savedRuleChainMetaData), additionalInfo);
+        entityConfigService.saveEntityConfigForEntity(getTenantId(), savedRuleChain.getId(), objectMapper.valueToTree(savedRuleChainMetaData), additionalInfo);
         if (savedRuleChainMetaData != null) {
             tbClusterService.onEntityStateChange(savedRuleChain.getTenantId(), savedRuleChain.getId(), ComponentLifecycleEvent.UPDATED);
 
