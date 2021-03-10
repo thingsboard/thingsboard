@@ -21,7 +21,7 @@
     <parent>
         <groupId>org.thingsboard.msa</groupId>
         <artifactId>transport</artifactId>
-        <version>3.2.1-SNAPSHOT</version>
+        <version>3.3.0-SNAPSHOT</version>
     </parent>
 
     <groupId>org.thingsboard.msa.transport</groupId>
