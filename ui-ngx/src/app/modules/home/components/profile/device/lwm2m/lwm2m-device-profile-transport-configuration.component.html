@@ -29,17 +29,6 @@
               {count: +lwm2mDeviceProfileFormGroup.get('clientOnlyObserveAfterConnect').value} }}
             </mat-checkbox>
           </div>
-          <div class="mat-padding" style="padding-bottom: 0px"
-               *ngIf="!lwm2mDeviceProfileFormGroup.get('clientOnlyObserveAfterConnect').value">
-            <mat-checkbox
-              formControlName="clientUpdateValueAfterConnect" color="primary"
-              matTooltip="{{ 'device-profile.lwm2m.client-update-value-after-connect-tip' | translate:
-                          { count: +lwm2mDeviceProfileFormGroup.get('clientUpdateValueAfterConnect').value } }}"
-              matTooltipPosition="above">
-              {{ 'device-profile.lwm2m.client-update-value-after-connect' | translate:
-              {count: +lwm2mDeviceProfileFormGroup.get('clientUpdateValueAfterConnect').value} }}
-            </mat-checkbox>
-          </div>
           <div class="mat-padding" style="padding-top: 0">
             <tb-profile-lwm2m-object-list
               (addList)="addObjectsList($event)"

@@ -25,16 +25,18 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.transport.resource.Resource;
+import org.thingsboard.server.common.data.transport.resource.ResourceType;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.entityconfig.EntityConfigService;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
@@ -44,6 +46,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.Optional;
 
 import static org.thingsboard.server.service.install.DatabaseHelper.objectMapper;
@@ -68,8 +71,11 @@ public class InstallScripts {
     public static final String WIDGET_BUNDLES_DIR = "widget_bundles";
     public static final String OAUTH2_CONFIG_TEMPLATES_DIR = "oauth2_config_templates";
     public static final String DASHBOARDS_DIR = "dashboards";
+    public static final String MODELS_DIR = "models";
+    public static final String CREDENTIALS_DIR = "credentials";
 
     public static final String JSON_EXT = ".json";
+    public static final String XML_EXT = ".xml";
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -93,6 +99,9 @@ public class InstallScripts {
 
     @Autowired
     private OAuth2ConfigTemplateService oAuth2TemplateService;
+
+    @Autowired
+    private ResourceService resourceService;
 
     public Path getTenantRuleChainsDir() {
         return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, RULE_CHAINS_DIR);
@@ -193,6 +202,42 @@ public class InstallScripts {
         }
     }
 
+    public void loadSystemLwm2mResources() throws Exception {
+        Path modelsDir = Paths.get(getDataDir(), MODELS_DIR);
+        if (Files.isDirectory(modelsDir)) {
+            try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(modelsDir, path -> path.toString().endsWith(XML_EXT))) {
+                dirStream.forEach(
+                        path -> {
+                            try {
+                                Resource resource = new Resource();
+                                resource.setTenantId(TenantId.SYS_TENANT_ID);
+                                resource.setResourceType(ResourceType.LWM2M_MODEL);
+                                resource.setResourceId(path.getFileName().toString());
+                                resource.setValue(Base64.getEncoder().encodeToString(Files.readAllBytes(path)));
+                                resourceService.saveResource(resource);
+                            } catch (Exception e) {
+                                log.error("Unable to load lwm2m model [{}]", path.toString());
+                                throw new RuntimeException("Unable to load lwm2m model", e);
+                            }
+                        }
+                );
+            }
+        }
+
+        Path jksPath = Paths.get(getDataDir(), CREDENTIALS_DIR, "serverKeyStore.jks");
+                        try {
+                            Resource resource = new Resource();
+                            resource.setTenantId(TenantId.SYS_TENANT_ID);
+                            resource.setResourceType(ResourceType.JKS);
+                            resource.setResourceId(jksPath.getFileName().toString());
+                            resource.setValue(Base64.getEncoder().encodeToString(Files.readAllBytes(jksPath)));
+                            resourceService.saveResource(resource);
+                        } catch (Exception e) {
+                            log.error("Unable to load lwm2m serverKeyStore [{}]", jksPath.toString());
+                            throw new RuntimeException("Unable to load l2m2m serverKeyStore", e);
+                        }
+    }
+
     public void loadDashboards(TenantId tenantId, CustomerId customerId) throws Exception {
         Path dashboardsDir = Paths.get(getDataDir(), JSON_DIR, DEMO_DIR, DASHBOARDS_DIR);
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dashboardsDir, path -> path.toString().endsWith(JSON_EXT))) {
@@ -215,7 +260,6 @@ public class InstallScripts {
             );
         }
     }
-
 
     public void loadDemoRuleChains(TenantId tenantId) throws Exception {
         try {

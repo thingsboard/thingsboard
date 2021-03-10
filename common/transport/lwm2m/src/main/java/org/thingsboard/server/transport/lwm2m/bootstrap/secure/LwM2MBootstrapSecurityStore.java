@@ -27,16 +27,15 @@ import org.eclipse.leshan.server.bootstrap.EditableBootstrapConfigStore;
 import org.eclipse.leshan.server.bootstrap.InvalidConfigurationException;
 import org.eclipse.leshan.server.security.BootstrapSecurityStore;
 import org.eclipse.leshan.server.security.SecurityInfo;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.secure.ReadResultSecurityStore;
-import org.thingsboard.server.transport.lwm2m.server.LwM2MSessionMsgListener;
-import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
-import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mSessionMsgListener;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContextServer;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler;
 import org.thingsboard.server.transport.lwm2m.utils.TypeServer;
 
 import java.io.IOException;
@@ -45,12 +44,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.BOOTSTRAP_SERVER;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.LOG_LW2M_ERROR;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.LOG_LW2M_INFO;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.LWM2M_SERVER;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.SERVERS;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.getBootstrapParametersFromThingsboard;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.BOOTSTRAP_SERVER;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_ERROR;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LWM2M_SERVER;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.SERVERS;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.getBootstrapParametersFromThingsboard;
 
 @Slf4j
 @Service("LwM2MBootstrapSecurityStore")
@@ -59,14 +58,14 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     private final EditableBootstrapConfigStore bootstrapConfigStore;
 
-    @Autowired
-    LwM2mCredentialsSecurityInfoValidator lwM2MCredentialsSecurityInfoValidator;
+    private final LwM2mCredentialsSecurityInfoValidator lwM2MCredentialsSecurityInfoValidator;
 
-    @Autowired
-    public LwM2MTransportContextServer context;
+    private final LwM2mTransportContextServer context;
 
-    public LwM2MBootstrapSecurityStore(EditableBootstrapConfigStore bootstrapConfigStore) {
+    public LwM2MBootstrapSecurityStore(EditableBootstrapConfigStore bootstrapConfigStore, LwM2mCredentialsSecurityInfoValidator lwM2MCredentialsSecurityInfoValidator, LwM2mTransportContextServer context) {
         this.bootstrapConfigStore = bootstrapConfigStore;
+        this.lwM2MCredentialsSecurityInfoValidator = lwM2MCredentialsSecurityInfoValidator;
+        this.context = context;
     }
 
     @Override
@@ -162,18 +161,18 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                 LwM2MServerBootstrap profileLwm2mServer = mapper.readValue(bootstrapObject.get(LWM2M_SERVER).toString(), LwM2MServerBootstrap.class);
                 UUID sessionUUiD = UUID.randomUUID();
                 TransportProtos.SessionInfoProto sessionInfo = context.getValidateSessionInfo(store.getMsg(), sessionUUiD.getMostSignificantBits(), sessionUUiD.getLeastSignificantBits());
-                context.getTransportService().registerAsyncSession(sessionInfo, new LwM2MSessionMsgListener(null, sessionInfo));
+                context.getTransportService().registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(null, sessionInfo));
                 if (this.getValidatedSecurityMode(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap, lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer)) {
                     lwM2MBootstrapConfig.bootstrapServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap);
                     lwM2MBootstrapConfig.lwm2mServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer);
                     String logMsg = String.format("%s: getParametersBootstrap: %s Access connect client with bootstrap server.", LOG_LW2M_INFO, store.getEndPoint());
-                    context.sentParametersOnThingsboard(context.getTelemetryMsgObject(logMsg), LwM2MTransportHandler.DEVICE_TELEMETRY_TOPIC, sessionInfo);
+                    context.sentParametersOnThingsboard(context.getTelemetryMsgObject(logMsg), LwM2mTransportHandler.DEVICE_TELEMETRY_TOPIC, sessionInfo);
                     return lwM2MBootstrapConfig;
                 } else {
                     log.error(" [{}] Different values SecurityMode between of client and profile.", store.getEndPoint());
                     log.error("{} getParametersBootstrap: [{}] Different values SecurityMode between of client and profile.", LOG_LW2M_ERROR, store.getEndPoint());
                     String logMsg = String.format("%s: getParametersBootstrap: %s Different values SecurityMode between of client and profile.", LOG_LW2M_ERROR, store.getEndPoint());
-                    context.sentParametersOnThingsboard(context.getTelemetryMsgObject(logMsg), LwM2MTransportHandler.DEVICE_TELEMETRY_TOPIC, sessionInfo);
+                    context.sentParametersOnThingsboard(context.getTelemetryMsgObject(logMsg), LwM2mTransportHandler.DEVICE_TELEMETRY_TOPIC, sessionInfo);
                     return null;
                 }
             }

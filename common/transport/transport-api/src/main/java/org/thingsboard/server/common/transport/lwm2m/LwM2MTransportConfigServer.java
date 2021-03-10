@@ -79,7 +79,7 @@ public class LwM2MTransportConfigServer {
     private String BASE_DIR_PATH = System.getProperty("user.dir");
 
     @Getter
-//    private String PATH_DATA_MICROSERVICE = "/usr/share/tb-lwm2m-transport/data$";
+    //    private String PATH_DATA_MICROSERVICE = "/usr/share/tb-lwm2m-transport/data$";
     private String PATH_DATA = "data";
 
     @Getter
@@ -147,57 +147,28 @@ public class LwM2MTransportConfigServer {
     private String rootAlias;
 
     @Getter
-    @Value("${transport.lwm2m.server.secure.start_psk:}")
-    private boolean serverStartPsk;
-
-    @Getter
-    @Value("${transport.lwm2m.server.secure.start_rpk:}")
-    private boolean serverStartRpk;
-
-    @Getter
-    @Value("${transport.lwm2m.server.secure.start_x509:}")
-    private boolean serverStartX509;
-
-    @Getter
-    @Value("${transport.lwm2m.secure.enable_gen_psk_rpk:}")
-    private Boolean enableGenPskRpk;
-
-    @Getter
-    @Value("${transport.lwm2m.server.bind_address:}")
-    private String serverHost;
+    @Value("${transport.lwm2m.secure.enable_gen_new_key_psk_rpk:}")
+    private Boolean enableGenNewKeyPskRpk;
 
     @Getter
     @Value("${transport.lwm2m.server.id:}")
     private Integer serverId;
 
     @Getter
-    @Value("${transport.lwm2m.server.secure.bind_address:}")
-    private String serverSecureHost;
-
-
-    @Getter
-    @Value("${transport.lwm2m.server.bind_port_no_sec_psk:}")
-    private Integer serverPortNoSecPsk;
+    @Value("${transport.lwm2m.server.bind_address:}")
+    private String serverHost;
 
     @Getter
-    @Value("${transport.lwm2m.server.bind_port_no_sec_rpk:}")
-    private Integer serverPortNoSecRpk;
+    @Value("${transport.lwm2m.server.secure.bind_address_security:}")
+    private String serverHostSecurity;
 
     @Getter
-    @Value("${transport.lwm2m.server.bind_port_no_sec_x509:}")
-    private Integer serverPortNoSecX509;
+    @Value("${transport.lwm2m.server.bind_port_no_sec:}")
+    private Integer serverPortNoSec;
 
     @Getter
-    @Value("${transport.lwm2m.server.secure.bind_port_psk:}")
-    private Integer serverPortPsk;
-
-    @Getter
-    @Value("${transport.lwm2m.server.secure.bind_port_rpk:}")
-    private Integer serverPortRpk;
-
-    @Getter
-    @Value("${transport.lwm2m.server.secure.bind_port_x509:}")
-    private Integer serverPortX509;
+    @Value("${transport.lwm2m.server.secure.bind_port_security:}")
+    private Integer serverPortSecurity;
 
     @Getter
     @Value("${transport.lwm2m.server.secure.public_x:}")
@@ -208,16 +179,12 @@ public class LwM2MTransportConfigServer {
     private String serverPublicY;
 
     @Getter
-    @Value("${transport.lwm2m.server.secure.private_s:}")
-    private String serverPrivateS;
+    @Value("${transport.lwm2m.server.secure.private_encoded:}")
+    private String serverPrivateEncoded;
 
     @Getter
     @Value("${transport.lwm2m.server.secure.alias:}")
     private String serverAlias;
-
-    @Getter
-    @Value("${transport.lwm2m.secure.redis_url:}")
-    private String redisUrl;
 
     @PostConstruct
     public void init() {
@@ -303,7 +270,4 @@ public class LwM2MTransportConfigServer {
         ResourceModel resource = this.getResourceModel(registration, pathIds);
         return (resource == null) ? ResourceModel.Operations.NONE : resource.operations;
     }
-
-
-    
 }

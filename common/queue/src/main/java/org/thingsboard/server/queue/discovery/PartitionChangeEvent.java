@@ -24,7 +24,9 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import java.util.Set;
 
 
-public class PartitionChangeEvent extends ApplicationEvent {
+public class PartitionChangeEvent extends TbApplicationEvent {
+
+    private static final long serialVersionUID = -8731788167026510559L;
 
     @Getter
     private final ServiceQueueKey serviceQueueKey;

@@ -40,6 +40,83 @@ zk:
   # Name of the directory in zookeeper 'filesystem'
   zk_dir: "${ZOOKEEPER_NODES_DIR:/thingsboard}"
 
+cache:
+  # caffeine or redis
+  type: "${CACHE_TYPE:caffeine}"
+
+caffeine:
+  specs:
+    relations:
+      timeToLiveInMinutes: 1440
+      maxSize: 0
+    deviceCredentials:
+      timeToLiveInMinutes: 1440
+      maxSize: 0
+    devices:
+      timeToLiveInMinutes: 1440
+      maxSize: 0
+    sessions:
+      timeToLiveInMinutes: 1440
+      maxSize: 0
+    assets:
+      timeToLiveInMinutes: 1440
+      maxSize: 0
+    entityViews:
+      timeToLiveInMinutes: 1440
+      maxSize: 0
+    claimDevices:
+      timeToLiveInMinutes: 1
+      maxSize: 0
+    securitySettings:
+      timeToLiveInMinutes: 1440
+      maxSize: 0
+    tenantProfiles:
+      timeToLiveInMinutes: 1440
+      maxSize: 0
+    deviceProfiles:
+      timeToLiveInMinutes: 1440
+      maxSize: 0
+
+redis:
+  # standalone or cluster
+  connection:
+    type: "${REDIS_CONNECTION_TYPE:standalone}"
+  standalone:
+    host: "${REDIS_HOST:localhost}"
+    port: "${REDIS_PORT:6379}"
+    useDefaultClientConfig: "${REDIS_USE_DEFAULT_CLIENT_CONFIG:true}"
+    # this value may be used only if you used not default ClientConfig
+    clientName: "${REDIS_CLIENT_NAME:standalone}"
+    # this value may be used only if you used not default ClientConfig
+    connectTimeout: "${REDIS_CLIENT_CONNECT_TIMEOUT:30000}"
+    # this value may be used only if you used not default ClientConfig
+    readTimeout: "${REDIS_CLIENT_READ_TIMEOUT:60000}"
+    # this value may be used only if you used not default ClientConfig
+    usePoolConfig: "${REDIS_CLIENT_USE_POOL_CONFIG:false}"
+  cluster:
+    # Comma-separated list of "host:port" pairs to bootstrap from.
+    nodes: "${REDIS_NODES:}"
+    # Maximum number of redirects to follow when executing commands across the cluster.
+    max-redirects: "${REDIS_MAX_REDIRECTS:12}"
+    useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
+  # db index
+  db: "${REDIS_DB:0}"
+  # db password
+  password: "${REDIS_PASSWORD:}"
+  # pool config
+  pool_config:
+    maxTotal: "${REDIS_POOL_CONFIG_MAX_TOTAL:128}"
+    maxIdle: "${REDIS_POOL_CONFIG_MAX_IDLE:128}"
+    minIdle: "${REDIS_POOL_CONFIG_MIN_IDLE:16}"
+    testOnBorrow: "${REDIS_POOL_CONFIG_TEST_ON_BORROW:true}"
+    testOnReturn: "${REDIS_POOL_CONFIG_TEST_ON_RETURN:true}"
+    testWhileIdle: "${REDIS_POOL_CONFIG_TEST_WHILE_IDLE:true}"
+    minEvictableMs: "${REDIS_POOL_CONFIG_MIN_EVICTABLE_MS:60000}"
+    evictionRunsMs: "${REDIS_POOL_CONFIG_EVICTION_RUNS_MS:30000}"
+    maxWaitMills: "${REDIS_POOL_CONFIG_MAX_WAIT_MS:60000}"
+    numberTestsPerEvictionRun: "${REDIS_POOL_CONFIG_NUMBER_TESTS_PER_EVICTION_RUN:3}"
+    blockWhenExhausted: "${REDIS_POOL_CONFIG_BLOCK_WHEN_EXHAUSTED:true}"
+
 # LWM2M server parameters
 transport:
   # Local LwM2M transport parameters
@@ -53,14 +130,14 @@ transport:
     #    model_path_file: "${LWM2M_MODEL_PATH_FILE:./common/transport/lwm2m/src/main/resources/models/}"
     model_path_file: "${LWM2M_MODEL_PATH_FILE:}"
     recommended_ciphers: "${LWM2M_RECOMMENDED_CIPHERS:false}"
-    recommended_supported_groups: "${LWM2M_RECOMMENDED_SUPPORTED_GROUPS:false}"
+    recommended_supported_groups: "${LWM2M_RECOMMENDED_SUPPORTED_GROUPS:true}"
     request_pool_size: "${LWM2M_REQUEST_POOL_SIZE:100}"
     request_error_pool_size: "${LWM2M_REQUEST_ERROR_POOL_SIZE:10}"
     registered_pool_size: "${LWM2M_REGISTERED_POOL_SIZE:10}"
     update_registered_pool_size: "${LWM2M_UPDATE_REGISTERED_POOL_SIZE:10}"
     un_registered_pool_size: "${LWM2M_UN_REGISTERED_POOL_SIZE:10}"
     secure:
-      # Only Certificate_x509:
+      # Certificate_x509:
       # To get helps about files format and how to generate it, see: https://github.com/eclipse/leshan/wiki/Credential-files-format
       # Create new X509 Certificates: common/transport/lwm2m/src/main/resources/credentials/shell/lwM2M_credentials.sh
       key_store_type: "${LWM2M_KEYSTORE_TYPE:JKS}"
@@ -69,51 +146,42 @@ transport:
       key_store_path_file: "${KEY_STORE_PATH_FILE:}"
       key_store_password: "${LWM2M_KEYSTORE_PASSWORD_SERVER:server_ks_password}"
       root_alias: "${LWM2M_SERVER_ROOT_CA:rootca}"
-      enable_gen_psk_rpk: "${ENABLE_GEN_PSK_RPK:true}"
+      enable_gen_new_key_psk_rpk: "${ENABLE_GEN_NEW_KEY_PSK_RPK:false}"
     server:
       id: "${LWM2M_SERVER_ID:123}"
       bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
-      bind_port_no_sec_psk: "${LWM2M_BIND_PORT_NO_SEC_PSK:5685}"
-      bind_port_no_sec_rpk: "${LWM2M_BIND_PORT_NO_SEC_RPK:5687}"
-      bind_port_no_sec_x509: "${LWM2M_BIND_PORT_NO_SEC_X509:5689}"
+      bind_port_no_sec: "${LWM2M_BIND_PORT_NO_SEC:5685}"
       secure:
-        bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
-        start_psk: "${START_SERVER_PSK:true}"
-        start_rpk: "${START_SERVER_RPK:true}"
-        start_x509: "${START_SERVER_X509:true}"
-        bind_port_psk: "${LWM2M_BIND_PORT_SEC_PSK:5686}"
-        bind_port_rpk: "${LWM2M_BIND_PORT_SEC_RPK:5688}"
-        bind_port_x509: "${LWM2M_BIND_PORT_SEC_X509:5690}"
-        # Only RPK: Public & Private Key
-        #        create_rpk: "${CREATE_RPK:}"
-        public_x: "${LWM2M_SERVER_PUBLIC_X:405354ea8893471d9296afbc8b020a5c6201b0bb25812a53b849d4480fa5f069}"
-        public_y: "${LWM2M_SERVER_PUBLIC_Y:30c9237e946a3a1692c1cafaa01a238a077f632c99371348337512363f28212b}"
-        private_s: "${LWM2M_SERVER_PRIVATE_S:274671fe40ce937b8a6352cf0a418e8a39e4bf0bb9bf74c910db953c20c73802}"
-        # Only Certificate_x509:
+        bind_address_security: "${LWM2M_BIND_ADDRESS_SECURITY:0.0.0.0}"
+        bind_port_security: "${LWM2M_BIND_PORT_SECURITY:5686}"
+        #  create_rpk: "${CREATE_RPK:}"
+        # Only for RPK: Public & Private Key. If the keystore file is missing or not working
+        #  - Public Key (Hex): [3059301306072a8648ce3d020106082a8648ce3d0301070342000405064b9e6762dd8d8b8a52355d7b4d8b9a3d64e6d2ee277d76c248861353f3585eeb1838e4f9e37b31fa347aef5ce3431eb54e0a2506910c5e0298817445721b]
+        #  - Private Key (Hex): [308193020100301306072a8648ce3d020106082a8648ce3d030107047930770201010420dc774b309e547ceb48fee547e104ce201a9c48c449dc5414cd04e7f5cf05f67ba00a06082a8648ce3d030107a1440342000405064b9e6762dd8d8b8a52355d7b4d8b9a3d64e6d2ee277d76c248861353f3585eeb1838e4f9e37b31fa347aef5ce3431eb54e0a2506910c5e0298817445721b],
+        #  - Elliptic Curve parameters  : [secp256r1 [NIST P-256, X9.62 prime256v1] (1.2.840.10045.3.1.7)]
+        public_x: "${LWM2M_SERVER_PUBLIC_X:05064b9e6762dd8d8b8a52355d7b4d8b9a3d64e6d2ee277d76c248861353f358}"
+        public_y: "${LWM2M_SERVER_PUBLIC_Y:5eeb1838e4f9e37b31fa347aef5ce3431eb54e0a2506910c5e0298817445721b}"
+        private_encoded: "${LWM2M_SERVER_PRIVATE_ENCODED:308193020100301306072a8648ce3d020106082a8648ce3d030107047930770201010420dc774b309e547ceb48fee547e104ce201a9c48c449dc5414cd04e7f5cf05f67ba00a06082a8648ce3d030107a1440342000405064b9e6762dd8d8b8a52355d7b4d8b9a3d64e6d2ee277d76c248861353f3585eeb1838e4f9e37b31fa347aef5ce3431eb54e0a2506910c5e0298817445721b}"        # Only Certificate_x509:
         alias: "${LWM2M_KEYSTORE_ALIAS_SERVER:server}"
     bootstrap:
-      enable: "${BOOTSTRAP:true}"
+      enable: "${LWM2M_BOOTSTRAP_ENABLED:true}"
       id: "${LWM2M_SERVER_ID:111}"
       bind_address: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
-      bind_port_no_sec_psk: "${LWM2M_BIND_PORT_NO_SEC_BS:5691}"
-      bind_port_no_sec_rpk: "${LWM2M_BIND_PORT_NO_SEC_BS:5693}"
-      bind_port_no_sec_x509: "${LWM2M_BIND_PORT_NO_SEC_BS:5695}"
+      bind_port_no_sec: "${LWM2M_BIND_PORT_NO_SEC_BS:5687}"
       secure:
-        bind_address: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
-        start_psk: "${START_SERVER_PSK_BS:true}"
-        start_rpk: "${START_SERVER_RPK_BS:true}"
-        start_x509: "${START_SERVER_X509_BS:true}"
-        bind_port_psk: "${LWM2M_BIND_PORT_SEC_PSK_BS:5692}"
-        bind_port_rpk: "${LWM2M_BIND_PORT_SER_RPK_BS:5694}"
-        bind_port_x509: "${LWM2M_BIND_PORT_SEC_X509_BS:5696}"
-        # Only RPK: Public & Private Key
-        public_x: "${LWM2M_SERVER_PUBLIC_X_BS:993ef2b698c6a9c0c1d8be78b13a9383c0854c7c7c7a504d289b403794648183}"
-        public_y: "${LWM2M_SERVER_PUBLIC_Y_BS:267412d5fc4e5ceb2257cb7fd7f76ebdac2fa9aa100afb162e990074cc0bfaa2}"
-        private_s: "${LWM2M_SERVER_PRIVATE_S_BS:9dbdbb073fc63570693a9aaf1013414e261c571f27e27fc6a8c1c2ad9347875a}"
-        # Only Certificate_x509:
+        bind_address_security: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
+        bind_port_security: "${LWM2M_BIND_PORT_SEC_BS:5688}"
+        #  Only for RPK: Public & Private Key. If the keystore file is missing or not working
+        #  - Elliptic Curve parameters  : [secp256r1 [NIST P-256, X9.62 prime256v1] (1.2.840.10045.3.1.7)]
+        #  - Public Key (Hex): [3059301306072a8648ce3d020106082a8648ce3d030107034200045017c87a1c1768264656b3b355434b0def6edb8b9bf166a4762d9930cd730f913fc4e61bcd8901ec27c424114c3e887ed372497f0c2cf85839b8443e76988b34]
+        #  - Private Key (Hex): [308193020100301306072a8648ce3d020106082a8648ce3d0301070479307702010104205ecafd90caa7be45c42e1f3f32571632b8409e6e6249d7124f4ba56fab3c8083a00a06082a8648ce3d030107a144034200045017c87a1c1768264656b3b355434b0def6edb8b9bf166a4762d9930cd730f913fc4e61bcd8901ec27c424114c3e887ed372497f0c2cf85839b8443e76988b34],
+        public_x: "${LWM2M_SERVER_PUBLIC_X_BS:5017c87a1c1768264656b3b355434b0def6edb8b9bf166a4762d9930cd730f91}"
+        public_y: "${LWM2M_SERVER_PUBLIC_Y_BS:3fc4e61bcd8901ec27c424114c3e887ed372497f0c2cf85839b8443e76988b34}"
+        private_encoded: "${LWM2M_SERVER_PRIVATE_ENCODED_BS:308193020100301306072a8648ce3d020106082a8648ce3d0301070479307702010104205ecafd90caa7be45c42e1f3f32571632b8409e6e6249d7124f4ba56fab3c8083a00a06082a8648ce3d030107a144034200045017c87a1c1768264656b3b355434b0def6edb8b9bf166a4762d9930cd730f913fc4e61bcd8901ec27c424114c3e887ed372497f0c2cf85839b8443e76988b34}"        # Only Certificate_x509:
         alias: "${LWM2M_KEYSTORE_ALIAS_BOOTSTRAP:bootstrap}"
-      # Redis
-    redis_url: "${LWM2M_REDIS_URL:''}"
+    # Use redis for Security and Registration stores
+    redis.enabled: "${LWM2M_REDIS_ENABLED:false}"
+
   sessions:
     inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
     report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:30000}"

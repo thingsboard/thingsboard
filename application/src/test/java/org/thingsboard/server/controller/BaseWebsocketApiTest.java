@@ -35,16 +35,23 @@ import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
+import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
+import org.thingsboard.server.common.data.query.EntityKeyValueType;
+import org.thingsboard.server.common.data.query.FilterPredicateValue;
+import org.thingsboard.server.common.data.query.KeyFilter;
+import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
+import org.thingsboard.server.service.telemetry.cmd.v2.EntityCountCmd;
+import org.thingsboard.server.service.telemetry.cmd.v2.EntityCountUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityHistoryCmd;
@@ -241,6 +248,98 @@ public class BaseWebsocketApiTest extends AbstractWebsocketTest {
         TsValue[] tsValues = eData.get(0).getTimeseries().get("temperature");
         Assert.assertNotNull(tsValues);
         Assert.assertEquals(new TsValue(dataPoint4.getTs(), dataPoint4.getValueAsString()), tsValues[0]);
+    }
+
+    @Test
+    public void testEntityCountWsCmd() throws Exception {
+        Device device = new Device();
+        device.setName("Device");
+        device.setType("default");
+        device.setLabel("testLabel" + (int) (Math.random() * 1000));
+        device = doPost("/api/device", device, Device.class);
+
+        AttributeKvEntry dataPoint1 = new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("temperature", 42L));
+        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, Collections.singletonList(dataPoint1));
+
+        DeviceTypeFilter dtf1 = new DeviceTypeFilter();
+        dtf1.setDeviceNameFilter("D");
+        dtf1.setDeviceType("default");
+        EntityCountQuery edq1 = new EntityCountQuery(dtf1, Collections.emptyList());
+
+        EntityCountCmd cmd1 = new EntityCountCmd(1, edq1);
+
+        TelemetryPluginCmdsWrapper wrapper1 = new TelemetryPluginCmdsWrapper();
+        wrapper1.setEntityCountCmds(Collections.singletonList(cmd1));
+
+        wsClient.send(mapper.writeValueAsString(wrapper1));
+        String msg1 = wsClient.waitForReply();
+        EntityCountUpdate update1 = mapper.readValue(msg1, EntityCountUpdate.class);
+        Assert.assertEquals(1, update1.getCmdId());
+        Assert.assertEquals(1, update1.getCount());
+
+        DeviceTypeFilter dtf2 = new DeviceTypeFilter();
+        dtf2.setDeviceNameFilter("D");
+        dtf2.setDeviceType("non-existing-device-type");
+        EntityCountQuery edq2 = new EntityCountQuery(dtf2, Collections.emptyList());
+
+        EntityCountCmd cmd2 = new EntityCountCmd(2, edq2);
+
+        TelemetryPluginCmdsWrapper wrapper2 = new TelemetryPluginCmdsWrapper();
+        wrapper2.setEntityCountCmds(Collections.singletonList(cmd2));
+        wsClient.send(mapper.writeValueAsString(wrapper2));
+
+        String msg2 = wsClient.waitForReply();
+        EntityCountUpdate update2 = mapper.readValue(msg2, EntityCountUpdate.class);
+        Assert.assertEquals(2, update2.getCmdId());
+        Assert.assertEquals(0, update2.getCount());
+
+        KeyFilter highTemperatureFilter = new KeyFilter();
+        highTemperatureFilter.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature"));
+        NumericFilterPredicate predicate = new NumericFilterPredicate();
+        predicate.setValue(FilterPredicateValue.fromDouble(40));
+        predicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        highTemperatureFilter.setPredicate(predicate);
+        highTemperatureFilter.setValueType(EntityKeyValueType.NUMERIC);
+
+        DeviceTypeFilter dtf3 = new DeviceTypeFilter();
+        dtf3.setDeviceNameFilter("D");
+        dtf3.setDeviceType("default");
+        EntityCountQuery edq3 = new EntityCountQuery(dtf3, Collections.singletonList(highTemperatureFilter));
+
+        EntityCountCmd cmd3 = new EntityCountCmd(3, edq3);
+
+        TelemetryPluginCmdsWrapper wrapper3 = new TelemetryPluginCmdsWrapper();
+        wrapper3.setEntityCountCmds(Collections.singletonList(cmd3));
+        wsClient.send(mapper.writeValueAsString(wrapper3));
+
+        String msg3 = wsClient.waitForReply();
+        EntityCountUpdate update3 = mapper.readValue(msg3, EntityCountUpdate.class);
+        Assert.assertEquals(3, update3.getCmdId());
+        Assert.assertEquals(1, update3.getCount());
+
+        KeyFilter highTemperatureFilter2 = new KeyFilter();
+        highTemperatureFilter2.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature"));
+        NumericFilterPredicate predicate2 = new NumericFilterPredicate();
+        predicate2.setValue(FilterPredicateValue.fromDouble(50));
+        predicate2.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        highTemperatureFilter2.setPredicate(predicate2);
+        highTemperatureFilter2.setValueType(EntityKeyValueType.NUMERIC);
+
+        DeviceTypeFilter dtf4 = new DeviceTypeFilter();
+        dtf4.setDeviceNameFilter("D");
+        dtf4.setDeviceType("default");
+        EntityCountQuery edq4 = new EntityCountQuery(dtf4, Collections.singletonList(highTemperatureFilter2));
+
+        EntityCountCmd cmd4 = new EntityCountCmd(4, edq4);
+
+        TelemetryPluginCmdsWrapper wrapper4 = new TelemetryPluginCmdsWrapper();
+        wrapper4.setEntityCountCmds(Collections.singletonList(cmd4));
+        wsClient.send(mapper.writeValueAsString(wrapper4));
+
+        String msg4 = wsClient.waitForReply();
+        EntityCountUpdate update4 = mapper.readValue(msg4, EntityCountUpdate.class);
+        Assert.assertEquals(4, update4.getCmdId());
+        Assert.assertEquals(0, update4.getCount());
     }
 
     @Test

@@ -16,26 +16,26 @@
 
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import {
-    AfterViewInit,
-    Component,
-    ElementRef,
-    forwardRef,
-    Input,
-    OnChanges,
-    OnInit,
-    SimpleChanges,
-    SkipSelf,
-    ViewChild
+  AfterViewInit,
+  Component,
+  ElementRef,
+  forwardRef,
+  Input,
+  OnChanges,
+  OnInit,
+  SimpleChanges,
+  SkipSelf,
+  ViewChild
 } from '@angular/core';
 import {
-    ControlValueAccessor,
-    FormBuilder,
-    FormControl,
-    FormGroup,
-    FormGroupDirective,
-    NG_VALUE_ACCESSOR,
-    NgForm,
-    Validators
+  ControlValueAccessor,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  FormGroupDirective,
+  NG_VALUE_ACCESSOR,
+  NgForm,
+  Validators
 } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { filter, map, mergeMap, publishReplay, refCount, share, tap } from 'rxjs/operators';
@@ -56,8 +56,8 @@ import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { DialogService } from '@core/services/dialog.service';
 import { MatDialog } from '@angular/material/dialog';
 import {
-    DataKeyConfigDialogComponent,
-    DataKeyConfigDialogData
+  DataKeyConfigDialogComponent,
+  DataKeyConfigDialogData
 } from '@home/components/widget/data-key-config-dialog.component';
 import { deepClone } from '@core/utils';
 import { MatChipDropEvent } from '@app/shared/components/mat-chip-draggable.directive';
@@ -94,8 +94,15 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
   @Input()
   datasourceType: DatasourceType;
 
+  private maxDataKeysValue: number;
+  get maxDataKeys(): number {
+    return this.datasourceType === DatasourceType.entityCount ? 1 : this.maxDataKeysValue;
+  }
+
   @Input()
-  maxDataKeys: number;
+  set maxDataKeys(value: number) {
+    this.maxDataKeysValue = value;
+  }
 
   @Input()
   optDataKeys: boolean;
@@ -114,7 +121,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
 
   private requiredValue: boolean;
   get required(): boolean {
-    return this.requiredValue || !this.optDataKeys;
+    return this.requiredValue || !this.optDataKeys || this.datasourceType === DatasourceType.entityCount;
   }
   @Input()
   set required(value: boolean) {
@@ -210,8 +217,10 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
     if (this.maxDataKeys !== null && this.maxDataKeys > -1) {
       if (this.datasourceType === DatasourceType.function) {
         return this.translate.instant('datakey.maximum-function-types', {count: this.maxDataKeys});
-      } else {
+      } else if (this.datasourceType !== DatasourceType.entityCount) {
         return this.translate.instant('datakey.maximum-timeseries-or-attributes', {count: this.maxDataKeys});
+      } else {
+        return '';
       }
     } else {
       return '';
@@ -241,6 +250,8 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
   private reset() {
     if (this.widgetType === widgetType.alarm) {
       this.keys = this.utils.getDefaultAlarmDataKeys();
+    } else if (this.datasourceType === DatasourceType.entityCount) {
+      this.keys = [this.callbacks.generateDataKey('count', DataKeyType.count)];
     } else {
       this.keys = [];
     }
@@ -426,7 +437,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
         const targetKeysList = this.widgetType === widgetType.alarm ? this.alarmKeys : this.functionTypeKeys;
         fetchObservable = of(targetKeysList);
       } else {
-        if (this.entityAliasId) {
+        if (this.datasourceType !== DatasourceType.entityCount && this.entityAliasId) {
           const dataKeyTypes = [DataKeyType.timeseries];
           if (this.widgetType === widgetType.latest || this.widgetType === widgetType.alarm) {
             dataKeyTypes.push(DataKeyType.attribute);

@@ -19,8 +19,10 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -114,6 +116,14 @@ public class JpaPsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDa
                 partitioningRepository.save(psqlPartition);
                 log.trace("Adding partition to Set: {}", psqlPartition);
                 partitions.put(psqlPartition.getStart(), psqlPartition);
+            } catch (DataIntegrityViolationException ex) {
+                log.trace("Error occurred during partition save:", ex);
+                if (ex.getCause() instanceof ConstraintViolationException) {
+                    log.warn("Saving partition [{}] rejected. Timeseries data will save to the ts_kv_indefinite (DEFAULT) partition.", psqlPartition.getPartitionDate());
+                    partitions.put(psqlPartition.getStart(), psqlPartition);
+                } else {
+                    throw new RuntimeException(ex);
+                }
             } finally {
                 partitionCreationLock.unlock();
             }

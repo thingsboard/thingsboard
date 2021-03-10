@@ -37,7 +37,7 @@ import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
-import org.thingsboard.server.dao.util.mapping.JacksonUtil;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.mqtt.AbstractMqttIntegrationTest;
 
 import java.util.concurrent.CountDownLatch;

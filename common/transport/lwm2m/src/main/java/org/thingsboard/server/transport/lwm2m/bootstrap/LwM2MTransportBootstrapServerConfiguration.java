@@ -25,20 +25,18 @@ import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServerBuil
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapSecurityStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MInMemoryBootstrapConfigStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2mDefaultBootstrapSessionManager;
-import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
-import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContextServer;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContextServer;
 
 import java.math.BigInteger;
 import java.security.AlgorithmParameters;
-import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.CertificateEncodingException;
@@ -47,17 +45,18 @@ import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.ECPoint;
-import java.security.spec.ECPrivateKeySpec;
 import java.security.spec.ECPublicKeySpec;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
 
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256;
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CBC_SHA256;
-import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.NO_SEC;
-import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.PSK;
-import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.RPK;
-import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.X509;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandler.getCoapConfig;
+import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CCM_8;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.getCoapConfig;
 
 @Slf4j
 @Component
@@ -65,12 +64,13 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportHandle
 public class LwM2MTransportBootstrapServerConfiguration {
     private PublicKey publicKey;
     private PrivateKey privateKey;
+    private boolean pskMode = false;
 
     @Autowired
     private LwM2MTransportContextBootstrap contextBs;
 
     @Autowired
-    private LwM2MTransportContextServer contextS;
+    private LwM2mTransportContextServer contextS;
 
     @Autowired
     private LwM2MBootstrapSecurityStore lwM2MBootstrapSecurityStore;
@@ -78,61 +78,53 @@ public class LwM2MTransportBootstrapServerConfiguration {
     @Autowired
     private LwM2MInMemoryBootstrapConfigStore lwM2MInMemoryBootstrapConfigStore;
 
-    @Primary
-    @Bean(name = "leshanBootstrapX509")
-    @ConditionalOnExpression("('${transport.lwm2m.bootstrap.secure.start_x509:false}'=='true')")
-    public LeshanBootstrapServer getLeshanBootstrapServerX509() {
-        log.info("Prepare and start BootstrapServerX509... PostConstruct");
-        return getLeshanBootstrapServer(this.contextBs.getCtxBootStrap().getBootstrapPortNoSecX509(), this.contextBs.getCtxBootStrap().getBootstrapSecurePortX509(), X509);
+
+    @Bean
+    public LeshanBootstrapServer getLeshanBootstrapServer() {
+        log.info("Prepare and start BootstrapServer... PostConstruct");
+        return this.getLhBootstrapServer(this.contextBs.getCtxBootStrap().getBootstrapPortNoSec(), this.contextBs.getCtxBootStrap().getBootstrapPortSecurity());
     }
 
-    @Bean(name = "leshanBootstrapPsk")
-    @ConditionalOnExpression("('${transport.lwm2m.bootstrap.secure.start_psk:false}'=='true')")
-    public LeshanBootstrapServer getLeshanBootstrapServerPsk() {
-        log.info("Prepare and start BootstrapServerRsk... PostConstruct");
-        return getLeshanBootstrapServer(this.contextBs.getCtxBootStrap().getBootstrapPortNoSecPsk(), this.contextBs.getCtxBootStrap().getBootstrapSecurePortPsk(), PSK);
-    }
-
-    @Bean(name = "leshanBootstrapRpk")
-    @ConditionalOnExpression("('${transport.lwm2m.bootstrap.secure.start_rpk:false}'=='true')")
-    public LeshanBootstrapServer getLeshanBootstrapServerRpk() {
-        log.info("Prepare and start BootstrapServerRpk... PostConstruct");
-        return getLeshanBootstrapServer(this.contextBs.getCtxBootStrap().getBootstrapPortNoSecRpk(), this.contextBs.getCtxBootStrap().getBootstrapSecurePortRpk(), RPK);
-    }
-
-    public LeshanBootstrapServer getLeshanBootstrapServer(Integer bootstrapPortNoSec, Integer bootstrapSecurePort, LwM2MSecurityMode dtlsMode) {
+    public LeshanBootstrapServer getLhBootstrapServer(Integer bootstrapPortNoSec, Integer bootstrapSecurePort) {
         LeshanBootstrapServerBuilder builder = new LeshanBootstrapServerBuilder();
         builder.setLocalAddress(this.contextBs.getCtxBootStrap().getBootstrapHost(), bootstrapPortNoSec);
-        builder.setLocalSecureAddress(this.contextBs.getCtxBootStrap().getBootstrapSecureHost(), bootstrapSecurePort);
+        builder.setLocalSecureAddress(this.contextBs.getCtxBootStrap().getBootstrapHostSecurity(), bootstrapSecurePort);
 
         /** Create CoAP Config */
-        builder.setCoapConfig(getCoapConfig (bootstrapPortNoSec, bootstrapSecurePort));
+        builder.setCoapConfig(getCoapConfig(bootstrapPortNoSec, bootstrapSecurePort));
 
-        /**  ConfigStore */
+        /** Define model provider (Create Models )*/
+        builder.setModel(new StaticModel(contextS.getLwM2MTransportConfigServer().getModelsValue()));
+
+        /**  Create credentials */
+        this.setServerWithCredentials(builder);
+
+        /** Set securityStore with new ConfigStore */
         builder.setConfigStore(lwM2MInMemoryBootstrapConfigStore);
 
         /** SecurityStore */
         builder.setSecurityStore(lwM2MBootstrapSecurityStore);
 
-        /** Define model provider (Create Models )*/
-        builder.setModel(new StaticModel(contextS.getCtxServer().getModelsValue()));
-
-        /**  Create credentials */
-        LwM2MSetSecurityStoreBootstrap(builder, dtlsMode);
 
         /** Create and Set DTLS Config */
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
-        if (dtlsMode==PSK) {
-            dtlsConfig.setRecommendedCipherSuitesOnly(this.contextS.getCtxServer().isRecommendedCiphers());
-            dtlsConfig.setRecommendedSupportedGroupsOnly(this.contextS.getCtxServer().isRecommendedSupportedGroups());
-            dtlsConfig.setSupportedCipherSuites(TLS_PSK_WITH_AES_128_CBC_SHA256);
+        dtlsConfig.setRecommendedSupportedGroupsOnly(this.contextS.getLwM2MTransportConfigServer().isRecommendedSupportedGroups());
+        dtlsConfig.setRecommendedCipherSuitesOnly(this.contextS.getLwM2MTransportConfigServer().isRecommendedCiphers());
+        if (this.pskMode) {
+            dtlsConfig.setSupportedCipherSuites(
+                    TLS_PSK_WITH_AES_128_CCM_8,
+                    TLS_PSK_WITH_AES_128_CBC_SHA256);
         }
-        else  {
-            dtlsConfig.setRecommendedCipherSuitesOnly(this.contextS.getCtxServer().isRecommendedCiphers());
-//            dtlsConfig.setRecommendedSupportedGroupsOnly(false);
+        else {
+            dtlsConfig.setSupportedCipherSuites(
+                    TLS_PSK_WITH_AES_128_CCM_8,
+                    TLS_PSK_WITH_AES_128_CBC_SHA256,
+                    TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
+                    TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256);
         }
-        builder.setDtlsConfig(dtlsConfig);
 
+        /** Set DTLS Config */
+        builder.setDtlsConfig(dtlsConfig);
 
         BootstrapSessionManager sessionManager = new LwM2mDefaultBootstrapSessionManager(lwM2MBootstrapSecurityStore);
         builder.setSessionManager(sessionManager);
@@ -141,150 +133,157 @@ public class LwM2MTransportBootstrapServerConfiguration {
         return builder.build();
     }
 
-    public void LwM2MSetSecurityStoreBootstrap(LeshanBootstrapServerBuilder builder, LwM2MSecurityMode dtlsMode) {
-
-        /** Set securityStore with new registrationStore */
-
-        switch (dtlsMode) {
-            /** Use No_Sec only */
-            case NO_SEC:
-                setServerWithX509Cert(builder, NO_SEC.code);
-                break;
-            /** Use PSK/RPK  */
-            case PSK:
-                break;
-            case RPK:
-                setRPK(builder);
-                break;
-            case X509:
-                setServerWithX509Cert(builder, X509.code);
-                break;
-            /** Use X509_EST only */
-            case X509_EST:
-                // TODO support sentinel pool and make pool configurable
-                break;
-            /** Use ather X509, PSK,  No_Sec ?? */
-            default:
-                break;
-        }
-    }
-
-    private void setRPK(LeshanBootstrapServerBuilder builder) {
+    private void setServerWithCredentials(LeshanBootstrapServerBuilder builder) {
         try {
-            /** Get Elliptic Curve Parameter spec for secp256r1 */
-            AlgorithmParameters algoParameters = AlgorithmParameters.getInstance("EC");
-            algoParameters.init(new ECGenParameterSpec("secp256r1"));
-            ECParameterSpec parameterSpec = algoParameters.getParameterSpec(ECParameterSpec.class);
-            if (this.contextBs.getCtxBootStrap().getBootstrapPublicX() != null && !this.contextBs.getCtxBootStrap().getBootstrapPublicX().isEmpty() && this.contextBs.getCtxBootStrap().getBootstrapPublicY() != null && !this.contextBs.getCtxBootStrap().getBootstrapPublicY().isEmpty()) {
-                /** Get point values */
-                byte[] publicX = Hex.decodeHex(this.contextBs.getCtxBootStrap().getBootstrapPublicX().toCharArray());
-                byte[] publicY = Hex.decodeHex(this.contextBs.getCtxBootStrap().getBootstrapPublicY().toCharArray());
-                /** Create key specs */
-                KeySpec publicKeySpec = new ECPublicKeySpec(new ECPoint(new BigInteger(publicX), new BigInteger(publicY)),
-                        parameterSpec);
-                /** Get keys */
-                this.publicKey = KeyFactory.getInstance("EC").generatePublic(publicKeySpec);
-            }
-            if (this.contextBs.getCtxBootStrap().getBootstrapPrivateS() != null && !this.contextBs.getCtxBootStrap().getBootstrapPrivateS().isEmpty()) {
-                /** Get point values */
-                byte[] privateS = Hex.decodeHex(this.contextBs.getCtxBootStrap().getBootstrapPrivateS().toCharArray());
-                /** Create key specs */
-                KeySpec privateKeySpec = new ECPrivateKeySpec(new BigInteger(privateS), parameterSpec);
-                /** Get keys */
-                this.privateKey = KeyFactory.getInstance("EC").generatePrivate(privateKeySpec);
-            }
-            if (this.publicKey != null && this.publicKey.getEncoded().length > 0 &&
-                    this.privateKey != null && this.privateKey.getEncoded().length > 0) {
-                builder.setPublicKey(this.publicKey);
-                builder.setPrivateKey(this.privateKey);
-                this.contextBs.getCtxBootStrap().setBootstrapPublicKey(this.publicKey);
-                getParamsRPK();
-            }
-        } catch (GeneralSecurityException | IllegalArgumentException e) {
-            log.error("[{}] Failed generate Server PSK/RPK", e.getMessage());
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void setServerWithX509Cert(LeshanBootstrapServerBuilder builder, int securityModeCode) {
-        try {
-            if (this.contextS.getCtxServer().getKeyStoreValue() != null) {
-                KeyStore keyStoreServer = this.contextS.getCtxServer().getKeyStoreValue();
-                setBuilderX509(builder);
-                X509Certificate rootCAX509Cert = (X509Certificate) keyStoreServer.getCertificate(this.contextS.getCtxServer().getRootAlias());
-                if (rootCAX509Cert != null && securityModeCode == X509.code) {
-                    X509Certificate[] trustedCertificates = new X509Certificate[1];
-                    trustedCertificates[0] = rootCAX509Cert;
-                    builder.setTrustedCertificates(trustedCertificates);
-                } else {
-                    /** by default trust all */
-                    builder.setTrustedCertificates(new X509Certificate[0]);
+            if (this.contextS.getLwM2MTransportConfigServer().getKeyStoreValue() != null) {
+                KeyStore keyStoreServer = this.contextS.getLwM2MTransportConfigServer().getKeyStoreValue();
+                if (this.setBuilderX509(builder)) {
+                    X509Certificate rootCAX509Cert = (X509Certificate) keyStoreServer.getCertificate(this.contextS.getLwM2MTransportConfigServer().getRootAlias());
+                    if (rootCAX509Cert != null) {
+                        X509Certificate[] trustedCertificates = new X509Certificate[1];
+                        trustedCertificates[0] = rootCAX509Cert;
+                        builder.setTrustedCertificates(trustedCertificates);
+                    } else {
+                        /** by default trust all */
+                        builder.setTrustedCertificates(new X509Certificate[0]);
+                    }
                 }
-            }
-            else {
+            } else if (this.setServerRPK(builder)) {
+                this.infoPramsUri("RPK");
+                this.infoParamsBootstrapServerKey(this.publicKey, this.privateKey);
+            } else {
                 /** by default trust all */
                 builder.setTrustedCertificates(new X509Certificate[0]);
-                log.error("Unable to load X509 files for BootStrapServer");
+                log.info("Unable to load X509 files for BootStrapServer");
+                this.pskMode = true;
+                this.infoPramsUri("PSK");
             }
         } catch (KeyStoreException ex) {
             log.error("[{}] Unable to load X509 files server", ex.getMessage());
         }
-
     }
 
-    private void setBuilderX509(LeshanBootstrapServerBuilder builder) {
+    private boolean setBuilderX509(LeshanBootstrapServerBuilder builder) {
         /**
          * For deb => KeyStorePathFile == yml or commandline: KEY_STORE_PATH_FILE
          * For idea => KeyStorePathResource == common/transport/lwm2m/src/main/resources/credentials: in LwM2MTransportContextServer: credentials/serverKeyStore.jks
          */
         try {
-            X509Certificate serverCertificate = (X509Certificate) this.contextS.getCtxServer().getKeyStoreValue().getCertificate(this.contextBs.getCtxBootStrap().getBootstrapAlias());
-            this.privateKey = (PrivateKey) this.contextS.getCtxServer().getKeyStoreValue().getKey(this.contextBs.getCtxBootStrap().getBootstrapAlias(), this.contextS.getCtxServer().getKeyStorePasswordServer() == null ? null : this.contextS.getCtxServer().getKeyStorePasswordServer().toCharArray());
-            if (this.privateKey != null && this.privateKey.getEncoded().length > 0) {
-                builder.setPrivateKey(this.privateKey);
-            }
-            if (serverCertificate != null) {
+            X509Certificate serverCertificate = (X509Certificate) this.contextS.getLwM2MTransportConfigServer().getKeyStoreValue().getCertificate(this.contextBs.getCtxBootStrap().getBootstrapAlias());
+            PrivateKey privateKey = (PrivateKey) this.contextS.getLwM2MTransportConfigServer().getKeyStoreValue().getKey(this.contextBs.getCtxBootStrap().getBootstrapAlias(), this.contextS.getLwM2MTransportConfigServer().getKeyStorePasswordServer() == null ? null : this.contextS.getLwM2MTransportConfigServer().getKeyStorePasswordServer().toCharArray());
+            PublicKey publicKey = serverCertificate.getPublicKey();
+            if (serverCertificate != null &&
+                    privateKey != null && privateKey.getEncoded().length > 0 &&
+                    publicKey != null && publicKey.getEncoded().length > 0) {
+                builder.setPublicKey(serverCertificate.getPublicKey());
+                builder.setPrivateKey(privateKey);
                 builder.setCertificateChain(new X509Certificate[]{serverCertificate});
-                this.infoParamsX509(serverCertificate);
+                this.infoParamsServerX509(serverCertificate, publicKey, privateKey);
+                return true;
+            } else {
+                return false;
             }
         } catch (Exception ex) {
             log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());
+            return false;
         }
     }
 
-    private void getParamsRPK() {
-        if (this.publicKey instanceof ECPublicKey) {
-            /** Get x coordinate */
-            byte[] x = ((ECPublicKey) this.publicKey).getW().getAffineX().toByteArray();
-            if (x[0] == 0)
-                x = Arrays.copyOfRange(x, 1, x.length);
-
-            /** Get Y coordinate */
-            byte[] y = ((ECPublicKey) this.publicKey).getW().getAffineY().toByteArray();
-            if (y[0] == 0)
-                y = Arrays.copyOfRange(y, 1, y.length);
-
-            /** Get Curves params */
-            String params = ((ECPublicKey) this.publicKey).getParams().toString();
-            log.info(
-                    " \nBootstrap uses RPK : \n Elliptic Curve parameters  : [{}] \n Public x coord : [{}] \n Public y coord : [{}] \n Public Key (Hex): [{}] \n Private Key (Hex): [{}]",
-                    params, Hex.encodeHexString(x), Hex.encodeHexString(y),
-                    Hex.encodeHexString(this.publicKey.getEncoded()),
-                    Hex.encodeHexString(this.privateKey.getEncoded()));
-        } else {
-            throw new IllegalStateException("Unsupported Public Key Format (only ECPublicKey supported).");
-        }
-    }
-
-    private void infoParamsX509(X509Certificate certificate) {
+    private void infoParamsServerX509(X509Certificate certificate, PublicKey publicKey, PrivateKey privateKey) {
         try {
-            log.info("BootStrap uses X509 : \n X509 Certificate (Hex): [{}] \n Private Key (Hex): [{}]",
-                    Hex.encodeHexString(certificate.getEncoded()),
-                    Hex.encodeHexString(this.privateKey.getEncoded()));
+            this.infoPramsUri("X509");
+            log.info("\n- X509 Certificate (Hex): [{}]",
+                    Hex.encodeHexString(certificate.getEncoded()));
+            this.infoParamsBootstrapServerKey(publicKey, privateKey);
         } catch (CertificateEncodingException e) {
             log.error("", e);
         }
     }
 
+    private void infoPramsUri(String mode) {
+        log.info("Bootstrap Server uses [{}]: serverNoSecureURI : [{}], serverSecureURI : [{}]",
+                mode,
+                this.contextBs.getCtxBootStrap().getBootstrapHost() + ":" + this.contextBs.getCtxBootStrap().getBootstrapPortNoSec(),
+                this.contextBs.getCtxBootStrap().getBootstrapHostSecurity() + ":" + this.contextBs.getCtxBootStrap().getBootstrapPortSecurity());
+    }
 
+
+    private boolean setServerRPK(LeshanBootstrapServerBuilder builder) {
+        try {
+            this.generateKeyForBootstrapRPK();
+            if (this.publicKey != null && this.publicKey.getEncoded().length > 0 &&
+                    this.privateKey != null && this.privateKey.getEncoded().length > 0) {
+                builder.setPublicKey(this.publicKey);
+//                builder.setCertificateChain(new X509Certificate[] { serverCertificate });
+                /// Trust all certificates.
+                builder.setTrustedCertificates(new X509Certificate[0]);
+                builder.setPrivateKey(this.privateKey);
+                return true;
+            }
+        } catch (NoSuchAlgorithmException | InvalidParameterSpecException | InvalidKeySpecException e) {
+            log.error("Fail create Bootstrap Server with RPK", e);
+        }
+        return false;
+    }
+
+
+    /**
+     * From yml: bootstrap
+     * public_x: "${LWM2M_SERVER_PUBLIC_X_BS:993ef2b698c6a9c0c1d8be78b13a9383c0854c7c7c7a504d289b403794648183}"
+     * public_y: "${LWM2M_SERVER_PUBLIC_Y_BS:267412d5fc4e5ceb2257cb7fd7f76ebdac2fa9aa100afb162e990074cc0bfaa2}"
+     * private_encoded: "${LWM2M_SERVER_PRIVATE_ENCODED_BS:9dbdbb073fc63570693a9aaf1013414e261c571f27e27fc6a8c1c2ad9347875a}"
+     */
+    private void generateKeyForBootstrapRPK() throws NoSuchAlgorithmException, InvalidParameterSpecException, InvalidKeySpecException {
+        /** Get Elliptic Curve Parameter spec for secp256r1 */
+        AlgorithmParameters algoParameters = AlgorithmParameters.getInstance("EC");
+        algoParameters.init(new ECGenParameterSpec("secp256r1"));
+        ECParameterSpec parameterSpec = algoParameters.getParameterSpec(ECParameterSpec.class);
+        if (this.contextBs.getCtxBootStrap().getBootstrapPublicX() != null && !this.contextBs.getCtxBootStrap().getBootstrapPublicX().isEmpty() && this.contextBs.getCtxBootStrap().getBootstrapPublicY() != null && !this.contextBs.getCtxBootStrap().getBootstrapPublicY().isEmpty()) {
+            /** Get point values */
+            byte[] publicX = Hex.decodeHex(this.contextBs.getCtxBootStrap().getBootstrapPublicX().toCharArray());
+            byte[] publicY = Hex.decodeHex(this.contextBs.getCtxBootStrap().getBootstrapPublicY().toCharArray());
+            /** Create key specs */
+            KeySpec publicKeySpec = new ECPublicKeySpec(new ECPoint(new BigInteger(publicX), new BigInteger(publicY)),
+                    parameterSpec);
+            /** Get public key */
+            this.publicKey = KeyFactory.getInstance("EC").generatePublic(publicKeySpec);
+        }
+        if (this.contextBs.getCtxBootStrap().getBootstrapPrivateEncoded() != null && !this.contextBs.getCtxBootStrap().getBootstrapPrivateEncoded().isEmpty()) {
+            /** Get private key */
+            byte[] privateS = Hex.decodeHex(this.contextBs.getCtxBootStrap().getBootstrapPrivateEncoded().toCharArray());
+            try {
+                this.privateKey = KeyFactory.getInstance("EC").generatePrivate(new PKCS8EncodedKeySpec(privateS));
+            } catch (InvalidKeySpecException ignore2) {
+                log.error("Invalid Bootstrap Server rpk.PrivateKey.getEncoded () [{}}]. PrivateKey has no EC algorithm", this.contextBs.getCtxBootStrap().getBootstrapPrivateEncoded());
+            }
+        }
+    }
+
+    private void infoParamsBootstrapServerKey(PublicKey publicKey, PrivateKey privateKey) {
+        /** Get x coordinate */
+        byte[] x = ((ECPublicKey) publicKey).getW().getAffineX().toByteArray();
+        if (x[0] == 0)
+            x = Arrays.copyOfRange(x, 1, x.length);
+
+        /** Get Y coordinate */
+        byte[] y = ((ECPublicKey) publicKey).getW().getAffineY().toByteArray();
+        if (y[0] == 0)
+            y = Arrays.copyOfRange(y, 1, y.length);
+
+        /** Get Curves params */
+        String params = ((ECPublicKey) publicKey).getParams().toString();
+        String privHex = Hex.encodeHexString(privateKey.getEncoded());
+        log.info("\n- Public Key (Hex): [{}] \n" +
+                        "- Private Key (Hex): [{}], \n" +
+                        "public_x: \"${LWM2M_SERVER_PUBLIC_X_BS:{}}\" \n" +
+                        "public_y: \"${LWM2M_SERVER_PUBLIC_Y_BS:{}}\" \n" +
+                        "private_encoded: \"${LWM2M_SERVER_PRIVATE_ENCODED_BS:{}}\" \n" +
+                        "- Elliptic Curve parameters  : [{}]",
+                Hex.encodeHexString(publicKey.getEncoded()),
+                privHex,
+                Hex.encodeHexString(x),
+                Hex.encodeHexString(y),
+                privHex,
+                params);
+    }
 }

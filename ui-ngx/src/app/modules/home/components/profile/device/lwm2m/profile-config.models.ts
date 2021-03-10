@@ -27,7 +27,7 @@ export const DEFAULT_ID_SERVER = 123;
 export const DEFAULT_ID_BOOTSTRAP = 111;
 export const DEFAULT_HOST_NAME = 'localhost';
 export const DEFAULT_PORT_SERVER_NO_SEC = 5685;
-export const DEFAULT_PORT_BOOTSTRAP_NO_SEC = 5691;
+export const DEFAULT_PORT_BOOTSTRAP_NO_SEC = 5687;
 export const DEFAULT_CLIENT_HOLD_OFF_TIME = 1;
 export const DEFAULT_LIFE_TIME = 300;
 export const DEFAULT_MIN_PERIOD = 1;
@@ -98,7 +98,6 @@ export interface ProfileConfigModels {
 
 export interface ClientLwM2mSettings {
   clientOnlyObserveAfterConnect: boolean;
-  clientUpdateValueAfterConnect: boolean;
 }
 export interface ObservableAttributes {
   observe: string[];
@@ -157,8 +156,7 @@ function getDefaultProfileObserveAttrConfig(): ObservableAttributes {
 
 function getDefaultProfileClientLwM2mSettingsConfig(): ClientLwM2mSettings {
   return {
-    clientOnlyObserveAfterConnect: true,
-    clientUpdateValueAfterConnect: false
+    clientOnlyObserveAfterConnect: true
   };
 }
 

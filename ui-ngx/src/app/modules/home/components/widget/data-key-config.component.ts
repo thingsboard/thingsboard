@@ -176,7 +176,14 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
       this.modelValue.usePostProcessing = true;
     }
     this.dataKeyFormGroup.patchValue(this.modelValue, {emitEvent: false});
-    this.dataKeyFormGroup.get('name').setValidators(this.modelValue.type !== DataKeyType.function ? [Validators.required] : []);
+    this.dataKeyFormGroup.get('name').setValidators(this.modelValue.type !== DataKeyType.function &&
+                                                    this.modelValue.type !== DataKeyType.count
+                                                    ? [Validators.required] : []);
+    if (this.modelValue.type === DataKeyType.count) {
+      this.dataKeyFormGroup.get('name').disable({emitEvent: false});
+    } else {
+      this.dataKeyFormGroup.get('name').enable({emitEvent: false});
+    }
     this.dataKeyFormGroup.get('name').updateValueAndValidity({emitEvent: false});
     if (this.displayAdvanced) {
       this.dataKeySettingsData.model = this.modelValue.settings;
