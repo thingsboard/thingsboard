@@ -526,7 +526,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     const datasourceFormGroup = this.fb.group(
       {
         type: [datasource ? datasource.type : null, [Validators.required]],
-        name: [datasource ? datasource.name : null, []],
         entityAliasId: [datasource ? datasource.entityAliasId : null,
           datasource && (datasource.type === DatasourceType.entity ||
                          datasource.type === DatasourceType.entityCount) ? [Validators.required] : []],
