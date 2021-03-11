@@ -207,39 +207,50 @@ public class CertPemCredentials implements ClientCredentials {
                 byte[] key = null;
                 byte[] pkcs1 = null;
 
-                if ("AES-256-CBC".equals(encryptionAlgorithm)) {
-                    cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-                    key = new byte[32];
-                    System.arraycopy(round1Digest, 0, key, 0, 16);
-                    System.arraycopy(round2Digest, 0, key, 16, 16);
-                    secretKey = new SecretKeySpec(key, "AES");
-                } else if ("AES-192-CBC".equals(encryptionAlgorithm)) {
-                    cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-                    key = new byte[24];
-                    System.arraycopy(round1Digest, 0, key, 0, 16);
-                    System.arraycopy(round2Digest, 0, key, 16, 8);
-                    secretKey = new SecretKeySpec(key, "AES");
-                } else if ("AES-128-CBC".equals(encryptionAlgorithm)) {
-                    cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-                    key = new byte[16];
-                    System.arraycopy(round1Digest, 0, key, 0, 16);
-                    secretKey = new SecretKeySpec(key, "AES");
-                } else if ("DES-EDE3-CBC".equals(encryptionAlgorithm)) {
-                    cipher = Cipher.getInstance("DESede/CBC/PKCS5Padding");
-                    key = new byte[24];
-                    System.arraycopy(round1Digest, 0, key, 0, 16);
-                    System.arraycopy(round2Digest, 0, key, 16, 8);
-                    secretKey = new SecretKeySpec(key, "DESede");
-                } else if ("DES-CBC".equals(encryptionAlgorithm)) {
-                    cipher = Cipher.getInstance("DES/CBC/PKCS5Padding");
-                    key = new byte[8];
-                    System.arraycopy(round1Digest, 0, key, 0, 8);
-                    secretKey = new SecretKeySpec(key, "DES");
+                switch(encryptionAlgorithm) {
+                    case "AES-256-CBC":
+                        cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                        key = new byte[32];
+                        System.arraycopy(round1Digest, 0, key, 0, 16);
+                        System.arraycopy(round2Digest, 0, key, 16, 16);
+                        secretKey = new SecretKeySpec(key, "AES");
+                        break;
+                    case "AES-192-CBC":
+                        cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                        key = new byte[24];
+                        System.arraycopy(round1Digest, 0, key, 0, 16);
+                        System.arraycopy(round2Digest, 0, key, 16, 8);
+                        secretKey = new SecretKeySpec(key, "AES");
+                        break;
+                    case "AES-128-CBC":
+                        cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                        key = new byte[16];
+                        System.arraycopy(round1Digest, 0, key, 0, 16);
+                        secretKey = new SecretKeySpec(key, "AES");
+                        break;
+                    case "DES-EDE3-CBC":
+                        cipher = Cipher.getInstance("DESede/CBC/PKCS5Padding");
+                        key = new byte[24];
+                        System.arraycopy(round1Digest, 0, key, 0, 16);
+                        System.arraycopy(round2Digest, 0, key, 16, 8);
+                        secretKey = new SecretKeySpec(key, "DESede");
+                        break;
+                    case "DES-CBC":
+                        cipher = Cipher.getInstance("DES/CBC/PKCS5Padding");
+                        key = new byte[8];
+                        System.arraycopy(round1Digest, 0, key, 0, 8);
+                        secretKey = new SecretKeySpec(key, "DES");
+                        break;
+                    }
+                if (cipher != null) {
+                    cipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(iv));
+                    pkcs1 = cipher.doFinal(encryptedBinaryKey);
+                    keySpec = decodeRSAPrivatePKCS1(pkcs1);
+                } else {
+                    throw new RuntimeException("Unknown Encryption algorithm!");
                 }
-
-                cipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(iv));
-                pkcs1 = cipher.doFinal(encryptedBinaryKey);
-                keySpec = decodeRSAPrivatePKCS1(pkcs1);
+            } else {
+                throw new RuntimeException("Wrong encryption details!");
             }
         } else {
             encodedKey = encodedKey.replaceAll(".*BEGIN.*PRIVATE KEY.*", "")
