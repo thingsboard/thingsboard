@@ -2266,7 +2266,8 @@
         "data-overflow": "Widget displays {{count}} out of {{total}} entities",
         "alarm-data-overflow": "Widget displays alarms for {{allowedEntities}} (maximum allowed) entities out of {{totalEntities}} entities",
         "search": "Search widget",
-        "filter": "Widget filter type"
+        "filter": "Widget filter type",
+        "loading-widgets": "Loading widgets..."
     },
     "widget-action": {
         "header-button": "Widget header button",
@@ -2318,7 +2319,8 @@
         "invalid-widgets-bundle-file-error": "Unable to import widgets bundle: Invalid widgets bundle data structure.",
         "search": "Search widget bundles",
         "selected-widgets-bundles": "{ count, plural, 1 {1 widgets bundle} other {# widgets bundles} } selected",
-        "open-widgets-bundle": "Open widgets bundle"
+        "open-widgets-bundle": "Open widgets bundle",
+        "loading-widgets-bundles": "Loading widgets bundles..."
     },
     "widget-config": {
         "data": "Data",

@@ -121,6 +121,7 @@ import {
   DisplayWidgetTypesPanelData,
   WidgetTypes
 } from '@home/components/dashboard-page/widget-types-panel.component';
+import { DashboardWidgetSelectComponent } from '@home/components/dashboard-page/dashboard-widget-select.component';
 
 // @dynamic
 @Component({
@@ -167,9 +168,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   forceDashboardMobileMode = false;
   isAddingWidget = false;
   isAddingWidgetClosed = true;
-  widgetsBundle: WidgetsBundle = null;
   searchBundle = '';
-  widgetTypes: WidgetTypes[] = [];
   filterWidgetTypes: widgetType[] = null;
 
   isToolbarOpened = false;
@@ -266,6 +265,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   @ViewChild('tbEditWidget') editWidgetComponent: EditWidgetComponent;
+
+  @ViewChild('dashboardWidgetSelect') dashboardWidgetSelectComponent: DashboardWidgetSelectComponent;
 
   constructor(protected store: Store<AppState>,
               @Inject(WINDOW) private window: Window,
@@ -367,7 +368,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.forceDashboardMobileMode = false;
     this.isAddingWidget = false;
     this.isAddingWidgetClosed = true;
-    this.widgetsBundle = null;
 
     this.isToolbarOpened = false;
     this.isToolbarOpenedAnimate = false;
@@ -885,7 +885,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   addWidgetFromType(widget: WidgetInfo) {
     this.onAddWidgetClosed();
-    this.widgetTypes = [];
     this.searchBundle = '';
     this.widgetComponentService.getWidgetInfo(widget.bundleAlias, widget.typeAlias, widget.isSystemType).subscribe(
       (widgetTypeInfo) => {
@@ -1153,16 +1152,13 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     return widgetContextActions;
   }
 
-  widgetBundleSelected(bundle: WidgetsBundle){
-    this.widgetsBundle = bundle;
-    this.widgetTypes = [];
+  widgetBundleSelected(){
     this.searchBundle = '';
   }
 
-  updateWidgetsTypes(types: Set<widgetType>) {
-    this.widgetTypes = Array.from(types.values()).map(type => {
-      return {type, display: true};
-    });
+  clearSelectedWidgetBundle() {
+    this.searchBundle = '';
+    this.dashboardWidgetSelectComponent.widgetsBundle = null;
   }
 
   editWidgetsTypesToDisplay($event: Event) {
@@ -1191,7 +1187,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       {
         provide: DISPLAY_WIDGET_TYPES_PANEL_DATA,
         useValue: {
-          types: this.widgetTypes,
+          types: Array.from(this.dashboardWidgetSelectComponent.widgetTypes.values()).map(type => {
+            return {type, display: true};
+          }),
           typesUpdated: (newTypes) => {
             this.filterWidgetTypes = newTypes.filter(type => type.display).map(type => type.type);
           }
