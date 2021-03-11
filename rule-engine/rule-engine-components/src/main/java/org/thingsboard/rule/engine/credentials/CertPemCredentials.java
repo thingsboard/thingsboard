@@ -205,7 +205,6 @@ public class CertPemCredentials implements ClientCredentials {
                 Cipher cipher = null;
                 SecretKey secretKey = null;
                 byte[] key = null;
-                byte[] pkcs1 = null;
 
                 switch(encryptionAlgorithm) {
                     case "AES-256-CBC":
@@ -244,7 +243,7 @@ public class CertPemCredentials implements ClientCredentials {
                     }
                 if (cipher != null) {
                     cipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(iv));
-                    pkcs1 = cipher.doFinal(encryptedBinaryKey);
+                    byte[] pkcs1 = cipher.doFinal(encryptedBinaryKey);
                     keySpec = decodeRSAPrivatePKCS1(pkcs1);
                 } else {
                     throw new RuntimeException("Unknown Encryption algorithm!");
@@ -264,8 +263,8 @@ public class CertPemCredentials implements ClientCredentials {
 
                 EncryptedPrivateKeyInfo privateKeyInfo = new EncryptedPrivateKeyInfo(decoded);
                 String algorithmName = privateKeyInfo.getAlgName();
-                Cipher cipher = Cipher.getInstance(algorithmName, "BC");
-                SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance(algorithmName, "BC");
+                Cipher cipher = Cipher.getInstance(algorithmName);
+                SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance(algorithmName);
 
                 Key pbeKey = secretKeyFactory.generateSecret(pbeKeySpec);
                 AlgorithmParameters algParams = privateKeyInfo.getAlgParameters();
