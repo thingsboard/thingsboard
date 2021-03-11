@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -242,12 +242,20 @@ class AlarmRuleState {
                 DurationAlarmConditionSpec duration = (DurationAlarmConditionSpec) spec;
                 EntityKey entityKey = duration.getKey();
                 TimeUnit unit = duration.getUnit();
+                if (duration.getValue() != null) {
+                    requiredDurationInMs = unit.toMillis(duration.getValue());
+                }
                 if (entityKey != null) {
-                    EntityKeyValue durationEntityKeyValue = data.getValue(AlarmConditionFilterKey.fromEntityKey(entityKey));
+                    AlarmConditionFilterKey alarmConditionFilterKey = AlarmConditionFilterKey.fromEntityKey(entityKey);
+                    if (alarmConditionFilterKey == null) {
+                        break;
+                    }
+                    EntityKeyValue durationEntityKeyValue = data.getValue(alarmConditionFilterKey);
+                    if (durationEntityKeyValue == null) {
+                        break;
+                    }
                     Long durationValue = durationEntityKeyValue.getLngValue();
                     requiredDurationInMs = unit.toMillis(durationValue);
-                } else if (duration.getValue() != null) {
-                    requiredDurationInMs = unit.toMillis(duration.getValue());
                 }
                 break;
         }
