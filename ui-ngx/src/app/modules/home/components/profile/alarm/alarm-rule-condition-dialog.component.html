@@ -84,7 +84,7 @@
             </mat-form-field>
             <mat-form-field formGroupName="key" class="mat-block" fxFlex="calc(40% - 8px)" hideRequiredMarker  floatLabel="always">
               <mat-label translate>filter.key-type.key-type</mat-label>
-              <mat-select required formControlName="type">
+              <mat-select formControlName="type">
                 <mat-option *ngFor="let type of entityKeyTypes" [value]="type">
                   {{entityKeyTypeTranslations.get(type) | translate}}
                 </mat-option>
@@ -92,7 +92,7 @@
             </mat-form-field>
             <mat-form-field formGroupName="key" class="mat-block" fxFlex="calc(60% - 8px)" hideRequiredMarker  floatLabel="always">
               <mat-label translate>filter.key-name</mat-label>
-              <input matInput required formControlName="key"
+              <input matInput formControlName="key"
                      [matAutocomplete]="auto"
                      matAutocompleteDisabled="true">
               <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete">
