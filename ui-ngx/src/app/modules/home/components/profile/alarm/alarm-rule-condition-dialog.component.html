@@ -49,8 +49,8 @@
               {{ 'device-profile.condition-type-required' | translate }}
             </mat-error>
           </mat-form-field>
-          <div fxLayout="row" fxLayoutGap="8px" *ngIf="conditionFormGroup.get('spec.type').value == AlarmConditionType.DURATION">
-            <mat-form-field class="mat-block" hideRequiredMarker fxFlex floatLabel="always">
+          <div fxLayout="row wrap" fxFlex fxLayoutGap="8px"  *ngIf="conditionFormGroup.get('spec.type').value == AlarmConditionType.DURATION">
+            <mat-form-field class="mat-block" hideRequiredMarker fxFlex="calc(50% - 8px)" floatLabel="always">
               <mat-label></mat-label>
               <input type="number" required
                      step="1" min="1" max="2147483647" matInput
@@ -69,7 +69,7 @@
                 {{ 'device-profile.condition-duration-value-pattern' | translate }}
               </mat-error>
             </mat-form-field>
-            <mat-form-field class="mat-block" hideRequiredMarker fxFlex floatLabel="always">
+            <mat-form-field class="mat-block" hideRequiredMarker fxFlex="calc(50% - 8px)"  loatLabel="always">
               <mat-label></mat-label>
               <mat-select formControlName="unit"
                           required
@@ -80,6 +80,28 @@
               </mat-select>
               <mat-error *ngIf="conditionFormGroup.get('spec.unit').hasError('required')">
                 {{ 'device-profile.condition-duration-time-unit-required' | translate }}
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field formGroupName="key" class="mat-block" fxFlex="calc(40% - 8px)" hideRequiredMarker  floatLabel="always">
+              <mat-label translate>filter.key-type.key-type</mat-label>
+              <mat-select required formControlName="type">
+                <mat-option *ngFor="let type of entityKeyTypes" [value]="type">
+                  {{entityKeyTypeTranslations.get(type) | translate}}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field formGroupName="key" class="mat-block" fxFlex="calc(60% - 8px)" hideRequiredMarker  floatLabel="always">
+              <mat-label translate>filter.key-name</mat-label>
+              <input matInput required formControlName="key"
+                     [matAutocomplete]="auto"
+                     matAutocompleteDisabled="true">
+              <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete">
+                <mat-option *ngFor="let option of filteredEntityFields | async" [value]="option">
+                  {{option}}
+                </mat-option>
+              </mat-autocomplete>
+              <mat-error *ngIf="conditionFormGroup.get('spec.key.key').hasError('required')">
+                {{ 'filter.key-name-required' | translate }}
               </mat-error>
             </mat-form-field>
           </div>

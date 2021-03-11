@@ -23,10 +23,18 @@ import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Valida
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { TranslateService } from '@ngx-translate/core';
-import { keyFilterInfosToKeyFilters, keyFiltersToKeyFilterInfos } from '@shared/models/query/query.models';
+import {
+  EntityKeyType, entityKeyTypeTranslationMap,
+  KeyFilter,
+  keyFilterInfosToKeyFilters,
+  keyFiltersToKeyFilterInfos
+} from '@shared/models/query/query.models';
 import { AlarmCondition, AlarmConditionType, AlarmConditionTypeTranslationMap } from '@shared/models/device.models';
 import { TimeUnit, timeUnitTranslationMap } from '@shared/models/time/time.models';
 import { EntityId } from '@shared/models/id/entity-id';
+import {Observable} from "rxjs";
+import {map, startWith} from "rxjs/operators";
+import {EntityField, entityFields} from "@shared/models/entity.models";
 
 export interface AlarmRuleConditionDialogData {
   readonly: boolean;
@@ -48,6 +56,12 @@ export class AlarmRuleConditionDialogComponent extends DialogComponent<AlarmRule
   alarmConditionTypes = Object.keys(AlarmConditionType);
   AlarmConditionType = AlarmConditionType;
   alarmConditionTypeTranslation = AlarmConditionTypeTranslationMap;
+
+  entityKeyTypes = [EntityKeyType.ATTRIBUTE, EntityKeyType.TIME_SERIES];
+  entityKeyTypeTranslations = entityKeyTypeTranslationMap;
+  filteredEntityFields: Observable<string[]>;
+  entityFields: { [fieldName: string]: EntityField };
+  entityFieldsList: string[];
 
   readonly = this.data.readonly;
   condition = this.data.condition;
@@ -72,7 +86,11 @@ export class AlarmRuleConditionDialogComponent extends DialogComponent<AlarmRule
         type: [AlarmConditionType.SIMPLE, Validators.required],
         unit: [{value: null, disable: true}, Validators.required],
         value: [{value: null, disable: true}, [Validators.required, Validators.min(1), Validators.max(2147483647), Validators.pattern('[0-9]*')]],
-        count: [{value: null, disable: true}, [Validators.required, Validators.min(1), Validators.max(2147483647), Validators.pattern('[0-9]*')]]
+        count: [{value: null, disable: true}, [Validators.required, Validators.min(1), Validators.max(2147483647), Validators.pattern('[0-9]*')]],
+        key: this.fb.group({
+          type: [EntityKeyType.ATTRIBUTE],
+          key: [null]
+        })
       })
     });
     this.conditionFormGroup.patchValue({spec: this.condition?.spec});
@@ -84,9 +102,17 @@ export class AlarmRuleConditionDialogComponent extends DialogComponent<AlarmRule
     } else {
       this.updateValidators(this.condition?.spec?.type);
     }
+    this.entityFields = entityFields;
+    this.entityFieldsList = Object.values(entityFields).map(entityField => entityField.keyName).sort();
   }
 
   ngOnInit(): void {
+    this.filteredEntityFields = this.conditionFormGroup.get('spec.key.key').valueChanges.pipe(
+      startWith(''),
+      map(value => {
+        return this.entityFieldsList.filter(option => option.startsWith(value));
+      })
+    );
   }
 
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
