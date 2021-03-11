@@ -172,8 +172,8 @@ public interface DeviceRepository extends PagingAndSortingRepository<DeviceEntit
 
     Long countByTenantId(UUID tenantId);
 
-    @Query("SELECT d FROM DeviceEntity d " +
+    @Query("SELECT d.id FROM DeviceEntity d " +
             "INNER JOIN DeviceProfileEntity p ON d.deviceProfileId = p.id " +
             "WHERE p.transportType = :transportType")
-    List<DeviceEntity> findByDeviceProfileTransportType(@Param("transportType") DeviceTransportType transportType);
+    List<UUID> findIdsByDeviceProfileTransportType(@Param("transportType") DeviceTransportType transportType);
 }

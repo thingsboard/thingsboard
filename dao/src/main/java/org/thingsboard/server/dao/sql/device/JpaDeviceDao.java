@@ -116,11 +116,8 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
     }
 
     @Override
-    public PageData<Device> findDevicesByDeviceProfileTransportType(DeviceTransportType transportType) {
-//        return DaoUtil.toPageData(
-//
-//        );
-        return null;
+    public List<UUID> findDevicesIdsByDeviceProfileTransportType(DeviceTransportType transportType) {
+        return deviceRepository.findIdsByDeviceProfileTransportType(transportType);
     }
 
     @Override

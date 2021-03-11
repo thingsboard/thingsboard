@@ -25,8 +25,7 @@ import java.util.stream.Stream;
 
 @Data
 public class SnmpProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
-
-    private int poolPeriodMs;
+    private int pollPeriodMs;
     private int timeoutMs;
     private int retries;
     private List<SnmpDeviceProfileKvMapping> attributes;

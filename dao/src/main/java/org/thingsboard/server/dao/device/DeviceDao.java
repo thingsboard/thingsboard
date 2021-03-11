@@ -217,6 +217,6 @@ public interface DeviceDao extends Dao<Device>, TenantEntityDao {
      */
     PageData<Device> findDevicesByTenantIdAndProfileId(UUID tenantId, UUID profileId, PageLink pageLink);
 
-    PageData<Device> findDevicesByDeviceProfileTransportType(DeviceTransportType transportType);
+    List<UUID> findDevicesIdsByDeviceProfileTransportType(DeviceTransportType transportType);
 
 }

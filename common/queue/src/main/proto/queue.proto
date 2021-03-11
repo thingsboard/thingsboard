@@ -251,6 +251,17 @@ message GetEntityProfileResponseMsg {
   bytes apiState = 3;
 }
 
+message GetDeviceRequestMsg {
+  int64 deviceIdMSB = 1;
+  int64 deviceIdLSB = 2;
+}
+
+message GetDeviceResponseMsg {
+  int64 deviceProfileIdMSB = 1;
+  int64 deviceProfileIdLSB = 2;
+  bytes deviceTransportConfiguration = 3;
+}
+
 message GetSnmpDevicesRequestMsg {
 
 }
@@ -569,6 +580,7 @@ message TransportApiRequestMsg {
   ValidateDeviceLwM2MCredentialsRequestMsg validateDeviceLwM2MCredentialsRequestMsg = 8;
   GetResourcesRequestMsg resourcesRequestMsg = 9;
   GetSnmpDevicesRequestMsg snmpDevicesRequestMsg = 10;
+  GetDeviceRequestMsg deviceRequestMsg = 11;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
@@ -580,6 +592,7 @@ message TransportApiResponseMsg {
   GetSnmpDevicesResponseMsg snmpDevicesResponseMsg = 5;
   LwM2MResponseMsg lwM2MResponseMsg = 6;
   GetResourcesResponseMsg resourcesResponseMsg = 7;
+  GetDeviceResponseMsg deviceResponseMsg = 8;
 }
 
 /* Messages that are handled by ThingsBoard Core Service */

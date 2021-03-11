@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface DeviceService {
 
@@ -91,5 +92,5 @@ public interface DeviceService {
 
     Device saveDevice(ProvisionRequest provisionRequest, DeviceProfile profile);
 
-    PageData<Device> findDevicesByDeviceProfileTransportType(DeviceTransportType transportType);
+    List<UUID> findDevicesIdsByDeviceProfileTransportType(DeviceTransportType transportType);
 }

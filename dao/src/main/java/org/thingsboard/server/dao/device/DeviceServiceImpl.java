@@ -81,6 +81,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -556,8 +557,8 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     }
 
     @Override
-    public PageData<Device> findDevicesByDeviceProfileTransportType(DeviceTransportType transportType) {
-        return deviceDao.findDevicesByDeviceProfileTransportType(transportType);
+    public List<UUID> findDevicesIdsByDeviceProfileTransportType(DeviceTransportType transportType) {
+        return deviceDao.findDevicesIdsByDeviceProfileTransportType(transportType);
     }
 
     private DataValidator<Device> deviceValidator =

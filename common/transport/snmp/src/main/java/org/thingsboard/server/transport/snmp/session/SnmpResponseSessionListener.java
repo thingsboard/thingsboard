@@ -45,12 +45,9 @@ import java.util.function.Consumer;
 
 @Slf4j
 @AllArgsConstructor
-public class SnmpSessionListener implements ResponseListener {
-
-    @Getter
+@Getter
+public class SnmpResponseSessionListener implements ResponseListener {
     private final SnmpTransportContext snmpTransportContext;
-
-    @Getter
     private final String token;
 
     @Override
@@ -72,7 +69,7 @@ public class SnmpSessionListener implements ResponseListener {
             TransportService transportService = snmpTransportContext.getTransportService();
             for (int i = 0; i < response.size(); i++) {
                 VariableBinding vb = response.get(i);
-                snmpTransportContext.findAttributesMapping(deviceProfileId, vb.getOid()).ifPresent(kvMapping -> transportService.process(DeviceTransportType.DEFAULT,
+                snmpTransportContext.getAttributesMapping(deviceProfileId, vb.getOid()).ifPresent(kvMapping -> transportService.process(DeviceTransportType.DEFAULT,
                         TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(token).build(),
                         new DeviceAuthCallback(snmpTransportContext, sessionInfo -> {
                             try {
@@ -84,7 +81,7 @@ public class SnmpSessionListener implements ResponseListener {
                                 log.warn("Failed to process SNMP response: {}", e.getMessage(), e);
                             }
                         })));
-                snmpTransportContext.findTelemetryMapping(deviceProfileId, vb.getOid()).ifPresent(kvMapping -> transportService.process(DeviceTransportType.DEFAULT,
+                snmpTransportContext.getTelemetryMapping(deviceProfileId, vb.getOid()).ifPresent(kvMapping -> transportService.process(DeviceTransportType.DEFAULT,
                         TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(token).build(),
                         new DeviceAuthCallback(snmpTransportContext, sessionInfo -> {
                             try {

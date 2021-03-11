@@ -24,6 +24,7 @@ import org.snmp4j.Target;
 import org.snmp4j.mp.SnmpConstants;
 import org.snmp4j.smi.GenericAddress;
 import org.snmp4j.smi.OctetString;
+import org.springframework.context.ApplicationEventPublisher;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
@@ -42,6 +43,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseNotifica
 import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.transport.snmp.SnmpTransportContext;
+import org.thingsboard.server.transport.snmp.event.DeviceProfileUpdatedEvent;
+import org.thingsboard.server.transport.snmp.event.DeviceUpdatedEvent;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -50,15 +53,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 @Slf4j
-public class DeviceSessionCtx extends DeviceAwareSessionContext implements SessionMsgListener {
+public class DeviceSessionContext extends DeviceAwareSessionContext implements SessionMsgListener {
     private final AtomicInteger msgIdSeq = new AtomicInteger(0);
-
     @Getter
     @Setter
     private SnmpDeviceTransportConfiguration deviceTransportConfig;
     @Getter
-    @Setter
-    private SnmpSessionListener snmpSessionListener;
+    private final SnmpResponseSessionListener snmpResponseSessionListener;
+    private final SnmpTransportContext snmpTransportContext;
+    private final ApplicationEventPublisher eventPublisher;
+
     @Getter
     @Setter
     private Target target;
@@ -70,10 +74,14 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
     private SnmpProfileTransportConfiguration snmpProfileTransportConfiguration;
     private long previousRequestExecutedAt = 0;
 
-    public DeviceSessionCtx(SnmpTransportContext transportContext, String token, SnmpDeviceTransportConfiguration deviceTransportConfig,
-                            Snmp snmp, DeviceId deviceId, DeviceProfile deviceProfile) {
+    public DeviceSessionContext(SnmpTransportContext snmpTransportContext, String token,
+                                SnmpDeviceTransportConfiguration deviceTransportConfig,
+                                ApplicationEventPublisher eventPublisher, Snmp snmp,
+                                DeviceId deviceId, DeviceProfile deviceProfile) {
         super(UUID.randomUUID());
-        this.snmpSessionListener = new SnmpSessionListener(transportContext, token);
+        this.snmpTransportContext = snmpTransportContext;
+        this.eventPublisher = eventPublisher;
+        this.snmpResponseSessionListener = new SnmpResponseSessionListener(snmpTransportContext, token);
         super.setDeviceId(deviceId);
         super.setDeviceProfile(deviceProfile);
         //TODO: What should be done if snmp null?
@@ -90,60 +98,25 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
     }
 
     @Override
-    public void onGetAttributesResponse(GetAttributeResponseMsg getAttributesResponse) {
-    }
-
-    @Override
-    public void onAttributeUpdate(AttributeUpdateNotificationMsg attributeUpdateNotification) {
-    }
-
-    @Override
-    public void onRemoteSessionCloseCommand(SessionCloseNotificationProto sessionCloseNotification) {
-    }
-
-    @Override
-    public void onToDeviceRpcRequest(ToDeviceRpcRequestMsg toDeviceRequest) {
-    }
-
-    @Override
-    public void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse) {
-    }
-
-    @Override
     public void onDeviceProfileUpdate(TransportProtos.SessionInfoProto newSessionInfo, DeviceProfile deviceProfile) {
         super.onDeviceProfileUpdate(sessionInfo, deviceProfile);
-        if (DeviceTransportType.SNMP.equals(deviceProfile.getTransportType())) {
-            snmpProfileTransportConfiguration = (SnmpProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
-            snmpSessionListener.getSnmpTransportContext().getProfileTransportConfig().put(
-                    deviceProfile.getId(),
-                    snmpProfileTransportConfiguration);
-            snmpSessionListener.getSnmpTransportContext().updatePduListPerProfile(deviceProfile.getId(), snmpProfileTransportConfiguration);
-        } else {
-            //TODO: should the context be removed from the map?
-        }
+        eventPublisher.publishEvent(new DeviceProfileUpdatedEvent(deviceProfile));
     }
 
     @Override
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
         super.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
-        if (super.getDeviceProfile() != null && DeviceTransportType.SNMP.equals(super.getDeviceProfile().getTransportType())) {
-            snmpSessionListener.getSnmpTransportContext().updateDeviceSessionCtx(device, deviceProfile, null);
-            SnmpProfileTransportConfiguration profileTransportConfig = (SnmpProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
-            SnmpDeviceTransportConfiguration deviceTransportConfig = (SnmpDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
-            initTarget(profileTransportConfig, deviceTransportConfig);
-        } else {
-            //TODO: should the context be removed from the map?
-        }
+        eventPublisher.publishEvent(new DeviceUpdatedEvent(device, super.getDeviceProfile()));
     }
 
     public void createSessionInfo(Consumer<TransportProtos.SessionInfoProto> registerSession) {
-        getSnmpSessionListener().getSnmpTransportContext().getTransportService().process(DeviceTransportType.SNMP,
-                TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(getSnmpSessionListener().getToken()).build(),
+        getSnmpResponseSessionListener().getSnmpTransportContext().getTransportService().process(DeviceTransportType.SNMP,
+                TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(getSnmpResponseSessionListener().getToken()).build(),
                 new TransportServiceCallback<ValidateDeviceCredentialsResponse>() {
                     @Override
                     public void onSuccess(ValidateDeviceCredentialsResponse msg) {
                         if (msg.hasDeviceInfo()) {
-                            sessionInfo = SessionInfoCreator.create(msg, getSnmpSessionListener().getSnmpTransportContext(), UUID.randomUUID());
+                            sessionInfo = SessionInfoCreator.create(msg, getSnmpResponseSessionListener().getSnmpTransportContext(), UUID.randomUUID());
                             registerSession.accept(sessionInfo);
                             setDeviceInfo(msg.getDeviceInfo());
                         } else {
@@ -160,17 +133,17 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
 
     public void executeSnmpRequest() {
         long timeNow = System.currentTimeMillis();
-        long nextRequestExecutionTime = previousRequestExecutedAt + snmpProfileTransportConfiguration.getPoolPeriodMs();
+        long nextRequestExecutionTime = previousRequestExecutedAt + snmpProfileTransportConfiguration.getPollPeriodMs();
         if (nextRequestExecutionTime < timeNow) {
             previousRequestExecutedAt = timeNow;
 
-            snmpSessionListener.getSnmpTransportContext().getPdusPerProfile().get(deviceProfile.getId()).forEach(pdu -> {
+            snmpTransportContext.getProfilesPdus().get(deviceProfile.getId()).forEach(pdu -> {
                 try {
                     log.debug("[{}] Sending SNMP message...", pdu.getRequestID());
                     snmp.send(pdu,
                             target,
                             deviceProfile.getId(),
-                            snmpSessionListener);
+                            snmpResponseSessionListener);
                 } catch (IOException e) {
                     log.error(e.getMessage(), e);
                 }
@@ -178,7 +151,7 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
         }
     }
 
-    private void initTarget(SnmpProfileTransportConfiguration profileTransportConfig, SnmpDeviceTransportConfiguration deviceTransportConfig) {
+    public void initTarget(SnmpProfileTransportConfiguration profileTransportConfig, SnmpDeviceTransportConfiguration deviceTransportConfig) {
         this.deviceTransportConfig = deviceTransportConfig;
         CommunityTarget communityTarget = new CommunityTarget();
         communityTarget.setAddress(GenericAddress.parse(GenericAddress.TYPE_UDP + ":" + this.deviceTransportConfig.getAddress() + "/" + this.deviceTransportConfig.getPort()));
@@ -203,4 +176,25 @@ public class DeviceSessionCtx extends DeviceAwareSessionContext implements Sessi
                 return -1;
         }
     }
+
+    @Override
+    public void onGetAttributesResponse(GetAttributeResponseMsg getAttributesResponse) {
+    }
+
+    @Override
+    public void onAttributeUpdate(AttributeUpdateNotificationMsg attributeUpdateNotification) {
+    }
+
+    @Override
+    public void onRemoteSessionCloseCommand(SessionCloseNotificationProto sessionCloseNotification) {
+    }
+
+    @Override
+    public void onToDeviceRpcRequest(ToDeviceRpcRequestMsg toDeviceRequest) {
+    }
+
+    @Override
+    public void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse) {
+    }
+
 }

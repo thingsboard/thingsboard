@@ -44,7 +44,7 @@ public class SnmpTransportBalancingService {
         }
     }
 
-    public boolean isAssignedToCurrentTransport(UUID entityId) {
+    public boolean isManagedByCurrentTransport(UUID entityId) {
         return resolvePartitionIndexForEntity(entityId) == currentTransportPartitionIndex;
     }
 
