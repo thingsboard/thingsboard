@@ -44,7 +44,8 @@ done
 
 . $PROPERTIES_FILE
 
-if [ -f $CLIENT_FILE_PREFIX.jks ] || [ -f $CLIENT_FILE_PREFIX.pub.pem ] || [ -f $CLIENT_FILE_PREFIX.nopass.pem ] || [ -f $CLIENT_FILE_PREFIX.pem ] || [ -f $CLIENT_FILE_PREFIX.p12 ];
+if [ -f $CLIENT_FILE_PREFIX.jks ] || [ -f $CLIENT_FILE_PREFIX.pub.pem ] || [ -f $CLIENT_FILE_PREFIX.nopass.pem ] || \
+   [ -f $CLIENT_FILE_PREFIX.pem ] || [ -f $CLIENT_FILE_PREFIX.p12 ] || [ -f $CLIENT_FILE_PREFIX.pk8.pem ];
 then
 while :
    do
@@ -62,6 +63,7 @@ while :
             rm -rf $CLIENT_FILE_PREFIX.nopass.pem
             rm -rf $CLIENT_FILE_PREFIX.pem
             rm -rf $CLIENT_FILE_PREFIX.p12
+            rm -rf $CLIENT_FILE_PREFIX.pk8.pem
             break;
             ;;
         *)  echo "Please reply 'yes' or 'no'"
@@ -84,6 +86,8 @@ if [ -z "$OPENSSL_CMD" ]; then
 	exit 0
 fi
 
+echo "INFO: your hostname is $(hostname)"
+echo "INFO: your CN (domain suffix) for key is $DOMAIN_SUFFIX"
 echo "Generating SSL Key Pair..."
 
 keytool -genkeypair -v \
@@ -112,7 +116,15 @@ echo "Converting pkcs12 to pem"
 openssl pkcs12 -in $CLIENT_FILE_PREFIX.p12 \
   -out $CLIENT_FILE_PREFIX.pem \
   -passin pass:$CLIENT_KEY_PASSWORD \
-  -passout pass:$CLIENT_KEY_PASSWORD \
+  -passout pass:$CLIENT_KEY_PASSWORD
+
+echo "Converting pem to pkcs8"
+openssl pkcs8 \
+  -topk8 \
+  -nocrypt \
+  -in $CLIENT_FILE_PREFIX.pem \
+  -out $CLIENT_FILE_PREFIX.pk8.pem \
+  -passin pass:$CLIENT_KEY_PASSWORD
 
 echo "Importing server public key to $CLIENT_FILE_PREFIX.jks"
 keytool --importcert \
