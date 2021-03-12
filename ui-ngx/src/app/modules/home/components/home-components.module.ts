@@ -133,6 +133,7 @@ import { ManageDashboardStatesDialogComponent } from '@home/components/dashboard
 import { DashboardStateDialogComponent } from '@home/components/dashboard-page/states/dashboard-state-dialog.component';
 import { EmbedDashboardDialogComponent } from '@home/components/widget/dialog/embed-dashboard-dialog.component';
 import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
+import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-page/widget-types-panel.component';
 
 @NgModule({
   declarations:
@@ -245,7 +246,8 @@ import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/emb
       DashboardSettingsDialogComponent,
       ManageDashboardStatesDialogComponent,
       DashboardStateDialogComponent,
-      EmbedDashboardDialogComponent
+      EmbedDashboardDialogComponent,
+      DisplayWidgetTypesPanelComponent
     ],
   imports: [
     CommonModule,
@@ -348,7 +350,8 @@ import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/emb
     DashboardSettingsDialogComponent,
     ManageDashboardStatesDialogComponent,
     DashboardStateDialogComponent,
-    EmbedDashboardDialogComponent
+    EmbedDashboardDialogComponent,
+    DisplayWidgetTypesPanelComponent
   ],
   providers: [
     WidgetComponentService,

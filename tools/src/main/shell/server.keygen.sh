@@ -86,6 +86,12 @@ fi
 
 echo "Generating SSL Key Pair..."
 
+EXT=""
+
+if [[ ! -z "$SUBJECT_ALTERNATIVE_NAMES" ]]; then
+  EXT="-ext san=$SUBJECT_ALTERNATIVE_NAMES "
+fi
+
 keytool -genkeypair -v \
   -alias $SERVER_KEY_ALIAS \
   -dname "CN=$DOMAIN_SUFFIX, OU=$ORGANIZATIONAL_UNIT, O=$ORGANIZATION, L=$CITY, ST=$STATE_OR_PROVINCE, C=$TWO_LETTER_COUNTRY_CODE" \
@@ -94,7 +100,8 @@ keytool -genkeypair -v \
   -storepass $SERVER_KEYSTORE_PASSWORD \
   -keyalg $SERVER_KEY_ALG \
   -keysize $SERVER_KEY_SIZE \
-  -validity 9999
+  -validity 9999 \
+  $EXT
 
 status=$?
 if [[ $status != 0 ]]; then

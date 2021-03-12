@@ -122,7 +122,9 @@
         "number-to": "Phone Number To",
         "number-to-required": "Phone Number To is required.",
         "phone-number-hint": "Phone Number in E.164 format, ex. +19995550123",
+        "phone-number-hint-twilio": "Phone Number in E.164 format/Phone Number's SID/Messaging Service SID, ex. +19995550123/PNXXX/MGXXX",
         "phone-number-pattern": "Invalid phone number. Should be in E.164 format, ex. +19995550123.",
+        "phone-number-pattern-twilio": "Invalid phone number. Should be in E.164 format/Phone Number's SID/Messaging Service SID, ex. +19995550123/PNXXX/MGXXX.",
         "sms-message": "SMS message",
         "sms-message-required": "SMS message is required.",
         "sms-message-max-length": "SMS message can't be longer 1600 characters",
@@ -299,6 +301,7 @@
         "filter-type-single-entity": "Single entity",
         "filter-type-entity-list": "Entity list",
         "filter-type-entity-name": "Entity name",
+        "filter-type-entity-type": "Entity type",
         "filter-type-state-entity": "Entity from dashboard state",
         "filter-type-state-entity-description": "Entity taken from dashboard state parameters",
         "filter-type-asset-type": "Asset type",
@@ -643,6 +646,7 @@
         "add-widget": "Add new widget",
         "title": "Title",
         "select-widget-title": "Select widget",
+        "select-widget-value": "{{title}}: select widget",
         "select-widget-subtitle": "List of available widget types",
         "delete": "Delete dashboard",
         "title-required": "Title is required.",
@@ -688,6 +692,8 @@
         "background-size-mode": "Background size mode",
         "no-image": "No image selected",
         "drop-image": "Drop an image or click to select a file to upload.",
+        "maximum-upload-file-size": "Maximum upload file size: {{ size }}",
+        "cannot-upload-file": "Cannot upload file",
         "settings": "Settings",
         "columns-count": "Columns count",
         "columns-count-required": "Columns count is required.",
@@ -800,6 +806,7 @@
     "datasource": {
         "type": "Datasource type",
         "name": "Name",
+        "label": "Label",
         "add-datasource-prompt": "Please add datasource"
     },
     "details": {
@@ -1177,6 +1184,7 @@
     "entity": {
         "entity": "Entity",
         "entities": "Entities",
+        "entities-count": "Entities count",
         "aliases": "Entity aliases",
         "entity-alias": "Entity alias",
         "unable-delete-entity-alias-title": "Unable to delete entity alias",
@@ -1647,7 +1655,8 @@
            "key-type": "Key type",
            "attribute": "Attribute",
            "timeseries": "Timeseries",
-           "entity-field": "Entity field"
+           "entity-field": "Entity field",
+           "constant": "Constant"
          },
          "value-type": {
            "value-type": "Value type",
@@ -1674,7 +1683,9 @@
          "no-dynamic-value": "No dynamic value",
          "source-attribute": "Source attribute",
          "switch-to-dynamic-value": "Switch to dynamic value",
-         "switch-to-default-value": "Switch to default value"
+         "switch-to-default-value": "Switch to default value",
+         "inherit-owner": "Inherit from owner",
+         "source-attribute-not-set": "If source attribute isn't set"
     },
     "fullscreen": {
         "expand": "Expand to fullscreen",
@@ -2280,6 +2291,7 @@
     "widget": {
         "widget-library": "Widgets Library",
         "widget-bundle": "Widgets Bundle",
+        "all-bundles": "All bundles",
         "select-widgets-bundle": "Select widgets bundle",
         "management": "Widget management",
         "editor": "Widget Editor",
@@ -2292,7 +2304,7 @@
         "timeseries": "Time series",
         "search-data": "Search data",
         "no-data-found": "No data found",
-        "latest-values": "Latest values",
+        "latest": "Latest values",
         "rpc": "Control widget",
         "alarm": "Alarm widget",
         "static": "Static widget",
@@ -2319,6 +2331,9 @@
         "css": "CSS",
         "settings-schema": "Settings schema",
         "datakey-settings-schema": "Data key settings schema",
+        "widget-settings": "Widget settings",
+        "description": "Description",
+        "image-preview": "Image preview",
         "javascript": "Javascript",
         "js": "JS",
         "remove-widget-type-title": "Are you sure you want to remove the widget type '{{widgetName}}'?",
@@ -2332,7 +2347,10 @@
         "export": "Export widget",
         "no-data": "No data to display on widget",
         "data-overflow": "Widget displays {{count}} out of {{total}} entities",
-        "alarm-data-overflow": "Widget displays alarms for {{allowedEntities}} (maximum allowed) entities out of {{totalEntities}} entities"
+        "alarm-data-overflow": "Widget displays alarms for {{allowedEntities}} (maximum allowed) entities out of {{totalEntities}} entities",
+        "search": "Search widget",
+        "filter": "Widget filter type",
+        "loading-widgets": "Loading widgets..."
     },
     "widget-action": {
         "header-button": "Widget header button",
@@ -2361,6 +2379,8 @@
         "delete": "Delete widgets bundle",
         "title": "Title",
         "title-required": "Title is required.",
+        "description": "Description",
+        "image-preview": "Image preview",
         "add-widgets-bundle-text": "Add new widgets bundle",
         "no-widgets-bundles-text": "No widgets bundles found",
         "empty": "Widgets bundle is empty",
@@ -2382,7 +2402,8 @@
         "invalid-widgets-bundle-file-error": "Unable to import widgets bundle: Invalid widgets bundle data structure.",
         "search": "Search widget bundles",
         "selected-widgets-bundles": "{ count, plural, 1 {1 widgets bundle} other {# widgets bundles} } selected",
-        "open-widgets-bundle": "Open widgets bundle"
+        "open-widgets-bundle": "Open widgets bundle",
+        "loading-widgets-bundles": "Loading widgets bundles..."
     },
     "widget-config": {
         "data": "Data",

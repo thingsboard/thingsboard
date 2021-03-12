@@ -35,7 +35,7 @@ import { DataKey, WidgetActionDescriptor, WidgetConfig } from '@shared/models/wi
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { createLabelFromDatasource, deepClone, hashCode, isDefined, isNumber } from '@core/utils';
+import { createLabelFromDatasource, deepClone, hashCode, isDefined, isNumber, isObject } from '@core/utils';
 import cssjs from '@core/css/css';
 import { sortItems } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
@@ -60,7 +60,11 @@ import {
   getAlarmValue,
   getCellContentInfo,
   getCellStyleInfo,
+  getColumnDefaultVisibility,
+  getColumnSelectionAvailability,
   getColumnWidth,
+  getRowStyleInfo,
+  RowStyleInfo,
   TableWidgetDataKeySettings,
   TableWidgetSettings,
   widthStyle
@@ -108,10 +112,11 @@ import { entityFields } from '@shared/models/entity.models';
 
 interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   alarmsTitle: string;
+  enableSelectColumnDisplay: boolean;
+  defaultSortOrder: string;
   enableSelection: boolean;
   enableStatusFilter?: boolean;
   enableFilter: boolean;
-  enableStickyAction: boolean;
   displayDetails: boolean;
   allowAcknowledgment: boolean;
   allowClear: boolean;
@@ -139,6 +144,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
 
   public enableSelection = true;
   public displayPagination = true;
+  public enableStickyHeader = true;
   public enableStickyAction = false;
   public pageSizeOptions;
   public pageLink: AlarmDataPageLink;
@@ -165,6 +171,10 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   private contentsInfo: {[key: string]: CellContentInfo} = {};
   private stylesInfo: {[key: string]: CellStyleInfo} = {};
   private columnWidth: {[key: string]: string} = {};
+  private columnDefaultVisibility: {[key: string]: boolean} = {};
+  private columnSelectionAvailability: {[key: string]: boolean} = {};
+
+  private rowStylesInfo: RowStyleInfo;
 
   private searchAction: WidgetAction = {
     name: 'action.search',
@@ -311,6 +321,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
 
     this.searchAction.show = isDefined(this.settings.enableSearch) ? this.settings.enableSearch : true;
     this.displayPagination = isDefined(this.settings.displayPagination) ? this.settings.displayPagination : true;
+    this.enableStickyHeader = isDefined(this.settings.enableStickyHeader) ? this.settings.enableStickyHeader : true;
     this.enableStickyAction = isDefined(this.settings.enableStickyAction) ? this.settings.enableStickyAction : false;
     this.columnDisplayAction.show = isDefined(this.settings.enableSelectColumnDisplay) ? this.settings.enableSelectColumnDisplay : true;
     let enableFilter;
@@ -322,6 +333,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       enableFilter = true;
     }
     this.alarmFilterAction.show = enableFilter;
+
+    this.rowStylesInfo = getRowStyleInfo(this.settings, 'alarm, ctx');
 
     const pageSize = this.settings.defaultPageSize;
     if (isDefined(pageSize) && isNumber(pageSize) && pageSize > 0) {
@@ -383,18 +396,21 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
             keySettings.columnWidth = '120px';
           }
         }
-        this.stylesInfo[dataKey.def] = getCellStyleInfo(keySettings);
+        this.stylesInfo[dataKey.def] = getCellStyleInfo(keySettings, 'value, alarm, ctx');
         this.contentsInfo[dataKey.def] = getCellContentInfo(keySettings, 'value, alarm, ctx');
         this.contentsInfo[dataKey.def].units = dataKey.units;
         this.contentsInfo[dataKey.def].decimals = dataKey.decimals;
         this.columnWidth[dataKey.def] = getColumnWidth(keySettings);
+        this.columnDefaultVisibility[dataKey.def] = getColumnDefaultVisibility(keySettings);
+        this.columnSelectionAvailability[dataKey.def] = getColumnSelectionAvailability(keySettings);
         this.columns.push(dataKey);
 
         if (dataKey.type !== DataKeyType.alarm) {
           latestDataKeys.push(dataKey);
         }
       });
-      this.displayedColumns.push(...this.columns.map(column => column.def));
+      this.displayedColumns.push(...this.columns.filter(column => this.columnDefaultVisibility[column.def])
+        .map(column => column.def));
     }
     if (this.settings.defaultSortOrder && this.settings.defaultSortOrder.length) {
       this.defaultSortOrder = this.utils.customTranslation(this.settings.defaultSortOrder, this.settings.defaultSortOrder);
@@ -450,7 +466,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       return {
         title: column.title,
         def: column.def,
-        display: this.displayedColumns.indexOf(column.def) > -1
+        display: this.displayedColumns.indexOf(column.def) > -1,
+        selectable: this.columnSelectionAvailability[column.def]
       };
     });
 
@@ -464,7 +481,9 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
             if (this.enableSelection) {
               this.displayedColumns.unshift('select');
             }
-            this.displayedColumns.push('actions');
+            if (this.actionCellDescriptors.length) {
+              this.displayedColumns.push('actions');
+            }
           }
         } as DisplayColumnsPanelData
       },
@@ -590,6 +609,30 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     return widthStyle(columnWidth);
   }
 
+  public rowStyle(alarm: AlarmDataInfo): any {
+    let style: any = {};
+    if (alarm) {
+      if (this.rowStylesInfo.useRowStyleFunction && this.rowStylesInfo.rowStyleFunction) {
+        try {
+          style = this.rowStylesInfo.rowStyleFunction(alarm, this.ctx);
+          if (!isObject(style)) {
+            throw new TypeError(`${style === null ? 'null' : typeof style} instead of style object`);
+          }
+          if (Array.isArray(style)) {
+            throw new TypeError(`Array instead of style object`);
+          }
+        } catch (e) {
+          style = {};
+          console.warn(`Row style function in widget '${this.ctx.widgetTitle}' ` +
+            `returns '${e}'. Please check your row style function.`);
+        }
+      } else {
+        style = {};
+      }
+    }
+    return style;
+  }
+
   public cellStyle(alarm: AlarmDataInfo, key: EntityColumn): any {
     let style: any = {};
     if (alarm && key) {
@@ -597,9 +640,17 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       const value = getAlarmValue(alarm, key);
       if (styleInfo.useCellStyleFunction && styleInfo.cellStyleFunction) {
         try {
-          style = styleInfo.cellStyleFunction(value);
+          style = styleInfo.cellStyleFunction(value, alarm, this.ctx);
+          if (!isObject(style)) {
+            throw new TypeError(`${style === null ? 'null' : typeof style} instead of style object`);
+          }
+          if (Array.isArray(style)) {
+            throw new TypeError(`Array instead of style object`);
+          }
         } catch (e) {
           style = {};
+          console.warn(`Cell style function for data key '${key.label}' in widget '${this.ctx.widgetTitle}' ` +
+            `returns '${e}'. Please check your cell style function.`);
         }
       } else {
         style = this.defaultStyle(key, value);
@@ -631,6 +682,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         return '';
 
       } else {
+        content = this.utils.customTranslation(content, content);
         switch (typeof content) {
           case 'string':
             return this.domSanitizer.bypassSecurityTrustHtml(content);

@@ -34,6 +34,7 @@ import { Subscription } from 'rxjs';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { FlowDirective } from '@flowjs/ngx-flow';
 import { TranslateService } from '@ngx-translate/core';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-file-input',
@@ -59,7 +60,7 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
   noFileText = 'import.no-file';
 
   @Input()
-  inputId = 'select';
+  inputId = this.utils.guid();
 
   @Input()
   allowedExtensions: string;
@@ -114,6 +115,7 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
   private propagateChange = null;
 
   constructor(protected store: Store<AppState>,
+              private utils: UtilsService,
               public translate: TranslateService) {
     super(store);
   }

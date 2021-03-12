@@ -15,10 +15,12 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CalculateDeltaNodeConfiguration implements NodeConfiguration<CalculateDeltaNodeConfiguration> {
     private String inputValueKey;
     private String outputValueKey;
@@ -26,7 +28,6 @@ public class CalculateDeltaNodeConfiguration implements NodeConfiguration<Calcul
     private boolean addPeriodBetweenMsgs;
     private String periodValueKey;
     private Integer round;
-    private boolean tellFailureIfInputValueKeyIsAbsent;
     private boolean tellFailureIfDeltaIsNegative;
 
     @Override
@@ -37,7 +38,6 @@ public class CalculateDeltaNodeConfiguration implements NodeConfiguration<Calcul
         configuration.setUseCache(true);
         configuration.setAddPeriodBetweenMsgs(false);
         configuration.setPeriodValueKey("periodInMs");
-        configuration.setTellFailureIfInputValueKeyIsAbsent(true);
         configuration.setTellFailureIfDeltaIsNegative(true);
         return configuration;
     }

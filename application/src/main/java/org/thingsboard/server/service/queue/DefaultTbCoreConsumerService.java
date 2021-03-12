@@ -151,12 +151,12 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     }
 
     @Override
-    public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
-        if (partitionChangeEvent.getServiceType().equals(getServiceType())) {
-            log.info("Subscribing to partitions: {}", partitionChangeEvent.getPartitions());
-            this.mainConsumer.subscribe(partitionChangeEvent.getPartitions());
+    protected void onTbApplicationEvent(PartitionChangeEvent event) {
+        if (event.getServiceType().equals(getServiceType())) {
+            log.info("Subscribing to partitions: {}", event.getPartitions());
+            this.mainConsumer.subscribe(event.getPartitions());
             this.usageStatsConsumer.subscribe(
-                    partitionChangeEvent
+                    event
                             .getPartitions()
                             .stream()
                             .map(tpi -> tpi.newByTopic(usageStatsConsumer.getTopic()))

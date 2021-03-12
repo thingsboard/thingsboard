@@ -60,7 +60,18 @@ export class EntityDataService {
   constructor(private telemetryService: TelemetryWebsocketService,
               private utils: UtilsService) {}
 
-  public prepareSubscription(listener: EntityDataListener): Observable<EntityDataLoadResult> {
+  private static isUnresolvedDatasource(datasource: Datasource, pageLink: EntityDataPageLink): boolean {
+    if (datasource.type === DatasourceType.entity) {
+      return !datasource.entityFilter || !pageLink;
+    } else if (datasource.type === DatasourceType.entityCount) {
+      return !datasource.entityFilter;
+    } else {
+      return false;
+    }
+  }
+
+  public prepareSubscription(listener: EntityDataListener,
+                             ignoreDataUpdateOnIntervalTick = false): Observable<EntityDataLoadResult> {
     const datasource = listener.configDatasource;
     listener.subscriptionOptions = this.createSubscriptionOptions(
       datasource,
@@ -68,8 +79,9 @@ export class EntityDataService {
       datasource.pageLink,
       datasource.keyFilters,
       null,
-      false);
-    if (datasource.type === DatasourceType.entity && (!datasource.entityFilter || !datasource.pageLink)) {
+      false,
+      ignoreDataUpdateOnIntervalTick);
+    if (EntityDataService.isUnresolvedDatasource(datasource, datasource.pageLink)) {
       return of(null);
     }
     listener.subscription = new EntityDataSubscription(listener, this.telemetryService, this.utils);
@@ -87,7 +99,8 @@ export class EntityDataService {
 
   public subscribeForPaginatedData(listener: EntityDataListener,
                                    pageLink: EntityDataPageLink,
-                                   keyFilters: KeyFilter[]): Observable<EntityDataLoadResult> {
+                                   keyFilters: KeyFilter[],
+                                   ignoreDataUpdateOnIntervalTick = false): Observable<EntityDataLoadResult> {
     const datasource = listener.configDatasource;
     listener.subscriptionOptions = this.createSubscriptionOptions(
       datasource,
@@ -95,8 +108,9 @@ export class EntityDataService {
       pageLink,
       datasource.keyFilters,
       keyFilters,
-      true);
-    if (datasource.type === DatasourceType.entity && (!datasource.entityFilter || !pageLink)) {
+      true,
+      ignoreDataUpdateOnIntervalTick);
+    if (EntityDataService.isUnresolvedDatasource(datasource, pageLink)) {
       listener.dataLoaded(emptyPageData<EntityData>(), [],
         listener.configDatasourceIndex, listener.subscriptionOptions.pageLink);
       return of(null);
@@ -119,7 +133,8 @@ export class EntityDataService {
                                     pageLink: EntityDataPageLink,
                                     keyFilters: KeyFilter[],
                                     additionalKeyFilters: KeyFilter[],
-                                    isPaginatedDataSubscription: boolean): EntityDataSubscriptionOptions {
+                                    isPaginatedDataSubscription: boolean,
+                                    ignoreDataUpdateOnIntervalTick: boolean): EntityDataSubscriptionOptions {
     const subscriptionDataKeys: Array<SubscriptionDataKey> = [];
     datasource.dataKeys.forEach((dataKey) => {
       const subscriptionDataKey: SubscriptionDataKey = {
@@ -135,13 +150,17 @@ export class EntityDataService {
       dataKeys: subscriptionDataKeys,
       type: subscriptionType
     };
-    if (entityDataSubscriptionOptions.datasourceType === DatasourceType.entity) {
+    if (entityDataSubscriptionOptions.datasourceType === DatasourceType.entity ||
+      entityDataSubscriptionOptions.datasourceType === DatasourceType.entityCount) {
       entityDataSubscriptionOptions.entityFilter = datasource.entityFilter;
-      entityDataSubscriptionOptions.pageLink = pageLink;
       entityDataSubscriptionOptions.keyFilters = keyFilters;
       entityDataSubscriptionOptions.additionalKeyFilters = additionalKeyFilters;
+      if (entityDataSubscriptionOptions.datasourceType === DatasourceType.entity) {
+        entityDataSubscriptionOptions.pageLink = pageLink;
+      }
     }
     entityDataSubscriptionOptions.isPaginatedDataSubscription = isPaginatedDataSubscription;
+    entityDataSubscriptionOptions.ignoreDataUpdateOnIntervalTick = ignoreDataUpdateOnIntervalTick;
     return entityDataSubscriptionOptions;
   }
 }

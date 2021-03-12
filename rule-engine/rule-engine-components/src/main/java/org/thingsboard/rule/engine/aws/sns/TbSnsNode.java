@@ -83,7 +83,7 @@ public class TbSnsNode implements TbNode {
     }
 
     private TbMsg publishMessage(TbContext ctx, TbMsg msg) {
-        String topicArn = TbNodeUtils.processPattern(this.config.getTopicArnPattern(), msg.getMetaData());
+        String topicArn = TbNodeUtils.processPattern(this.config.getTopicArnPattern(), msg);
         PublishRequest publishRequest = new PublishRequest()
                 .withTopicArn(topicArn)
                 .withMessage(msg.getData());

@@ -16,16 +16,16 @@
 package org.thingsboard.server.service.telemetry.cmd.v2;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
+import lombok.ToString;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.service.telemetry.sub.SubscriptionErrorCode;
 
 import java.util.List;
 
-
+@ToString
 public class EntityDataUpdate extends DataUpdate<EntityData> {
 
     @Getter
@@ -41,8 +41,8 @@ public class EntityDataUpdate extends DataUpdate<EntityData> {
     }
 
     @Override
-    public DataUpdateType getDataUpdateType() {
-        return DataUpdateType.ENTITY_DATA;
+    public CmdUpdateType getCmdUpdateType() {
+        return CmdUpdateType.ENTITY_DATA;
     }
 
     @JsonCreator

@@ -56,11 +56,11 @@ export class UserComponent extends EntityComponent<User> {
   }
 
   isUserCredentialsEnabled(): boolean {
-    if (!this.entity || !this.entity.additionalInfo || isUndefined(this.entity.additionalInfo.userCredentialsEnabled)) {
-      return true;
-    } else {
       return this.entity.additionalInfo.userCredentialsEnabled === true;
-    }
+  }
+
+  isUserCredentialPresent(): boolean {
+    return this.entity && this.entity.additionalInfo && isDefinedAndNotNull(this.entity.additionalInfo.userCredentialsEnabled);
   }
 
   buildForm(entity: User): FormGroup {

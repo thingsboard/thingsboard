@@ -39,6 +39,7 @@ zk:
 transport:
   http:
     request_timeout: "${HTTP_REQUEST_TIMEOUT:60000}"
+    max_request_timeout: "${HTTP_MAX_REQUEST_TIMEOUT:300000}"
   sessions:
     inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
     report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:30000}"
