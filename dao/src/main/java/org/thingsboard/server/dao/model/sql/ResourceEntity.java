@@ -17,8 +17,8 @@ package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.transport.resource.Resource;
-import org.thingsboard.server.common.data.transport.resource.ResourceType;
+import org.thingsboard.server.common.data.Resource;
+import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.dao.model.ToData;
 
 import javax.persistence.Column;
