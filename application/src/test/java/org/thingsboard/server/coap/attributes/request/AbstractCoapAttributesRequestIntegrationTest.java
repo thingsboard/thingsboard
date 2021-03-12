@@ -52,7 +52,7 @@ public abstract class AbstractCoapAttributesRequestIntegrationTest extends Abstr
     }
 
     protected void processTestRequestAttributesValuesFromTheServer() throws Exception {
-        postAttributesAndSubscribeToTopic();
+        postAttributes();
 
         Thread.sleep(1000);
 
@@ -64,7 +64,7 @@ public abstract class AbstractCoapAttributesRequestIntegrationTest extends Abstr
         validateResponse(getAttributesResponse);
     }
 
-    protected void postAttributesAndSubscribeToTopic() throws Exception {
+    protected void postAttributes() throws Exception {
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
         CoapClient client = getCoapClient(FeatureType.ATTRIBUTES);
         CoapResponse coapResponse = client.setTimeout((long) 60000).post(POST_ATTRIBUTES_PAYLOAD.getBytes(), MediaTypeRegistry.APPLICATION_JSON);

@@ -83,7 +83,7 @@ public abstract class AbstractCoapAttributesRequestProtoIntegrationTest extends 
         processTestRequestAttributesValuesFromTheServer();
     }
 
-    protected void postAttributesAndSubscribeToTopic() throws Exception {
+    protected void postAttributes() throws Exception {
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         assertTrue(transportConfiguration instanceof CoapDeviceProfileTransportConfiguration);
