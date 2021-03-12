@@ -269,29 +269,24 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
             }
           }
         );
-      } else {
+      } else if (value.entityType && value.id) {
         const targetEntityType = this.checkEntityType(value.entityType);
-        if (value.id) {
-          this.entityService.getEntity(targetEntityType, value.id, {ignoreLoading: true, ignoreErrors: true}).subscribe(
-            (entity) => {
-              this.modelValue = entity.id.id;
-              this.selectEntityFormGroup.get('entity').patchValue(entity, {emitEvent: false});
-            },
-            () => {
-              this.modelValue = null;
-              this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
-              if (value !== null) {
-                this.propagateChange(this.modelValue);
-              }
+        this.entityService.getEntity(targetEntityType, value.id, {ignoreLoading: true, ignoreErrors: true}).subscribe(
+          (entity) => {
+            this.modelValue = entity.id.id;
+            this.selectEntityFormGroup.get('entity').patchValue(entity, {emitEvent: false});
+          },
+          () => {
+            this.modelValue = null;
+            this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
+            if (value !== null) {
+              this.propagateChange(this.modelValue);
             }
-          );
-        } else {
-          this.modelValue = null;
-          this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
-          if (value !== null) {
-            this.propagateChange(this.modelValue);
           }
-        }
+        );
+      } else {
+        this.modelValue = null;
+        this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
       }
     } else {
       this.modelValue = null;
