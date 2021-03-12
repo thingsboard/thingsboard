@@ -139,6 +139,7 @@ import { ContactComponent } from '@shared/components/contact.component';
 import { TimezoneSelectComponent } from '@shared/components/time/timezone-select.component';
 import { FileSizePipe } from '@shared/pipe/file-size.pipe';
 import { WidgetsBundleSearchComponent } from '@shared/components/widgets-bundle-search.component';
+import { SelectableColumnsPipe } from '@shared/pipe/selectable-columns.pipe';
 
 @NgModule({
   providers: [
@@ -223,6 +224,7 @@ import { WidgetsBundleSearchComponent } from '@shared/components/widgets-bundle-
     TruncatePipe,
     TbJsonPipe,
     FileSizePipe,
+    SelectableColumnsPipe,
     KeyboardShortcutPipe,
     TbJsonToStringDirective,
     JsonObjectEditDialogComponent,
@@ -393,6 +395,7 @@ import { WidgetsBundleSearchComponent } from '@shared/components/widgets-bundle-
     TbJsonPipe,
     KeyboardShortcutPipe,
     FileSizePipe,
+    SelectableColumnsPipe,
     TranslateModule,
     JsonObjectEditDialogComponent,
     HistorySelectorComponent,
