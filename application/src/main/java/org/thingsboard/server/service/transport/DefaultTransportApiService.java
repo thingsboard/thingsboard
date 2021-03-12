@@ -368,6 +368,11 @@ public class DefaultTransportApiService implements TransportApiService {
         String resourceId = requestMsg.getResourceId();
         TransportProtos.GetResourceResponseMsg.Builder builder = TransportProtos.GetResourceResponseMsg.newBuilder();
         Resource resource = resourceService.getResource(tenantId, resourceType, resourceId);
+
+        if (resource == null && !tenantId.equals(TenantId.SYS_TENANT_ID)) {
+            resource = resourceService.getResource(TenantId.SYS_TENANT_ID, resourceType, resourceId);
+        }
+
         if (resource != null) {
             builder.setResource(ByteString.copyFrom(dataDecodingEncodingService.encode(resource)));
         }
