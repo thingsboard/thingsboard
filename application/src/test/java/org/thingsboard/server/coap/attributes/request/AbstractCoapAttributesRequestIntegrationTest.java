@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.coap.attributes.request;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapClient;
@@ -29,12 +30,16 @@ import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
 public abstract class AbstractCoapAttributesRequestIntegrationTest extends AbstractCoapAttributesIntegrationTest {
+
+    protected static final long CLIENT_REQUEST_TIMEOUT = 60000L;
 
     @Before
     public void beforeTest() throws Exception {
@@ -54,20 +59,32 @@ public abstract class AbstractCoapAttributesRequestIntegrationTest extends Abstr
     protected void processTestRequestAttributesValuesFromTheServer() throws Exception {
         postAttributes();
 
-        Thread.sleep(1000);
+        long start = System.currentTimeMillis();
+        long end = System.currentTimeMillis() + 5000;
+
+        List<String> savedAttributeKeys = null;
+        while (start <= end) {
+            savedAttributeKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/keys/attributes/CLIENT_SCOPE", new TypeReference<>() {});
+            if (savedAttributeKeys.size() == 5) {
+                break;
+            }
+            Thread.sleep(100);
+            start += 100;
+        }
+        assertNotNull(savedAttributeKeys);
 
         String keys = "attribute1,attribute2,attribute3,attribute4,attribute5";
         String featureTokenUrl = getFeatureTokenUrl(accessToken, FeatureType.ATTRIBUTES) + "?clientKeys=" + keys + "&sharedKeys=" + keys;
         CoapClient client = getCoapClient(featureTokenUrl);
 
-        CoapResponse getAttributesResponse = client.setTimeout((long) 60000).get();
+        CoapResponse getAttributesResponse = client.setTimeout(CLIENT_REQUEST_TIMEOUT).get();
         validateResponse(getAttributesResponse);
     }
 
     protected void postAttributes() throws Exception {
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
         CoapClient client = getCoapClient(FeatureType.ATTRIBUTES);
-        CoapResponse coapResponse = client.setTimeout((long) 60000).post(POST_ATTRIBUTES_PAYLOAD.getBytes(), MediaTypeRegistry.APPLICATION_JSON);
+        CoapResponse coapResponse = client.setTimeout(CLIENT_REQUEST_TIMEOUT).post(POST_ATTRIBUTES_PAYLOAD.getBytes(), MediaTypeRegistry.APPLICATION_JSON);
         assertEquals(CoAP.ResponseCode.CREATED, coapResponse.getCode());
     }
 

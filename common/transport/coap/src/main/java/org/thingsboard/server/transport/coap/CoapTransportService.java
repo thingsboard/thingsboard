@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.core.network.CoapEndpoint;
-import org.eclipse.californium.core.network.CoapEndpoint.Builder;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -60,7 +59,12 @@ public class CoapTransportService {
 
         InetAddress addr = InetAddress.getByName(coapTransportContext.getHost());
         InetSocketAddress sockAddr = new InetSocketAddress(addr, coapTransportContext.getPort());
-        server.addEndpoint(new CoapEndpoint(sockAddr));
+
+        CoapEndpoint.Builder coapEndpoitBuilder = new CoapEndpoint.Builder();
+        coapEndpoitBuilder.setInetSocketAddress(sockAddr);
+        CoapEndpoint coapEndpoint = coapEndpoitBuilder.build();
+
+        server.addEndpoint(coapEndpoint);
         server.start();
         log.info("CoAP transport started!");
     }

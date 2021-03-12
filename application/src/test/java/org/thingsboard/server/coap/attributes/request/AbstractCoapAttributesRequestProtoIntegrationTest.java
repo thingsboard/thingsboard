@@ -125,7 +125,7 @@ public abstract class AbstractCoapAttributesRequestProtoIntegrationTest extends 
                 .build();
         byte[] payload = postAttributesMsg.toByteArray();
         CoapClient client = getCoapClient(FeatureType.ATTRIBUTES);
-        CoapResponse coapResponse = client.setTimeout((long) 60000).post(payload, MediaTypeRegistry.APPLICATION_JSON);
+        CoapResponse coapResponse = client.setTimeout(CLIENT_REQUEST_TIMEOUT).post(payload, MediaTypeRegistry.APPLICATION_JSON);
         assertEquals(CoAP.ResponseCode.CREATED, coapResponse.getCode());
     }
 
