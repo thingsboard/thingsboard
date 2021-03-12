@@ -18,8 +18,7 @@ package org.thingsboard.server.dao.model.sql;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.transport.resource.Resource;
+import org.thingsboard.server.common.data.Resource;
 
 import javax.persistence.Transient;
 import java.io.Serializable;

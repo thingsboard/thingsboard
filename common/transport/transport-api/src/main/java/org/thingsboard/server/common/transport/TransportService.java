@@ -25,8 +25,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestM
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.GetResourcesRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.GetResourcesResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetResourceRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetResourceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.LwM2MRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.LwM2MResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
@@ -53,7 +53,7 @@ public interface TransportService {
 
     GetEntityProfileResponseMsg getEntityProfile(GetEntityProfileRequestMsg msg);
 
-    GetResourcesResponseMsg getResources(GetResourcesRequestMsg msg);
+    GetResourceResponseMsg getResource(GetResourceRequestMsg msg);
 
     void process(DeviceTransportType transportType, ValidateDeviceTokenRequestMsg msg,
                  TransportServiceCallback<ValidateDeviceCredentialsResponse> callback);

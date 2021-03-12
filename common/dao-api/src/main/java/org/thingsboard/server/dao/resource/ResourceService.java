@@ -18,8 +18,8 @@ package org.thingsboard.server.dao.resource;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.transport.resource.Resource;
-import org.thingsboard.server.common.data.transport.resource.ResourceType;
+import org.thingsboard.server.common.data.Resource;
+import org.thingsboard.server.common.data.ResourceType;
 
 
 public interface ResourceService {
