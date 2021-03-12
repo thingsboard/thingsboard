@@ -120,12 +120,13 @@
             </div>
           </mat-cell>
         </ng-container>
-        <mat-header-row [ngClass]="{'mat-row-select': enableSelection}" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+        <mat-header-row [ngClass]="{'mat-row-select': enableSelection}" *matHeaderRowDef="displayedColumns; sticky: enableStickyHeader"></mat-header-row>
         <mat-row [ngClass]="{'mat-row-select': enableSelection,
                              'mat-selected': alarmsDatasource.isSelected(alarm),
                              'tb-current-entity': alarmsDatasource.isCurrentAlarm(alarm),
                              'invisible': alarmsDatasource.dataLoading}"
                  *matRowDef="let alarm; columns: displayedColumns;"
+                 [ngStyle]="rowStyle(alarm)"
                  (click)="onRowClick($event, alarm)"></mat-row>
       </table>
       <span [fxShow]="(alarmsDatasource.isEmpty() | async) && !alarmsDatasource.dataLoading"
