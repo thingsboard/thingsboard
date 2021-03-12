@@ -19,22 +19,18 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.snmp4j.CommunityTarget;
-import org.snmp4j.Snmp;
 import org.snmp4j.Target;
+import org.snmp4j.event.ResponseEvent;
+import org.snmp4j.event.ResponseListener;
 import org.snmp4j.mp.SnmpConstants;
 import org.snmp4j.smi.GenericAddress;
 import org.snmp4j.smi.OctetString;
-import org.springframework.context.ApplicationEventPublisher;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.SnmpProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.SessionMsgListener;
-import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
-import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
@@ -43,124 +39,84 @@ import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseNotifica
 import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.transport.snmp.SnmpTransportContext;
-import org.thingsboard.server.transport.snmp.event.DeviceProfileUpdatedEvent;
-import org.thingsboard.server.transport.snmp.event.DeviceUpdatedEvent;
+import org.thingsboard.server.transport.snmp.service.SnmpTransportService;
 
-import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 
 @Slf4j
-public class DeviceSessionContext extends DeviceAwareSessionContext implements SessionMsgListener {
-    private final AtomicInteger msgIdSeq = new AtomicInteger(0);
+public class DeviceSessionContext extends DeviceAwareSessionContext implements SessionMsgListener, ResponseListener {
     @Getter
-    @Setter
-    private SnmpDeviceTransportConfiguration deviceTransportConfig;
-    @Getter
-    private final SnmpResponseSessionListener snmpResponseSessionListener;
-    private final SnmpTransportContext snmpTransportContext;
-    private final ApplicationEventPublisher eventPublisher;
-
-    @Getter
-    @Setter
     private Target target;
+    private final String token;
+    @Getter
+    private final SnmpProfileTransportConfiguration snmpProfileTransportConfiguration;
+
+    private final SnmpTransportContext snmpTransportContext;
+    private final SnmpTransportService snmpTransportService;
+
     @Getter
     @Setter
-    private volatile TransportProtos.SessionInfoProto sessionInfo;
-
-    private Snmp snmp;
-    private SnmpProfileTransportConfiguration snmpProfileTransportConfiguration;
     private long previousRequestExecutedAt = 0;
+    private final AtomicInteger msgIdSeq = new AtomicInteger(0);
+    private boolean isActive = true;
 
-    public DeviceSessionContext(SnmpTransportContext snmpTransportContext, String token,
-                                SnmpDeviceTransportConfiguration deviceTransportConfig,
-                                ApplicationEventPublisher eventPublisher, Snmp snmp,
-                                DeviceId deviceId, DeviceProfile deviceProfile) {
+    public DeviceSessionContext(DeviceId deviceId, DeviceProfile deviceProfile,
+                                String token, SnmpDeviceTransportConfiguration deviceTransportConfig,
+                                SnmpTransportContext snmpTransportContext, SnmpTransportService snmpTransportService) {
         super(UUID.randomUUID());
-        this.snmpTransportContext = snmpTransportContext;
-        this.eventPublisher = eventPublisher;
-        this.snmpResponseSessionListener = new SnmpResponseSessionListener(snmpTransportContext, token);
         super.setDeviceId(deviceId);
         super.setDeviceProfile(deviceProfile);
-        //TODO: What should be done if snmp null?
-        if (snmp != null) {
-            this.snmp = snmp;
-        }
-        this.snmpProfileTransportConfiguration = (SnmpProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
-        initTarget(this.snmpProfileTransportConfiguration, deviceTransportConfig);
-    }
 
-    @Override
-    public int nextMsgId() {
-        return msgIdSeq.incrementAndGet();
+        this.token = token;
+        this.snmpTransportContext = snmpTransportContext;
+        this.snmpTransportService = snmpTransportService;
+        this.snmpProfileTransportConfiguration = (SnmpProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
+
+        initTarget(snmpProfileTransportConfiguration, deviceTransportConfig);
     }
 
     @Override
     public void onDeviceProfileUpdate(TransportProtos.SessionInfoProto newSessionInfo, DeviceProfile deviceProfile) {
-        super.onDeviceProfileUpdate(sessionInfo, deviceProfile);
-        eventPublisher.publishEvent(new DeviceProfileUpdatedEvent(deviceProfile));
+        super.onDeviceProfileUpdate(newSessionInfo, deviceProfile);
+        if (isActive) {
+            snmpTransportContext.onDeviceProfileUpdated(deviceProfile, this);
+        }
     }
 
     @Override
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
         super.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
-        eventPublisher.publishEvent(new DeviceUpdatedEvent(device, super.getDeviceProfile()));
+        if (isActive) {
+            snmpTransportContext.onDeviceUpdated(device, getDeviceProfile());
+        }
     }
 
-    public void createSessionInfo(Consumer<TransportProtos.SessionInfoProto> registerSession) {
-        getSnmpResponseSessionListener().getSnmpTransportContext().getTransportService().process(DeviceTransportType.SNMP,
-                TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(getSnmpResponseSessionListener().getToken()).build(),
-                new TransportServiceCallback<ValidateDeviceCredentialsResponse>() {
-                    @Override
-                    public void onSuccess(ValidateDeviceCredentialsResponse msg) {
-                        if (msg.hasDeviceInfo()) {
-                            sessionInfo = SessionInfoCreator.create(msg, getSnmpResponseSessionListener().getSnmpTransportContext(), UUID.randomUUID());
-                            registerSession.accept(sessionInfo);
-                            setDeviceInfo(msg.getDeviceInfo());
-                        } else {
-                            log.warn("[{}] Failed to process device auth", getDeviceId());
-                        }
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        log.warn("[{}] Failed to process device auth", getDeviceId(), e);
-                    }
-                });
-    }
-
-    public void executeSnmpRequest() {
-        long timeNow = System.currentTimeMillis();
-        long nextRequestExecutionTime = previousRequestExecutedAt + snmpProfileTransportConfiguration.getPollPeriodMs();
-        if (nextRequestExecutionTime < timeNow) {
-            previousRequestExecutedAt = timeNow;
-
-            snmpTransportContext.getProfilesPdus().get(deviceProfile.getId()).forEach(pdu -> {
-                try {
-                    log.debug("[{}] Sending SNMP message...", pdu.getRequestID());
-                    snmp.send(pdu,
-                            target,
-                            deviceProfile.getId(),
-                            snmpResponseSessionListener);
-                } catch (IOException e) {
-                    log.error(e.getMessage(), e);
-                }
-            });
+    @Override
+    public void onResponse(ResponseEvent event) {
+        if (isActive) {
+            snmpTransportService.onNewDeviceResponse(event, this);
         }
     }
 
     public void initTarget(SnmpProfileTransportConfiguration profileTransportConfig, SnmpDeviceTransportConfiguration deviceTransportConfig) {
-        this.deviceTransportConfig = deviceTransportConfig;
         CommunityTarget communityTarget = new CommunityTarget();
-        communityTarget.setAddress(GenericAddress.parse(GenericAddress.TYPE_UDP + ":" + this.deviceTransportConfig.getAddress() + "/" + this.deviceTransportConfig.getPort()));
-        communityTarget.setVersion(getSnmpVersion(this.deviceTransportConfig.getProtocolVersion()));
-        communityTarget.setCommunity(new OctetString(this.deviceTransportConfig.getCommunity()));
+        communityTarget.setAddress(GenericAddress.parse(GenericAddress.TYPE_UDP + ":" + deviceTransportConfig.getAddress() + "/" + deviceTransportConfig.getPort()));
+        communityTarget.setVersion(getSnmpVersion(deviceTransportConfig.getProtocolVersion()));
+        communityTarget.setCommunity(new OctetString(deviceTransportConfig.getCommunity()));
         communityTarget.setTimeout(profileTransportConfig.getTimeoutMs());
         communityTarget.setRetries(profileTransportConfig.getRetries());
         this.target = communityTarget;
         log.info("SNMP target initialized: {}", this.target);
+    }
+
+    public void close() {
+        isActive = false;
+    }
+
+    public String getToken() {
+        return token;
     }
 
     //TODO: replace with enum, wtih preliminary discussion of type version in config (string or integer)
@@ -175,6 +131,11 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
             default:
                 return -1;
         }
+    }
+
+    @Override
+    public int nextMsgId() {
+        return msgIdSeq.incrementAndGet();
     }
 
     @Override
@@ -196,5 +157,4 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     @Override
     public void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse) {
     }
-
 }

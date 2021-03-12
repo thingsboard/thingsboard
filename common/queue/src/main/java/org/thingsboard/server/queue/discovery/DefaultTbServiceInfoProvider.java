@@ -107,7 +107,7 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         }
 
         builder.addAllTransports(getTransports().stream()
-                .map(TransportName::getName)
+                .map(TransportName::value)
                 .collect(Collectors.toSet()));
 
         serviceInfo = builder.build();

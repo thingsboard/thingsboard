@@ -13,45 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.service;
+package org.thingsboard.server.transport.snmp.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.transport.TransportDeviceCache;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.util.TbTransportComponent;
 
-import java.util.Map;
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
-@Component
-@TbTransportComponent
+@Service
 @RequiredArgsConstructor
-public class DefaultTransportDeviceCache implements TransportDeviceCache {
+public class ProtoTransportEntityService {
     private final TransportService transportService;
     private final DataDecodingEncodingService dataDecodingEncodingService;
-    private final Map<DeviceId, Device> devices = new ConcurrentHashMap<>();
 
-    @Override
-    public Device get(DeviceId id) {
-        return Optional.ofNullable(devices.get(id))
-                .orElseGet(() -> {
-                    Device device = requestDevice(id);
-                    devices.put(id, device);
-                    return device;
-                });
-    }
-
-    private Device requestDevice(DeviceId id) {
+    public Device getDeviceById(DeviceId id) {
         TransportProtos.GetDeviceResponseMsg deviceProto = transportService.getDevice(TransportProtos.GetDeviceRequestMsg.newBuilder()
                 .setDeviceIdMSB(id.getId().getMostSignificantBits())
                 .setDeviceIdLSB(id.getId().getLeastSignificantBits())
@@ -76,8 +62,25 @@ public class DefaultTransportDeviceCache implements TransportDeviceCache {
         return device;
     }
 
-    @Override
-    public void evict(DeviceId id) {
-        devices.remove(id);
+    public DeviceCredentials getDeviceCredentialsByDeviceId(DeviceId deviceId) {
+        TransportProtos.GetDeviceCredentialsResponseMsg deviceCredentialsResponse = transportService.getDeviceCredentials(
+                TransportProtos.GetDeviceCredentialsRequestMsg.newBuilder()
+                        .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                        .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                        .build()
+        );
+
+        return (DeviceCredentials) dataDecodingEncodingService.decode(deviceCredentialsResponse.getDeviceCredentialsData().toByteArray())
+                .orElseThrow(() -> new IllegalArgumentException("Device credentials not found"));
+    }
+
+    public List<UUID> getAllSnmpDevicesIds() {
+        TransportProtos.GetSnmpDevicesResponseMsg devicesIdsResponse = transportService.getSnmpDevicesIds(
+                TransportProtos.GetSnmpDevicesRequestMsg.getDefaultInstance()
+        );
+
+        return devicesIdsResponse.getIdsList().stream()
+                .map(UUID::fromString)
+                .collect(Collectors.toList());
     }
 }

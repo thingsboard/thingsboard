@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.snmp.session;
+package org.thingsboard.server.transport.snmp.service;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -25,9 +25,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.snmp4j.PDU;
 import org.snmp4j.Snmp;
 import org.snmp4j.event.ResponseEvent;
-import org.snmp4j.event.ResponseListener;
+import org.snmp4j.smi.OID;
 import org.snmp4j.smi.VariableBinding;
+import org.snmp4j.transport.DefaultUdpTransportMapping;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.TransportName;
+import org.thingsboard.server.common.data.device.profile.SnmpProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.transport.TransportContext;
@@ -39,24 +51,120 @@ import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.snmp.SnmpTransportContext;
+import org.thingsboard.server.transport.snmp.session.DeviceSessionContext;
 
+import javax.annotation.PreDestroy;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
+@Service("SnmpTransportService")
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.snmp.enabled}'=='true')")
 @Slf4j
-@AllArgsConstructor
-@Getter
-public class SnmpResponseSessionListener implements ResponseListener {
+public class SnmpTransportService {
     private final SnmpTransportContext snmpTransportContext;
-    private final String token;
 
-    @Override
-    public void onResponse(ResponseEvent event) {
-        ((Snmp) event.getSource()).cancel(event.getRequest(), this);
-        snmpTransportContext.getSnmpCallbackExecutor().submit(() -> processSnmpResponse(event));
+    @Getter
+    private ExecutorService snmpCallbackExecutor;
+    @Getter
+    private Snmp snmp;
+    private ScheduledExecutorService pollingExecutor;
+
+    public SnmpTransportService(@Lazy SnmpTransportContext snmpTransportContext) {
+        this.snmpTransportContext = snmpTransportContext;
     }
 
-    private void processSnmpResponse(ResponseEvent event) {
+    //    @PostConstruct
+    private void init() {
+        log.info("Starting SNMP transport...");
+        pollingExecutor = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("snmp-polling"));
+        //TODO: Set parallelism value in the config
+        snmpCallbackExecutor = Executors.newWorkStealingPool(20);
+
+        initializeSnmp();
+
+        log.info("SNMP transport started!");
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        log.info("Stopping SNMP transport!");
+        if (pollingExecutor != null) {
+            pollingExecutor.shutdownNow();
+        }
+        if (snmpCallbackExecutor != null) {
+            snmpCallbackExecutor.shutdownNow();
+        }
+        if (snmp != null) {
+            try {
+                snmp.close();
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+        log.info("SNMP transport stopped!");
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    @Order(value = 10)
+    public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
+        log.info("Received application ready event. Starting SNMP polling.");
+//        startPolling();
+    }
+
+    private void initializeSnmp() {
+        try {
+            this.snmp = new Snmp(new DefaultUdpTransportMapping());
+            this.snmp.listen();
+        } catch (IOException e) {
+            //TODO: what should be done if transport wasn't initialized?
+            log.error(e.getMessage(), e);
+        }
+    }
+
+    private void startPolling() {
+        //TODO: Get poll period from configuration;
+        int pollPeriodSeconds = 1;
+
+        pollingExecutor.scheduleWithFixedDelay(() -> {
+            snmpTransportContext.getDevicesSessions().forEach(this::executeSnmpRequest);
+        }, 0, pollPeriodSeconds, TimeUnit.SECONDS);
+    }
+
+    private void executeSnmpRequest(DeviceSessionContext sessionContext) {
+        long timeNow = System.currentTimeMillis();
+        long nextRequestExecutionTime = sessionContext.getPreviousRequestExecutedAt() + sessionContext.getSnmpProfileTransportConfiguration().getPollPeriodMs();
+
+        if (nextRequestExecutionTime < timeNow) {
+            sessionContext.setPreviousRequestExecutedAt(timeNow);
+
+            DeviceProfileId deviceProfileId = sessionContext.getDeviceProfile().getId();
+            snmpTransportContext.getProfilesPdus().get(deviceProfileId).forEach(pdu -> {
+                try {
+                    log.debug("[{}] Sending SNMP message...", pdu.getRequestID());
+                    snmp.send(pdu, sessionContext.getTarget(), deviceProfileId, sessionContext);
+                } catch (IOException e) {
+                    log.error(e.getMessage(), e);
+                }
+            });
+        }
+    }
+
+    public void onNewDeviceResponse(ResponseEvent responseEvent, DeviceSessionContext sessionContext) {
+        ((Snmp) responseEvent.getSource()).cancel(responseEvent.getRequest(), sessionContext);
+        snmpTransportContext.getSnmpCallbackExecutor().submit(() -> processSnmpResponse(responseEvent, sessionContext));
+    }
+
+    private void processSnmpResponse(ResponseEvent event, DeviceSessionContext sessionContext) {
         PDU response = event.getResponse();
         if (event.getError() != null) {
             log.warn("Response error: {}", event.getError().getMessage(), event.getError());
@@ -70,7 +178,7 @@ public class SnmpResponseSessionListener implements ResponseListener {
             for (int i = 0; i < response.size(); i++) {
                 VariableBinding vb = response.get(i);
                 snmpTransportContext.getAttributesMapping(deviceProfileId, vb.getOid()).ifPresent(kvMapping -> transportService.process(DeviceTransportType.DEFAULT,
-                        TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(token).build(),
+                        TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(sessionContext.getToken()).build(),
                         new DeviceAuthCallback(snmpTransportContext, sessionInfo -> {
                             try {
                                 transportService.process(sessionInfo,
@@ -82,7 +190,7 @@ public class SnmpResponseSessionListener implements ResponseListener {
                             }
                         })));
                 snmpTransportContext.getTelemetryMapping(deviceProfileId, vb.getOid()).ifPresent(kvMapping -> transportService.process(DeviceTransportType.DEFAULT,
-                        TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(token).build(),
+                        TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(sessionContext.getToken()).build(),
                         new DeviceAuthCallback(snmpTransportContext, sessionInfo -> {
                             try {
                                 transportService.process(sessionInfo,
@@ -98,6 +206,14 @@ public class SnmpResponseSessionListener implements ResponseListener {
         } else {
             log.warn("No SNMP response, requestId: {}", event.getRequest().getRequestID());
         }
+    }
+
+    private void reportActivity(TransportProtos.SessionInfoProto sessionInfo) {
+        snmpTransportContext.getTransportService().process(sessionInfo, TransportProtos.SubscriptionInfoProto.newBuilder()
+                .setAttributeSubscription(false)
+                .setRpcSubscription(false)
+                .setLastActivityTime(System.currentTimeMillis())
+                .build(), TransportServiceCallback.EMPTY);
     }
 
     private TransportProtos.PostAttributeMsg convertToPostAttributes(String keyName, DataType dataType, String payload) throws AdaptorException {
@@ -140,14 +256,6 @@ public class SnmpResponseSessionListener implements ResponseListener {
         return new JsonParser().parse(result.toString());
     }
 
-    private void reportActivity(TransportProtos.SessionInfoProto sessionInfo) {
-        snmpTransportContext.getTransportService().process(sessionInfo, TransportProtos.SubscriptionInfoProto.newBuilder()
-                .setAttributeSubscription(false)
-                .setRpcSubscription(false)
-                .setLastActivityTime(System.currentTimeMillis())
-                .build(), TransportServiceCallback.EMPTY);
-    }
-
     @AllArgsConstructor
     private static class DeviceAuthCallback implements TransportServiceCallback<ValidateDeviceCredentialsResponse> {
         private final TransportContext transportContext;
@@ -165,6 +273,14 @@ public class SnmpResponseSessionListener implements ResponseListener {
         @Override
         public void onError(Throwable e) {
             log.warn("Failed to process device auth", e);
+        }
+    }
+
+    @Configuration
+    static class Config {
+        @Bean
+        public TransportName transportName() {
+            return new TransportName("snmp");
         }
     }
 }

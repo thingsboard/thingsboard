@@ -23,8 +23,10 @@ import org.snmp4j.Snmp;
 import org.snmp4j.smi.OID;
 import org.snmp4j.smi.VariableBinding;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -37,15 +39,18 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.transport.TransportContext;
-import org.thingsboard.server.common.transport.TransportDeviceCache;
 import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
 import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.transport.snmp.event.DeviceProfileUpdatedEvent;
-import org.thingsboard.server.transport.snmp.event.DeviceUpdatedEvent;
+import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
+import org.thingsboard.server.transport.snmp.service.ProtoTransportEntityService;
+import org.thingsboard.server.transport.snmp.service.SnmpTransportBalancingService;
+import org.thingsboard.server.transport.snmp.service.SnmpTransportService;
 import org.thingsboard.server.transport.snmp.session.DeviceSessionContext;
 
-import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -64,31 +69,25 @@ import java.util.stream.Collectors;
 public class SnmpTransportContext extends TransportContext {
     private final SnmpTransportService snmpTransportService;
     private final TransportDeviceProfileCache deviceProfileCache;
-    private final TransportDeviceCache deviceCache;
     private final TransportService transportService;
+    private final ProtoTransportEntityService protoEntityService;
     private final SnmpTransportBalancingService balancingService;
     private final ApplicationEventPublisher eventPublisher;
 
-    @Getter
     private final Map<DeviceId, DeviceSessionContext> devicesSessions = new ConcurrentHashMap<>();
-    @Getter
     private final Map<DeviceProfileId, SnmpProfileTransportConfiguration> profilesTransportConfigs = new ConcurrentHashMap<>();
-    @Getter
     private final Map<DeviceProfileId, List<PDU>> profilesPdus = new ConcurrentHashMap<>();
 
-    @PostConstruct
-    private void initDevicesSessions() {
-        TransportProtos.GetSnmpDevicesResponseMsg devicesIds = transportService.getSnmpDevicesIds(
-                TransportProtos.GetSnmpDevicesRequestMsg.getDefaultInstance()
-        );
-        List<Device> managedDevices = devicesIds.getIdsList().stream()
-                .map(UUID::fromString)
+    @EventListener(ApplicationReadyEvent.class)
+    @Order(2)
+    public void initDevicesSessions() {
+        List<Device> managedDevices = protoEntityService.getAllSnmpDevicesIds().stream()
                 .filter(balancingService::isManagedByCurrentTransport)
                 .map(DeviceId::new)
-                .map(deviceCache::get)
+                .map(protoEntityService::getDeviceById)
                 .collect(Collectors.toList());
 
-        managedDevices.forEach(this::establishDeviceSession);
+//        managedDevices.forEach(this::establishDeviceSession);
     }
 
     private void establishDeviceSession(Device device) {
@@ -103,52 +102,89 @@ public class SnmpTransportContext extends TransportContext {
     }
 
     public void updateDeviceSessionContext(Device device, DeviceProfile deviceProfile, Snmp snmp) {
-//        DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId());
-        DeviceCredentials credentials = null;
+        DeviceCredentials credentials = protoEntityService.getDeviceCredentialsByDeviceId(device.getId());
+
         if (credentials.getCredentialsType() == DeviceCredentialsType.ACCESS_TOKEN) {
             SnmpDeviceTransportConfiguration snmpDeviceTransportConfiguration = (SnmpDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
             if (snmpDeviceTransportConfiguration.isValid()) {
                 DeviceSessionContext deviceSessionContext = new DeviceSessionContext(
-                        this, credentials.getCredentialsId(), snmpDeviceTransportConfiguration,
-                        eventPublisher, snmp, device.getId(), deviceProfile
+                        device.getId(), deviceProfile,
+                         credentials.getCredentialsId(), snmpDeviceTransportConfiguration,
+                        this, snmpTransportService
                 );
-                deviceSessionContext.createSessionInfo(ctx -> {
-                    transportService.registerAsyncSession(deviceSessionContext.getSessionInfo(), deviceSessionContext);
-                });
+                registerDeviceSession(deviceSessionContext);
                 devicesSessions.put(device.getId(), deviceSessionContext);
+            } else {
+                // do smth
             }
         } else {
             log.warn("[{}] Expected credentials type is {} but found {}", device.getId(), DeviceCredentialsType.ACCESS_TOKEN, credentials.getCredentialsType());
         }
     }
 
-    @EventListener(DeviceProfileUpdatedEvent.class)
-    public void onDeviceProfileUpdated(DeviceProfileUpdatedEvent deviceProfileUpdatedEvent) {
-        DeviceProfile deviceProfile = deviceProfileUpdatedEvent.getDeviceProfile();
-
+    // FIXME: will be executed for each device with this profile ?
+    public void onDeviceProfileUpdated(DeviceProfile deviceProfile, DeviceSessionContext deviceSessionContext) {
         if (deviceProfile.getTransportType() == DeviceTransportType.SNMP) {
             SnmpProfileTransportConfiguration transportConfiguration = (SnmpProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
             profilesTransportConfigs.put(deviceProfile.getId(), transportConfiguration);
             profilesPdus.put(deviceProfile.getId(), createPdus(transportConfiguration));
         } else {
-            // destroy session
+            deviceSessionContext.close();
+            transportService.deregisterSession(deviceSessionContext.getSessionInfo());
+            devicesSessions.remove(deviceSessionContext.getDeviceId());
+
+            profilesTransportConfigs.remove(deviceProfile.getId());
+            profilesPdus.remove(deviceProfile.getId());
         }
     }
 
-    @EventListener(DeviceUpdatedEvent.class)
-    public void onDeviceUpdated(DeviceUpdatedEvent deviceUpdatedEvent) {
-        Device device = deviceUpdatedEvent.getDevice();
-        DeviceProfile deviceProfile = deviceUpdatedEvent.getDeviceProfile();
-
-        if (deviceProfile != null && deviceProfile.getTransportType() == DeviceTransportType.SNMP) {
+    // FIXME: what if device profile transport type will be SNMP but device transport config will not be of SNMP type?
+    public void onDeviceUpdated(Device device, DeviceProfile deviceProfile) {
+        if (deviceProfile != null && deviceProfile.getTransportType() == DeviceTransportType.SNMP &&
+        device.getDeviceData() != null && device.getDeviceData().get) {
             updateDeviceSessionContext(device, deviceProfile, null);
 
             SnmpProfileTransportConfiguration profileTransportConfig = (SnmpProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
             SnmpDeviceTransportConfiguration deviceTransportConfig = (SnmpDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
             devicesSessions.get(device.getId()).initTarget(profileTransportConfig, deviceTransportConfig);
         } else {
+
             //TODO: should the context be removed from the map?
         }
+    }
+
+    private void registerDeviceSession(DeviceSessionContext deviceSessionContext) {
+        transportService.process(DeviceTransportType.SNMP,
+                TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceSessionContext.getToken()).build(),
+                new TransportServiceCallback<ValidateDeviceCredentialsResponse>() {
+                    @Override
+                    public void onSuccess(ValidateDeviceCredentialsResponse msg) {
+                        if (msg.hasDeviceInfo()) {
+                            SessionInfoProto sessionInfo = SessionInfoCreator.create(
+                                    msg, SnmpTransportContext.this, UUID.randomUUID()
+                            );
+
+                            transportService.registerAsyncSession(sessionInfo, deviceSessionContext);
+                            deviceSessionContext.setSessionInfo(sessionInfo);
+                            deviceSessionContext.setDeviceInfo(msg.getDeviceInfo());
+                        } else {
+                            log.warn("[{}] Failed to process device auth", deviceSessionContext.getDeviceId());
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        log.warn("[{}] Failed to process device auth", deviceSessionContext.getDeviceId(), e);
+                    }
+                });
+    }
+
+    public Collection<DeviceSessionContext> getDevicesSessions() {
+        return devicesSessions.values();
+    }
+
+    public Map<DeviceProfileId, List<PDU>> getProfilesPdus() {
+        return profilesPdus;
     }
 
     private List<PDU> createPdus(SnmpProfileTransportConfiguration deviceProfileConfig) {
@@ -166,10 +202,6 @@ public class SnmpTransportContext extends TransportContext {
                     return request;
                 })
                 .collect(Collectors.toList());
-    }
-
-    public Collection<DeviceSessionContext> getDevicesSessions() {
-        return devicesSessions.values();
     }
 
     public Optional<SnmpDeviceProfileKvMapping> getAttributesMapping(DeviceProfileId deviceProfileId, OID responseOid) {
@@ -197,7 +229,6 @@ public class SnmpTransportContext extends TransportContext {
         return snmpTransportService.getSnmpCallbackExecutor();
     }
 
-    //TODO: Extract SNMP methods to enum
     private int getSnmpMethod(String configMethod) {
         switch (configMethod) {
             case "get":

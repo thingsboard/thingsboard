@@ -16,13 +16,13 @@
 package org.thingsboard.server.common.data;
 
 public class TransportName {
-    private final String name;
+    private final String value;
 
-    public TransportName(String name) {
-        this.name = name;
+    public TransportName(String value) {
+        this.value = value;
     }
 
-    public String getName() {
-        return name;
+    public String value() {
+        return value;
     }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.snmp;
+package org.thingsboard.server.transport.snmp.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
@@ -39,7 +39,7 @@ public class SnmpTransportBalancingService {
 
     @EventListener(value = ServiceListChangedEvent.class)
     public void onSnmpTransportListChanged(ServiceListChangedEvent event) {
-        if (event.getChangedService() == null || event.getChangedService().getTransportsList().contains(transportName.getName())) {
+        if (event.getChangedService() == null || event.getChangedService().getTransportsList().contains(transportName.value())) {
             recalculatePartitions(event.getServiceList(), event.getCurrentService());
         }
     }
@@ -48,13 +48,13 @@ public class SnmpTransportBalancingService {
         return resolvePartitionIndexForEntity(entityId) == currentTransportPartitionIndex;
     }
 
-    public int resolvePartitionIndexForEntity(UUID entityId) {
+    private int resolvePartitionIndexForEntity(UUID entityId) {
         return hashPartitionService.resolvePartitionIndex(entityId, snmpTransportsCount);
     }
 
     private void recalculatePartitions(List<ServiceInfo> serviceList, ServiceInfo currentService) {
         List<ServiceInfo> snmpTransports = serviceList.stream()
-                .filter(service -> service.getTransportsList().contains(transportName.getName()))
+                .filter(service -> service.getTransportsList().contains(transportName.value()))
                 .sorted(Comparator.comparing(ServiceInfo::getServiceId))
                 .collect(Collectors.toList());
 
