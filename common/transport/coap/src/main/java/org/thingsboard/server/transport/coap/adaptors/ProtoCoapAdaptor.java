@@ -65,8 +65,17 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
     @Override
     public TransportProtos.ToDeviceRpcResponseMsg convertToDeviceRpcResponse(UUID sessionId, Request inbound) throws AdaptorException {
         Optional<Integer> requestId = CoapTransportResource.getRequestId(inbound);
-        return TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId.orElseThrow(() -> new AdaptorException("Request id is missing!")))
-                .setPayload(inbound.getPayloadString()).build();
+        if (requestId.isEmpty()) {
+            throw new AdaptorException("Request id is missing!");
+        } else {
+            try {
+                String payload = TransportProtos.ToDeviceRpcResponseMsg.parseFrom(inbound.getPayload()).getPayload();
+                return TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId.get())
+                        .setPayload(payload).build();
+            } catch (InvalidProtocolBufferException e) {
+                throw new AdaptorException(e);
+            }
+        }
     }
 
     @Override
