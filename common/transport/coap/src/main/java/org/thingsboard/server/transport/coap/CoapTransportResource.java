@@ -21,6 +21,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.Request;
+import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.network.Exchange;
 import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
@@ -29,6 +30,7 @@ import org.eclipse.californium.core.server.resources.ResourceObserver;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultCoapDeviceTypeConfiguration;
@@ -53,16 +55,16 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 public class CoapTransportResource extends AbstractCoapTransportResource {
     private static final int ACCESS_TOKEN_POSITION = 3;
     private static final int FEATURE_TYPE_POSITION = 4;
     private static final int REQUEST_ID_POSITION = 5;
-    private static final String API_V_1_PREFIX = "/api/v1";
-    private static final String SLASH_PREFIX = "/";
 
     private final ConcurrentMap<String, TransportProtos.SessionInfoProto> tokenToSessionIdMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, AtomicInteger> tokenToNotificationCounterMap = new ConcurrentHashMap<>();
     private final Set<UUID> rpcSubscriptions = ConcurrentHashMap.newKeySet();
     private final Set<UUID> attributeSubscriptions = ConcurrentHashMap.newKeySet();
 
@@ -73,6 +75,23 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
 //        this.setObservable(false); // disable observing
 //        this.setObserveType(CoAP.Type.CON); // configure the notification type to CONs
 //        this.getAttributes().setObservable(); // mark observable in the Link-Format
+    }
+
+    public void checkObserveRelation(Exchange exchange, Response response) {
+        String token = getTokenFromRequest(exchange.getRequest());
+        final ObserveRelation relation = exchange.getRelation();
+        if (relation == null || relation.isCanceled()) {
+            return; // because request did not try to establish a relation
+        }
+        if (CoAP.ResponseCode.isSuccess(response.getCode())) {
+
+            if (!relation.isEstablished()) {
+                relation.setEstablished();
+                addObserveRelation(relation);
+            }
+            AtomicInteger notificationCounter = tokenToNotificationCounterMap.computeIfAbsent(token, s -> new AtomicInteger(0));
+            response.getOptions().setObserve(notificationCounter.getAndIncrement());
+        } // ObserveLayer takes care of the else case
     }
 
     @Override
@@ -143,16 +162,19 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
             UUID sessionId = UUID.randomUUID();
             log.trace("[{}] Processing provision publish msg [{}]!", sessionId, exchange.advanced().getRequest());
             TransportProtos.ProvisionDeviceRequestMsg provisionRequestMsg;
+            TransportPayloadType payloadType;
             try {
                 provisionRequestMsg = transportContext.getJsonCoapAdaptor().convertToProvisionRequestMsg(sessionId, exchange.advanced().getRequest());
+                payloadType = TransportPayloadType.JSON;
             } catch (Exception e) {
                 if (e instanceof JsonParseException || (e.getCause() != null && e.getCause() instanceof JsonParseException)) {
                     provisionRequestMsg = transportContext.getProtoCoapAdaptor().convertToProvisionRequestMsg(sessionId, exchange.advanced().getRequest());
+                    payloadType = TransportPayloadType.PROTOBUF;
                 } else {
                     throw new AdaptorException(e);
                 }
             }
-            transportService.process(provisionRequestMsg, new DeviceProvisionCallback(exchange));
+            transportService.process(provisionRequestMsg, new DeviceProvisionCallback(exchange, payloadType));
         } catch (AdaptorException e) {
             log.trace("Failed to decode message: ", e);
             exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
@@ -204,9 +226,6 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                                     registerAsyncCoapSession(exchange, sessionInfo, coapTransportAdaptor, getTokenFromRequest(request));
                                     transportService.process(sessionInfo,
                                             TransportProtos.SubscribeToAttributeUpdatesMsg.getDefaultInstance(), new CoapNoOpCallback(exchange));
-                                } else {
-                                    UUID attrSessionId = new UUID(currentAttrSession.getSessionIdMSB(), currentAttrSession.getSessionIdLSB());
-                                    reportActivity(currentAttrSession, attributeSubscriptions.contains(attrSessionId), rpcSubscriptions.contains(attrSessionId));
                                 }
                                 break;
                             case UNSUBSCRIBE_ATTRIBUTES_REQUEST:
@@ -270,6 +289,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
     }
 
     private TransportProtos.SessionInfoProto lookupAsyncSessionInfo(String token) {
+        tokenToNotificationCounterMap.remove(token);
         return tokenToSessionIdMap.remove(token);
     }
 
@@ -280,7 +300,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
     }
 
     private CoapSessionListener getCoapSessionListener(CoapExchange exchange, CoapTransportAdaptor coapTransportAdaptor) {
-        return new CoapSessionListener(this, exchange, coapTransportAdaptor);
+        return new CoapSessionListener(exchange, coapTransportAdaptor);
     }
 
     private String getTokenFromRequest(Request request) {
@@ -329,14 +349,24 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
 
     private static class DeviceProvisionCallback implements TransportServiceCallback<TransportProtos.ProvisionDeviceResponseMsg> {
         private final CoapExchange exchange;
+        private final TransportPayloadType payloadType;
 
-        DeviceProvisionCallback(CoapExchange exchange) {
+        DeviceProvisionCallback(CoapExchange exchange, TransportPayloadType payloadType) {
             this.exchange = exchange;
+            this.payloadType = payloadType;
         }
 
         @Override
         public void onSuccess(TransportProtos.ProvisionDeviceResponseMsg msg) {
-            exchange.respond(JsonConverter.toJson(msg).toString());
+            CoAP.ResponseCode responseCode = CoAP.ResponseCode.CREATED;
+            if (!msg.getStatus().equals(TransportProtos.ProvisionResponseStatus.SUCCESS)) {
+                responseCode = CoAP.ResponseCode.BAD_REQUEST;
+            }
+            if (payloadType.equals(TransportPayloadType.JSON)) {
+                exchange.respond(responseCode, JsonConverter.toJson(msg).toString());
+            } else {
+                exchange.respond(responseCode, msg.toByteArray());
+            }
         }
 
         @Override
@@ -350,12 +380,10 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
 
         private final CoapExchange exchange;
         private final CoapTransportAdaptor coapTransportAdaptor;
-        private final CoapTransportResource coapTransportResource;
 
-        CoapSessionListener(CoapTransportResource coapTransportResource, CoapExchange exchange, CoapTransportAdaptor coapTransportAdaptor) {
+        CoapSessionListener(CoapExchange exchange, CoapTransportAdaptor coapTransportAdaptor) {
             this.exchange = exchange;
             this.coapTransportAdaptor = coapTransportAdaptor;
-            this.coapTransportResource = coapTransportResource;
         }
 
         @Override
@@ -372,7 +400,6 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         public void onAttributeUpdate(TransportProtos.AttributeUpdateNotificationMsg msg) {
             try {
                 exchange.respond(coapTransportAdaptor.convertToPublish(isConRequest(), msg));
-                coapTransportResource.changed();
             } catch (AdaptorException e) {
                 log.trace("Failed to reply due to error", e);
                 exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
@@ -388,7 +415,6 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         public void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg msg) {
             try {
                 exchange.respond(coapTransportAdaptor.convertToPublish(isConRequest(), msg));
-                coapTransportResource.changed();
             } catch (AdaptorException e) {
                 log.trace("Failed to reply due to error", e);
                 exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
