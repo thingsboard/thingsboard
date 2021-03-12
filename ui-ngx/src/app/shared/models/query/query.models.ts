@@ -818,7 +818,7 @@ export function updateDatasourceFromEntityInfo(datasource: Datasource, entity: E
   };
   datasource.entityId = entity.id;
   datasource.entityType = entity.entityType;
-  if (datasource.type === DatasourceType.entity) {
+  if (datasource.type === DatasourceType.entity || datasource.type === DatasourceType.entityCount) {
     datasource.entityName = entity.name;
     datasource.entityLabel = entity.label;
     datasource.name = entity.name;
