@@ -27,7 +27,6 @@ import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.security.DefaultAuthorizer;
 import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.eclipse.leshan.server.security.SecurityChecker;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
@@ -61,24 +60,23 @@ import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_W
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.getCoapConfig;
 
 @Slf4j
-@Component("LwM2MTransportServerConfiguration")
+@Component
 @TbLwM2mTransportComponent
 public class LwM2mTransportServerConfiguration {
     private PublicKey publicKey;
     private PrivateKey privateKey;
     private boolean pskMode = false;
+    private final LwM2mTransportContextServer context;
+    private final CaliforniumRegistrationStore registrationStore;
+    private final EditableSecurityStore securityStore;
+    private final LwM2mClientContext lwM2mClientContext;
 
-    @Autowired
-    private LwM2mTransportContextServer context;
-
-    @Autowired
-    private CaliforniumRegistrationStore registrationStore;
-
-    @Autowired
-    private EditableSecurityStore securityStore;
-
-    @Autowired
-    private LwM2mClientContext lwM2mClientContext;;
+    public LwM2mTransportServerConfiguration(LwM2mTransportContextServer context, CaliforniumRegistrationStore registrationStore, EditableSecurityStore securityStore, LwM2mClientContext lwM2mClientContext) {
+        this.context = context;
+        this.registrationStore = registrationStore;
+        this.securityStore = securityStore;
+        this.lwM2mClientContext = lwM2mClientContext;
+    }
 
     @Bean
     public LeshanServer getLeshanServer() {
@@ -98,10 +96,8 @@ public class LwM2mTransportServerConfiguration {
         builder.setCoapConfig(getCoapConfig(serverPortNoSec, serverSecurePort));
 
         /** Define model provider (Create Models )*/
-//        TransportProtos.GetResourcesResponseMsg responseMsg= this.context.getResourceTenantProcess(TenantId.SYS_TENANT_ID.getId(), ResourceType.LWM2M_MODEL.name());
-//        TransportProtos.GetResourcesResponseMsg responseMsg= this.context.getResourceTenant(TenantId.SYS_TENANT_ID.getId(), ResourceType.LWM2M_MODEL.name());
-//        LwM2mModelProvider modelProvider = new VersionedModelProvider(this.context.getLwM2MTransportConfigServer().getModelsValueCommon());
-        LwM2mModelProvider modelProvider = new LwM2mVersionedModelProvider(this.context.getLwM2MTransportConfigServer().getModelsValueServer(), this.lwM2mClientContext);
+        LwM2mModelProvider modelProvider = new LwM2mVersionedModelProvider(this.lwM2mClientContext, this.context);
+        this.context.getLwM2MTransportConfigServer().setModelProvider(modelProvider);
         builder.setObjectModelProvider(modelProvider);
 
         /**  Create credentials */

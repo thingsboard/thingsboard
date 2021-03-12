@@ -87,9 +87,6 @@ public class LwM2mTransportRequest {
 
     private final LeshanServer leshanServer;
 
-//    @Autowired
-//    private LwM2mTransportServiceImpl serviceImpl;
-
     private final LwM2mTransportServiceImpl serviceImpl;
 
     public LwM2mTransportRequest(LwM2mTransportContextServer context, LwM2mClientContext lwM2mClientContext, LeshanServer leshanServer, LwM2mTransportServiceImpl serviceImpl) {
@@ -232,6 +229,7 @@ public class LwM2mTransportRequest {
     private void sendRequest(Registration registration, DownlinkRequest request, long timeoutInMs) {
         LwM2mClient lwM2MClient = lwM2mClientContext.getLwM2mClientWithReg(registration, null);
         leshanServer.send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
+
             if (!lwM2MClient.isInit()) {
                 lwM2MClient.initValue(this.serviceImpl, request.getPath().toString());
             }

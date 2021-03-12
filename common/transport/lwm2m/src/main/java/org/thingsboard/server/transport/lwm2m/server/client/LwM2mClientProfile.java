@@ -19,13 +19,12 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import lombok.Data;
-
-import java.util.UUID;
+import org.thingsboard.server.common.data.id.TenantId;
 
 @Data
 public class LwM2mClientProfile {
 
-    private UUID tenantId;
+    private TenantId tenantId;
     /**
      * {"clientLwM2mSettings": {
      *      clientUpdateValueAfterConnect: false;

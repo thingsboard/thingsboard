@@ -153,11 +153,6 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         executorRegistered.submit(() -> {
             try {
                 log.warn("[{}] [{{}] Client: create after Registration", registration.getEndpoint(), registration.getId());
-                ((LwM2mVersionedModelProvider)leshanServer.getModelProvider()).setRepository(this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getModelsValueCommon());
-//                TransportProtos.GetResourcesResponseMsg responseMsg= this.lwM2mTransportContextServer.getResourceTenantProcess(TenantId.SYS_TENANT_ID.getId(), ResourceType.LWM2M_MODEL.name());
-//                TransportProtos.GetResourcesResponseMsg responseMsg= this.lwM2mTransportContextServer.getResourceTenant(TenantId.SYS_TENANT_ID.getId(), ResourceType.LWM2M_MODEL.name());
-
-                //                (((VersionedModelProvider) (leshanServer)).modelProvider).repository;
                 LwM2mClient lwM2MClient = this.lwM2mClientContext.updateInSessionsLwM2MClient(registration);
                 if (lwM2MClient != null) {
                     SessionInfoProto sessionInfo = this.getValidateSessionInfo(registration);
@@ -656,21 +651,6 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         });
         return (clientInstances.size() > 0) ? clientInstances : null;
     }
-
-//    /**
-//     * get AttrName/TelemetryName with value from Client
-//     *
-//     * @param registration -
-//     * @return - JsonObject, format: {name: value}}
-//     */
-//    private JsonObject getAttributeClient(Registration registration) {
-//        if (registration.getAdditionalRegistrationAttributes().size() > 0) {
-//            JsonObject resNameValues = new JsonObject();
-//            registration.getAdditionalRegistrationAttributes().forEach(resNameValues::addProperty);
-//            return resNameValues;
-//        }
-//        return null;
-//    }
 
     /**
      * @param attributes   - new JsonObject

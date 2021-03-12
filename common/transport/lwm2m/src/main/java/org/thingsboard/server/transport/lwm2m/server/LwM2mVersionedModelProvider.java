@@ -15,100 +15,122 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.model.DefaultDDFFileValidator;
 import org.eclipse.leshan.core.model.LwM2mModel;
-import org.eclipse.leshan.core.model.LwM2mModelRepository;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
-public class LwM2mVersionedModelProvider  implements LwM2mModelProvider {
+import static org.thingsboard.server.common.data.ResourceType.LWM2M_MODEL;
 
-    private LwM2mModelRepository repository;
-    private Map<String, LwM2mModelRepository> repositoriesTenant;
-    private LwM2mClientContext lwM2mClientContext;
+@Slf4j
+public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
 
-    public LwM2mVersionedModelProvider(Collection<ObjectModel> objectModels, LwM2mClientContext lwM2mClientContext) {
-        this.repository = new LwM2mModelRepository(objectModels);
+    /**
+     * int objectId
+     * String version ("1.01")
+     * Key = objectId + "##" + version
+     * Value = TenantId
+     */
+    private final LwM2mClientContext lwM2mClientContext;
+    private final LwM2mTransportContextServer lwM2mTransportContextServer;
+
+    public LwM2mVersionedModelProvider(LwM2mClientContext lwM2mClientContext, LwM2mTransportContextServer lwM2mTransportContextServer) {
         this.lwM2mClientContext = lwM2mClientContext;
-        this.repositoriesTenant = new ConcurrentHashMap<>();
+        this.lwM2mTransportContextServer = lwM2mTransportContextServer;
+    }
+    private String getIdVer(ObjectModel objectModel) {
+        return objectModel.id + "##" + ((objectModel.getVersion() == null || objectModel.getVersion().isEmpty()) ? ObjectModel.DEFAULT_VERSION : objectModel.getVersion());
     }
 
-    public LwM2mVersionedModelProvider(LwM2mModelRepository repository, LwM2mClientContext lwM2mClientContext) {
-        this.repository = repository;
-        this.lwM2mClientContext = lwM2mClientContext;
-        this.repositoriesTenant = new ConcurrentHashMap<>();
+    private String getIdVer(Integer objectId, String version) {
+        return objectId != null ? objectId + "##" + ((version == null || version.isEmpty()) ? ObjectModel.DEFAULT_VERSION : version) : null;
     }
 
-    public void setRepositoriesTenant (String tenantID, LwM2mModelRepository repositoryTenant) {
-        this.repositoriesTenant.put(tenantID, repositoryTenant);
-    }
-
-    public LwM2mModelRepository getRepositoriesTenant (String tenantID) {
-        return this.repositoriesTenant.get(tenantID);
-    }
-
-    public void setRepository (Collection<ObjectModel> objectModels) {
-        this.repository = new LwM2mModelRepository(objectModels);
-    }
-
-    public LwM2mModelRepository getRepositoriesCommonTenant (String tenantID) {
-        LwM2mModelRepository repository = new LwM2mModelRepository();
-
-        return repository;
-    }
-
+    /**
+     * Update repository if need
+     *
+     * @param registration
+     * @return
+     */
     @Override
     public LwM2mModel getObjectModel(Registration registration) {
-        return new DynamicModel(registration, this.lwM2mClientContext.getProfile(registration).getTenantId());
+        return new DynamicModel(registration
+        );
     }
 
     private class DynamicModel implements LwM2mModel {
 
         private final Registration registration;
-        private final UUID tenantId;
+        private final TenantId tenantId;
 
-        public DynamicModel(Registration registration, UUID tenantId) {
+        public DynamicModel(Registration registration) {
             this.registration = registration;
-            this.tenantId = tenantId;
+            this.tenantId = lwM2mClientContext.getProfile(registration).getTenantId();
         }
 
         @Override
         public ResourceModel getResourceModel(int objectId, int resourceId) {
-            ObjectModel objectModel = getObjectModel(objectId);
-            if (objectModel != null)
-                return objectModel.resources.get(resourceId);
-            else
+            try {
+                ObjectModel objectModel = getObjectModel(objectId);
+                if (objectModel != null)
+                    return objectModel.resources.get(resourceId);
+                else
+                    return null;
+            } catch (Exception e) {
+                log.error("", e);
                 return null;
+            }
         }
 
         @Override
         public ObjectModel getObjectModel(int objectId) {
             String version = registration.getSupportedVersion(objectId);
             if (version != null) {
-                return repository.getObjectModel(objectId, version);
+                return this.getObjectModelDynamic(objectId, version);
             }
             return null;
         }
 
         @Override
         public Collection<ObjectModel> getObjectModels() {
-            Map<Integer, String> supportedObjects = registration.getSupportedObject();
-            Collection<ObjectModel> result = new ArrayList<>(supportedObjects.size());
-            for (Map.Entry<Integer, String> supportedObject : supportedObjects.entrySet()) {
-                ObjectModel objectModel = repository.getObjectModel(supportedObject.getKey(),
-                        supportedObject.getValue());
-                if (objectModel != null)
+            Map<Integer, String> supportedObjects = this.registration.getSupportedObject();
+            Collection<ObjectModel> result = new ArrayList(supportedObjects.size());
+            Iterator i$ = supportedObjects.entrySet().iterator();
+
+            while (i$.hasNext()) {
+                Map.Entry<Integer, String> supportedObject = (Map.Entry) i$.next();
+                ObjectModel objectModel = this.getObjectModelDynamic((Integer) supportedObject.getKey(), (String) supportedObject.getValue());
+                if (objectModel != null) {
                     result.add(objectModel);
+                }
             }
             return result;
+        }
+
+        private ObjectModel getObjectModelDynamic(Integer objectId, String version) {
+            String key = getIdVer(objectId, version);
+            String xmlB64 = lwM2mTransportContextServer.getTransportResourceCache().get(
+                    this.tenantId,
+                    LWM2M_MODEL,
+                    key).
+                    getValue();
+            return xmlB64 != null && !xmlB64.isEmpty() ?
+                    lwM2mTransportContextServer.parseFromXmlToObjectModel(
+                            Base64.getDecoder().decode(xmlB64),
+                            key + ".xml",
+                            new DefaultDDFFileValidator()) :
+                    null;
         }
     }
 }

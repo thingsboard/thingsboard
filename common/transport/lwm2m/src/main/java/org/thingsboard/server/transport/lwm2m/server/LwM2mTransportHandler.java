@@ -35,6 +35,7 @@ import org.eclipse.leshan.server.californium.LeshanServerBuilder;
 import org.nustaq.serialization.FSTConfiguration;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientProfile;
@@ -45,7 +46,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Optional;
-import java.util.UUID;
 
 @Slf4j
 //@Component("LwM2MTransportHandler")
@@ -189,7 +189,7 @@ public class LwM2mTransportHandler {
         return null;
     }
 
-    public static LwM2mClientProfile getNewProfileParameters(JsonObject profilesConfigData, UUID tenantId) {
+    public static LwM2mClientProfile getNewProfileParameters(JsonObject profilesConfigData, TenantId tenantId) {
         LwM2mClientProfile lwM2MClientProfile = new LwM2mClientProfile();
         lwM2MClientProfile.setTenantId(tenantId);
         lwM2MClientProfile.setPostClientLwM2mSettings(profilesConfigData.get(CLIENT_LWM2M_SETTINGS).getAsJsonObject());
@@ -223,7 +223,7 @@ public class LwM2mTransportHandler {
                 ObjectMapper mapper = new ObjectMapper();
                 String profileStr = mapper.writeValueAsString(profile);
                 JsonObject profileJson = (profileStr  != null) ? validateJson(profileStr) : null;
-                return (getValidateCredentialsBodyFromThingsboard(profileJson)) ? LwM2mTransportHandler.getNewProfileParameters(profileJson, deviceProfile.getTenantId().getId()) : null;
+                return (getValidateCredentialsBodyFromThingsboard(profileJson)) ? LwM2mTransportHandler.getNewProfileParameters(profileJson, deviceProfile.getTenantId()) : null;
             } catch (IOException e) {
                 log.error("", e);
             }

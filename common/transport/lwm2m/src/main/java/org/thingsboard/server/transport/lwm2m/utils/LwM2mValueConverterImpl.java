@@ -31,6 +31,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
+
 @Slf4j
 public class LwM2mValueConverterImpl implements LwM2mValueConverter {
 
@@ -51,6 +53,9 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
         if (currentType == expectedType) {
             /** expected type */
             return value;
+        }
+        if (currentType == null) {
+            currentType = OPAQUE;
         }
 
         switch (expectedType) {

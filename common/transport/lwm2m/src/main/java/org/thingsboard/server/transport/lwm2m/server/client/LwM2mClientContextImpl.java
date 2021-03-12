@@ -168,5 +168,4 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         }
         return false;
     }
-
 }
