@@ -23,14 +23,14 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.server.common.data.Resource;
+import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.transport.resource.Resource;
-import org.thingsboard.server.common.data.transport.resource.ResourceType;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-
-import java.util.List;
 
 @Slf4j
 @RestController
@@ -61,21 +61,14 @@ public class ResourceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/resource", method = RequestMethod.GET)
     @ResponseBody
-    public List<Resource> getResources(@RequestParam(required = false) boolean system) throws ThingsboardException {
+    public PageData<Resource> getResources(@RequestParam(required = false) boolean system,
+                                           @RequestParam int pageSize,
+                                           @RequestParam int page,
+                                           @RequestParam(required = false) String sortProperty,
+                                           @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
-            return checkNotNull(resourceService.findResourcesByTenantId(system ? TenantId.SYS_TENANT_ID : getTenantId()));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/resource/{resourceType}", method = RequestMethod.GET)
-    @ResponseBody
-    public List<Resource> getResources(@RequestParam(required = false) boolean system,
-                                       @PathVariable("resourceType") ResourceType resourceType) throws ThingsboardException {
-        try {
-            return checkNotNull(resourceService.findResourcesByTenantIdResourceType(system ? TenantId.SYS_TENANT_ID : getTenantId(), resourceType));
+            PageLink pageLink = createPageLink(pageSize, page, null, sortProperty, sortOrder);
+            return checkNotNull(resourceService.findResourcesByTenantId(system ? TenantId.SYS_TENANT_ID : getTenantId(), pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }

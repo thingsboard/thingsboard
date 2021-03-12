@@ -13,32 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sql;
+package org.thingsboard.server.common.data;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.Resource;
+import org.thingsboard.server.common.data.id.TenantId;
 
-import javax.persistence.Transient;
 import java.io.Serializable;
-import java.util.UUID;
 
-@NoArgsConstructor
-@AllArgsConstructor
 @Data
-public class ResourceCompositeKey implements Serializable {
+public class Resource implements HasTenantId, Serializable {
 
-    @Transient
-    private static final long serialVersionUID = -3789469030818742769L;
+    private static final long serialVersionUID = 7379609705527272306L;
 
-    private UUID tenantId;
-    private String resourceType;
+    private TenantId tenantId;
+    private ResourceType resourceType;
     private String resourceId;
+    private String value;
 
-    public ResourceCompositeKey(Resource resource) {
-        this.tenantId = resource.getTenantId().getId();
-        this.resourceType = resource.getResourceType().name();
-        this.resourceId = resource.getResourceId();
+    @Override
+    public String toString() {
+        return "Resource{" +
+                "tenantId=" + tenantId +
+                ", resourceType=" + resourceType +
+                ", resourceId='" + resourceId + '\'' +
+                '}';
     }
 }

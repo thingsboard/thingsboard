@@ -22,14 +22,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.Resource;
+import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
-import org.thingsboard.server.common.data.transport.resource.Resource;
-import org.thingsboard.server.common.data.transport.resource.ResourceType;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -250,7 +250,6 @@ public class InstallScripts {
             );
         }
     }
-
 
     public void loadDemoRuleChains(TenantId tenantId) throws Exception {
         try {

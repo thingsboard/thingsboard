@@ -40,8 +40,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.transport.resource.ResourceType;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
@@ -156,7 +154,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
             try {
                 log.warn("[{}] [{{}] Client: create after Registration", registration.getEndpoint(), registration.getId());
                 ((LwM2mVersionedModelProvider)leshanServer.getModelProvider()).setRepository(this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getModelsValueCommon());
-                TransportProtos.GetResourcesResponseMsg responseMsg= this.lwM2mTransportContextServer.getResourceTenantProcess(TenantId.SYS_TENANT_ID.getId(), ResourceType.LWM2M_MODEL.name());
+//                TransportProtos.GetResourcesResponseMsg responseMsg= this.lwM2mTransportContextServer.getResourceTenantProcess(TenantId.SYS_TENANT_ID.getId(), ResourceType.LWM2M_MODEL.name());
 //                TransportProtos.GetResourcesResponseMsg responseMsg= this.lwM2mTransportContextServer.getResourceTenant(TenantId.SYS_TENANT_ID.getId(), ResourceType.LWM2M_MODEL.name());
 
                 //                (((VersionedModelProvider) (leshanServer)).modelProvider).repository;

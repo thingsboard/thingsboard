@@ -31,6 +31,8 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.Resource;
+import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.device.credentials.ProvisionDeviceCredentialsData;
@@ -42,8 +44,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
-import org.thingsboard.server.common.data.transport.resource.Resource;
-import org.thingsboard.server.common.data.transport.resource.ResourceType;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
@@ -64,7 +64,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileRequ
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.GetResourcesRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetResourceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionResponseStatus;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
@@ -81,14 +81,11 @@ import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 /**
  * Created by ashvayka on 05.10.18.
@@ -166,8 +163,8 @@ public class DefaultTransportApiService implements TransportApiService {
         } else if (transportApiRequestMsg.hasProvisionDeviceRequestMsg()) {
             return Futures.transform(handle(transportApiRequestMsg.getProvisionDeviceRequestMsg()),
                     value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
-        } else if (transportApiRequestMsg.hasResourcesRequestMsg()) {
-            return Futures.transform(handle(transportApiRequestMsg.getResourcesRequestMsg()),
+        } else if (transportApiRequestMsg.hasResourceRequestMsg()) {
+            return Futures.transform(handle(transportApiRequestMsg.getResourceRequestMsg()),
                     value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
         }
         return Futures.transform(getEmptyTransportApiResponseFuture(),
@@ -365,41 +362,22 @@ public class DefaultTransportApiService implements TransportApiService {
         return Futures.immediateFuture(TransportApiResponseMsg.newBuilder().setEntityProfileResponseMsg(builder).build());
     }
 
-    private ListenableFuture<TransportApiResponseMsg> handle(GetResourcesRequestMsg requestMsg) {
+    private ListenableFuture<TransportApiResponseMsg> handle(GetResourceRequestMsg requestMsg) {
         TenantId tenantId = new TenantId(new UUID(requestMsg.getTenantIdMSB(), requestMsg.getTenantIdLSB()));
-        TransportProtos.GetResourcesResponseMsg.Builder builder = TransportProtos.GetResourcesResponseMsg.newBuilder();
-        String resourceType = requestMsg.getResourceType();
+        ResourceType resourceType = ResourceType.valueOf(requestMsg.getResourceType());
         String resourceId = requestMsg.getResourceId();
+        TransportProtos.GetResourceResponseMsg.Builder builder = TransportProtos.GetResourceResponseMsg.newBuilder();
+        Resource resource = resourceService.getResource(tenantId, resourceType, resourceId);
 
-        List<TransportProtos.ResourceMsg> resources;
-
-        if (resourceType != null && resourceId != null && !resourceId.isEmpty()) {
-            resources = Collections.singletonList(toProto(
-                    resourceService.getResource(tenantId, ResourceType.valueOf(resourceType), resourceId)));
-        } else if (resourceType != null && !resourceType.isEmpty()) {
-            resources = resourceService.findResourcesByTenantIdResourceType(tenantId, ResourceType.valueOf(resourceType))
-                    .stream()
-                    .map(this::toProto)
-                    .collect(Collectors.toList());
-        } else {
-            resources = resourceService.findResourcesByTenantId(tenantId)
-                    .stream()
-                    .map(this::toProto)
-                    .collect(Collectors.toList());
+        if (resource == null && !tenantId.equals(TenantId.SYS_TENANT_ID)) {
+            resource = resourceService.getResource(TenantId.SYS_TENANT_ID, resourceType, resourceId);
         }
 
-        builder.addAllResources(resources);
-        return Futures.immediateFuture(TransportApiResponseMsg.newBuilder().setResourcesResponseMsg(builder).build());
-    }
+        if (resource != null) {
+            builder.setResource(ByteString.copyFrom(dataDecodingEncodingService.encode(resource)));
+        }
 
-    private TransportProtos.ResourceMsg toProto(Resource resource) {
-        return TransportProtos.ResourceMsg.newBuilder()
-                .setTenantIdMSB(resource.getTenantId().getId().getMostSignificantBits())
-                .setTenantIdLSB(resource.getTenantId().getId().getLeastSignificantBits())
-                .setResourceType(resource.getResourceType().name())
-                .setResourceId(resource.getResourceId())
-                .setValue(resource.getValue())
-                .build();
+        return Futures.immediateFuture(TransportApiResponseMsg.newBuilder().setResourceResponseMsg(builder).build());
     }
 
     private ListenableFuture<TransportApiResponseMsg> getDeviceInfo(DeviceId deviceId, DeviceCredentials credentials) {

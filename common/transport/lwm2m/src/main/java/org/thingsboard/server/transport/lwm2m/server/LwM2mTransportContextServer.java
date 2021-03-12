@@ -41,8 +41,6 @@ import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigServer;
-import org.thingsboard.server.gen.transport.TransportProtos.GetResourcesRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.GetResourcesResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
@@ -51,9 +49,6 @@ import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
 
 import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_TELEMETRY;
 
@@ -147,56 +142,56 @@ public class LwM2mTransportContextServer extends TransportContext {
 
 
 
-    /**
-     * ResourcesRequestMsg
-     *
-     * @param resourceType
-     * @return
-     */
-    public GetResourcesResponseMsg getResourceTenant (UUID tenantId, String resourceType) {
-        CountDownLatch latch = new CountDownLatch(1);
-        GetResourcesResponseMsg responseMsg =
-                this.getTransportService()
-                        .getResources(GetResourcesRequestMsg.newBuilder()
-                                .setResourceType(resourceType)
-                                .setTenantIdLSB(tenantId.getLeastSignificantBits())
-                                .setTenantIdMSB(tenantId.getMostSignificantBits())
-                                .build());
-        latch.countDown();
-        try {
-            latch.await(this.getLwM2MTransportConfigServer().getTimeout(), TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            log.error("Failed to await credentials!", e);
-        }
+//    /**
+//     * ResourcesRequestMsg
+//     *
+//     * @param resourceType
+//     * @return
+//     */
+//    public GetResourcesResponseMsg getResourceTenant (UUID tenantId, String resourceType) {
+//        CountDownLatch latch = new CountDownLatch(1);
+//        GetResourcesResponseMsg responseMsg =
+//                this.getTransportService()
+//                        .getResources(GetResourcesRequestMsg.newBuilder()
+//                                .setResourceType(resourceType)
+//                                .setTenantIdLSB(tenantId.getLeastSignificantBits())
+//                                .setTenantIdMSB(tenantId.getMostSignificantBits())
+//                                .build());
+//        latch.countDown();
+//        try {
+//            latch.await(this.getLwM2MTransportConfigServer().getTimeout(), TimeUnit.MILLISECONDS);
+//        } catch (InterruptedException e) {
+//            log.error("Failed to await credentials!", e);
+//        }
+//
+//        return responseMsg;
+//    }
 
-        return responseMsg;
-    }
-
-    public GetResourcesResponseMsg getResourceTenantProcess (UUID tenantId, String resourceType) {
-        CountDownLatch latch = new CountDownLatch(2);
-        final GetResourcesResponseMsg[] responseMsg = {null};
-        this.getTransportService().process(GetResourcesRequestMsg.newBuilder()
-                        .setResourceType(resourceType)
-                        .setTenantIdLSB(tenantId.getLeastSignificantBits())
-                        .setTenantIdMSB(tenantId.getMostSignificantBits())
-                        .build(),
-                new TransportServiceCallback<>() {
-                    @Override
-                    public void onSuccess(GetResourcesResponseMsg msg) { responseMsg[0] = msg;
-                        latch.countDown();
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        log.trace("[{}] [{}] Failed to process credentials ", tenantId, e);
-                        latch.countDown();
-                    }
-                });
-        try {
-            latch.await(this.getLwM2MTransportConfigServer().getTimeout(), TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            log.error("Failed to await credentials!", e);
-        }
-        return responseMsg[0];
-    }
+//    public GetResourcesResponseMsg getResourceTenantProcess (UUID tenantId, String resourceType) {
+//        CountDownLatch latch = new CountDownLatch(2);
+//        final GetResourcesResponseMsg[] responseMsg = {null};
+//        this.getTransportService().process(GetResourcesRequestMsg.newBuilder()
+//                        .setResourceType(resourceType)
+//                        .setTenantIdLSB(tenantId.getLeastSignificantBits())
+//                        .setTenantIdMSB(tenantId.getMostSignificantBits())
+//                        .build(),
+//                new TransportServiceCallback<>() {
+//                    @Override
+//                    public void onSuccess(GetResourcesResponseMsg msg) { responseMsg[0] = msg;
+//                        latch.countDown();
+//                    }
+//
+//                    @Override
+//                    public void onError(Throwable e) {
+//                        log.trace("[{}] [{}] Failed to process credentials ", tenantId, e);
+//                        latch.countDown();
+//                    }
+//                });
+//        try {
+//            latch.await(this.getLwM2MTransportConfigServer().getTimeout(), TimeUnit.MILLISECONDS);
+//        } catch (InterruptedException e) {
+//            log.error("Failed to await credentials!", e);
+//        }
+//        return responseMsg[0];
+//    }
 }
