@@ -44,13 +44,17 @@ public class DictionaryParser {
     }
 
     private void parseDictionaryDump(LineIterator iterator) {
-        String tempLine;
-        while(iterator.hasNext()) {
-            tempLine = iterator.nextLine();
+        try {
+            String tempLine;
+            while (iterator.hasNext()) {
+                tempLine = iterator.nextLine();
 
-            if(isBlockStarted(tempLine)) {
-                processBlock(iterator);
+                if (isBlockStarted(tempLine)) {
+                    processBlock(iterator);
+                }
             }
+        } finally {
+            iterator.close();
         }
     }
 

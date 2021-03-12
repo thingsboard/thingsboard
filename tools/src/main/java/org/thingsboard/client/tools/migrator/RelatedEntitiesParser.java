@@ -42,39 +42,43 @@ public class RelatedEntitiesParser {
 
     private void processAllTables(LineIterator lineIterator) {
         String currentLine;
-        while(lineIterator.hasNext()) {
-            currentLine = lineIterator.nextLine();
-            if(currentLine.startsWith("COPY public.alarm")) {
-                processBlock(lineIterator, EntityType.ALARM);
-            } else if (currentLine.startsWith("COPY public.asset")) {
-                processBlock(lineIterator, EntityType.ASSET);
-            } else if (currentLine.startsWith("COPY public.customer")) {
-                processBlock(lineIterator, EntityType.CUSTOMER);
-            } else if (currentLine.startsWith("COPY public.dashboard")) {
-                processBlock(lineIterator, EntityType.DASHBOARD);
-            } else if (currentLine.startsWith("COPY public.device")) {
-                processBlock(lineIterator, EntityType.DEVICE);
-            } else if (currentLine.startsWith("COPY public.rule_chain")) {
-                processBlock(lineIterator, EntityType.RULE_CHAIN);
-            } else if (currentLine.startsWith("COPY public.rule_node")) {
-                processBlock(lineIterator, EntityType.RULE_NODE);
-            } else if (currentLine.startsWith("COPY public.tenant")) {
-                processBlock(lineIterator, EntityType.TENANT);
-            } else if (currentLine.startsWith("COPY public.tb_user")) {
-                processBlock(lineIterator, EntityType.USER);
-            } else if (currentLine.startsWith("COPY public.entity_view")) {
-                processBlock(lineIterator, EntityType.ENTITY_VIEW);
-            } else if (currentLine.startsWith("COPY public.widgets_bundle")) {
-                processBlock(lineIterator, EntityType.WIDGETS_BUNDLE);
-            } else if (currentLine.startsWith("COPY public.widget_type")) {
-                processBlock(lineIterator, EntityType.WIDGET_TYPE);
-            } else if (currentLine.startsWith("COPY public.tenant_profile")) {
-                processBlock(lineIterator, EntityType.TENANT_PROFILE);
-            } else if (currentLine.startsWith("COPY public.device_profile")) {
-                processBlock(lineIterator, EntityType.DEVICE_PROFILE);
-            } else if (currentLine.startsWith("COPY public.api_usage_state")) {
-                processBlock(lineIterator, EntityType.API_USAGE_STATE);
+        try {
+            while (lineIterator.hasNext()) {
+                currentLine = lineIterator.nextLine();
+                if (currentLine.startsWith("COPY public.alarm")) {
+                    processBlock(lineIterator, EntityType.ALARM);
+                } else if (currentLine.startsWith("COPY public.asset")) {
+                    processBlock(lineIterator, EntityType.ASSET);
+                } else if (currentLine.startsWith("COPY public.customer")) {
+                    processBlock(lineIterator, EntityType.CUSTOMER);
+                } else if (currentLine.startsWith("COPY public.dashboard")) {
+                    processBlock(lineIterator, EntityType.DASHBOARD);
+                } else if (currentLine.startsWith("COPY public.device")) {
+                    processBlock(lineIterator, EntityType.DEVICE);
+                } else if (currentLine.startsWith("COPY public.rule_chain")) {
+                    processBlock(lineIterator, EntityType.RULE_CHAIN);
+                } else if (currentLine.startsWith("COPY public.rule_node")) {
+                    processBlock(lineIterator, EntityType.RULE_NODE);
+                } else if (currentLine.startsWith("COPY public.tenant")) {
+                    processBlock(lineIterator, EntityType.TENANT);
+                } else if (currentLine.startsWith("COPY public.tb_user")) {
+                    processBlock(lineIterator, EntityType.USER);
+                } else if (currentLine.startsWith("COPY public.entity_view")) {
+                    processBlock(lineIterator, EntityType.ENTITY_VIEW);
+                } else if (currentLine.startsWith("COPY public.widgets_bundle")) {
+                    processBlock(lineIterator, EntityType.WIDGETS_BUNDLE);
+                } else if (currentLine.startsWith("COPY public.widget_type")) {
+                    processBlock(lineIterator, EntityType.WIDGET_TYPE);
+                } else if (currentLine.startsWith("COPY public.tenant_profile")) {
+                    processBlock(lineIterator, EntityType.TENANT_PROFILE);
+                } else if (currentLine.startsWith("COPY public.device_profile")) {
+                    processBlock(lineIterator, EntityType.DEVICE_PROFILE);
+                } else if (currentLine.startsWith("COPY public.api_usage_state")) {
+                    processBlock(lineIterator, EntityType.API_USAGE_STATE);
+                }
             }
+        } finally {
+            lineIterator.close();
         }
     }
 

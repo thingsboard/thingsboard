@@ -33,22 +33,23 @@ public class MigratorTool {
         try {
             boolean castEnable = Boolean.parseBoolean(cmd.getOptionValue("castEnable"));
             File allTelemetrySource = new File(cmd.getOptionValue("telemetryFrom"));
+            File tsSaveDir = null;
+            File partitionsSaveDir = null;
+            File latestSaveDir = null;
 
             RelatedEntitiesParser allEntityIdsAndTypes =
                     new RelatedEntitiesParser(new File(cmd.getOptionValue("relatedEntities")));
             DictionaryParser dictionaryParser = new DictionaryParser(allTelemetrySource);
 
             if(cmd.getOptionValue("latestTelemetryOut") != null) {
-                File latestSaveDir = new File(cmd.getOptionValue("latestTelemetryOut"));
-                PgCaLatestMigrator.migrateLatest(allTelemetrySource, latestSaveDir, allEntityIdsAndTypes, dictionaryParser, castEnable);
+                latestSaveDir = new File(cmd.getOptionValue("latestTelemetryOut"));
             }
             if(cmd.getOptionValue("telemetryOut") != null) {
-                File tsSaveDir = new File(cmd.getOptionValue("telemetryOut"));
-                File partitionsSaveDir = new File(cmd.getOptionValue("partitionsOut"));
-                PostgresToCassandraTelemetryMigrator.migrateTs(
-                        allTelemetrySource, tsSaveDir, partitionsSaveDir, allEntityIdsAndTypes, dictionaryParser, castEnable
-                );
+                tsSaveDir = new File(cmd.getOptionValue("telemetryOut"));
+                partitionsSaveDir = new File(cmd.getOptionValue("partitionsOut"));
             }
+
+            new PgCaMigrator(allTelemetrySource, tsSaveDir, partitionsSaveDir, latestSaveDir, allEntityIdsAndTypes, dictionaryParser, castEnable).migrate();
 
         } catch (Throwable th) {
             th.printStackTrace();
