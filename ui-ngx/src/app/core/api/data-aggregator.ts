@@ -155,6 +155,7 @@ export class DataAggregator {
   }
 
   public onData(data: SubscriptionDataHolder, update: boolean, history: boolean, detectChanges: boolean) {
+    this.updatedData = true;
     if (!this.dataReceived || this.resetPending) {
       let updateIntervalScheduledTime = true;
       if (!this.dataReceived) {
@@ -183,7 +184,6 @@ export class DataAggregator {
         this.onInterval(history, detectChanges);
       }
     }
-    this.updatedData = true;
   }
 
   private onInterval(history?: boolean, detectChanges?: boolean) {
