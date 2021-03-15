@@ -40,6 +40,11 @@ public class CustomerUserPermissions extends AbstractPermissions {
         put(Resource.USER, userPermissionChecker);
         put(Resource.WIDGETS_BUNDLE, widgetsPermissionChecker);
         put(Resource.WIDGET_TYPE, widgetsPermissionChecker);
+        
+        // Make it possible that autorised USERS (that are logged in), 
+        // have the ability to change a server/shared Attribute value from the dashboard.
+        // Withoud this line, only logged in TENANTS can adjust the attribute, not logged in USERS
+        put(Resource.DEVICE, TenantAdminPermissions.tenantEntityPermissionChecker);
     }
 
     private static final PermissionChecker customerEntityPermissionChecker =
