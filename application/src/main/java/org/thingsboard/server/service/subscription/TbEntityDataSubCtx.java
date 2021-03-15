@@ -137,7 +137,8 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
                         for (TsValue update : new ArrayList<>(updateList)) {
                             if (update.getTs() < v.getTs()) {
                                 log.trace("[{}][{}][{}] Removed stale update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
-                                updateList.remove(update);
+                                // Looks like this is redundant feature and our UI is ready to merge the updates.
+                                //updateList.remove(update);
                             } else if ((update.getTs() == v.getTs() && update.getValue().equals(v.getValue()))) {
                                 log.trace("[{}][{}][{}] Removed duplicate update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
                                 updateList.remove(update);
