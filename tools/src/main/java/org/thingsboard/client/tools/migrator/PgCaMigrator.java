@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2021 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.client.tools.migrator;
 
 import com.google.common.collect.Lists;
@@ -122,29 +137,52 @@ public class PgCaMigrator {
         }
     }
 
-    private void logLinesProcessed() {
-        if (linesProcessed++ % LOG_BATCH == 0) {
-            System.out.println(new Date() + " linesProcessed = " + linesProcessed + " in, castOk " + castedOk + "  castErr " + castErrors);
+    private void logLinesProcessed(long lines) {
+        if (lines % LOG_BATCH == 0) {
+            System.out.println(new Date() + " lines processed = " + lines + " in, castOk " + castedOk + "  castErr " + castErrors);
         }
     }
 
-    private List<Object> toValuesTs(List<String> raw) {
-        linesTsMigrated++;
-        List<Object> result = new ArrayList<>();
+    private void logLinesMigrated(long lines) {
+        if(lines % LOG_BATCH == 0) {
+            System.out.println(new Date() + " lines migrated = " + lines + " in, castOk " + castedOk + "  castErr " + castErrors);
+        }
+    }
+
+    private void addTypeIdKey(List<Object> result, List<String> raw) {
         result.add(entityIdsAndTypes.getEntityType(raw.get(0)));
         result.add(UUID.fromString(raw.get(0)));
         result.add(keyParser.getKeyByKeyId(raw.get(1)));
+    }
 
+    private void addPartitions(List<Object> result, List<String> raw) {
         long ts = Long.parseLong(raw.get(2));
         long partition = toPartitionTs(ts);
         result.add(partition);
         result.add(ts);
+    }
 
+    private void addTimeseries(List<Object> result, List<String> raw) {
+        result.add(Long.parseLong(raw.get(2)));
+    }
+
+    private void addValues(List<Object> result, List<String> raw) {
         result.add(raw.get(3).equals("\\N") ? null : raw.get(3).equals("t") ? Boolean.TRUE : Boolean.FALSE);
         result.add(raw.get(4).equals("\\N") ? null : raw.get(4));
         result.add(raw.get(5).equals("\\N") ? null : Long.parseLong(raw.get(5)));
         result.add(raw.get(6).equals("\\N") ? null : Double.parseDouble(raw.get(6)));
         result.add(raw.get(7).equals("\\N") ? null : raw.get(7));
+    }
+
+    private List<Object> toValuesTs(List<String> raw) {
+
+        logLinesMigrated(linesTsMigrated++);
+
+        List<Object> result = new ArrayList<>();
+
+        addTypeIdKey(result, raw);
+        addPartitions(result, raw);
+        addValues(result, raw);
 
         processPartitions(result);
 
@@ -152,20 +190,12 @@ public class PgCaMigrator {
     }
 
     private List<Object> toValuesLatest(List<String> raw) {
-        linesLatestMigrated++;
+        logLinesMigrated(linesLatestMigrated++);
         List<Object> result = new ArrayList<>();
-        result.add(this.entityIdsAndTypes.getEntityType(raw.get(0)));
-        result.add(UUID.fromString(raw.get(0)));
-        result.add(this.keyParser.getKeyByKeyId(raw.get(1)));
 
-        long ts = Long.parseLong(raw.get(2));
-        result.add(3, ts);
-
-        result.add(raw.get(3).equals("\\N") ? null : raw.get(3).equals("t") ? Boolean.TRUE : Boolean.FALSE);
-        result.add(raw.get(4).equals("\\N") ? null : raw.get(4));
-        result.add(raw.get(5).equals("\\N") ? null : Long.parseLong(raw.get(5)));
-        result.add(raw.get(6).equals("\\N") ? null : Double.parseDouble(raw.get(6)));
-        result.add(raw.get(7).equals("\\N") ? null : raw.get(7));
+        addTypeIdKey(result, raw);
+        addTimeseries(result, raw);
+        addValues(result, raw);
 
         return result;
     }
@@ -184,7 +214,7 @@ public class PgCaMigrator {
         String currentLine;
         linesProcessed = 0;
         while(iterator.hasNext()) {
-            logLinesProcessed();
+            logLinesProcessed(linesProcessed++);
             currentLine = iterator.nextLine();
             if(isBlockFinished(currentLine)) {
                 return;

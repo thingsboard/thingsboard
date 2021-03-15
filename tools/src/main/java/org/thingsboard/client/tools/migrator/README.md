@@ -21,8 +21,6 @@ It will generate single jar file with all required dependencies inside `target d
 #### Dump data from the source Postgres Database
 *Do not use compression if possible because Tool can only work with uncompressed file
 
-*If you want to migrate just `ts_kv` without `ts_kv_latest` just don't dump an unnecessary table and when starting the tool don't use arguments (paths) for input dump and output files*
-
 1. Dump related tables that need to correct save telemetry
    
    `pg_dump -h localhost -U postgres -d thingsboard -t tenant -t customer -t user -t dashboard -t asset -t device -t alarm -t rule_chain -t rule_node -t entity_view -t widgets_bundle -t widget_type -t tenant_profile -t device_profile -t api_usage_state -t tb_user > related_entities.dmp`
@@ -38,21 +36,26 @@ Tool use 3 different directories for saving SSTables - `ts_kv_cf`, `ts_kv_latest
 
 Create 3 empty directories. For example:
 
-    /home/ubunut/migration/ts
-    /home/ubunut/migration/ts_latest
-    /home/ubunut/migration/ts_partition
+    /home/user/migration/ts
+    /home/user/migration/ts_latest
+    /home/user/migration/ts_partition
     
 #### Run tool
-*Note: if you run this tool on remote instance - don't forget to execute this command in `screen` to avoid unexpected termination
+
+**If you want to migrate just `ts_kv` without `ts_kv_latest` or vice versa don't use arguments (paths) for output files*
+
+**Note: if you run this tool on remote instance - don't forget to execute this command in `screen` to avoid unexpected termination*
 
 ```
 java -jar ./tools-2.4.1-SNAPSHOT-jar-with-dependencies.jar 
-        -telemetryFrom ./source/ts_kv_all.dmp
+        -telemetryFrom /home/user/dump/ts_kv_all.dmp 
+        -relatedEntities /home/user/dump/relatedEntities.dmp 
         -latestOut /home/ubunut/migration/ts_latest 
-        -tsOut /home/ubunut/migration/ts  
-        -partitionsOut /home/ubunut/migration/ts_partition
-        -castEnable false
+        -tsOut /home/ubunut/migration/ts 
+        -partitionsOut /home/ubunut/migration/ts_partition 
+        -castEnable false 
 ```  
+*Use your paths for program arguments*
 
 Tool execution time depends on DB size, CPU resources and Disk throughput
 
@@ -62,20 +65,21 @@ Tool execution time depends on DB size, CPU resources and Disk throughput
 1. [Optional] install Cassandra on the instance
 2. [Optional] Using `cqlsh` create `thingsboard` keyspace and requred tables from this file `schema-ts.cql`
 3. Stop Cassandra
-4. Copy generated SSTable files into cassandra data dir:
+4. Look at `/var/lib/cassandra/data/thingsboard` and check for names of data folders
+5. Copy generated SSTable files into cassandra data dir using next command:
 
 ```
-    sudo find /home/ubunut/migration/ts -name '*.*' -exec mv {} /var/lib/cassandra/data/thingsboard/ts_kv_cf-0e9aaf00ee5511e9a5fa7d6f489ffd13/ \;
-    sudo find /home/ubunut/migration/ts_latest -name '*.*' -exec mv {} /var/lib/cassandra/data/thingsboard/ts_kv_latest_cf-161449d0ee5511e9a5fa7d6f489ffd13/ \;
-    sudo find /home/ubunut/migration/ts_partition -name '*.*' -exec mv {} /var/lib/cassandra/data/thingsboard/ts_kv_partitions_cf-12e8fa80ee5511e9a5fa7d6f489ffd13/ \;
+    sudo find /home/user/migration/ts -name '*.*' -exec mv {} /var/lib/cassandra/data/thingsboard/ts_kv_cf-0e9aaf00ee5511e9a5fa7d6f489ffd13/ \;
+    sudo find /home/user/migration/ts_latest -name '*.*' -exec mv {} /var/lib/cassandra/data/thingsboard/ts_kv_latest_cf-161449d0ee5511e9a5fa7d6f489ffd13/ \;
+    sudo find /home/user/migration/ts_partition -name '*.*' -exec mv {} /var/lib/cassandra/data/thingsboard/ts_kv_partitions_cf-12e8fa80ee5511e9a5fa7d6f489ffd13/ \;
 ```   
-    
-5. Start Cassandra service and trigger compaction
+  *Pay attention! Data folders have similar name  `ts_kv_cf-0e9aaf00ee5511e9a5fa7d6f489ffd13`, but you have to use own*  
+6. Start Cassandra service and trigger compaction
 
-```
-    trigger compactions: nodetool compact thingsboard
-    check compaction status: nodetool compactionstats
-```
+    Trigger compactions: `nodetool compact thingsboard`
+   
+    Check compaction status: `nodetool compactionstats`
+
     
 ## Switch Thignsboard into Hybrid Mode
 
