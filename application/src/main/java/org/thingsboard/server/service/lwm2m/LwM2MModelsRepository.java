@@ -33,7 +33,6 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigBootstrap;
 import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigServer;
 import org.thingsboard.server.dao.service.Validator;
-import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 
 import java.math.BigInteger;
@@ -102,8 +101,8 @@ public class LwM2MModelsRepository {
      */
     private List<LwM2mObject> getLwm2mObjects(Predicate<? super ObjectModel> predicate, String sortProperty, String sortOrder) {
         List<LwM2mObject> lwM2mObjects = new ArrayList<>();
-        List<ObjectModel> listObjects = (predicate == null) ? this.contextServer.getModelsValue() :
-                contextServer.getModelsValue().stream()
+        List<ObjectModel> listObjects = (predicate == null) ? this.contextServer.getModelsValueCommon() :
+                contextServer.getModelsValueCommon().stream()
                         .filter(predicate)
                         .collect(Collectors.toList());
 

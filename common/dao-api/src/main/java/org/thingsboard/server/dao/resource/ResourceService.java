@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.dao.resource;
 
+import org.thingsboard.server.common.data.Resource;
+import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.Resource;
-import org.thingsboard.server.common.data.ResourceType;
+
+import java.util.List;
 
 
 public interface ResourceService {
@@ -28,6 +30,8 @@ public interface ResourceService {
     Resource getResource(TenantId tenantId, ResourceType resourceType, String resourceId);
 
     PageData<Resource> findResourcesByTenantId(TenantId tenantId, PageLink pageLink);
+
+    List<Resource> findResourcesByTenantIdResourceType(TenantId tenantId, ResourceType resourceType);
 
     void deleteResource(TenantId tenantId, ResourceType resourceType, String resourceId);
 

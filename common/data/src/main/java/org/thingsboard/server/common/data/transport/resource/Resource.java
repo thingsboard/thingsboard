@@ -13,17 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport;
+package org.thingsboard.server.common.data.transport.resource;
 
-import org.thingsboard.server.common.data.Resource;
-import org.thingsboard.server.common.data.ResourceType;
+import lombok.Data;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-public interface TransportResourceCache {
+@Data
+public class Resource implements HasTenantId {
+    private TenantId tenantId;
+    private ResourceType resourceType;
+    private String resourceId;
+    private String value;
 
-    Resource get(TenantId tenantId, ResourceType resourceType, String resourceId);
-
-    void update(TenantId tenantId, ResourceType resourceType, String resourceI);
-
-    void evict(TenantId tenantId, ResourceType resourceType, String resourceId);
+    @Override
+    public String toString() {
+        return "Resource{" +
+                "tenantId=" + tenantId +
+                ", resourceType=" + resourceType +
+                ", resourceId='" + resourceId + '\'' +
+                '}';
+    }
 }

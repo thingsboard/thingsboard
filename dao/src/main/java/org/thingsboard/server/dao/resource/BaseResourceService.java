@@ -17,12 +17,14 @@ package org.thingsboard.server.dao.resource;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.Resource;
+import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.Resource;
-import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.dao.exception.DataValidationException;
+
+import java.util.List;
 
 import static org.thingsboard.server.dao.device.DeviceServiceImpl.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -63,6 +65,14 @@ public class BaseResourceService implements ResourceService {
         log.trace("Executing findByTenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         return resourceDao.findAllByTenantId(tenantId, pageLink);
+    }
+
+
+    @Override
+    public List<Resource> findResourcesByTenantIdResourceType(TenantId tenantId, ResourceType resourceType) {
+        log.trace("Executing findByTenantId [{}]", tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        return resourceDao.findAllByTenantIdResourceType(tenantId, resourceType);
     }
 
     @Override

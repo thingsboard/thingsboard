@@ -652,21 +652,6 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         return (clientInstances.size() > 0) ? clientInstances : null;
     }
 
-//    /**
-//     * get AttrName/TelemetryName with value from Client
-//     *
-//     * @param registration -
-//     * @return - JsonObject, format: {name: value}}
-//     */
-//    private JsonObject getAttributeClient(Registration registration) {
-//        if (registration.getAdditionalRegistrationAttributes().size() > 0) {
-//            JsonObject resNameValues = new JsonObject();
-//            registration.getAdditionalRegistrationAttributes().forEach(resNameValues::addProperty);
-//            return resNameValues;
-//        }
-//        return null;
-//    }
-
     /**
      * @param attributes   - new JsonObject
      * @param telemetry    - new JsonObject

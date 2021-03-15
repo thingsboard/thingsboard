@@ -13,17 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport;
+package org.thingsboard.server.common.data.transport.resource;
 
-import org.thingsboard.server.common.data.Resource;
-import org.thingsboard.server.common.data.ResourceType;
-import org.thingsboard.server.common.data.id.TenantId;
-
-public interface TransportResourceCache {
-
-    Resource get(TenantId tenantId, ResourceType resourceType, String resourceId);
-
-    void update(TenantId tenantId, ResourceType resourceType, String resourceI);
-
-    void evict(TenantId tenantId, ResourceType resourceType, String resourceId);
+public enum ResourceType {
+    LWM2M_MODEL, JKS, PKCS_12
 }

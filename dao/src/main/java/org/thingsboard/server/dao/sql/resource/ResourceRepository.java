@@ -21,11 +21,15 @@ import org.springframework.data.repository.CrudRepository;
 import org.thingsboard.server.dao.model.sql.ResourceCompositeKey;
 import org.thingsboard.server.dao.model.sql.ResourceEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface ResourceRepository extends CrudRepository<ResourceEntity, ResourceCompositeKey> {
 
     Page<ResourceEntity> findAllByTenantId(UUID tenantId, Pageable pageable);
+
+
+    List<ResourceEntity> findAllByTenantIdAndResourceType(UUID tenantId, String resourceType);
 
     void removeAllByTenantId(UUID tenantId);
 }

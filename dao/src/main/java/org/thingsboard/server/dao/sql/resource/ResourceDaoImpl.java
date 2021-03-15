@@ -18,15 +18,17 @@ package org.thingsboard.server.dao.sql.resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.common.data.Resource;
+import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.Resource;
-import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.ResourceCompositeKey;
 import org.thingsboard.server.dao.model.sql.ResourceEntity;
 import org.thingsboard.server.dao.resource.ResourceDao;
+
+import java.util.List;
 
 @Slf4j
 @Component
@@ -68,6 +70,11 @@ public class ResourceDaoImpl implements ResourceDao {
     @Override
     public PageData<Resource> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(resourceRepository.findAllByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public List<Resource> findAllByTenantIdResourceType(TenantId tenantId, ResourceType resourceType) {
+        return DaoUtil.convertDataList(resourceRepository.findAllByTenantIdAndResourceType(tenantId.getId(), resourceType.name()));
     }
 
     @Override
