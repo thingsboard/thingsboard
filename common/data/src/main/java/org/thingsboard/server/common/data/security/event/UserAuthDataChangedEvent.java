@@ -13,10 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.model.token;
+package org.thingsboard.server.common.data.security.event;
 
-import java.io.Serializable;
+import org.thingsboard.server.common.data.id.UserId;
 
-public interface JwtToken extends Serializable {
-    String getToken();
+public class UserAuthDataChangedEvent {
+    private final UserId userId;
+
+    public UserAuthDataChangedEvent(UserId userId) {
+        this.userId = userId;
+    }
+
+    public UserId getUserId() {
+        return userId;
+    }
 }
