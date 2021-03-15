@@ -1,0 +1,69 @@
+<!--
+
+    Copyright © 2016-2021 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form [formGroup]="coapDeviceProfileTransportConfigurationFormGroup" style="padding-bottom: 16px;">
+  <section formGroupName="coapDeviceTypeConfiguration">
+    <fieldset class="fields-group">
+      <legend class="group-title" translate>device-profile.coap-device-type</legend>
+      <div fxLayoutGap="8px" fxLayout="column">
+        <mat-form-field class="mat-block">
+          <mat-select formControlName="coapDeviceType" required>
+            <mat-option *ngFor="let type of coapTransportDeviceTypes" [value]="type">
+              {{coapTransportDeviceTypeTranslations.get(type) | translate}}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="coapDeviceProfileTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.coapDeviceType').hasError('required')">
+            {{ 'device-profile.coap-device-type-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </fieldset>
+    <div *ngIf="coapDeviceTypeDefault" formGroupName="transportPayloadTypeConfiguration">
+      <fieldset class="fields-group">
+        <legend class="group-title" translate>device-profile.coap-device-payload-type</legend>
+        <div fxLayoutGap="8px" fxLayout="column">
+          <mat-form-field class="mat-block">
+            <mat-select formControlName="transportPayloadType" required>
+              <mat-option *ngFor="let type of transportPayloadTypes" [value]="type">
+                {{transportPayloadTypeTranslations.get(type) | translate}}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="coapDeviceProfileTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.transportPayloadType').hasError('required')">
+              {{ 'device-profile.mqtt-payload-type-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <div *ngIf="protoPayloadType" fxLayout="column">
+            <mat-form-field fxFlex>
+              <mat-label translate>device-profile.telemetry-proto-schema</mat-label>
+              <textarea matInput required formControlName="deviceTelemetryProtoSchema" rows="5"></textarea>
+              <mat-error *ngIf="coapDeviceProfileTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceTelemetryProtoSchema').hasError('required')">
+                {{ 'device-profile.telemetry-proto-schema-required' | translate}}
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field fxFlex>
+              <mat-label translate>device-profile.attributes-proto-schema</mat-label>
+              <textarea matInput required formControlName="deviceAttributesProtoSchema" rows="5"></textarea>
+              <mat-error *ngIf="coapDeviceProfileTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceAttributesProtoSchema').hasError('required')">
+                {{ 'device-profile.attributes-proto-schema-required' | translate}}
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+  </section>
+</form>

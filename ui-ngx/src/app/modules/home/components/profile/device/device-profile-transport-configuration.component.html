@@ -35,5 +35,11 @@
         formControlName="configuration">
       </tb-lwm2m-device-profile-transport-configuration>
     </ng-template-->
+    <ng-template [ngSwitchCase]="deviceTransportType.COAP">
+      <tb-coap-device-profile-transport-configuration
+        [required]="required"
+        formControlName="configuration">
+      </tb-coap-device-profile-transport-configuration>
+    </ng-template>
   </div>
 </div>
