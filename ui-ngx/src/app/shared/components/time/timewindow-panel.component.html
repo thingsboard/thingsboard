@@ -65,6 +65,17 @@
                         style="padding-top: 8px;"></tb-datetime-period>
                     </section>
                   </mat-radio-button>
+                  <mat-radio-button [value]="historyTypes.INTERVAL" color="primary">
+                    <section fxLayout="column">
+                      <span translate>timewindow.interval</span>
+                      <tb-quick-time-interval
+                        formControlName="quickInterval"
+                        [fxShow]="timewindowForm.get('history.historyType').value === historyTypes.INTERVAL"
+                        [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+                                timewindowForm.get('history.historyType').value === historyTypes.INTERVAL"
+                        style="padding-top: 8px; min-width: 364px"></tb-quick-time-interval>
+                    </section>
+                  </mat-radio-button>
                 </mat-radio-group>
               </div>
             </section>

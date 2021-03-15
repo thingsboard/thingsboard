@@ -19,7 +19,7 @@ import {
   aggregationTranslations,
   AggregationType,
   DAY,
-  HistoryWindowType,
+  HistoryWindowType, quickTimeIntervalPeriod,
   Timewindow,
   TimewindowType
 } from '@shared/models/time/time.models';
@@ -119,7 +119,12 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
               value: this.timewindow.history && typeof this.timewindow.history.fixedTimewindow !== 'undefined'
                 ? this.timewindow.history.fixedTimewindow : null,
               disabled: hideInterval
-            })
+            }),
+            quickInterval: this.fb.control({
+              value: this.timewindow.history && typeof this.timewindow.history.quickInterval !== 'undefined'
+                ? this.timewindow.history.quickInterval : null,
+              disabled: hideInterval
+            }),
           }
         ),
         aggregation: this.fb.group(
@@ -149,7 +154,8 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
       historyType: timewindowFormValue.history.historyType,
       timewindowMs: timewindowFormValue.history.timewindowMs,
       interval: timewindowFormValue.history.interval,
-      fixedTimewindow: timewindowFormValue.history.fixedTimewindow
+      fixedTimewindow: timewindowFormValue.history.fixedTimewindow,
+      quickInterval: timewindowFormValue.history.quickInterval
     };
     if (this.aggregation) {
       this.timewindow.aggregation = {
@@ -193,6 +199,8 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     const timewindowFormValue = this.timewindowForm.getRawValue();
     if (timewindowFormValue.history.historyType === HistoryWindowType.LAST_INTERVAL) {
       return timewindowFormValue.history.timewindowMs;
+    } else if (timewindowFormValue.history.historyType === HistoryWindowType.INTERVAL) {
+      return quickTimeIntervalPeriod(timewindowFormValue.history.quickInterval);
     } else if (timewindowFormValue.history.fixedTimewindow) {
       return timewindowFormValue.history.fixedTimewindow.endTimeMs -
         timewindowFormValue.history.fixedTimewindow.startTimeMs;
@@ -206,10 +214,12 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
       this.timewindowForm.get('history.historyType').disable({emitEvent: false});
       this.timewindowForm.get('history.timewindowMs').disable({emitEvent: false});
       this.timewindowForm.get('history.fixedTimewindow').disable({emitEvent: false});
+      this.timewindowForm.get('history.quickInterval').disable({emitEvent: false});
     } else {
       this.timewindowForm.get('history.historyType').enable({emitEvent: false});
       this.timewindowForm.get('history.timewindowMs').enable({emitEvent: false});
       this.timewindowForm.get('history.fixedTimewindow').enable({emitEvent: false});
+      this.timewindowForm.get('history.quickInterval').enable({emitEvent: false});
     }
     this.timewindowForm.markAsDirty();
   }
