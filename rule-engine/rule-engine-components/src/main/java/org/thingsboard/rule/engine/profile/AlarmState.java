@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.profile;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -39,6 +40,7 @@ import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.ServiceQueue;
+import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
 import java.util.ArrayList;
@@ -118,8 +120,15 @@ class AlarmState {
                 for (AlarmRuleState state : createRulesSortedBySeverityDesc) {
                     stateUpdate = clearAlarmState(stateUpdate, state);
                 }
-                ctx.getAlarmService().clearAlarm(ctx.getTenantId(), currentAlarm.getId(), createDetails(clearState), System.currentTimeMillis());
-                pushMsg(ctx, new TbAlarmResult(false, false, true, currentAlarm));
+                Alarm clearedAlarm;
+                try {
+                    clearedAlarm = ctx.getAlarmService().clearAlarmAndGetOperationResult(
+                            ctx.getTenantId(), currentAlarm.getId(), createDetails(clearState), System.currentTimeMillis()
+                    ).get().getAlarm();
+                } catch (InterruptedException | ExecutionException e) {
+                    throw new RuntimeException(e);
+                }
+                pushMsg(ctx, new TbAlarmResult(false, false, true, clearedAlarm));
                 currentAlarm = null;
             } else if (AlarmEvalResult.FALSE.equals(evalResult)) {
                 stateUpdate = clearAlarmState(stateUpdate, clearState);
