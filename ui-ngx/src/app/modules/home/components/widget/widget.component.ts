@@ -55,7 +55,7 @@ import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
 import { UtilsService } from '@core/services/utils.service';
 import { forkJoin, Observable, of, ReplaySubject, Subscription, throwError } from 'rxjs';
-import { deepClone, insertVariable, isDefined, objToBase64, objToBase64URI } from '@core/utils';
+import { deepClone, insertVariable, isDefined, objToBase64, objToBase64URI, validateEntityId } from '@core/utils';
 import {
   IDynamicWidgetComponent,
   WidgetContext,
@@ -1004,7 +1004,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     const type = descriptor.type;
     const targetEntityParamName = descriptor.stateEntityParamName;
     let targetEntityId: EntityId;
-    if (descriptor.setEntityId) {
+    if (descriptor.setEntityId && validateEntityId(entityId)) {
       targetEntityId = entityId;
     }
     switch (type) {

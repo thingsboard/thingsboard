@@ -967,6 +967,8 @@
         "transport-type-mqtt-hint": "Enables advanced MQTT transport settings",
         "transport-type-lwm2m": "LWM2M",
         "transport-type-lwm2m-hint": "LWM2M transport type",
+        "transport-type-coap": "CoAP",
+        "transport-type-coap-hint": "Enables advanced CoAP transport settings",
         "description": "Description",
         "default": "Default",
         "profile-configuration": "Profile configuration",
@@ -984,9 +986,14 @@
         "mqtt-device-topic-filters": "MQTT device topic filters",
         "mqtt-device-topic-filters-unique": "MQTT device topic filters need to be unique.",
         "mqtt-device-payload-type": "MQTT device payload",
-        "mqtt-device-payload-type-json": "JSON",
-        "mqtt-device-payload-type-proto": "Protobuf",
+        "transport-device-payload-type-json": "JSON",
+        "transport-device-payload-type-proto": "Protobuf",
         "mqtt-payload-type-required": "Payload type is required.",
+        "coap-device-type": "CoAP device type",
+        "coap-device-payload-type": "CoAP device payload",
+        "coap-device-type-required": "CoAP device type is required.",
+        "coap-device-type-default": "Default",
+        "coap-device-type-efento": "Efento NB-IoT",
         "support-level-wildcards": "Single <code>[+]</code> and multi-level <code>[#]</code> wildcards supported.",
         "telemetry-topic-filter": "Telemetry topic filter",
         "telemetry-topic-filter-required": "Telemetry topic filter is required.",
@@ -2266,7 +2273,8 @@
         "data-overflow": "Widget displays {{count}} out of {{total}} entities",
         "alarm-data-overflow": "Widget displays alarms for {{allowedEntities}} (maximum allowed) entities out of {{totalEntities}} entities",
         "search": "Search widget",
-        "filter": "Widget filter type"
+        "filter": "Widget filter type",
+        "loading-widgets": "Loading widgets..."
     },
     "widget-action": {
         "header-button": "Widget header button",
@@ -2318,7 +2326,8 @@
         "invalid-widgets-bundle-file-error": "Unable to import widgets bundle: Invalid widgets bundle data structure.",
         "search": "Search widget bundles",
         "selected-widgets-bundles": "{ count, plural, 1 {1 widgets bundle} other {# widgets bundles} } selected",
-        "open-widgets-bundle": "Open widgets bundle"
+        "open-widgets-bundle": "Open widgets bundle",
+        "loading-widgets-bundles": "Loading widgets bundles..."
     },
     "widget-config": {
         "data": "Data",
