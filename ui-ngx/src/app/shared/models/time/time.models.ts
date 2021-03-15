@@ -27,6 +27,7 @@ export const SECOND = 1000;
 export const MINUTE = 60 * SECOND;
 export const HOUR = 60 * MINUTE;
 export const DAY = 24 * HOUR;
+export const WEEK = 7 * DAY;
 export const YEAR = DAY * 365;
 
 export enum TimewindowType {
@@ -36,12 +37,14 @@ export enum TimewindowType {
 
 export enum HistoryWindowType {
   LAST_INTERVAL,
-  FIXED
+  FIXED,
+  INTERVAL
 }
 
 export interface IntervalWindow {
   interval?: number;
   timewindowMs?: number;
+  quickInterval?: QuickTimeInterval;
 }
 
 export interface FixedWindow {
@@ -111,6 +114,40 @@ export interface WidgetTimewindow {
   stDiff?: number;
 }
 
+export enum QuickTimeInterval {
+  YESTERDAY = 'YESTERDAY',
+  DAY_BEFORE_YESTERDAY = 'DAY_BEFORE_YESTERDAY',
+  THIS_DAY_LAST_WEEK = 'THIS_DAY_LAST_WEEK',
+  PREVIOUS_WEEK = 'PREVIOUS_WEEK',
+  PREVIOUS_MONTH = 'PREVIOUS_MONTH',
+  PREVIOUS_YEAR = 'PREVIOUS_YEAR',
+  TODAY = 'TODAY',
+  TODAY_SO_FAR = 'TODAY_SO_FAR',
+  CURRENT_WEEK = 'CURRENT_WEEK',
+  CURRENT_WEEK_SO_FAR = 'CURRENT_WEEK_SO_WAR',
+  CURRENT_MONTH = 'CURRENT_MONTH',
+  CURRENT_MONTH_SO_FAR = 'CURRENT_MONTH_SO_FAR',
+  CURRENT_YEAR = 'CURRENT_YEAR',
+  CURRENT_YEAR_SO_FAR = 'CURRENT_YEAR_SO_FAR'
+}
+
+export const QuickTimeIntervalTranslationMap = new Map<QuickTimeInterval, string>([
+  [QuickTimeInterval.YESTERDAY, 'timeinterval.predefined.yesterday'],
+  [QuickTimeInterval.DAY_BEFORE_YESTERDAY, 'timeinterval.predefined.day-before-yesterday'],
+  [QuickTimeInterval.THIS_DAY_LAST_WEEK, 'timeinterval.predefined.this-day-last-week'],
+  [QuickTimeInterval.PREVIOUS_WEEK, 'timeinterval.predefined.previous-week'],
+  [QuickTimeInterval.PREVIOUS_MONTH, 'timeinterval.predefined.previous-month'],
+  [QuickTimeInterval.PREVIOUS_YEAR, 'timeinterval.predefined.previous-year'],
+  [QuickTimeInterval.TODAY, 'timeinterval.predefined.today'],
+  [QuickTimeInterval.TODAY_SO_FAR, 'timeinterval.predefined.today-so-far'],
+  [QuickTimeInterval.CURRENT_WEEK, 'timeinterval.predefined.current-week'],
+  [QuickTimeInterval.CURRENT_WEEK_SO_FAR, 'timeinterval.predefined.current-week-so-far'],
+  [QuickTimeInterval.CURRENT_MONTH, 'timeinterval.predefined.current-month'],
+  [QuickTimeInterval.CURRENT_MONTH_SO_FAR, 'timeinterval.predefined.current-month-so-far'],
+  [QuickTimeInterval.CURRENT_YEAR, 'timeinterval.predefined.current-year'],
+  [QuickTimeInterval.CURRENT_YEAR_SO_FAR, 'timeinterval.predefined.current-year-so-far']
+]);
+
 export function historyInterval(timewindowMs: number): Timewindow {
   const timewindow: Timewindow = {
     selectedTab: TimewindowType.HISTORY,
@@ -141,7 +178,8 @@ export function defaultTimewindow(timeService: TimeService): Timewindow {
       fixedTimewindow: {
         startTimeMs: currentTime - DAY,
         endTimeMs: currentTime
-      }
+      },
+      quickInterval: QuickTimeInterval.TODAY
     },
     aggregation: {
       type: AggregationType.AVG,
@@ -178,6 +216,8 @@ export function initModelFromDefaultTimewindow(value: Timewindow, timeService: T
       if (isUndefined(value.history.historyType)) {
         if (isDefined(value.history.timewindowMs)) {
           model.history.historyType = HistoryWindowType.LAST_INTERVAL;
+        } else if (isDefined(value.history.quickInterval)) {
+          model.history.historyType = HistoryWindowType.INTERVAL;
         } else {
           model.history.historyType = HistoryWindowType.FIXED;
         }
@@ -186,6 +226,8 @@ export function initModelFromDefaultTimewindow(value: Timewindow, timeService: T
       }
       if (model.history.historyType === HistoryWindowType.LAST_INTERVAL) {
         model.history.timewindowMs = value.history.timewindowMs;
+      } else if (model.history.historyType === HistoryWindowType.INTERVAL) {
+        model.history.quickInterval = value.history.quickInterval;
       } else {
         model.history.fixedTimewindow.startTimeMs = value.history.fixedTimewindow.startTimeMs;
         model.history.fixedTimewindow.endTimeMs = value.history.fixedTimewindow.endTimeMs;
@@ -281,7 +323,13 @@ export function createSubscriptionTimewindow(timewindow: Timewindow, stDiff: num
   } else {
     let historyType = timewindow.history.historyType;
     if (isUndefined(historyType)) {
-      historyType = isDefined(timewindow.history.timewindowMs) ? HistoryWindowType.LAST_INTERVAL : HistoryWindowType.FIXED;
+      if (isDefined(timewindow.history.timewindowMs)) {
+        historyType = HistoryWindowType.LAST_INTERVAL;
+      } else if (isDefined(timewindow.history.quickInterval)) {
+        historyType = HistoryWindowType.INTERVAL;
+      } else {
+        historyType = HistoryWindowType.FIXED;
+      }
     }
     if (historyType === HistoryWindowType.LAST_INTERVAL) {
       const currentTime = Date.now();
@@ -290,6 +338,9 @@ export function createSubscriptionTimewindow(timewindow: Timewindow, stDiff: num
         endTimeMs: currentTime
       };
       aggTimewindow = timewindow.history.timewindowMs;
+    } else if (historyType === HistoryWindowType.INTERVAL) {
+      subscriptionTimewindow.fixedWindow = createSubscriptionTimeWindowFromQuickKTimeInterval(timewindow.history.quickInterval);
+      aggTimewindow = subscriptionTimewindow.fixedWindow.endTimeMs - subscriptionTimewindow.fixedWindow.startTimeMs;
     } else {
       subscriptionTimewindow.fixedWindow = {
         startTimeMs: timewindow.history.fixedTimewindow.startTimeMs,
@@ -307,6 +358,102 @@ export function createSubscriptionTimewindow(timewindow: Timewindow, stDiff: num
     aggregation.limit = Math.ceil(aggTimewindow / subscriptionTimewindow.aggregation.interval);
   }
   return subscriptionTimewindow;
+}
+
+export function createSubscriptionTimeWindowFromQuickKTimeInterval(interval: QuickTimeInterval): FixedWindow {
+  const currentDate = moment();
+  const timeWindow = {
+    startTimeMs: 0,
+    endTimeMs: 0
+  };
+  switch (interval) {
+    case QuickTimeInterval.YESTERDAY:
+      currentDate.subtract(1, 'days');
+      timeWindow.startTimeMs = currentDate.startOf('day').valueOf();
+      timeWindow.endTimeMs = currentDate.endOf('day').valueOf();
+      break;
+    case QuickTimeInterval.DAY_BEFORE_YESTERDAY:
+      currentDate.subtract(2, 'days');
+      timeWindow.startTimeMs = currentDate.startOf('day').valueOf();
+      timeWindow.endTimeMs = currentDate.endOf('day').valueOf();
+      break;
+    case QuickTimeInterval.THIS_DAY_LAST_WEEK:
+      currentDate.subtract(1, 'weeks');
+      timeWindow.startTimeMs = currentDate.startOf('day').valueOf();
+      timeWindow.endTimeMs = currentDate.endOf('day').valueOf();
+      break;
+    case QuickTimeInterval.PREVIOUS_WEEK:
+      currentDate.subtract(1, 'weeks');
+      timeWindow.startTimeMs = currentDate.startOf('week').valueOf();
+      timeWindow.endTimeMs = currentDate.endOf('week').valueOf();
+      break;
+    case QuickTimeInterval.PREVIOUS_MONTH:
+      currentDate.subtract(1, 'months');
+      timeWindow.startTimeMs = currentDate.startOf('month').valueOf();
+      timeWindow.endTimeMs = currentDate.endOf('month').valueOf();
+      break;
+    case QuickTimeInterval.PREVIOUS_YEAR:
+      currentDate.subtract(1, 'years');
+      timeWindow.startTimeMs = currentDate.startOf('year').valueOf();
+      timeWindow.endTimeMs = currentDate.endOf('year').valueOf();
+      break;
+    case QuickTimeInterval.TODAY:
+      timeWindow.startTimeMs = currentDate.startOf('day').valueOf();
+      timeWindow.endTimeMs = currentDate.endOf('day').valueOf();
+      break;
+    case QuickTimeInterval.TODAY_SO_FAR:
+      timeWindow.endTimeMs = currentDate.valueOf();
+      timeWindow.startTimeMs = currentDate.startOf('day').valueOf();
+      break;
+    case QuickTimeInterval.CURRENT_WEEK:
+      timeWindow.startTimeMs = currentDate.startOf('week').valueOf();
+      timeWindow.endTimeMs = currentDate.endOf('week').valueOf();
+      break;
+    case QuickTimeInterval.CURRENT_WEEK_SO_FAR:
+      timeWindow.endTimeMs = currentDate.valueOf();
+      timeWindow.startTimeMs = currentDate.startOf('week').valueOf();
+      break;
+    case QuickTimeInterval.CURRENT_MONTH:
+      timeWindow.startTimeMs = currentDate.startOf('month').valueOf();
+      timeWindow.endTimeMs = currentDate.endOf('month').valueOf();
+      break;
+    case QuickTimeInterval.CURRENT_MONTH_SO_FAR:
+      timeWindow.endTimeMs = currentDate.valueOf();
+      timeWindow.startTimeMs = currentDate.startOf('month').valueOf();
+      break;
+    case QuickTimeInterval.CURRENT_YEAR:
+      timeWindow.startTimeMs = currentDate.startOf('year').valueOf();
+      timeWindow.endTimeMs = currentDate.endOf('year').valueOf();
+      break;
+    case QuickTimeInterval.CURRENT_YEAR_SO_FAR:
+      timeWindow.endTimeMs = currentDate.valueOf();
+      timeWindow.startTimeMs = currentDate.startOf('year').valueOf();
+      break;
+  }
+  return timeWindow;
+}
+
+export function quickTimeIntervalPeriod(interval: QuickTimeInterval): number {
+  switch (interval) {
+    case QuickTimeInterval.YESTERDAY:
+    case QuickTimeInterval.DAY_BEFORE_YESTERDAY:
+    case QuickTimeInterval.THIS_DAY_LAST_WEEK:
+    case QuickTimeInterval.TODAY:
+    case QuickTimeInterval.TODAY_SO_FAR:
+      return DAY;
+    case QuickTimeInterval.PREVIOUS_WEEK:
+    case QuickTimeInterval.CURRENT_WEEK:
+    case QuickTimeInterval.CURRENT_WEEK_SO_FAR:
+      return WEEK;
+    case QuickTimeInterval.PREVIOUS_MONTH:
+    case QuickTimeInterval.CURRENT_MONTH:
+    case QuickTimeInterval.CURRENT_MONTH_SO_FAR:
+      return DAY * 30;
+    case QuickTimeInterval.PREVIOUS_YEAR:
+    case QuickTimeInterval.CURRENT_YEAR:
+    case QuickTimeInterval.CURRENT_YEAR_SO_FAR:
+      return YEAR;
+  }
 }
 
 export function createTimewindowForComparison(subscriptionTimewindow: SubscriptionTimewindow,
@@ -358,6 +505,8 @@ export function cloneSelectedHistoryTimewindow(historyWindow: HistoryWindow): Hi
     cloned.interval = historyWindow.interval;
     if (historyWindow.historyType === HistoryWindowType.LAST_INTERVAL) {
       cloned.timewindowMs = historyWindow.timewindowMs;
+    } else if (historyWindow.historyType === HistoryWindowType.INTERVAL) {
+      cloned.quickInterval = historyWindow.quickInterval;
     } else if (historyWindow.historyType === HistoryWindowType.FIXED) {
       cloned.fixedTimewindow = deepClone(historyWindow.fixedTimewindow);
     }
@@ -375,7 +524,7 @@ export const defaultTimeIntervals = new Array<TimeInterval>(
   {
     name: 'timeinterval.seconds-interval',
     translateParams: {seconds: 1},
-    value: 1 * SECOND
+    value: SECOND
   },
   {
     name: 'timeinterval.seconds-interval',
@@ -400,7 +549,7 @@ export const defaultTimeIntervals = new Array<TimeInterval>(
   {
     name: 'timeinterval.minutes-interval',
     translateParams: {minutes: 1},
-    value: 1 * MINUTE
+    value: MINUTE
   },
   {
     name: 'timeinterval.minutes-interval',
@@ -430,7 +579,7 @@ export const defaultTimeIntervals = new Array<TimeInterval>(
   {
     name: 'timeinterval.hours-interval',
     translateParams: {hours: 1},
-    value: 1 * HOUR
+    value: HOUR
   },
   {
     name: 'timeinterval.hours-interval',
@@ -455,7 +604,7 @@ export const defaultTimeIntervals = new Array<TimeInterval>(
   {
     name: 'timeinterval.days-interval',
     translateParams: {days: 1},
-    value: 1 * DAY
+    value: DAY
   },
   {
     name: 'timeinterval.days-interval',

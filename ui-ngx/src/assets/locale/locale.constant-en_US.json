@@ -2111,7 +2111,23 @@
         "hours": "Hours",
         "minutes": "Minutes",
         "seconds": "Seconds",
-        "advanced": "Advanced"
+        "advanced": "Advanced",
+        "predefined": {
+          "yesterday": "Yesterday",
+          "day-before-yesterday": "Day before yesterday",
+          "this-day-last-week": "This day last week",
+          "previous-week": "Previous week",
+          "previous-month": "Previous month",
+          "previous-year": "Previous year",
+          "today": "Today",
+          "today-so-far": "Today so far",
+          "current-week": "Current week",
+          "current-week-so-far": "Current week so far",
+          "current-month": "Current month",
+          "current-month-so-far": "Current month so far",
+          "current-year": "Current year",
+          "current-year-so-far": "Current year so far"
+        }
     },
     "timeunit": {
         "seconds": "Seconds",
@@ -2132,7 +2148,8 @@
         "date-range": "Date range",
         "last": "Last",
         "time-period": "Time period",
-        "hide": "Hide"
+        "hide": "Hide",
+        "interval": "Interval"
     },
     "user": {
         "user": "User",

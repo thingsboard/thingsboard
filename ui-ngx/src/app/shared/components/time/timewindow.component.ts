@@ -33,6 +33,7 @@ import {
   cloneSelectedTimewindow,
   HistoryWindowType,
   initModelFromDefaultTimewindow,
+  QuickTimeIntervalTranslationMap,
   Timewindow,
   TimewindowType
 } from '@shared/models/time/time.models';
@@ -280,6 +281,8 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
       if (this.innerValue.history.historyType === HistoryWindowType.LAST_INTERVAL) {
         this.innerValue.displayValue += this.translate.instant('timewindow.last-prefix') + ' ' +
           this.millisecondsToTimeStringPipe.transform(this.innerValue.history.timewindowMs);
+      } else if (this.innerValue.history.historyType === HistoryWindowType.INTERVAL) {
+        this.innerValue.displayValue += this.translate.instant(QuickTimeIntervalTranslationMap.get(this.innerValue.history.quickInterval));
       } else {
         const startString = this.datePipe.transform(this.innerValue.history.fixedTimewindow.startTimeMs, 'yyyy-MM-dd HH:mm:ss');
         const endString = this.datePipe.transform(this.innerValue.history.fixedTimewindow.endTimeMs, 'yyyy-MM-dd HH:mm:ss');
