@@ -13,23 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.discovery.event;
+package org.thingsboard.server.common.transport;
 
 import lombok.Getter;
-import org.thingsboard.server.common.msg.queue.ServiceQueueKey;
+import org.thingsboard.server.common.data.Device;
 
-import java.util.Set;
+@Getter
+public class DeviceUpdatedEvent {
+    private final Device device;
 
-
-public class ClusterTopologyChangeEvent extends TbApplicationEvent {
-
-    private static final long serialVersionUID = -2441739930040282254L;
-
-    @Getter
-    private final Set<ServiceQueueKey> serviceQueueKeys;
-
-    public ClusterTopologyChangeEvent(Object source, Set<ServiceQueueKey> serviceQueueKeys) {
-        super(source);
-        this.serviceQueueKeys = serviceQueueKeys;
+    public DeviceUpdatedEvent(Device device) {
+        this.device = device;
     }
 }

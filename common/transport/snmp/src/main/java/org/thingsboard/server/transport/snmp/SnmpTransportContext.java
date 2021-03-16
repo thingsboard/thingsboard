@@ -15,22 +15,20 @@
  */
 package org.thingsboard.server.transport.snmp;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.snmp4j.PDU;
-import org.snmp4j.Snmp;
 import org.snmp4j.smi.OID;
 import org.snmp4j.smi.VariableBinding;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.device.data.DeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileKvMapping;
 import org.thingsboard.server.common.data.device.profile.SnmpProfileTransportConfiguration;
@@ -38,14 +36,17 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.transport.DeviceUpdatedEvent;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
+import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
+import org.thingsboard.server.transport.snmp.event.SnmpTransportListChangedEvent;
 import org.thingsboard.server.transport.snmp.service.ProtoTransportEntityService;
 import org.thingsboard.server.transport.snmp.service.SnmpTransportBalancingService;
 import org.thingsboard.server.transport.snmp.service.SnmpTransportService;
@@ -54,6 +55,7 @@ import org.thingsboard.server.transport.snmp.session.DeviceSessionContext;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -72,88 +74,98 @@ public class SnmpTransportContext extends TransportContext {
     private final TransportService transportService;
     private final ProtoTransportEntityService protoEntityService;
     private final SnmpTransportBalancingService balancingService;
-    private final ApplicationEventPublisher eventPublisher;
 
-    private final Map<DeviceId, DeviceSessionContext> devicesSessions = new ConcurrentHashMap<>();
+    private final Map<DeviceId, DeviceSessionContext> sessions = new ConcurrentHashMap<>();
     private final Map<DeviceProfileId, SnmpProfileTransportConfiguration> profilesTransportConfigs = new ConcurrentHashMap<>();
     private final Map<DeviceProfileId, List<PDU>> profilesPdus = new ConcurrentHashMap<>();
+    private List<DeviceId> allSnmpDevicesIds = new LinkedList<>();
 
     @EventListener(ApplicationReadyEvent.class)
     @Order(2)
     public void initDevicesSessions() {
-        List<Device> managedDevices = protoEntityService.getAllSnmpDevicesIds().stream()
-                .filter(balancingService::isManagedByCurrentTransport)
+        allSnmpDevicesIds = protoEntityService.getAllSnmpDevicesIds().stream()
                 .map(DeviceId::new)
+                .collect(Collectors.toList());
+        List<Device> managedDevices = allSnmpDevicesIds.stream()
+                .filter(deviceId -> balancingService.isManagedByCurrentTransport(deviceId.getId()))
                 .map(protoEntityService::getDeviceById)
                 .collect(Collectors.toList());
 
-//        managedDevices.forEach(this::establishDeviceSession);
+        managedDevices.forEach(this::establishDeviceSession);
     }
 
     private void establishDeviceSession(Device device) {
         DeviceProfileId deviceProfileId = device.getDeviceProfileId();
         DeviceProfile deviceProfile = deviceProfileCache.get(deviceProfileId);
 
-        SnmpProfileTransportConfiguration snmpTransportConfig = (SnmpProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
-
-        profilesTransportConfigs.putIfAbsent(deviceProfileId, snmpTransportConfig);
-        updateDeviceSessionContext(device, deviceProfile, snmpTransportService.getSnmp());
-        profilesPdus.computeIfAbsent(deviceProfileId, id -> createPdus(snmpTransportConfig));
-    }
-
-    public void updateDeviceSessionContext(Device device, DeviceProfile deviceProfile, Snmp snmp) {
         DeviceCredentials credentials = protoEntityService.getDeviceCredentialsByDeviceId(device.getId());
-
-        if (credentials.getCredentialsType() == DeviceCredentialsType.ACCESS_TOKEN) {
-            SnmpDeviceTransportConfiguration snmpDeviceTransportConfiguration = (SnmpDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
-            if (snmpDeviceTransportConfiguration.isValid()) {
-                DeviceSessionContext deviceSessionContext = new DeviceSessionContext(
-                        device.getId(), deviceProfile,
-                         credentials.getCredentialsId(), snmpDeviceTransportConfiguration,
-                        this, snmpTransportService
-                );
-                registerDeviceSession(deviceSessionContext);
-                devicesSessions.put(device.getId(), deviceSessionContext);
-            } else {
-                // do smth
-            }
-        } else {
+        if (credentials.getCredentialsType() != DeviceCredentialsType.ACCESS_TOKEN) {
             log.warn("[{}] Expected credentials type is {} but found {}", device.getId(), DeviceCredentialsType.ACCESS_TOKEN, credentials.getCredentialsType());
+            return;
+        }
+
+        SnmpDeviceTransportConfiguration deviceTransportConfiguration = (SnmpDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
+        if (!deviceTransportConfiguration.isValid()) {
+            log.warn("SNMP device transport configuration is not valid");
+            return;
+        }
+
+        SnmpProfileTransportConfiguration profileTransportConfiguration = (SnmpProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
+        profilesPdus.computeIfAbsent(deviceProfileId, id -> createPdus(profileTransportConfiguration));
+
+        DeviceSessionContext deviceSessionContext = new DeviceSessionContext(
+                device, deviceProfile,
+                credentials.getCredentialsId(), deviceTransportConfiguration,
+                this, snmpTransportService
+        );
+        registerSessionMsgListener(deviceSessionContext);
+        sessions.put(device.getId(), deviceSessionContext);
+    }
+
+    private void updateDeviceSession(DeviceSessionContext sessionContext, Device device, DeviceProfile deviceProfile) {
+        DeviceProfileId deviceProfileId = deviceProfile.getId();
+
+        DeviceCredentials credentials = protoEntityService.getDeviceCredentialsByDeviceId(device.getId());
+        if (credentials.getCredentialsType() != DeviceCredentialsType.ACCESS_TOKEN) {
+            log.warn("[{}] Expected credentials type is {} but found {}", device.getId(), DeviceCredentialsType.ACCESS_TOKEN, credentials.getCredentialsType());
+            destroyDeviceSession(sessionContext);
+            return;
+        }
+
+        SnmpProfileTransportConfiguration profileTransportConfiguration = (SnmpProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
+        SnmpDeviceTransportConfiguration deviceTransportConfiguration = (SnmpDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
+        sessionContext.setProfileTransportConfiguration(profileTransportConfiguration);
+        sessionContext.setDeviceTransportConfiguration(deviceTransportConfiguration);
+        if (!deviceTransportConfiguration.isValid()) {
+            destroyDeviceSession(sessionContext);
+            return;
+        }
+
+        if (!profileTransportConfiguration.equals(profilesTransportConfigs.get(deviceProfileId))) {
+            profilesPdus.put(deviceProfileId, createPdus(profileTransportConfiguration));
+            profilesTransportConfigs.put(deviceProfileId, profileTransportConfiguration);
+            sessionContext.initTarget(profileTransportConfiguration, deviceTransportConfiguration);
+        } else if (!deviceTransportConfiguration.equals(sessionContext.getDeviceTransportConfiguration())) {
+            sessionContext.initTarget(profileTransportConfiguration, deviceTransportConfiguration);
         }
     }
 
-    // FIXME: will be executed for each device with this profile ?
-    public void onDeviceProfileUpdated(DeviceProfile deviceProfile, DeviceSessionContext deviceSessionContext) {
-        if (deviceProfile.getTransportType() == DeviceTransportType.SNMP) {
-            SnmpProfileTransportConfiguration transportConfiguration = (SnmpProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
-            profilesTransportConfigs.put(deviceProfile.getId(), transportConfiguration);
-            profilesPdus.put(deviceProfile.getId(), createPdus(transportConfiguration));
-        } else {
-            deviceSessionContext.close();
-            transportService.deregisterSession(deviceSessionContext.getSessionInfo());
-            devicesSessions.remove(deviceSessionContext.getDeviceId());
+    private void destroyDeviceSession(DeviceSessionContext sessionContext) {
+        if (sessionContext == null) return;
+        sessionContext.close();
+        transportService.deregisterSession(sessionContext.getSessionInfo());
+        sessions.remove(sessionContext.getDeviceId());
 
-            profilesTransportConfigs.remove(deviceProfile.getId());
-            profilesPdus.remove(deviceProfile.getId());
+        DeviceProfileId deviceProfileId = sessionContext.getDeviceProfile().getId();
+        if (sessions.values().stream()
+                .map(DeviceAwareSessionContext::getDeviceProfile)
+                .noneMatch(deviceProfile -> deviceProfile.getId().equals(deviceProfileId))) {
+            profilesTransportConfigs.remove(deviceProfileId);
+            profilesPdus.remove(deviceProfileId);
         }
     }
 
-    // FIXME: what if device profile transport type will be SNMP but device transport config will not be of SNMP type?
-    public void onDeviceUpdated(Device device, DeviceProfile deviceProfile) {
-        if (deviceProfile != null && deviceProfile.getTransportType() == DeviceTransportType.SNMP &&
-        device.getDeviceData() != null && device.getDeviceData().get) {
-            updateDeviceSessionContext(device, deviceProfile, null);
-
-            SnmpProfileTransportConfiguration profileTransportConfig = (SnmpProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
-            SnmpDeviceTransportConfiguration deviceTransportConfig = (SnmpDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
-            devicesSessions.get(device.getId()).initTarget(profileTransportConfig, deviceTransportConfig);
-        } else {
-
-            //TODO: should the context be removed from the map?
-        }
-    }
-
-    private void registerDeviceSession(DeviceSessionContext deviceSessionContext) {
+    private void registerSessionMsgListener(DeviceSessionContext deviceSessionContext) {
         transportService.process(DeviceTransportType.SNMP,
                 TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceSessionContext.getToken()).build(),
                 new TransportServiceCallback<ValidateDeviceCredentialsResponse>() {
@@ -174,17 +186,9 @@ public class SnmpTransportContext extends TransportContext {
 
                     @Override
                     public void onError(Throwable e) {
-                        log.warn("[{}] Failed to process device auth", deviceSessionContext.getDeviceId(), e);
+                        log.warn("[{}] Failed to process device auth: {}", deviceSessionContext.getDeviceId(), e);
                     }
                 });
-    }
-
-    public Collection<DeviceSessionContext> getDevicesSessions() {
-        return devicesSessions.values();
-    }
-
-    public Map<DeviceProfileId, List<PDU>> getProfilesPdus() {
-        return profilesPdus;
     }
 
     private List<PDU> createPdus(SnmpProfileTransportConfiguration deviceProfileConfig) {
@@ -202,6 +206,67 @@ public class SnmpTransportContext extends TransportContext {
                     return request;
                 })
                 .collect(Collectors.toList());
+    }
+
+    @EventListener(DeviceUpdatedEvent.class)
+    public void onDeviceUpdatedOrCreated(DeviceUpdatedEvent deviceUpdatedEvent) {
+        Device device = deviceUpdatedEvent.getDevice();
+        DeviceTransportType transportType = Optional.ofNullable(device.getDeviceData().getTransportConfiguration())
+                .map(DeviceTransportConfiguration::getType)
+                .orElse(null);
+        if (!allSnmpDevicesIds.contains(device.getId())) {
+            if (transportType != DeviceTransportType.SNMP) {
+                return;
+            }
+            allSnmpDevicesIds.add(device.getId());
+            if (balancingService.isManagedByCurrentTransport(device.getId().getId())) {
+                establishDeviceSession(device);
+            }
+        } else {
+            if (balancingService.isManagedByCurrentTransport(device.getId().getId())) {
+                DeviceSessionContext sessionContext = sessions.get(device.getId());
+                if (transportType == DeviceTransportType.SNMP) {
+                    if (sessionContext != null) {
+                        updateDeviceSession(sessionContext, device, deviceProfileCache.get(device.getDeviceProfileId()));
+                    } else {
+                        establishDeviceSession(device);
+                    }
+                } else {
+                    destroyDeviceSession(sessionContext);
+                }
+            }
+        }
+    }
+
+    public void onDeviceDeleted(DeviceSessionContext sessionContext) {
+        destroyDeviceSession(sessionContext);
+    }
+
+    public void onDeviceProfileUpdated(DeviceProfile deviceProfile, DeviceSessionContext sessionContext) {
+        updateDeviceSession(sessionContext, sessionContext.getDevice(), deviceProfile);
+    }
+
+    @EventListener(SnmpTransportListChangedEvent.class)
+    public void onSnmpTransportListChanged() {
+        for (DeviceId deviceId : allSnmpDevicesIds) {
+            if (balancingService.isManagedByCurrentTransport(deviceId.getId())) {
+                if (!sessions.containsKey(deviceId)) {
+                    establishDeviceSession(protoEntityService.getDeviceById(deviceId));
+                }
+            } else {
+                Optional.ofNullable(sessions.get(deviceId))
+                        .ifPresent(this::destroyDeviceSession);
+            }
+        }
+    }
+
+
+    public Collection<DeviceSessionContext> getSessions() {
+        return sessions.values();
+    }
+
+    public Map<DeviceProfileId, List<PDU>> getProfilesPdus() {
+        return profilesPdus;
     }
 
     public Optional<SnmpDeviceProfileKvMapping> getAttributesMapping(DeviceProfileId deviceProfileId, OID responseOid) {

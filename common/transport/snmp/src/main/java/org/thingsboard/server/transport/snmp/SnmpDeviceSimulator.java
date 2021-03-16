@@ -31,8 +31,7 @@ import org.snmp4j.transport.UdpTransportMapping;
 import java.io.IOException;
 
 /**
- * FOR TESTING PURPOSES.
- * Will be removed when the time comes.
+ * For testing purposes. Will be removed when the time comes
  */
 public class SnmpDeviceSimulator {
     private final Target target;

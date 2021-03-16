@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceTransportType;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,6 +39,10 @@ public class SnmpProfileTransportConfiguration implements DeviceProfileTransport
 
     @JsonIgnore
     public List<SnmpDeviceProfileKvMapping> getKvMappings() {
-        return Stream.concat(attributes.stream(), telemetry.stream()).collect(Collectors.toList());
+        if (attributes != null && telemetry != null) {
+            return Stream.concat(attributes.stream(), telemetry.stream()).collect(Collectors.toList());
+        } else {
+            return Collections.emptyList();
+        }
     }
 }

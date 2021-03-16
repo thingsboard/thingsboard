@@ -16,20 +16,22 @@
 package org.thingsboard.server.queue.discovery.event;
 
 import lombok.Getter;
-import org.thingsboard.server.common.msg.queue.ServiceQueueKey;
+import org.springframework.context.ApplicationEvent;
 
-import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
+public class TbApplicationEvent extends ApplicationEvent {
 
-public class ClusterTopologyChangeEvent extends TbApplicationEvent {
+    private static final long serialVersionUID = 3884264064887765146L;
 
-    private static final long serialVersionUID = -2441739930040282254L;
+    private static final AtomicInteger sequence = new AtomicInteger();
 
     @Getter
-    private final Set<ServiceQueueKey> serviceQueueKeys;
+    private final int sequenceNumber;
 
-    public ClusterTopologyChangeEvent(Object source, Set<ServiceQueueKey> serviceQueueKeys) {
+    public TbApplicationEvent(Object source) {
         super(source);
-        this.serviceQueueKeys = serviceQueueKeys;
+        sequenceNumber = sequence.incrementAndGet();
     }
+
 }

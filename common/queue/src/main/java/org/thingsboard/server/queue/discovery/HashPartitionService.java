@@ -218,18 +218,6 @@ public class HashPartitionService implements PartitionService {
         }
     }
 
-    public static int resolvePartition(UUID entityId, int partitions) {
-        HashFunction hashFunction = Hashing.murmur3_128();
-        int hash = hashFunction.newHasher()
-                .putLong(entityId.getMostSignificantBits())
-                .putLong(entityId.getLeastSignificantBits()).hash().asInt();
-        return Math.abs(hash % partitions);
-    }
-
-    public static void main(String[] args) {
-        System.out.println(resolvePartition(UUID.randomUUID(), 1));
-    }
-
     @Override
     public int resolvePartitionIndex(UUID entityId, int partitions) {
         int hash = hashFunction.newHasher()

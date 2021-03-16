@@ -25,7 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.snmp4j.PDU;
 import org.snmp4j.Snmp;
 import org.snmp4j.event.ResponseEvent;
-import org.snmp4j.smi.OID;
 import org.snmp4j.smi.VariableBinding;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -39,7 +38,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.TransportName;
-import org.thingsboard.server.common.data.device.profile.SnmpProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.transport.TransportContext;
@@ -55,17 +53,12 @@ import org.thingsboard.server.transport.snmp.session.DeviceSessionContext;
 
 import javax.annotation.PreDestroy;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 @Service("SnmpTransportService")
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.snmp.enabled}'=='true')")
@@ -136,13 +129,13 @@ public class SnmpTransportService {
         int pollPeriodSeconds = 1;
 
         pollingExecutor.scheduleWithFixedDelay(() -> {
-            snmpTransportContext.getDevicesSessions().forEach(this::executeSnmpRequest);
+            snmpTransportContext.getSessions().forEach(this::executeSnmpRequest);
         }, 0, pollPeriodSeconds, TimeUnit.SECONDS);
     }
 
     private void executeSnmpRequest(DeviceSessionContext sessionContext) {
         long timeNow = System.currentTimeMillis();
-        long nextRequestExecutionTime = sessionContext.getPreviousRequestExecutedAt() + sessionContext.getSnmpProfileTransportConfiguration().getPollPeriodMs();
+        long nextRequestExecutionTime = sessionContext.getPreviousRequestExecutedAt() + sessionContext.getProfileTransportConfiguration().getPollPeriodMs();
 
         if (nextRequestExecutionTime < timeNow) {
             sessionContext.setPreviousRequestExecutedAt(timeNow);

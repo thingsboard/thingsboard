@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.TransportName;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -64,7 +63,6 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
     private ApplicationContext applicationContext;
 
     private List<ServiceType> serviceTypes;
-    private List<DeviceTransportType> transportTypes;
     private ServiceInfo serviceInfo;
     private TenantId isolatedTenant;
 

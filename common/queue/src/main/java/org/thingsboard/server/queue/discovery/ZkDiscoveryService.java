@@ -304,7 +304,7 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
             case CHILD_REMOVED:
                 TransportProtos.ServiceInfo currentService = serviceInfoProvider.getServiceInfo();
                 partitionService.recalculatePartitions(currentService, getOtherServers());
-                eventPublisher.publishEvent(new ServiceListChangedEvent(getAllServers(),currentService, instance));
+                eventPublisher.publishEvent(new ServiceListChangedEvent(getAllServers(), currentService, instance));
                 break;
             default:
                 break;

@@ -16,12 +16,14 @@
 package org.thingsboard.server.transport.snmp.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.TransportName;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
 import org.thingsboard.server.queue.discovery.HashPartitionService;
 import org.thingsboard.server.queue.discovery.event.ServiceListChangedEvent;
+import org.thingsboard.server.transport.snmp.event.SnmpTransportListChangedEvent;
 
 import java.util.Comparator;
 import java.util.List;
@@ -33,6 +35,7 @@ import java.util.stream.Collectors;
 public class SnmpTransportBalancingService {
     private final HashPartitionService hashPartitionService;
     private final TransportName transportName;
+    private final ApplicationEventPublisher eventPublisher;
 
     private int snmpTransportsCount = 1;
     private Integer currentTransportPartitionIndex = 0;
@@ -41,6 +44,7 @@ public class SnmpTransportBalancingService {
     public void onSnmpTransportListChanged(ServiceListChangedEvent event) {
         if (event.getChangedService() == null || event.getChangedService().getTransportsList().contains(transportName.value())) {
             recalculatePartitions(event.getServiceList(), event.getCurrentService());
+            eventPublisher.publishEvent(new SnmpTransportListChangedEvent());
         }
     }
 

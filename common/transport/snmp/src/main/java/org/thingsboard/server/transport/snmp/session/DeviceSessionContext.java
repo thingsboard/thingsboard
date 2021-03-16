@@ -41,7 +41,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseM
 import org.thingsboard.server.transport.snmp.SnmpTransportContext;
 import org.thingsboard.server.transport.snmp.service.SnmpTransportService;
 
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -51,7 +50,13 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     private Target target;
     private final String token;
     @Getter
-    private final SnmpProfileTransportConfiguration snmpProfileTransportConfiguration;
+    @Setter
+    private SnmpProfileTransportConfiguration profileTransportConfiguration;
+    @Getter
+    @Setter
+    private SnmpDeviceTransportConfiguration deviceTransportConfiguration;
+    @Getter
+    private final Device device;
 
     private final SnmpTransportContext snmpTransportContext;
     private final SnmpTransportService snmpTransportService;
@@ -62,19 +67,22 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     private final AtomicInteger msgIdSeq = new AtomicInteger(0);
     private boolean isActive = true;
 
-    public DeviceSessionContext(DeviceId deviceId, DeviceProfile deviceProfile,
-                                String token, SnmpDeviceTransportConfiguration deviceTransportConfig,
+    public DeviceSessionContext(Device device, DeviceProfile deviceProfile,
+                                String token, SnmpDeviceTransportConfiguration deviceTransportConfiguration,
                                 SnmpTransportContext snmpTransportContext, SnmpTransportService snmpTransportService) {
         super(UUID.randomUUID());
-        super.setDeviceId(deviceId);
+        super.setDeviceId(device.getId());
         super.setDeviceProfile(deviceProfile);
+        this.device = device;
 
         this.token = token;
         this.snmpTransportContext = snmpTransportContext;
         this.snmpTransportService = snmpTransportService;
-        this.snmpProfileTransportConfiguration = (SnmpProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
 
-        initTarget(snmpProfileTransportConfiguration, deviceTransportConfig);
+        this.profileTransportConfiguration = (SnmpProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
+        this.deviceTransportConfiguration = deviceTransportConfiguration;
+
+        initTarget(this.profileTransportConfiguration, this.deviceTransportConfiguration);
     }
 
     @Override
@@ -86,11 +94,8 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     }
 
     @Override
-    public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
-        super.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
-        if (isActive) {
-            snmpTransportContext.onDeviceUpdated(device, getDeviceProfile());
-        }
+    public void onDeviceDeleted(DeviceId deviceId) {
+        snmpTransportContext.onDeviceDeleted(this);
     }
 
     @Override

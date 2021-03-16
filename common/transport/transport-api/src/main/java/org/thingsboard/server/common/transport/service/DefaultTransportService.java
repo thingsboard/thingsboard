@@ -23,6 +23,7 @@ import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
@@ -47,6 +48,7 @@ import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.stats.MessagesStats;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsType;
+import org.thingsboard.server.common.transport.DeviceUpdatedEvent;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
 import org.thingsboard.server.common.transport.TransportService;
@@ -130,6 +132,7 @@ public class DefaultTransportService implements TransportService {
     private final TransportRateLimitService rateLimitService;
     private final DataDecodingEncodingService dataDecodingEncodingService;
     private final SchedulerComponent scheduler;
+    private final ApplicationEventPublisher eventPublisher;
 
     protected TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> transportApiRequestTemplate;
     protected TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> ruleEngineMsgProducer;
@@ -156,7 +159,8 @@ public class DefaultTransportService implements TransportService {
                                    TransportDeviceProfileCache deviceProfileCache,
                                    TransportTenantProfileCache tenantProfileCache,
                                    TbApiUsageClient apiUsageClient, TransportRateLimitService rateLimitService,
-                                   DataDecodingEncodingService dataDecodingEncodingService, SchedulerComponent scheduler) {
+                                   DataDecodingEncodingService dataDecodingEncodingService, SchedulerComponent scheduler,
+                                   ApplicationEventPublisher eventPublisher) {
         this.serviceInfoProvider = serviceInfoProvider;
         this.queueProvider = queueProvider;
         this.producerProvider = producerProvider;
@@ -168,6 +172,7 @@ public class DefaultTransportService implements TransportService {
         this.rateLimitService = rateLimitService;
         this.dataDecodingEncodingService = dataDecodingEncodingService;
         this.scheduler = scheduler;
+        this.eventPublisher = eventPublisher;
     }
 
     @PostConstruct
@@ -732,7 +737,10 @@ public class DefaultTransportService implements TransportService {
                     }
                 } else if (EntityType.DEVICE.equals(entityType)) {
                     Optional<Device> deviceOpt = dataDecodingEncodingService.decode(msg.getData().toByteArray());
-                    deviceOpt.ifPresent(this::onDeviceUpdate);
+                    deviceOpt.ifPresent(device -> {
+                        onDeviceUpdate(device);
+                        eventPublisher.publishEvent(new DeviceUpdatedEvent(device));
+                    });
                 }
             } else if (toSessionMsg.hasEntityDeleteMsg()) {
                 TransportProtos.EntityDeleteMsg msg = toSessionMsg.getEntityDeleteMsg();
@@ -746,6 +754,7 @@ public class DefaultTransportService implements TransportService {
                     rateLimitService.remove(new TenantId(entityUuid));
                 } else if (EntityType.DEVICE.equals(entityType)) {
                     rateLimitService.remove(new DeviceId(entityUuid));
+                    onDeviceDeleted(new DeviceId(entityUuid));
                 }
             } else if (toSessionMsg.hasResourceUpdateMsg()) {
                 //TODO: update resource cache
@@ -807,6 +816,17 @@ public class DefaultTransportService implements TransportService {
                 }
                 md.setSessionInfo(newSessionInfo);
                 transportCallbackExecutor.submit(() -> md.getListener().onDeviceUpdate(newSessionInfo, device, Optional.ofNullable(newDeviceProfile)));
+            }
+        });
+    }
+
+    private void onDeviceDeleted(DeviceId deviceId) {
+        sessions.forEach((id, md) -> {
+            DeviceId sessionDeviceId = new DeviceId(new UUID(md.getSessionInfo().getDeviceIdMSB(), md.getSessionInfo().getDeviceIdLSB()));
+            if (sessionDeviceId.equals(deviceId)) {
+                transportCallbackExecutor.submit(() -> {
+                    md.getListener().onDeviceDeleted(deviceId);
+                });
             }
         });
     }

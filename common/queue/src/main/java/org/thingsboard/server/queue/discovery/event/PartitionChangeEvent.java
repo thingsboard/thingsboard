@@ -19,7 +19,6 @@ import lombok.Getter;
 import org.thingsboard.server.common.msg.queue.ServiceQueueKey;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.queue.discovery.TbApplicationEvent;
 
 import java.util.Set;
 
