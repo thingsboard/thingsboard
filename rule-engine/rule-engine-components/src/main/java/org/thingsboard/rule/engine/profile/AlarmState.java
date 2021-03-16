@@ -18,10 +18,10 @@ package org.thingsboard.rule.engine.profile;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.rule.engine.action.TbAlarmResult;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.profile.state.PersistedAlarmRuleState;
@@ -119,14 +119,13 @@ class AlarmState {
                 ListenableFuture<AlarmOperationResult> alarmClearOperationResult = ctx.getAlarmService().clearAlarmForResult(
                         ctx.getTenantId(), currentAlarm.getId(), createDetails(clearState), System.currentTimeMillis()
                 );
-                alarmClearOperationResult.addListener(() -> {
-                    try {
-                        Alarm clearedAlarm = alarmClearOperationResult.get().getAlarm();
-                        pushMsg(ctx, new TbAlarmResult(false, false, true, clearedAlarm));
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }, MoreExecutors.directExecutor());
+                DonAsynchron.withCallback(alarmClearOperationResult,
+                        result -> {
+                            pushMsg(ctx, new TbAlarmResult(false, false, true, result.getAlarm()));
+                        },
+                        throwable -> {
+                            throw new RuntimeException(throwable);
+                        });
                 currentAlarm = null;
             } else if (AlarmEvalResult.FALSE.equals(evalResult)) {
                 stateUpdate = clearAlarmState(stateUpdate, clearState);
