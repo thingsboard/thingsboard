@@ -15,7 +15,12 @@
 ///
 
 import { SubscriptionData, SubscriptionDataHolder } from '@app/shared/models/telemetry/telemetry.models';
-import { AggregationType } from '@shared/models/time/time.models';
+import {
+  AggregationType,
+  calculateIntervalEndTime,
+  calculateIntervalStartTime,
+  QuickTimeInterval
+} from '@shared/models/time/time.models';
 import { UtilsService } from '@core/services/utils.service';
 import { deepClone } from '@core/utils';
 import Timeout = NodeJS.Timeout;
@@ -92,7 +97,8 @@ export class DataAggregator {
               private interval: number,
               private stateData: boolean,
               private utils: UtilsService,
-              private ignoreDataUpdateOnIntervalTick: boolean) {
+              private ignoreDataUpdateOnIntervalTick: boolean,
+              private quickInterval: QuickTimeInterval) {
     this.tsKeyNames.forEach((key) => {
       this.dataBuffer[key] = [];
     });
@@ -138,7 +144,8 @@ export class DataAggregator {
     this.startTs = startTs;
     this.timeWindow = timeWindow;
     this.interval = interval;
-    this.endTs = this.startTs + this.timeWindow;
+    const endTs = this.startTs + this.timeWindow;
+    this.endTs = calculateIntervalEndTime(this.quickInterval, endTs);
     this.elapsed = 0;
     this.aggregationTimeout = Math.max(this.interval, 1000);
     this.resetPending = true;
@@ -161,7 +168,8 @@ export class DataAggregator {
       if (!this.dataReceived) {
         this.elapsed = 0;
         this.dataReceived = true;
-        this.endTs = this.startTs + this.timeWindow;
+        const endTs = this.startTs + this.timeWindow;
+        this.endTs = calculateIntervalEndTime(this.quickInterval, endTs);
       }
       if (this.resetPending) {
         this.resetPending = false;
@@ -197,8 +205,11 @@ export class DataAggregator {
     if (!history) {
       const delta = Math.floor(this.elapsed / this.interval);
       if (delta || !this.data) {
-        this.startTs += delta * this.interval;
-        this.endTs += delta * this.interval;
+        const tickTs = delta * this.interval;
+        const startTS = this.startTs + tickTs;
+        this.startTs = calculateIntervalStartTime(this.quickInterval, startTS);
+        const endTs = this.endTs + tickTs;
+        this.endTs = calculateIntervalEndTime(this.quickInterval, endTs);
         this.data = this.updateData();
         this.elapsed = this.elapsed - delta * this.interval;
       }

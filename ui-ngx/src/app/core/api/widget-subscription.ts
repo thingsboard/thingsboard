@@ -37,6 +37,8 @@ import {
 } from '@app/shared/models/widget.models';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
+  calculateIntervalEndTime,
+  calculateIntervalStartTime,
   createSubscriptionTimewindow,
   createTimewindowForComparison,
   SubscriptionTimewindow,
@@ -1081,8 +1083,10 @@ export class WidgetSubscription implements IWidgetSubscription {
   private updateTimewindow() {
     this.timeWindow.interval = this.subscriptionTimewindow.aggregation.interval || 1000;
     if (this.subscriptionTimewindow.realtimeWindowMs) {
-      this.timeWindow.maxTime = moment().valueOf() + this.timeWindow.stDiff;
-      this.timeWindow.minTime = this.timeWindow.maxTime - this.subscriptionTimewindow.realtimeWindowMs;
+      this.timeWindow.maxTime = calculateIntervalEndTime(
+        this.subscriptionTimewindow.quickInterval, moment().valueOf() + this.timeWindow.stDiff);
+      this.timeWindow.minTime = calculateIntervalStartTime(
+        this.subscriptionTimewindow.quickInterval, this.timeWindow.maxTime - this.subscriptionTimewindow.realtimeWindowMs);
     } else if (this.subscriptionTimewindow.fixedWindow) {
       this.timeWindow.maxTime = this.subscriptionTimewindow.fixedWindow.endTimeMs;
       this.timeWindow.minTime = this.subscriptionTimewindow.fixedWindow.startTimeMs;
@@ -1105,7 +1109,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     this.comparisonTimeWindow.interval = this.timewindowForComparison.aggregation.interval || 1000;
     if (this.timewindowForComparison.realtimeWindowMs) {
       this.comparisonTimeWindow.maxTime = moment(this.timeWindow.maxTime).subtract(1, this.timeForComparison).valueOf();
-      this.comparisonTimeWindow.minTime = this.comparisonTimeWindow.maxTime - this.timewindowForComparison.realtimeWindowMs;
+      this.comparisonTimeWindow.minTime = moment(this.timeWindow.minTime).subtract(1, this.timeForComparison).valueOf();
     } else if (this.timewindowForComparison.fixedWindow) {
       this.comparisonTimeWindow.maxTime = this.timewindowForComparison.fixedWindow.endTimeMs;
       this.comparisonTimeWindow.minTime = this.timewindowForComparison.fixedWindow.startTimeMs;
