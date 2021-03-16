@@ -24,7 +24,7 @@ import {
   NG_VALUE_ACCESSOR
 } from '@angular/forms';
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
-import { EntityTypeFilter } from '@shared/models/relation.models';
+import { RelationEntityTypeFilter } from '@shared/models/relation.models';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -80,7 +80,7 @@ export class RelationFiltersComponent extends PageComponent implements ControlVa
     this.disabled = isDisabled;
   }
 
-  writeValue(filters: Array<EntityTypeFilter>): void {
+  writeValue(filters: Array<RelationEntityTypeFilter>): void {
     if (this.valueChangeSubscription) {
       this.valueChangeSubscription.unsubscribe();
     }
@@ -102,14 +102,14 @@ export class RelationFiltersComponent extends PageComponent implements ControlVa
 
   public addFilter() {
     const relationFiltersFormArray = this.relationFiltersFormGroup.get('relationFilters') as FormArray;
-    const filter: EntityTypeFilter = {
+    const filter: RelationEntityTypeFilter = {
       relationType: null,
       entityTypes: []
     };
     relationFiltersFormArray.push(this.createRelationFilterFormGroup(filter));
   }
 
-  private createRelationFilterFormGroup(filter: EntityTypeFilter): AbstractControl {
+  private createRelationFilterFormGroup(filter: RelationEntityTypeFilter): AbstractControl {
     return this.fb.group({
       relationType: [filter ? filter.relationType : null],
       entityTypes: [filter ? filter.entityTypes : []]
@@ -117,7 +117,7 @@ export class RelationFiltersComponent extends PageComponent implements ControlVa
   }
 
   private updateModel() {
-    const filters: Array<EntityTypeFilter> = this.relationFiltersFormGroup.get('relationFilters').value;
+    const filters: Array<RelationEntityTypeFilter> = this.relationFiltersFormGroup.get('relationFilters').value;
     this.propagateChange(filters);
   }
 }

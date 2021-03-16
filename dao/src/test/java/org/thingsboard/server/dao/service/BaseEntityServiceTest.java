@@ -15,12 +15,10 @@
  */
 package org.thingsboard.server.dao.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -33,27 +31,57 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.id.*;
-import org.thingsboard.server.common.data.kv.*;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.query.*;
+import org.thingsboard.server.common.data.query.AssetSearchQueryFilter;
+import org.thingsboard.server.common.data.query.DeviceSearchQueryFilter;
+import org.thingsboard.server.common.data.query.DeviceTypeFilter;
+import org.thingsboard.server.common.data.query.EdgeSearchQueryFilter;
+import org.thingsboard.server.common.data.query.EdgeTypeFilter;
+import org.thingsboard.server.common.data.query.EntityCountQuery;
+import org.thingsboard.server.common.data.query.EntityData;
+import org.thingsboard.server.common.data.query.EntityDataPageLink;
+import org.thingsboard.server.common.data.query.EntityDataQuery;
+import org.thingsboard.server.common.data.query.EntityDataSortOrder;
+import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.common.data.query.EntityKeyType;
+import org.thingsboard.server.common.data.query.EntityListFilter;
+import org.thingsboard.server.common.data.query.FilterPredicateValue;
+import org.thingsboard.server.common.data.query.KeyFilter;
+import org.thingsboard.server.common.data.query.NumericFilterPredicate;
+import org.thingsboard.server.common.data.query.RelationsQueryFilter;
+import org.thingsboard.server.common.data.query.StringFilterPredicate;
+import org.thingsboard.server.common.data.query.StringFilterPredicate.StringOperation;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
-import org.thingsboard.server.common.data.relation.EntityTypeFilter;
+import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.common.data.rule.RuleChain;
-import org.thingsboard.server.common.data.rule.RuleChainMetaData;
-import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
-import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.dao.util.DaoTestUtil;
-import org.thingsboard.server.dao.util.SqlDbType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.junit.Assert.assertEquals;
 
 public abstract class BaseEntityServiceTest extends AbstractServiceTest {
 
@@ -142,13 +170,13 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         long count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
         Assert.assertEquals(30, count);
 
-        filter.setFilters(Collections.singletonList(new EntityTypeFilter("Contains", Collections.singletonList(EntityType.DEVICE))));
+        filter.setFilters(Collections.singletonList(new RelationEntityTypeFilter("Contains", Collections.singletonList(EntityType.DEVICE))));
         count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
         Assert.assertEquals(25, count);
 
         filter.setRootEntity(devices.get(0).getId());
         filter.setDirection(EntitySearchDirection.TO);
-        filter.setFilters(Collections.singletonList(new EntityTypeFilter("Manages", Collections.singletonList(EntityType.TENANT))));
+        filter.setFilters(Collections.singletonList(new RelationEntityTypeFilter("Manages", Collections.singletonList(EntityType.TENANT))));
         count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
         Assert.assertEquals(1, count);
 
@@ -292,7 +320,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         RelationsQueryFilter filter = new RelationsQueryFilter();
         filter.setRootEntity(tenantId);
         filter.setDirection(EntitySearchDirection.FROM);
-        filter.setFilters(Collections.singletonList(new EntityTypeFilter("Contains", Collections.singletonList(EntityType.DEVICE))));
+        filter.setFilters(Collections.singletonList(new RelationEntityTypeFilter("Contains", Collections.singletonList(EntityType.DEVICE))));
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
                 new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC
@@ -603,6 +631,155 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         Assert.assertEquals("Device19", data.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue());
 
         deviceService.deleteDevicesByTenantId(tenantId);
+    }
+
+    @Test
+    public void testFindEntityDataByQuery_operationEqual_emptySearchQuery() {
+        List<Device> devices = createMockDevices(10);
+        devices.get(0).setLabel("");
+        devices.get(1).setLabel(null);
+        devices.forEach(deviceService::saveDevice);
+
+        String searchQuery = "";
+        EntityDataQuery query = createDeviceSearchQuery("label", StringOperation.EQUAL, searchQuery);
+
+        PageData<EntityData> result = searchEntities(query);
+        assertEquals(devices.size(), result.getTotalElements());
+    }
+
+    @Test
+    public void testFindEntityDataByQuery_operationNotEqual() {
+        List<Device> devices = createMockDevices(10);
+        devices.get(0).setLabel("");
+        devices.get(1).setLabel(null);
+        devices.forEach(deviceService::saveDevice);
+
+        String searchQuery = devices.get(2).getLabel();
+        EntityDataQuery query = createDeviceSearchQuery("label", StringOperation.NOT_EQUAL, searchQuery);
+
+        PageData<EntityData> result = searchEntities(query);
+        assertEquals(devices.size() - 1, result.getTotalElements());
+    }
+
+    @Test
+    public void testFindEntityDataByQuery_operationNotEqual_emptySearchQuery() {
+        List<Device> devices = createMockDevices(10);
+        devices.get(0).setLabel("");
+        devices.get(1).setLabel(null);
+        devices.forEach(deviceService::saveDevice);
+
+        String searchQuery = "";
+        EntityDataQuery query = createDeviceSearchQuery("label", StringOperation.NOT_EQUAL, searchQuery);
+
+        PageData<EntityData> result = searchEntities(query);
+        assertEquals(devices.size(), result.getTotalElements());
+    }
+
+    @Test
+    public void testFindEntityDataByQuery_operationStartsWith_emptySearchQuery() {
+        List<Device> devices = createMockDevices(10);
+        devices.get(0).setLabel("");
+        devices.get(1).setLabel(null);
+        devices.forEach(deviceService::saveDevice);
+
+        String searchQuery = "";
+        EntityDataQuery query = createDeviceSearchQuery("label", StringOperation.STARTS_WITH, searchQuery);
+
+        PageData<EntityData> result = searchEntities(query);
+        assertEquals(devices.size(), result.getTotalElements());
+    }
+
+    @Test
+    public void testFindEntityDataByQuery_operationEndsWith_emptySearchQuery() {
+        List<Device> devices = createMockDevices(10);
+        devices.get(0).setLabel("");
+        devices.get(1).setLabel(null);
+        devices.forEach(deviceService::saveDevice);
+
+        String searchQuery = "";
+        EntityDataQuery query = createDeviceSearchQuery("label", StringOperation.ENDS_WITH, searchQuery);
+
+        PageData<EntityData> result = searchEntities(query);
+        assertEquals(devices.size(), result.getTotalElements());
+    }
+
+    @Test
+    public void testFindEntityDataByQuery_operationContains_emptySearchQuery() {
+        List<Device> devices = createMockDevices(10);
+        devices.get(0).setLabel("");
+        devices.get(1).setLabel(null);
+        devices.forEach(deviceService::saveDevice);
+
+        String searchQuery = "";
+        EntityDataQuery query = createDeviceSearchQuery("label", StringOperation.CONTAINS, searchQuery);
+
+        PageData<EntityData> result = searchEntities(query);
+        assertEquals(devices.size(), result.getTotalElements());
+    }
+
+    @Test
+    public void testFindEntityDataByQuery_operationNotContains() {
+        List<Device> devices = createMockDevices(10);
+        devices.get(0).setLabel("");
+        devices.get(1).setLabel(null);
+        devices.forEach(deviceService::saveDevice);
+
+        String searchQuery = "label-";
+        EntityDataQuery query = createDeviceSearchQuery("label", StringOperation.NOT_CONTAINS, searchQuery);
+
+        PageData<EntityData> result = searchEntities(query);
+        assertEquals(2, result.getTotalElements());
+    }
+
+    @Test
+    public void testFindEntityDataByQuery_operationNotContains_emptySearchQuery() {
+        List<Device> devices = createMockDevices(10);
+        devices.get(0).setLabel("");
+        devices.get(1).setLabel(null);
+        devices.forEach(deviceService::saveDevice);
+
+        String searchQuery = "";
+        EntityDataQuery query = createDeviceSearchQuery("label", StringOperation.NOT_CONTAINS, searchQuery);
+
+        PageData<EntityData> result = searchEntities(query);
+        assertEquals(devices.size(), result.getTotalElements());
+    }
+
+    private PageData<EntityData> searchEntities(EntityDataQuery query) {
+        return entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), query);
+    }
+
+    private EntityDataQuery createDeviceSearchQuery(String deviceField, StringOperation operation, String searchQuery) {
+        DeviceTypeFilter deviceTypeFilter = new DeviceTypeFilter();
+        deviceTypeFilter.setDeviceType("default");
+        deviceTypeFilter.setDeviceNameFilter("");
+
+        EntityDataSortOrder sortOrder = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC
+        );
+        EntityDataPageLink pageLink = new EntityDataPageLink(1000, 0, null, sortOrder);
+        List<EntityKey> entityFields = Arrays.asList(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "name"),
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "label")
+        );
+
+        List<KeyFilter> keyFilters = createStringKeyFilters(deviceField, EntityKeyType.ENTITY_FIELD, operation, searchQuery);
+
+        return new EntityDataQuery(deviceTypeFilter, pageLink, entityFields, null, keyFilters);
+    }
+
+    private List<Device> createMockDevices(int count) {
+        return Stream.iterate(1, i -> i + 1)
+                .map(i -> {
+                    Device device = new Device();
+                    device.setTenantId(tenantId);
+                    device.setName("Device " + i);
+                    device.setType("default");
+                    device.setLabel("label-" + RandomUtils.nextInt(100, 10000));
+                    return device;
+                })
+                .limit(count)
+                .collect(Collectors.toList());
     }
 
     @Test

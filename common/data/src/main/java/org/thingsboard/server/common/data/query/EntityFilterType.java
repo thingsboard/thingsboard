@@ -19,6 +19,7 @@ public enum EntityFilterType {
     SINGLE_ENTITY("singleEntity"),
     ENTITY_LIST("entityList"),
     ENTITY_NAME("entityName"),
+    ENTITY_TYPE("entityType"),
     ASSET_TYPE("assetType"),
     DEVICE_TYPE("deviceType"),
     ENTITY_VIEW_TYPE("entityViewType"),

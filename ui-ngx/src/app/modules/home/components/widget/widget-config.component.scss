@@ -23,10 +23,34 @@
     .tb-advanced-widget-config {
       height: 100%;
     }
+    .tb-datasources {
+
+      .handle {
+        cursor: move;
+      }
+
+      .mat-list {
+        min-height: 68px;
+        padding-left: 0;
+      }
+
+      .mat-list-item {
+        height: auto;
+        min-height: 68px;
+        display: block;
+        &.dndDraggingSource {
+          display: none;
+        }
+        &.dndPlaceholder {
+          display: block;
+          background-color: #ddd;
+        }
+      }
+    }
     .tb-datasource-type {
-      min-width: 110px;
+      min-width: 120px;
       @media #{$mat-gt-sm} {
-        max-width: 110px;
+        max-width: 120px;
       }
     }
     .tb-datasource {
@@ -70,12 +94,17 @@
       white-space: normal;
     }
     .mat-expansion-panel {
-      &.tb-datasources{
+      &.tb-datasources {
         &.mat-expanded {
           overflow: visible;
         }
         .mat-expansion-panel-body{
           padding: 0 12px 16px;
+        }
+        .mat-list-base .mat-list-item {
+          .mat-list-item-content {
+            padding: 0;
+          }
         }
       }
       .mat-expansion-panel-content {
@@ -108,6 +137,11 @@
             width: 200px;
             max-width: 200px;
           }
+        }
+      }
+      .tb-datasource-name.no-border-top {
+        .mat-form-field-infix {
+          border-top: 0;
         }
       }
     }

@@ -315,6 +315,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
     this.dashboardCtx.aliasController = new AliasController(this.utils,
       this.entityService,
+      this.translate,
       () => this.dashboardCtx.stateController,
       this.dashboardConfiguration.entityAliases,
       this.dashboardConfiguration.filters);

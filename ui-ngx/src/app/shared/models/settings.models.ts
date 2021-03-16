@@ -65,6 +65,7 @@ export interface UpdateMessage {
 }
 
 export const phoneNumberPattern = /^\+[1-9]\d{1,14}$/;
+export const phoneNumberPatternTwilio = /^\+[1-9]\d{1,14}$|^(MG|PN).*$/;
 
 export enum SmsProviderType {
   AWS_SNS = 'AWS_SNS',

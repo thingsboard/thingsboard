@@ -101,8 +101,8 @@ public class LwM2MModelsRepository {
      */
     private List<LwM2mObject> getLwm2mObjects(Predicate<? super ObjectModel> predicate, String sortProperty, String sortOrder) {
         List<LwM2mObject> lwM2mObjects = new ArrayList<>();
-        List<ObjectModel> listObjects = (predicate == null) ? this.contextServer.getModelsValue() :
-                contextServer.getModelsValue().stream()
+        List<ObjectModel> listObjects = (predicate == null) ? this.contextServer.getModelsValueCommon() :
+                contextServer.getModelsValueCommon().stream()
                         .filter(predicate)
                         .collect(Collectors.toList());
 

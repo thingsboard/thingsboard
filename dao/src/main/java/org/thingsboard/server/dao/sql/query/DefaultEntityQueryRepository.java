@@ -42,12 +42,13 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityListFilter;
 import org.thingsboard.server.common.data.query.EntityNameFilter;
 import org.thingsboard.server.common.data.query.EntitySearchQueryFilter;
+import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.EntityViewSearchQueryFilter;
 import org.thingsboard.server.common.data.query.EntityViewTypeFilter;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
-import org.thingsboard.server.common.data.relation.EntityTypeFilter;
+import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -266,18 +267,70 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query) {
         EntityType entityType = resolveEntityType(query.getEntityFilter());
         QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, customerId, entityType));
-        ctx.append("select count(e.id) from ");
-        ctx.append(addEntityTableQuery(ctx, query.getEntityFilter()));
-        ctx.append(" e where ");
-        ctx.append(buildEntityWhere(ctx, query.getEntityFilter(), Collections.emptyList()));
-        return transactionTemplate.execute(status -> {
-            long startTs = System.currentTimeMillis();
-            try {
-                return jdbcTemplate.queryForObject(ctx.getQuery(), ctx, Long.class);
-            } finally {
-                queryLog.logQuery(ctx, ctx.getQuery(), System.currentTimeMillis() - startTs);
+        if (query.getKeyFilters() == null || query.getKeyFilters().isEmpty()) {
+            ctx.append("select count(e.id) from ");
+            ctx.append(addEntityTableQuery(ctx, query.getEntityFilter()));
+            ctx.append(" e where ");
+            ctx.append(buildEntityWhere(ctx, query.getEntityFilter(), Collections.emptyList()));
+            return transactionTemplate.execute(status -> {
+                long startTs = System.currentTimeMillis();
+                try {
+                    return jdbcTemplate.queryForObject(ctx.getQuery(), ctx, Long.class);
+                } finally {
+                    queryLog.logQuery(ctx, ctx.getQuery(), System.currentTimeMillis() - startTs);
+                }
+            });
+        } else {
+            List<EntityKeyMapping> mappings = EntityKeyMapping.prepareEntityCountKeyMapping(query);
+
+            List<EntityKeyMapping> selectionMapping = mappings.stream().filter(EntityKeyMapping::isSelection)
+                    .collect(Collectors.toList());
+            List<EntityKeyMapping> entityFieldsSelectionMapping = selectionMapping.stream().filter(mapping -> !mapping.isLatest())
+                    .collect(Collectors.toList());
+
+            List<EntityKeyMapping> filterMapping = mappings.stream().filter(EntityKeyMapping::hasFilter)
+                    .collect(Collectors.toList());
+            List<EntityKeyMapping> entityFieldsFiltersMapping = filterMapping.stream().filter(mapping -> !mapping.isLatest())
+                    .collect(Collectors.toList());
+
+            List<EntityKeyMapping> allLatestMappings = mappings.stream().filter(EntityKeyMapping::isLatest)
+                    .collect(Collectors.toList());
+
+
+            String entityWhereClause = DefaultEntityQueryRepository.this.buildEntityWhere(ctx, query.getEntityFilter(), entityFieldsFiltersMapping);
+            String latestJoinsCnt = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings, true);
+            String entityFieldsSelection = EntityKeyMapping.buildSelections(entityFieldsSelectionMapping, query.getEntityFilter().getType(), entityType);
+            String entityTypeStr;
+            if (query.getEntityFilter().getType().equals(EntityFilterType.RELATIONS_QUERY)) {
+                entityTypeStr = "e.entity_type";
+            } else {
+                entityTypeStr = "'" + entityType.name() + "'";
             }
-        });
+            if (!StringUtils.isEmpty(entityFieldsSelection)) {
+                entityFieldsSelection = String.format("e.id id, %s entity_type, %s", entityTypeStr, entityFieldsSelection);
+            } else {
+                entityFieldsSelection = String.format("e.id id, %s entity_type", entityTypeStr);
+            }
+
+            String fromClauseCount = String.format("from (select %s from (select %s from %s e where %s) entities %s ) result %s",
+                    "entities.*",
+                    entityFieldsSelection,
+                    addEntityTableQuery(ctx, query.getEntityFilter()),
+                    entityWhereClause,
+                    latestJoinsCnt,
+                    "");
+
+            String countQuery = String.format("select count(id) %s", fromClauseCount);
+
+            return transactionTemplate.execute(status -> {
+                long startTs = System.currentTimeMillis();
+                try {
+                    return jdbcTemplate.queryForObject(countQuery, ctx, Long.class);
+                } finally {
+                    queryLog.logQuery(ctx, ctx.getQuery(), System.currentTimeMillis() - startTs);
+                }
+            });
+        }
     }
 
     @Override
@@ -456,6 +509,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             case ENTITY_VIEW_SEARCH_QUERY:
             case EDGE_SEARCH_QUERY:
             case API_USAGE_STATE:
+            case ENTITY_TYPE:
                 return "";
             default:
                 throw new RuntimeException("Not implemented!");
@@ -544,7 +598,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         boolean single = entityFilter.getFilters() != null && entityFilter.getFilters().size() == 1;
         if (entityFilter.getFilters() != null && !entityFilter.getFilters().isEmpty()) {
             int entityTypeFilterIdx = 0;
-            for (EntityTypeFilter etf : entityFilter.getFilters()) {
+            for (RelationEntityTypeFilter etf : entityFilter.getFilters()) {
                 String etfCondition = buildEtfCondition(ctx, etf, entityFilter.getDirection(), entityTypeFilterIdx++);
                 if (!etfCondition.isEmpty()) {
                     if (noConditions) {
@@ -593,7 +647,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         return "( " + selectFields + from + ")";
     }
 
-    private String buildEtfCondition(QueryContext ctx, EntityTypeFilter etf, EntitySearchDirection direction, int entityTypeFilterIdx) {
+    private String buildEtfCondition(QueryContext ctx, RelationEntityTypeFilter etf, EntitySearchDirection direction, int entityTypeFilterIdx) {
         StringBuilder whereFilter = new StringBuilder();
         String relationType = etf.getRelationType();
         List<EntityType> entityTypes = etf.getEntityTypes();
@@ -703,6 +757,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 return ((EntityListFilter) entityFilter).getEntityType();
             case ENTITY_NAME:
                 return ((EntityNameFilter) entityFilter).getEntityType();
+            case ENTITY_TYPE:
+                return ((EntityTypeFilter) entityFilter).getEntityType();
             case ASSET_TYPE:
             case ASSET_SEARCH_QUERY:
                 return EntityType.ASSET;

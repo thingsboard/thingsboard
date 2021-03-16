@@ -196,17 +196,23 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
                 }
                 break;
             case "3.1.1":
+            case "3.2.1":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Load TTL functions ...");
                     loadSql(conn, "2.4.3", LOAD_TTL_FUNCTIONS_SQL);
                     log.info("Load Drop Partitions functions ...");
                     loadSql(conn, "2.4.3", LOAD_DROP_PARTITIONS_FUNCTIONS_SQL);
+
+                    executeQuery(conn, "DROP PROCEDURE IF EXISTS cleanup_timeseries_by_ttl(character varying, bigint, bigint);");
+                    executeQuery(conn, "DROP FUNCTION IF EXISTS delete_asset_records_from_ts_kv(character varying, character varying, bigint);");
+                    executeQuery(conn, "DROP FUNCTION IF EXISTS delete_device_records_from_ts_kv(character varying, character varying, bigint);");
+                    executeQuery(conn, "DROP FUNCTION IF EXISTS delete_customer_records_from_ts_kv(character varying, character varying, bigint);");
                 }
                 break;
-            case "3.2.1":
+            case "3.2.2":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Load Edge TTL functions ...");
-                    loadSql(conn, "3.2.1", LOAD_TTL_FUNCTIONS_SQL);
+                    loadSql(conn, "3.2.2", LOAD_TTL_FUNCTIONS_SQL);
                 }
                 break;
             default:

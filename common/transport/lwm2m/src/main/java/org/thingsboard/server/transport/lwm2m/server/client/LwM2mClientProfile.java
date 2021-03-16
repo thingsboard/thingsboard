@@ -15,18 +15,22 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.client;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import lombok.Data;
+import org.thingsboard.server.common.data.id.TenantId;
 
 @Data
 public class LwM2mClientProfile {
+
+    private TenantId tenantId;
     /**
      * {"clientLwM2mSettings": {
      *      clientUpdateValueAfterConnect: false;
      *       }
-    **/
-    JsonObject postClientLwM2mSettings;
+     **/
+    private JsonObject postClientLwM2mSettings;
 
     /**
      * {"keyName": {
@@ -34,21 +38,44 @@ public class LwM2mClientProfile {
      *       "/3/0/0": "manufacturer",
      *       "/3/0/2": "serialNumber"
      *       }
-    **/
-    JsonObject postKeyNameProfile;
+     **/
+    private JsonObject postKeyNameProfile;
 
     /**
      * [ "/2/0/0", "/2/0/1"]
      */
-    JsonArray postAttributeProfile;
+    private JsonArray postAttributeProfile;
 
     /**
      * [ "/2/0/0", "/2/0/1"]
      */
-    JsonArray postTelemetryProfile;
+    private JsonArray postTelemetryProfile;
 
     /**
      * [ "/2/0/0", "/2/0/1"]
      */
-    JsonArray postObserveProfile;
+    private JsonArray postObserveProfile;
+
+    public LwM2mClientProfile clone() {
+        LwM2mClientProfile lwM2mClientProfile = new LwM2mClientProfile();
+        lwM2mClientProfile.postClientLwM2mSettings = this.deepCopy(this.postClientLwM2mSettings, JsonObject.class);
+        lwM2mClientProfile.postKeyNameProfile = this.deepCopy(this.postKeyNameProfile, JsonObject.class);
+        lwM2mClientProfile.postAttributeProfile = this.deepCopy(this.postAttributeProfile, JsonArray.class);
+        lwM2mClientProfile.postTelemetryProfile = this.deepCopy(this.postTelemetryProfile, JsonArray.class);
+        lwM2mClientProfile.postObserveProfile = this.deepCopy(this.postObserveProfile, JsonArray.class);
+        return lwM2mClientProfile;
+    }
+
+
+    private <T> T deepCopy(T elements, Class<T> type) {
+        try {
+            Gson gson = new Gson();
+            return gson.fromJson(gson.toJson(elements), type);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
 }

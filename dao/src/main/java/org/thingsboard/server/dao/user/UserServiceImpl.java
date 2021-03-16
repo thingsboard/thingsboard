@@ -22,8 +22,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.common.data.security.event.UserAuthDataChangedEvent;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
@@ -75,21 +76,26 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     @Value("${security.user_login_case_sensitive:true}")
     private boolean userLoginCaseSensitive;
 
-    @Autowired
-    private UserDao userDao;
+    private final UserDao userDao;
+    private final UserCredentialsDao userCredentialsDao;
+    private final TenantDao tenantDao;
+    private final CustomerDao customerDao;
+    private final TbTenantProfileCache tenantProfileCache;
+    private final ApplicationEventPublisher eventPublisher;
 
-    @Autowired
-    private UserCredentialsDao userCredentialsDao;
-
-    @Autowired
-    private TenantDao tenantDao;
-
-    @Autowired
-    private CustomerDao customerDao;
-
-    @Autowired
-    @Lazy
-    private TbTenantProfileCache tenantProfileCache;
+    public UserServiceImpl(UserDao userDao,
+                           UserCredentialsDao userCredentialsDao,
+                           TenantDao tenantDao,
+                           CustomerDao customerDao,
+                           @Lazy TbTenantProfileCache tenantProfileCache,
+                           ApplicationEventPublisher eventPublisher) {
+        this.userDao = userDao;
+        this.userCredentialsDao = userCredentialsDao;
+        this.tenantDao = tenantDao;
+        this.customerDao = customerDao;
+        this.tenantProfileCache = tenantProfileCache;
+        this.eventPublisher = eventPublisher;
+    }
 
     @Override
     public User findUserByEmail(TenantId tenantId, String email) {
@@ -225,6 +231,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         userCredentialsDao.removeById(tenantId, userCredentials.getUuidId());
         deleteEntityRelations(tenantId, userId);
         userDao.removeById(tenantId, userId.getId());
+        eventPublisher.publishEvent(new UserAuthDataChangedEvent(userId));
     }
 
     @Override

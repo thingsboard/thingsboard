@@ -34,6 +34,7 @@ server:
   log_controller_error_stack_trace: "${HTTP_LOG_CONTROLLER_ERROR_STACK_TRACE:false}"
   ws:
     send_timeout: "${TB_SERVER_WS_SEND_TIMEOUT:5000}"
+    ping_timeout: "${TB_SERVER_WS_PING_TIMEOUT:30000}"
     limits:
       # Limit the amount of sessions and subscriptions available on each server. Put values to zero to disable particular limitation
       max_sessions_per_tenant: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SESSIONS_PER_TENANT:0}"
@@ -326,6 +327,9 @@ actors:
 cache:
   # caffeine or redis
   type: "${CACHE_TYPE:caffeine}"
+  attributes:
+    # make sure that if cache.type is 'redis' and cache.attributes.enabled is 'true' that you change 'maxmemory-policy' Redis config property to 'allkeys-lru', 'allkeys-lfu' or 'allkeys-random'
+    enabled: "${CACHE_ATTRIBUTES_ENABLED:true}"
 
 caffeine:
   specs:
@@ -359,6 +363,12 @@ caffeine:
     deviceProfiles:
       timeToLiveInMinutes: 1440
       maxSize: 0
+    attributes:
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
+    tokensOutdatageTime:
+      timeToLiveInMinutes: 20000
+      maxSize: 10000
     edges:
       timeToLiveInMinutes: 1440
       maxSize: 0
@@ -547,6 +557,7 @@ transport:
   http:
     enabled: "${HTTP_ENABLED:true}"
     request_timeout: "${HTTP_REQUEST_TIMEOUT:60000}"
+    max_request_timeout: "${HTTP_MAX_REQUEST_TIMEOUT:300000}"
   # Local MQTT transport parameters
   mqtt:
     # Enable/disable mqtt transport protocol.

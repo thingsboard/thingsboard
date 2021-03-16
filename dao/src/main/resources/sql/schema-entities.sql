@@ -448,6 +448,14 @@ CREATE TABLE IF NOT EXISTS api_usage_state (
     CONSTRAINT api_usage_state_unq_key UNIQUE (tenant_id, entity_id)
 );
 
+CREATE TABLE IF NOT EXISTS resource (
+    tenant_id uuid NOT NULL,
+    resource_type varchar(32) NOT NULL,
+    resource_id varchar(255) NOT NULL,
+    resource_value varchar,
+    CONSTRAINT resource_unq_key UNIQUE (tenant_id, resource_type, resource_id)
+);
+
 CREATE TABLE IF NOT EXISTS edge (
     id uuid NOT NULL CONSTRAINT edge_pkey PRIMARY KEY,
     created_time bigint NOT NULL,

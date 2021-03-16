@@ -16,16 +16,10 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import org.apache.http.conn.ssl.TrustStrategy;
-import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.ssl.SSLContexts;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.boot.web.server.LocalServerPort;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
@@ -33,7 +27,6 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
@@ -44,20 +37,15 @@ import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityListFilter;
+import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityHistoryCmd;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -132,6 +120,14 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
 
         count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
         Assert.assertEquals(97, count.longValue());
+
+        EntityTypeFilter filter2 = new EntityTypeFilter();
+        filter2.setEntityType(EntityType.DEVICE);
+
+        EntityCountQuery countQuery2 = new EntityCountQuery(filter2);
+
+        Long count2 = doPostWithResponse("/api/entitiesQuery/count", countQuery2, Long.class);
+        Assert.assertEquals(97, count2.longValue());
     }
 
     @Test
@@ -198,11 +194,31 @@ public abstract class BaseEntityQueryControllerTest extends AbstractControllerTe
         Assert.assertEquals(11, data.getTotalElements());
         Assert.assertEquals("Device19", data.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue());
 
+
+        EntityTypeFilter filter2 = new EntityTypeFilter();
+        filter2.setEntityType(EntityType.DEVICE);
+
+        EntityDataSortOrder sortOrder2 = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC
+        );
+        EntityDataPageLink pageLink2 = new EntityDataPageLink(10, 0, null, sortOrder2);
+        List<EntityKey> entityFields2 = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
+
+        EntityDataQuery query2 = new EntityDataQuery(filter2, pageLink2, entityFields2, null, null);
+
+        PageData<EntityData> data2 =
+                doPostWithTypedResponse("/api/entitiesQuery/find", query2, new TypeReference<PageData<EntityData>>() {
+                });
+
+        Assert.assertEquals(97, data2.getTotalElements());
+        Assert.assertEquals(10, data2.getTotalPages());
+        Assert.assertTrue(data2.hasNext());
+        Assert.assertEquals(10, data2.getData().size());
+
     }
 
     @Test
     public void testFindEntityDataByQueryWithAttributes() throws Exception {
-
         List<Device> devices = new ArrayList<>();
         List<Long> temperatures = new ArrayList<>();
         List<Long> highTemperatures = new ArrayList<>();

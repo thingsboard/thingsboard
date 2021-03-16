@@ -122,7 +122,9 @@
         "number-to": "Phone Number To",
         "number-to-required": "Phone Number To is required.",
         "phone-number-hint": "Phone Number in E.164 format, ex. +19995550123",
+        "phone-number-hint-twilio": "Phone Number in E.164 format/Phone Number's SID/Messaging Service SID, ex. +19995550123/PNXXX/MGXXX",
         "phone-number-pattern": "Invalid phone number. Should be in E.164 format, ex. +19995550123.",
+        "phone-number-pattern-twilio": "Invalid phone number. Should be in E.164 format/Phone Number's SID/Messaging Service SID, ex. +19995550123/PNXXX/MGXXX.",
         "sms-message": "SMS message",
         "sms-message-required": "SMS message is required.",
         "sms-message-max-length": "SMS message can't be longer 1600 characters",
@@ -299,6 +301,7 @@
         "filter-type-single-entity": "Single entity",
         "filter-type-entity-list": "Entity list",
         "filter-type-entity-name": "Entity name",
+        "filter-type-entity-type": "Entity type",
         "filter-type-state-entity": "Entity from dashboard state",
         "filter-type-state-entity-description": "Entity taken from dashboard state parameters",
         "filter-type-asset-type": "Asset type",
@@ -826,6 +829,7 @@
     "datasource": {
         "type": "Datasource type",
         "name": "Name",
+        "label": "Label",
         "add-datasource-prompt": "Please add datasource"
     },
     "details": {
@@ -1137,10 +1141,8 @@
         "schedule-time-to": "To",
         "schedule-days-of-week-required": "At least one day of week should be selected.",
         "lwm2m": {
-            "client-only-observe-after-connect": "{ count, plural, 1 {Only Observe Request to the client after registration} other {Read&Observe Request to the client after registration} }",
-            "client-only-observe-after-connect-tip": "{ count, plural, 1 {Only Observe Request to the client marked as observe from the profile configuration.} other {Read Request to the client after registration to read the values of the resources then Observe Request to the client marked as observe from the profile configuration.} }",
-            "client-update-value-after-connect": "{ count, plural, 1 {Request to the client after registration for All resource values} other {Request to the client after registration to read values only as attributes or telemetry} }",
-            "client-update-value-after-connect-tip": "{ count, plural, 1 {Request to the client after registration to read all resource values for all objects} other {Request to the client after registration to read the values of the resources marked as attribute or telemetry from the profile configuration.} }",
+            "client-only-observe-after-connect": "{ count, plural, 1 {Strategy 1: Only Observe Request to the client after the initial connection} other {Strategy 2: Read All Resources & Observe Request to the client after registration} }",
+            "client-only-observe-after-connect-tip": "{ count, plural, 1 {Strategy 1: After the initial connection of the LWM2M Client, the server sends Observe resources Request to the client, those resources that are marked as observation in the Device profile and which exist on the LWM2M client.} other {Strategy  2: After the registration, request the client to read all the resource values for all objects that the LWM2M client has,\n then execute:  the server sends Observe resources Request to the client, those resources that are marked as observation in the Device profile and which exist on the LWM2M client.} }",
             "object-list": "Object list",
             "object-list-empty": "No objects selected.",
             "no-objects-matching": "No objects matching '{{object}}' were found.",
@@ -1342,6 +1344,7 @@
     "entity": {
         "entity": "Entity",
         "entities": "Entities",
+        "entities-count": "Entities count",
         "aliases": "Entity aliases",
         "entity-alias": "Entity alias",
         "unable-delete-entity-alias-title": "Unable to delete entity alias",
@@ -1823,7 +1826,8 @@
            "key-type": "Key type",
            "attribute": "Attribute",
            "timeseries": "Timeseries",
-           "entity-field": "Entity field"
+           "entity-field": "Entity field",
+           "constant": "Constant"
          },
          "value-type": {
            "value-type": "Value type",

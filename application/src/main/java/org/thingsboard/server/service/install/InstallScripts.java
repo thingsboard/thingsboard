@@ -17,14 +17,19 @@ package org.thingsboard.server.service.install;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.model.DDFFileParser;
+import org.eclipse.leshan.core.model.DefaultDDFFileValidator;
+import org.eclipse.leshan.core.model.InvalidDDFFileException;
+import org.eclipse.leshan.core.model.ObjectModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.Resource;
+import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -33,15 +38,19 @@ import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.Optional;
 
 import static org.thingsboard.server.service.install.DatabaseHelper.objectMapper;
@@ -66,10 +75,13 @@ public class InstallScripts {
     public static final String WIDGET_BUNDLES_DIR = "widget_bundles";
     public static final String OAUTH2_CONFIG_TEMPLATES_DIR = "oauth2_config_templates";
     public static final String DASHBOARDS_DIR = "dashboards";
+    public static final String MODELS_DIR = "models";
+    public static final String CREDENTIALS_DIR = "credentials";
 
     public static final String EDGE_MANAGEMENT = "edge_management";
 
     public static final String JSON_EXT = ".json";
+    public static final String XML_EXT = ".xml";
 
     @Value("${install.data_dir:}")
     private String dataDir;
@@ -88,6 +100,9 @@ public class InstallScripts {
 
     @Autowired
     private OAuth2ConfigTemplateService oAuth2TemplateService;
+
+    @Autowired
+    private ResourceService resourceService;
 
     private Path getTenantRuleChainsDir() {
         return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, RULE_CHAINS_DIR);
@@ -197,6 +212,73 @@ public class InstallScripts {
                         }
                     }
             );
+        }
+    }
+
+    public void loadSystemLwm2mResources() throws Exception {
+//        Path modelsDir = Paths.get("/home/nick/Igor_project/thingsboard_ce_3_2_docker/thingsboard/common/transport/lwm2m/src/main/resources/models/");
+        Path modelsDir = Paths.get(getDataDir(), MODELS_DIR);
+        if (Files.isDirectory(modelsDir)) {
+            try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(modelsDir, path -> path.toString().endsWith(XML_EXT))) {
+                dirStream.forEach(
+                        path -> {
+                            try {
+                                byte[] fileBytes = Files.readAllBytes(path);
+                                String key = getObjectModelLwm2mValid(fileBytes, path.getFileName().toString(), new DefaultDDFFileValidator());
+                                if (key != null) {
+                                    Resource resource = new Resource();
+                                    resource.setTenantId(TenantId.SYS_TENANT_ID);
+                                    resource.setResourceType(ResourceType.LWM2M_MODEL);
+                                    resource.setResourceId(key);
+                                    resource.setValue(Base64.getEncoder().encodeToString(fileBytes));
+                                    resourceService.saveResource(resource);
+                                }
+                            } catch (Exception e) {
+                                log.error("Unable to load lwm2m model [{}]", path.toString());
+                                throw new RuntimeException("Unable to load lwm2m model", e);
+                            }
+                        }
+                );
+            }
+        }
+
+        Path jksPath = Paths.get(getDataDir(), CREDENTIALS_DIR, "serverKeyStore.jks");
+        try {
+            Resource resource = new Resource();
+            resource.setTenantId(TenantId.SYS_TENANT_ID);
+            resource.setResourceType(ResourceType.JKS);
+            resource.setResourceId(jksPath.getFileName().toString());
+            resource.setValue(Base64.getEncoder().encodeToString(Files.readAllBytes(jksPath)));
+            resourceService.saveResource(resource);
+        } catch (Exception e) {
+            log.error("Unable to load lwm2m serverKeyStore [{}]", jksPath.toString());
+            throw new RuntimeException("Unable to load l2m2m serverKeyStore", e);
+        }
+    }
+
+    private String getObjectModelLwm2mValid(byte[] xmlByte, String streamName, DefaultDDFFileValidator ddfValidator) {
+        try {
+            DDFFileParser ddfFileParser = new DDFFileParser(ddfValidator);
+            ObjectModel objectModel = ddfFileParser.parseEx(new ByteArrayInputStream(xmlByte), streamName).get(0);
+            return objectModel.id + "##" + objectModel.getVersion();
+        } catch (IOException | InvalidDDFFileException e) {
+            log.error("Could not parse the XML file [{}]", streamName, e);
+            return null;
+        }
+
+    }
+
+    private void removeFile(Path modelsDir, String nameFile, byte[] fileBytes) {
+        String path = "/home/nick/Igor_project/thingsboard_ce_3_2_docker/thingsboard/common/transport/lwm2m/src/main/resources/models/";
+        File file = new File(path + nameFile);
+        if (!file.isDirectory()) {
+            try {
+                Files.write(Paths.get(path + "server/" + nameFile), fileBytes);
+                file.delete();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
         }
     }
 
