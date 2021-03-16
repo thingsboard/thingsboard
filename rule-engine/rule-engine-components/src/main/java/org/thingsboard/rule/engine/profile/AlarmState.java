@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.profile;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -26,17 +27,12 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.profile.state.PersistedAlarmRuleState;
 import org.thingsboard.rule.engine.profile.state.PersistedAlarmState;
 import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.query.EntityKeyType;
-import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.ServiceQueue;
@@ -120,15 +116,17 @@ class AlarmState {
                 for (AlarmRuleState state : createRulesSortedBySeverityDesc) {
                     stateUpdate = clearAlarmState(stateUpdate, state);
                 }
-                Alarm clearedAlarm;
-                try {
-                    clearedAlarm = ctx.getAlarmService().clearAlarmAndGetOperationResult(
-                            ctx.getTenantId(), currentAlarm.getId(), createDetails(clearState), System.currentTimeMillis()
-                    ).get().getAlarm();
-                } catch (InterruptedException | ExecutionException e) {
-                    throw new RuntimeException(e);
-                }
-                pushMsg(ctx, new TbAlarmResult(false, false, true, clearedAlarm));
+                ListenableFuture<AlarmOperationResult> alarmClearOperationResult = ctx.getAlarmService().clearAlarmForResult(
+                        ctx.getTenantId(), currentAlarm.getId(), createDetails(clearState), System.currentTimeMillis()
+                );
+                alarmClearOperationResult.addListener(() -> {
+                    try {
+                        Alarm clearedAlarm = alarmClearOperationResult.get().getAlarm();
+                        pushMsg(ctx, new TbAlarmResult(false, false, true, clearedAlarm));
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }, MoreExecutors.directExecutor());
                 currentAlarm = null;
             } else if (AlarmEvalResult.FALSE.equals(evalResult)) {
                 stateUpdate = clearAlarmState(stateUpdate, clearState);
