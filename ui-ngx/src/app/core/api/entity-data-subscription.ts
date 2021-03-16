@@ -752,7 +752,8 @@ export class EntityDataSubscription {
       subsTw.aggregation.interval,
       subsTw.aggregation.stateData,
       this.utils,
-      this.entityDataSubscriptionOptions.ignoreDataUpdateOnIntervalTick
+      this.entityDataSubscriptionOptions.ignoreDataUpdateOnIntervalTick,
+      subsTw.quickInterval
     );
   }
 

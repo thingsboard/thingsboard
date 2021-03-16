@@ -34,6 +34,7 @@ import {
   HistoryWindowType,
   initModelFromDefaultTimewindow,
   QuickTimeIntervalTranslationMap,
+  RealtimeWindowType,
   Timewindow,
   TimewindowType
 } from '@shared/models/time/time.models';
@@ -273,9 +274,13 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
 
   updateDisplayValue() {
     if (this.innerValue.selectedTab === TimewindowType.REALTIME && !this.historyOnly) {
-      this.innerValue.displayValue = this.translate.instant('timewindow.realtime') + ' - ' +
-        this.translate.instant('timewindow.last-prefix') + ' ' +
-        this.millisecondsToTimeStringPipe.transform(this.innerValue.realtime.timewindowMs);
+      this.innerValue.displayValue = this.translate.instant('timewindow.realtime') + ' - ';
+      if (this.innerValue.realtime.realtimeType === RealtimeWindowType.INTERVAL) {
+        this.innerValue.displayValue += this.translate.instant(QuickTimeIntervalTranslationMap.get(this.innerValue.realtime.quickInterval));
+      } else {
+        this.innerValue.displayValue +=  this.translate.instant('timewindow.last-prefix') + ' ' +
+          this.millisecondsToTimeStringPipe.transform(this.innerValue.realtime.timewindowMs);
+      }
     } else {
       this.innerValue.displayValue = !this.historyOnly ? (this.translate.instant('timewindow.history') + ' - ') : '';
       if (this.innerValue.history.historyType === HistoryWindowType.LAST_INTERVAL) {

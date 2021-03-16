@@ -21,16 +21,43 @@
       <mat-tab-group dynamicHeight [ngClass]="{'tb-headless': historyOnly}"
                      (selectedIndexChange)="timewindowForm.markAsDirty()" [(selectedIndex)]="timewindow.selectedTab">
         <mat-tab label="{{ 'timewindow.realtime' | translate }}">
-          <div formGroupName="realtime" class="mat-content mat-padding" fxLayout="column">
-            <tb-timeinterval
-              [(hideFlag)]="timewindow.hideInterval"
-              (hideFlagChange)="onHideIntervalChanged()"
-              [isEdit]="isEdit"
-              formControlName="timewindowMs"
-              predefinedName="timewindow.last"
-              [required]="timewindow.selectedTab === timewindowTypes.REALTIME"
-              style="padding-top: 8px;"></tb-timeinterval>
-          </div>
+          <section fxLayout="row">
+            <section *ngIf="isEdit" fxLayout="column" style="padding-top: 8px; padding-left: 16px;">
+              <label class="tb-small hide-label" translate>timewindow.hide</label>
+              <mat-checkbox [ngModelOptions]="{standalone: true}" [(ngModel)]="timewindow.hideInterval"
+                            (ngModelChange)="onHideIntervalChanged()"></mat-checkbox>
+            </section>
+            <section fxLayout="column" fxFlex [fxShow]="isEdit || !timewindow.hideInterval">
+              <div formGroupName="realtime" class="mat-content mat-padding" style="padding-top: 8px;">
+                <mat-radio-group formControlName="realtimeType">
+                  <mat-radio-button [value]="realtimeTypes.LAST_INTERVAL" color="primary">
+                    <section fxLayout="column">
+                      <span translate>timewindow.last</span>
+                      <tb-timeinterval
+                        formControlName="timewindowMs"
+                        predefinedName="timewindow.last"
+                        [fxShow]="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL"
+                        [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
+                                timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL"
+                        style="padding-top: 8px;"></tb-timeinterval>
+                    </section>
+                  </mat-radio-button>
+                  <mat-radio-button [value]="realtimeTypes.INTERVAL" color="primary">
+                    <section fxLayout="column">
+                      <span translate>timewindow.interval</span>
+                      <tb-quick-time-interval
+                        formControlName="quickInterval"
+                        onlyCurrentInterval="true"
+                        [fxShow]="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL"
+                        [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+                                timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL"
+                        style="padding-top: 8px; min-width: 364px"></tb-quick-time-interval>
+                    </section>
+                  </mat-radio-button>
+                </mat-radio-group>
+              </div>
+            </section>
+          </section>
         </mat-tab>
         <mat-tab label="{{ 'timewindow.history' | translate }}">
           <section fxLayout="row">
