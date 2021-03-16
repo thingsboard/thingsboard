@@ -27,6 +27,24 @@ import java.util.Map;
 
 public class RelatedEntitiesParser {
     private final Map<String, String> allEntityIdsAndTypes = new HashMap<>();
+    
+    private final Map<String, EntityType> tableNameAndEntityType = Map.ofEntries(
+            Map.entry("COPY public.alarm ", EntityType.ALARM),
+            Map.entry("COPY public.asset ", EntityType.ASSET),
+            Map.entry("COPY public.customer ", EntityType.CUSTOMER),
+            Map.entry("COPY public.dashboard ", EntityType.DASHBOARD),
+            Map.entry("COPY public.device ", EntityType.DEVICE),
+            Map.entry("COPY public.rule_chain ", EntityType.RULE_CHAIN),
+            Map.entry("COPY public.rule_node ", EntityType.RULE_NODE),
+            Map.entry("COPY public.tenant ", EntityType.TENANT),
+            Map.entry("COPY public.tb_user ", EntityType.USER),
+            Map.entry("COPY public.entity_view ", EntityType.ENTITY_VIEW),
+            Map.entry("COPY public.widgets_bundle ", EntityType.WIDGETS_BUNDLE),
+            Map.entry("COPY public.widget_type ", EntityType.WIDGET_TYPE),
+            Map.entry("COPY public.tenant_profile ", EntityType.TENANT_PROFILE),
+            Map.entry("COPY public.device_profile ", EntityType.DEVICE_PROFILE),
+            Map.entry("COPY public.api_usage_state ", EntityType.API_USAGE_STATE)
+    );
 
     public RelatedEntitiesParser(File source) throws IOException {
         processAllTables(FileUtils.lineIterator(source));
@@ -45,36 +63,10 @@ public class RelatedEntitiesParser {
         try {
             while (lineIterator.hasNext()) {
                 currentLine = lineIterator.nextLine();
-                if (currentLine.startsWith("COPY public.alarm")) {
-                    processBlock(lineIterator, EntityType.ALARM);
-                } else if (currentLine.startsWith("COPY public.asset")) {
-                    processBlock(lineIterator, EntityType.ASSET);
-                } else if (currentLine.startsWith("COPY public.customer")) {
-                    processBlock(lineIterator, EntityType.CUSTOMER);
-                } else if (currentLine.startsWith("COPY public.dashboard")) {
-                    processBlock(lineIterator, EntityType.DASHBOARD);
-                } else if (currentLine.startsWith("COPY public.device")) {
-                    processBlock(lineIterator, EntityType.DEVICE);
-                } else if (currentLine.startsWith("COPY public.rule_chain")) {
-                    processBlock(lineIterator, EntityType.RULE_CHAIN);
-                } else if (currentLine.startsWith("COPY public.rule_node")) {
-                    processBlock(lineIterator, EntityType.RULE_NODE);
-                } else if (currentLine.startsWith("COPY public.tenant")) {
-                    processBlock(lineIterator, EntityType.TENANT);
-                } else if (currentLine.startsWith("COPY public.tb_user")) {
-                    processBlock(lineIterator, EntityType.USER);
-                } else if (currentLine.startsWith("COPY public.entity_view")) {
-                    processBlock(lineIterator, EntityType.ENTITY_VIEW);
-                } else if (currentLine.startsWith("COPY public.widgets_bundle")) {
-                    processBlock(lineIterator, EntityType.WIDGETS_BUNDLE);
-                } else if (currentLine.startsWith("COPY public.widget_type")) {
-                    processBlock(lineIterator, EntityType.WIDGET_TYPE);
-                } else if (currentLine.startsWith("COPY public.tenant_profile")) {
-                    processBlock(lineIterator, EntityType.TENANT_PROFILE);
-                } else if (currentLine.startsWith("COPY public.device_profile")) {
-                    processBlock(lineIterator, EntityType.DEVICE_PROFILE);
-                } else if (currentLine.startsWith("COPY public.api_usage_state")) {
-                    processBlock(lineIterator, EntityType.API_USAGE_STATE);
+                for(Map.Entry<String, EntityType> entry : tableNameAndEntityType.entrySet()) {
+                    if(currentLine.startsWith(entry.getKey())) {
+                        processBlock(lineIterator, entry.getValue());
+                    }
                 }
             }
         } finally {

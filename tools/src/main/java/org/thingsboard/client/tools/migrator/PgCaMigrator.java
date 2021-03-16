@@ -43,7 +43,6 @@ public class PgCaMigrator {
     private final long LOG_BATCH = 1000000;
     private final long rowPerFile = 1000000;
 
-    private long linesProcessed = 0;
     private long linesTsMigrated = 0;
     private long linesLatestMigrated = 0;
     private long castErrors = 0;
@@ -99,7 +98,7 @@ public class PgCaMigrator {
                     System.out.println("START TO MIGRATE LATEST");
                     long start = System.currentTimeMillis();
                     processBlock(iterator, currentTsLatestWriter, outTsLatestDir, this::toValuesLatest);
-                    System.out.println("FORMING OF SSL FOR LATEST TS FINISHED WITH TIME: " + (System.currentTimeMillis() - start) + " ms.");
+                    System.out.println("TOTAL LINES MIGRATED: " + linesLatestMigrated + ", FORMING OF SSL FOR LATEST TS FINISHED WITH TIME: " + (System.currentTimeMillis() - start) + " ms.");
                     isLatestDone = true;
                 }
 
@@ -107,7 +106,7 @@ public class PgCaMigrator {
                     System.out.println("START TO MIGRATE TS");
                     long start = System.currentTimeMillis();
                     processBlock(iterator, currentTsWriter, outTsDir, this::toValuesTs);
-                    System.out.println("FORMING OF SSL FOR TS FINISHED WITH TIME: " + (System.currentTimeMillis() - start) + " ms.");
+                    System.out.println("TOTAL LINES MIGRATED: " + linesTsMigrated + ", FORMING OF SSL FOR TS FINISHED WITH TIME: " + (System.currentTimeMillis() - start) + " ms.");
                     isTsDone = true;
                 }
             }
@@ -212,7 +211,7 @@ public class PgCaMigrator {
 
     private void processBlock(LineIterator iterator, CQLSSTableWriter writer, File outDir, Function<List<String>, List<Object>> function) {
         String currentLine;
-        linesProcessed = 0;
+        long linesProcessed = 0;
         while(iterator.hasNext()) {
             logLinesProcessed(linesProcessed++);
             currentLine = iterator.nextLine();

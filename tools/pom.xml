@@ -70,7 +70,7 @@
             <plugins>
                 <plugin>
                     <artifactId>maven-assembly-plugin</artifactId>
-                    <configuration>
+                    <configuration combine.self="override">
                         <archive>
                             <manifest>
                                 <mainClass>org.thingsboard.client.tools.migrator.MigratorTool</mainClass>

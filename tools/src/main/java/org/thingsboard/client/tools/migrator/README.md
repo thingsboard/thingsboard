@@ -23,7 +23,7 @@ It will generate single jar file with all required dependencies inside `target d
 
 1. Dump related tables that need to correct save telemetry
    
-   `pg_dump -h localhost -U postgres -d thingsboard -t tenant -t customer -t user -t dashboard -t asset -t device -t alarm -t rule_chain -t rule_node -t entity_view -t widgets_bundle -t widget_type -t tenant_profile -t device_profile -t api_usage_state -t tb_user > related_entities.dmp`
+   `pg_dump -h localhost -U postgres -d thingsboard -T admin_settings -T attribute_kv -T audit_log -T component_discriptor -T device_credentials -T event -T oauth2_client_registration -T oauth2_client_registration_info -T oauth2_client_registration_template -T relation -T rule_node_state tb_schema_settings -T user_credentials > related_entities.dmp`
    
 2. Dump `ts_kv` and child:
    
@@ -47,12 +47,12 @@ Create 3 empty directories. For example:
 **Note: if you run this tool on remote instance - don't forget to execute this command in `screen` to avoid unexpected termination*
 
 ```
-java -jar ./tools-2.4.1-SNAPSHOT-jar-with-dependencies.jar 
+java -jar ./tools-3.2.2-SNAPSHOT-jar-with-dependencies.jar 
         -telemetryFrom /home/user/dump/ts_kv_all.dmp 
-        -relatedEntities /home/user/dump/relatedEntities.dmp 
-        -latestOut /home/ubunut/migration/ts_latest 
-        -tsOut /home/ubunut/migration/ts 
-        -partitionsOut /home/ubunut/migration/ts_partition 
+        -relatedEntities /home/user/dump/related_entities.dmp 
+        -latestOut /home/user/migration/ts_latest 
+        -tsOut /home/user/migration/ts 
+        -partitionsOut /home/user/migration/ts_partition 
         -castEnable false 
 ```  
 *Use your paths for program arguments*
@@ -63,7 +63,7 @@ Tool execution time depends on DB size, CPU resources and Disk throughput
 * Note that this this part works only for single node Cassandra Cluster. If you have more nodes - it is better to use `sstableloader` tool.
 
 1. [Optional] install Cassandra on the instance
-2. [Optional] Using `cqlsh` create `thingsboard` keyspace and requred tables from this file `schema-ts.cql`
+2. [Optional] Using `cqlsh` create `thingsboard` keyspace and requred tables from this files `schema-ts.cql` and `schema-ts-latest.cql` using `source` command
 3. Stop Cassandra
 4. Look at `/var/lib/cassandra/data/thingsboard` and check for names of data folders
 5. Copy generated SSTable files into cassandra data dir using next command:
