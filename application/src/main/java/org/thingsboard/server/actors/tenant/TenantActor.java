@@ -119,7 +119,7 @@ public class TenantActor extends RuleChainManagerActor {
             log.info("[{}] Processing missing Tenant msg: {}", tenantId, msg);
             if (msg.getMsgType().equals(MsgType.QUEUE_TO_RULE_ENGINE_MSG)) {
                 QueueToRuleEngineMsg queueMsg = (QueueToRuleEngineMsg) msg;
-                queueMsg.getTbMsg().getCallback().onSuccess();
+                queueMsg.getMsg().getCallback().onSuccess();
             } else if (msg.getMsgType().equals(MsgType.TRANSPORT_TO_DEVICE_ACTOR_MSG)) {
                 TransportToDeviceActorMsgWrapper transportMsg = (TransportToDeviceActorMsgWrapper) msg;
                 transportMsg.getCallback().onSuccess();
@@ -177,7 +177,7 @@ public class TenantActor extends RuleChainManagerActor {
             log.warn("RECEIVED INVALID MESSAGE: {}", msg);
             return;
         }
-        TbMsg tbMsg = msg.getTbMsg();
+        TbMsg tbMsg = msg.getMsg();
         if (apiUsageState.isReExecEnabled()) {
             if (tbMsg.getRuleChainId() == null) {
                 if (getRootChainActor() != null) {

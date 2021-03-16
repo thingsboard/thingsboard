@@ -106,6 +106,15 @@ export interface Dashboard extends DashboardInfo {
   configuration?: DashboardConfiguration;
 }
 
+export interface HomeDashboard extends Dashboard {
+  hideDashboardToolbar: boolean;
+}
+
+export interface HomeDashboardInfo {
+  dashboardId: DashboardId;
+  hideDashboardToolbar: boolean;
+}
+
 export function isPublicDashboard(dashboard: DashboardInfo): boolean {
   if (dashboard && dashboard.assignedCustomers) {
     return dashboard.assignedCustomers

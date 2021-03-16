@@ -18,14 +18,14 @@
 <form [formGroup]="twilioSmsProviderConfigurationFormGroup" style="padding-bottom: 16px;">
   <mat-form-field class="mat-block">
     <mat-label translate>admin.number-from</mat-label>
-    <input type="tel" required [pattern]="phoneNumberPattern" matInput formControlName="numberFrom">
+    <input type="tel" required [pattern]="phoneNumberPatternTwilio" matInput formControlName="numberFrom">
     <mat-error *ngIf="twilioSmsProviderConfigurationFormGroup.get('numberFrom').hasError('required')">
       {{ 'admin.number-from-required' | translate }}
     </mat-error>
     <mat-error *ngIf="twilioSmsProviderConfigurationFormGroup.get('numberFrom').hasError('pattern')">
-      {{ 'admin.phone-number-pattern' | translate }}
+      {{ 'admin.phone-number-pattern-twilio' | translate }}
     </mat-error>
-    <mat-hint innerHTML="{{ 'admin.phone-number-hint' | translate }}"></mat-hint>
+    <mat-hint innerHTML="{{ 'admin.phone-number-hint-twilio' | translate }}"></mat-hint>
   </mat-form-field>
   <mat-form-field class="mat-block">
     <mat-label translate>admin.twilio-account-sid</mat-label>
@@ -36,7 +36,7 @@
   </mat-form-field>
   <mat-form-field class="mat-block">
     <mat-label translate>admin.twilio-account-token</mat-label>
-    <input required type="password" matInput formControlName="accountToken">
+    <input required type="password" autocomplete="new-password" matInput formControlName="accountToken">
     <mat-error *ngIf="twilioSmsProviderConfigurationFormGroup.get('accountToken').hasError('required')">
       {{ 'admin.twilio-account-token-required' | translate }}
     </mat-error>

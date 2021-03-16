@@ -35,6 +35,7 @@ import io.netty.handler.codec.mqtt.MqttSubscribeMessage;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import io.netty.handler.codec.mqtt.MqttUnsubscribeMessage;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
@@ -55,6 +56,7 @@ import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
+import org.thingsboard.server.common.transport.service.SessionMetaData;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionEvent;
@@ -67,7 +69,8 @@ import org.thingsboard.server.transport.mqtt.session.MqttTopicMatcher;
 import org.thingsboard.server.transport.mqtt.util.SslUtil;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.security.cert.X509Certificate;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -314,7 +317,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     private <T> TransportServiceCallback<Void> getPubAckCallback(final ChannelHandlerContext ctx, final int msgId, final T msg) {
-        return new TransportServiceCallback<Void>() {
+        return new TransportServiceCallback<>() {
             @Override
             public void onSuccess(Void dummy) {
                 log.trace("[{}] Published msg: {}", sessionId, msg);
@@ -481,12 +484,13 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         if (userName != null) {
             request.setUserName(userName);
         }
-        String password = connectMessage.payload().password();
-        if (password != null) {
+        byte[] passwordBytes = connectMessage.payload().passwordInBytes();
+        if (passwordBytes != null) {
+            String password = new String(passwordBytes, CharsetUtil.UTF_8);
             request.setPassword(password);
         }
         transportService.process(DeviceTransportType.MQTT, request.build(),
-                new TransportServiceCallback<ValidateDeviceCredentialsResponse>() {
+                new TransportServiceCallback<>() {
                     @Override
                     public void onSuccess(ValidateDeviceCredentialsResponse msg) {
                         onValidateDeviceResponse(msg, ctx, connectMessage);
@@ -506,10 +510,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             if (!context.isSkipValidityCheckForClientCert()) {
                 cert.checkValidity();
             }
-            String strCert = SslUtil.getX509CertificateString(cert);
+            String strCert = SslUtil.getCertificateString(cert);
             String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
             transportService.process(DeviceTransportType.MQTT, ValidateDeviceX509CertRequestMsg.newBuilder().setHash(sha3Hash).build(),
-                    new TransportServiceCallback<ValidateDeviceCredentialsResponse>() {
+                    new TransportServiceCallback<>() {
                         @Override
                         public void onSuccess(ValidateDeviceCredentialsResponse msg) {
                             onValidateDeviceResponse(msg, ctx, connectMessage);
@@ -530,9 +534,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private X509Certificate getX509Certificate() {
         try {
-            X509Certificate[] certChain = sslHandler.engine().getSession().getPeerCertificateChain();
+            Certificate[] certChain = sslHandler.engine().getSession().getPeerCertificates();
             if (certChain.length > 0) {
-                return certChain[0];
+                return (X509Certificate) certChain[0];
             }
         } catch (SSLPeerUnverifiedException e) {
             log.warn(e.getMessage());
@@ -596,7 +600,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private void checkGatewaySession() {
+    private void checkGatewaySession(SessionMetaData sessionMetaData) {
         TransportDeviceInfo device = deviceSessionCtx.getDeviceInfo();
         try {
             JsonNode infoNode = context.getMapper().readTree(device.getAdditionalInfo());
@@ -604,6 +608,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 JsonNode gatewayNode = infoNode.get("gateway");
                 if (gatewayNode != null && gatewayNode.asBoolean()) {
                     gatewaySessionHandler = new GatewaySessionHandler(deviceSessionCtx, sessionId);
+                    if (infoNode.has(DefaultTransportService.OVERWRITE_ACTIVITY_TIME) && infoNode.get(DefaultTransportService.OVERWRITE_ACTIVITY_TIME).isBoolean()) {
+                        sessionMetaData.setOverwriteActivityTime(infoNode.get(DefaultTransportService.OVERWRITE_ACTIVITY_TIME).asBoolean());
+                    }
                 }
             }
         } catch (IOException e) {
@@ -639,8 +646,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             transportService.process(deviceSessionCtx.getSessionInfo(), DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN), new TransportServiceCallback<Void>() {
                 @Override
                 public void onSuccess(Void msg) {
-                    transportService.registerAsyncSession(deviceSessionCtx.getSessionInfo(), MqttTransportHandler.this);
-                    checkGatewaySession();
+                    SessionMetaData sessionMetaData = transportService.registerAsyncSession(deviceSessionCtx.getSessionInfo(), MqttTransportHandler.this);
+                    checkGatewaySession(sessionMetaData);
                     ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED, connectMessage));
                     log.info("[{}] Client connected!", sessionId);
                 }

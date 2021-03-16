@@ -44,6 +44,7 @@ import { DashboardService } from '@core/http/dashboard.service';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { CustomActionEditorCompleter } from '@home/components/widget/action/custom-action.models';
+import { isDefinedAndNotNull } from '@core/utils';
 
 export interface WidgetActionDialogData {
   isAdd: boolean;
@@ -155,6 +156,28 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
             );
             this.setupSelectedDashboardStateIds(action ? action.targetDashboardId : null);
           } else {
+            if (type === WidgetActionType.openDashboardState) {
+              this.actionTypeFormGroup.addControl(
+                'openInSeparateDialog',
+                this.fb.control(action ? action.openInSeparateDialog : false, [])
+              );
+              this.actionTypeFormGroup.addControl(
+                'dialogTitle',
+                this.fb.control(action ? action.dialogTitle : '', [])
+              );
+              this.actionTypeFormGroup.addControl(
+                'dialogHideDashboardToolbar',
+                this.fb.control(action && isDefinedAndNotNull(action.dialogHideDashboardToolbar) ? action.dialogHideDashboardToolbar : true, [])
+              );
+              this.actionTypeFormGroup.addControl(
+                'dialogWidth',
+                this.fb.control(action ? action.dialogWidth : null, [Validators.min(1), Validators.max(100)])
+              );
+              this.actionTypeFormGroup.addControl(
+                'dialogHeight',
+                this.fb.control(action ? action.dialogHeight : null, [Validators.min(1), Validators.max(100)])
+              );
+            }
             this.actionTypeFormGroup.addControl(
               'openRightLayout',
               this.fb.control(action ? action.openRightLayout : false, [])

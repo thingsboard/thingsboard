@@ -485,6 +485,9 @@ export class WidgetComponentService {
       if (isUndefined(result.typeParameters.warnOnPageDataOverflow)) {
         result.typeParameters.warnOnPageDataOverflow = true;
       }
+      if (isUndefined(result.typeParameters.ignoreDataUpdateOnIntervalTick)) {
+        result.typeParameters.ignoreDataUpdateOnIntervalTick = false;
+      }
       if (isUndefined(result.typeParameters.dataKeysOptional)) {
         result.typeParameters.dataKeysOptional = false;
       }

@@ -25,7 +25,7 @@ import java.util.concurrent.ScheduledFuture;
  * Created by ashvayka on 15.10.18.
  */
 @Data
-class SessionMetaData {
+public class SessionMetaData {
 
     private volatile TransportProtos.SessionInfoProto sessionInfo;
     private final TransportProtos.SessionType sessionType;
@@ -36,6 +36,7 @@ class SessionMetaData {
     private volatile long lastReportedActivityTime;
     private volatile boolean subscribedToAttributes;
     private volatile boolean subscribedToRPC;
+    private volatile boolean overwriteActivityTime;
 
     SessionMetaData(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SessionType sessionType, SessionMsgListener listener) {
         this.sessionInfo = sessionInfo;

@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.query.EntityKeyType;
@@ -35,7 +36,7 @@ import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.ServiceQueue;
-import org.thingsboard.server.dao.util.mapping.JacksonUtil;
+import org.thingsboard.common.util.JacksonUtil;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -57,10 +58,12 @@ class AlarmState {
     private volatile TbMsgMetaData lastMsgMetaData;
     private volatile String lastMsgQueueName;
     private volatile DataSnapshot dataSnapshot;
+    private final DynamicPredicateValueCtx dynamicPredicateValueCtx;
 
-    AlarmState(ProfileState deviceProfile, EntityId originator, DeviceProfileAlarm alarmDefinition, PersistedAlarmState alarmState) {
+    AlarmState(ProfileState deviceProfile, EntityId originator, DeviceProfileAlarm alarmDefinition, PersistedAlarmState alarmState, DynamicPredicateValueCtx dynamicPredicateValueCtx) {
         this.deviceProfile = deviceProfile;
         this.originator = originator;
+        this.dynamicPredicateValueCtx = dynamicPredicateValueCtx;
         this.updateState(alarmDefinition, alarmState);
     }
 
@@ -133,9 +136,9 @@ class AlarmState {
     public boolean validateUpdate(SnapshotUpdate update, AlarmRuleState state) {
         if (update != null) {
             //Check that the update type and that keys match.
-            if (update.getType().equals(EntityKeyType.TIME_SERIES)) {
+            if (update.getType().equals(AlarmConditionKeyType.TIME_SERIES)) {
                 return state.validateTsUpdate(update.getKeys());
-            } else if (update.getType().equals(EntityKeyType.ATTRIBUTE)) {
+            } else if (update.getType().equals(AlarmConditionKeyType.ATTRIBUTE)) {
                 return state.validateAttrUpdate(update.getKeys());
             }
         }
@@ -188,12 +191,12 @@ class AlarmState {
                 }
             }
             createRulesSortedBySeverityDesc.add(new AlarmRuleState(severity, rule,
-                    deviceProfile.getCreateAlarmKeys(alarm.getId(), severity), ruleState));
+                    deviceProfile.getCreateAlarmKeys(alarm.getId(), severity), ruleState, dynamicPredicateValueCtx));
         });
         createRulesSortedBySeverityDesc.sort(Comparator.comparingInt(state -> state.getSeverity().ordinal()));
         PersistedAlarmRuleState ruleState = alarmState == null ? null : alarmState.getClearRuleState();
         if (alarmDefinition.getClearRule() != null) {
-            clearState = new AlarmRuleState(null, alarmDefinition.getClearRule(), deviceProfile.getClearAlarmKeys(alarm.getId()), ruleState);
+            clearState = new AlarmRuleState(null, alarmDefinition.getClearRule(), deviceProfile.getClearAlarmKeys(alarm.getId()), ruleState, dynamicPredicateValueCtx);
         }
     }
 
@@ -223,7 +226,11 @@ class AlarmState {
             currentAlarm.setType(alarmDefinition.getAlarmType());
             currentAlarm.setStatus(AlarmStatus.ACTIVE_UNACK);
             currentAlarm.setSeverity(severity);
-            currentAlarm.setStartTs(System.currentTimeMillis());
+            long startTs = dataSnapshot.getTs();
+            if (startTs == 0L) {
+                startTs = System.currentTimeMillis();
+            }
+            currentAlarm.setStartTs(startTs);
             currentAlarm.setEndTs(currentAlarm.getStartTs());
             currentAlarm.setDetails(createDetails(ruleState));
             currentAlarm.setOriginator(originator);
@@ -243,7 +250,7 @@ class AlarmState {
         String alarmDetailsStr = ruleState.getAlarmRule().getAlarmDetails();
 
         if (StringUtils.isNotEmpty(alarmDetailsStr)) {
-            for (KeyFilter keyFilter : ruleState.getAlarmRule().getCondition().getCondition()) {
+            for (var keyFilter : ruleState.getAlarmRule().getCondition().getCondition()) {
                 EntityKeyValue entityKeyValue = dataSnapshot.getValue(keyFilter.getKey());
                 alarmDetailsStr = alarmDetailsStr.replaceAll(String.format("\\$\\{%s}", keyFilter.getKey().getKey()), getValueAsString(entityKeyValue));
             }
@@ -290,5 +297,12 @@ class AlarmState {
             }
         }
         return updated;
+    }
+
+    public void processAckAlarm(Alarm alarm) {
+        if (currentAlarm != null && currentAlarm.getId().equals(alarm.getId())) {
+            currentAlarm.setStatus(alarm.getStatus());
+            currentAlarm.setAckTs(alarm.getAckTs());
+        }
     }
 }

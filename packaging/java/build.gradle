@@ -102,7 +102,7 @@ buildRpm {
     archiveVersion = projectVersion.replace('-', '')
     archiveFileName = "${pkgName}.rpm"
 
-    requires("java-1.8.0")
+    requires("java-11")
 
     from("${buildDir}/conf") {
         include "${pkgName}.conf"
@@ -141,7 +141,7 @@ buildDeb {
 
     archiveFileName = "${pkgName}.deb"
 
-    requires("openjdk-8-jre").or("java8-runtime").or("oracle-java8-installer").or("openjdk-8-jre-headless")
+    requires("openjdk-11-jre").or("java11-runtime").or("oracle-java11-installer").or("openjdk-11-jre-headless")
 
     from("${buildDir}/conf") {
         include "${pkgName}.conf"

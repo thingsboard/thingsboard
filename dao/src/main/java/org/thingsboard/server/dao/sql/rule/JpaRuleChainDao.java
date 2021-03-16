@@ -39,12 +39,12 @@ public class JpaRuleChainDao extends JpaAbstractSearchTextDao<RuleChainEntity, R
     private RuleChainRepository ruleChainRepository;
 
     @Override
-    protected Class getEntityClass() {
+    protected Class<RuleChainEntity> getEntityClass() {
         return RuleChainEntity.class;
     }
 
     @Override
-    protected CrudRepository getCrudRepository() {
+    protected CrudRepository<RuleChainEntity, UUID> getCrudRepository() {
         return ruleChainRepository;
     }
 

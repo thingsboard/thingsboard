@@ -14,11 +14,12 @@
 # limitations under the License.
 #
 
-FROM thingsboard/openjdk8
+FROM thingsboard/openjdk11
 
 RUN apt-get update
 RUN apt-get install -y curl
-RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ stretch-pgdg main' | tee --append /etc/apt/sources.list.d/pgdg.list > /dev/null
+RUN echo 'deb http://ftp.us.debian.org/debian sid main' | tee --append /etc/apt/sources.list.d/debian.list > /dev/null
+RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ sid-pgdg main' | tee --append /etc/apt/sources.list.d/pgdg.list > /dev/null
 RUN curl -L https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
 ENV PG_MAJOR 11
 RUN apt-get update
@@ -74,6 +75,7 @@ USER ${pkg.user}
 EXPOSE 9090
 EXPOSE 1883
 EXPOSE 5683/udp
+EXPOSE 5685/udp
 
 VOLUME ["/data"]
 
