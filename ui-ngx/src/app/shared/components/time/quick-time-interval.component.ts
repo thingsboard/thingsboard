@@ -50,7 +50,7 @@ export class QuickTimeIntervalComponent implements OnInit, ControlValueAccessor 
 
   get intervals() {
     if (this.onlyCurrentInterval) {
-      return this.allIntervals.filter(interval => interval.startsWith('TODAY_') || interval.startsWith('CURRENT_'));
+      return this.allIntervals.filter(interval => interval.startsWith('TODAY') || interval.startsWith('CURRENT_'));
     }
     return this.allIntervals;
   }
@@ -71,7 +71,6 @@ export class QuickTimeIntervalComponent implements OnInit, ControlValueAccessor 
 
   writeValue(interval: QuickTimeInterval): void {
     this.modelValue = interval;
-    this.rendered = true;
   }
 
   onIntervalChange() {
