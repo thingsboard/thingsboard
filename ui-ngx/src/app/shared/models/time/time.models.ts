@@ -92,6 +92,7 @@ export interface Aggregation {
 
 export interface Timewindow {
   displayValue?: string;
+  displayTimezoneAbbr?: string;
   hideInterval?: boolean;
   hideAggregation?: boolean;
   hideAggInterval?: boolean;
@@ -731,6 +732,7 @@ export interface TimezoneInfo {
   name: string;
   offset: string;
   nOffset: number;
+  abbr: string;
 }
 
 let timezones: TimezoneInfo[] = null;
@@ -744,7 +746,8 @@ export function getTimezones(): TimezoneInfo[] {
         id: zoneName,
         name: zoneName.replace(/_/g, ' '),
         offset: `UTC${tz.format('Z')}`,
-        nOffset: tz.utcOffset()
+        nOffset: tz.utcOffset(),
+        abbr: tz.zoneAbbr()
       };
     });
   }
