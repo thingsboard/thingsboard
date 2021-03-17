@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.TransportName;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
 import org.thingsboard.server.queue.discovery.HashPartitionService;
 import org.thingsboard.server.queue.discovery.event.ServiceListChangedEvent;
+import org.thingsboard.server.queue.util.TbSnmpTransportComponent;
 import org.thingsboard.server.transport.snmp.event.SnmpTransportListChangedEvent;
 
 import java.util.Comparator;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@TbSnmpTransportComponent
 @Service
 @RequiredArgsConstructor
 public class SnmpTransportBalancingService {

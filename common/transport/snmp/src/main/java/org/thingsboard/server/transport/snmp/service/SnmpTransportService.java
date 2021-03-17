@@ -27,7 +27,6 @@ import org.snmp4j.Snmp;
 import org.snmp4j.event.ResponseEvent;
 import org.snmp4j.smi.VariableBinding;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -49,6 +48,7 @@ import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.snmp.SnmpTransportContext;
+import org.thingsboard.server.queue.util.TbSnmpTransportComponent;
 import org.thingsboard.server.transport.snmp.session.DeviceSessionContext;
 
 import javax.annotation.PreDestroy;
@@ -60,8 +60,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-@Service("SnmpTransportService")
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.snmp.enabled}'=='true')")
+@TbSnmpTransportComponent
+@Service
 @Slf4j
 public class SnmpTransportService {
     private final SnmpTransportContext snmpTransportContext;
@@ -269,6 +269,7 @@ public class SnmpTransportService {
         }
     }
 
+    @TbSnmpTransportComponent
     @Configuration
     static class Config {
         @Bean

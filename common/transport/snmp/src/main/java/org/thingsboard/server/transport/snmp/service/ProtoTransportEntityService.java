@@ -26,11 +26,13 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.util.TbSnmpTransportComponent;
 
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@TbSnmpTransportComponent
 @Service
 @RequiredArgsConstructor
 public class ProtoTransportEntityService {
