@@ -31,6 +31,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
 import {
   cloneSelectedTimewindow,
+  getTimezoneInfo,
   HistoryWindowType,
   initModelFromDefaultTimewindow,
   QuickTimeIntervalTranslationMap,
@@ -51,7 +52,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { WINDOW } from '@core/services/window.service';
 import { TimeService } from '@core/services/time.service';
 import { TooltipPosition } from '@angular/material/tooltip';
-import { deepClone } from '@core/utils';
+import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 // @dynamic
@@ -305,6 +306,12 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
         const endString = this.datePipe.transform(this.innerValue.history.fixedTimewindow.endTimeMs, 'yyyy-MM-dd HH:mm:ss');
         this.innerValue.displayValue += this.translate.instant('timewindow.period', {startTime: startString, endTime: endString});
       }
+    }
+    if (isDefinedAndNotNull(this.innerValue.timezone) && this.innerValue.timezone !== '') {
+      this.innerValue.displayValue += ' ';
+      this.innerValue.displayTimezoneAbbr = getTimezoneInfo(this.innerValue.timezone).abbr;
+    } else {
+      this.innerValue.displayTimezoneAbbr = '';
     }
   }
 
