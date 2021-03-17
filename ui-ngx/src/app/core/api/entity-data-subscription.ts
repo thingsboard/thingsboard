@@ -237,7 +237,7 @@ export class EntityDataSubscription {
       };
 
       if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
-        this.prepareSubscriptionCommands(this.dataCommand);
+        this.prepareSubscriptionCommands();
       }
 
       this.subscriber.subscriptionCommands.push(this.dataCommand);
@@ -256,8 +256,8 @@ export class EntityDataSubscription {
         if (this.started) {
           const targetCommand = this.entityDataSubscriptionOptions.isPaginatedDataSubscription ? this.dataCommand : this.subsCommand;
           if (this.entityDataSubscriptionOptions.type === widgetType.timeseries &&
-              !this.history && this.tsFields.length) {
-            const newSubsTw: SubscriptionTimewindow = this.listener.updateRealtimeSubscription();
+            !this.history && this.tsFields.length) {
+            const newSubsTw = this.listener.updateRealtimeSubscription();
             this.subsTw = newSubsTw;
             targetCommand.tsCmd.startTs = this.subsTw.startTs;
             targetCommand.tsCmd.timeWindow = this.subsTw.aggregation.timeWindow;
@@ -266,9 +266,10 @@ export class EntityDataSubscription {
             targetCommand.tsCmd.agg = this.subsTw.aggregation.type;
             targetCommand.tsCmd.fetchLatestPreviousPoint = this.subsTw.aggregation.stateData;
             this.dataAggregators.forEach((dataAggregator) => {
-              dataAggregator.reset(newSubsTw.startTs,  newSubsTw.aggregation.timeWindow, newSubsTw.aggregation.interval);
+              dataAggregator.reset(newSubsTw);
             });
           }
+          this.subscriber.setTsOffset(this.subsTw.tsOffset);
           targetCommand.query = this.dataCommand.query;
           this.subscriber.subscriptionCommands = [targetCommand];
         } else {
@@ -393,7 +394,7 @@ export class EntityDataSubscription {
     if (this.datasourceType === DatasourceType.entity) {
       this.subsCommand = new EntityDataCmd();
       this.subsCommand.cmdId = this.dataCommand.cmdId;
-      this.prepareSubscriptionCommands(this.subsCommand);
+      this.prepareSubscriptionCommands();
       if (!this.subsCommand.isEmpty()) {
         this.subscriber.subscriptionCommands = [this.subsCommand];
         this.subscriber.update();
@@ -404,11 +405,11 @@ export class EntityDataSubscription {
     this.started = true;
   }
 
-  private prepareSubscriptionCommands(cmd: EntityDataCmd) {
+  private prepareSubscriptionCommands() {
     if (this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
       if (this.tsFields.length > 0) {
         if (this.history) {
-          cmd.historyCmd = {
+          this.subsCommand.historyCmd = {
             keys: this.tsFields.map(key => key.key),
             startTs: this.subsTw.fixedWindow.startTimeMs,
             endTs: this.subsTw.fixedWindow.endTimeMs,
@@ -418,7 +419,7 @@ export class EntityDataSubscription {
             fetchLatestPreviousPoint: this.subsTw.aggregation.stateData
           };
         } else {
-          cmd.tsCmd = {
+          this.subsCommand.tsCmd = {
             keys: this.tsFields.map(key => key.key),
             startTs: this.subsTw.startTs,
             timeWindow: this.subsTw.aggregation.timeWindow,
@@ -429,9 +430,10 @@ export class EntityDataSubscription {
           };
         }
       }
+      this.subscriber.setTsOffset(this.subsTw.tsOffset);
     } else if (this.entityDataSubscriptionOptions.type === widgetType.latest) {
       if (this.latestValues.length > 0) {
-        cmd.latestCmd = {
+        this.subsCommand.latestCmd = {
           keys: this.latestValues
         };
       }
@@ -745,12 +747,7 @@ export class EntityDataSubscription {
         this.onData(data, dataKeyType, dataIndex, detectChanges, dataUpdatedCb);
       },
       tsKeyNames,
-      subsTw.startTs,
-      subsTw.aggregation.limit,
-      subsTw.aggregation.type,
-      subsTw.aggregation.timeWindow,
-      subsTw.aggregation.interval,
-      subsTw.aggregation.stateData,
+      subsTw,
       this.utils,
       this.entityDataSubscriptionOptions.ignoreDataUpdateOnIntervalTick
     );
@@ -827,7 +824,8 @@ export class EntityDataSubscription {
                 startTime = dataKey.lastUpdateTime + this.frequency;
                 endTime = dataKey.lastUpdateTime + deltaElapsed;
               } else {
-                startTime = this.entityDataSubscriptionOptions.subscriptionTimewindow.startTs;
+                startTime = this.entityDataSubscriptionOptions.subscriptionTimewindow.startTs +
+                  this.entityDataSubscriptionOptions.subscriptionTimewindow.tsOffset;
                 endTime = startTime + this.entityDataSubscriptionOptions.subscriptionTimewindow.realtimeWindowMs + this.frequency;
                 if (this.entityDataSubscriptionOptions.subscriptionTimewindow.aggregation.type === AggregationType.NONE) {
                   const time = endTime - this.frequency * this.entityDataSubscriptionOptions.subscriptionTimewindow.aggregation.limit;
@@ -835,8 +833,10 @@ export class EntityDataSubscription {
                 }
               }
             } else {
-              startTime = this.entityDataSubscriptionOptions.subscriptionTimewindow.fixedWindow.startTimeMs;
-              endTime = this.entityDataSubscriptionOptions.subscriptionTimewindow.fixedWindow.endTimeMs;
+              startTime = this.entityDataSubscriptionOptions.subscriptionTimewindow.fixedWindow.startTimeMs +
+                this.entityDataSubscriptionOptions.subscriptionTimewindow.tsOffset;
+              endTime = this.entityDataSubscriptionOptions.subscriptionTimewindow.fixedWindow.endTimeMs +
+                this.entityDataSubscriptionOptions.subscriptionTimewindow.tsOffset;
             }
           }
           generatedData.data[`${dataKey.name}_${dataKey.index}`] = this.generateSeries(dataKey, index, startTime, endTime);

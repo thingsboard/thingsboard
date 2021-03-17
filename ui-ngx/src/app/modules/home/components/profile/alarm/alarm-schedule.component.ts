@@ -94,11 +94,10 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
       items: this.fb.array(Array.from({length: 7}, (value, i) => this.defaultItemsScheduler(i)), this.validateItems)
     });
     this.alarmScheduleForm.get('type').valueChanges.subscribe((type) => {
-      getDefaultTimezone().subscribe((defaultTimezone) => {
-        this.alarmScheduleForm.reset({type, items: this.defaultItems, timezone: defaultTimezone}, {emitEvent: false});
-        this.updateValidators(type, true);
-        this.alarmScheduleForm.updateValueAndValidity();
-      });
+      const defaultTimezone = getDefaultTimezone();
+      this.alarmScheduleForm.reset({type, items: this.defaultItems, timezone: defaultTimezone}, {emitEvent: false});
+      this.updateValidators(type, true);
+      this.alarmScheduleForm.updateValueAndValidity();
     });
     this.alarmScheduleForm.valueChanges.subscribe(() => {
       this.updateModel();

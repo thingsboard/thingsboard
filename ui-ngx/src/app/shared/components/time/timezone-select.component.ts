@@ -16,7 +16,7 @@
 
 import { AfterViewInit, Component, forwardRef, Input, NgZone, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { map, mergeMap, share, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
@@ -42,10 +42,6 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
   modelValue: string | null;
 
   defaultTimezoneId: string = null;
-
-  timezones$ = getTimezones().pipe(
-    share()
-  );
 
   @Input()
   set defaultTimezone(timezone: string) {
@@ -138,23 +134,20 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
 
   writeValue(value: string | null): void {
     this.searchText = '';
-    getTimezoneInfo(value, this.defaultTimezoneId, this.userTimezoneByDefaultValue).subscribe(
-      (foundTimezone) => {
-        if (foundTimezone !== null) {
-          this.selectTimezoneFormGroup.get('timezone').patchValue(foundTimezone, {emitEvent: false});
-          if (foundTimezone.id !== value) {
-            setTimeout(() => {
-              this.updateView(foundTimezone.id);
-            }, 0);
-          } else {
-            this.modelValue = value;
-          }
-        } else {
-          this.modelValue = null;
-          this.selectTimezoneFormGroup.get('timezone').patchValue('', {emitEvent: false});
-        }
+    const foundTimezone = getTimezoneInfo(value, this.defaultTimezoneId, this.userTimezoneByDefaultValue);
+    if (foundTimezone !== null) {
+      this.selectTimezoneFormGroup.get('timezone').patchValue(foundTimezone, {emitEvent: false});
+      if (foundTimezone.id !== value) {
+        setTimeout(() => {
+          this.updateView(foundTimezone.id);
+        }, 0);
+      } else {
+        this.modelValue = value;
       }
-    );
+    } else {
+      this.modelValue = null;
+      this.selectTimezoneFormGroup.get('timezone').patchValue('', {emitEvent: false});
+    }
     this.dirty = true;
   }
 
@@ -170,14 +163,12 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
       this.ignoreClosePanel = false;
     } else {
       if (!this.modelValue && (this.defaultTimezoneId || this.userTimezoneByDefaultValue)) {
-        getTimezoneInfo(this.defaultTimezoneId, this.defaultTimezoneId, this.userTimezoneByDefaultValue).subscribe(
-          (defaultTimezoneInfo) => {
-            if (defaultTimezoneInfo !== null) {
-              this.ngZone.run(() => {
-                this.selectTimezoneFormGroup.get('timezone').reset(defaultTimezoneInfo, {emitEvent: true});
-              });
-            }
-       });
+        const defaultTimezoneInfo = getTimezoneInfo(this.defaultTimezoneId, this.defaultTimezoneId, this.userTimezoneByDefaultValue);
+        if (defaultTimezoneInfo !== null) {
+          this.ngZone.run(() => {
+            this.selectTimezoneFormGroup.get('timezone').reset(defaultTimezoneInfo, {emitEvent: true});
+          });
+        }
       }
     }
   }
@@ -196,12 +187,10 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
   fetchTimezones(searchText?: string): Observable<Array<TimezoneInfo>> {
     this.searchText = searchText;
     if (searchText && searchText.length) {
-      return getTimezones().pipe(
-        map((timezones) => timezones.filter((timezoneInfo) =>
-          timezoneInfo.name.toLowerCase().includes(searchText.toLowerCase())))
-      );
+      return of(getTimezones().filter((timezoneInfo) =>
+          timezoneInfo.name.toLowerCase().includes(searchText.toLowerCase())));
     }
-    return getTimezones();
+    return of(getTimezones());
   }
 
   clear() {

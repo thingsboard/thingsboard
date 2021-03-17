@@ -37,8 +37,10 @@ import {
 } from '@app/shared/models/widget.models';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
+  calculateIntervalEndTime,
+  calculateIntervalStartTime,
   createSubscriptionTimewindow,
-  createTimewindowForComparison,
+  createTimewindowForComparison, getCurrentTime,
   SubscriptionTimewindow,
   Timewindow,
   toHistoryTimewindow,
@@ -837,9 +839,11 @@ export class WidgetSubscription implements IWidgetSubscription {
     if (this.alarmDataListener) {
       this.ctx.alarmDataService.stopSubscription(this.alarmDataListener);
     }
+
     if (this.timeWindowConfig) {
       this.updateRealtimeSubscription();
     }
+
     this.alarmDataListener = {
       subscriptionTimewindow: this.subscriptionTimewindow,
       alarmSource: this.alarmSource,
@@ -1080,12 +1084,21 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   private updateTimewindow() {
     this.timeWindow.interval = this.subscriptionTimewindow.aggregation.interval || 1000;
+    this.timeWindow.timezone = this.subscriptionTimewindow.timezone;
     if (this.subscriptionTimewindow.realtimeWindowMs) {
-      this.timeWindow.maxTime = moment().valueOf() + this.timeWindow.stDiff;
-      this.timeWindow.minTime = this.timeWindow.maxTime - this.subscriptionTimewindow.realtimeWindowMs;
+      if (this.subscriptionTimewindow.quickInterval) {
+        const currentDate = getCurrentTime(this.subscriptionTimewindow.timezone);
+        this.timeWindow.maxTime = calculateIntervalEndTime(
+          this.subscriptionTimewindow.quickInterval, currentDate) + this.subscriptionTimewindow.tsOffset;
+        this.timeWindow.minTime = calculateIntervalStartTime(
+          this.subscriptionTimewindow.quickInterval, currentDate) + this.subscriptionTimewindow.tsOffset;
+      } else {
+        this.timeWindow.maxTime = moment().valueOf() + this.subscriptionTimewindow.tsOffset + this.timeWindow.stDiff;
+        this.timeWindow.minTime = this.timeWindow.maxTime - this.subscriptionTimewindow.realtimeWindowMs;
+      }
     } else if (this.subscriptionTimewindow.fixedWindow) {
-      this.timeWindow.maxTime = this.subscriptionTimewindow.fixedWindow.endTimeMs;
-      this.timeWindow.minTime = this.subscriptionTimewindow.fixedWindow.startTimeMs;
+      this.timeWindow.maxTime = this.subscriptionTimewindow.fixedWindow.endTimeMs + this.subscriptionTimewindow.tsOffset;
+      this.timeWindow.minTime = this.subscriptionTimewindow.fixedWindow.startTimeMs + this.subscriptionTimewindow.tsOffset;
     }
   }
 
@@ -1103,12 +1116,13 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   private updateComparisonTimewindow() {
     this.comparisonTimeWindow.interval = this.timewindowForComparison.aggregation.interval || 1000;
+    this.comparisonTimeWindow.timezone = this.timewindowForComparison.timezone;
     if (this.timewindowForComparison.realtimeWindowMs) {
       this.comparisonTimeWindow.maxTime = moment(this.timeWindow.maxTime).subtract(1, this.timeForComparison).valueOf();
-      this.comparisonTimeWindow.minTime = this.comparisonTimeWindow.maxTime - this.timewindowForComparison.realtimeWindowMs;
+      this.comparisonTimeWindow.minTime = moment(this.timeWindow.minTime).subtract(1, this.timeForComparison).valueOf();
     } else if (this.timewindowForComparison.fixedWindow) {
-      this.comparisonTimeWindow.maxTime = this.timewindowForComparison.fixedWindow.endTimeMs;
-      this.comparisonTimeWindow.minTime = this.timewindowForComparison.fixedWindow.startTimeMs;
+      this.comparisonTimeWindow.maxTime = this.timewindowForComparison.fixedWindow.endTimeMs + this.timewindowForComparison.tsOffset;
+      this.comparisonTimeWindow.minTime = this.timewindowForComparison.fixedWindow.startTimeMs + this.timewindowForComparison.tsOffset;
     }
   }
 
@@ -1335,7 +1349,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     this.onDataUpdated();
   }
 
-  private alarmsUpdated(_updated: Array<AlarmData>, alarms: PageData<AlarmData>) {
+  private alarmsUpdated(updated: Array<AlarmData>, alarms: PageData<AlarmData>) {
     this.alarmsLoaded(alarms, 0, 0);
   }
 
