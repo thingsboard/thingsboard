@@ -222,7 +222,6 @@ public class PgCaMigrator {
             try {
                 List<String> raw = Arrays.stream(currentLine.trim().split("\t"))
                         .map(String::trim)
-                        .filter(StringUtils::isNotEmpty)
                         .collect(Collectors.toList());
                 List<Object> values = function.apply(raw);
 
