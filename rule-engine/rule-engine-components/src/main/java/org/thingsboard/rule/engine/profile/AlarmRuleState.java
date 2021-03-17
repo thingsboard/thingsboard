@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpec;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
 import org.thingsboard.server.common.data.device.profile.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.CustomTimeSchedule;
 import org.thingsboard.server.common.data.device.profile.CustomTimeScheduleItem;
@@ -34,9 +35,7 @@ import org.thingsboard.server.common.data.device.profile.SpecificTimeSchedule;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.query.EntityKey;
-import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
-import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.KeyFilterPredicate;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
@@ -46,6 +45,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 @Data
@@ -55,7 +55,6 @@ class AlarmRuleState {
     private final AlarmSeverity severity;
     private final AlarmRule alarmRule;
     private final AlarmConditionSpec spec;
-    private final long requiredDurationInMs;
     private final long requiredRepeats;
     private final Set<AlarmConditionFilterKey> entityKeys;
     private PersistedAlarmRuleState state;
@@ -72,19 +71,13 @@ class AlarmRuleState {
             this.state = new PersistedAlarmRuleState(0L, 0L, 0L);
         }
         this.spec = getSpec(alarmRule);
-        long requiredDurationInMs = 0;
         long requiredRepeats = 0;
         switch (spec.getType()) {
-            case DURATION:
-                DurationAlarmConditionSpec duration = (DurationAlarmConditionSpec) spec;
-                requiredDurationInMs = duration.getUnit().toMillis(duration.getValue());
-                break;
             case REPEATING:
                 RepeatingAlarmConditionSpec repeating = (RepeatingAlarmConditionSpec) spec;
                 requiredRepeats = repeating.getCount();
                 break;
         }
-        this.requiredDurationInMs = requiredDurationInMs;
         this.requiredRepeats = requiredRepeats;
         this.dynamicPredicateValueCtx = dynamicPredicateValueCtx;
     }
@@ -233,18 +226,49 @@ class AlarmRuleState {
                 state.setDuration(0L);
                 updateFlag = true;
             }
+            long requiredDurationInMs = resolveRequiredDurationInMs(data);
             return state.getDuration() > requiredDurationInMs ? AlarmEvalResult.TRUE : AlarmEvalResult.NOT_YET_TRUE;
         } else {
             return AlarmEvalResult.FALSE;
         }
     }
 
-    public AlarmEvalResult eval(long ts) {
+    private long resolveRequiredDurationInMs(DataSnapshot data) {
+        AlarmConditionSpec alarmConditionSpec = getSpec();
+        AlarmConditionSpecType specType = alarmConditionSpec.getType();
+        long requiredDurationInMs = 0;
+        switch (specType) {
+            case DURATION:
+                DurationAlarmConditionSpec duration = (DurationAlarmConditionSpec) spec;
+                EntityKey entityKey = duration.getKey();
+                TimeUnit unit = duration.getUnit();
+                if (duration.getValue() != null) {
+                    requiredDurationInMs = unit.toMillis(duration.getValue());
+                }
+                if (entityKey != null) {
+                    AlarmConditionFilterKey alarmConditionFilterKey = AlarmConditionFilterKey.fromEntityKey(entityKey);
+                    if (alarmConditionFilterKey == null) {
+                        break;
+                    }
+                    EntityKeyValue durationEntityKeyValue = data.getValue(alarmConditionFilterKey);
+                    if (durationEntityKeyValue == null) {
+                        break;
+                    }
+                    Long durationValue = durationEntityKeyValue.getLngValue();
+                    requiredDurationInMs = unit.toMillis(durationValue);
+                }
+                break;
+        }
+        return requiredDurationInMs;
+    }
+
+    public AlarmEvalResult eval(long ts, DataSnapshot dataSnapshot) {
         switch (spec.getType()) {
             case SIMPLE:
             case REPEATING:
                 return AlarmEvalResult.NOT_YET_TRUE;
             case DURATION:
+                long requiredDurationInMs = resolveRequiredDurationInMs(dataSnapshot);
                 if (requiredDurationInMs > 0 && state.getLastEventTs() > 0 && ts > state.getLastEventTs()) {
                     long duration = state.getDuration() + (ts - state.getLastEventTs());
                     if (isActive(ts)) {
