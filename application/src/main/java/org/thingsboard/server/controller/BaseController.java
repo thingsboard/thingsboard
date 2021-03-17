@@ -91,6 +91,7 @@ import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.entityconfig.EntityConfigService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -236,6 +237,9 @@ public abstract class BaseController {
 
     @Autowired
     protected LwM2MModelsRepository lwM2MModelsRepository;
+
+    @Autowired
+    protected EntityConfigService entityConfigService;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -864,6 +868,15 @@ public abstract class BaseController {
         return null;
     }
 
+    protected ObjectNode getEntityConfigAdditionalInfo(String comment) throws ThingsboardException {
+        ObjectNode additionalInfo = json.createObjectNode();
+        if (!org.springframework.util.StringUtils.isEmpty(comment)) {
+            additionalInfo.put("comment", comment);
+        }
+        additionalInfo.put("userId", getCurrentUser().getUuidId().toString());
+        additionalInfo.put("userName", getCurrentUser().getName());
+        return additionalInfo;
+    }
     private void addTimeseries(ObjectNode entityNode, List<TsKvEntry> timeseries) throws Exception {
         if (timeseries != null && !timeseries.isEmpty()) {
             ArrayNode result = entityNode.putArray("timeseries");

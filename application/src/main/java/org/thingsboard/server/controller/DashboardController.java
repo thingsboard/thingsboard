@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.EntityConfigId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -107,17 +108,61 @@ public class DashboardController extends BaseController {
         }
     }
 
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/dashboard/{dashboardId}/entityConfig/{entityConfigId}/restore", method = RequestMethod.POST)
+    @ResponseBody
+    public Dashboard restoreDashboardConfig(@PathVariable(DASHBOARD_ID) String strDashboardId,
+                                            @PathVariable("entityConfigId") String strEntityConfigId,
+                                            @RequestParam(required = false) String comment) throws ThingsboardException {
+        checkParameter(DASHBOARD_ID, strDashboardId);
+        checkParameter("entityConfigId", strEntityConfigId);
+        try {
+            DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+            checkDashboardId(dashboardId, Operation.READ);
+            ObjectNode additionalInfo = getEntityConfigAdditionalInfo(comment);
+            return dashboardService.restoreDashboardConfig(getTenantId(), dashboardId, new EntityConfigId(toUUID(strEntityConfigId)), additionalInfo);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/dashboard/{dashboardId}/entityConfig/{entityConfigId}/restoreAsNew", method = RequestMethod.POST)
+    @ResponseBody
+    public Dashboard restoreDashboardAsNew(@PathVariable(DASHBOARD_ID) String strDashboardId,
+                                            @PathVariable("entityConfigId") String strEntityConfigId,
+                                            @RequestParam(required = false) String comment,
+                                            @RequestParam(required = false) String title) throws ThingsboardException {
+        checkParameter(DASHBOARD_ID, strDashboardId);
+        checkParameter("entityConfigId", strEntityConfigId);
+        try {
+            DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+            Dashboard dashboard = checkDashboardId(dashboardId, Operation.WRITE);
+            checkDashboardId(dashboardId, Operation.READ);
+            ObjectNode additionalInfo = getEntityConfigAdditionalInfo(comment);
+            Dashboard savedDashboard =  dashboardService.restoreDashboardAsNew(getTenantId(), dashboardId, new EntityConfigId(toUUID(strEntityConfigId)), title);
+            entityConfigService.saveEntityConfigForEntity(savedDashboard.getTenantId(), savedDashboard.getId(), dashboard.getConfiguration(), additionalInfo);
+            logEntityAction(savedDashboard.getId(), savedDashboard,
+                    null, ActionType.ADDED, null);
+
+            return savedDashboard;
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/dashboard", method = RequestMethod.POST)
     @ResponseBody
-    public Dashboard saveDashboard(@RequestBody Dashboard dashboard) throws ThingsboardException {
+    public Dashboard saveDashboard(@RequestBody Dashboard dashboard,
+                                   @RequestParam(required = false) String comment) throws ThingsboardException {
         try {
             dashboard.setTenantId(getCurrentUser().getTenantId());
 
             checkEntity(dashboard.getId(), dashboard, Resource.DASHBOARD);
-
+            ObjectNode additionalInfo = getEntityConfigAdditionalInfo(comment);
             Dashboard savedDashboard = checkNotNull(dashboardService.saveDashboard(dashboard));
-
+            entityConfigService.saveEntityConfigForEntity(savedDashboard.getTenantId(), savedDashboard.getId(), dashboard.getConfiguration(), additionalInfo);
             logEntityAction(savedDashboard.getId(), savedDashboard,
                     null,
                     dashboard.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);

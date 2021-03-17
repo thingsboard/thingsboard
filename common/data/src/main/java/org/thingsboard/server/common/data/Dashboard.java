@@ -17,13 +17,14 @@ package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.EntityConfigId;
 
 public class Dashboard extends DashboardInfo {
 
     private static final long serialVersionUID = 872682138346187503L;
-    
+
     private transient JsonNode configuration;
-    
+
     public Dashboard() {
         super();
     }

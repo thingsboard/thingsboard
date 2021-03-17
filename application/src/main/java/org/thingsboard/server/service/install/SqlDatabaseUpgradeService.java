@@ -425,6 +425,8 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Updating schema ...");
                     try {
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.2.0", SCHEMA_UPDATE_SQL);
+                        loadSql(schemaUpdateFile, conn);
                         conn.createStatement().execute("CREATE INDEX IF NOT EXISTS idx_device_device_profile_id ON device(tenant_id, device_profile_id);");
                         conn.createStatement().execute("ALTER TABLE dashboard ALTER COLUMN configuration TYPE varchar;");
                         conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3002001;");

@@ -196,9 +196,9 @@ public class ThingsboardInstallService {
                             break;
                         case "3.2.2":
                             log.info("Upgrading ThingsBoard from version 3.2.2 to 3.3.0 ...");
-                                databaseEntitiesUpgradeService.upgradeDatabase("3.2.2");
-
+                            databaseEntitiesUpgradeService.upgradeDatabase("3.2.2");
                             log.info("Updating system data...");
+                            dataUpdateService.updateData("3.2.2");
                             break;
                         default:
                             throw new RuntimeException("Unable to upgrade ThingsBoard, unsupported fromVersion: " + upgradeFromVersion);

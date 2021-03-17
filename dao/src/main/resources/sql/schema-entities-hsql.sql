@@ -428,3 +428,15 @@ CREATE TABLE IF NOT EXISTS resource (
     resource_value varchar,
     CONSTRAINT resource_unq_key UNIQUE (tenant_id, resource_type, resource_id)
 );
+
+CREATE TABLE IF NOT EXISTS entity_config (
+     id uuid NOT NULL CONSTRAINT entity_config_pkey PRIMARY KEY,
+     created_time bigint NOT NULL,
+     entity_id uuid,
+     entity_type varchar(255),
+     tenant_id uuid,
+     version bigint,
+     configuration varchar(10000000),
+     additional_info varchar
+);
+

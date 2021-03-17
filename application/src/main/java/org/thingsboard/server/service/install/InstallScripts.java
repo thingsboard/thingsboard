@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.install;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.DDFFileParser;
 import org.eclipse.leshan.core.model.DefaultDDFFileValidator;
@@ -37,6 +38,7 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.entityconfig.EntityConfigService;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -81,6 +83,8 @@ public class InstallScripts {
     public static final String JSON_EXT = ".json";
     public static final String XML_EXT = ".xml";
 
+    private static final ObjectMapper mapper = new ObjectMapper();
+
     @Value("${install.data_dir:}")
     private String dataDir;
 
@@ -89,6 +93,9 @@ public class InstallScripts {
 
     @Autowired
     private DashboardService dashboardService;
+
+    @Autowired
+    private EntityConfigService entityConfigService;
 
     @Autowired
     private WidgetTypeService widgetTypeService;
@@ -164,7 +171,7 @@ public class InstallScripts {
 
         ruleChainMetaData.setRuleChainId(ruleChain.getId());
         ruleChainService.saveRuleChainMetaData(new TenantId(EntityId.NULL_UUID), ruleChainMetaData);
-
+        entityConfigService.saveEntityConfigForEntity(tenantId, ruleChain.getId(), mapper.valueToTree(ruleChainMetaData), null);
         return ruleChain;
     }
 
@@ -278,6 +285,7 @@ public class InstallScripts {
                             Dashboard dashboard = objectMapper.treeToValue(dashboardJson, Dashboard.class);
                             dashboard.setTenantId(tenantId);
                             Dashboard savedDashboard = dashboardService.saveDashboard(dashboard);
+                            entityConfigService.saveEntityConfigForEntity(savedDashboard.getTenantId(), savedDashboard.getId(), dashboard.getConfiguration(), null);
                             if (customerId != null && !customerId.isNullUid()) {
                                 dashboardService.assignDashboardToCustomer(new TenantId(EntityId.NULL_UUID), savedDashboard.getId(), customerId);
                             }

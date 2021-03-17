@@ -16,19 +16,26 @@
 package org.thingsboard.server.dao.rule;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.message.ObjectArrayMessage;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.EntityConfig;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.EntityConfigId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -55,6 +62,7 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -74,6 +82,7 @@ import static org.thingsboard.server.common.data.DataConstants.TENANT;
 @Slf4j
 public class BaseRuleChainService extends AbstractEntityService implements RuleChainService {
 
+    private static final ObjectMapper mapper = new ObjectMapper();
     private static final int DEFAULT_PAGE_SIZE = 1000;
     @Autowired
     private RuleChainDao ruleChainDao;
@@ -103,6 +112,40 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             }
         }
         return savedRuleChain;
+    }
+
+
+    @Override
+    public RuleChainMetaData getRuleChainMetaDataByEntityConfigId(TenantId tenantId, RuleChainId ruleChainId, EntityConfigId entityConfigId) {
+        return getRuleChainMetaDataByEntityConfigId(tenantId, ruleChainId, entityConfigId, true);
+    }
+
+    private RuleChainMetaData getRuleChainMetaDataByEntityConfigId(TenantId tenantId, RuleChainId ruleChainId, EntityConfigId entityConfigId, boolean resetRuleNodeIds) {
+        log.trace("Executing getRuleChainMetaDataByEntityConfigId [{}]", ruleChainId);
+        EntityConfig entityConfig = entityConfigService.getEntityConfigById(tenantId, entityConfigId);
+        if (entityConfig != null) {
+            validateEntityConfig(ruleChainId, entityConfig);
+            try {
+                RuleChainMetaData metaData = mapper.treeToValue(entityConfig.getConfiguration(), RuleChainMetaData.class);
+                if (resetRuleNodeIds) {
+                    resetRuleNodeIds(Collections.singletonList(metaData));
+                }
+                return metaData;
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public RuleChainMetaData restoreRuleChainMetaData(TenantId tenantId, RuleChainId ruleChainId, EntityConfigId entityConfigId, JsonNode additionalInfo) {
+        log.trace("Executing restoreRuleChainMetaData [{}]", ruleChainId);
+        RuleChainMetaData ruleChainMetaData = getRuleChainMetaDataByEntityConfigId(tenantId, ruleChainId, entityConfigId, false);
+        if (ruleChainMetaData != null) {
+            entityConfigService.restoreEntityConfig(tenantId, ruleChainId, entityConfigId, additionalInfo);
+        }
+        return ruleChainMetaData;
     }
 
     @Override
@@ -137,6 +180,10 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         ruleChainDao.save(tenantId, ruleChain);
     }
 
+    private boolean contains(List<RuleNode> ruleNodes, RuleNodeId ruleNodeId) {
+        return ruleNodes.stream().filter(rn -> rn.getId().equals(ruleNodeId)).findAny().isPresent();
+    }
+
     @Override
     public RuleChainMetaData saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData) {
         Validator.validateId(ruleChainMetaData.getRuleChainId(), "Incorrect rule chain id.");
@@ -154,17 +201,22 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         List<RuleNode> toDelete = new ArrayList<>();
 
         Map<RuleNodeId, Integer> ruleNodeIndexMap = new HashMap<>();
+        List<RuleNode> existingRuleNodes = getRuleChainNodes(tenantId, ruleChainMetaData.getRuleChainId());
+
         if (nodes != null) {
             for (RuleNode node : nodes) {
                 if (node.getId() != null) {
-                    ruleNodeIndexMap.put(node.getId(), nodes.indexOf(node));
+                    if (contains(existingRuleNodes, node.getId())) {
+                        ruleNodeIndexMap.put(node.getId(), nodes.indexOf(node));
+                    } else {
+                        toAddOrUpdate.add(node);
+                    }
                 } else {
                     toAddOrUpdate.add(node);
                 }
             }
         }
 
-        List<RuleNode> existingRuleNodes = getRuleChainNodes(tenantId, ruleChainMetaData.getRuleChainId());
         for (RuleNode existingNode : existingRuleNodes) {
             deleteEntityRelations(tenantId, existingNode.getId());
             Integer index = ruleNodeIndexMap.get(existingNode.getId());
@@ -547,6 +599,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     private void checkRuleNodesAndDelete(TenantId tenantId, RuleChainId ruleChainId) {
         try{
             ruleChainDao.removeById(tenantId, ruleChainId.getId());
+            entityConfigService.deleteEntityConfigsByEntityId(tenantId, ruleChainId);
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_default_rule_chain_device_profile")) {

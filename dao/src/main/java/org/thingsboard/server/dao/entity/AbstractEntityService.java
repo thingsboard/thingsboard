@@ -18,8 +18,11 @@ package org.thingsboard.server.dao.entity;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.server.common.data.EntityConfig;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.entityconfig.EntityConfigService;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.RelationService;
 
 import java.util.Optional;
@@ -29,6 +32,9 @@ public abstract class AbstractEntityService {
 
     @Autowired
     protected RelationService relationService;
+
+    @Autowired
+    protected EntityConfigService entityConfigService;
 
     protected void deleteEntityRelations(TenantId tenantId, EntityId entityId) {
         log.trace("Executing deleteEntityRelations [{}]", entityId);
@@ -42,6 +48,12 @@ public abstract class AbstractEntityService {
             return Optional.of((ConstraintViolationException) (t.getCause()));
         } else {
             return Optional.empty();
+        }
+    }
+
+    protected void validateEntityConfig(EntityId entityId, EntityConfig entityConfig) {
+        if (!entityId.equals(entityConfig.getEntityId())) {
+            throw new DataValidationException("Entity Configuration belongs to different entity!");
         }
     }
 }
