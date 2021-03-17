@@ -80,7 +80,7 @@ class AlarmState {
 
     public boolean process(TbContext ctx, long ts) throws ExecutionException, InterruptedException {
         initCurrentAlarm(ctx);
-        return createOrClearAlarms(ctx, ts, null, AlarmRuleState::eval);
+        return createOrClearAlarms(ctx, ts, null, (alarmState, tsParam) -> alarmState.eval(tsParam, dataSnapshot));
     }
 
     public <T> boolean createOrClearAlarms(TbContext ctx, T data, SnapshotUpdate update, BiFunction<AlarmRuleState, T, AlarmEvalResult> evalFunction) {
