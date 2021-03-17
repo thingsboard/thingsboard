@@ -91,6 +91,17 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
     return this.aggregationValue;
   }
 
+  timezoneValue = false;
+
+  @Input()
+  set timezone(val) {
+    this.timezoneValue = coerceBooleanProperty(val);
+  }
+
+  get timezone() {
+    return this.timezoneValue;
+  }
+
   isToolbarValue = false;
 
   @Input()
@@ -171,7 +182,7 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
     });
     if (isGtXs) {
       config.minWidth = '417px';
-      config.maxHeight = '440px';
+      config.maxHeight = '500px';
       const panelHeight = 375;
       const panelWidth = 417;
       const el = this.timewindowPanelOrigin.elementRef.nativeElement;
@@ -227,6 +238,7 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
         timewindow: deepClone(this.innerValue),
         historyOnly: this.historyOnly,
         aggregation: this.aggregation,
+        timezone: this.timezone,
         isEdit: this.isEdit
       }
     );
