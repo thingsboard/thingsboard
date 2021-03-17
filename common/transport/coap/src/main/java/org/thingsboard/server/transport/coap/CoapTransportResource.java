@@ -304,7 +304,8 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
     }
 
     private String getTokenFromRequest(Request request) {
-        return request.getSource().getHostAddress() + ":" + request.getSourcePort() + ":" + request.getTokenString();
+        return (request.getSourceContext() != null ? request.getSourceContext().getPeerAddress().getAddress().getHostAddress() : "null")
+                + ":" + (request.getSourceContext() != null ? request.getSourceContext().getPeerAddress().getPort() : -1) + ":" + request.getTokenString();
     }
 
     private Optional<DeviceTokenCredentials> decodeCredentials(Request request) {
