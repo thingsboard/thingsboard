@@ -430,6 +430,38 @@ export class EntityDataUpdate extends DataUpdate<EntityData> {
   constructor(msg: EntityDataUpdateMsg) {
     super(msg);
   }
+
+  public prepareData(tsOffset: number) {
+    if (this.data) {
+      this.processEntityData(this.data.data, tsOffset);
+    }
+    if (this.update) {
+      this.processEntityData(this.update, tsOffset);
+    }
+  }
+
+  private processEntityData(data: Array<EntityData>, tsOffset: number) {
+    for (const entityData of data) {
+      if (entityData.timeseries) {
+        for (const key of Object.keys(entityData.timeseries)) {
+          const tsValues = entityData.timeseries[key];
+          for (const tsValue of tsValues) {
+            tsValue.ts += tsOffset;
+          }
+        }
+      }
+      if (entityData.latest) {
+        for (const entityKeyType of Object.keys(entityData.latest)) {
+          const keyTypeValues = entityData.latest[entityKeyType];
+          for (const key of Object.keys(keyTypeValues)) {
+            const tsValue = keyTypeValues[key];
+            tsValue.ts += tsOffset;
+          }
+        }
+      }
+    }
+  }
+
 }
 
 export class AlarmDataUpdate extends DataUpdate<AlarmData> {
@@ -467,6 +499,8 @@ export class TelemetrySubscriber {
   private reconnectSubject = new Subject();
 
   private zone: NgZone;
+
+  private tsOffset = 0;
 
   public subscriptionCommands: Array<WebsocketCmd>;
 
@@ -522,6 +556,10 @@ export class TelemetrySubscriber {
     this.reconnectSubject.complete();
   }
 
+  public setTsOffset(tsOffset: number) {
+    this.tsOffset = tsOffset;
+  }
+
   public onData(message: SubscriptionUpdate) {
     const cmdId = message.subscriptionId;
     let keys: string[];
@@ -545,6 +583,9 @@ export class TelemetrySubscriber {
   }
 
   public onEntityData(message: EntityDataUpdate) {
+    if (this.tsOffset) {
+      message.prepareData(this.tsOffset);
+    }
     if (this.zone) {
       this.zone.run(
         () => {

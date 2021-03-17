@@ -49,7 +49,7 @@
                         formControlName="quickInterval"
                         onlyCurrentInterval="true"
                         [fxShow]="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL"
-                        [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+                        [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
                                 timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL"
                         style="padding-top: 8px; min-width: 364px"></tb-quick-time-interval>
                     </section>
@@ -99,7 +99,7 @@
                         formControlName="quickInterval"
                         [fxShow]="timewindowForm.get('history.historyType').value === historyTypes.INTERVAL"
                         [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
-                                timewindowForm.get('history.historyType').value === historyTypes.INTERVAL"
+                              timewindowForm.get('history.historyType').value === historyTypes.INTERVAL"
                         style="padding-top: 8px; min-width: 364px"></tb-quick-time-interval>
                     </section>
                   </mat-radio-button>
@@ -176,6 +176,16 @@
           [min]="minHistoryAggInterval()" [max]="maxHistoryAggInterval()"
           predefinedName="aggregation.group-interval">
         </tb-timeinterval>
+      </div>
+      <div *ngIf="timezone" class="mat-content mat-padding" fxLayout="row">
+        <section fxLayout="column" [fxShow]="isEdit">
+          <label class="tb-small hide-label" translate>timewindow.hide</label>
+          <mat-checkbox [ngModelOptions]="{standalone: true}" [(ngModel)]="timewindow.hideTimezone"
+                        (ngModelChange)="onHideTimezoneChanged()"></mat-checkbox>
+        </section>
+        <tb-timezone-select fxFlex [fxShow]="isEdit || !timewindow.hideTimezone"
+          formControlName="timezone">
+        </tb-timezone-select>
       </div>
       <div fxLayout="row" class="tb-panel-actions" fxLayoutAlign="end center">
         <button type="button"

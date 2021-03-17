@@ -38,6 +38,7 @@ export interface TimewindowPanelData {
   historyOnly: boolean;
   timewindow: Timewindow;
   aggregation: boolean;
+  timezone: boolean;
   isEdit: boolean;
 }
 
@@ -51,6 +52,8 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
   historyOnly = false;
 
   aggregation = false;
+
+  timezone = false;
 
   isEdit = false;
 
@@ -82,6 +85,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     this.historyOnly = data.historyOnly;
     this.timewindow = data.timewindow;
     this.aggregation = data.aggregation;
+    this.timezone = data.timezone;
     this.isEdit = data.isEdit;
   }
 
@@ -89,6 +93,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     const hideInterval = this.timewindow.hideInterval || false;
     const hideAggregation = this.timewindow.hideAggregation || false;
     const hideAggInterval = this.timewindow.hideAggInterval || false;
+    const hideTimezone = this.timewindow.hideTimezone || false;
 
     this.timewindowForm = this.fb.group({
         realtime: this.fb.group(
@@ -154,7 +159,12 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
               disabled: hideAggInterval
             }, [Validators.min(this.minDatapointsLimit()), Validators.max(this.maxDatapointsLimit())])
           }
-        )
+        ),
+        timezone: this.fb.control({
+          value: this.timewindow.timezone !== 'undefined'
+            ? this.timewindow.timezone : null,
+          disabled: hideTimezone
+        })
     });
   }
 
@@ -171,13 +181,16 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
       timewindowMs: timewindowFormValue.history.timewindowMs,
       interval: timewindowFormValue.history.interval,
       fixedTimewindow: timewindowFormValue.history.fixedTimewindow,
-      quickInterval: timewindowFormValue.history.quickInterval
+      quickInterval: timewindowFormValue.history.quickInterval,
     };
     if (this.aggregation) {
       this.timewindow.aggregation = {
         type: timewindowFormValue.aggregation.type,
         limit: timewindowFormValue.aggregation.limit
       };
+    }
+    if (this.timezone) {
+      this.timewindow.timezone = timewindowFormValue.timezone;
     }
     this.result = this.timewindow;
     this.overlayRef.dispose();
@@ -272,6 +285,15 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
       this.timewindowForm.get('aggregation.limit').disable({emitEvent: false});
     } else {
       this.timewindowForm.get('aggregation.limit').enable({emitEvent: false});
+    }
+    this.timewindowForm.markAsDirty();
+  }
+
+  onHideTimezoneChanged() {
+    if (this.timewindow.hideTimezone) {
+      this.timewindowForm.get('timezone').disable({emitEvent: false});
+    } else {
+      this.timewindowForm.get('timezone').enable({emitEvent: false});
     }
     this.timewindowForm.markAsDirty();
   }
