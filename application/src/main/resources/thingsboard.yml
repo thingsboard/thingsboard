@@ -110,7 +110,7 @@ security:
     # Enable/disable claiming devices, if false -> the device's [claimingAllowed] SERVER_SCOPE attribute must be set to [true] to allow claiming specific device
     allowClaimingByDefault: "${SECURITY_CLAIM_ALLOW_CLAIMING_BY_DEFAULT:true}"
     # Time allowed to claim the device in milliseconds
-    duration: "${SECURITY_CLAIM_DURATION:60000}" # 1 minute, note this value must equal claimDevices.timeToLiveInMinutes value
+    duration: "${SECURITY_CLAIM_DURATION:86400000}" # 1 minute, note this value must equal claimDevices.timeToLiveInMinutes value
   basic:
     enabled: "${SECURITY_BASIC_ENABLED:false}"
   oauth2:
@@ -348,8 +348,8 @@ caffeine:
       timeToLiveInMinutes: 1440
       maxSize: 0
     claimDevices:
-      timeToLiveInMinutes: 1
-      maxSize: 0
+      timeToLiveInMinutes: 1440
+      maxSize: 1000
     securitySettings:
       timeToLiveInMinutes: 1440
       maxSize: 0
