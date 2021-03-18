@@ -18,8 +18,10 @@ import { SubscriptionData, SubscriptionDataHolder } from '@app/shared/models/tel
 import {
   AggregationType,
   calculateIntervalEndTime,
-  calculateIntervalStartTime, getCurrentTime,
-  QuickTimeInterval, SubscriptionTimewindow
+  calculateIntervalStartTime,
+  getCurrentTime,
+  getCurrentTimeForComparison,
+  SubscriptionTimewindow
 } from '@shared/models/time/time.models';
 import { UtilsService } from '@core/services/utils.service';
 import { deepClone } from '@core/utils';
@@ -139,7 +141,8 @@ export class DataAggregator {
     this.intervalScheduledTime = this.utils.currentPerfTime();
     this.startTs = this.subsTw.startTs + this.subsTw.tsOffset;
     if (this.subsTw.quickInterval) {
-      this.endTs = calculateIntervalEndTime(this.subsTw.quickInterval, null, this.subsTw.timezone) + this.subsTw.tsOffset;
+      const currentDate = this.getCurrentTime();
+      this.endTs = calculateIntervalEndTime(this.subsTw.quickInterval, currentDate) + this.subsTw.tsOffset;
     } else {
       this.endTs = this.startTs + this.subsTw.aggregation.timeWindow;
     }
@@ -166,7 +169,8 @@ export class DataAggregator {
         this.elapsed = 0;
         this.dataReceived = true;
         if (this.subsTw.quickInterval) {
-          this.endTs = calculateIntervalEndTime(this.subsTw.quickInterval, null, this.subsTw.timezone) + this.subsTw.tsOffset;
+          const currentDate = this.getCurrentTime();
+          this.endTs = calculateIntervalEndTime(this.subsTw.quickInterval, currentDate) + this.subsTw.tsOffset;
         } else {
           this.endTs = this.startTs + this.subsTw.aggregation.timeWindow;
         }
@@ -207,7 +211,7 @@ export class DataAggregator {
       if (delta || !this.data) {
         const tickTs = delta * this.subsTw.aggregation.interval;
         if (this.subsTw.quickInterval) {
-          const currentDate = getCurrentTime(this.subsTw.timezone);
+          const currentDate = this.getCurrentTime();
           this.startTs = calculateIntervalStartTime(this.subsTw.quickInterval, currentDate) + this.subsTw.tsOffset;
           this.endTs = calculateIntervalEndTime(this.subsTw.quickInterval, currentDate) + this.subsTw.tsOffset;
         } else {
@@ -353,6 +357,14 @@ export class DataAggregator {
       return Number(val);
     } else {
       return val;
+    }
+  }
+
+  private getCurrentTime() {
+    if (this.subsTw.timeForComparison) {
+      return getCurrentTimeForComparison(this.subsTw.timeForComparison, this.subsTw.timezone);
+    } else {
+      return getCurrentTime(this.subsTw.timezone);
     }
   }
 

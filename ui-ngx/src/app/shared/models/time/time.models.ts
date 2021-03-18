@@ -118,6 +118,7 @@ export interface SubscriptionTimewindow {
   realtimeWindowMs?: number;
   fixedWindow?: FixedWindow;
   aggregation?: SubscriptionAggregation;
+  timeForComparison?: moment_.unitOfTime.DurationConstructor;
 }
 
 export interface WidgetTimewindow {
@@ -208,6 +209,14 @@ export function defaultTimewindow(timeService: TimeService): Timewindow {
   return timewindow;
 }
 
+function getTimewindowType(timewindow: Timewindow): TimewindowType {
+  if (isUndefined(timewindow.selectedTab)) {
+    return isDefined(timewindow.realtime) ? TimewindowType.REALTIME : TimewindowType.HISTORY;
+  } else {
+    return timewindow.selectedTab;
+  }
+}
+
 export function initModelFromDefaultTimewindow(value: Timewindow, timeService: TimeService): Timewindow {
   const model = defaultTimewindow(timeService);
   if (value) {
@@ -215,15 +224,7 @@ export function initModelFromDefaultTimewindow(value: Timewindow, timeService: T
     model.hideAggregation = value.hideAggregation;
     model.hideAggInterval = value.hideAggInterval;
     model.hideTimezone = value.hideTimezone;
-    if (isUndefined(value.selectedTab)) {
-      if (value.realtime) {
-        model.selectedTab = TimewindowType.REALTIME;
-      } else {
-        model.selectedTab = TimewindowType.HISTORY;
-      }
-    } else {
-      model.selectedTab = value.selectedTab;
-    }
+    model.selectedTab = getTimewindowType(value);
     if (model.selectedTab === TimewindowType.REALTIME) {
       if (isDefined(value.realtime.interval)) {
         model.realtime.interval = value.realtime.interval;
@@ -328,6 +329,10 @@ export function calculateTsOffset(timezone?: string): number {
   }
 }
 
+export function isHistoryTypeTimewindow(timewindow: Timewindow): boolean {
+  return getTimewindowType(timewindow) === TimewindowType.HISTORY;
+}
+
 export function createSubscriptionTimewindow(timewindow: Timewindow, stDiff: number, stateData: boolean,
                                              timeService: TimeService): SubscriptionTimewindow {
   const subscriptionTimewindow: SubscriptionTimewindow = {
@@ -352,10 +357,7 @@ export function createSubscriptionTimewindow(timewindow: Timewindow, stDiff: num
       limit: timewindow.aggregation.limit || timeService.getMaxDatapointsLimit()
     };
   }
-  let selectedTab = timewindow.selectedTab;
-  if (isUndefined(selectedTab)) {
-    selectedTab = isDefined(timewindow.realtime) ? TimewindowType.REALTIME : TimewindowType.HISTORY;
-  }
+  const selectedTab = getTimewindowType(timewindow);
   if (selectedTab === TimewindowType.REALTIME) {
     let realtimeType = timewindow.realtime.realtimeType;
     if (isUndefined(realtimeType)) {
@@ -558,10 +560,15 @@ export function createTimewindowForComparison(subscriptionTimewindow: Subscripti
   const timewindowForComparison: SubscriptionTimewindow = {
     fixedWindow: null,
     realtimeWindowMs: null,
-    aggregation: subscriptionTimewindow.aggregation
+    aggregation: subscriptionTimewindow.aggregation,
+    tsOffset: subscriptionTimewindow.tsOffset
   };
 
   if (subscriptionTimewindow.realtimeWindowMs) {
+    if (subscriptionTimewindow.quickInterval) {
+      timewindowForComparison.quickInterval = subscriptionTimewindow.quickInterval;
+      timewindowForComparison.timeForComparison = timeUnit;
+    }
     timewindowForComparison.startTs = moment(subscriptionTimewindow.startTs).subtract(1, timeUnit).valueOf();
     timewindowForComparison.realtimeWindowMs = subscriptionTimewindow.realtimeWindowMs;
   } else if (subscriptionTimewindow.fixedWindow) {
@@ -796,4 +803,8 @@ export function getCurrentTime(tz?: string): moment_.Moment {
 
 export function getTimezone(tz: string): moment_.Moment {
     return moment.tz(tz);
+}
+
+export function getCurrentTimeForComparison(timeForComparison: moment_.unitOfTime.DurationConstructor, tz?: string): moment_.Moment {
+  return getCurrentTime(tz).subtract(1, timeForComparison);
 }

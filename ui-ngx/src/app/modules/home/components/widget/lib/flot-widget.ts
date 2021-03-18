@@ -57,7 +57,7 @@ import {
 } from './flot-widget.models';
 import * as moment_ from 'moment';
 import * as tinycolor_ from 'tinycolor2';
-import { AggregationType } from '@shared/models/time/time.models';
+import { AggregationType, isHistoryTypeTimewindow } from '@shared/models/time/time.models';
 import { CancelAnimationFrame } from '@core/services/raf.service';
 import { UtilsService } from '@core/services/utils.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -91,6 +91,8 @@ export class TbFlot {
   private readonly tooltipIndividual: boolean;
   private readonly tooltipCumulative: boolean;
   private readonly hideZeros: boolean;
+
+  private comparisonEnabled: boolean;
 
   private readonly defaultBarWidth: number;
 
@@ -157,6 +159,9 @@ export class TbFlot {
       ? this.settings.tooltipIndividual : false);
     this.tooltipCumulative = isDefined(this.settings.tooltipCumulative) ? this.settings.tooltipCumulative : false;
     this.hideZeros = isDefined(this.settings.hideZeros) ? this.settings.hideZeros : false;
+
+    this.comparisonEnabled = this.settings.comparisonEnabled &&
+      isHistoryTypeTimewindow(this.ctx.defaultSubscription.timeWindowConfig);
 
     const font = {
       color: this.settings.fontColor || '#545454',
@@ -263,7 +268,7 @@ export class TbFlot {
         };
       }
 
-      if (this.settings.comparisonEnabled) {
+      if (this.comparisonEnabled) {
         const xaxis = deepClone(this.xaxis);
         xaxis.position = 'top';
         if (this.settings.xaxisSecond) {
@@ -425,7 +430,7 @@ export class TbFlot {
         fill: keySettings.fillLines === true
       };
 
-      if (this.settings.stack && !this.settings.comparisonEnabled) {
+      if (this.settings.stack && !this.comparisonEnabled) {
         series.stack = !keySettings.excludeFromStacking;
       } else {
         series.stack = false;
@@ -557,7 +562,7 @@ export class TbFlot {
       }
       this.options.xaxes[0].min = this.subscription.timeWindow.minTime;
       this.options.xaxes[0].max = this.subscription.timeWindow.maxTime;
-      if (this.settings.comparisonEnabled) {
+      if (this.comparisonEnabled) {
         this.options.xaxes[1].min = this.subscription.comparisonTimeWindow.minTime;
         this.options.xaxes[1].max = this.subscription.comparisonTimeWindow.maxTime;
       }
@@ -636,7 +641,7 @@ export class TbFlot {
 
           this.options.xaxes[0].min = this.subscription.timeWindow.minTime;
           this.options.xaxes[0].max = this.subscription.timeWindow.maxTime;
-          if (this.settings.comparisonEnabled) {
+          if (this.comparisonEnabled) {
             this.options.xaxes[1].min = this.subscription.comparisonTimeWindow.minTime;
             this.options.xaxes[1].max = this.subscription.comparisonTimeWindow.maxTime;
           }
@@ -654,7 +659,7 @@ export class TbFlot {
           } else {
             this.plot.getOptions().xaxes[0].min = this.subscription.timeWindow.minTime;
             this.plot.getOptions().xaxes[0].max = this.subscription.timeWindow.maxTime;
-            if (this.settings.comparisonEnabled) {
+            if (this.comparisonEnabled) {
               this.plot.getOptions().xaxes[1].min = this.subscription.comparisonTimeWindow.minTime;
               this.plot.getOptions().xaxes[1].max = this.subscription.comparisonTimeWindow.maxTime;
             }
@@ -1293,7 +1298,7 @@ export class TbFlot {
     const results: TbFlotHoverInfo[] = [{
       seriesHover: []
     }];
-    if (this.settings.comparisonEnabled) {
+    if (this.comparisonEnabled) {
       results.push({
         seriesHover: []
       });
