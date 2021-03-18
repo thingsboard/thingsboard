@@ -15,7 +15,7 @@
 ///
 
 import { DataSet, DataSetHolder, DatasourceType, widgetType } from '@shared/models/widget.models';
-import { AggregationType, SubscriptionTimewindow } from '@shared/models/time/time.models';
+import { AggregationType, getCurrentTime, SubscriptionTimewindow } from '@shared/models/time/time.models';
 import {
   EntityData,
   EntityDataPageLink,
@@ -74,6 +74,7 @@ export interface EntityDataSubscriptionOptions {
   keyFilters?: Array<KeyFilter>;
   additionalKeyFilters?: Array<KeyFilter>;
   subscriptionTimewindow?: SubscriptionTimewindow;
+  latestTsOffset?: number;
 }
 
 export class EntityDataSubscription {
@@ -95,6 +96,7 @@ export class EntityDataSubscription {
   private entityDataResolveSubject: Subject<EntityDataLoadResult>;
   private pageData: PageData<EntityData>;
   private subsTw: SubscriptionTimewindow;
+  private latestTsOffset: number;
   private dataAggregators: Array<DataAggregator>;
   private dataKeys: {[key: string]: Array<SubscriptionDataKey> | SubscriptionDataKey} = {};
   private datasourceData: {[index: number]: {[key: string]: DataSetHolder}};
@@ -177,6 +179,7 @@ export class EntityDataSubscription {
       this.started = true;
       this.dataResolved = true;
       this.subsTw = this.entityDataSubscriptionOptions.subscriptionTimewindow;
+      this.latestTsOffset = this.entityDataSubscriptionOptions.latestTsOffset;
       this.history = this.entityDataSubscriptionOptions.subscriptionTimewindow &&
         isObject(this.entityDataSubscriptionOptions.subscriptionTimewindow.fixedWindow);
       this.realtime = this.entityDataSubscriptionOptions.subscriptionTimewindow &&
@@ -237,7 +240,12 @@ export class EntityDataSubscription {
       };
 
       if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
-        this.prepareSubscriptionCommands();
+        this.prepareSubscriptionCommands(this.dataCommand);
+        if (this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
+          this.subscriber.setTsOffset(this.subsTw.tsOffset);
+        } else {
+          this.subscriber.setTsOffset(this.latestTsOffset);
+        }
       }
 
       this.subscriber.subscriptionCommands.push(this.dataCommand);
@@ -276,9 +284,15 @@ export class EntityDataSubscription {
           this.subscriber.subscriptionCommands = [this.dataCommand];
         }
       });
-
       this.subscriber.subscribe();
     } else if (this.datasourceType === DatasourceType.function) {
+      let tsOffset = 0;
+      if (this.entityDataSubscriptionOptions.type === widgetType.latest) {
+        tsOffset = this.entityDataSubscriptionOptions.latestTsOffset;
+      } else if (this.entityDataSubscriptionOptions.subscriptionTimewindow) {
+        tsOffset = this.entityDataSubscriptionOptions.subscriptionTimewindow.tsOffset;
+      }
+
       const entityData: EntityData = {
         entityId: {
           id: NULL_UUID,
@@ -289,7 +303,7 @@ export class EntityDataSubscription {
       };
       const name = DatasourceType.function;
       entityData.latest[EntityKeyType.ENTITY_FIELD] = {
-        name: {ts: Date.now(), value: name}
+        name: {ts: Date.now() + tsOffset, value: name}
       };
       const pageData: PageData<EntityData> = {
         data: [entityData],
@@ -299,7 +313,9 @@ export class EntityDataSubscription {
       };
       this.onPageData(pageData);
     } else if (this.datasourceType === DatasourceType.entityCount) {
+      this.latestTsOffset = this.entityDataSubscriptionOptions.latestTsOffset;
       this.subscriber = new TelemetrySubscriber(this.telemetryService);
+      this.subscriber.setTsOffset(this.latestTsOffset);
       this.countCommand = new EntityCountCmd();
       let keyFilters = this.entityDataSubscriptionOptions.keyFilters;
       if (this.entityDataSubscriptionOptions.additionalKeyFilters) {
@@ -332,13 +348,13 @@ export class EntityDataSubscription {
               latest: {
                 [EntityKeyType.ENTITY_FIELD]: {
                   name: {
-                    ts: Date.now(),
+                    ts: Date.now() + this.latestTsOffset,
                     value: DatasourceType.entityCount
                   }
                 },
                 [EntityKeyType.COUNT]: {
                   [countKey.name]: {
-                    ts: Date.now(),
+                    ts: Date.now() + this.latestTsOffset,
                     value: entityCountUpdate.count + ''
                   }
                 }
@@ -359,7 +375,7 @@ export class EntityDataSubscription {
               latest: {
                 [EntityKeyType.COUNT]: {
                   [countKey.name]: {
-                    ts: Date.now(),
+                    ts: Date.now() + this.latestTsOffset,
                     value: entityCountUpdate.count + ''
                   }
                 }
@@ -384,6 +400,7 @@ export class EntityDataSubscription {
       return;
     }
     this.subsTw = this.entityDataSubscriptionOptions.subscriptionTimewindow;
+    this.latestTsOffset = this.entityDataSubscriptionOptions.latestTsOffset;
     this.history = this.entityDataSubscriptionOptions.subscriptionTimewindow &&
       isObject(this.entityDataSubscriptionOptions.subscriptionTimewindow.fixedWindow);
     this.realtime = this.entityDataSubscriptionOptions.subscriptionTimewindow &&
@@ -394,10 +411,26 @@ export class EntityDataSubscription {
     if (this.datasourceType === DatasourceType.entity) {
       this.subsCommand = new EntityDataCmd();
       this.subsCommand.cmdId = this.dataCommand.cmdId;
-      this.prepareSubscriptionCommands();
-      if (!this.subsCommand.isEmpty()) {
+      this.prepareSubscriptionCommands(this.subsCommand);
+      let latestTsOffsetChanged = false;
+      if (this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
+        this.subscriber.setTsOffset(this.subsTw.tsOffset);
+      } else {
+        latestTsOffsetChanged = this.subscriber.setTsOffset(this.latestTsOffset);
+      }
+      if (latestTsOffsetChanged) {
+        if (this.listener.initialPageDataChanged) {
+          this.listener.initialPageDataChanged(this.pageData);
+        }
+      } else if (!this.subsCommand.isEmpty()) {
         this.subscriber.subscriptionCommands = [this.subsCommand];
         this.subscriber.update();
+      }
+    } else if (this.datasourceType === DatasourceType.entityCount) {
+      if (this.subscriber.setTsOffset(this.latestTsOffset)) {
+        if (this.listener.initialPageDataChanged) {
+          this.listener.initialPageDataChanged(this.pageData);
+        }
       }
     } else if (this.datasourceType === DatasourceType.function) {
       this.startFunction();
@@ -405,11 +438,11 @@ export class EntityDataSubscription {
     this.started = true;
   }
 
-  private prepareSubscriptionCommands() {
+  private prepareSubscriptionCommands(cmd: EntityDataCmd) {
     if (this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
       if (this.tsFields.length > 0) {
         if (this.history) {
-          this.subsCommand.historyCmd = {
+          cmd.historyCmd = {
             keys: this.tsFields.map(key => key.key),
             startTs: this.subsTw.fixedWindow.startTimeMs,
             endTs: this.subsTw.fixedWindow.endTimeMs,
@@ -419,7 +452,7 @@ export class EntityDataSubscription {
             fetchLatestPreviousPoint: this.subsTw.aggregation.stateData
           };
         } else {
-          this.subsCommand.tsCmd = {
+          cmd.tsCmd = {
             keys: this.tsFields.map(key => key.key),
             startTs: this.subsTw.startTs,
             timeWindow: this.subsTw.aggregation.timeWindow,
@@ -430,10 +463,9 @@ export class EntityDataSubscription {
           };
         }
       }
-      this.subscriber.setTsOffset(this.subsTw.tsOffset);
     } else if (this.entityDataSubscriptionOptions.type === widgetType.latest) {
       if (this.latestValues.length > 0) {
-        this.subsCommand.latestCmd = {
+        cmd.latestCmd = {
           keys: this.latestValues
         };
       }
@@ -783,7 +815,7 @@ export class EntityDataSubscription {
     } else {
       prevSeries = [0, 0];
     }
-    const time = Date.now();
+    const time = Date.now() + this.latestTsOffset;
     const value = dataKey.func(time, prevSeries[1]);
     const series: [number, any] = [time, value];
     this.datasourceData[0][dataKey.key].data = [series];
@@ -837,6 +869,10 @@ export class EntityDataSubscription {
                 this.entityDataSubscriptionOptions.subscriptionTimewindow.tsOffset;
               endTime = this.entityDataSubscriptionOptions.subscriptionTimewindow.fixedWindow.endTimeMs +
                 this.entityDataSubscriptionOptions.subscriptionTimewindow.tsOffset;
+            }
+            if (this.entityDataSubscriptionOptions.subscriptionTimewindow.quickInterval) {
+              const currentTime = getCurrentTime().valueOf() + this.entityDataSubscriptionOptions.subscriptionTimewindow.tsOffset;
+              endTime = Math.min(currentTime, endTime);
             }
           }
           generatedData.data[`${dataKey.name}_${dataKey.index}`] = this.generateSeries(dataKey, index, startTime, endTime);
