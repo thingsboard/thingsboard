@@ -31,8 +31,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
 import {
   cloneSelectedTimewindow,
+  getTimezoneInfo,
   HistoryWindowType,
   initModelFromDefaultTimewindow,
+  QuickTimeIntervalTranslationMap,
+  RealtimeWindowType,
   Timewindow,
   TimewindowType
 } from '@shared/models/time/time.models';
@@ -49,7 +52,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { WINDOW } from '@core/services/window.service';
 import { TimeService } from '@core/services/time.service';
 import { TooltipPosition } from '@angular/material/tooltip';
-import { deepClone } from '@core/utils';
+import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 // @dynamic
@@ -87,6 +90,17 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
 
   get aggregation() {
     return this.aggregationValue;
+  }
+
+  timezoneValue = false;
+
+  @Input()
+  set timezone(val) {
+    this.timezoneValue = coerceBooleanProperty(val);
+  }
+
+  get timezone() {
+    return this.timezoneValue;
   }
 
   isToolbarValue = false;
@@ -169,7 +183,7 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
     });
     if (isGtXs) {
       config.minWidth = '417px';
-      config.maxHeight = '440px';
+      config.maxHeight = '500px';
       const panelHeight = 375;
       const panelWidth = 417;
       const el = this.timewindowPanelOrigin.elementRef.nativeElement;
@@ -225,6 +239,7 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
         timewindow: deepClone(this.innerValue),
         historyOnly: this.historyOnly,
         aggregation: this.aggregation,
+        timezone: this.timezone,
         isEdit: this.isEdit
       }
     );
@@ -272,19 +287,31 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
 
   updateDisplayValue() {
     if (this.innerValue.selectedTab === TimewindowType.REALTIME && !this.historyOnly) {
-      this.innerValue.displayValue = this.translate.instant('timewindow.realtime') + ' - ' +
-        this.translate.instant('timewindow.last-prefix') + ' ' +
-        this.millisecondsToTimeStringPipe.transform(this.innerValue.realtime.timewindowMs);
+      this.innerValue.displayValue = this.translate.instant('timewindow.realtime') + ' - ';
+      if (this.innerValue.realtime.realtimeType === RealtimeWindowType.INTERVAL) {
+        this.innerValue.displayValue += this.translate.instant(QuickTimeIntervalTranslationMap.get(this.innerValue.realtime.quickInterval));
+      } else {
+        this.innerValue.displayValue +=  this.translate.instant('timewindow.last-prefix') + ' ' +
+          this.millisecondsToTimeStringPipe.transform(this.innerValue.realtime.timewindowMs);
+      }
     } else {
       this.innerValue.displayValue = !this.historyOnly ? (this.translate.instant('timewindow.history') + ' - ') : '';
       if (this.innerValue.history.historyType === HistoryWindowType.LAST_INTERVAL) {
         this.innerValue.displayValue += this.translate.instant('timewindow.last-prefix') + ' ' +
           this.millisecondsToTimeStringPipe.transform(this.innerValue.history.timewindowMs);
+      } else if (this.innerValue.history.historyType === HistoryWindowType.INTERVAL) {
+        this.innerValue.displayValue += this.translate.instant(QuickTimeIntervalTranslationMap.get(this.innerValue.history.quickInterval));
       } else {
         const startString = this.datePipe.transform(this.innerValue.history.fixedTimewindow.startTimeMs, 'yyyy-MM-dd HH:mm:ss');
         const endString = this.datePipe.transform(this.innerValue.history.fixedTimewindow.endTimeMs, 'yyyy-MM-dd HH:mm:ss');
         this.innerValue.displayValue += this.translate.instant('timewindow.period', {startTime: startString, endTime: endString});
       }
+    }
+    if (isDefinedAndNotNull(this.innerValue.timezone) && this.innerValue.timezone !== '') {
+      this.innerValue.displayValue += ' ';
+      this.innerValue.displayTimezoneAbbr = getTimezoneInfo(this.innerValue.timezone).abbr;
+    } else {
+      this.innerValue.displayTimezoneAbbr = '';
     }
   }
 

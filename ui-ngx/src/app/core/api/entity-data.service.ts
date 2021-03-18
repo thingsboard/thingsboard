@@ -32,6 +32,7 @@ import { Observable, of } from 'rxjs';
 export interface EntityDataListener {
   subscriptionType: widgetType;
   subscriptionTimewindow?: SubscriptionTimewindow;
+  latestTsOffset?: number;
   configDatasource: Datasource;
   configDatasourceIndex: number;
   dataLoaded: (pageData: PageData<EntityData>,
@@ -92,6 +93,8 @@ export class EntityDataService {
     if (listener.subscription) {
       if (listener.subscriptionType === widgetType.timeseries) {
         listener.subscriptionOptions.subscriptionTimewindow = deepClone(listener.subscriptionTimewindow);
+      } else if (listener.subscriptionType === widgetType.latest) {
+        listener.subscriptionOptions.latestTsOffset = listener.latestTsOffset;
       }
       listener.subscription.start();
     }
@@ -118,6 +121,8 @@ export class EntityDataService {
     listener.subscription = new EntityDataSubscription(listener, this.telemetryService, this.utils);
     if (listener.subscriptionType === widgetType.timeseries) {
       listener.subscriptionOptions.subscriptionTimewindow = deepClone(listener.subscriptionTimewindow);
+    } else if (listener.subscriptionType === widgetType.latest) {
+      listener.subscriptionOptions.latestTsOffset = listener.latestTsOffset;
     }
     return listener.subscription.subscribe();
   }

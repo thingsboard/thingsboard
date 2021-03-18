@@ -1988,7 +1988,8 @@
       "timezone": "Timezone",
       "select-timezone": "Select timezone",
       "no-timezones-matching": "No timezones matching '{{timezone}}' were found.",
-      "timezone-required": "Timezone is required."
+      "timezone-required": "Timezone is required.",
+      "browser-time": "Browser Time"
     },
     "queue": {
       "select_name": "Select queue name",
@@ -2118,7 +2119,24 @@
         "hours": "Hours",
         "minutes": "Minutes",
         "seconds": "Seconds",
-        "advanced": "Advanced"
+        "advanced": "Advanced",
+        "predefined": {
+          "yesterday": "Yesterday",
+          "day-before-yesterday": "Day before yesterday",
+          "this-day-last-week": "This day last week",
+          "previous-week": "Previous week",
+          "previous-month": "Previous month",
+          "previous-year": "Previous year",
+          "current-hour": "Current hour",
+          "current-day": "Current day",
+          "current-day-so-far": "Current day so far",
+          "current-week": "Current week",
+          "current-week-so-far": "Current week so far",
+          "current-month": "Current month",
+          "current-month-so-far": "Current month so far",
+          "current-year": "Current year",
+          "current-year-so-far": "Current year so far"
+        }
     },
     "timeunit": {
         "seconds": "Seconds",
@@ -2139,7 +2157,8 @@
         "date-range": "Date range",
         "last": "Last",
         "time-period": "Time period",
-        "hide": "Hide"
+        "hide": "Hide",
+        "interval": "Interval"
     },
     "user": {
         "user": "User",
