@@ -16,14 +16,17 @@
 
 import { SubscriptionData, SubscriptionDataHolder } from '@app/shared/models/telemetry/telemetry.models';
 import {
-  AggregationType,
+  AggregationType, calculateIntervalComparisonEndTime,
   calculateIntervalEndTime,
-  calculateIntervalStartTime, getCurrentTime,
-  QuickTimeInterval, SubscriptionTimewindow
+  calculateIntervalStartTime,
+  getCurrentTime,
+  getCurrentTimeForComparison,
+  SubscriptionTimewindow
 } from '@shared/models/time/time.models';
 import { UtilsService } from '@core/services/utils.service';
 import { deepClone } from '@core/utils';
 import Timeout = NodeJS.Timeout;
+import * as moment_ from 'moment';
 
 export declare type onAggregatedData = (data: SubscriptionData, detectChanges: boolean) => void;
 
@@ -85,7 +88,7 @@ export class DataAggregator {
   private intervalTimeoutHandle: Timeout;
   private intervalScheduledTime: number;
 
-  private startTs = this.subsTw.startTs + this.subsTw.tsOffset;
+  private startTs: number;
   private endTs: number;
   private elapsed: number;
 
@@ -137,12 +140,7 @@ export class DataAggregator {
     }
     this.subsTw = subsTw;
     this.intervalScheduledTime = this.utils.currentPerfTime();
-    this.startTs = this.subsTw.startTs + this.subsTw.tsOffset;
-    if (this.subsTw.quickInterval) {
-      this.endTs = calculateIntervalEndTime(this.subsTw.quickInterval, null, this.subsTw.timezone) + this.subsTw.tsOffset;
-    } else {
-      this.endTs = this.startTs + this.subsTw.aggregation.timeWindow;
-    }
+    this.calculateStartEndTs();
     this.elapsed = 0;
     this.aggregationTimeout = Math.max(this.subsTw.aggregation.interval, 1000);
     this.resetPending = true;
@@ -165,11 +163,7 @@ export class DataAggregator {
       if (!this.dataReceived) {
         this.elapsed = 0;
         this.dataReceived = true;
-        if (this.subsTw.quickInterval) {
-          this.endTs = calculateIntervalEndTime(this.subsTw.quickInterval, null, this.subsTw.timezone) + this.subsTw.tsOffset;
-        } else {
-          this.endTs = this.startTs + this.subsTw.aggregation.timeWindow;
-        }
+        this.calculateStartEndTs();
       }
       if (this.resetPending) {
         this.resetPending = false;
@@ -194,6 +188,21 @@ export class DataAggregator {
     }
   }
 
+  private calculateStartEndTs() {
+    this.startTs = this.subsTw.startTs + this.subsTw.tsOffset;
+    if (this.subsTw.quickInterval) {
+      if (this.subsTw.timeForComparison === 'previousInterval') {
+        const currentDate = getCurrentTime(this.subsTw.timezone);
+        this.endTs = calculateIntervalComparisonEndTime(this.subsTw.quickInterval, currentDate) + this.subsTw.tsOffset;
+      } else {
+        const currentDate = this.getCurrentTime();
+        this.endTs = calculateIntervalEndTime(this.subsTw.quickInterval, currentDate) + this.subsTw.tsOffset;
+      }
+    } else {
+      this.endTs = this.startTs + this.subsTw.aggregation.timeWindow;
+    }
+  }
+
   private onInterval(history?: boolean, detectChanges?: boolean) {
     const now = this.utils.currentPerfTime();
     this.elapsed += now - this.intervalScheduledTime;
@@ -207,7 +216,7 @@ export class DataAggregator {
       if (delta || !this.data) {
         const tickTs = delta * this.subsTw.aggregation.interval;
         if (this.subsTw.quickInterval) {
-          const currentDate = getCurrentTime(this.subsTw.timezone);
+          const currentDate = this.getCurrentTime();
           this.startTs = calculateIntervalStartTime(this.subsTw.quickInterval, currentDate) + this.subsTw.tsOffset;
           this.endTs = calculateIntervalEndTime(this.subsTw.quickInterval, currentDate) + this.subsTw.tsOffset;
         } else {
@@ -353,6 +362,14 @@ export class DataAggregator {
       return Number(val);
     } else {
       return val;
+    }
+  }
+
+  private getCurrentTime() {
+    if (this.subsTw.timeForComparison) {
+      return getCurrentTimeForComparison(this.subsTw.timeForComparison as moment_.unitOfTime.DurationConstructor, this.subsTw.timezone);
+    } else {
+      return getCurrentTime(this.subsTw.timezone);
     }
   }
 

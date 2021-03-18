@@ -1798,6 +1798,7 @@
         "avg": "avg",
         "total": "total",
         "comparison-time-ago": {
+            "previousInterval": "(previous interval)",
             "days": "(day ago)",
             "weeks": "(week ago)",
             "months": "(month ago)",

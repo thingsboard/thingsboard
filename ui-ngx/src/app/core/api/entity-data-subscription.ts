@@ -419,8 +419,8 @@ export class EntityDataSubscription {
         latestTsOffsetChanged = this.subscriber.setTsOffset(this.latestTsOffset);
       }
       if (latestTsOffsetChanged) {
-        if (this.listener.initialPageDataChanged) {
-          this.listener.initialPageDataChanged(this.pageData);
+        if (this.listener.forceReInit) {
+          this.listener.forceReInit();
         }
       } else if (!this.subsCommand.isEmpty()) {
         this.subscriber.subscriptionCommands = [this.subsCommand];
@@ -428,8 +428,8 @@ export class EntityDataSubscription {
       }
     } else if (this.datasourceType === DatasourceType.entityCount) {
       if (this.subscriber.setTsOffset(this.latestTsOffset)) {
-        if (this.listener.initialPageDataChanged) {
-          this.listener.initialPageDataChanged(this.pageData);
+        if (this.listener.forceReInit) {
+          this.listener.forceReInit();
         }
       }
     } else if (this.datasourceType === DatasourceType.function) {
