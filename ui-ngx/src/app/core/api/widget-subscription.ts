@@ -36,18 +36,6 @@ import {
   widgetType
 } from '@app/shared/models/widget.models';
 import { HttpErrorResponse } from '@angular/common/http';
-import {
-  calculateIntervalEndTime,
-  calculateIntervalStartTime,
-  calculateTsOffset,
-  createSubscriptionTimewindow,
-  createTimewindowForComparison,
-  getCurrentTime,
-  SubscriptionTimewindow,
-  Timewindow,
-  toHistoryTimewindow,
-  WidgetTimewindow
-} from '@app/shared/models/time/time.models';
 import { forkJoin, Observable, of, ReplaySubject, Subject, throwError } from 'rxjs';
 import { CancelAnimationFrame } from '@core/services/raf.service';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -68,6 +56,19 @@ import {
 } from '@shared/models/query/query.models';
 import { map } from 'rxjs/operators';
 import { AlarmDataListener } from '@core/api/alarm-data.service';
+import {
+  calculateIntervalEndTime,
+  calculateIntervalStartTime,
+  calculateTsOffset,
+  createSubscriptionTimewindow,
+  createTimewindowForComparison,
+  getCurrentTime,
+  isHistoryTypeTimewindow,
+  SubscriptionTimewindow,
+  Timewindow,
+  toHistoryTimewindow,
+  WidgetTimewindow
+} from '@app/shared/models/time/time.models';
 
 const moment = moment_;
 
@@ -387,7 +388,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.notifyDataLoaded();
       return of(null);
     }
-    if (this.comparisonEnabled) {
+    if (this.comparisonEnabled && isHistoryTypeTimewindow(this.timeWindowConfig)) {
       const additionalDatasources: Datasource[] = [];
       this.configuredDatasources.forEach((datasource, datasourceIndex) => {
         const additionalDataKeys: DataKey[] = [];
@@ -420,14 +421,14 @@ export class WidgetSubscription implements IWidgetSubscription {
         initialPageDataChanged: this.initialPageDataChanged.bind(this),
         dataUpdated: this.dataUpdated.bind(this),
         updateRealtimeSubscription: () => {
-          if (this.comparisonEnabled && datasource.isAdditional) {
+          if (this.comparisonEnabled && datasource.isAdditional && isHistoryTypeTimewindow(this.timeWindowConfig)) {
             return this.updateSubscriptionForComparison();
           } else {
             return this.updateRealtimeSubscription();
           }
         },
         setRealtimeSubscription: (subscriptionTimewindow) => {
-          if (this.comparisonEnabled && datasource.isAdditional) {
+          if (this.comparisonEnabled && datasource.isAdditional && isHistoryTypeTimewindow(this.timeWindowConfig)) {
             this.updateSubscriptionForComparison(subscriptionTimewindow);
           } else {
             this.updateRealtimeSubscription(deepClone(subscriptionTimewindow));
@@ -888,7 +889,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     if (!this.hasDataPageLink) {
       if (this.type === widgetType.timeseries && this.timeWindowConfig) {
         this.updateRealtimeSubscription();
-        if (this.comparisonEnabled) {
+        if (this.comparisonEnabled && isHistoryTypeTimewindow(this.timeWindowConfig)) {
           this.updateSubscriptionForComparison();
         }
       }
@@ -904,7 +905,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       const forceUpdate = !this.datasources.length;
       const notifyDataLoaded = !this.entityDataListeners.filter((listener) => listener.subscription ? true : false).length;
       this.entityDataListeners.forEach((listener) => {
-        if (this.comparisonEnabled && listener.configDatasource.isAdditional) {
+        if (this.comparisonEnabled && listener.configDatasource.isAdditional && isHistoryTypeTimewindow(this.timeWindowConfig)) {
           listener.subscriptionTimewindow = this.timewindowForComparison;
         } else {
           listener.subscriptionTimewindow = this.subscriptionTimewindow;
@@ -1147,8 +1148,8 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.comparisonTimeWindow.maxTime = moment(this.timeWindow.maxTime).subtract(1, this.timeForComparison).valueOf();
       this.comparisonTimeWindow.minTime = moment(this.timeWindow.minTime).subtract(1, this.timeForComparison).valueOf();
     } else if (this.timewindowForComparison.fixedWindow) {
-      this.comparisonTimeWindow.maxTime = this.timewindowForComparison.fixedWindow.endTimeMs + this.timewindowForComparison.tsOffset;
-      this.comparisonTimeWindow.minTime = this.timewindowForComparison.fixedWindow.startTimeMs + this.timewindowForComparison.tsOffset;
+      this.comparisonTimeWindow.maxTime = this.timewindowForComparison.fixedWindow.endTimeMs;
+      this.comparisonTimeWindow.minTime = this.timewindowForComparison.fixedWindow.startTimeMs;
     }
   }
 
@@ -1261,7 +1262,7 @@ export class WidgetSubscription implements IWidgetSubscription {
         index++;
       });
     });
-    if (this.comparisonEnabled) {
+    if (this.comparisonEnabled && isHistoryTypeTimewindow(this.timeWindowConfig)) {
       this.datasourcePages.forEach(datasourcePage => {
         datasourcePage.data.forEach((datasource, dIndex) => {
           if (datasource.isAdditional) {
