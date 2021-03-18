@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -202,7 +203,6 @@ public class InstallScripts {
     }
 
     public void loadSystemLwm2mResources() throws Exception {
-//        Path modelsDir = Paths.get("/home/nick/Igor_project/thingsboard_ce_3_2_docker/thingsboard/common/transport/lwm2m/src/main/resources/models/");
         Path modelsDir = Paths.get(getDataDir(), MODELS_DIR);
         if (Files.isDirectory(modelsDir)) {
             try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(modelsDir, path -> path.toString().endsWith(XML_EXT))) {
@@ -210,18 +210,16 @@ public class InstallScripts {
                         path -> {
                             try {
                                 byte[] fileBytes = Files.readAllBytes(path);
-                                String key = getObjectModelLwm2mValid(fileBytes, path.getFileName().toString(), new DefaultDDFFileValidator());
-                                if (key != null) {
-                                    Resource resource = new Resource();
-                                    resource.setTenantId(TenantId.SYS_TENANT_ID);
-                                    resource.setResourceType(ResourceType.LWM2M_MODEL);
-                                    resource.setResourceId(key);
-                                    resource.setValue(Base64.getEncoder().encodeToString(fileBytes));
-                                    resourceService.saveResource(resource);
-                                }
+                                String source = new String(fileBytes);
+                                Resource resource = new Resource();
+                                resource.setTenantId(TenantId.SYS_TENANT_ID);
+                                resource.setResourceType(ResourceType.LWM2M_MODEL);
+                                resource.setResourceId(getValueByTeg(source, "ObjectID") + "_" + getValueByTeg(source, "ObjectVersion"));
+                                resource.setTextSearch(resource.getResourceId() + ":" + getValueByTeg(source, "Name"));
+                                resource.setValue(Base64.getEncoder().encodeToString(fileBytes));
+                                resourceService.saveResource(resource);
                             } catch (Exception e) {
-                                log.error("Unable to load lwm2m model [{}]", path.toString());
-                                throw new RuntimeException("Unable to load lwm2m model", e);
+                                throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", path.toString()));
                             }
                         }
                 );
@@ -234,6 +232,7 @@ public class InstallScripts {
             resource.setTenantId(TenantId.SYS_TENANT_ID);
             resource.setResourceType(ResourceType.JKS);
             resource.setResourceId(jksPath.getFileName().toString());
+            resource.setTextSearch(jksPath.getFileName().toString());
             resource.setValue(Base64.getEncoder().encodeToString(Files.readAllBytes(jksPath)));
             resourceService.saveResource(resource);
         } catch (Exception e) {
@@ -242,11 +241,18 @@ public class InstallScripts {
         }
     }
 
-    private String getObjectModelLwm2mValid(byte[] xmlByte, String streamName, DefaultDDFFileValidator ddfValidator) {
+    private String getValueByTeg(String source, String tagHtml) {
+        int lenTag = ("<" + tagHtml + ">").length();
+        int indStart = source.indexOf("<" + tagHtml + ">");
+        int indEnd = source.indexOf("</" + tagHtml + ">");
+        return (indStart > 0 && indEnd > 0) ? source.substring(indStart + lenTag, indEnd) : null;
+
+    }
+
+    private ObjectModel getObjectModelLwm2mValid(byte[] xmlByte, String streamName, DefaultDDFFileValidator ddfValidator) {
         try {
             DDFFileParser ddfFileParser = new DDFFileParser(ddfValidator);
-            ObjectModel objectModel = ddfFileParser.parseEx(new ByteArrayInputStream(xmlByte), streamName).get(0);
-            return objectModel.id + "##" + objectModel.getVersion();
+            return ddfFileParser.parseEx(new ByteArrayInputStream(xmlByte), streamName).get(0);
         } catch (IOException | InvalidDDFFileException e) {
             log.error("Could not parse the XML file [{}]", streamName, e);
             return null;

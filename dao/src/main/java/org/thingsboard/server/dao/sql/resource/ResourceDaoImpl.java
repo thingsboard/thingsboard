@@ -29,6 +29,7 @@ import org.thingsboard.server.dao.model.sql.ResourceEntity;
 import org.thingsboard.server.dao.resource.ResourceDao;
 
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Component
@@ -73,8 +74,37 @@ public class ResourceDaoImpl implements ResourceDao {
     }
 
     @Override
-    public List<Resource> findAllByTenantIdResourceType(TenantId tenantId, ResourceType resourceType) {
+    public List<Resource> findAllByTenantIdAndResourceType(TenantId tenantId, ResourceType resourceType) {
         return DaoUtil.convertDataList(resourceRepository.findAllByTenantIdAndResourceType(tenantId.getId(), resourceType.name()));
+    }
+
+    @Override
+    public PageData<Resource> findResourcesByTenantIdAndResourceType(TenantId tenantId,
+                                                                     ResourceType resourceType,
+                                                                     PageLink pageLink) {
+        return DaoUtil.toPageData(resourceRepository.findResourcesPage(
+                tenantId.getId(),
+                TenantId.SYS_TENANT_ID.getId(),
+                resourceType.name(),
+                Objects.toString(pageLink.getTextSearch(), ""),
+                DaoUtil.toPageable(pageLink)
+        ));
+    }
+
+    @Override
+    public List<Resource> findResourcesByTenantIdAndResourceType(TenantId tenantId, ResourceType resourceType,
+                                                                 String[] objectIds,
+                                                                 String searchText) {
+        return objectIds == null ?
+                DaoUtil.convertDataList(resourceRepository.findResources(
+                        tenantId.getId(),
+                        TenantId.SYS_TENANT_ID.getId(),
+                        resourceType.name(),
+                        Objects.toString(searchText, ""))) :
+                DaoUtil.convertDataList(resourceRepository.findResourcesByIds(
+                        tenantId.getId(),
+                        TenantId.SYS_TENANT_ID.getId(),
+                        resourceType.name(), objectIds));
     }
 
     @Override

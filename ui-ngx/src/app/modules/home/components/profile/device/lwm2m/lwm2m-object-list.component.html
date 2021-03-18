@@ -40,7 +40,7 @@
                     class="tb-autocomplete"
                     [displayWith]="displayObjectLwm2mFn">
     <mat-option *ngFor="let objectLwm2m of filteredObjectsList | async" [value]="objectLwm2m">
-      <span [innerHTML]="objectLwm2m.id + ': ' + objectLwm2m.name  | highlight:searchText"></span>
+      <span [innerHTML]="objectLwm2m.keyId + ': ' + objectLwm2m.name  | highlight:searchText"></span>
     </mat-option>
     <mat-option *ngIf="!(filteredObjectsList | async)?.length" [value]="null">
       <span>

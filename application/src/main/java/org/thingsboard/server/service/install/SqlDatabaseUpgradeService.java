@@ -442,6 +442,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                 " tenant_id uuid NOT NULL," +
                                 " resource_type varchar(32) NOT NULL," +
                                 " resource_id varchar(255) NOT NULL," +
+                                " text_search  varchar(255)," +
                                 " resource_value varchar," +
                                 " CONSTRAINT resource_unq_key UNIQUE (tenant_id, resource_type, resource_id)" +
                                 " );");
