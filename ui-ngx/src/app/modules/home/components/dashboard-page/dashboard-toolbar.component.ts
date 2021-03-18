@@ -43,4 +43,6 @@ export class DashboardToolbarComponent implements OnInit {
     this.triggerClick.emit();
   }
 
+  white_label_logo = 'assets/white_label_logo.png';
+
 }

@@ -26,6 +26,10 @@
     </button>
   </mat-fab-trigger>
   <mat-toolbar color="primary">
+    <div fxFlex="auto" fxLayout="row">
+      <img [src]="white_label_logo"
+           aria-label="white_label_logo" class="whitelabel-logo-db"/>
+    </div>
     <mat-fab-actions class="mat-toolbar-tools">
       <ng-content></ng-content>
     </mat-fab-actions>
