@@ -1108,7 +1108,8 @@
         "schedule-time-to": "To",
         "schedule-days-of-week-required": "At least one day of week should be selected.",
         "lwm2m": {
-            "client-only-observe-after-connect": "{ count, plural, 1 {Strategy 1: Only Observe Request to the client after the initial connection} other {Strategy 2: Read All Resources & Observe Request to the client after registration} }",
+            "client-only-observe-after-connect-label": "Strategy",
+            "client-only-observe-after-connect": "{ count, plural, 1 {1: Only Observe Request to the client after the initial connection} other {2: Read All Resources & Observe Request to the client after registration} }",
             "client-only-observe-after-connect-tip": "{ count, plural, 1 {Strategy 1: After the initial connection of the LWM2M Client, the server sends Observe resources Request to the client, those resources that are marked as observation in the Device profile and which exist on the LWM2M client.} other {Strategy  2: After the registration, request the client to read all the resource values for all objects that the LWM2M client has,\n then execute:  the server sends Observe resources Request to the client, those resources that are marked as observation in the Device profile and which exist on the LWM2M client.} }",
             "object-list": "Object list",
             "object-list-empty": "No objects selected.",

@@ -77,7 +77,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
               private deviceProfileService: DeviceProfileService,
               @Inject(WINDOW) private window: Window) {
     this.lwm2mDeviceProfileFormGroup = this.fb.group({
-      clientOnlyObserveAfterConnect: [true, []],
+      clientOnlyObserveAfterConnect: [1, []],
       objectIds: [null, Validators.required],
       observeAttrTelemetry: [null, Validators.required],
       shortId: [null, Validators.required],
