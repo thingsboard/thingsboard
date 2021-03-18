@@ -39,8 +39,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import {
   calculateIntervalEndTime,
   calculateIntervalStartTime,
+  calculateTsOffset,
   createSubscriptionTimewindow,
-  createTimewindowForComparison, getCurrentTime,
+  createTimewindowForComparison,
+  getCurrentTime,
   SubscriptionTimewindow,
   Timewindow,
   toHistoryTimewindow,
@@ -79,8 +81,10 @@ export class WidgetSubscription implements IWidgetSubscription {
   timeWindow: WidgetTimewindow;
   originalTimewindow: Timewindow;
   timeWindowConfig: Timewindow;
+  timezone: string;
   subscriptionTimewindow: SubscriptionTimewindow;
   useDashboardTimewindow: boolean;
+  tsOffset = 0;
 
   hasDataPageLink: boolean;
   singleEntity: boolean;
@@ -213,6 +217,10 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.timeWindow = {};
       this.useDashboardTimewindow = options.useDashboardTimewindow;
       this.stateData = options.stateData;
+      if (this.type === widgetType.latest) {
+        this.timezone = options.dashboardTimewindow.timezone;
+        this.updateTsOffset();
+      }
       if (this.useDashboardTimewindow) {
         this.timeWindowConfig = deepClone(options.dashboardTimewindow);
       } else {
@@ -578,11 +586,16 @@ export class WidgetSubscription implements IWidgetSubscription {
         if (!isEqual(this.timeWindowConfig, newDashboardTimewindow) && newDashboardTimewindow) {
           this.timeWindowConfig = deepClone(newDashboardTimewindow);
           this.update();
-          return true;
+        }
+      }
+    } else if (this.type === widgetType.latest) {
+      if (newDashboardTimewindow && this.timezone !== newDashboardTimewindow.timezone) {
+        this.timezone = newDashboardTimewindow.timezone;
+        if (this.updateTsOffset()) {
+          this.update();
         }
       }
     }
-    return false;
   }
 
   updateDataVisibility(index: number): void {
@@ -815,6 +828,7 @@ export class WidgetSubscription implements IWidgetSubscription {
         configDatasource: datasource,
         configDatasourceIndex: datasourceIndex,
         subscriptionTimewindow: this.subscriptionTimewindow,
+        latestTsOffset: this.tsOffset,
         dataLoaded: (pageData, data1, datasourceIndex1, pageLink1) => {
           this.dataLoaded(pageData, data1, datasourceIndex1, pageLink1, true);
         },
@@ -882,24 +896,27 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private dataSubscribe() {
+    this.updateDataTimewindow();
     if (!this.hasDataPageLink) {
-      if (this.type === widgetType.timeseries && this.timeWindowConfig) {
-        this.updateDataTimewindow();
-        if (this.subscriptionTimewindow.fixedWindow) {
+      if (this.type === widgetType.timeseries && this.timeWindowConfig && this.subscriptionTimewindow.fixedWindow) {
           this.onDataUpdated();
-        }
       }
       const forceUpdate = !this.datasources.length;
+      const notifyDataLoaded = !this.entityDataListeners.filter((listener) => listener.subscription ? true : false).length;
       this.entityDataListeners.forEach((listener) => {
         if (this.comparisonEnabled && listener.configDatasource.isAdditional) {
           listener.subscriptionTimewindow = this.timewindowForComparison;
         } else {
           listener.subscriptionTimewindow = this.subscriptionTimewindow;
+          listener.latestTsOffset = this.tsOffset;
         }
         this.ctx.entityDataService.startSubscription(listener);
       });
       if (forceUpdate) {
         this.onDataUpdated();
+      }
+      if (notifyDataLoaded) {
+        this.notifyDataLoaded();
       }
     }
   }
@@ -1100,6 +1117,15 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.timeWindow.maxTime = this.subscriptionTimewindow.fixedWindow.endTimeMs + this.subscriptionTimewindow.tsOffset;
       this.timeWindow.minTime = this.subscriptionTimewindow.fixedWindow.startTimeMs + this.subscriptionTimewindow.tsOffset;
     }
+  }
+
+  private updateTsOffset(): boolean {
+    const newOffset = calculateTsOffset(this.timezone);
+    if (this.tsOffset !== newOffset) {
+      this.tsOffset = newOffset;
+      return true;
+    }
+    return false;
   }
 
   private updateRealtimeSubscription(subscriptionTimewindow?: SubscriptionTimewindow): SubscriptionTimewindow {

@@ -133,7 +133,7 @@
             <mat-checkbox [ngModelOptions]="{standalone: true}" [(ngModel)]="timewindow.hideAggInterval"
                           (ngModelChange)="onHideAggIntervalChanged()"></mat-checkbox>
           </section>
-          <section fxLayout="column" [fxShow]="isEdit || !timewindow.hideAggInterval">
+          <section fxLayout="column" fxFlex [fxShow]="isEdit || !timewindow.hideAggInterval">
             <div class="limit-slider-container"
                  fxLayout="row" fxLayoutAlign="start center">
               <span translate>aggregation.limit</span>
@@ -184,7 +184,8 @@
                         (ngModelChange)="onHideTimezoneChanged()"></mat-checkbox>
         </section>
         <tb-timezone-select fxFlex [fxShow]="isEdit || !timewindow.hideTimezone"
-          formControlName="timezone">
+                        localBrowserTimezonePlaceholderOnEmpty="true"
+                        formControlName="timezone">
         </tb-timezone-select>
       </div>
       <div fxLayout="row" class="tb-panel-actions" fxLayoutAlign="end center">

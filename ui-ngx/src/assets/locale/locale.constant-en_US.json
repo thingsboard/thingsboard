@@ -1988,7 +1988,8 @@
       "timezone": "Timezone",
       "select-timezone": "Select timezone",
       "no-timezones-matching": "No timezones matching '{{timezone}}' were found.",
-      "timezone-required": "Timezone is required."
+      "timezone-required": "Timezone is required.",
+      "browser-time": "Browser Time"
     },
     "queue": {
       "select_name": "Select queue name",

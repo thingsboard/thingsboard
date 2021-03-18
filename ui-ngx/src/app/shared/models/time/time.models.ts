@@ -318,6 +318,16 @@ export function toHistoryTimewindow(timewindow: Timewindow, startTimeMs: number,
   return historyTimewindow;
 }
 
+export function calculateTsOffset(timezone?: string): number {
+  if (timezone) {
+    const tz = getTimezone(timezone);
+    const localOffset = moment().utcOffset();
+    return (tz.utcOffset() - localOffset) * 60 * 1000;
+  } else {
+    return 0;
+  }
+}
+
 export function createSubscriptionTimewindow(timewindow: Timewindow, stDiff: number, stateData: boolean,
                                              timeService: TimeService): SubscriptionTimewindow {
   const subscriptionTimewindow: SubscriptionTimewindow = {
@@ -329,13 +339,8 @@ export function createSubscriptionTimewindow(timewindow: Timewindow, stDiff: num
       type: AggregationType.AVG
     },
     timezone: timewindow.timezone,
-    tsOffset: 0
+    tsOffset: calculateTsOffset(timewindow.timezone)
   };
-  if (timewindow.timezone) {
-    const tz = getTimezone(timewindow.timezone);
-    const localOffset = moment().utcOffset();
-    subscriptionTimewindow.tsOffset = (tz.utcOffset() - localOffset) * 60 * 1000;
-  }
   let aggTimewindow = 0;
   if (stateData) {
     subscriptionTimewindow.aggregation.type = AggregationType.NONE;
@@ -407,6 +412,7 @@ export function createSubscriptionTimewindow(timewindow: Timewindow, stDiff: num
         endTimeMs: calculateIntervalEndTime(timewindow.history.quickInterval, currentDate)
       };
       aggTimewindow = subscriptionTimewindow.fixedWindow.endTimeMs - subscriptionTimewindow.fixedWindow.startTimeMs;
+      subscriptionTimewindow.quickInterval = timewindow.history.quickInterval;
     } else {
       subscriptionTimewindow.fixedWindow = {
         startTimeMs: timewindow.history.fixedTimewindow.startTimeMs - subscriptionTimewindow.tsOffset,
@@ -766,6 +772,11 @@ export function getTimezoneInfo(timezoneId: string, defaultTimezoneId?: string, 
     }
   }
   return foundTimezone;
+}
+
+export function getDefaultTimezoneInfo(): TimezoneInfo {
+  const userTimezone = getDefaultTimezone();
+  return getTimezoneInfo(userTimezone);
 }
 
 export function getDefaultTimezone(): string {
