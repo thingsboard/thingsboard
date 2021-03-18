@@ -40,6 +40,7 @@ export interface EntityDataListener {
                datasourceIndex: number, pageLink: EntityDataPageLink) => void;
   dataUpdated: (data: DataSetHolder, datasourceIndex: number, dataIndex: number, dataKeyIndex: number, detectChanges: boolean) => void;
   initialPageDataChanged?: (nextPageData: PageData<EntityData>) => void;
+  forceReInit?: () => void;
   updateRealtimeSubscription?: () => SubscriptionTimewindow;
   setRealtimeSubscription?: (subscriptionTimewindow: SubscriptionTimewindow) => void;
   subscriptionOptions?: EntityDataSubscriptionOptions;
