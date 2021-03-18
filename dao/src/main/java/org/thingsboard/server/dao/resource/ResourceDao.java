@@ -33,8 +33,15 @@ public interface ResourceDao {
 
     PageData<Resource> findAllByTenantId(TenantId tenantId, PageLink pageLink);
 
+    PageData<Resource> findResourcesByTenantIdAndResourceType(TenantId tenantId,
+                                                              ResourceType resourceType,
+                                                              PageLink pageLink);
 
-    List<Resource> findAllByTenantIdResourceType(TenantId tenantId, ResourceType resourceType);
+    List<Resource> findAllByTenantIdAndResourceType(TenantId tenantId, ResourceType resourceType);
 
+    List<Resource> findResourcesByTenantIdAndResourceType(TenantId tenantId,
+                                                          ResourceType resourceType,
+                                                          String[] objectIds,
+                                                          String searchText);
     void removeAllByTenantId(TenantId tenantId);
 }

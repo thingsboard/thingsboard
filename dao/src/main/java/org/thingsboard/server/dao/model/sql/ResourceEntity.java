@@ -33,6 +33,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TABLE_NAM
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TENANT_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TYPE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_VALUE_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.TEXT_SEARCH_COLUMN;
 
 @Data
 @Entity
@@ -52,6 +53,9 @@ public class ResourceEntity implements ToData<Resource> {
     @Column(name = RESOURCE_ID_COLUMN)
     private String resourceId;
 
+    @Column(name = TEXT_SEARCH_COLUMN)
+    private String textSearch;
+
     @Column(name = RESOURCE_VALUE_COLUMN)
     private String value;
 
@@ -62,6 +66,7 @@ public class ResourceEntity implements ToData<Resource> {
         this.tenantId = resource.getTenantId().getId();
         this.resourceType = resource.getResourceType().name();
         this.resourceId = resource.getResourceId();
+        this.textSearch = resource.getTextSearch();
         this.value = resource.getValue();
     }
 
@@ -71,6 +76,7 @@ public class ResourceEntity implements ToData<Resource> {
         resource.setTenantId(new TenantId(tenantId));
         resource.setResourceType(ResourceType.valueOf(resourceType));
         resource.setResourceId(resourceId);
+        resource.setTextSearch(textSearch);
         resource.setValue(value);
         return resource;
     }
