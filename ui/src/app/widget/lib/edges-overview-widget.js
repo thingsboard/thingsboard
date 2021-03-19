@@ -101,7 +101,6 @@ function EdgesOverviewWidgetController($scope, $translate, types, utils, entityS
             if (datasource.type === types.datasourceType.entity && datasource.entity && datasource.entity.id.entityType === types.entityType.edge) {
                 var selectedEdge = datasource.entity;
                 vm.customerTitle = getCustomerTitle(selectedEdge.id.id);
-                // vm.ctx.widgetTitle = selectedEdge.name;
                 cb(loadNodesForEdge(selectedEdge.id.id, selectedEdge));
             } else if (datasource.type === types.datasourceType.function) {
                 cb(loadNodesForEdge(null, null));
