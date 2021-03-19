@@ -44,6 +44,8 @@ export class WidgetEditorDashboardResolver implements Resolve<Dashboard> {
       typeAlias: 'customWidget',
       type: editWidgetInfo.type,
       title: 'My widget',
+      image: null,
+      description: null,
       sizeX: editWidgetInfo.sizeX * 2,
       sizeY: editWidgetInfo.sizeY * 2,
       row: 2,

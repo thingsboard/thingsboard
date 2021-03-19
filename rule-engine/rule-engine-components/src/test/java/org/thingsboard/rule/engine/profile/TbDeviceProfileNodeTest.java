@@ -50,11 +50,9 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.DynamicValueSourceType;
-import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
-import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
@@ -74,7 +72,6 @@ import java.util.TreeMap;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -386,10 +383,6 @@ public class TbDeviceProfileNodeTest {
         deviceProfile.setId(deviceProfileId);
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
-        Device device = new Device();
-        device.setId(deviceId);
-        device.setCustomerId(customerId);
-
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
                 EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "greaterAttribute"
         );
@@ -464,7 +457,7 @@ public class TbDeviceProfileNodeTest {
         device.setCustomerId(customerId);
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "lessAttribute"
+                EntityType.CUSTOMER, deviceId.getId(), "SERVER_SCOPE", "lessAttribute"
         );
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
@@ -474,7 +467,7 @@ public class TbDeviceProfileNodeTest {
 
         AttributeKvEntry entry = attributeKvEntity.toData();
         ListenableFuture<List<AttributeKvEntry>> listListenableFutureWithLess =
-                Futures.immediateFuture(Collections.singletonList(entry));
+                Futures.immediateFuture(Collections.emptyList());
         ListenableFuture<Optional<AttributeKvEntry>> optionalListenableFutureWithLess =
                 Futures.immediateFuture(Optional.of(entry));
 
@@ -538,10 +531,6 @@ public class TbDeviceProfileNodeTest {
         DeviceProfile deviceProfile = new DeviceProfile();
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
-        Device device = new Device();
-        device.setId(deviceId);
-        device.setCustomerId(customerId);
-
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
                 EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "lessAttribute"
         );
@@ -553,7 +542,7 @@ public class TbDeviceProfileNodeTest {
 
         AttributeKvEntry entry = attributeKvEntity.toData();
         ListenableFuture<List<AttributeKvEntry>> listListenableFutureWithLess =
-                Futures.immediateFuture(Collections.singletonList(entry));
+                Futures.immediateFuture(Collections.emptyList());
         ListenableFuture<Optional<AttributeKvEntry>> optionalListenableFutureWithLess =
                 Futures.immediateFuture(Optional.of(entry));
 
@@ -620,6 +609,10 @@ public class TbDeviceProfileNodeTest {
                 EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "tenantAttribute"
         );
 
+        Device device = new Device();
+        device.setId(deviceId);
+        device.setCustomerId(customerId);
+
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
         attributeKvEntity.setLongValue(100L);
@@ -627,7 +620,11 @@ public class TbDeviceProfileNodeTest {
 
         AttributeKvEntry entry = attributeKvEntity.toData();
         ListenableFuture<List<AttributeKvEntry>> listListenableFutureWithLess =
-                Futures.immediateFuture(Collections.singletonList(entry));
+                Futures.immediateFuture(Collections.emptyList());
+        ListenableFuture<Optional<AttributeKvEntry>> emptyOptionalFuture =
+                Futures.immediateFuture(Optional.empty());
+        ListenableFuture<Optional<AttributeKvEntry>> optionalListenableFutureWithLess =
+                Futures.immediateFuture(Optional.of(entry));
 
         AlarmConditionFilter lowTempFilter = new AlarmConditionFilter();
         lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
@@ -661,8 +658,14 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(alarmService.createOrUpdateAlarm(Mockito.any()))
                 .thenAnswer(AdditionalAnswers.returnsFirstArg());
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
+        Mockito.when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
+                .thenReturn(device);
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
+        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), Mockito.anyString(), Mockito.anyString()))
+                .thenReturn(emptyOptionalFuture);
+        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(DataConstants.SERVER_SCOPE),  Mockito.anyString()))
+                .thenReturn(optionalListenableFutureWithLess);
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
         Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.anyString()))
@@ -677,6 +680,7 @@ public class TbDeviceProfileNodeTest {
         verify(ctx).tellSuccess(msg);
         verify(ctx).tellNext(theMsg, "Alarm Created");
         verify(ctx, Mockito.never()).tellFailure(Mockito.any(), Mockito.any());
+
     }
 
 
@@ -688,8 +692,12 @@ public class TbDeviceProfileNodeTest {
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "customerAttribute"
+                EntityType.DEVICE, deviceId.getId(), EntityKeyType.SERVER_ATTRIBUTE.name(), "tenantAttribute"
         );
+
+        Device device = new Device();
+        device.setId(deviceId);
+        device.setCustomerId(customerId);
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
@@ -698,7 +706,9 @@ public class TbDeviceProfileNodeTest {
 
         AttributeKvEntry entry = attributeKvEntity.toData();
         ListenableFuture<List<AttributeKvEntry>> listListenableFutureWithLess =
-                Futures.immediateFuture(Collections.singletonList(entry));
+                Futures.immediateFuture(Collections.emptyList());
+        ListenableFuture<Optional<AttributeKvEntry>> emptyOptionalFuture =
+                Futures.immediateFuture(Optional.empty());
         ListenableFuture<Optional<AttributeKvEntry>> optionalListenableFutureWithLess =
                 Futures.immediateFuture(Optional.of(entry));
 
@@ -711,7 +721,7 @@ public class TbDeviceProfileNodeTest {
                 new FilterPredicateValue<>(
                         0.0,
                         null,
-                        new DynamicValue<>(DynamicValueSourceType.CURRENT_CUSTOMER, "customerAttribute", true))
+                        new DynamicValue<>(DynamicValueSourceType.CURRENT_CUSTOMER, "tenantAttribute", true))
         );
         lowTempFilter.setPredicate(lowTempPredicate);
         AlarmCondition alarmCondition = new AlarmCondition();
@@ -720,7 +730,7 @@ public class TbDeviceProfileNodeTest {
         alarmRule.setCondition(alarmCondition);
         DeviceProfileAlarm dpa = new DeviceProfileAlarm();
         dpa.setId("lesstempID");
-        dpa.setAlarmType("lessTemperatureAlarm");
+        dpa.setAlarmType("greaterTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
         deviceProfileData.setAlarms(Collections.singletonList(dpa));
@@ -729,14 +739,18 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
-        Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "lessTemperatureAlarm"))
+        Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "greaterTemperatureAlarm"))
                 .thenReturn(Futures.immediateFuture(null));
         Mockito.when(alarmService.createOrUpdateAlarm(Mockito.any()))
                 .thenAnswer(AdditionalAnswers.returnsFirstArg());
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
+        Mockito.when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
+                .thenReturn(device);
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
-        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(DataConstants.SERVER_SCOPE), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), Mockito.anyString(), Mockito.anyString()))
+                .thenReturn(emptyOptionalFuture);
+        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(DataConstants.SERVER_SCOPE),  Mockito.anyString()))
                 .thenReturn(optionalListenableFutureWithLess);
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");

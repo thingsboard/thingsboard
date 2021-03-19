@@ -519,6 +519,9 @@ public class EntityKeyMapping {
         String operationField = field;
         String paramName = getNextParameterName(field);
         String value = stringFilterPredicate.getValue().getValue();
+        if (value.isEmpty()) {
+            return null;
+        }
         String stringOperationQuery = "";
         if (stringFilterPredicate.isIgnoreCase()) {
             value = value.toLowerCase();
@@ -526,30 +529,26 @@ public class EntityKeyMapping {
         }
         switch (stringFilterPredicate.getOperation()) {
             case EQUAL:
-                stringOperationQuery = String.format("%s = :%s) or (%s is null and :%s = '')", operationField, paramName, operationField, paramName);
+                stringOperationQuery = String.format("%s = :%s)", operationField, paramName);
                 break;
             case NOT_EQUAL:
-                stringOperationQuery = String.format("%s != :%s) or (%s is null and :%s != '')", operationField, paramName, operationField, paramName);
+                stringOperationQuery = String.format("%s != :%s or %s is null)", operationField, paramName, operationField);
                 break;
             case STARTS_WITH:
                 value += "%";
-                stringOperationQuery = String.format("%s like :%s) or (%s is null and :%s = '%%')", operationField, paramName, operationField, paramName);
+                stringOperationQuery = String.format("%s like :%s)", operationField, paramName);
                 break;
             case ENDS_WITH:
                 value = "%" + value;
-                stringOperationQuery = String.format("%s like :%s) or (%s is null and :%s = '%%')", operationField, paramName, operationField, paramName);
+                stringOperationQuery = String.format("%s like :%s)", operationField, paramName);
                 break;
             case CONTAINS:
-                if (value.length() > 0) {
-                    value = "%" + value + "%";
-                }
-                stringOperationQuery = String.format("%s like :%s) or (%s is null and :%s = '')", operationField, paramName, operationField, paramName);
+                value = "%" + value + "%";
+                stringOperationQuery = String.format("%s like :%s)", operationField, paramName);
                 break;
             case NOT_CONTAINS:
-                if (value.length() > 0) {
-                    value = "%" + value + "%";
-                }
-                stringOperationQuery = String.format("%s not like :%s) or (%s is null and :%s != '')", operationField, paramName, operationField, paramName);
+                value = "%" + value + "%";
+                stringOperationQuery = String.format("%s not like :%s or %s is null)", operationField, paramName, operationField);
                 break;
         }
         ctx.addStringParameter(paramName, value);

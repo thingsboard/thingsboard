@@ -1451,7 +1451,7 @@
     "timeseries": "Zeitreihe",
     "search-data": "Daten suchen",
     "no-data-found": "Keine Daten gefunden",
-    "latest-values": "Neueste Werte",
+    "latest": "Neueste Werte",
     "rpc": "Steuerungswidget",
     "alarm": "Alarm-Widget",
     "static": "Statisches Widget",

@@ -137,6 +137,10 @@ import { DndModule } from 'ngx-drag-drop';
 import { QueueTypeListComponent } from '@shared/components/queue/queue-type-list.component';
 import { ContactComponent } from '@shared/components/contact.component';
 import { TimezoneSelectComponent } from '@shared/components/time/timezone-select.component';
+import { FileSizePipe } from '@shared/pipe/file-size.pipe';
+import { WidgetsBundleSearchComponent } from '@shared/components/widgets-bundle-search.component';
+import { SelectableColumnsPipe } from '@shared/pipe/selectable-columns.pipe';
+import { QuickTimeIntervalComponent } from '@shared/components/time/quick-time-interval.component';
 
 @NgModule({
   providers: [
@@ -146,6 +150,7 @@ import { TimezoneSelectComponent } from '@shared/components/time/timezone-select
     HighlightPipe,
     TruncatePipe,
     TbJsonPipe,
+    FileSizePipe,
     {
       provide: FlowInjectionToken,
       useValue: Flow
@@ -171,6 +176,7 @@ import { TimezoneSelectComponent } from '@shared/components/time/timezone-select
     TimewindowComponent,
     TimewindowPanelComponent,
     TimeintervalComponent,
+    QuickTimeIntervalComponent,
     DashboardSelectComponent,
     DashboardSelectPanelComponent,
     DatetimePeriodComponent,
@@ -219,12 +225,15 @@ import { TimezoneSelectComponent } from '@shared/components/time/timezone-select
     HighlightPipe,
     TruncatePipe,
     TbJsonPipe,
+    FileSizePipe,
+    SelectableColumnsPipe,
     KeyboardShortcutPipe,
     TbJsonToStringDirective,
     JsonObjectEditDialogComponent,
     HistorySelectorComponent,
     EntityGatewaySelectComponent,
-    ContactComponent
+    ContactComponent,
+    WidgetsBundleSearchComponent
   ],
   imports: [
     CommonModule,
@@ -295,6 +304,7 @@ import { TimezoneSelectComponent } from '@shared/components/time/timezone-select
     TimewindowComponent,
     TimewindowPanelComponent,
     TimeintervalComponent,
+    QuickTimeIntervalComponent,
     DashboardSelectComponent,
     DatetimePeriodComponent,
     DatetimeComponent,
@@ -387,11 +397,14 @@ import { TimezoneSelectComponent } from '@shared/components/time/timezone-select
     TruncatePipe,
     TbJsonPipe,
     KeyboardShortcutPipe,
+    FileSizePipe,
+    SelectableColumnsPipe,
     TranslateModule,
     JsonObjectEditDialogComponent,
     HistorySelectorComponent,
     EntityGatewaySelectComponent,
-    ContactComponent
+    ContactComponent,
+    WidgetsBundleSearchComponent
   ]
 })
 export class SharedModule { }

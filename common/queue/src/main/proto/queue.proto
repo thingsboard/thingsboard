@@ -404,6 +404,7 @@ message TbTimeSeriesSubscriptionProto {
   repeated TbSubscriptionKetStateProto keyStates = 3;
   int64 startTime = 4;
   int64 endTime = 5;
+  bool latestValues = 6;
 }
 
 message TbAttributeSubscriptionProto {
