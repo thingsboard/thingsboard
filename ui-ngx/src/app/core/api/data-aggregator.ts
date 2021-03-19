@@ -300,14 +300,14 @@ export class DataAggregator {
       const aggKeyData = this.aggregationMap.aggMap[key];
       let keyData = this.dataBuffer[key];
       aggKeyData.forEach((aggData, aggTimestamp) => {
-        if (aggTimestamp <= this.startTs) {
+        if (aggTimestamp < this.startTs) {
           if (this.subsTw.aggregation.stateData &&
             (!this.lastPrevKvPairData[key] || this.lastPrevKvPairData[key][0] < aggTimestamp)) {
             this.lastPrevKvPairData[key] = [aggTimestamp, aggData.aggValue];
           }
           aggKeyData.delete(aggTimestamp);
           this.updatedData = true;
-        } else if (aggTimestamp <= this.endTs) {
+        } else if (aggTimestamp < this.endTs) {
           const kvPair: [number, any] = [aggTimestamp, aggData.aggValue];
           keyData.push(kvPair);
         }
