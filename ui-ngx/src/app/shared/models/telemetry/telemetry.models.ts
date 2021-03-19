@@ -549,8 +549,6 @@ export class TelemetrySubscriber {
   private entityCountSubject = new ReplaySubject<EntityCountUpdate>(1);
   private reconnectSubject = new Subject();
 
-  private zone: NgZone;
-
   private tsOffset = undefined;
 
   public subscriptionCommands: Array<WebsocketCmd>;
@@ -576,13 +574,12 @@ export class TelemetrySubscriber {
     if (keys) {
       subscriptionCommand.keys = keys.join(',');
     }
-    const subscriber = new TelemetrySubscriber(telemetryService);
-    subscriber.zone = zone;
+    const subscriber = new TelemetrySubscriber(telemetryService, zone);
     subscriber.subscriptionCommands.push(subscriptionCommand);
     return subscriber;
   }
 
-  constructor(private telemetryService: TelemetryService) {
+  constructor(private telemetryService: TelemetryService, private zone?: NgZone) {
     this.subscriptionCommands = [];
   }
 
