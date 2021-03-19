@@ -72,6 +72,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -421,20 +422,33 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
     private void initStatesFromDataBase() {
         try {
             log.info("Initializing tenant states.");
-            PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, 1024);
-            for (Tenant tenant : tenantIterator) {
-                if (!myTenantStates.containsKey(tenant.getId()) && partitionService.resolve(ServiceType.TB_CORE, tenant.getId(), tenant.getId()).isMyPartition()) {
-                    log.debug("[{}] Initializing tenant state.", tenant.getId());
-                    updateLock.lock();
-                    try {
-                        updateTenantState(getOrFetchState(tenant.getId()), tenantProfileCache.get(tenant.getTenantProfileId()));
-                        log.debug("[{}] Initialized tenant state.", tenant.getId());
-                    } catch (Exception e) {
-                        log.warn("[{}] Failed to initialize tenant API state", tenant.getId(), e);
-                    } finally {
-                        updateLock.unlock();
+            updateLock.lock();
+            try {
+                ExecutorService tmpInitExecutor = Executors.newWorkStealingPool(20);
+                try {
+                    PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, 1024);
+                    List<Future<?>> futures = new ArrayList<>();
+                    for (Tenant tenant : tenantIterator) {
+                        if (!myTenantStates.containsKey(tenant.getId()) && partitionService.resolve(ServiceType.TB_CORE, tenant.getId(), tenant.getId()).isMyPartition()) {
+                            log.debug("[{}] Initializing tenant state.", tenant.getId());
+                            futures.add(tmpInitExecutor.submit(() -> {
+                                try {
+                                    updateTenantState(getOrFetchState(tenant.getId()), tenantProfileCache.get(tenant.getTenantProfileId()));
+                                    log.debug("[{}] Initialized tenant state.", tenant.getId());
+                                } catch (Exception e) {
+                                    log.warn("[{}] Failed to initialize tenant API state", tenant.getId(), e);
+                                }
+                            }));
+                        }
                     }
+                    for (Future<?> future : futures) {
+                        future.get();
+                    }
+                } finally {
+                    tmpInitExecutor.shutdownNow();
                 }
+            } finally {
+                updateLock.unlock();
             }
             log.info("Initialized tenant states.");
         } catch (Exception e) {
