@@ -17,7 +17,7 @@
 import { TimeService } from '@core/services/time.service';
 import { deepClone, isDefined, isUndefined } from '@app/core/utils';
 import * as moment_ from 'moment';
-import * as monentTz from 'moment-timezone';
+import * as momentTz from 'moment-timezone';
 
 const moment = moment_;
 
@@ -846,8 +846,8 @@ let defaultTimezone: string = null;
 
 export function getTimezones(): TimezoneInfo[] {
   if (!timezones) {
-    timezones = monentTz.tz.names().map((zoneName) => {
-      const tz = monentTz.tz(zoneName);
+    timezones = momentTz.tz.names().map((zoneName) => {
+      const tz = momentTz.tz(zoneName);
       return {
         id: zoneName,
         name: zoneName.replace(/_/g, ' '),
@@ -881,7 +881,7 @@ export function getDefaultTimezoneInfo(): TimezoneInfo {
 
 export function getDefaultTimezone(): string {
   if (!defaultTimezone) {
-    defaultTimezone = monentTz.tz.guess();
+    defaultTimezone = momentTz.tz.guess();
   }
   return defaultTimezone;
 }
