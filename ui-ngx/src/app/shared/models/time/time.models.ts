@@ -136,13 +136,16 @@ export enum QuickTimeInterval {
   DAY_BEFORE_YESTERDAY = 'DAY_BEFORE_YESTERDAY',
   THIS_DAY_LAST_WEEK = 'THIS_DAY_LAST_WEEK',
   PREVIOUS_WEEK = 'PREVIOUS_WEEK',
+  PREVIOUS_WEEK_ISO = 'PREVIOUS_WEEK_ISO',
   PREVIOUS_MONTH = 'PREVIOUS_MONTH',
   PREVIOUS_YEAR = 'PREVIOUS_YEAR',
   CURRENT_HOUR = 'CURRENT_HOUR',
   CURRENT_DAY = 'CURRENT_DAY',
   CURRENT_DAY_SO_FAR = 'CURRENT_DAY_SO_FAR',
   CURRENT_WEEK = 'CURRENT_WEEK',
-  CURRENT_WEEK_SO_FAR = 'CURRENT_WEEK_SO_WAR',
+  CURRENT_WEEK_ISO = 'CURRENT_WEEK_ISO',
+  CURRENT_WEEK_SO_FAR = 'CURRENT_WEEK_SO_FAR',
+  CURRENT_WEEK_ISO_SO_FAR = 'CURRENT_WEEK_ISO_SO_FAR',
   CURRENT_MONTH = 'CURRENT_MONTH',
   CURRENT_MONTH_SO_FAR = 'CURRENT_MONTH_SO_FAR',
   CURRENT_YEAR = 'CURRENT_YEAR',
@@ -154,13 +157,16 @@ export const QuickTimeIntervalTranslationMap = new Map<QuickTimeInterval, string
   [QuickTimeInterval.DAY_BEFORE_YESTERDAY, 'timeinterval.predefined.day-before-yesterday'],
   [QuickTimeInterval.THIS_DAY_LAST_WEEK, 'timeinterval.predefined.this-day-last-week'],
   [QuickTimeInterval.PREVIOUS_WEEK, 'timeinterval.predefined.previous-week'],
+  [QuickTimeInterval.PREVIOUS_WEEK_ISO, 'timeinterval.predefined.previous-week-iso'],
   [QuickTimeInterval.PREVIOUS_MONTH, 'timeinterval.predefined.previous-month'],
   [QuickTimeInterval.PREVIOUS_YEAR, 'timeinterval.predefined.previous-year'],
   [QuickTimeInterval.CURRENT_HOUR, 'timeinterval.predefined.current-hour'],
   [QuickTimeInterval.CURRENT_DAY, 'timeinterval.predefined.current-day'],
   [QuickTimeInterval.CURRENT_DAY_SO_FAR, 'timeinterval.predefined.current-day-so-far'],
   [QuickTimeInterval.CURRENT_WEEK, 'timeinterval.predefined.current-week'],
+  [QuickTimeInterval.CURRENT_WEEK_ISO, 'timeinterval.predefined.current-week-iso'],
   [QuickTimeInterval.CURRENT_WEEK_SO_FAR, 'timeinterval.predefined.current-week-so-far'],
+  [QuickTimeInterval.CURRENT_WEEK_ISO_SO_FAR, 'timeinterval.predefined.current-week-iso-so-far'],
   [QuickTimeInterval.CURRENT_MONTH, 'timeinterval.predefined.current-month'],
   [QuickTimeInterval.CURRENT_MONTH_SO_FAR, 'timeinterval.predefined.current-month-so-far'],
   [QuickTimeInterval.CURRENT_YEAR, 'timeinterval.predefined.current-year'],
@@ -453,7 +459,9 @@ function getSubscriptionRealtimeWindowFromTimeInterval(interval: QuickTimeInterv
     case QuickTimeInterval.CURRENT_DAY_SO_FAR:
       return DAY;
     case QuickTimeInterval.CURRENT_WEEK:
+    case QuickTimeInterval.CURRENT_WEEK_ISO:
     case QuickTimeInterval.CURRENT_WEEK_SO_FAR:
+    case QuickTimeInterval.CURRENT_WEEK_ISO_SO_FAR:
       return WEEK;
     case QuickTimeInterval.CURRENT_MONTH:
     case QuickTimeInterval.CURRENT_MONTH_SO_FAR:
@@ -479,6 +487,9 @@ export function calculateIntervalEndTime(interval: QuickTimeInterval, currentDat
       case QuickTimeInterval.PREVIOUS_WEEK:
         currentDate.subtract(1, 'weeks');
         return currentDate.endOf('week').valueOf();
+      case QuickTimeInterval.PREVIOUS_WEEK_ISO:
+        currentDate.subtract(1, 'weeks');
+        return currentDate.endOf('isoWeek').valueOf();
       case QuickTimeInterval.PREVIOUS_MONTH:
         currentDate.subtract(1, 'months');
         return currentDate.endOf('month').valueOf();
@@ -491,12 +502,15 @@ export function calculateIntervalEndTime(interval: QuickTimeInterval, currentDat
         return currentDate.endOf('day').valueOf();
       case QuickTimeInterval.CURRENT_WEEK:
         return currentDate.endOf('week').valueOf();
+      case QuickTimeInterval.CURRENT_WEEK_ISO:
+        return currentDate.endOf('isoWeek').valueOf();
       case QuickTimeInterval.CURRENT_MONTH:
         return currentDate.endOf('month').valueOf();
       case QuickTimeInterval.CURRENT_YEAR:
         return currentDate.endOf('year').valueOf();
       case QuickTimeInterval.CURRENT_DAY_SO_FAR:
       case QuickTimeInterval.CURRENT_WEEK_SO_FAR:
+      case QuickTimeInterval.CURRENT_WEEK_ISO_SO_FAR:
       case QuickTimeInterval.CURRENT_MONTH_SO_FAR:
       case QuickTimeInterval.CURRENT_YEAR_SO_FAR:
         return currentDate.valueOf();
@@ -518,6 +532,9 @@ export function calculateIntervalStartTime(interval: QuickTimeInterval, currentD
     case QuickTimeInterval.PREVIOUS_WEEK:
       currentDate.subtract(1, 'weeks');
       return currentDate.startOf('week').valueOf();
+    case QuickTimeInterval.PREVIOUS_WEEK_ISO:
+      currentDate.subtract(1, 'weeks');
+      return currentDate.startOf('isoWeek').valueOf();
     case QuickTimeInterval.PREVIOUS_MONTH:
       currentDate.subtract(1, 'months');
       return currentDate.startOf('month').valueOf();
@@ -532,6 +549,9 @@ export function calculateIntervalStartTime(interval: QuickTimeInterval, currentD
     case QuickTimeInterval.CURRENT_WEEK:
     case QuickTimeInterval.CURRENT_WEEK_SO_FAR:
       return currentDate.startOf('week').valueOf();
+    case QuickTimeInterval.CURRENT_WEEK_ISO:
+    case QuickTimeInterval.CURRENT_WEEK_ISO_SO_FAR:
+      return currentDate.startOf('isoWeek').valueOf();
     case QuickTimeInterval.CURRENT_MONTH:
     case QuickTimeInterval.CURRENT_MONTH_SO_FAR:
       return currentDate.startOf('month').valueOf();
@@ -552,8 +572,11 @@ export function quickTimeIntervalPeriod(interval: QuickTimeInterval): number {
     case QuickTimeInterval.CURRENT_DAY_SO_FAR:
       return DAY;
     case QuickTimeInterval.PREVIOUS_WEEK:
+    case QuickTimeInterval.PREVIOUS_WEEK_ISO:
     case QuickTimeInterval.CURRENT_WEEK:
+    case QuickTimeInterval.CURRENT_WEEK_ISO:
     case QuickTimeInterval.CURRENT_WEEK_SO_FAR:
+    case QuickTimeInterval.CURRENT_WEEK_ISO_SO_FAR:
       return WEEK;
     case QuickTimeInterval.PREVIOUS_MONTH:
     case QuickTimeInterval.CURRENT_MONTH:
@@ -583,6 +606,11 @@ export function calculateIntervalComparisonStartTime(interval: QuickTimeInterval
     case QuickTimeInterval.CURRENT_WEEK_SO_FAR:
       currentDate.subtract(1, 'weeks');
       return currentDate.startOf('week').valueOf();
+    case QuickTimeInterval.PREVIOUS_WEEK_ISO:
+    case QuickTimeInterval.CURRENT_WEEK_ISO:
+    case QuickTimeInterval.CURRENT_WEEK_ISO_SO_FAR:
+      currentDate.subtract(1, 'weeks');
+      return currentDate.startOf('isoWeek').valueOf();
     case QuickTimeInterval.PREVIOUS_MONTH:
     case QuickTimeInterval.CURRENT_MONTH:
     case QuickTimeInterval.CURRENT_MONTH_SO_FAR:
@@ -616,7 +644,12 @@ export function calculateIntervalComparisonEndTime(interval: QuickTimeInterval,
     case QuickTimeInterval.CURRENT_WEEK:
       currentDate.subtract(1, 'weeks');
       return currentDate.endOf('week').valueOf();
+    case QuickTimeInterval.PREVIOUS_WEEK_ISO:
+    case QuickTimeInterval.CURRENT_WEEK_ISO:
+      currentDate.subtract(1, 'weeks');
+      return currentDate.endOf('isoWeek').valueOf();
     case QuickTimeInterval.CURRENT_WEEK_SO_FAR:
+    case QuickTimeInterval.CURRENT_WEEK_ISO_SO_FAR:
       return currentDate.subtract(1, 'week').valueOf();
     case QuickTimeInterval.PREVIOUS_MONTH:
     case QuickTimeInterval.CURRENT_MONTH:
