@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport;
+package org.thingsboard.server.dao.resource;
 
-import org.thingsboard.server.common.data.TbResource;
-import org.thingsboard.server.common.data.ResourceType;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.Dao;
 
-public interface TransportResourceCache {
+import java.util.UUID;
 
-    TbResource get(TenantId tenantId, ResourceType resourceType, String resourceId);
+public interface TbResourceInfoDao extends Dao<TbResourceInfo> {
 
-    void update(TenantId tenantId, ResourceType resourceType, String resourceI);
+    PageData<TbResourceInfo> findTbResourcesByTenantId(UUID tenantId, PageLink pageLink);
 
-    void evict(TenantId tenantId, ResourceType resourceType, String resourceId);
 }

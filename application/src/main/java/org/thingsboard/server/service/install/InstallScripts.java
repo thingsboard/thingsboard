@@ -22,8 +22,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.Resource;
 import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -35,7 +35,7 @@ import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
-import org.thingsboard.server.dao.resource.ResourceService;
+import org.thingsboard.server.dao.resource.TbResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
@@ -95,7 +95,7 @@ public class InstallScripts {
     private OAuth2ConfigTemplateService oAuth2TemplateService;
 
     @Autowired
-    private ResourceService resourceService;
+    private TbResourceService resourceService;
 
     public Path getTenantRuleChainsDir() {
         return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, RULE_CHAINS_DIR);
@@ -204,13 +204,10 @@ public class InstallScripts {
                         path -> {
                             try {
                                 byte[] fileBytes = Files.readAllBytes(path);
-                                String source = new String(fileBytes);
-                                Resource resource = new Resource();
+                                TbResource resource = new TbResource();
                                 resource.setTenantId(TenantId.SYS_TENANT_ID);
                                 resource.setResourceType(ResourceType.LWM2M_MODEL);
-                                resource.setResourceId(getValueByTag(source, "ObjectID") + "_" + getValueByTag(source, "ObjectVersion"));
-                                resource.setTextSearch(resource.getResourceId() + ":" + getValueByTag(source, "Name"));
-                                resource.setValue(Base64.getEncoder().encodeToString(fileBytes));
+                                resource.setData(Base64.getEncoder().encodeToString(fileBytes));
                                 resourceService.saveResource(resource);
                             } catch (Exception e) {
                                 throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", path.toString()));
@@ -219,28 +216,6 @@ public class InstallScripts {
                 );
             }
         }
-
-        Path jksPath = Paths.get(getDataDir(), CREDENTIALS_DIR, "serverKeyStore.jks");
-        try {
-            Resource resource = new Resource();
-            resource.setTenantId(TenantId.SYS_TENANT_ID);
-            resource.setResourceType(ResourceType.JKS);
-            resource.setResourceId(jksPath.getFileName().toString());
-            resource.setTextSearch(jksPath.getFileName().toString());
-            resource.setValue(Base64.getEncoder().encodeToString(Files.readAllBytes(jksPath)));
-            resourceService.saveResource(resource);
-        } catch (Exception e) {
-            log.error("Unable to load lwm2m serverKeyStore [{}]", jksPath.toString());
-            throw new RuntimeException("Unable to load lwm2m serverKeyStore", e);
-        }
-    }
-
-    private String getValueByTag(String source, String tag) {
-        int lenTag = ("<" + tag + ">").length();
-        int indStart = source.indexOf("<" + tag + ">");
-        int indEnd = source.indexOf("</" + tag + ">");
-        return (indStart > 0 && indEnd > 0) ? source.substring(indStart + lenTag, indEnd) : null;
-
     }
 
     public void loadDashboards(TenantId tenantId, CustomerId customerId) throws Exception {

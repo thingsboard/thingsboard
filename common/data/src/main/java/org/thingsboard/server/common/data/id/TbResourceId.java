@@ -13,17 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport;
+package org.thingsboard.server.common.data.id;
 
-import org.thingsboard.server.common.data.TbResource;
-import org.thingsboard.server.common.data.ResourceType;
-import org.thingsboard.server.common.data.id.TenantId;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.thingsboard.server.common.data.EntityType;
 
-public interface TransportResourceCache {
+import java.util.UUID;
 
-    TbResource get(TenantId tenantId, ResourceType resourceType, String resourceId);
+public class TbResourceId extends UUIDBased implements EntityId {
 
-    void update(TenantId tenantId, ResourceType resourceType, String resourceI);
+    private static final long serialVersionUID = 1L;
 
-    void evict(TenantId tenantId, ResourceType resourceType, String resourceId);
+    @JsonCreator
+    public TbResourceId(@JsonProperty("id") UUID id) {
+        super(id);
+    }
+
+    @JsonIgnore
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.TB_RESOURCE;
+    }
 }

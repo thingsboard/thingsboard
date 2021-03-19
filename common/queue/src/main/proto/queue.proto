@@ -205,7 +205,7 @@ message GetResourceRequestMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
   string resourceType = 3;
-  string resourceId = 4;
+  string resourceKey = 4;
 }
 
 message GetResourceResponseMsg {
@@ -257,14 +257,14 @@ message ResourceUpdateMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
   string resourceType = 3;
-  string resourceId = 4;
+  string resourceKey = 4;
 }
 
 message ResourceDeleteMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
   string resourceType = 3;
-  string resourceId = 4;
+  string resourceKey = 4;
 }
 
 message SessionCloseNotificationProto {
