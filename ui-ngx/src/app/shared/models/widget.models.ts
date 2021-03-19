@@ -63,7 +63,7 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
     [
       widgetType.latest,
       {
-        name: 'widget.latest-values',
+        name: 'widget.latest',
         icon: 'track_changes',
         configHelpLinkId: 'widgetsConfigLatest',
         template: {
@@ -165,12 +165,26 @@ export interface WidgetControllerDescriptor {
   actionSources?: {[actionSourceId: string]: WidgetActionSource};
 }
 
-export interface WidgetType extends BaseData<WidgetTypeId> {
+export interface BaseWidgetType extends BaseData<WidgetTypeId> {
   tenantId: TenantId;
   bundleAlias: string;
   alias: string;
   name: string;
+}
+
+export interface WidgetType extends BaseWidgetType {
   descriptor: WidgetTypeDescriptor;
+}
+
+export interface WidgetTypeInfo extends BaseWidgetType {
+  image: string;
+  description: string;
+  widgetType: widgetType;
+}
+
+export interface WidgetTypeDetails extends WidgetType {
+  image: string;
+  description: string;
 }
 
 export enum LegendDirection {
@@ -399,19 +413,24 @@ export interface WidgetConfig {
   [key: string]: any;
 }
 
-export interface Widget {
-  id?: string;
+export interface Widget extends WidgetInfo{
   typeId?: WidgetTypeId;
-  isSystemType: boolean;
-  bundleAlias: string;
-  typeAlias: string;
-  type: widgetType;
-  title: string;
   sizeX: number;
   sizeY: number;
   row: number;
   col: number;
   config: WidgetConfig;
+}
+
+export interface WidgetInfo {
+  id?: string;
+  isSystemType: boolean;
+  bundleAlias: string;
+  typeAlias: string;
+  type: widgetType;
+  title: string;
+  image?: string;
+  description?: string;
 }
 
 export interface GroupInfo {
@@ -429,7 +448,7 @@ export interface JsonSchema {
 export interface JsonSettingsSchema {
   schema?: JsonSchema;
   form?: any[];
-  groupInfoes?: GroupInfo[]
+  groupInfoes?: GroupInfo[];
 }
 
 export interface WidgetPosition {

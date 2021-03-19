@@ -2206,7 +2206,7 @@
         "timeseries": "Časové řady",
         "search-data": "Vyhledat data",
         "no-data-found": "Žádná data nebyla nalezena",
-        "latest-values": "Poslední hodnoty",
+        "latest": "Poslední hodnoty",
         "rpc": "Ovládací widget",
         "alarm": "Widgety alarmu",
         "static": "Statické widgety",

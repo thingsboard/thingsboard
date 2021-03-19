@@ -24,20 +24,28 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 
 const tinycolor = tinycolor_;
 
+type ColumnVisibilityOptions = 'visible' | 'hidden';
+
+type ColumnSelectionOptions = 'enabled' | 'disabled';
+
 export interface TableWidgetSettings {
   enableSearch: boolean;
-  enableSelectColumnDisplay: boolean;
+  enableStickyAction: boolean;
+  enableStickyHeader: boolean;
   displayPagination: boolean;
   defaultPageSize: number;
-  defaultSortOrder: string;
+  useRowStyleFunction: boolean;
+  rowStyleFunction?: string;
 }
 
 export interface TableWidgetDataKeySettings {
   columnWidth?: string;
   useCellStyleFunction: boolean;
-  cellStyleFunction: string;
+  cellStyleFunction?: string;
   useCellContentFunction: boolean;
-  cellContentFunction: string;
+  cellContentFunction?: string;
+  defaultColumnVisibility?: ColumnVisibilityOptions;
+  columnSelectionToDisplay?: ColumnSelectionOptions;
 }
 
 export interface EntityData {
@@ -58,6 +66,7 @@ export interface DisplayColumn {
   title: string;
   def: string;
   display: boolean;
+  selectable: boolean;
 }
 
 export type CellContentFunction = (...args: any[]) => string;
@@ -69,11 +78,18 @@ export interface CellContentInfo {
   decimals?: number;
 }
 
-export type CellStyleFunction = (value: any) => any;
+export type CellStyleFunction = (...args: any[]) => any;
 
 export interface CellStyleInfo {
   useCellStyleFunction: boolean;
   cellStyleFunction?: CellStyleFunction;
+}
+
+export type RowStyleFunction = (...args: any[]) => any;
+
+export interface RowStyleInfo {
+  useRowStyleFunction: boolean;
+  rowStyleFunction?: RowStyleFunction;
 }
 
 
@@ -196,14 +212,35 @@ export function getAlarmValue(alarm: AlarmDataInfo, key: EntityColumn) {
   }
 }
 
-export function getCellStyleInfo(keySettings: TableWidgetDataKeySettings): CellStyleInfo {
+export function getRowStyleInfo(settings: TableWidgetSettings, ...args: string[]): RowStyleInfo {
+  let rowStyleFunction: RowStyleFunction = null;
+  let useRowStyleFunction = false;
+
+  if (settings.useRowStyleFunction === true) {
+    if (isDefined(settings.rowStyleFunction) && settings.rowStyleFunction.length > 0) {
+      try {
+        rowStyleFunction = new Function(...args, settings.rowStyleFunction) as RowStyleFunction;
+        useRowStyleFunction = true;
+      } catch (e) {
+        rowStyleFunction = null;
+        useRowStyleFunction = false;
+      }
+    }
+  }
+  return {
+    useRowStyleFunction,
+    rowStyleFunction
+  };
+}
+
+export function getCellStyleInfo(keySettings: TableWidgetDataKeySettings, ...args: string[]): CellStyleInfo {
   let cellStyleFunction: CellStyleFunction = null;
   let useCellStyleFunction = false;
 
   if (keySettings.useCellStyleFunction === true) {
     if (isDefined(keySettings.cellStyleFunction) && keySettings.cellStyleFunction.length > 0) {
       try {
-        cellStyleFunction = new Function('value', keySettings.cellStyleFunction) as CellStyleFunction;
+        cellStyleFunction = new Function(...args, keySettings.cellStyleFunction) as CellStyleFunction;
         useCellStyleFunction = true;
       } catch (e) {
         cellStyleFunction = null;
@@ -251,6 +288,13 @@ export function widthStyle(width: string): any {
   return widthStyleObj;
 }
 
+export function getColumnDefaultVisibility(keySettings: TableWidgetDataKeySettings): boolean {
+  return !(isDefined(keySettings.defaultColumnVisibility) && keySettings.defaultColumnVisibility === 'hidden');
+}
+
+export function getColumnSelectionAvailability(keySettings: TableWidgetDataKeySettings): boolean {
+  return !(isDefined(keySettings.columnSelectionToDisplay) && keySettings.columnSelectionToDisplay === 'disabled');
+}
 
 
 export function constructTableCssString(widgetConfig: WidgetConfig): string {

@@ -32,6 +32,8 @@ export class DetailsPanelComponent extends PageComponent {
   @Input() headerSubtitle = '';
   @Input() isReadOnly = false;
   @Input() isAlwaysEdit = false;
+  @Input() isShowSearch = false;
+  @Input() backgroundColor = '#FFF';
 
   theFormValue: FormGroup;
 
@@ -50,8 +52,11 @@ export class DetailsPanelComponent extends PageComponent {
   toggleDetailsEditMode = new EventEmitter<boolean>();
   @Output()
   applyDetails = new EventEmitter<void>();
+  @Output()
+  closeSearch = new EventEmitter<void>();
 
   isEditValue = false;
+  showSearchPane = false;
 
   @Output()
   isEditChange = new EventEmitter<boolean>();
@@ -88,4 +93,10 @@ export class DetailsPanelComponent extends PageComponent {
     }
   }
 
+  onToggleSearch() {
+    this.showSearchPane = !this.showSearchPane;
+    if (!this.showSearchPane) {
+      this.closeSearch.emit();
+    }
+  }
 }

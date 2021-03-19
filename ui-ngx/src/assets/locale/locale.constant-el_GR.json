@@ -2316,7 +2316,7 @@
     "timeseries": "Χρονική σειρά",
     "search-data": "Αναζήτηση δεδομένων",
     "no-data-found": "Δεν βρέθηκαν δεδομένα",
-    "latest-values": "Τελευταίες αξίες",
+    "latest": "Τελευταίες αξίες",
     "rpc": "Έλεγχος Widget",
     "alarm": "Alarm widget",
     "static": "Στατικό widget",

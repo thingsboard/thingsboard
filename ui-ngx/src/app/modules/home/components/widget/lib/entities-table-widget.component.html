@@ -47,7 +47,7 @@
                     [ngStyle]="cellStyle(entity, column)">
           </mat-cell>
         </ng-container>
-        <ng-container matColumnDef="actions" stickyEnd>
+        <ng-container matColumnDef="actions" [stickyEnd]="enableStickyAction">
           <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (actionCellDescriptors.length * 40) + 'px',
                                                                 maxWidth: (actionCellDescriptors.length * 40) + 'px',
                                                                 width: (actionCellDescriptors.length * 40) + 'px' }">
@@ -81,10 +81,11 @@
             </div>
           </mat-cell>
         </ng-container>
-        <mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+        <mat-header-row *matHeaderRowDef="displayedColumns; sticky: enableStickyHeader"></mat-header-row>
         <mat-row [ngClass]="{'tb-current-entity': entityDatasource.isCurrentEntity(entity),
                              'invisible': entityDatasource.dataLoading}"
                  *matRowDef="let entity; columns: displayedColumns;"
+                 [ngStyle]="rowStyle(entity)"
                  (click)="onRowClick($event, entity)" (dblclick)="onRowClick($event, entity, true)"></mat-row>
       </table>
       <span [fxShow]="(entityDatasource.isEmpty() | async) && !entityDatasource.dataLoading"

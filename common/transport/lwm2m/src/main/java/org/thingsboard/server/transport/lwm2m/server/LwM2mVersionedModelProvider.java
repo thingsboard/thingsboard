@@ -105,12 +105,12 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
         @Override
         public Collection<ObjectModel> getObjectModels() {
             Map<Integer, String> supportedObjects = this.registration.getSupportedObject();
-            Collection<ObjectModel> result = new ArrayList(supportedObjects.size());
-            Iterator i$ = supportedObjects.entrySet().iterator();
+            Collection<ObjectModel> result = new ArrayList<>(supportedObjects.size());
+            Iterator<Map.Entry<Integer, String>> i$ = supportedObjects.entrySet().iterator();
 
             while (i$.hasNext()) {
-                Map.Entry<Integer, String> supportedObject = (Map.Entry) i$.next();
-                ObjectModel objectModel = this.getObjectModelDynamic((Integer) supportedObject.getKey(), (String) supportedObject.getValue());
+                Map.Entry<Integer, String> supportedObject = i$.next();
+                ObjectModel objectModel = this.getObjectModelDynamic(supportedObject.getKey(), supportedObject.getValue());
                 if (objectModel != null) {
                     result.add(objectModel);
                 }

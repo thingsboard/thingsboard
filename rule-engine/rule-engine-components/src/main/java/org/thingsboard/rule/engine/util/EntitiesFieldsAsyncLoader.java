@@ -63,7 +63,7 @@ public class EntitiesFieldsAsyncLoader {
                 return getAsync(ctx.getEntityViewService().findEntityViewByIdAsync(ctx.getTenantId(), (EntityViewId) original),
                         EntityFieldsData::new);
             default:
-                return Futures.immediateFailedFuture(new TbNodeException("Unexpected original EntityType " + original));
+                return Futures.immediateFailedFuture(new TbNodeException("Unexpected original EntityType " + original.getEntityType()));
         }
     }
 

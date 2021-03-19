@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplat
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.widget.WidgetType;
+import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -184,9 +185,9 @@ public class InstallScripts {
                             widgetTypesArrayJson.forEach(
                                     widgetTypeJson -> {
                                         try {
-                                            WidgetType widgetType = objectMapper.treeToValue(widgetTypeJson, WidgetType.class);
-                                            widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
-                                            widgetTypeService.saveWidgetType(widgetType);
+                                            WidgetTypeDetails widgetTypeDetails = objectMapper.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
+                                            widgetTypeDetails.setBundleAlias(savedWidgetsBundle.getAlias());
+                                            widgetTypeService.saveWidgetType(widgetTypeDetails);
                                         } catch (Exception e) {
                                             log.error("Unable to load widget type from json: [{}]", path.toString());
                                             throw new RuntimeException("Unable to load widget type from json", e);

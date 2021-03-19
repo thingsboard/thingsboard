@@ -1535,7 +1535,7 @@
         "timeseries": "Serii Temporale",
         "search-data": "Caută Date",
         "no-data-found": "Nu Au Fost Găsite Date",
-        "latest-values": "Ultimele Valori",
+        "latest": "Ultimele Valori",
         "rpc": "Widget Control ",
         "alarm": "Widget Alarmă",
         "static": "Widget Static",

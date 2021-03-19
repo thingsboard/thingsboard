@@ -123,7 +123,7 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
             Map<TsKey, TsKvLatestEntity> trueLatest = new HashMap<>();
             v.forEach(ts -> {
                 TsKey key = new TsKey(ts.getEntityId(), ts.getKey());
-                trueLatest.merge(key, ts, (oldTs, newTs) -> oldTs.getTs() < newTs.getTs() ? newTs : oldTs);
+                trueLatest.merge(key, ts, (oldTs, newTs) -> oldTs.getTs() <= newTs.getTs() ? newTs : oldTs);
             });
             List<TsKvLatestEntity> latestEntities = new ArrayList<>(trueLatest.values());
             if (batchSortEnabled) {

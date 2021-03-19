@@ -91,6 +91,7 @@
                          direction="left"
                          tooltipPosition="below"
                          aggregation="true"
+                         timezone="true"
                          [(ngModel)]="dashboardCtx.dashboardTimewindow">
           </tb-timewindow>
           <tb-filters-edit [fxShow]="!isEdit && displayFilters()"
@@ -242,26 +243,44 @@
           </tb-edit-widget>
         </tb-details-panel>
         <tb-details-panel *ngIf="!isAddingWidgetClosed && !widgetEditMode" fxFlex
-                          headerTitle="{{'dashboard.select-widget-title' | translate}}"
-                          headerHeightPx="120"
+                          headerTitle="{{ isAddingWidget ?
+                            ((!dashboardWidgetSelectComponent?.widgetsBundle ?
+                               'widget.select-widgets-bundle' : 'dashboard.select-widget-value') | translate: dashboardWidgetSelectComponent?.widgetsBundle) : ''
+                          }}"
+                          headerHeightPx="64"
+                          [isShowSearch]="true"
                           [isReadOnly]="true"
                           [isEdit]="false"
-                          (closeDetails)="onAddWidgetClosed()">
-          <div class="header-pane" *ngIf="isAddingWidget">
-            <div fxLayout="row">
-              <span class="tb-details-subtitle">{{ 'widgets-bundle.current' | translate }}</span>
-              <tb-widgets-bundle-select fxFlexOffset="5"
-                                        fxFlex
-                                        required
-                                        [selectFirstBundle]="false"
-                                        [ngModel]="widgetsBundle"
-                                        (ngModelChange)="widgetsBundle = $event">
-              </tb-widgets-bundle-select>
-            </div>
+                          backgroundColor="#cfd8dc"
+                          (closeDetails)="onAddWidgetClosed()"
+                          (closeSearch)="onCloseSearchBundle()">
+          <div class="prefix-title-buttons" [fxShow]="(isAddingWidget && dashboardWidgetSelectComponent?.widgetsBundle) ? true : false" style="height: 28px; margin-right: 12px">
+            <button class="tb-mat-28" mat-icon-button type="button" (click)="clearSelectedWidgetBundle()">
+              <mat-icon>arrow_back</mat-icon>
+            </button>
           </div>
-          <tb-dashboard-widget-select *ngIf="isAddingWidget"
+          <div class="search-pane" *ngIf="isAddingWidget" fxLayout="row">
+            <tb-widgets-bundle-search fxFlex
+                                      [(ngModel)]="searchBundle"
+                                      placeholder="{{ (!dashboardWidgetSelectComponent?.widgetsBundle ? 'widgets-bundle.search' : 'widget.search') | translate }}"
+                                      (ngModelChange)="searchBundle = $event">
+            </tb-widgets-bundle-search>
+          </div>
+          <div class="details-buttons" *ngIf="isAddingWidget">
+            <button mat-button mat-icon-button type="button"
+                    *ngIf="dashboardWidgetSelectComponent?.widgetTypes.size > 1"
+                    (click)="editWidgetsTypesToDisplay($event)"
+                    matTooltip="{{ 'widget.filter' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>filter_list</mat-icon>
+            </button>
+          </div>
+          <tb-dashboard-widget-select #dashboardWidgetSelect
+                                      *ngIf="isAddingWidget"
                                       [aliasController]="dashboardCtx.aliasController"
-                                      [widgetsBundle]="widgetsBundle"
+                                      [searchBundle]="searchBundle"
+                                      [filterWidgetTypes]="filterWidgetTypes"
+                                      (widgetsBundleSelected)="widgetBundleSelected()"
                                       (widgetSelected)="addWidgetFromType($event)">
           </tb-dashboard-widget-select>
         </tb-details-panel>
