@@ -1091,7 +1091,13 @@
         "schedule-time": "Time",
         "schedule-time-from": "From",
         "schedule-time-to": "To",
-        "schedule-days-of-week-required": "At least one day of week should be selected."
+        "schedule-days-of-week-required": "At least one day of week should be selected.",
+        "create-device-profile": "Create new device profile",
+        "import": "Import device profile",
+        "export": "Export device profile",
+        "export-failed-error": "Unable to export device profile: {{error}}",
+        "device-profile-file": "Device profile file",
+        "invalid-device-profile-file-error": "Unable to import device profile: Invalid device profile data structure."
     },
     "dialog": {
         "close": "Close dialog"
