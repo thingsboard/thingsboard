@@ -20,65 +20,63 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
-import org.thingsboard.server.dao.model.sql.ResourceCompositeKey;
-import org.thingsboard.server.dao.model.sql.ResourceEntity;
+import org.thingsboard.server.dao.model.sql.TbResourceEntity;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface ResourceRepository extends CrudRepository<ResourceEntity, ResourceCompositeKey> {
+public interface TbResourceRepository extends CrudRepository<TbResourceEntity, UUID> {
 
+    TbResourceEntity findByTenantIdAndResourceTypeAndResourceKey(UUID tenantId, String resourceType, String resourceKey);
 
-    Page<ResourceEntity> findAllByTenantId(UUID tenantId, Pageable pageable);
+    Page<TbResourceEntity> findAllByTenantId(UUID tenantId, Pageable pageable);
 
-    @Query("SELECT tr FROM ResourceEntity tr " +
+    @Query("SELECT tr FROM TbResourceEntity tr " +
             "WHERE tr.resourceType = :resourceType " +
-            "AND LOWER(tr.textSearch) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+            "AND LOWER(tr.searchText) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "AND (tr.tenantId = :tenantId " +
             "OR (tr.tenantId = :systemAdminId " +
             "AND NOT EXISTS " +
-            "(SELECT sr FROM ResourceEntity sr " +
+            "(SELECT sr FROM TbResourceEntity sr " +
             "WHERE sr.tenantId = :tenantId " +
             "AND sr.resourceType = :resourceType " +
-            "AND tr.resourceId = sr.resourceId)))")
-    Page<ResourceEntity> findResourcesPage(
+            "AND tr.resourceKey = sr.resourceKey)))")
+    Page<TbResourceEntity> findResourcesPage(
             @Param("tenantId") UUID tenantId,
             @Param("systemAdminId") UUID sysAdminId,
             @Param("resourceType") String resourceType,
             @Param("searchText") String search,
             Pageable pageable);
 
-    List<ResourceEntity> findAllByTenantIdAndResourceType(UUID tenantId, String resourceType);
-
     void removeAllByTenantId(UUID tenantId);
 
-    @Query("SELECT tr FROM ResourceEntity tr " +
+    @Query("SELECT tr FROM TbResourceEntity tr " +
             "WHERE tr.resourceType = :resourceType " +
-            "AND LOWER(tr.textSearch) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
+            "AND LOWER(tr.searchText) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
             "AND (tr.tenantId = :tenantId " +
             "OR (tr.tenantId = :systemAdminId " +
             "AND NOT EXISTS " +
-            "(SELECT sr FROM ResourceEntity sr " +
+            "(SELECT sr FROM TbResourceEntity sr " +
             "WHERE sr.tenantId = :tenantId " +
             "AND sr.resourceType = :resourceType " +
-            "AND tr.resourceId = sr.resourceId)))")
-    List<ResourceEntity> findResources(@Param("tenantId") UUID tenantId,
-                                       @Param("systemAdminId") UUID sysAdminId,
-                                       @Param("resourceType") String resourceType,
-                                       @Param("searchText") String search);
+            "AND tr.resourceKey = sr.resourceKey)))")
+    List<TbResourceEntity> findResources(@Param("tenantId") UUID tenantId,
+                                         @Param("systemAdminId") UUID sysAdminId,
+                                         @Param("resourceType") String resourceType,
+                                         @Param("searchText") String search);
 
-    @Query("SELECT tr FROM ResourceEntity tr " +
+    @Query("SELECT tr FROM TbResourceEntity tr " +
             "WHERE tr.resourceType = :resourceType " +
-            "AND tr.resourceId in (:resourceIds) " +
+            "AND tr.resourceKey in (:resourceIds) " +
             "AND (tr.tenantId = :tenantId " +
             "OR (tr.tenantId = :systemAdminId " +
             "AND NOT EXISTS " +
-            "(SELECT sr FROM ResourceEntity sr " +
+            "(SELECT sr FROM TbResourceEntity sr " +
             "WHERE sr.tenantId = :tenantId " +
             "AND sr.resourceType = :resourceType " +
-            "AND tr.resourceId = sr.resourceId)))")
-    List<ResourceEntity> findResourcesByIds(@Param("tenantId") UUID tenantId,
-                                            @Param("systemAdminId") UUID sysAdminId,
-                                            @Param("resourceType") String resourceType,
-                                            @Param("resourceIds") String[] objectIds);
+            "AND tr.resourceKey = sr.resourceKey)))")
+    List<TbResourceEntity> findResourcesByIds(@Param("tenantId") UUID tenantId,
+                                              @Param("systemAdminId") UUID sysAdminId,
+                                              @Param("resourceType") String resourceType,
+                                              @Param("resourceIds") String[] objectIds);
 }

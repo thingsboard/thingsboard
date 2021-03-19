@@ -124,7 +124,7 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
                     this.tenantId,
                     LWM2M_MODEL,
                     key).
-                    getValue();
+                    getData();
             return xmlB64 != null && !xmlB64.isEmpty() ?
                     lwM2mTransportContextServer.parseFromXmlToObjectModel(
                             Base64.getDecoder().decode(xmlB64),
