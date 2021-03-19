@@ -179,20 +179,6 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
     return this.lw2mModels;
   }
 
-  private getLwM2mModels(): Observable<Array<ObjectLwM2M>> {
-    if (!this.lw2mModels) {
-      const sortOrder = {
-        property: 'id',
-        direction: Direction.ASC
-      };
-      this.lw2mModels = this.deviceProfileService.getLwm2mObjects(sortOrder).pipe(
-        publishReplay(1),
-        refCount()
-      );
-    }
-    return this.lw2mModels;
-  }
-
   onFocus = (): void => {
     if (!this.dirty) {
       this.lwm2mListFormGroup.get('objectLwm2m').updateValueAndValidity({onlySelf: true, emitEvent: true});

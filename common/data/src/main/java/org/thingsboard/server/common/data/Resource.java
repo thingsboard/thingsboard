@@ -17,21 +17,9 @@ package org.thingsboard.server.common.data;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.model.DDFFileParser;
-import org.eclipse.leshan.core.model.DefaultDDFFileValidator;
-import org.eclipse.leshan.core.model.InvalidDDFFileException;
-import org.eclipse.leshan.core.model.ObjectModel;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.lwm2m.LwM2mInstance;
-import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
-import org.thingsboard.server.common.data.lwm2m.LwM2mResource;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
 
 @Slf4j
 @Data
@@ -54,39 +42,5 @@ public class Resource implements HasTenantId, Serializable {
         res.append(", textSearch='").append(textSearch).append('\'');
         res.append('}');
         return res.toString();
-    }
-
-    public LwM2mObject toLwM2mObject () {
-            try {
-                DDFFileParser ddfFileParser = new DDFFileParser(new DefaultDDFFileValidator());
-                List<ObjectModel> objectModels = ddfFileParser.parseEx(new ByteArrayInputStream(Base64.getDecoder().decode(this.value)), this.textSearch);
-                if (objectModels.size() == 0) {
-                    return null;
-                }
-                else {
-                    ObjectModel obj = objectModels.get(0);
-                    LwM2mObject lwM2mObject = new LwM2mObject();
-                    lwM2mObject.setId(obj.id);
-                    lwM2mObject.setKeyId(this.resourceId);
-                    lwM2mObject.setName(obj.name);
-                    lwM2mObject.setMultiple(obj.multiple);
-                    lwM2mObject.setMandatory(obj.mandatory);
-                    LwM2mInstance instance = new LwM2mInstance();
-                    instance.setId(0);
-                    List<LwM2mResource> resources = new ArrayList<>();
-                    obj.resources.forEach((k, v) -> {
-                        if (!v.operations.isExecutable()) {
-                            LwM2mResource resource = new LwM2mResource(k, v.name, false, false, false);
-                            resources.add(resource);
-                        }
-                    });
-                    instance.setResources(resources.stream().toArray(LwM2mResource[]::new));
-                    lwM2mObject.setInstances(new LwM2mInstance[]{instance});
-                   return lwM2mObject;
-                }
-            } catch (IOException | InvalidDDFFileException e) {
-                log.error("Could not parse the XML of objectModel with name [{}]", this.textSearch, e);
-                return  null;
-            }
     }
 }

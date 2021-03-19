@@ -17,10 +17,6 @@ package org.thingsboard.server.service.install;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.model.DDFFileParser;
-import org.eclipse.leshan.core.model.DefaultDDFFileValidator;
-import org.eclipse.leshan.core.model.InvalidDDFFileException;
-import org.eclipse.leshan.core.model.ObjectModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -34,7 +30,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
-import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -45,8 +40,6 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -215,8 +208,8 @@ public class InstallScripts {
                                 Resource resource = new Resource();
                                 resource.setTenantId(TenantId.SYS_TENANT_ID);
                                 resource.setResourceType(ResourceType.LWM2M_MODEL);
-                                resource.setResourceId(getValueByTeg(source, "ObjectID") + "_" + getValueByTeg(source, "ObjectVersion"));
-                                resource.setTextSearch(resource.getResourceId() + ":" + getValueByTeg(source, "Name"));
+                                resource.setResourceId(getValueByTag(source, "ObjectID") + "_" + getValueByTag(source, "ObjectVersion"));
+                                resource.setTextSearch(resource.getResourceId() + ":" + getValueByTag(source, "Name"));
                                 resource.setValue(Base64.getEncoder().encodeToString(fileBytes));
                                 resourceService.saveResource(resource);
                             } catch (Exception e) {
@@ -238,41 +231,16 @@ public class InstallScripts {
             resourceService.saveResource(resource);
         } catch (Exception e) {
             log.error("Unable to load lwm2m serverKeyStore [{}]", jksPath.toString());
-            throw new RuntimeException("Unable to load l2m2m serverKeyStore", e);
+            throw new RuntimeException("Unable to load lwm2m serverKeyStore", e);
         }
     }
 
-    private String getValueByTeg(String source, String tagHtml) {
-        int lenTag = ("<" + tagHtml + ">").length();
-        int indStart = source.indexOf("<" + tagHtml + ">");
-        int indEnd = source.indexOf("</" + tagHtml + ">");
+    private String getValueByTag(String source, String tag) {
+        int lenTag = ("<" + tag + ">").length();
+        int indStart = source.indexOf("<" + tag + ">");
+        int indEnd = source.indexOf("</" + tag + ">");
         return (indStart > 0 && indEnd > 0) ? source.substring(indStart + lenTag, indEnd) : null;
 
-    }
-
-    private ObjectModel getObjectModelLwm2mValid(byte[] xmlByte, String streamName, DefaultDDFFileValidator ddfValidator) {
-        try {
-            DDFFileParser ddfFileParser = new DDFFileParser(ddfValidator);
-            return ddfFileParser.parseEx(new ByteArrayInputStream(xmlByte), streamName).get(0);
-        } catch (IOException | InvalidDDFFileException e) {
-            log.error("Could not parse the XML file [{}]", streamName, e);
-            return null;
-        }
-
-    }
-
-    private void removeFile(Path modelsDir, String nameFile, byte[] fileBytes) {
-        String path = "/home/nick/Igor_project/thingsboard_ce_3_2_docker/thingsboard/common/transport/lwm2m/src/main/resources/models/";
-        File file = new File(path + nameFile);
-        if (!file.isDirectory()) {
-            try {
-                Files.write(Paths.get(path + "server/" + nameFile), fileBytes);
-                file.delete();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        }
     }
 
     public void loadDashboards(TenantId tenantId, CustomerId customerId) throws Exception {
