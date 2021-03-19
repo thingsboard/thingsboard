@@ -95,22 +95,25 @@ public class BaseResourceService implements ResourceService {
         PageData<Resource> resourcePageData = resourceDao.findResourcesByTenantIdAndResourceType(
                                                                         tenantId,
                                                                         ResourceType.LWM2M_MODEL, pageLink);
-        List<LwM2mObject> lwM2mObjects = resourcePageData.getData().stream().map(this::toLwM2mObject).collect(Collectors.toList());
-        return lwM2mObjects.size() > 1 ? this.sortList (lwM2mObjects, sortProperty, sortOrder) : lwM2mObjects;
+       return resourcePageData.getData().stream()
+               .map(this::toLwM2mObject)
+               .sorted(getComparator(sortProperty, sortOrder))
+               .collect(Collectors.toList());
     }
 
     @Override
     public List<LwM2mObject> findLwM2mObject(TenantId tenantId, String sortOrder,
                                              String sortProperty,
-                                             String[] objectIds,
-                                             String searchText) {
+                                             String[] objectIds) {
         log.trace("Executing findByTenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         List<Resource> resources = resourceDao.findResourcesByTenantIdAndResourceType(tenantId, ResourceType.LWM2M_MODEL,
                                                                                         objectIds,
-                                                                                        searchText);
-        List<LwM2mObject> lwM2mObjects = resources.stream().map(this::toLwM2mObject).collect(Collectors.toList());
-        return lwM2mObjects.size() > 1 ? this.sortList (lwM2mObjects, sortProperty, sortOrder) : lwM2mObjects;
+                                                                                        null);
+        return resources.stream()
+                .map(this::toLwM2mObject)
+                .sorted(getComparator(sortProperty, sortOrder))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -128,7 +131,7 @@ public class BaseResourceService implements ResourceService {
             throw new DataValidationException("Resource value should be specified!");
         }
         validate(resource.getTenantId(), resource.getResourceType(), resource.getResourceId());
-        if (resource.getResourceType().equals(ResourceType.LWM2M_MODEL) && resource.toLwM2mObject() == null) {
+        if (resource.getResourceType().equals(ResourceType.LWM2M_MODEL) && this.toLwM2mObject(resource) == null) {
             throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getTextSearch()));
         }
     }
@@ -177,27 +180,14 @@ public class BaseResourceService implements ResourceService {
         }
     }
 
-    private List<LwM2mObject> sortList (List<LwM2mObject> lwM2mObjects, String sortProperty, String sortOrder) {
-        switch (sortProperty) {
-            case "name":
-                switch (sortOrder) {
-                    case "ASC":
-                        lwM2mObjects.sort((o1, o2) -> o1.getName().compareTo(o2.getName()));
-                        break;
-                    case "DESC":
-                        lwM2mObjects.stream().sorted(Comparator.comparing(LwM2mObject::getName).reversed());
-                        break;
-                }
-            case "id":
-                switch (sortOrder) {
-                    case "ASC":
-                        lwM2mObjects.sort((o1, o2) -> Long.compare(o1.getId(), o2.getId()));
-                        break;
-                    case "DESC":
-                        lwM2mObjects.sort((o1, o2) -> Long.compare(o2.getId(), o1.getId()));
-                }
+    private Comparator<? super LwM2mObject> getComparator(String sortProperty, String sortOrder) {
+        Comparator<LwM2mObject> comparator;
+        if ("name".equals(sortProperty)) {
+            comparator = Comparator.comparing(LwM2mObject::getName);
+        } else {
+            comparator = Comparator.comparingLong(LwM2mObject::getId);
         }
-        return lwM2mObjects;
+        return "DESC".equals(sortOrder) ? comparator.reversed() : comparator;
     }
 
 }

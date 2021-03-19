@@ -62,7 +62,7 @@ public class ResourceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/resource/page", method = RequestMethod.GET)
+    @RequestMapping(value = "/resource", method = RequestMethod.GET)
     @ResponseBody
     public PageData<Resource> getResources(@RequestParam(required = false) boolean system,
                                            @RequestParam int pageSize,
@@ -71,8 +71,6 @@ public class ResourceController extends BaseController {
                                            @RequestParam(required = false) String sortProperty,
                                            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
-//            int[] objectIds;
-//            ResourceType resourceType
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             return checkNotNull(resourceService.findResourcesByTenantId(system ? TenantId.SYS_TENANT_ID : getTenantId(), pageLink));
         } catch (Exception e) {
@@ -101,11 +99,9 @@ public class ResourceController extends BaseController {
     @ResponseBody
     public List<LwM2mObject> getLwm2mListObjects(@RequestParam String sortOrder,
                                                  @RequestParam String sortProperty,
-                                                 @RequestParam(required = false) String[] objectIds,
-                                                 @RequestParam(required = false) String searchText)
-            throws ThingsboardException {
+                                                 @RequestParam(required = false) String[] objectIds) throws ThingsboardException {
         try {
-            return checkNotNull(resourceService.findLwM2mObject(getTenantId(), sortOrder, sortProperty, objectIds, searchText));
+            return checkNotNull(resourceService.findLwM2mObject(getTenantId(), sortOrder, sortProperty, objectIds));
         } catch (Exception e) {
             throw handleException(e);
         }

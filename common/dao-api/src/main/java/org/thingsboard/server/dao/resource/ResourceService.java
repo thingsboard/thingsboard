@@ -32,18 +32,17 @@ public interface ResourceService {
 
     PageData<Resource> findResourcesByTenantId(TenantId tenantId, PageLink pageLink);
 
+    List<Resource> findAllByTenantIdAndResourceType(TenantId tenantId, ResourceType resourceType);
+
     List<LwM2mObject> findLwM2mObject(TenantId tenantId,
                                       String sortOrder,
                                       String sortProperty,
-                                      String[] objectIds,
-                                      String searchText);
+                                      String[] objectIds);
 
     List<LwM2mObject> findLwM2mObjectPage(TenantId tenantId,
                                           String sortProperty,
                                           String sortOrder,
                                           PageLink pageLink);
-
-    List<Resource> findAllByTenantIdAndResourceType(TenantId tenantId, ResourceType resourceType);
 
     void deleteResource(TenantId tenantId, ResourceType resourceType, String resourceId);
 
