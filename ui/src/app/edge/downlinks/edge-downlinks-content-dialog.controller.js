@@ -25,7 +25,7 @@ import beautify from 'js-beautify';
 const js_beautify = beautify.js;
 
 /*@ngInject*/
-export default function EdgeDownlinksContentDialogController($mdDialog, types, content, contentType, title, showingCallback) {
+export default function EdgeDownlinksContentDialogController($mdDialog, types, content, title, showingCallback) {
 
     var vm = this;
 
@@ -33,22 +33,12 @@ export default function EdgeDownlinksContentDialogController($mdDialog, types, c
         updateEditorSize(element);
     }
 
-    vm.content = content;
+    vm.content = js_beautify(content, {indent_size: 4});
     vm.title = title;
-
-    var mode;
-    if (contentType) {
-        mode = types.contentType[contentType].code;
-        if (contentType == types.contentType.JSON.value && vm.content) {
-            vm.content = js_beautify(vm.content, {indent_size: 4});
-        }
-    } else {
-        mode = 'java';
-    }
 
     vm.contentOptions = {
         useWrapMode: false,
-        mode: mode,
+        mode: types.contentType.JSON.code,
         showGutter: false,
         showPrintMargin: false,
         theme: 'github',
