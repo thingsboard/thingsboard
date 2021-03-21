@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import static org.thingsboard.server.common.data.ResourceType.LWM2M_MODEL;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LWM2M_SEPARATOR_KEY;
 
 @Slf4j
 public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
@@ -49,12 +50,9 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
         this.lwM2mClientContext = lwM2mClientContext;
         this.lwM2mTransportContextServer = lwM2mTransportContextServer;
     }
-    private String getIdVer(ObjectModel objectModel) {
-        return objectModel.id + "##" + ((objectModel.getVersion() == null || objectModel.getVersion().isEmpty()) ? ObjectModel.DEFAULT_VERSION : objectModel.getVersion());
-    }
 
-    private String getIdVer(Integer objectId, String version) {
-        return objectId != null ? objectId + "##" + ((version == null || version.isEmpty()) ? ObjectModel.DEFAULT_VERSION : version) : null;
+     private String getKeyIdVer(Integer objectId, String version) {
+        return objectId != null ? objectId + LWM2M_SEPARATOR_KEY + ((version == null || version.isEmpty()) ? ObjectModel.DEFAULT_VERSION : version) : null;
     }
 
     /**
@@ -65,8 +63,7 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
      */
     @Override
     public LwM2mModel getObjectModel(Registration registration) {
-        return new DynamicModel(registration
-        );
+        return new DynamicModel(registration);
     }
 
     private class DynamicModel implements LwM2mModel {
@@ -119,7 +116,7 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
         }
 
         private ObjectModel getObjectModelDynamic(Integer objectId, String version) {
-            String key = getIdVer(objectId, version);
+            String key = getKeyIdVer(objectId, version);
             String xmlB64 = lwM2mTransportContextServer.getTransportResourceCache().get(
                     this.tenantId,
                     LWM2M_MODEL,

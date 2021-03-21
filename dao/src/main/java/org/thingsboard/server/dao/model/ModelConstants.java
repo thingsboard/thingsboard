@@ -465,7 +465,8 @@ public class ModelConstants {
     public static final String RESOURCE_KEY_COLUMN = "resource_key";
     public static final String RESOURCE_TITLE_COLUMN = TITLE_PROPERTY;
     public static final String RESOURCE_DATA_COLUMN = "data";
-
+    public static final String LWM2M_SEPARATOR_KEY = "_";
+    public static final String LWM2M_SEPARATOR_SEARCH_TEXT = ":";
 
     /**
      * Cassandra attributes and timeseries constants.
