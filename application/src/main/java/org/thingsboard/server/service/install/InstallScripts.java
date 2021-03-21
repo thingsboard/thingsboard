@@ -200,8 +200,7 @@ public class InstallScripts {
     }
 
     public void loadSystemLwm2mResources() throws Exception {
-        Path modelsDir = Paths.get("/home/nick/Igor_project/Models/lwm2m_modelObject/models");
-//        Path modelsDir = Paths.get(getDataDir(), MODELS_DIR);
+        Path modelsDir = Paths.get(getDataDir(), MODELS_DIR);
         if (Files.isDirectory(modelsDir)) {
             try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(modelsDir, path -> path.toString().endsWith(XML_EXT))) {
                 dirStream.forEach(
