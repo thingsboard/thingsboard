@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.install;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +26,6 @@ import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -49,7 +47,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.thingsboard.server.service.install.DatabaseHelper.objectMapper;
 
@@ -207,10 +204,7 @@ public class InstallScripts {
                         path -> {
                             try {
                                 byte[] fileBytes = Files.readAllBytes(path);
-                                UUID id = Uuids.timeBased();
-                                TbResource resource = new TbResource(new TbResourceId(id));
-//                                TbResource resource = new TbResource();
-//                                resource.setCreatedTime(Uuids.unixTimestamp(id));
+                                TbResource resource = new TbResource();
                                 resource.setTenantId(TenantId.SYS_TENANT_ID);
                                 resource.setResourceType(ResourceType.LWM2M_MODEL);
                                 resource.setData(Base64.getEncoder().encodeToString(fileBytes));

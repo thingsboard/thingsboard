@@ -64,25 +64,24 @@ public class BaseTbResourceService implements TbResourceService {
     }
 
     @Override
-    public TbResource saveResource(TbResource resource) throws InvalidDDFFileException, IOException {
-        log.trace("Executing saveResource [{}]", resource);
-        if (resource.getId() != null && ResourceType.LWM2M_MODEL.equals(resource.getResourceType())) {
+    public TbResource saveResource(TbResource tbResource) throws InvalidDDFFileException, IOException {
+        log.trace("Executing saveResource [{}]", tbResource);
+        if (ResourceType.LWM2M_MODEL.equals(tbResource.getResourceType())) {
             List<ObjectModel> objectModels =
-                    ddfFileParser.parseEx(new ByteArrayInputStream(Base64.getDecoder().decode(resource.getData())), resource.getSearchText());
+                    ddfFileParser.parseEx(new ByteArrayInputStream(Base64.getDecoder().decode(tbResource.getData())), tbResource.getSearchText());
             if (!objectModels.isEmpty()) {
                 ObjectModel objectModel = objectModels.get(0);
                 String resourceKey = objectModel.id + LWM2M_SEPARATOR_KEY + objectModel.getVersion();
                 String name = objectModel.name;
-//                log.warn("Name: [{}], id: [{}], ver: [{}]", name, objectModel.id, objectModel.getVersion());
-                resource.setResourceKey(resourceKey);
-                resource.setTitle(name);
-                resource.setSearchText(resourceKey + LWM2M_SEPARATOR_SEARCH_TEXT + name);
+                tbResource.setResourceKey(resourceKey);
+                tbResource.setTitle(name);
+                tbResource.setSearchText(resourceKey + LWM2M_SEPARATOR_SEARCH_TEXT + name);
             } else {
-                throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getSearchText()));
+                throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", tbResource.getSearchText()));
             }
         }
-        validate(resource);
-        return resourceDao.saveResource(resource);
+        validate(tbResource);
+        return resourceDao.save(tbResource.getTenantId(), tbResource);
     }
 
     @Override
