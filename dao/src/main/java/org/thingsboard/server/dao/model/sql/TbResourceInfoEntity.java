@@ -61,8 +61,10 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
     }
 
     public TbResourceInfoEntity(TbResourceInfo resource) {
-        this.setUuid(resource.getId().getId());
-        this.setCreatedTime(resource.getCreatedTime());
+        if (resource.getId() != null) {
+            this.id = resource.getId().getId();
+        }
+        this.createdTime = resource.getCreatedTime();
         this.tenantId = resource.getTenantId().getId();
         this.title = resource.getTitle();
         this.resourceType = resource.getResourceType().name();
@@ -72,8 +74,7 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
 
     @Override
     public TbResourceInfo toData() {
-        TbResourceInfo resource = new TbResourceInfo();
-        resource.setId(new TbResourceId(id));
+        TbResourceInfo resource = new TbResourceInfo(new TbResourceId(id));
         resource.setCreatedTime(createdTime);
         resource.setTenantId(new TenantId(tenantId));
         resource.setTitle(title);

@@ -45,7 +45,8 @@ public class TbResourceInfo extends SearchTextBased<TbResourceId> implements Has
         this.tenantId = resourceInfo.getTenantId();
         this.title = resourceInfo.getTitle();
         this.resourceType = resourceInfo.getResourceType();
-        this.resourceKey = resourceInfo.resourceKey;
+        this.resourceKey = resourceInfo.getResourceKey();
+        this.searchText = resourceInfo.getSearchText();
     }
 
     @Override

@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.sql.resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -51,12 +50,6 @@ public class JpaTbResourceDao extends JpaAbstractSearchTextDao<TbResourceEntity,
     @Override
     protected CrudRepository<TbResourceEntity, UUID> getCrudRepository() {
         return resourceRepository;
-    }
-
-    @Override
-    @Transactional
-    public TbResource saveResource(TbResource resource) {
-        return DaoUtil.getData(resourceRepository.save(new TbResourceEntity(resource)));
     }
 
     @Override
