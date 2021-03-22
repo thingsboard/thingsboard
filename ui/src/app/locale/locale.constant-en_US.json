@@ -443,7 +443,7 @@
         "manage-assets": "Manage assets",
         "manage-devices": "Manage devices",
         "manage-dashboards": "Manage dashboards",
-        "manage-edges": "Manage edges",
+        "manage-edges": "Manage edge instances",
         "title": "Title",
         "title-required": "Title is required.",
         "description": "Description",

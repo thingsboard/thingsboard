@@ -391,7 +391,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
         }
         var ruleChainParams = {ruleChainId: ruleChain.id.id};
         if (vm.ruleChainsScope === 'edge') {
-            $state.go('home.edges.ruleChains.ruleChain', ruleChainParams);
+            $state.go('home.edges.instances.ruleChains.ruleChain', ruleChainParams);
         } else if (vm.ruleChainsScope === 'edges') {
             $state.go('home.edges.ruleChains.ruleChain', ruleChainParams);
         } else {

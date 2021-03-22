@@ -711,35 +711,35 @@ export function EdgeController($rootScope, userService, edgeService, customerSer
         if ($event) {
             $event.stopPropagation();
         }
-        $state.go('home.edges.dashboards', {edgeId: edge.id.id});
+        $state.go('home.edges.instances.dashboards', {edgeId: edge.id.id});
     }
 
     function openEdgeRuleChains($event, edge) {
         if ($event) {
             $event.stopPropagation();
         }
-        $state.go('home.edges.ruleChains', {edgeId: edge.id.id});
+        $state.go('home.edges.instances.ruleChains', {edgeId: edge.id.id});
     }
 
     function openEdgeAssets($event, edge) {
         if ($event) {
             $event.stopPropagation();
         }
-        $state.go('home.edges.assets', {edgeId: edge.id.id});
+        $state.go('home.edges.instances.assets', {edgeId: edge.id.id});
     }
 
     function openEdgeDevices($event, edge) {
         if ($event) {
             $event.stopPropagation();
         }
-        $state.go('home.edges.devices', {edgeId: edge.id.id});
+        $state.go('home.edges.instances.devices', {edgeId: edge.id.id});
     }
 
     function openEdgeEntityViews($event, edge) {
         if ($event) {
             $event.stopPropagation();
         }
-        $state.go('home.edges.entityViews', {edgeId: edge.id.id});
+        $state.go('home.edges.instances.entityViews', {edgeId: edge.id.id});
     }
 
 }

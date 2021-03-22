@@ -191,12 +191,12 @@ function Menu(userService, $state, $rootScope) {
                                 type: 'toggle',
                                 state: 'home.edges',
                                 height: '80px',
-                                icon: 'router',
+                                icon: 'settings_input_antenna',
                                 pages: [
                                     {
                                         name: 'edge.edge-instances',
                                         type: 'link',
-                                        state: 'home.edges',
+                                        state: 'home.edges.instances',
                                         icon: 'router'
                                     },
                                     {
@@ -288,7 +288,7 @@ function Menu(userService, $state, $rootScope) {
                                 {
                                     name: 'edge.edge-instances',
                                     icon: 'router',
-                                    state: 'home.edges'
+                                    state: 'home.edges.instances'
                                 },
                                 {
                                     name: 'edge.rulechain-templates',
@@ -356,7 +356,7 @@ function Menu(userService, $state, $rootScope) {
                             {
                                 name: 'edge.edge-instances',
                                 type: 'link',
-                                state: 'home.edges',
+                                state: 'home.edges.instances',
                                 icon: 'router'
                             }
                         );
@@ -404,12 +404,12 @@ function Menu(userService, $state, $rootScope) {
                     if (userService.isEdgesSupportEnabled()) {
                         homeSections.push(
                             {
-                                name: 'edge.edge-instances',
+                                name: 'edge.management',
                                 places: [
                                     {
                                         name: 'edge.edge-instances',
                                         icon: 'router',
-                                        state: 'home.edges'
+                                        state: 'home.edges.instances'
                                     }
                                 ]
                             }

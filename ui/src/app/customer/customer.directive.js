@@ -50,6 +50,7 @@ export default function CustomerDirective($compile, $templateCache, $translate, 
         scope: {
             customer: '=',
             isEdit: '=',
+            isEdgesSupportEnabled: '=',
             theForm: '=',
             onManageUsers: '&',
             onManageAssets: '&',
