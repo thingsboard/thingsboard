@@ -40,6 +40,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
@@ -1117,5 +1118,10 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         Set<String> namesIsWritable = ConcurrentHashMap.newKeySet();
         namesIsWritable.addAll(new HashSet<>(keyNamesIsWritable.values()));
         return new ArrayList<>(namesIsWritable);
+    }
+
+    @Override
+    public String getName() {
+        return "LWM2M";
     }
 }

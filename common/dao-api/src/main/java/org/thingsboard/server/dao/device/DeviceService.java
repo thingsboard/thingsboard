@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -31,6 +32,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface DeviceService {
 
@@ -90,4 +92,5 @@ public interface DeviceService {
 
     Device saveDevice(ProvisionRequest provisionRequest, DeviceProfile profile);
 
+    List<UUID> findDevicesIdsByDeviceProfileTransportType(DeviceTransportType transportType);
 }

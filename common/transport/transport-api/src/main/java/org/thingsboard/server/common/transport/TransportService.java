@@ -22,11 +22,17 @@ import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsRes
 import org.thingsboard.server.common.transport.service.SessionMetaData;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceCredentialsRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceCredentialsResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetResourcesRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetResourcesResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetSnmpDevicesRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetSnmpDevicesResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.LwM2MRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.LwM2MResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
@@ -54,6 +60,12 @@ public interface TransportService {
     GetEntityProfileResponseMsg getEntityProfile(GetEntityProfileRequestMsg msg);
 
     GetResourcesResponseMsg getResources(GetResourcesRequestMsg msg);
+
+    GetSnmpDevicesResponseMsg getSnmpDevicesIds(GetSnmpDevicesRequestMsg requestMsg);
+
+    GetDeviceResponseMsg getDevice(GetDeviceRequestMsg requestMsg);
+
+    GetDeviceCredentialsResponseMsg getDeviceCredentials(GetDeviceCredentialsRequestMsg requestMsg);
 
     void process(DeviceTransportType transportType, ValidateDeviceTokenRequestMsg msg,
                  TransportServiceCallback<ValidateDeviceCredentialsResponse> callback);

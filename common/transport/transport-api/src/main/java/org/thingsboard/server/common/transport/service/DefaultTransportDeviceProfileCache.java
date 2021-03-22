@@ -112,8 +112,8 @@ public class DefaultTransportDeviceProfileCache implements TransportDeviceProfil
                     profile = profileOpt.get();
                     this.put(profile);
                 } else {
-                    log.warn("[{}] Can't device profile: {}", id, entityProfileMsg.getData());
-                    throw new RuntimeException("Can't device profile!");
+                    log.warn("[{}] Can't find device profile: {}", id, entityProfileMsg.getData());
+                    throw new RuntimeException("Can't find device profile!");
                 }
             } finally {
                 deviceProfileFetchLock.unlock();

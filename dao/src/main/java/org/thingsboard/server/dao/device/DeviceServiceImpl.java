@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -80,6 +81,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -552,6 +554,11 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             }
         }
         return savedDevice;
+    }
+
+    @Override
+    public List<UUID> findDevicesIdsByDeviceProfileTransportType(DeviceTransportType transportType) {
+        return deviceDao.findDevicesIdsByDeviceProfileTransportType(transportType);
     }
 
     private DataValidator<Device> deviceValidator =

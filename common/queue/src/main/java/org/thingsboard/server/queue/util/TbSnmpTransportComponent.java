@@ -13,25 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.discovery;
+package org.thingsboard.server.queue.util;
 
-import lombok.Getter;
-import org.springframework.context.ApplicationEvent;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public class TbApplicationEvent extends ApplicationEvent {
-
-    private static final long serialVersionUID = 3884264064887765146L;
-
-    private static final AtomicInteger sequence = new AtomicInteger();
-
-    @Getter
-    private final int sequenceNumber;
-
-    public TbApplicationEvent(Object source) {
-        super(source);
-        sequenceNumber = sequence.incrementAndGet();
-    }
-
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.snmp.enabled}'=='true')")
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.TYPE, ElementType.METHOD})
+public @interface TbSnmpTransportComponent {
 }
