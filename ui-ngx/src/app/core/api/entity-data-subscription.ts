@@ -799,7 +799,7 @@ export class EntityDataSubscription {
     } else {
       prevSeries = [0, 0];
     }
-    for (let time = startTime; time <= endTime && (this.timer || this.history); time += this.frequency) {
+    for (let time = startTime; time < endTime && (this.timer || this.history); time += this.frequency) {
       const value = dataKey.func(time, prevSeries[1]);
       const series: [number, any] = [time, value];
       data.push(series);
