@@ -94,6 +94,6 @@ public class MqttTransportService implements TbTransportService {
 
     @Override
     public String getName() {
-        return "mqtt";
+        return "MQTT";
     }
 }

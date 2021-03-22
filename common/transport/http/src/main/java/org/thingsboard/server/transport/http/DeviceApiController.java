@@ -339,7 +339,7 @@ public class DeviceApiController implements TbTransportService {
 
     @Override
     public String getName() {
-        return "http";
+        return "HTTP";
     }
 
 }

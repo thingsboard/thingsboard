@@ -269,6 +269,6 @@ public class SnmpTransportService implements TbTransportService {
 
     @Override
     public String getName() {
-        return "snmp";
+        return "SNMP";
     }
 }

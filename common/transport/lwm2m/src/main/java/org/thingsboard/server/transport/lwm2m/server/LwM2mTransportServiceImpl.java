@@ -1122,6 +1122,6 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
 
     @Override
     public String getName() {
-        return "lwm2m";
+        return "LWM2M";
     }
 }

@@ -76,6 +76,6 @@ public class CoapTransportService implements TbTransportService {
 
     @Override
     public String getName() {
-        return "coap";
+        return "COAP";
     }
 }
