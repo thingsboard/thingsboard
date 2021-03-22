@@ -43,9 +43,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
+import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_SEARCH_TEXT;
 import static org.thingsboard.server.dao.device.DeviceServiceImpl.INCORRECT_TENANT_ID;
-import static org.thingsboard.server.dao.model.ModelConstants.LWM2M_SEPARATOR_KEY;
-import static org.thingsboard.server.dao.model.ModelConstants.LWM2M_SEPARATOR_SEARCH_TEXT;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service

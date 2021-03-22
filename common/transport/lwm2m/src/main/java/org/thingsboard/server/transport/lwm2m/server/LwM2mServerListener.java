@@ -26,6 +26,8 @@ import org.eclipse.leshan.server.registration.RegistrationUpdate;
 
 import java.util.Collection;
 
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertToIdVerFromObjectId;
+
 @Slf4j
 public class LwM2mServerListener {
 
@@ -90,7 +92,7 @@ public class LwM2mServerListener {
         public void onResponse(Observation observation, Registration registration, ObserveResponse response) {
             if (registration != null) {
                 try {
-                    service.onObservationResponse(registration, observation.getPath().toString(), response);
+                    service.onObservationResponse(registration, convertToIdVerFromObjectId(observation.getPath().toString(), registration), response);
                 } catch (Exception e) {
                     log.error("[{}] onResponse", e.toString());
 

@@ -32,7 +32,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import static org.thingsboard.server.common.data.ResourceType.LWM2M_MODEL;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LWM2M_SEPARATOR_KEY;
+import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
 
 @Slf4j
 public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
@@ -104,7 +104,6 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
             Map<Integer, String> supportedObjects = this.registration.getSupportedObject();
             Collection<ObjectModel> result = new ArrayList<>(supportedObjects.size());
             Iterator<Map.Entry<Integer, String>> i$ = supportedObjects.entrySet().iterator();
-
             while (i$.hasNext()) {
                 Map.Entry<Integer, String> supportedObject = i$.next();
                 ObjectModel objectModel = this.getObjectModelDynamic(supportedObject.getKey(), supportedObject.getValue());
