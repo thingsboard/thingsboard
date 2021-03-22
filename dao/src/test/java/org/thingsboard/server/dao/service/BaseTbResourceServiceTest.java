@@ -340,6 +340,8 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
         pageData = resourceService.findResourcesByTenantId(TenantId.SYS_TENANT_ID, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
+
+        tenantService.deleteTenant(tenantId);
     }
 
 }
