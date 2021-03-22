@@ -18,9 +18,6 @@ package org.thingsboard.server.common.transport.util;
 import lombok.extern.slf4j.Slf4j;
 import org.nustaq.serialization.FSTConfiguration;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
-
 import java.util.Optional;
 
 @Slf4j
