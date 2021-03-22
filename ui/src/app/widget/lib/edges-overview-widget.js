@@ -42,16 +42,6 @@ function EdgesOverviewWidget() {
 function EdgesOverviewWidgetController($scope, $translate, types, utils, entityService, edgeService, customerService, userService) {
     var vm = this;
 
-    vm.showData = true;
-
-    vm.nodeIdCounter = 0;
-
-    vm.entityNodesMap = {};
-    vm.entityGroupsNodesMap = {};
-
-    vm.customerTitle = null;
-    vm.edgeIsDatasource = true;
-
     var edgeGroupsTypes = [
         types.entityType.asset,
         types.entityType.device,
@@ -60,7 +50,11 @@ function EdgesOverviewWidgetController($scope, $translate, types, utils, entityS
         types.entityType.rulechain
     ];
 
-    vm.onNodeSelected = onNodeSelected;
+    vm.showData = true;
+
+    vm.edgeIsDatasource = true;
+
+    vm.nodeIdCounter = 0;
 
     $scope.$watch('vm.ctx', function() {
         if (vm.ctx && vm.ctx.defaultSubscription) {
@@ -68,27 +62,25 @@ function EdgesOverviewWidgetController($scope, $translate, types, utils, entityS
             vm.widgetConfig = vm.ctx.widgetConfig;
             vm.subscription = vm.ctx.defaultSubscription;
             vm.datasources = vm.subscription.datasources;
+            initializeConfig();
             updateDatasources();
         }
     });
 
-    function onNodeSelected(node, event) {
-        var nodeId;
-        if (!node) {
-            nodeId = -1;
+    function initializeConfig() {
+        var datasource = vm.datasources[0];
+        var edgeIsDatasource = datasource && datasource.type === types.datasourceType.entity && datasource.entity && datasource.entity.id.entityType === types.entityType.edge;
+        if (edgeIsDatasource) {
+            let edge = datasource.entity;
+            updateTitle(edge);
         } else {
-            nodeId = node.id;
+            vm.edgeIsDatasource = false;
         }
-        if (nodeId !== -1) {
-            var selectedNode = vm.entityNodesMap[nodeId];
-            if (selectedNode) {
-                var descriptors = vm.ctx.actionsApi.getActionDescriptors('nodeSelected');
-                if (descriptors.length) {
-                    var entity = selectedNode.data.nodeCtx.entity;
-                    vm.ctx.actionsApi.handleWidgetAction(event, descriptors[0], entity.id, entity.name, { nodeCtx: selectedNode.data.nodeCtx });
-                }
-            }
-        }
+    }
+
+    function updateTitle(edge) {
+        let displayDefaultTitle = angular.isDefined(vm.settings.enableDefaultTitle) ? vm.settings.enableDefaultTitle : false;
+        vm.ctx.widgetTitle = displayDefaultTitle ? `${edge.name} Quick Overview` : vm.widgetConfig.title;
     }
 
     function updateDatasources() {
@@ -97,43 +89,96 @@ function EdgesOverviewWidgetController($scope, $translate, types, utils, entityS
 
     function loadNodes(node, cb) {
         var datasource = vm.datasources[0];
-        if (node.id === '#' && datasource) {
-            if (datasource.type === types.datasourceType.entity && datasource.entity && datasource.entity.id.entityType === types.entityType.edge) {
-                var selectedEdge = datasource.entity;
-                vm.customerTitle = getCustomerTitle(selectedEdge.id.id);
-                // vm.ctx.widgetTitle = selectedEdge.name;
-                cb(loadNodesForEdge(selectedEdge.id.id, selectedEdge));
-            } else if (datasource.type === types.datasourceType.function) {
-                cb(loadNodesForEdge(null, null));
-            } else {
-                vm.edgeIsDatasource = false;
-                cb([]);
-            }
-        } else if (node.data && node.data.entity && node.data.entity.id.entityType === types.entityType.edge) {
-            var edgeId = node.data.entity.id.id;
-            var entityType = node.data.entityType;
-            var pageLink = {limit: 100};
-            entityService.getAssignedToEdgeEntitiesByType(edgeId, entityType, pageLink).then(
-                (entities) => {
-                    if (entities.data.length > 0) {
-                        cb(entitiesToNodes(node.id, entities.data));
-                    } else {
-                        cb([]);
-                    }
+        if (datasource) {
+            if (node.id === '#') {
+                if (datasource.type === types.datasourceType.entity && datasource.entity && datasource.entity.id.entityType === types.entityType.edge) {
+                    var selectedEdge = datasource.entity;
+                    vm.customerTitle = getCustomerTitle(selectedEdge.id.id);
+                    cb(loadNodesForEdge(selectedEdge));
+                } else if (datasource.type === types.datasourceType.function) {
+                    cb(loadNodesForEdge(datasource.entity));
+                } else {
+                    vm.edgeIsDatasource = false;
+                    cb([]);
                 }
-            );
-        } else {
+            } else if (node.data && node.data.entity && node.data.entity.id.entityType === types.entityType.edge) {
+                var edgeId = node.data.entity.id.id;
+                var entityType = node.data.entityType;
+                var pageLink = { limit: 100 };
+                entityService.getAssignedToEdgeEntitiesByType(edgeId, entityType, pageLink).then(
+                    (entities) => {
+                        if (entities) {
+                            cb(entitiesToNodes(entities.data));
+                        } else {
+                            cb([]);
+                        }
+                    }
+                );
+            }
+        }
+        else {
             cb([]);
         }
     }
 
-    function entitiesToNodes(parentNodeId, entities) {
+    function getCustomerTitle(edgeId) {
+        edgeService.getEdge(edgeId, true).then(
+            function success(edge) {
+                if (edge.customerId.id !== types.id.nullUid) {
+                    customerService.getCustomer(edge.customerId.id, { ignoreErrors: true }).then(
+                        function success(customer) {
+                            vm.customerTitle = $translate.instant('edge.assigned-to-customer-widget', { customerTitle: customer.title });
+                        },
+                        function fail() {
+                        }
+                    );
+                }
+            },
+            function fail() {
+            }
+        )
+    }
+
+    function loadNodesForEdge(entity) {
         var nodes = [];
-        vm.entityNodesMap[parentNodeId] = {};
+        var allowedEntityGroupTypes = getAllowedEntityGroupTypes();
+        allowedEntityGroupTypes.forEach(
+            (entityType) => {
+                let node = createEdgeGroupsNode(entity, entityType);
+                nodes.push(node);
+            }
+        )
+        return nodes;
+    }
+
+    function getAllowedEntityGroupTypes() {
+        var allowedEntityGroupTypes = edgeGroupsTypes;
+        if (userService.getAuthority() === 'CUSTOMER_USER') {
+            allowedEntityGroupTypes = allowedEntityGroupTypes.filter(type => type !== types.entityType.rulechain);
+        }
+        return allowedEntityGroupTypes;
+    }
+
+    function createEdgeGroupsNode(entity, entityType) {
+        return {
+            id: ++vm.nodeIdCounter,
+            icon: 'material-icons ' + iconForGroupType(entityType),
+            text: textForGroupType(entityType),
+            children: true,
+            data: {
+                entityType,
+                entity,
+                internalId: entity ? entity.id.id + '_' + entityType : utils.guid()
+            }
+        };
+    }
+
+    function entitiesToNodes(entities) {
+        var nodes = [];
         if (entities) {
             entities.forEach(
                 (entity) => {
-                    var node = createEntityNode(parentNodeId, entity, entity.id.entityType);
+                    var node = createEntityNode(entity, entity.id.entityType);
                     nodes.push(node);
                 }
             );
@@ -141,13 +186,8 @@ function EdgesOverviewWidgetController($scope, $translate, types, utils, entityS
         return nodes;
     }
 
-    function createEntityNode(parentNodeId, entity, entityType) {
-        var nodesMap = vm.entityNodesMap[parentNodeId];
-        if (!nodesMap) {
-            nodesMap = {};
-            vm.entityNodesMap[parentNodeId] = nodesMap;
-        }
-        var node = {
+    function createEntityNode(entity, entityType) {
+        return {
             id: ++vm.nodeIdCounter,
             icon: 'material-icons ' + iconForGroupType(entityType),
             text: entity.name,
@@ -157,34 +197,6 @@ function EdgesOverviewWidgetController($scope, $translate, types, utils, entityS
                 internalId: entity.id.id
             }
         };
-        nodesMap[entity.id.id] = node.id;
-        return node;
-    }
-
-    function loadNodesForEdge(parentNodeId, entity) {
-        var nodes = [];
-        vm.entityGroupsNodesMap[parentNodeId] = {};
-        var allowedGroupTypes = edgeGroupsTypes;
-        if (userService.getAuthority() === 'CUSTOMER_USER') {
-            allowedGroupTypes = edgeGroupsTypes.filter(type => type !== types.entityType.rulechain);
-        }
-        allowedGroupTypes.forEach(
-            (entityType) => {
-                var node = {
-                    id: ++vm.nodeIdCounter,
-                    icon: 'material-icons ' + iconForGroupType(entityType),
-                    text: textForGroupType(entityType),
-                    children: true,
-                    data: {
-                        entityType,
-                        entity,
-                        internalId: entity ? entity.id.id + '_' + entityType : utils.guid()
-                    }
-                };
-                nodes.push(node);
-            }
-        )
-        return nodes;
     }
 
     function iconForGroupType(entityType) {
@@ -217,24 +229,6 @@ function EdgesOverviewWidgetController($scope, $translate, types, utils, entityS
                 return $translate.instant('dashboard.dashboards');
         }
         return '';
-    }
-
-    function getCustomerTitle(edgeId) {
-        edgeService.getEdge(edgeId, true).then(
-            function success(edge) {
-                if (edge.customerId.id !== types.id.nullUid) {
-                    customerService.getCustomer(edge.customerId.id, { ignoreErrors: true }).then(
-                        function success(customer) {
-                            vm.customerTitle = $translate.instant('edge.assigned-to-customer-widget', { customerTitle: customer.title });
-                        },
-                        function fail() {
-                        }
-                    );
-                }
-            },
-            function fail() {
-            }
-        )
     }
 
 }

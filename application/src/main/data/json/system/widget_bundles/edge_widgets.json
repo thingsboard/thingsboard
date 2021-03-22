@@ -7,7 +7,7 @@
   "widgetTypes": [
     {
       "alias": "edges_overview",
-      "name": "Edges Quick Overview",
+      "name": "Edge Quick Overview",
       "descriptor": {
         "type": "latest",
         "sizeX": 7.5,
@@ -15,10 +15,10 @@
         "resources": [],
         "templateHtml": "<tb-edges-overview-widget \n    ctx=\"ctx\">\n</tb-edges-overview-widget>",
         "templateCss": "",
-        "controllerScript": "self.onInit = function() {\n  var scope = self.ctx.$scope;\n  scope.ctx = self.ctx;\n}\n\nself.typeParameters = function() {\n  return {\n    maxDatasources: 1,\n    dataKeysOptional: true\n  };\n}\n\nself.actionSources = function() {\n    return {\n        'nodeSelected': {\n            name: 'widget-action.node-selected',\n            multiple: false\n        }\n    };\n}\n\nself.onDestroy = function() {\n}\n",
-        "settingsSchema": "{}",
+        "controllerScript": "self.onInit = function() {\n  var scope = self.ctx.$scope;\n  scope.ctx = self.ctx;\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        dataKeysOptional: true\n    };\n}\n\nself.onDestroy = function() {\n};\n",
+        "settingsSchema": "{\n    \"schema\": {\n        \"type\": \"object\",\n        \"title\": \"EdgeOverviewSettings\",\n        \"properties\": {\n            \"enableDefaultTitle\": {\n                \"title\": \"Display default title\",\n                \"type\": \"boolean\",\n                \"default\": true\n            }\n        },\n        \"required\": []\n    },\n    \"form\": [\n        \"enableDefaultTitle\"\n    ]\n}",
         "dataKeySettingsSchema": "{}",
-        "defaultConfig": "{\"timewindow\":{\"realtime\":{\"interval\":1000,\"timewindowMs\":86400000},\"aggregation\":{\"type\":\"NONE\",\"limit\":200}},\"showTitle\":true,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"4px\",\"settings\":{},\"title\":\"Edges Quick Overview\",\"showTitleIcon\":true,\"titleIcon\":\"router\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400,\"padding\":\"5px 10px 5px 10px\"},\"useDashboardTimewindow\":false,\"showLegend\":false,\"datasources\":[{\"type\":\"function\",\"name\":\"Simulated\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Random\",\"color\":\"#f44336\",\"settings\":{\"columnWidth\":\"0px\",\"useCellStyleFunction\":false,\"cellStyleFunction\":\"\",\"useCellContentFunction\":false,\"cellContentFunction\":\"\"},\"_hash\":0.6401141393938932,\"funcBody\":\"var value = prevValue + Math.random() * 100 - 50;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < -1000) {\\n\\tvalue = -1000;\\n} else if (value > 1000) {\\n\\tvalue = 1000;\\n}\\nreturn value;\"}]}],\"widgetStyle\":{},\"actions\":{}}"
+        "defaultConfig": "{\"timewindow\":{\"realtime\":{\"interval\":1000,\"timewindowMs\":86400000},\"aggregation\":{\"type\":\"NONE\",\"limit\":200}},\"showTitle\":true,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"4px\",\"settings\":{},\"title\":\"Edge Quick Overview\",\"showTitleIcon\":true,\"titleIcon\":\"router\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400,\"padding\":\"5px 10px 5px 10px\"},\"useDashboardTimewindow\":false,\"showLegend\":false,\"datasources\":[{\"type\":\"function\",\"name\":\"Simulated\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Random\",\"color\":\"#f44336\",\"settings\":{\"columnWidth\":\"0px\",\"useCellStyleFunction\":false,\"cellStyleFunction\":\"\",\"useCellContentFunction\":false,\"cellContentFunction\":\"\"},\"_hash\":0.6401141393938932,\"funcBody\":\"var value = prevValue + Math.random() * 100 - 50;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < -1000) {\\n\\tvalue = -1000;\\n} else if (value > 1000) {\\n\\tvalue = 1000;\\n}\\nreturn value;\"}]}],\"widgetStyle\":{},\"actions\":{}}"
       }
     }
   ]

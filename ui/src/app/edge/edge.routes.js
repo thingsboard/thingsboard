@@ -30,6 +30,16 @@ export default function EdgeRoutes($stateProvider, types) {
         .state('home.edges', {
             url: '/edges',
             params: {'topIndex': 0},
+            redirectTo: 'home.edges.instances',
+            auth: ['TENANT_ADMIN', 'CUSTOMER_USER'],
+            data: {
+                pageTitle: 'edge.management'
+            },
+            ncyBreadcrumb: {
+                label: '{"icon": "settings_input_antenna", "label": "edge.management"}'
+            }
+        }).state('home.edges.instances', {
+            url: '/instances',
             module: 'private',
             auth: ['TENANT_ADMIN', 'CUSTOMER_USER'],
             views: {
@@ -49,9 +59,8 @@ export default function EdgeRoutes($stateProvider, types) {
             ncyBreadcrumb: {
                 label: '{"icon": "router", "label": "edge.edge-instances"}'
             }
-        }).state('home.edges.entityViews', {
+        }).state('home.edges.instances.entityViews', {
             url: '/:edgeId/entityViews',
-            params: {'topIndex': 0},
             module: 'private',
             auth: ['TENANT_ADMIN', 'CUSTOMER_USER'],
             views: {
@@ -71,7 +80,7 @@ export default function EdgeRoutes($stateProvider, types) {
             ncyBreadcrumb: {
                 label: '{"icon": "view_quilt", "label": "edge.entity-views"}'
             }
-        }).state('home.edges.devices', {
+        }).state('home.edges.instances.devices', {
             url: '/:edgeId/devices',
             params: {'topIndex': 0},
             module: 'private',
@@ -93,7 +102,7 @@ export default function EdgeRoutes($stateProvider, types) {
             ncyBreadcrumb: {
                 label: '{"icon": "devices_other", "label": "edge.devices"}'
             }
-        }).state('home.edges.assets', {
+        }).state('home.edges.instances.assets', {
             url: '/:edgeId/assets',
             params: {'topIndex': 0},
             module: 'private',
@@ -115,7 +124,7 @@ export default function EdgeRoutes($stateProvider, types) {
             ncyBreadcrumb: {
                 label: '{"icon": "domain", "label": "edge.assets"}'
             }
-        }).state('home.edges.dashboards', {
+        }).state('home.edges.instances.dashboards', {
             url: '/:edgeId/dashboards',
             params: {'topIndex': 0},
             module: 'private',
@@ -135,7 +144,7 @@ export default function EdgeRoutes($stateProvider, types) {
             ncyBreadcrumb: {
                 label: '{"icon": "dashboard", "label": "edge.dashboards"}'
             }
-        }).state('home.edges.dashboards.dashboard', {
+        }).state('home.edges.instances.dashboards.dashboard', {
             url: '/:dashboardId?state',
             reloadOnSearch: false,
             module: 'private',

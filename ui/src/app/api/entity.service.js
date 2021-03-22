@@ -20,9 +20,9 @@ export default angular.module('thingsboard.api.entity', [thingsboardTypes])
     .name;
 
 /*@ngInject*/
-function EntityService($http, $q, $filter, $translate, $log, userService, deviceService, assetService, tenantService,
+function EntityService($http, $q, $filter, $translate, $log, types, utils, userService, deviceService, assetService, tenantService,
                        customerService, ruleChainService, dashboardService, entityRelationService, attributeService,
-                       entityViewService, edgeService, types, utils) {
+                       entityViewService, edgeService, widgetService) {
     var service = {
         getEntity: getEntity,
         getEntities: getEntities,
@@ -43,7 +43,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         deleteRelatedEntity: deleteRelatedEntity,
         moveEntity: moveEntity,
         copyEntity: copyEntity,
-        getAssignedToEdgeEntitiesByType: getAssignedToEdgeEntitiesByType
+        getAssignedToEdgeEntitiesByType: getAssignedToEdgeEntitiesByType,
+        getEdgeEventContentByEntityType: getEdgeEventContentByEntityType
     };
 
     return service;
@@ -917,7 +918,6 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         return entityTypes;
     }
 
-
     function checkEntityAlias(entityAlias) {
         var deferred = $q.defer();
         resolveAliasFilter(entityAlias.filter, null, 1, true).then(
@@ -1702,6 +1702,57 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 break;
             case types.entityType.rulechain:
                 promise = ruleChainService.getEdgeRuleChains(edgeId, pageLink, null);
+                break;
+        }
+        return promise;
+    }
+
+    function getEdgeEventContentByEntityType(entity) {
+        var deferred = $q.defer();
+        var promise = getEdgeEventContentPromise(entity);
+        if (promise) {
+            promise.then(
+                function success(result) {
+                    deferred.resolve(result);
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+        } else {
+            deferred.reject();
+        }
+        return deferred.promise;
+    }
+
+    function getEdgeEventContentPromise(entity) {
+        var promise;
+        const entityId = entity.entityId;
+        const entityType = entity.type;
+        switch (entityType) {
+            case types.edgeEventType.dashboard:
+            case types.edgeEventType.alarm:
+            case types.edgeEventType.rulechain:
+            case types.edgeEventType.edge:
+            case types.edgeEventType.user:
+            case types.edgeEventType.customer:
+            case types.edgeEventType.tenant:
+            case types.edgeEventType.asset:
+            case types.edgeEventType.device:
+            case types.edgeEventType.entityView:
+                promise = getEntity(entityType, entityId, { ignoreLoading: true, ignoreErrors: true });
+                break;
+            case types.edgeEventType.ruleChainMetaData:
+                promise = ruleChainService.getRuleChainMetaData(entityId);
+                break;
+            case types.edgeEventType.widgetType:
+                promise = widgetService.getWidgetTypeById(entityId);
+                break;
+            case types.edgeEventType.widgetsBundle:
+                promise = widgetService.getWidgetsBundle(entityId);
+                break;
+            case types.edgeEventType.relation:
+                promise = $q.when(entity.body);
                 break;
         }
         return promise;
