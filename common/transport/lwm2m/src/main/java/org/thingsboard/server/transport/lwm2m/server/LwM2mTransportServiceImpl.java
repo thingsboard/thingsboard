@@ -295,19 +295,19 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         if (msg.getSharedUpdatedCount() > 0) {
             JsonElement el = JsonConverter.toJson(msg);
             el.getAsJsonObject().entrySet().forEach(de -> {
-                String path = this.getPathAttributeUpdate(sessionInfo, de.getKey());
+                String pathIdVer = this.getPathAttributeUpdate(sessionInfo, de.getKey());
                 String value = de.getValue().getAsString();
                 LwM2mClient lwM2MClient = lwM2mClientContext.getLwM2mClient(new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
                 LwM2mClientProfile clientProfile = lwM2mClientContext.getProfile(new UUID(sessionInfo.getDeviceProfileIdMSB(), sessionInfo.getDeviceProfileIdLSB()));
-                if (path != null && !path.isEmpty() && (this.validatePathInAttrProfile(clientProfile, path) || this.validatePathInTelemetryProfile(clientProfile, path))) {
-                    ResourceModel resourceModel = lwM2mTransportContextServer.getLwM2MTransportConfigServer().getResourceModel(lwM2MClient.getRegistration(), new LwM2mPath(path));
+                if (pathIdVer != null && !pathIdVer.isEmpty() && (this.validatePathInAttrProfile(clientProfile, pathIdVer) || this.validatePathInTelemetryProfile(clientProfile, pathIdVer))) {
+                    ResourceModel resourceModel = lwM2mTransportContextServer.getLwM2MTransportConfigServer().getResourceModel(lwM2MClient.getRegistration(), new LwM2mPath(convertToObjectIdFromIdVer(pathIdVer)));
                     if (resourceModel != null && resourceModel.operations.isWritable()) {
-                        lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(), path, POST_TYPE_OPER_WRITE_REPLACE,
+                        lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(), pathIdVer, POST_TYPE_OPER_WRITE_REPLACE,
                                 ContentFormat.TLV.getName(), null, value, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getTimeout());
                     } else {
-                        log.error("Resource path - [{}] value - [{}] is not Writable and cannot be updated", path, value);
+                        log.error("Resource path - [{}] value - [{}] is not Writable and cannot be updated", pathIdVer, value);
                         String logMsg = String.format("%s: attributeUpdate: Resource path - %s value - %s is not Writable and cannot be updated",
-                                LOG_LW2M_ERROR, path, value);
+                                LOG_LW2M_ERROR, pathIdVer, value);
                         this.sentLogsToThingsboard(logMsg, lwM2MClient.getRegistration());
                     }
                 } else {
