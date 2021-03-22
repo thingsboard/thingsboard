@@ -79,6 +79,7 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
         showDashboardsSelect: [isUndefined(this.settings.showDashboardsSelect) ? true : this.settings.showDashboardsSelect, []],
         showEntitiesSelect: [isUndefined(this.settings.showEntitiesSelect) ? true : this.settings.showEntitiesSelect, []],
         showFilters: [isUndefined(this.settings.showFilters) ? true : this.settings.showFilters, []],
+        showDashboardLogo: [isUndefined(this.settings.showDashboardLogo) ? true : this.settings.showDashboardLogo, []],
         showDashboardTimewindow: [isUndefined(this.settings.showDashboardTimewindow) ? true : this.settings.showDashboardTimewindow, []],
         showDashboardExport: [isUndefined(this.settings.showDashboardExport) ? true : this.settings.showDashboardExport, []]
       });

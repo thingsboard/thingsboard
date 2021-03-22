@@ -189,6 +189,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   currentDashboardScope: DashboardPageScope;
 
   addingLayoutCtx: DashboardPageLayoutContext;
+  
+  dashboard_logo = 'assets/example_logo.png';
 
 
   dashboardCtx: DashboardContext = {
@@ -480,6 +482,15 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     }
   }
 
+  public showDashboardLogo(): boolean {
+    if (this.dashboard.configuration.settings &&
+      isDefined(this.dashboard.configuration.settings.showDashboardLogo)) {
+      return this.dashboard.configuration.settings.showDashboardLogo;
+    } else {
+      return true;
+    }
+  }
+  
   public showRightLayoutSwitch(): boolean {
     return this.isMobile && this.layouts.right.show;
   }

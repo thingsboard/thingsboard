@@ -725,6 +725,7 @@
         "display-filters": "Display filters",
         "display-dashboard-timewindow": "Display timewindow",
         "display-dashboard-export": "Display export",
+        "display-dashboard-showDashboardLogo": "Display dashboard logo", 
         "import": "Import dashboard",
         "export": "Export dashboard",
         "export-failed-error": "Unable to export dashboard: {{error}}",

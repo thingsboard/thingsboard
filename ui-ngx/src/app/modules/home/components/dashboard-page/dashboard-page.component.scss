@@ -54,6 +54,14 @@ div.tb-dashboard-page {
     z-index: 13;
     pointer-events: none;
 
+    .db-logo-and-title {
+      height: $toolbar-height;
+      .whitelabel-logo-db{
+        height: 100%;
+        width: auto;
+      }
+    }
+
     &.tb-dashboard-toolbar-opened {
       right: 0;
       // transition: right .3s cubic-bezier(.55, 0, .55, .2);
@@ -63,8 +71,9 @@ div.tb-dashboard-page {
       right: 18px;
       transition: right .3s cubic-bezier(.55, 0, .55, .2) .2s;
     }
-  }
+  
 
+    }
   .tb-dashboard-container {
     &.tb-dashboard-toolbar-opened {
       &.is-fullscreen {
