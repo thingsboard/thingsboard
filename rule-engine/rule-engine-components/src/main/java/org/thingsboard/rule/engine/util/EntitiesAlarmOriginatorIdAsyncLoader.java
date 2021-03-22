@@ -32,7 +32,7 @@ public class EntitiesAlarmOriginatorIdAsyncLoader {
             case ALARM:
                 return getAlarmOriginatorAsync(ctx.getAlarmService().findAlarmByIdAsync(ctx.getTenantId(), (AlarmId) original));
             default:
-                return Futures.immediateFailedFuture(new TbNodeException("Unexpected original EntityType " + original));
+                return Futures.immediateFailedFuture(new TbNodeException("Unexpected original EntityType " + original.getEntityType()));
         }
     }
 

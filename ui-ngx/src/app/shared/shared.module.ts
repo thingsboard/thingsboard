@@ -139,6 +139,8 @@ import { ContactComponent } from '@shared/components/contact.component';
 import { TimezoneSelectComponent } from '@shared/components/time/timezone-select.component';
 import { FileSizePipe } from '@shared/pipe/file-size.pipe';
 import { WidgetsBundleSearchComponent } from '@shared/components/widgets-bundle-search.component';
+import { SelectableColumnsPipe } from '@shared/pipe/selectable-columns.pipe';
+import { QuickTimeIntervalComponent } from '@shared/components/time/quick-time-interval.component';
 
 @NgModule({
   providers: [
@@ -174,6 +176,7 @@ import { WidgetsBundleSearchComponent } from '@shared/components/widgets-bundle-
     TimewindowComponent,
     TimewindowPanelComponent,
     TimeintervalComponent,
+    QuickTimeIntervalComponent,
     DashboardSelectComponent,
     DashboardSelectPanelComponent,
     DatetimePeriodComponent,
@@ -223,6 +226,7 @@ import { WidgetsBundleSearchComponent } from '@shared/components/widgets-bundle-
     TruncatePipe,
     TbJsonPipe,
     FileSizePipe,
+    SelectableColumnsPipe,
     KeyboardShortcutPipe,
     TbJsonToStringDirective,
     JsonObjectEditDialogComponent,
@@ -300,6 +304,7 @@ import { WidgetsBundleSearchComponent } from '@shared/components/widgets-bundle-
     TimewindowComponent,
     TimewindowPanelComponent,
     TimeintervalComponent,
+    QuickTimeIntervalComponent,
     DashboardSelectComponent,
     DatetimePeriodComponent,
     DatetimeComponent,
@@ -393,6 +398,7 @@ import { WidgetsBundleSearchComponent } from '@shared/components/widgets-bundle-
     TbJsonPipe,
     KeyboardShortcutPipe,
     FileSizePipe,
+    SelectableColumnsPipe,
     TranslateModule,
     JsonObjectEditDialogComponent,
     HistorySelectorComponent,

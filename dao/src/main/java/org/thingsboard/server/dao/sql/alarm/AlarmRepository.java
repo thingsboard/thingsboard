@@ -76,12 +76,17 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
                                      @Param("searchText") String searchText,
                                      Pageable pageable);
 
-    @Query("SELECT alarm.severity FROM AlarmEntity alarm" +
-            " WHERE alarm.tenantId = :tenantId" +
-            " AND alarm.originatorId = :entityId" +
-            " AND ((:status) IS NULL OR alarm.status in (:status))")
+    @Query(value = "SELECT a.severity FROM AlarmEntity a " +
+            "LEFT JOIN RelationEntity re ON a.id = re.toId " +
+            "AND re.relationTypeGroup = 'ALARM' " +
+            "AND re.toType = 'ALARM' " +
+            "AND re.fromId = :affectedEntityId " +
+            "AND re.fromType = :affectedEntityType " +
+            "WHERE a.tenantId = :tenantId " +
+            "AND (a.originatorId = :affectedEntityId or re.fromId IS NOT NULL) " +
+            "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses))")
     Set<AlarmSeverity> findAlarmSeverities(@Param("tenantId") UUID tenantId,
-                                           @Param("entityId") UUID entityId,
-                                           @Param("status") Set<AlarmStatus> status);
-
+                                           @Param("affectedEntityId") UUID affectedEntityId,
+                                           @Param("affectedEntityType") String affectedEntityType,
+                                           @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses);
 }

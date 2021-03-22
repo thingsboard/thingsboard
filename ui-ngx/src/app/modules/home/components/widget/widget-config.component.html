@@ -263,15 +263,6 @@
               </mat-select>
             </mat-form-field>
             <section class="tb-datasource" [ngSwitch]="alarmSourceSettings.get('type').value">
-              <ng-template [ngSwitchCase]="datasourceType.function">
-                <mat-form-field floatLabel="always" [fxShow]="widgetType !== widgetTypes.alarm"
-                                class="tb-datasource-name" style="min-width: 200px;">
-                  <mat-label></mat-label>
-                  <input matInput
-                         placeholder="{{ 'datasource.name' | translate }}"
-                         formControlName="name">
-                </mat-form-field>
-              </ng-template>
               <ng-template [ngSwitchCase]="datasourceType.entity">
                 <tb-entity-alias-select
                   [showLabel]="true"

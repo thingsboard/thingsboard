@@ -95,6 +95,7 @@
               <tb-timewindow *ngIf="widget.hasTimewindow"
                              #timewindowComponent
                              aggregation="{{widget.hasAggregation}}"
+                             timezone="true"
                              [isEdit]="isEdit"
                              [(ngModel)]="widgetComponent.widget.config.timewindow"
                              (ngModelChange)="widgetComponent.onTimewindowChanged($event)">
