@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -112,25 +113,50 @@ public class DefaultTransportService implements TransportService {
 
     @Value("${transport.sessions.inactivity_timeout}")
     private long sessionInactivityTimeout;
+
     @Value("${transport.sessions.report_timeout}")
     private long sessionReportTimeout;
+
     @Value("${transport.client_side_rpc.timeout:60000}")
     private long clientSideRpcTimeout;
+
     @Value("${queue.transport.poll_interval}")
     private int notificationsPollDuration;
 
     private final Gson gson = new Gson();
-    private final TbTransportQueueFactory queueProvider;
-    private final TbQueueProducerProvider producerProvider;
-    private final PartitionService partitionService;
-    private final TbServiceInfoProvider serviceInfoProvider;
-    private final StatsFactory statsFactory;
-    private final TransportDeviceProfileCache deviceProfileCache;
-    private final TransportTenantProfileCache tenantProfileCache;
-    private final TbApiUsageClient apiUsageClient;
-    private final TransportRateLimitService rateLimitService;
-    private final DataDecodingEncodingService dataDecodingEncodingService;
-    private final SchedulerComponent scheduler;
+
+    @Autowired
+    private TbTransportQueueFactory queueProvider;
+
+    @Autowired
+    private TbQueueProducerProvider producerProvider;
+
+    @Autowired
+    private PartitionService partitionService;
+
+    @Autowired
+    private TbServiceInfoProvider serviceInfoProvider;
+
+    @Autowired
+    private StatsFactory statsFactory;
+
+    @Autowired
+    private TransportDeviceProfileCache deviceProfileCache;
+
+    @Autowired
+    private TransportTenantProfileCache tenantProfileCache;
+
+    @Autowired
+    private TbApiUsageClient apiUsageClient;
+
+    @Autowired
+    private TransportRateLimitService rateLimitService;
+
+    @Autowired
+    private DataDecodingEncodingService dataDecodingEncodingService;
+
+    @Autowired
+    private SchedulerComponent scheduler;
 
     protected TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> transportApiRequestTemplate;
     protected TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> ruleEngineMsgProducer;
@@ -148,28 +174,6 @@ public class DefaultTransportService implements TransportService {
     private final Map<String, RpcRequestMetadata> toServerRpcPendingMap = new ConcurrentHashMap<>();
 
     private volatile boolean stopped = false;
-
-    public DefaultTransportService(TbServiceInfoProvider serviceInfoProvider,
-                                   TbTransportQueueFactory queueProvider,
-                                   TbQueueProducerProvider producerProvider,
-                                   PartitionService partitionService,
-                                   StatsFactory statsFactory,
-                                   TransportDeviceProfileCache deviceProfileCache,
-                                   TransportTenantProfileCache tenantProfileCache,
-                                   TbApiUsageClient apiUsageClient, TransportRateLimitService rateLimitService,
-                                   DataDecodingEncodingService dataDecodingEncodingService, SchedulerComponent scheduler) {
-        this.serviceInfoProvider = serviceInfoProvider;
-        this.queueProvider = queueProvider;
-        this.producerProvider = producerProvider;
-        this.partitionService = partitionService;
-        this.statsFactory = statsFactory;
-        this.deviceProfileCache = deviceProfileCache;
-        this.tenantProfileCache = tenantProfileCache;
-        this.apiUsageClient = apiUsageClient;
-        this.rateLimitService = rateLimitService;
-        this.dataDecodingEncodingService = dataDecodingEncodingService;
-        this.scheduler = scheduler;
-    }
 
     @PostConstruct
     public void init() {

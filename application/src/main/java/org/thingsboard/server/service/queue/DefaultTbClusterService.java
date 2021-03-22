@@ -17,6 +17,7 @@ package org.thingsboard.server.service.queue;
 
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -73,17 +74,17 @@ public class DefaultTbClusterService implements TbClusterService {
     private final AtomicInteger toRuleEngineNfs = new AtomicInteger(0);
     private final AtomicInteger toTransportNfs = new AtomicInteger(0);
 
-    private final TbQueueProducerProvider producerProvider;
-    private final PartitionService partitionService;
-    private final DataDecodingEncodingService encodingService;
-    private final TbDeviceProfileCache deviceProfileCache;
+    @Autowired
+    private TbQueueProducerProvider producerProvider;
 
-    public DefaultTbClusterService(TbQueueProducerProvider producerProvider, PartitionService partitionService, DataDecodingEncodingService encodingService, TbDeviceProfileCache deviceProfileCache) {
-        this.producerProvider = producerProvider;
-        this.partitionService = partitionService;
-        this.encodingService = encodingService;
-        this.deviceProfileCache = deviceProfileCache;
-    }
+    @Autowired
+    private PartitionService partitionService;
+
+    @Autowired
+    private DataDecodingEncodingService encodingService;
+
+    @Autowired
+    private TbDeviceProfileCache deviceProfileCache;
 
     @Override
     public void pushMsgToCore(TenantId tenantId, EntityId entityId, ToCoreMsg msg, TbQueueCallback callback) {
