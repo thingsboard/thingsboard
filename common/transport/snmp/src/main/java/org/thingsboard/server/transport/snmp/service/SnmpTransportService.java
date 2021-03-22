@@ -28,15 +28,13 @@ import org.snmp4j.event.ResponseEvent;
 import org.snmp4j.smi.VariableBinding;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.TransportName;
+import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.transport.TransportContext;
@@ -63,7 +61,7 @@ import java.util.function.Consumer;
 @TbSnmpTransportComponent
 @Service
 @Slf4j
-public class SnmpTransportService {
+public class SnmpTransportService implements TbTransportService {
     private final SnmpTransportContext snmpTransportContext;
 
     @Getter
@@ -269,12 +267,8 @@ public class SnmpTransportService {
         }
     }
 
-    @TbSnmpTransportComponent
-    @Configuration
-    static class Config {
-        @Bean
-        public TransportName transportName() {
-            return new TransportName("snmp");
-        }
+    @Override
+    public String getName() {
+        return "snmp";
     }
 }

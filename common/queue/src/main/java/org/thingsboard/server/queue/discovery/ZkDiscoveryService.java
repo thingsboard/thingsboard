@@ -70,7 +70,6 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
 
     private final TbServiceInfoProvider serviceInfoProvider;
     private final PartitionService partitionService;
-    private final ApplicationEventPublisher eventPublisher;
 
     private ExecutorService reconnectExecutorService;
     private CuratorFramework client;
@@ -81,11 +80,9 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
     private volatile boolean stopped = true;
 
     public ZkDiscoveryService(TbServiceInfoProvider serviceInfoProvider,
-                              PartitionService partitionService,
-                              ApplicationEventPublisher eventPublisher) {
+                              PartitionService partitionService) {
         this.serviceInfoProvider = serviceInfoProvider;
         this.partitionService = partitionService;
-        this.eventPublisher = eventPublisher;
     }
 
     @PostConstruct
@@ -118,19 +115,6 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
                 .collect(Collectors.toList());
     }
 
-    private List<TransportProtos.ServiceInfo> getAllServers() {
-        return cache.getCurrentData().stream()
-                .map(cd -> {
-                    try {
-                        return TransportProtos.ServiceInfo.parseFrom(cd.getData());
-                    } catch (NoSuchElementException | InvalidProtocolBufferException e) {
-                        log.error("Failed to decode ZK node", e);
-                        throw new RuntimeException(e);
-                    }
-                })
-                .collect(Collectors.toList());
-    }
-
     @EventListener(ApplicationReadyEvent.class)
     @Order(value = 1)
     public void onApplicationEvent(ApplicationReadyEvent event) {
@@ -147,7 +131,6 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
         publishCurrentServer();
         TransportProtos.ServiceInfo currentService = serviceInfoProvider.getServiceInfo();
         partitionService.recalculatePartitions(currentService, getOtherServers());
-        eventPublisher.publishEvent(new ServiceListChangedEvent(getAllServers(), currentService));
     }
 
     public synchronized void publishCurrentServer() {
@@ -304,7 +287,6 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
             case CHILD_REMOVED:
                 TransportProtos.ServiceInfo currentService = serviceInfoProvider.getServiceInfo();
                 partitionService.recalculatePartitions(currentService, getOtherServers());
-                eventPublisher.publishEvent(new ServiceListChangedEvent(getAllServers(), currentService, instance));
                 break;
             default:
                 break;

@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.data.DeviceData;
-import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
+import org.thingsboard.server.common.data.device.data.DeviceTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -45,6 +45,10 @@ public class ProtoTransportEntityService {
                 .setDeviceIdLSB(id.getId().getLeastSignificantBits())
                 .build());
 
+        if (deviceProto == null) {
+            return null;
+        }
+
         DeviceProfileId deviceProfileId = new DeviceProfileId(new UUID(
                 deviceProto.getDeviceProfileIdMSB(), deviceProto.getDeviceProfileIdLSB())
         );
@@ -53,12 +57,12 @@ public class ProtoTransportEntityService {
         device.setId(id);
         device.setDeviceProfileId(deviceProfileId);
 
-        SnmpDeviceTransportConfiguration snmpDeviceTransportConfiguration = (SnmpDeviceTransportConfiguration) dataDecodingEncodingService.decode(
+        DeviceTransportConfiguration deviceTransportConfiguration = (DeviceTransportConfiguration) dataDecodingEncodingService.decode(
                 deviceProto.getDeviceTransportConfiguration().toByteArray()
         ).orElseThrow(() -> new IllegalStateException("Can't find device transport configuration"));
 
         DeviceData deviceData = new DeviceData();
-        deviceData.setTransportConfiguration(snmpDeviceTransportConfiguration);
+        deviceData.setTransportConfiguration(deviceTransportConfiguration);
         device.setDeviceData(deviceData);
 
         return device;

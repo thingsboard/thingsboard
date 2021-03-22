@@ -295,8 +295,12 @@ public class DefaultTransportService implements TransportService {
         );
 
         try {
-            TbProtoQueueMsg<TransportApiResponseMsg> response = transportApiRequestTemplate.send(protoMsg).get();
-            return response.getValue().getDeviceResponseMsg();
+            TransportApiResponseMsg response = transportApiRequestTemplate.send(protoMsg).get().getValue();
+            if (response.hasDeviceResponseMsg()) {
+                return response.getDeviceResponseMsg();
+            } else {
+                return null;
+            }
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }

@@ -16,24 +16,20 @@
 package org.thingsboard.server.queue.discovery.event;
 
 import lombok.Getter;
+import lombok.ToString;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
 
 import java.util.List;
 
 @Getter
-public class ServiceListChangedEvent {
-    private final List<ServiceInfo> serviceList;
+@ToString
+public class ServiceListChangedEvent extends TbApplicationEvent {
+    private final List<ServiceInfo> otherServices;
     private final ServiceInfo currentService;
-    private ServiceInfo changedService;
 
-    public ServiceListChangedEvent(List<ServiceInfo> serviceList, ServiceInfo currentService) {
-        this.serviceList = serviceList;
+    public ServiceListChangedEvent(List<ServiceInfo> otherServices, ServiceInfo currentService) {
+        super(otherServices);
+        this.otherServices = otherServices;
         this.currentService = currentService;
-    }
-
-    public ServiceListChangedEvent(List<ServiceInfo> serviceList, ServiceInfo currentService, ServiceInfo changedService) {
-        this.serviceList = serviceList;
-        this.currentService = currentService;
-        this.changedService = changedService;
     }
 }

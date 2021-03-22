@@ -376,16 +376,23 @@ public class DefaultTransportApiService implements TransportApiService {
     private ListenableFuture<TransportApiResponseMsg> handle(GetDeviceRequestMsg requestMsg) {
         DeviceId deviceId = new DeviceId(new UUID(requestMsg.getDeviceIdMSB(), requestMsg.getDeviceIdLSB()));
         Device device = deviceService.findDeviceById(TenantId.SYS_TENANT_ID, deviceId);
-        UUID deviceProfileId = device.getDeviceProfileId().getId();
 
-        return Futures.immediateFuture(TransportApiResponseMsg.newBuilder()
-                .setDeviceResponseMsg(TransportProtos.GetDeviceResponseMsg.newBuilder()
-                        .setDeviceProfileIdMSB(deviceProfileId.getMostSignificantBits())
-                        .setDeviceProfileIdLSB(deviceProfileId.getLeastSignificantBits())
-                        .setDeviceTransportConfiguration(ByteString.copyFrom(
-                                dataDecodingEncodingService.encode(device.getDeviceData().getTransportConfiguration())
-                        )))
-                .build());
+        TransportApiResponseMsg responseMsg;
+        if (device != null) {
+            UUID deviceProfileId = device.getDeviceProfileId().getId();
+            responseMsg = TransportApiResponseMsg.newBuilder()
+                    .setDeviceResponseMsg(TransportProtos.GetDeviceResponseMsg.newBuilder()
+                            .setDeviceProfileIdMSB(deviceProfileId.getMostSignificantBits())
+                            .setDeviceProfileIdLSB(deviceProfileId.getLeastSignificantBits())
+                            .setDeviceTransportConfiguration(ByteString.copyFrom(
+                                    dataDecodingEncodingService.encode(device.getDeviceData().getTransportConfiguration())
+                            )))
+                    .build();
+        } else {
+            responseMsg = TransportApiResponseMsg.getDefaultInstance();
+        }
+
+        return Futures.immediateFuture(responseMsg);
     }
 
     private ListenableFuture<TransportApiResponseMsg> handle(GetDeviceCredentialsRequestMsg requestMsg) {
@@ -433,6 +440,7 @@ public class DefaultTransportApiService implements TransportApiService {
                 .build();
     }
 
+    // TODO: request snmp devices with pagination
     private ListenableFuture<TransportApiResponseMsg> handle(GetSnmpDevicesRequestMsg requestMsg) {
         List<UUID> result = deviceService.findDevicesIdsByDeviceProfileTransportType(DeviceTransportType.SNMP);
         GetSnmpDevicesResponseMsg responseMsg = GetSnmpDevicesResponseMsg.newBuilder()

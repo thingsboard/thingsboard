@@ -106,6 +106,7 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     }
 
     public void initTarget(SnmpProfileTransportConfiguration profileTransportConfig, SnmpDeviceTransportConfiguration deviceTransportConfig) {
+        log.trace("Initializing target for SNMP session of device {}", device);
         CommunityTarget communityTarget = new CommunityTarget();
         communityTarget.setAddress(GenericAddress.parse(GenericAddress.TYPE_UDP + ":" + deviceTransportConfig.getAddress() + "/" + deviceTransportConfig.getPort()));
         communityTarget.setVersion(getSnmpVersion(deviceTransportConfig.getProtocolVersion()));

@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.TbTransportService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -38,7 +39,7 @@ import javax.annotation.PreDestroy;
 @Service("MqttTransportService")
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.mqtt.enabled}'=='true')")
 @Slf4j
-public class MqttTransportService {
+public class MqttTransportService implements TbTransportService {
 
     @Value("${transport.mqtt.bind_address}")
     private String host;
@@ -89,5 +90,10 @@ public class MqttTransportService {
             bossGroup.shutdownGracefully();
         }
         log.info("MQTT transport stopped!");
+    }
+
+    @Override
+    public String getName() {
+        return "mqtt";
     }
 }

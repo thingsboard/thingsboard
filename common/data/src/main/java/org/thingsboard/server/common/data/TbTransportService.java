@@ -15,14 +15,6 @@
  */
 package org.thingsboard.server.common.data;
 
-public class TransportName {
-    private final String value;
-
-    public TransportName(String value) {
-        this.value = value;
-    }
-
-    public String value() {
-        return value;
-    }
+public interface TbTransportService {
+    String getName();
 }

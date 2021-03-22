@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportContext;
@@ -41,7 +42,6 @@ import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
@@ -53,7 +53,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMs
 import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 
 import javax.servlet.http.HttpServletRequest;
@@ -69,7 +68,7 @@ import java.util.function.Consumer;
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.http.enabled}'=='true')")
 @RequestMapping("/api/v1")
 @Slf4j
-public class DeviceApiController {
+public class DeviceApiController implements TbTransportService {
 
     @Autowired
     private HttpTransportContext transportContext;
@@ -336,6 +335,11 @@ public class DeviceApiController {
                 .setRpcSubscription(false)
                 .setLastActivityTime(System.currentTimeMillis())
                 .build(), TransportServiceCallback.EMPTY);
+    }
+
+    @Override
+    public String getName() {
+        return "http";
     }
 
 }

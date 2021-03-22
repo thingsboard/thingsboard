@@ -15,5 +15,10 @@
  */
 package org.thingsboard.server.transport.snmp.event;
 
-public class SnmpTransportListChangedEvent {
+import org.thingsboard.server.queue.discovery.event.TbApplicationEvent;
+
+public class SnmpTransportListChangedEvent extends TbApplicationEvent {
+    public SnmpTransportListChangedEvent() {
+        super(new Object());
+    }
 }

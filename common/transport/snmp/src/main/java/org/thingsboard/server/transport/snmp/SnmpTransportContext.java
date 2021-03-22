@@ -46,7 +46,6 @@ import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.queue.util.TbSnmpTransportComponent;
-import org.thingsboard.server.transport.snmp.event.SnmpTransportListChangedEvent;
 import org.thingsboard.server.transport.snmp.service.ProtoTransportEntityService;
 import org.thingsboard.server.transport.snmp.service.SnmpTransportBalancingService;
 import org.thingsboard.server.transport.snmp.service.SnmpTransportService;
@@ -61,6 +60,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
@@ -78,23 +78,32 @@ public class SnmpTransportContext extends TransportContext {
     private final Map<DeviceId, DeviceSessionContext> sessions = new ConcurrentHashMap<>();
     private final Map<DeviceProfileId, SnmpProfileTransportConfiguration> profilesTransportConfigs = new ConcurrentHashMap<>();
     private final Map<DeviceProfileId, List<PDU>> profilesPdus = new ConcurrentHashMap<>();
-    private List<DeviceId> allSnmpDevicesIds = new LinkedList<>();
+    private Collection<DeviceId> allSnmpDevicesIds = new ConcurrentLinkedDeque<>();
 
     @EventListener(ApplicationReadyEvent.class)
     @Order(2)
     public void initDevicesSessions() {
+        log.info("Initializing SNMP devices sessions");
         allSnmpDevicesIds = protoEntityService.getAllSnmpDevicesIds().stream()
                 .map(DeviceId::new)
                 .collect(Collectors.toList());
-        List<Device> managedDevices = allSnmpDevicesIds.stream()
-                .filter(deviceId -> balancingService.isManagedByCurrentTransport(deviceId.getId()))
-                .map(protoEntityService::getDeviceById)
-                .collect(Collectors.toList());
+        log.trace("Found all SNMP devices ids: {}", allSnmpDevicesIds);
 
-        managedDevices.forEach(this::establishDeviceSession);
+        List<DeviceId> managedDevicesIds = allSnmpDevicesIds.stream()
+                .filter(deviceId -> balancingService.isManagedByCurrentTransport(deviceId.getId()))
+                .collect(Collectors.toList());
+        log.info("SNMP devices managed by current SNMP transport: {}", managedDevicesIds);
+
+        managedDevicesIds.stream()
+                .map(protoEntityService::getDeviceById)
+                .collect(Collectors.toList())
+                .forEach(this::establishDeviceSession);
     }
 
     private void establishDeviceSession(Device device) {
+        if (device == null) return;
+        log.info("Establishing SNMP device session for device {}", device.getId());
+
         DeviceProfileId deviceProfileId = device.getDeviceProfileId();
         DeviceProfile deviceProfile = deviceProfileCache.get(deviceProfileId);
 
@@ -120,9 +129,11 @@ public class SnmpTransportContext extends TransportContext {
         );
         registerSessionMsgListener(deviceSessionContext);
         sessions.put(device.getId(), deviceSessionContext);
+        log.info("Established SNMP device session for device {}", device.getId());
     }
 
     private void updateDeviceSession(DeviceSessionContext sessionContext, Device device, DeviceProfile deviceProfile) {
+        log.info("Updating SNMP device session for device {}", device.getId());
         DeviceProfileId deviceProfileId = deviceProfile.getId();
 
         DeviceCredentials credentials = protoEntityService.getDeviceCredentialsByDeviceId(device.getId());
@@ -137,6 +148,7 @@ public class SnmpTransportContext extends TransportContext {
         sessionContext.setProfileTransportConfiguration(profileTransportConfiguration);
         sessionContext.setDeviceTransportConfiguration(deviceTransportConfiguration);
         if (!deviceTransportConfiguration.isValid()) {
+            log.warn("SNMP device transport configuration is not valid");
             destroyDeviceSession(sessionContext);
             return;
         }
@@ -147,19 +159,24 @@ public class SnmpTransportContext extends TransportContext {
             sessionContext.initTarget(profileTransportConfiguration, deviceTransportConfiguration);
         } else if (!deviceTransportConfiguration.equals(sessionContext.getDeviceTransportConfiguration())) {
             sessionContext.initTarget(profileTransportConfiguration, deviceTransportConfiguration);
+        } else {
+            log.trace("Configuration of the device {} was not updated", device);
         }
     }
 
     private void destroyDeviceSession(DeviceSessionContext sessionContext) {
         if (sessionContext == null) return;
+        log.info("Destroying SNMP device session for device {}", sessionContext.getDevice().getId());
         sessionContext.close();
         transportService.deregisterSession(sessionContext.getSessionInfo());
         sessions.remove(sessionContext.getDeviceId());
+        log.trace("Deregistered and removed session");
 
         DeviceProfileId deviceProfileId = sessionContext.getDeviceProfile().getId();
         if (sessions.values().stream()
                 .map(DeviceAwareSessionContext::getDeviceProfile)
                 .noneMatch(deviceProfile -> deviceProfile.getId().equals(deviceProfileId))) {
+            log.trace("Removed values for device profile {} from configs and pdus caches", deviceProfileId);
             profilesTransportConfigs.remove(deviceProfileId);
             profilesPdus.remove(deviceProfileId);
         }
@@ -211,6 +228,7 @@ public class SnmpTransportContext extends TransportContext {
     @EventListener(DeviceUpdatedEvent.class)
     public void onDeviceUpdatedOrCreated(DeviceUpdatedEvent deviceUpdatedEvent) {
         Device device = deviceUpdatedEvent.getDevice();
+        log.trace("Got creating or updating device event for device {}", device);
         DeviceTransportType transportType = Optional.ofNullable(device.getDeviceData().getTransportConfiguration())
                 .map(DeviceTransportConfiguration::getType)
                 .orElse(null);
@@ -232,6 +250,7 @@ public class SnmpTransportContext extends TransportContext {
                         establishDeviceSession(device);
                     }
                 } else {
+                    log.trace("Transport type was changed to {}", transportType);
                     destroyDeviceSession(sessionContext);
                 }
             }
@@ -246,18 +265,30 @@ public class SnmpTransportContext extends TransportContext {
         updateDeviceSession(sessionContext, sessionContext.getDevice(), deviceProfile);
     }
 
-    @EventListener(SnmpTransportListChangedEvent.class)
     public void onSnmpTransportListChanged() {
+        log.trace("SNMP transport list changed. Updating sessions");
+        List<DeviceId> deleted = new LinkedList<>();
         for (DeviceId deviceId : allSnmpDevicesIds) {
             if (balancingService.isManagedByCurrentTransport(deviceId.getId())) {
                 if (!sessions.containsKey(deviceId)) {
-                    establishDeviceSession(protoEntityService.getDeviceById(deviceId));
+                    Device device = protoEntityService.getDeviceById(deviceId);
+                    if (device != null) {
+                        log.info("SNMP device {} is now managed by current transport node", deviceId);
+                        establishDeviceSession(device);
+                    } else {
+                        deleted.add(deviceId);
+                    }
                 }
             } else {
                 Optional.ofNullable(sessions.get(deviceId))
-                        .ifPresent(this::destroyDeviceSession);
+                        .ifPresent(sessionContext -> {
+                            log.info("SNMP session for device {} is not managed by current transport node anymore", deviceId);
+                            destroyDeviceSession(sessionContext);
+                        });
             }
         }
+        log.trace("Removing deleted SNMP devices: {}", deleted);
+        allSnmpDevicesIds.removeAll(deleted);
     }
 
 

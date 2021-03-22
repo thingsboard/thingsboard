@@ -32,6 +32,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
 import org.thingsboard.server.queue.discovery.event.ClusterTopologyChangeEvent;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
+import org.thingsboard.server.queue.discovery.event.ServiceListChangedEvent;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 
 import javax.annotation.PostConstruct;
@@ -185,6 +186,8 @@ public class HashPartitionService implements PartitionService {
                 applicationEventPublisher.publishEvent(new ClusterTopologyChangeEvent(this, changes));
             }
         }
+
+        applicationEventPublisher.publishEvent(new ServiceListChangedEvent(otherServices, currentService));
     }
 
     @Override

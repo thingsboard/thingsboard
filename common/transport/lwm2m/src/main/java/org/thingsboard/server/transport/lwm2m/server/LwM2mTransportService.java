@@ -20,12 +20,13 @@ import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.Collection;
 import java.util.Optional;
 
-public interface LwM2mTransportService {
+public interface LwM2mTransportService extends TbTransportService {
 
     void onRegistered(Registration registration, Collection<Observation> previousObsersations);
 
