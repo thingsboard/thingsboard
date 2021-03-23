@@ -549,7 +549,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
      */
     private boolean validatePathInAttrProfile(LwM2mClientProfile clientProfile, String path) {
         try {
-            List<String> attributesSet = new Gson().fromJson(clientProfile.getPostAttributeProfile(), new TypeToken<>() {
+            List<String> attributesSet = new Gson().fromJson(clientProfile.getPostAttributeProfile(), new TypeToken<List<String>>() {
             }.getType());
             return attributesSet.stream().anyMatch(p -> p.equals(path));
         } catch (Exception e) {
@@ -565,7 +565,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
      */
     private boolean validatePathInTelemetryProfile(LwM2mClientProfile clientProfile, String path) {
         try {
-            List<String> telemetriesSet = new Gson().fromJson(clientProfile.getPostTelemetryProfile(), new TypeToken<>() {
+            List<String> telemetriesSet = new Gson().fromJson(clientProfile.getPostTelemetryProfile(), new TypeToken<List<String>>() {
             }.getType());
             return telemetriesSet.stream().anyMatch(p -> p.equals(path));
         } catch (Exception e) {
@@ -821,10 +821,8 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
 
             // #5.1
             if (!observeOld.equals(observeNew)) {
-                Set<String> observeSetOld = new Gson().fromJson(observeOld, new TypeToken<>() {
-                }.getType());
-                Set<String> observeSetNew = new Gson().fromJson(observeNew, new TypeToken<>() {
-                }.getType());
+                Set<String> observeSetOld = new Gson().fromJson(observeOld, new TypeToken<Set<String>>() {}.getType());
+                Set<String> observeSetNew = new Gson().fromJson(observeNew, new TypeToken<Set<String>>() {}.getType());
                 //#5.2 add
                 //  path Attr/Telemetry includes newObserve
                 attributeSetOld.addAll(telemetrySetOld);
@@ -846,7 +844,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
     }
 
     private Set<String> convertJsonArrayToSet(JsonArray jsonArray) {
-        List<String> attributeListOld = new Gson().fromJson(jsonArray, new TypeToken<>() {
+        List<String> attributeListOld = new Gson().fromJson(jsonArray, new TypeToken<List<String>>() {
         }.getType());
         return Sets.newConcurrentHashSet(attributeListOld);
     }
@@ -886,7 +884,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
      */
     private void readResourceValueObserve(Registration registration, Set<String> targets, String typeOper) {
         targets.forEach(target -> {
-            LwM2mPath pathIds = new LwM2mPath(target);
+            LwM2mPath pathIds = new LwM2mPath(convertToObjectIdFromIdVer(target));
             if (pathIds.isResource()) {
                 if (GET_TYPE_OPER_READ.equals(typeOper)) {
                     lwM2mTransportRequest.sendAllRequest(registration, target, typeOper,
@@ -913,7 +911,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         LwM2mClient lwM2MClient = lwM2mClientContext.getLwM2mClientWithReg(registration, null);
         paramAnallyzer.forEach(p -> {
                     if (this.returnResourceValueFromLwM2MClient(lwM2MClient, p) != null) {
-                        this.setCancelObservationRecourse(registration, p);
+                        this.setCancelObservationRecourse(registration, convertToObjectIdFromIdVer(p));
                     }
                 }
         );

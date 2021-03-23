@@ -151,11 +151,13 @@ public class LwM2mTransportRequest {
                 case POST_TYPE_OPER_WRITE_REPLACE:
                     // Request to write a <b>String Single-Instance Resource</b> using the TLV content format.
                     if (resource != null && contentFormat != null) {
-                        if (contentFormat.equals(ContentFormat.TLV) && !resource.multiple) {
+//                        if (contentFormat.equals(ContentFormat.TLV) && !resource.multiple) {
+                        if (contentFormat.equals(ContentFormat.TLV)) {
                             request = this.getWriteRequestSingleResource(null, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), params, resource.type, registration);
                         }
                         // Mode.REPLACE && Request to write a <b>String Single-Instance Resource</b> using the given content format (TEXT, TLV, JSON)
-                        else if (!contentFormat.equals(ContentFormat.TLV) && !resource.multiple) {
+//                        else if (!contentFormat.equals(ContentFormat.TLV) && !resource.multiple) {
+                        else if (!contentFormat.equals(ContentFormat.TLV)) {
                             request = this.getWriteRequestSingleResource(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), params, resource.type, registration);
                         }
                     }
