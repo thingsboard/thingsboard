@@ -125,26 +125,6 @@ export function isEmpty(obj: any): boolean {
   return true;
 }
 
-export function formatValue(value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined {
-  if (isDefinedAndNotNull(value) && isNumeric(value) &&
-    (isDefinedAndNotNull(dec) || isDefinedAndNotNull(units) || Number(value).toString() === value)) {
-    let formatted: string | number = Number(value);
-    if (isDefinedAndNotNull(dec)) {
-      formatted = formatted.toFixed(dec);
-    }
-    if (!showZeroDecimals) {
-      formatted = (Number(formatted));
-    }
-    formatted = formatted.toString();
-    if (isDefinedAndNotNull(units) && units.length > 0) {
-      formatted += ' ' + units;
-    }
-    return formatted;
-  } else {
-    return value !== null ? value : '';
-  }
-}
-
 export function objectValues(obj: any): any[] {
   return Object.keys(obj).map(e => obj[e]);
 }
