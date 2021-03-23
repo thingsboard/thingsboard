@@ -50,6 +50,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
+import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_SEARCH_TEXT;
 import static org.thingsboard.server.dao.device.DeviceServiceImpl.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -82,11 +84,13 @@ public class BaseTbResourceService implements TbResourceService {
             if (!objectModels.isEmpty()) {
                 ObjectModel objectModel = objectModels.get(0);
 
-                String resourceKey = objectModel.id + "_" + objectModel.getVersion();
+                String resourceKey = objectModel.id + LWM2M_SEPARATOR_KEY + objectModel.getVersion();
                 String name = objectModel.name;
                 resource.setResourceKey(resourceKey);
                 resource.setTitle(name);
-                resource.setSearchText(resourceKey + ":" + name);
+                resource.setSearchText(resourceKey + LWM2M_SEPARATOR_SEARCH_TEXT + name);
+            } else {
+                throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getSearchText()));
             }
         } else {
             resource.setResourceKey(resource.getFileName());

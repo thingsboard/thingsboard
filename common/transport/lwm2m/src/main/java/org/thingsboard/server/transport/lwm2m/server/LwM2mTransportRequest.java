@@ -72,6 +72,8 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandle
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.PUT_TYPE_OPER_WRITE_ATTRIBUTES;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.PUT_TYPE_OPER_WRITE_UPDATE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.RESPONSE_CHANNEL;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertToIdVerFromObjectId;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertToObjectIdFromIdVer;
 
 @Slf4j
 @Service
@@ -114,7 +116,7 @@ public class LwM2mTransportRequest {
      */
     public void sendAllRequest(Registration registration, String target, String typeOper,
                                String contentFormatParam, Observation observation, Object params, long timeoutInMs) {
-        LwM2mPath resultIds = new LwM2mPath(target);
+        LwM2mPath resultIds = new LwM2mPath(convertToObjectIdFromIdVer(target));
         if (registration != null && resultIds.getObjectId() >= 0) {
             DownlinkRequest request = null;
             ContentFormat contentFormat = contentFormatParam != null ? ContentFormat.fromName(contentFormatParam.toUpperCase()) : null;
@@ -149,11 +151,13 @@ public class LwM2mTransportRequest {
                 case POST_TYPE_OPER_WRITE_REPLACE:
                     // Request to write a <b>String Single-Instance Resource</b> using the TLV content format.
                     if (resource != null && contentFormat != null) {
-                        if (contentFormat.equals(ContentFormat.TLV) && !resource.multiple) {
+//                        if (contentFormat.equals(ContentFormat.TLV) && !resource.multiple) {
+                        if (contentFormat.equals(ContentFormat.TLV)) {
                             request = this.getWriteRequestSingleResource(null, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), params, resource.type, registration);
                         }
                         // Mode.REPLACE && Request to write a <b>String Single-Instance Resource</b> using the given content format (TEXT, TLV, JSON)
-                        else if (!contentFormat.equals(ContentFormat.TLV) && !resource.multiple) {
+//                        else if (!contentFormat.equals(ContentFormat.TLV) && !resource.multiple) {
+                        else if (!contentFormat.equals(ContentFormat.TLV)) {
                             request = this.getWriteRequestSingleResource(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), params, resource.type, registration);
                         }
                     }
@@ -229,9 +233,8 @@ public class LwM2mTransportRequest {
     private void sendRequest(Registration registration, DownlinkRequest request, long timeoutInMs) {
         LwM2mClient lwM2MClient = lwM2mClientContext.getLwM2mClientWithReg(registration, null);
         leshanServer.send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
-
             if (!lwM2MClient.isInit()) {
-                lwM2MClient.initValue(this.serviceImpl, request.getPath().toString());
+                lwM2MClient.initValue(this.serviceImpl, convertToIdVerFromObjectId(request.getPath().toString(), registration));
             }
             if (isSuccess(((Response) response.getCoapResponse()).getCode())) {
                 this.handleResponse(registration, request.getPath().toString(), response, request);
@@ -251,7 +254,7 @@ public class LwM2mTransportRequest {
             }
         }, e -> {
             if (!lwM2MClient.isInit()) {
-                lwM2MClient.initValue(this.serviceImpl, request.getPath().toString());
+                lwM2MClient.initValue(this.serviceImpl, convertToIdVerFromObjectId(request.getPath().toString(), registration));
             }
             String msg = String.format("%s: sendRequest: Resource path - %s msg error - %s  SendRequest to Client",
                     LOG_LW2M_ERROR, request.getPath().toString(), e.toString());
@@ -310,21 +313,22 @@ public class LwM2mTransportRequest {
      * @param response -
      */
     private void sendResponse(Registration registration, String path, LwM2mResponse response, DownlinkRequest request) {
+        String pathIdVer = convertToIdVerFromObjectId(path, registration);
         if (response instanceof ReadResponse) {
-            serviceImpl.onObservationResponse(registration, path, (ReadResponse) response);
+            serviceImpl.onObservationResponse(registration, pathIdVer, (ReadResponse) response);
         } else if (response instanceof CancelObservationResponse) {
-            log.info("[{}] Path [{}] CancelObservationResponse 3_Send", path, response);
+            log.info("[{}] Path [{}] CancelObservationResponse 3_Send", pathIdVer, response);
         } else if (response instanceof DeleteResponse) {
-            log.info("[{}] Path [{}] DeleteResponse 5_Send", path, response);
+            log.info("[{}] Path [{}] DeleteResponse 5_Send", pathIdVer, response);
         } else if (response instanceof DiscoverResponse) {
-            log.info("[{}] Path [{}] DiscoverResponse 6_Send", path, response);
+            log.info("[{}] Path [{}] DiscoverResponse 6_Send", pathIdVer, response);
         } else if (response instanceof ExecuteResponse) {
-            log.info("[{}] Path [{}] ExecuteResponse  7_Send", path, response);
+            log.info("[{}] Path [{}] ExecuteResponse  7_Send", pathIdVer, response);
         } else if (response instanceof WriteAttributesResponse) {
-            log.info("[{}] Path [{}] WriteAttributesResponse 8_Send", path, response);
+            log.info("[{}] Path [{}] WriteAttributesResponse 8_Send", pathIdVer, response);
         } else if (response instanceof WriteResponse) {
-            log.info("[{}] Path [{}] WriteAttributesResponse 9_Send", path, response);
-            serviceImpl.onWriteResponseOk(registration, path, (WriteRequest) request);
+            log.info("[{}] Path [{}] WriteAttributesResponse 9_Send", pathIdVer, response);
+            serviceImpl.onWriteResponseOk(registration, pathIdVer, (WriteRequest) request);
         }
     }
 }
