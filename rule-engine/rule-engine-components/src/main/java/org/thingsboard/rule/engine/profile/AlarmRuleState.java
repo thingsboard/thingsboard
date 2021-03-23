@@ -34,7 +34,7 @@ import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpe
 import org.thingsboard.server.common.data.device.profile.SpecificTimeSchedule;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
-import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilterPredicate;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
@@ -55,7 +55,6 @@ class AlarmRuleState {
     private final AlarmSeverity severity;
     private final AlarmRule alarmRule;
     private final AlarmConditionSpec spec;
-    private final long requiredRepeats;
     private final Set<AlarmConditionFilterKey> entityKeys;
     private PersistedAlarmRuleState state;
     private boolean updateFlag;
@@ -71,14 +70,6 @@ class AlarmRuleState {
             this.state = new PersistedAlarmRuleState(0L, 0L, 0L);
         }
         this.spec = getSpec(alarmRule);
-        long requiredRepeats = 0;
-        switch (spec.getType()) {
-            case REPEATING:
-                RepeatingAlarmConditionSpec repeating = (RepeatingAlarmConditionSpec) spec;
-                requiredRepeats = repeating.getCount();
-                break;
-        }
-        this.requiredRepeats = requiredRepeats;
         this.dynamicPredicateValueCtx = dynamicPredicateValueCtx;
     }
 
@@ -207,6 +198,7 @@ class AlarmRuleState {
         if (active && eval(alarmRule.getCondition(), data)) {
             state.setEventCount(state.getEventCount() + 1);
             updateFlag = true;
+            long requiredRepeats = resolveRequiredRepeats(data);
             return state.getEventCount() >= requiredRepeats ? AlarmEvalResult.TRUE : AlarmEvalResult.NOT_YET_TRUE;
         } else {
             return AlarmEvalResult.FALSE;
@@ -233,33 +225,44 @@ class AlarmRuleState {
         }
     }
 
-    private long resolveRequiredDurationInMs(DataSnapshot data) {
+    private long resolveRequiredRepeats(DataSnapshot data) {
+        long repeatingTimes = 0;
         AlarmConditionSpec alarmConditionSpec = getSpec();
         AlarmConditionSpecType specType = alarmConditionSpec.getType();
-        long requiredDurationInMs = 0;
-        switch (specType) {
-            case DURATION:
-                DurationAlarmConditionSpec duration = (DurationAlarmConditionSpec) spec;
-                EntityKey entityKey = duration.getKey();
-                TimeUnit unit = duration.getUnit();
-                if (duration.getValue() != null) {
-                    requiredDurationInMs = unit.toMillis(duration.getValue());
+        if(specType.equals(AlarmConditionSpecType.REPEATING)) {
+            RepeatingAlarmConditionSpec repeating = (RepeatingAlarmConditionSpec) spec;
+
+            repeatingTimes = repeating.getDefaultValue();
+
+            if (repeating.getDynamicValue().getSourceAttribute() != null) {
+                EntityKeyValue repeatingKeyValue = getDynamicPredicateValue(data, repeating.getDynamicValue());
+                if (repeatingKeyValue != null) {
+                    repeatingTimes = repeatingKeyValue.getLngValue();
                 }
-                if (entityKey != null) {
-                    AlarmConditionFilterKey alarmConditionFilterKey = AlarmConditionFilterKey.fromEntityKey(entityKey);
-                    if (alarmConditionFilterKey == null) {
-                        break;
-                    }
-                    EntityKeyValue durationEntityKeyValue = data.getValue(alarmConditionFilterKey);
-                    if (durationEntityKeyValue == null) {
-                        break;
-                    }
-                    Long durationValue = durationEntityKeyValue.getLngValue();
-                    requiredDurationInMs = unit.toMillis(durationValue);
-                }
-                break;
+            }
         }
-        return requiredDurationInMs;
+        return repeatingTimes;
+    }
+
+    private long resolveRequiredDurationInMs(DataSnapshot data) {
+        long durationTimeInMs = 0;
+        AlarmConditionSpec alarmConditionSpec = getSpec();
+        AlarmConditionSpecType specType = alarmConditionSpec.getType();
+        if(specType.equals(AlarmConditionSpecType.DURATION)) {
+            DurationAlarmConditionSpec duration = (DurationAlarmConditionSpec) spec;
+            TimeUnit timeUnit = duration.getUnit();
+
+            durationTimeInMs = timeUnit.toMillis(duration.getDefaultValue());
+
+            if (duration.getDynamicValue().getSourceAttribute() != null) {
+                EntityKeyValue durationKeyValue = getDynamicPredicateValue(data, duration.getDynamicValue());
+                if (durationKeyValue != null) {
+                    durationTimeInMs = timeUnit.toMillis(durationKeyValue.getLngValue());
+                }
+            }
+        }
+
+        return durationTimeInMs;
     }
 
     public AlarmEvalResult eval(long ts, DataSnapshot dataSnapshot) {
@@ -429,7 +432,7 @@ class AlarmRuleState {
     }
 
     private <T> T getPredicateValue(DataSnapshot data, FilterPredicateValue<T> value, Function<EntityKeyValue, T> transformFunction) {
-        EntityKeyValue ekv = getDynamicPredicateValue(data, value);
+        EntityKeyValue ekv = getDynamicPredicateValue(data, value.getDynamicValue());
         if (ekv != null) {
             T result = transformFunction.apply(ekv);
             if (result != null) {
@@ -439,22 +442,22 @@ class AlarmRuleState {
         return value.getDefaultValue();
     }
 
-    private <T> EntityKeyValue getDynamicPredicateValue(DataSnapshot data, FilterPredicateValue<T> value) {
+    private <T> EntityKeyValue getDynamicPredicateValue(DataSnapshot data, DynamicValue<T> value) {
         EntityKeyValue ekv = null;
-        if (value.getDynamicValue() != null) {
-            switch (value.getDynamicValue().getSourceType()) {
+        if (value != null) {
+            switch (value.getSourceType()) {
                 case CURRENT_DEVICE:
-                    ekv = data.getValue(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, value.getDynamicValue().getSourceAttribute()));
-                    if (ekv != null || !value.getDynamicValue().isInherit()) {
+                    ekv = data.getValue(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, value.getSourceAttribute()));
+                    if (ekv != null || !value.isInherit()) {
                         break;
                     }
                 case CURRENT_CUSTOMER:
-                    ekv = dynamicPredicateValueCtx.getCustomerValue(value.getDynamicValue().getSourceAttribute());
-                    if (ekv != null || !value.getDynamicValue().isInherit()) {
+                    ekv = dynamicPredicateValueCtx.getCustomerValue(value.getSourceAttribute());
+                    if (ekv != null || !value.isInherit()) {
                         break;
                     }
                 case CURRENT_TENANT:
-                    ekv = dynamicPredicateValueCtx.getTenantValue(value.getDynamicValue().getSourceAttribute());
+                    ekv = dynamicPredicateValueCtx.getTenantValue(value.getSourceAttribute());
             }
         }
         return ekv;
