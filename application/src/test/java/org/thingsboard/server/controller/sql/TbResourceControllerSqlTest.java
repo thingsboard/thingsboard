@@ -13,19 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.resource;
+package org.thingsboard.server.controller.sql;
 
-import org.thingsboard.server.common.data.TbResourceInfo;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.controller.BaseTbResourceControllerTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
-import java.util.UUID;
-
-public interface TbResourceInfoDao extends Dao<TbResourceInfo> {
-
-    PageData<TbResourceInfo> findAllTenantResourcesByTenantId(UUID tenantId, PageLink pageLink);
-
-    PageData<TbResourceInfo> findTenantResourcesByTenantId(UUID tenantId, PageLink pageLink);
-
+@DaoSqlTest
+public class TbResourceControllerSqlTest extends BaseTbResourceControllerTest {
 }

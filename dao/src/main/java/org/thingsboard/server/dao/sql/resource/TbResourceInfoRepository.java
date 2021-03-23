@@ -35,8 +35,15 @@ public interface TbResourceInfoRepository extends CrudRepository<TbResourceInfoE
             "WHERE sr.tenantId = :tenantId " +
             "AND tr.resourceType = sr.resourceType " +
             "AND tr.resourceKey = sr.resourceKey)))")
-    Page<TbResourceInfoEntity> findByTenantId(@Param("tenantId") UUID tenantId,
-                                              @Param("systemAdminId") UUID sysadminId,
-                                              @Param("searchText") String searchText,
-                                              Pageable pageable);
+    Page<TbResourceInfoEntity> findAllTenantResourcesByTenantId(@Param("tenantId") UUID tenantId,
+                                                                @Param("systemAdminId") UUID sysadminId,
+                                                                @Param("searchText") String searchText,
+                                                                Pageable pageable);
+
+    @Query("SELECT ri FROM TbResourceInfoEntity ri WHERE " +
+            "ri.tenantId = :tenantId " +
+            "AND LOWER(ri.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+    Page<TbResourceInfoEntity> findTenantResourcesByTenantId(@Param("tenantId") UUID tenantId,
+                                                             @Param("searchText") String searchText,
+                                                             Pageable pageable);
 }

@@ -51,7 +51,7 @@ public class TbResourceInfo extends SearchTextBased<TbResourceId> implements Has
 
     @Override
     public String getSearchText() {
-        return searchText;
+        return searchText != null ? searchText : title;
     }
 
     @Override

@@ -128,7 +128,7 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testSaveResourceWithEmptyTenant() throws Exception {
+    public void testSaveTbResourceWithEmptyTenant() throws Exception {
         TbResource resource = new TbResource();
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("My resource");
@@ -167,7 +167,7 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
     }
 
     @Test(expected = DataValidationException.class)
-    public void testSaveResourceWithEmptyTitle() throws Exception {
+    public void testSaveTbResourceWithEmptyTitle() throws Exception {
         TbResource resource = new TbResource();
         resource.setTenantId(tenantId);
         resource.setResourceType(ResourceType.JKS);
@@ -177,7 +177,7 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
     }
 
     @Test(expected = DataValidationException.class)
-    public void testSaveResourceWithInvalidTenant() throws Exception {
+    public void testSaveTbResourceWithInvalidTenant() throws Exception {
         TbResource resource = new TbResource();
         resource.setTenantId(new TenantId(Uuids.timeBased()));
         resource.setResourceType(ResourceType.JKS);
@@ -235,7 +235,7 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testFindResourcesByTenantId() throws Exception {
+    public void testFindTenantResourcesByTenantId() throws Exception {
         Tenant tenant = new Tenant();
         tenant.setTitle("Test tenant");
         tenant = tenantService.saveTenant(tenant);
@@ -255,9 +255,9 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
 
         List<TbResourceInfo> loadedResources = new ArrayList<>();
         PageLink pageLink = new PageLink(16);
-        PageData<TbResourceInfo> pageData = null;
+        PageData<TbResourceInfo> pageData;
         do {
-            pageData = resourceService.findResourcesByTenantId(tenantId, pageLink);
+            pageData = resourceService.findTenantResourcesByTenantId(tenantId, pageLink);
             loadedResources.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -272,7 +272,7 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
         resourceService.deleteResourcesByTenantId(tenantId);
 
         pageLink = new PageLink(31);
-        pageData = resourceService.findResourcesByTenantId(tenantId, pageLink);
+        pageData = resourceService.findTenantResourcesByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
 
@@ -280,7 +280,7 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testFindAllResourcesByTenantId() throws Exception {
+    public void testFindAllTenantResourcesByTenantId() throws Exception {
         Tenant tenant = new Tenant();
         tenant.setTitle("Test tenant");
         tenant = tenantService.saveTenant(tenant);
@@ -313,9 +313,9 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
 
         List<TbResourceInfo> loadedResources = new ArrayList<>();
         PageLink pageLink = new PageLink(10);
-        PageData<TbResourceInfo> pageData = null;
+        PageData<TbResourceInfo> pageData;
         do {
-            pageData = resourceService.findResourcesByTenantId(tenantId, pageLink);
+            pageData = resourceService.findAllTenantResourcesByTenantId(tenantId, pageLink);
             loadedResources.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -330,14 +330,14 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
         resourceService.deleteResourcesByTenantId(tenantId);
 
         pageLink = new PageLink(100);
-        pageData = resourceService.findResourcesByTenantId(tenantId, pageLink);
+        pageData = resourceService.findAllTenantResourcesByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(pageData.getData().size(), 100);
 
         resourceService.deleteResourcesByTenantId(TenantId.SYS_TENANT_ID);
 
         pageLink = new PageLink(100);
-        pageData = resourceService.findResourcesByTenantId(TenantId.SYS_TENANT_ID, pageLink);
+        pageData = resourceService.findAllTenantResourcesByTenantId(TenantId.SYS_TENANT_ID, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
 

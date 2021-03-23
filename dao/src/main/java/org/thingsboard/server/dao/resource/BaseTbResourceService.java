@@ -23,12 +23,10 @@ import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.lwm2m.LwM2mInstance;
@@ -90,17 +88,19 @@ public class BaseTbResourceService implements TbResourceService {
                 resource.setTitle(name);
                 resource.setSearchText(resourceKey + ":" + name);
             }
+        } else {
+            resource.setResourceKey(resource.getFileName());
         }
 
         resourceValidator.validate(resource, TbResourceInfo::getTenantId);
-
 
         try {
             return resourceDao.save(resource.getTenantId(), resource);
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("resource_unq_key")) {
-                throw new DataValidationException("Resource with such key already exists!");
+                String field = ResourceType.LWM2M_MODEL.equals(resource.getResourceType()) ? "resourceKey" : "fileName";
+                throw new DataValidationException("Resource with such " + field + " already exists!");
             } else {
                 throw t;
             }
@@ -136,10 +136,17 @@ public class BaseTbResourceService implements TbResourceService {
     }
 
     @Override
-    public PageData<TbResourceInfo> findResourcesByTenantId(TenantId tenantId, PageLink pageLink) {
-        log.trace("Executing findByTenantId [{}]", tenantId);
+    public PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TenantId tenantId, PageLink pageLink) {
+        log.trace("Executing findAllTenantResourcesByTenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return resourceInfoDao.findTbResourcesByTenantId(tenantId.getId(), pageLink);
+        return resourceInfoDao.findAllTenantResourcesByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
+    public PageData<TbResourceInfo> findTenantResourcesByTenantId(TenantId tenantId, PageLink pageLink) {
+        log.trace("Executing findTenantResourcesByTenantId [{}]", tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        return resourceInfoDao.findTenantResourcesByTenantId(tenantId.getId(), pageLink);
     }
 
     @Override
@@ -230,6 +237,9 @@ public class BaseTbResourceService implements TbResourceService {
             }
             if (resource.getResourceType() == null) {
                 throw new DataValidationException("Resource type should be specified!");
+            }
+            if (StringUtils.isEmpty(resource.getFileName())) {
+                throw new DataValidationException("Resource file name should be specified!");
             }
             if (StringUtils.isEmpty(resource.getResourceKey())) {
                 throw new DataValidationException("Resource key should be specified!");
