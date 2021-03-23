@@ -283,10 +283,12 @@ public class DefaultTbClusterService implements TbClusterService {
         byte[] msgBytes = encodingService.encode(msg);
         TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> toRuleEngineProducer = producerProvider.getRuleEngineNotificationsMsgProducer();
         Set<String> tbRuleEngineServices = new HashSet<>(partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE));
-        if (msg.getEntityId().getEntityType().equals(EntityType.TENANT)
-                || msg.getEntityId().getEntityType().equals(EntityType.TENANT_PROFILE)
-                || msg.getEntityId().getEntityType().equals(EntityType.DEVICE_PROFILE)
-                || msg.getEntityId().getEntityType().equals(EntityType.API_USAGE_STATE)) {
+        EntityType entityType = msg.getEntityId().getEntityType();
+        if (entityType.equals(EntityType.TENANT)
+                || entityType.equals(EntityType.TENANT_PROFILE)
+                || entityType.equals(EntityType.DEVICE_PROFILE)
+                || entityType.equals(EntityType.API_USAGE_STATE)
+                || (entityType.equals(EntityType.DEVICE) && msg.getEvent() == ComponentLifecycleEvent.UPDATED)) {
             TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toCoreNfProducer = producerProvider.getTbCoreNotificationsMsgProducer();
             Set<String> tbCoreServices = partitionService.getAllServiceIds(ServiceType.TB_CORE);
             for (String serviceId : tbCoreServices) {

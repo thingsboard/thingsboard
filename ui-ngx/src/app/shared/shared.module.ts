@@ -140,6 +140,7 @@ import { TimezoneSelectComponent } from '@shared/components/time/timezone-select
 import { FileSizePipe } from '@shared/pipe/file-size.pipe';
 import { WidgetsBundleSearchComponent } from '@shared/components/widgets-bundle-search.component';
 import { SelectableColumnsPipe } from '@shared/pipe/selectable-columns.pipe';
+import { QuickTimeIntervalComponent } from '@shared/components/time/quick-time-interval.component';
 
 @NgModule({
   providers: [
@@ -175,6 +176,7 @@ import { SelectableColumnsPipe } from '@shared/pipe/selectable-columns.pipe';
     TimewindowComponent,
     TimewindowPanelComponent,
     TimeintervalComponent,
+    QuickTimeIntervalComponent,
     DashboardSelectComponent,
     DashboardSelectPanelComponent,
     DatetimePeriodComponent,
@@ -302,6 +304,7 @@ import { SelectableColumnsPipe } from '@shared/pipe/selectable-columns.pipe';
     TimewindowComponent,
     TimewindowPanelComponent,
     TimeintervalComponent,
+    QuickTimeIntervalComponent,
     DashboardSelectComponent,
     DatetimePeriodComponent,
     DatetimeComponent,

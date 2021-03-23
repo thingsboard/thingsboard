@@ -55,6 +55,8 @@ import { RequestConfig } from '@core/http/http-utils';
 import { RuleChain, RuleChainImport, RuleChainMetaData } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { FiltersInfo } from '@shared/models/query/query.models';
+import { DeviceProfileService } from '@core/http/device-profile.service';
+import { DeviceProfile } from '@shared/models/device.models';
 
 // @dynamic
 @Injectable()
@@ -67,6 +69,7 @@ export class ImportExportService {
               private dashboardService: DashboardService,
               private dashboardUtils: DashboardUtilsService,
               private widgetService: WidgetService,
+              private deviceProfileService: DeviceProfileService,
               private entityService: EntityService,
               private ruleChainService: RuleChainService,
               private utils: UtilsService,
@@ -420,6 +423,37 @@ export class ImportExportService {
     );
   }
 
+  public exportDeviceProfile(deviceProfileId: string) {
+    this.deviceProfileService.getDeviceProfile(deviceProfileId).subscribe(
+      (deviceProfile) => {
+          let name = deviceProfile.name;
+          name = name.toLowerCase().replace(/\W/g, '_');
+          this.exportToPc(this.prepareDeviceProfileExport(deviceProfile), name);
+        },
+        (e) => {
+          this.handleExportError(e, 'device-profile.export-failed-error');
+        }
+      );
+  }
+
+  public importDeviceProfile(): Observable<DeviceProfile> {
+    return this.openImportDialog('device-profile.import', 'device-profile.device-profile-file').pipe(
+      mergeMap((deviceProfile: DeviceProfile) => {
+        if (!this.validateImportedDeviceProfile(deviceProfile)) {
+          this.store.dispatch(new ActionNotificationShow(
+            {message: this.translate.instant('device-profile.invalid-device-profile-file-error'),
+              type: 'error'}));
+          throw new Error('Invalid device profile file');
+        } else {
+            return this.deviceProfileService.saveDeviceProfile(deviceProfile);
+        }
+      }),
+      catchError((err) => {
+        return of(null);
+      })
+    );
+  }
+
   public exportJSZip(data: object, filename: string) {
     import('jszip').then((JSZip) => {
       const jsZip = new JSZip.default();
@@ -458,6 +492,17 @@ export class ImportExportService {
     if (isUndefined(ruleChainImport.ruleChain)
       || isUndefined(ruleChainImport.metadata)
       || isUndefined(ruleChainImport.ruleChain.name)) {
+      return false;
+    }
+    return true;
+  }
+
+  private validateImportedDeviceProfile(deviceProfile: DeviceProfile): boolean {
+    if (isUndefined(deviceProfile.name)
+      || isUndefined(deviceProfile.type)
+      || isUndefined(deviceProfile.transportType)
+      || isUndefined(deviceProfile.provisionType)
+      || isUndefined(deviceProfile.profileData)) {
       return false;
     }
     return true;
@@ -738,6 +783,12 @@ export class ImportExportService {
     dashboard = this.prepareExport(dashboard);
     delete dashboard.assignedCustomers;
     return dashboard;
+  }
+
+  private prepareDeviceProfileExport(deviceProfile: DeviceProfile): DeviceProfile {
+    deviceProfile = this.prepareExport(deviceProfile);
+    deviceProfile.default = false;
+    return deviceProfile;
   }
 
   private prepareExport(data: any): any {
