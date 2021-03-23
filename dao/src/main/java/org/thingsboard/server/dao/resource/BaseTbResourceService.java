@@ -43,6 +43,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
+import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_SEARCH_TEXT;
 import static org.thingsboard.server.dao.device.DeviceServiceImpl.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -62,26 +64,24 @@ public class BaseTbResourceService implements TbResourceService {
     }
 
     @Override
-    public TbResource saveResource(TbResource resource) throws InvalidDDFFileException, IOException {
-        log.trace("Executing saveResource [{}]", resource);
-
-        if (resource.getId() == null && ResourceType.LWM2M_MODEL.equals(resource.getResourceType())) {
+    public TbResource saveResource(TbResource tbResource) throws InvalidDDFFileException, IOException {
+        log.trace("Executing saveResource [{}]", tbResource);
+        if (ResourceType.LWM2M_MODEL.equals(tbResource.getResourceType())) {
             List<ObjectModel> objectModels =
-                    ddfFileParser.parseEx(new ByteArrayInputStream(Base64.getDecoder().decode(resource.getData())), resource.getSearchText());
+                    ddfFileParser.parseEx(new ByteArrayInputStream(Base64.getDecoder().decode(tbResource.getData())), tbResource.getSearchText());
             if (!objectModels.isEmpty()) {
                 ObjectModel objectModel = objectModels.get(0);
-
-                String resourceKey = objectModel.id + "_" + objectModel.getVersion();
+                String resourceKey = objectModel.id + LWM2M_SEPARATOR_KEY + objectModel.getVersion();
                 String name = objectModel.name;
-                resource.setResourceKey(resourceKey);
-                resource.setTitle(name);
-                resource.setSearchText(resourceKey + ":" + name);
+                tbResource.setResourceKey(resourceKey);
+                tbResource.setTitle(name);
+                tbResource.setSearchText(resourceKey + LWM2M_SEPARATOR_SEARCH_TEXT + name);
+            } else {
+                throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", tbResource.getSearchText()));
             }
         }
-
-        validate(resource);
-
-        return resourceDao.saveResource(resource);
+        validate(tbResource);
+        return resourceDao.save(tbResource.getTenantId(), tbResource);
     }
 
     @Override
@@ -162,9 +162,6 @@ public class BaseTbResourceService implements TbResourceService {
             throw new DataValidationException("Resource value should be specified!");
         }
         validate(resource.getTenantId(), resource.getResourceType(), resource.getResourceKey());
-        if (resource.getResourceType().equals(ResourceType.LWM2M_MODEL) && this.toLwM2mObject(resource) == null) {
-            throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getSearchText()));
-        }
     }
 
     protected void validate(TenantId tenantId, ResourceType resourceType, String resourceId) {

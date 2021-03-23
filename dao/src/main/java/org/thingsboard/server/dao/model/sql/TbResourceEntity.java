@@ -65,7 +65,8 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> implements Searc
     }
 
     public TbResourceEntity(TbResource resource) {
-        this.setUuid(resource.getId().getId());
+        this.id = resource.getUuidId();
+        this.createdTime = resource.getCreatedTime();
         this.tenantId = resource.getTenantId().getId();
         this.title = resource.getTitle();
         this.resourceType = resource.getResourceType().name();

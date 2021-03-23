@@ -88,10 +88,15 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandle
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_TELEMETRY;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LWM2M_STRATEGY_2;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.POST_TYPE_OPER_EXECUTE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.POST_TYPE_OPER_WRITE_REPLACE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.SERVICE_CHANNEL;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertToIdVerFromObjectId;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertToObjectIdFromIdVer;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.getAckCallback;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.validateObjectIdFromKey;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.validateObjectVerFromKey;
 
 @Slf4j
 @Service
@@ -290,19 +295,19 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         if (msg.getSharedUpdatedCount() > 0) {
             JsonElement el = JsonConverter.toJson(msg);
             el.getAsJsonObject().entrySet().forEach(de -> {
-                String path = this.getPathAttributeUpdate(sessionInfo, de.getKey());
+                String pathIdVer = this.getPathAttributeUpdate(sessionInfo, de.getKey());
                 String value = de.getValue().getAsString();
                 LwM2mClient lwM2MClient = lwM2mClientContext.getLwM2mClient(new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
                 LwM2mClientProfile clientProfile = lwM2mClientContext.getProfile(new UUID(sessionInfo.getDeviceProfileIdMSB(), sessionInfo.getDeviceProfileIdLSB()));
-                if (path != null && !path.isEmpty() && (this.validatePathInAttrProfile(clientProfile, path) || this.validatePathInTelemetryProfile(clientProfile, path))) {
-                    ResourceModel resourceModel = lwM2mTransportContextServer.getLwM2MTransportConfigServer().getResourceModel(lwM2MClient.getRegistration(), new LwM2mPath(path));
+                if (pathIdVer != null && !pathIdVer.isEmpty() && (this.validatePathInAttrProfile(clientProfile, pathIdVer) || this.validatePathInTelemetryProfile(clientProfile, pathIdVer))) {
+                    ResourceModel resourceModel = lwM2mTransportContextServer.getLwM2MTransportConfigServer().getResourceModel(lwM2MClient.getRegistration(), new LwM2mPath(convertToObjectIdFromIdVer(pathIdVer)));
                     if (resourceModel != null && resourceModel.operations.isWritable()) {
-                        lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(), path, POST_TYPE_OPER_WRITE_REPLACE,
+                        lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(), pathIdVer, POST_TYPE_OPER_WRITE_REPLACE,
                                 ContentFormat.TLV.getName(), null, value, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getTimeout());
                     } else {
-                        log.error("Resource path - [{}] value - [{}] is not Writable and cannot be updated", path, value);
+                        log.error("Resource path - [{}] value - [{}] is not Writable and cannot be updated", pathIdVer, value);
                         String logMsg = String.format("%s: attributeUpdate: Resource path - %s value - %s is not Writable and cannot be updated",
-                                LOG_LW2M_ERROR, path, value);
+                                LOG_LW2M_ERROR, pathIdVer, value);
                         this.sentLogsToThingsboard(logMsg, lwM2MClient.getRegistration());
                     }
                 } else {
@@ -348,7 +353,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
 
     /**
      * Trigger Server path = "/1/0/8"
-     *
+     * <p>
      * Trigger bootStrap path = "/1/0/9" - have to implemented on client
      */
     @Override
@@ -458,7 +463,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
     private void initLwM2mFromClientValue(Registration registration, LwM2mClient lwM2MClient) {
         LwM2mClientProfile lwM2MClientProfile = lwM2mClientContext.getProfile(registration);
         Set<String> clientObjects = this.getAllOjectsInClient(registration);
-        if (clientObjects != null && !LwM2mTransportHandler.getClientOnlyObserveAfterConnect(lwM2MClientProfile)) {
+        if (clientObjects != null && LWM2M_STRATEGY_2 == LwM2mTransportHandler.getClientOnlyObserveAfterConnect(lwM2MClientProfile)) {
             // #2
             lwM2MClient.getPendingRequests().addAll(clientObjects);
             clientObjects.forEach(path -> lwM2mTransportRequest.sendAllRequest(registration, path, GET_TYPE_OPER_READ, ContentFormat.TLV.getName(),
@@ -499,9 +504,9 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
      * #1 Return old Value Resource from LwM2MClient
      * #2 Update new Resources (replace old Resource Value on new Resource Value)
      *
-     * @param registration - Registration LwM2M Client
+     * @param registration  - Registration LwM2M Client
      * @param lwM2mResource - LwM2mSingleResource response.getContent()
-     * @param path         - resource
+     * @param path          - resource
      */
     private void updateResourcesValue(Registration registration, LwM2mResource lwM2mResource, String path) {
         LwM2mClient lwM2MClient = lwM2mClientContext.getLwM2mClientWithReg(registration, null);
@@ -539,7 +544,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
 
     /**
      * @param clientProfile -
-     * @param path    -
+     * @param path          -
      * @return true if path isPresent in postAttributeProfile
      */
     private boolean validatePathInAttrProfile(LwM2mClientProfile clientProfile, String path) {
@@ -555,7 +560,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
 
     /**
      * @param clientProfile -
-     * @param path    -
+     * @param path          -
      * @return true if path isPresent in postAttributeProfile
      */
     private boolean validatePathInTelemetryProfile(LwM2mClientProfile clientProfile, String path) {
@@ -581,10 +586,13 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         Set<String> clientInstances = this.getAllInstancesInClient(registration);
         Set<String> result;
         if (GET_TYPE_OPER_READ.equals(typeOper)) {
-            result = JacksonUtil.fromString(lwM2MClientProfile.getPostAttributeProfile().toString(), new TypeReference<>() {});
-            result.addAll(JacksonUtil.fromString(lwM2MClientProfile.getPostTelemetryProfile().toString(), new TypeReference<>() {}));
+            result = JacksonUtil.fromString(lwM2MClientProfile.getPostAttributeProfile().toString(), new TypeReference<>() {
+            });
+            result.addAll(JacksonUtil.fromString(lwM2MClientProfile.getPostTelemetryProfile().toString(), new TypeReference<>() {
+            }));
         } else {
-            result = JacksonUtil.fromString(lwM2MClientProfile.getPostObserveProfile().toString(), new TypeReference<>() {});
+            result = JacksonUtil.fromString(lwM2MClientProfile.getPostObserveProfile().toString(), new TypeReference<>() {
+            });
         }
         Set<String> pathSent = ConcurrentHashMap.newKeySet();
         result.forEach(target -> {
@@ -646,7 +654,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         Arrays.stream(registration.getObjectLinks()).forEach(url -> {
             LwM2mPath pathIds = new LwM2mPath(url.getUrl());
             if (pathIds.isObjectInstance()) {
-                clientInstances.add(url.getUrl());
+                clientInstances.add(convertToIdVerFromObjectId(url.getUrl(), registration));
             }
         });
         return (clientInstances.size() > 0) ? clientInstances : null;
@@ -656,26 +664,22 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
      * @param attributes   - new JsonObject
      * @param telemetry    - new JsonObject
      * @param registration - Registration LwM2M Client
-     * @param path -
+     * @param path         -
      */
     private void getParametersFromProfile(JsonObject attributes, JsonObject telemetry, Registration registration, Set<String> path) {
-        LwM2mClientProfile lwM2MClientProfile = lwM2mClientContext.getProfile(registration);
-        lwM2MClientProfile.getPostAttributeProfile().forEach(p -> {
-            LwM2mPath pathIds = new LwM2mPath(p.getAsString());
-            if (pathIds.isResource()) {
-                if (path == null || path.contains(p.getAsString())) {
-                    this.addParameters(p.getAsString(), attributes, registration);
+        if (path != null && path.size() > 0) {
+            LwM2mClientProfile lwM2MClientProfile = lwM2mClientContext.getProfile(registration);
+            lwM2MClientProfile.getPostAttributeProfile().forEach(idVer -> {
+                if (path.contains(idVer.getAsString())) {
+                    this.addParameters(idVer.getAsString(), attributes, registration);
                 }
-            }
-        });
-        lwM2MClientProfile.getPostTelemetryProfile().forEach(p -> {
-            LwM2mPath pathIds = new LwM2mPath(p.getAsString());
-            if (pathIds.isResource()) {
-                if (path == null || path.contains(p.getAsString())) {
-                    this.addParameters(p.getAsString(), telemetry, registration);
+            });
+            lwM2MClientProfile.getPostTelemetryProfile().forEach(idVer -> {
+                if (path.contains(idVer.getAsString())) {
+                    this.addParameters(idVer.getAsString(), telemetry, registration);
                 }
-            }
-        });
+            });
+        }
     }
 
     /**
@@ -703,22 +707,21 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
      * @return - value of Resource or null
      */
     private String getResourceValueToString(LwM2mClient lwM2MClient, String path) {
-        LwM2mPath pathIds = new LwM2mPath(path);
-        ResourceValue resourceValue = this.returnResourceValueFromLwM2MClient(lwM2MClient, pathIds);
+        LwM2mPath pathIds =new LwM2mPath(convertToObjectIdFromIdVer(path));
+        ResourceValue resourceValue = this.returnResourceValueFromLwM2MClient(lwM2MClient, path);
         return resourceValue == null ? null :
                 this.converter.convertValue(resourceValue.getResourceValue(), this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getResourceModelType(lwM2MClient.getRegistration(), pathIds), ResourceModel.Type.STRING, pathIds).toString();
     }
 
     /**
-     *
      * @param lwM2MClient -
-     * @param pathIds -
+     * @param path     -
      * @return - return value of Resource by idPath
      */
-    private ResourceValue returnResourceValueFromLwM2MClient(LwM2mClient lwM2MClient, LwM2mPath pathIds) {
+    private ResourceValue returnResourceValueFromLwM2MClient(LwM2mClient lwM2MClient, String path) {
         ResourceValue resourceValue = null;
-        if (pathIds.isResource()) {
-            resourceValue = lwM2MClient.getResources().get(pathIds.toString());
+        if (new LwM2mPath(convertToObjectIdFromIdVer(path)).isResource()) {
+            resourceValue = lwM2MClient.getResources().get(path);
         }
         return resourceValue;
     }
@@ -818,8 +821,10 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
 
             // #5.1
             if (!observeOld.equals(observeNew)) {
-                Set<String> observeSetOld = new Gson().fromJson(observeOld, new TypeToken<>() {}.getType());
-                Set<String> observeSetNew = new Gson().fromJson(observeNew, new TypeToken<>() {}.getType());
+                Set<String> observeSetOld = new Gson().fromJson(observeOld, new TypeToken<>() {
+                }.getType());
+                Set<String> observeSetNew = new Gson().fromJson(observeNew, new TypeToken<>() {
+                }.getType());
                 //#5.2 add
                 //  path Attr/Telemetry includes newObserve
                 attributeSetOld.addAll(telemetrySetOld);
@@ -840,7 +845,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         }
     }
 
-    private Set <String> convertJsonArrayToSet (JsonArray jsonArray) {
+    private Set<String> convertJsonArrayToSet(JsonArray jsonArray) {
         List<String> attributeListOld = new Gson().fromJson(jsonArray, new TypeToken<>() {
         }.getType());
         return Sets.newConcurrentHashSet(attributeListOld);
@@ -907,7 +912,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
     private void cancelObserveIsValue(Registration registration, Set<String> paramAnallyzer) {
         LwM2mClient lwM2MClient = lwM2mClientContext.getLwM2mClientWithReg(registration, null);
         paramAnallyzer.forEach(p -> {
-                    if (this.returnResourceValueFromLwM2MClient(lwM2MClient, new LwM2mPath(p)) != null) {
+                    if (this.returnResourceValueFromLwM2MClient(lwM2MClient, p) != null) {
                         this.setCancelObservationRecourse(registration, p);
                     }
                 }
@@ -953,8 +958,9 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
      */
     private String getPathAttributeUpdateProfile(TransportProtos.SessionInfoProto sessionInfo, String name) {
         LwM2mClientProfile profile = lwM2mClientContext.getProfile(new UUID(sessionInfo.getDeviceProfileIdMSB(), sessionInfo.getDeviceProfileIdLSB()));
+        Registration registration = lwM2mClientContext.getLwM2MClient(sessionInfo).getRegistration();
         return profile.getPostKeyNameProfile().getAsJsonObject().entrySet().stream()
-                .filter(e -> e.getValue().getAsString().equals(name)).findFirst().map(Map.Entry::getKey)
+                .filter(e -> e.getValue().getAsString().equals(name) && validateResourceInModelByVer(registration, e.getKey())).findFirst().map(Map.Entry::getKey)
                 .orElse("");
     }
 
@@ -974,12 +980,14 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         try {
             LwM2mClient lwM2MClient = lwM2mClientContext.getLwM2MClient(sessionInfo);
             attributesResponse.getSharedAttributeListList().forEach(attr -> {
-                String path = this.getPathAttributeUpdate(sessionInfo, attr.getKv().getKey());
-                // #1.1
-                if (lwM2MClient.getDelayedRequests().containsKey(path) && attr.getTs() > lwM2MClient.getDelayedRequests().get(path).getTs()) {
-                    lwM2MClient.getDelayedRequests().put(path, attr);
-                } else {
-                    lwM2MClient.getDelayedRequests().put(path, attr);
+                String path =this.getPathAttributeUpdate(sessionInfo, attr.getKv().getKey());
+                if (path != null) {
+                    // #1.1
+                    if (lwM2MClient.getDelayedRequests().containsKey(path) && attr.getTs() > lwM2MClient.getDelayedRequests().get(path).getTs()) {
+                        lwM2MClient.getDelayedRequests().put(path, attr);
+                    } else {
+                        lwM2MClient.getDelayedRequests().put(path, attr);
+                    }
                 }
             });
             // #2.1
@@ -1057,6 +1065,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
     }
 
     /**
+     * !!!  sharedAttr === profileAttr  !!!
      * If there is a difference in values between the current resource values and the shared attribute values
      * when the client connects to the server
      * #1 get attributes name from profile include name resources in ModelObject if resource  isWritable
@@ -1083,24 +1092,42 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
 
 
     /**
-     * Get names and keyNames from profile shared!!!! attr resources IsWritable
+     * !!!  sharedAttr === profileAttr  !!!
+     * Get names or keyNames from profile:  resources IsWritable
      *
      * @param lwM2MClient -
-     * @return ArrayList  keyNames from profile attr resources shared!!!! && IsWritable
+     * @return ArrayList  keyNames from profile profileAttr && IsWritable
      */
     private List<String> getNamesAttrFromProfileIsWritable(LwM2mClient lwM2MClient) {
         LwM2mClientProfile profile = lwM2mClientContext.getProfile(lwM2MClient.getProfileId());
-        Set<String> attrSet = new Gson().fromJson(profile.getPostAttributeProfile(), new TypeToken<>() {}.getType());
-        ConcurrentMap<String, String> keyNamesMap = new Gson().fromJson(profile.getPostKeyNameProfile().toString(), new TypeToken<ConcurrentHashMap<String, String>>() {}.getType());
+        Set<String> attrSet = new Gson().fromJson(profile.getPostAttributeProfile(),
+                new TypeToken<HashSet<String>>() {
+                }.getType());
+        ConcurrentMap<String, String> keyNamesMap = new Gson().fromJson(profile.getPostKeyNameProfile().toString(),
+                new TypeToken<ConcurrentHashMap<String, String>>() {
+                }.getType());
 
         ConcurrentMap<String, String> keyNamesIsWritable = keyNamesMap.entrySet()
                 .stream()
-                .filter(e -> (attrSet.contains(e.getKey()) && lwM2mTransportContextServer.getLwM2MTransportConfigServer().getResourceModel(lwM2MClient.getRegistration(), new LwM2mPath(e.getKey())) != null &&
-                        lwM2mTransportContextServer.getLwM2MTransportConfigServer().getResourceModel(lwM2MClient.getRegistration(), new LwM2mPath(e.getKey())).operations.isWritable()))
+                .filter(e -> (attrSet.contains(e.getKey()) && resourceIsWritable(lwM2MClient.getRegistration(), e.getKey())))
                 .collect(Collectors.toConcurrentMap(Map.Entry::getKey, Map.Entry::getValue));
 
         Set<String> namesIsWritable = ConcurrentHashMap.newKeySet();
         namesIsWritable.addAll(new HashSet<>(keyNamesIsWritable.values()));
         return new ArrayList<>(namesIsWritable);
+    }
+
+    private boolean resourceIsWritable(Registration registration, String pathKey) {
+        return validateResourceInModelByVer(registration, pathKey) &&
+                lwM2mTransportContextServer.getLwM2MTransportConfigServer().getResourceModel(registration,
+                        new LwM2mPath(convertToObjectIdFromIdVer(pathKey))).operations.isWritable();
+    }
+
+    private boolean validateResourceInModelByVer(Registration registration, String pathKey) {
+        Integer objectId = validateObjectIdFromKey(pathKey);
+        String objectVer = validateObjectVerFromKey(pathKey);
+        LwM2mPath lwM2mPath = new LwM2mPath(convertToObjectIdFromIdVer(pathKey));
+        return objectId != null && objectVer != null && objectVer.equals(registration.getSupportedVersion(objectId)) &&
+                lwM2mTransportContextServer.getLwM2MTransportConfigServer().getResourceModel(registration, lwM2mPath) != null;
     }
 }

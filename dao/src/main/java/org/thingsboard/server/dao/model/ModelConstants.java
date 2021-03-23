@@ -466,7 +466,6 @@ public class ModelConstants {
     public static final String RESOURCE_TITLE_COLUMN = TITLE_PROPERTY;
     public static final String RESOURCE_DATA_COLUMN = "data";
 
-
     /**
      * Cassandra attributes and timeseries constants.
      */

@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.TBRedisCacheConfiguration;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 
 import java.util.Collection;
@@ -89,10 +90,14 @@ public class TbLwM2mStoreConfiguration {
         }
 
         @Override
-        public SecurityInfo getByEndpoint(String endpoint) {
-            SecurityInfo securityInfo = securityStore.getByEndpoint(endpoint);
+        public SecurityInfo getByEndpoint(String endPoint) {
+            SecurityInfo securityInfo = securityStore.getByEndpoint(endPoint);
             if (securityInfo == null) {
-                securityInfo = clientContext.addLwM2mClientToSession(endpoint).getSecurityInfo();
+                LwM2mClient lwM2mClient = clientContext.getLwM2MClient(endPoint, null);
+                if (lwM2mClient != null && !lwM2mClient.getRegistration().getIdentity().isSecure()){
+                    return null;
+                }
+                securityInfo = clientContext.addLwM2mClientToSession(endPoint).getSecurityInfo();
                 try {
                     if (securityInfo != null) {
                         add(securityInfo);

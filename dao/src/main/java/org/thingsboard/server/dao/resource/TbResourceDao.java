@@ -26,8 +26,6 @@ import java.util.List;
 
 public interface TbResourceDao extends Dao<TbResource> {
 
-    TbResource saveResource(TbResource resource);
-
     TbResource getResource(TenantId tenantId, ResourceType resourceType, String resourceId);
 
     PageData<TbResource> findAllByTenantId(TenantId tenantId, PageLink pageLink);
