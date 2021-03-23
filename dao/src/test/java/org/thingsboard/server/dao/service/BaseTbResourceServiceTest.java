@@ -61,6 +61,8 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
             "</Object>\n" +
             "</LWM2M>";
 
+    private static final String DEFAULT_FILE_NAME = "test.jks";
+
     private IdComparator<TbResourceInfo> idComparator = new IdComparator<>();
 
     private TenantId tenantId;
@@ -85,7 +87,7 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
         resource.setTenantId(tenantId);
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("My first resource");
-        resource.setResourceKey("Test resource");
+        resource.setFileName(DEFAULT_FILE_NAME);
         resource.setData("Test Data");
 
         TbResource savedResource = resourceService.saveResource(resource);
@@ -112,6 +114,7 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
         TbResource resource = new TbResource();
         resource.setTenantId(tenantId);
         resource.setResourceType(ResourceType.LWM2M_MODEL);
+        resource.setFileName("test_model.xml");
         resource.setData(Base64.getEncoder().encodeToString(LWM2M_TEST_MODEL.getBytes()));
 
         TbResource savedResource = resourceService.saveResource(resource);
@@ -132,7 +135,7 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
         TbResource resource = new TbResource();
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("My resource");
-        resource.setResourceKey("Test resource");
+        resource.setFileName(DEFAULT_FILE_NAME);
         resource.setData("Test Data");
         TbResource savedResource = resourceService.saveResource(resource);
 
@@ -142,12 +145,12 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
     }
 
     @Test(expected = DataValidationException.class)
-    public void testSaveTbResourceWithExistsKey() throws Exception {
+    public void testSaveTbResourceWithExistsFileName() throws Exception {
         TbResource resource = new TbResource();
         resource.setTenantId(tenantId);
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("My resource");
-        resource.setResourceKey("Test resource");
+        resource.setFileName(DEFAULT_FILE_NAME);
         resource.setData("Test Data");
 
         TbResource savedResource = resourceService.saveResource(resource);
@@ -156,7 +159,7 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
         resource.setTenantId(tenantId);
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("My resource");
-        resource.setResourceKey("Test resource");
+        resource.setFileName(DEFAULT_FILE_NAME);
         resource.setData("Test Data");
 
         try {
@@ -171,7 +174,7 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
         TbResource resource = new TbResource();
         resource.setTenantId(tenantId);
         resource.setResourceType(ResourceType.JKS);
-        resource.setResourceKey("Test resource");
+        resource.setFileName(DEFAULT_FILE_NAME);
         resource.setData("Test Data");
         resourceService.saveResource(resource);
     }
@@ -182,7 +185,7 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
         resource.setTenantId(new TenantId(Uuids.timeBased()));
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("My resource");
-        resource.setResourceKey("Test resource");
+        resource.setFileName(DEFAULT_FILE_NAME);
         resource.setData("Test Data");
         resourceService.saveResource(resource);
     }
@@ -192,7 +195,7 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
         TbResource resource = new TbResource();
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("My resource");
-        resource.setResourceKey("Test resource");
+        resource.setFileName(DEFAULT_FILE_NAME);
         resource.setData("Test Data");
         TbResource savedResource = resourceService.saveResource(resource);
 
@@ -208,7 +211,7 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
         resource.setResourceType(ResourceType.JKS);
         resource.setTenantId(tenantId);
         resource.setTitle("My resource");
-        resource.setResourceKey("Test resource");
+        resource.setFileName(DEFAULT_FILE_NAME);
         resource.setData("Test Data");
         TbResource savedResource = resourceService.saveResource(resource);
 
@@ -223,7 +226,7 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
         TbResource resource = new TbResource();
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("My resource");
-        resource.setResourceKey("Test resource");
+        resource.setFileName(DEFAULT_FILE_NAME);
         resource.setData("Test Data");
         TbResource savedResource = resourceService.saveResource(resource);
 
@@ -248,7 +251,7 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
             resource.setTenantId(tenantId);
             resource.setTitle("Resource" + i);
             resource.setResourceType(ResourceType.JKS);
-            resource.setResourceKey("Key" + i);
+            resource.setFileName(i + DEFAULT_FILE_NAME);
             resource.setData("Test Data");
             resources.add(new TbResourceInfo(resourceService.saveResource(resource)));
         }
@@ -293,7 +296,7 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
             resource.setTenantId(TenantId.SYS_TENANT_ID);
             resource.setTitle("System Resource" + i);
             resource.setResourceType(ResourceType.JKS);
-            resource.setResourceKey("Key" + i);
+            resource.setFileName(i + DEFAULT_FILE_NAME);
             resource.setData("Test Data");
             TbResourceInfo tbResourceInfo = new TbResourceInfo(resourceService.saveResource(resource));
             if (i >= 50) {
@@ -306,7 +309,7 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
             resource.setTenantId(tenantId);
             resource.setTitle("Tenant Resource" + i);
             resource.setResourceType(ResourceType.JKS);
-            resource.setResourceKey("Key" + i);
+            resource.setFileName(i + DEFAULT_FILE_NAME);
             resource.setData("Test Data");
             resources.add(new TbResourceInfo(resourceService.saveResource(resource)));
         }
