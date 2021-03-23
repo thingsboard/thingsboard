@@ -23,13 +23,16 @@ import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
+import org.thingsboard.server.common.data.device.profile.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
+import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.DynamicValueSourceType;
 import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.KeyFilterPredicate;
 import org.thingsboard.server.common.data.query.SimpleKeyFilterPredicate;
 
@@ -90,7 +93,7 @@ class ProfileState {
         }
     }
 
-    private void addEntityKeysFromAlarmConditionSpec(org.thingsboard.server.common.data.device.profile.AlarmRule alarmRule) {
+    private void addEntityKeysFromAlarmConditionSpec(AlarmRule alarmRule) {
         AlarmConditionSpec spec = alarmRule.getCondition().getSpec();
         if (spec == null) {
             return;
@@ -99,11 +102,19 @@ class ProfileState {
         switch (specType) {
             case DURATION:
                 DurationAlarmConditionSpec dynamicAlarmConditionSpec = (DurationAlarmConditionSpec) spec;
-                EntityKey entityKey = dynamicAlarmConditionSpec.getKey();
-                if (entityKey == null) {
+                EntityKey entityKey = new EntityKey(EntityKeyType.ATTRIBUTE, dynamicAlarmConditionSpec.getDynamicValue().getSourceAttribute());
+                if (entityKey.getKey() == null) {
                     return;
                 }
                 entityKeys.add(AlarmConditionFilterKey.fromEntityKey(entityKey));
+                break;
+            case REPEATING:
+                RepeatingAlarmConditionSpec repeating = (RepeatingAlarmConditionSpec) spec;
+                EntityKey repeatingKey = new EntityKey(EntityKeyType.ATTRIBUTE, repeating.getDynamicValue().getSourceAttribute());
+                if(repeatingKey.getKey() == null) {
+                    return;
+                }
+                entityKeys.add(AlarmConditionFilterKey.fromEntityKey(repeatingKey));
                 break;
         }
     }

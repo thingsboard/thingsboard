@@ -17,14 +17,14 @@ package org.thingsboard.server.common.data.device.profile;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
-
-import java.util.concurrent.TimeUnit;
+import org.thingsboard.server.common.data.query.DynamicValue;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RepeatingAlarmConditionSpec implements AlarmConditionSpec {
 
-    private int count;
+    private Long defaultValue;
+    private DynamicValue<Long> dynamicValue;
 
     @Override
     public AlarmConditionSpecType getType() {
