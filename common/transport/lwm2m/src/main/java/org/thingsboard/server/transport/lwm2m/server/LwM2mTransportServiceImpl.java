@@ -162,15 +162,12 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
                 if (lwM2MClient != null) {
                     SessionInfoProto sessionInfo = this.getValidateSessionInfo(registration);
                     if (sessionInfo != null) {
-                        lwM2MClient.setDeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
-                        lwM2MClient.setProfileId(new UUID(sessionInfo.getDeviceProfileIdMSB(), sessionInfo.getDeviceProfileIdLSB()));
-                        lwM2MClient.setDeviceName(sessionInfo.getDeviceName());
-                        lwM2MClient.setDeviceProfileName(sessionInfo.getDeviceType());
+                        this.initLwM2mClient (lwM2MClient, sessionInfo);
                         transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(this, sessionInfo));
                         transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN), null);
                         transportService.process(sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build(), null);
-                        this.sentLogsToThingsboard(LOG_LW2M_INFO + ": Client create after Registration", registration);
                         this.initLwM2mFromClientValue(registration, lwM2MClient);
+                        this.sentLogsToThingsboard(LOG_LW2M_INFO + ": Client create after Registration", registration);
                     } else {
                         log.error("Client: [{}] onRegistered [{}] name  [{}] sessionInfo ", registration.getId(), registration.getEndpoint(), null);
                     }
@@ -194,6 +191,11 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
                 SessionInfoProto sessionInfo = this.getValidateSessionInfo(registration);
                 if (sessionInfo != null) {
                     this.checkInactivity(sessionInfo);
+                    LwM2mClient lwM2MClient = this.lwM2mClientContext.getLwM2MClient(sessionInfo);
+                    if (lwM2MClient.getDeviceId() == null && lwM2MClient.getProfileId() == null) {
+                        initLwM2mClient(lwM2MClient, sessionInfo);
+                    }
+
                     log.info("Client: [{}] updatedReg [{}] name  [{}] profile ", registration.getId(), registration.getEndpoint(), sessionInfo.getDeviceType());
                 } else {
                     log.error("Client: [{}] updatedReg [{}] name  [{}] sessionInfo ", registration.getId(), registration.getEndpoint(), null);
@@ -219,6 +221,13 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
                 log.error("[{}] endpoint [{}] error Unable un registration.", registration.getEndpoint(), t);
             }
         });
+    }
+
+    private void initLwM2mClient (LwM2mClient lwM2MClient, SessionInfoProto sessionInfo) {
+        lwM2MClient.setDeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
+        lwM2MClient.setProfileId(new UUID(sessionInfo.getDeviceProfileIdMSB(), sessionInfo.getDeviceProfileIdLSB()));
+        lwM2MClient.setDeviceName(sessionInfo.getDeviceName());
+        lwM2MClient.setDeviceProfileName(sessionInfo.getDeviceType());
     }
 
     private void closeClientSession(Registration registration) {

@@ -94,7 +94,7 @@ public class TbLwM2mStoreConfiguration {
             SecurityInfo securityInfo = securityStore.getByEndpoint(endPoint);
             if (securityInfo == null) {
                 LwM2mClient lwM2mClient = clientContext.getLwM2MClient(endPoint, null);
-                if (lwM2mClient != null && !lwM2mClient.getRegistration().getIdentity().isSecure()){
+                if (lwM2mClient != null && lwM2mClient.getRegistration() != null && !lwM2mClient.getRegistration().getIdentity().isSecure()){
                     return null;
                 }
                 securityInfo = clientContext.addLwM2mClientToSession(endPoint).getSecurityInfo();
