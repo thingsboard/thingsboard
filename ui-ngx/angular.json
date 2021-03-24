@@ -111,6 +111,7 @@
               "classnames",
               "raf",
               "moment-timezone",
+              "moment",
               "tinycolor2",
               "json-schema-defaults",
               "leaflet-providers",

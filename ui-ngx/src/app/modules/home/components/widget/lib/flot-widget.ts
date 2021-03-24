@@ -202,7 +202,7 @@ export class TbFlot {
         this.xaxis.labelFont.weight = 'bold';
       }
 
-      this.yAxisTickFormatter = this.formatYAxisTicks.bind(this);
+      this.yAxisTickFormatter = this.formatAxisTicks.bind(this);
 
       this.yaxis.tickFormatter = this.yAxisTickFormatter;
 
@@ -257,12 +257,9 @@ export class TbFlot {
         }
       }
 
+      this.xaxis.tickFormatter = this.formatAxisTicks.bind(this);
+
       this.options.xaxes[0] = deepClone(this.xaxis);
-      if (this.settings.xaxis && this.settings.xaxis.showLabels === false) {
-        this.options.xaxes[0].tickFormatter = () => {
-          return '';
-        };
-      }
 
       this.options.series = {};
 
@@ -359,11 +356,6 @@ export class TbFlot {
       const xaxis = deepClone(this.xaxis);
       xaxis.position = 'top';
       if (this.settings.xaxisSecond) {
-        if (this.settings.xaxisSecond.showLabels === false) {
-          xaxis.tickFormatter = () => {
-            return '';
-          };
-        }
         xaxis.label = this.utils.customTranslation(this.settings.xaxisSecond.title, this.settings.xaxisSecond.title) || null;
         xaxis.position = this.settings.xaxisSecond.axisPosition;
       }
@@ -1120,26 +1112,33 @@ export class TbFlot {
     return content;
   }
 
-  private formatYAxisTicks(value: number, axis?: TbFlotPlotAxis): string {
+  private formatAxisTicks(value: number, axis?: TbFlotPlotAxis): string {
     if (this.settings.yaxis && this.settings.yaxis.showLabels === false) {
       return '';
     }
     if (axis.options.ticksFormatterFunction) {
       return axis.options.ticksFormatterFunction(value);
     }
-    const factor = axis.options.tickDecimals ? Math.pow(10, axis.options.tickDecimals) : 1;
-    let formatted = '' + Math.round(value * factor) / factor;
-    if (isDefined(axis.options.tickDecimals) && axis.options.tickDecimals !== null) {
-      const decimal = formatted.indexOf('.');
-      const precision = decimal === -1 ? 0 : formatted.length - decimal - 1;
-      if (precision < axis.options.tickDecimals) {
-        formatted = (precision ? formatted : formatted + '.') + ('' + factor).substr(1, axis.options.tickDecimals - precision);
+    if (axis.options.mode && axis.options.mode === 'time') {
+      let unit = axis.tickSize[1];
+      switch(unit) {
+        case "second":
+          return moment(value).format('HH:mm:ss');
+        case "minute":
+          return moment(value).format('HH:mm');
+        case "hour":
+          return moment(value).format('MM-DD HH:mm');
+        case "day":
+          return moment(value).format('MM-DD');
+        case "month":
+          return moment(value).format('YYYY-MM');
+        case "year":
+          return moment(value).format('YYYY');
+        default:
+          return moment(value).format('YYYY-MM-DD HH:mm:ss');
       }
     }
-    if (axis.options.tickUnits) {
-      formatted += ' ' + axis.options.tickUnits;
-    }
-    return formatted;
+    return this.ctx.utils.formatValue(value, axis.options.tickDecimals, axis.options.tickUnits, this.hideZeros);
   }
 
   private enableMouseEvents() {
