@@ -27,14 +27,11 @@ import org.thingsboard.server.transport.lwm2m.secure.ReadResultSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler;
 import org.thingsboard.server.transport.lwm2m.utils.TypeServer;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.NO_SEC;
 
@@ -42,7 +39,6 @@ import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.NO
 @TbLwM2mTransportComponent
 public class LwM2mClientContextImpl implements LwM2mClientContext {
     protected final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-    protected final Lock writeLock;
     private static final boolean INFOS_ARE_COMPROMISED = false;
 
     private final Map<String /** registrationId */, LwM2mClient> lwM2mClients = new ConcurrentHashMap<>();
@@ -55,23 +51,14 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     public LwM2mClientContextImpl(LwM2mCredentialsSecurityInfoValidator lwM2MCredentialsSecurityInfoValidator, EditableSecurityStore securityStore) {
         this.lwM2MCredentialsSecurityInfoValidator = lwM2MCredentialsSecurityInfoValidator;
         this.securityStore = securityStore;
-        this.writeLock = this.readWriteLock.writeLock();
     }
 
     public void delRemoveSessionAndListener(String registrationId) {
-        this.writeLock.lock();
-
         LwM2mClient lwM2MClient = this.lwM2mClients.get(registrationId);
         if (lwM2MClient != null) {
-            securityStore.remove(lwM2MClient.getEndpoint(), INFOS_ARE_COMPROMISED);
-            //  remove All registration for this device
-            List registrationIds = this.lwM2mClients.entrySet().stream()
-                    .filter(e -> lwM2MClient.getDeviceId().equals(e.getValue().getDeviceId()))
-                    .map(x -> x.getKey())
-                    .collect(Collectors.toList());
-            registrationIds.forEach(r -> {this.lwM2mClients.remove(r);});
+            this.securityStore.remove(lwM2MClient.getEndpoint(), INFOS_ARE_COMPROMISED);
+            this.lwM2mClients.remove(registrationId);
         }
-        this.writeLock.unlock();
     }
 
     @Override
