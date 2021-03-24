@@ -15,6 +15,11 @@
  */
 package org.thingsboard.server.service.install;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.fge.jackson.jsonpointer.JsonPointer;
+import com.github.fge.jackson.jsonpointer.JsonPointerException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,9 +29,13 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.query.DynamicValue;
+import org.thingsboard.server.common.data.query.DynamicValueSourceType;
+import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.sql.device.DeviceProfileRepository;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
@@ -96,6 +105,9 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
 
     @Autowired
     private DeviceProfileService deviceProfileService;
+
+    @Autowired
+    private DeviceProfileRepository deviceProfileRepository;
 
     @Autowired
     private ApiUsageStateService apiUsageStateService;
@@ -469,6 +481,65 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         log.error("Failed updating schema!!!", e);
                     }
                     log.info("Schema updated.");
+                }
+                break;
+            case "3.3.0":
+                try {
+                    log.info("Updating schema ...");
+                    deviceProfileRepository.findAll().forEach(deviceProfile -> {
+                        try {
+                            ObjectNode array = ((ObjectNode) deviceProfile.getProfileData().get("alarms"));
+                            for (JsonNode node : array) {
+                                if (!node.has("createRules")) {
+                                    continue;
+                                }
+                                node = node.get("createRules");
+                                if (node.has("MAJOR")) {
+                                    node = node.get("MAJOR");
+                                } else if (node.has("MINOR")) {
+                                    node = node.get("MINOR");
+                                } else if (node.has("CRITICAL")) {
+                                    node = node.get("CRITICAL");
+                                } else if (node.has("WARNING")) {
+                                    node = node.get("WARNING");
+                                } else if (node.has("INTERMEDIATE")) {
+                                    node = node.get("INTERMEDIATE");
+                                } else {
+                                    continue;
+                                }
+
+                                if (!node.has("condition")) {
+                                    continue;
+                                }
+                                node = node.get("condition").get("spec");
+
+                                if (node.get("type").asText().equals("DURATION")) {
+                                    if (node.has("value")) {
+                                        long value = node.get("value").asLong();
+                                        var predicate = new FilterPredicateValue<>(
+                                                value, null, new DynamicValue<>(null, null, false)
+                                        );
+                                        ((ObjectNode) node).remove("value");
+                                        ((ObjectNode) node).put("predicate", new ObjectMapper().writeValueAsString(predicate));
+                                    }
+                                }
+                                if (node.get("type").asText().equals("REPEATING")) {
+                                    int count = node.get("count").asInt();
+                                    var predicate = new FilterPredicateValue<>(
+                                            count, null, new DynamicValue<>(null, null, false)
+                                    );
+                                    ((ObjectNode) node).remove("count");
+                                    ((ObjectNode) node).put("predicate", new ObjectMapper().writeValueAsString(predicate));
+                                }
+                            }
+
+                        } catch (Exception e) {
+                            log.error("Some of Alarm Conditions cannot be updated! This may create an errors in future. ");
+                            e.printStackTrace();
+                        }
+                    });
+                } catch (Exception e) {
+                    log.error("Failing update schema! " + e.getMessage());
                 }
                 break;
             default:

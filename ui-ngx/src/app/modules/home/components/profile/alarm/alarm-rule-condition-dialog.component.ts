@@ -24,7 +24,7 @@ import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { TranslateService } from '@ngx-translate/core';
 import {
-  EntityKeyType, entityKeyTypeTranslationMap,
+  EntityKeyType, entityKeyTypeTranslationMap, EntityKeyValueType, FilterPredicateValue,
   KeyFilter,
   keyFilterInfosToKeyFilters,
   keyFiltersToKeyFilterInfos
@@ -56,13 +56,7 @@ export class AlarmRuleConditionDialogComponent extends DialogComponent<AlarmRule
   alarmConditionTypes = Object.keys(AlarmConditionType);
   AlarmConditionType = AlarmConditionType;
   alarmConditionTypeTranslation = AlarmConditionTypeTranslationMap;
-
-  entityKeyTypes = [EntityKeyType.ATTRIBUTE, EntityKeyType.TIME_SERIES];
-  entityKeyTypeTranslations = entityKeyTypeTranslationMap;
-  filteredEntityFields: Observable<string[]>;
-  entityFields: { [fieldName: string]: EntityField };
-  entityFieldsList: string[];
-
+  entityKeyType: EntityKeyValueType = EntityKeyValueType.NUMERIC;
   readonly = this.data.readonly;
   condition = this.data.condition;
   entityId = this.data.entityId;
@@ -85,12 +79,8 @@ export class AlarmRuleConditionDialogComponent extends DialogComponent<AlarmRule
       spec: this.fb.group({
         type: [AlarmConditionType.SIMPLE, Validators.required],
         unit: [{value: null, disable: true}, Validators.required],
-        value: [{value: null, disable: true}, [Validators.required, Validators.min(1), Validators.max(2147483647), Validators.pattern('[0-9]*')]],
-        count: [{value: null, disable: true}, [Validators.required, Validators.min(1), Validators.max(2147483647), Validators.pattern('[0-9]*')]],
-        key: this.fb.group({
-          type: [EntityKeyType.ATTRIBUTE],
-          key: [null]
-        })
+        predicate: {},
+        count: [{value: null, disable: true}, [Validators.required, Validators.min(1), Validators.max(2147483647), Validators.pattern('[0-9]*')]]
       })
     });
     this.conditionFormGroup.patchValue({spec: this.condition?.spec});
@@ -102,17 +92,9 @@ export class AlarmRuleConditionDialogComponent extends DialogComponent<AlarmRule
     } else {
       this.updateValidators(this.condition?.spec?.type);
     }
-    this.entityFields = entityFields;
-    this.entityFieldsList = Object.values(entityFields).map(entityField => entityField.keyName).sort();
   }
 
   ngOnInit(): void {
-    this.filteredEntityFields = this.conditionFormGroup.get('spec.key.key').valueChanges.pipe(
-      startWith(''),
-      map(value => {
-        return this.entityFieldsList.filter(option => option.startsWith(value));
-      })
-    );
   }
 
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -124,9 +106,9 @@ export class AlarmRuleConditionDialogComponent extends DialogComponent<AlarmRule
   private updateValidators(type: AlarmConditionType, resetDuration = false, emitEvent = false) {
     switch (type) {
       case AlarmConditionType.DURATION:
-        this.conditionFormGroup.get('spec.value').enable();
         this.conditionFormGroup.get('spec.unit').enable();
         this.conditionFormGroup.get('spec.count').disable();
+        this.conditionFormGroup.get('spec.predicate').enable();
         if (resetDuration) {
           this.conditionFormGroup.get('spec').patchValue({
             count: null
@@ -135,29 +117,29 @@ export class AlarmRuleConditionDialogComponent extends DialogComponent<AlarmRule
         break;
       case AlarmConditionType.REPEATING:
         this.conditionFormGroup.get('spec.count').enable();
-        this.conditionFormGroup.get('spec.value').disable();
+        this.conditionFormGroup.get('spec.predicate').enable();
         this.conditionFormGroup.get('spec.unit').disable();
         if (resetDuration) {
           this.conditionFormGroup.get('spec').patchValue({
-            value: null,
-            unit: null
+            unit: null,
+            predicate: null
           });
         }
         break;
       case AlarmConditionType.SIMPLE:
-        this.conditionFormGroup.get('spec.value').disable();
         this.conditionFormGroup.get('spec.unit').disable();
         this.conditionFormGroup.get('spec.count').disable();
+        this.conditionFormGroup.get('spec.predicate').disable();
         if (resetDuration) {
           this.conditionFormGroup.get('spec').patchValue({
-            value: null,
             unit: null,
-            count: null
+            count: null,
+            predicate: null,
           });
         }
         break;
     }
-    this.conditionFormGroup.get('spec.value').updateValueAndValidity({emitEvent});
+    this.conditionFormGroup.get('spec.predicate').updateValueAndValidity({emitEvent});
     this.conditionFormGroup.get('spec.unit').updateValueAndValidity({emitEvent});
     this.conditionFormGroup.get('spec.count').updateValueAndValidity({emitEvent});
   }

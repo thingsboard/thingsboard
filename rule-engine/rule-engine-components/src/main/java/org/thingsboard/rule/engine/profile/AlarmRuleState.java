@@ -232,10 +232,10 @@ class AlarmRuleState {
         if(specType.equals(AlarmConditionSpecType.REPEATING)) {
             RepeatingAlarmConditionSpec repeating = (RepeatingAlarmConditionSpec) spec;
 
-            repeatingTimes = repeating.getDefaultValue();
+            repeatingTimes = repeating.getPredicate().getDefaultValue();
 
-            if (repeating.getDynamicValue().getSourceAttribute() != null) {
-                EntityKeyValue repeatingKeyValue = getDynamicPredicateValue(data, repeating.getDynamicValue());
+            if (repeating.getPredicate().getDynamicValue().getSourceAttribute() != null) {
+                EntityKeyValue repeatingKeyValue = getDynamicPredicateValue(data, repeating.getPredicate().getDynamicValue());
                 if (repeatingKeyValue != null) {
                     repeatingTimes = repeatingKeyValue.getLngValue();
                 }
@@ -252,10 +252,10 @@ class AlarmRuleState {
             DurationAlarmConditionSpec duration = (DurationAlarmConditionSpec) spec;
             TimeUnit timeUnit = duration.getUnit();
 
-            durationTimeInMs = timeUnit.toMillis(duration.getDefaultValue());
+            durationTimeInMs = timeUnit.toMillis(duration.getPredicate().getDefaultValue());
 
-            if (duration.getDynamicValue().getSourceAttribute() != null) {
-                EntityKeyValue durationKeyValue = getDynamicPredicateValue(data, duration.getDynamicValue());
+            if (duration.getPredicate().getDynamicValue().getSourceAttribute() != null) {
+                EntityKeyValue durationKeyValue = getDynamicPredicateValue(data, duration.getPredicate().getDynamicValue());
                 if (durationKeyValue != null) {
                     durationTimeInMs = timeUnit.toMillis(durationKeyValue.getLngValue());
                 }

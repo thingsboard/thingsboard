@@ -102,7 +102,7 @@ class ProfileState {
         switch (specType) {
             case DURATION:
                 DurationAlarmConditionSpec dynamicAlarmConditionSpec = (DurationAlarmConditionSpec) spec;
-                EntityKey entityKey = new EntityKey(EntityKeyType.ATTRIBUTE, dynamicAlarmConditionSpec.getDynamicValue().getSourceAttribute());
+                EntityKey entityKey = new EntityKey(EntityKeyType.ATTRIBUTE, dynamicAlarmConditionSpec.getPredicate().getDynamicValue().getSourceAttribute());
                 if (entityKey.getKey() == null) {
                     return;
                 }
@@ -110,7 +110,7 @@ class ProfileState {
                 break;
             case REPEATING:
                 RepeatingAlarmConditionSpec repeating = (RepeatingAlarmConditionSpec) spec;
-                EntityKey repeatingKey = new EntityKey(EntityKeyType.ATTRIBUTE, repeating.getDynamicValue().getSourceAttribute());
+                EntityKey repeatingKey = new EntityKey(EntityKeyType.ATTRIBUTE, repeating.getPredicate().getDynamicValue().getSourceAttribute());
                 if(repeatingKey.getKey() == null) {
                     return;
                 }
