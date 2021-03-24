@@ -27,6 +27,8 @@ public class TbResource extends TbResourceInfo {
 
     private static final long serialVersionUID = 7379609705527272306L;
 
+    private String fileName;
+
     private String data;
 
     public TbResource() {
@@ -61,6 +63,8 @@ public class TbResource extends TbResourceInfo {
         builder.append(getResourceType());
         builder.append(", resourceKey=");
         builder.append(getResourceKey());
+        builder.append(", fileName=");
+        builder.append(fileName);
         builder.append(", data=");
         builder.append(data);
         builder.append("]");

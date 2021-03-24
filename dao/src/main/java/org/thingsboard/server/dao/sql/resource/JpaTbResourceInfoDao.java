@@ -49,11 +49,21 @@ public class JpaTbResourceInfoDao extends JpaAbstractSearchTextDao<TbResourceInf
     }
 
     @Override
-    public PageData<TbResourceInfo> findTbResourcesByTenantId(UUID tenantId, PageLink pageLink) {
+    public PageData<TbResourceInfo> findAllTenantResourcesByTenantId(UUID tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(resourceInfoRepository
-                .findByTenantId(
+                .findAllTenantResourcesByTenantId(
                         tenantId,
                         TenantId.NULL_UUID,
                         Objects.toString(pageLink.getTextSearch(), ""),
-                        DaoUtil.toPageable(pageLink)));    }
+                        DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<TbResourceInfo> findTenantResourcesByTenantId(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(resourceInfoRepository
+                .findTenantResourcesByTenantId(
+                        tenantId,
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        DaoUtil.toPageable(pageLink)));
+    }
 }
