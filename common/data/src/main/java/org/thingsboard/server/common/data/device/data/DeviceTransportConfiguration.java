@@ -38,4 +38,7 @@ public interface DeviceTransportConfiguration extends Serializable {
     @JsonIgnore
     DeviceTransportType getType();
 
+    default void validate() {
+    }
+
 }

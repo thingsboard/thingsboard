@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.transport.snmp;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.kv.DataType;
+public enum SnmpMethod {
+    GET(-96),
+    SET(-93);
 
-@Data
-public class SnmpMapping {
-    private String oid;
-    private String method;
-    private String key;
-    private DataType dataType;
+    // codes taken from org.snmp4j.PDU class
+    private final int code;
+
+    SnmpMethod(int code) {
+        this.code = code;
+    }
+
+    public int getCode() {
+        return code;
+    }
 }

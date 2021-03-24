@@ -46,6 +46,7 @@ import org.thingsboard.server.common.data.device.credentials.BasicMqttCredential
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
+import org.thingsboard.server.common.data.device.data.DeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.MqttDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
@@ -604,6 +605,9 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                             throw new DataValidationException("Can't assign device to customer from different tenant!");
                         }
                     }
+                    Optional.ofNullable(device.getDeviceData())
+                            .flatMap(deviceData -> Optional.ofNullable(deviceData.getTransportConfiguration()))
+                            .ifPresent(DeviceTransportConfiguration::validate);
                 }
             };
 

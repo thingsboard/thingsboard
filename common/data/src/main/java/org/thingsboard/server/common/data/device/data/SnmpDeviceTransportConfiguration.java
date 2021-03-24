@@ -19,25 +19,30 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.transport.snmp.SnmpProtocolVersion;
 
 @Data
 public class SnmpDeviceTransportConfiguration implements DeviceTransportConfiguration {
-
     private String address;
     private int port;
     private String community;
-    private String protocolVersion;
+    private SnmpProtocolVersion protocolVersion;
 
     @Override
     public DeviceTransportType getType() {
         return DeviceTransportType.SNMP;
     }
 
+    @Override
+    public void validate() {
+        if (!isValid()) {
+            throw new IllegalArgumentException("Transport configuration is not valid");
+        }
+    }
+
     @JsonIgnore
-    public boolean isValid() {
-        return StringUtils.isNotEmpty(this.address)
-                && this.port > 0
-                && StringUtils.isNotEmpty(this.community)
-                && StringUtils.isNotEmpty(this.protocolVersion);
+    private boolean isValid() {
+        return StringUtils.isNotBlank(address) && port > 0 &&
+                StringUtils.isNotBlank(community) && protocolVersion != null;
     }
 }
