@@ -24,6 +24,9 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { FlowDirective } from '@flowjs/ngx-flow';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { UtilsService } from '@core/services/utils.service';
+import { DialogService } from '@core/services/dialog.service';
+import { TranslateService } from '@ngx-translate/core';
+import { FileSizePipe } from '@shared/pipe/file-size.pipe';
 
 @Component({
   selector: 'tb-image-input',
@@ -41,6 +44,9 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
 
   @Input()
   label: string;
+
+  @Input()
+  maxSizeByte: number;
 
   private requiredValue: boolean;
 
@@ -80,7 +86,10 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
 
   constructor(protected store: Store<AppState>,
               private utils: UtilsService,
-              private sanitizer: DomSanitizer) {
+              private sanitizer: DomSanitizer,
+              private dialog: DialogService,
+              private translate: TranslateService,
+              private fileSize: FileSizePipe) {
     super(store);
   }
 
@@ -88,6 +97,15 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
     this.autoUploadSubscription = this.flow.events$.subscribe(event => {
       if (event.type === 'fileAdded') {
         const file = (event.event[0] as flowjs.FlowFile).file;
+        if (this.maxSizeByte && this.maxSizeByte < file.size) {
+          this.dialog.alert(
+            this.translate.instant('dashboard.cannot-upload-file'),
+            this.translate.instant('dashboard.maximum-upload-file-size', {size: this.fileSize.transform(this.maxSizeByte)})
+          ).subscribe(
+            () => { }
+          );
+          return false;
+        }
         const reader = new FileReader();
         reader.onload = (loadEvent) => {
           if (typeof reader.result === 'string' && reader.result.startsWith('data:image/')) {

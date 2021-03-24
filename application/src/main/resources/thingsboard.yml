@@ -110,7 +110,7 @@ security:
     # Enable/disable claiming devices, if false -> the device's [claimingAllowed] SERVER_SCOPE attribute must be set to [true] to allow claiming specific device
     allowClaimingByDefault: "${SECURITY_CLAIM_ALLOW_CLAIMING_BY_DEFAULT:true}"
     # Time allowed to claim the device in milliseconds
-    duration: "${SECURITY_CLAIM_DURATION:60000}" # 1 minute, note this value must equal claimDevices.timeToLiveInMinutes value
+    duration: "${SECURITY_CLAIM_DURATION:86400000}" # 1 minute, note this value must equal claimDevices.timeToLiveInMinutes value
   basic:
     enabled: "${SECURITY_BASIC_ENABLED:false}"
   oauth2:
@@ -348,8 +348,8 @@ caffeine:
       timeToLiveInMinutes: 1440
       maxSize: 0
     claimDevices:
-      timeToLiveInMinutes: 1
-      maxSize: 0
+      timeToLiveInMinutes: 1440
+      maxSize: 1000
     securitySettings:
       timeToLiveInMinutes: 1440
       maxSize: 0
@@ -362,6 +362,9 @@ caffeine:
     attributes:
       timeToLiveInMinutes: 1440
       maxSize: 100000
+    tokensOutdatageTime:
+      timeToLiveInMinutes: 20000
+      maxSize: 10000
 
 redis:
   # standalone or cluster
@@ -591,8 +594,6 @@ transport:
     #   send a Confirmable message to the time when an acknowledgement is no longer expected.
     #   DEFAULT_TIMEOUT = 2 * 60 * 1000l; 2 min in ms
     timeout: "${LWM2M_TIMEOUT:120000}"
-#    model_path_file: "${LWM2M_MODEL_PATH_FILE:./common/transport/lwm2m/src/main/resources/models/}"
-    model_path_file: "${LWM2M_MODEL_PATH_FILE:}"
     recommended_ciphers: "${LWM2M_RECOMMENDED_CIPHERS:false}"
     recommended_supported_groups: "${LWM2M_RECOMMENDED_SUPPORTED_GROUPS:true}"
     request_pool_size: "${LWM2M_REQUEST_POOL_SIZE:100}"
@@ -606,7 +607,7 @@ transport:
       # Create new X509 Certificates: common/transport/lwm2m/src/main/resources/credentials/shell/lwM2M_credentials.sh
       key_store_type: "${LWM2M_KEYSTORE_TYPE:JKS}"
       # key_store_type: "${LWM2M_KEYSTORE_TYPE:PKCS12}"
-#      key_store_path_file: "${KEY_STORE_PATH_FILE:/usr/share/thingsboard/conf/credentials/serverKeyStore.jks}"
+#      key_store_path_file: "${KEY_STORE_PATH_FILE:/common/transport/lwm2m/src/main/resources/credentials/serverKeyStore.jks"
       key_store_path_file: "${KEY_STORE_PATH_FILE:}"
       key_store_password: "${LWM2M_KEYSTORE_PASSWORD_SERVER:server_ks_password}"
       root_alias: "${LWM2M_SERVER_ROOT_CA:rootca}"
@@ -689,11 +690,11 @@ queue:
       security.protocol: "${TB_QUEUE_KAFKA_CONFLUENT_SECURITY_PROTOCOL:SASL_SSL}"
     other:
     topic-properties:
-      rule-engine: "${TB_QUEUE_KAFKA_RE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"
-      core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"
-      transport-api: "${TB_QUEUE_KAFKA_TA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"
-      notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"
-      js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600;partitions:100}"
+      rule-engine: "${TB_QUEUE_KAFKA_RE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      transport-api: "${TB_QUEUE_KAFKA_TA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600;partitions:100;min.insync.replicas:1}"
     consumer-stats:
       enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
       print-interval-ms: "${TB_QUEUE_KAFKA_CONSUMER_STATS_MIN_PRINT_INTERVAL_MS:60000}"

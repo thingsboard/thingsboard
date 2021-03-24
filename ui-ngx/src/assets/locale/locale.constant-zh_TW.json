@@ -1396,7 +1396,7 @@
     "timeseries": "時間序列",
     "search-data": "搜尋資料",
     "no-data-found": "沒有找到資料",
-    "latest-values": "最新值",
+    "latest": "最新值",
     "rpc": "控件部件",
     "alarm": "警告部件",
     "static": "靜態部件",

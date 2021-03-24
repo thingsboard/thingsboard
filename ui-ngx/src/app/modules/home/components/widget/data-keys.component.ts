@@ -121,7 +121,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
 
   private requiredValue: boolean;
   get required(): boolean {
-    return this.requiredValue || !this.optDataKeys || this.datasourceType === DatasourceType.entityCount;
+    return this.requiredValue || !this.optDataKeys || this.isEntityCountDatasource;
   }
   @Input()
   set required(value: boolean) {
@@ -217,7 +217,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
     if (this.maxDataKeys !== null && this.maxDataKeys > -1) {
       if (this.datasourceType === DatasourceType.function) {
         return this.translate.instant('datakey.maximum-function-types', {count: this.maxDataKeys});
-      } else if (this.datasourceType !== DatasourceType.entityCount) {
+      } else if (!this.isEntityCountDatasource) {
         return this.translate.instant('datakey.maximum-timeseries-or-attributes', {count: this.maxDataKeys});
       } else {
         return '';
@@ -250,7 +250,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
   private reset() {
     if (this.widgetType === widgetType.alarm) {
       this.keys = this.utils.getDefaultAlarmDataKeys();
-    } else if (this.datasourceType === DatasourceType.entityCount) {
+    } else if (this.isEntityCountDatasource) {
       this.keys = [this.callbacks.generateDataKey('count', DataKeyType.count)];
     } else {
       this.keys = [];
@@ -271,11 +271,10 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
         if (propName === 'entityAliasId') {
-          this.searchText = '';
-          this.fetchObservable$ = null;
-          this.latestSearchTextResult = null;
+          this.clearSearchCache();
           this.dirty = true;
         } else if (['widgetType', 'datasourceType'].includes(propName)) {
+          this.clearSearchCache();
           this.updateParams();
           setTimeout(() => {
             this.reset();
@@ -436,20 +435,18 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
       if (this.datasourceType === DatasourceType.function) {
         const targetKeysList = this.widgetType === widgetType.alarm ? this.alarmKeys : this.functionTypeKeys;
         fetchObservable = of(targetKeysList);
-      } else {
-        if (this.datasourceType !== DatasourceType.entityCount && this.entityAliasId) {
-          const dataKeyTypes = [DataKeyType.timeseries];
-          if (this.widgetType === widgetType.latest || this.widgetType === widgetType.alarm) {
-            dataKeyTypes.push(DataKeyType.attribute);
-            dataKeyTypes.push(DataKeyType.entityField);
-            if (this.widgetType === widgetType.alarm) {
-              dataKeyTypes.push(DataKeyType.alarm);
-            }
+      } else if (this.datasourceType === DatasourceType.entity && this.entityAliasId) {
+        const dataKeyTypes = [DataKeyType.timeseries];
+        if (this.widgetType === widgetType.latest || this.widgetType === widgetType.alarm) {
+          dataKeyTypes.push(DataKeyType.attribute);
+          dataKeyTypes.push(DataKeyType.entityField);
+          if (this.widgetType === widgetType.alarm) {
+            dataKeyTypes.push(DataKeyType.alarm);
           }
-          fetchObservable = this.callbacks.fetchEntityKeys(this.entityAliasId, dataKeyTypes);
-        } else {
-          fetchObservable = of([]);
         }
+        fetchObservable = this.callbacks.fetchEntityKeys(this.entityAliasId, dataKeyTypes);
+      } else {
+        fetchObservable = of([]);
       }
       this.fetchObservable$ = fetchObservable.pipe(
         publishReplay(1),
@@ -477,4 +474,13 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
     }, 0);
   }
 
+  get isEntityCountDatasource(): boolean {
+    return this.datasourceType === DatasourceType.entityCount;
+  }
+
+  private clearSearchCache() {
+    this.searchText = '';
+    this.fetchObservable$ = null;
+    this.latestSearchTextResult = null;
+  }
 }

@@ -14,16 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { PageLink } from '@shared/models/page/page-link';
-import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { Observable } from 'rxjs';
-import { PageData } from '@shared/models/page/page-data';
-import { DeviceProfile, DeviceProfileInfo, DeviceTransportType } from '@shared/models/device.models';
-import { isDefinedAndNotNull, isEmptyStr } from '@core/utils';
-import { ObjectLwM2M, ServerSecurityConfig } from '@home/components/profile/device/lwm2m/profile-config.models';
-import { SortOrder } from '@shared/models/page/sort-order';
+import {Injectable} from '@angular/core';
+import {HttpClient} from '@angular/common/http';
+import {PageLink} from '@shared/models/page/page-link';
+import {defaultHttpOptionsFromConfig, RequestConfig} from './http-utils';
+import {Observable} from 'rxjs';
+import {PageData} from '@shared/models/page/page-data';
+import {DeviceProfile, DeviceProfileInfo, DeviceTransportType} from '@shared/models/device.models';
+import {isDefinedAndNotNull, isEmptyStr} from '@core/utils';
+import {ObjectLwM2M, ServerSecurityConfig} from '@home/components/profile/device/lwm2m/profile-config.models';
+import {SortOrder} from '@shared/models/page/sort-order';
 
 @Injectable({
   providedIn: 'root'
@@ -43,9 +43,9 @@ export class DeviceProfileService {
     return this.http.get<DeviceProfile>(`/api/deviceProfile/${deviceProfileId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getLwm2mObjects(sortOrder: SortOrder, objectIds?: number[], searchText?: string, config?: RequestConfig):
+  public getLwm2mObjects(sortOrder: SortOrder, objectIds?: string[], searchText?: string, config?: RequestConfig):
     Observable<Array<ObjectLwM2M>> {
-    let url = `/api/lwm2m/deviceProfile/?sortProperty=${sortOrder.property}&sortOrder=${sortOrder.direction}`;
+    let url = `/api/resource/lwm2m/?sortProperty=${sortOrder.property}&sortOrder=${sortOrder.direction}`;
     if (isDefinedAndNotNull(objectIds) && objectIds.length > 0) {
       url += `&objectIds=${objectIds}`;
     }
@@ -63,9 +63,9 @@ export class DeviceProfileService {
     );
   }
 
-  public getLwm2mObjectsPage(pageLink: PageLink, config?: RequestConfig): Observable<PageData<ObjectLwM2M>> {
-    return this.http.get<PageData<ObjectLwM2M>>(
-      `/api/lwm2m/deviceProfile/objects${pageLink.toQuery()}`,
+  public getLwm2mObjectsPage(pageLink: PageLink, config?: RequestConfig): Observable<Array<ObjectLwM2M>> {
+    return this.http.get<Array<ObjectLwM2M>>(
+      `/api/resource/lwm2m/page${pageLink.toQuery()}`,
       defaultHttpOptionsFromConfig(config)
     );
   }

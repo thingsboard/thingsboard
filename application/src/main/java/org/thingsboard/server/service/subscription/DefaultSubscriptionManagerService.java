@@ -213,7 +213,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                 }, s -> true, s -> {
                     List<TsKvEntry> subscriptionUpdate = null;
                     for (TsKvEntry kv : ts) {
-                        if (isInTimeRange(s, kv.getTs()) && (s.isAllKeys() || s.getKeyStates().containsKey((kv.getKey())))) {
+                        if ((s.isAllKeys() || s.getKeyStates().containsKey((kv.getKey())))) {
                             if (subscriptionUpdate == null) {
                                 subscriptionUpdate = new ArrayList<>();
                             }
@@ -375,11 +375,6 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         }
     }
 
-    private boolean isInTimeRange(TbTimeseriesSubscription subscription, long kvTime) {
-        return (subscription.getStartTime() == 0 || subscription.getStartTime() <= kvTime)
-                && (subscription.getEndTime() == 0 || subscription.getEndTime() >= kvTime);
-    }
-
     private void removeSubscriptionFromEntityMap(TbSubscription sub) {
         Set<TbSubscription> entitySubSet = subscriptionsByEntityId.get(sub.getEntityId());
         if (entitySubSet != null) {
@@ -429,16 +424,9 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                 serviceId, subscription.getSessionId(), subscription.getSubscriptionId(), subscription.getEntityId());
 
         long curTs = System.currentTimeMillis();
-        List<ReadTsKvQuery> queries = new ArrayList<>();
-        subscription.getKeyStates().forEach((key, value) -> {
-            if (curTs > value) {
-                long startTs = subscription.getStartTime() > 0 ? Math.max(subscription.getStartTime(), value + 1L) : (value + 1L);
-                long endTs = subscription.getEndTime() > 0 ? Math.min(subscription.getEndTime(), curTs) : curTs;
-                queries.add(new BaseReadTsKvQuery(key, startTs, endTs, 0, 1000, Aggregation.NONE));
-            }
-        });
-        if (!queries.isEmpty()) {
-            DonAsynchron.withCallback(tsService.findAll(subscription.getTenantId(), subscription.getEntityId(), queries),
+
+        if (subscription.isLatestValues()) {
+            DonAsynchron.withCallback(tsService.findLatest(subscription.getTenantId(), subscription.getEntityId(), subscription.getKeyStates().keySet()),
                     missedUpdates -> {
                         if (missedUpdates != null && !missedUpdates.isEmpty()) {
                             TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_CORE, subscription.getServiceId());
@@ -447,6 +435,26 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                     },
                     e -> log.error("Failed to fetch missed updates.", e),
                     tsCallBackExecutor);
+        } else {
+            List<ReadTsKvQuery> queries = new ArrayList<>();
+            subscription.getKeyStates().forEach((key, value) -> {
+                if (curTs > value) {
+                    long startTs = subscription.getStartTime() > 0 ? Math.max(subscription.getStartTime(), value + 1L) : (value + 1L);
+                    long endTs = subscription.getEndTime() > 0 ? Math.min(subscription.getEndTime(), curTs) : curTs;
+                    queries.add(new BaseReadTsKvQuery(key, startTs, endTs, 0, 1000, Aggregation.NONE));
+                }
+            });
+            if (!queries.isEmpty()) {
+                DonAsynchron.withCallback(tsService.findAll(subscription.getTenantId(), subscription.getEntityId(), queries),
+                        missedUpdates -> {
+                            if (missedUpdates != null && !missedUpdates.isEmpty()) {
+                                TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_CORE, subscription.getServiceId());
+                                toCoreNotificationsProducer.send(tpi, toProto(subscription, missedUpdates), null);
+                            }
+                        },
+                        e -> log.error("Failed to fetch missed updates.", e),
+                        tsCallBackExecutor);
+            }
         }
     }
 
@@ -468,12 +476,19 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         data.forEach((key, value) -> {
             TbSubscriptionUpdateValueListProto.Builder dataBuilder = TbSubscriptionUpdateValueListProto.newBuilder();
             dataBuilder.setKey(key);
-            value.forEach(v -> {
+            boolean hasData = false;
+            for (Object v : value) {
                 Object[] array = (Object[]) v;
                 dataBuilder.addTs((long) array[0]);
-                dataBuilder.addValue((String) array[1]);
-            });
-            builder.addData(dataBuilder.build());
+                String strVal = (String) array[1];
+                if (strVal != null) {
+                    hasData = true;
+                    dataBuilder.addValue(strVal);
+                }
+            }
+            if (hasData) {
+                builder.addData(dataBuilder.build());
+            }
         });
 
         ToCoreNotificationMsg toCoreMsg = ToCoreNotificationMsg.newBuilder().setToLocalSubscriptionServiceMsg(

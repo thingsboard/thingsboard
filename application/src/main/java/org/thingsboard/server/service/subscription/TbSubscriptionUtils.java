@@ -83,6 +83,7 @@ public class TbSubscriptionUtils {
                         TbSubscriptionKetStateProto.newBuilder().setKey(key).setTs(value).build()));
                 tSubProto.setStartTime(tSub.getStartTime());
                 tSubProto.setEndTime(tSub.getEndTime());
+                tSubProto.setLatestValues(tSub.isLatestValues());
                 msgBuilder.setTelemetrySub(tSubProto.build());
                 break;
             case ATTRIBUTES:
@@ -146,6 +147,7 @@ public class TbSubscriptionUtils {
         telemetrySub.getKeyStatesList().forEach(ksProto -> keyStates.put(ksProto.getKey(), ksProto.getTs()));
         builder.startTime(telemetrySub.getStartTime());
         builder.endTime(telemetrySub.getEndTime());
+        builder.latestValues(telemetrySub.getLatestValues());
         builder.keyStates(keyStates);
         return builder.build();
     }

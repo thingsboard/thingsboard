@@ -101,9 +101,15 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
 
     @Override
     public ListenableFuture<Boolean> clearAlarm(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTs) {
+        ListenableFuture<AlarmOperationResult> result = clearAlarmForResult(tenantId, alarmId, details, clearTs);
+        return Futures.transform(result, AlarmOperationResult::isSuccessful, wsCallBackExecutor);
+    }
+
+    @Override
+    public ListenableFuture<AlarmOperationResult> clearAlarmForResult(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTs) {
         ListenableFuture<AlarmOperationResult> result = alarmService.clearAlarm(tenantId, alarmId, details, clearTs);
         Futures.addCallback(result, new AlarmUpdateCallback(), wsCallBackExecutor);
-        return Futures.transform(result, AlarmOperationResult::isSuccessful, wsCallBackExecutor);
+        return result;
     }
 
     @Override

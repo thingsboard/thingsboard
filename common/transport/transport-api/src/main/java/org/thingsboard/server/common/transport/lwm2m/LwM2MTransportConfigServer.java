@@ -18,10 +18,9 @@ package org.thingsboard.server.common.transport.lwm2m;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.model.ObjectLoader;
-import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mPath;
+import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -38,18 +37,11 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true') || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
 public class LwM2MTransportConfigServer {
-
-
-    @Getter
-    private String MODEL_PATH_DEFAULT = "models";
 
     @Getter
     private String KEY_STORE_DEFAULT_RESOURCE_PATH = "credentials";
@@ -84,7 +76,7 @@ public class LwM2MTransportConfigServer {
 
     @Getter
     @Setter
-    private List<ObjectModel> modelsValue;
+    private LwM2mModelProvider modelProvider;
 
     @Getter
     @Value("${transport.lwm2m.timeout:}")
@@ -93,10 +85,6 @@ public class LwM2MTransportConfigServer {
     @Getter
     @Value("${transport.sessions.report_timeout}")
     private long sessionReportTimeout;
-
-    @Getter
-    @Value("${transport.lwm2m.model_path_file:}")
-    private String modelPathFile;
 
     @Getter
     @Value("${transport.lwm2m.recommended_ciphers:}")
@@ -188,27 +176,7 @@ public class LwM2MTransportConfigServer {
 
     @PostConstruct
     public void init() {
-        modelsValue = ObjectLoader.loadDefault();
-        File path = getPathModels();
-        if (path.isDirectory()) {
-            try {
-                modelsValue.addAll(ObjectLoader.loadObjectsFromDir(path));
-                log.info(" [{}] Models directory is a directory", path.getAbsoluteFile());
-            } catch (Exception e) {
-                log.error(" [{}] Could not parse the resource definition file", e.toString());
-            }
-        } else {
-            log.error(" [{}] Read Models", path.getAbsoluteFile());
-        }
         this.getInKeyStore();
-    }
-
-    private File getPathModels() {
-        Path pathModels = (modelPathFile != null && !modelPathFile.isEmpty()) ? Paths.get(modelPathFile) :
-                (new File(Paths.get(getBaseDirPath(), PATH_DATA, MODEL_PATH_DEFAULT).toUri()).isDirectory()) ?
-                        Paths.get(getBaseDirPath(), PATH_DATA, MODEL_PATH_DEFAULT) :
-                        Paths.get(getBaseDirPath(), APP_DIR, TRANSPORT_DIR, LWM2M_DIR, SRC_DIR, MAIN_DIR, RESOURCES_DIR, MODEL_PATH_DEFAULT);
-        return (pathModels != null) ? new File(pathModels.toUri()) : null;
     }
 
     private KeyStore getInKeyStore() {
@@ -253,21 +221,11 @@ public class LwM2MTransportConfigServer {
     }
 
     public ResourceModel getResourceModel(Registration registration, LwM2mPath pathIds) {
-        String pathLink = "/" + pathIds.getObjectId() + "/" + pathIds.getObjectInstanceId();
-        return (Arrays.stream(registration.getObjectLinks()).filter(p-> p.getUrl().equals(pathLink)).findFirst().isPresent() &&
-                this.modelsValue.stream().filter(v -> v.id == pathIds.getObjectId()).collect(Collectors.toList()).size() > 0) &&
-                this.modelsValue.stream().filter(v -> v.id == pathIds.getObjectId()).collect(Collectors.toList()).get(0).resources.containsKey(pathIds.getResourceId()) ?
-                this.modelsValue.stream().filter(v -> v.id == pathIds.getObjectId()).collect(Collectors.toList()).get(0).resources.get(pathIds.getResourceId()) :
-                null;
+        return this.modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
     }
-    
+
     public ResourceModel.Type getResourceModelType(Registration registration, LwM2mPath pathIds) {
         ResourceModel resource = this.getResourceModel(registration, pathIds);
         return (resource == null) ? null : resource.type;
-    }
-
-    public ResourceModel.Operations getOperation(Registration registration, LwM2mPath pathIds) {
-        ResourceModel resource = this.getResourceModel(registration, pathIds);
-        return (resource == null) ? ResourceModel.Operations.NONE : resource.operations;
     }
 }

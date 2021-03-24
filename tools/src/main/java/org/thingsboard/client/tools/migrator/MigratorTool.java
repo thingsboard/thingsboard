@@ -30,17 +30,26 @@ public class MigratorTool {
     public static void main(String[] args) {
         CommandLine cmd = parseArgs(args);
 
-
         try {
-            File latestSource = new File(cmd.getOptionValue("latestTelemetryFrom"));
-            File latestSaveDir = new File(cmd.getOptionValue("latestTelemetryOut"));
-            File tsSource = new File(cmd.getOptionValue("telemetryFrom"));
-            File tsSaveDir = new File(cmd.getOptionValue("telemetryOut"));
-            File partitionsSaveDir = new File(cmd.getOptionValue("partitionsOut"));
             boolean castEnable = Boolean.parseBoolean(cmd.getOptionValue("castEnable"));
+            File allTelemetrySource = new File(cmd.getOptionValue("telemetryFrom"));
+            File tsSaveDir = null;
+            File partitionsSaveDir = null;
+            File latestSaveDir = null;
 
-            PgCaLatestMigrator.migrateLatest(latestSource, latestSaveDir, castEnable);
-            PostgresToCassandraTelemetryMigrator.migrateTs(tsSource, tsSaveDir, partitionsSaveDir, castEnable);
+            RelatedEntitiesParser allEntityIdsAndTypes =
+                    new RelatedEntitiesParser(new File(cmd.getOptionValue("relatedEntities")));
+            DictionaryParser dictionaryParser = new DictionaryParser(allTelemetrySource);
+
+            if(cmd.getOptionValue("latestTelemetryOut") != null) {
+                latestSaveDir = new File(cmd.getOptionValue("latestTelemetryOut"));
+            }
+            if(cmd.getOptionValue("telemetryOut") != null) {
+                tsSaveDir = new File(cmd.getOptionValue("telemetryOut"));
+                partitionsSaveDir = new File(cmd.getOptionValue("partitionsOut"));
+            }
+
+            new PgCaMigrator(allTelemetrySource, tsSaveDir, partitionsSaveDir, latestSaveDir, allEntityIdsAndTypes, dictionaryParser, castEnable).migrate();
 
         } catch (Throwable th) {
             th.printStackTrace();
@@ -52,29 +61,29 @@ public class MigratorTool {
     private static CommandLine parseArgs(String[] args) {
         Options options = new Options();
 
-        Option latestTsOpt = new Option("latestFrom", "latestTelemetryFrom", true, "latest telemetry source file path");
-        latestTsOpt.setRequired(true);
-        options.addOption(latestTsOpt);
+        Option telemetryAllFrom = new Option("telemetryFrom", "telemetryFrom", true, "telemetry source file");
+        telemetryAllFrom.setRequired(true);
+        options.addOption(telemetryAllFrom);
 
         Option latestTsOutOpt = new Option("latestOut", "latestTelemetryOut", true, "latest telemetry save dir");
-        latestTsOutOpt.setRequired(true);
+        latestTsOutOpt.setRequired(false);
         options.addOption(latestTsOutOpt);
 
-        Option tsOpt = new Option("tsFrom", "telemetryFrom", true, "telemetry source file path");
-        tsOpt.setRequired(true);
-        options.addOption(tsOpt);
-
         Option tsOutOpt = new Option("tsOut", "telemetryOut", true, "sstable save dir");
-        tsOutOpt.setRequired(true);
+        tsOutOpt.setRequired(false);
         options.addOption(tsOutOpt);
 
         Option partitionOutOpt = new Option("partitionsOut", "partitionsOut", true, "partitions save dir");
-        partitionOutOpt.setRequired(true);
+        partitionOutOpt.setRequired(false);
         options.addOption(partitionOutOpt);
 
         Option castOpt = new Option("castEnable", "castEnable", true, "cast String to Double if possible");
         castOpt.setRequired(true);
         options.addOption(castOpt);
+
+        Option relatedOpt = new Option("relatedEntities", "relatedEntities", true, "related entities source file path");
+        relatedOpt.setRequired(true);
+        options.addOption(relatedOpt);
 
         HelpFormatter formatter = new HelpFormatter();
         CommandLineParser parser = new BasicParser();

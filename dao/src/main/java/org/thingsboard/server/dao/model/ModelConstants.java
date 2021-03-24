@@ -304,6 +304,7 @@ public class ModelConstants {
     public static final String WIDGETS_BUNDLE_ALIAS_PROPERTY = ALIAS_PROPERTY;
     public static final String WIDGETS_BUNDLE_TITLE_PROPERTY = TITLE_PROPERTY;
     public static final String WIDGETS_BUNDLE_IMAGE_PROPERTY = "image";
+    public static final String WIDGETS_BUNDLE_DESCRIPTION = "description";
 
     public static final String WIDGETS_BUNDLE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "widgets_bundle_by_tenant_and_search_text";
     public static final String WIDGETS_BUNDLE_BY_TENANT_AND_ALIAS_COLUMN_FAMILY_NAME = "widgets_bundle_by_tenant_and_alias";
@@ -316,6 +317,8 @@ public class ModelConstants {
     public static final String WIDGET_TYPE_BUNDLE_ALIAS_PROPERTY = "bundle_alias";
     public static final String WIDGET_TYPE_ALIAS_PROPERTY = ALIAS_PROPERTY;
     public static final String WIDGET_TYPE_NAME_PROPERTY = "name";
+    public static final String WIDGET_TYPE_IMAGE_PROPERTY = "image";
+    public static final String WIDGET_TYPE_DESCRIPTION_PROPERTY = "description";
     public static final String WIDGET_TYPE_DESCRIPTOR_PROPERTY = "descriptor";
 
     public static final String WIDGET_TYPE_BY_TENANT_AND_ALIASES_COLUMN_FAMILY_NAME = "widget_type_by_tenant_and_aliases";
@@ -459,8 +462,10 @@ public class ModelConstants {
     public static final String RESOURCE_TABLE_NAME = "resource";
     public static final String RESOURCE_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
     public static final String RESOURCE_TYPE_COLUMN = "resource_type";
-    public static final String RESOURCE_ID_COLUMN = "resource_id";
-    public static final String RESOURCE_VALUE_COLUMN = "resource_value";
+    public static final String RESOURCE_KEY_COLUMN = "resource_key";
+    public static final String RESOURCE_TITLE_COLUMN = TITLE_PROPERTY;
+    public static final String RESOURCE_FILE_NAME_COLUMN = "file_name";
+    public static final String RESOURCE_DATA_COLUMN = "data";
 
     /**
      * Cassandra attributes and timeseries constants.

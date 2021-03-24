@@ -290,7 +290,9 @@ CREATE TABLE IF NOT EXISTS widget_type (
     bundle_alias varchar(255),
     descriptor varchar(1000000),
     name varchar(255),
-    tenant_id uuid
+    tenant_id uuid,
+    image varchar(1000000),
+    description varchar(255)
 );
 
 CREATE TABLE IF NOT EXISTS widgets_bundle (
@@ -299,7 +301,9 @@ CREATE TABLE IF NOT EXISTS widgets_bundle (
     alias varchar(255),
     search_text varchar(255),
     tenant_id uuid,
-    title varchar(255)
+    title varchar(255),
+    image varchar(1000000),
+    description varchar(255)
 );
 
 CREATE TABLE IF NOT EXISTS entity_view (
@@ -422,9 +426,14 @@ CREATE TABLE IF NOT EXISTS api_usage_state (
 );
 
 CREATE TABLE IF NOT EXISTS resource (
+    id uuid NOT NULL CONSTRAINT resource_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
     tenant_id uuid NOT NULL,
+    title varchar(255) NOT NULL,
     resource_type varchar(32) NOT NULL,
-    resource_id varchar(255) NOT NULL,
-    resource_value varchar,
-    CONSTRAINT resource_unq_key UNIQUE (tenant_id, resource_type, resource_id)
+    resource_key varchar(255) NOT NULL,
+    search_text varchar(255),
+    file_name varchar(255) NOT NULL,
+    data varchar,
+    CONSTRAINT resource_unq_key UNIQUE (tenant_id, resource_type, resource_key)
 );

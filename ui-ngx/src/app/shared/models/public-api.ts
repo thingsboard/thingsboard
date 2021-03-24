@@ -39,6 +39,7 @@ export * from './material.models';
 export * from './oauth2.models';
 export * from './queue.models';
 export * from './relation.models';
+export * from './resource.models';
 export * from './rule-chain.models';
 export * from './rule-node.models';
 export * from './settings.models';

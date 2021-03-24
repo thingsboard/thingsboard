@@ -202,23 +202,15 @@ message LwM2MResponseMsg {
   LwM2MRegistrationResponseMsg registrationMsg = 1;
 }
 
-message ResourceMsg {
+message GetResourceRequestMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
   string resourceType = 3;
-  string resourceId = 4;
-  string value = 5;
+  string resourceKey = 4;
 }
 
-message GetResourcesRequestMsg {
-  int64 tenantIdMSB = 1;
-  int64 tenantIdLSB = 2;
-  string resourceType = 3;
-  string resourceId = 4;
-}
-
-message GetResourcesResponseMsg {
-  repeated ResourceMsg resources = 1;
+message GetResourceResponseMsg {
+  bytes resource = 1;
 }
 
 message ValidateDeviceLwM2MCredentialsRequestMsg {
@@ -294,14 +286,14 @@ message ResourceUpdateMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
   string resourceType = 3;
-  string resourceId = 4;
+  string resourceKey = 4;
 }
 
 message ResourceDeleteMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
   string resourceType = 3;
-  string resourceId = 4;
+  string resourceKey = 4;
 }
 
 message SessionCloseNotificationProto {
@@ -441,6 +433,7 @@ message TbTimeSeriesSubscriptionProto {
   repeated TbSubscriptionKetStateProto keyStates = 3;
   int64 startTime = 4;
   int64 endTime = 5;
+  bool latestValues = 6;
 }
 
 message TbAttributeSubscriptionProto {
@@ -587,7 +580,7 @@ message TransportApiRequestMsg {
   ValidateBasicMqttCredRequestMsg validateBasicMqttCredRequestMsg = 6;
   ProvisionDeviceRequestMsg provisionDeviceRequestMsg = 7;
   ValidateDeviceLwM2MCredentialsRequestMsg validateDeviceLwM2MCredentialsRequestMsg = 8;
-  GetResourcesRequestMsg resourcesRequestMsg = 9;
+  GetResourceRequestMsg resourceRequestMsg = 9;
   GetSnmpDevicesRequestMsg snmpDevicesRequestMsg = 10;
   GetDeviceRequestMsg deviceRequestMsg = 11;
   GetDeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 12;
@@ -601,7 +594,7 @@ message TransportApiResponseMsg {
   ProvisionDeviceResponseMsg provisionDeviceResponseMsg = 4;
   GetSnmpDevicesResponseMsg snmpDevicesResponseMsg = 5;
   LwM2MResponseMsg lwM2MResponseMsg = 6;
-  GetResourcesResponseMsg resourcesResponseMsg = 7;
+  GetResourceResponseMsg resourceResponseMsg = 7;
   GetDeviceResponseMsg deviceResponseMsg = 8;
   GetDeviceCredentialsResponseMsg deviceCredentialsResponseMsg = 9;
 }

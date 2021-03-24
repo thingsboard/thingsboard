@@ -29,8 +29,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceResponseMsg
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.GetResourcesRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.GetResourcesResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetResourceRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetResourceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetSnmpDevicesRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetSnmpDevicesResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.LwM2MRequestMsg;
@@ -59,7 +59,7 @@ public interface TransportService {
 
     GetEntityProfileResponseMsg getEntityProfile(GetEntityProfileRequestMsg msg);
 
-    GetResourcesResponseMsg getResources(GetResourcesRequestMsg msg);
+    GetResourceResponseMsg getResource(GetResourceRequestMsg msg);
 
     GetSnmpDevicesResponseMsg getSnmpDevicesIds(GetSnmpDevicesRequestMsg requestMsg);
 

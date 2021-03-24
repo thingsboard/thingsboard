@@ -20,6 +20,7 @@ import lombok.Data;
 @Data
 public class LwM2mObject {
     int id;
+    String keyId;
     String name;
     boolean multiple;
     boolean mandatory;

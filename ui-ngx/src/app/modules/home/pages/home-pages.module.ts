@@ -34,6 +34,7 @@ import { MODULES_MAP } from '@shared/public-api';
 import { modulesMap } from '../../common/modules-map';
 import { DeviceProfileModule } from './device-profile/device-profile.module';
 import { ApiUsageModule } from '@home/pages/api-usage/api-usage.module';
+import { ResourceModule } from '@home/pages/resource/resource.module';
 
 @NgModule({
   exports: [
@@ -52,6 +53,7 @@ import { ApiUsageModule } from '@home/pages/api-usage/api-usage.module';
     DashboardModule,
     AuditLogModule,
     ApiUsageModule,
+    ResourceModule,
     UserModule
   ],
   providers: [
