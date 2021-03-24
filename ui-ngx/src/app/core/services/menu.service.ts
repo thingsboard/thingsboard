@@ -105,6 +105,13 @@ export class MenuService {
       },
       {
         id: guid(),
+        name: 'resource.resources-library',
+        type: 'link',
+        path: '/resources-library',
+        icon: 'folder'
+      },
+      {
+        id: guid(),
         name: 'admin.system-settings',
         type: 'toggle',
         path: '/settings',
@@ -178,6 +185,16 @@ export class MenuService {
             name: 'widget.widget-library',
             icon: 'now_widgets',
             path: '/widgets-bundles'
+          }
+        ]
+      },
+      {
+        name: 'resource.management',
+        places: [
+          {
+            name: 'resource.resources-library',
+            icon: 'folder',
+            path: '/resources-library'
           }
         ]
       },
@@ -285,6 +302,13 @@ export class MenuService {
       },
       {
         id: guid(),
+        name: 'resource.resources-library',
+        type: 'link',
+        path: '/resources-library',
+        icon: 'folder'
+      },
+      {
+        id: guid(),
         name: 'admin.home-settings',
         type: 'link',
         path: '/settings/home',
@@ -365,6 +389,16 @@ export class MenuService {
             name: 'entity-view.entity-views',
             icon: 'view_quilt',
             path: '/entityViews'
+          }
+        ]
+      },
+      {
+        name: 'resource.management',
+        places: [
+          {
+            name: 'resource.resources-library',
+            icon: 'folder',
+            path: '/resources-library'
           }
         ]
       },
