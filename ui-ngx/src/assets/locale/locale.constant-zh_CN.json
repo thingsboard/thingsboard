@@ -2323,7 +2323,7 @@
     "html": "HTML",
     "javascript": "Javascript",
     "js": "JS",
-    "latest-values": "最新值",
+    "latest": "最新值",
     "management": "管理部件",
     "missing-widget-title-error": "部件标题必须指定！",
     "no-data": "小部件上没有要显示的数据",

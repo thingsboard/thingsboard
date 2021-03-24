@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -108,7 +109,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     private PreparedStatement deletePartitionStmt;
 
     private boolean isInstall() {
-        return environment.acceptsProfiles("install");
+        return environment.acceptsProfiles(Profiles.of("install"));
     }
 
     @PostConstruct
@@ -116,16 +117,16 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         super.startExecutor();
         if (!isInstall()) {
             getFetchStmt(Aggregation.NONE, DESC_ORDER);
-            Optional<NoSqlTsPartitionDate> partition = NoSqlTsPartitionDate.parse(partitioning);
-            if (partition.isPresent()) {
-                tsFormat = partition.get();
-                if (!isFixedPartitioning() && partitionsCacheSize > 0) {
-                    cassandraTsPartitionsCache = new CassandraTsPartitionsCache(partitionsCacheSize);
-                }
-            } else {
-                log.warn("Incorrect configuration of partitioning {}", partitioning);
-                throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
+        }
+        Optional<NoSqlTsPartitionDate> partition = NoSqlTsPartitionDate.parse(partitioning);
+        if (partition.isPresent()) {
+            tsFormat = partition.get();
+            if (!isFixedPartitioning() && partitionsCacheSize > 0) {
+                cassandraTsPartitionsCache = new CassandraTsPartitionsCache(partitionsCacheSize);
             }
+        } else {
+            log.warn("Incorrect configuration of partitioning {}", partitioning);
+            throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
         }
     }
 
@@ -549,8 +550,8 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
                     + "AND " + ModelConstants.ENTITY_ID_COLUMN + EQUALS_PARAM
                     + "AND " + ModelConstants.KEY_COLUMN + EQUALS_PARAM
                     + "AND " + ModelConstants.PARTITION_COLUMN + EQUALS_PARAM
-                    + "AND " + ModelConstants.TS_COLUMN + " > ? "
-                    + "AND " + ModelConstants.TS_COLUMN + " <= ?");
+                    + "AND " + ModelConstants.TS_COLUMN + " >= ? "
+                    + "AND " + ModelConstants.TS_COLUMN + " < ?");
         }
         return deleteStmt;
     }
@@ -739,8 +740,8 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
                         + "AND " + ModelConstants.ENTITY_ID_COLUMN + EQUALS_PARAM
                         + "AND " + ModelConstants.KEY_COLUMN + EQUALS_PARAM
                         + "AND " + ModelConstants.PARTITION_COLUMN + EQUALS_PARAM
-                        + "AND " + ModelConstants.TS_COLUMN + " > ? "
-                        + "AND " + ModelConstants.TS_COLUMN + " <= ?"
+                        + "AND " + ModelConstants.TS_COLUMN + " >= ? "
+                        + "AND " + ModelConstants.TS_COLUMN + " < ?"
                         + (type == Aggregation.NONE ? " ORDER BY " + ModelConstants.TS_COLUMN + " " + orderBy + " LIMIT ?" : ""));
             }
         }

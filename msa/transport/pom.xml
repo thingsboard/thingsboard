@@ -39,17 +39,4 @@
         <module>http</module>
         <module>coap</module>
     </modules>
-
-    <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>com.spotify</groupId>
-                    <artifactId>dockerfile-maven-plugin</artifactId>
-                    <version>1.4.5</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-    </build>
-
 </project>

@@ -74,6 +74,7 @@ export class TbFlot {
   private readonly utils: UtilsService;
 
   private settings: TbFlotSettings;
+  private comparisonEnabled: boolean;
 
   private readonly tooltip: JQuery<any>;
 
@@ -175,7 +176,7 @@ export class TbFlot {
         autoHighlight: this.tooltipIndividual === true,
         markings: []
       },
-      selection : { mode : ctx.isMobile ? null : 'x' },
+      selection : { mode : 'x' },
       legend : {
         show: false
       }
@@ -263,29 +264,7 @@ export class TbFlot {
         };
       }
 
-      if (this.settings.comparisonEnabled) {
-        const xaxis = deepClone(this.xaxis);
-        xaxis.position = 'top';
-        if (this.settings.xaxisSecond) {
-          if (this.settings.xaxisSecond.showLabels === false) {
-            xaxis.tickFormatter = () => {
-              return '';
-            };
-          }
-          xaxis.label = this.utils.customTranslation(this.settings.xaxisSecond.title, this.settings.xaxisSecond.title) || null;
-          xaxis.position = this.settings.xaxisSecond.axisPosition;
-        }
-        xaxis.tickLength = 0;
-        this.options.xaxes.push(xaxis);
-
-        this.options.series = {
-          stack: false
-        };
-      } else {
-        this.options.series = {
-          stack: this.settings.stack === true
-        };
-      }
+      this.options.series = {};
 
       this.options.crosshair = {
         mode: 'x'
@@ -364,7 +343,6 @@ export class TbFlot {
 
       // Experimental
       this.animatedPie = this.settings.animatedPie === true;
-
     }
 
     if (this.ctx.defaultSubscription) {
@@ -372,10 +350,29 @@ export class TbFlot {
     }
   }
 
-
   private init($element: JQuery<any>, subscription: IWidgetSubscription) {
-    this.subscription = subscription;
     this.$element = $element;
+    this.subscription = subscription;
+    this.comparisonEnabled = this.subscription ? this.subscription.comparisonEnabled : this.settings.comparisonEnabled;
+    if (this.comparisonEnabled) {
+      const xaxis = deepClone(this.xaxis);
+      xaxis.position = 'top';
+      if (this.settings.xaxisSecond) {
+        if (this.settings.xaxisSecond.showLabels === false) {
+          xaxis.tickFormatter = () => {
+            return '';
+          };
+        }
+        xaxis.label = this.utils.customTranslation(this.settings.xaxisSecond.title, this.settings.xaxisSecond.title) || null;
+        xaxis.position = this.settings.xaxisSecond.axisPosition;
+      }
+      xaxis.tickLength = 0;
+      this.options.xaxes.push(xaxis);
+
+      this.options.series.stack = false;
+    } else {
+      this.options.series.stack = this.settings.stack === true;
+    }
     const colors: string[] = [];
     this.yaxes = [];
     const yaxesMap: {[units: string]: TbFlotAxisOptions} = {};
@@ -387,7 +384,7 @@ export class TbFlot {
       this.settings.dataKeysListForLabels.forEach((item) => {
         item.settings = {};
       });
-      subscription.datasources.forEach((item) => {
+      this.subscription.datasources.forEach((item) => {
         const datasource: Datasource = {
           type: item.type,
           entityType: item.entityType,
@@ -425,7 +422,7 @@ export class TbFlot {
         fill: keySettings.fillLines === true
       };
 
-      if (this.settings.stack && !this.settings.comparisonEnabled) {
+      if (this.settings.stack && !this.comparisonEnabled) {
         series.stack = !keySettings.excludeFromStacking;
       } else {
         series.stack = false;
@@ -557,7 +554,7 @@ export class TbFlot {
       }
       this.options.xaxes[0].min = this.subscription.timeWindow.minTime;
       this.options.xaxes[0].max = this.subscription.timeWindow.maxTime;
-      if (this.settings.comparisonEnabled) {
+      if (this.comparisonEnabled) {
         this.options.xaxes[1].min = this.subscription.comparisonTimeWindow.minTime;
         this.options.xaxes[1].max = this.subscription.comparisonTimeWindow.maxTime;
       }
@@ -636,7 +633,7 @@ export class TbFlot {
 
           this.options.xaxes[0].min = this.subscription.timeWindow.minTime;
           this.options.xaxes[0].max = this.subscription.timeWindow.maxTime;
-          if (this.settings.comparisonEnabled) {
+          if (this.comparisonEnabled) {
             this.options.xaxes[1].min = this.subscription.comparisonTimeWindow.minTime;
             this.options.xaxes[1].max = this.subscription.comparisonTimeWindow.maxTime;
           }
@@ -654,7 +651,7 @@ export class TbFlot {
           } else {
             this.plot.getOptions().xaxes[0].min = this.subscription.timeWindow.minTime;
             this.plot.getOptions().xaxes[0].max = this.subscription.timeWindow.maxTime;
-            if (this.settings.comparisonEnabled) {
+            if (this.comparisonEnabled) {
               this.plot.getOptions().xaxes[1].min = this.subscription.comparisonTimeWindow.minTime;
               this.plot.getOptions().xaxes[1].max = this.subscription.comparisonTimeWindow.maxTime;
             }
@@ -702,7 +699,7 @@ export class TbFlot {
   }
 
   public checkMouseEvents() {
-    const enabled = !this.ctx.isMobile &&  !this.ctx.isEdit;
+    const enabled = !this.ctx.isEdit;
     if (isUndefined(this.mouseEventsEnabled) || this.mouseEventsEnabled !== enabled) {
       this.mouseEventsEnabled = enabled;
       if (this.$element) {
@@ -1289,13 +1286,21 @@ export class TbFlot {
     let value: any;
     let lastValue = 0;
     let minDistanceHistorical: number;
+    let deltaX = 0;
     const results: TbFlotHoverInfo[] = [{
       seriesHover: []
     }];
-    if (this.settings.comparisonEnabled) {
+    if (this.comparisonEnabled) {
       results.push({
         seriesHover: []
       });
+    }
+    if (this.chartType === 'bar' && this.options.series.bars.align !== 'left') {
+      if (this.options.series.bars.align === 'center') {
+        deltaX = this.options.series.bars.barWidth / 2;
+      } else {
+        deltaX = this.options.series.bars.barWidth;
+      }
     }
     for (i = 0; i < seriesList.length; i++) {
       series = seriesList[i];
@@ -1305,6 +1310,7 @@ export class TbFlot {
       } else {
         posx = pos.x;
       }
+      posx += deltaX;
       hoverIndex = this.findHoverIndexFromData(posx, series);
       if (series.data[hoverIndex] && series.data[hoverIndex][0]) {
         hoverDistance = posx - series.data[hoverIndex][0];

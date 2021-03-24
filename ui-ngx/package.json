@@ -1,6 +1,6 @@
 {
   "name": "thingsboard",
-  "version": "3.2.1",
+  "version": "3.2.2",
   "scripts": {
     "ng": "ng",
     "start": "node --max_old_space_size=8048 ./node_modules/@angular/cli/bin/ng serve --host 0.0.0.0 --open",
@@ -68,6 +68,7 @@
     "ngx-clipboard": "^13.0.1",
     "ngx-color-picker": "^10.1.0",
     "ngx-daterangepicker-material": "^4.0.1",
+    "ngx-drag-drop": "^2.0.0",
     "ngx-flowchart": "git://github.com/thingsboard/ngx-flowchart.git#master",
     "ngx-hm-carousel": "^2.0.0-rc.1",
     "ngx-sharebuttons": "^8.0.1",

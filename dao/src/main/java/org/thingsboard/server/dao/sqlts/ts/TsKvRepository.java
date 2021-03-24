@@ -32,7 +32,7 @@ import java.util.concurrent.CompletableFuture;
 public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvCompositeKey> {
 
     @Query("SELECT tskv FROM TsKvEntity tskv WHERE tskv.entityId = :entityId " +
-            "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
+            "AND tskv.key = :entityKey AND tskv.ts >= :startTs AND tskv.ts < :endTs")
     List<TsKvEntity> findAllWithLimit(@Param("entityId") UUID entityId,
                                       @Param("entityKey") int key,
                                       @Param("startTs") long startTs,
@@ -42,7 +42,7 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
     @Transactional
     @Modifying
     @Query("DELETE FROM TsKvEntity tskv WHERE tskv.entityId = :entityId " +
-            "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
+            "AND tskv.key = :entityKey AND tskv.ts >= :startTs AND tskv.ts < :endTs")
     void delete(@Param("entityId") UUID entityId,
                 @Param("entityKey") int key,
                 @Param("startTs") long startTs,
@@ -51,7 +51,7 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
     @Async
     @Query("SELECT new TsKvEntity(MAX(tskv.strValue)) FROM TsKvEntity tskv " +
             "WHERE tskv.strValue IS NOT NULL " +
-            "AND tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
+            "AND tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts >= :startTs AND tskv.ts < :endTs")
     CompletableFuture<TsKvEntity> findStringMax(@Param("entityId") UUID entityId,
                                                 @Param("entityKey") int entityKey,
                                                 @Param("startTs") long startTs,
@@ -63,7 +63,7 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
             "SUM(CASE WHEN tskv.longValue IS NULL THEN 0 ELSE 1 END), " +
             "SUM(CASE WHEN tskv.doubleValue IS NULL THEN 0 ELSE 1 END), " +
             "'MAX') FROM TsKvEntity tskv " +
-            "WHERE tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
+            "WHERE tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts >= :startTs AND tskv.ts < :endTs")
     CompletableFuture<TsKvEntity> findNumericMax(@Param("entityId") UUID entityId,
                                           @Param("entityKey") int entityKey,
                                           @Param("startTs") long startTs,
@@ -73,7 +73,7 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
     @Async
     @Query("SELECT new TsKvEntity(MIN(tskv.strValue)) FROM TsKvEntity tskv " +
             "WHERE tskv.strValue IS NOT NULL " +
-            "AND tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
+            "AND tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts >= :startTs AND tskv.ts < :endTs")
     CompletableFuture<TsKvEntity> findStringMin(@Param("entityId") UUID entityId,
                                           @Param("entityKey") int entityKey,
                                           @Param("startTs") long startTs,
@@ -85,7 +85,7 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
             "SUM(CASE WHEN tskv.longValue IS NULL THEN 0 ELSE 1 END), " +
             "SUM(CASE WHEN tskv.doubleValue IS NULL THEN 0 ELSE 1 END), " +
             "'MIN') FROM TsKvEntity tskv " +
-            "WHERE tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
+            "WHERE tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts >= :startTs AND tskv.ts < :endTs")
     CompletableFuture<TsKvEntity> findNumericMin(
                                           @Param("entityId") UUID entityId,
                                           @Param("entityKey") int entityKey,
@@ -98,7 +98,7 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
             "SUM(CASE WHEN tskv.longValue IS NULL THEN 0 ELSE 1 END), " +
             "SUM(CASE WHEN tskv.doubleValue IS NULL THEN 0 ELSE 1 END), " +
             "SUM(CASE WHEN tskv.jsonValue IS NULL THEN 0 ELSE 1 END)) FROM TsKvEntity tskv " +
-            "WHERE tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
+            "WHERE tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts >= :startTs AND tskv.ts < :endTs")
     CompletableFuture<TsKvEntity> findCount(@Param("entityId") UUID entityId,
                                             @Param("entityKey") int entityKey,
                                             @Param("startTs") long startTs,
@@ -110,7 +110,7 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
             "SUM(CASE WHEN tskv.longValue IS NULL THEN 0 ELSE 1 END), " +
             "SUM(CASE WHEN tskv.doubleValue IS NULL THEN 0 ELSE 1 END), " +
             "'AVG') FROM TsKvEntity tskv " +
-            "WHERE tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
+            "WHERE tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts >= :startTs AND tskv.ts < :endTs")
     CompletableFuture<TsKvEntity> findAvg(@Param("entityId") UUID entityId,
                                           @Param("entityKey") int entityKey,
                                           @Param("startTs") long startTs,
@@ -122,7 +122,7 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
             "SUM(CASE WHEN tskv.longValue IS NULL THEN 0 ELSE 1 END), " +
             "SUM(CASE WHEN tskv.doubleValue IS NULL THEN 0 ELSE 1 END), " +
             "'SUM') FROM TsKvEntity tskv " +
-            "WHERE tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts <= :endTs")
+            "WHERE tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts >= :startTs AND tskv.ts < :endTs")
     CompletableFuture<TsKvEntity> findSum(@Param("entityId") UUID entityId,
                                           @Param("entityKey") int entityKey,
                                           @Param("startTs") long startTs,

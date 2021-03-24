@@ -114,6 +114,9 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   isRemoveActionEnabled: boolean;
 
   @Input()
+  disableWidgetInteraction = false;
+
+  @Input()
   dashboardStyle: {[klass: string]: any};
 
   @Input()

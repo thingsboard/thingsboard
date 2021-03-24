@@ -19,9 +19,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  Injector,
   Input,
   NgZone,
   OnInit,
+  StaticProvider,
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
@@ -62,7 +64,7 @@ import {
   EditAttributeValuePanelComponent,
   EditAttributeValuePanelData
 } from './edit-attribute-value-panel.component';
-import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';
+import { ComponentPortal } from '@angular/cdk/portal';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { DataKey, Datasource, DatasourceType, Widget, widgetType } from '@shared/models/widget.models';
@@ -319,13 +321,19 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     overlayRef.backdropClick().subscribe(() => {
       overlayRef.dispose();
     });
-    const injectionTokens = new WeakMap<any, any>([
-      [EDIT_ATTRIBUTE_VALUE_PANEL_DATA, {
-        attributeValue: attribute.value
-      } as EditAttributeValuePanelData],
-      [OverlayRef, overlayRef]
-    ]);
-    const injector = new PortalInjector(this.viewContainerRef.injector, injectionTokens);
+    const providers: StaticProvider[] = [
+      {
+        provide: EDIT_ATTRIBUTE_VALUE_PANEL_DATA,
+        useValue: {
+          attributeValue: attribute.value
+        } as EditAttributeValuePanelData
+      },
+      {
+        provide: OverlayRef,
+        useValue: overlayRef
+      }
+    ];
+    const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
     const componentRef = overlayRef.attach(new ComponentPortal(EditAttributeValuePanelComponent,
       this.viewContainerRef, injector));
     componentRef.onDestroy(() => {
@@ -395,6 +403,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
 
     this.aliasController = new AliasController(this.utils,
       this.entityService,
+      this.translate,
       () => stateController, entitiAliases, filters);
 
     const dataKeyType: DataKeyType = this.attributeScope === LatestTelemetry.LATEST_TELEMETRY ?

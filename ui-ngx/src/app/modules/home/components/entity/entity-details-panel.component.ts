@@ -25,7 +25,6 @@ import {
   Injector,
   Input,
   OnDestroy,
-  OnInit,
   Output,
   QueryList,
   ViewChild,
@@ -44,7 +43,7 @@ import { EntityAction } from '@home/models/entity/entity-component.models';
 import { Subscription } from 'rxjs';
 import { MatTab, MatTabGroup } from '@angular/material/tabs';
 import { EntityTabsComponent } from '@home/components/entity/entity-tabs.component';
-import { deepClone } from '@core/utils';
+import { deepClone, mergeDeep } from '@core/utils';
 
 @Component({
   selector: 'tb-entity-details-panel',
@@ -52,7 +51,7 @@ import { deepClone } from '@core/utils';
   styleUrls: ['./entity-details-panel.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class EntityDetailsPanelComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
+export class EntityDetailsPanelComponent extends PageComponent implements AfterViewInit, OnDestroy {
 
   @Output()
   closeEntityDetails = new EventEmitter<void>();
@@ -138,10 +137,6 @@ export class EntityDetailsPanelComponent extends PageComponent implements OnInit
 
   get isEdit() {
     return this.isEditValue;
-  }
-
-  ngOnInit(): void {
-    this.init();
   }
 
   private init() {
@@ -281,6 +276,10 @@ export class EntityDetailsPanelComponent extends PageComponent implements OnInit
   saveEntity() {
     if (this.detailsForm.valid) {
       const editingEntity = {...this.editingEntity, ...this.entityComponent.entityFormValue()};
+      if (this.editingEntity.hasOwnProperty('additionalInfo')) {
+        editingEntity.additionalInfo =
+          mergeDeep((this.editingEntity as any).additionalInfo, this.entityComponent.entityFormValue()?.additionalInfo);
+      }
       this.entitiesTableConfig.saveEntity(editingEntity).subscribe(
         (entity) => {
           this.entity = entity;

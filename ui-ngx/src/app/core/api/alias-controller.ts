@@ -16,7 +16,7 @@
 
 import { AliasInfo, IAliasController, StateControllerHolder, StateEntityInfo } from '@core/api/widget-api.models';
 import { forkJoin, Observable, of, ReplaySubject, Subject } from 'rxjs';
-import { Datasource, DatasourceType } from '@app/shared/models/widget.models';
+import { Datasource, DatasourceType, datasourceTypeTranslationMap } from '@app/shared/models/widget.models';
 import { deepClone, isEqual } from '@core/utils';
 import { EntityService } from '@core/http/entity.service';
 import { UtilsService } from '@core/services/utils.service';
@@ -27,6 +27,7 @@ import {
   defaultEntityDataPageLink, Filter, FilterInfo, filterInfoToKeyFilters, Filters, KeyFilter, singleEntityDataPageLink,
   updateDatasourceFromEntityInfo
 } from '@shared/models/query/query.models';
+import { TranslateService } from '@ngx-translate/core';
 
 export class AliasController implements IAliasController {
 
@@ -50,11 +51,12 @@ export class AliasController implements IAliasController {
 
   constructor(private utils: UtilsService,
               private entityService: EntityService,
+              private translate: TranslateService,
               private stateControllerHolder: StateControllerHolder,
               private origEntityAliases: EntityAliases,
               private origFilters: Filters) {
-    this.entityAliases = deepClone(this.origEntityAliases);
-    this.filters = deepClone(this.origFilters);
+    this.entityAliases = deepClone(this.origEntityAliases) || {};
+    this.filters = deepClone(this.origFilters) || {};
     this.userFilters = {};
   }
 
@@ -241,7 +243,7 @@ export class AliasController implements IAliasController {
 
   private resolveDatasource(datasource: Datasource, forceFilter = false): Observable<Datasource> {
     const newDatasource = deepClone(datasource);
-    if (newDatasource.type === DatasourceType.entity) {
+    if (newDatasource.type === DatasourceType.entity || newDatasource.type === DatasourceType.entityCount) {
       if (newDatasource.filterId) {
         newDatasource.keyFilters = this.getKeyFilters(newDatasource.filterId);
       }
@@ -329,16 +331,23 @@ export class AliasController implements IAliasController {
     return forkJoin(observables).pipe(
       map((result) => {
         let functionIndex = 0;
+        let entityCountIndex = 0;
         result.forEach((datasource) => {
-          if (datasource.type === DatasourceType.function) {
+          if (datasource.type === DatasourceType.function || datasource.type === DatasourceType.entityCount) {
             let name: string;
             if (datasource.name && datasource.name.length) {
               name = datasource.name;
             } else {
-              functionIndex++;
-              name = DatasourceType.function;
-              if (functionIndex > 1) {
+              if (datasource.type === DatasourceType.function) {
+                functionIndex++;
+              } else {
+                entityCountIndex++;
+              }
+              name = this.translate.instant(datasourceTypeTranslationMap.get(datasource.type));
+              if (datasource.type === DatasourceType.function && functionIndex > 1) {
                 name += ' ' + functionIndex;
+              } else if (datasource.type === DatasourceType.entityCount && entityCountIndex > 1) {
+                name += ' ' + entityCountIndex;
               }
             }
             datasource.name = name;

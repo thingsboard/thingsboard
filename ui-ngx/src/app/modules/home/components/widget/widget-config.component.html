@@ -100,87 +100,115 @@
         </div>
         <ng-template #datasourcesTemplate>
           <div fxFlex fxLayout="row" fxLayoutAlign="start center">
-            <span fxFlex="5"></span>
+            <span style="width: 60px;"></span>
             <div fxFlex fxLayout="row" fxLayoutAlign="start center"
                  style="padding: 0 0 0 10px; margin: 5px;">
-              <span translate style="min-width: 110px;">widget-config.datasource-type</span>
+              <span translate style="min-width: 120px;">widget-config.datasource-type</span>
               <span fxHide fxShow.gt-sm translate fxFlex
                     style="padding-left: 10px;">widget-config.datasource-parameters</span>
               <span style="min-width: 40px;"></span>
             </div>
           </div>
           <div style="overflow: auto; padding-bottom: 15px;">
-            <div fxFlex fxLayout="row" fxLayoutAlign="start center"
-                 formArrayName="datasources"
-                 *ngFor="let datasourceControl of datasourcesFormArray().controls; let $index = index;">
-              <span fxFlex="5">{{$index + 1}}.</span>
-              <div [formGroupName]="$index" class="mat-elevation-z4" fxFlex
-                   fxLayout="row"
-                   fxLayoutAlign="start center"
-                   style="padding: 0 0 0 10px; margin: 5px;">
-                <section fxFlex
-                         fxLayout="column"
-                         fxLayoutAlign="center"
-                         fxLayout.gt-sm="row"
-                         fxLayoutAlign.gt-sm="start center">
-                  <mat-form-field class="tb-datasource-type">
-                    <mat-select formControlName="type">
-                      <mat-option *ngFor="let datasourceType of datasourceTypes" [value]="datasourceType">
-                        {{ datasourceTypesTranslations.get(datasourceType) | translate }}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                  <section class="tb-datasource" [ngSwitch]="datasourceControl.get('type').value">
-                    <ng-template [ngSwitchCase]="datasourceType.function">
-                      <mat-form-field floatLabel="always"
-                                      class="tb-datasource-name" style="min-width: 200px;">
-                        <mat-label></mat-label>
-                        <input matInput
-                               placeholder="{{ 'datasource.name' | translate }}"
-                               formControlName="name">
+            <mat-list dndDropzone dndEffectAllowed="move"
+                      (dndDrop)="onDatasourceDrop($event)"
+                      [dndDisableIf]="disabled" formArrayName="datasources">
+              <mat-list-item dndPlaceholderRef
+                             class="dndPlaceholder">
+              </mat-list-item>
+              <mat-list-item *ngFor="let datasourceControl of datasourcesFormArray().controls; let $index = index;"
+                             [dndDraggable]="datasourceControl.value"
+                             (dndMoved)="dndDatasourceMoved($index)"
+                             [dndDisableIf]="disabled"
+                             dndEffectAllowed="move">
+                <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+                  <div style="width: 60px;">
+                    <button *ngIf="!disabled" mat-icon-button color="primary"
+                            class="handle"
+                            style="min-width: 40px; margin: 0"
+                            dndHandle
+                            matTooltip="{{ 'action.drag' | translate }}"
+                            matTooltipPosition="above">
+                      <mat-icon>drag_handle</mat-icon>
+                    </button>
+                    <span>{{$index + 1}}.</span>
+                  </div>
+                  <div class="mat-elevation-z4" fxFlex
+                       fxLayout="row"
+                       fxLayoutAlign="start center"
+                       style="padding: 0 0 0 10px; margin: 5px;">
+                    <section fxFlex
+                             fxLayout="column"
+                             fxLayoutAlign="center"
+                             fxLayout.gt-sm="row"
+                             fxLayoutAlign.gt-sm="start center">
+                      <mat-form-field class="tb-datasource-type">
+                        <mat-select [formControl]="datasourceControl.get('type')">
+                          <mat-option *ngFor="let datasourceType of datasourceTypes" [value]="datasourceType">
+                            {{ datasourceTypesTranslations.get(datasourceType) | translate }}
+                          </mat-option>
+                        </mat-select>
                       </mat-form-field>
-                    </ng-template>
-                    <ng-template [ngSwitchCase]="datasourceType.entity">
-                      <section fxLayout="column">
-                        <tb-entity-alias-select
-                          [showLabel]="true"
-                          [tbRequired]="datasourceControl.get('type').value === datasourceType.entity"
-                          [aliasController]="aliasController"
-                          formControlName="entityAliasId"
-                          [callbacks]="widgetConfigCallbacks">
-                        </tb-entity-alias-select>
-                        <tb-filter-select
-                          [showLabel]="true"
-                          [aliasController]="aliasController"
-                          formControlName="filterId"
-                          [callbacks]="widgetConfigCallbacks">
-                        </tb-filter-select>
+                      <section fxLayout="column" class="tb-datasource" [ngSwitch]="datasourceControl.get('type').value">
+                        <ng-template [ngSwitchCase]="datasourceType.function">
+                          <mat-form-field floatLabel="always"
+                                          class="tb-datasource-name" style="min-width: 200px;">
+                            <mat-label></mat-label>
+                            <input matInput
+                                   placeholder="{{ 'datasource.label' | translate }}"
+                                   [formControl]="datasourceControl.get('name')">
+                          </mat-form-field>
+                        </ng-template>
+                        <ng-template [ngSwitchCase]="datasourceControl.get('type').value === datasourceType.entity ||
+                                                 datasourceControl.get('type').value === datasourceType.entityCount ? datasourceControl.get('type').value : ''">
+                          <tb-entity-alias-select
+                            [showLabel]="true"
+                            [tbRequired]="true"
+                            [aliasController]="aliasController"
+                            [formControl]="datasourceControl.get('entityAliasId')"
+                            [callbacks]="widgetConfigCallbacks">
+                          </tb-entity-alias-select>
+                          <tb-filter-select
+                            [showLabel]="true"
+                            [aliasController]="aliasController"
+                            [formControl]="datasourceControl.get('filterId')"
+                            [callbacks]="widgetConfigCallbacks">
+                          </tb-filter-select>
+                          <mat-form-field *ngIf="datasourceControl.get('type').value === datasourceType.entityCount"
+                                          floatLabel="always"
+                                          class="tb-datasource-name no-border-top" style="min-width: 200px;">
+                            <mat-label></mat-label>
+                            <input matInput
+                                   placeholder="{{ 'datasource.label' | translate }}"
+                                   [formControl]="datasourceControl.get('name')">
+                          </mat-form-field>
+                        </ng-template>
                       </section>
-                    </ng-template>
-                  </section>
-                  <tb-data-keys class="tb-data-keys" fxFlex
-                                [widgetType]="widgetType"
-                                [datasourceType]="datasourceControl.get('type').value"
-                                [maxDataKeys]="modelValue?.typeParameters?.maxDataKeys"
-                                [optDataKeys]="modelValue?.typeParameters?.dataKeysOptional"
-                                [aliasController]="aliasController"
-                                [datakeySettingsSchema]="modelValue?.dataKeySettingsSchema"
-                                [callbacks]="widgetConfigCallbacks"
-                                [entityAliasId]="datasourceControl.get('entityAliasId').value"
-                                formControlName="dataKeys">
-                  </tb-data-keys>
-                </section>
-                <button [disabled]="isLoading$ | async"
-                        type="button"
-                        mat-icon-button color="primary"
-                        style="min-width: 40px;"
-                        (click)="removeDatasource($index)"
-                        matTooltip="{{ 'widget-config.remove-datasource' | translate }}"
-                        matTooltipPosition="above">
-                  <mat-icon>close</mat-icon>
-                </button>
-              </div>
-            </div>
+                      <tb-data-keys class="tb-data-keys" fxFlex
+                                    [widgetType]="widgetType"
+                                    [datasourceType]="datasourceControl.get('type').value"
+                                    [maxDataKeys]="modelValue?.typeParameters?.maxDataKeys"
+                                    [optDataKeys]="modelValue?.typeParameters?.dataKeysOptional"
+                                    [aliasController]="aliasController"
+                                    [datakeySettingsSchema]="modelValue?.dataKeySettingsSchema"
+                                    [callbacks]="widgetConfigCallbacks"
+                                    [entityAliasId]="datasourceControl.get('entityAliasId').value"
+                                    [formControl]="datasourceControl.get('dataKeys')">
+                      </tb-data-keys>
+                    </section>
+                    <button [disabled]="isLoading$ | async"
+                            type="button"
+                            mat-icon-button color="primary"
+                            style="min-width: 40px;"
+                            (click)="removeDatasource($index)"
+                            matTooltip="{{ 'widget-config.remove-datasource' | translate }}"
+                            matTooltipPosition="above">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </mat-list-item>
+            </mat-list>
           </div>
         </ng-template>
         <div fxFlex fxLayout="row" fxLayoutAlign="start center">
@@ -235,15 +263,6 @@
               </mat-select>
             </mat-form-field>
             <section class="tb-datasource" [ngSwitch]="alarmSourceSettings.get('type').value">
-              <ng-template [ngSwitchCase]="datasourceType.function">
-                <mat-form-field floatLabel="always" [fxShow]="widgetType !== widgetTypes.alarm"
-                                class="tb-datasource-name" style="min-width: 200px;">
-                  <mat-label></mat-label>
-                  <input matInput
-                         placeholder="{{ 'datasource.name' | translate }}"
-                         formControlName="name">
-                </mat-form-field>
-              </ng-template>
               <ng-template [ngSwitchCase]="datasourceType.entity">
                 <tb-entity-alias-select
                   [showLabel]="true"
