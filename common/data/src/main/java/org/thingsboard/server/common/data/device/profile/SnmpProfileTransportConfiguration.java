@@ -29,8 +29,8 @@ public class SnmpProfileTransportConfiguration implements DeviceProfileTransport
     private int pollPeriodMs;
     private int timeoutMs;
     private int retries;
-    private List<SnmpDeviceProfileKvMapping> attributes;
-    private List<SnmpDeviceProfileKvMapping> telemetry;
+    private List<SnmpMapping> attributesMappings;
+    private List<SnmpMapping> telemetryMappings;
 
     @Override
     public DeviceTransportType getType() {
@@ -38,9 +38,9 @@ public class SnmpProfileTransportConfiguration implements DeviceProfileTransport
     }
 
     @JsonIgnore
-    public List<SnmpDeviceProfileKvMapping> getKvMappings() {
-        if (attributes != null && telemetry != null) {
-            return Stream.concat(attributes.stream(), telemetry.stream()).collect(Collectors.toList());
+    public List<SnmpMapping> getAllMappings() {
+        if (attributesMappings != null && telemetryMappings != null) {
+            return Stream.concat(attributesMappings.stream(), telemetryMappings.stream()).collect(Collectors.toList());
         } else {
             return Collections.emptyList();
         }

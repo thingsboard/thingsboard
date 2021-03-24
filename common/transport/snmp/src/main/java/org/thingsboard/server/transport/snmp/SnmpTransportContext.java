@@ -20,16 +20,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.snmp4j.PDU;
 import org.snmp4j.smi.OID;
 import org.snmp4j.smi.VariableBinding;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.data.DeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
-import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileKvMapping;
+import org.thingsboard.server.common.data.device.profile.SnmpMapping;
 import org.thingsboard.server.common.data.device.profile.SnmpProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -45,6 +43,7 @@ import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsRes
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
+import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbSnmpTransportComponent;
 import org.thingsboard.server.transport.snmp.service.ProtoTransportEntityService;
 import org.thingsboard.server.transport.snmp.service.SnmpTransportBalancingService;
@@ -61,7 +60,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 @TbSnmpTransportComponent
@@ -80,8 +78,7 @@ public class SnmpTransportContext extends TransportContext {
     private final Map<DeviceProfileId, List<PDU>> profilesPdus = new ConcurrentHashMap<>();
     private Collection<DeviceId> allSnmpDevicesIds = new ConcurrentLinkedDeque<>();
 
-    @EventListener(ApplicationReadyEvent.class)
-    @Order(2)
+    @AfterStartUp(order = 2)
     public void initDevicesSessions() {
         log.info("Initializing SNMP devices sessions");
         allSnmpDevicesIds = protoEntityService.getAllSnmpDevicesIds().stream()
@@ -209,17 +206,17 @@ public class SnmpTransportContext extends TransportContext {
     }
 
     private List<PDU> createPdus(SnmpProfileTransportConfiguration deviceProfileConfig) {
-        Map<String, List<VariableBinding>> varBindingPerMethod = new HashMap<>();
+        Map<String, List<VariableBinding>> bindingsPerMethod = new HashMap<>();
 
-        deviceProfileConfig.getKvMappings().forEach(mapping -> varBindingPerMethod
+        deviceProfileConfig.getAllMappings().forEach(mapping -> bindingsPerMethod
                 .computeIfAbsent(mapping.getMethod(), v -> new ArrayList<>())
                 .add(new VariableBinding(new OID(mapping.getOid()))));
 
-        return varBindingPerMethod.keySet().stream()
+        return bindingsPerMethod.keySet().stream()
                 .map(method -> {
                     PDU request = new PDU();
                     request.setType(getSnmpMethod(method));
-                    request.addAll(varBindingPerMethod.get(method));
+                    request.addAll(bindingsPerMethod.get(method));
                     return request;
                 })
                 .collect(Collectors.toList());
@@ -300,29 +297,25 @@ public class SnmpTransportContext extends TransportContext {
         return profilesPdus;
     }
 
-    public Optional<SnmpDeviceProfileKvMapping> getAttributesMapping(DeviceProfileId deviceProfileId, OID responseOid) {
+    public Optional<SnmpMapping> getAttributeMapping(DeviceProfileId deviceProfileId, OID responseOid) {
         if (profilesTransportConfigs.containsKey(deviceProfileId)) {
-            return getMapping(responseOid, profilesTransportConfigs.get(deviceProfileId).getAttributes());
+            return getMapping(responseOid, profilesTransportConfigs.get(deviceProfileId).getAttributesMappings());
         }
         return Optional.empty();
     }
 
-    public Optional<SnmpDeviceProfileKvMapping> getTelemetryMapping(DeviceProfileId deviceProfileId, OID responseOid) {
+    public Optional<SnmpMapping> getTelemetryMapping(DeviceProfileId deviceProfileId, OID responseOid) {
         if (profilesTransportConfigs.containsKey(deviceProfileId)) {
-            return getMapping(responseOid, profilesTransportConfigs.get(deviceProfileId).getTelemetry());
+            return getMapping(responseOid, profilesTransportConfigs.get(deviceProfileId).getTelemetryMappings());
         }
         return Optional.empty();
     }
 
-    private Optional<SnmpDeviceProfileKvMapping> getMapping(OID responseOid, List<SnmpDeviceProfileKvMapping> mappings) {
+    private Optional<SnmpMapping> getMapping(OID responseOid, List<SnmpMapping> mappings) {
         return mappings.stream()
                 .filter(kvMapping -> new OID(kvMapping.getOid()).equals(responseOid))
                 //TODO: OID shouldn't be duplicated in the config, add backend and UI verification
                 .findFirst();
-    }
-
-    public ExecutorService getSnmpCallbackExecutor() {
-        return snmpTransportService.getSnmpCallbackExecutor();
     }
 
     private int getSnmpMethod(String configMethod) {
