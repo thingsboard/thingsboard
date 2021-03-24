@@ -18,11 +18,10 @@ package org.thingsboard.server.common.data.device.profile;
 import lombok.Data;
 import org.thingsboard.server.common.data.kv.DataType;
 
-//TODO: rename class
 @Data
-public class SnmpDeviceProfileKvMapping {
-    private String key;
-    private DataType type;
-    private String method;
+public class SnmpMapping {
     private String oid;
+    private String method;
+    private String key;
+    private DataType dataType;
 }

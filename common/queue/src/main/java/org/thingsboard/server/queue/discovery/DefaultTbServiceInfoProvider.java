@@ -20,8 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.TbTransportService;
@@ -31,6 +29,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
+import org.thingsboard.server.queue.util.AfterContextReady;
 
 import javax.annotation.PostConstruct;
 import java.net.InetAddress;
@@ -109,7 +108,7 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         serviceInfo = builder.build();
     }
 
-    @EventListener(ContextRefreshedEvent.class)
+    @AfterContextReady
     public void setTransports() {
         serviceInfo = ServiceInfo.newBuilder(serviceInfo)
                 .addAllTransports(getTransportServices().stream()
