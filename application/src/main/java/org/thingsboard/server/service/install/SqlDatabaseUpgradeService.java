@@ -18,8 +18,6 @@ package org.thingsboard.server.service.install;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.github.fge.jackson.jsonpointer.JsonPointer;
-import com.github.fge.jackson.jsonpointer.JsonPointerException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,10 +25,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.DynamicValue;
-import org.thingsboard.server.common.data.query.DynamicValueSourceType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
@@ -488,51 +486,30 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.info("Updating schema ...");
                     deviceProfileRepository.findAll().forEach(deviceProfile -> {
                         try {
-                            ObjectNode array = ((ObjectNode) deviceProfile.getProfileData().get("alarms"));
-                            for (JsonNode node : array) {
-                                if (!node.has("createRules")) {
-                                    continue;
-                                }
-                                node = node.get("createRules");
-                                if (node.has("MAJOR")) {
-                                    node = node.get("MAJOR");
-                                } else if (node.has("MINOR")) {
-                                    node = node.get("MINOR");
-                                } else if (node.has("CRITICAL")) {
-                                    node = node.get("CRITICAL");
-                                } else if (node.has("WARNING")) {
-                                    node = node.get("WARNING");
-                                } else if (node.has("INTERMEDIATE")) {
-                                    node = node.get("INTERMEDIATE");
-                                } else {
-                                    continue;
-                                }
+                            if(deviceProfile.getProfileData().has("alarms")) {
+                                JsonNode array = deviceProfile.getProfileData().get("alarms");
+                                for (JsonNode node : array) {
+                                    if (node.has("createRules")) {
+                                        JsonNode createRules = node.get("createRules");
+                                        if (createRules.has("MAJOR")) {
+                                            convertOldSpecToNew(createRules.get("MAJOR").get("condition").get("spec"));
+                                        } else if (createRules.has("MINOR")) {
+                                            convertOldSpecToNew(createRules.get("MINOR").get("condition").get("spec"));
+                                        } else if (createRules.has("CRITICAL")) {
+                                            convertOldSpecToNew(createRules.get("CRITICAL").get("condition").get("spec"));
+                                        } else if (createRules.has("WARNING")) {
+                                            convertOldSpecToNew(createRules.get("WARNING").get("condition").get("spec"));
+                                        } else if (createRules.has("INTERMEDIATE")) {
+                                            convertOldSpecToNew(createRules.get("INTERMEDIATE").get("condition").get("spec"));
+                                        }
+                                    }
 
-                                if (!node.has("condition")) {
-                                    continue;
-                                }
-                                node = node.get("condition").get("spec");
-
-                                if (node.get("type").asText().equals("DURATION")) {
-                                    if (node.has("value")) {
-                                        long value = node.get("value").asLong();
-                                        var predicate = new FilterPredicateValue<>(
-                                                value, null, new DynamicValue<>(null, null, false)
-                                        );
-                                        ((ObjectNode) node).remove("value");
-                                        ((ObjectNode) node).put("predicate", new ObjectMapper().writeValueAsString(predicate));
+                                    if(node.has("clearRule")) {
+                                        convertOldSpecToNew(node.get("clearRule").get("condition").get("spec"));
                                     }
                                 }
-                                if (node.get("type").asText().equals("REPEATING")) {
-                                    int count = node.get("count").asInt();
-                                    var predicate = new FilterPredicateValue<>(
-                                            count, null, new DynamicValue<>(null, null, false)
-                                    );
-                                    ((ObjectNode) node).remove("count");
-                                    ((ObjectNode) node).put("predicate", new ObjectMapper().writeValueAsString(predicate));
-                                }
+                                deviceProfileRepository.save(deviceProfile);
                             }
-
                         } catch (Exception e) {
                             log.error("Some of Alarm Conditions cannot be updated! This may create an errors in future. ");
                             e.printStackTrace();
@@ -571,5 +548,28 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
             log.info("Failed to check current PostgreSQL schema due to: {}", e.getMessage());
         }
         return isOldSchema;
+    }
+
+    private void convertOldSpecToNew(JsonNode spec) throws Exception {
+        if(spec != null) {
+            if (spec.has("type") && spec.get("type").asText().equals(AlarmConditionSpecType.DURATION.name())) {
+                if (spec.has("value")) {
+                    long value = spec.get("value").asLong();
+                    var predicate = new FilterPredicateValue<>(
+                            value, null, new DynamicValue<>(null, null, false)
+                    );
+                    ((ObjectNode) spec).remove("value");
+                    ((ObjectNode) spec).put("predicate", new ObjectMapper().writeValueAsString(predicate));
+                }
+            }
+            else if (spec.has("type") && spec.get("type").asText().equals(AlarmConditionSpecType.REPEATING.name())) {
+                int count = spec.get("count").asInt();
+                var predicate = new FilterPredicateValue<>(
+                        count, null, new DynamicValue<>(null, null, false)
+                );
+                ((ObjectNode) spec).remove("count");
+                ((ObjectNode) spec).put("predicate", new ObjectMapper().writeValueAsString(predicate));
+            }
+        }
     }
 }
