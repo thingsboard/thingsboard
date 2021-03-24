@@ -89,7 +89,7 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                         log.info("PostgreSQL version is valid!");
                         if (isOldSchema(conn, 2004003)) {
                             log.info("Load upgrade functions ...");
-                            loadSql(conn, LOAD_FUNCTIONS_SQL);
+                            loadSql(conn, LOAD_FUNCTIONS_SQL, "2.4.3");
                             log.info("Updating timescale schema ...");
                             executeQuery(conn, CALL_CREATE_TS_KV_LATEST_TABLE);
                             executeQuery(conn, CALL_CREATE_NEW_TENANT_TS_KV_TABLE);
@@ -165,7 +165,7 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                         }
 
                         log.info("Load TTL functions ...");
-                        loadSql(conn, LOAD_TTL_FUNCTIONS_SQL);
+                        loadSql(conn, LOAD_TTL_FUNCTIONS_SQL, "2.4.3");
 
                         executeQuery(conn, "UPDATE tb_schema_settings SET schema_version = 2005000");
                         log.info("schema timescale updated!");
@@ -181,7 +181,7 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                 break;
             case "3.2.1":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-                    loadSql(conn, LOAD_TTL_FUNCTIONS_SQL);
+                    loadSql(conn, LOAD_TTL_FUNCTIONS_SQL, "3.2.1");
                 }
                 break;
             default:
@@ -205,8 +205,8 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
     }
 
     @Override
-    protected void loadSql(Connection conn, String fileName) {
-        Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.4.3", fileName);
+    protected void loadSql(Connection conn, String fileName, String version) {
+        Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", version, fileName);
         try {
             loadFunctions(schemaUpdateFile, conn);
             log.info("Functions successfully loaded!");
