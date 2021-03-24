@@ -22,6 +22,7 @@ import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
+import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 
@@ -30,6 +31,7 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.thingsboard.server.common.data.ResourceType.LWM2M_MODEL;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
@@ -83,6 +85,7 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
                 if (objectModel != null)
                     return objectModel.resources.get(resourceId);
                 else
+                    log.warn("TbResources (Object model) with id [{}/{}] not found on the server", objectId, resourceId);
                     return null;
             } catch (Exception e) {
                 log.error("", e);
@@ -116,17 +119,15 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
 
         private ObjectModel getObjectModelDynamic(Integer objectId, String version) {
             String key = getKeyIdVer(objectId, version);
-            String xmlB64 = lwM2mTransportContextServer.getTransportResourceCache().get(
-                    this.tenantId,
-                    LWM2M_MODEL,
-                    key).
-                    getData();
-            return xmlB64 != null && !xmlB64.isEmpty() ?
-                    lwM2mTransportContextServer.parseFromXmlToObjectModel(
-                            Base64.getDecoder().decode(xmlB64),
-                            key + ".xml",
-                            new DefaultDDFFileValidator()) :
-                    null;
+
+            Optional<TbResource> tbResource = lwM2mTransportContextServer
+                    .getTransportResourceCache()
+                    .get(this.tenantId, LWM2M_MODEL, key);
+
+            return tbResource.map(resource -> lwM2mTransportContextServer.parseFromXmlToObjectModel(
+                    Base64.getDecoder().decode(resource.getData()),
+                    key + ".xml",
+                    new DefaultDDFFileValidator())).orElse(null);
         }
     }
 }

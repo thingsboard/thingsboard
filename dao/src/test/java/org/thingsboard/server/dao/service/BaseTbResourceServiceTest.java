@@ -123,7 +123,7 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(savedResource.getId());
         Assert.assertTrue(savedResource.getCreatedTime() > 0);
         Assert.assertEquals(resource.getTenantId(), savedResource.getTenantId());
-        Assert.assertEquals("My first resource", savedResource.getTitle());
+        Assert.assertEquals("My first resource id=0 v1.0", savedResource.getTitle());
         Assert.assertEquals("0_1.0", savedResource.getResourceKey());
         Assert.assertEquals(resource.getData(), savedResource.getData());
 
