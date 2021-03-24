@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.device.profile;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.transport.snmp.SnmpMapping;
 
 import java.util.Collections;
 import java.util.List;
@@ -25,12 +26,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Data
-public class SnmpProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
+public class SnmpDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
     private int pollPeriodMs;
     private int timeoutMs;
     private int retries;
-    private List<SnmpMapping> attributesMappings;
     private List<SnmpMapping> telemetryMappings;
+    private List<SnmpMapping> attributesMappings;
 
     @Override
     public DeviceTransportType getType() {
@@ -39,10 +40,25 @@ public class SnmpProfileTransportConfiguration implements DeviceProfileTransport
 
     @JsonIgnore
     public List<SnmpMapping> getAllMappings() {
-        if (attributesMappings != null && telemetryMappings != null) {
-            return Stream.concat(attributesMappings.stream(), telemetryMappings.stream()).collect(Collectors.toList());
+        if (telemetryMappings != null && attributesMappings != null) {
+            return Stream.concat(telemetryMappings.stream(), attributesMappings.stream()).collect(Collectors.toList());
         } else {
             return Collections.emptyList();
         }
+    }
+
+    @Override
+    public void validate() {
+        if (!isValid()) {
+            throw new IllegalArgumentException("Transport configuration is not valid");
+        }
+    }
+
+    @JsonIgnore
+    private boolean isValid() {
+        List<SnmpMapping> mappings = getAllMappings();
+        return pollPeriodMs > 0 && timeoutMs > 0 && retries >= 0 &&
+                !mappings.isEmpty() && mappings.stream().allMatch(SnmpMapping::isValid) &&
+                mappings.stream().map(SnmpMapping::getOid).distinct().count() == mappings.size();
     }
 }

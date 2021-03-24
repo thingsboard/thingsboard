@@ -27,12 +27,13 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.data.DeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
-import org.thingsboard.server.common.data.device.profile.SnmpMapping;
-import org.thingsboard.server.common.data.device.profile.SnmpProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.data.transport.snmp.SnmpMapping;
+import org.thingsboard.server.common.data.transport.snmp.SnmpMethod;
 import org.thingsboard.server.common.transport.DeviceUpdatedEvent;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
@@ -74,7 +75,7 @@ public class SnmpTransportContext extends TransportContext {
     private final SnmpTransportBalancingService balancingService;
 
     private final Map<DeviceId, DeviceSessionContext> sessions = new ConcurrentHashMap<>();
-    private final Map<DeviceProfileId, SnmpProfileTransportConfiguration> profilesTransportConfigs = new ConcurrentHashMap<>();
+    private final Map<DeviceProfileId, SnmpDeviceProfileTransportConfiguration> profilesTransportConfigs = new ConcurrentHashMap<>();
     private final Map<DeviceProfileId, List<PDU>> profilesPdus = new ConcurrentHashMap<>();
     private Collection<DeviceId> allSnmpDevicesIds = new ConcurrentLinkedDeque<>();
 
@@ -94,7 +95,13 @@ public class SnmpTransportContext extends TransportContext {
         managedDevicesIds.stream()
                 .map(protoEntityService::getDeviceById)
                 .collect(Collectors.toList())
-                .forEach(this::establishDeviceSession);
+                .forEach(device -> {
+                    try {
+                        establishDeviceSession(device);
+                    } catch (Exception e) {
+                        log.error("Failed to establish session for SNMP device {}: {}", device.getId(), e.getMessage());
+                    }
+                });
     }
 
     private void establishDeviceSession(Device device) {
@@ -110,13 +117,10 @@ public class SnmpTransportContext extends TransportContext {
             return;
         }
 
+        SnmpDeviceProfileTransportConfiguration profileTransportConfiguration = (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
         SnmpDeviceTransportConfiguration deviceTransportConfiguration = (SnmpDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
-        if (!deviceTransportConfiguration.isValid()) {
-            log.warn("SNMP device transport configuration is not valid");
-            return;
-        }
 
-        SnmpProfileTransportConfiguration profileTransportConfiguration = (SnmpProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
+        profilesTransportConfigs.put(deviceProfileId, profileTransportConfiguration);
         profilesPdus.computeIfAbsent(deviceProfileId, id -> createPdus(profileTransportConfiguration));
 
         DeviceSessionContext deviceSessionContext = new DeviceSessionContext(
@@ -140,22 +144,18 @@ public class SnmpTransportContext extends TransportContext {
             return;
         }
 
-        SnmpProfileTransportConfiguration profileTransportConfiguration = (SnmpProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
-        SnmpDeviceTransportConfiguration deviceTransportConfiguration = (SnmpDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
-        sessionContext.setProfileTransportConfiguration(profileTransportConfiguration);
-        sessionContext.setDeviceTransportConfiguration(deviceTransportConfiguration);
-        if (!deviceTransportConfiguration.isValid()) {
-            log.warn("SNMP device transport configuration is not valid");
-            destroyDeviceSession(sessionContext);
-            return;
-        }
+        SnmpDeviceProfileTransportConfiguration newProfileTransportConfiguration = (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
+        SnmpDeviceTransportConfiguration newDeviceTransportConfiguration = (SnmpDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
 
-        if (!profileTransportConfiguration.equals(profilesTransportConfigs.get(deviceProfileId))) {
-            profilesPdus.put(deviceProfileId, createPdus(profileTransportConfiguration));
-            profilesTransportConfigs.put(deviceProfileId, profileTransportConfiguration);
-            sessionContext.initTarget(profileTransportConfiguration, deviceTransportConfiguration);
-        } else if (!deviceTransportConfiguration.equals(sessionContext.getDeviceTransportConfiguration())) {
-            sessionContext.initTarget(profileTransportConfiguration, deviceTransportConfiguration);
+        if (!newProfileTransportConfiguration.equals(sessionContext.getProfileTransportConfiguration())) {
+            profilesPdus.put(deviceProfileId, createPdus(newProfileTransportConfiguration));
+            profilesTransportConfigs.put(deviceProfileId, newProfileTransportConfiguration);
+
+            sessionContext.setProfileTransportConfiguration(newProfileTransportConfiguration);
+            sessionContext.initTarget(newProfileTransportConfiguration, newDeviceTransportConfiguration);
+        } else if (!newDeviceTransportConfiguration.equals(sessionContext.getDeviceTransportConfiguration())) {
+            sessionContext.setDeviceTransportConfiguration(newDeviceTransportConfiguration);
+            sessionContext.initTarget(newProfileTransportConfiguration, newDeviceTransportConfiguration);
         } else {
             log.trace("Configuration of the device {} was not updated", device);
         }
@@ -205,8 +205,8 @@ public class SnmpTransportContext extends TransportContext {
                 });
     }
 
-    private List<PDU> createPdus(SnmpProfileTransportConfiguration deviceProfileConfig) {
-        Map<String, List<VariableBinding>> bindingsPerMethod = new HashMap<>();
+    private List<PDU> createPdus(SnmpDeviceProfileTransportConfiguration deviceProfileConfig) {
+        Map<SnmpMethod, List<VariableBinding>> bindingsPerMethod = new HashMap<>();
 
         deviceProfileConfig.getAllMappings().forEach(mapping -> bindingsPerMethod
                 .computeIfAbsent(mapping.getMethod(), v -> new ArrayList<>())
@@ -215,7 +215,7 @@ public class SnmpTransportContext extends TransportContext {
         return bindingsPerMethod.keySet().stream()
                 .map(method -> {
                     PDU request = new PDU();
-                    request.setType(getSnmpMethod(method));
+                    request.setType(method.getCode());
                     request.addAll(bindingsPerMethod.get(method));
                     return request;
                 })
@@ -311,22 +311,9 @@ public class SnmpTransportContext extends TransportContext {
         return Optional.empty();
     }
 
-    private Optional<SnmpMapping> getMapping(OID responseOid, List<SnmpMapping> mappings) {
+    private Optional<SnmpMapping> getMapping(OID oid, List<SnmpMapping> mappings) {
         return mappings.stream()
-                .filter(kvMapping -> new OID(kvMapping.getOid()).equals(responseOid))
-                //TODO: OID shouldn't be duplicated in the config, add backend and UI verification
+                .filter(mapping -> new OID(mapping.getOid()).equals(oid))
                 .findFirst();
-    }
-
-    private int getSnmpMethod(String configMethod) {
-        switch (configMethod) {
-            case "get":
-                return PDU.GET;
-            case "getNext":
-            case "response":
-            case "set":
-            default:
-                return -1;
-        }
     }
 }

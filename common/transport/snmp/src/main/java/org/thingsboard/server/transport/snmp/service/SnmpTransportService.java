@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.snmp4j.PDU;
 import org.snmp4j.Snmp;
 import org.snmp4j.event.ResponseEvent;
+import org.snmp4j.smi.Null;
 import org.snmp4j.smi.VariableBinding;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 import org.springframework.context.annotation.Lazy;
@@ -103,8 +104,8 @@ public class SnmpTransportService implements TbTransportService {
                 try {
                     log.debug("[{}] Sending SNMP message for device {}", pdu.getRequestID(), sessionContext.getDeviceId());
                     snmp.send(pdu, sessionContext.getTarget(), deviceProfileId, sessionContext);
-                } catch (IOException e) {
-                    log.error(e.getMessage(), e);
+                } catch (Exception e) {
+                    log.error("Failed to send SNMP request: {}", e.getMessage());
                 }
             });
         }
@@ -123,7 +124,7 @@ public class SnmpTransportService implements TbTransportService {
 
         PDU response = event.getResponse();
         if (response == null) {
-            log.warn("No SNMP response, requestId: {}", event.getRequest().getRequestID());
+            log.warn("No response from SNMP device {}, requestId: {}", sessionContext.getDeviceId(), event.getRequest().getRequestID());
             return;
         }
 
@@ -137,6 +138,11 @@ public class SnmpTransportService implements TbTransportService {
         for (int i = 0; i < response.size(); i++) {
             VariableBinding variableBinding = response.get(i);
             log.trace("Processing variable binding {}: {}", i, variableBinding);
+
+            if (variableBinding.getVariable() instanceof Null) {
+                log.debug("Response variable is empty");
+                continue;
+            }
 
             snmpTransportContext.getTelemetryMapping(deviceProfileId, variableBinding.getOid()).ifPresent(mapping -> {
                 log.trace("Found telemetry mapping for oid {}: {}", variableBinding.getOid(), mapping);

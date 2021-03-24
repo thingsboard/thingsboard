@@ -22,13 +22,12 @@ import org.snmp4j.CommunityTarget;
 import org.snmp4j.Target;
 import org.snmp4j.event.ResponseEvent;
 import org.snmp4j.event.ResponseListener;
-import org.snmp4j.mp.SnmpConstants;
 import org.snmp4j.smi.GenericAddress;
 import org.snmp4j.smi.OctetString;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
-import org.thingsboard.server.common.data.device.profile.SnmpProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
@@ -51,7 +50,7 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     private final String token;
     @Getter
     @Setter
-    private SnmpProfileTransportConfiguration profileTransportConfiguration;
+    private SnmpDeviceProfileTransportConfiguration profileTransportConfiguration;
     @Getter
     @Setter
     private SnmpDeviceTransportConfiguration deviceTransportConfiguration;
@@ -79,7 +78,7 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
         this.snmpTransportContext = snmpTransportContext;
         this.snmpTransportService = snmpTransportService;
 
-        this.profileTransportConfiguration = (SnmpProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
+        this.profileTransportConfiguration = (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
         this.deviceTransportConfiguration = deviceTransportConfiguration;
 
         initTarget(this.profileTransportConfiguration, this.deviceTransportConfiguration);
@@ -105,11 +104,11 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
         }
     }
 
-    public void initTarget(SnmpProfileTransportConfiguration profileTransportConfig, SnmpDeviceTransportConfiguration deviceTransportConfig) {
+    public void initTarget(SnmpDeviceProfileTransportConfiguration profileTransportConfig, SnmpDeviceTransportConfiguration deviceTransportConfig) {
         log.trace("Initializing target for SNMP session of device {}", device);
         CommunityTarget communityTarget = new CommunityTarget();
         communityTarget.setAddress(GenericAddress.parse(GenericAddress.TYPE_UDP + ":" + deviceTransportConfig.getAddress() + "/" + deviceTransportConfig.getPort()));
-        communityTarget.setVersion(getSnmpVersion(deviceTransportConfig.getProtocolVersion()));
+        communityTarget.setVersion(deviceTransportConfig.getProtocolVersion().getCode());
         communityTarget.setCommunity(new OctetString(deviceTransportConfig.getCommunity()));
         communityTarget.setTimeout(profileTransportConfig.getTimeoutMs());
         communityTarget.setRetries(profileTransportConfig.getRetries());
@@ -123,20 +122,6 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
 
     public String getToken() {
         return token;
-    }
-
-    //TODO: replace with enum, wtih preliminary discussion of type version in config (string or integer)
-    private int getSnmpVersion(String configSnmpVersion) {
-        switch (configSnmpVersion) {
-            case ("v1"):
-                return SnmpConstants.version1;
-            case ("v2c"):
-                return SnmpConstants.version2c;
-            case ("v3"):
-                return SnmpConstants.version3;
-            default:
-                return -1;
-        }
     }
 
     @Override
