@@ -607,7 +607,7 @@ transport:
       # Create new X509 Certificates: common/transport/lwm2m/src/main/resources/credentials/shell/lwM2M_credentials.sh
       key_store_type: "${LWM2M_KEYSTORE_TYPE:JKS}"
       # key_store_type: "${LWM2M_KEYSTORE_TYPE:PKCS12}"
-#      key_store_path_file: "${KEY_STORE_PATH_FILE:/usr/share/thingsboard/conf/credentials/serverKeyStore.jks}"
+#      key_store_path_file: "${KEY_STORE_PATH_FILE:/common/transport/lwm2m/src/main/resources/credentials/serverKeyStore.jks"
       key_store_path_file: "${KEY_STORE_PATH_FILE:}"
       key_store_password: "${LWM2M_KEYSTORE_PASSWORD_SERVER:server_ks_password}"
       root_alias: "${LWM2M_SERVER_ROOT_CA:rootca}"
