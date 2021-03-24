@@ -30,15 +30,13 @@ import org.thingsboard.server.transport.lwm2m.utils.TypeServer;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.NO_SEC;
 
 @Service
 @TbLwM2mTransportComponent
 public class LwM2mClientContextImpl implements LwM2mClientContext {
-    protected final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+
     private static final boolean INFOS_ARE_COMPROMISED = false;
 
     private final Map<String /** registrationId */, LwM2mClient> lwM2mClients = new ConcurrentHashMap<>();
