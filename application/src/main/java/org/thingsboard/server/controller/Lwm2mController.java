@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
@@ -30,54 +29,19 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-public class DeviceLwm2mController extends BaseController {
-
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/lwm2m/deviceProfile",  params = {"sortOrder", "sortProperty"},  method = RequestMethod.GET)
-    @ResponseBody
-    public List<LwM2mObject> getLwm2mListObjects(@RequestParam String sortOrder,
-                                                 @RequestParam String sortProperty,
-                                                 @RequestParam(required = false) int[] objectIds,
-                                                 @RequestParam(required = false) String searchText)
-                                                 throws ThingsboardException {
-        try {
-            return lwM2MModelsRepository.getLwm2mObjects(objectIds, searchText, sortProperty, sortOrder);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/lwm2m/deviceProfile/objects", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
-    public PageData<LwM2mObject> getLwm2mListObjects(@RequestParam int pageSize,
-                                                     @RequestParam int page,
-                                                     @RequestParam(required = false) String searchText,
-                                                     @RequestParam(required = false) String sortProperty,
-                                                     @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        try {
-            PageLink pageLink = createPageLink(pageSize, page, searchText, sortProperty, sortOrder);
-            return checkNotNull(lwM2MModelsRepository.findDeviceLwm2mObjects(getTenantId(), pageLink));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
+public class Lwm2mController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/lwm2m/deviceProfile/bootstrap/{securityMode}/{bootstrapServerIs}", method = RequestMethod.GET)
