@@ -16,6 +16,10 @@
 package org.thingsboard.server.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,11 +35,13 @@ import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.resource.TbResourceService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.Base64;
 import java.util.List;
 
 @Slf4j
@@ -50,6 +56,27 @@ public class TbResourceController extends BaseController {
 
     public TbResourceController(TbResourceService resourceService) {
         this.resourceService = resourceService;
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/resource/{resourceId}/download", method = RequestMethod.GET)
+    @ResponseBody
+    public ResponseEntity<org.springframework.core.io.Resource> downloadResource(@PathVariable(RESOURCE_ID) String strResourceId) throws ThingsboardException {
+        checkParameter(RESOURCE_ID, strResourceId);
+        try {
+            TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
+            TbResource tbResource = checkResourceId(resourceId, Operation.READ);
+
+            ByteArrayResource resource = new ByteArrayResource(Base64.getDecoder().decode(tbResource.getData().getBytes()));
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + tbResource.getFileName())
+                    .header("x-filename", tbResource.getFileName())
+                    .contentLength(resource.contentLength())
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(resource);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
@@ -103,7 +130,11 @@ public class TbResourceController extends BaseController {
                                                  @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            return checkNotNull(resourceService.findResourcesByTenantId(getTenantId(), pageLink));
+            if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
+                return checkNotNull(resourceService.findTenantResourcesByTenantId(getTenantId(), pageLink));
+            } else {
+                return checkNotNull(resourceService.findAllTenantResourcesByTenantId(getTenantId(), pageLink));
+            }
         } catch (Exception e) {
             throw handleException(e);
         }

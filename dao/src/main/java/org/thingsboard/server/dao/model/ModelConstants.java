@@ -464,6 +464,7 @@ public class ModelConstants {
     public static final String RESOURCE_TYPE_COLUMN = "resource_type";
     public static final String RESOURCE_KEY_COLUMN = "resource_key";
     public static final String RESOURCE_TITLE_COLUMN = TITLE_PROPERTY;
+    public static final String RESOURCE_FILE_NAME_COLUMN = "file_name";
     public static final String RESOURCE_DATA_COLUMN = "data";
 
     /**

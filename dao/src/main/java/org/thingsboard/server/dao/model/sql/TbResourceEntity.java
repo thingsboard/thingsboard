@@ -30,6 +30,7 @@ import javax.persistence.Table;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_DATA_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_FILE_NAME_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_KEY_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TENANT_ID_COLUMN;
@@ -58,6 +59,9 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> implements Searc
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
 
+    @Column(name = RESOURCE_FILE_NAME_COLUMN)
+    private String fileName;
+
     @Column(name = RESOURCE_DATA_COLUMN)
     private String data;
 
@@ -65,32 +69,37 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> implements Searc
     }
 
     public TbResourceEntity(TbResource resource) {
-        this.id = resource.getUuidId();
+        if (resource.getId() != null) {
+            this.id = resource.getId().getId();
+        }
         this.createdTime = resource.getCreatedTime();
-        this.tenantId = resource.getTenantId().getId();
+        if (resource.getTenantId() != null) {
+            this.tenantId = resource.getTenantId().getId();
+        }
         this.title = resource.getTitle();
         this.resourceType = resource.getResourceType().name();
         this.resourceKey = resource.getResourceKey();
         this.searchText = resource.getSearchText();
+        this.fileName = resource.getFileName();
         this.data = resource.getData();
     }
 
     @Override
     public TbResource toData() {
-        TbResource resource = new TbResource();
-        resource.setId(new TbResourceId(id));
+        TbResource resource = new TbResource(new TbResourceId(id));
         resource.setCreatedTime(createdTime);
         resource.setTenantId(new TenantId(tenantId));
         resource.setTitle(title);
         resource.setResourceType(ResourceType.valueOf(resourceType));
         resource.setResourceKey(resourceKey);
         resource.setSearchText(searchText);
+        resource.setFileName(fileName);
         resource.setData(data);
         return resource;
     }
 
     @Override
     public String getSearchTextSource() {
-        return title;
+        return this.searchText;
     }
 }

@@ -205,6 +205,7 @@ public class InstallScripts {
                             try {
                                 byte[] fileBytes = Files.readAllBytes(path);
                                 TbResource resource = new TbResource();
+                                resource.setFileName(path.getFileName().toString());
                                 resource.setTenantId(TenantId.SYS_TENANT_ID);
                                 resource.setResourceType(ResourceType.LWM2M_MODEL);
                                 resource.setData(Base64.getEncoder().encodeToString(fileBytes));
