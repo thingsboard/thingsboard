@@ -333,7 +333,8 @@ export class TbFlot {
 
       if (this.options.series.pie.label.show) {
         this.options.series.pie.label.formatter = (label, series) => {
-          return `<div class='pie-label'>${series.dataKey.label}<br/>${Math.round(series.percent)}%</div>`;
+          return `<div class='pie-label'>${series.dataKey.label}<br/>` +
+            `${this.ctx.utils.formatValue(series.percent,0,'%')}</div>`;
         };
         this.options.series.pie.label.radius = 3 / 4;
         this.options.series.pie.label.background = {
@@ -977,7 +978,7 @@ export class TbFlot {
       valueContent = this.ctx.utils.formatValue(value, trackDecimals, units);
     }
     if (isNumber(percent)) {
-      valueContent += ' (' + Math.round(percent) + ' %)';
+      valueContent += ' (' + this.ctx.utils.formatValue(percent, 0, '%', true) + ')';
     }
     const valueSpan =  $(`<span>${valueContent}</span>`);
     valueSpan.css({
