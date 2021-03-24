@@ -594,8 +594,6 @@ transport:
     #   send a Confirmable message to the time when an acknowledgement is no longer expected.
     #   DEFAULT_TIMEOUT = 2 * 60 * 1000l; 2 min in ms
     timeout: "${LWM2M_TIMEOUT:120000}"
-#    model_path_file: "${LWM2M_MODEL_PATH_FILE:./common/transport/lwm2m/src/main/resources/models/}"
-    model_path_file: "${LWM2M_MODEL_PATH_FILE:}"
     recommended_ciphers: "${LWM2M_RECOMMENDED_CIPHERS:false}"
     recommended_supported_groups: "${LWM2M_RECOMMENDED_SUPPORTED_GROUPS:true}"
     request_pool_size: "${LWM2M_REQUEST_POOL_SIZE:100}"
@@ -609,7 +607,7 @@ transport:
       # Create new X509 Certificates: common/transport/lwm2m/src/main/resources/credentials/shell/lwM2M_credentials.sh
       key_store_type: "${LWM2M_KEYSTORE_TYPE:JKS}"
       # key_store_type: "${LWM2M_KEYSTORE_TYPE:PKCS12}"
-#      key_store_path_file: "${KEY_STORE_PATH_FILE:/usr/share/thingsboard/conf/credentials/serverKeyStore.jks}"
+#      key_store_path_file: "${KEY_STORE_PATH_FILE:/common/transport/lwm2m/src/main/resources/credentials/serverKeyStore.jks"
       key_store_path_file: "${KEY_STORE_PATH_FILE:}"
       key_store_password: "${LWM2M_KEYSTORE_PASSWORD_SERVER:server_ks_password}"
       root_alias: "${LWM2M_SERVER_ROOT_CA:rootca}"

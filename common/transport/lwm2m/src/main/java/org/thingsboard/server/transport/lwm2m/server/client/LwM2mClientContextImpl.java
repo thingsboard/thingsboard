@@ -36,6 +36,7 @@ import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.NO
 @Service
 @TbLwM2mTransportComponent
 public class LwM2mClientContextImpl implements LwM2mClientContext {
+
     private static final boolean INFOS_ARE_COMPROMISED = false;
 
     private final Map<String /** registrationId */, LwM2mClient> lwM2mClients = new ConcurrentHashMap<>();
@@ -51,10 +52,10 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     public void delRemoveSessionAndListener(String registrationId) {
-        LwM2mClient lwM2MClient = lwM2mClients.get(registrationId);
+        LwM2mClient lwM2MClient = this.lwM2mClients.get(registrationId);
         if (lwM2MClient != null) {
-            securityStore.remove(lwM2MClient.getEndpoint(), INFOS_ARE_COMPROMISED);
-            lwM2mClients.remove(registrationId);
+            this.securityStore.remove(lwM2MClient.getEndpoint(), INFOS_ARE_COMPROMISED);
+            this.lwM2mClients.remove(registrationId);
         }
     }
 

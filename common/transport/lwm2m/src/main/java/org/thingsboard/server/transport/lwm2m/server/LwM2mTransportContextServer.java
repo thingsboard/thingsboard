@@ -89,12 +89,12 @@ public class LwM2mTransportContextServer extends TransportContext {
     }
 
     /**
-     * Sent to Thingsboard Attribute || Telemetry
+     * send to Thingsboard Attribute || Telemetry
      *
      * @param msg   - JsonObject: [{name: value}]
      * @return - dummy
      */
-    private <T> TransportServiceCallback<Void> getPubAckCallbackSentAttrTelemetry(final T msg) {
+    private <T> TransportServiceCallback<Void> getPubAckCallbackSendAttrTelemetry(final T msg) {
         return new TransportServiceCallback<>() {
             @Override
             public void onSuccess(Void dummy) {
@@ -108,16 +108,16 @@ public class LwM2mTransportContextServer extends TransportContext {
         };
     }
 
-    public void sentParametersOnThingsboard(JsonElement msg, String topicName, SessionInfoProto sessionInfo) {
+    public void sendParametersOnThingsboard(JsonElement msg, String topicName, SessionInfoProto sessionInfo) {
         try {
             if (topicName.equals(LwM2mTransportHandler.DEVICE_ATTRIBUTES_TOPIC)) {
                 PostAttributeMsg postAttributeMsg = adaptor.convertToPostAttributes(msg);
-                TransportServiceCallback call = this.getPubAckCallbackSentAttrTelemetry(postAttributeMsg);
-                transportService.process(sessionInfo, postAttributeMsg, this.getPubAckCallbackSentAttrTelemetry(call));
+                TransportServiceCallback call = this.getPubAckCallbackSendAttrTelemetry(postAttributeMsg);
+                transportService.process(sessionInfo, postAttributeMsg, this.getPubAckCallbackSendAttrTelemetry(call));
             } else if (topicName.equals(LwM2mTransportHandler.DEVICE_TELEMETRY_TOPIC)) {
                 PostTelemetryMsg postTelemetryMsg = adaptor.convertToPostTelemetry(msg);
-                TransportServiceCallback call = this.getPubAckCallbackSentAttrTelemetry(postTelemetryMsg);
-                transportService.process(sessionInfo, postTelemetryMsg, this.getPubAckCallbackSentAttrTelemetry(call));
+                TransportServiceCallback call = this.getPubAckCallbackSendAttrTelemetry(postTelemetryMsg);
+                transportService.process(sessionInfo, postTelemetryMsg, this.getPubAckCallbackSendAttrTelemetry(call));
             }
         } catch (AdaptorException e) {
             log.error("[{}] Failed to process publish msg [{}]", topicName, e);

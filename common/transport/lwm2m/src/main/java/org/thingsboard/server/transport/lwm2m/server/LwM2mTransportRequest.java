@@ -242,14 +242,14 @@ public class LwM2mTransportRequest {
                     String msg = String.format("%s: sendRequest Replace: CoapCde - %s Lwm2m code - %d name - %s Resource path - %s value - %s SendRequest to Client",
                             LOG_LW2M_INFO, ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString(),
                             ((LwM2mSingleResource) ((WriteRequest) request).getNode()).getValue().toString());
-                    serviceImpl.sentLogsToThingsboard(msg, registration);
+                    serviceImpl.sendLogsToThingsboard(msg, registration);
                     log.info("[{}] [{}] - [{}] [{}] Update SendRequest[{}]", registration.getEndpoint(), ((Response) response.getCoapResponse()).getCode(), response.getCode(), request.getPath().toString(),
                             ((LwM2mSingleResource) ((WriteRequest) request).getNode()).getValue());
                 }
             } else {
                 String msg = String.format("%s: sendRequest: CoapCode - %s Lwm2m code - %d name - %s Resource path - %s  SendRequest to Client", LOG_LW2M_ERROR,
                         ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString());
-                serviceImpl.sentLogsToThingsboard(msg, registration);
+                serviceImpl.sendLogsToThingsboard(msg, registration);
                 log.error("[{}], [{}] - [{}] [{}] error SendRequest", registration.getEndpoint(), ((Response) response.getCoapResponse()).getCode(), response.getCode(), request.getPath().toString());
             }
         }, e -> {
@@ -258,7 +258,7 @@ public class LwM2mTransportRequest {
             }
             String msg = String.format("%s: sendRequest: Resource path - %s msg error - %s  SendRequest to Client",
                     LOG_LW2M_ERROR, request.getPath().toString(), e.toString());
-            serviceImpl.sentLogsToThingsboard(msg, registration);
+            serviceImpl.sendLogsToThingsboard(msg, registration);
             log.error("[{}] - [{}] error SendRequest", request.getPath().toString(), e.toString());
         });
 
@@ -290,7 +290,7 @@ public class LwM2mTransportRequest {
             String patn = "/" + objectId + "/" + instanceId + "/" + resourceId;
             String msg = String.format(LOG_LW2M_ERROR + ": NumberFormatException: Resource path - %s type - %s value - %s msg error - %s  SendRequest to Client",
                     patn, type, value, e.toString());
-            serviceImpl.sentLogsToThingsboard(msg, registration);
+            serviceImpl.sendLogsToThingsboard(msg, registration);
             log.error("Path: [{}] type: [{}] value: [{}] errorMsg: [{}]]", patn, type, value, e.toString());
             return null;
         }
