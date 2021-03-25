@@ -40,7 +40,7 @@
         <section formGroupName="spec" class="row">
           <mat-form-field class="mat-block" hideRequiredMarker>
             <mat-label translate>device-profile.condition-type</mat-label>
-            <mat-select formControlName="type" required>
+            <mat-select formControlName="type" required >
               <mat-option *ngFor="let alarmConditionType of alarmConditionTypes" [value]="alarmConditionType">
                 {{ alarmConditionTypeTranslation.get(alarmConditionType) | translate }}
               </mat-option>
@@ -50,8 +50,10 @@
             </mat-error>
           </mat-form-field>
           <div fxLayout="row wrap" fxFlex fxLayoutGap="8px"  *ngIf="conditionFormGroup.get('spec.type').value == AlarmConditionType.DURATION">
-            <mat-form-field class="mat-block" hideRequiredMarker fxFlex="calc(50% - 8px)"  loatLabel="always">
-              <mat-label></mat-label>
+            <mat-form-field class="mat-block" hideRequiredMarker fxFlex="100%"  loatLabel="always">
+              <mat-label translate>
+                {{ 'device-profile.condition-duration-time-unit'}}
+              </mat-label>
               <mat-select formControlName="unit"
                           required
                           placeholder="{{ 'device-profile.condition-duration-time-unit' | translate }}">
@@ -67,8 +69,9 @@
           <div fxLayout="row" fxLayoutGap="8px" *ngIf="conditionFormGroup.get('spec.type').value != AlarmConditionType.SIMPLE">
             <tb-filter-predicate-value [allowUserDynamicSource]="false"
                                        [onlyUserDynamicSource]="false"
-                                       fxFlex="70"
+                                       fxFlex="100"
                                        [valueType]="entityKeyType"
+                                       [usageArea]="'condition'"
                                        formControlName="predicate">
             </tb-filter-predicate-value>
           </div>

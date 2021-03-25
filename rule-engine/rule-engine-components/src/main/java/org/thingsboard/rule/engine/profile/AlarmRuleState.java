@@ -234,7 +234,8 @@ class AlarmRuleState {
 
             repeatingTimes = repeating.getPredicate().getDefaultValue();
 
-            if (repeating.getPredicate().getDynamicValue().getSourceAttribute() != null) {
+            if (repeating.getPredicate().getDynamicValue() != null &&
+                    repeating.getPredicate().getDynamicValue().getSourceAttribute() != null) {
                 EntityKeyValue repeatingKeyValue = getDynamicPredicateValue(data, repeating.getPredicate().getDynamicValue());
                 if (repeatingKeyValue != null) {
                     repeatingTimes = repeatingKeyValue.getLngValue();
@@ -254,7 +255,8 @@ class AlarmRuleState {
 
             durationTimeInMs = timeUnit.toMillis(duration.getPredicate().getDefaultValue());
 
-            if (duration.getPredicate().getDynamicValue().getSourceAttribute() != null) {
+            if (duration.getPredicate().getDynamicValue() != null &&
+                    duration.getPredicate().getDynamicValue().getSourceAttribute() != null) {
                 EntityKeyValue durationKeyValue = getDynamicPredicateValue(data, duration.getPredicate().getDynamicValue());
                 if (durationKeyValue != null) {
                     durationTimeInMs = timeUnit.toMillis(durationKeyValue.getLngValue());

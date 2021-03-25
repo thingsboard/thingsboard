@@ -82,34 +82,43 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, OnIn
 
   allow = true;
 
+  @Input()
+  usageArea: string = null;
+
   private propagateChange = null;
+
+  private defaultValueValidators: ValidatorFn[];
 
   constructor(private fb: FormBuilder) {
   }
 
   ngOnInit(): void {
     let defaultValue: string | number | boolean;
-    let defaultValueValidators: ValidatorFn[];
     switch (this.valueType) {
       case EntityKeyValueType.STRING:
         defaultValue = '';
-        defaultValueValidators = [];
+        this.defaultValueValidators = [];
         break;
       case EntityKeyValueType.NUMERIC:
-        defaultValue = 0;
-        defaultValueValidators = [Validators.required];
+        if(this.usageArea && this.usageArea === 'condition') {
+          defaultValue = 1;
+          this.defaultValueValidators = [Validators.required, Validators.min(1), Validators.max(2147483647), Validators.pattern('[0-9]*')]
+        } else {
+          defaultValue = 0;
+          this.defaultValueValidators = [Validators.required];
+        }
         break;
       case EntityKeyValueType.BOOLEAN:
         defaultValue = false;
-        defaultValueValidators = [];
+        this.defaultValueValidators = [];
         break;
       case EntityKeyValueType.DATE_TIME:
         defaultValue = Date.now();
-        defaultValueValidators = [Validators.required];
+        this.defaultValueValidators = [Validators.required];
         break;
     }
     this.filterPredicateValueFormGroup = this.fb.group({
-      defaultValue: [defaultValue, defaultValueValidators],
+      defaultValue: [defaultValue, this.defaultValueValidators],
       dynamicValue: this.fb.group(
         {
           sourceType: [null],

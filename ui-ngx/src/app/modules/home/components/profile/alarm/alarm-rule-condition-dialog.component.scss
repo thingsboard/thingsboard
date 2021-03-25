@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
+:host ::ng-deep {
   .row {
     margin-top: 1em;
+  }
+
+  .mat-form-field-subscript-wrapper {
+    top: calc(100% - 0.2em) !important;
   }
 }

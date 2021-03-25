@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
@@ -485,34 +486,33 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                 try {
                     log.info("Updating schema ...");
                     deviceProfileRepository.findAll().forEach(deviceProfile -> {
-                        try {
-                            if(deviceProfile.getProfileData().has("alarms")) {
-                                JsonNode array = deviceProfile.getProfileData().get("alarms");
-                                for (JsonNode node : array) {
-                                    if (node.has("createRules")) {
-                                        JsonNode createRules = node.get("createRules");
-                                        if (createRules.has("MAJOR")) {
-                                            convertOldSpecToNew(createRules.get("MAJOR").get("condition").get("spec"));
-                                        } else if (createRules.has("MINOR")) {
-                                            convertOldSpecToNew(createRules.get("MINOR").get("condition").get("spec"));
-                                        } else if (createRules.has("CRITICAL")) {
-                                            convertOldSpecToNew(createRules.get("CRITICAL").get("condition").get("spec"));
-                                        } else if (createRules.has("WARNING")) {
-                                            convertOldSpecToNew(createRules.get("WARNING").get("condition").get("spec"));
-                                        } else if (createRules.has("INTERMEDIATE")) {
-                                            convertOldSpecToNew(createRules.get("INTERMEDIATE").get("condition").get("spec"));
-                                        }
+                        if(deviceProfile.getProfileData().has("alarms")) {
+                            JsonNode array = deviceProfile.getProfileData().get("alarms");
+                            for (JsonNode node : array) {
+                                if (node.has("createRules")) {
+                                    JsonNode createRules = node.get("createRules");
+                                    if (createRules.has("MAJOR")) {
+                                        convertOldSpecToNew(createRules.get("MAJOR").get("condition").get("spec"));
                                     }
-
-                                    if(node.has("clearRule")) {
-                                        convertOldSpecToNew(node.get("clearRule").get("condition").get("spec"));
+                                    if (createRules.has("MINOR")) {
+                                        convertOldSpecToNew(createRules.get("MINOR").get("condition").get("spec"));
+                                    }
+                                    if (createRules.has("CRITICAL")) {
+                                        convertOldSpecToNew(createRules.get("CRITICAL").get("condition").get("spec"));
+                                    }
+                                    if (createRules.has("WARNING")) {
+                                        convertOldSpecToNew(createRules.get("WARNING").get("condition").get("spec"));
+                                    }
+                                    if (createRules.has("INDETERMINATE")) {
+                                        convertOldSpecToNew(createRules.get("INDETERMINATE").get("condition").get("spec"));
                                     }
                                 }
-                                deviceProfileRepository.save(deviceProfile);
+
+                                if(node.has("clearRule")) {
+                                    convertOldSpecToNew(node.get("clearRule").get("condition").get("spec"));
+                                }
                             }
-                        } catch (Exception e) {
-                            log.error("Some of Alarm Conditions cannot be updated! This may create an errors in future. ");
-                            e.printStackTrace();
+                            deviceProfileRepository.save(deviceProfile);
                         }
                     });
                 } catch (Exception e) {
@@ -550,25 +550,26 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
         return isOldSchema;
     }
 
-    private void convertOldSpecToNew(JsonNode spec) throws Exception {
+    private void convertOldSpecToNew(JsonNode spec) {
         if(spec != null) {
-            if (spec.has("type") && spec.get("type").asText().equals(AlarmConditionSpecType.DURATION.name())) {
+            if (spec.has("type") && spec.get("type").asText().equals("DURATION")) {
                 if (spec.has("value")) {
                     long value = spec.get("value").asLong();
                     var predicate = new FilterPredicateValue<>(
                             value, null, new DynamicValue<>(null, null, false)
                     );
                     ((ObjectNode) spec).remove("value");
-                    ((ObjectNode) spec).put("predicate", new ObjectMapper().writeValueAsString(predicate));
+                    ((ObjectNode) spec).putPOJO("predicate", predicate);
                 }
-            }
-            else if (spec.has("type") && spec.get("type").asText().equals(AlarmConditionSpecType.REPEATING.name())) {
-                int count = spec.get("count").asInt();
-                var predicate = new FilterPredicateValue<>(
-                        count, null, new DynamicValue<>(null, null, false)
-                );
-                ((ObjectNode) spec).remove("count");
-                ((ObjectNode) spec).put("predicate", new ObjectMapper().writeValueAsString(predicate));
+            } else if (spec.has("type") && spec.get("type").asText().equals("REPEATING")) {
+                if (spec.has("count")) {
+                    int count = spec.get("count").asInt();
+                    var predicate = new FilterPredicateValue<>(
+                            count, null, new DynamicValue<>(null, null, false)
+                    );
+                    ((ObjectNode) spec).remove("count");
+                    ((ObjectNode) spec).putPOJO("predicate", predicate);
+                }
             }
         }
     }

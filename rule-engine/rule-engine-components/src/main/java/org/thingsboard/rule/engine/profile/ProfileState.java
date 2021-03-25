@@ -102,19 +102,23 @@ class ProfileState {
         switch (specType) {
             case DURATION:
                 DurationAlarmConditionSpec dynamicAlarmConditionSpec = (DurationAlarmConditionSpec) spec;
-                EntityKey entityKey = new EntityKey(EntityKeyType.ATTRIBUTE, dynamicAlarmConditionSpec.getPredicate().getDynamicValue().getSourceAttribute());
-                if (entityKey.getKey() == null) {
-                    return;
+                if(dynamicAlarmConditionSpec.getPredicate().getDynamicValue() != null) {
+                    EntityKey entityKey = new EntityKey(EntityKeyType.ATTRIBUTE, dynamicAlarmConditionSpec.getPredicate().getDynamicValue().getSourceAttribute());
+                    if (entityKey.getKey() == null) {
+                        return;
+                    }
+                    entityKeys.add(AlarmConditionFilterKey.fromEntityKey(entityKey));
                 }
-                entityKeys.add(AlarmConditionFilterKey.fromEntityKey(entityKey));
                 break;
             case REPEATING:
                 RepeatingAlarmConditionSpec repeating = (RepeatingAlarmConditionSpec) spec;
-                EntityKey repeatingKey = new EntityKey(EntityKeyType.ATTRIBUTE, repeating.getPredicate().getDynamicValue().getSourceAttribute());
-                if(repeatingKey.getKey() == null) {
-                    return;
+                if(repeating.getPredicate().getDynamicValue() != null) {
+                    EntityKey repeatingKey = new EntityKey(EntityKeyType.ATTRIBUTE, repeating.getPredicate().getDynamicValue().getSourceAttribute());
+                    if (repeatingKey.getKey() == null) {
+                        return;
+                    }
+                    entityKeys.add(AlarmConditionFilterKey.fromEntityKey(repeatingKey));
                 }
-                entityKeys.add(AlarmConditionFilterKey.fromEntityKey(repeatingKey));
                 break;
         }
     }

@@ -22,6 +22,9 @@
         <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
           <mat-label></mat-label>
           <input matInput formControlName="defaultValue" placeholder="{{'filter.value' | translate}}">
+          <mat-error *ngIf="this.usageArea === 'condition' && filterPredicateValueFormGroup.get('defaultValue').hasError('required')">
+            {{ 'filter.default-value-required' | translate }}
+          </mat-error>
         </mat-form-field>
       </ng-template>
       <ng-template [ngSwitchCase]="valueTypeEnum.NUMERIC">
@@ -29,6 +32,15 @@
           <mat-label></mat-label>
           <input required type="number" matInput formControlName="defaultValue"
                  placeholder="{{'filter.value' | translate}}">
+          <mat-error *ngIf="this.usageArea === 'condition' && filterPredicateValueFormGroup.get('defaultValue').hasError('required')">
+            {{ 'filter.default-value-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="this.usageArea === 'condition'
+                    && filterPredicateValueFormGroup.get('defaultValue').hasError('pattern')
+                    || filterPredicateValueFormGroup.get('defaultValue').hasError('min')
+                    || filterPredicateValueFormGroup.get('defaultValue').hasError('max')">
+            {{ 'filter.condition-value-size' | translate }}
+          </mat-error>
         </mat-form-field>
       </ng-template>
       <ng-template [ngSwitchCase]="valueTypeEnum.DATE_TIME">
@@ -43,7 +55,6 @@
         </mat-checkbox>
       </ng-template>
     </div>
-    <div class="tb-hint" translate>filter.default-value</div>
   </div>
   <div fxFlex fxLayout="column" [fxShow]="dynamicMode || onlyUserDynamicSource">
     <div formGroupName="dynamicValue" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">

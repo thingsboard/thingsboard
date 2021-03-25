@@ -78,9 +78,8 @@ export class AlarmRuleConditionDialogComponent extends DialogComponent<AlarmRule
       keyFilters: [keyFiltersToKeyFilterInfos(this.condition?.condition), Validators.required],
       spec: this.fb.group({
         type: [AlarmConditionType.SIMPLE, Validators.required],
-        unit: [{value: null, disable: true}, Validators.required],
-        predicate: {},
-        count: [{value: null, disable: true}, [Validators.required, Validators.min(1), Validators.max(2147483647), Validators.pattern('[0-9]*')]]
+        unit: [null, Validators.required],
+        predicate: [null, Validators.required]
       })
     });
     this.conditionFormGroup.patchValue({spec: this.condition?.spec});
@@ -107,18 +106,20 @@ export class AlarmRuleConditionDialogComponent extends DialogComponent<AlarmRule
     switch (type) {
       case AlarmConditionType.DURATION:
         this.conditionFormGroup.get('spec.unit').enable();
-        this.conditionFormGroup.get('spec.count').disable();
         this.conditionFormGroup.get('spec.predicate').enable();
+        break;
+      case AlarmConditionType.REPEATING:
+        this.conditionFormGroup.get('spec.predicate').enable();
+        this.conditionFormGroup.get('spec.unit').disable();
         if (resetDuration) {
           this.conditionFormGroup.get('spec').patchValue({
-            count: null
+            unit: null
           });
         }
         break;
-      case AlarmConditionType.REPEATING:
-        this.conditionFormGroup.get('spec.count').enable();
-        this.conditionFormGroup.get('spec.predicate').enable();
+      case AlarmConditionType.SIMPLE:
         this.conditionFormGroup.get('spec.unit').disable();
+        this.conditionFormGroup.get('spec.predicate').disable();
         if (resetDuration) {
           this.conditionFormGroup.get('spec').patchValue({
             unit: null,
@@ -126,22 +127,9 @@ export class AlarmRuleConditionDialogComponent extends DialogComponent<AlarmRule
           });
         }
         break;
-      case AlarmConditionType.SIMPLE:
-        this.conditionFormGroup.get('spec.unit').disable();
-        this.conditionFormGroup.get('spec.count').disable();
-        this.conditionFormGroup.get('spec.predicate').disable();
-        if (resetDuration) {
-          this.conditionFormGroup.get('spec').patchValue({
-            unit: null,
-            count: null,
-            predicate: null,
-          });
-        }
-        break;
     }
     this.conditionFormGroup.get('spec.predicate').updateValueAndValidity({emitEvent});
     this.conditionFormGroup.get('spec.unit').updateValueAndValidity({emitEvent});
-    this.conditionFormGroup.get('spec.count').updateValueAndValidity({emitEvent});
   }
 
   cancel(): void {
