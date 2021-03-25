@@ -65,10 +65,12 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     private long previousRequestExecutedAt = 0;
     private final AtomicInteger msgIdSeq = new AtomicInteger(0);
     private boolean isActive = true;
+    private final String snmpUnderlyingProtocol;
 
-    public DeviceSessionContext(Device device, DeviceProfile deviceProfile,
-                                String token, SnmpDeviceTransportConfiguration deviceTransportConfiguration,
-                                SnmpTransportContext snmpTransportContext, SnmpTransportService snmpTransportService) {
+    public DeviceSessionContext(Device device, DeviceProfile deviceProfile, String token,
+                                SnmpDeviceTransportConfiguration deviceTransportConfiguration,
+                                SnmpTransportContext snmpTransportContext, SnmpTransportService snmpTransportService,
+                                String snmpUnderlyingProtocol) {
         super(UUID.randomUUID());
         super.setDeviceId(device.getId());
         super.setDeviceProfile(deviceProfile);
@@ -81,6 +83,7 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
         this.profileTransportConfiguration = (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
         this.deviceTransportConfiguration = deviceTransportConfiguration;
 
+        this.snmpUnderlyingProtocol = snmpUnderlyingProtocol;
         initTarget(this.profileTransportConfiguration, this.deviceTransportConfiguration);
     }
 
@@ -100,14 +103,14 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     @Override
     public void onResponse(ResponseEvent event) {
         if (isActive) {
-            snmpTransportService.onNewDeviceResponse(event, this);
+            snmpTransportService.onNewDeviceResponse(this, event);
         }
     }
 
     public void initTarget(SnmpDeviceProfileTransportConfiguration profileTransportConfig, SnmpDeviceTransportConfiguration deviceTransportConfig) {
         log.trace("Initializing target for SNMP session of device {}", device);
         CommunityTarget communityTarget = new CommunityTarget();
-        communityTarget.setAddress(GenericAddress.parse(GenericAddress.TYPE_UDP + ":" + deviceTransportConfig.getAddress() + "/" + deviceTransportConfig.getPort()));
+        communityTarget.setAddress(GenericAddress.parse(snmpUnderlyingProtocol + ":" + deviceTransportConfig.getAddress() + "/" + deviceTransportConfig.getPort()));
         communityTarget.setVersion(deviceTransportConfig.getProtocolVersion().getCode());
         communityTarget.setCommunity(new OctetString(deviceTransportConfig.getCommunity()));
         communityTarget.setTimeout(profileTransportConfig.getTimeoutMs());

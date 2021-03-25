@@ -19,10 +19,13 @@ import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.snmp4j.PDU;
 import org.snmp4j.Snmp;
+import org.snmp4j.TransportMapping;
 import org.snmp4j.event.ResponseEvent;
 import org.snmp4j.smi.Null;
 import org.snmp4j.smi.VariableBinding;
+import org.snmp4j.transport.DefaultTcpTransportMapping;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -57,6 +60,11 @@ public class SnmpTransportService implements TbTransportService {
     private ScheduledExecutorService pollingExecutor;
     private ExecutorService snmpResponseProcessingExecutor;
 
+    @Value("${transport.snmp.response_processing.parallelism_level}")
+    private Integer responseProcessingParallelismLevel;
+    @Value("${transport.snmp.underlying_protocol}")
+    private String snmpUnderlyingProtocol;
+
     public SnmpTransportService(@Lazy SnmpTransportContext snmpTransportContext,
                                 TransportService transportService) {
         this.snmpTransportContext = snmpTransportContext;
@@ -68,8 +76,7 @@ public class SnmpTransportService implements TbTransportService {
         log.info("Initializing SNMP transport service");
 
         pollingExecutor = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("snmp-polling"));
-        //TODO: Set parallelism value in the config
-        snmpResponseProcessingExecutor = Executors.newWorkStealingPool(20);
+        snmpResponseProcessingExecutor = Executors.newWorkStealingPool(responseProcessingParallelismLevel);
 
         initializeSnmp();
 
@@ -77,19 +84,28 @@ public class SnmpTransportService implements TbTransportService {
     }
 
     private void initializeSnmp() throws IOException {
-        snmp = new Snmp(new DefaultUdpTransportMapping());
+        TransportMapping<?> transportMapping;
+        switch (snmpUnderlyingProtocol) {
+            case "udp":
+                transportMapping = new DefaultUdpTransportMapping();
+                break;
+            case "tcp":
+                transportMapping = new DefaultTcpTransportMapping();
+                break;
+            default:
+                throw new IllegalArgumentException("Underlying protocol " + snmpUnderlyingProtocol + " for SNMP is not supported");
+        }
+        snmp = new Snmp(transportMapping);
         snmp.listen();
     }
 
     @AfterStartUp(order = 10)
     public void startPolling() {
         log.info("Starting SNMP polling");
-        //TODO: Get poll period from configuration;
-        int pollPeriodSeconds = 1;
 
         pollingExecutor.scheduleWithFixedDelay(() -> {
             snmpTransportContext.getSessions().forEach(this::executeSnmpRequest);
-        }, 0, pollPeriodSeconds, TimeUnit.SECONDS);
+        }, 0, 1, TimeUnit.SECONDS);
     }
 
     private void executeSnmpRequest(DeviceSessionContext sessionContext) {
@@ -111,12 +127,12 @@ public class SnmpTransportService implements TbTransportService {
         }
     }
 
-    public void onNewDeviceResponse(ResponseEvent responseEvent, DeviceSessionContext sessionContext) {
+    public void onNewDeviceResponse(DeviceSessionContext sessionContext, ResponseEvent responseEvent) {
         ((Snmp) responseEvent.getSource()).cancel(responseEvent.getRequest(), sessionContext);
-        snmpResponseProcessingExecutor.submit(() -> processSnmpResponse(responseEvent, sessionContext));
+        snmpResponseProcessingExecutor.submit(() -> processSnmpResponse(sessionContext, responseEvent));
     }
 
-    private void processSnmpResponse(ResponseEvent event, DeviceSessionContext sessionContext) {
+    private void processSnmpResponse(DeviceSessionContext sessionContext, ResponseEvent event) {
         if (event.getError() != null) {
             log.warn("Response error: {}", event.getError().getMessage(), event.getError());
             return;

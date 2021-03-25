@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.snmp4j.PDU;
 import org.snmp4j.smi.OID;
 import org.snmp4j.smi.VariableBinding;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
@@ -79,6 +80,9 @@ public class SnmpTransportContext extends TransportContext {
     private final Map<DeviceProfileId, List<PDU>> profilesPdus = new ConcurrentHashMap<>();
     private Collection<DeviceId> allSnmpDevicesIds = new ConcurrentLinkedDeque<>();
 
+    @Value("${transport.snmp.underlying_protocol}")
+    private String snmpUnderlyingProtocol;
+
     @AfterStartUp(order = 2)
     public void initDevicesSessions() {
         log.info("Initializing SNMP devices sessions");
@@ -124,9 +128,9 @@ public class SnmpTransportContext extends TransportContext {
         profilesPdus.computeIfAbsent(deviceProfileId, id -> createPdus(profileTransportConfiguration));
 
         DeviceSessionContext deviceSessionContext = new DeviceSessionContext(
-                device, deviceProfile,
-                credentials.getCredentialsId(), deviceTransportConfiguration,
-                this, snmpTransportService
+                device, deviceProfile, credentials.getCredentialsId(),
+                deviceTransportConfiguration, this,
+                snmpTransportService, snmpUnderlyingProtocol
         );
         registerSessionMsgListener(deviceSessionContext);
         sessions.put(device.getId(), deviceSessionContext);

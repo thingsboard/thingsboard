@@ -1,0 +1,27 @@
+{
+  "pollPeriodMs": 3000,
+  "timeoutMs": 500,
+  "retries": 0,
+  "telemetryMappings": [
+    {
+      "oid": ".1.3.6.1.2.1.1.1.50",
+      "method": "GET",
+      "key": "temperature",
+      "dataType": "LONG"
+    },
+    {
+      "oid": ".1.3.6.1.2.1.2.1.52",
+      "method": "GET",
+      "key": "humidity",
+      "dataType": "LONG"
+    }
+  ],
+  "attributesMappings": [
+    {
+      "oid": ".1.3.6.1.2.1.3.1.54",
+      "method": "GET",
+      "key": "isCool",
+      "dataType": "STRING"
+    }
+  ]
+}
