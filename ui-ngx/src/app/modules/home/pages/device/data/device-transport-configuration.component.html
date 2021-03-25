@@ -35,6 +35,12 @@
         formControlName="configuration">
       </tb-lwm2m-device-transport-configuration>
     </ng-template-->
+    <ng-template [ngSwitchCase]="deviceTransportType.COAP">
+      <tb-coap-device-transport-configuration
+        [required]="required"
+        formControlName="configuration">
+      </tb-coap-device-transport-configuration>
+    </ng-template>
     <ng-template [ngSwitchCase]="deviceTransportType.SNMP">
       <tb-snmp-device-transport-configuration
         [required]="required"

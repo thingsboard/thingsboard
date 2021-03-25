@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.service;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -56,6 +57,7 @@ import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
+import org.thingsboard.server.common.data.query.StringFilterPredicate.StringOperation;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
@@ -72,6 +74,9 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.junit.Assert.assertEquals;
 
 public abstract class BaseEntityServiceTest extends AbstractServiceTest {
 
@@ -539,6 +544,155 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         Assert.assertEquals("Device19", data.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue());
 
         deviceService.deleteDevicesByTenantId(tenantId);
+    }
+
+    @Test
+    public void testFindEntityDataByQuery_operationEqual_emptySearchQuery() {
+        List<Device> devices = createMockDevices(10);
+        devices.get(0).setLabel("");
+        devices.get(1).setLabel(null);
+        devices.forEach(deviceService::saveDevice);
+
+        String searchQuery = "";
+        EntityDataQuery query = createDeviceSearchQuery("label", StringOperation.EQUAL, searchQuery);
+
+        PageData<EntityData> result = searchEntities(query);
+        assertEquals(devices.size(), result.getTotalElements());
+    }
+
+    @Test
+    public void testFindEntityDataByQuery_operationNotEqual() {
+        List<Device> devices = createMockDevices(10);
+        devices.get(0).setLabel("");
+        devices.get(1).setLabel(null);
+        devices.forEach(deviceService::saveDevice);
+
+        String searchQuery = devices.get(2).getLabel();
+        EntityDataQuery query = createDeviceSearchQuery("label", StringOperation.NOT_EQUAL, searchQuery);
+
+        PageData<EntityData> result = searchEntities(query);
+        assertEquals(devices.size() - 1, result.getTotalElements());
+    }
+
+    @Test
+    public void testFindEntityDataByQuery_operationNotEqual_emptySearchQuery() {
+        List<Device> devices = createMockDevices(10);
+        devices.get(0).setLabel("");
+        devices.get(1).setLabel(null);
+        devices.forEach(deviceService::saveDevice);
+
+        String searchQuery = "";
+        EntityDataQuery query = createDeviceSearchQuery("label", StringOperation.NOT_EQUAL, searchQuery);
+
+        PageData<EntityData> result = searchEntities(query);
+        assertEquals(devices.size(), result.getTotalElements());
+    }
+
+    @Test
+    public void testFindEntityDataByQuery_operationStartsWith_emptySearchQuery() {
+        List<Device> devices = createMockDevices(10);
+        devices.get(0).setLabel("");
+        devices.get(1).setLabel(null);
+        devices.forEach(deviceService::saveDevice);
+
+        String searchQuery = "";
+        EntityDataQuery query = createDeviceSearchQuery("label", StringOperation.STARTS_WITH, searchQuery);
+
+        PageData<EntityData> result = searchEntities(query);
+        assertEquals(devices.size(), result.getTotalElements());
+    }
+
+    @Test
+    public void testFindEntityDataByQuery_operationEndsWith_emptySearchQuery() {
+        List<Device> devices = createMockDevices(10);
+        devices.get(0).setLabel("");
+        devices.get(1).setLabel(null);
+        devices.forEach(deviceService::saveDevice);
+
+        String searchQuery = "";
+        EntityDataQuery query = createDeviceSearchQuery("label", StringOperation.ENDS_WITH, searchQuery);
+
+        PageData<EntityData> result = searchEntities(query);
+        assertEquals(devices.size(), result.getTotalElements());
+    }
+
+    @Test
+    public void testFindEntityDataByQuery_operationContains_emptySearchQuery() {
+        List<Device> devices = createMockDevices(10);
+        devices.get(0).setLabel("");
+        devices.get(1).setLabel(null);
+        devices.forEach(deviceService::saveDevice);
+
+        String searchQuery = "";
+        EntityDataQuery query = createDeviceSearchQuery("label", StringOperation.CONTAINS, searchQuery);
+
+        PageData<EntityData> result = searchEntities(query);
+        assertEquals(devices.size(), result.getTotalElements());
+    }
+
+    @Test
+    public void testFindEntityDataByQuery_operationNotContains() {
+        List<Device> devices = createMockDevices(10);
+        devices.get(0).setLabel("");
+        devices.get(1).setLabel(null);
+        devices.forEach(deviceService::saveDevice);
+
+        String searchQuery = "label-";
+        EntityDataQuery query = createDeviceSearchQuery("label", StringOperation.NOT_CONTAINS, searchQuery);
+
+        PageData<EntityData> result = searchEntities(query);
+        assertEquals(2, result.getTotalElements());
+    }
+
+    @Test
+    public void testFindEntityDataByQuery_operationNotContains_emptySearchQuery() {
+        List<Device> devices = createMockDevices(10);
+        devices.get(0).setLabel("");
+        devices.get(1).setLabel(null);
+        devices.forEach(deviceService::saveDevice);
+
+        String searchQuery = "";
+        EntityDataQuery query = createDeviceSearchQuery("label", StringOperation.NOT_CONTAINS, searchQuery);
+
+        PageData<EntityData> result = searchEntities(query);
+        assertEquals(devices.size(), result.getTotalElements());
+    }
+
+    private PageData<EntityData> searchEntities(EntityDataQuery query) {
+        return entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), query);
+    }
+
+    private EntityDataQuery createDeviceSearchQuery(String deviceField, StringOperation operation, String searchQuery) {
+        DeviceTypeFilter deviceTypeFilter = new DeviceTypeFilter();
+        deviceTypeFilter.setDeviceType("default");
+        deviceTypeFilter.setDeviceNameFilter("");
+
+        EntityDataSortOrder sortOrder = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC
+        );
+        EntityDataPageLink pageLink = new EntityDataPageLink(1000, 0, null, sortOrder);
+        List<EntityKey> entityFields = Arrays.asList(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "name"),
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "label")
+        );
+
+        List<KeyFilter> keyFilters = createStringKeyFilters(deviceField, EntityKeyType.ENTITY_FIELD, operation, searchQuery);
+
+        return new EntityDataQuery(deviceTypeFilter, pageLink, entityFields, null, keyFilters);
+    }
+
+    private List<Device> createMockDevices(int count) {
+        return Stream.iterate(1, i -> i + 1)
+                .map(i -> {
+                    Device device = new Device();
+                    device.setTenantId(tenantId);
+                    device.setName("Device " + i);
+                    device.setType("default");
+                    device.setLabel("label-" + RandomUtils.nextInt(100, 10000));
+                    return device;
+                })
+                .limit(count)
+                .collect(Collectors.toList());
     }
 
     @Test

@@ -17,23 +17,13 @@ package org.thingsboard.server.service.lwm2m;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.util.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.lwm2m.LwM2mInstance;
-import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
-import org.thingsboard.server.common.data.lwm2m.LwM2mResource;
 import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigBootstrap;
 import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigServer;
-import org.thingsboard.server.dao.service.Validator;
-import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 
 import java.math.BigInteger;
@@ -49,16 +39,6 @@ import java.security.spec.ECParameterSpec;
 import java.security.spec.ECPoint;
 import java.security.spec.ECPublicKeySpec;
 import java.security.spec.KeySpec;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Slf4j
 @Service
@@ -73,127 +53,6 @@ public class LwM2MModelsRepository {
 
     @Autowired
     LwM2MTransportConfigBootstrap contextBootStrap;
-
-    /**
-     * @param objectIds
-     * @param textSearch
-     * @return list of LwM2mObject
-     * Filter by Predicate (uses objectIds, if objectIds is null then it uses textSearch,
-     * if textSearch is null then it uses AllList from  List<ObjectModel>)
-     */
-    public List<LwM2mObject> getLwm2mObjects(int[] objectIds, String textSearch, String sortProperty, String sortOrder) {
-        if (objectIds == null && textSearch != null && !textSearch.isEmpty()) {
-             objectIds = getObjectIdFromTextSearch(textSearch);
-        }
-        int[] finalObjectIds = objectIds;
-        return getLwm2mObjects((objectIds != null && objectIds.length > 0  && textSearch != null && !textSearch.isEmpty()) ?
-                        (ObjectModel element) -> IntStream.of(finalObjectIds).anyMatch(x -> x == element.id) || element.name.toLowerCase().contains(textSearch.toLowerCase()) :
-                        (objectIds != null && objectIds.length > 0) ?
-                                (ObjectModel element) -> IntStream.of(finalObjectIds).anyMatch(x -> x == element.id) :
-                                (textSearch != null && !textSearch.isEmpty()) ?
-                                        (ObjectModel element) -> element.name.contains(textSearch) :
-                                        null,
-                sortProperty, sortOrder);
-    }
-
-    /**
-     * @param predicate
-     * @return list of LwM2mObject
-     */
-    private List<LwM2mObject> getLwm2mObjects(Predicate<? super ObjectModel> predicate, String sortProperty, String sortOrder) {
-        List<LwM2mObject> lwM2mObjects = new ArrayList<>();
-        List<ObjectModel> listObjects = (predicate == null) ? this.contextServer.getModelsValue() :
-                contextServer.getModelsValue().stream()
-                        .filter(predicate)
-                        .collect(Collectors.toList());
-
-        listObjects.forEach(obj -> {
-            LwM2mObject lwM2mObject = new LwM2mObject();
-            lwM2mObject.setId(obj.id);
-            lwM2mObject.setName(obj.name);
-            lwM2mObject.setMultiple(obj.multiple);
-            lwM2mObject.setMandatory(obj.mandatory);
-            LwM2mInstance instance = new LwM2mInstance();
-            instance.setId(0);
-            List<LwM2mResource> resources = new ArrayList<>();
-            obj.resources.forEach((k, v) -> {
-                if (!v.operations.isExecutable()) {
-                    LwM2mResource resource = new LwM2mResource(k, v.name, false, false, false);
-                    resources.add(resource);
-                }
-            });
-            instance.setResources(resources.stream().toArray(LwM2mResource[]::new));
-            lwM2mObject.setInstances(new LwM2mInstance[]{instance});
-            lwM2mObjects.add(lwM2mObject);
-        });
-        return lwM2mObjects.size() > 1 ? this.sortList (lwM2mObjects, sortProperty, sortOrder) : lwM2mObjects;
-    }
-
-    private List<LwM2mObject> sortList (List<LwM2mObject> lwM2mObjects, String sortProperty, String sortOrder) {
-        switch (sortProperty) {
-            case "name":
-                switch (sortOrder) {
-                    case "ASC":
-                        lwM2mObjects.sort((o1, o2) -> o1.getName().compareTo(o2.getName()));
-                        break;
-                    case "DESC":
-                        lwM2mObjects.stream().sorted(Comparator.comparing(LwM2mObject::getName).reversed());
-                        break;
-                }
-            case "id":
-                switch (sortOrder) {
-                    case "ASC":
-                        lwM2mObjects.sort((o1, o2) -> Long.compare(o1.getId(), o2.getId()));
-                        break;
-                    case "DESC":
-                        lwM2mObjects.sort((o1, o2) -> Long.compare(o2.getId(), o1.getId()));
-                }
-        }
-        return lwM2mObjects;
-    }
-
-    /**
-     * @param tenantId
-     * @param pageLink
-     * @return List of LwM2mObject in PageData format
-     */
-    public PageData<LwM2mObject> findDeviceLwm2mObjects(TenantId tenantId, PageLink pageLink) {
-        log.trace("Executing findDeviceProfileInfos tenantId [{}], pageLink [{}]", tenantId, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        Validator.validatePageLink(pageLink);
-        return this.findLwm2mListObjects(pageLink);
-    }
-
-    /**
-     * @param pageLink
-     * @return List of LwM2mObject in PageData format, filter == TextSearch
-     * PageNumber = 1, PageSize = List<LwM2mObject>.size()
-     */
-    public PageData<LwM2mObject> findLwm2mListObjects(PageLink pageLink) {
-        PageImpl<LwM2mObject> page = new PageImpl<>(getLwm2mObjects(getObjectIdFromTextSearch(pageLink.getTextSearch()),
-                                                                               pageLink.getTextSearch(),
-                                                                               pageLink.getSortOrder().getProperty(),
-                                                                               pageLink.getSortOrder().getDirection().name()));
-        PageData<LwM2mObject> pageData = new PageData<>(page.getContent(), page.getTotalPages(), page.getTotalElements(), page.hasNext());
-        return pageData;
-    }
-
-    /**
-     * Filter for id Object
-     * @param textSearch -
-     * @return - return Object id only first chartAt in textSearch
-     */
-    private int[] getObjectIdFromTextSearch(String textSearch) {
-        String filtered = null;
-        if (textSearch !=null && !textSearch.isEmpty()) {
-            AtomicInteger a = new AtomicInteger();
-            filtered = textSearch.chars ()
-                    .mapToObj(chr -> (char) chr)
-                    .filter(i -> Character.isDigit(i) && textSearch.charAt(a.getAndIncrement()) == i)
-                    .collect(Collector.of(StringBuilder::new, StringBuilder::append, StringBuilder::append, StringBuilder::toString));
-        }
-        return (filtered != null && !filtered.isEmpty()) ? new int[]{Integer.parseInt(filtered)} : new int[0];
-    }
 
     /**
      * @param securityMode

@@ -646,6 +646,7 @@
         "add-widget": "Add new widget",
         "title": "Title",
         "select-widget-title": "Select widget",
+        "select-widget-value": "{{title}}: select widget",
         "select-widget-subtitle": "List of available widget types",
         "delete": "Delete dashboard",
         "title-required": "Title is required.",
@@ -691,6 +692,8 @@
         "background-size-mode": "Background size mode",
         "no-image": "No image selected",
         "drop-image": "Drop an image or click to select a file to upload.",
+        "maximum-upload-file-size": "Maximum upload file size: {{ size }}",
+        "cannot-upload-file": "Cannot upload file",
         "settings": "Settings",
         "columns-count": "Columns count",
         "columns-count-required": "Columns count is required.",
@@ -987,6 +990,8 @@
         "transport-type-default-hint": "Supports basic MQTT, HTTP and CoAP transport",
         "transport-type-mqtt": "MQTT",
         "transport-type-mqtt-hint": "Enables advanced MQTT transport settings",
+        "transport-type-coap": "CoAP",
+        "transport-type-coap-hint": "Enables advanced CoAP transport settings",
         "transport-type-lwm2m": "LWM2M",
         "transport-type-lwm2m-hint": "LWM2M transport type",
         "transport-type-snmp": "SNMP",
@@ -1017,7 +1022,14 @@
         "snmp-method-pdu-type-get-request": "GetRequest",
         "snmp-method-pdu-type-get-next-request": "GetNextRequest",
         "snmp-oid": "OID",
+        "transport-device-payload-type-json": "JSON",
+        "transport-device-payload-type-proto": "Protobuf",
         "mqtt-payload-type-required": "Payload type is required.",
+        "coap-device-type": "CoAP device type",
+        "coap-device-payload-type": "CoAP device payload",
+        "coap-device-type-required": "CoAP device type is required.",
+        "coap-device-type-default": "Default",
+        "coap-device-type-efento": "Efento NB-IoT",
         "support-level-wildcards": "Single <code>[+]</code> and multi-level <code>[#]</code> wildcards supported.",
         "telemetry-topic-filter": "Telemetry topic filter",
         "telemetry-topic-filter-required": "Telemetry topic filter is required.",
@@ -1116,8 +1128,15 @@
         "schedule-time-from": "From",
         "schedule-time-to": "To",
         "schedule-days-of-week-required": "At least one day of week should be selected.",
+        "create-device-profile": "Create new device profile",
+        "import": "Import device profile",
+        "export": "Export device profile",
+        "export-failed-error": "Unable to export device profile: {{error}}",
+        "device-profile-file": "Device profile file",
+        "invalid-device-profile-file-error": "Unable to import device profile: Invalid device profile data structure.",
         "lwm2m": {
-            "client-only-observe-after-connect": "{ count, plural, 1 {Strategy 1: Only Observe Request to the client after the initial connection} other {Strategy 2: Read All Resources & Observe Request to the client after registration} }",
+            "client-only-observe-after-connect-label": "Strategy",
+            "client-only-observe-after-connect": "{ count, plural, 1 {1: Only Observe Request to the client after the initial connection} other {2: Read All Resources & Observe Request to the client after registration} }",
             "client-only-observe-after-connect-tip": "{ count, plural, 1 {Strategy 1: After the initial connection of the LWM2M Client, the server sends Observe resources Request to the client, those resources that are marked as observation in the Device profile and which exist on the LWM2M client.} other {Strategy  2: After the registration, request the client to read all the resource values for all objects that the LWM2M client has,\n then execute:  the server sends Observe resources Request to the client, those resources that are marked as observation in the Device profile and which exist on the LWM2M client.} }",
             "object-list": "Object list",
             "object-list-empty": "No objects selected.",
@@ -1872,6 +1891,7 @@
         "avg": "avg",
         "total": "total",
         "comparison-time-ago": {
+            "previousInterval": "(previous interval)",
             "days": "(day ago)",
             "weeks": "(week ago)",
             "months": "(month ago)",
@@ -1953,6 +1973,31 @@
         "additional-info": "Additional info (JSON)",
         "invalid-additional-info": "Unable to parse additional info json.",
         "no-relations-text": "No relations found"
+    },
+    "resource": {
+        "add": "Add Resource",
+        "delete": "Delete resource",
+        "delete-resource-text": "Be careful, after the confirmation the resource will become unrecoverable.",
+        "delete-resource-title": "Are you sure you want to delete the resource '{{resourceTitle}}'?",
+        "delete-resources-action-title": "Delete { count, plural, 1 {1 resource} other {# resources} }",
+        "delete-resources-text": "Be careful, after the confirmation all selected resources will be removed.",
+        "delete-resources-title": "Are you sure you want to delete { count, plural, 1 {1 resource} other {# resources} }?",
+        "drop-file": "Drop a resource file or click to select a file to upload.",
+        "empty": "Resource is empty",
+        "export": "Export resource",
+        "management": "Resource management",
+        "no-resource-matching": "No resource matching '{{widgetsBundle}}' were found.",
+        "no-resource-text": "No resources found",
+        "open-widgets-bundle": "Open widgets bundle",
+        "resource": "Resource",
+        "resource-library-details": "Resource library details",
+        "resource-type": "Resource type",
+        "resources-library": "Resources library",
+        "search": "Search resources",
+        "selected-resources": "{ count, plural, 1 {1 resource} other {# resources} } selected",
+        "system": "System",
+        "title": "Title",
+        "title-required": "Title is required."
     },
     "rulechain": {
         "rulechain": "Rule chain",
@@ -2062,7 +2107,8 @@
       "timezone": "Timezone",
       "select-timezone": "Select timezone",
       "no-timezones-matching": "No timezones matching '{{timezone}}' were found.",
-      "timezone-required": "Timezone is required."
+      "timezone-required": "Timezone is required.",
+      "browser-time": "Browser Time"
     },
     "queue": {
       "select_name": "Select queue name",
@@ -2192,7 +2238,24 @@
         "hours": "Hours",
         "minutes": "Minutes",
         "seconds": "Seconds",
-        "advanced": "Advanced"
+        "advanced": "Advanced",
+        "predefined": {
+          "yesterday": "Yesterday",
+          "day-before-yesterday": "Day before yesterday",
+          "this-day-last-week": "This day last week",
+          "previous-week": "Previous week",
+          "previous-month": "Previous month",
+          "previous-year": "Previous year",
+          "current-hour": "Current hour",
+          "current-day": "Current day",
+          "current-day-so-far": "Current day so far",
+          "current-week": "Current week",
+          "current-week-so-far": "Current week so far",
+          "current-month": "Current month",
+          "current-month-so-far": "Current month so far",
+          "current-year": "Current year",
+          "current-year-so-far": "Current year so far"
+        }
     },
     "timeunit": {
         "seconds": "Seconds",
@@ -2213,7 +2276,8 @@
         "date-range": "Date range",
         "last": "Last",
         "time-period": "Time period",
-        "hide": "Hide"
+        "hide": "Hide",
+        "interval": "Interval"
     },
     "user": {
         "user": "User",
@@ -2289,6 +2353,7 @@
     "widget": {
         "widget-library": "Widgets Library",
         "widget-bundle": "Widgets Bundle",
+        "all-bundles": "All bundles",
         "select-widgets-bundle": "Select widgets bundle",
         "management": "Widget management",
         "editor": "Widget Editor",
@@ -2301,7 +2366,7 @@
         "timeseries": "Time series",
         "search-data": "Search data",
         "no-data-found": "No data found",
-        "latest-values": "Latest values",
+        "latest": "Latest values",
         "rpc": "Control widget",
         "alarm": "Alarm widget",
         "static": "Static widget",
@@ -2328,6 +2393,9 @@
         "css": "CSS",
         "settings-schema": "Settings schema",
         "datakey-settings-schema": "Data key settings schema",
+        "widget-settings": "Widget settings",
+        "description": "Description",
+        "image-preview": "Image preview",
         "javascript": "Javascript",
         "js": "JS",
         "remove-widget-type-title": "Are you sure you want to remove the widget type '{{widgetName}}'?",
@@ -2341,7 +2409,10 @@
         "export": "Export widget",
         "no-data": "No data to display on widget",
         "data-overflow": "Widget displays {{count}} out of {{total}} entities",
-        "alarm-data-overflow": "Widget displays alarms for {{allowedEntities}} (maximum allowed) entities out of {{totalEntities}} entities"
+        "alarm-data-overflow": "Widget displays alarms for {{allowedEntities}} (maximum allowed) entities out of {{totalEntities}} entities",
+        "search": "Search widget",
+        "filter": "Widget filter type",
+        "loading-widgets": "Loading widgets..."
     },
     "widget-action": {
         "header-button": "Widget header button",
@@ -2370,6 +2441,8 @@
         "delete": "Delete widgets bundle",
         "title": "Title",
         "title-required": "Title is required.",
+        "description": "Description",
+        "image-preview": "Image preview",
         "add-widgets-bundle-text": "Add new widgets bundle",
         "no-widgets-bundles-text": "No widgets bundles found",
         "empty": "Widgets bundle is empty",
@@ -2391,7 +2464,8 @@
         "invalid-widgets-bundle-file-error": "Unable to import widgets bundle: Invalid widgets bundle data structure.",
         "search": "Search widget bundles",
         "selected-widgets-bundles": "{ count, plural, 1 {1 widgets bundle} other {# widgets bundles} } selected",
-        "open-widgets-bundle": "Open widgets bundle"
+        "open-widgets-bundle": "Open widgets bundle",
+        "loading-widgets-bundles": "Loading widgets bundles..."
     },
     "widget-config": {
         "data": "Data",

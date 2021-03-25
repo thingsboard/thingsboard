@@ -1468,7 +1468,7 @@
         "timeseries": "Laika sērijas",
         "search-data": "Meklēt datus",
         "no-data-found": "Nav datu atrasti",
-        "latest-values": "Pedējās vērtības",
+        "latest": "Pedējās vērtības",
         "rpc": "Kontroles logrīks",
         "alarm": "Trauksmes logrīks",
         "static": "Statiskais logrīks",
