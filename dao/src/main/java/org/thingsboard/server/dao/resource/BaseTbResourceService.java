@@ -87,7 +87,7 @@ public class BaseTbResourceService implements TbResourceService {
                 String resourceKey = objectModel.id + LWM2M_SEPARATOR_KEY + objectModel.getVersion();
                 String name = objectModel.name;
                 resource.setResourceKey(resourceKey);
-                resource.setTitle(name);
+                resource.setTitle(name + " id=" +objectModel.id + " v" + objectModel.getVersion());
                 resource.setSearchText(resourceKey + LWM2M_SEPARATOR_SEARCH_TEXT + name);
             } else {
                 throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getSearchText()));
