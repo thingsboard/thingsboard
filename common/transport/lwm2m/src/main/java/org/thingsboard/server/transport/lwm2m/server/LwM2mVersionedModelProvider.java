@@ -85,7 +85,7 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
                 if (objectModel != null)
                     return objectModel.resources.get(resourceId);
                 else
-                    log.warn("TbResources (Object model) with id [{}/{}] not found on the server", objectId, resourceId);
+                    log.warn("TbResources (Object model) with id [{}/0/{}] not found on the server", objectId, resourceId);
                     return null;
             } catch (Exception e) {
                 log.error("", e);

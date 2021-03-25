@@ -18,10 +18,7 @@ package org.thingsboard.server.common.transport.lwm2m;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.model.ResourceModel;
-import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
-import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
@@ -218,14 +215,5 @@ public class LwM2MTransportConfigServer {
             FULL_FILE_PATH = Paths.get(BASE_DIR_PATH);
         }
         return FULL_FILE_PATH.toUri().getPath();
-    }
-
-    public ResourceModel getResourceModel(Registration registration, LwM2mPath pathIds) {
-        return this.modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
-    }
-
-    public ResourceModel.Type getResourceModelType(Registration registration, LwM2mPath pathIds) {
-        ResourceModel resource = this.getResourceModel(registration, pathIds);
-        return (resource == null) ? null : resource.type;
     }
 }

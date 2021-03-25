@@ -34,25 +34,25 @@ public class LwM2mClientProfile {
 
     /**
      * {"keyName": {
-     *       "/3/0/1": "modelNumber",
-     *       "/3/0/0": "manufacturer",
-     *       "/3/0/2": "serialNumber"
+     *       "/3_1.0/0/1": "modelNumber",
+     *       "/3_1.0/0/0": "manufacturer",
+     *       "/3_1.0/0/2": "serialNumber"
      *       }
      **/
     private JsonObject postKeyNameProfile;
 
     /**
-     * [ "/2/0/0", "/2/0/1"]
+     * [ "/3_1.0/0/0", "/3_1.0/0/1"]
      */
     private JsonArray postAttributeProfile;
 
     /**
-     * [ "/2/0/0", "/2/0/1"]
+     * [ "/3_1.0/0/0", "/3_1.0/0/2"]
      */
     private JsonArray postTelemetryProfile;
 
     /**
-     * [ "/2/0/0", "/2/0/1"]
+     * [ "/3_1.0/0", "/3_1.0/0/1, "/3_1.0/0/2"]
      */
     private JsonArray postObserveProfile;
 

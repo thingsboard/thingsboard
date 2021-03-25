@@ -47,6 +47,10 @@ public interface LwM2mTransportService {
 
     void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt);
 
+    void onResourceUpdate (Optional<TransportProtos.ResourceUpdateMsg> resourceUpdateMsgOpt);
+
+    void onResourceDelete(Optional<TransportProtos.ResourceDeleteMsg> resourceDeleteMsgOpt);
+
     void doTrigger(Registration registration, String path);
 
     void doDisconnect(TransportProtos.SessionInfoProto sessionInfo);

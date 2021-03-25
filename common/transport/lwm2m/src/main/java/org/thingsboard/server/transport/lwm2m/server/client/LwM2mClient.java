@@ -17,9 +17,10 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.node.LwM2mMultipleResource;
+import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
-import org.eclipse.leshan.core.node.LwM2mSingleResource;
+import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -28,9 +29,14 @@ import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServiceImpl;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
+
+import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertToObjectIdFromIdVer;
 
 @Slf4j
 @Data
@@ -67,21 +73,74 @@ public class LwM2mClient implements Cloneable {
         this.init = false;
     }
 
-    public void updateResourceValue(String pathRez, LwM2mResource rez) {
-        if (rez instanceof LwM2mMultipleResource) {
-            this.resources.put(pathRez, new ResourceValue(rez.getValues(), null, true));
-        } else if (rez instanceof LwM2mSingleResource) {
-            this.resources.put(pathRez, new ResourceValue(null, rez.getValue(), false));
+    public boolean saveResourceValue(String pathRez, LwM2mResource rez, LwM2mModelProvider modelProvider) {
+        if (this.resources.get(pathRez) != null && this.resources.get(pathRez).getResourceModel() != null) {
+            this.resources.get(pathRez).setLwM2mResource(rez);
+            return true;
+        } else {
+            LwM2mPath pathIds = new LwM2mPath(convertToObjectIdFromIdVer(pathRez));
+            ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
+            if (resourceModel != null) {
+                this.resources.put(pathRez, new ResourceValue(rez, resourceModel));
+                return true;
+            } else {
+                return false;
+            }
         }
     }
 
-    public void initValue(LwM2mTransportServiceImpl lwM2MTransportService, String path) {
+    public ResourceModel getResourceModel(String pathRez) {
+        if (this.getResources().get(pathRez) != null) {
+            return this.getResources().get(pathRez).getResourceModel();
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     *
+     * @param pathIdVer == "3_1.0"
+     * @param modelProvider -
+     */
+    public void deleteResources(String pathIdVer, LwM2mModelProvider modelProvider) {
+        Set key = getKeysEqualsIdVer(pathIdVer);
+        key.forEach(pathRez -> {
+            LwM2mPath pathIds = new LwM2mPath(convertToObjectIdFromIdVer(pathRez.toString()));
+            ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
+            if (resourceModel != null) {
+                this.resources.get(pathRez).setResourceModel(resourceModel);
+            }
+            else {
+                this.resources.remove(pathRez);
+            }
+        });
+    }
+
+    public void updateResourceModel(String idVer, LwM2mModelProvider modelProvider) {
+        Set key = getKeysEqualsIdVer(idVer);
+        key.forEach(k -> this.saveResourceModel(k.toString(), modelProvider));
+    }
+
+    private void saveResourceModel(String pathRez, LwM2mModelProvider modelProvider) {
+        LwM2mPath pathIds = new LwM2mPath(convertToObjectIdFromIdVer(pathRez));
+        ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
+        this.resources.get(pathRez).setResourceModel(resourceModel);
+    }
+
+    private Set getKeysEqualsIdVer(String idVer) {
+        return this.resources.keySet()
+                .stream()
+                .filter(e -> idVer.equals(e.split(LWM2M_SEPARATOR_PATH)[1]))
+                .collect(Collectors.toSet());
+    }
+
+    public void initValue(LwM2mTransportServiceImpl serviceImpl, String path) {
         if (path != null) {
             this.pendingRequests.remove(path);
         }
         if (this.pendingRequests.size() == 0) {
             this.init = true;
-            lwM2MTransportService.putDelayedUpdateResourcesThingsboard(this);
+            serviceImpl.putDelayedUpdateResourcesThingsboard(this);
         }
     }
 

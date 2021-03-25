@@ -16,23 +16,16 @@
 package org.thingsboard.server.transport.lwm2m.server.client;
 
 import lombok.Data;
-
-import java.util.Map;
+import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mResource;
 
 @Data
 public class ResourceValue {
-    Map<Integer, ?>  values;
-    Object value;
-    boolean multiInstances;
+    private LwM2mResource lwM2mResource;
+    private ResourceModel resourceModel;
 
-    public ResourceValue(Map<Integer, ?> values, Object value, boolean multiInstances) {
-        this.values = values;
-        this.value = value;
-        this.multiInstances = multiInstances;
+    public ResourceValue(LwM2mResource lwM2mResource, ResourceModel resourceModel) {
+        this.lwM2mResource = lwM2mResource;
+        this.resourceModel = resourceModel;
     }
-
-    public Object getResourceValue() {
-        return this.multiInstances ? this.values : this.value;
-    }
-
 }
