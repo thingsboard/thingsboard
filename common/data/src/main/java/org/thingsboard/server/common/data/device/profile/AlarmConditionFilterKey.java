@@ -16,39 +16,11 @@
 package org.thingsboard.server.common.data.device.profile;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.query.EntityKey;
-import org.thingsboard.server.common.data.query.EntityKeyType;
 
 @Data
 public class AlarmConditionFilterKey {
 
     private final AlarmConditionKeyType type;
     private final String key;
-
-    public static AlarmConditionFilterKey fromEntityKey(EntityKey entityKey) {
-        String key = entityKey.getKey();
-        EntityKeyType entityKeyType = entityKey.getType();
-
-        AlarmConditionKeyType alarmConditionKeyType;
-        switch (entityKeyType) {
-            case ATTRIBUTE:
-            case CLIENT_ATTRIBUTE:
-            case SHARED_ATTRIBUTE:
-            case SERVER_ATTRIBUTE:
-                alarmConditionKeyType = AlarmConditionKeyType.ATTRIBUTE;
-                break;
-            case TIME_SERIES:
-                alarmConditionKeyType = AlarmConditionKeyType.TIME_SERIES;
-                break;
-            case ENTITY_FIELD:
-            case ALARM_FIELD:
-                alarmConditionKeyType = AlarmConditionKeyType.ENTITY_FIELD;
-                break;
-            default:
-                return null;
-        }
-
-        return new AlarmConditionFilterKey(alarmConditionKeyType, key);
-    }
 
 }

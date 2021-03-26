@@ -31,8 +31,6 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.DynamicValueSourceType;
-import org.thingsboard.server.common.data.query.EntityKey;
-import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.KeyFilterPredicate;
 import org.thingsboard.server.common.data.query.SimpleKeyFilterPredicate;
 
@@ -101,26 +99,27 @@ class ProfileState {
         AlarmConditionSpecType specType = spec.getType();
         switch (specType) {
             case DURATION:
-                DurationAlarmConditionSpec dynamicAlarmConditionSpec = (DurationAlarmConditionSpec) spec;
-                if(dynamicAlarmConditionSpec.getPredicate().getDynamicValue() != null) {
-                    EntityKey entityKey = new EntityKey(EntityKeyType.ATTRIBUTE, dynamicAlarmConditionSpec.getPredicate().getDynamicValue().getSourceAttribute());
-                    if (entityKey.getKey() == null) {
-                        return;
-                    }
-                    entityKeys.add(AlarmConditionFilterKey.fromEntityKey(entityKey));
+                DurationAlarmConditionSpec duration = (DurationAlarmConditionSpec) spec;
+                if(duration.getPredicate().getDynamicValue() != null
+                        && duration.getPredicate().getDynamicValue().getSourceAttribute() != null) {
+                    entityKeys.add(
+                            new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE,
+                                    duration.getPredicate().getDynamicValue().getSourceAttribute())
+                    );
                 }
                 break;
             case REPEATING:
                 RepeatingAlarmConditionSpec repeating = (RepeatingAlarmConditionSpec) spec;
-                if(repeating.getPredicate().getDynamicValue() != null) {
-                    EntityKey repeatingKey = new EntityKey(EntityKeyType.ATTRIBUTE, repeating.getPredicate().getDynamicValue().getSourceAttribute());
-                    if (repeatingKey.getKey() == null) {
-                        return;
-                    }
-                    entityKeys.add(AlarmConditionFilterKey.fromEntityKey(repeatingKey));
+                if(repeating.getPredicate().getDynamicValue() != null
+                        && repeating.getPredicate().getDynamicValue().getSourceAttribute() != null) {
+                    entityKeys.add(
+                            new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE,
+                                    repeating.getPredicate().getDynamicValue().getSourceAttribute())
+                    );
                 }
                 break;
         }
+
     }
 
     private void addDynamicValuesRecursively(KeyFilterPredicate predicate, Set<AlarmConditionFilterKey> entityKeys, Set<AlarmConditionFilterKey> ruleKeys) {
