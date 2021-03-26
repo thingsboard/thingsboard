@@ -59,7 +59,7 @@ export const SECURITY_CONFIG_MODE_NAMES = new Map<SECURITY_CONFIG_MODE, string>(
 );
 
 export interface ModelValue {
-  objectIds: string[] | null,
+  objectIds: string[],
   objectsList: ObjectLwM2M[]
 }
 
