@@ -23,23 +23,36 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Slf4j
 public abstract class DataValidator<D extends BaseData<?>> {
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", Pattern.CASE_INSENSITIVE);
 
+    private static final Validator fieldsValidator = Validation.buildDefaultValidatorFactory().getValidator();
+
     public void validate(D data, Function<D, TenantId> tenantIdFunction) {
         try {
             if (data == null) {
                 throw new DataValidationException("Data object can't be null!");
             }
+
+            List<String> validationErrors = validateFields(data);
+            if (!validationErrors.isEmpty()) {
+                throw new IllegalArgumentException("Validation error: " + String.join(", ", validationErrors));
+            }
+
             TenantId tenantId = tenantIdFunction.apply(data);
             validateDataImpl(tenantId, data);
             if (data.getId() == null) {
@@ -79,6 +92,14 @@ public abstract class DataValidator<D extends BaseData<?>> {
 
         Matcher emailMatcher = EMAIL_PATTERN.matcher(email);
         return emailMatcher.matches();
+    }
+
+    private List<String> validateFields(D data) {
+        Set<ConstraintViolation<D>> constraintsViolations = fieldsValidator.validate(data);
+        return constraintsViolations.stream()
+                .map(ConstraintViolation::getMessage)
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     protected void validateNumberOfEntitiesPerTenant(TenantId tenantId,

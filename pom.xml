@@ -116,6 +116,10 @@
         <protobuf-dynamic.version>1.0.2TB</protobuf-dynamic.version>
         <wire-schema.version>3.4.0</wire-schema.version>
         <twilio.version>7.54.2</twilio.version>
+        <hibernate-validator.version>6.0.13.Final</hibernate-validator.version>
+        <javax.el.version>3.0.0</javax.el.version>
+        <javax.validation-api.version>2.0.1.Final</javax.validation-api.version>
+        <antisamy.version>1.6.2</antisamy.version>
     </properties>
 
     <modules>
