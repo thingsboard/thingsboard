@@ -19,7 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.core.network.CoapEndpoint;
+import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.eclipse.californium.core.server.resources.Resource;
+import org.eclipse.californium.scandium.DTLSConnector;
+import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
@@ -44,6 +47,8 @@ public class CoapTransportService {
     @Autowired
     private CoapTransportContext coapTransportContext;
 
+    private TbCoapDtlsCertificateVerifier tbDtlsCertificateVerifier;
+
     private CoapServer server;
 
     @PostConstruct
@@ -52,26 +57,39 @@ public class CoapTransportService {
         log.info("Starting CoAP transport server");
 
         this.server = new CoapServer();
+
+        CoapEndpoint.Builder capEndpointBuilder = new CoapEndpoint.Builder();
+
+        TbCoapDtlsSettings dtlsSettings = coapTransportContext.getDtlsSettings();
+        if (dtlsSettings != null) {
+            DtlsConnectorConfig dtlsConnectorConfig = dtlsSettings.dtlsConnectorConfig();
+            DTLSConnector connector = new DTLSConnector(dtlsConnectorConfig);
+            capEndpointBuilder.setConnector(connector);
+            if (dtlsConnectorConfig.isClientAuthenticationRequired()) {
+                tbDtlsCertificateVerifier = (TbCoapDtlsCertificateVerifier) dtlsConnectorConfig.getAdvancedCertificateVerifier();
+            }
+        } else {
+            InetAddress addr = InetAddress.getByName(coapTransportContext.getHost());
+            InetSocketAddress sockAddr = new InetSocketAddress(addr, coapTransportContext.getPort());
+            capEndpointBuilder.setInetSocketAddress(sockAddr);
+            capEndpointBuilder.setNetworkConfig(NetworkConfig.getStandard());
+        }
+        CoapEndpoint coapEndpoint = capEndpointBuilder.build();
+
+        server.addEndpoint(coapEndpoint);
+
         createResources();
         Resource root = this.server.getRoot();
         TbCoapServerMessageDeliverer messageDeliverer = new TbCoapServerMessageDeliverer(root);
         this.server.setMessageDeliverer(messageDeliverer);
 
-        InetAddress addr = InetAddress.getByName(coapTransportContext.getHost());
-        InetSocketAddress sockAddr = new InetSocketAddress(addr, coapTransportContext.getPort());
-
-        CoapEndpoint.Builder coapEndpoitBuilder = new CoapEndpoint.Builder();
-        coapEndpoitBuilder.setInetSocketAddress(sockAddr);
-        CoapEndpoint coapEndpoint = coapEndpoitBuilder.build();
-
-        server.addEndpoint(coapEndpoint);
         server.start();
         log.info("CoAP transport started!");
     }
 
     private void createResources() {
         CoapResource api = new CoapResource(API);
-        api.add(new CoapTransportResource(coapTransportContext, V1));
+        api.add(new CoapTransportResource(coapTransportContext, tbDtlsCertificateVerifier, V1));
 
         CoapResource efento = new CoapResource(EFENTO);
         CoapEfentoTransportResource efentoMeasurementsTransportResource = new CoapEfentoTransportResource(coapTransportContext, MEASUREMENTS);
