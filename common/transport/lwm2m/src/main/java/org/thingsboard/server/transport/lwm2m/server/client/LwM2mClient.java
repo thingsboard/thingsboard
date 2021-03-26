@@ -116,6 +116,11 @@ public class LwM2mClient implements Cloneable {
         });
     }
 
+    /**
+     *
+     * @param idVer -
+     * @param modelProvider -
+     */
     public void updateResourceModel(String idVer, LwM2mModelProvider modelProvider) {
         Set key = getKeysEqualsIdVer(idVer);
         key.forEach(k -> this.saveResourceModel(k.toString(), modelProvider));
