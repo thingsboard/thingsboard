@@ -18,11 +18,13 @@ package org.thingsboard.server.common.data;
 import org.thingsboard.server.common.data.id.AdminSettingsId;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 public class AdminSettings extends BaseData<AdminSettingsId> {
 
     private static final long serialVersionUID = -7670322981725511892L;
-    
+
+    @NoXss
     private String key;
     private transient JsonNode jsonValue;
     

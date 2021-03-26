@@ -13,20 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.common.data.validation;
 
-import lombok.Data;
+import javax.validation.Constraint;
+import javax.validation.Payload;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import javax.validation.Valid;
-import java.util.List;
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+@Constraint(validatedBy = {NoXssValidator.class})
+public @interface NoXss {
+    String message() default "field value is malformed";
 
-@Data
-public class DeviceProfileData {
+    Class<?>[] groups() default {};
 
-    private DeviceProfileConfiguration configuration;
-    private DeviceProfileTransportConfiguration transportConfiguration;
-    private DeviceProfileProvisionConfiguration provisionConfiguration;
-    @Valid
-    private List<DeviceProfileAlarm> alarms;
-
+    Class<? extends Payload>[] payload() default {};
 }
