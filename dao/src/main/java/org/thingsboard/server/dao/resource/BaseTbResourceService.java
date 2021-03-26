@@ -31,7 +31,7 @@ import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.lwm2m.LwM2mInstance;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
-import org.thingsboard.server.common.data.lwm2m.LwM2mResource;
+import org.thingsboard.server.common.data.lwm2m.LwM2mResourceObserve;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -87,7 +87,9 @@ public class BaseTbResourceService implements TbResourceService {
                 String resourceKey = objectModel.id + LWM2M_SEPARATOR_KEY + objectModel.getVersion();
                 String name = objectModel.name;
                 resource.setResourceKey(resourceKey);
-                resource.setTitle(name + " id=" +objectModel.id + " v" + objectModel.getVersion());
+                if (resource.getId() == null) {
+                    resource.setTitle(name + " id=" + objectModel.id + " v" + objectModel.getVersion());
+                }
                 resource.setSearchText(resourceKey + LWM2M_SEPARATOR_SEARCH_TEXT + name);
             } else {
                 throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getSearchText()));
@@ -205,14 +207,14 @@ public class BaseTbResourceService implements TbResourceService {
                 lwM2mObject.setMandatory(obj.mandatory);
                 LwM2mInstance instance = new LwM2mInstance();
                 instance.setId(0);
-                List<LwM2mResource> resources = new ArrayList<>();
+                List<LwM2mResourceObserve> resources = new ArrayList<>();
                 obj.resources.forEach((k, v) -> {
                     if (!v.operations.isExecutable()) {
-                        LwM2mResource lwM2mResource = new LwM2mResource(k, v.name, false, false, false);
-                        resources.add(lwM2mResource);
+                        LwM2mResourceObserve lwM2MResourceObserve = new LwM2mResourceObserve(k, v.name, false, false, false);
+                        resources.add(lwM2MResourceObserve);
                     }
                 });
-                instance.setResources(resources.toArray(LwM2mResource[]::new));
+                instance.setResources(resources.toArray(LwM2mResourceObserve[]::new));
                 lwM2mObject.setInstances(new LwM2mInstance[]{instance});
                 return lwM2mObject;
             }

@@ -83,7 +83,7 @@ public class LwM2mTransportRequest {
 
     private LwM2mValueConverterImpl converter;
 
-    private final LwM2mTransportContextServer context;
+    private final LwM2mTransportContextServer lwM2mTransportContextServer;
 
     private final LwM2mClientContext lwM2mClientContext;
 
@@ -91,8 +91,8 @@ public class LwM2mTransportRequest {
 
     private final LwM2mTransportServiceImpl serviceImpl;
 
-    public LwM2mTransportRequest(LwM2mTransportContextServer context, LwM2mClientContext lwM2mClientContext, LeshanServer leshanServer, LwM2mTransportServiceImpl serviceImpl) {
-        this.context = context;
+    public LwM2mTransportRequest(LwM2mTransportContextServer lwM2mTransportContextServer, LwM2mClientContext lwM2mClientContext, LeshanServer leshanServer, LwM2mTransportServiceImpl serviceImpl) {
+        this.lwM2mTransportContextServer = lwM2mTransportContextServer;
         this.lwM2mClientContext = lwM2mClientContext;
         this.leshanServer = leshanServer;
         this.serviceImpl = serviceImpl;
@@ -101,7 +101,7 @@ public class LwM2mTransportRequest {
     @PostConstruct
     public void init() {
         this.converter = LwM2mValueConverterImpl.getInstance();
-        executorResponse = Executors.newFixedThreadPool(this.context.getLwM2MTransportConfigServer().getRequestPoolSize(),
+        executorResponse = Executors.newFixedThreadPool(this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getRequestPoolSize(),
                 new NamedThreadFactory(String.format("LwM2M %s channel response", RESPONSE_CHANNEL)));
     }
 
@@ -120,7 +120,8 @@ public class LwM2mTransportRequest {
         if (registration != null && resultIds.getObjectId() >= 0) {
             DownlinkRequest request = null;
             ContentFormat contentFormat = contentFormatParam != null ? ContentFormat.fromName(contentFormatParam.toUpperCase()) : null;
-            ResourceModel resource = serviceImpl.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getResourceModel(registration, resultIds);
+            LwM2mClient lwM2MClient = lwM2mClientContext.getLwM2mClientWithReg(registration, null);
+            ResourceModel resource = lwM2MClient.getResourceModel(target);
             timeoutInMs = timeoutInMs > 0 ? timeoutInMs : DEFAULT_TIMEOUT;
             switch (typeOper) {
                 case GET_TYPE_OPER_READ:
@@ -217,7 +218,10 @@ public class LwM2mTransportRequest {
             }
 
             if (request != null) {
-                this.sendRequest(registration, request, timeoutInMs);
+                this.sendRequest(registration, lwM2MClient, request, timeoutInMs);
+            }
+            else {
+                log.error("[{}], [{}] - [{}] error SendRequest", registration.getEndpoint(), typeOper, target);
             }
         }
     }
@@ -230,8 +234,7 @@ public class LwM2mTransportRequest {
      */
 
     @SuppressWarnings("unchecked")
-    private void sendRequest(Registration registration, DownlinkRequest request, long timeoutInMs) {
-        LwM2mClient lwM2MClient = lwM2mClientContext.getLwM2mClientWithReg(registration, null);
+    private void sendRequest(Registration registration, LwM2mClient lwM2MClient, DownlinkRequest request, long timeoutInMs) {
         leshanServer.send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
             if (!lwM2MClient.isInit()) {
                 lwM2MClient.initValue(this.serviceImpl, convertToIdVerFromObjectId(request.getPath().toString(), registration));
