@@ -141,6 +141,45 @@ public class DeviceController extends BaseController {
         }
     }
 
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/bulk/devices", method = RequestMethod.POST)
+    @ResponseBody
+    public List<Device> saveBulkDevices(@RequestBody List<Device> devices,
+                                        @RequestParam(name = "accessToken", required = false) String accessToken) throws ThingsboardException {
+        List<Device> savedDevices = new ArrayList<>();
+        for (Device device : devices) {
+            try {
+                device.setTenantId(getCurrentUser().getTenantId());
+
+                checkEntity(device.getId(), device, Resource.DEVICE);
+
+                Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
+
+                tbClusterService.onDeviceChange(savedDevice, null);
+                tbClusterService.pushMsgToCore(new DeviceNameOrTypeUpdateMsg(savedDevice.getTenantId(),
+                        savedDevice.getId(), savedDevice.getName(), savedDevice.getType()), null);
+                tbClusterService.onEntityStateChange(savedDevice.getTenantId(), savedDevice.getId(),
+                        device.getId() == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+
+                logEntityAction(savedDevice.getId(), savedDevice,
+                        savedDevice.getCustomerId(),
+                        device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
+
+                if (device.getId() == null) {
+                    deviceStateService.onDeviceAdded(savedDevice);
+                } else {
+                    deviceStateService.onDeviceUpdated(savedDevice);
+                }
+                savedDevices.add(device);
+            } catch (Exception e) {
+                logEntityAction(emptyId(EntityType.DEVICE), device,
+                        null, device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
+                throw handleException(e);
+            }
+        }
+        return savedDevices;
+    }
+
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/device/{deviceId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
