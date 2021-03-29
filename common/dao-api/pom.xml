@@ -21,7 +21,7 @@
     <parent>
         <groupId>org.thingsboard</groupId>
         <version>3.2.2-SNAPSHOT</version>
-        <artifactId>thingsboard</artifactId>
+        <artifactId>common</artifactId>
     </parent>
     <groupId>org.thingsboard.common</groupId>
     <artifactId>dao-api</artifactId>
