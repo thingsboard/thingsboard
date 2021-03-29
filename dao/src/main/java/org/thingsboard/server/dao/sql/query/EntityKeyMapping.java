@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.sql.query;
 
 import lombok.Data;
-import org.springframework.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
@@ -42,7 +42,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -245,8 +244,9 @@ public class EntityKeyMapping {
             entityTypeStr = "'" + entityType.name() + "'";
         }
         ctx.addStringParameter(alias + "_key_id", entityKey.getKey());
-        String filterQuery = toQueries(ctx, entityFilter.getType()).filter(Objects::nonNull).collect(
-                Collectors.joining(" and "));
+        String filterQuery = toQueries(ctx, entityFilter.getType())
+                .filter(StringUtils::isNotEmpty)
+                .collect(Collectors.joining(" and "));
         if (StringUtils.isEmpty(filterQuery)) {
             filterQuery = "";
         } else {
@@ -293,8 +293,10 @@ public class EntityKeyMapping {
     }
 
     public static String buildQuery(QueryContext ctx, List<EntityKeyMapping> mappings, EntityFilterType filterType) {
-        return mappings.stream().flatMap(mapping -> mapping.toQueries(ctx, filterType)).filter(Objects::nonNull).collect(
-                Collectors.joining(" AND "));
+        return mappings.stream()
+                .flatMap(mapping -> mapping.toQueries(ctx, filterType))
+                .filter(StringUtils::isNotEmpty)
+                .collect(Collectors.joining(" AND "));
     }
 
     public static List<EntityKeyMapping> prepareKeyMapping(EntityDataQuery query) {
@@ -461,9 +463,8 @@ public class EntityKeyMapping {
                                               ComplexFilterPredicate predicate, EntityFilterType filterType) {
         String result = predicate.getPredicates().stream()
                 .map(keyFilterPredicate -> this.buildPredicateQuery(ctx, alias, key, keyFilterPredicate, filterType))
-                .filter(Objects::nonNull).collect(Collectors.joining(
-                        " " + predicate.getOperation().name() + " "
-                ));
+                .filter(StringUtils::isNotEmpty)
+                .collect(Collectors.joining(" " + predicate.getOperation().name() + " "));
         if (!result.trim().isEmpty()) {
             result = "( " + result + " )";
         }
@@ -520,7 +521,7 @@ public class EntityKeyMapping {
         String paramName = getNextParameterName(field);
         String value = stringFilterPredicate.getValue().getValue();
         if (value.isEmpty()) {
-            return null;
+            return "";
         }
         String stringOperationQuery = "";
         if (stringFilterPredicate.isIgnoreCase()) {
