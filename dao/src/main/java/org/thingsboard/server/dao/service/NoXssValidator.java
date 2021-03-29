@@ -27,7 +27,7 @@ import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
 @Slf4j
-public class NoXssValidator implements ConstraintValidator<NoXss, String> {
+public class NoXssValidator implements ConstraintValidator<NoXss, Object> {
     private static final AntiSamy xssChecker = new AntiSamy();
     private static Policy xssPolicy;
 
@@ -43,13 +43,13 @@ public class NoXssValidator implements ConstraintValidator<NoXss, String> {
     }
 
     @Override
-    public boolean isValid(String value, ConstraintValidatorContext constraintValidatorContext) {
-        if (value == null || value.isEmpty() || xssPolicy == null) {
+    public boolean isValid(Object value, ConstraintValidatorContext constraintValidatorContext) {
+        if (!(value instanceof String) || ((String) value).isEmpty() || xssPolicy == null) {
             return true;
         }
 
         try {
-            return xssChecker.scan(value, xssPolicy).getNumberOfErrors() == 0;
+            return xssChecker.scan((String) value, xssPolicy).getNumberOfErrors() == 0;
         } catch (ScanException | PolicyException e) {
             return false;
         }
