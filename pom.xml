@@ -47,6 +47,7 @@
         <jjwt.version>0.7.0</jjwt.version>
         <json-path.version>2.2.0</json-path.version>
         <junit.version>4.12</junit.version>
+        <jupiter.version>5.7.1</jupiter.version>
         <slf4j.version>1.7.7</slf4j.version>
         <logback.version>1.2.3</logback.version>
         <mockito.version>3.3.3</mockito.version>
@@ -1342,6 +1343,12 @@
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-params</artifactId>
+                <version>${jupiter.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
