@@ -55,12 +55,14 @@
         </div>
         <div fxFlex="10">
           <mat-checkbox formControlName="attribute" color="warn"
+                        [checked]="updateObserve(i)"
                         matTooltip="{{'device-profile.lwm2m.is-attr-tip' | translate}}"
                         matTooltipPosition="above">
           </mat-checkbox>
         </div>
         <div fxFlex="10">
           <mat-checkbox formControlName="telemetry" color="primary"
+                        [checked]="updateObserve(i)"
                         matTooltip="{{'device-profile.lwm2m.is-telemetry-tip' | translate}}"
                         matTooltipPosition="above">
           </mat-checkbox>
