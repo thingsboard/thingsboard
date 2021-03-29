@@ -13,32 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.validation;
+package org.thingsboard.server.dao.service;
 
 import com.google.common.io.Resources;
+import lombok.extern.slf4j.Slf4j;
 import org.owasp.validator.html.AntiSamy;
 import org.owasp.validator.html.Policy;
 import org.owasp.validator.html.PolicyException;
 import org.owasp.validator.html.ScanException;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
+@Slf4j
 public class NoXssValidator implements ConstraintValidator<NoXss, String> {
     private static final AntiSamy xssChecker = new AntiSamy();
-    private static final Policy xssPolicy;
+    private static Policy xssPolicy;
 
-    static {
-        try {
-            xssPolicy = Policy.getInstance(Resources.getResource("xss-policy.xml"));
-        } catch (PolicyException e) {
-            throw new RuntimeException(e);
+    @Override
+    public void initialize(NoXss constraintAnnotation) {
+        if (xssPolicy == null) {
+            try {
+                xssPolicy = Policy.getInstance(Resources.getResource("xss-policy.xml"));
+            } catch (Exception e) {
+                log.error("Failed to set xss policy: {}", e.getMessage());
+            }
         }
     }
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext constraintValidatorContext) {
-        if (value == null || value.isEmpty()) {
+        if (value == null || value.isEmpty() || xssPolicy == null) {
             return true;
         }
 
