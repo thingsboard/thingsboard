@@ -109,14 +109,15 @@ public class LwM2mTransportRequest {
      * Device management and service enablement, including Read, Write, Execute, Discover, Create, Delete and Write-Attributes
      *
      * @param registration -
-     * @param target -
+     * @param targetIdVer -
      * @param typeOper -
      * @param contentFormatParam -
      * @param observation -
      */
-    public void sendAllRequest(Registration registration, String target, String typeOper,
+    public void sendAllRequest(Registration registration, String targetIdVer, String typeOper,
                                String contentFormatParam, Observation observation, Object params, long timeoutInMs) {
-        LwM2mPath resultIds = new LwM2mPath(convertToObjectIdFromIdVer(target));
+        String target = convertToObjectIdFromIdVer(targetIdVer);
+        LwM2mPath resultIds = new LwM2mPath(target);
         if (registration != null && resultIds.getObjectId() >= 0) {
             DownlinkRequest request = null;
             ContentFormat contentFormat = contentFormatParam != null ? ContentFormat.fromName(contentFormatParam.toUpperCase()) : null;
@@ -221,7 +222,7 @@ public class LwM2mTransportRequest {
                 this.sendRequest(registration, lwM2MClient, request, timeoutInMs);
             }
             else {
-                log.error("[{}], [{}] - [{}] error SendRequest", registration.getEndpoint(), typeOper, target);
+                log.error("[{}], [{}] - [{}] error SendRequest", registration.getEndpoint(), typeOper, targetIdVer);
             }
         }
     }
