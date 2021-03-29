@@ -17,9 +17,13 @@ package org.thingsboard.server.dao.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.validator.HibernateValidator;
+import org.hibernate.validator.HibernateValidatorConfiguration;
+import org.hibernate.validator.cfg.ConstraintMapping;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.NoXss;
 import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
@@ -40,7 +44,11 @@ public abstract class DataValidator<D extends BaseData<?>> {
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", Pattern.CASE_INSENSITIVE);
 
-    private static final Validator fieldsValidator = Validation.buildDefaultValidatorFactory().getValidator();
+    private static Validator fieldsValidator;
+
+    static {
+        initializeFieldsValidator();
+    }
 
     public void validate(D data, Function<D, TenantId> tenantIdFunction) {
         try {
@@ -131,5 +139,14 @@ public abstract class DataValidator<D extends BaseData<?>> {
         if (!expectedFields.containsAll(actualFields) || !actualFields.containsAll(expectedFields)) {
             throw new DataValidationException("Provided json structure is different from stored one '" + actualNode + "'!");
         }
+    }
+
+    private static void initializeFieldsValidator() {
+        HibernateValidatorConfiguration validatorConfiguration = Validation.byProvider(HibernateValidator.class).configure();
+        ConstraintMapping constraintMapping = validatorConfiguration.createConstraintMapping();
+        constraintMapping.constraintDefinition(NoXss.class).validatedBy(NoXssValidator.class);
+        validatorConfiguration.addMapping(constraintMapping);
+
+        fieldsValidator = validatorConfiguration.buildValidatorFactory().getValidator();
     }
 }

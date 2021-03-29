@@ -24,7 +24,7 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-@Constraint(validatedBy = {NoXssValidator.class})
+@Constraint(validatedBy = {})
 public @interface NoXss {
     String message() default "field value is malformed";
 
