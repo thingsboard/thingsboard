@@ -24,6 +24,7 @@ export interface IStateControllerComponent extends IStateController {
   stateControllerInstanceId: string;
   state: string;
   currentState: string;
+  syncStateWithQueryParam: boolean;
   isMobile: boolean;
   states: {[id: string]: DashboardState };
   dashboardId: string;

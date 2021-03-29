@@ -28,10 +28,10 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 @ToString
 public final class StatsPersistMsg implements TbActorMsg {
 
-    private long messagesProcessed;
-    private long errorsOccurred;
-    private TenantId tenantId;
-    private EntityId entityId;
+    private final long messagesProcessed;
+    private final long errorsOccurred;
+    private final TenantId tenantId;
+    private final EntityId entityId;
 
     @Override
     public MsgType getMsgType() {

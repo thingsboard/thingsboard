@@ -18,7 +18,7 @@
 <form [formGroup]="widgetFormGroup" (ngSubmit)="add()" style="width: 900px;">
   <mat-toolbar color="primary">
     <h2 translate>widget.add</h2>
-    <span fxFlex></span>
+    <span fxFlex>: {{data.widgetInfo.widgetName}}</span>
     <div [tb-help]="helpLinkIdForWidgetType()"></div>
     <button mat-icon-button
             (click)="cancel()"

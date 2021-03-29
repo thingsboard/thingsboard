@@ -83,11 +83,8 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
 
     protected ListenableFuture<TbMsg> getTbMsgListenableFuture(TbContext ctx, TbMsg msg, MessageData messageData, String prefix) {
         if (!this.config.getDetailsList().isEmpty()) {
-            ListenableFuture<JsonElement> resultObject = null;
             ListenableFuture<ContactBased> contactBasedListenableFuture = getContactBasedListenableFuture(ctx, msg);
-            for (EntityDetails entityDetails : this.config.getDetailsList()) {
-                resultObject = addContactProperties(messageData.getData(), contactBasedListenableFuture, entityDetails, prefix);
-            }
+            ListenableFuture<JsonElement> resultObject = addContactProperties(messageData.getData(), contactBasedListenableFuture, prefix);
             return transformMsg(ctx, msg, resultObject, messageData);
         } else {
             return Futures.immediateFuture(msg);
@@ -109,10 +106,14 @@ public abstract class TbAbstractGetEntityDetailsNode<C extends TbAbstractGetEnti
         }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<JsonElement> addContactProperties(JsonElement data, ListenableFuture<ContactBased> entityFuture, EntityDetails entityDetails, String prefix) {
+    private ListenableFuture<JsonElement> addContactProperties(JsonElement data, ListenableFuture<ContactBased> entityFuture, String prefix) {
         return Futures.transformAsync(entityFuture, contactBased -> {
             if (contactBased != null) {
-                return Futures.immediateFuture(setProperties(contactBased, data, entityDetails, prefix));
+                JsonElement jsonElement = null;
+                for (EntityDetails entityDetails : this.config.getDetailsList()) {
+                    jsonElement = setProperties(contactBased, data, entityDetails, prefix);
+                }
+                return Futures.immediateFuture(jsonElement);
             } else {
                 return Futures.immediateFuture(null);
             }

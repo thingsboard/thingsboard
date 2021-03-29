@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -162,6 +163,10 @@ public interface TbContext {
 
     RuleNodeId getSelfId();
 
+    RuleNode getSelf();
+
+    String getRuleChainName();
+
     TenantId getTenantId();
 
     AttributesService getAttributesService();
@@ -227,9 +232,6 @@ public interface TbContext {
     CassandraCluster getCassandraCluster();
 
     TbResultSetFuture submitCassandraTask(CassandraStatementTask task);
-
-    @Deprecated
-    RedisTemplate<String, Object> getRedisTemplate();
 
     PageData<RuleNodeState> findRuleNodeStates(PageLink pageLink);
 

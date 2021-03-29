@@ -105,7 +105,7 @@ export class WidgetComponentService {
             settingsSchema: this.utils.editWidgetInfo.settingsSchema,
             dataKeySettingsSchema: this.utils.editWidgetInfo.dataKeySettingsSchema,
             defaultConfig: this.utils.editWidgetInfo.defaultConfig
-          }, new WidgetTypeId('1'), new TenantId( NULL_UUID ), 'customWidgetBundle'
+          }, new WidgetTypeId('1'), new TenantId( NULL_UUID ), 'customWidgetBundle', undefined
         );
       }
       const initSubject = new ReplaySubject();
@@ -484,6 +484,9 @@ export class WidgetComponentService {
       }
       if (isUndefined(result.typeParameters.warnOnPageDataOverflow)) {
         result.typeParameters.warnOnPageDataOverflow = true;
+      }
+      if (isUndefined(result.typeParameters.ignoreDataUpdateOnIntervalTick)) {
+        result.typeParameters.ignoreDataUpdateOnIntervalTick = false;
       }
       if (isUndefined(result.typeParameters.dataKeysOptional)) {
         result.typeParameters.dataKeysOptional = false;

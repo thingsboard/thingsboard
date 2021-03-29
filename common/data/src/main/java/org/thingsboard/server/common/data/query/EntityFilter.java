@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = SingleEntityFilter.class, name = "singleEntity"),
         @JsonSubTypes.Type(value = EntityListFilter.class, name = "entityList"),
         @JsonSubTypes.Type(value = EntityNameFilter.class, name = "entityName"),
+        @JsonSubTypes.Type(value = EntityTypeFilter.class, name = "entityType"),
         @JsonSubTypes.Type(value = AssetTypeFilter.class, name = "assetType"),
         @JsonSubTypes.Type(value = DeviceTypeFilter.class, name = "deviceType"),
         @JsonSubTypes.Type(value = EntityViewTypeFilter.class, name = "entityViewType"),

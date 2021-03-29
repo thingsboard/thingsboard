@@ -26,6 +26,7 @@ import { HomeComponentsModule } from '@modules/home/components/home-components.m
 import { OAuth2SettingsComponent } from '@modules/home/pages/admin/oauth2-settings.component';
 import { SmsProviderComponent } from '@home/pages/admin/sms-provider.component';
 import { SendTestSmsDialogComponent } from '@home/pages/admin/send-test-sms-dialog.component';
+import { HomeSettingsComponent } from '@home/pages/admin/home-settings.component';
 import { QueueComponent} from './queue.component';
 
 @NgModule({
@@ -37,6 +38,7 @@ import { QueueComponent} from './queue.component';
       SendTestSmsDialogComponent,
       SecuritySettingsComponent,
       OAuth2SettingsComponent,
+      HomeSettingsComponent,
       QueueComponent,
     ],
   imports: [

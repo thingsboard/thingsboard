@@ -60,6 +60,7 @@ public final class InMemoryStorage {
     public <T extends TbQueueMsg> List<T> get(String topic) {
         if (storage.containsKey(topic)) {
             List<T> entities;
+            @SuppressWarnings("unchecked")
             T first = (T) storage.get(topic).poll();
             if (first != null) {
                 entities = new ArrayList<>();
@@ -67,7 +68,9 @@ public final class InMemoryStorage {
                 List<TbQueueMsg> otherList = new ArrayList<>();
                 storage.get(topic).drainTo(otherList, 999);
                 for (TbQueueMsg other : otherList) {
-                    entities.add((T) other);
+                    @SuppressWarnings("unchecked")
+                    T entity = (T) other;
+                    entities.add(entity);
                 }
             } else {
                 entities = Collections.emptyList();

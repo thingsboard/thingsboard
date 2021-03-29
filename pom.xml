@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>3.3.0-SNAPSHOT</version>
+    <version>3.2.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -36,7 +36,10 @@
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
-        <spring-boot.version>2.3.5.RELEASE</spring-boot.version>
+        <javax-annotation.version>1.3.2</javax-annotation.version>
+        <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
+        <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
+        <spring-boot.version>2.3.9.RELEASE</spring-boot.version>
         <spring.version>5.2.10.RELEASE</spring.version>
         <spring-security.version>5.4.1</spring-security.version>
         <spring-data-redis.version>2.4.1</spring-data-redis.version>
@@ -46,23 +49,24 @@
         <junit.version>4.12</junit.version>
         <slf4j.version>1.7.7</slf4j.version>
         <logback.version>1.2.3</logback.version>
-        <mockito.version>1.9.5</mockito.version>
+        <mockito.version>3.3.3</mockito.version>
         <rat.version>0.10</rat.version>
-        <cassandra.version>4.6.0</cassandra.version>
+        <cassandra.version>4.10.0</cassandra.version>
         <metrics.version>4.0.5</metrics.version>
         <cassandra-unit.version>4.3.1.0</cassandra-unit.version>
-        <cassandra-all.version>3.11.9</cassandra-all.version>
+        <cassandra-all.version>3.11.10</cassandra-all.version>
+        <cassandra-driver-core.version>3.11.0</cassandra-driver-core.version>
         <takari-cpsuite.version>1.2.7</takari-cpsuite.version>
         <guava.version>28.2-jre</guava.version>
         <caffeine.version>2.6.1</caffeine.version>
         <commons-lang3.version>3.4</commons-lang3.version>
         <commons-io.version>2.5</commons-io.version>
         <commons-csv.version>1.4</commons-csv.version>
-        <jackson.version>2.11.3</jackson.version>
-        <jackson-annotations.version>2.11.3</jackson-annotations.version>
-        <jackson-core.version>2.11.3</jackson-core.version>
+        <jackson.version>2.12.1</jackson.version>
+        <jackson-annotations.version>2.12.1</jackson-annotations.version>
+        <jackson-core.version>2.12.1</jackson-core.version>
         <json-schema-validator.version>2.2.6</json-schema-validator.version>
-        <californium.version>1.0.2</californium.version>
+        <californium.version>2.6.1</californium.version>
         <gson.version>2.6.2</gson.version>
         <freemarker.version>2.3.30</freemarker.version>
         <mail.version>1.6.2</mail.version>
@@ -70,9 +74,9 @@
         <zookeeper.version>3.5.5</zookeeper.version>
         <protobuf.version>3.11.4</protobuf.version>
         <grpc.version>1.22.1</grpc.version>
-        <lombok.version>1.16.18</lombok.version>
+        <lombok.version>1.18.18</lombok.version>
         <paho.client.version>1.2.4</paho.client.version>
-        <netty.version>4.1.53.Final</netty.version>
+        <netty.version>4.1.60.Final</netty.version>
         <os-maven-plugin.version>1.5.0</os-maven-plugin.version>
         <rabbitmq.version>4.8.0</rabbitmq.version>
         <surfire.version>2.19.1</surfire.version>
@@ -86,12 +90,12 @@
         <hsqldb.version>2.5.0</hsqldb.version>
         <dbunit.version>2.5.3</dbunit.version>
         <spring-test-dbunit.version>1.2.1</spring-test-dbunit.version>
-        <postgresql.driver.version>9.4.1212</postgresql.driver.version>
+        <postgresql.driver.version>42.2.16</postgresql.driver.version>
         <sonar.exclusions>org/thingsboard/server/gen/**/*,
             org/thingsboard/server/extensions/core/plugin/telemetry/gen/**/*
         </sonar.exclusions>
         <elasticsearch.version>5.0.2</elasticsearch.version>
-        <delight-nashorn-sandbox.version>0.1.14</delight-nashorn-sandbox.version>
+        <delight-nashorn-sandbox.version>0.1.31</delight-nashorn-sandbox.version>
         <kafka.version>2.6.0</kafka.version>
         <bucket4j.version>4.1.1</bucket4j.version>
         <fst.version>2.57</fst.version>
@@ -543,10 +547,21 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>2.5.1</version>
+                    <version>3.8.1</version>
                     <configuration>
-                        <source>1.8</source>
-                        <target>1.8</target>
+                        <release>11</release>
+                        <compilerArgs>
+                            <arg>-Xlint:deprecation</arg>
+                            <arg>-Xlint:removal</arg>
+                            <arg>-Xlint:unchecked</arg>
+                        </compilerArgs>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -557,17 +572,22 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-source-plugin</artifactId>
-                    <version>2.2.1</version>
+                    <version>3.2.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.0.2</version>
+                    <version>3.1.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
                     <version>3.0.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>2.8.2</version>
                 </plugin>
                 <plugin>
                     <groupId>org.springframework.boot</groupId>
@@ -583,6 +603,11 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.0.0-M1</version>
+                    <configuration>
+                        <argLine>
+                            --illegal-access=permit
+                        </argLine>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -878,6 +903,21 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>javax.annotation</groupId>
+                <artifactId>javax.annotation-api</artifactId>
+                <version>${javax-annotation.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.xml.bind</groupId>
+                <artifactId>jakarta.xml.bind-api</artifactId>
+                <version>${jakarta.xml.bind-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>jaxb-runtime</artifactId>
+                <version>${jaxb-runtime.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-security</artifactId>
                 <version>${spring-boot.version}</version>
@@ -1062,6 +1102,11 @@
                 <version>${cassandra.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.datastax.cassandra</groupId>
+                <artifactId>cassandra-driver-core</artifactId>
+                <version>${cassandra-driver-core.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-jmx</artifactId>
                 <version>${metrics.version}</version>
@@ -1224,7 +1269,7 @@
             </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
-                <artifactId>mockito-all</artifactId>
+                <artifactId>mockito-core</artifactId>
                 <version>${mockito.version}</version>
                 <scope>test</scope>
             </dependency>

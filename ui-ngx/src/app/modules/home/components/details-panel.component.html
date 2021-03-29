@@ -18,13 +18,27 @@
 <header>
   <mat-toolbar class="details-toolbar" color="primary" [ngStyle]="{height: headerHeightPx+'px'}">
     <div class="mat-toolbar-tools" fxLayout="row" fxLayoutAlign="start center" style="height: 100%;">
-      <div class="mat-toolbar-tools tb-details-title-header" fxFlex fxLayout="column" fxLayoutAlign="start start">
-        <span class="tb-details-title">{{ headerTitle }}</span>
+      <div class="mat-toolbar-tools tb-details-title-header" fxFlex fxLayout="column" fxLayoutAlign="start start" [fxHide]="showSearchPane">
+        <div class="tb-details-title" fxLayout="row" fxLayoutAlign="start center">
+          <ng-content select=".prefix-title-buttons"></ng-content>
+          <span>{{ headerTitle }}</span>
+        </div>
         <span class="tb-details-subtitle">{{ headerSubtitle }}</span>
         <span style="width: 100%;">
           <ng-content select=".header-pane"></ng-content>
         </span>
       </div>
+      <div *ngIf="isShowSearch" [fxHide]="!showSearchPane" fxLayout="row" fxLayoutAlign="start center" style="width: 100%;">
+        <button mat-button mat-icon-button (click)="onToggleSearch()">
+          <mat-icon class="material-icons">arrow_back</mat-icon>
+        </button>
+        <div style="width: 100%; margin: 0 20px">
+          <ng-content select=".search-pane"></ng-content>
+        </div>
+      </div>
+      <button mat-button mat-icon-button *ngIf="isShowSearch && !showSearchPane" (click)="onToggleSearch()">
+        <mat-icon class="material-icons">search</mat-icon>
+      </button>
       <ng-content select=".details-buttons"></ng-content>
       <button mat-button mat-icon-button (click)="onCloseDetails()">
         <mat-icon class="material-icons">close</mat-icon>
@@ -51,6 +65,6 @@
     </section>
   </mat-toolbar>
 </header>
-<div fxFlex class="mat-content">
+<div fxFlex class="mat-content" [ngStyle]="{backgroundColor: backgroundColor}">
   <ng-content></ng-content>
 </div>

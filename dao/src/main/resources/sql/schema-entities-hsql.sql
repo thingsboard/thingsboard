@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS customer (
 CREATE TABLE IF NOT EXISTS dashboard (
     id uuid NOT NULL CONSTRAINT dashboard_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
-    configuration varchar,
+    configuration varchar(10000000),
     assigned_customers varchar(1000000),
     search_text varchar(255),
     tenant_id uuid,
@@ -290,7 +290,9 @@ CREATE TABLE IF NOT EXISTS widget_type (
     bundle_alias varchar(255),
     descriptor varchar(1000000),
     name varchar(255),
-    tenant_id uuid
+    tenant_id uuid,
+    image varchar(1000000),
+    description varchar(255)
 );
 
 CREATE TABLE IF NOT EXISTS widgets_bundle (
@@ -299,7 +301,9 @@ CREATE TABLE IF NOT EXISTS widgets_bundle (
     alias varchar(255),
     search_text varchar(255),
     tenant_id uuid,
-    title varchar(255)
+    title varchar(255),
+    image varchar(1000000),
+    description varchar(255)
 );
 
 CREATE TABLE IF NOT EXISTS entity_view (

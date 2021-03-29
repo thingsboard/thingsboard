@@ -14,7 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnDestroy, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import {
+  Component,
+  Injector,
+  Input,
+  OnDestroy,
+  OnInit,
+  StaticProvider,
+  ViewChild,
+  ViewContainerRef
+} from '@angular/core';
 import { TooltipPosition } from '@angular/material/tooltip';
 import { IAliasController } from '@core/api/widget-api.models';
 import { CdkOverlayOrigin, ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
@@ -28,7 +37,7 @@ import {
   FiltersEditPanelComponent,
   FiltersEditPanelData
 } from '@home/components/filter/filters-edit-panel.component';
-import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';
+import { ComponentPortal } from '@angular/cdk/portal';
 import { UserFilterDialogComponent, UserFilterDialogData } from '@home/components/filter/user-filter-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 
@@ -153,12 +162,12 @@ export class FiltersEditComponent implements OnInit, OnDestroy {
     }
   }
 
-  private _createFiltersEditPanelInjector(overlayRef: OverlayRef, data: FiltersEditPanelData): PortalInjector {
-    const injectionTokens = new WeakMap<any, any>([
-      [FILTER_EDIT_PANEL_DATA, data],
-      [OverlayRef, overlayRef]
-    ]);
-    return new PortalInjector(this.viewContainerRef.injector, injectionTokens);
+  private _createFiltersEditPanelInjector(overlayRef: OverlayRef, data: FiltersEditPanelData): Injector {
+    const providers: StaticProvider[] = [
+      {provide: FILTER_EDIT_PANEL_DATA, useValue: data},
+      {provide: OverlayRef, useValue: overlayRef}
+    ];
+    return Injector.create({parent: this.viewContainerRef.injector, providers});
   }
 
   private updateFiltersInfo() {

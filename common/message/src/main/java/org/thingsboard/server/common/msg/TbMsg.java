@@ -120,7 +120,7 @@ public final class TbMsg implements Serializable {
     private TbMsg(String queueName, UUID id, long ts, String type, EntityId originator, TbMsgMetaData metaData, TbMsgDataType dataType, String data,
                   RuleChainId ruleChainId, RuleNodeId ruleNodeId, int ruleNodeExecCounter, TbMsgCallback callback) {
         this.id = id;
-        this.queueName = queueName;
+        this.queueName = queueName != null ? queueName : ServiceQueue.MAIN;
         if (ts > 0) {
             this.ts = ts;
         } else {

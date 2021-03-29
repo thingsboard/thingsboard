@@ -42,4 +42,5 @@
       </div>
     </div>
   </ng-container>
+  <div class="tb-hint" *ngIf="maxSizeByte" translate [translateParams]="{ size: maxSizeByte | fileSize}">dashboard.maximum-upload-file-size</div>
 </div>

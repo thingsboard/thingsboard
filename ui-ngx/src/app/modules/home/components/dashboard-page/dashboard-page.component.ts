@@ -18,11 +18,14 @@ import {
   ChangeDetectorRef,
   Component,
   Inject,
+  Injector,
   Input,
   NgZone,
   OnDestroy,
   OnInit,
+  StaticProvider,
   ViewChild,
+  ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
@@ -44,7 +47,7 @@ import {
 } from '@app/shared/models/dashboard.models';
 import { WINDOW } from '@core/services/window.service';
 import { WindowMessage } from '@shared/models/window-message.model';
-import { deepClone, isDefined } from '@app/core/utils';
+import { deepClone, isDefined, isDefinedAndNotNull } from '@app/core/utils';
 import {
   DashboardContext,
   DashboardPageLayout,
@@ -58,7 +61,15 @@ import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
-import { Widget, WidgetConfig, WidgetPosition, widgetTypesData } from '@app/shared/models/widget.models';
+import {
+  DatasourceType,
+  Widget,
+  WidgetConfig,
+  WidgetInfo,
+  WidgetPosition,
+  widgetType,
+  widgetTypesData
+} from '@shared/models/widget.models';
 import { environment as env } from '@env/environment';
 import { Authority } from '@shared/models/authority.enum';
 import { DialogService } from '@core/services/dialog.service';
@@ -80,7 +91,10 @@ import {
 import { EntityAliases } from '@app/shared/models/alias.models';
 import { EditWidgetComponent } from '@home/components/dashboard-page/edit-widget.component';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
-import { AddWidgetDialogComponent, AddWidgetDialogData } from '@home/components/dashboard-page/add-widget-dialog.component';
+import {
+  AddWidgetDialogComponent,
+  AddWidgetDialogData
+} from '@home/components/dashboard-page/add-widget-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
 import {
   ManageDashboardLayoutsDialogComponent,
@@ -99,6 +113,15 @@ import { ImportExportService } from '@home/components/import-export/import-expor
 import { AuthState } from '@app/core/auth/auth.models';
 import { FiltersDialogComponent, FiltersDialogData } from '@home/components/filter/filters-dialog.component';
 import { Filters } from '@shared/models/query/query.models';
+import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
+import { ComponentPortal } from '@angular/cdk/portal';
+import {
+  DISPLAY_WIDGET_TYPES_PANEL_DATA,
+  DisplayWidgetTypesPanelComponent,
+  DisplayWidgetTypesPanelData,
+  WidgetTypes
+} from '@home/components/dashboard-page/widget-types-panel.component';
+import { DashboardWidgetSelectComponent } from '@home/components/dashboard-page/dashboard-widget-select.component';
 
 // @dynamic
 @Component({
@@ -124,6 +147,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   hideToolbar: boolean;
 
   @Input()
+  syncStateWithQueryParam = true;
+
+  @Input()
   dashboard: Dashboard;
   dashboardConfiguration: DashboardConfiguration;
 
@@ -142,7 +168,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   forceDashboardMobileMode = false;
   isAddingWidget = false;
   isAddingWidgetClosed = true;
-  widgetsBundle: WidgetsBundle = null;
+  searchBundle = '';
+  filterWidgetTypes: widgetType[] = null;
 
   isToolbarOpened = false;
   isToolbarOpenedAnimate = false;
@@ -239,6 +266,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   @ViewChild('tbEditWidget') editWidgetComponent: EditWidgetComponent;
 
+  @ViewChild('dashboardWidgetSelect') dashboardWidgetSelectComponent: DashboardWidgetSelectComponent;
+
   constructor(protected store: Store<AppState>,
               @Inject(WINDOW) private window: Window,
               private breakpointObserver: BreakpointObserver,
@@ -257,6 +286,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private dialog: MatDialog,
               private translate: TranslateService,
               private ngZone: NgZone,
+              private overlay: Overlay,
+              private viewContainerRef: ViewContainerRef,
               private cd: ChangeDetectorRef) {
     super(store);
 
@@ -266,9 +297,12 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.rxSubscriptions.push(this.route.data.subscribe(
       (data) => {
         if (this.embedded) {
-          data.dashboard = this.dashboard;
+          data.dashboard = this.dashboardUtils.validateAndUpdateDashboard(this.dashboard);
+          data.currentDashboardId = this.dashboard.id ? this.dashboard.id.id : null;
           data.widgetEditMode = false;
           data.singlePageMode = false;
+        } else {
+          data.currentDashboardId = this.route.snapshot.params.dashboardId;
         }
         this.init(data);
         this.runChangeDetection();
@@ -286,7 +320,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
     this.reset();
 
-    this.currentDashboardId = this.route.snapshot.params.dashboardId;
+    this.currentDashboardId = data.currentDashboardId;
 
     if (this.route.snapshot.params.customerId) {
       this.currentCustomerId = this.route.snapshot.params.customerId;
@@ -306,6 +340,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
     this.dashboardCtx.aliasController = new AliasController(this.utils,
       this.entityService,
+      this.translate,
       () => this.dashboardCtx.stateController,
       this.dashboardConfiguration.entityAliases,
       this.dashboardConfiguration.filters);
@@ -333,7 +368,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.forceDashboardMobileMode = false;
     this.isAddingWidget = false;
     this.isAddingWidgetClosed = true;
-    this.widgetsBundle = null;
 
     this.isToolbarOpened = false;
     this.isToolbarOpenedAnimate = false;
@@ -849,19 +883,28 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     }
   }
 
-  addWidgetFromType(widget: Widget) {
+  addWidgetFromType(widget: WidgetInfo) {
     this.onAddWidgetClosed();
+    this.searchBundle = '';
     this.widgetComponentService.getWidgetInfo(widget.bundleAlias, widget.typeAlias, widget.isSystemType).subscribe(
       (widgetTypeInfo) => {
         const config: WidgetConfig = JSON.parse(widgetTypeInfo.defaultConfig);
         config.title = 'New ' + widgetTypeInfo.widgetName;
         config.datasources = [];
+        if (isDefinedAndNotNull(config.alarmSource)) {
+          config.alarmSource = {
+            type: DatasourceType.entity,
+            dataKeys: config.alarmSource.dataKeys || []
+          };
+        }
         const newWidget: Widget = {
           isSystemType: widget.isSystemType,
           bundleAlias: widget.bundleAlias,
           typeAlias: widgetTypeInfo.alias,
           type: widgetTypeInfo.type,
           title: 'New widget',
+          image: null,
+          description: null,
           sizeX: widgetTypeInfo.sizeX,
           sizeY: widgetTypeInfo.sizeY,
           config,
@@ -1107,5 +1150,62 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       }
     }
     return widgetContextActions;
+  }
+
+  widgetBundleSelected(){
+    this.searchBundle = '';
+  }
+
+  clearSelectedWidgetBundle() {
+    this.searchBundle = '';
+    this.dashboardWidgetSelectComponent.widgetsBundle = null;
+  }
+
+  editWidgetsTypesToDisplay($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const target = $event.target || $event.currentTarget;
+    const config = new OverlayConfig();
+    config.backdropClass = 'cdk-overlay-transparent-backdrop';
+    config.hasBackdrop = true;
+    const connectedPosition: ConnectedPosition = {
+      originX: 'end',
+      originY: 'bottom',
+      overlayX: 'end',
+      overlayY: 'top'
+    };
+    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
+      .withPositions([connectedPosition]);
+
+    const overlayRef = this.overlay.create(config);
+    overlayRef.backdropClick().subscribe(() => {
+      overlayRef.dispose();
+    });
+
+    const providers: StaticProvider[] = [
+      {
+        provide: DISPLAY_WIDGET_TYPES_PANEL_DATA,
+        useValue: {
+          types: Array.from(this.dashboardWidgetSelectComponent.widgetTypes.values()).map(type => {
+            return {type, display: true};
+          }),
+          typesUpdated: (newTypes) => {
+            this.filterWidgetTypes = newTypes.filter(type => type.display).map(type => type.type);
+          }
+        } as DisplayWidgetTypesPanelData
+      },
+      {
+        provide: OverlayRef,
+        useValue: overlayRef
+      }
+    ];
+    const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
+    overlayRef.attach(new ComponentPortal(DisplayWidgetTypesPanelComponent, this.viewContainerRef, injector));
+    this.cd.detectChanges();
+  }
+
+  onCloseSearchBundle() {
+    this.searchBundle = '';
   }
 }

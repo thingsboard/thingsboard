@@ -21,7 +21,7 @@
 
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.3.0-SNAPSHOT</version>
+        <version>3.2.2-SNAPSHOT</version>
         <artifactId>msa</artifactId>
     </parent>
     <groupId>org.thingsboard.msa</groupId>
@@ -37,7 +37,7 @@
         <blackBoxTests.skip>true</blackBoxTests.skip>
         <testcontainers.version>1.9.1</testcontainers.version>
         <zeroturnaround.version>1.10</zeroturnaround.version>
-        <httpclient.version>4.5.6</httpclient.version>
+        <httpclient.version>4.5.13</httpclient.version>
     </properties>
 
     <dependencies>

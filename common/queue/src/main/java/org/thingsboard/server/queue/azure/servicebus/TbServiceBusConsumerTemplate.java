@@ -155,6 +155,7 @@ public class TbServiceBusConsumerTemplate<T extends TbQueueMsg> extends Abstract
     }
 
     private <V> CompletableFuture<List<V>> fromList(List<CompletableFuture<V>> futures) {
+        @SuppressWarnings("unchecked")
         CompletableFuture<Collection<V>>[] arrayFuture = new CompletableFuture[futures.size()];
         futures.toArray(arrayFuture);
 

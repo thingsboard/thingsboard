@@ -1777,7 +1777,7 @@
     "timeseries": "Intervalos de tempo",
     "search-data": "Pesquisar dados",
     "no-data-found": "Nenhum dado encontrado",
-    "latest-values": "Últimos valores",
+    "latest": "Últimos valores",
     "rpc": "Widget de controle",
     "alarm": "Widget de alarme",
     "static": "Widget estático",

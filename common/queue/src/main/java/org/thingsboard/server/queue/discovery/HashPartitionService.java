@@ -177,7 +177,7 @@ public class HashPartitionService implements PartitionService {
     }
 
     @Override
-    public void recalculatePartitions(ServiceInfo currentService, List<ServiceInfo> otherServices) {
+    public synchronized void recalculatePartitions(ServiceInfo currentService, List<ServiceInfo> otherServices) {
         logServiceInfo(currentService);
         otherServices.forEach(this::logServiceInfo);
         Map<ServiceQueueKey, List<ServiceInfo>> queueServicesMap = new HashMap<>();

@@ -18,9 +18,11 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
+  Injector,
   Input,
   NgZone,
   OnInit,
+  StaticProvider,
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
@@ -38,7 +40,7 @@ import {
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { createLabelFromDatasource, deepClone, hashCode, isDefined, isNumber } from '@core/utils';
+import { createLabelFromDatasource, deepClone, hashCode, isDefined, isNumber, isObject } from '@core/utils';
 import cssjs from '@core/css/css';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -63,14 +65,18 @@ import {
   fromEntityColumnDef,
   getCellContentInfo,
   getCellStyleInfo,
+  getColumnDefaultVisibility,
+  getColumnSelectionAvailability,
   getColumnWidth,
   getEntityValue,
+  getRowStyleInfo,
+  RowStyleInfo,
   TableWidgetDataKeySettings,
   TableWidgetSettings,
   widthStyle
 } from '@home/components/widget/lib/table-widget.models';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
-import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';
+import { ComponentPortal } from '@angular/cdk/portal';
 import {
   DISPLAY_COLUMNS_PANEL_DATA,
   DisplayColumnsPanelComponent,
@@ -90,6 +96,8 @@ import { DatePipe } from '@angular/common';
 
 interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   entitiesTitle: string;
+  enableSelectColumnDisplay: boolean;
+  defaultSortOrder: string;
   displayEntityName: boolean;
   entityNameColumnTitle: string;
   displayEntityLabel: boolean;
@@ -112,6 +120,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   @ViewChild(MatSort) sort: MatSort;
 
   public displayPagination = true;
+  public enableStickyHeader = true;
+  public enableStickyAction = true;
   public pageSizeOptions;
   public pageLink: EntityDataPageLink;
   public sortOrderProperty: string;
@@ -133,6 +143,10 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   private contentsInfo: {[key: string]: CellContentInfo} = {};
   private stylesInfo: {[key: string]: CellStyleInfo} = {};
   private columnWidth: {[key: string]: string} = {};
+  private columnDefaultVisibility: {[key: string]: boolean} = {};
+  private columnSelectionAvailability: {[key: string]: boolean} = {};
+
+  private rowStylesInfo: RowStyleInfo;
 
   private searchAction: WidgetAction = {
     name: 'action.search',
@@ -229,7 +243,11 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
     this.searchAction.show = isDefined(this.settings.enableSearch) ? this.settings.enableSearch : true;
     this.displayPagination = isDefined(this.settings.displayPagination) ? this.settings.displayPagination : true;
+    this.enableStickyHeader = isDefined(this.settings.enableStickyHeader) ? this.settings.enableStickyHeader : true;
+    this.enableStickyAction = isDefined(this.settings.enableStickyAction) ? this.settings.enableStickyAction : true;
     this.columnDisplayAction.show = isDefined(this.settings.enableSelectColumnDisplay) ? this.settings.enableSelectColumnDisplay : true;
+
+    this.rowStylesInfo = getRowStyleInfo(this.settings, 'entity, ctx');
 
     const pageSize = this.settings.defaultPageSize;
     if (isDefined(pageSize) && isNumber(pageSize) && pageSize > 0) {
@@ -295,6 +313,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         useCellStyleFunction: false
       };
       this.columnWidth.entityName = '0px';
+      this.columnDefaultVisibility.entityName = true;
+      this.columnSelectionAvailability.entityName = true;
     }
     if (displayEntityLabel) {
       this.columns.push(
@@ -316,6 +336,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         useCellStyleFunction: false
       };
       this.columnWidth.entityLabel = '0px';
+      this.columnDefaultVisibility.entityLabel = true;
+      this.columnSelectionAvailability.entityLabel = true;
     }
     if (displayEntityType) {
       this.columns.push(
@@ -337,6 +359,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         useCellStyleFunction: false
       };
       this.columnWidth.entityType = '0px';
+      this.columnDefaultVisibility.entityType = true;
+      this.columnSelectionAvailability.entityType = true;
     }
 
     const dataKeys: Array<DataKey> = [];
@@ -364,14 +388,17 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           }
         }
 
-        this.stylesInfo[dataKey.def] = getCellStyleInfo(keySettings);
+        this.stylesInfo[dataKey.def] = getCellStyleInfo(keySettings, 'value, entity, ctx');
         this.contentsInfo[dataKey.def] = getCellContentInfo(keySettings, 'value, entity, ctx');
         this.contentsInfo[dataKey.def].units = dataKey.units;
         this.contentsInfo[dataKey.def].decimals = dataKey.decimals;
         this.columnWidth[dataKey.def] = getColumnWidth(keySettings);
+        this.columnDefaultVisibility[dataKey.def] = getColumnDefaultVisibility(keySettings);
+        this.columnSelectionAvailability[dataKey.def] = getColumnSelectionAvailability(keySettings);
         this.columns.push(dataKey);
       });
-      this.displayedColumns.push(...this.columns.map(column => column.def));
+      this.displayedColumns.push(...this.columns.filter(column => this.columnDefaultVisibility[column.def])
+        .map(column => column.def));
     }
 
     if (this.settings.defaultSortOrder && this.settings.defaultSortOrder.length) {
@@ -418,21 +445,30 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       return {
         title: column.title,
         def: column.def,
-        display: this.displayedColumns.indexOf(column.def) > -1
+        display: this.displayedColumns.indexOf(column.def) > -1,
+        selectable: this.columnSelectionAvailability[column.def]
       };
     });
 
-    const injectionTokens = new WeakMap<any, any>([
-      [DISPLAY_COLUMNS_PANEL_DATA, {
-        columns,
-        columnsUpdated: (newColumns) => {
-          this.displayedColumns = newColumns.filter(column => column.display).map(column => column.def);
-          this.displayedColumns.push('actions');
-        }
-      } as DisplayColumnsPanelData],
-      [OverlayRef, overlayRef]
-    ]);
-    const injector = new PortalInjector(this.viewContainerRef.injector, injectionTokens);
+    const providers: StaticProvider[] = [
+      {
+        provide: DISPLAY_COLUMNS_PANEL_DATA,
+        useValue: {
+          columns,
+          columnsUpdated: (newColumns) => {
+            this.displayedColumns = newColumns.filter(column => column.display).map(column => column.def);
+            if (this.actionCellDescriptors.length) {
+              this.displayedColumns.push('actions');
+            }
+          }
+        } as DisplayColumnsPanelData
+      },
+      {
+        provide: OverlayRef,
+        useValue: overlayRef
+      }
+    ];
+    const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
     overlayRef.attach(new ComponentPortal(DisplayColumnsPanelComponent,
       this.viewContainerRef, injector));
     this.ctx.detectChanges();
@@ -499,6 +535,30 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     return widthStyle(columnWidth);
   }
 
+  public rowStyle(entity: EntityData): any {
+    let style: any = {};
+    if (entity) {
+      if (this.rowStylesInfo.useRowStyleFunction && this.rowStylesInfo.rowStyleFunction) {
+        try {
+          style = this.rowStylesInfo.rowStyleFunction(entity, this.ctx);
+          if (!isObject(style)) {
+            throw new TypeError(`${style === null ? 'null' : typeof style} instead of style object`);
+          }
+          if (Array.isArray(style)) {
+            throw new TypeError(`Array instead of style object`);
+          }
+        } catch (e) {
+          style = {};
+          console.warn(`Row style function in widget '${this.ctx.widgetTitle}' ` +
+            `returns '${e}'. Please check your row style function.`);
+        }
+      } else {
+        style = {};
+      }
+    }
+    return style;
+  }
+
   public cellStyle(entity: EntityData, key: EntityColumn): any {
     let style: any = {};
     if (entity && key) {
@@ -506,9 +566,17 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       const value = getEntityValue(entity, key);
       if (styleInfo.useCellStyleFunction && styleInfo.cellStyleFunction) {
         try {
-          style = styleInfo.cellStyleFunction(value);
+          style = styleInfo.cellStyleFunction(value, entity, this.ctx);
+          if (!isObject(style)) {
+            throw new TypeError(`${style === null ? 'null' : typeof style} instead of style object`);
+          }
+          if (Array.isArray(style)) {
+            throw new TypeError(`Array instead of style object`);
+          }
         } catch (e) {
           style = {};
+          console.warn(`Cell style function for data key '${key.label}' in widget '${this.ctx.widgetTitle}' ` +
+            `returns '${e}'. Please check your cell style function.`);
         }
       } else {
         style = {};
@@ -530,7 +598,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         try {
           content = contentInfo.cellContentFunction(value, entity, this.ctx);
         } catch (e) {
-            content = '' + value;
+          content = '' + value;
         }
       } else {
         content = this.defaultContent(key, contentInfo, value);
@@ -540,6 +608,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         return '';
 
       } else {
+        content = this.utils.customTranslation(content, content);
         switch (typeof content) {
           case 'string':
             return this.domSanitizer.bypassSecurityTrustHtml(content);

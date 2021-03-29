@@ -35,14 +35,17 @@ export enum EntityKeyType {
   SERVER_ATTRIBUTE = 'SERVER_ATTRIBUTE',
   TIME_SERIES = 'TIME_SERIES',
   ENTITY_FIELD = 'ENTITY_FIELD',
-  ALARM_FIELD = 'ALARM_FIELD'
+  ALARM_FIELD = 'ALARM_FIELD',
+  CONSTANT = 'CONSTANT',
+  COUNT = 'COUNT'
 }
 
 export const entityKeyTypeTranslationMap = new Map<EntityKeyType, string>(
   [
     [EntityKeyType.ATTRIBUTE, 'filter.key-type.attribute'],
     [EntityKeyType.TIME_SERIES, 'filter.key-type.timeseries'],
-    [EntityKeyType.ENTITY_FIELD, 'filter.key-type.entity-field']
+    [EntityKeyType.ENTITY_FIELD, 'filter.key-type.entity-field'],
+    [EntityKeyType.CONSTANT, 'filter.key-type.constant']
   ]
 );
 
@@ -59,6 +62,8 @@ export function entityKeyTypeToDataKeyType(entityKeyType: EntityKeyType): DataKe
       return DataKeyType.entityField;
     case EntityKeyType.ALARM_FIELD:
       return DataKeyType.alarm;
+    case EntityKeyType.COUNT:
+      return DataKeyType.count;
   }
 }
 
@@ -74,6 +79,8 @@ export function dataKeyTypeToEntityKeyType(dataKeyType: DataKeyType): EntityKeyT
       return EntityKeyType.ALARM_FIELD;
     case DataKeyType.entityField:
       return EntityKeyType.ENTITY_FIELD;
+    case DataKeyType.count:
+      return EntityKeyType.COUNT;
   }
 }
 
@@ -285,6 +292,7 @@ export const dynamicValueSourceTypeTranslationMap = new Map<DynamicValueSourceTy
 export interface DynamicValue<T> {
   sourceType: DynamicValueSourceType;
   sourceAttribute: string;
+  inherit?: boolean;
 }
 
 export interface FilterPredicateValue<T> {
@@ -343,12 +351,14 @@ export interface KeyFilterPredicateInfo {
 export interface KeyFilter {
   key: EntityKey;
   valueType: EntityKeyValueType;
+  value?: string | number | boolean;
   predicate: KeyFilterPredicate;
 }
 
 export interface KeyFilterInfo {
   key: EntityKey;
   valueType: EntityKeyValueType;
+  value?: string | number | boolean;
   predicates: Array<KeyFilterPredicateInfo>;
 }
 
@@ -445,7 +455,9 @@ function simpleKeyFilterPredicateToText(translate: TranslateService,
       break;
     case FilterPredicateType.BOOLEAN:
       operation = translate.instant(booleanOperationTranslationMap.get(keyFilterPredicate.operation));
-      value = translate.instant(keyFilterPredicate.value.defaultValue ? 'value.true' : 'value.false');
+      if (!dynamicValue) {
+        value = translate.instant(keyFilterPredicate.value.defaultValue ? 'value.true' : 'value.false');
+      }
       break;
   }
   if (!dynamicValue) {
@@ -465,6 +477,7 @@ export function keyFilterInfosToKeyFilters(keyFilterInfos: Array<KeyFilterInfo>)
       const keyFilter: KeyFilter = {
         key,
         valueType: keyFilterInfo.valueType,
+        value: keyFilterInfo.value,
         predicate: keyFilterPredicateInfoToKeyFilterPredicate(predicate)
       };
       keyFilters.push(keyFilter);
@@ -485,6 +498,7 @@ export function keyFiltersToKeyFilterInfos(keyFilters: Array<KeyFilter>): Array<
         keyFilterInfo = {
           key,
           valueType: keyFilter.valueType,
+          value: keyFilter.value,
           predicates: []
         };
         keyFilterInfoMap[infoKey] = keyFilterInfo;
@@ -507,6 +521,7 @@ export function filterInfoToKeyFilters(filter: FilterInfo): Array<KeyFilter> {
       const keyFilter: KeyFilter = {
         key,
         valueType: keyFilterInfo.valueType,
+        value: keyFilterInfo.value,
         predicate: keyFilterPredicateInfoToKeyFilterPredicate(predicate)
       };
       keyFilters.push(keyFilter);
@@ -708,13 +723,13 @@ export const defaultEntityDataPageLink: EntityDataPageLink = createDefaultEntity
 
 export interface EntityCountQuery {
   entityFilter: EntityFilter;
+  keyFilters?: Array<KeyFilter>;
 }
 
 export interface AbstractDataQuery<T extends EntityDataPageLink> extends EntityCountQuery {
   pageLink: T;
   entityFields?: Array<EntityKey>;
   latestValues?: Array<EntityKey>;
-  keyFilters?: Array<KeyFilter>;
 }
 
 export interface EntityDataQuery extends AbstractDataQuery<EntityDataPageLink> {
@@ -803,7 +818,7 @@ export function updateDatasourceFromEntityInfo(datasource: Datasource, entity: E
   };
   datasource.entityId = entity.id;
   datasource.entityType = entity.entityType;
-  if (datasource.type === DatasourceType.entity) {
+  if (datasource.type === DatasourceType.entity || datasource.type === DatasourceType.entityCount) {
     datasource.entityName = entity.name;
     datasource.entityLabel = entity.label;
     datasource.name = entity.name;

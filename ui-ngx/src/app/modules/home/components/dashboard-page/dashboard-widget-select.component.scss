@@ -13,10 +13,67 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host ::ng-deep {
-  .mat-tab-group {
-    .mat-tab-body-wrapper {
-      height: 100%;
+@import '../../../../../scss/constants';
+
+:host{
+  min-width: 100%;
+  min-height: 100%;
+  position: absolute;
+  background-color: #cfd8dc;
+
+  .widget-select {
+    padding: 12px 0 12px 12px;
+    background-color: #cfd8dc;
+
+    .mat-card-container {
+      flex: 0 0 100%;
+      max-width: 100%;
+
+      &:hover {
+        .mat-card {
+          box-shadow: 0 2px 6px 6px rgb(0 0 0 / 20%), 0 1px 4px 2px rgb(0 0 0 / 14%), 0 1px 6px 0 rgb(0 0 0 / 12%)
+        }
+      }
+
+      .mat-card {
+        cursor: pointer;
+        transition: box-shadow 0.2s;
+
+        .preview-container {
+          text-align: center;
+          margin: auto 0;
+        }
+
+        .preview {
+          max-width: 100%;
+          max-height: 100%;
+          object-fit: contain;
+        }
+
+        .mat-card-title {
+          font-size: 20px;
+        }
+
+        .mat-card-content {
+          font-size: 14px;
+          line-height: 18px;
+          color: #666;
+        }
+      }
+    }
+
+    @media #{$mat-gt-xs} {
+      .mat-card-container {
+        flex: 0 0 50%;
+        max-width: 50%;
+      }
+    }
+
+    @media screen and (min-width: 2000px) {
+      .mat-card-container {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+      }
     }
   }
 }
