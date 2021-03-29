@@ -360,7 +360,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
      */
     @Override
     public void onResourceUpdate (Optional<TransportProtos.ResourceUpdateMsg> resourceUpdateMsgOpt) {
-        String idVer = resourceUpdateMsgOpt.get().getResourceKey(); // 19_1.0
+        String idVer = resourceUpdateMsgOpt.get().getResourceKey();
         lwM2mClientContext.getLwM2mClients().values().stream().forEach(e -> e.updateResourceModel(idVer, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getModelProvider()));
     }
 
@@ -370,7 +370,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
      */
     @Override
     public void onResourceDelete(Optional<TransportProtos.ResourceDeleteMsg> resourceDeleteMsgOpt) {
-        String pathIdVer =  resourceDeleteMsgOpt.get().getResourceKey(); // 19_1.0
+        String pathIdVer = resourceDeleteMsgOpt.get().getResourceKey();
         lwM2mClientContext.getLwM2mClients().values().stream().forEach(e -> e.deleteResources(pathIdVer, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getModelProvider()));
     }
 
@@ -537,8 +537,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
             Set<String> paths = new HashSet<>();
             paths.add(path);
             this.updateAttrTelemetry(registration, paths);
-        }
-        else {
+        } else {
             log.error("Fail update Resource [{}]", lwM2mResource);
         }
     }
@@ -574,7 +573,8 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
     private boolean validatePathInAttrProfile(LwM2mClientProfile clientProfile, String path) {
         try {
             List<String> attributesSet = new Gson().fromJson(clientProfile.getPostAttributeProfile(),
-                    new TypeToken<List<String>>() {}.getType());
+                    new TypeToken<List<String>>() {
+                    }.getType());
             return attributesSet.stream().anyMatch(p -> p.equals(path));
         } catch (Exception e) {
             log.error("Fail Validate Path [{}] ClientProfile.Attribute", path, e);
@@ -830,7 +830,6 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
             if (sendAttrToThingsboard.getPathPostParametersAdd().size() > 0) {
                 // update value in Resources
                 registrationIds.forEach(registrationId -> {
-//                    LeshanServer lwServer = leshanServer;
                     Registration registration = lwM2mClientContext.getRegistration(registrationId);
                     this.readResourceValueObserve(registration, sendAttrToThingsboard.getPathPostParametersAdd(), GET_TYPE_OPER_READ);
                     // send attr/telemetry to tingsboard for new path
