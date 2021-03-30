@@ -19,7 +19,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { EntitiesTableComponent } from '../../components/entity/entities-table.component';
 import { Authority } from '@shared/models/authority.enum';
-import { AssetsTableConfigResolver } from './assets-table-config.resolver';
+import { AssetsTableConfigResolver } from '@modules/home/pages/asset/assets-table-config.resolver';
 
 const routes: Routes = [
   {
