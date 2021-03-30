@@ -44,10 +44,10 @@ import java.util.Optional;
 @Component
 public class TbCoapDtlsSettings {
 
-    @Value("${transport.coap.dtls.bind_address}")
+    @Value("${transport.coap.bind_address}")
     private String host;
 
-    @Value("${transport.coap.dtls.bind_port}")
+    @Value("${transport.coap.bind_port}")
     private Integer port;
 
     @Value("${transport.coap.dtls.mode}")
@@ -65,6 +65,15 @@ public class TbCoapDtlsSettings {
     @Value("${transport.coap.dtls.key_alias}")
     private String keyAlias;
 
+    @Value("${transport.coap.dtls.skip_validity_check_for_client_cert}")
+    private boolean skipValidityCheckForClientCert;
+
+    @Value("${transport.coap.dtls.x509.dtls_session_inactivity_timeout}")
+    private long dtlsSessionInactivityTimeout;
+
+    @Value("${transport.coap.dtls.x509.dtls_session_report_timeout}")
+    private long dtlsSessionReportTimeout;
+
     @Autowired
     private TransportService transportService;
 
@@ -79,21 +88,25 @@ public class TbCoapDtlsSettings {
         } else {
             DtlsConnectorConfig.Builder configBuilder = new DtlsConnectorConfig.Builder();
             configBuilder.setAddress(getInetSocketAddress());
+            String keyStoreFilePath = Resources.getResource(keyStoreFile).getPath();
+            SslContextUtil.Credentials serverCredentials = loadServerCredentials(keyStoreFilePath);
             SecurityMode securityMode = securityModeOpt.get();
             if (securityMode.equals(SecurityMode.NO_AUTH)) {
                 configBuilder.setClientAuthenticationRequired(false);
-                String keyStoreFilePath = Resources.getResource(keyStoreFile).getPath();
-                SslContextUtil.Credentials serverCredentials = loadServerCredentials(keyStoreFilePath);
-                loadTrustedCertificates(configBuilder, keyStoreFilePath);
-                configBuilder.setIdentity(serverCredentials.getPrivateKey(), serverCredentials.getCertificateChain(),
-                                Collections.singletonList(CertificateType.X_509));
+                configBuilder.setServerOnly(true);
             } else {
-                String keyStoreFilePath = Resources.getResource(keyStoreFile).getPath();
-                SslContextUtil.Credentials serverCredentials = loadServerCredentials(keyStoreFilePath);
-                configBuilder.setAdvancedCertificateVerifier(new TbCoapDtlsCertificateVerifier(transportService, serviceInfoProvider));
-                configBuilder.setIdentity(serverCredentials.getPrivateKey(), serverCredentials.getCertificateChain(),
-                        Collections.singletonList(CertificateType.X_509));
+                configBuilder.setAdvancedCertificateVerifier(
+                        new TbCoapDtlsCertificateVerifier(
+                                transportService,
+                                serviceInfoProvider,
+                                dtlsSessionInactivityTimeout,
+                                dtlsSessionReportTimeout,
+                                skipValidityCheckForClientCert
+                        )
+                );
             }
+            configBuilder.setIdentity(serverCredentials.getPrivateKey(), serverCredentials.getCertificateChain(),
+                    Collections.singletonList(CertificateType.X_509));
             return configBuilder.build();
         }
     }

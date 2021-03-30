@@ -35,65 +35,78 @@ import java.security.GeneralSecurityException;
 import java.security.Principal;
 import java.security.cert.Certificate;
 import java.util.Collections;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class SecureClientX509 {
 
     private final DTLSConnector dtlsConnector;
+    private ExecutorService executor = Executors.newFixedThreadPool(1);
+    private CoapClient coapClient;
 
-    public SecureClientX509(DTLSConnector dtlsConnector) {
+    public SecureClientX509(DTLSConnector dtlsConnector, String host, int port, String clientKeys, String sharedKeys) throws URISyntaxException {
         this.dtlsConnector = dtlsConnector;
+        this.coapClient = getCoapClient(host, port, clientKeys, sharedKeys);
     }
 
-    public void test(String host, Integer port, String clientKeys, String sharedKeys) {
-        CoapResponse response = null;
-        try {
-            URI uri = new URI(getFutureUrl(host, port, clientKeys, sharedKeys));
-            CoapClient client = new CoapClient(uri);
-            CoapEndpoint.Builder builder = new CoapEndpoint.Builder();
-            builder.setConnector(dtlsConnector);
+    public void test() {
+        executor.submit(() -> {
+            try {
+                while (!Thread.interrupted()) {
+                    CoapResponse response = null;
+                    try {
+                        response = coapClient.get();
+                    } catch (ConnectorException | IOException e) {
+                        System.err.println("Error occurred while sending request: " + e);
+                        System.exit(-1);
+                    }
+                    if (response != null) {
 
-            client.setEndpoint(builder.build());
-            response = client.get();
-            client.shutdown();
-        } catch (URISyntaxException e) {
-            System.err.println("Invalid URI: " + e.getMessage());
-            System.exit(-1);
-        } catch (ConnectorException | IOException e) {
-            System.err.println("Error occurred while sending request: " + e);
-            System.exit(-1);
-        }
-
-        if (response != null) {
-
-            System.out.println(response.getCode() + " - " + response.getCode().name());
-            System.out.println(response.getOptions());
-            System.out.println(response.getResponseText());
-            System.out.println();
-            System.out.println("ADVANCED:");
-            EndpointContext context = response.advanced().getSourceContext();
-            Principal identity = context.getPeerIdentity();
-            if (identity != null) {
-                System.out.println(context.getPeerIdentity());
-            } else {
-                System.out.println("anonymous");
+                        System.out.println(response.getCode() + " - " + response.getCode().name());
+                        System.out.println(response.getOptions());
+                        System.out.println(response.getResponseText());
+                        System.out.println();
+                        System.out.println("ADVANCED:");
+                        EndpointContext context = response.advanced().getSourceContext();
+                        Principal identity = context.getPeerIdentity();
+                        if (identity != null) {
+                            System.out.println(context.getPeerIdentity());
+                        } else {
+                            System.out.println("anonymous");
+                        }
+                        System.out.println(context.get(DtlsEndpointContext.KEY_CIPHER));
+                        System.out.println(Utils.prettyPrint(response));
+                    } else {
+                        System.out.println("No response received.");
+                    }
+                    Thread.sleep(5000);
+                }
+            } catch (Exception e) {
+                System.out.println("Error occurred while sending COAP requests.");
             }
-            System.out.println(context.get(DtlsEndpointContext.KEY_CIPHER));
-            System.out.println(Utils.prettyPrint(response));
-        } else {
-            System.out.println("No response received.");
-        }
+        });
+    }
+
+    private CoapClient getCoapClient(String host, Integer port, String clientKeys, String sharedKeys) throws URISyntaxException {
+        URI uri = new URI(getFutureUrl(host, port, clientKeys, sharedKeys));
+        CoapClient client = new CoapClient(uri);
+        CoapEndpoint.Builder builder = new CoapEndpoint.Builder();
+        builder.setConnector(dtlsConnector);
+
+        client.setEndpoint(builder.build());
+        return client;
     }
 
     private String getFutureUrl(String host, Integer port, String clientKeys, String sharedKeys) {
         return "coaps://" + host + ":" + port + "/api/v1/attributes?clientKeys=" + clientKeys + "&sharedKeys=" + sharedKeys;
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws URISyntaxException {
         System.out.println("Usage: java -cp ... org.thingsboard.server.transport.coap.client.SecureClientX509 " +
                 "host port keyStoreUriPath keyStoreAlias trustedAliasPattern clientKeys sharedKeys");
 
         String host = args[0];
-        Integer port = Integer.parseInt(args[1]);
+        int port = Integer.parseInt(args[1]);
         String clientKeys = args[6];
         String sharedKeys = args[7];
 
@@ -106,8 +119,8 @@ public class SecureClientX509 {
         DtlsConnectorConfig.Builder builder = new DtlsConnectorConfig.Builder();
         setupCredentials(builder, keyStoreUriPath, keyStoreAlias, trustedAliasPattern, keyStorePassword);
         DTLSConnector dtlsConnector = new DTLSConnector(builder.build());
-        SecureClientX509 client = new SecureClientX509(dtlsConnector);
-        client.test(host, port, clientKeys, sharedKeys);
+        SecureClientX509 client = new SecureClientX509(dtlsConnector, host, port, clientKeys, sharedKeys);
+        client.test();
     }
 
     private static void setupCredentials(DtlsConnectorConfig.Builder config, String keyStoreUriPath, String keyStoreAlias, String trustedAliasPattern, String keyStorePassword) {

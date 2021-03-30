@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.coap;
 
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.elements.util.CertPathUtil;
 import org.eclipse.californium.scandium.dtls.AlertMessage;
@@ -42,26 +43,31 @@ import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import javax.security.auth.x500.X500Principal;
 import java.security.cert.CertPath;
 import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateExpiredException;
+import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
+@Data
 public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVerifier {
 
-    private final ConcurrentMap<String, TbCoapDtlsSessionInfo> dtlsSessionIdMap = new ConcurrentHashMap<>();
+    private final TbCoapDtlsSessionInMemoryStorage tbCoapDtlsSessionInMemoryStorage;
 
     private TransportService transportService;
     private TbServiceInfoProvider serviceInfoProvider;
+    private boolean skipValidityCheckForClientCert;
 
-    public TbCoapDtlsCertificateVerifier(TransportService transportService, TbServiceInfoProvider serviceInfoProvider) {
+    public TbCoapDtlsCertificateVerifier(TransportService transportService, TbServiceInfoProvider serviceInfoProvider, long dtlsSessionInactivityTimeout, long dtlsSessionReportTimeout, boolean skipValidityCheckForClientCert) {
         this.transportService = transportService;
         this.serviceInfoProvider = serviceInfoProvider;
+        this.skipValidityCheckForClientCert = skipValidityCheckForClientCert;
+        this.tbCoapDtlsSessionInMemoryStorage = new TbCoapDtlsSessionInMemoryStorage(dtlsSessionInactivityTimeout, dtlsSessionReportTimeout);
     }
 
     @Override
@@ -77,6 +83,9 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
             X509Certificate[] chain = certpath.getCertificates().toArray(new X509Certificate[0]);
             for (X509Certificate cert : chain) {
                 try {
+                    if (!skipValidityCheckForClientCert) {
+                        cert.checkValidity();
+                    }
                     String strCert = SslUtil.getCertificateString(cert);
                     String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
                     final ValidateDeviceCredentialsResponse[] deviceCredentialsResponse = new ValidateDeviceCredentialsResponse[1];
@@ -99,16 +108,19 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
                             });
                     latch.await(10, TimeUnit.SECONDS);
                     ValidateDeviceCredentialsResponse msg = deviceCredentialsResponse[0];
-                    if (strCert.equals(msg.getCredentials())) {
+                    if (msg != null && strCert.equals(msg.getCredentials())) {
                         credentialsBody = msg.getCredentials();
                         DeviceProfile deviceProfile = msg.getDeviceProfile();
                         if (msg.hasDeviceInfo() && deviceProfile != null) {
                             TransportProtos.SessionInfoProto sessionInfoProto = SessionInfoCreator.create(msg, serviceInfoProvider.getServiceId(), UUID.randomUUID());
-                            dtlsSessionIdMap.putIfAbsent(session.getSessionIdentifier().toString(), new TbCoapDtlsSessionInfo(sessionInfoProto, deviceProfile));
+                            tbCoapDtlsSessionInMemoryStorage.put(session.getSessionIdentifier().toString(), new TbCoapDtlsSessionInfo(sessionInfoProto, deviceProfile));
                         }
                         break;
                     }
-                } catch (InterruptedException | CertificateEncodingException e) {
+                } catch (InterruptedException |
+                        CertificateEncodingException |
+                        CertificateExpiredException |
+                        CertificateNotYetValidException e) {
                     log.error(e.getMessage(), e);
                 }
             }
@@ -135,7 +147,15 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
         // empty implementation
     }
 
-    public ConcurrentMap<String, TbCoapDtlsSessionInfo> getDtlsSessionIdMap() {
-        return dtlsSessionIdMap;
+    public ConcurrentMap<String, TbCoapDtlsSessionInfo> getTbCoapDtlsSessionIdsMap() {
+        return tbCoapDtlsSessionInMemoryStorage.getDtlsSessionIdMap();
+    }
+
+    public void evictTimeoutSessions() {
+        tbCoapDtlsSessionInMemoryStorage.evictTimeoutSessions();
+    }
+
+    public long getDtlsSessionReportTimeout() {
+        return tbCoapDtlsSessionInMemoryStorage.getDtlsSessionReportTimeout();
     }
 }

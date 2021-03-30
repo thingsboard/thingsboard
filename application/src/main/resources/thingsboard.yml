@@ -586,9 +586,8 @@ transport:
     dtls:
       # Enable/disable DTLS 1.2 support
       enabled: "${COAP_DTLS_ENABLED:false}"
-      bind_address: "${COAP_DTLS_BIND_ADDRESS:0.0.0.0}"
-      bind_port: "${COAP_DTLS_BIND_PORT:5684}"
-      mode: "${COAP_DTLS_SECURE_MODE:NO_AUTH}" # Allowed values: NO_AUTH, X509
+      # Secure mode. Allowed values: NO_AUTH, X509
+      mode: "${COAP_DTLS_SECURE_MODE:NO_AUTH}"
       # Path to the key store that holds the certificate
       key_store: "${COAP_DTLS_KEY_STORE:coapserver.jks}"
       # Password used to access the key store
@@ -597,6 +596,11 @@ transport:
       key_password: "${COAP_DTLS_KEY_PASSWORD:server_key_password}"
       # Key alias
       key_alias: "${COAP_DTLS_KEY_ALIAS:serveralias}"
+      # Skip certificate validity check for client certificates.
+      skip_validity_check_for_client_cert: "${COAP_DTLS_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
+      x509:
+        dtls_session_inactivity_timeout: "${TB_COAP_X509_DTLS_SESSION_INACTIVITY_TIMEOUT:86400000}"
+        dtls_session_report_timeout: "${TB_COAP_X509_DTLS_SESSION_REPORT_TIMEOUT:1800000}"
 swagger:
   api_path_regex: "${SWAGGER_API_PATH_REGEX:/api.*}"
   security_path_regex: "${SWAGGER_SECURITY_PATH_REGEX:/api.*}"

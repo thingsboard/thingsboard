@@ -15,16 +15,21 @@
  */
 package org.thingsboard.server.transport.coap;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 @Data
-@AllArgsConstructor
 public class TbCoapDtlsSessionInfo {
 
     private TransportProtos.SessionInfoProto sessionInfoProto;
     private DeviceProfile deviceProfile;
+    private long lastActivityTime;
 
+
+    public TbCoapDtlsSessionInfo(TransportProtos.SessionInfoProto sessionInfoProto, DeviceProfile deviceProfile) {
+        this.sessionInfoProto = sessionInfoProto;
+        this.deviceProfile = deviceProfile;
+        this.lastActivityTime = System.currentTimeMillis();
+    }
 }

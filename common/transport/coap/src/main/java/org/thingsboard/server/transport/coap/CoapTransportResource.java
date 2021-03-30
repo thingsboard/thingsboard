@@ -75,13 +75,11 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
 
     private ConcurrentMap<String, TbCoapDtlsSessionInfo> dtlsSessionIdMap;
 
-    public CoapTransportResource(CoapTransportContext coapTransportContext, TbCoapDtlsCertificateVerifier tbDtlsCertificateVerifier, String name) {
+    public CoapTransportResource(CoapTransportContext coapTransportContext, ConcurrentMap<String, TbCoapDtlsSessionInfo> dtlsSessionIdMap, String name) {
         super(coapTransportContext, name);
         this.setObservable(true); // enable observing
         this.addObserver(new CoapResourceObserver());
-        if (tbDtlsCertificateVerifier != null) {
-            this.dtlsSessionIdMap = tbDtlsCertificateVerifier.getDtlsSessionIdMap();
-        }
+        this.dtlsSessionIdMap = dtlsSessionIdMap;
 //        this.setObservable(false); // disable observing
 //        this.setObserveType(CoAP.Type.CON); // configure the notification type to CONs
 //        this.getAttributes().setObservable(); // mark observable in the Link-Format
@@ -116,7 +114,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         } else if (exchange.getRequestOptions().hasObserve()) {
             processExchangeGetRequest(exchange, featureType.get());
         } else if (featureType.get() == FeatureType.ATTRIBUTES) {
-            processHandleRequest(exchange, SessionMsgType.GET_ATTRIBUTES_REQUEST);
+            processRequest(exchange, SessionMsgType.GET_ATTRIBUTES_REQUEST);
         } else {
             log.trace("Invalid feature type parameter");
             exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
@@ -131,7 +129,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         } else {
             sessionMsgType = unsubscribe ? SessionMsgType.UNSUBSCRIBE_ATTRIBUTES_REQUEST : SessionMsgType.SUBSCRIBE_ATTRIBUTES_REQUEST;
         }
-        processHandleRequest(exchange, sessionMsgType);
+        processRequest(exchange, sessionMsgType);
     }
 
     @Override
@@ -143,21 +141,21 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         } else {
             switch (featureType.get()) {
                 case ATTRIBUTES:
-                    processHandleRequest(exchange, SessionMsgType.POST_ATTRIBUTES_REQUEST);
+                    processRequest(exchange, SessionMsgType.POST_ATTRIBUTES_REQUEST);
                     break;
                 case TELEMETRY:
-                    processHandleRequest(exchange, SessionMsgType.POST_TELEMETRY_REQUEST);
+                    processRequest(exchange, SessionMsgType.POST_TELEMETRY_REQUEST);
                     break;
                 case RPC:
                     Optional<Integer> requestId = getRequestId(exchange.advanced().getRequest());
                     if (requestId.isPresent()) {
-                        processHandleRequest(exchange, SessionMsgType.TO_DEVICE_RPC_RESPONSE);
+                        processRequest(exchange, SessionMsgType.TO_DEVICE_RPC_RESPONSE);
                     } else {
-                        processHandleRequest(exchange, SessionMsgType.TO_SERVER_RPC_REQUEST);
+                        processRequest(exchange, SessionMsgType.TO_SERVER_RPC_REQUEST);
                     }
                     break;
                 case CLAIM:
-                    processHandleRequest(exchange, SessionMsgType.CLAIM_REQUEST);
+                    processRequest(exchange, SessionMsgType.CLAIM_REQUEST);
                     break;
                 case PROVISION:
                     processProvision(exchange);
@@ -191,7 +189,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         }
     }
 
-    private void processHandleRequest(CoapExchange exchange, SessionMsgType type) {
+    private void processRequest(CoapExchange exchange, SessionMsgType type) {
         log.trace("Processing {}", exchange.advanced().getRequest());
         exchange.accept();
         Exchange advanced = exchange.advanced();
@@ -199,21 +197,30 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
 
         String dtlsSessionIdStr = request.getSourceContext().get(DTLS_SESSION_ID_KEY);
         if (!StringUtils.isEmpty(dtlsSessionIdStr)) {
-            if (dtlsSessionIdMap != null && dtlsSessionIdMap.containsKey(dtlsSessionIdStr)) {
-                TbCoapDtlsSessionInfo tbCoapDtlsSessionInfo = dtlsSessionIdMap.get(dtlsSessionIdStr);
-                processRequest(exchange, type, request, tbCoapDtlsSessionInfo.getSessionInfoProto(), tbCoapDtlsSessionInfo.getDeviceProfile());
+            if (dtlsSessionIdMap != null) {
+                TbCoapDtlsSessionInfo tbCoapDtlsSessionInfo = dtlsSessionIdMap
+                        .computeIfPresent(dtlsSessionIdStr, (dtlsSessionId, dtlsSessionInfo) -> {
+                            log.info("update dtls session lastActivityTime: {}, ts: {}", dtlsSessionId, dtlsSessionInfo.getLastActivityTime());
+                            dtlsSessionInfo.setLastActivityTime(System.currentTimeMillis());
+                            return dtlsSessionInfo;
+                        });
+                if (tbCoapDtlsSessionInfo != null) {
+                    processRequest(exchange, type, request, tbCoapDtlsSessionInfo.getSessionInfoProto(), tbCoapDtlsSessionInfo.getDeviceProfile());
+                } else {
+                    exchange.respond(CoAP.ResponseCode.UNAUTHORIZED);
+                }
             } else {
-                processHandleAccessTokenRequest(exchange, type, request);
+                processAccessTokenRequest(exchange, type, request);
             }
         } else {
-            processHandleAccessTokenRequest(exchange, type, request);
+            processAccessTokenRequest(exchange, type, request);
         }
     }
 
-    private void processHandleAccessTokenRequest(CoapExchange exchange, SessionMsgType type, Request request) {
+    private void processAccessTokenRequest(CoapExchange exchange, SessionMsgType type, Request request) {
         Optional<DeviceTokenCredentials> credentials = decodeTokenCredentials(request);
         if (credentials.isEmpty()) {
-            exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
+            exchange.respond(CoAP.ResponseCode.UNAUTHORIZED);
             return;
         }
         transportService.process(DeviceTransportType.COAP, TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(credentials.get().getCredentialsId()).build(),
@@ -337,7 +344,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
 
     private Optional<DeviceTokenCredentials> decodeTokenCredentials(Request request) {
         List<String> uriPath = request.getOptions().getUriPath();
-        if (uriPath.size() >= ACCESS_TOKEN_POSITION) {
+        if (uriPath.size() > ACCESS_TOKEN_POSITION) {
             return Optional.of(new DeviceTokenCredentials(uriPath.get(ACCESS_TOKEN_POSITION - 1)));
         } else {
             return Optional.empty();

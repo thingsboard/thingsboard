@@ -33,6 +33,11 @@ import javax.annotation.PreDestroy;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.Random;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Service("CoapTransportService")
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.coap.enabled}'=='true')")
@@ -51,6 +56,8 @@ public class CoapTransportService {
 
     private CoapServer server;
 
+    private ScheduledExecutorService dtlsSessionsExecutor;
+
     @PostConstruct
     public void init() throws UnknownHostException {
         log.info("Starting CoAP transport...");
@@ -60,13 +67,15 @@ public class CoapTransportService {
 
         CoapEndpoint.Builder capEndpointBuilder = new CoapEndpoint.Builder();
 
-        TbCoapDtlsSettings dtlsSettings = coapTransportContext.getDtlsSettings();
-        if (dtlsSettings != null) {
+        if (isDtlsEnabled()) {
+            TbCoapDtlsSettings dtlsSettings = coapTransportContext.getDtlsSettings();
             DtlsConnectorConfig dtlsConnectorConfig = dtlsSettings.dtlsConnectorConfig();
             DTLSConnector connector = new DTLSConnector(dtlsConnectorConfig);
             capEndpointBuilder.setConnector(connector);
             if (dtlsConnectorConfig.isClientAuthenticationRequired()) {
                 tbDtlsCertificateVerifier = (TbCoapDtlsCertificateVerifier) dtlsConnectorConfig.getAdvancedCertificateVerifier();
+                dtlsSessionsExecutor = Executors.newSingleThreadScheduledExecutor();
+                dtlsSessionsExecutor.scheduleAtFixedRate(this::evictTimeoutSessions, new Random().nextInt((int) getDtlsSessionReportTimeout()), getDtlsSessionReportTimeout(), TimeUnit.MILLISECONDS);
             }
         } else {
             InetAddress addr = InetAddress.getByName(coapTransportContext.getHost());
@@ -89,7 +98,7 @@ public class CoapTransportService {
 
     private void createResources() {
         CoapResource api = new CoapResource(API);
-        api.add(new CoapTransportResource(coapTransportContext, tbDtlsCertificateVerifier, V1));
+        api.add(new CoapTransportResource(coapTransportContext, getDtlsSessionsMap(), V1));
 
         CoapResource efento = new CoapResource(EFENTO);
         CoapEfentoTransportResource efentoMeasurementsTransportResource = new CoapEfentoTransportResource(coapTransportContext, MEASUREMENTS);
@@ -99,8 +108,27 @@ public class CoapTransportService {
         server.add(efento);
     }
 
+    private boolean isDtlsEnabled() {
+        return coapTransportContext.getDtlsSettings() != null;
+    }
+
+    private ConcurrentMap<String, TbCoapDtlsSessionInfo> getDtlsSessionsMap() {
+        return tbDtlsCertificateVerifier != null ? tbDtlsCertificateVerifier.getTbCoapDtlsSessionIdsMap() : null;
+    }
+
+    private void evictTimeoutSessions() {
+        tbDtlsCertificateVerifier.evictTimeoutSessions();
+    }
+
+    private long getDtlsSessionReportTimeout() {
+        return tbDtlsCertificateVerifier.getDtlsSessionReportTimeout();
+    }
+
     @PreDestroy
     public void shutdown() {
+        if (dtlsSessionsExecutor != null) {
+            dtlsSessionsExecutor.shutdownNow();
+        }
         log.info("Stopping CoAP transport!");
         this.server.destroy();
         log.info("CoAP transport stopped!");
