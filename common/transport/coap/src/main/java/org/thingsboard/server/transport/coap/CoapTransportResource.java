@@ -200,7 +200,6 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
             if (dtlsSessionIdMap != null) {
                 TbCoapDtlsSessionInfo tbCoapDtlsSessionInfo = dtlsSessionIdMap
                         .computeIfPresent(dtlsSessionIdStr, (dtlsSessionId, dtlsSessionInfo) -> {
-                            log.info("update dtls session lastActivityTime: {}, ts: {}", dtlsSessionId, dtlsSessionInfo.getLastActivityTime());
                             dtlsSessionInfo.setLastActivityTime(System.currentTimeMillis());
                             return dtlsSessionInfo;
                         });
@@ -218,7 +217,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
     }
 
     private void processAccessTokenRequest(CoapExchange exchange, SessionMsgType type, Request request) {
-        Optional<DeviceTokenCredentials> credentials = decodeTokenCredentials(request);
+        Optional<DeviceTokenCredentials> credentials = decodeCredentials(request);
         if (credentials.isEmpty()) {
             exchange.respond(CoAP.ResponseCode.UNAUTHORIZED);
             return;
@@ -342,7 +341,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                 + ":" + (request.getSourceContext() != null ? request.getSourceContext().getPeerAddress().getPort() : -1) + ":" + request.getTokenString();
     }
 
-    private Optional<DeviceTokenCredentials> decodeTokenCredentials(Request request) {
+    private Optional<DeviceTokenCredentials> decodeCredentials(Request request) {
         List<String> uriPath = request.getOptions().getUriPath();
         if (uriPath.size() > ACCESS_TOKEN_POSITION) {
             return Optional.of(new DeviceTokenCredentials(uriPath.get(ACCESS_TOKEN_POSITION - 1)));
