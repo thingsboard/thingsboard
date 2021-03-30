@@ -111,6 +111,19 @@ public class TbResourceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/resource", method = RequestMethod.POST)
     @ResponseBody
+    public TbResource saveResourceOne(@RequestBody TbResource resource) throws ThingsboardException {
+        try {
+            resource.setTenantId(getTenantId());
+            checkEntity(resource.getId(), resource, Resource.TB_RESOURCE);
+            return this.addResource(resource);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/resources", method = RequestMethod.POST)
+    @ResponseBody
     public List<TbResource> saveResources(@RequestBody List<TbResource> resources) throws ThingsboardException {
         try {
             List<TbResource> addResources = new ArrayList<>();

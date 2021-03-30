@@ -76,6 +76,22 @@ public class LwM2MTransportConfigServer {
     private LwM2mModelProvider modelProvider;
 
     @Getter
+    @Value("${transport.resources_synchronize.enabled:}")
+    private boolean synchronizeEnabled;
+
+    @Getter
+    @Value("${transport.resources_synchronize.url:}")
+    private String synchronizeUrl;
+
+    @Getter
+    @Value("${transport.resources_synchronize.interval_s:}")
+    private long synchronizeInterval;
+
+    @Getter
+    @Value("${transport.resources_synchronize.update_enabled:}")
+    private boolean synchronizeUpdateEnabled;
+
+    @Getter
     @Value("${transport.lwm2m.timeout:}")
     private Long timeout;
 

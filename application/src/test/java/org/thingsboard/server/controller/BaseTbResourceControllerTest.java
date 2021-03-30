@@ -80,7 +80,7 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
         resource.setFileName(DEFAULT_FILE_NAME);
         resource.setData("Test Data");
 
-        TbResource savedResource = save(resource);
+        TbResource savedResource = this.save(resource);
 
         Assert.assertNotNull(savedResource);
         Assert.assertNotNull(savedResource.getId());
@@ -93,7 +93,7 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
 
         savedResource.setTitle("My new resource");
 
-        save(savedResource);
+        this.save(savedResource);
 
         TbResource foundResource = doGet("/api/resource/" + savedResource.getId().getId().toString(), TbResource.class);
         Assert.assertEquals(foundResource.getTitle(), savedResource.getTitle());
@@ -107,10 +107,10 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
         resource.setFileName(DEFAULT_FILE_NAME);
         resource.setData("Test Data");
 
-        TbResource savedResource = save(resource);
+        TbResource savedResource = this.save(resource);
 
         loginDifferentTenant();
-        doPostWithTypedResponse("/api/resource", Collections.singletonList(savedResource), new TypeReference<>(){}, status().isBadRequest());
+        doPostWithTypedResponse("/api/resources", Collections.singletonList(savedResource), new TypeReference<>(){}, status().isBadRequest());
         deleteDifferentTenant();
     }
 
@@ -122,7 +122,7 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
         resource.setFileName(DEFAULT_FILE_NAME);
         resource.setData("Test Data");
 
-        TbResource savedResource = save(resource);
+        TbResource savedResource = this.save(resource);
 
         TbResource foundResource = doGet("/api/resource/" + savedResource.getId().getId().toString(), TbResource.class);
         Assert.assertNotNull(foundResource);
@@ -137,7 +137,7 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
         resource.setFileName(DEFAULT_FILE_NAME);
         resource.setData("Test Data");
 
-        TbResource savedResource = save(resource);
+        TbResource savedResource = this.save(resource);
 
         doDelete("/api/resource/" + savedResource.getId().getId().toString())
                 .andExpect(status().isOk());
@@ -158,7 +158,7 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
             resourcesToSave.add(resource);
         }
 
-        List<TbResourceInfo> resources =save(resourcesToSave).stream().map(TbResourceInfo::new).collect(Collectors.toList());
+        List<TbResourceInfo> resources = this.save(resourcesToSave).stream().map(TbResourceInfo::new).collect(Collectors.toList());
 
         List<TbResourceInfo> loadedResources = new ArrayList<>();
         PageLink pageLink = new PageLink(24);
@@ -190,7 +190,7 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
             resource.setResourceType(ResourceType.JKS);
             resource.setFileName(i + DEFAULT_FILE_NAME);
             resource.setData("Test Data");
-            resources.add(new TbResourceInfo(save(resource)));
+            resources.add(new TbResourceInfo(this.save(resource)));
         }
         List<TbResourceInfo> loadedResources = new ArrayList<>();
         PageLink pageLink = new PageLink(24);
@@ -240,7 +240,7 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
             resource.setResourceType(ResourceType.JKS);
             resource.setFileName(i + DEFAULT_FILE_NAME);
             resource.setData("Test Data");
-            expectedResources.add(new TbResourceInfo(save(resource)));
+            expectedResources.add(new TbResourceInfo(this.save(resource)));
         }
 
         loginSysAdmin();
@@ -251,7 +251,7 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
             resource.setResourceType(ResourceType.JKS);
             resource.setFileName(i + DEFAULT_FILE_NAME);
             resource.setData("Test Data");
-            TbResourceInfo savedResource = new TbResourceInfo(save(resource));
+            TbResourceInfo savedResource = new TbResourceInfo(this.save(resource));
             systemResources.add(savedResource);
             if (i >= 73) {
                 expectedResources.add(savedResource);
@@ -287,10 +287,10 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
     }
 
     private TbResource save(TbResource tbResource) throws Exception {
-        return save(Collections.singletonList(tbResource)).get(0);
+        return this.save(Collections.singletonList(tbResource)).get(0);
     }
 
     private List<TbResource> save(List<TbResource> tbResources) throws Exception {
-        return doPostWithTypedResponse("/api/resource", tbResources, new TypeReference<>(){});
+        return doPostWithTypedResponse("/api/resources", tbResources, new TypeReference<>(){});
     }
 }

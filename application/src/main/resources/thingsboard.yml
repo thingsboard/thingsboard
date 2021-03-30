@@ -545,6 +545,12 @@ transport:
     timeout: "${CLIENT_SIDE_RPC_TIMEOUT:60000}"
   # Enable/disable http/mqtt/coap transport protocols (has higher priority than certain protocol's 'enabled' property)
   api_enabled: "${TB_TRANSPORT_API_ENABLED:true}"
+  resources_synchronize:
+    enabled: "${RESOURCES_SYNCHRONIZE_ENABLED:false}"
+    url: "${RESOURCES_SYNCHRONIZE_URL:coaps://example.org/firmware}"
+    # Interval synchronize resources in second. Default  2592000 second or 30 days
+    interval_s: "${RESOURCES_SYNCHRONIZE_INTERVAL_S:2592000}"
+    update_enabled: "${RESOURCES_SYNCHRONIZE_UPDATE_ENABLED:true}"
   # Local HTTP transport parameters
   http:
     enabled: "${HTTP_ENABLED:true}"
