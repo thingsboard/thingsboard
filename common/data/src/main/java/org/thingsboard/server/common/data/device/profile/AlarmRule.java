@@ -16,13 +16,18 @@
 package org.thingsboard.server.common.data.device.profile;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.validation.NoXss;
+
+import javax.validation.Valid;
 
 @Data
 public class AlarmRule {
 
+    @Valid
     private AlarmCondition condition;
     private AlarmSchedule schedule;
     // Advanced
+    @NoXss
     private String alarmDetails;
 
 }
