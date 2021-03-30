@@ -479,44 +479,42 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     } catch (Exception e) {
                         log.error("Failed updating schema!!!", e);
                     }
-                    log.info("Schema updated.");
-                }
-                break;
-            case "3.3.0":
-                try {
-                    log.info("Updating schema ...");
-                    deviceProfileRepository.findAll().forEach(deviceProfile -> {
-                        if(deviceProfile.getProfileData().has("alarms")) {
-                            JsonNode array = deviceProfile.getProfileData().get("alarms");
-                            for (JsonNode node : array) {
-                                if (node.has("createRules")) {
-                                    JsonNode createRules = node.get("createRules");
-                                    if (createRules.has("MAJOR")) {
-                                        convertOldSpecToNew(createRules.get("MAJOR").get("condition").get("spec"));
+                    try {
+                        log.info("Updating schema ...");
+                        deviceProfileRepository.findAll().forEach(deviceProfile -> {
+                            if(deviceProfile.getProfileData().has("alarms")) {
+                                JsonNode array = deviceProfile.getProfileData().get("alarms");
+                                for (JsonNode node : array) {
+                                    if (node.has("createRules")) {
+                                        JsonNode createRules = node.get("createRules");
+                                        if (createRules.has("MAJOR")) {
+                                            convertOldSpecToNew(createRules.get("MAJOR").get("condition").get("spec"));
+                                        }
+                                        if (createRules.has("MINOR")) {
+                                            convertOldSpecToNew(createRules.get("MINOR").get("condition").get("spec"));
+                                        }
+                                        if (createRules.has("CRITICAL")) {
+                                            convertOldSpecToNew(createRules.get("CRITICAL").get("condition").get("spec"));
+                                        }
+                                        if (createRules.has("WARNING")) {
+                                            convertOldSpecToNew(createRules.get("WARNING").get("condition").get("spec"));
+                                        }
+                                        if (createRules.has("INDETERMINATE")) {
+                                            convertOldSpecToNew(createRules.get("INDETERMINATE").get("condition").get("spec"));
+                                        }
                                     }
-                                    if (createRules.has("MINOR")) {
-                                        convertOldSpecToNew(createRules.get("MINOR").get("condition").get("spec"));
-                                    }
-                                    if (createRules.has("CRITICAL")) {
-                                        convertOldSpecToNew(createRules.get("CRITICAL").get("condition").get("spec"));
-                                    }
-                                    if (createRules.has("WARNING")) {
-                                        convertOldSpecToNew(createRules.get("WARNING").get("condition").get("spec"));
-                                    }
-                                    if (createRules.has("INDETERMINATE")) {
-                                        convertOldSpecToNew(createRules.get("INDETERMINATE").get("condition").get("spec"));
-                                    }
-                                }
 
-                                if(node.has("clearRule")) {
-                                    convertOldSpecToNew(node.get("clearRule").get("condition").get("spec"));
+                                    if(node.has("clearRule")) {
+                                        convertOldSpecToNew(node.get("clearRule").get("condition").get("spec"));
+                                    }
                                 }
+                                deviceProfileRepository.save(deviceProfile);
                             }
-                            deviceProfileRepository.save(deviceProfile);
-                        }
-                    });
-                } catch (Exception e) {
-                    log.error("Failing update schema! " + e.getMessage());
+                        });
+                    } catch (Exception e) {
+                        log.error("Failed updating schema!!! ", e);
+                    }
+                    log.info("Schema updated.");
                 }
                 break;
             default:
