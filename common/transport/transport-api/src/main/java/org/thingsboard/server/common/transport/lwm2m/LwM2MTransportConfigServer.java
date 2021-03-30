@@ -92,12 +92,8 @@ public class LwM2MTransportConfigServer {
     private boolean recommendedSupportedGroups;
 
     @Getter
-    @Value("${transport.lwm2m.request_pool_size:}")
-    private int requestPoolSize;
-
-    @Getter
-    @Value("${transport.lwm2m.request_error_pool_size:}")
-    private int requestErrorPoolSize;
+    @Value("${transport.lwm2m.response_pool_size:}")
+    private int responsePoolSize;
 
     @Getter
     @Value("${transport.lwm2m.registered_pool_size:}")
