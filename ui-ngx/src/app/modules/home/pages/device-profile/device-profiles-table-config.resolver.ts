@@ -20,7 +20,8 @@ import {
   checkBoxCell,
   DateEntityTableColumn,
   EntityTableColumn,
-  EntityTableConfig
+  EntityTableConfig,
+  HeaderActionDescriptor
 } from '@home/models/entity/entities-table-config.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
@@ -33,14 +34,14 @@ import {
   deviceTransportTypeTranslationMap
 } from '@shared/models/device.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
-import { DeviceProfileComponent } from '../../components/profile/device-profile.component';
+import { DeviceProfileComponent } from '@home/components/profile/device-profile.component';
 import { DeviceProfileTabsComponent } from './device-profile-tabs.component';
-import { Observable } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import {
   AddDeviceProfileDialogComponent,
   AddDeviceProfileDialogData
-} from '../../components/profile/add-device-profile-dialog.component';
+} from '@home/components/profile/add-device-profile-dialog.component';
+import { ImportExportService } from '@home/components/import-export/import-export.service';
 
 @Injectable()
 export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableConfig<DeviceProfile>> {
@@ -48,6 +49,7 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
   private readonly config: EntityTableConfig<DeviceProfile> = new EntityTableConfig<DeviceProfile>();
 
   constructor(private deviceProfileService: DeviceProfileService,
+              private importExport: ImportExportService,
               private translate: TranslateService,
               private datePipe: DatePipe,
               private dialogService: DialogService,
@@ -81,6 +83,12 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
 
     this.config.cellActionDescriptors.push(
       {
+        name: this.translate.instant('device-profile.export'),
+        icon: 'file_download',
+        isEnabled: () => true,
+        onAction: ($event, entity) => this.exportDeviceProfile($event, entity)
+      },
+      {
         name: this.translate.instant('device-profile.set-default'),
         icon: 'flag',
         isEnabled: (deviceProfile) => !deviceProfile.default,
@@ -101,7 +109,7 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
     this.config.onEntityAction = action => this.onDeviceProfileAction(action);
     this.config.deleteEnabled = (deviceProfile) => deviceProfile && !deviceProfile.default;
     this.config.entitySelectionEnabled = (deviceProfile) => deviceProfile && !deviceProfile.default;
-    this.config.addEntity = () => this.addDeviceProfile();
+    this.config.addActionDescriptors = this.configureAddActions();
   }
 
   resolve(): EntityTableConfig<DeviceProfile> {
@@ -110,8 +118,27 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
     return this.config;
   }
 
-  addDeviceProfile(): Observable<DeviceProfile> {
-    return this.dialog.open<AddDeviceProfileDialogComponent, AddDeviceProfileDialogData,
+  configureAddActions(): Array<HeaderActionDescriptor> {
+    const actions: Array<HeaderActionDescriptor> = [];
+    actions.push(
+      {
+        name: this.translate.instant('device-profile.create-device-profile'),
+        icon: 'insert_drive_file',
+        isEnabled: () => true,
+        onAction: () => this.addDeviceProfile()
+      },
+      {
+        name: this.translate.instant('device-profile.import'),
+        icon: 'file_upload',
+        isEnabled: () => true,
+        onAction: ($event) => this.importDeviceProfile($event)
+      }
+    );
+    return actions;
+  }
+
+  addDeviceProfile() {
+    this.dialog.open<AddDeviceProfileDialogComponent, AddDeviceProfileDialogData,
       DeviceProfile>(AddDeviceProfileDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
@@ -119,7 +146,13 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
         deviceProfileName: null,
         transportType: null
       }
-    }).afterClosed();
+    }).afterClosed().subscribe(
+      (res) => {
+        if (res) {
+          this.config.table.updateData();
+        }
+      }
+    );
   }
 
   setDefaultDeviceProfile($event: Event, deviceProfile: DeviceProfile) {
@@ -144,10 +177,30 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
     );
   }
 
+  importDeviceProfile($event: Event) {
+    this.importExport.importDeviceProfile().subscribe(
+      (deviceProfile) => {
+        if (deviceProfile) {
+          this.config.table.updateData();
+        }
+      }
+    );
+  }
+
+  exportDeviceProfile($event: Event, deviceProfile: DeviceProfile) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.importExport.exportDeviceProfile(deviceProfile.id.id);
+  }
+
   onDeviceProfileAction(action: EntityAction<DeviceProfile>): boolean {
     switch (action.action) {
       case 'setDefault':
         this.setDefaultDeviceProfile(action.event, action.entity);
+        return true;
+      case 'export':
+        this.exportDeviceProfile(action.event, action.entity);
         return true;
     }
     return false;

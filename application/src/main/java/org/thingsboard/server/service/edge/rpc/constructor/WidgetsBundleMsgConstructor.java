@@ -24,6 +24,8 @@ import org.thingsboard.server.gen.edge.UpdateMsgType;
 import org.thingsboard.server.gen.edge.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.nio.charset.StandardCharsets;
+
 @Component
 @TbCoreComponent
 public class WidgetsBundleMsgConstructor {
@@ -36,7 +38,7 @@ public class WidgetsBundleMsgConstructor {
                 .setTitle(widgetsBundle.getTitle())
                 .setAlias(widgetsBundle.getAlias());
         if (widgetsBundle.getImage() != null) {
-            builder.setImage(ByteString.copyFrom(widgetsBundle.getImage()));
+            builder.setImage(ByteString.copyFrom(widgetsBundle.getImage().getBytes(StandardCharsets.UTF_8)));
         }
         if (widgetsBundle.getTenantId().equals(TenantId.SYS_TENANT_ID)) {
             builder.setIsSystem(true);

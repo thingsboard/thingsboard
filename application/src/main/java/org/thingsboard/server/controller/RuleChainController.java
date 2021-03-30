@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -457,6 +458,25 @@ public class RuleChainController extends BaseController {
     }
 
     private String msgToOutput(TbMsg msg) throws Exception {
+        JsonNode resultNode = convertMsgToOut(msg);
+        return objectMapper.writeValueAsString(resultNode);
+    }
+
+    private String msgToOutput(List<TbMsg> msgs) throws Exception {
+        JsonNode resultNode;
+        if (msgs.size() > 1) {
+            resultNode = objectMapper.createArrayNode();
+            for (TbMsg msg : msgs) {
+                JsonNode convertedData = convertMsgToOut(msg);
+                ((ArrayNode) resultNode).add(convertedData);
+            }
+        } else {
+            resultNode = convertMsgToOut(msgs.get(0));
+        }
+        return objectMapper.writeValueAsString(resultNode);
+    }
+
+    private JsonNode convertMsgToOut(TbMsg msg) throws Exception{
         ObjectNode msgData = objectMapper.createObjectNode();
         if (!StringUtils.isEmpty(msg.getData())) {
             msgData.set("msg", objectMapper.readTree(msg.getData()));
@@ -464,7 +484,7 @@ public class RuleChainController extends BaseController {
         Map<String, String> metadata = msg.getMetaData().getData();
         msgData.set("metadata", objectMapper.valueToTree(metadata));
         msgData.put("msgType", msg.getType());
-        return objectMapper.writeValueAsString(msgData);
+        return msgData;
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
@@ -622,4 +642,5 @@ public class RuleChainController extends BaseController {
             throw handleException(e);
         }
     }
+
 }

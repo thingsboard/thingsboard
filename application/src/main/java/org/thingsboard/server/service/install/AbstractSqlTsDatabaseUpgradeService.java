@@ -50,7 +50,7 @@ public abstract class AbstractSqlTsDatabaseUpgradeService {
     @Autowired
     protected InstallScripts installScripts;
 
-    protected abstract void loadSql(Connection conn, String version, String fileName);
+    protected abstract void loadSql(Connection conn, String fileName, String version);
 
     protected void loadFunctions(Path sqlFile, Connection conn) throws Exception {
         String sql = new String(Files.readAllBytes(sqlFile), StandardCharsets.UTF_8);

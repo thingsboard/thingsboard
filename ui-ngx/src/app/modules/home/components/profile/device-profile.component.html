@@ -18,6 +18,12 @@
 <div class="tb-details-buttons" fxLayout.xs="column" *ngIf="!standalone">
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'export')"
+          [fxShow]="!isEdit">
+    {{'device-profile.export' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'setDefault')"
           [fxShow]="!isEdit && !entity?.default">
     {{'device-profile.set-default' | translate }}

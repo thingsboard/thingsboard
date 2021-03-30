@@ -18,7 +18,7 @@
 <form (ngSubmit)="add()" style="min-width: 650px;">
   <mat-toolbar color="primary">
     <h2 translate>rulenode.add</h2>
-    <span fxFlex></span>
+    <span fxFlex>: {{ruleNode.component.name}}</span>
     <div [tb-help]="helpLinkIdForRuleNodeType()"></div>
     <button mat-icon-button
             (click)="cancel()"

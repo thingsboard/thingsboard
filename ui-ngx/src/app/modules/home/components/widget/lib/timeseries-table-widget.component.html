@@ -48,17 +48,17 @@
                 <mat-header-cell *matHeaderCellDef mat-sort-header>Timestamp</mat-header-cell>
                 <mat-cell *matCellDef="let row;"
                           [innerHTML]="cellContent(source, 0, row, row[0])"
-                          [ngStyle]="cellStyle(source, 0, row[0])">
+                          [ngStyle]="cellStyle(source, 0, row, row[0])">
                 </mat-cell>
               </ng-container>
               <ng-container [matColumnDef]="h.index + ''" *ngFor="let h of source.header; trackBy: trackByColumnIndex;">
                 <mat-header-cell *matHeaderCellDef mat-sort-header> {{ h.dataKey.label }} </mat-header-cell>
                 <mat-cell *matCellDef="let row;"
                           [innerHTML]="cellContent(source, h.index, row, row[h.index])"
-                          [ngStyle]="cellStyle(source, h.index, row[h.index])">
+                          [ngStyle]="cellStyle(source, h.index, row, row[h.index])">
                 </mat-cell>
               </ng-container>
-              <ng-container matColumnDef="actions" stickyEnd>
+              <ng-container matColumnDef="actions" [stickyEnd]="enableStickyAction">
                 <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (actionCellDescriptors.length * 40) + 'px',
                                                                       maxWidth: (actionCellDescriptors.length * 40) + 'px',
                                                                       width: (actionCellDescriptors.length * 40) + 'px' }">
@@ -92,8 +92,9 @@
                   </div>
                 </mat-cell>
               </ng-container>
-              <mat-header-row *matHeaderRowDef="source.displayedColumns; sticky: true"></mat-header-row>
+              <mat-header-row *matHeaderRowDef="source.displayedColumns; sticky: enableStickyHeader"></mat-header-row>
               <mat-row *matRowDef="let row; columns: source.displayedColumns;"
+                       [ngStyle]="rowStyle(source, row)"
                        (click)="onRowClick($event, row)"></mat-row>
             </table>
             <span [fxShow]="source.timeseriesDatasource.isEmpty() | async"
