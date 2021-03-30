@@ -117,6 +117,8 @@ public class TbResourceController extends BaseController {
             StringJoiner noSaveResources = new StringJoiner("; ");
             resources.forEach(resource -> {
                 try {
+                    resource.setTenantId(getTenantId());
+                    checkEntity(resource.getId(), resource, Resource.TB_RESOURCE);
                     addResources.add(addResource(resource));
                 } catch (Exception e) {
                     noSaveResources.add(resource.getFileName());
@@ -197,7 +199,6 @@ public class TbResourceController extends BaseController {
     }
 
     private TbResource addResource(TbResource resource) throws Exception {
-            resource.setTenantId(getTenantId());
             checkEntity(resource.getId(), resource, Resource.TB_RESOURCE);
             TbResource savedResource = checkNotNull(resourceService.saveResource(resource));
             tbClusterService.onResourceChange(savedResource, null);
