@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
@@ -41,8 +42,10 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.StringJoiner;
 
 @Slf4j
 @RestController
@@ -108,13 +111,24 @@ public class TbResourceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/resource", method = RequestMethod.POST)
     @ResponseBody
-    public TbResource saveResource(@RequestBody TbResource resource) throws ThingsboardException {
+    public List<TbResource> saveResources(@RequestBody List<TbResource> resources) throws ThingsboardException {
         try {
-            resource.setTenantId(getTenantId());
-            checkEntity(resource.getId(), resource, Resource.TB_RESOURCE);
-            TbResource savedResource = checkNotNull(resourceService.saveResource(resource));
-            tbClusterService.onResourceChange(savedResource, null);
-            return savedResource;
+            List<TbResource> addResources = new ArrayList<>();
+            StringJoiner noSaveResources = new StringJoiner("; ");
+            resources.forEach(resource -> {
+                try {
+                    resource.setTenantId(getTenantId());
+                    checkEntity(resource.getId(), resource, Resource.TB_RESOURCE);
+                    addResources.add(addResource(resource));
+                } catch (Exception e) {
+                    noSaveResources.add(resource.getFileName());
+                    log.warn("Fail save resource: [{}]", resource.getFileName(), e);
+                }
+            });
+            if (noSaveResources.length() > 0) {
+                throw new ThingsboardException(String.format("Fail save resource: %s", noSaveResources.toString()), ThingsboardErrorCode.INVALID_ARGUMENTS);
+            }
+            return addResources;
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -182,5 +196,12 @@ public class TbResourceController extends BaseController {
         } catch (Exception e) {
             throw handleException(e);
         }
+    }
+
+    private TbResource addResource(TbResource resource) throws Exception {
+            checkEntity(resource.getId(), resource, Resource.TB_RESOURCE);
+            TbResource savedResource = checkNotNull(resourceService.saveResource(resource));
+            tbClusterService.onResourceChange(savedResource, null);
+            return savedResource;
     }
 }

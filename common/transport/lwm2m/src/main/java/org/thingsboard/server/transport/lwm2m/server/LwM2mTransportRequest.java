@@ -101,7 +101,7 @@ public class LwM2mTransportRequest {
     @PostConstruct
     public void init() {
         this.converter = LwM2mValueConverterImpl.getInstance();
-        executorResponse = Executors.newFixedThreadPool(this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getRequestPoolSize(),
+        executorResponse = Executors.newFixedThreadPool(this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getResponsePoolSize(),
                 new NamedThreadFactory(String.format("LwM2M %s channel response", RESPONSE_CHANNEL)));
     }
 
