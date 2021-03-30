@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -28,10 +28,13 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
-  MqttTransportPayloadType,
+  defaultAttributesSchema,
+  defaultTelemetrySchema,
   DeviceProfileTransportConfiguration,
   DeviceTransportType,
-  MqttDeviceProfileTransportConfiguration, mqttTransportPayloadTypeTranslationMap
+  MqttDeviceProfileTransportConfiguration,
+  TransportPayloadType,
+  transportPayloadTypeTranslationMap
 } from '@shared/models/device.models';
 import { isDefinedAndNotNull } from '@core/utils';
 
@@ -47,9 +50,9 @@ import { isDefinedAndNotNull } from '@core/utils';
 })
 export class MqttDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit {
 
-  mqttTransportPayloadTypes = Object.keys(MqttTransportPayloadType);
+  transportPayloadTypes = Object.keys(TransportPayloadType);
 
-  mqttTransportPayloadTypeTranslations = mqttTransportPayloadTypeTranslationMap;
+  transportPayloadTypeTranslations = transportPayloadTypeTranslationMap;
 
   mqttDeviceProfileTransportConfigurationFormGroup: FormGroup;
 
@@ -82,11 +85,18 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
 
   ngOnInit() {
     this.mqttDeviceProfileTransportConfigurationFormGroup = this.fb.group({
-      configuration: this.fb.group({
         deviceAttributesTopic: [null, [Validators.required, this.validationMQTTTopic()]],
         deviceTelemetryTopic: [null, [Validators.required, this.validationMQTTTopic()]],
-        transportPayloadType: [MqttTransportPayloadType.JSON, Validators.required]
-      }, {validator: this.uniqueDeviceTopicValidator})
+        transportPayloadTypeConfiguration: this.fb.group({
+          transportPayloadType: [TransportPayloadType.JSON, Validators.required],
+          deviceTelemetryProtoSchema: [defaultTelemetrySchema, Validators.required],
+          deviceAttributesProtoSchema: [defaultAttributesSchema, Validators.required]
+        })
+      }, {validator: this.uniqueDeviceTopicValidator}
+    );
+    this.mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.transportPayloadType')
+      .valueChanges.subscribe(payloadType => {
+      this.updateTransportPayloadBasedControls(payloadType, true);
     });
     this.mqttDeviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
@@ -102,19 +112,43 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     }
   }
 
+  get protoPayloadType(): boolean {
+    const transportPayloadType = this.mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.transportPayloadType').value;
+    return transportPayloadType === TransportPayloadType.PROTOBUF;
+  }
+
   writeValue(value: MqttDeviceProfileTransportConfiguration | null): void {
     if (isDefinedAndNotNull(value)) {
-      this.mqttDeviceProfileTransportConfigurationFormGroup.patchValue({configuration: value}, {emitEvent: false});
+      this.mqttDeviceProfileTransportConfigurationFormGroup.patchValue(value, {emitEvent: false});
+      this.updateTransportPayloadBasedControls(value.transportPayloadTypeConfiguration?.transportPayloadType);
     }
   }
 
   private updateModel() {
     let configuration: DeviceProfileTransportConfiguration = null;
     if (this.mqttDeviceProfileTransportConfigurationFormGroup.valid) {
-      configuration = this.mqttDeviceProfileTransportConfigurationFormGroup.getRawValue().configuration;
+      configuration = this.mqttDeviceProfileTransportConfigurationFormGroup.value;
       configuration.type = DeviceTransportType.MQTT;
     }
     this.propagateChange(configuration);
+  }
+
+  private updateTransportPayloadBasedControls(type: TransportPayloadType, forceUpdated = false) {
+    const transportPayloadTypeForm = this.mqttDeviceProfileTransportConfigurationFormGroup
+      .get('transportPayloadTypeConfiguration') as FormGroup;
+    if (forceUpdated) {
+      transportPayloadTypeForm.patchValue({
+        deviceTelemetryProtoSchema: defaultTelemetrySchema,
+        deviceAttributesProtoSchema: defaultAttributesSchema
+      }, {emitEvent: false});
+    }
+    if (type === TransportPayloadType.PROTOBUF && !this.disabled) {
+      transportPayloadTypeForm.get('deviceTelemetryProtoSchema').enable({emitEvent: false});
+      transportPayloadTypeForm.get('deviceAttributesProtoSchema').enable({emitEvent: false});
+    } else {
+      transportPayloadTypeForm.get('deviceTelemetryProtoSchema').disable({emitEvent: false});
+      transportPayloadTypeForm.get('deviceAttributesProtoSchema').disable({emitEvent: false});
+    }
   }
 
   private validationMQTTTopic(): ValidatorFn {

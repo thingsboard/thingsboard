@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -130,6 +130,7 @@ export class AlarmDataSubscription {
         this.alarmDataCommand.query.pageLink.timeWindow = this.subsTw.realtimeWindowMs;
       }
 
+      this.subscriber.setTsOffset(this.subsTw.tsOffset);
       this.subscriber.subscriptionCommands.push(this.alarmDataCommand);
 
       this.subscriber.alarmData$.subscribe((alarmDataUpdate) => {
@@ -143,8 +144,11 @@ export class AlarmDataSubscription {
       this.subscriber.subscribe();
 
     } else if (this.datasourceType === DatasourceType.function) {
+      const alarm = deepClone(simulatedAlarm);
+      alarm.createdTime += this.subsTw.tsOffset;
+      alarm.startTs += this.subsTw.tsOffset;
       const pageData: PageData<AlarmData> = {
-        data: [{...simulatedAlarm, entityId: '1', latest: {}}],
+        data: [{...alarm, entityId: '1', latest: {}}],
         hasNext: false,
         totalElements: 1,
         totalPages: 1

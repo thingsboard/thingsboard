@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -65,6 +65,8 @@ export class FilterPredicateListComponent implements ControlValueAccessor, OnIni
   @Input() displayUserParameters = true;
 
   @Input() allowUserDynamicSource = true;
+
+  @Input() onlyUserDynamicSource = false;
 
   filterListFormGroup: FormGroup;
 
@@ -159,7 +161,8 @@ export class FilterPredicateListComponent implements ControlValueAccessor, OnIni
         key: this.key,
         isAdd: true,
         displayUserParameters: this.displayUserParameters,
-        allowUserDynamicSource: this.allowUserDynamicSource
+        allowUserDynamicSource: this.allowUserDynamicSource,
+        onlyUserDynamicSource: this.onlyUserDynamicSource
       }
     }).afterClosed().pipe(
       map((result) => {

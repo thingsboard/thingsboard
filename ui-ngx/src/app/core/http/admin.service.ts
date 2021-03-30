@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,7 +18,13 @@ import { Injectable } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { AdminSettings, MailServerSettings, SecuritySettings, UpdateMessage } from '@shared/models/settings.models';
+import {
+  AdminSettings,
+  MailServerSettings,
+  SecuritySettings,
+  TestSmsRequest,
+  UpdateMessage
+} from '@shared/models/settings.models';
 
 @Injectable({
   providedIn: 'root'
@@ -41,6 +47,11 @@ export class AdminService {
   public sendTestMail(adminSettings: AdminSettings<MailServerSettings>,
                       config?: RequestConfig): Observable<void> {
     return this.http.post<void>('/api/admin/settings/testMail', adminSettings, defaultHttpOptionsFromConfig(config));
+  }
+
+  public sendTestSms(testSmsRequest: TestSmsRequest,
+                     config?: RequestConfig): Observable<void> {
+    return this.http.post<void>('/api/admin/settings/testSms', testSmsRequest, defaultHttpOptionsFromConfig(config));
   }
 
   public getSecuritySettings(config?: RequestConfig): Observable<SecuritySettings> {

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -51,16 +51,17 @@
             ngxClipboard
             (cbOnSuccess)="onDeviceIdCopied($event)"
             [cbContent]="entity?.id?.id"
+            [disabled]="(isLoading$ | async)"
             [fxShow]="!isEdit">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>device.copyId</span>
     </button>
-    <button mat-raised-button
-            (click)="copyAccessToken($event)"
-            [fxShow]="!isEdit">
-      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-      <span translate>device.copyAccessToken</span>
-    </button>
+    <tb-copy-device-credentials
+      [fxShow]="!isEdit"
+      [disabled]="(isLoading$ | async)"
+      [credentials$]="deviceCredentials$"
+      [deviceId]="entity?.id">
+    </tb-copy-device-credentials>
   </div>
 </div>
 <div class="mat-padding" fxLayout="column">
@@ -99,9 +100,15 @@
         required>
       </tb-device-data>
       <div formGroupName="additionalInfo" fxLayout="column">
-        <mat-checkbox fxFlex formControlName="gateway" style="padding-bottom: 16px;">
-          {{ 'device.is-gateway' | translate }}
-        </mat-checkbox>
+        <div fxLayout="row" fxLayout.xs="column" style="padding-bottom: 16px;">
+          <mat-checkbox fxFlex.gt-sm="30" fxFlex formControlName="gateway">
+            {{ 'device.is-gateway' | translate }}
+          </mat-checkbox>
+          <mat-checkbox fxFlex *ngIf="entityForm.get('additionalInfo.gateway').value"
+                        formControlName="overwriteActivityTime">
+            {{ 'device.overwrite-activity-time' | translate }}
+          </mat-checkbox>
+        </div>
         <mat-form-field class="mat-block">
           <mat-label translate>device.description</mat-label>
           <textarea matInput formControlName="description" rows="2"></textarea>

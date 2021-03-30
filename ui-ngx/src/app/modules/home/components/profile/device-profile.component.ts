@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import {
 import { EntityType } from '@shared/models/entity-type.models';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { ServiceType } from '@shared/models/queue.models';
+import { EntityId } from '@shared/models/id/entity-id';
 
 @Component({
   selector: 'tb-device-profile',
@@ -66,6 +67,8 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
 
   serviceType = ServiceType.TB_RULE_ENGINE;
 
+  deviceProfileId: EntityId;
+
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
               @Optional() @Inject('entity') protected entityValue: DeviceProfile,
@@ -83,12 +86,13 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
   }
 
   buildForm(entity: DeviceProfile): FormGroup {
+    this.deviceProfileId = entity?.id ? entity.id : null;
     this.displayProfileConfiguration = entity && entity.type &&
       deviceProfileTypeConfigurationInfoMap.get(entity.type).hasProfileConfiguration;
     this.displayTransportConfiguration = entity && entity.transportType &&
       deviceTransportTypeConfigurationInfoMap.get(entity.transportType).hasProfileConfiguration;
     const deviceProvisionConfiguration: DeviceProvisionConfiguration = {
-      type: entity?.provisionType ? entity?.provisionType : DeviceProvisionType.DISABLED,
+      type: entity?.provisionType ? entity.provisionType : DeviceProvisionType.DISABLED,
       provisionDeviceKey: entity?.provisionDeviceKey,
       provisionDeviceSecret: entity?.profileData?.provisionConfiguration?.provisionDeviceSecret
     };
@@ -157,12 +161,13 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
   }
 
   updateForm(entity: DeviceProfile) {
+    this.deviceProfileId = entity.id;
     this.displayProfileConfiguration = entity.type &&
       deviceProfileTypeConfigurationInfoMap.get(entity.type).hasProfileConfiguration;
     this.displayTransportConfiguration = entity.transportType &&
       deviceTransportTypeConfigurationInfoMap.get(entity.transportType).hasProfileConfiguration;
     const deviceProvisionConfiguration: DeviceProvisionConfiguration = {
-      type: entity?.provisionType ? entity?.provisionType : DeviceProvisionType.DISABLED,
+      type: entity?.provisionType ? entity.provisionType : DeviceProvisionType.DISABLED,
       provisionDeviceKey: entity?.provisionDeviceKey,
       provisionDeviceSecret: entity?.profileData?.provisionConfiguration?.provisionDeviceSecret
     };

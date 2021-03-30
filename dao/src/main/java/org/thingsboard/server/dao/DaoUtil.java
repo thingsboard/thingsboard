@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,11 +40,11 @@ public abstract class DaoUtil {
 
     public static <T> PageData<T> toPageData(Page<? extends ToData<T>> page) {
         List<T> data = convertDataList(page.getContent());
-        return new PageData(data, page.getTotalPages(), page.getTotalElements(), page.hasNext());
+        return new PageData<>(data, page.getTotalPages(), page.getTotalElements(), page.hasNext());
     }
 
     public static <T> PageData<T> pageToPageData(Page<T> page) {
-        return new PageData(page.getContent(), page.getTotalPages(), page.getTotalElements(), page.hasNext());
+        return new PageData<>(page.getContent(), page.getTotalPages(), page.getTotalElements(), page.hasNext());
     }
 
     public static Pageable toPageable(PageLink pageLink) {

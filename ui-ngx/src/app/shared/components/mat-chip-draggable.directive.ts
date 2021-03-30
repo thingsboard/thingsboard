@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -124,6 +124,7 @@ class DraggableChip {
     if (this.preventDrag) {
       event.preventDefault();
     } else {
+      event.stopPropagation();
       this.dragging = true;
       globalDraggingChipListId = this.chipListElement.id;
       this.chipListElement.classList.add(draggingClassName);
@@ -159,6 +160,7 @@ class DraggableChip {
   }
 
   private onDragEnd(event: Event | any) {
+    event.stopPropagation();
     this.dragging = false;
     globalDraggingChipListId = null;
     this.chipListElement.classList.remove(draggingClassName);

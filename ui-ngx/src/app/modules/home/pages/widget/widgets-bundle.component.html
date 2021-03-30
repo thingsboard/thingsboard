@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -44,6 +44,16 @@
         <mat-error *ngIf="entityForm.get('title').hasError('required')">
           {{ 'widgets-bundle.title-required' | translate }}
         </mat-error>
+      </mat-form-field>
+      <tb-image-input fxFlex
+                      label="{{'widgets-bundle.image-preview' | translate}}"
+                      maxSizeByte="524288"
+                      formControlName="image">
+      </tb-image-input>
+      <mat-form-field class="mat-block">
+        <mat-label translate>widgets-bundle.description</mat-label>
+        <textarea matInput formControlName="description" rows="2" maxlength="255" #descriptionInput></textarea>
+        <mat-hint align="end">{{descriptionInput.value?.length || 0}}/255</mat-hint>
       </mat-form-field>
     </fieldset>
   </form>

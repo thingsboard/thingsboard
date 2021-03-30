@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,10 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxJSExecutions;
     private long maxDPStorageDays;
     private int maxRuleNodeExecutionsPerMessage;
+    private long maxEmails;
+    private long maxSms;
+
+    private int defaultStorageTtlDays;
 
     private double warnThreshold;
 
@@ -58,6 +62,10 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
                 return maxREExecutions;
             case STORAGE_DP_COUNT:
                 return maxDPStorageDays;
+            case EMAIL_EXEC_COUNT:
+                return maxEmails;
+            case SMS_EXEC_COUNT:
+                return maxSms;
         }
         return 0L;
     }

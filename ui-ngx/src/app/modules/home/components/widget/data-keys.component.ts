@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,29 +16,29 @@
 
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import {
-    AfterViewInit,
-    Component,
-    ElementRef,
-    forwardRef,
-    Input,
-    OnChanges,
-    OnInit,
-    SimpleChanges,
-    SkipSelf,
-    ViewChild
+  AfterViewInit,
+  Component,
+  ElementRef,
+  forwardRef,
+  Input,
+  OnChanges,
+  OnInit,
+  SimpleChanges,
+  SkipSelf,
+  ViewChild
 } from '@angular/core';
 import {
-    ControlValueAccessor,
-    FormBuilder,
-    FormControl,
-    FormGroup,
-    FormGroupDirective,
-    NG_VALUE_ACCESSOR,
-    NgForm,
-    Validators
+  ControlValueAccessor,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  FormGroupDirective,
+  NG_VALUE_ACCESSOR,
+  NgForm,
+  Validators
 } from '@angular/forms';
 import { Observable, of } from 'rxjs';
-import { filter, map, mergeMap, share, tap } from 'rxjs/operators';
+import { filter, map, mergeMap, publishReplay, refCount, share, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -56,8 +56,8 @@ import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { DialogService } from '@core/services/dialog.service';
 import { MatDialog } from '@angular/material/dialog';
 import {
-    DataKeyConfigDialogComponent,
-    DataKeyConfigDialogData
+  DataKeyConfigDialogComponent,
+  DataKeyConfigDialogData
 } from '@home/components/widget/data-key-config-dialog.component';
 import { deepClone } from '@core/utils';
 import { MatChipDropEvent } from '@app/shared/components/mat-chip-draggable.directive';
@@ -94,8 +94,15 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
   @Input()
   datasourceType: DatasourceType;
 
+  private maxDataKeysValue: number;
+  get maxDataKeys(): number {
+    return this.datasourceType === DatasourceType.entityCount ? 1 : this.maxDataKeysValue;
+  }
+
   @Input()
-  maxDataKeys: number;
+  set maxDataKeys(value: number) {
+    this.maxDataKeysValue = value;
+  }
 
   @Input()
   optDataKeys: boolean;
@@ -114,7 +121,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
 
   private requiredValue: boolean;
   get required(): boolean {
-    return this.requiredValue || !this.optDataKeys;
+    return this.requiredValue || !this.optDataKeys || this.isEntityCountDatasource;
   }
   @Input()
   set required(value: boolean) {
@@ -142,6 +149,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
 
   searchText = '';
   private latestSearchTextResult: Array<DataKey> = null;
+  private fetchObservable$: Observable<Array<DataKey>> = null;
 
   private dirty = false;
 
@@ -209,8 +217,10 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
     if (this.maxDataKeys !== null && this.maxDataKeys > -1) {
       if (this.datasourceType === DatasourceType.function) {
         return this.translate.instant('datakey.maximum-function-types', {count: this.maxDataKeys});
-      } else {
+      } else if (!this.isEntityCountDatasource) {
         return this.translate.instant('datakey.maximum-timeseries-or-attributes', {count: this.maxDataKeys});
+      } else {
+        return '';
       }
     } else {
       return '';
@@ -240,6 +250,8 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
   private reset() {
     if (this.widgetType === widgetType.alarm) {
       this.keys = this.utils.getDefaultAlarmDataKeys();
+    } else if (this.isEntityCountDatasource) {
+      this.keys = [this.callbacks.generateDataKey('count', DataKeyType.count)];
     } else {
       this.keys = [];
     }
@@ -259,10 +271,10 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
         if (propName === 'entityAliasId') {
-          this.searchText = '';
-          this.latestSearchTextResult = null;
+          this.clearSearchCache();
           this.dirty = true;
         } else if (['widgetType', 'datasourceType'].includes(propName)) {
+          this.clearSearchCache();
           this.updateParams();
           setTimeout(() => {
             this.reset();
@@ -405,39 +417,48 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
     return key ? key.name : undefined;
   }
 
-  fetchKeys(searchText?: string): Observable<Array<DataKey>> {
-    if (this.latestSearchTextResult === null || this.searchText !== searchText) {
+  private fetchKeys(searchText?: string): Observable<Array<DataKey>> {
+    if (this.searchText !== searchText || this.latestSearchTextResult === null) {
       this.searchText = searchText;
-      let fetchObservable: Observable<Array<DataKey>> = null;
-      if (this.datasourceType === DatasourceType.function) {
-        const dataKeyFilter = this.createDataKeyFilter(this.searchText);
-        const targetKeysList = this.widgetType === widgetType.alarm ? this.alarmKeys : this.functionTypeKeys;
-        fetchObservable = of(targetKeysList.filter(dataKeyFilter));
-      } else {
-        if (this.entityAliasId) {
-          const dataKeyTypes = [DataKeyType.timeseries];
-          if (this.widgetType === widgetType.latest || this.widgetType === widgetType.alarm) {
-            dataKeyTypes.push(DataKeyType.attribute);
-            dataKeyTypes.push(DataKeyType.entityField);
-            if (this.widgetType === widgetType.alarm) {
-                dataKeyTypes.push(DataKeyType.alarm);
-            }
-          }
-          fetchObservable = this.callbacks.fetchEntityKeys(this.entityAliasId, this.searchText, dataKeyTypes);
-        } else {
-          fetchObservable = of([]);
-        }
-      }
-      return fetchObservable.pipe(
+      const dataKeyFilter = this.createDataKeyFilter(this.searchText);
+      return this.getKeys().pipe(
+        map(name => name.filter(dataKeyFilter)),
         tap(res => this.latestSearchTextResult = res)
       );
     }
     return of(this.latestSearchTextResult);
   }
 
+  private getKeys(): Observable<Array<DataKey>> {
+    if (this.fetchObservable$ === null) {
+      let fetchObservable: Observable<Array<DataKey>>;
+      if (this.datasourceType === DatasourceType.function) {
+        const targetKeysList = this.widgetType === widgetType.alarm ? this.alarmKeys : this.functionTypeKeys;
+        fetchObservable = of(targetKeysList);
+      } else if (this.datasourceType === DatasourceType.entity && this.entityAliasId) {
+        const dataKeyTypes = [DataKeyType.timeseries];
+        if (this.widgetType === widgetType.latest || this.widgetType === widgetType.alarm) {
+          dataKeyTypes.push(DataKeyType.attribute);
+          dataKeyTypes.push(DataKeyType.entityField);
+          if (this.widgetType === widgetType.alarm) {
+            dataKeyTypes.push(DataKeyType.alarm);
+          }
+        }
+        fetchObservable = this.callbacks.fetchEntityKeys(this.entityAliasId, dataKeyTypes);
+      } else {
+        fetchObservable = of([]);
+      }
+      this.fetchObservable$ = fetchObservable.pipe(
+        publishReplay(1),
+        refCount()
+      );
+    }
+    return this.fetchObservable$;
+  }
+
   private createDataKeyFilter(query: string): (key: DataKey) => boolean {
     const lowercaseQuery = query.toLowerCase();
-    return key => key.name.toLowerCase().indexOf(lowercaseQuery) === 0;
+    return key => key.name.toLowerCase().startsWith(lowercaseQuery);
   }
 
   textIsNotEmpty(text: string): boolean {
@@ -453,4 +474,13 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
     }, 0);
   }
 
+  get isEntityCountDatasource(): boolean {
+    return this.datasourceType === DatasourceType.entityCount;
+  }
+
+  private clearSearchCache() {
+    this.searchText = '';
+    this.fetchObservable$ = null;
+    this.latestSearchTextResult = null;
+  }
 }

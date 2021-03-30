@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -269,7 +269,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
             }
           }
         );
-      } else {
+      } else if (value.entityType && value.id) {
         const targetEntityType = this.checkEntityType(value.entityType);
         this.entityService.getEntity(targetEntityType, value.id, {ignoreLoading: true, ignoreErrors: true}).subscribe(
           (entity) => {
@@ -284,6 +284,9 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
             }
           }
         );
+      } else {
+        this.modelValue = null;
+        this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
       }
     } else {
       this.modelValue = null;

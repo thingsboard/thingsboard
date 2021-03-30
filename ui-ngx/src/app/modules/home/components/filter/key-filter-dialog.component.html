@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async" fxLayout="column">
       <section fxLayout="row" fxLayoutGap="8px" class="entity-key">
-        <section fxFlex="70" fxLayout="row" formGroupName="key" fxLayoutGap="8px">
+        <section [fxFlex]="isConstantKeyType ? 45 : 70" fxLayout="row" formGroupName="key" fxLayoutGap="8px">
           <mat-form-field fxFlex="40" class="mat-block">
             <mat-label translate>filter.key-type.key-type</mat-label>
             <mat-select required formControlName="type">
@@ -40,11 +40,19 @@
           <mat-form-field fxFlex="60" class="mat-block">
             <mat-label translate>filter.key-name</mat-label>
             <input matInput required formControlName="key"
-                   [matAutocomplete]="auto"
-                   [matAutocompleteDisabled]="keyFilterFormGroup.get('key.type').value !== entityField">
-            <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete">
-              <mat-option *ngFor="let option of filteredEntityFields | async" [value]="option">
-                {{option}}
+                   #keyNameInput
+                   (focusin)="onFocus()"
+                   [matAutocomplete]="keyName"
+                   [matAutocompleteDisabled]="!showAutocomplete">
+            <button *ngIf="keyFilterFormGroup.get('key.key').value && showAutocomplete"
+                    type="button"
+                    matSuffix mat-button mat-icon-button aria-label="Clear"
+                    (click)="clear()">
+              <mat-icon class="material-icons">close</mat-icon>
+            </button>
+            <mat-autocomplete autoActiveFirstOption #keyName="matAutocomplete">
+              <mat-option *ngFor="let keyName of filteredKeysName | async" [value]="keyName">
+                <span [innerHTML]="keyName | highlight:searchText"></span>
               </mat-option>
             </mat-autocomplete>
             <mat-error *ngIf="keyFilterFormGroup.get('key.key').hasError('required')">
@@ -52,7 +60,7 @@
             </mat-error>
           </mat-form-field>
         </section>
-        <mat-form-field fxFlex="30" class="mat-block">
+        <mat-form-field [fxFlex]="isConstantKeyType ? 20 : 30" class="mat-block">
           <mat-label translate>filter.value-type.value-type</mat-label>
           <mat-select formControlName="valueType">
             <mat-select-trigger>
@@ -68,9 +76,37 @@
             {{ 'filter.value-type-required' | translate }}
           </mat-error>
         </mat-form-field>
+        <div fxFlex *ngIf="isConstantKeyType">
+          <div fxLayout="column" [ngSwitch]="keyFilterFormGroup.get('valueType').value">
+            <ng-template [ngSwitchCase]="entityKeyValueTypeEnum.STRING">
+              <mat-form-field class="mat-block">
+                <mat-label translate>filter.value</mat-label>
+                <input matInput required formControlName="value" placeholder="{{'filter.value' | translate}}">
+              </mat-form-field>
+            </ng-template>
+            <ng-template [ngSwitchCase]="entityKeyValueTypeEnum.NUMERIC">
+              <mat-form-field class="mat-block">
+                <mat-label translate>filter.value</mat-label>
+                <input required type="number" matInput formControlName="value">
+              </mat-form-field>
+            </ng-template>
+            <ng-template [ngSwitchCase]="entityKeyValueTypeEnum.DATE_TIME">
+              <tb-datetime formControlName="value"
+                           dateText="filter.date"
+                           timeText="filter.time"
+                           required></tb-datetime>
+            </ng-template>
+            <ng-template [ngSwitchCase]="entityKeyValueTypeEnum.BOOLEAN">
+              <mat-checkbox formControlName="value" style="margin-top: 20px">
+                {{ (keyFilterFormGroup.get('value').value ? 'value.true' : 'value.false') | translate }}
+              </mat-checkbox>
+            </ng-template>
+          </div>
+        </div>
       </section>
       <tb-filter-predicate-list *ngIf="keyFilterFormGroup.get('valueType').value"
                                 [allowUserDynamicSource]="data.allowUserDynamicSource"
+                                [onlyUserDynamicSource]="isConstantKeyType"
                                 [displayUserParameters]="data.displayUserParameters"
                                 [valueType]="keyFilterFormGroup.get('valueType').value"
                                 [key]="keyFilterFormGroup.get('key.key').value"

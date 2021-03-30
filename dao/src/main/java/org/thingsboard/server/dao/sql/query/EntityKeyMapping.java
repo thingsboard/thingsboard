@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
+import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityFilter;
@@ -379,6 +380,30 @@ public class EntityKeyMapping {
 
         return mappings;
     }
+
+    public static List<EntityKeyMapping> prepareEntityCountKeyMapping(EntityCountQuery query) {
+        Map<EntityKey, List<KeyFilter>> filters =
+                query.getKeyFilters() != null ?
+                        query.getKeyFilters().stream().collect(Collectors.groupingBy(KeyFilter::getKey)) : Collections.emptyMap();
+        int index = 2;
+        List<EntityKeyMapping> mappings = new ArrayList<>();
+        if (!filters.isEmpty()) {
+            for (EntityKey filterField : filters.keySet()) {
+                EntityKeyMapping mapping = new EntityKeyMapping();
+                mapping.setIndex(index);
+                mapping.setAlias(String.format("alias%s", index));
+                mapping.setKeyFilters(filters.get(filterField));
+                mapping.setLatest(!filterField.getType().equals(EntityKeyType.ENTITY_FIELD));
+                mapping.setSelection(false);
+                mapping.setEntityKey(filterField);
+                mappings.add(mapping);
+                index += 1;
+            }
+        }
+
+        return mappings;
+    }
+
 
     private String buildAttributeSelection() {
         return buildTimeSeriesOrAttrSelection(true);

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,7 +153,8 @@ public class CassandraToSqlColumn {
                     sqlInsertStatement.setBoolean(this.sqlIndex, Boolean.parseBoolean(value));
                     break;
                 case ENUM_TO_INT:
-                    Enum enumVal = Enum.valueOf(this.enumClass, value);
+                    @SuppressWarnings("unchecked")
+                    Enum<?> enumVal = Enum.valueOf(this.enumClass, value);
                     int intValue = enumVal.ordinal();
                     sqlInsertStatement.setInt(this.sqlIndex, intValue);
                     break;

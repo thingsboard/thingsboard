@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import {
   EditAlarmDetailsDialogComponent,
   EditAlarmDetailsDialogData
 } from '@home/components/profile/alarm/edit-alarm-details-dialog.component';
+import { EntityId } from '@shared/models/id/entity-id';
 
 @Component({
   selector: 'tb-alarm-rule',
@@ -64,6 +65,9 @@ export class AlarmRuleComponent implements ControlValueAccessor, OnInit, Validat
   set required(value: boolean) {
     this.requiredValue = coerceBooleanProperty(value);
   }
+
+  @Input()
+  deviceProfileId: EntityId;
 
   private modelValue: AlarmRule;
 

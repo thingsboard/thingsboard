@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ export class ItemBufferService {
       if (widget.config.datasources) {
         for (let i = 0; i < widget.config.datasources.length; i++) {
           const datasource = widget.config.datasources[i];
-          if (datasource.type === DatasourceType.entity && datasource.entityAliasId) {
+          if ((datasource.type === DatasourceType.entity || datasource.type === DatasourceType.entityCount) && datasource.entityAliasId) {
             entityAlias = dashboard.configuration.entityAliases[datasource.entityAliasId];
             if (entityAlias) {
               aliasesInfo.datasourceAliases[i] = this.prepareAliasInfo(entityAlias);
@@ -119,7 +119,7 @@ export class ItemBufferService {
       if (widget.config.datasources) {
         for (let i = 0; i < widget.config.datasources.length; i++) {
           const datasource = widget.config.datasources[i];
-          if (datasource.type === DatasourceType.entity && datasource.filterId) {
+          if ((datasource.type === DatasourceType.entity || datasource.type === DatasourceType.entityCount) && datasource.filterId) {
             filter = dashboard.configuration.filters[datasource.filterId];
             if (filter) {
               filtersInfo.datasourceFilters[i] = this.prepareFilterInfo(filter);

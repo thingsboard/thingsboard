@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -21,16 +21,43 @@
       <mat-tab-group dynamicHeight [ngClass]="{'tb-headless': historyOnly}"
                      (selectedIndexChange)="timewindowForm.markAsDirty()" [(selectedIndex)]="timewindow.selectedTab">
         <mat-tab label="{{ 'timewindow.realtime' | translate }}">
-          <div formGroupName="realtime" class="mat-content mat-padding" fxLayout="column">
-            <tb-timeinterval
-              [(hideFlag)]="timewindow.hideInterval"
-              (hideFlagChange)="onHideIntervalChanged()"
-              [isEdit]="isEdit"
-              formControlName="timewindowMs"
-              predefinedName="timewindow.last"
-              [required]="timewindow.selectedTab === timewindowTypes.REALTIME"
-              style="padding-top: 8px;"></tb-timeinterval>
-          </div>
+          <section fxLayout="row">
+            <section *ngIf="isEdit" fxLayout="column" style="padding-top: 8px; padding-left: 16px;">
+              <label class="tb-small hide-label" translate>timewindow.hide</label>
+              <mat-checkbox [ngModelOptions]="{standalone: true}" [(ngModel)]="timewindow.hideInterval"
+                            (ngModelChange)="onHideIntervalChanged()"></mat-checkbox>
+            </section>
+            <section fxLayout="column" fxFlex [fxShow]="isEdit || !timewindow.hideInterval">
+              <div formGroupName="realtime" class="mat-content mat-padding" style="padding-top: 8px;">
+                <mat-radio-group formControlName="realtimeType">
+                  <mat-radio-button [value]="realtimeTypes.LAST_INTERVAL" color="primary">
+                    <section fxLayout="column">
+                      <span translate>timewindow.last</span>
+                      <tb-timeinterval
+                        formControlName="timewindowMs"
+                        predefinedName="timewindow.last"
+                        [fxShow]="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL"
+                        [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
+                                timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL"
+                        style="padding-top: 8px;"></tb-timeinterval>
+                    </section>
+                  </mat-radio-button>
+                  <mat-radio-button [value]="realtimeTypes.INTERVAL" color="primary">
+                    <section fxLayout="column">
+                      <span translate>timewindow.interval</span>
+                      <tb-quick-time-interval
+                        formControlName="quickInterval"
+                        onlyCurrentInterval="true"
+                        [fxShow]="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL"
+                        [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
+                                timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL"
+                        style="padding-top: 8px; min-width: 364px"></tb-quick-time-interval>
+                    </section>
+                  </mat-radio-button>
+                </mat-radio-group>
+              </div>
+            </section>
+          </section>
         </mat-tab>
         <mat-tab label="{{ 'timewindow.history' | translate }}">
           <section fxLayout="row">
@@ -65,6 +92,17 @@
                         style="padding-top: 8px;"></tb-datetime-period>
                     </section>
                   </mat-radio-button>
+                  <mat-radio-button [value]="historyTypes.INTERVAL" color="primary">
+                    <section fxLayout="column">
+                      <span translate>timewindow.interval</span>
+                      <tb-quick-time-interval
+                        formControlName="quickInterval"
+                        [fxShow]="timewindowForm.get('history.historyType').value === historyTypes.INTERVAL"
+                        [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+                              timewindowForm.get('history.historyType').value === historyTypes.INTERVAL"
+                        style="padding-top: 8px; min-width: 364px"></tb-quick-time-interval>
+                    </section>
+                  </mat-radio-button>
                 </mat-radio-group>
               </div>
             </section>
@@ -95,7 +133,7 @@
             <mat-checkbox [ngModelOptions]="{standalone: true}" [(ngModel)]="timewindow.hideAggInterval"
                           (ngModelChange)="onHideAggIntervalChanged()"></mat-checkbox>
           </section>
-          <section fxLayout="column" [fxShow]="isEdit || !timewindow.hideAggInterval">
+          <section fxLayout="column" fxFlex [fxShow]="isEdit || !timewindow.hideAggInterval">
             <div class="limit-slider-container"
                  fxLayout="row" fxLayoutAlign="start center">
               <span translate>aggregation.limit</span>
@@ -138,6 +176,17 @@
           [min]="minHistoryAggInterval()" [max]="maxHistoryAggInterval()"
           predefinedName="aggregation.group-interval">
         </tb-timeinterval>
+      </div>
+      <div *ngIf="timezone" class="mat-content mat-padding" fxLayout="row">
+        <section fxLayout="column" [fxShow]="isEdit">
+          <label class="tb-small hide-label" translate>timewindow.hide</label>
+          <mat-checkbox [ngModelOptions]="{standalone: true}" [(ngModel)]="timewindow.hideTimezone"
+                        (ngModelChange)="onHideTimezoneChanged()"></mat-checkbox>
+        </section>
+        <tb-timezone-select fxFlex [fxShow]="isEdit || !timewindow.hideTimezone"
+                        localBrowserTimezonePlaceholderOnEmpty="true"
+                        formControlName="timezone">
+        </tb-timezone-select>
       </div>
       <div fxLayout="row" class="tb-panel-actions" fxLayoutAlign="end center">
         <button type="button"

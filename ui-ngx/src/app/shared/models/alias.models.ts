@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,14 +16,14 @@
 
 import { EntityType } from '@shared/models/entity-type.models';
 import { EntityId } from '@shared/models/id/entity-id';
-import { EntitySearchDirection, EntityTypeFilter } from '@shared/models/relation.models';
-import { EntityInfo } from './entity.models';
+import { EntitySearchDirection, RelationEntityTypeFilter } from '@shared/models/relation.models';
 import { EntityFilter } from '@shared/models/query/query.models';
 
 export enum AliasFilterType {
   singleEntity = 'singleEntity',
   entityList = 'entityList',
   entityName = 'entityName',
+  entityType = 'entityType',
   stateEntity = 'stateEntity',
   assetType = 'assetType',
   deviceType = 'deviceType',
@@ -40,6 +40,7 @@ export const aliasFilterTypeTranslationMap = new Map<AliasFilterType, string>(
     [ AliasFilterType.singleEntity, 'alias.filter-type-single-entity' ],
     [ AliasFilterType.entityList, 'alias.filter-type-entity-list' ],
     [ AliasFilterType.entityName, 'alias.filter-type-entity-name' ],
+    [ AliasFilterType.entityType, 'alias.filter-type-entity-type' ],
     [ AliasFilterType.stateEntity, 'alias.filter-type-state-entity' ],
     [ AliasFilterType.assetType, 'alias.filter-type-asset-type' ],
     [ AliasFilterType.deviceType, 'alias.filter-type-device-type' ],
@@ -64,6 +65,10 @@ export interface EntityListFilter {
 export interface EntityNameFilter {
   entityType?: EntityType;
   entityNameFilter?: string;
+}
+
+export interface EntityTypeFilter {
+  entityType?: EntityType;
 }
 
 export interface StateEntityFilter {
@@ -92,7 +97,7 @@ export interface RelationsQueryFilter {
   defaultStateEntity?: EntityId;
   rootEntity?: EntityId;
   direction?: EntitySearchDirection;
-  filters?: Array<EntityTypeFilter>;
+  filters?: Array<RelationEntityTypeFilter>;
   maxLevel?: number;
   fetchLastLevelOnly?: boolean;
 }
@@ -108,6 +113,7 @@ export interface EntitySearchQueryFilter {
   fetchLastLevelOnly?: boolean;
 }
 
+// tslint:disable-next-line:no-empty-interface
 export interface ApiUsageStateFilter {
 
 }
@@ -128,6 +134,7 @@ export type EntityFilters =
   SingleEntityFilter &
   EntityListFilter &
   EntityNameFilter &
+  EntityTypeFilter &
   StateEntityFilter &
   AssetTypeFilter &
   DeviceTypeFilter &

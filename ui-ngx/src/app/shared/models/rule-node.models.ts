@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -348,7 +348,9 @@ export enum MessageType {
   ENTITY_ASSIGNED = 'ENTITY_ASSIGNED',
   ENTITY_UNASSIGNED = 'ENTITY_UNASSIGNED',
   ATTRIBUTES_UPDATED = 'ATTRIBUTES_UPDATED',
-  ATTRIBUTES_DELETED = 'ATTRIBUTES_DELETED'
+  ATTRIBUTES_DELETED = 'ATTRIBUTES_DELETED',
+  TIMESERIES_UPDATED = 'TIMESERIES_UPDATED',
+  TIMESERIES_DELETED = 'TIMESERIES_DELETED'
 }
 
 export const messageTypeNames = new Map<MessageType, string>(
@@ -367,7 +369,9 @@ export const messageTypeNames = new Map<MessageType, string>(
     [MessageType.ENTITY_ASSIGNED, 'Entity Assigned'],
     [MessageType.ENTITY_UNASSIGNED, 'Entity Unassigned'],
     [MessageType.ATTRIBUTES_UPDATED, 'Attributes Updated'],
-    [MessageType.ATTRIBUTES_DELETED, 'Attributes Deleted']
+    [MessageType.ATTRIBUTES_DELETED, 'Attributes Deleted'],
+    [MessageType.TIMESERIES_UPDATED, 'Timeseries Updated'],
+    [MessageType.TIMESERIES_DELETED, 'Timeseries Deleted']
   ]
 );
 
@@ -416,7 +420,8 @@ const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.mqtt.azure.TbAzureIotHubNode': 'ruleNodeAzureIotHub',
   'org.thingsboard.rule.engine.rabbitmq.TbRabbitMqNode': 'ruleNodeRabbitMq',
   'org.thingsboard.rule.engine.rest.TbRestApiCallNode': 'ruleNodeRestApiCall',
-  'org.thingsboard.rule.engine.mail.TbSendEmailNode': 'ruleNodeSendEmail'
+  'org.thingsboard.rule.engine.mail.TbSendEmailNode': 'ruleNodeSendEmail',
+  'org.thingsboard.rule.engine.sms.TbSendSmsNode': 'ruleNodeSendSms'
 };
 
 export function getRuleNodeHelpLink(component: RuleNodeComponentDescriptor): string {

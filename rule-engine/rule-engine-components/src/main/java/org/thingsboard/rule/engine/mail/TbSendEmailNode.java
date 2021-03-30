@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -87,7 +88,7 @@ public class TbSendEmailNode implements TbNode {
 
     private void sendEmail(TbContext ctx, EmailPojo email) throws Exception {
         if (this.config.isUseSystemSmtpSettings()) {
-            ctx.getMailService().send(email.getFrom(), email.getTo(), email.getCc(),
+            ctx.getMailService().send(ctx.getTenantId(), email.getFrom(), email.getTo(), email.getCc(),
                     email.getBcc(), email.getSubject(), email.getBody());
         } else {
             MimeMessage mailMsg = mailSender.createMimeMessage();

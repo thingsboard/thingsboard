@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@
       </div>
     </mat-toolbar>
     <div fxFlex class="table-container">
-      <table mat-table [dataSource]="alarmsDatasource" [trackBy]="trackByRowIndex"
+      <table mat-table [dataSource]="alarmsDatasource" [trackBy]="trackByAlarmId"
                  matSort [matSortActive]="sortOrderProperty" [matSortDirection]="pageLinkSortDirection()" matSortDisableClear>
         <ng-container matColumnDef="select" sticky>
           <mat-header-cell *matHeaderCellDef style="width: 30px;">
@@ -96,7 +96,7 @@
                                                                 width: (actionCellDescriptors.length * 40) + 'px' }">
             <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
               <button mat-button mat-icon-button [disabled]="(isLoading$ | async) || !actionEnabled(alarm, actionDescriptor)"
-                      *ngFor="let actionDescriptor of actionCellDescriptors"
+                      *ngFor="let actionDescriptor of actionCellDescriptors; trackBy: trackByActionCellDescriptionId"
                       matTooltip="{{ actionDescriptor.displayName }}"
                       matTooltipPosition="above"
                       (click)="onActionButtonClick($event, alarm, actionDescriptor)">
@@ -110,7 +110,7 @@
                 <mat-icon class="material-icons">more_vert</mat-icon>
               </button>
               <mat-menu #cellActionsMenu="matMenu" xPosition="before">
-                <button mat-menu-item *ngFor="let actionDescriptor of actionCellDescriptors"
+                <button mat-menu-item *ngFor="let actionDescriptor of actionCellDescriptors; trackBy: trackByActionCellDescriptionId"
                         [disabled]="(isLoading$ | async) || !actionEnabled(alarm, actionDescriptor)"
                         (click)="onActionButtonClick($event, alarm, actionDescriptor)">
                   <mat-icon>{{actionDescriptor.icon}}</mat-icon>
@@ -120,12 +120,13 @@
             </div>
           </mat-cell>
         </ng-container>
-        <mat-header-row [ngClass]="{'mat-row-select': enableSelection}" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+        <mat-header-row [ngClass]="{'mat-row-select': enableSelection}" *matHeaderRowDef="displayedColumns; sticky: enableStickyHeader"></mat-header-row>
         <mat-row [ngClass]="{'mat-row-select': enableSelection,
                              'mat-selected': alarmsDatasource.isSelected(alarm),
                              'tb-current-entity': alarmsDatasource.isCurrentAlarm(alarm),
                              'invisible': alarmsDatasource.dataLoading}"
                  *matRowDef="let alarm; columns: displayedColumns;"
+                 [ngStyle]="rowStyle(alarm)"
                  (click)="onRowClick($event, alarm)"></mat-row>
       </table>
       <span [fxShow]="(alarmsDatasource.isEmpty() | async) && !alarmsDatasource.dataLoading"
@@ -140,6 +141,7 @@
                    [length]="alarmsDatasource.total() | async"
                    [pageIndex]="pageLink.page"
                    [pageSize]="pageLink.pageSize"
-                   [pageSizeOptions]="pageSizeOptions"></mat-paginator>
+                   [pageSizeOptions]="pageSizeOptions"
+                   showFirstLastButtons></mat-paginator>
   </div>
 </div>

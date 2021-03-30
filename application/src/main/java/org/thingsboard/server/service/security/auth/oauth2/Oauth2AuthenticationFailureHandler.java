@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,10 +37,13 @@ import java.nio.charset.StandardCharsets;
 @ConditionalOnProperty(prefix = "security.oauth2", value = "enabled", havingValue = "true")
 public class Oauth2AuthenticationFailureHandler extends SimpleUrlAuthenticationFailureHandler {
 
+    private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
     private final SystemSecurityService systemSecurityService;
 
     @Autowired
-    public Oauth2AuthenticationFailureHandler(final SystemSecurityService systemSecurityService) {
+    public Oauth2AuthenticationFailureHandler(final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository,
+                                              final SystemSecurityService systemSecurityService) {
+        this.httpCookieOAuth2AuthorizationRequestRepository = httpCookieOAuth2AuthorizationRequestRepository;
         this.systemSecurityService = systemSecurityService;
     }
 
@@ -49,6 +52,7 @@ public class Oauth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
                                         HttpServletResponse response, AuthenticationException exception)
             throws IOException, ServletException {
         String baseUrl = this.systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
+        httpCookieOAuth2AuthorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
         getRedirectStrategy().sendRedirect(request, response, baseUrl + "/login?loginError=" +
                 URLEncoder.encode(exception.getMessage(), StandardCharsets.UTF_8.toString()));
     }

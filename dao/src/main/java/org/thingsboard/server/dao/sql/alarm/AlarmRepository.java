@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.dao.model.sql.AlarmEntity;
 import org.thingsboard.server.dao.model.sql.AlarmInfoEntity;
@@ -75,4 +76,17 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
                                      @Param("searchText") String searchText,
                                      Pageable pageable);
 
+    @Query(value = "SELECT a.severity FROM AlarmEntity a " +
+            "LEFT JOIN RelationEntity re ON a.id = re.toId " +
+            "AND re.relationTypeGroup = 'ALARM' " +
+            "AND re.toType = 'ALARM' " +
+            "AND re.fromId = :affectedEntityId " +
+            "AND re.fromType = :affectedEntityType " +
+            "WHERE a.tenantId = :tenantId " +
+            "AND (a.originatorId = :affectedEntityId or re.fromId IS NOT NULL) " +
+            "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses))")
+    Set<AlarmSeverity> findAlarmSeverities(@Param("tenantId") UUID tenantId,
+                                           @Param("affectedEntityId") UUID affectedEntityId,
+                                           @Param("affectedEntityType") String affectedEntityType,
+                                           @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses);
 }

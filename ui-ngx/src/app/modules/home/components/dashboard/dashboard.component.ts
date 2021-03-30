@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ import { MatMenuTrigger } from '@angular/material/menu';
 import { SafeStyle } from '@angular/platform-browser';
 import { distinct } from 'rxjs/operators';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-dashboard',
@@ -113,6 +114,9 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   isRemoveActionEnabled: boolean;
 
   @Input()
+  disableWidgetInteraction = false;
+
+  @Input()
   dashboardStyle: {[klass: string]: any};
 
   @Input()
@@ -168,6 +172,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   private gridsterResize$: ResizeObserver;
 
   constructor(protected store: Store<AppState>,
+              public utils: UtilsService,
               private timeService: TimeService,
               private dialogService: DialogService,
               private breakpointObserver: BreakpointObserver,

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 -->
 <div fxFlex fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="8px" [formGroup]="booleanFilterPredicateFormGroup">
-  <mat-form-field floatLabel="always" hideRequiredMarker fxFlex="40" class="mat-block">
+  <mat-form-field floatLabel="always" hideRequiredMarker fxFlex="30" class="mat-block">
     <mat-label></mat-label>
     <mat-select required formControlName="operation" placeholder="{{'filter.operation.operation' | translate}}">
       <mat-option *ngFor="let operation of booleanOperations" [value]="operation">
@@ -25,7 +25,8 @@
     </mat-select>
   </mat-form-field>
   <tb-filter-predicate-value [allowUserDynamicSource]="allowUserDynamicSource"
-                             fxFlex="60"
+                             [onlyUserDynamicSource]="onlyUserDynamicSource"
+                             fxFlex="70"
                              [valueType]="valueTypeEnum.BOOLEAN"
                              formControlName="value">
   </tb-filter-predicate-value>

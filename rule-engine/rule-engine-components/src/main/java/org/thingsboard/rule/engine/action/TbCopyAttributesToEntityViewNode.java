@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
             if (!msg.getMetaData().getData().isEmpty()) {
                 long now = System.currentTimeMillis();
                 String scope = msg.getType().equals(SessionMsgType.POST_ATTRIBUTES_REQUEST.name()) ?
-                        DataConstants.CLIENT_SCOPE : msg.getMetaData().getValue("scope");
+                        DataConstants.CLIENT_SCOPE : msg.getMetaData().getValue(DataConstants.SCOPE);
 
                 ListenableFuture<List<EntityView>> entityViewsFuture =
                         ctx.getEntityViewService().findEntityViewsByTenantIdAndEntityIdAsync(ctx.getTenantId(), msg.getOriginator());

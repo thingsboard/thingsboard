@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -40,12 +40,12 @@ import {
 } from '@shared/models/widget.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import {hashCode, isDefined, isDefinedAndNotNull, isNumber} from '@core/utils';
+import { hashCode, isDefined, isNumber, isObject } from '@core/utils';
 import cssjs from '@core/css/css';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
-import { BehaviorSubject, fromEvent, merge, Observable, of } from 'rxjs';
+import { BehaviorSubject, fromEvent, merge, Observable, of, Subscription } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { catchError, debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
@@ -57,17 +57,17 @@ import {
   constructTableCssString,
   getCellContentInfo,
   getCellStyleInfo,
-  TableWidgetDataKeySettings
+  getRowStyleInfo,
+  RowStyleInfo,
+  TableWidgetDataKeySettings, TableWidgetSettings
 } from '@home/components/widget/lib/table-widget.models';
 import { Overlay } from '@angular/cdk/overlay';
 import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
 import { DatePipe } from '@angular/common';
 
-interface TimeseriesTableWidgetSettings {
+export interface TimeseriesTableWidgetSettings extends TableWidgetSettings {
   showTimestamp: boolean;
   showMilliseconds: boolean;
-  displayPagination: boolean;
-  defaultPageSize: number;
   hideEmptyLines: boolean;
 }
 
@@ -111,6 +111,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   @ViewChildren(MatSort) sorts: QueryList<MatSort>;
 
   public displayPagination = true;
+  public enableStickyHeader = true;
+  public enableStickyAction = true;
   public pageSizeOptions;
   public textSearchMode = false;
   public textSearch: string = null;
@@ -126,8 +128,12 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   private defaultPageSize = 10;
   private defaultSortOrder = '-0';
   private hideEmptyLines = false;
-  private showTimestamp = true;
+  public showTimestamp = true;
   private dateFormatFilter: string;
+
+  private rowStylesInfo: RowStyleInfo;
+
+  private subscriptions: Subscription[] = [];
 
   private searchAction: WidgetAction = {
     name: 'action.search',
@@ -166,40 +172,27 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         debounceTime(150),
         distinctUntilChanged(),
         tap(() => {
-          if (this.displayPagination) {
-            this.paginators.forEach((paginator) => {
-              paginator.pageIndex = 0;
-            });
-          }
           this.sources.forEach((source) => {
             source.pageLink.textSearch = this.textSearch;
+            if (this.displayPagination) {
+              source.pageLink.page = 0;
+            }
           });
-          this.updateAllData();
+          this.loadCurrentSourceRow();
+          this.ctx.detectChanges();
         })
       )
       .subscribe();
 
-    if (this.displayPagination) {
-      this.sorts.forEach((sort, index) => {
-        sort.sortChange.subscribe(() => this.paginators.toArray()[index].pageIndex = 0);
-      });
-    }
-    this.sorts.forEach((sort, index) => {
-      const paginator = this.displayPagination ? this.paginators.toArray()[index] : null;
-      sort.sortChange.subscribe(() => this.paginators.toArray()[index].pageIndex = 0);
-      ((this.displayPagination ? merge(sort.sortChange, paginator.page) : sort.sortChange) as Observable<any>)
-        .pipe(
-          tap(() => this.updateData(sort, paginator, index))
-        )
-        .subscribe();
+    this.sorts.changes.subscribe(() => {
+      this.initSubscriptionsToSortAndPaginator();
     });
-    this.updateAllData();
+
+    this.initSubscriptionsToSortAndPaginator();
   }
 
   public onDataUpdated() {
-    this.sources.forEach((source) => {
-      source.timeseriesDatasource.dataUpdated(this.data);
-    });
+    this.updateCurrentSourceData();
   }
 
   private initialize() {
@@ -207,10 +200,15 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
 
     this.actionCellDescriptors = this.ctx.actionsApi.getActionDescriptors('actionCellButton');
 
+    this.searchAction.show = isDefined(this.settings.enableSearch) ? this.settings.enableSearch : true;
     this.displayPagination = isDefined(this.settings.displayPagination) ? this.settings.displayPagination : true;
+    this.enableStickyHeader = isDefined(this.settings.enableStickyHeader) ? this.settings.enableStickyHeader : true;
+    this.enableStickyAction = isDefined(this.settings.enableStickyAction) ? this.settings.enableStickyAction : true;
     this.hideEmptyLines = isDefined(this.settings.hideEmptyLines) ? this.settings.hideEmptyLines : false;
     this.showTimestamp = this.settings.showTimestamp !== false;
-    this.dateFormatFilter = (this.settings.showMilliseconds !== true) ? 'yyyy-MM-dd HH:mm:ss' :  'yyyy-MM-dd HH:mm:ss.sss';
+    this.dateFormatFilter = (this.settings.showMilliseconds !== true) ? 'yyyy-MM-dd HH:mm:ss' :  'yyyy-MM-dd HH:mm:ss.SSS';
+
+    this.rowStylesInfo = getRowStyleInfo(this.settings, 'rowData, ctx');
 
     const pageSize = this.settings.defaultPageSize;
     if (isDefined(pageSize) && isNumber(pageSize) && pageSize > 0) {
@@ -269,13 +267,15 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
           });
           source.displayedColumns.push(index + '');
           source.rowDataTemplate[dataKey.label] = null;
-          source.stylesInfo.push(getCellStyleInfo(keySettings));
+          source.stylesInfo.push(getCellStyleInfo(keySettings, 'value, rowData, ctx'));
           const cellContentInfo = getCellContentInfo(keySettings, 'value, rowData, ctx');
           cellContentInfo.units = dataKey.units;
           cellContentInfo.decimals = dataKey.decimals;
           source.contentsInfo.push(cellContentInfo);
         }
-        source.displayedColumns.push('actions');
+        if (this.actionCellDescriptors.length) {
+          source.displayedColumns.push('actions');
+        }
         const tsDatasource = new TimeseriesDatasource(source, this.hideEmptyLines, this.dateFormatFilter, this.datePipe);
         tsDatasource.dataUpdated(this.data);
         this.sources.push(source);
@@ -305,7 +305,27 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.ctx.activeEntityInfo = activeEntityInfo;
   }
 
+  private initSubscriptionsToSortAndPaginator() {
+    this.subscriptions.forEach(subscription => subscription.unsubscribe());
+    this.sorts.forEach((sort, index) => {
+      let paginator = null;
+      const observables = [sort.sortChange];
+      if (this.displayPagination) {
+        paginator = this.paginators.toArray()[index];
+        this.subscriptions.push(
+          sort.sortChange.subscribe(() => paginator.pageIndex = 0)
+        );
+        observables.push(paginator.page);
+      }
+      this.updateData(sort, paginator);
+      this.subscriptions.push(merge(...observables).pipe(
+        tap(() => this.updateData(sort, paginator))
+      ).subscribe());
+    });
+  }
+
   onSourceIndexChanged() {
+    this.updateCurrentSourceData();
     this.updateActiveEntityInfo();
   }
 
@@ -326,30 +346,19 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   exitFilterMode() {
     this.textSearchMode = false;
     this.textSearch = null;
-    this.sources.forEach((source, index) => {
+    this.sources.forEach((source) => {
       source.pageLink.textSearch = this.textSearch;
-      const sort = this.sorts.toArray()[index];
-      let paginator = null;
       if (this.displayPagination) {
-        paginator = this.paginators.toArray()[index];
-        paginator.pageIndex = 0;
+        source.pageLink.page = 0;
       }
-      this.updateData(sort, paginator, index);
     });
+    this.loadCurrentSourceRow();
     this.ctx.hideTitlePanel = false;
     this.ctx.detectChanges(true);
   }
 
-  private updateAllData() {
-    this.sources.forEach((source, index) => {
-      const sort = this.sorts.toArray()[index];
-      const paginator = this.displayPagination ? this.paginators.toArray()[index] : null;
-      this.updateData(sort, paginator, index);
-    });
-  }
-
-  private updateData(sort: MatSort, paginator: MatPaginator, index: number) {
-    const source = this.sources[index];
+  private updateData(sort: MatSort, paginator: MatPaginator) {
+    const source = this.sources[this.sourceIndex];
     if (this.displayPagination) {
       source.pageLink.page = paginator.pageIndex;
       source.pageLink.pageSize = paginator.pageSize;
@@ -366,19 +375,65 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     return header.index;
   }
 
-  public trackByRowIndex(index: number) {
+  public trackByRowTimestamp(index: number) {
     return index;
   }
 
-  public cellStyle(source: TimeseriesTableSource, index: number, value: any): any {
+  public trackByActionCellDescriptionId(index: number, action: WidgetActionDescriptor) {
+    return action.id;
+  }
+
+  public trackBySourcesIndex(index: number, source: TimeseriesTableSource) {
+    return source.datasource.entityId;
+  }
+
+  public rowStyle(source: TimeseriesTableSource, row: TimeseriesRow): any {
+    let style: any = {};
+    if (this.rowStylesInfo.useRowStyleFunction && this.rowStylesInfo.rowStyleFunction) {
+      try {
+        const rowData = source.rowDataTemplate;
+        rowData.Timestamp = row[0];
+        source.header.forEach((headerInfo) => {
+          rowData[headerInfo.dataKey.name] = row[headerInfo.index];
+        });
+        style = this.rowStylesInfo.rowStyleFunction(rowData, this.ctx);
+        if (!isObject(style)) {
+          throw new TypeError(`${style === null ? 'null' : typeof style} instead of style object`);
+        }
+        if (Array.isArray(style)) {
+          throw new TypeError(`Array instead of style object`);
+        }
+      } catch (e) {
+        style = {};
+        console.warn(`Row style function in widget ` +
+          `'${this.ctx.widgetConfig.title}' returns '${e}'. Please check your row style function.`);
+      }
+    }
+    return style;
+  }
+
+  public cellStyle(source: TimeseriesTableSource, index: number, row: TimeseriesRow, value: any): any {
     let style: any = {};
     if (index > 0) {
       const styleInfo = source.stylesInfo[index - 1];
       if (styleInfo.useCellStyleFunction && styleInfo.cellStyleFunction) {
         try {
-          style = styleInfo.cellStyleFunction(value);
+          const rowData = source.rowDataTemplate;
+          rowData.Timestamp = row[0];
+          source.header.forEach((headerInfo) => {
+            rowData[headerInfo.dataKey.name] = row[headerInfo.index];
+          });
+          style = styleInfo.cellStyleFunction(value, rowData, this.ctx);
+          if (!isObject(style)) {
+            throw new TypeError(`${style === null ? 'null' : typeof style} instead of style object`);
+          }
+          if (Array.isArray(style)) {
+            throw new TypeError(`Array instead of style object`);
+          }
         } catch (e) {
           style = {};
+          console.warn(`Cell style function for data key '${source.header[index - 1].dataKey.label}' in widget ` +
+            `'${this.ctx.widgetConfig.title}' returns '${e}'. Please check your cell style function.`);
         }
       }
     }
@@ -410,8 +465,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
 
       if (!isDefined(content)) {
         return '';
-
       } else {
+        content = this.utils.customTranslation(content, content);
         switch (typeof content) {
           case 'string':
             return this.domSanitizer.bypassSecurityTrustHtml(content);
@@ -454,6 +509,18 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     }
     this.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, row, entityLabel);
   }
+
+  public isActiveTab(index: number): boolean {
+    return index === this.sourceIndex;
+  }
+
+  private updateCurrentSourceData() {
+    this.sources[this.sourceIndex].timeseriesDatasource.dataUpdated(this.data);
+  }
+
+  private loadCurrentSourceRow() {
+    this.sources[this.sourceIndex].timeseriesDatasource.loadRows();
+  }
 }
 
 class TimeseriesDatasource implements DataSource<TimeseriesRow> {
@@ -474,6 +541,10 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
   }
 
   connect(collectionViewer: CollectionViewer): Observable<TimeseriesRow[] | ReadonlyArray<TimeseriesRow>> {
+    if (this.rowsSubject.isStopped) {
+      this.rowsSubject.isStopped = false;
+      this.pageDataSubject.isStopped = false;
+    }
     return this.rowsSubject.asObservable();
   }
 
@@ -538,7 +609,7 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
         }
       }
     } else {
-      rows = Object.values(rowsMap);
+      rows = Object.keys(rowsMap).map(itm => rowsMap[itm]);
     }
     return rows;
   }

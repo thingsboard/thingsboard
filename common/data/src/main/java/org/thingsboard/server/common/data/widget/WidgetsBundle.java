@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,8 @@ public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements H
     private TenantId tenantId;
     private String alias;
     private String title;
-    private byte[] image;
+    private String image;
+    private String description;
 
     public WidgetsBundle() {
         super();
@@ -45,6 +46,7 @@ public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements H
         this.alias = widgetsBundle.getAlias();
         this.title = widgetsBundle.getTitle();
         this.image = widgetsBundle.getImage();
+        this.description = widgetsBundle.getDescription();
     }
 
     public TenantId getTenantId() {
@@ -71,13 +73,17 @@ public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements H
         this.title = title;
     }
 
-    public byte[] getImage() {
+    public String getImage() {
         return image;
     }
 
-    public void setImage(byte[] image) {
+    public void setImage(String image) {
         this.image = image;
     }
+
+    public String getDescription() { return description; }
+
+    public void setDescription(String description) { this.description = description; }
 
     @Override
     public String getSearchText() {
@@ -90,7 +96,8 @@ public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements H
         result = 31 * result + (tenantId != null ? tenantId.hashCode() : 0);
         result = 31 * result + (alias != null ? alias.hashCode() : 0);
         result = 31 * result + (title != null ? title.hashCode() : 0);
-        result = 31 * result + Arrays.hashCode(image);
+        result = 31 * result + (image != null ? image.hashCode() : 0);
+        result = 31 * result + (description != null ? description.hashCode() : 0);
         return result;
     }
 
@@ -105,7 +112,9 @@ public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements H
         if (tenantId != null ? !tenantId.equals(that.tenantId) : that.tenantId != null) return false;
         if (alias != null ? !alias.equals(that.alias) : that.alias != null) return false;
         if (title != null ? !title.equals(that.title) : that.title != null) return false;
-        return Arrays.equals(image, that.image);
+        if (image != null ? !image.equals(that.image) : that.image != null) return false;
+        if (description != null ? !description.equals(that.image) : that.description != null) return false;
+        return true;
     }
 
     @Override
@@ -114,7 +123,8 @@ public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements H
         sb.append("tenantId=").append(tenantId);
         sb.append(", alias='").append(alias).append('\'');
         sb.append(", title='").append(title).append('\'');
-        sb.append(", image=").append(Arrays.toString(image));
+        sb.append(", image='").append(image).append('\'');
+        sb.append(", description='").append(description).append('\'');
         sb.append('}');
         return sb.toString();
     }

@@ -1,0 +1,44 @@
+<!--
+
+    Copyright © 2016-2021 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div [formGroup]="smsProviderConfigurationFormGroup">
+  <mat-form-field class="mat-block">
+    <mat-label translate>admin.sms-provider-type</mat-label>
+    <mat-select formControlName="type" [required]="required">
+      <mat-option *ngFor="let type of smsProviderTypes" [value]="type">
+        {{smsProviderTypeTranslations.get(type) | translate}}
+      </mat-option>
+    </mat-select>
+    <mat-error *ngIf="smsProviderConfigurationFormGroup.get('type').hasError('required')">
+      {{ 'admin.sms-provider-type-required' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <div [ngSwitch]="smsProviderConfigurationFormGroup.get('type').value">
+    <ng-template [ngSwitchCase]="smsProviderType.AWS_SNS">
+      <tb-aws-sns-provider-configuration
+        [required]="required"
+        formControlName="configuration">
+      </tb-aws-sns-provider-configuration>
+    </ng-template>
+    <ng-template [ngSwitchCase]="smsProviderType.TWILIO">
+      <tb-twilio-sms-provider-configuration
+        [required]="required"
+        formControlName="configuration">
+      </tb-twilio-sms-provider-configuration>
+    </ng-template>
+  </div>
+</div>

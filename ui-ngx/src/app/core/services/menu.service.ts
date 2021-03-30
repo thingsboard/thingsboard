@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ export class MenuService {
         name: 'admin.system-settings',
         type: 'toggle',
         path: '/settings',
-        height: '160px',
+        height: '200px',
         icon: 'settings',
         pages: [
           {
@@ -124,6 +124,13 @@ export class MenuService {
             type: 'link',
             path: '/settings/outgoing-mail',
             icon: 'mail'
+          },
+          {
+            id: guid(),
+            name: 'admin.sms-provider',
+            type: 'link',
+            path: '/settings/sms-provider',
+            icon: 'sms'
           },
           {
             id: guid(),
@@ -188,6 +195,11 @@ export class MenuService {
             path: '/settings/outgoing-mail'
           },
           {
+            name: 'admin.sms-provider',
+            icon: 'sms',
+            path: '/settings/sms-provider'
+          },
+          {
             name: 'admin.security-settings',
             icon: 'security',
             path: '/settings/security-settings'
@@ -211,6 +223,7 @@ export class MenuService {
         name: 'home.home',
         type: 'link',
         path: '/home',
+        notExact: true,
         icon: 'home'
       },
       {
@@ -272,10 +285,25 @@ export class MenuService {
       },
       {
         id: guid(),
+        name: 'admin.home-settings',
+        type: 'link',
+        path: '/settings/home',
+        icon: 'settings_applications'
+      },
+      {
+        id: guid(),
         name: 'audit-log.audit-logs',
         type: 'link',
         path: '/auditLogs',
         icon: 'track_changes'
+      },
+      {
+        id: guid(),
+        name: 'api-usage.api-usage',
+        type: 'link',
+        path: '/usage',
+        icon: 'insert_chart',
+        notExact: true
       }
     );
     return sections;
@@ -362,6 +390,11 @@ export class MenuService {
             name: 'audit-log.audit-logs',
             icon: 'track_changes',
             path: '/auditLogs'
+          },
+          {
+            name: 'api-usage.api-usage',
+            icon: 'insert_chart',
+            path: '/usage'
           }
         ]
       }
@@ -377,6 +410,7 @@ export class MenuService {
         name: 'home.home',
         type: 'link',
         path: '/home',
+        notExact: true,
         icon: 'home'
       },
       {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
+import org.thingsboard.server.common.data.device.data.CoapDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
@@ -203,6 +204,8 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_name_unq_key")) {
+                // remove device from cache in case null value cached in the distributed redis.
+                removeDeviceFromCache(device.getTenantId(), device.getName());
                 throw new DataValidationException("Device with such name already exists!");
             } else {
                 throw t;
@@ -239,6 +242,9 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                     break;
                 case LWM2M:
                     deviceData.setTransportConfiguration(new Lwm2mDeviceTransportConfiguration());
+                    break;
+                case COAP:
+                    deviceData.setTransportConfiguration(new CoapDeviceTransportConfiguration());
                     break;
             }
         }
@@ -281,13 +287,17 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         }
         deleteEntityRelations(tenantId, deviceId);
 
-        List<Object> list = new ArrayList<>();
-        list.add(device.getTenantId());
-        list.add(device.getName());
-        Cache cache = cacheManager.getCache(DEVICE_CACHE);
-        cache.evict(list);
+        removeDeviceFromCache(tenantId, device.getName());
 
         deviceDao.removeById(tenantId, deviceId.getId());
+    }
+
+    private void removeDeviceFromCache(TenantId tenantId, String name) {
+        List<Object> list = new ArrayList<>();
+        list.add(tenantId);
+        list.add(name);
+        Cache cache = cacheManager.getCache(DEVICE_CACHE);
+        cache.evict(list);
     }
 
     @Override

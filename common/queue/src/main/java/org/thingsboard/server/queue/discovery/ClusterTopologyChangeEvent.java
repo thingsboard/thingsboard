@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,9 @@ import org.thingsboard.server.common.msg.queue.ServiceQueueKey;
 import java.util.Set;
 
 
-public class ClusterTopologyChangeEvent extends ApplicationEvent {
+public class ClusterTopologyChangeEvent extends TbApplicationEvent {
+
+    private static final long serialVersionUID = -2441739930040282254L;
 
     @Getter
     private final Set<ServiceQueueKey> serviceQueueKeys;

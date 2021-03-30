@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2016-2020 The Thingsboard Authors
+# Copyright © 2016-2021 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 #
 
 usage() {
-    echo "This script generates client public/private rey pair, extracts them to a no-password RSA pem file,"
+    echo "This script generates client public/private key pair, extracts them to a no-password pem file,"
     echo "and imports server public key to client keystore"
     echo "usage: ./client.keygen.sh [-p file]"
     echo "    -p | --props | --properties file  Properties file. default value is ./keygen.properties"
@@ -44,7 +44,8 @@ done
 
 . $PROPERTIES_FILE
 
-if [ -f $CLIENT_FILE_PREFIX.jks ] || [ -f $CLIENT_FILE_PREFIX.pub.pem ] || [ -f $CLIENT_FILE_PREFIX.nopass.pem ] || [ -f $CLIENT_FILE_PREFIX.pem ] || [ -f $CLIENT_FILE_PREFIX.p12 ];
+if [ -f $CLIENT_FILE_PREFIX.jks ] || [ -f $CLIENT_FILE_PREFIX.pub.pem ] || [ -f $CLIENT_FILE_PREFIX.nopass.pem ] || \
+   [ -f $CLIENT_FILE_PREFIX.pem ] || [ -f $CLIENT_FILE_PREFIX.p12 ] || [ -f $CLIENT_FILE_PREFIX.pk8.pem ];
 then
 while :
    do
@@ -62,6 +63,7 @@ while :
             rm -rf $CLIENT_FILE_PREFIX.nopass.pem
             rm -rf $CLIENT_FILE_PREFIX.pem
             rm -rf $CLIENT_FILE_PREFIX.p12
+            rm -rf $CLIENT_FILE_PREFIX.pk8.pem
             break;
             ;;
         *)  echo "Please reply 'yes' or 'no'"
@@ -70,6 +72,22 @@ while :
     done
 fi
 
+OPENSSL_CMD=""
+case $CLIENT_KEY_ALG in
+RSA)
+	OPENSSL_CMD="rsa"
+	;;
+EC)
+	OPENSSL_CMD="ec"
+	;;
+esac
+if [ -z "$OPENSSL_CMD" ]; then
+	echo "Unexpected CLIENT_KEY_ALG. Exiting."
+	exit 0
+fi
+
+echo "INFO: your hostname is $(hostname)"
+echo "INFO: your CN (domain suffix) for key is $DOMAIN_SUFFIX"
 echo "Generating SSL Key Pair..."
 
 keytool -genkeypair -v \
@@ -77,8 +95,8 @@ keytool -genkeypair -v \
   -keystore $CLIENT_FILE_PREFIX.jks \
   -keypass $CLIENT_KEY_PASSWORD \
   -storepass $CLIENT_KEYSTORE_PASSWORD \
-  -keyalg RSA \
-  -keysize 2048 \
+  -keyalg $CLIENT_KEY_ALG \
+  -keysize $CLIENT_KEY_SIZE\
   -validity 9999 \
   -dname "CN=$DOMAIN_SUFFIX, OU=$ORGANIZATIONAL_UNIT, O=$ORGANIZATION, L=$CITY, ST=$STATE_OR_PROVINCE, C=$TWO_LETTER_COUNTRY_CODE"
 
@@ -98,7 +116,15 @@ echo "Converting pkcs12 to pem"
 openssl pkcs12 -in $CLIENT_FILE_PREFIX.p12 \
   -out $CLIENT_FILE_PREFIX.pem \
   -passin pass:$CLIENT_KEY_PASSWORD \
-  -passout pass:$CLIENT_KEY_PASSWORD \
+  -passout pass:$CLIENT_KEY_PASSWORD
+
+echo "Converting pem to pkcs8"
+openssl pkcs8 \
+  -topk8 \
+  -nocrypt \
+  -in $CLIENT_FILE_PREFIX.pem \
+  -out $CLIENT_FILE_PREFIX.pk8.pem \
+  -passin pass:$CLIENT_KEY_PASSWORD
 
 echo "Importing server public key to $CLIENT_FILE_PREFIX.jks"
 keytool --importcert \
@@ -110,7 +136,7 @@ keytool --importcert \
    -noprompt
 
 echo "Exporting no-password pem certificate"
-openssl rsa -in $CLIENT_FILE_PREFIX.pem -out $CLIENT_FILE_PREFIX.nopass.pem -passin pass:$CLIENT_KEY_PASSWORD
+openssl $OPENSSL_CMD -in $CLIENT_FILE_PREFIX.pem -out $CLIENT_FILE_PREFIX.nopass.pem -passin pass:$CLIENT_KEY_PASSWORD
 tail -n +$(($(grep -m1 -n -e '-----BEGIN CERTIFICATE' $CLIENT_FILE_PREFIX.pem | cut -d: -f1) )) \
   $CLIENT_FILE_PREFIX.pem >> $CLIENT_FILE_PREFIX.nopass.pem
 

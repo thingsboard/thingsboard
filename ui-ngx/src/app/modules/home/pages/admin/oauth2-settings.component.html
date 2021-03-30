@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -61,8 +61,8 @@
                             <div [formGroupName]="n" fxLayout="row" fxLayoutGap="8px">
                               <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
                                 <div fxLayout="column" fxFlex.sm="60" fxFlex.gt-sm="50">
-                                  <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
-                                    <mat-form-field fxFlex="30" fxFlex.xs class="mat-block">
+                                  <div fxLayout="row" fxLayout.xs="column" fxLayout.md="column" fxLayoutGap="8px" fxLayoutGap.md="0px">
+                                    <mat-form-field fxFlex="30" fxFlex.md fxFlex.xs class="mat-block">
                                       <mat-label translate>admin.oauth2.protocol</mat-label>
                                       <mat-select formControlName="scheme">
                                         <mat-option *ngFor="let protocol of protocols" [value]="protocol">

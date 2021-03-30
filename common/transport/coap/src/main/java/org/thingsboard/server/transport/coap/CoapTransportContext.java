@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportContext;
-import org.thingsboard.server.transport.coap.adaptors.CoapTransportAdaptor;
+import org.thingsboard.server.transport.coap.efento.adaptor.EfentoCoapAdaptor;
+import org.thingsboard.server.transport.coap.adaptors.JsonCoapAdaptor;
+import org.thingsboard.server.transport.coap.adaptors.ProtoCoapAdaptor;
 
 /**
  * Created by ashvayka on 18.10.18.
@@ -46,6 +48,14 @@ public class CoapTransportContext extends TransportContext {
 
     @Getter
     @Autowired
-    private CoapTransportAdaptor adaptor;
+    private JsonCoapAdaptor jsonCoapAdaptor;
+
+    @Getter
+    @Autowired
+    private ProtoCoapAdaptor protoCoapAdaptor;
+
+    @Getter
+    @Autowired
+    private EfentoCoapAdaptor efentoCoapAdaptor;
 
 }

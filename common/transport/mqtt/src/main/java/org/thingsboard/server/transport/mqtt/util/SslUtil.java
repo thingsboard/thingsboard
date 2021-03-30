@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import org.springframework.util.Base64Utils;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 
 import java.io.IOException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
-import java.security.cert.X509Certificate;
 
 /**
  * @author Valerii Sosliuk
@@ -32,15 +32,8 @@ public class SslUtil {
     private SslUtil() {
     }
 
-    public static String getX509CertificateString(X509Certificate cert)
-            throws CertificateEncodingException, IOException {
-        Base64Utils.encodeToString(cert.getEncoded());
-        return EncryptionUtil.trimNewLines(Base64Utils.encodeToString(cert.getEncoded()));
-    }
-
-    public static String getX509CertificateString(javax.security.cert.X509Certificate cert)
-            throws javax.security.cert.CertificateEncodingException, IOException {
-        Base64Utils.encodeToString(cert.getEncoded());
+    public static String getCertificateString(Certificate cert)
+            throws CertificateEncodingException {
         return EncryptionUtil.trimNewLines(Base64Utils.encodeToString(cert.getEncoded()));
     }
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,7 +30,8 @@ import {
 import { AlarmRule, alarmRuleValidator } from '@shared/models/device.models';
 import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
-import { AlarmSeverity, alarmSeverityTranslations } from '../../../../../shared/models/alarm.models';
+import { AlarmSeverity, alarmSeverityTranslations } from '@shared/models/alarm.models';
+import { EntityId } from '@shared/models/id/entity-id';
 
 @Component({
   selector: 'tb-create-alarm-rules',
@@ -58,6 +59,9 @@ export class CreateAlarmRulesComponent implements ControlValueAccessor, OnInit, 
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  deviceProfileId: EntityId;
 
   createAlarmRulesFormGroup: FormGroup;
 

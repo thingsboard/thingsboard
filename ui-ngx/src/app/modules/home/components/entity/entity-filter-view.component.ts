@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -75,6 +75,10 @@ export class EntityFilterViewComponent implements ControlValueAccessor {
           prefix = this.filter.entityNameFilter;
           this.filterDisplayValue = this.translate.instant(entityTypeTranslations.get(entityType).nameStartsWith,
             {prefix});
+          break;
+        case AliasFilterType.entityType:
+          entityType = this.filter.entityType;
+          this.filterDisplayValue = this.translate.instant(entityTypeTranslations.get(entityType).typePlural);
           break;
         case AliasFilterType.stateEntity:
           this.filterDisplayValue = this.translate.instant('alias.filter-type-state-entity-description');

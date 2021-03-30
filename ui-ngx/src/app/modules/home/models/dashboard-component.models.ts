@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import { guid, isDefined, isEqual, isUndefined } from '@app/core/utils';
 import { IterableDiffer, KeyValueDiffer } from '@angular/core';
 import { IAliasController, IStateController } from '@app/core/api/widget-api.models';
 import { enumerable } from '@shared/decorators/enumerable';
+import { UtilsService } from '@core/services/utils.service';
 
 export interface WidgetsData {
   widgets: Array<Widget>;
@@ -56,6 +57,7 @@ export interface DashboardCallbacks {
 }
 
 export interface IDashboardComponent {
+  utils: UtilsService;
   gridsterOpts: GridsterConfig;
   gridster: GridsterComponent;
   dashboardWidgets: DashboardWidgets;
@@ -295,6 +297,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   margin: string;
 
   title: string;
+  customTranslatedTitle: string;
   titleTooltip: string;
   showTitle: boolean;
   titleStyle: {[klass: string]: any};
@@ -358,8 +361,10 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
     this.title = isDefined(this.widgetContext.widgetTitle)
       && this.widgetContext.widgetTitle.length ? this.widgetContext.widgetTitle : this.widget.config.title;
+    this.customTranslatedTitle = this.dashboard.utils.customTranslation(this.title, this.title);
     this.titleTooltip = isDefined(this.widgetContext.widgetTitleTooltip)
       && this.widgetContext.widgetTitleTooltip.length ? this.widgetContext.widgetTitleTooltip : this.widget.config.titleTooltip;
+    this.titleTooltip = this.dashboard.utils.customTranslation(this.titleTooltip, this.titleTooltip);
     this.showTitle = isDefined(this.widget.config.showTitle) ? this.widget.config.showTitle : true;
     this.titleStyle = this.widget.config.titleStyle ? this.widget.config.titleStyle : {};
 

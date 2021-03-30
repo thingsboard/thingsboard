@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import { DefaultDeviceTransportConfigurationComponent } from './data/default-dev
 import { DeviceTransportConfigurationComponent } from './data/device-transport-configuration.component';
 import { MqttDeviceTransportConfigurationComponent } from './data/mqtt-device-transport-configuration.component';
 import { Lwm2mDeviceTransportConfigurationComponent } from './data/lwm2m-device-transport-configuration.component';
+import { CoapDeviceTransportConfigurationComponent } from './data/coap-device-transport-configuration.component';
 
 @NgModule({
   declarations: [
@@ -39,6 +40,7 @@ import { Lwm2mDeviceTransportConfigurationComponent } from './data/lwm2m-device-
     DefaultDeviceTransportConfigurationComponent,
     MqttDeviceTransportConfigurationComponent,
     Lwm2mDeviceTransportConfigurationComponent,
+    CoapDeviceTransportConfigurationComponent,
     DeviceTransportConfigurationComponent,
     DeviceDataComponent,
     DeviceComponent,

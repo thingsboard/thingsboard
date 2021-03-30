@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,6 +109,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
+import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 
@@ -218,7 +219,11 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public void sendTestMail(AdminSettings adminSettings) {
-        restTemplate.postForEntity(baseURL + "/api/admin/settings/testMail", adminSettings, AdminSettings.class);
+        restTemplate.postForLocation(baseURL + "/api/admin/settings/testMail", adminSettings);
+    }
+
+    public void sendTestSms(TestSmsRequest testSmsRequest) {
+        restTemplate.postForLocation(baseURL + "/api/admin/settings/testSms", testSmsRequest);
     }
 
     public Optional<SecuritySettings> getSecuritySettings() {
@@ -1165,7 +1170,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public List<EntitySubtype> getDeviceTypes() {
         return restTemplate.exchange(
-                baseURL + "/api/devices",
+                baseURL + "/api/device/types",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<EntitySubtype>>() {
@@ -1451,7 +1456,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         params.put("relationTypeGroup", relationTypeGroup.name());
 
         return restTemplate.exchange(
-                baseURL + "/api/relations?toId={toId}&toType={toType}&relationTypeGroup={relationTypeGroup}",
+                baseURL + "/api/relations/info?toId={toId}&toType={toType}&relationTypeGroup={relationTypeGroup}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<EntityRelationInfo>>() {
@@ -1486,7 +1491,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public List<EntityRelationInfo> findInfoByQuery(EntityRelationsQuery query) {
         return restTemplate.exchange(
-                baseURL + "/api/relations",
+                baseURL + "/api/relations/info",
                 HttpMethod.POST,
                 new HttpEntity<>(query),
                 new ParameterizedTypeReference<List<EntityRelationInfo>>() {
@@ -1712,6 +1717,10 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public OAuth2ClientsParams saveOAuth2Params(OAuth2ClientsParams oauth2Params) {
         return restTemplate.postForEntity(baseURL + "/api/oauth2/config", oauth2Params, OAuth2ClientsParams.class).getBody();
+    }
+
+    public String getLoginProcessingUrl() {
+        return restTemplate.getForEntity(baseURL + "/api/oauth2/loginProcessingUrl", String.class).getBody();
     }
 
     public void handleOneWayDeviceRPCRequest(DeviceId deviceId, JsonNode requestBody) {
@@ -2179,7 +2188,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         Map<String, String> params = new HashMap<>();
         addPageLinkToParam(params, pageLink);
         return restTemplate.exchange(
-                baseURL + "/api/tenantProfiles" + getUrlParams(pageLink),
+                baseURL + "/api/tenantProfiles?" + getUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<TenantProfile>>() {
@@ -2190,7 +2199,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         Map<String, String> params = new HashMap<>();
         addPageLinkToParam(params, pageLink);
         return restTemplate.exchange(
-                baseURL + "/api/tenantProfileInfos" + getUrlParams(pageLink),
+                baseURL + "/api/tenantProfileInfos?" + getUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<EntityInfo>>() {
@@ -2247,7 +2256,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         Map<String, String> params = new HashMap<>();
         addPageLinkToParam(params, pageLink);
         return restTemplate.exchange(
-                baseURL + "/api/users" + getUrlParams(pageLink),
+                baseURL + "/api/users?" + getUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<User>>() {

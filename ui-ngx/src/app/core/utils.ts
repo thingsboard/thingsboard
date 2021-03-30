@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ import _ from 'lodash';
 import { Observable, Subject } from 'rxjs';
 import { finalize, share } from 'rxjs/operators';
 import { Datasource } from '@app/shared/models/widget.models';
+import { EntityId } from '@shared/models/id/entity-id';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 const varsRegex = /\${([^}]*)}/g;
 
@@ -90,6 +92,10 @@ export function isDefinedAndNotNull(value: any): boolean {
 
 export function isEmptyStr(value: any): boolean {
   return value === '';
+}
+
+export function isNotEmptyStr(value: any): boolean {
+  return value !== null && typeof value === 'string' && value.trim().length > 0;
 }
 
 export function isFunction(value: any): boolean {
@@ -320,6 +326,9 @@ export function snakeCase(name: string, separator: string): string {
 }
 
 export function getDescendantProp(obj: any, path: string): any {
+  if (obj.hasOwnProperty(path)) {
+    return obj[path];
+  }
   return path.split('.').reduce((acc, part) => acc && acc[part], obj);
 }
 
@@ -381,6 +390,15 @@ export function padValue(val: any, dec: number): string {
   return strVal;
 }
 
+export function baseUrl(): string {
+  let url = window.location.protocol + '//' + window.location.hostname;
+  const port = window.location.port;
+  if (port && port.length > 0 && port !== '80' && port !== '443') {
+    url += ':' + port;
+  }
+  return url;
+}
+
 export function sortObjectKeys<T>(obj: T): T {
   return Object.keys(obj).sort().reduce((acc, key) => {
     acc[key] = obj[key];
@@ -414,4 +432,8 @@ export function generateSecret(length?: number): string {
     return str;
   }
   return str.concat(generateSecret(length - str.length));
+}
+
+export function validateEntityId(entityId: EntityId): boolean {
+  return isDefinedAndNotNull(entityId.id) && entityId.id !== NULL_UUID && isDefinedAndNotNull(entityId.entityType);
 }

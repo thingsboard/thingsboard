@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 -->
 <div fxLayout="column" class="mat-content mat-padding">
-  <div fxLayout="column" *ngFor="let filter of filtersInfo | keyvalue; let last = last">
-    <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+  <div *ngFor="let filter of filtersInfo | keyvalue; let last = last">
+    <div fxLayout="row" fxLayoutAlign="start center">
       <mat-label fxFlex>{{filter.value.filter}}</mat-label>
       <button mat-icon-button color="primary"
               style="min-width: 40px;"

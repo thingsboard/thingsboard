@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -269,8 +269,9 @@ message ProvisionDeviceCredentialsMsg {
 }
 
 message ProvisionDeviceResponseMsg {
-  DeviceCredentialsProto deviceCredentials = 1;
-  ProvisionResponseStatus provisionResponseStatus = 2;
+  ProvisionResponseStatus status = 1;
+  CredentialsType credentialsType = 2;
+  string credentialsValue = 3;
 }
 
 enum ProvisionResponseStatus {
@@ -336,6 +337,7 @@ message TbTimeSeriesSubscriptionProto {
   repeated TbSubscriptionKetStateProto keyStates = 3;
   int64 startTime = 4;
   int64 endTime = 5;
+  bool latestValues = 6;
 }
 
 message TbAttributeSubscriptionProto {

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -80,9 +80,9 @@
              (mousedown)="widgetMouseDown($event, widget)"
              (click)="widgetClicked($event, widget)"
              (contextmenu)="openWidgetContextMenu($event, widget)">
-          <div fxLayout="row" fxLayoutAlign="space-between start">
-            <div class="tb-widget-title" fxLayout="column" fxLayoutAlign="center start" [fxShow]="widget.showWidgetTitlePanel">
-              <span [fxShow]="widget.showTitle"
+          <div *ngIf="widgetComponent.widgetContext?.inited" fxLayout="row" fxLayoutAlign="space-between start">
+            <div class="tb-widget-title" fxLayout="column" fxLayoutAlign="center start" *ngIf="widget.showWidgetTitlePanel">
+              <span *ngIf="widget.showTitle"
                     [ngClass]="{'single-row': widget.hasTimewindow}"
                     [ngStyle]="widget.titleStyle"
                     [matTooltip]="widget.titleTooltip"
@@ -90,17 +90,17 @@
                     matTooltipPosition="above"
                     class="mat-subheading-2 title">
                 <mat-icon *ngIf="widget.showTitleIcon" [ngStyle]="widget.titleIconStyle">{{widget.titleIcon}}</mat-icon>
-                {{widget.title}}
+                {{widget.customTranslatedTitle}}
               </span>
               <tb-timewindow *ngIf="widget.hasTimewindow"
-                             #timewindowComponent
                              aggregation="{{widget.hasAggregation}}"
+                             timezone="true"
                              [isEdit]="isEdit"
                              [(ngModel)]="widgetComponent.widget.config.timewindow"
                              (ngModelChange)="widgetComponent.onTimewindowChanged($event)">
               </tb-timewindow>
             </div>
-            <div [fxShow]="widget.showWidgetActions"
+            <div *ngIf="widget.showWidgetActions"
                  class="tb-widget-actions"
                  [ngClass]="{'tb-widget-actions-absolute': !(widget.showWidgetTitlePanel&&(widget.showTitle||widget.hasAggregation))}"
                  fxLayout="row"
@@ -150,7 +150,7 @@
               </button>
             </div>
           </div>
-          <div fxFlex fxLayout="column" class="tb-widget-content">
+          <div fxFlex fxLayout="column" class="tb-widget-content" [ngClass]="{'tb-no-interaction': disableWidgetInteraction}">
             <tb-widget fxFlex
                        #widgetComponent
                        [dashboardWidget]="widget"

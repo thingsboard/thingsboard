@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,4 +26,5 @@ public class CacheConstants {
     public static final String SECURITY_SETTINGS_CACHE = "securitySettings";
     public static final String TENANT_PROFILE_CACHE = "tenantProfiles";
     public static final String DEVICE_PROFILE_CACHE = "deviceProfiles";
+    public static final String ATTRIBUTES_CACHE = "attributes";
 }

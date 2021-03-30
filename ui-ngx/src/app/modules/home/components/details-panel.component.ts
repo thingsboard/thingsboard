@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ export class DetailsPanelComponent extends PageComponent {
   @Input() headerSubtitle = '';
   @Input() isReadOnly = false;
   @Input() isAlwaysEdit = false;
+  @Input() isShowSearch = false;
+  @Input() backgroundColor = '#FFF';
 
   theFormValue: FormGroup;
 
@@ -50,8 +52,11 @@ export class DetailsPanelComponent extends PageComponent {
   toggleDetailsEditMode = new EventEmitter<boolean>();
   @Output()
   applyDetails = new EventEmitter<void>();
+  @Output()
+  closeSearch = new EventEmitter<void>();
 
   isEditValue = false;
+  showSearchPane = false;
 
   @Output()
   isEditChange = new EventEmitter<boolean>();
@@ -88,4 +93,10 @@ export class DetailsPanelComponent extends PageComponent {
     }
   }
 
+  onToggleSearch() {
+    this.showSearchPane = !this.showSearchPane;
+    if (!this.showSearchPane) {
+      this.closeSearch.emit();
+    }
+  }
 }

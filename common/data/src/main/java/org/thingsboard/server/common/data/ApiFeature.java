@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,21 @@ package org.thingsboard.server.common.data;
 import lombok.Getter;
 
 public enum ApiFeature {
-    TRANSPORT("transportApiState"),
-    DB("dbApiState"),
-    RE("ruleEngineApiState"),
-    JS("jsExecutionApiState");
+    TRANSPORT("transportApiState", "Device API"),
+    DB("dbApiState", "Telemetry persistence"),
+    RE("ruleEngineApiState", "Rule Engine execution"),
+    JS("jsExecutionApiState", "JavaScript functions execution"),
+    EMAIL("emailApiState", "Email messages"),
+    SMS("smsApiState", "SMS messages");
 
     @Getter
     private final String apiStateKey;
+    @Getter
+    private final String label;
 
-    ApiFeature(String apiStateKey) {
+    ApiFeature(String apiStateKey, String label) {
         this.apiStateKey = apiStateKey;
+        this.label = label;
     }
 
 }

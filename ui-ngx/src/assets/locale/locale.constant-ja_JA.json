@@ -1305,7 +1305,7 @@
 		"timeseries": "時系列",
 		"search-data": "検索データ",
 		"no-data-found": "何もデータが見つかりませんでした",
-		"latest-values": "最新の値",
+		"latest": "最新の値",
 		"rpc": "コントロールウィジェット",
 		"alarm": "アラームウィジェット",
 		"static": "静的ウィジェット",

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,9 @@ package org.thingsboard.server.service.device;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -113,6 +112,13 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     public ProvisionResponse provisionDevice(ProvisionRequest provisionRequest) {
         String provisionRequestKey = provisionRequest.getCredentials().getProvisionDeviceKey();
         String provisionRequestSecret = provisionRequest.getCredentials().getProvisionDeviceSecret();
+        if (!StringUtils.isEmpty(provisionRequest.getDeviceName())) {
+            provisionRequest.setDeviceName(provisionRequest.getDeviceName().trim());
+            if (StringUtils.isEmpty(provisionRequest.getDeviceName())) {
+                log.warn("Provision request contains empty device name!");
+                throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+            }
+        }
 
         if (StringUtils.isEmpty(provisionRequestKey) || StringUtils.isEmpty(provisionRequestSecret)) {
             throw new ProvisionFailedException(ProvisionResponseStatus.NOT_FOUND.name());
@@ -188,6 +194,11 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         Device device = deviceService.findDeviceByTenantIdAndName(profile.getTenantId(), provisionRequest.getDeviceName());
         try {
             if (device == null) {
+                if (StringUtils.isEmpty(provisionRequest.getDeviceName())) {
+                    String newDeviceName = RandomStringUtils.randomAlphanumeric(20);
+                    log.info("Device name not found in provision request. Generated name is: {}", newDeviceName);
+                    provisionRequest.setDeviceName(newDeviceName);
+                }
                 Device savedDevice = deviceService.saveDevice(provisionRequest, profile);
 
                 deviceStateService.onDeviceAdded(savedDevice);

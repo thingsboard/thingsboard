@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,7 +126,7 @@ public class HashPartitionService implements PartitionService {
     }
 
     @Override
-    public void recalculatePartitions(ServiceInfo currentService, List<ServiceInfo> otherServices) {
+    public synchronized void recalculatePartitions(ServiceInfo currentService, List<ServiceInfo> otherServices) {
         logServiceInfo(currentService);
         otherServices.forEach(this::logServiceInfo);
         Map<ServiceQueueKey, List<ServiceInfo>> queueServicesMap = new HashMap<>();
@@ -134,7 +134,7 @@ public class HashPartitionService implements PartitionService {
         for (ServiceInfo other : otherServices) {
             addNode(queueServicesMap, other);
         }
-        queueServicesMap.values().forEach(list -> list.sort((a, b) -> a.getServiceId().compareTo(b.getServiceId())));
+        queueServicesMap.values().forEach(list -> list.sort(Comparator.comparing(ServiceInfo::getServiceId)));
 
         ConcurrentMap<ServiceQueueKey, List<Integer>> oldPartitions = myPartitions;
         TenantId myIsolatedOrSystemTenantId = getSystemOrIsolatedTenantId(currentService);
@@ -195,9 +195,11 @@ public class HashPartitionService implements PartitionService {
         if (current.getServiceTypesList().contains(serviceType.name())) {
             result.add(current.getServiceId());
         }
-        for (ServiceInfo serviceInfo : currentOtherServices) {
-            if (serviceInfo.getServiceTypesList().contains(serviceType.name())) {
-                result.add(serviceInfo.getServiceId());
+        if (currentOtherServices != null) {
+            for (ServiceInfo serviceInfo : currentOtherServices) {
+                if (serviceInfo.getServiceTypesList().contains(serviceType.name())) {
+                    result.add(serviceInfo.getServiceId());
+                }
             }
         }
         return result;

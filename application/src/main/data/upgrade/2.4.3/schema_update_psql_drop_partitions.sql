@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2020 The Thingsboard Authors
+-- Copyright © 2016-2021 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -84,11 +84,12 @@ BEGIN
                                 END IF;
                             END IF;
                         END IF;
-                    END IF;
-                    IF partition_to_delete IS NOT NULL THEN
-                        RAISE NOTICE 'Partition to delete by max ttl: %', partition_to_delete;
-                        EXECUTE format('DROP TABLE %I', partition_to_delete);
-                        deleted := deleted + 1;
+                        IF partition_to_delete IS NOT NULL THEN
+                            RAISE NOTICE 'Partition to delete by max ttl: %', partition_to_delete;
+                            EXECUTE format('DROP TABLE IF EXISTS %I', partition_to_delete);
+                            partition_to_delete := NULL;
+                            deleted := deleted + 1;
+                        END IF;
                     END IF;
                 END LOOP;
         END IF;

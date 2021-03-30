@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import org.thingsboard.server.service.telemetry.cmd.v1.GetHistoryCmd;
 import org.thingsboard.server.service.telemetry.cmd.v1.TimeseriesSubscriptionCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataUnsubscribeCmd;
+import org.thingsboard.server.service.telemetry.cmd.v2.EntityCountCmd;
+import org.thingsboard.server.service.telemetry.cmd.v2.EntityCountUnsubscribeCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUnsubscribeCmd;
 
@@ -45,5 +47,9 @@ public class TelemetryPluginCmdsWrapper {
     private List<AlarmDataCmd> alarmDataCmds;
 
     private List<AlarmDataUnsubscribeCmd> alarmDataUnsubscribeCmds;
+
+    private List<EntityCountCmd> entityCountCmds;
+
+    private List<EntityCountUnsubscribeCmd> entityCountUnsubscribeCmds;
 
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,14 +24,20 @@ import { GeneralSettingsComponent } from '@modules/home/pages/admin/general-sett
 import { SecuritySettingsComponent } from '@modules/home/pages/admin/security-settings.component';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { OAuth2SettingsComponent } from '@modules/home/pages/admin/oauth2-settings.component';
+import { SmsProviderComponent } from '@home/pages/admin/sms-provider.component';
+import { SendTestSmsDialogComponent } from '@home/pages/admin/send-test-sms-dialog.component';
+import { HomeSettingsComponent } from '@home/pages/admin/home-settings.component';
 
 @NgModule({
   declarations:
     [
       GeneralSettingsComponent,
       MailServerComponent,
+      SmsProviderComponent,
+      SendTestSmsDialogComponent,
       SecuritySettingsComponent,
-      OAuth2SettingsComponent
+      OAuth2SettingsComponent,
+      HomeSettingsComponent
     ],
   imports: [
     CommonModule,

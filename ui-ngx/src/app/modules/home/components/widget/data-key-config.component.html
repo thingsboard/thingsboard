@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
                formControlName="name"
                required
                [matAutocomplete]="keyAutocomplete">
-        <button *ngIf="dataKeyFormGroup.get('name').value"
+        <button *ngIf="dataKeyFormGroup.get('name').value && !dataKeyFormGroup.get('name').disabled"
                 type="button"
                 matSuffix mat-icon-button aria-label="Clear"
                 (click)="clearKey()">
@@ -72,7 +72,7 @@
           formControlName="funcBody">
         </tb-js-func>
       </section>
-      <section fxLayout="column" *ngIf="(modelValue.type === dataKeyTypes.timeseries || modelValue.type === dataKeyTypes.attribute) && showPostProcessing">
+      <section fxLayout="column" *ngIf="(modelValue.type === dataKeyTypes.timeseries || modelValue.type === dataKeyTypes.attribute || modelValue.type === dataKeyTypes.count) && showPostProcessing">
         <mat-checkbox formControlName="usePostProcessing">
           {{ 'datakey.use-data-post-processing-func' | translate }}
         </mat-checkbox>

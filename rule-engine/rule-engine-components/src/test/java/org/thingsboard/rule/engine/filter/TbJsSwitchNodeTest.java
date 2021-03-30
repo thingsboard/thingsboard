@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.ScriptEngine;
@@ -43,7 +43,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.same;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -92,6 +92,7 @@ public class TbJsSwitchNodeTest {
         node.init(ctx, nodeConfiguration);
     }
 
+    @SuppressWarnings("unchecked")
     private void mockJsExecutor() {
         when(ctx.getJsExecutor()).thenReturn(executor);
         doAnswer((Answer<ListenableFuture<Set<String>>>) invocationOnMock -> {
@@ -101,7 +102,7 @@ public class TbJsSwitchNodeTest {
             } catch (Throwable th) {
                 return Futures.immediateFailedFuture(th);
             }
-        }).when(executor).executeAsync(Matchers.any(Callable.class));
+        }).when(executor).executeAsync(ArgumentMatchers.any(Callable.class));
     }
 
     private void verifyError(TbMsg msg, String message, Class expectedClass) {

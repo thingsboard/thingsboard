@@ -1,0 +1,168 @@
+/**
+ * Copyright © 2016-2021 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "../../../../../scss/constants";
+
+$toolbar-height: 50px !default;
+$fullscreen-toolbar-height: 64px !default;
+$mobile-toolbar-height: 80px !default;
+$half-mobile-toolbar-height: 40px !default;
+$mobile-toolbar-height-total: 84px !default;
+
+tb-dashboard-toolbar {
+  mat-fab-toolbar {
+    mat-fab-trigger {
+      .mat-fab {
+        width: 36px;
+        height: 36px;
+        margin: 4px 0 0 4px;
+        .mat-button-wrapper {
+          padding: 0;
+        }
+      }
+    }
+
+    &.is-fullscreen {
+
+      .mat-fab-toolbar-wrapper {
+        height: $mobile-toolbar-height-total;
+
+        @media #{$mat-gt-sm} {
+          height: $fullscreen-toolbar-height;
+        }
+
+        mat-toolbar {
+          height: $mobile-toolbar-height;
+          min-height: $mobile-toolbar-height;
+          .mat-toolbar-tools {
+            height: $mobile-toolbar-height;
+            min-height: $mobile-toolbar-height;
+          }
+          @media #{$mat-gt-sm} {
+            height: $fullscreen-toolbar-height;
+            min-height: $fullscreen-toolbar-height;
+            .mat-toolbar-tools {
+              height: $fullscreen-toolbar-height;
+              min-height: $fullscreen-toolbar-height;
+            }
+          }
+        }
+      }
+    }
+
+    .mat-fab-toolbar-wrapper {
+      height: $mobile-toolbar-height-total;
+
+      @media #{$mat-gt-sm} {
+        height: $toolbar-height;
+      }
+
+      mat-toolbar {
+        height: $mobile-toolbar-height;
+        min-height: $mobile-toolbar-height;
+        .mat-toolbar-tools {
+          height: $mobile-toolbar-height;
+          min-height: $mobile-toolbar-height;
+        }
+
+        @media #{$mat-gt-sm} {
+          height: $toolbar-height;
+          min-height: $toolbar-height;
+          .mat-toolbar-tools {
+            height: $toolbar-height;
+            min-height: $toolbar-height;
+          }
+        }
+
+        mat-fab-actions {
+          margin-top: 0;
+          font-size: 16px;
+
+          @media #{$mat-lt-md} {
+            height: $mobile-toolbar-height;
+            max-height: $mobile-toolbar-height;
+          }
+
+          .close-action {
+            margin-right: -18px;
+          }
+
+          .mat-fab-action-item {
+            width: 100%;
+            height: $mobile-toolbar-height;
+
+            @media #{$mat-gt-sm} {
+              height: 46px;
+            }
+
+            .tb-dashboard-action-panels {
+              height: $mobile-toolbar-height;
+
+              @media #{$mat-gt-sm} {
+                height: 46px;
+              }
+
+              .tb-dashboard-action-panel {
+                min-width: 0;
+                height: $half-mobile-toolbar-height;
+
+                @media #{$mat-lt-md} {
+                  mat-menu{
+                    margin: 0;
+                  }
+                }
+
+                @media #{$mat-gt-sm} {
+                  height: 46px;
+                }
+
+                > div {
+                  height: $half-mobile-toolbar-height;
+
+                  @media #{$mat-gt-sm} {
+                    height: 46px;
+                  }
+                }
+
+                mat-select {
+                  margin: 0;
+                  pointer-events: all;
+                }
+
+                tb-states-component {
+                  pointer-events: all;
+                }
+
+                button.mat-icon-button:not(.tb-mat-32) {
+                  min-width: 40px;
+
+                  @media #{$mat-lt-md} {
+                    min-width: 28px;
+                    padding: 2px;
+                    margin: 0;
+                    .mat-button-wrapper {
+                      display: block;
+                      line-height: 24px;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

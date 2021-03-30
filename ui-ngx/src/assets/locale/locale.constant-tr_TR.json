@@ -1464,7 +1464,7 @@
     "timeseries": "Zaman serisi",
     "search-data": "Arama verileri",
     "no-data-found": "Veri bulunamadı",
-    "latest-values": "Son değerler",
+    "latest": "Son değerler",
     "rpc": "Kontrol göstergesi",
     "alarm": "Alarm göstergesi",
     "static": "Statik gösterge",

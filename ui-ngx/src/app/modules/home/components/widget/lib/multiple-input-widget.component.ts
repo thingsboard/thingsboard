@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,16 +24,17 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DataKey, Datasource, DatasourceData, DatasourceType, WidgetConfig } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
-import { isDefined, isEqual, isUndefined, createLabelFromDatasource, isDefinedAndNotNull } from '@core/utils';
+import { createLabelFromDatasource, isDefined, isDefinedAndNotNull, isEqual, isUndefined } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
 import * as _moment from 'moment';
 import { FormBuilder, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { RequestConfig } from '@core/http/http-utils';
 import { AttributeService } from '@core/http/attribute.service';
 import { AttributeData, AttributeScope, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
-import { forkJoin, Observable } from 'rxjs';
+import { forkJoin, Observable, Subject } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { takeUntil } from 'rxjs/operators';
 
 type FieldAlignment = 'row' | 'column';
 
@@ -102,11 +103,12 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   ctx: WidgetContext;
 
   private formResize$: ResizeObserver;
-  private settings: MultipleInputWidgetSettings;
+  public settings: MultipleInputWidgetSettings;
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
   private datasources: Array<Datasource>;
-  private sources: Array<MultipleInputWidgetSource> = [];
+  private destroy$ = new Subject();
+  public sources: Array<MultipleInputWidgetSource> = [];
 
   isVerticalAlignment: boolean;
   inputWidthSettings: string;
@@ -153,6 +155,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
     if (this.formResize$) {
       this.formResize$.disconnect();
     }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private initializeConfig() {
@@ -256,6 +260,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   private buildForm() {
     this.multipleInputFormGroup = this.fb.group({});
     this.sources.forEach((source) => {
+      const addedFormControl = {};
+      const waitFormControl = {};
       for (const key of this.visibleKeys(source)) {
         const validators: ValidatorFn[] = [];
         if (key.settings.required) {
@@ -277,6 +283,36 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
                       disabled: key.settings.isEditable === 'disabled' || key.settings.disabledOnCondition},
           validators
          );
+        if (this.settings.showActionButtons) {
+          addedFormControl[key.name] = formControl;
+          if (key.settings.isEditable === 'editable' && key.settings.disabledOnDataKey) {
+            if (addedFormControl.hasOwnProperty(key.settings.disabledOnDataKey)) {
+              addedFormControl[key.settings.disabledOnDataKey].valueChanges.pipe(
+                takeUntil(this.destroy$)
+              ).subscribe((value) => {
+                if (!value) {
+                  formControl.disable({emitEvent: false});
+                } else {
+                  formControl.enable({emitEvent: false});
+                }
+              });
+            } else {
+              waitFormControl[key.settings.disabledOnDataKey] = formControl;
+            }
+          }
+
+          if (waitFormControl.hasOwnProperty(key.name)) {
+            formControl.valueChanges.pipe(
+              takeUntil(this.destroy$)
+            ).subscribe((value) => {
+              if (!value) {
+                waitFormControl[key.name].disable({emitEvent: false});
+              } else {
+                waitFormControl[key.name].enable({emitEvent: false});
+              }
+            });
+          }
+        }
         this.multipleInputFormGroup.addControl(key.formId, formControl);
       }
     });
