@@ -713,7 +713,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
     private void addParameters(String path, JsonObject parameters, Registration registration) {
         LwM2mClient lwM2MClient = lwM2mClientContext.getLwM2mClientWithReg(registration, null);
         JsonObject names = lwM2mClientContext.getProfiles().get(lwM2MClient.getProfileId()).getPostKeyNameProfile();
-        String resName = String.valueOf(names.get(path));
+        String resName = names.get(path).getAsString();
         if (resName != null && !resName.isEmpty()) {
             try {
                 String resValue = this.getResourceValueToString(lwM2MClient, path);
