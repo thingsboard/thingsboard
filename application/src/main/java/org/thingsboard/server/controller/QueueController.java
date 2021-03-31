@@ -52,7 +52,7 @@ public class QueueController extends BaseController {
             ServiceType type = ServiceType.valueOf(serviceType);
             switch (type) {
                 case TB_RULE_ENGINE:
-                    return queueService.findQueues(getTenantId()).stream().map(Queue::getName).collect(Collectors.toList());
+                    return queueService.findQueuesByTenantId(getTenantId()).stream().map(Queue::getName).collect(Collectors.toList());
                 default:
                     return Collections.emptyList();
             }
@@ -76,7 +76,7 @@ public class QueueController extends BaseController {
             ServiceType type = ServiceType.valueOf(serviceType);
             switch (type) {
                 case TB_RULE_ENGINE:
-                    return queueService.findQueues(getTenantId(), pageLink);
+                    return queueService.findQueuesByTenantId(getTenantId(), pageLink);
                 default:
                     return new PageData<>();
             }
@@ -115,7 +115,7 @@ public class QueueController extends BaseController {
             switch (type) {
                 case TB_RULE_ENGINE:
                     queue.setTenantId(getTenantId());
-                    Queue savedQueue = queueService.createOrUpdateQueue(queue);
+                    Queue savedQueue = queueService.saveQueue(queue);
                     checkNotNull(savedQueue);
                     return savedQueue;
                 default:

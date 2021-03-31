@@ -139,7 +139,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     @PostConstruct
     public void init() {
         super.init("tb-rule-engine-consumer", "tb-rule-engine-notifications-consumer");
-        queueService.findQueues(tenantId).forEach(this::initQueue);
+        queueService.findQueuesByTenantId(tenantId).forEach(this::initQueue);
         submitExecutor = Executors.newSingleThreadExecutor();
     }
 

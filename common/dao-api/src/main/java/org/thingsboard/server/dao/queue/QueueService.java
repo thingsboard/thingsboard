@@ -27,13 +27,13 @@ import java.util.List;
 
 public interface QueueService {
 
-    Queue createOrUpdateQueue(Queue queue);
+    Queue saveQueue(Queue queue);
 
     void deleteQueue(TenantId tenantId, QueueId queueId);
 
-    List<Queue> findQueues(TenantId tenantId);
+    List<Queue> findQueuesByTenantId(TenantId tenantId);
 
-    PageData<Queue> findQueues(TenantId tenantId, PageLink pageLink);
+    PageData<Queue> findQueuesByTenantId(TenantId tenantId, PageLink pageLink);
 
     List<Queue> findAllMainQueues();
 

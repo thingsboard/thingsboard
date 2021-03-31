@@ -58,11 +58,8 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.DynamicValueSourceType;
-import org.thingsboard.server.common.data.query.EntityKey;
-import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
-import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.queue.ProcessingStrategy;
 import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
@@ -174,13 +171,19 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
             log.warn(e.getMessage());
         }
 
+        TenantProfileData isolatedTenantProfileData = new TenantProfileData();
+        DefaultTenantProfileConfiguration profileConfiguration = new DefaultTenantProfileConfiguration();
+        profileConfiguration.setMaxNumberOfQueues(10);
+        profileConfiguration.setMaxNumberOfPartitionsPerQueue(10);
+        isolatedTenantProfileData.setConfiguration(profileConfiguration);
+
         TenantProfile isolatedTbRuleEngineProfile = new TenantProfile();
         isolatedTbRuleEngineProfile.setDefault(false);
         isolatedTbRuleEngineProfile.setName("Isolated TB Rule Engine");
         isolatedTbRuleEngineProfile.setDescription("Isolated TB Rule Engine tenant profile");
         isolatedTbRuleEngineProfile.setIsolatedTbCore(false);
         isolatedTbRuleEngineProfile.setIsolatedTbRuleEngine(true);
-        isolatedTbRuleEngineProfile.setProfileData(tenantProfileData);
+        isolatedTbRuleEngineProfile.setProfileData(isolatedTenantProfileData);
 
         try {
             tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, isolatedTbRuleEngineProfile);
@@ -194,7 +197,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         isolatedTbCoreAndTbRuleEngineProfile.setDescription("Isolated TB Core and TB Rule Engine tenant profile");
         isolatedTbCoreAndTbRuleEngineProfile.setIsolatedTbCore(true);
         isolatedTbCoreAndTbRuleEngineProfile.setIsolatedTbRuleEngine(true);
-        isolatedTbCoreAndTbRuleEngineProfile.setProfileData(tenantProfileData);
+        isolatedTbCoreAndTbRuleEngineProfile.setProfileData(isolatedTenantProfileData);
 
         try {
             tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, isolatedTbCoreAndTbRuleEngineProfile);
@@ -516,7 +519,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         mainQueueProcessingStrategy.setPauseBetweenRetries(3);
         mainQueueProcessingStrategy.setMaxPauseBetweenRetries(3);
         mainQueue.setProcessingStrategy(mainQueueProcessingStrategy);
-        queueService.createOrUpdateQueue(mainQueue);
+        queueService.saveQueue(mainQueue);
 
         Queue highPriorityQueue = new Queue();
         highPriorityQueue.setTenantId(TenantId.SYS_TENANT_ID);
@@ -536,7 +539,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         highPriorityQueueProcessingStrategy.setPauseBetweenRetries(5);
         highPriorityQueueProcessingStrategy.setMaxPauseBetweenRetries(5);
         highPriorityQueue.setProcessingStrategy(highPriorityQueueProcessingStrategy);
-        queueService.createOrUpdateQueue(highPriorityQueue);
+        queueService.saveQueue(highPriorityQueue);
 
         Queue sequentialByOriginatorQueue = new Queue();
         sequentialByOriginatorQueue.setTenantId(TenantId.SYS_TENANT_ID);
@@ -556,6 +559,6 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         sequentialByOriginatorQueueProcessingStrategy.setPauseBetweenRetries(5);
         sequentialByOriginatorQueueProcessingStrategy.setMaxPauseBetweenRetries(5);
         sequentialByOriginatorQueue.setProcessingStrategy(sequentialByOriginatorQueueProcessingStrategy);
-        queueService.createOrUpdateQueue(sequentialByOriginatorQueue);
+        queueService.saveQueue(sequentialByOriginatorQueue);
     }
 }

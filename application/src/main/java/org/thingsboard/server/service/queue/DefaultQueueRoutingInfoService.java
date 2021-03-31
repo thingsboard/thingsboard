@@ -49,6 +49,6 @@ public class DefaultQueueRoutingInfoService implements QueueRoutingInfoService {
 
     @Override
     public List<QueueRoutingInfo> getQueuesRoutingInfo(TenantId tenantId) {
-        return queueService.findQueues(tenantId).stream().map(QueueRoutingInfo::new).collect(Collectors.toList());
+        return queueService.findQueuesByTenantId(tenantId).stream().map(QueueRoutingInfo::new).collect(Collectors.toList());
     }
 }

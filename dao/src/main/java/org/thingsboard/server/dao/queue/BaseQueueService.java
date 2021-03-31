@@ -69,7 +69,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
 
     @Override
     @Transactional
-    public Queue createOrUpdateQueue(Queue queue) {
+    public Queue saveQueue(Queue queue) {
         log.trace("Executing createOrUpdateQueue [{}]", queue);
         queueValidator.validate(queue, Queue::getTenantId);
         Queue savedQueue;
@@ -103,7 +103,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
         int currentPartitions = queue.getPartitions();
 
         //TODO: 3.2 remove if partitions can't be deleted.
-        if (currentPartitions != oldPartitions) {
+        if (currentPartitions != oldPartitions && tbQueueAdmin != null) {
             queueClusterService.onQueueDelete(queue, null);
             if (currentPartitions > oldPartitions) {
                 log.info("Added [{}] new partitions to [{}] queue", currentPartitions - oldPartitions, queue.getName());
@@ -126,10 +126,12 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     public void deleteQueue(TenantId tenantId, QueueId queueId) {
         log.trace("Executing deleteQueue, queueId: [{}]", queueId);
         Queue queue = findQueueById(tenantId, queueId);
-        queueClusterService.onQueueDelete(queue, null);
+        if (queueClusterService != null) {
+            queueClusterService.onQueueDelete(queue, null);
+        }
         queueStatsService.deleteQueueStatsByQueueId(tenantId, queueId);
         boolean result = queueDao.removeById(tenantId, queueId.getId());
-        if (result) {
+        if (result && tbQueueAdmin != null) {
             for (int i = 0; i < queue.getPartitions(); i++) {
                 String fullTopicName = new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName();
                 log.debug("Deleting queue [{}]", fullTopicName);
@@ -143,13 +145,13 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     }
 
     @Override
-    public List<Queue> findQueues(TenantId tenantId) {
+    public List<Queue> findQueuesByTenantId(TenantId tenantId) {
         log.trace("Executing findQueues, tenantId: [{}]", tenantId);
         return queueDao.findAllByTenantId(getSystemOrIsolatedTenantId(tenantId));
     }
 
     @Override
-    public PageData<Queue> findQueues(TenantId tenantId, PageLink pageLink) {
+    public PageData<Queue> findQueuesByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findQueues pageLink [{}]", pageLink);
         Validator.validatePageLink(pageLink);
         return queueDao.findQueuesByTenantId(getSystemOrIsolatedTenantId(tenantId), pageLink);
@@ -209,7 +211,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
         mainQueueProcessingStrategy.setPauseBetweenRetries(3);
         mainQueueProcessingStrategy.setMaxPauseBetweenRetries(3);
         mainQueue.setProcessingStrategy(mainQueueProcessingStrategy);
-        return createOrUpdateQueue(mainQueue);
+        return saveQueue(mainQueue);
     }
 
     private DataValidator<Queue> queueValidator =
@@ -227,8 +229,15 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
 
                 @Override
                 protected void validateUpdate(TenantId tenantId, Queue queue) {
+                    Queue foundQueue = queueDao.findById(tenantId, queue.getUuidId());
                     if (queueDao.findById(tenantId, queue.getUuidId()) == null) {
                         throw new DataValidationException(String.format("Queue with id: %s does not exists!", queue.getId()));
+                    }
+                    if (!foundQueue.getName().equals(queue.getName())) {
+                        throw new DataValidationException("Queue name can't be changed!");
+                    }
+                    if (!foundQueue.getTopic().equals(queue.getTopic())) {
+                        throw new DataValidationException("Queue topic can't be changed!");
                     }
                 }
 
@@ -245,7 +254,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
                         }
 
                         if (queue.getId() == null) {
-                            List<Queue> existingQueues = findQueues(tenantId);
+                            List<Queue> existingQueues = findQueuesByTenantId(tenantId);
                             if (existingQueues.size() >= profileConfiguration.getMaxNumberOfQueues()) {
                                 throw new DataValidationException("The limit for creating new queue has been exceeded!");
                             }
@@ -257,7 +266,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
                     }
 
                     if (StringUtils.isEmpty(queue.getName())) {
-                        throw new DataValidationException("Queue name should be non empty!");
+                        throw new DataValidationException("Queue name should be specified!");
                     }
                     if (StringUtils.isBlank(queue.getTopic())) {
                         throw new DataValidationException("Queue topic should be non empty and without spaces!");
@@ -292,16 +301,12 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
                     if (processingStrategy.getRetries() < 0) {
                         throw new DataValidationException("Queue processing strategy retries can't be less then 0!");
                     }
-                    if (processingStrategy.getFailurePercentage() < 0) {
-                        throw new DataValidationException("Queue processing strategy failure percentage can't be less then 0!");
-                    }
-                    if (processingStrategy.getFailurePercentage() > 100) {
-                        throw new DataValidationException("Queue processing strategy failure percentage can't be more then 100!");
+                    if (processingStrategy.getFailurePercentage() < 0 || processingStrategy.getFailurePercentage() > 100) {
+                        throw new DataValidationException("Queue processing strategy failure percentage should be in a range from 0 to 100!");
                     }
                     if (processingStrategy.getPauseBetweenRetries() < 0) {
                         throw new DataValidationException("Queue processing strategy pause between retries can't be less then 0!");
                     }
-
                     if (processingStrategy.getMaxPauseBetweenRetries() < processingStrategy.getPauseBetweenRetries()) {
                         throw new DataValidationException("Queue processing strategy MAX pause between retries can't be less then pause between retries!");
                     }

@@ -502,7 +502,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                 processingStrategy.setPauseBetweenRetries(queueSettings.getProcessingStrategy().getPauseBetweenRetries());
                                 processingStrategy.setMaxPauseBetweenRetries(queueSettings.getProcessingStrategy().getMaxPauseBetweenRetries());
                                 queue.setProcessingStrategy(processingStrategy);
-                                queueService.createOrUpdateQueue(queue);
+                                queueService.saveQueue(queue);
                             });
                         } else {
                             systemDataLoaderService.createQueues();
