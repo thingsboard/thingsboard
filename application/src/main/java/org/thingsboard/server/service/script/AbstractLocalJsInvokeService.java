@@ -43,10 +43,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
-public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeService {
+public abstract class AbstractLocalJsInvokeService extends AbstractJsInvokeService {
 
-    private NashornSandbox sandbox;
-    private ScriptEngine engine;
     private ExecutorService monitorExecutorService;
 
     private final AtomicInteger jsPushedMsgs = new AtomicInteger(0);
@@ -62,13 +60,28 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
     @Getter
     private final JsExecutorService jsExecutor;
 
+    @Value("${js.local.use_js_sandbox}")
+    private boolean useJsSandbox;
+
+    @Value("${js.local.monitor_thread_pool_size}")
+    private int monitorThreadPoolSize;
+
+    @Value("${js.local.max_cpu_time}")
+    private long maxCpuTime;
+
+    @Value("${js.local.max_errors}")
+    private int maxErrors;
+
+    @Value("${js.local.max_black_list_duration_sec:60}")
+    private int maxBlackListDurationSec;
+
     @Value("${js.local.max_requests_timeout:0}")
     private long maxRequestsTimeout;
 
     @Value("${js.local.stats.enabled:false}")
     private boolean statsEnabled;
 
-    public AbstractNashornJsInvokeService(TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient, JsExecutorService jsExecutor) {
+    public AbstractLocalJsInvokeService(TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient, JsExecutorService jsExecutor) {
         super(apiUsageStateService, apiUsageClient);
         this.jsExecutor = jsExecutor;
     }
@@ -92,18 +105,20 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
     public void init() {
         super.init(maxRequestsTimeout);
         if (useJsSandbox()) {
-            sandbox = NashornSandboxes.create();
             monitorExecutorService = Executors.newWorkStealingPool(getMonitorThreadPoolSize());
-            sandbox.setExecutor(monitorExecutorService);
-            sandbox.setMaxCPUTime(getMaxCpuTime());
-            sandbox.allowNoBraces(false);
-            sandbox.allowLoadFunctions(true);
-            sandbox.setMaxPreparedStatements(30);
+            initSandbox(monitorExecutorService);
         } else {
-            ScriptEngineManager factory = new ScriptEngineManager();
-            engine = factory.getEngineByName("nashorn");
+            initEngine();
         }
     }
+
+    protected abstract void initEngine();
+
+    protected abstract void initSandbox(ExecutorService monitorExecutorService);
+
+    protected abstract void evalUsingEngine(String jsScript) throws ScriptException;
+
+    protected abstract void evalUsingSandbox(String jsScript) throws ScriptException;
 
     @PreDestroy
     public void stop() {
@@ -113,11 +128,27 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
         }
     }
 
-    protected abstract boolean useJsSandbox();
+    protected boolean useJsSandbox() {
+        return useJsSandbox;
+    }
 
-    protected abstract int getMonitorThreadPoolSize();
+    protected int getMonitorThreadPoolSize() {
+        return monitorThreadPoolSize;
+    }
 
-    protected abstract long getMaxCpuTime();
+    protected long getMaxCpuTime() {
+        return maxCpuTime;
+    }
+
+    @Override
+    protected int getMaxErrors() {
+        return maxErrors;
+    }
+
+    @Override
+    protected long getMaxBlacklistDuration() {
+        return TimeUnit.SECONDS.toMillis(maxBlackListDurationSec);
+    }
 
     @Override
     protected ListenableFuture<UUID> doEval(UUID scriptId, String functionName, String jsScript) {
@@ -127,9 +158,9 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
                 evalLock.lock();
                 try {
                     if (useJsSandbox()) {
-                        sandbox.eval(jsScript);
+                        evalUsingSandbox(jsScript);
                     } else {
-                        engine.eval(jsScript);
+                        evalUsingEngine(jsScript);
                     }
                 } finally {
                     evalLock.unlock();
@@ -154,9 +185,9 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
         ListenableFuture<Object> result = jsExecutor.executeAsync(() -> {
             try {
                 if (useJsSandbox()) {
-                    return sandbox.getSandboxedInvocable().invokeFunction(functionName, args);
+                    return invokeSandboxFunction(functionName, args);
                 } else {
-                    return ((Invocable) engine).invokeFunction(functionName, args);
+                    return invokeEngineFunction(functionName, args);
                 }
             } catch (Exception e) {
                 onScriptExecutionError(scriptId);
@@ -171,11 +202,15 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
         return result;
     }
 
+    protected abstract Object invokeEngineFunction(String functionName, Object[] args) throws ScriptException, NoSuchMethodException;
+
+    protected abstract Object invokeSandboxFunction(String functionName, Object[] args) throws ScriptException, NoSuchMethodException;
+
     protected void doRelease(UUID scriptId, String functionName) throws ScriptException {
         if (useJsSandbox()) {
-            sandbox.eval(functionName + " = undefined;");
+            evalUsingSandbox(functionName + " = undefined;");
         } else {
-            engine.eval(functionName + " = undefined;");
+            evalUsingEngine(functionName + " = undefined;");
         }
     }
 

@@ -504,6 +504,8 @@ js:
   evaluator: "${JS_EVALUATOR:local}" # local/remote
   # Built-in JVM JavaScript environment properties
   local:
+    # Type of local JS Engine
+    engine: "${JS_EVALUATOR_ENGINE_NAME:graal}"
     # Use Sandboxed (secured) JVM JavaScript environment
     use_js_sandbox: "${USE_LOCAL_JS_SANDBOX:true}"
     # Specify thread pool size for JavaScript sandbox resource monitor

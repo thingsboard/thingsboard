@@ -95,7 +95,9 @@
             org/thingsboard/server/extensions/core/plugin/telemetry/gen/**/*
         </sonar.exclusions>
         <elasticsearch.version>5.0.2</elasticsearch.version>
-        <delight-nashorn-sandbox.version>0.1.31</delight-nashorn-sandbox.version>
+        <delight-nashorn-sandbox.version>0.2.0</delight-nashorn-sandbox.version>
+        <delight-graaljs-sandbox.version>0.1.2</delight-graaljs-sandbox.version>
+        <graalvm-sdk.version>21.0.0.2</graalvm-sdk.version>
         <kafka.version>2.6.0</kafka.version>
         <bucket4j.version>4.1.1</bucket4j.version>
         <fst.version>2.57</fst.version>
@@ -1331,6 +1333,32 @@
                 <groupId>org.javadelight</groupId>
                 <artifactId>delight-nashorn-sandbox</artifactId>
                 <version>${delight-nashorn-sandbox.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.javadelight</groupId>
+                <artifactId>delight-graaljs-sandbox</artifactId>
+                <version>${delight-graaljs-sandbox.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>*</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.graalvm.js</groupId>
+                <artifactId>js</artifactId>
+                <version>${graalvm-sdk.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.graalvm.js</groupId>
+                <artifactId>js-scriptengine</artifactId>
+                <version>${graalvm-sdk.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.graalvm.truffle</groupId>
+                <artifactId>truffle-api</artifactId>
+                <version>${graalvm-sdk.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.github.vladimir-bukhtoyarov</groupId>

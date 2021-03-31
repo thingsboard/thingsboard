@@ -15,43 +15,45 @@
  */
 package org.thingsboard.server.service.script;
 
-import delight.nashornsandbox.NashornSandbox;
-import delight.nashornsandbox.NashornSandboxes;
+import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
+import delight.graaljssandbox.GraalSandbox;
+import delight.graaljssandbox.GraalSandboxes;
 import lombok.extern.slf4j.Slf4j;
+import org.graalvm.polyglot.Context;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
-import javax.annotation.PostConstruct;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Slf4j
-@ConditionalOnExpression("'${js.evaluator:local}'=='local' && '${js.local.engine:nashorn}'=='nashorn'")
+@ConditionalOnExpression("'${js.evaluator:local}'=='local' && '${js.local.engine:nashorn}'=='graal'")
 @Service
-public class NashornJsInvokeService extends AbstractLocalJsInvokeService {
+public class GraalJsInvokeService extends AbstractLocalJsInvokeService {
 
-    private NashornSandbox sandbox;
+    private GraalSandbox sandbox;
     private ScriptEngine engine;
 
-    public NashornJsInvokeService(TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient, JsExecutorService jsExecutor) {
+
+    public GraalJsInvokeService(TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient, JsExecutorService jsExecutor) {
         super(apiUsageStateService, apiUsageClient, jsExecutor);
     }
 
     @Override
     protected void initEngine() {
-        ScriptEngineManager factory = new ScriptEngineManager();
-        engine = factory.getEngineByName("nashorn");
+        engine = GraalJSScriptEngine.create(null,
+                Context.newBuilder("js")
+                        .allowAllAccess(false)
+                        .option("js.ecmascript-version", "2021"));
     }
 
     @Override
     protected void initSandbox(ExecutorService monitorExecutorService) {
-        sandbox = NashornSandboxes.create();
+        sandbox = GraalSandboxes.create();
         sandbox.setExecutor(monitorExecutorService);
         sandbox.setMaxCPUTime(getMaxCpuTime());
         sandbox.allowNoBraces(false);
@@ -78,4 +80,5 @@ public class NashornJsInvokeService extends AbstractLocalJsInvokeService {
     protected Object invokeEngineFunction(String functionName, Object[] args) throws ScriptException, NoSuchMethodException {
         return ((Invocable) engine).invokeFunction(functionName, args);
     }
+
 }
