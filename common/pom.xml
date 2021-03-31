@@ -39,6 +39,7 @@
         <module>message</module>
         <module>actor</module>
         <module>queue</module>
+        <module>queue-api</module>
         <module>transport</module>
         <module>dao-api</module>
         <module>stats</module>

@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.ApiUsageState;
@@ -38,6 +39,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
@@ -51,18 +53,16 @@ import org.thingsboard.server.dao.device.DeviceProvisionService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.device.provision.ProvisionResponse;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.DeviceCredentialsProto;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsgOrBuilder;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionResponseStatus;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
@@ -79,11 +79,13 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 /**
  * Created by ashvayka on 05.10.18.
@@ -106,6 +108,9 @@ public class DefaultTransportApiService implements TransportApiService {
     private final TbClusterService tbClusterService;
     private final DataDecodingEncodingService dataDecodingEncodingService;
     private final DeviceProvisionService deviceProvisionService;
+
+    @Autowired
+    private QueueService queueService;
 
     private final ConcurrentMap<String, ReentrantLock> deviceCreationLocks = new ConcurrentHashMap<>();
 
@@ -152,6 +157,12 @@ public class DefaultTransportApiService implements TransportApiService {
         } else if (transportApiRequestMsg.hasProvisionDeviceRequestMsg()) {
             return Futures.transform(handle(transportApiRequestMsg.getProvisionDeviceRequestMsg()),
                     value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
+        } else if (transportApiRequestMsg.hasGetQueueRoutingInfoRequestMsg()) {
+            return Futures.transform(handle(transportApiRequestMsg.getGetQueueRoutingInfoRequestMsg()), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
+        } else if (transportApiRequestMsg.hasGetTenantQueueRoutingInfoRequestMsg()) {
+            return Futures.transform(handle(transportApiRequestMsg.getGetTenantQueueRoutingInfoRequestMsg()), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
+        } else if (transportApiRequestMsg.hasGetAllQueueRoutingInfoRequestMsg()) {
+            return Futures.transform(handle(transportApiRequestMsg.getGetAllQueueRoutingInfoRequestMsg()), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
         }
         return Futures.transform(getEmptyTransportApiResponseFuture(),
                 value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
@@ -345,6 +356,31 @@ public class DefaultTransportApiService implements TransportApiService {
             throw new RuntimeException("Invalid entity profile request: " + entityType);
         }
         return Futures.immediateFuture(TransportApiResponseMsg.newBuilder().setEntityProfileResponseMsg(builder).build());
+    }
+
+    private ListenableFuture<TransportApiResponseMsg> handle(TransportProtos.GetQueueRoutingInfoRequestMsg requestMsg) {
+        return queuesToTransportApiResponseMsg(queueService.findAllMainQueues());
+    }
+
+    private ListenableFuture<TransportApiResponseMsg> handle(TransportProtos.GetAllQueueRoutingInfoRequestMsg requestMsg) {
+        return queuesToTransportApiResponseMsg(queueService.findAllQueues());
+    }
+
+    private ListenableFuture<TransportApiResponseMsg> handle(TransportProtos.GetTenantQueueRoutingInfoRequestMsg requestMsg) {
+        TenantId tenantId = new TenantId(new UUID(requestMsg.getTenantIdMSB(), requestMsg.getTenantIdLSB()));
+        return queuesToTransportApiResponseMsg(queueService.findQueuesByTenantId(tenantId));
+    }
+
+    private ListenableFuture<TransportApiResponseMsg> queuesToTransportApiResponseMsg(List<Queue> queues) {
+        return Futures.immediateFuture(TransportApiResponseMsg.newBuilder()
+                .addAllGetQueueRoutingInfoResponseMsgs(queues.stream()
+                        .map(queue -> TransportProtos.GetQueueRoutingInfoResponseMsg.newBuilder()
+                                .setTenantIdMSB(queue.getTenantId().getId().getMostSignificantBits())
+                                .setTenantIdLSB(queue.getTenantId().getId().getLeastSignificantBits())
+                                .setQueueName(queue.getName())
+                                .setQueueTopic(queue.getTopic())
+                                .setPartitions(queue.getPartitions())
+                                .build()).collect(Collectors.toList())).build());
     }
 
     private ListenableFuture<TransportApiResponseMsg> getDeviceInfo(DeviceId deviceId, DeviceCredentials credentials) {

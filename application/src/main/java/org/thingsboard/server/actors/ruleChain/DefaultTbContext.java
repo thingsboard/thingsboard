@@ -65,6 +65,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
+import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -503,6 +504,11 @@ class DefaultTbContext implements TbContext {
     @Override
     public SmsSenderFactory getSmsSenderFactory() {
         return mainCtx.getSmsSenderFactory();
+    }
+
+    @Override
+    public QueueStatsService getQueueStatsService() {
+        return mainCtx.getQueueStatsService();
     }
 
     @Override

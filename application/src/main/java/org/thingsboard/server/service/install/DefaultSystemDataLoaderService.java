@@ -58,12 +58,14 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.DynamicValueSourceType;
-import org.thingsboard.server.common.data.query.EntityKey;
-import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
-import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
+import org.thingsboard.server.common.data.queue.ProcessingStrategy;
+import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
+import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.data.queue.SubmitStrategy;
+import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.UserCredentials;
@@ -76,6 +78,7 @@ import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
@@ -135,6 +138,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     @Autowired
     private RuleChainService ruleChainService;
 
+    @Autowired
+    private QueueService queueService;
+
     @Bean
     protected BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -165,13 +171,19 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
             log.warn(e.getMessage());
         }
 
+        TenantProfileData isolatedTenantProfileData = new TenantProfileData();
+        DefaultTenantProfileConfiguration profileConfiguration = new DefaultTenantProfileConfiguration();
+        profileConfiguration.setMaxNumberOfQueues(10);
+        profileConfiguration.setMaxNumberOfPartitionsPerQueue(10);
+        isolatedTenantProfileData.setConfiguration(profileConfiguration);
+
         TenantProfile isolatedTbRuleEngineProfile = new TenantProfile();
         isolatedTbRuleEngineProfile.setDefault(false);
         isolatedTbRuleEngineProfile.setName("Isolated TB Rule Engine");
         isolatedTbRuleEngineProfile.setDescription("Isolated TB Rule Engine tenant profile");
         isolatedTbRuleEngineProfile.setIsolatedTbCore(false);
         isolatedTbRuleEngineProfile.setIsolatedTbRuleEngine(true);
-        isolatedTbRuleEngineProfile.setProfileData(tenantProfileData);
+        isolatedTbRuleEngineProfile.setProfileData(isolatedTenantProfileData);
 
         try {
             tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, isolatedTbRuleEngineProfile);
@@ -185,7 +197,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         isolatedTbCoreAndTbRuleEngineProfile.setDescription("Isolated TB Core and TB Rule Engine tenant profile");
         isolatedTbCoreAndTbRuleEngineProfile.setIsolatedTbCore(true);
         isolatedTbCoreAndTbRuleEngineProfile.setIsolatedTbRuleEngine(true);
-        isolatedTbCoreAndTbRuleEngineProfile.setProfileData(tenantProfileData);
+        isolatedTbCoreAndTbRuleEngineProfile.setProfileData(isolatedTenantProfileData);
 
         try {
             tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, isolatedTbCoreAndTbRuleEngineProfile);
@@ -487,4 +499,66 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         return device;
     }
 
+    @Override
+    public void createQueues() {
+        Queue mainQueue = new Queue();
+        mainQueue.setTenantId(TenantId.SYS_TENANT_ID);
+        mainQueue.setName("Main");
+        mainQueue.setTopic("tb_rule_engine.main");
+        mainQueue.setPollInterval(25);
+        mainQueue.setPartitions(10);
+        mainQueue.setPackProcessingTimeout(2000);
+        SubmitStrategy mainQueueSubmitStrategy = new SubmitStrategy();
+        mainQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
+        mainQueueSubmitStrategy.setBatchSize(1000);
+        mainQueue.setSubmitStrategy(mainQueueSubmitStrategy);
+        ProcessingStrategy mainQueueProcessingStrategy = new ProcessingStrategy();
+        mainQueueProcessingStrategy.setType(ProcessingStrategyType.SKIP_ALL_FAILURES);
+        mainQueueProcessingStrategy.setRetries(3);
+        mainQueueProcessingStrategy.setFailurePercentage(0);
+        mainQueueProcessingStrategy.setPauseBetweenRetries(3);
+        mainQueueProcessingStrategy.setMaxPauseBetweenRetries(3);
+        mainQueue.setProcessingStrategy(mainQueueProcessingStrategy);
+        queueService.saveQueue(mainQueue);
+
+        Queue highPriorityQueue = new Queue();
+        highPriorityQueue.setTenantId(TenantId.SYS_TENANT_ID);
+        highPriorityQueue.setName("HighPriority");
+        highPriorityQueue.setTopic("tb_rule_engine.hp");
+        highPriorityQueue.setPollInterval(25);
+        highPriorityQueue.setPartitions(10);
+        highPriorityQueue.setPackProcessingTimeout(2000);
+        SubmitStrategy highPriorityQueueSubmitStrategy = new SubmitStrategy();
+        highPriorityQueueSubmitStrategy.setType(SubmitStrategyType.BURST);
+        highPriorityQueueSubmitStrategy.setBatchSize(100);
+        highPriorityQueue.setSubmitStrategy(highPriorityQueueSubmitStrategy);
+        ProcessingStrategy highPriorityQueueProcessingStrategy = new ProcessingStrategy();
+        highPriorityQueueProcessingStrategy.setType(ProcessingStrategyType.RETRY_FAILED_AND_TIMED_OUT);
+        highPriorityQueueProcessingStrategy.setRetries(0);
+        highPriorityQueueProcessingStrategy.setFailurePercentage(0);
+        highPriorityQueueProcessingStrategy.setPauseBetweenRetries(5);
+        highPriorityQueueProcessingStrategy.setMaxPauseBetweenRetries(5);
+        highPriorityQueue.setProcessingStrategy(highPriorityQueueProcessingStrategy);
+        queueService.saveQueue(highPriorityQueue);
+
+        Queue sequentialByOriginatorQueue = new Queue();
+        sequentialByOriginatorQueue.setTenantId(TenantId.SYS_TENANT_ID);
+        sequentialByOriginatorQueue.setName("SequentialByOriginator");
+        sequentialByOriginatorQueue.setTopic("tb_rule_engine.sq");
+        sequentialByOriginatorQueue.setPollInterval(25);
+        sequentialByOriginatorQueue.setPartitions(10);
+        sequentialByOriginatorQueue.setPackProcessingTimeout(2000);
+        SubmitStrategy sequentialByOriginatorQueueSubmitStrategy = new SubmitStrategy();
+        sequentialByOriginatorQueueSubmitStrategy.setType(SubmitStrategyType.SEQUENTIAL_BY_ORIGINATOR);
+        sequentialByOriginatorQueueSubmitStrategy.setBatchSize(100);
+        sequentialByOriginatorQueue.setSubmitStrategy(sequentialByOriginatorQueueSubmitStrategy);
+        ProcessingStrategy sequentialByOriginatorQueueProcessingStrategy = new ProcessingStrategy();
+        sequentialByOriginatorQueueProcessingStrategy.setType(ProcessingStrategyType.RETRY_FAILED_AND_TIMED_OUT);
+        sequentialByOriginatorQueueProcessingStrategy.setRetries(3);
+        sequentialByOriginatorQueueProcessingStrategy.setFailurePercentage(0);
+        sequentialByOriginatorQueueProcessingStrategy.setPauseBetweenRetries(5);
+        sequentialByOriginatorQueueProcessingStrategy.setMaxPauseBetweenRetries(5);
+        sequentialByOriginatorQueue.setProcessingStrategy(sequentialByOriginatorQueueProcessingStrategy);
+        queueService.saveQueue(sequentialByOriginatorQueue);
+    }
 }

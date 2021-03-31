@@ -158,7 +158,7 @@ export class QueueTypeListComponent implements ControlValueAccessor, OnInit, Aft
   getQueues(): Observable<Array<string>> {
     if (!this.queues) {
       this.queues = this.queueService.
-      getTenantQueuesByServiceType(this.queueType, {ignoreLoading: true}).pipe(
+      getTenantQueuesNamesByServiceType(this.queueType, {ignoreLoading: true}).pipe(
         publishReplay(1),
         refCount()
       );

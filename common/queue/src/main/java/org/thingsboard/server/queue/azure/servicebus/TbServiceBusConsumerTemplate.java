@@ -35,6 +35,7 @@ import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueMsgDecoder;
 import org.thingsboard.server.queue.common.AbstractTbQueueConsumerTemplate;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
+import org.thingsboard.server.queue.settings.TbServiceBusSettings;
 
 import java.time.Duration;
 import java.util.Collection;

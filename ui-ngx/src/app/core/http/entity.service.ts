@@ -56,6 +56,7 @@ import { deepClone, isDefined, isDefinedAndNotNull } from '@core/utils';
 import { Asset } from '@shared/models/asset.models';
 import { Device, DeviceCredentialsType } from '@shared/models/device.models';
 import { AttributeService } from '@core/http/attribute.service';
+import {QueueStatsService} from '@core/http/queue-stats.service';
 import {
   AlarmData,
   AlarmDataQuery,
@@ -93,7 +94,8 @@ export class EntityService {
     private dashboardService: DashboardService,
     private entityRelationService: EntityRelationService,
     private attributeService: AttributeService,
-    private utils: UtilsService
+    private utils: UtilsService,
+    private queueStatsService: QueueStatsService
   ) { }
 
   private getEntityObservable(entityType: EntityType, entityId: string,
@@ -124,6 +126,9 @@ export class EntityService {
         break;
       case EntityType.RULE_CHAIN:
         observable = this.ruleChainService.getRuleChain(entityId, config);
+        break;
+      case EntityType.QUEUE_STATS:
+        observable = this.queueStatsService.getSingleQueueStats(entityId, config)
         break;
       case EntityType.ALARM:
         console.error('Get Alarm Entity is not implemented!');
@@ -198,6 +203,9 @@ export class EntityService {
         observable = this.getEntitiesByIdsObservable(
           (id) => this.userService.getUser(id, config),
           entityIds);
+        break;
+      case EntityType.QUEUE_STATS:
+        observable = this.queueStatsService.getQueueStatsByIds(entityIds, config);
         break;
       case EntityType.ALARM:
         console.error('Get Alarm Entity is not implemented!');
@@ -322,6 +330,10 @@ export class EntityService {
       case EntityType.USER:
         pageLink.sortOrder.property = 'email';
         entitiesObservable = this.userService.getUsers(pageLink);
+        break;
+      case EntityType.QUEUE_STATS:
+        pageLink.sortOrder.property = 'name';
+        entitiesObservable = this.queueStatsService.getQueueStats(pageLink);
         break;
       case EntityType.ALARM:
         console.error('Get Alarm Entities is not implemented!');
@@ -580,6 +592,7 @@ export class EntityService {
         entityTypes.push(EntityType.CUSTOMER);
         entityTypes.push(EntityType.USER);
         entityTypes.push(EntityType.DASHBOARD);
+        // entityTypes.push(EntityType.QUEUE_STATS);
         if (useAliasEntityTypes) {
           entityTypes.push(AliasEntityType.CURRENT_CUSTOMER);
           entityTypes.push(AliasEntityType.CURRENT_TENANT);
@@ -649,6 +662,9 @@ export class EntityService {
         entityFieldKeys.push(entityFields.title.keyName);
         break;
       case EntityType.API_USAGE_STATE:
+        entityFieldKeys.push(entityFields.name.keyName);
+        break;
+      case EntityType.QUEUE_STATS:
         entityFieldKeys.push(entityFields.name.keyName);
         break;
     }
@@ -825,6 +841,8 @@ export class EntityService {
         result.entityFilter = deepClone(filter);
         return of(result);
       case AliasFilterType.deviceType:
+        result.entityFilter = deepClone(filter);
+      case AliasFilterType.ruleEngineStats:
         result.entityFilter = deepClone(filter);
         return of(result);
       case AliasFilterType.entityViewType:

@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.transport;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -25,7 +24,7 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
@@ -39,11 +38,11 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 @TbCoreComponent
 public class DefaultTbCoreToTransportService implements TbCoreToTransportService {
 
-    private final PartitionService partitionService;
+    private final NotificationsTopicService notificationsTopicService;
     private final TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> tbTransportProducer;
 
-    public DefaultTbCoreToTransportService(PartitionService partitionService, TbQueueProducerProvider tbQueueProducerProvider) {
-        this.partitionService = partitionService;
+    public DefaultTbCoreToTransportService(NotificationsTopicService notificationsTopicService, TbQueueProducerProvider tbQueueProducerProvider) {
+        this.notificationsTopicService = notificationsTopicService;
         this.tbTransportProducer = tbQueueProducerProvider.getTransportNotificationsMsgProducer();
     }
 
@@ -54,7 +53,7 @@ public class DefaultTbCoreToTransportService implements TbCoreToTransportService
 
     @Override
     public void process(String nodeId, ToTransportMsg msg, Runnable onSuccess, Consumer<Throwable> onFailure) {
-        TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_TRANSPORT, nodeId);
+        TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, nodeId);
         UUID sessionId = new UUID(msg.getSessionIdMSB(), msg.getSessionIdLSB());
         log.trace("[{}][{}] Pushing session data to topic: {}", tpi.getFullTopicName(), sessionId, msg);
         TbProtoQueueMsg<ToTransportMsg> queueMsg = new TbProtoQueueMsg<>(NULL_UUID, msg);

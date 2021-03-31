@@ -228,6 +228,14 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
                             throw new DataValidationException("Another default tenant profile is present!");
                         }
                     }
+                    if (tenantProfile.isIsolatedTbRuleEngine()) {
+                        if (((DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration()).getMaxNumberOfQueues() < 1) {
+                            throw new DataValidationException("Property maxNumberOfQueues can't be less then 1!");
+                        }
+                        if (((DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration()).getMaxNumberOfPartitionsPerQueue() < 1) {
+                            throw new DataValidationException("Property maxNumberOfPartitionsPerQueue can't be less then 1!");
+                        }
+                    }
                 }
 
                 @Override
@@ -239,6 +247,15 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
                         throw new DataValidationException("Can't update isolatedTbRuleEngine property!");
                     } else if (old.isIsolatedTbCore() != tenantProfile.isIsolatedTbCore()) {
                         throw new DataValidationException("Can't update isolatedTbCore property!");
+                    } else if (tenantProfile.isIsolatedTbRuleEngine()) {
+                        if (((DefaultTenantProfileConfiguration) old.getProfileData().getConfiguration()).getMaxNumberOfQueues() >
+                                ((DefaultTenantProfileConfiguration) old.getProfileData().getConfiguration()).getMaxNumberOfQueues()) {
+                            throw new DataValidationException("Can't decrease maxNumberOfQueues property!");
+                        }
+                        if (((DefaultTenantProfileConfiguration) old.getProfileData().getConfiguration()).getMaxNumberOfPartitionsPerQueue() >
+                                ((DefaultTenantProfileConfiguration) old.getProfileData().getConfiguration()).getMaxNumberOfPartitionsPerQueue()) {
+                            throw new DataValidationException("Can't decrease maxNumberOfPartitionsPerQueue property!");
+                        }
                     }
                 }
             };

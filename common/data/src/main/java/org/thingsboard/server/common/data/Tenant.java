@@ -40,7 +40,7 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
     public Tenant(TenantId id) {
         super(id);
     }
-    
+
     public Tenant(Tenant tenant) {
         super(tenant);
         this.title = tenant.getTitle();

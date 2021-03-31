@@ -27,6 +27,7 @@ import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueMsgDecoder;
 import org.thingsboard.server.queue.common.AbstractTbQueueConsumerTemplate;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
+import org.thingsboard.server.queue.settings.TbRabbitMqSettings;
 
 import java.io.IOException;
 import java.util.Collections;

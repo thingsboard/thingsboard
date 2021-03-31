@@ -48,7 +48,9 @@ export enum EntityType {
   ENTITY_VIEW = 'ENTITY_VIEW',
   WIDGETS_BUNDLE = 'WIDGETS_BUNDLE',
   WIDGET_TYPE = 'WIDGET_TYPE',
-  API_USAGE_STATE = 'API_USAGE_STATE'
+  API_USAGE_STATE = 'API_USAGE_STATE',
+  QUEUE = 'QUEUE',
+  QUEUE_STATS = 'QUEUE_STATS'
 }
 
 export enum AliasEntityType {
@@ -253,6 +255,22 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         noEntities: 'widgets-bundle.no-widgets-bundles-text',
         search: 'widgets-bundle.search',
         selectedEntities: 'widgets-bundle.selected-widgets-bundles'
+      }
+    ],
+    [
+      EntityType.QUEUE,
+      {
+        add: 'queue.add',
+        search: 'queue.search',
+        details: 'queue.details',
+        selectedEntities: 'queue.selected-queues'
+      }
+    ],
+    [
+      EntityType.QUEUE_STATS,
+      {
+        type: 'entity.type-queue-stats',
+        list: 'entity.type-queue-stats'
       }
     ],
     [

@@ -152,6 +152,13 @@
         "max-failed-login-attempts": "Número máximo de intentos fallidos de inicio de sesión, antes de que la cuenta esté bloqueada",
         "minimum-max-failed-login-attempts-range": "El número máximo de intentos fallidos de inicio de sesión no puede ser negativo",
         "user-lockout-notification-email": "En caso de bloqueo de la cuenta del usuario, envíe una notificación por correo electrónico",
+        "queue-select-name": "Seleccione el nombre de la cola",
+        "queue-name": "Nombre",
+        "queue-name-required": "El nombre de la cola es obligatorio!",
+        "queues": "Colas",
+        "queue-partitions": "Particiones",
+        "queue-submit-strategy": "Enviar estrategia",
+        "queue-processing-strategy": "Estrategia de procesamiento",
         "domain-name": "Nombre de dominio",
         "domain-name-unique": "El nombre de dominio y protocolo debe ser único.",
         "error-verification-url": "Un nombre de dominio no debe contener símbolos '/' y ':'. Ejemplo: thingsboard.io",
@@ -219,6 +226,7 @@
           "enable": "Activar ajustes OAuth2"
         }
       },
+    },
     "alarm": {
         "alarm": "Alarma",
         "alarms": "Alarmas",
@@ -1970,9 +1978,26 @@
       "timezone-required": "Se requiere zona horaria."
     },
     "queue": {
-      "select_name": "Selecciona el nombre de la cola",
-      "name": "Nombre Cola",
-      "name_required": "Necesario especificar el nombre de cola"
+        "select-name": "Selecciona el nombre de la cola",
+        "name": "Nombre Cola",
+        "name-required": "Necesario especificar el nombre de cola",
+        "topic-required": "El tema de la cola es obligatorio!",
+        "queues": "Colas",
+        "search": "Cola de búsqueda",
+        "add" : "Agregar cola",
+        "details": "Detalles de la cola",
+        "topic": "Tema",
+        "submit-strategy": "Enviar estrategia",
+        "processing-strategy": "Estrategia de procesamiento",
+        "poll-interval": "Intervalo de encuesta",
+        "partitions": "Particiones",
+        "processing-timeout": "Tiempo de espera de procesamiento",
+        "batch-size": "Tamaño del lote",
+        "retries": "Reintentos",
+        "failure-percentage": "Porcentaje de fallos",
+        "pause-between-retries": "Pausa entre reintentos",
+        "max-pause-between-retries": "Pausa máxima entre reintentos",
+        "delete": "Eliminar cola"
     },
     "tenant": {
         "tenant": "Propietario",

@@ -92,8 +92,7 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
         public void onFailure(Throwable t) {
         }
     };
-    private final TbClusterService clusterService;
-    private final PartitionService partitionService;
+
     private final TenantService tenantService;
     private final TimeseriesService tsService;
     private final ApiUsageStateService apiUsageStateService;
@@ -104,6 +103,15 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
     @Lazy
     @Autowired
     private InternalTelemetryService tsWsService;
+
+    @Lazy
+    @Autowired
+    private TbClusterService clusterService;
+
+    @Lazy
+    @Autowired
+    private PartitionService partitionService;
+
 
     // Tenants that should be processed on this server
     private final Map<TenantId, TenantApiUsageState> myTenantStates = new ConcurrentHashMap<>();
@@ -120,15 +128,12 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
 
     private final ExecutorService mailExecutor;
 
-    public DefaultTbApiUsageStateService(TbClusterService clusterService,
-                                         PartitionService partitionService,
-                                         TenantService tenantService,
+    public DefaultTbApiUsageStateService(TenantService tenantService,
                                          TimeseriesService tsService,
                                          ApiUsageStateService apiUsageStateService,
                                          SchedulerComponent scheduler,
-                                         TbTenantProfileCache tenantProfileCache, MailService mailService) {
-        this.clusterService = clusterService;
-        this.partitionService = partitionService;
+                                         TbTenantProfileCache tenantProfileCache,
+                                         MailService mailService) {
         this.tenantService = tenantService;
         this.tsService = tsService;
         this.apiUsageStateService = apiUsageStateService;

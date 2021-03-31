@@ -59,6 +59,8 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.QueueId;
+import org.thingsboard.server.common.data.id.QueueStatsId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -75,6 +77,8 @@ import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.data.queue.QueueStats;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.widget.WidgetType;
@@ -96,6 +100,8 @@ import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.queue.QueueService;
+import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -108,6 +114,7 @@ import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
@@ -233,6 +240,15 @@ public abstract class BaseController {
 
     @Autowired
     protected TbDeviceProfileCache deviceProfileCache;
+
+    @Autowired
+    protected QueueService queueService;
+
+    @Autowired
+    protected QueueStatsService queueStatsService;
+
+    @Autowired
+    protected TbServiceInfoProvider serviceInfoProvider;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -457,6 +473,12 @@ public abstract class BaseController {
                 case WIDGET_TYPE:
                     checkWidgetTypeId(new WidgetTypeId(entityId.getId()), operation);
                     return;
+                case QUEUE:
+                    checkQueueId(new QueueId(entityId.getId()), operation);
+                    return;
+                case QUEUE_STATS:
+                    checkQueueStatsId(new QueueStatsId(entityId.getId()), operation);
+                    return;
                 default:
                     throw new IllegalArgumentException("Unsupported entity type: " + entityId.getEntityType());
             }
@@ -662,6 +684,25 @@ public abstract class BaseController {
         checkNotNull(ruleNode);
         checkRuleChain(ruleNode.getRuleChainId(), operation);
         return ruleNode;
+    }
+
+    protected Queue checkQueueId(QueueId queueId, Operation operation) throws ThingsboardException {
+        validateId(queueId, "Incorrect queueId " + queueId);
+        Queue queue = queueService.findQueueById(getCurrentUser().getTenantId(), queueId);
+        checkNotNull(queue);
+        if (operation.equals(Operation.DELETE) && queue.getName().equals("Main")) {
+            throw new ThingsboardException("Main queue can't be deleted!", ThingsboardErrorCode.GENERAL);
+        }
+        accessControlService.checkPermission(getCurrentUser(), Resource.QUEUE, operation, queueId, queue);
+        return queue;
+    }
+
+    protected QueueStats checkQueueStatsId(QueueStatsId queueStatsId, Operation operation) throws ThingsboardException {
+        validateId(queueStatsId, "Incorrect queueStatsId " + queueStatsId);
+        QueueStats queueStats = queueStatsService.findQueueStatsById(getCurrentUser().getTenantId(), queueStatsId);
+        checkNotNull(queueStats);
+        accessControlService.checkPermission(getCurrentUser(), Resource.QUEUE, operation, queueStatsId, queueStats);
+        return queueStats;
     }
 
     @SuppressWarnings("unchecked")

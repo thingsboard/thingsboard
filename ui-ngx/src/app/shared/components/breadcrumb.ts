@@ -34,5 +34,6 @@ export interface BreadCrumbConfig<C> {
   labelFunction: BreadCrumbLabelFunction<C>;
   label: string;
   icon: string;
+  isMdiIcon: boolean;
   skip: boolean;
 }

@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.kafka;
+package org.thingsboard.server.queue.settings;
 
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -25,17 +25,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
-@ConditionalOnProperty(prefix = "queue", value = "type", havingValue = "kafka")
-public class TbKafkaTopicConfigs {
-    @Value("${queue.kafka.topic-properties.core}")
+@ConditionalOnExpression("'${queue.type:null}'=='service-bus'")
+public class TbServiceBusQueueConfigs {
+    @Value("${queue.service-bus.queue-properties.core}")
     private String coreProperties;
-    @Value("${queue.kafka.topic-properties.rule-engine}")
+    @Value("${queue.service-bus.queue-properties.rule-engine}")
     private String ruleEngineProperties;
-    @Value("${queue.kafka.topic-properties.transport-api}")
+    @Value("${queue.service-bus.queue-properties.transport-api}")
     private String transportApiProperties;
-    @Value("${queue.kafka.topic-properties.notifications}")
+    @Value("${queue.service-bus.queue-properties.notifications}")
     private String notificationsProperties;
-    @Value("${queue.kafka.topic-properties.js-executor}")
+    @Value("${queue.service-bus.queue-properties.js-executor}")
     private String jsExecutorProperties;
 
     @Getter

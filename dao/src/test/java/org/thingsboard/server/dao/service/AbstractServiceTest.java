@@ -51,6 +51,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
@@ -141,6 +142,9 @@ public abstract class AbstractServiceTest {
 
     @Autowired
     protected DeviceProfileService deviceProfileService;
+
+    @Autowired
+    protected QueueService queueService;
 
     class IdComparator<D extends HasId> implements Comparator<D> {
         @Override

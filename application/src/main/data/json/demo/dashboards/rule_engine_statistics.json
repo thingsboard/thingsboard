@@ -106,7 +106,7 @@
                   "_hash": 0.49891007198715376
                 }
               ],
-              "entityAliasId": "140f23dd-e3a0-ed98-6189-03c49d2d8018"
+              "entityAliasId": "26f9d890-9611-acd4-1cdb-e0a77fd0e7ba"
             }
           ],
           "timewindow": {
@@ -232,7 +232,7 @@
                   "_hash": 0.7255162989552142
                 }
               ],
-              "entityAliasId": "140f23dd-e3a0-ed98-6189-03c49d2d8018"
+              "entityAliasId": "26f9d890-9611-acd4-1cdb-e0a77fd0e7ba"
             }
           ],
           "timewindow": {
@@ -348,7 +348,7 @@
                   "_hash": 0.2679547062508352
                 }
               ],
-              "entityAliasId": "140f23dd-e3a0-ed98-6189-03c49d2d8018"
+              "entityAliasId": "26f9d890-9611-acd4-1cdb-e0a77fd0e7ba"
             }
           ],
           "timewindow": {
@@ -471,14 +471,12 @@
       }
     },
     "entityAliases": {
-      "140f23dd-e3a0-ed98-6189-03c49d2d8018": {
-        "id": "140f23dd-e3a0-ed98-6189-03c49d2d8018",
+      "26f9d890-9611-acd4-1cdb-e0a77fd0e7ba": {
+        "id": "26f9d890-9611-acd4-1cdb-e0a77fd0e7ba",
         "alias": "TbServiceQueues",
         "filter": {
-          "type": "assetType",
-          "resolveMultiple": true,
-          "assetType": "TbServiceQueue",
-          "assetNameFilter": ""
+          "type": "ruleEngineStats",
+          "resolveMultiple": true
         }
       }
     },

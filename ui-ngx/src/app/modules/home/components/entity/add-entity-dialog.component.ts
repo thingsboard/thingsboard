@@ -91,10 +91,12 @@ export class AddEntityDialogComponent extends
   }
 
   helpLinkId(): string {
-    if (this.resources.helpLinkIdForEntity && this.entityComponent.entityForm) {
-      return this.resources.helpLinkIdForEntity(this.entityComponent.entityForm.getRawValue());
-    } else {
-      return this.resources.helpLinkId;
+    if (this.resources) {
+      if (this.resources.helpLinkIdForEntity && this.entityComponent.entityForm) {
+        return this.resources.helpLinkIdForEntity(this.entityComponent.entityForm.getRawValue());
+      } else {
+        return this.resources.helpLinkId;
+      }
     }
   }
 

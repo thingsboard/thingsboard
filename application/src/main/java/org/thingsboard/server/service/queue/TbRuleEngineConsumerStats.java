@@ -15,19 +15,20 @@
  */
 package org.thingsboard.server.service.queue;
 
-import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
+import org.thingsboard.server.common.stats.StatsCounter;
+import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.common.stats.StatsType;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingResult;
-import org.thingsboard.server.common.stats.StatsCounter;
-import org.thingsboard.server.common.stats.StatsType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -88,7 +89,7 @@ public class TbRuleEngineConsumerStats {
         counters.add(failedIterationsCounter);
     }
 
-    public Timer getTimer(TenantId tenantId, String status){
+    public Timer getTimer(TenantId tenantId, String status) {
         return tenantMsgProcessTimers.computeIfAbsent(tenantId,
                 id -> statsFactory.createTimer(StatsType.RULE_ENGINE.getName() + "." + queueName,
                         "tenantId", tenantId.getId().toString(),

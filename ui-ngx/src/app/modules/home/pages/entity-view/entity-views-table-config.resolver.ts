@@ -49,7 +49,7 @@ import {
 import {
   AddEntitiesToCustomerDialogComponent,
   AddEntitiesToCustomerDialogData
-} from '../../dialogs/add-entities-to-customer-dialog.component';
+} from '@home/dialogs/add-entities-to-customer-dialog.component';
 import { EntityView, EntityViewInfo } from '@app/shared/models/entity-view.models';
 import { EntityViewService } from '@core/http/entity-view.service';
 import { EntityViewComponent } from '@modules/home/pages/entity-view/entity-view.component';

@@ -33,6 +33,8 @@ import { OAuth2Service } from '@core/http/oauth2.service';
 import { UserProfileResolver } from '@home/pages/profile/profile-routing.module';
 import { SmsProviderComponent } from '@home/pages/admin/sms-provider.component';
 import { HomeSettingsComponent } from '@home/pages/admin/home-settings.component';
+import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
+import { QueuesTableConfigResolver } from './queues-table-config.resolver';
 
 @Injectable()
 export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
@@ -146,6 +148,23 @@ const routes: Routes = [
             icon: 'settings_applications'
           }
         }
+      },
+      {
+        path: 'queues',
+        component: EntitiesTableComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.SYS_ADMIN],
+          title: 'admin.queues',
+          breadcrumb: {
+            isMdiIcon: true,
+            label: 'admin.queues',
+            icon: 'queues-list'
+          }
+        },
+        resolve: {
+          entitiesTableConfig: QueuesTableConfigResolver
+        }
       }
     ]
   }
@@ -155,7 +174,8 @@ const routes: Routes = [
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule],
   providers: [
-    OAuth2LoginProcessingUrlResolver
+    OAuth2LoginProcessingUrlResolver,
+    QueuesTableConfigResolver
   ]
 })
 export class AdminRoutingModule { }

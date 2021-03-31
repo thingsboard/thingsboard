@@ -67,16 +67,7 @@ public class InMemoryTbQueueConsumer<T extends TbQueueMsg> implements TbQueueCon
             @SuppressWarnings("unchecked")
             List<T> messages = partitions
                     .stream()
-                    .map(tpi -> {
-                        try {
-                            return storage.get(tpi.getFullTopicName());
-                        } catch (InterruptedException e) {
-                            if (!stopped) {
-                                log.error("Queue was interrupted.", e);
-                            }
-                            return Collections.emptyList();
-                        }
-                    })
+                    .map(tpi -> storage.get(tpi.getFullTopicName()))
                     .flatMap(List::stream)
                     .map(msg -> (T) msg).collect(Collectors.toList());
             if (messages.size() > 0) {

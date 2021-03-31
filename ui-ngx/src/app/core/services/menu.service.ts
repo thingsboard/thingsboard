@@ -108,7 +108,7 @@ export class MenuService {
         name: 'admin.system-settings',
         type: 'toggle',
         path: '/settings',
-        height: '200px',
+        height: '240px',
         icon: 'settings',
         pages: [
           {
@@ -145,7 +145,15 @@ export class MenuService {
             type: 'link',
             path: '/settings/oauth2',
             icon: 'security'
-          }
+          },
+          {
+            id: guid(),
+            name: 'admin.queues',
+            type: 'link',
+            isMdiIcon: true,
+            path: '/settings/queues',
+            icon: 'queues-list'
+          },
         ]
       }
     );
@@ -208,7 +216,13 @@ export class MenuService {
             name: 'admin.oauth2.oauth2',
             icon: 'security',
             path: '/settings/oauth2'
-          }
+          },
+          {
+            name: 'admin.queues',
+            icon: 'queues-list',
+            isMdiIcon: true,
+            path: '/settings/queues'
+          },
         ]
       }
     );

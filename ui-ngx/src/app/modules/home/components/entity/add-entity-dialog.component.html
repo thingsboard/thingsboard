@@ -19,7 +19,7 @@
   <mat-toolbar color="primary">
     <h2 translate>{{ translations.add }}</h2>
     <span fxFlex></span>
-    <div [tb-help]="helpLinkId()"></div>
+    <div [tb-help]="helpLinkId()" *ngIf="resources"></div>
     <button mat-icon-button
             (click)="cancel()"
             type="button">

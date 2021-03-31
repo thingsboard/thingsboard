@@ -35,7 +35,9 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.util.mapping.JacksonUtil;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceStateServiceMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.FromDeviceRPCResponseProto;
 import org.thingsboard.server.gen.transport.TransportProtos.LocalSubscriptionServiceMsgProto;
@@ -53,11 +55,11 @@ import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceAct
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
@@ -102,6 +104,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private final SubscriptionManagerService subscriptionManagerService;
     private final TbCoreDeviceRpcService tbCoreDeviceRpcService;
     private final TbCoreConsumerStats stats;
+    private final PartitionService partitionService;
     protected final TbQueueConsumer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> usageStatsConsumer;
 
     protected volatile ExecutorService usageStatsExecutor;
@@ -117,7 +120,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         TbDeviceProfileCache deviceProfileCache,
                                         TbApiUsageStateService statsService,
                                         TbTenantProfileCache tenantProfileCache,
-                                        TbApiUsageStateService apiUsageStateService) {
+                                        TbApiUsageStateService apiUsageStateService,
+                                        PartitionService partitionService) {
         super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, apiUsageStateService, tbCoreQueueFactory.createToCoreNotificationsMsgConsumer());
         this.mainConsumer = tbCoreQueueFactory.createToCoreMsgConsumer();
         this.usageStatsConsumer = tbCoreQueueFactory.createToUsageStatsServiceMsgConsumer();
@@ -126,6 +130,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         this.subscriptionManagerService = subscriptionManagerService;
         this.tbCoreDeviceRpcService = tbCoreDeviceRpcService;
         this.stats = new TbCoreConsumerStats(statsFactory);
+        this.partitionService = partitionService;
         this.statsService = statsService;
     }
 
@@ -271,6 +276,14 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             forwardToCoreRpcService(toCoreNotification.getFromDeviceRpcResponse(), callback);
         } else if (toCoreNotification.getComponentLifecycleMsg() != null && !toCoreNotification.getComponentLifecycleMsg().isEmpty()) {
             handleComponentLifecycleMsg(id, toCoreNotification.getComponentLifecycleMsg());
+            callback.onSuccess();
+        } else if (toCoreNotification.hasQueueUpdateMsg()) {
+            TransportProtos.QueueUpdateMsg queue = toCoreNotification.getQueueUpdateMsg();
+            partitionService.addNewQueue(queue);
+            callback.onSuccess();
+        } else if (toCoreNotification.hasQueueDeleteMsg()) {
+            TransportProtos.QueueDeleteMsg queue = toCoreNotification.getQueueDeleteMsg();
+            partitionService.removeQueue(queue);
             callback.onSuccess();
         }
         if (statsEnabled) {

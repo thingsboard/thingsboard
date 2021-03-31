@@ -15,9 +15,10 @@
  */
 package org.thingsboard.server.queue;
 
-public interface TbQueueAdmin {
+import org.thingsboard.server.common.data.queue.Queue;
 
-    void createTopicIfNotExists(String topic);
+public interface TbQueueClusterService {
+    void onQueueChange(Queue queue, TbQueueCallback callback);
 
-    void destroy();
+    void onQueueDelete(Queue queue, TbQueueCallback callback);
 }

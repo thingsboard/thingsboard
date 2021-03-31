@@ -53,7 +53,8 @@ public class ContainerTestSuite {
                     .withTailChildContainers(!skipTailChildContainers)
                     .withEnv(installTb.getEnv())
                     .withEnv("LOAD_BALANCER_NAME", "")
-                    .withExposedService("haproxy", 80, Wait.forHttp("/swagger-ui.html").withStartupTimeout(Duration.ofSeconds(400)));
+                    .withExposedService("haproxy", 80, Wait.forHttp("/api/v1/DOCKER_TEST/attributes").forStatusCode(401).withStartupTimeout(Duration.ofSeconds(400)));
+//                    .withExposedService("haproxy", 80, Wait.forHttp("/swagger-ui.html").withStartupTimeout(Duration.ofSeconds(400)));
         }
         return testContainer;
     }

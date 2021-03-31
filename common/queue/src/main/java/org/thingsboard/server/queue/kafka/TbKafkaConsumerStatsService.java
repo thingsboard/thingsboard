@@ -32,6 +32,7 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.settings.TbKafkaSettings;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;

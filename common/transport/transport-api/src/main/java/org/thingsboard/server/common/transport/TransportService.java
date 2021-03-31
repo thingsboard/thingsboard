@@ -15,16 +15,19 @@
  */
 package org.thingsboard.server.common.transport;
 
-import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.service.SessionMetaData;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetAllQueueRoutingInfoRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetQueueRoutingInfoRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetQueueRoutingInfoResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetTenantQueueRoutingInfoRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
@@ -40,12 +43,20 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateBasicMqttCre
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 
+import java.util.List;
+
 /**
  * Created by ashvayka on 04.10.18.
  */
 public interface TransportService {
 
     GetEntityProfileResponseMsg getEntityProfile(GetEntityProfileRequestMsg msg);
+
+    List<GetQueueRoutingInfoResponseMsg> getQueueRoutingInfo(GetQueueRoutingInfoRequestMsg msg);
+
+    List<GetQueueRoutingInfoResponseMsg> getQueueRoutingInfo(GetTenantQueueRoutingInfoRequestMsg msg);
+
+    List<GetQueueRoutingInfoResponseMsg> getQueueRoutingInfo(GetAllQueueRoutingInfoRequestMsg msg);
 
     void process(DeviceTransportType transportType, ValidateDeviceTokenRequestMsg msg,
                  TransportServiceCallback<ValidateDeviceCredentialsResponse> callback);

@@ -28,6 +28,8 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxUsers;
     private long maxDashboards;
     private long maxRuleChains;
+    private int maxNumberOfQueues;
+    private int maxNumberOfPartitionsPerQueue;
 
     private String transportTenantMsgRateLimit;
     private String transportTenantTelemetryMsgRateLimit;
