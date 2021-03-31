@@ -78,7 +78,7 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
         if (stopped) {
             return errorAndReturnEmpty();
         }
-        if (!subscribed && partitions == null) {
+        if (!subscribed && partitions == null && subscribeQueue.isEmpty()) {
             return sleepAndReturnEmpty(startNanos, durationInMillis);
         }
 
