@@ -107,6 +107,11 @@ public class BaseEventService implements EventService {
     }
 
     @Override
+    public PageData<Event> findEvents(TenantId tenantId, EntityId entityId, String eventType, String bodyFilter, String dataSearch, String metadataSearch, TimePageLink pageLink) {
+        return eventDao.findEvents(tenantId.getId(), entityId, eventType, bodyFilter, dataSearch, metadataSearch, pageLink);
+    }
+
+    @Override
     public List<Event> findLatestEvents(TenantId tenantId, EntityId entityId, String eventType, int limit) {
         return eventDao.findLatestEvents(tenantId.getId(), entityId, eventType, limit);
     }

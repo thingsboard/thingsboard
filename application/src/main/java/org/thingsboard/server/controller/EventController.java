@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -96,6 +97,38 @@ public class EventController extends BaseController {
             TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
 
             return checkNotNull(eventService.findEvents(tenantId, entityId, pageLink));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/events/{entityType}/{entityId}/{eventType}", method = RequestMethod.POST)
+    @ResponseBody
+    public PageData<Event> getEvents(
+            @PathVariable("entityType") String strEntityType,
+            @PathVariable("entityId") String strEntityId,
+            @PathVariable("eventType") String eventType,
+            @RequestParam("tenantId") String strTenantId,
+            @RequestParam int pageSize,
+            @RequestParam int page,
+            @RequestBody String bodyFilter,
+            @RequestParam(required = false) String dataSearch,
+            @RequestParam(required = false) String metadataSearch,
+            @RequestParam(required = false) String textSearch,
+            @RequestParam(required = false) String sortProperty,
+            @RequestParam(required = false) String sortOrder,
+            @RequestParam(required = false) Long startTime,
+            @RequestParam(required = false) Long endTime) throws ThingsboardException {
+        checkParameter("EntityId", strEntityId);
+        checkParameter("EntityType", strEntityType);
+        try {
+            TenantId tenantId = new TenantId(toUUID(strTenantId));
+
+            EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
+            checkEntityId(entityId, Operation.READ);
+            TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
+            return checkNotNull(eventService.findEvents(tenantId, entityId, eventType, bodyFilter, dataSearch, metadataSearch, pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }

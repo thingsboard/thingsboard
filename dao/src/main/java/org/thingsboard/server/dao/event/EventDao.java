@@ -88,6 +88,8 @@ public interface EventDao extends Dao<Event> {
      */
     PageData<Event> findEvents(UUID tenantId, EntityId entityId, String eventType, TimePageLink pageLink);
 
+    PageData<Event> findEvents(UUID tenantId, EntityId entityId, String eventType, String bodyFilter, String dataSearch, String metadataSearch, TimePageLink pageLink);
+
     /**
      * Find latest events by tenantId, entityId and eventType.
      *

@@ -17,12 +17,14 @@ package org.thingsboard.server.dao.sql.event;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.dao.model.sql.EventEntity;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.UUID;
 
@@ -78,6 +80,42 @@ public interface EventRepository extends PagingAndSortingRepository<EventEntity,
                                                                   @Param("eventType") String eventType,
                                                                   @Param("startTime") Long startTime,
                                                                   @Param("endTime") Long endTime,
+                                                                  Pageable pageable);
+
+    @Query(nativeQuery = true,
+            value = "SELECT * FROM event e WHERE " +
+            "e.tenant_id = :tenantId " +
+            "AND e.entity_type = :entityType " +
+            "AND e.entity_id = :entityId " +
+            "AND e.event_type = :eventType " +
+            "AND (:startTime = 0 OR e.created_time >= :startTime) " +
+            "AND (:endTime = 0 OR e.created_time <= :endTime) " +
+            "AND jsonb_contains(cast(e.body AS jsonb), cast(:jsonFilter AS jsonb)) " +
+            "AND (:dataSearch IS NULL OR cast(json_object_field(cast(body AS json), 'data') AS VARCHAR) " +
+                    "LIKE concat('%', :dataSearch, '%')) " +
+            "AND (:metadataSearch IS NULL OR cast(json_object_field(cast(body AS json), 'metadata') AS VARCHAR)" +
+                    "LIKE concat('%', :metadataSearch, '%')) ",
+            countQuery = "SELECT count(*) FROM event e WHERE " +
+            "e.tenant_id = :tenantId " +
+            "AND e.entity_type = :entityType " +
+            "AND e.entity_id = :entityId " +
+            "AND e.event_type = :eventType " +
+            "AND (:startTime = 0 OR e.created_time >= :startTime) " +
+            "AND (:endTime = 0 OR e.created_time <= :endTime) " +
+            "AND jsonb_contains(cast(e.body AS jsonb), cast(:jsonFilter AS jsonb)) " +
+            "AND (:dataSearch IS NULL OR cast(json_object_field(cast(body AS json), 'data') AS VARCHAR) " +
+            "LIKE concat('%', :dataSearch, '%')) " +
+            "AND (:metadataSearch IS NULL OR cast(json_object_field(cast(body AS json), 'metadata') AS VARCHAR)" +
+            "LIKE concat('%', :metadataSearch, '%')) ")
+    Page<EventEntity> findEventsByTenantIdAndEntityIdAndEventTypeByFilters(@Param("tenantId") UUID tenantId,
+                                                                  @Param("entityType") String entityType,
+                                                                  @Param("entityId") UUID entityId,
+                                                                  @Param("eventType") String eventType,
+                                                                  @Param("startTime") Long startTime,
+                                                                  @Param("endTime") Long endTime,
+                                                                  @Param("jsonFilter") String jsonFilter,
+                                                                  @Param("dataSearch") String dataSearch,
+                                                                  @Param("metadataSearch") String metadataSearch,
                                                                   Pageable pageable);
 
 }
