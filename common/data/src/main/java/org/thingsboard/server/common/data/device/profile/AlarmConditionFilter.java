@@ -19,8 +19,10 @@ import lombok.Data;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.KeyFilterPredicate;
 
+import java.io.Serializable;
+
 @Data
-public class AlarmConditionFilter {
+public class AlarmConditionFilter implements Serializable {
 
     private AlarmConditionFilterKey key;
     private EntityKeyValueType valueType;
