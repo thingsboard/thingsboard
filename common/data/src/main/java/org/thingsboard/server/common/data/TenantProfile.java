@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -34,7 +35,9 @@ import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalIn
 @Slf4j
 public class TenantProfile extends SearchTextBased<TenantProfileId> implements HasName {
 
+    @NoXss
     private String name;
+    @NoXss
     private String description;
     private boolean isDefault;
     private boolean isolatedTbCore;
