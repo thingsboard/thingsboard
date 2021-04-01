@@ -15,7 +15,9 @@
  */
 package org.thingsboard.server.common.transport.adaptor;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
@@ -166,5 +168,29 @@ public class ProtoConverter {
             }
         });
         return kvList;
+    }
+
+    public static byte[] convertToRpcRequest(TransportProtos.ToDeviceRpcRequestMsg toDeviceRpcRequestMsg) {
+        TransportProtos.ToDeviceRpcRequestMsg.Builder toDeviceRpcRequestMsgBuilder = TransportProtos.ToDeviceRpcRequestMsg.newBuilder();
+        toDeviceRpcRequestMsgBuilder.setRequestId(toDeviceRpcRequestMsg.getRequestId());
+        toDeviceRpcRequestMsgBuilder.setMethodName(toDeviceRpcRequestMsg.getMethodName());
+        toDeviceRpcRequestMsgBuilder.setParams(parseParams(toDeviceRpcRequestMsg));
+        TransportProtos.ToDeviceRpcRequestMsg result = toDeviceRpcRequestMsgBuilder.build();
+        return result.toByteArray();
+    }
+
+    private static String parseParams(TransportProtos.ToDeviceRpcRequestMsg toDeviceRpcRequestMsg) {
+        String params = toDeviceRpcRequestMsg.getParams();
+        JsonElement jsonElementParams = JSON_PARSER.parse(params);
+        if (!jsonElementParams.isJsonPrimitive()) {
+            return params;
+        } else {
+            JsonPrimitive primitiveParams = jsonElementParams.getAsJsonPrimitive();
+            if (jsonElementParams.getAsJsonPrimitive().isString()) {
+                return primitiveParams.getAsString();
+            } else {
+                return params;
+            }
+        }
     }
 }
