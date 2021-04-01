@@ -37,10 +37,10 @@
           [entityId]="entityId"
           formControlName="keyFilters">
         </tb-key-filter-list>
-        <section formGroupName="spec" class="row">
+        <section formGroupName="spec" style="margin-top: 1em">
           <mat-form-field class="mat-block" hideRequiredMarker>
             <mat-label translate>device-profile.condition-type</mat-label>
-            <mat-select formControlName="type" required >
+            <mat-select formControlName="type" required>
               <mat-option *ngFor="let alarmConditionType of alarmConditionTypes" [value]="alarmConditionType">
                 {{ alarmConditionTypeTranslation.get(alarmConditionType) | translate }}
               </mat-option>
@@ -49,31 +49,26 @@
               {{ 'device-profile.condition-type-required' | translate }}
             </mat-error>
           </mat-form-field>
-          <div fxLayout="row wrap" fxFlex fxLayoutGap="8px"  *ngIf="conditionFormGroup.get('spec.type').value == AlarmConditionType.DURATION">
-            <mat-form-field class="mat-block" hideRequiredMarker fxFlex="100%"  loatLabel="always">
-              <mat-label translate>
-                {{ 'device-profile.condition-duration-time-unit'}}
-              </mat-label>
-              <mat-select formControlName="unit"
-                          required
-                          placeholder="{{ 'device-profile.condition-duration-time-unit' | translate }}">
-                <mat-option *ngFor="let timeUnit of timeUnits" [value]="timeUnit">
-                  {{ timeUnitTranslations.get(timeUnit) | translate }}
-                </mat-option>
-              </mat-select>
-              <mat-error *ngIf="conditionFormGroup.get('spec.unit').hasError('required')">
-                {{ 'device-profile.condition-duration-time-unit-required' | translate }}
-              </mat-error>
-            </mat-form-field>
-          </div>
-          <div fxLayout="row" fxLayoutGap="8px" *ngIf="conditionFormGroup.get('spec.type').value != AlarmConditionType.SIMPLE">
-            <tb-filter-predicate-value [allowUserDynamicSource]="false"
-                                       [onlyUserDynamicSource]="false"
-                                       fxFlex="100"
-                                       [valueType]="entityKeyType"
-                                       [usageArea]="'condition'"
-                                       formControlName="predicate">
-            </tb-filter-predicate-value>
+          <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px" *ngIf="conditionFormGroup.get('spec.type').value != AlarmConditionType.SIMPLE">
+            <tb-alarm-duration-predicate-value
+              fxLayout="row" fxFlex formControlName="predicate"
+              [alarmConditionType]="conditionFormGroup.get('spec.type').value"
+            >
+            </tb-alarm-duration-predicate-value>
+            <div fxFlex="23" *ngIf="conditionFormGroup.get('spec.type').value == AlarmConditionType.DURATION">
+              <mat-form-field class="mat-block" hideRequiredMarker floatLabel="always">
+                <mat-label></mat-label>
+                <mat-select formControlName="unit" required
+                            placeholder="{{ 'device-profile.condition-duration-time-unit' | translate }}">
+                  <mat-option *ngFor="let timeUnit of timeUnits" [value]="timeUnit">
+                    {{ timeUnitTranslations.get(timeUnit) | translate }}
+                  </mat-option>
+                </mat-select>
+                <mat-error *ngIf="conditionFormGroup.get('spec.unit').hasError('required')">
+                  {{ 'device-profile.condition-duration-time-unit-required' | translate }}
+                </mat-error>
+              </mat-form-field>
+            </div>
           </div>
         </section>
       </div>

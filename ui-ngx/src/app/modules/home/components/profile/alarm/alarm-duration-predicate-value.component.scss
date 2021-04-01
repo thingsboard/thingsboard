@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  .row {
-    margin-top: 1em;
+
+:host ::ng-deep {
+  .source-attribute {
+    .mat-form-field-infix{
+      width: 100%;
+    }
   }
 }

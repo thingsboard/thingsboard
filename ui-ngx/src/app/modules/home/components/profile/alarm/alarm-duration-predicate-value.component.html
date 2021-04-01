@@ -15,39 +15,31 @@
     limitations under the License.
 
 -->
-<div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" [formGroup]="filterPredicateValueFormGroup">
-  <div fxFlex fxLayout="column" [fxShow]="!dynamicMode && !onlyUserDynamicSource">
-    <div fxLayout="column" [ngSwitch]="valueType">
-      <ng-template [ngSwitchCase]="valueTypeEnum.STRING">
-        <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
-          <mat-label></mat-label>
-          <input matInput formControlName="defaultValue" placeholder="{{'filter.value' | translate}}">
-        </mat-form-field>
-      </ng-template>
-      <ng-template [ngSwitchCase]="valueTypeEnum.NUMERIC">
-        <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
-          <mat-label></mat-label>
-          <input required type="number" matInput formControlName="defaultValue"
-                 placeholder="{{'filter.value' | translate}}">
-        </mat-form-field>
-      </ng-template>
-      <ng-template [ngSwitchCase]="valueTypeEnum.DATE_TIME">
-        <tb-datetime formControlName="defaultValue"
-                     dateText="filter.date"
-                     timeText="filter.time"
-                     required [showLabel]="false"></tb-datetime>
-      </ng-template>
-      <ng-template [ngSwitchCase]="valueTypeEnum.BOOLEAN">
-        <mat-checkbox formControlName="defaultValue">
-          {{ (filterPredicateValueFormGroup.get('defaultValue').value ? 'value.true' : 'value.false') | translate }}
-        </mat-checkbox>
-      </ng-template>
-    </div>
-    <div class="tb-hint" translate>filter.default-value</div>
+<div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" [formGroup]="alarmDurationPredicateValueFormGroup">
+  <div fxFlex fxLayout="column" [fxShow]="!dynamicMode">
+    <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
+      <mat-label></mat-label>
+      <input required type="number" matInput
+             step="1" min="1" max="2147483647"
+             formControlName="defaultValue"
+             placeholder="{{ defaultValuePlaceholder | translate }}">
+      <mat-error *ngIf="alarmDurationPredicateValueFormGroup.get('defaultValue').hasError('required')">
+        {{ defaultValueRequiredError | translate }}
+      </mat-error>
+      <mat-error *ngIf="alarmDurationPredicateValueFormGroup.get('defaultValue').hasError('min')">
+        {{ defaultValueRangeError | translate }}
+      </mat-error>
+      <mat-error *ngIf="alarmDurationPredicateValueFormGroup.get('defaultValue').hasError('max')">
+        {{ defaultValueRangeError | translate }}
+      </mat-error>
+      <mat-error *ngIf="alarmDurationPredicateValueFormGroup.get('defaultValue').hasError('pattern')">
+        {{ defaultValuePatternError | translate }}
+      </mat-error>
+    </mat-form-field>
   </div>
-  <div fxFlex fxLayout="column" [fxShow]="dynamicMode || onlyUserDynamicSource">
+  <div fxFlex fxLayout="column" [fxShow]="dynamicMode">
     <div formGroupName="dynamicValue" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-      <div fxFlex="35" fxLayout="column">
+      <div fxFlex="40" fxLayout="column">
         <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
           <mat-label></mat-label>
           <mat-select formControlName="sourceType" placeholder="{{'filter.dynamic-source-type' | translate}}">
@@ -59,26 +51,23 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
-        <div class="tb-hint" translate>filter.dynamic-source-type</div>
       </div>
       <div fxFlex fxLayout="column">
-        <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
+        <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block source-attribute">
           <mat-label></mat-label>
           <input matInput formControlName="sourceAttribute" placeholder="{{'filter.source-attribute' | translate}}">
         </mat-form-field>
-        <div class="tb-hint" translate>filter.source-attribute</div>
       </div>
-      <div *ngIf="!allow && inheritMode"
+      <div *ngIf="inheritMode"
            fxLayout="column"
            style="padding-top: 6px">
         <mat-checkbox formControlName="inherit">
           {{ 'filter.inherit-owner' | translate}}
         </mat-checkbox>
-        <div class="tb-hint" translate>filter.source-attribute-not-set</div>
       </div>
     </div>
   </div>
-  <button mat-icon-button *ngIf="!onlyUserDynamicSource"
+  <button mat-icon-button
           class="mat-elevation-z1 tb-mat-32"
           color="primary"
           type="button"

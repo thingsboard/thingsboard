@@ -18,16 +18,18 @@ import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
-  FormControl, FormGroup,
+  FormControl,
+  FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  Validator, Validators
+  Validator,
+  Validators
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { deepClone, isUndefined } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
-import { AlarmCondition, AlarmConditionSpec, AlarmConditionType } from '@shared/models/device.models';
+import { AlarmCondition, AlarmConditionType } from '@shared/models/device.models';
 import {
   AlarmRuleConditionDialogComponent,
   AlarmRuleConditionDialogData
@@ -171,22 +173,26 @@ export class AlarmRuleConditionComponent implements ControlValueAccessor, OnInit
               duringText = this.translate.instant('timewindow.days', {days: spec.predicate.defaultValue});
               break;
           }
-          if(spec.predicate.dynamicValue && spec.predicate.dynamicValue.sourceAttribute) {
+          if (spec.predicate.dynamicValue && spec.predicate.dynamicValue.sourceAttribute) {
             this.specText = this.translate.instant('device-profile.condition-during-dynamic', {
               during: duringText,
               attribute: spec.predicate.dynamicValue.sourceAttribute
             });
           } else {
-            this.specText = this.translate.instant('device-profile.condition-during-not-dynamic', {
+            this.specText = this.translate.instant('device-profile.condition-during', {
               during: duringText
             });
           }
           break;
         case AlarmConditionType.REPEATING:
-          if(spec.predicate.dynamicValue && spec.predicate.dynamicValue.sourceAttribute) {
-            this.specText = this.translate.instant('device-profile.condition-repeat-times-dynamic', {count: spec.predicate.defaultValue, attribute: spec.predicate.dynamicValue.sourceAttribute})
+          if (spec.predicate.dynamicValue && spec.predicate.dynamicValue.sourceAttribute) {
+            this.specText = this.translate.instant('device-profile.condition-repeat-times-dynamic', {
+              count: spec.predicate.defaultValue,
+              attribute: spec.predicate.dynamicValue.sourceAttribute
+            });
           } else {
-            this.specText = this.translate.instant('device-profile.condition-repeat-times-not-dynamic', {count: spec.predicate.defaultValue});
+            this.specText = this.translate.instant('device-profile.condition-repeat-times',
+              {count: spec.predicate.defaultValue});
           }
           break;
       }

@@ -134,6 +134,7 @@ import { DashboardStateDialogComponent } from '@home/components/dashboard-page/s
 import { EmbedDashboardDialogComponent } from '@home/components/widget/dialog/embed-dashboard-dialog.component';
 import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
 import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-page/widget-types-panel.component';
+import { AlarmDurationPredicateValueComponent } from '@home/components/profile/alarm/alarm-duration-predicate-value.component';
 
 @NgModule({
   declarations:
@@ -228,6 +229,7 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
       AlarmScheduleInfoComponent,
       DeviceProfileProvisionConfigurationComponent,
       AlarmScheduleComponent,
+      AlarmDurationPredicateValueComponent,
       DeviceWizardDialogComponent,
       DeviceCredentialsComponent,
       CopyDeviceCredentialsComponent,
@@ -334,6 +336,7 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
     AlarmScheduleInfoComponent,
     AlarmScheduleComponent,
     AlarmScheduleDialogComponent,
+    AlarmDurationPredicateValueComponent,
     EditAlarmDetailsDialogComponent,
     DeviceProfileProvisionConfigurationComponent,
     AlarmScheduleComponent,

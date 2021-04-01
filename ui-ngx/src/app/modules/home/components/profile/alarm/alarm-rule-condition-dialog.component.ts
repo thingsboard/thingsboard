@@ -23,18 +23,10 @@ import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Valida
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { TranslateService } from '@ngx-translate/core';
-import {
-  EntityKeyType, entityKeyTypeTranslationMap, EntityKeyValueType, FilterPredicateValue,
-  KeyFilter,
-  keyFilterInfosToKeyFilters,
-  keyFiltersToKeyFilterInfos
-} from '@shared/models/query/query.models';
+import { keyFilterInfosToKeyFilters, keyFiltersToKeyFilterInfos } from '@shared/models/query/query.models';
 import { AlarmCondition, AlarmConditionType, AlarmConditionTypeTranslationMap } from '@shared/models/device.models';
 import { TimeUnit, timeUnitTranslationMap } from '@shared/models/time/time.models';
 import { EntityId } from '@shared/models/id/entity-id';
-import {Observable} from "rxjs";
-import {map, startWith} from "rxjs/operators";
-import {EntityField, entityFields} from "@shared/models/entity.models";
 
 export interface AlarmRuleConditionDialogData {
   readonly: boolean;
@@ -51,12 +43,11 @@ export interface AlarmRuleConditionDialogData {
 export class AlarmRuleConditionDialogComponent extends DialogComponent<AlarmRuleConditionDialogComponent, AlarmCondition>
   implements OnInit, ErrorStateMatcher {
 
-  timeUnits = Object.keys(TimeUnit);
+  timeUnits = Object.values(TimeUnit);
   timeUnitTranslations = timeUnitTranslationMap;
-  alarmConditionTypes = Object.keys(AlarmConditionType);
+  alarmConditionTypes = Object.values(AlarmConditionType);
   AlarmConditionType = AlarmConditionType;
   alarmConditionTypeTranslation = AlarmConditionTypeTranslationMap;
-  entityKeyType: EntityKeyValueType = EntityKeyValueType.NUMERIC;
   readonly = this.data.readonly;
   condition = this.data.condition;
   entityId = this.data.entityId;
@@ -107,13 +98,19 @@ export class AlarmRuleConditionDialogComponent extends DialogComponent<AlarmRule
       case AlarmConditionType.DURATION:
         this.conditionFormGroup.get('spec.unit').enable();
         this.conditionFormGroup.get('spec.predicate').enable();
+        if (resetDuration) {
+          this.conditionFormGroup.get('spec').patchValue({
+            predicate: null
+          });
+        }
         break;
       case AlarmConditionType.REPEATING:
         this.conditionFormGroup.get('spec.predicate').enable();
         this.conditionFormGroup.get('spec.unit').disable();
         if (resetDuration) {
           this.conditionFormGroup.get('spec').patchValue({
-            unit: null
+            unit: null,
+            predicate: null
           });
         }
         break;
