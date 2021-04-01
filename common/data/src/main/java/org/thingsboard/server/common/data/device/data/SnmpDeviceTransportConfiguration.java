@@ -25,8 +25,10 @@ import org.thingsboard.server.common.data.transport.snmp.SnmpProtocolVersion;
 public class SnmpDeviceTransportConfiguration implements DeviceTransportConfiguration {
     private String address;
     private int port;
-    private String community;
     private SnmpProtocolVersion protocolVersion;
+    private String securityName;
+    private String authenticationPassphrase; // for SNMP v3
+    private String privacyPassphrase; // for SNMP v3
 
     @Override
     public DeviceTransportType getType() {
@@ -43,6 +45,6 @@ public class SnmpDeviceTransportConfiguration implements DeviceTransportConfigur
     @JsonIgnore
     private boolean isValid() {
         return StringUtils.isNotBlank(address) && port > 0 &&
-                StringUtils.isNotBlank(community) && protocolVersion != null;
+                StringUtils.isNotBlank(securityName) && protocolVersion != null;
     }
 }

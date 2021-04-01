@@ -15,7 +15,10 @@
  */
 package org.thingsboard.server.transport.snmp;
 
+import org.snmp4j.CommandResponderEvent;
 import org.snmp4j.CommunityTarget;
+import org.snmp4j.PDU;
+import org.snmp4j.Snmp;
 import org.snmp4j.Target;
 import org.snmp4j.TransportMapping;
 import org.snmp4j.agent.BaseAgent;
@@ -42,25 +45,56 @@ import org.snmp4j.smi.GenericAddress;
 import org.snmp4j.smi.Integer32;
 import org.snmp4j.smi.OID;
 import org.snmp4j.smi.OctetString;
+import org.snmp4j.smi.UdpAddress;
 import org.snmp4j.smi.Variable;
+import org.snmp4j.smi.VariableBinding;
 import org.snmp4j.transport.TransportMappings;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
-public class SnmpDeviceSimulator extends BaseAgent {
+public class SnmpDeviceSimulatorV2 extends BaseAgent {
+
+    public static class RequestProcessor extends CommandProcessor {
+        private final Consumer<CommandResponderEvent> processor;
+
+        public RequestProcessor(Consumer<CommandResponderEvent> processor) {
+            super(new OctetString(MPv3.createLocalEngineID()));
+            this.processor = processor;
+        }
+
+        @Override
+        public void processPdu(CommandResponderEvent event) {
+            processor.accept(event);
+        }
+    }
 
     public static void main(String[] args) throws IOException {
-        SnmpDeviceSimulator device = new SnmpDeviceSimulator(1610);
+        SnmpDeviceSimulatorV2 device = new SnmpDeviceSimulatorV2(1610, "public");
 
         device.start();
         device.setUpMappings(Map.of(
                 ".1.3.6.1.2.1.1.1.50", "12",
                 ".1.3.6.1.2.1.2.1.52", "56",
-                ".1.3.6.1.2.1.3.1.54", "yes"
+                ".1.3.6.1.2.1.3.1.54", "yes",
+                ".1.3.6.1.2.1.7.1.58", ""
         ));
+
+
+//        while (true) {
+//            new Scanner(System.in).nextLine();
+//            device.sendTrap("127.0.0.1", 1062, Map.of(".1.3.6.1.2.87.1.56", "12"));
+//            System.out.println("sent");
+//        }
+
+//        Snmp snmp = new Snmp(device.transportMappings[0]);
+//        device.snmp.addCommandResponder(event -> {
+//            System.out.println(event);
+//        });
 
         new Scanner(System.in).nextLine();
     }
@@ -68,19 +102,24 @@ public class SnmpDeviceSimulator extends BaseAgent {
 
     private final Target target;
     private final Address address;
+    private Snmp snmp;
 
-    public SnmpDeviceSimulator(int port) {
-        super(new File("conf.agent"), new File("bootCounter.agent"),
-                new CommandProcessor(new OctetString(MPv3.createLocalEngineID())));
+    private final String password;
 
+    public SnmpDeviceSimulatorV2(int port, String password) throws IOException {
+        super(new File("conf.agent"), new File("bootCounter.agent"), new RequestProcessor(event -> {
+            System.out.println("aboba");
+            ((Snmp) event.getSource()).cancel(event.getPDU(), event1 -> System.out.println("canceled"));
+        }));
         CommunityTarget target = new CommunityTarget();
-        target.setCommunity(new OctetString("public"));
-        address = GenericAddress.parse("udp:0.0.0.0/" + port);
+        target.setCommunity(new OctetString(password));
+        this.address = GenericAddress.parse("udp:0.0.0.0/" + port);
         target.setAddress(address);
         target.setRetries(2);
         target.setTimeout(1500);
         target.setVersion(SnmpConstants.version2c);
         this.target = target;
+        this.password = password;
     }
 
     public void start() throws IOException {
@@ -90,17 +129,27 @@ public class SnmpDeviceSimulator extends BaseAgent {
         finishInit();
         run();
         sendColdStartNotification();
+        snmp = new Snmp(transportMappings[0]);
     }
 
     public void setUpMappings(Map<String, String> oidToResponseMappings) {
         unregisterManagedObject(getSnmpv2MIB());
         oidToResponseMappings.forEach((oid, response) -> {
-            registerManagedObject(new MOScalar<>(new OID(oid), MOAccessImpl.ACCESS_READ_ONLY, new OctetString(response)));
+            registerManagedObject(new MOScalar<>(new OID(oid), MOAccessImpl.ACCESS_READ_WRITE, new OctetString(response)));
         });
     }
 
-    public Target getTarget() {
-        return target;
+    public void sendTrap(String host, int port, Map<String, String> values) throws IOException {
+        PDU pdu = new PDU();
+        pdu.addAll(values.entrySet().stream()
+                .map(entry -> new VariableBinding(new OID(entry.getKey()), new OctetString(entry.getValue())))
+                .collect(Collectors.toList()));
+        pdu.setType(PDU.TRAP);
+
+        CommunityTarget remoteTarget = (CommunityTarget) getTarget().clone();
+        remoteTarget.setAddress(new UdpAddress(host + "/" + port));
+
+        snmp.send(pdu, remoteTarget);
     }
 
     @Override
@@ -165,4 +214,9 @@ public class SnmpDeviceSimulator extends BaseAgent {
                 new OctetString("public2public").toSubIndex(true), com2sec);
         communityMIB.getSnmpCommunityEntry().addRow(row);
     }
+
+    public Target getTarget() {
+        return target;
+    }
+
 }

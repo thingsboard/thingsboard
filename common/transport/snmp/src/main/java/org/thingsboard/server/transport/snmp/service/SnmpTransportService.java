@@ -16,12 +16,20 @@
 package org.thingsboard.server.transport.snmp.service;
 
 import com.google.gson.JsonObject;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.snmp4j.CommandResponder;
+import org.snmp4j.CommandResponderEvent;
 import org.snmp4j.PDU;
 import org.snmp4j.Snmp;
 import org.snmp4j.TransportMapping;
 import org.snmp4j.event.ResponseEvent;
 import org.snmp4j.smi.Null;
+import org.snmp4j.smi.OID;
+import org.snmp4j.smi.OctetString;
+import org.snmp4j.smi.TcpAddress;
+import org.snmp4j.smi.UdpAddress;
 import org.snmp4j.smi.VariableBinding;
 import org.snmp4j.transport.DefaultTcpTransportMapping;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
@@ -32,11 +40,14 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.kv.DataType;
+import org.thingsboard.server.common.data.transport.snmp.SnmpCommunicationSpec;
+import org.thingsboard.server.common.data.transport.snmp.SnmpMapping;
+import org.thingsboard.server.common.data.transport.snmp.configs.RepeatingQueryingSnmpCommunicationConfig;
+import org.thingsboard.server.common.data.transport.snmp.configs.SnmpCommunicationConfig;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbSnmpTransportComponent;
 import org.thingsboard.server.transport.snmp.SnmpTransportContext;
 import org.thingsboard.server.transport.snmp.session.DeviceSessionContext;
@@ -44,21 +55,33 @@ import org.thingsboard.server.transport.snmp.session.DeviceSessionContext;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @TbSnmpTransportComponent
 @Service
 @Slf4j
-public class SnmpTransportService implements TbTransportService {
+public class SnmpTransportService implements TbTransportService, CommandResponder {
     private final SnmpTransportContext snmpTransportContext;
     private final TransportService transportService;
 
+    @Getter
     private Snmp snmp;
-    private ScheduledExecutorService pollingExecutor;
-    private ExecutorService snmpResponseProcessingExecutor;
+    private ScheduledExecutorService queryingExecutor;
+    private ExecutorService responseProcessingExecutor;
+
+    private final Map<SnmpCommunicationSpec, BiConsumer<JsonObject, DeviceSessionContext>> responseProcessors = new EnumMap<>(SnmpCommunicationSpec.class);
 
     @Value("${transport.snmp.response_processing.parallelism_level}")
     private Integer responseProcessingParallelismLevel;
@@ -75,10 +98,12 @@ public class SnmpTransportService implements TbTransportService {
     private void init() throws IOException {
         log.info("Initializing SNMP transport service");
 
-        pollingExecutor = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("snmp-polling"));
-        snmpResponseProcessingExecutor = Executors.newWorkStealingPool(responseProcessingParallelismLevel);
+        queryingExecutor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors(), ThingsBoardThreadFactory.forName("snmp-querying"));
+        responseProcessingExecutor = Executors.newWorkStealingPool(responseProcessingParallelismLevel);
 
         initializeSnmp();
+        initializeTrapsListener();
+        configureResponseProcessors();
 
         log.info("SNMP transport service initialized");
     }
@@ -99,40 +124,118 @@ public class SnmpTransportService implements TbTransportService {
         snmp.listen();
     }
 
-    @AfterStartUp(order = 10)
-    public void startPolling() {
-        log.info("Starting SNMP polling");
+    private void initializeTrapsListener() throws IOException {
+        int trapsListeningPort = 1062;
+        String bindingAddress = "0.0.0.0/" + trapsListeningPort;
 
-        pollingExecutor.scheduleWithFixedDelay(() -> {
-            snmpTransportContext.getSessions().forEach(this::executeSnmpRequest);
-        }, 0, 1, TimeUnit.SECONDS);
+        TransportMapping<?> transportMapping;
+        switch (snmpUnderlyingProtocol) {
+            case "udp":
+                transportMapping = new DefaultUdpTransportMapping(new UdpAddress(bindingAddress));
+                break;
+            case "tcp":
+                transportMapping = new DefaultTcpTransportMapping(new TcpAddress(bindingAddress));
+                break;
+            default:
+                throw new IllegalArgumentException("Underlying protocol " + snmpUnderlyingProtocol + " for SNMP is not supported");
+        }
+
+
+        Snmp trapsSnmp = new Snmp(transportMapping);
+        trapsSnmp.addCommandResponder(this);
+
+        transportMapping.listen();
     }
 
-    private void executeSnmpRequest(DeviceSessionContext sessionContext) {
-        long timeNow = System.currentTimeMillis();
-        long nextRequestExecutionTime = sessionContext.getPreviousRequestExecutedAt() + sessionContext.getProfileTransportConfiguration().getPollPeriodMs();
+    public void createQueryingTasks(DeviceSessionContext sessionContext) {
+        List<ScheduledFuture<?>> queryingTasks = sessionContext.getProfileTransportConfiguration().getCommunicationConfigs().stream()
+                .filter(config -> config.getSpec().isRepeatingQuerying())
+                .map(config -> {
+                    RepeatingQueryingSnmpCommunicationConfig repeatingCommunicationConfig = (RepeatingQueryingSnmpCommunicationConfig) config;
+                    return createQueryingTaskForConfig(sessionContext, repeatingCommunicationConfig);
+                })
+                .collect(Collectors.toList());
+        sessionContext.setQueryingTasks(queryingTasks);
+    }
 
-        if (nextRequestExecutionTime < timeNow) {
-            sessionContext.setPreviousRequestExecutedAt(timeNow);
-
-            DeviceProfileId deviceProfileId = sessionContext.getDeviceProfile().getId();
-            snmpTransportContext.getProfilesPdus().get(deviceProfileId).forEach(pdu -> {
-                try {
-                    log.debug("[{}] Sending SNMP message for device {}", pdu.getRequestID(), sessionContext.getDeviceId());
-                    snmp.send(pdu, sessionContext.getTarget(), deviceProfileId, sessionContext);
-                } catch (Exception e) {
-                    log.error("Failed to send SNMP request: {}", e.getMessage());
+    private ScheduledFuture<?> createQueryingTaskForConfig(DeviceSessionContext sessionContext, RepeatingQueryingSnmpCommunicationConfig communicationConfig) {
+        Long queryingFrequency = communicationConfig.getQueryingFrequencyMs();
+        return queryingExecutor.scheduleWithFixedDelay(() -> {
+            try {
+                if (sessionContext.isActive()) {
+                    sendRequest(sessionContext, communicationConfig);
                 }
-            });
+            } catch (Exception e) {
+                log.error("Failed to send SNMP request for device {}: {}", sessionContext.getDeviceId(), e.getMessage());
+            }
+        }, queryingFrequency, queryingFrequency, TimeUnit.MILLISECONDS);
+    }
+
+    public void cancelQueryingTasks(DeviceSessionContext sessionContext) {
+        sessionContext.getQueryingTasks().forEach(task -> task.cancel(true));
+        sessionContext.getQueryingTasks().clear();
+    }
+
+    public void sendRequest(DeviceSessionContext sessionContext, SnmpCommunicationConfig communicationConfig) throws IOException {
+        PDU request = createPdu(communicationConfig);
+        executeRequest(sessionContext, request);
+    }
+
+    public void sendRequest(DeviceSessionContext sessionContext, SnmpCommunicationConfig communicationConfig, Map<String, String> values) throws IOException {
+        PDU request = createPduWithValues(communicationConfig, values);
+        executeRequest(sessionContext, request);
+    }
+
+    private void executeRequest(DeviceSessionContext sessionContext, PDU request) throws IOException {
+        if (request.size() > 0) {
+            log.trace("Executing SNMP request for device {}. Variables bindings: {}", sessionContext.getDeviceId(), request.getVariableBindings());
+            snmp.send(request, sessionContext.getTarget(), sessionContext.getDeviceProfile().getId(), sessionContext);
         }
     }
 
-    public void onNewDeviceResponse(DeviceSessionContext sessionContext, ResponseEvent responseEvent) {
-        ((Snmp) responseEvent.getSource()).cancel(responseEvent.getRequest(), sessionContext);
-        snmpResponseProcessingExecutor.submit(() -> processSnmpResponse(sessionContext, responseEvent));
+    private PDU createPdu(SnmpCommunicationConfig communicationConfig) {
+        PDU pdu = new PDU();
+        pdu.setType(communicationConfig.getMethod().getCode());
+        pdu.addAll(communicationConfig.getMappings().stream()
+                .map(mapping -> new VariableBinding(new OID(mapping.getOid())))
+                .collect(Collectors.toList()));
+        return pdu;
     }
 
-    private void processSnmpResponse(DeviceSessionContext sessionContext, ResponseEvent event) {
+    private PDU createPduWithValues(SnmpCommunicationConfig communicationConfig, Map<String, String> values) {
+        PDU pdu = new PDU();
+        pdu.setType(communicationConfig.getMethod().getCode());
+        pdu.addAll(communicationConfig.getMappings().stream()
+                .filter(mapping -> values.containsKey(mapping.getKey()))
+                .map(mapping -> {
+                    String value = values.get(mapping.getKey());
+                    return new VariableBinding(new OID(mapping.getOid()), new OctetString(value));
+                })
+                .collect(Collectors.toList()));
+        return pdu;
+    }
+
+
+    private void processTrap(CommandResponderEvent event) {
+        if (event.getPDU().getType() != PDU.TRAP) return;
+
+        snmpTransportContext.getSessions().stream()
+                .filter(sessionContext -> {
+                    // TODO: SNMP v3 support
+                    return sessionContext.getTarget().getSecurityName().equals(OctetString.fromByteArray(event.getSecurityName())) &&
+                            sessionContext.getTarget().getAddress().equals(event.getPeerAddress());
+                })
+                .findFirst()
+                .ifPresentOrElse(sessionContext -> {
+                    responseProcessingExecutor.execute(() -> processResponse(sessionContext, event.getPDU()));
+                }, () -> {
+                    log.debug("SNMP event is from unknown source: {}", event);
+                });
+    }
+
+    public void processResponseEvent(DeviceSessionContext sessionContext, ResponseEvent event) {
+        ((Snmp) event.getSource()).cancel(event.getRequest(), sessionContext);
+
         if (event.getError() != null) {
             log.warn("Response error: {}", event.getError().getMessage(), event.getError());
             return;
@@ -143,16 +246,29 @@ public class SnmpTransportService implements TbTransportService {
             log.warn("No response from SNMP device {}, requestId: {}", sessionContext.getDeviceId(), event.getRequest().getRequestID());
             return;
         }
-
         DeviceProfileId deviceProfileId = (DeviceProfileId) event.getUserObject();
         log.debug("[{}] Processing SNMP response for device {} with device profile {}: {}",
                 response.getRequestID(), sessionContext.getDeviceId(), deviceProfileId, response);
 
-        JsonObject telemetry = new JsonObject();
-        JsonObject attributes = new JsonObject();
+        responseProcessingExecutor.execute(() -> processResponse(sessionContext, response));
+    }
 
-        for (int i = 0; i < response.size(); i++) {
-            VariableBinding variableBinding = response.get(i);
+    private void processResponse(DeviceSessionContext sessionContext, PDU responsePdu) {
+        Map<OID, SnmpMapping> mappings = new HashMap<>();
+        Map<OID, SnmpCommunicationConfig> configs = new HashMap<>();
+        Map<SnmpCommunicationSpec, JsonObject> responses = new EnumMap<>(SnmpCommunicationSpec.class);
+
+        for (SnmpCommunicationConfig config : sessionContext.getProfileTransportConfiguration().getCommunicationConfigs()) {
+            for (SnmpMapping mapping : config.getMappings()) {
+                OID oid = new OID(mapping.getOid());
+                mappings.put(oid, mapping);
+                configs.put(oid, config);
+            }
+            responses.put(config.getSpec(), new JsonObject());
+        }
+
+        for (int i = 0; i < responsePdu.size(); i++) {
+            VariableBinding variableBinding = responsePdu.get(i);
             log.trace("Processing variable binding {}: {}", i, variableBinding);
 
             if (variableBinding.getVariable() instanceof Null) {
@@ -160,35 +276,55 @@ public class SnmpTransportService implements TbTransportService {
                 continue;
             }
 
-            snmpTransportContext.getTelemetryMapping(deviceProfileId, variableBinding.getOid()).ifPresent(mapping -> {
-                log.trace("Found telemetry mapping for oid {}: {}", variableBinding.getOid(), mapping);
-                processValue(mapping.getKey(), mapping.getDataType(), variableBinding.toValueString(), telemetry);
-            });
+            OID oid = variableBinding.getOid();
+            if (!mappings.containsKey(oid)) {
+                log.debug("No SNMP mapping for oid {}", oid);
+                continue;
+            }
 
-            snmpTransportContext.getAttributeMapping(deviceProfileId, variableBinding.getOid()).ifPresent(mapping -> {
-                log.trace("Found attribute mapping for oid {}: {}", variableBinding.getOid(), mapping);
-                processValue(mapping.getKey(), mapping.getDataType(), variableBinding.toValueString(), attributes);
-            });
+            SnmpCommunicationSpec spec = configs.get(oid).getSpec();
+            if (!responseProcessors.containsKey(spec)) {
+                log.debug("No response processor found for spec {}", spec);
+                continue;
+            }
+
+            SnmpMapping mapping = mappings.get(oid);
+            processValue(mapping.getKey(), mapping.getDataType(), variableBinding.toValueString(), responses.get(spec));
         }
 
-        if (telemetry.entrySet().isEmpty() && attributes.entrySet().isEmpty()) {
-            log.warn("No telemetry or attribute values is the SNMP response for device {}", sessionContext.getDeviceId());
+        if (responses.values().stream().allMatch(response -> response.entrySet().isEmpty())) {
+            log.debug("No values is the SNMP response for device {}. Request id: {}", sessionContext.getDeviceId(), responsePdu.getRequestID());
             return;
         }
 
-        if (!telemetry.entrySet().isEmpty()) {
-            TransportProtos.PostTelemetryMsg postTelemetryMsg = JsonConverter.convertToTelemetryProto(telemetry);
-            transportService.process(sessionContext.getSessionInfo(), postTelemetryMsg, TransportServiceCallback.EMPTY);
-            log.debug("Posted telemetry for device {}: {}", sessionContext.getDeviceId(), telemetry);
-        }
-
-        if (!attributes.entrySet().isEmpty()) {
-            TransportProtos.PostAttributeMsg postAttributesMsg = JsonConverter.convertToAttributesProto(attributes);
-            transportService.process(sessionContext.getSessionInfo(), postAttributesMsg, TransportServiceCallback.EMPTY);
-            log.debug("Posted attributes for device {}: {}", sessionContext.getDeviceId(), attributes);
-        }
+        responses.forEach((spec, response) -> {
+            Optional.ofNullable(responseProcessors.get(spec))
+                    .ifPresent(responseProcessor -> {
+                        responseProcessor.accept(response, sessionContext);
+                    });
+        });
 
         reportActivity(sessionContext.getSessionInfo());
+    }
+
+    private void configureResponseProcessors() {
+        Stream.of(SnmpCommunicationSpec.TELEMETRY_QUERYING, SnmpCommunicationSpec.TELEMETRY_TRAPS_RECEIVING)
+                .forEach(telemetrySpec -> {
+                    responseProcessors.put(telemetrySpec, (response, sessionContext) -> {
+                        TransportProtos.PostTelemetryMsg postTelemetryMsg = JsonConverter.convertToTelemetryProto(response);
+                        transportService.process(sessionContext.getSessionInfo(), postTelemetryMsg, TransportServiceCallback.EMPTY);
+                        log.debug("Posted telemetry for device {}: {}", sessionContext.getDeviceId(), response);
+                    });
+                });
+
+        Stream.of(SnmpCommunicationSpec.CLIENT_ATTRIBUTES_QUERYING, SnmpCommunicationSpec.CLIENT_ATTRIBUTES_TRAPS_RECEIVING)
+                .forEach(clientAttributesSpec -> {
+                    responseProcessors.put(clientAttributesSpec, (response, sessionContext) -> {
+                        TransportProtos.PostAttributeMsg postAttributesMsg = JsonConverter.convertToAttributesProto(response);
+                        transportService.process(sessionContext.getSessionInfo(), postAttributesMsg, TransportServiceCallback.EMPTY);
+                        log.debug("Posted attributes for device {}: {}", sessionContext.getDeviceId(), response);
+                    });
+                });
     }
 
     private void reportActivity(TransportProtos.SessionInfoProto sessionInfo) {
@@ -200,6 +336,8 @@ public class SnmpTransportService implements TbTransportService {
     }
 
     private void processValue(String key, DataType dataType, String value, JsonObject result) {
+        if (StringUtils.isEmpty(value)) return;
+
         switch (dataType) {
             case LONG:
                 result.addProperty(key, Long.parseLong(value));
@@ -216,6 +354,11 @@ public class SnmpTransportService implements TbTransportService {
     }
 
     @Override
+    public void processPdu(CommandResponderEvent event) {
+        processTrap(event);
+    }
+
+    @Override
     public String getName() {
         return "SNMP";
     }
@@ -223,11 +366,11 @@ public class SnmpTransportService implements TbTransportService {
     @PreDestroy
     public void shutdown() {
         log.info("Stopping SNMP transport!");
-        if (pollingExecutor != null) {
-            pollingExecutor.shutdownNow();
+        if (queryingExecutor != null) {
+            queryingExecutor.shutdownNow();
         }
-        if (snmpResponseProcessingExecutor != null) {
-            snmpResponseProcessingExecutor.shutdownNow();
+        if (responseProcessingExecutor != null) {
+            responseProcessingExecutor.shutdownNow();
         }
         if (snmp != null) {
             try {

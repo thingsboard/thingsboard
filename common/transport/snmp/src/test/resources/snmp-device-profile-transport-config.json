@@ -1,27 +1,53 @@
 {
-  "pollPeriodMs": 3000,
   "timeoutMs": 500,
   "retries": 0,
-  "telemetryMappings": [
+  "communicationConfigs": [
     {
-      "oid": ".1.3.6.1.2.1.1.1.50",
-      "method": "GET",
-      "key": "temperature",
-      "dataType": "LONG"
+      "spec": "TELEMETRY_QUERYING",
+      "queryingFrequencyMs": 3000,
+      "mappings": [
+        {
+          "oid": ".1.3.6.1.2.1.1.1.50",
+          "key": "temperature",
+          "dataType": "LONG"
+        },
+        {
+          "oid": ".1.3.6.1.2.1.2.1.52",
+          "key": "humidity",
+          "dataType": "DOUBLE"
+        }
+      ]
     },
     {
-      "oid": ".1.3.6.1.2.1.2.1.52",
-      "method": "GET",
-      "key": "humidity",
-      "dataType": "LONG"
-    }
-  ],
-  "attributesMappings": [
+      "spec": "CLIENT_ATTRIBUTES_QUERYING",
+      "queryingFrequencyMs": 5000,
+      "mappings": [
+        {
+          "oid": ".1.3.6.1.2.1.3.1.54",
+          "key": "isCool",
+          "dataType": "STRING"
+        }
+      ]
+    },
     {
-      "oid": ".1.3.6.1.2.1.3.1.54",
-      "method": "GET",
-      "key": "isCool",
-      "dataType": "STRING"
+      "spec": "SHARED_ATTRIBUTES_SETTING",
+      "mappings": [
+        {
+          "oid": ".1.3.6.1.2.1.7.1.58",
+          "key": "shared",
+          "dataType": "STRING"
+        }
+      ]
+    },
+    {
+      "spec": "TELEMETRY_TRAPS_RECEIVING",
+      "mappings": [
+        {
+          "oid": ".1.3.6.1.2.8.7.1.56",
+          "key": "temperature_trap",
+          "dataType": "LONG"
+        }
+      ]
     }
   ]
 }

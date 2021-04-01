@@ -18,33 +18,19 @@ package org.thingsboard.server.common.data.device.profile;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.transport.snmp.SnmpMapping;
+import org.thingsboard.server.common.data.transport.snmp.configs.SnmpCommunicationConfig;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Data
 public class SnmpDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
-    private int pollPeriodMs;
     private int timeoutMs;
     private int retries;
-    private List<SnmpMapping> telemetryMappings;
-    private List<SnmpMapping> attributesMappings;
+    private List<SnmpCommunicationConfig> communicationConfigs;
 
     @Override
     public DeviceTransportType getType() {
         return DeviceTransportType.SNMP;
-    }
-
-    @JsonIgnore
-    public List<SnmpMapping> getAllMappings() {
-        if (telemetryMappings != null && attributesMappings != null) {
-            return Stream.concat(telemetryMappings.stream(), attributesMappings.stream()).collect(Collectors.toList());
-        } else {
-            return Collections.emptyList();
-        }
     }
 
     @Override
@@ -56,9 +42,6 @@ public class SnmpDeviceProfileTransportConfiguration implements DeviceProfileTra
 
     @JsonIgnore
     private boolean isValid() {
-        List<SnmpMapping> mappings = getAllMappings();
-        return pollPeriodMs > 0 && timeoutMs > 0 && retries >= 0 &&
-                !mappings.isEmpty() && mappings.stream().allMatch(SnmpMapping::isValid) &&
-                mappings.stream().map(SnmpMapping::getOid).distinct().count() == mappings.size();
+        return true;
     }
 }

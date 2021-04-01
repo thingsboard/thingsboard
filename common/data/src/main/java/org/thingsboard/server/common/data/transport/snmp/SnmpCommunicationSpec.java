@@ -15,24 +15,26 @@
  */
 package org.thingsboard.server.common.data.transport.snmp;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Data;
-import org.apache.commons.lang3.StringUtils;
-import org.thingsboard.server.common.data.kv.DataType;
+public enum SnmpCommunicationSpec {
+    TELEMETRY_QUERYING(true),
+    CLIENT_ATTRIBUTES_QUERYING(true),
 
-import java.util.regex.Pattern;
+    SHARED_ATTRIBUTES_SETTING,
 
-@Data
-public class SnmpMapping {
-    private String oid;
-    private String key;
-    private DataType dataType;
+    TELEMETRY_TRAPS_RECEIVING,
+    CLIENT_ATTRIBUTES_TRAPS_RECEIVING;
 
-    private static final Pattern OID_PATTERN = Pattern.compile("^\\.?([0-2])((\\.0)|(\\.[1-9][0-9]*))*$");
+    private final boolean isRepeatingQuerying;
 
-    @JsonIgnore
-    public boolean isValid() {
-        return StringUtils.isNotEmpty(oid) && OID_PATTERN.matcher(oid).matches() &&
-                StringUtils.isNotBlank(key) && dataType != null;
+    SnmpCommunicationSpec() {
+        this.isRepeatingQuerying = false;
+    }
+
+    SnmpCommunicationSpec(boolean isRepeatingQuerying) {
+        this.isRepeatingQuerying = isRepeatingQuerying;
+    }
+
+    public boolean isRepeatingQuerying() {
+        return isRepeatingQuerying;
     }
 }
