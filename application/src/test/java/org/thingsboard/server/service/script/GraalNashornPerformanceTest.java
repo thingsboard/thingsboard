@@ -16,6 +16,8 @@
 package org.thingsboard.server.service.script;
 
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -26,16 +28,18 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
+@Ignore
 @RunWith(MockitoJUnitRunner.class)
 public class GraalNashornPerformanceTest {
-
-    NashornJsInvokeService nashornJsInvokeService;
-
+    private final int NUMBER_OF_INVOCATIONS = 1500;
     private final String FUNCTION =
-            "var data = {devaName: 'TBD01', msg: {temp: 42, humidity: 77}};\n" +
+            "var data = msg;\n" +
+            "var metadata = metadata;\n" +
             "var deviceName = data.devName;\n" +
             "var deviceType = 'thermostat';\n" +
             "\n" +
@@ -46,16 +50,13 @@ public class GraalNashornPerformanceTest {
             "       temperature: data.msg.temp,\n" +
             "       humidity: data.msg.humidity\n" +
             "   }, \n" +
-            "   metadata: generateMetadata()\n" +
+            "   metadata: metadata\n" +
             "};\n" +
             "\n" +
-            "function generateMetadata() {\n" +
-            "   var metadata = {reason: 'created to test function'," +
-                    "data: {msgNumber: 0, nextMsg: false}};\n" +
-            "   return metadata;\n" +
-            "}\n" +
-            "\n" +
             "return result;";
+
+    private final String data = "{\"devName\": \"TBD01\", \"msg\": {\"temp\": 11, \"humidity\": 77}}";
+    private final String metadata = "{\"data\": 40}";
 
     private final TenantId tenantId = new TenantId(UUID.randomUUID());
 
@@ -66,48 +67,56 @@ public class GraalNashornPerformanceTest {
     @Mock
     ApiUsageState apiUsageState;
 
+    @Before
+    public void init() {
+        Mockito.when(tbApiUsageStateService.getApiUsageState(tenantId)).thenReturn(apiUsageState);
+        Mockito.when(apiUsageState.isJsExecEnabled()).thenReturn(true);
+    }
+
     @Test
-    public void graalPerformanceTest() {
+    public void graalPerformanceTest() throws Exception {
         var executorService = new JsExecutorService();
         executorService.init();
         GraalJsInvokeService graalJsInvokeService = new GraalJsInvokeService(tbApiUsageStateService, tbApiUsageClient, executorService);
         graalJsInvokeService.initEngine();
 
-        Mockito.when(tbApiUsageStateService.getApiUsageState(tenantId)).thenReturn(apiUsageState);
-        Mockito.when(apiUsageState.isJsExecEnabled()).thenReturn(true);
-
-        try {
-            long startTime = System.currentTimeMillis();
-            UUID scriptId = graalJsInvokeService.eval(tenantId, JsScriptType.RULE_NODE_SCRIPT, FUNCTION).get();
-            String result = (String) graalJsInvokeService.invokeFunction(tenantId, scriptId, "{}", "{}", "POST_TELEMETRY_REQUEST").get();
-            long endTime = System.currentTimeMillis() - startTime;
-
-            System.out.println("GraalJsInvokeService performance test.\nExecution time: " + endTime + "(ms)\nResult: " + result);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        printStatistics(testExecutor(graalJsInvokeService), "Graal Executor");
     }
 
     @Test
-    public void nashornPerformanceTest() {
+    public void nashornPerformanceTest() throws Exception {
         var executorService = new JsExecutorService();
         executorService.init();
-        nashornJsInvokeService = new NashornJsInvokeService(tbApiUsageStateService, tbApiUsageClient, executorService);
+        NashornJsInvokeService nashornJsInvokeService = new NashornJsInvokeService(tbApiUsageStateService, tbApiUsageClient, executorService);
         nashornJsInvokeService.initEngine();
 
-        Mockito.when(tbApiUsageStateService.getApiUsageState(tenantId)).thenReturn(apiUsageState);
-        Mockito.when(apiUsageState.isJsExecEnabled()).thenReturn(true);
+        printStatistics(testExecutor(nashornJsInvokeService), "Nashorn Executor");
+    }
 
-        try {
-            long startTime = System.currentTimeMillis();
-            UUID scriptId = nashornJsInvokeService.eval(tenantId, JsScriptType.RULE_NODE_SCRIPT, FUNCTION).get();
-            String result = (String) nashornJsInvokeService.invokeFunction(tenantId, scriptId, "{}", "{}", "POST_TELEMETRY_REQUEST").get();
-            long endTime = System.currentTimeMillis() - startTime;
+    private void printStatistics(List<Long> allIterationsResultTime, String executorName) {
+        var statistics = allIterationsResultTime.stream().mapToLong(x -> x).summaryStatistics();
+        System.out.println(executorName + "\nNumber of executions: " + statistics.getCount() +
+                "\nTotal time: " + statistics.getSum() +
+                "(ns)\nMinimal time: " + statistics.getMin() +
+                "(ns)\nMaximum time: " + statistics.getMax() +
+                "(ns)\nAverage time: " + statistics.getAverage() + "(ns)");
+    }
 
-            System.out.println("NashornJsInvokeService performance test.\nExecution time: " + endTime + "(ms)\nResult: " + result);
-        } catch (Exception e) {
-            e.printStackTrace();
+    private List<Long> testExecutor(AbstractLocalJsInvokeService executor) throws Exception {
+        int counter = 0;
+        long startTime;
+        long endTime;
+        List<Long> allIterationsResultTime = new ArrayList<>(NUMBER_OF_INVOCATIONS);
+        UUID scriptId = executor.eval(tenantId, JsScriptType.RULE_NODE_SCRIPT, FUNCTION).get();
+        while (counter < NUMBER_OF_INVOCATIONS) {
+            startTime = System.nanoTime();
+            executor.invokeFunction(tenantId, scriptId, data, metadata, "POST_TELEMETRY_REQUEST").get();
+            endTime = System.nanoTime() - startTime;
+            allIterationsResultTime.add(endTime);
+            counter++;
         }
+
+        return allIterationsResultTime;
     }
 
 }
