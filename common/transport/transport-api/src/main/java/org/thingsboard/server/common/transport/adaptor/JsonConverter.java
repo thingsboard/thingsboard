@@ -22,7 +22,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.stream.MalformedJsonException;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.DataConstants;
@@ -158,15 +157,7 @@ public class JsonConverter {
             result.addProperty("id", msg.getRequestId());
         }
         result.addProperty("method", msg.getMethodName());
-        try {
-            result.add("params", JSON_PARSER.parse(msg.getParams()));
-        } catch (JsonSyntaxException ex) {
-            if (ex.getCause() instanceof MalformedJsonException) {
-                result.addProperty("params", msg.getParams());
-            } else {
-                throw ex;
-            }
-        }
+        result.add("params", JSON_PARSER.parse(msg.getParams()));
         return result;
     }
 
