@@ -171,9 +171,8 @@ public class ProtoConverter {
     }
 
     public static byte[] convertToRpcRequest(TransportProtos.ToDeviceRpcRequestMsg toDeviceRpcRequestMsg) {
-        TransportProtos.ToDeviceRpcRequestMsg.Builder toDeviceRpcRequestMsgBuilder = TransportProtos.ToDeviceRpcRequestMsg.newBuilder();
-        toDeviceRpcRequestMsgBuilder.setRequestId(toDeviceRpcRequestMsg.getRequestId());
-        toDeviceRpcRequestMsgBuilder.setMethodName(toDeviceRpcRequestMsg.getMethodName());
+        TransportProtos.ToDeviceRpcRequestMsg.Builder toDeviceRpcRequestMsgBuilder = toDeviceRpcRequestMsg.newBuilderForType();
+        toDeviceRpcRequestMsgBuilder.mergeFrom(toDeviceRpcRequestMsg);
         toDeviceRpcRequestMsgBuilder.setParams(parseParams(toDeviceRpcRequestMsg));
         TransportProtos.ToDeviceRpcRequestMsg result = toDeviceRpcRequestMsgBuilder.build();
         return result.toByteArray();
