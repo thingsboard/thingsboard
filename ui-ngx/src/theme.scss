@@ -23,7 +23,7 @@ $tb-primary-color: #305680;
 $tb-secondary-color: #527dad;
 $tb-hue3-color: #a7c1de;
 
-$tb-dark-primary-color: #9fa8da;
+$tb-dark-primary-color: #2b3249;
 
 $tb-mat-indigo: (
   50: #e8eaf6,
@@ -84,7 +84,7 @@ $tb-dark-mat-indigo: (
   500: $tb-dark-primary-color,
   600: $tb-secondary-color,
   700: #303f9f,
-  800: $tb-primary-color,
+  800: #1d263c,
   900: #1a237e,
   A100: $tb-hue3-color,
   A200: #536dfe,
@@ -96,7 +96,7 @@ $tb-dark-mat-indigo: (
     200: $dark-primary-text,
     300: $dark-primary-text,
     400: $dark-primary-text,
-    500: map_get($tb-mat-indigo, 900),
+    500: $light-primary-text,
     600: $light-primary-text,
     700: $light-primary-text,
     800: $light-primary-text,
@@ -112,20 +112,38 @@ $tb-dark-primary: mat-palette($tb-dark-mat-indigo);
 
 $tb-dark-theme-background: (
   status-bar: black,
-  app-bar:    map_get($tb-dark-mat-indigo, 900),
-  background: map_get($tb-dark-mat-indigo, 800),
+  app-bar:    map_get($tb-dark-mat-indigo, 500),
+  background: #1d263c, //map_get($tb-dark-mat-indigo, 800),
   hover:      rgba(white, 0.04),
   card:       map_get($tb-dark-mat-indigo, 800),
   dialog:     map_get($tb-dark-mat-indigo, 800),
   disabled-button: rgba(white, 0.12),
   raised-button: map-get($tb-dark-mat-indigo, 50),
   focused-button: $light-focused,
-  selected-button: map_get($tb-dark-mat-indigo, 900),
+  selected-button: map_get($tb-dark-mat-indigo, 500),
   selected-disabled-button: map_get($tb-dark-mat-indigo, 800),
   disabled-button-toggle: black,
   unselected-chip: map_get($tb-dark-mat-indigo, 700),
   disabled-list-option: black,
   tooltip: map_get($mat-grey, 700),
+);
+
+$tb-dark-theme-foreground: (
+  base:              white,
+  divider:           $light-dividers,
+  dividers:          $light-dividers,
+  disabled:          $light-disabled-text,
+  disabled-button:   rgba(white, 0.3),
+  disabled-text:     $light-disabled-text,
+  elevation:         black,
+  hint-text:         $light-disabled-text,
+  secondary-text:    $light-secondary-text,
+  icon:              white,
+  icons:             white,
+  text:              white,
+  slider-min:        white,
+  slider-off:        rgba(white, 0.3),
+  slider-off-active: rgba(white, 0.3),
 );
 
 @function get-tb-dark-theme($primary, $accent, $warn: mat-palette($mat-red)) {
@@ -134,7 +152,7 @@ $tb-dark-theme-background: (
     accent: $accent,
     warn: $warn,
     is-dark: true,
-    foreground: $mat-dark-theme-foreground,
+    foreground: $tb-dark-theme-foreground,
     background: $tb-dark-theme-background,
   );
 }
@@ -186,8 +204,15 @@ $tb-dark-theme: get-tb-dark-theme(
   @include mat-fab-toolbar-theme($tb-theme);
 }
 
-.tb-default {
+@media (prefers-color-scheme: light) {
   @include angular-material-theme($tb-theme);
+}
+
+@media (prefers-color-scheme: dark) {
+  @include angular-material-theme($tb-dark-theme);
+}
+
+.tb-default {
   @include mat-datetimepicker-theme($tb-theme);
   @include tb-components-theme($tb-theme);
 }
