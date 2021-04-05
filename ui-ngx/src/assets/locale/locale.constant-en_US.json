@@ -726,6 +726,8 @@
         "display-dashboard-timewindow": "Display timewindow",
         "display-dashboard-export": "Display export",
         "display-dashboard-showDashboardLogo": "Display dashboard logo", 
+        "display-dashboard-enterLogoName": "Enter logo filename (must be in assets folder)",
+        "display-dashboard-exampleLogoName": "example_logo.png",
         "import": "Import dashboard",
         "export": "Export dashboard",
         "export-failed-error": "Unable to export dashboard: {{error}}",
