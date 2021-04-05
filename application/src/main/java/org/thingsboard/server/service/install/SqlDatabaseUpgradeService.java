@@ -16,17 +16,14 @@
 package org.thingsboard.server.service.install;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.DynamicValue;
@@ -476,45 +473,42 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
 
                         conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3003000;");
                         installScripts.loadSystemLwm2mResources();
-                    } catch (Exception e) {
-                        log.error("Failed updating schema!!!", e);
-                    }
-                    try {
-                        log.info("Updating schema ...");
-                        deviceProfileRepository.findAll().forEach(deviceProfile -> {
-                            if(deviceProfile.getProfileData().has("alarms")) {
-                                JsonNode array = deviceProfile.getProfileData().get("alarms");
-                                for (JsonNode node : array) {
-                                    if (node.has("createRules")) {
-                                        JsonNode createRules = node.get("createRules");
-                                        if (createRules.has("MAJOR")) {
-                                            convertOldSpecToNew(createRules.get("MAJOR").get("condition").get("spec"));
-                                        }
-                                        if (createRules.has("MINOR")) {
-                                            convertOldSpecToNew(createRules.get("MINOR").get("condition").get("spec"));
-                                        }
-                                        if (createRules.has("CRITICAL")) {
-                                            convertOldSpecToNew(createRules.get("CRITICAL").get("condition").get("spec"));
-                                        }
-                                        if (createRules.has("WARNING")) {
-                                            convertOldSpecToNew(createRules.get("WARNING").get("condition").get("spec"));
-                                        }
-                                        if (createRules.has("INDETERMINATE")) {
-                                            convertOldSpecToNew(createRules.get("INDETERMINATE").get("condition").get("spec"));
-                                        }
-                                    }
+                    } catch (Exception e) {}
 
-                                    if(node.has("clearRule")) {
-                                        convertOldSpecToNew(node.get("clearRule").get("condition").get("spec"));
+                    deviceProfileRepository.findAll().forEach(deviceProfile -> {
+                        if(deviceProfile.getProfileData().has("alarms")) {
+                            JsonNode array = deviceProfile.getProfileData().get("alarms");
+                            for (JsonNode node : array) {
+                                if (node.has("createRules")) {
+                                    JsonNode createRules = node.get("createRules");
+                                    if (createRules.has("MAJOR")) {
+                                        convertOldSpecToNew(createRules.get("MAJOR").get("condition").get("spec"));
+                                    }
+                                    if (createRules.has("MINOR")) {
+                                        convertOldSpecToNew(createRules.get("MINOR").get("condition").get("spec"));
+                                    }
+                                    if (createRules.has("CRITICAL")) {
+                                        convertOldSpecToNew(createRules.get("CRITICAL").get("condition").get("spec"));
+                                    }
+                                    if (createRules.has("WARNING")) {
+                                        convertOldSpecToNew(createRules.get("WARNING").get("condition").get("spec"));
+                                    }
+                                    if (createRules.has("INDETERMINATE")) {
+                                        convertOldSpecToNew(createRules.get("INDETERMINATE").get("condition").get("spec"));
                                     }
                                 }
-                                deviceProfileRepository.save(deviceProfile);
+
+                                if(node.has("clearRule")) {
+                                    convertOldSpecToNew(node.get("clearRule").get("condition").get("spec"));
+                                }
                             }
-                        });
-                    } catch (Exception e) {
-                        log.error("Failed updating schema!!! ", e);
-                    }
+                            deviceProfileRepository.save(deviceProfile);
+                        }
+                    });
+
                     log.info("Schema updated.");
+                } catch (Exception e) {
+                    log.error("Failed updating schema!!!", e);
                 }
                 break;
             default:
