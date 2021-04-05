@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 
@@ -127,6 +128,11 @@ public class EventController extends BaseController {
 
             EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
             checkEntityId(entityId, Operation.READ);
+
+            if(!sortProperty.isEmpty() && sortProperty.equals("createdTime")) {
+                sortProperty = ModelConstants.CREATED_TIME_PROPERTY;
+            }
+
             TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
             return checkNotNull(eventService.findEvents(tenantId, entityId, eventType, bodyFilter, dataSearch, metadataSearch, pageLink));
         } catch (Exception e) {
