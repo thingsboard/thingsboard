@@ -121,6 +121,8 @@ import {
   DisplayWidgetTypesPanelData,
   WidgetTypes
 } from '@home/components/dashboard-page/widget-types-panel.component';
+import { LogoComponent } from '@app/shared/components/logo.component';
+import { concat } from 'lodash';
 import { DashboardWidgetSelectComponent } from '@home/components/dashboard-page/dashboard-widget-select.component';
 
 // @dynamic
@@ -189,10 +191,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   currentDashboardScope: DashboardPageScope;
 
   addingLayoutCtx: DashboardPageLayoutContext;
+
+  logo_name_local = 'example_logo.png'; 
+  dashboard_logo = 'assets/' + this.logo_name_local; 
   
-  dashboard_logo = 'assets/example_logo.png';
-
-
   dashboardCtx: DashboardContext = {
     instanceId: this.utils.guid(),
     getDashboard: () => this.dashboard,
@@ -491,6 +493,11 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       return true;
     }
   }
+
+  public updateLogoName(): string {
+    this.dashboard_logo = 'assets/' + this.dashboard.configuration.settings.logoName 
+    return this.dashboard.configuration.settings.logoName;
+  }
   
   public showRightLayoutSwitch(): boolean {
     return this.isMobile && this.layouts.right.show;
@@ -612,11 +619,16 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         settings: deepClone(this.dashboard.configuration.settings),
-        gridSettings
+        gridSettings,
       }
-    }).afterClosed().subscribe((data) => {
+    }
+    ).afterClosed().subscribe((data) => {
       if (data) {
         this.dashboard.configuration.settings = data.settings;
+        if (this.dashboard.configuration.settings)
+        {
+          this.updateLogoName();
+        }
         const newGridSettings = data.gridSettings;
         if (newGridSettings) {
           const layout = this.dashboard.configuration.states[layoutKeys.state].layouts[layoutKeys.layout];

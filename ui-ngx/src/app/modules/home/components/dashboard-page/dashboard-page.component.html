@@ -51,7 +51,7 @@
                fxLayoutAlign.gt-sm="start center"
                fxLayoutAlign="end center" fxLayoutGap="12px" class="db-logo-and-title" >
 
-            <img [fxShow]="showDashboardLogo()" [src]="dashboard_logo"
+            <img [fxShow]="showDashboardLogo() && isFullscreen" [src]="dashboard_logo"
                  aria-label="white_label_logo" class="whitelabel-logo-db"/>
 
             <tb-states-component fxFlex.lt-md

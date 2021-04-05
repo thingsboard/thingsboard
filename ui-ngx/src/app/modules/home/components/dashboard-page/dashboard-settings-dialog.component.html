@@ -51,6 +51,10 @@
                           openOnInput
                           formControlName="titleColor">
           </tb-color-input>
+          <mat-form-field class="mat-block" fxFlex floatLabel="always">
+            <mat-label translate>dashboard.display-dashboard-enterLogoName</mat-label>
+            <input #searchInput matInput formControlName="logoName" placeholder="{{ 'dashboard.display-dashboard-exampleLogoName' | translate }}"/>
+          </mat-form-field>
         </div>
         <div fxLayout="row" fxLayoutAlign="start center" fxLayout.lt-md="column" fxLayoutAlign.lt-md  fxLayoutGap="8px">
           <mat-checkbox fxFlex formControlName="showDashboardLogo">

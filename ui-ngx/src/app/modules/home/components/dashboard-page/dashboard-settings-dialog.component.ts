@@ -34,6 +34,7 @@ export interface DashboardSettingsDialogData {
   gridSettings?: GridSettings;
 }
 
+
 @Component({
   selector: 'tb-dashboard-settings-dialog',
   templateUrl: './dashboard-settings-dialog.component.html',
@@ -45,13 +46,16 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
 
   settings: DashboardSettings;
   gridSettings: GridSettings;
+  logo_name;
 
+  
   settingsFormGroup: FormGroup;
   gridSettingsFormGroup: FormGroup;
 
   stateControllerIds: string[];
 
   submitted = false;
+  
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -69,6 +73,7 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
 
     this.settings = this.data.settings;
     this.gridSettings = this.data.gridSettings;
+    this.logo_name = 'example_logo.png';
 
     if (this.settings) {
       this.settingsFormGroup = this.fb.group({
@@ -80,6 +85,7 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
         showEntitiesSelect: [isUndefined(this.settings.showEntitiesSelect) ? true : this.settings.showEntitiesSelect, []],
         showFilters: [isUndefined(this.settings.showFilters) ? true : this.settings.showFilters, []],
         showDashboardLogo: [isUndefined(this.settings.showDashboardLogo) ? true : this.settings.showDashboardLogo, []],
+        logoName: [isUndefined(this.settings.logoName) ? this.logo_name : this.settings.logoName, []],
         showDashboardTimewindow: [isUndefined(this.settings.showDashboardTimewindow) ? true : this.settings.showDashboardTimewindow, []],
         showDashboardExport: [isUndefined(this.settings.showDashboardExport) ? true : this.settings.showDashboardExport, []]
       });
