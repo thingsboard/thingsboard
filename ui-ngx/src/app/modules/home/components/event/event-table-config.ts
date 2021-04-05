@@ -38,16 +38,27 @@ import {
   EventContentDialogComponent,
   EventContentDialogData
 } from '@home/components/event/event-content-dialog.component';
-import { sortObjectKeys } from '@core/utils';
+import { isEqual, sortObjectKeys } from '@core/utils';
+import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
+import { ChangeDetectorRef, Injector, StaticProvider, ViewContainerRef } from '@angular/core';
+import { ComponentPortal } from '@angular/cdk/portal';
+import {
+  EVENT_FILTER_PANEL_DATA,
+  EventFilterPanelComponent,
+  EventFilterPanelData
+} from '@home/components/event/event-filter-panel.component';
 
 export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
   eventTypeValue: EventType | DebugEventType;
 
+  private filterParams = {};
+
   set eventType(eventType: EventType | DebugEventType) {
     if (this.eventTypeValue !== eventType) {
       this.eventTypeValue = eventType;
       this.updateColumns(true);
+      this.filterParams = {};
     }
   }
 
@@ -66,7 +77,10 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               public tenantId: string,
               private defaultEventType: EventType | DebugEventType,
               private disabledEventTypes: Array<EventType | DebugEventType> = null,
-              private debugEventTypes: Array<DebugEventType> = null) {
+              private debugEventTypes: Array<DebugEventType> = null,
+              private overlay: Overlay,
+              private viewContainerRef: ViewContainerRef,
+              private cd: ChangeDetectorRef) {
     super();
     this.loadDataOnInit = false;
     this.tableTitle = '';
@@ -101,10 +115,19 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
     this.updateColumns();
+
+    this.headerActionDescriptors.push({
+      name: this.translate.instant('asset.make-public'),
+      icon: 'filter_list',
+      isEnabled: () => true,
+      onAction: ($event) => {
+        this.editEventFilter($event);
+      }
+    });
   }
 
   fetchEvents(pageLink: TimePageLink): Observable<PageData<Event>> {
-    return this.eventService.getEvents(this.entityId, this.eventType, this.tenantId, pageLink);
+    return this.eventService.getFilterEvents(this.entityId, this.eventType, this.tenantId, this.filterParams, pageLink);
   }
 
   updateColumns(updateTableColumns: boolean = false): void {
@@ -248,5 +271,53 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         contentType
       }
     });
+  }
+
+  private editEventFilter($event: MouseEvent) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const target = $event.target || $event.srcElement || $event.currentTarget;
+    const config = new OverlayConfig();
+    config.backdropClass = 'cdk-overlay-transparent-backdrop';
+    config.hasBackdrop = true;
+    const connectedPosition: ConnectedPosition = {
+      originX: 'end',
+      originY: 'bottom',
+      overlayX: 'end',
+      overlayY: 'top'
+    };
+    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
+      .withPositions([connectedPosition]);
+
+    const overlayRef = this.overlay.create(config);
+    overlayRef.backdropClick().subscribe(() => {
+      overlayRef.dispose();
+    });
+    const providers: StaticProvider[] = [
+      {
+        provide: EVENT_FILTER_PANEL_DATA,
+        useValue: {
+          columns: this.columns.map((column) => {
+            return {title: column.title, key: column.key};
+          }),
+          filterParams: this.filterParams
+        } as EventFilterPanelData
+      },
+      {
+        provide: OverlayRef,
+        useValue: overlayRef
+      }
+    ];
+    const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
+    const componentRef = overlayRef.attach(new ComponentPortal(EventFilterPanelComponent,
+      this.viewContainerRef, injector));
+    componentRef.onDestroy(() => {
+      if (componentRef.instance.result && !isEqual(this.filterParams, componentRef.instance.result.filterParams)) {
+        this.filterParams = componentRef.instance.result.filterParams;
+        this.table.updateData();
+      }
+    });
+    this.cd.detectChanges();
   }
 }

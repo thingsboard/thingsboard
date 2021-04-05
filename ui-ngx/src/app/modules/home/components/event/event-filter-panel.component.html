@@ -1,0 +1,64 @@
+<!--
+
+    Copyright © 2016-2021 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form fxLayout="column" class="mat-content mat-padding" [formGroup]="eventFilterFormGroup" (ngSubmit)="update()">
+  <ng-container *ngFor="let column of showColumns">
+    <ng-container [ngSwitch]="column.key">
+      <ng-template [ngSwitchCase]="'type'">
+        <mat-form-field>
+          <mat-label>{{ column.title | translate}}</mat-label>
+          <mat-select [formControlName]="column.key">
+            <mat-option [value]="null"></mat-option>
+            <mat-option *ngFor="let eventType of eventTypes" [value]="eventType">
+              {{ eventType }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </ng-template>
+      <ng-template [ngSwitchCase]="'entity'">
+        <mat-form-field>
+          <mat-label>{{ column.title | translate}}</mat-label>
+          <mat-select [formControlName]="column.key">
+            <mat-option [value]="null"></mat-option>
+            <mat-option *ngFor="let entityType of entityTypes" [value]="entityType">
+              {{ entityType }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </ng-template>
+      <ng-container *ngSwitchDefault>
+        <mat-form-field>
+          <mat-label>{{ column.title | translate}}</mat-label>
+          <input matInput [formControlName]="column.key">
+        </mat-form-field>
+      </ng-container>
+    </ng-container>
+  </ng-container>
+  <div fxLayout="row" class="tb-panel-actions" fxLayoutAlign="end center">
+    <button type="button"
+            mat-button
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button type="submit"
+            mat-raised-button
+            color="primary"
+            [disabled]="eventFilterFormGroup.invalid || !eventFilterFormGroup.dirty">
+      {{ 'action.update' | translate }}
+    </button>
+  </div>
+</form>

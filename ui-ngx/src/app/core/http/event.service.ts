@@ -38,4 +38,10 @@ export class EventService {
               `${pageLink.toQuery()}&tenantId=${tenantId}`,
       defaultHttpOptionsFromConfig(config));
   }
+
+  public getFilterEvents(entityId: EntityId, eventType: EventType | DebugEventType, tenantId: string,
+                         filters: any | null, pageLink: TimePageLink, config?: RequestConfig): Observable<PageData<Event>> {
+    return this.http.post<PageData<Event>>(`/api/events/${entityId.entityType}/${entityId.id}/${eventType}` +
+      `${pageLink.toQuery()}&tenantId=${tenantId}`, filters, defaultHttpOptionsFromConfig(config));
+  }
 }
