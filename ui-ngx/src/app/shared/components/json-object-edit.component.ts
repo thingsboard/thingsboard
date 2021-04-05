@@ -22,7 +22,7 @@ import { ActionNotificationHide, ActionNotificationShow } from '@core/notificati
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
-import { guid } from '@core/utils';
+import { guid, isDefinedAndNotNull, isLiteralObject } from '@core/utils';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { getAce } from '@shared/models/ace/ace.models';
 
@@ -224,7 +224,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
     this.contentValue = '';
     this.objectValid = false;
     try {
-      if (this.modelValue) {
+      if (isDefinedAndNotNull(this.modelValue)) {
         this.contentValue = JSON.stringify(this.modelValue, undefined, 2);
         this.objectValid = true;
       } else {
@@ -250,6 +250,9 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
       if (this.contentValue && this.contentValue.length > 0) {
         try {
           data = JSON.parse(this.contentValue);
+          if (!isLiteralObject(data)) {
+            throw new TypeError(`Value is not a valid JSON`);
+          }
           this.objectValid = true;
           this.validationError = '';
         } catch (ex) {

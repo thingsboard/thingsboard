@@ -37,6 +37,7 @@ import { GatewayFormComponent } from './lib/gateway/gateway-form.component';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
 import { NavigationCardsWidgetComponent } from '@home/components/widget/lib/navigation-cards-widget.component';
 import { NavigationCardWidgetComponent } from '@home/components/widget/lib/navigation-card-widget.component';
+import { JsonInputWidgetComponent } from '@home/components/widget/lib/json-input-widget.component';
 
 @NgModule({
   declarations:
@@ -49,6 +50,7 @@ import { NavigationCardWidgetComponent } from '@home/components/widget/lib/navig
       EntitiesHierarchyWidgetComponent,
       DateRangeNavigatorWidgetComponent,
       DateRangeNavigatorPanelComponent,
+      JsonInputWidgetComponent,
       MultipleInputWidgetComponent,
       TripAnimationComponent,
       PhotoCameraInputWidgetComponent,
@@ -69,6 +71,7 @@ import { NavigationCardWidgetComponent } from '@home/components/widget/lib/navig
     EntitiesHierarchyWidgetComponent,
     RpcWidgetsModule,
     DateRangeNavigatorWidgetComponent,
+    JsonInputWidgetComponent,
     MultipleInputWidgetComponent,
     TripAnimationComponent,
     PhotoCameraInputWidgetComponent,
