@@ -970,6 +970,8 @@
         "transport-type-mqtt-hint": "Enables advanced MQTT transport settings",
         "transport-type-lwm2m": "LWM2M",
         "transport-type-lwm2m-hint": "LWM2M transport type",
+        "transport-type-coap": "CoAP",
+        "transport-type-coap-hint": "Enables advanced CoAP transport settings",
         "description": "Description",
         "default": "Default",
         "profile-configuration": "Profile configuration",
@@ -987,9 +989,14 @@
         "mqtt-device-topic-filters": "MQTT device topic filters",
         "mqtt-device-topic-filters-unique": "MQTT device topic filters need to be unique.",
         "mqtt-device-payload-type": "MQTT device payload",
-        "mqtt-device-payload-type-json": "JSON",
-        "mqtt-device-payload-type-proto": "Protobuf",
+        "transport-device-payload-type-json": "JSON",
+        "transport-device-payload-type-proto": "Protobuf",
         "mqtt-payload-type-required": "Payload type is required.",
+        "coap-device-type": "CoAP device type",
+        "coap-device-payload-type": "CoAP device payload",
+        "coap-device-type-required": "CoAP device type is required.",
+        "coap-device-type-default": "Default",
+        "coap-device-type-efento": "Efento NB-IoT",
         "support-level-wildcards": "Single <code>[+]</code> and multi-level <code>[#]</code> wildcards supported.",
         "telemetry-topic-filter": "Telemetry topic filter",
         "telemetry-topic-filter-required": "Telemetry topic filter is required.",
@@ -1087,7 +1094,13 @@
         "schedule-time": "Time",
         "schedule-time-from": "From",
         "schedule-time-to": "To",
-        "schedule-days-of-week-required": "At least one day of week should be selected."
+        "schedule-days-of-week-required": "At least one day of week should be selected.",
+        "create-device-profile": "Create new device profile",
+        "import": "Import device profile",
+        "export": "Export device profile",
+        "export-failed-error": "Unable to export device profile: {{error}}",
+        "device-profile-file": "Device profile file",
+        "invalid-device-profile-file-error": "Unable to import device profile: Invalid device profile data structure."
     },
     "dialog": {
         "close": "Close dialog"
@@ -1794,6 +1807,7 @@
         "avg": "avg",
         "total": "total",
         "comparison-time-ago": {
+            "previousInterval": "(previous interval)",
             "days": "(day ago)",
             "weeks": "(week ago)",
             "months": "(month ago)",
@@ -1984,7 +1998,8 @@
       "timezone": "Timezone",
       "select-timezone": "Select timezone",
       "no-timezones-matching": "No timezones matching '{{timezone}}' were found.",
-      "timezone-required": "Timezone is required."
+      "timezone-required": "Timezone is required.",
+      "browser-time": "Browser Time"
     },
     "queue": {
       "select_name": "Select queue name",
@@ -2114,7 +2129,27 @@
         "hours": "Hours",
         "minutes": "Minutes",
         "seconds": "Seconds",
-        "advanced": "Advanced"
+        "advanced": "Advanced",
+        "predefined": {
+          "yesterday": "Yesterday",
+          "day-before-yesterday": "Day before yesterday",
+          "this-day-last-week": "This day last week",
+          "previous-week": "Previous week (Sun - Sat)",
+          "previous-week-iso": "Previous week (Mon - Sun)",
+          "previous-month": "Previous month",
+          "previous-year": "Previous year",
+          "current-hour": "Current hour",
+          "current-day": "Current day",
+          "current-day-so-far": "Current day so far",
+          "current-week": "Current week (Sun - Sat)",
+          "current-week-iso": "Current week (Mon - Sun)",
+          "current-week-so-far": "Current week so far (Sun - Sat)",
+          "current-week-iso-so-far": "Current week so far (Mon - Sun)",
+          "current-month": "Current month",
+          "current-month-so-far": "Current month so far",
+          "current-year": "Current year",
+          "current-year-so-far": "Current year so far"
+        }
     },
     "timeunit": {
         "seconds": "Seconds",
@@ -2135,7 +2170,8 @@
         "date-range": "Date range",
         "last": "Last",
         "time-period": "Time period",
-        "hide": "Hide"
+        "hide": "Hide",
+        "interval": "Interval"
     },
     "user": {
         "user": "User",
@@ -2269,7 +2305,8 @@
         "data-overflow": "Widget displays {{count}} out of {{total}} entities",
         "alarm-data-overflow": "Widget displays alarms for {{allowedEntities}} (maximum allowed) entities out of {{totalEntities}} entities",
         "search": "Search widget",
-        "filter": "Widget filter type"
+        "filter": "Widget filter type",
+        "loading-widgets": "Loading widgets..."
     },
     "widget-action": {
         "header-button": "Widget header button",
@@ -2321,7 +2358,8 @@
         "invalid-widgets-bundle-file-error": "Unable to import widgets bundle: Invalid widgets bundle data structure.",
         "search": "Search widget bundles",
         "selected-widgets-bundles": "{ count, plural, 1 {1 widgets bundle} other {# widgets bundles} } selected",
-        "open-widgets-bundle": "Open widgets bundle"
+        "open-widgets-bundle": "Open widgets bundle",
+        "loading-widgets-bundles": "Loading widgets bundles..."
     },
     "widget-config": {
         "data": "Data",
