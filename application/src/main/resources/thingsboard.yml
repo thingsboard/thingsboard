@@ -586,6 +586,10 @@ transport:
     dtls:
       # Enable/disable DTLS 1.2 support
       enabled: "${COAP_DTLS_ENABLED:false}"
+      # CoAP DTLS bind address
+      bind_address: "${COAP_DTLS_BIND_ADDRESS:0.0.0.0}"
+      # CoAP DTLS bind port
+      bind_port: "${COAP_DTLS_BIND_PORT:5684}"
       # Secure mode. Allowed values: NO_AUTH, X509
       mode: "${COAP_DTLS_SECURE_MODE:NO_AUTH}"
       # Path to the key store that holds the certificate

@@ -47,6 +47,8 @@ import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.thingsboard.server.common.transport.coapserver.CoapServerService;
+import org.thingsboard.server.common.transport.coapserver.TbCoapDtlsSessionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.adaptors.CoapTransportAdaptor;
 
@@ -74,12 +76,14 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
     private final Set<UUID> attributeSubscriptions = ConcurrentHashMap.newKeySet();
 
     private ConcurrentMap<String, TbCoapDtlsSessionInfo> dtlsSessionIdMap;
+    private long timeout;
 
-    public CoapTransportResource(CoapTransportContext coapTransportContext, ConcurrentMap<String, TbCoapDtlsSessionInfo> dtlsSessionIdMap, String name) {
+    public CoapTransportResource(CoapTransportContext coapTransportContext, CoapServerService coapServerService, String name) {
         super(coapTransportContext, name);
         this.setObservable(true); // enable observing
         this.addObserver(new CoapResourceObserver());
-        this.dtlsSessionIdMap = dtlsSessionIdMap;
+        this.dtlsSessionIdMap = coapServerService.getDtlsSessionsMap();
+        this.timeout = coapServerService.getTimeout();
 //        this.setObservable(false); // disable observing
 //        this.setObserveType(CoAP.Type.CON); // configure the notification type to CONs
 //        this.getAttributes().setObservable(); // mark observable in the Link-Format
@@ -303,13 +307,13 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                             new CoapOkCallback(exchange, CoAP.ResponseCode.CREATED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
                     break;
                 case TO_SERVER_RPC_REQUEST:
-                    transportService.registerSyncSession(sessionInfo, getCoapSessionListener(exchange, coapTransportAdaptor), transportContext.getTimeout());
+                    transportService.registerSyncSession(sessionInfo, getCoapSessionListener(exchange, coapTransportAdaptor), timeout);
                     transportService.process(sessionInfo,
                             coapTransportAdaptor.convertToServerRpcRequest(sessionId, request),
                             new CoapNoOpCallback(exchange));
                     break;
                 case GET_ATTRIBUTES_REQUEST:
-                    transportService.registerSyncSession(sessionInfo, getCoapSessionListener(exchange, coapTransportAdaptor), transportContext.getTimeout());
+                    transportService.registerSyncSession(sessionInfo, getCoapSessionListener(exchange, coapTransportAdaptor), timeout);
                     transportService.process(sessionInfo,
                             coapTransportAdaptor.convertToGetAttributes(sessionId, request),
                             new CoapNoOpCallback(exchange));
