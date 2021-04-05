@@ -216,7 +216,7 @@ services:
   haproxy:
     restart: always
     container_name: "${LOAD_BALANCER_NAME}"
-    image: thingsboard/haproxy-certbot:latest
+    image: thingsboard/haproxy-certbot:1.3.0
     volumes:
      - ./haproxy/config:/config
      - ./haproxy/letsencrypt:/etc/letsencrypt
