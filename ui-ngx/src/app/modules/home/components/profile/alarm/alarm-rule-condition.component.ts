@@ -36,6 +36,7 @@ import {
 } from '@home/components/profile/alarm/alarm-rule-condition-dialog.component';
 import { TimeUnit } from '@shared/models/time/time.models';
 import { EntityId } from '@shared/models/id/entity-id';
+import { dynamicValueSourceTypeTranslationMap } from '@shared/models/query/query.models';
 
 @Component({
   selector: 'tb-alarm-rule-condition',
@@ -174,9 +175,11 @@ export class AlarmRuleConditionComponent implements ControlValueAccessor, OnInit
               break;
           }
           if (spec.predicate.dynamicValue && spec.predicate.dynamicValue.sourceAttribute) {
+            const attributeSource =
+              this.translate.instant(dynamicValueSourceTypeTranslationMap.get(spec.predicate.dynamicValue.sourceType));
             this.specText = this.translate.instant('device-profile.condition-during-dynamic', {
               during: duringText,
-              attribute: spec.predicate.dynamicValue.sourceAttribute
+              attribute: `${attributeSource}.${spec.predicate.dynamicValue.sourceAttribute}`
             });
           } else {
             this.specText = this.translate.instant('device-profile.condition-during', {
@@ -186,9 +189,11 @@ export class AlarmRuleConditionComponent implements ControlValueAccessor, OnInit
           break;
         case AlarmConditionType.REPEATING:
           if (spec.predicate.dynamicValue && spec.predicate.dynamicValue.sourceAttribute) {
+            const attributeSource =
+              this.translate.instant(dynamicValueSourceTypeTranslationMap.get(spec.predicate.dynamicValue.sourceType));
             this.specText = this.translate.instant('device-profile.condition-repeat-times-dynamic', {
               count: spec.predicate.defaultValue,
-              attribute: spec.predicate.dynamicValue.sourceAttribute
+              attribute: `${attributeSource}.${spec.predicate.dynamicValue.sourceAttribute}`
             });
           } else {
             this.specText = this.translate.instant('device-profile.condition-repeat-times',
