@@ -877,7 +877,8 @@
     "success": "成功",
     "failed": "失敗",
     "messages-processed": "消息處理",
-    "errors-occurred": "錯誤發生"
+    "errors-occurred": "錯誤發生",
+    "all-events": "所有"
   },
   "extension": {
     "extensions": "擴展",

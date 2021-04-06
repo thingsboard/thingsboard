@@ -917,7 +917,8 @@
     "success": "Erfolg",
     "failed": "Fehlgeschlagen",
     "messages-processed": "Nachrichten verarbeitet",
-    "errors-occurred": "Fehler aufgetreten"
+    "errors-occurred": "Fehler aufgetreten",
+    "all-events": "Alle"
   },
   "extension": {
     "extensions": "Erweiterungen",

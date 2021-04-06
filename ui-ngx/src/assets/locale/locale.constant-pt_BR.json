@@ -1009,7 +1009,8 @@
     "success": "Êxito",
     "failed": "Falhou",
     "messages-processed": "Mensagens processadas",
-    "errors-occurred": "Erros"
+    "errors-occurred": "Erros",
+    "all-events": "Tudo"
   },
   "extension": {
     "extensions": "Extensões",

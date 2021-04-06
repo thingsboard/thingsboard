@@ -955,7 +955,8 @@
         "type-debug-rule-node": "Debug",
         "type-error": "Erreur",
         "type-lc-event": "Evénement du cycle de vie",
-        "type-stats": "Statistiques"
+        "type-stats": "Statistiques",
+        "all-events": "Tout"
     },
     "extension": {
         "add": "Ajouter une extension",

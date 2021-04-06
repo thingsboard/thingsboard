@@ -21,8 +21,8 @@
       <ng-template [ngSwitchCase]="'type'">
         <mat-form-field>
           <mat-label>{{ column.title | translate}}</mat-label>
-          <mat-select [formControlName]="column.key">
-            <mat-option [value]="null"></mat-option>
+          <mat-select formControlName="type">
+            <mat-option [value]="null">{{ 'event.all-events' | translate}}</mat-option>
             <mat-option *ngFor="let eventType of eventTypes" [value]="eventType">
               {{ eventType }}
             </mat-option>
@@ -32,18 +32,23 @@
       <ng-template [ngSwitchCase]="'entity'">
         <mat-form-field>
           <mat-label>{{ column.title | translate}}</mat-label>
-          <mat-select [formControlName]="column.key">
-            <mat-option [value]="null"></mat-option>
+          <mat-select formControlName="entity">
+            <mat-option [value]="null">{{ 'event.all-events' | translate}}</mat-option>
             <mat-option *ngFor="let entityType of entityTypes" [value]="entityType">
               {{ entityType }}
             </mat-option>
           </mat-select>
         </mat-form-field>
       </ng-template>
+      <ng-template [ngSwitchCase]="'error'">
+        <tb-checkbox formControlName="error" [falseValue]="null" style="display: block; padding-bottom: 16px;">
+          {{ 'event.has-error' | translate }}
+        </tb-checkbox>
+      </ng-template>
       <ng-container *ngSwitchDefault>
         <mat-form-field>
           <mat-label>{{ column.title | translate}}</mat-label>
-          <input matInput [formControlName]="column.key">
+          <input matInput type="text" [name]="column.key" [formControlName]="column.key">
         </mat-form-field>
       </ng-container>
     </ng-container>

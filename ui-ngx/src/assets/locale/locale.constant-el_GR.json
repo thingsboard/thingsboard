@@ -1258,7 +1258,8 @@
     "success": "Επιτυχία",
     "failed": "Απέτυχε",
     "messages-processed": "Επεξεργασμένα μηνύματα",
-    "errors-occurred": "Παρουσιάστηκαν σφάλματα"
+    "errors-occurred": "Παρουσιάστηκαν σφάλματα",
+    "all-events": "Όλοι"
   },
   "extension": {
     "extensions": "Επεκτάσεις",

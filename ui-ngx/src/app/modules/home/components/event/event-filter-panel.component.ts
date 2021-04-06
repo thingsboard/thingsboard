@@ -39,7 +39,7 @@ export interface FilterEntityColumn {
 })
 export class EventFilterPanelComponent {
 
-  private readonly excludeColumns = ['createdTime', 'data', 'metadata', 'error'];
+  private readonly excludeColumns = ['createdTime', 'data', 'metadata'];
 
   eventFilterFormGroup: FormGroup;
 
