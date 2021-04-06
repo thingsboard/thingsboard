@@ -1356,7 +1356,8 @@
     "type-debug-rule-node": "调试",
     "type-error": "错误",
     "type-lc-event": "生命周期事件",
-    "type-stats": "类型统计"
+    "type-stats": "类型统计",
+    "all-events": "全部"
   },
   "extension": {
     "add": "添加扩展",

@@ -957,7 +957,8 @@
         "success": "Succes",
         "failed": "Eşuat",
         "messages-processed": "Mesaje procesate",
-        "errors-occurred": "Au apărut erori"
+        "errors-occurred": "Au apărut erori",
+        "all-events": "Toate"
     },
     "extension": {
         "extensions": "Extensii",
@@ -1174,7 +1175,7 @@
             "entity-field": "Câmp Entitate",
             "access-token": "Token De Acces"
         },
-        "stepper-text":{
+        "stepper-text": {
             "select-file": "Selectează un fişier",
             "configuration": "Importă configurație",
             "column-type": "Selectează tipul de coloane",

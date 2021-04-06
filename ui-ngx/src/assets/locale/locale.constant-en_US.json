@@ -1368,7 +1368,9 @@
         "success": "Success",
         "failed": "Failed",
         "messages-processed": "Messages processed",
-        "errors-occurred": "Errors occurred"
+        "errors-occurred": "Errors occurred",
+        "all-events": "All",
+        "has-error": "Has error"
     },
     "extension": {
         "extensions": "Extensions",

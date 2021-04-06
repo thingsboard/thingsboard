@@ -1341,7 +1341,8 @@
     "success": "Uspeh",
     "failed": "Ni uspelo",
     "messages-processed": "Obdelana sporočila",
-    "errors-occurred": "Prišlo je do napak"
+    "errors-occurred": "Prišlo je do napak",
+    "all-events": "Vse"
   },
   "extension": {
     "extensions": "Razširitve",

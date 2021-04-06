@@ -1344,7 +1344,8 @@
         "success": "Úspěch",
         "failed": "Neúspěch",
         "messages-processed": "Zpracované zprávy",
-        "errors-occurred": "Vyskytly se chyby"
+        "errors-occurred": "Vyskytly se chyby",
+        "all-events": "Vše"
     },
     "extension": {
         "extensions": "Rozšíření",

@@ -893,7 +893,8 @@
         "success": "موفقيت",
         "failed": "عدم موفقيت",
         "messages-processed": "پيام پردازش شد",
-        "errors-occurred": "خطاها رخ دادند"
+        "errors-occurred": "خطاها رخ دادند",
+        "all-events": "همه"
     },
     "extension": {
         "extensions": "دنباله ها",

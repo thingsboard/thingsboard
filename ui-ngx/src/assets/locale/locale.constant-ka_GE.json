@@ -971,7 +971,8 @@
     "success": "წარმატება",
     "failed": "ვერ მოხერხდა",
     "messages-processed": "შეტყობინებების დამუშავება",
-    "errors-occurred": "შეცდომები მოხდა"
+    "errors-occurred": "შეცდომები მოხდა",
+    "all-events": "ყველა"
   },
   "extension": {
     "extensions": "დამატებითი აპი",

@@ -906,7 +906,8 @@
         "success": "Sekmīgi",
         "failed": "Kļūda",
         "messages-processed": "Ziņojumi apstrādāti",
-        "errors-occurred": "Kļūdas konstatētas"
+        "errors-occurred": "Kļūdas konstatētas",
+        "all-events": "Visi"
     },
     "extension": {
         "extensions": "Paplašinājumi",

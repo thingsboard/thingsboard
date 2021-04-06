@@ -1341,7 +1341,8 @@
         "success": "성공",
         "failed": "실패",
         "messages-processed": "처리된 메시지",
-        "errors-occurred": "오류가 발생했습니다"
+        "errors-occurred": "오류가 발생했습니다",
+        "all-events": "모두"
     },
     "extension": {
         "extensions": "확장",

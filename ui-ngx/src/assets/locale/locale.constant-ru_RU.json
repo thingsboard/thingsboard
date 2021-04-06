@@ -960,7 +960,8 @@
         "success": "Успех",
         "failed": "Неудача",
         "messages-processed": "Сообщения обработаны",
-        "errors-occurred": "Возникли ошибки"
+        "errors-occurred": "Возникли ошибки",
+        "all-events": "Все"
     },
     "extension": {
         "extensions": "Расширение",
