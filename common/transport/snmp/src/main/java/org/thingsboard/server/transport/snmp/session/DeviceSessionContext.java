@@ -18,29 +18,15 @@ package org.thingsboard.server.transport.snmp.session;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.snmp4j.AbstractTarget;
-import org.snmp4j.CommunityTarget;
 import org.snmp4j.Target;
-import org.snmp4j.UserTarget;
 import org.snmp4j.event.ResponseEvent;
 import org.snmp4j.event.ResponseListener;
-import org.snmp4j.security.AuthSHA;
-import org.snmp4j.security.PrivDES;
-import org.snmp4j.security.SecurityLevel;
-import org.snmp4j.security.SecurityModel;
-import org.snmp4j.security.SecurityModels;
-import org.snmp4j.security.USM;
-import org.snmp4j.security.UsmUser;
-import org.snmp4j.smi.GenericAddress;
-import org.snmp4j.smi.OID;
-import org.snmp4j.smi.OctetString;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.transport.snmp.SnmpCommunicationSpec;
-import org.thingsboard.server.common.data.transport.snmp.SnmpProtocolVersion;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
@@ -50,6 +36,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponse
 import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseNotificationProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
+import org.thingsboard.server.transport.snmp.SnmpAuthService;
 import org.thingsboard.server.transport.snmp.SnmpTransportContext;
 import org.thingsboard.server.transport.snmp.service.SnmpTransportService;
 
@@ -77,6 +64,7 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
 
     private final SnmpTransportContext snmpTransportContext;
     private final SnmpTransportService snmpTransportService;
+    private final SnmpAuthService snmpAuthService;
 
     @Getter
     @Setter
@@ -84,7 +72,6 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     private final AtomicInteger msgIdSeq = new AtomicInteger(0);
     @Getter
     private boolean isActive = true;
-    private final String snmpUnderlyingProtocol;
 
     @Getter
     @Setter
@@ -93,8 +80,7 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     public DeviceSessionContext(Device device, DeviceProfile deviceProfile, String token,
                                 SnmpDeviceProfileTransportConfiguration profileTransportConfiguration,
                                 SnmpDeviceTransportConfiguration deviceTransportConfiguration,
-                                SnmpTransportContext snmpTransportContext, SnmpTransportService snmpTransportService,
-                                String snmpUnderlyingProtocol) {
+                                SnmpTransportContext snmpTransportContext) {
         super(UUID.randomUUID());
         super.setDeviceId(device.getId());
         super.setDeviceProfile(deviceProfile);
@@ -102,12 +88,12 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
 
         this.token = token;
         this.snmpTransportContext = snmpTransportContext;
-        this.snmpTransportService = snmpTransportService;
+        this.snmpTransportService = snmpTransportContext.getSnmpTransportService();
+        this.snmpAuthService = snmpTransportContext.getSnmpAuthService();
 
         this.profileTransportConfiguration = profileTransportConfiguration;
         this.deviceTransportConfiguration = deviceTransportConfiguration;
 
-        this.snmpUnderlyingProtocol = snmpUnderlyingProtocol;
         initializeTarget(profileTransportConfiguration, deviceTransportConfiguration);
     }
 
@@ -133,55 +119,7 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
 
     public void initializeTarget(SnmpDeviceProfileTransportConfiguration profileTransportConfig, SnmpDeviceTransportConfiguration deviceTransportConfig) {
         log.trace("Initializing target for SNMP session of device {}", device);
-
-        AbstractTarget target;
-
-        SnmpProtocolVersion protocolVersion = deviceTransportConfig.getProtocolVersion();
-        switch (protocolVersion) {
-            case V1:
-                CommunityTarget communityTargetV1 = new CommunityTarget();
-                communityTargetV1.setSecurityModel(SecurityModel.SECURITY_MODEL_SNMPv1);
-                communityTargetV1.setSecurityLevel(SecurityLevel.NOAUTH_NOPRIV);
-                communityTargetV1.setCommunity(new OctetString(deviceTransportConfig.getSecurityName()));
-                target = communityTargetV1;
-                break;
-            case V2C:
-                CommunityTarget communityTargetV2 = new CommunityTarget();
-                communityTargetV2.setSecurityModel(SecurityModel.SECURITY_MODEL_SNMPv2c);
-                communityTargetV2.setSecurityLevel(SecurityLevel.NOAUTH_NOPRIV);
-                communityTargetV2.setCommunity(new OctetString(deviceTransportConfig.getSecurityName()));
-                target = communityTargetV2;
-                break;
-            case V3:
-                USM usm = new USM();
-                SecurityModels.getInstance().addSecurityModel(usm);
-
-                OctetString securityName = new OctetString(deviceTransportConfig.getSecurityName());
-                OctetString authenticationPassphrase = new OctetString(deviceTransportConfig.getAuthenticationPassphrase());
-                OctetString privacyPassphrase = new OctetString(deviceTransportConfig.getPrivacyPassphrase());
-
-                OID authenticationProtocol = AuthSHA.ID;
-                OID privacyProtocol = PrivDES.ID; // FIXME: to config
-
-                UsmUser user = new UsmUser(securityName, authenticationProtocol, authenticationPassphrase, privacyProtocol, privacyPassphrase);
-                snmpTransportService.getSnmp().getUSM().addUser(user);
-
-                UserTarget userTarget = new UserTarget();
-                userTarget.setSecurityName(securityName);
-                userTarget.setSecurityLevel(SecurityLevel.AUTH_PRIV);
-
-                target = userTarget;
-                break;
-            default:
-                throw new UnsupportedOperationException("SNMP protocol version " + protocolVersion + " is not supported");
-        }
-
-        target.setAddress(GenericAddress.parse(snmpUnderlyingProtocol + ":" + deviceTransportConfig.getAddress() + "/" + deviceTransportConfig.getPort()));
-        target.setTimeout(profileTransportConfig.getTimeoutMs());
-        target.setRetries(profileTransportConfig.getRetries());
-        target.setVersion(protocolVersion.getCode());
-
-        this.target = target;
+        this.target = snmpAuthService.setUpSnmpTarget(profileTransportConfig, deviceTransportConfig);
         log.info("SNMP target initialized: {}", target);
     }
 
