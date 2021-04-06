@@ -30,7 +30,6 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
@@ -107,8 +106,8 @@ public class BaseEventService implements EventService {
     }
 
     @Override
-    public PageData<Event> findEvents(TenantId tenantId, EntityId entityId, String eventType, String bodyFilter, String dataSearch, String metadataSearch, TimePageLink pageLink) {
-        return eventDao.findEvents(tenantId.getId(), entityId, eventType, bodyFilter, dataSearch, metadataSearch, pageLink);
+    public PageData<Event> findEvents(TenantId tenantId, EntityId entityId, String eventType, String bodyFilter, String dataSearch, String metadataSearch, Boolean isError, TimePageLink pageLink) {
+        return eventDao.findEvents(tenantId.getId(), entityId, eventType, bodyFilter, dataSearch, metadataSearch, isError, pageLink);
     }
 
     @Override

@@ -34,7 +34,6 @@ import org.thingsboard.server.dao.event.EventDao;
 import org.thingsboard.server.dao.model.sql.EventEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -149,7 +148,7 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
     }
 
     @Override
-    public PageData<Event> findEvents(UUID tenantId, EntityId entityId, String eventType, String bodyFilter, String dataSearch, String metadataSearch, TimePageLink pageLink) {
+    public PageData<Event> findEvents(UUID tenantId, EntityId entityId, String eventType, String bodyFilter, String dataSearch, String metadataSearch, Boolean isError, TimePageLink pageLink) {
         Long startTime = pageLink.getStartTime() == null ? 0 : pageLink.getStartTime();
         Long endTime = pageLink.getEndTime() == null ? 0 : pageLink.getEndTime();
         return DaoUtil.toPageData(
@@ -164,6 +163,7 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
                                 bodyFilter,
                                 dataSearch,
                                 metadataSearch,
+                                isError,
                                 DaoUtil.toPageable(pageLink)));
     }
 

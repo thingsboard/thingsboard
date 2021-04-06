@@ -82,29 +82,32 @@ public interface EventRepository extends PagingAndSortingRepository<EventEntity,
 
     @Query(nativeQuery = true,
             value = "SELECT * FROM event e WHERE " +
-            "e.tenant_id = :tenantId " +
-            "AND e.entity_type = :entityType " +
-            "AND e.entity_id = :entityId " +
-            "AND e.event_type = :eventType " +
-            "AND (:startTime = 0 OR e.created_time >= :startTime) " +
-            "AND (:endTime = 0 OR e.created_time <= :endTime) " +
-            "AND jsonb_contains(cast(e.body AS jsonb), cast(:jsonFilter AS jsonb)) " +
-            "AND (:dataSearch IS NULL OR cast(json_object_field(cast(body AS json), 'data') AS VARCHAR) " +
-                    "LIKE concat('%', :dataSearch, '%')) " +
-            "AND (:metadataSearch IS NULL OR cast(json_object_field(cast(body AS json), 'metadata') AS VARCHAR)" +
-                    "LIKE concat('%', :metadataSearch, '%')) ",
+                    "e.tenant_id = :tenantId " +
+                    "AND e.entity_type = :entityType " +
+                    "AND e.entity_id = :entityId " +
+                    "AND e.event_type = :eventType " +
+                    "AND (:startTime = 0 OR e.created_time >= :startTime) " +
+                    "AND (:endTime = 0 OR e.created_time <= :endTime) " +
+                    "AND jsonb_contains(cast(lower(e.body) AS jsonb), cast(lower(:jsonFilter) AS jsonb)) " +
+                    "AND (:dataSearch IS NULL OR lower(cast(json_object_field(cast(body AS json), 'data') AS VARCHAR)) " +
+                    "LIKE concat('%', lower(cast(:dataSearch as varchar)), '%')) " +
+                    "AND (:metadataSearch IS NULL OR lower(cast(json_object_field(cast(body AS json), 'metadata') AS VARCHAR)) " +
+                    "LIKE concat('%', lower(cast(:metadataSearch as varchar)), '%')) " +
+                    "AND (jsonb_object_field(cast(e.body as jsonb), 'error') is not null) = :isError ",
             countQuery = "SELECT count(*) FROM event e WHERE " +
-            "e.tenant_id = :tenantId " +
-            "AND e.entity_type = :entityType " +
-            "AND e.entity_id = :entityId " +
-            "AND e.event_type = :eventType " +
-            "AND (:startTime = 0 OR e.created_time >= :startTime) " +
-            "AND (:endTime = 0 OR e.created_time <= :endTime) " +
-            "AND jsonb_contains(cast(e.body AS jsonb), cast(:jsonFilter AS jsonb)) " +
-            "AND (:dataSearch IS NULL OR cast(json_object_field(cast(body AS json), 'data') AS VARCHAR) " +
-            "LIKE concat('%', :dataSearch, '%')) " +
-            "AND (:metadataSearch IS NULL OR cast(json_object_field(cast(body AS json), 'metadata') AS VARCHAR)" +
-            "LIKE concat('%', :metadataSearch, '%')) ")
+                    "e.tenant_id = :tenantId " +
+                    "AND e.entity_type = :entityType " +
+                    "AND e.entity_id = :entityId " +
+                    "AND e.event_type = :eventType " +
+                    "AND (:startTime = 0 OR e.created_time >= :startTime) " +
+                    "AND (:endTime = 0 OR e.created_time <= :endTime) " +
+                    "AND jsonb_contains(cast(lower(e.body) AS jsonb), cast(lower(:jsonFilter) AS jsonb)) " +
+                    "AND (:dataSearch IS NULL OR lower(cast(json_object_field(cast(body AS json), 'data') AS VARCHAR)) " +
+                    "LIKE concat('%', lower(cast(:dataSearch as varchar)), '%')) " +
+                    "AND (:metadataSearch IS NULL OR lower(cast(json_object_field(cast(body AS json), 'metadata') AS VARCHAR)) " +
+                    "LIKE concat('%', lower(cast(:metadataSearch as varchar)), '%')) " +
+                    "AND (jsonb_object_field(cast(e.body as jsonb), 'error') is not null) = :isError "
+    )
     Page<EventEntity> findEventsByTenantIdAndEntityIdAndEventTypeByFilters(@Param("tenantId") UUID tenantId,
                                                                   @Param("entityType") String entityType,
                                                                   @Param("entityId") UUID entityId,
@@ -114,6 +117,7 @@ public interface EventRepository extends PagingAndSortingRepository<EventEntity,
                                                                   @Param("jsonFilter") String jsonFilter,
                                                                   @Param("dataSearch") String dataSearch,
                                                                   @Param("metadataSearch") String metadataSearch,
+                                                                  @Param("isError") boolean isError,
                                                                   Pageable pageable);
 
 }

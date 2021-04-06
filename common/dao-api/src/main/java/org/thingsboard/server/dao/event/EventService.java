@@ -41,7 +41,7 @@ public interface EventService {
 
     List<Event> findLatestEvents(TenantId tenantId, EntityId entityId, String eventType, int limit);
 
-    PageData<Event> findEvents(TenantId tenantId, EntityId entityId, String eventType, String bodyFilter, String dataSearch, String metadataSearch, TimePageLink pageLink);
+    PageData<Event> findEvents(TenantId tenantId, EntityId entityId, String eventType, String bodyFilter, String dataSearch, String metadataSearch, Boolean isError, TimePageLink pageLink);
 
     void removeEvents(TenantId tenantId, EntityId entityId);
 

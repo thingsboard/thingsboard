@@ -114,6 +114,7 @@ public class EventController extends BaseController {
             @RequestParam int pageSize,
             @RequestParam int page,
             @RequestBody String bodyFilter,
+            @RequestParam(required = false) boolean isError,
             @RequestParam(required = false) String dataSearch,
             @RequestParam(required = false) String metadataSearch,
             @RequestParam(required = false) String textSearch,
@@ -129,12 +130,12 @@ public class EventController extends BaseController {
             EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
             checkEntityId(entityId, Operation.READ);
 
-            if(!sortProperty.isEmpty() && sortProperty.equals("createdTime")) {
+            if(sortProperty != null && sortProperty.equals("createdTime")) {
                 sortProperty = ModelConstants.CREATED_TIME_PROPERTY;
             }
 
             TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
-            return checkNotNull(eventService.findEvents(tenantId, entityId, eventType, bodyFilter, dataSearch, metadataSearch, pageLink));
+            return checkNotNull(eventService.findEvents(tenantId, entityId, eventType, bodyFilter, dataSearch, metadataSearch, isError, pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }
