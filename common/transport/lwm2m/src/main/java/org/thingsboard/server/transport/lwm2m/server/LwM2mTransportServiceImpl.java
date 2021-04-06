@@ -146,9 +146,9 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
      * Next ->  Create new LwM2MClient for current session -> setModelClient...
      *
      * @param registration         - Registration LwM2M Client
-     * @param previousObsersations - may be null
+     * @param previousObservations - may be null
      */
-    public void onRegistered(Registration registration, Collection<Observation> previousObsersations) {
+    public void onRegistered(Registration registration, Collection<Observation> previousObservations) {
         executorRegistered.submit(() -> {
             try {
                 log.warn("[{}] [{{}] Client: create after Registration", registration.getEndpoint(), registration.getId());
@@ -188,6 +188,13 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
                     LwM2mClient lwM2MClient = this.lwM2mClientContext.getLwM2MClient(sessionInfo);
                     if (lwM2MClient.getDeviceId() == null && lwM2MClient.getProfileId() == null) {
                         initLwM2mClient(lwM2MClient, sessionInfo);
+                    } else {
+                        if (registration.getBindingMode().useQueueMode()) {
+                            LwM2mQueuedRequest request;
+                            while ((request = lwM2MClient.getQueuedRequests().poll()) != null) {
+                                request.send();
+                            }
+                        }
                     }
 
                     log.info("Client: [{}] updatedReg [{}] name  [{}] profile ", registration.getId(), registration.getEndpoint(), sessionInfo.getDeviceType());
@@ -206,7 +213,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
      *                     !!! Warn: if have not finishing unReg, then this operation will be finished on next Client`s connect
      */
     public void unReg(Registration registration, Collection<Observation> observations) {
-        executorUnRegistered.submit(() -> {
+         executorUnRegistered.submit(() -> {
             try {
                 this.setCancelObservations(registration);
                 this.sendLogsToThingsboard(LOG_LW2M_INFO + ": Client unRegistration", registration);
@@ -239,8 +246,11 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         }
     }
 
+    @Override
     public void onSleepingDev(Registration registration) {
         log.info("[{}] [{}] Received endpoint Sleeping version event", registration.getId(), registration.getEndpoint());
+        this.sendLogsToThingsboard(LOG_LW2M_INFO + ": Client is sleeping!", registration);
+
         //TODO: associate endpointId with device information.
     }
 
@@ -417,6 +427,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
      */
     protected void onAwakeDev(Registration registration) {
         log.info("[{}] [{}] Received endpoint Awake version event", registration.getId(), registration.getEndpoint());
+        this.sendLogsToThingsboard(LOG_LW2M_INFO + ": Client is awake!", registration);
         //TODO: associate endpointId with device information.
     }
 
@@ -612,7 +623,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         if (GET_TYPE_OPER_READ.equals(typeOper)) {
             result = JacksonUtil.fromString(lwM2MClientProfile.getPostAttributeProfile().toString(), new TypeReference<>() {
             });
-            result.addAll(JacksonUtil.fromString(lwM2MClientProfile.getPostTelemetryProfile().toString(), new TypeReference<>() {
+            result.addAll(JacksonUtil.convertValue(lwM2MClientProfile.getPostTelemetryProfile().toString(), new TypeReference<>() {
             }));
         } else {
             result = JacksonUtil.fromString(lwM2MClientProfile.getPostObserveProfile().toString(), new TypeReference<>() {
