@@ -24,6 +24,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.event.DebugRuleNodeEvent;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -148,23 +149,28 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
     }
 
     @Override
-    public PageData<Event> findEvents(UUID tenantId, EntityId entityId, String eventType, String bodyFilter, String dataSearch, String metadataSearch, Boolean isError, TimePageLink pageLink) {
+    public PageData<Event> findDebugRuleNodeEvents(UUID tenantId, EntityId entityId, DebugRuleNodeEvent debugRuleNodeEvent, TimePageLink pageLink) {
         Long startTime = pageLink.getStartTime() == null ? 0 : pageLink.getStartTime();
         Long endTime = pageLink.getEndTime() == null ? 0 : pageLink.getEndTime();
         return DaoUtil.toPageData(
-                eventRepository
-                        .findEventsByTenantIdAndEntityIdAndEventTypeByFilters(
+                eventRepository.
+                        findDebugRuleNodeEvents(
                                 tenantId,
-                                entityId.getEntityType().name(),
                                 entityId.getId(),
-                                eventType,
+                                entityId.getEntityType().name(),
                                 startTime,
                                 endTime,
-                                bodyFilter,
-                                dataSearch,
-                                metadataSearch,
-                                isError,
-                                DaoUtil.toPageable(pageLink)));
+                                debugRuleNodeEvent.getType(),
+                                debugRuleNodeEvent.getServer(),
+                                debugRuleNodeEvent.getEntityName(),
+                                debugRuleNodeEvent.getRelationType(),
+                                debugRuleNodeEvent.getMessageId(),
+                                debugRuleNodeEvent.getMessageType(),
+                                debugRuleNodeEvent.isError(),
+                                debugRuleNodeEvent.getDataSearch(),
+                                debugRuleNodeEvent.getMetadataSearch(),
+                                DaoUtil.toPageable(pageLink))
+        );
     }
 
     @Override

@@ -25,6 +25,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.event.DebugRuleNodeEvent;
+import org.thingsboard.server.common.data.event.EventProvisionConfiguration;
+import org.thingsboard.server.common.data.event.EventType;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -104,19 +108,15 @@ public class EventController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/events/{entityType}/{entityId}/{eventType}", method = RequestMethod.POST)
+    @RequestMapping(value = "/events/{entityType}/{entityId}", method = RequestMethod.POST)
     @ResponseBody
     public PageData<Event> getEvents(
             @PathVariable("entityType") String strEntityType,
             @PathVariable("entityId") String strEntityId,
-            @PathVariable("eventType") String eventType,
             @RequestParam("tenantId") String strTenantId,
             @RequestParam int pageSize,
             @RequestParam int page,
-            @RequestBody String bodyFilter,
-            @RequestParam(required = false) boolean isError,
-            @RequestParam(required = false) String dataSearch,
-            @RequestParam(required = false) String metadataSearch,
+            @RequestBody EventProvisionConfiguration eventProvisionConfiguration,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String sortProperty,
             @RequestParam(required = false) String sortOrder,
@@ -135,7 +135,16 @@ public class EventController extends BaseController {
             }
 
             TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
-            return checkNotNull(eventService.findEvents(tenantId, entityId, eventType, bodyFilter, dataSearch, metadataSearch, isError, pageLink));
+
+            if(eventProvisionConfiguration.getEventType() == EventType.DEBUG_RULE_NODE) {
+                return checkNotNull(eventService.findDebugRuleNodeEvents(
+                        tenantId,
+                        entityId,
+                        (DebugRuleNodeEvent) eventProvisionConfiguration,
+                        pageLink));
+            }
+
+            throw new ThingsboardException("Not supported type: " + eventProvisionConfiguration.getEventType(), ThingsboardErrorCode.INVALID_ARGUMENTS);
         } catch (Exception e) {
             throw handleException(e);
         }

@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.event;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.event.DebugRuleNodeEvent;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -41,7 +42,7 @@ public interface EventService {
 
     List<Event> findLatestEvents(TenantId tenantId, EntityId entityId, String eventType, int limit);
 
-    PageData<Event> findEvents(TenantId tenantId, EntityId entityId, String eventType, String bodyFilter, String dataSearch, String metadataSearch, Boolean isError, TimePageLink pageLink);
+    PageData<Event> findDebugRuleNodeEvents(TenantId tenantId, EntityId entityId, DebugRuleNodeEvent debugRuleNodeEvent, TimePageLink pageLink);
 
     void removeEvents(TenantId tenantId, EntityId entityId);
 
