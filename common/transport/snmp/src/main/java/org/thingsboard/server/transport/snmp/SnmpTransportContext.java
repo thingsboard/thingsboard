@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.transport.snmp;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
@@ -61,17 +61,17 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 public class SnmpTransportContext extends TransportContext {
+    @Getter
     private final SnmpTransportService snmpTransportService;
     private final TransportDeviceProfileCache deviceProfileCache;
     private final TransportService transportService;
     private final ProtoTransportEntityService protoEntityService;
     private final SnmpTransportBalancingService balancingService;
+    @Getter
+    private final SnmpAuthService snmpAuthService;
 
     private final Map<DeviceId, DeviceSessionContext> sessions = new ConcurrentHashMap<>();
     private Collection<DeviceId> allSnmpDevicesIds = new ConcurrentLinkedDeque<>();
-
-    @Value("${transport.snmp.underlying_protocol}")
-    private String snmpUnderlyingProtocol;
 
     @AfterStartUp(order = 2)
     public void initDevicesSessions() {
@@ -116,8 +116,7 @@ public class SnmpTransportContext extends TransportContext {
 
         DeviceSessionContext deviceSessionContext = new DeviceSessionContext(
                 device, deviceProfile, credentials.getCredentialsId(),
-                profileTransportConfiguration, deviceTransportConfiguration,
-                this, snmpTransportService, snmpUnderlyingProtocol
+                profileTransportConfiguration, deviceTransportConfiguration, this
         );
         registerSessionMsgListener(deviceSessionContext);
         sessions.put(device.getId(), deviceSessionContext);
@@ -155,6 +154,7 @@ public class SnmpTransportContext extends TransportContext {
         if (sessionContext == null) return;
         log.info("Destroying SNMP device session for device {}", sessionContext.getDevice().getId());
         sessionContext.close();
+        snmpAuthService.cleanUpSnmpAuthInfo(sessionContext);
         transportService.deregisterSession(sessionContext.getSessionInfo());
         sessions.remove(sessionContext.getDeviceId());
         snmpTransportService.cancelQueryingTasks(sessionContext);

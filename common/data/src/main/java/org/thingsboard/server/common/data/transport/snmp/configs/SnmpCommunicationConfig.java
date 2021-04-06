@@ -31,9 +31,7 @@ import java.util.List;
 @JsonSubTypes({
         @Type(value = TelemetryQueryingSnmpCommunicationConfig.class, name = "TELEMETRY_QUERYING"),
         @Type(value = ClientAttributesQueryingSnmpCommunicationConfig.class, name = "CLIENT_ATTRIBUTES_QUERYING"),
-        @Type(value = SharedAttributesSettingSnmpCommunicationConfig.class, name = "SHARED_ATTRIBUTES_SETTING"),
-        @Type(value = TelemetryTrapsReceivingSnmpCommunicationConfig.class, name = "TELEMETRY_TRAPS_RECEIVING"),
-        @Type(value = ClientAttributesTrapsReceivingSnmpCommunicationConfig.class, name = "CLIENT_ATTRIBUTES_TRAPS_RECEIVING")
+        @Type(value = SharedAttributesSettingSnmpCommunicationConfig.class, name = "SHARED_ATTRIBUTES_SETTING")
 })
 public abstract class SnmpCommunicationConfig {
     protected List<SnmpMapping> mappings;
