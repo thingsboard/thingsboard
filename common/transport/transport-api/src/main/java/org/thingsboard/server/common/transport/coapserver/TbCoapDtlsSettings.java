@@ -39,7 +39,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 @Slf4j
-@ConditionalOnExpression("'${transport.coap.enabled}'=='true'")
+@ConditionalOnExpression("'${transport.type:null}'=='null' || ('${transport.type}'=='local' && '${transport.coap.enabled}'=='true')")
 @ConditionalOnProperty(prefix = "transport.coap.dtls", value = "enabled", havingValue = "true", matchIfMissing = false)
 @Component
 public class TbCoapDtlsSettings {
