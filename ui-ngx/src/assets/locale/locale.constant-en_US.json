@@ -1003,6 +1003,8 @@
         "telemetry-proto-schema-required": "Telemetry proto schema is required.",
         "attributes-proto-schema": "Attributes proto schema",
         "attributes-proto-schema-required": "Attributes proto schema is required.",
+        "rpc-response-proto-schema": "RPC response proto schema",
+        "rpc-response-proto-schema-required": "RPC response proto schema is required.",
         "rpc-response-topic-filter": "RPC response topic filter",
         "rpc-response-topic-filter-required": "RPC response topic filter is required.",
         "not-valid-pattern-topic-filter": "Not valid pattern topic filter",

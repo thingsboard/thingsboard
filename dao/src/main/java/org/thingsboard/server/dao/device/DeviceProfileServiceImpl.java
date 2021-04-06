@@ -87,6 +87,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     private static final Location LOCATION = new Location("", "", -1, -1);
     private static final String ATTRIBUTES_PROTO_SCHEMA = "attributes proto schema";
     private static final String TELEMETRY_PROTO_SCHEMA = "telemetry proto schema";
+    public static final String RPC_RESPONSE_PROTO_SCHEMA = "rpc response proto schema";
 
     private static String invalidSchemaProvidedMessage(String schemaName) {
         return "[Transport Configuration] invalid " + schemaName + " provided!";
@@ -417,6 +418,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                     try {
                         validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceAttributesProtoSchema(), ATTRIBUTES_PROTO_SCHEMA);
                         validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceTelemetryProtoSchema(), TELEMETRY_PROTO_SCHEMA);
+                        validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceRpcResponseProtoSchema(), RPC_RESPONSE_PROTO_SCHEMA);
                     } catch (Exception exception) {
                         throw new DataValidationException(exception.getMessage());
                     }

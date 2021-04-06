@@ -24,6 +24,7 @@ import {
   coapDeviceTypeTranslationMap,
   CoapTransportDeviceType,
   defaultAttributesSchema,
+  defaultRpcResponseSchema,
   defaultTelemetrySchema,
   DeviceProfileTransportConfiguration,
   DeviceTransportType,
@@ -59,7 +60,8 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
   private transportPayloadTypeConfiguration = this.fb.group({
     transportPayloadType: [TransportPayloadType.JSON, Validators.required],
     deviceTelemetryProtoSchema: [defaultTelemetrySchema, Validators.required],
-    deviceAttributesProtoSchema: [defaultAttributesSchema, Validators.required]
+    deviceAttributesProtoSchema: [defaultAttributesSchema, Validators.required],
+    deviceRpcResponseProtoSchema: [defaultRpcResponseSchema, Validators.required]
   });
 
   get required(): boolean {

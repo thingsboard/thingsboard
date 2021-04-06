@@ -62,7 +62,7 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
     protected DeviceProfile deviceProfile;
 
     protected void processBeforeTest (String deviceName, String gatewayName, TransportPayloadType payloadType, String telemetryTopic, String attributesTopic) throws Exception {
-        this.processBeforeTest(deviceName, gatewayName, payloadType, telemetryTopic, attributesTopic, null, null, DeviceProfileProvisionType.DISABLED, null, null);
+        this.processBeforeTest(deviceName, gatewayName, payloadType, telemetryTopic, attributesTopic, null, null, null, DeviceProfileProvisionType.DISABLED, null, null);
     }
 
     protected void processBeforeTest(String deviceName,
@@ -72,6 +72,7 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
                                      String attributesTopic,
                                      String telemetryProtoSchema,
                                      String attributesProtoSchema,
+                                     String rpcResponseProtoSchema,
                                      DeviceProfileProvisionType provisionType,
                                      String provisionKey, String provisionSecret
                                      ) throws Exception {
@@ -103,7 +104,7 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
         gateway.setAdditionalInfo(additionalInfo);
 
         if (payloadType != null) {
-            DeviceProfile mqttDeviceProfile = createMqttDeviceProfile(payloadType, telemetryTopic, attributesTopic, telemetryProtoSchema, attributesProtoSchema, provisionType, provisionKey, provisionSecret);
+            DeviceProfile mqttDeviceProfile = createMqttDeviceProfile(payloadType, telemetryTopic, attributesTopic, telemetryProtoSchema, attributesProtoSchema, rpcResponseProtoSchema, provisionType, provisionKey, provisionSecret);
             deviceProfile = doPost("/api/deviceProfile", mqttDeviceProfile, DeviceProfile.class);
             device.setType(deviceProfile.getName());
             device.setDeviceProfileId(deviceProfile.getId());
@@ -157,7 +158,7 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
     protected DeviceProfile createMqttDeviceProfile(TransportPayloadType transportPayloadType,
                                                     String telemetryTopic, String attributesTopic,
                                                     String telemetryProtoSchema, String attributesProtoSchema,
-                                                    DeviceProfileProvisionType provisionType,
+                                                    String rpcResponseProtoSchema, DeviceProfileProvisionType provisionType,
                                                     String provisionKey, String provisionSecret) {
         DeviceProfile deviceProfile = new DeviceProfile();
         deviceProfile.setName(transportPayloadType.name());
@@ -186,8 +187,12 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
             if (StringUtils.isEmpty(attributesProtoSchema)) {
                 attributesProtoSchema = DEVICE_ATTRIBUTES_PROTO_SCHEMA;
             }
+            if (StringUtils.isEmpty(rpcResponseProtoSchema)) {
+                rpcResponseProtoSchema = DEVICE_RPC_RESPONSE_PROTO_SCHEMA;
+            }
             protoTransportPayloadConfiguration.setDeviceTelemetryProtoSchema(telemetryProtoSchema);
             protoTransportPayloadConfiguration.setDeviceAttributesProtoSchema(attributesProtoSchema);
+            protoTransportPayloadConfiguration.setDeviceRpcResponseProtoSchema(rpcResponseProtoSchema);
             transportPayloadTypeConfiguration = protoTransportPayloadConfiguration;
         }
         mqttDeviceProfileTransportConfiguration.setTransportPayloadTypeConfiguration(transportPayloadTypeConfiguration);

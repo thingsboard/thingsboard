@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.github.os72.protobuf.dynamic.DynamicSchema;
 import com.github.os72.protobuf.dynamic.EnumDefinition;
 import com.github.os72.protobuf.dynamic.MessageDefinition;
@@ -46,9 +45,11 @@ public class ProtoTransportPayloadConfiguration implements TransportPayloadTypeC
     public static final Location LOCATION = new Location("", "", -1, -1);
     public static final String ATTRIBUTES_PROTO_SCHEMA = "attributes proto schema";
     public static final String TELEMETRY_PROTO_SCHEMA = "telemetry proto schema";
+    public static final String RPC_RESPONSE_PROTO_SCHEMA = "rpc response proto schema";
 
     private String deviceTelemetryProtoSchema;
     private String deviceAttributesProtoSchema;
+    private String deviceRpcResponseProtoSchema;
 
     @Override
     public TransportPayloadType getTransportPayloadType() {
@@ -61,6 +62,23 @@ public class ProtoTransportPayloadConfiguration implements TransportPayloadTypeC
 
     public Descriptors.Descriptor getAttributesDynamicMessageDescriptor(String deviceAttributesProtoSchema) {
         return getDescriptor(deviceAttributesProtoSchema, ATTRIBUTES_PROTO_SCHEMA);
+    }
+
+    public Descriptors.Descriptor getRpcResponseDynamicMessageDescriptor(String deviceRpcResponseProtoSchema) {
+        return getDescriptor(deviceRpcResponseProtoSchema, RPC_RESPONSE_PROTO_SCHEMA);
+    }
+
+    public String getDeviceRpcResponseProtoSchema() {
+        if (!isEmptyStr(deviceRpcResponseProtoSchema)) {
+            return deviceRpcResponseProtoSchema;
+        } else {
+            return "syntax =\"proto3\";\n" +
+                    "package rpc;\n" +
+                    "\n" +
+                    "message RpcResponseMsg {\n" +
+                    "  string payload = 1;\n" +
+                    "}";
+        }
     }
 
     private Descriptors.Descriptor getDescriptor(String protoSchema, String schemaName) {

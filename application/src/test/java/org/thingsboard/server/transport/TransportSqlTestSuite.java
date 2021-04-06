@@ -27,12 +27,12 @@ import java.util.Arrays;
 @RunWith(ClasspathSuite.class)
 @ClasspathSuite.ClassnameFilters({
         "org.thingsboard.server.transport.*.rpc.sql.*Test",
-        "org.thingsboard.server.transport.*.telemetry.timeseries.sql.*Test",
-        "org.thingsboard.server.transport.*.telemetry.attributes.sql.*Test",
-        "org.thingsboard.server.transport.*.attributes.updates.sql.*Test",
-        "org.thingsboard.server.transport.*.attributes.request.sql.*Test",
-        "org.thingsboard.server.transport.*.claim.sql.*Test",
-        "org.thingsboard.server.transport.*.provision.sql.*Test"
+//        "org.thingsboard.server.transport.*.telemetry.timeseries.sql.*Test",
+//        "org.thingsboard.server.transport.*.telemetry.attributes.sql.*Test",
+//        "org.thingsboard.server.transport.*.attributes.updates.sql.*Test",
+//        "org.thingsboard.server.transport.*.attributes.request.sql.*Test",
+//        "org.thingsboard.server.transport.*.claim.sql.*Test",
+//        "org.thingsboard.server.transport.*.provision.sql.*Test"
 })
 public class TransportSqlTestSuite {
 

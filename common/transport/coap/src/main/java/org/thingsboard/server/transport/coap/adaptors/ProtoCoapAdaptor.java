@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.coap.adaptors;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
@@ -63,16 +64,16 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
     }
 
     @Override
-    public TransportProtos.ToDeviceRpcResponseMsg convertToDeviceRpcResponse(UUID sessionId, Request inbound) throws AdaptorException {
+    public TransportProtos.ToDeviceRpcResponseMsg convertToDeviceRpcResponse(UUID sessionId, Request inbound, Descriptors.Descriptor rpcResponseMsgDescriptor) throws AdaptorException {
         Optional<Integer> requestId = CoapTransportResource.getRequestId(inbound);
         if (requestId.isEmpty()) {
             throw new AdaptorException("Request id is missing!");
         } else {
             try {
-                String payload = TransportProtos.ToDeviceRpcResponseMsg.parseFrom(inbound.getPayload()).getPayload();
-                return TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId.get())
-                        .setPayload(payload).build();
-            } catch (InvalidProtocolBufferException e) {
+                JsonElement response = new JsonParser().parse(dynamicMsgToJson(inbound.getPayload(), rpcResponseMsgDescriptor));
+                return TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId.orElseThrow(() -> new AdaptorException("Request id is missing!")))
+                        .setPayload(response.toString()).build();
+            } catch (Exception e) {
                 throw new AdaptorException(e);
             }
         }

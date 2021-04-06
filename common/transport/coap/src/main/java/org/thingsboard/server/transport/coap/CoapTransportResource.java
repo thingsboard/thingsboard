@@ -299,7 +299,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                     break;
                 case TO_DEVICE_RPC_RESPONSE:
                     transportService.process(sessionInfo,
-                            coapTransportAdaptor.convertToDeviceRpcResponse(sessionId, request),
+                            coapTransportAdaptor.convertToDeviceRpcResponse(sessionId, request, transportConfigurationContainer.getRpcResponseMsgDescriptor()),
                             new CoapOkCallback(exchange, CoAP.ResponseCode.CREATED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
                     break;
                 case TO_SERVER_RPC_REQUEST:
@@ -541,9 +541,11 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                             (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
                     String deviceTelemetryProtoSchema = protoTransportPayloadConfiguration.getDeviceTelemetryProtoSchema();
                     String deviceAttributesProtoSchema = protoTransportPayloadConfiguration.getDeviceAttributesProtoSchema();
+                    String deviceRpcResponseProtoSchema = protoTransportPayloadConfiguration.getDeviceRpcResponseProtoSchema();
                     return new TransportConfigurationContainer(false,
                             protoTransportPayloadConfiguration.getTelemetryDynamicMessageDescriptor(deviceTelemetryProtoSchema),
-                            protoTransportPayloadConfiguration.getAttributesDynamicMessageDescriptor(deviceAttributesProtoSchema));
+                            protoTransportPayloadConfiguration.getAttributesDynamicMessageDescriptor(deviceAttributesProtoSchema),
+                            protoTransportPayloadConfiguration.getRpcResponseDynamicMessageDescriptor(deviceRpcResponseProtoSchema));
                 }
             } else {
                 throw new AdaptorException("Invalid CoapDeviceTypeConfiguration type: " + coapDeviceTypeConfiguration.getClass().getSimpleName() + "!");
@@ -563,11 +565,13 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         private boolean jsonPayload;
         private Descriptors.Descriptor telemetryMsgDescriptor;
         private Descriptors.Descriptor attributesMsgDescriptor;
+        private Descriptors.Descriptor rpcResponseMsgDescriptor;
 
-        public TransportConfigurationContainer(boolean jsonPayload, Descriptors.Descriptor telemetryMsgDescriptor, Descriptors.Descriptor attributesMsgDescriptor) {
+        public TransportConfigurationContainer(boolean jsonPayload, Descriptors.Descriptor telemetryMsgDescriptor, Descriptors.Descriptor attributesMsgDescriptor, Descriptors.Descriptor rpcResponseMsgDescriptor) {
             this.jsonPayload = jsonPayload;
             this.telemetryMsgDescriptor = telemetryMsgDescriptor;
             this.attributesMsgDescriptor = attributesMsgDescriptor;
+            this.rpcResponseMsgDescriptor = rpcResponseMsgDescriptor;
         }
 
         public TransportConfigurationContainer(boolean jsonPayload) {

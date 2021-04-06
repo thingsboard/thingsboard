@@ -15,18 +15,33 @@
  */
 package org.thingsboard.server.transport.mqtt.rpc;
 
+import com.github.os72.protobuf.dynamic.DynamicSchema;
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
+import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
+import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
-import org.thingsboard.server.gen.transport.TransportProtos;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
 public abstract class AbstractMqttServerSideRpcProtoIntegrationTest extends AbstractMqttServerSideRpcIntegrationTest {
@@ -83,14 +98,44 @@ public abstract class AbstractMqttServerSideRpcProtoIntegrationTest extends Abst
         return builder.build();
     }
 
+    protected void processTwoWayRpcTest() throws Exception {
+        MqttAsyncClient client = getMqttAsyncClient(accessToken);
+        client.subscribe(MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC, 1);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        TestMqttCallback callback = new TestMqttCallback(client, latch);
+        client.setCallback(callback);
+
+        Thread.sleep(1000);
+
+        String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"26\",\"value\": 1}}";
+        String deviceId = savedDevice.getId().getId().toString();
+
+        String result = doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isOk());
+        String expected = "{\"payload\":\"{\\\"value1\\\":\\\"A\\\",\\\"value2\\\":\\\"B\\\"}\"}";
+        latch.await(3, TimeUnit.SECONDS);
+        Assert.assertEquals(expected, result);
+    }
+
     protected MqttMessage processMessageArrived(String requestTopic, MqttMessage mqttMessage) throws MqttException, InvalidProtocolBufferException {
         MqttMessage message = new MqttMessage();
         if (requestTopic.startsWith(MqttTopics.BASE_DEVICE_API_TOPIC)) {
-                TransportProtos.ToDeviceRpcResponseMsg toDeviceRpcResponseMsg = TransportProtos.ToDeviceRpcResponseMsg.newBuilder()
-                        .setPayload(DEVICE_RESPONSE)
-                        .setRequestId(0)
-                        .build();
-                message.setPayload(toDeviceRpcResponseMsg.toByteArray());
+            DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
+            assertTrue(transportConfiguration instanceof MqttDeviceProfileTransportConfiguration);
+            MqttDeviceProfileTransportConfiguration mqttTransportConfiguration = (MqttDeviceProfileTransportConfiguration) transportConfiguration;
+            TransportPayloadTypeConfiguration transportPayloadTypeConfiguration = mqttTransportConfiguration.getTransportPayloadTypeConfiguration();
+            assertTrue(transportPayloadTypeConfiguration instanceof ProtoTransportPayloadConfiguration);
+            ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
+            ProtoFileElement transportProtoSchemaFile = protoTransportPayloadConfiguration.getTransportProtoSchema(DEVICE_RPC_RESPONSE_PROTO_SCHEMA);
+            DynamicSchema rpcResponseProtoSchema = protoTransportPayloadConfiguration.getDynamicSchema(transportProtoSchemaFile, ProtoTransportPayloadConfiguration.RPC_RESPONSE_PROTO_SCHEMA);
+
+            DynamicMessage.Builder rpcResponseBuilder = rpcResponseProtoSchema.newMessageBuilder("RpcResponseMsg");
+            Descriptors.Descriptor rpcResponseMsgDescriptor = rpcResponseBuilder.getDescriptorForType();
+            assertNotNull(rpcResponseMsgDescriptor);
+            DynamicMessage rpcResponseMsg = rpcResponseBuilder
+                    .setField(rpcResponseMsgDescriptor.findFieldByName("payload"), DEVICE_RESPONSE)
+                    .build();
+                message.setPayload(rpcResponseMsg.toByteArray());
         } else {
             TransportApiProtos.GatewayDeviceRpcRequestMsg msg = TransportApiProtos.GatewayDeviceRpcRequestMsg.parseFrom(mqttMessage.getPayload());
             String deviceName = msg.getDeviceName();

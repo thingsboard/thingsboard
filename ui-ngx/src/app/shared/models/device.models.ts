@@ -140,6 +140,14 @@ export const defaultAttributesSchema =
   '  string serialNumber = 2;\n' +
   '}';
 
+export const defaultRpcResponseSchema =
+  'syntax ="proto3";\n' +
+  'package rpc;\n' +
+  '\n' +
+  'message RpcResponseMsg {\n' +
+  '  string payload = 1;\n' +
+  '}';
+
 export const coapDeviceTypeTranslationMap = new Map<CoapTransportDeviceType, string>(
   [
     [CoapTransportDeviceType.DEFAULT, 'device-profile.coap-device-type-default'],
@@ -281,7 +289,10 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
         break;*/
       case DeviceTransportType.COAP:
         const coapTransportConfiguration: CoapDeviceProfileTransportConfiguration = {
-          coapDeviceTypeConfiguration: {coapDeviceType: CoapTransportDeviceType.DEFAULT, transportPayloadTypeConfiguration: {transportPayloadType: TransportPayloadType.JSON}}
+          coapDeviceTypeConfiguration: {
+            coapDeviceType: CoapTransportDeviceType.DEFAULT,
+            transportPayloadTypeConfiguration: {transportPayloadType: TransportPayloadType.JSON}
+          }
         };
         transportConfiguration = {...coapTransportConfiguration, type: DeviceTransportType.COAP};
         break;

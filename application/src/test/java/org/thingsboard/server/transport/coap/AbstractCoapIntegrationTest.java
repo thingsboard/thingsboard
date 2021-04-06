@@ -53,7 +53,7 @@ import static org.junit.Assert.assertNotNull;
 public abstract class AbstractCoapIntegrationTest extends AbstractTransportIntegrationTest {
 
     protected void processBeforeTest(String deviceName, CoapDeviceType coapDeviceType, TransportPayloadType payloadType) throws Exception {
-        this.processBeforeTest(deviceName, coapDeviceType, payloadType, null, null, DeviceProfileProvisionType.DISABLED, null, null);
+        this.processBeforeTest(deviceName, coapDeviceType, payloadType, null, null, null, DeviceProfileProvisionType.DISABLED, null, null);
     }
 
     protected void processBeforeTest(String deviceName,
@@ -61,6 +61,7 @@ public abstract class AbstractCoapIntegrationTest extends AbstractTransportInteg
                                      TransportPayloadType payloadType,
                                      String telemetryProtoSchema,
                                      String attributesProtoSchema,
+                                     String rpcResponseProtoSchema,
                                      DeviceProfileProvisionType provisionType,
                                      String provisionKey, String provisionSecret
     ) throws Exception {
@@ -85,7 +86,7 @@ public abstract class AbstractCoapIntegrationTest extends AbstractTransportInteg
         device.setType("default");
 
         if (coapDeviceType != null) {
-            DeviceProfile coapDeviceProfile = createCoapDeviceProfile(payloadType, coapDeviceType, attributesProtoSchema, provisionType, provisionKey, provisionSecret, telemetryProtoSchema);
+            DeviceProfile coapDeviceProfile = createCoapDeviceProfile(payloadType, coapDeviceType, provisionSecret, provisionType, provisionKey, attributesProtoSchema, telemetryProtoSchema, rpcResponseProtoSchema);
             deviceProfile = doPost("/api/deviceProfile", coapDeviceProfile, DeviceProfile.class);
             device.setType(deviceProfile.getName());
             device.setDeviceProfileId(deviceProfile.getId());
@@ -103,8 +104,9 @@ public abstract class AbstractCoapIntegrationTest extends AbstractTransportInteg
     }
 
     protected DeviceProfile createCoapDeviceProfile(TransportPayloadType transportPayloadType, CoapDeviceType coapDeviceType,
-                                                    String attributesProtoSchema, DeviceProfileProvisionType provisionType,
-                                                    String provisionKey, String provisionSecret, String telemetryProtoSchema) {
+                                                    String provisionSecret, DeviceProfileProvisionType provisionType,
+                                                    String provisionKey, String attributesProtoSchema,
+                                                    String telemetryProtoSchema, String rpcResponseProtoSchema) {
         DeviceProfile deviceProfile = new DeviceProfile();
         deviceProfile.setName(transportPayloadType.name());
         deviceProfile.setType(DeviceProfileType.DEFAULT);
@@ -127,8 +129,12 @@ public abstract class AbstractCoapIntegrationTest extends AbstractTransportInteg
                 if (StringUtils.isEmpty(attributesProtoSchema)) {
                     attributesProtoSchema = DEVICE_ATTRIBUTES_PROTO_SCHEMA;
                 }
+                if (StringUtils.isEmpty(rpcResponseProtoSchema)) {
+                    rpcResponseProtoSchema = DEVICE_RPC_RESPONSE_PROTO_SCHEMA;
+                }
                 protoTransportPayloadConfiguration.setDeviceTelemetryProtoSchema(telemetryProtoSchema);
                 protoTransportPayloadConfiguration.setDeviceAttributesProtoSchema(attributesProtoSchema);
+                protoTransportPayloadConfiguration.setDeviceRpcResponseProtoSchema(rpcResponseProtoSchema);
                 transportPayloadTypeConfiguration = protoTransportPayloadConfiguration;
             } else {
                 transportPayloadTypeConfiguration = new JsonTransportPayloadConfiguration();
