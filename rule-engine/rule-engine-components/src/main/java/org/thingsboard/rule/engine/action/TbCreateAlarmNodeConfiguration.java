@@ -25,7 +25,7 @@ import java.util.List;
 @Data
 public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfiguration implements NodeConfiguration<TbCreateAlarmNodeConfiguration> {
 
-    private AlarmSeverity severity;
+    private String severity;
     private boolean propagate;
     private boolean useMessageAlarmData;
 
@@ -40,7 +40,7 @@ public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigura
                 "}\n" +
                 "return details;");
         configuration.setAlarmType("General Alarm");
-        configuration.setSeverity(AlarmSeverity.CRITICAL);
+        configuration.setSeverity(AlarmSeverity.CRITICAL.name());
         configuration.setPropagate(false);
         configuration.setUseMessageAlarmData(false);
         configuration.setRelationTypes(Collections.emptyList());

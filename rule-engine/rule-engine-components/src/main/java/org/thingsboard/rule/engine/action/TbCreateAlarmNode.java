@@ -22,18 +22,23 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.EnumUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -67,10 +72,19 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
     @Override
     protected ListenableFuture<TbAlarmResult> processAlarm(TbContext ctx, TbMsg msg) {
         String alarmType;
+        String alarmSeverity;
         final Alarm msgAlarm;
 
         if (!config.isUseMessageAlarmData()) {
             alarmType = TbNodeUtils.processPattern(this.config.getAlarmType(), msg);
+            if(!EnumUtils.isValidEnum(AlarmSeverity.class, this.config.getSeverity())) {
+                alarmSeverity = TbNodeUtils.processPattern(this.config.getSeverity(), msg);
+                if(!EnumUtils.isValidEnum(AlarmSeverity.class, alarmSeverity)) {
+                    ctx.tellFailure(msg, new TbNodeException("Used incorrect pattern or Alarm Severity not included in message: " + alarmSeverity));
+                    return null;
+                }
+                this.config.setSeverity(alarmSeverity);
+            }
             msgAlarm = null;
         } else {
             try {
@@ -132,7 +146,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
                 existingAlarm.setPropagate(msgAlarm.isPropagate());
                 existingAlarm.setPropagateRelationTypes(msgAlarm.getPropagateRelationTypes());
             } else {
-                existingAlarm.setSeverity(config.getSeverity());
+                existingAlarm.setSeverity(EnumUtils.getEnum(AlarmSeverity.class, this.config.getSeverity()));
                 existingAlarm.setPropagate(config.isPropagate());
                 existingAlarm.setPropagateRelationTypes(relationTypes);
             }
@@ -149,7 +163,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
                 .tenantId(tenantId)
                 .originator(msg.getOriginator())
                 .status(AlarmStatus.ACTIVE_UNACK)
-                .severity(config.getSeverity())
+                .severity(EnumUtils.getEnum(AlarmSeverity.class, this.config.getSeverity()))
                 .propagate(config.isPropagate())
                 .type(TbNodeUtils.processPattern(this.config.getAlarmType(), msg))
                 .propagateRelationTypes(relationTypes)

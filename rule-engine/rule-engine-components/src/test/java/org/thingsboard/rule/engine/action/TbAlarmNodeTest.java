@@ -388,7 +388,7 @@ public class TbAlarmNodeTest {
         try {
             TbCreateAlarmNodeConfiguration config = new TbCreateAlarmNodeConfiguration();
             config.setPropagate(true);
-            config.setSeverity(CRITICAL);
+            config.setSeverity(CRITICAL.name());
             config.setAlarmType("SomeType");
             config.setAlarmDetailsBuildJs("DETAILS");
             ObjectMapper mapper = new ObjectMapper();
