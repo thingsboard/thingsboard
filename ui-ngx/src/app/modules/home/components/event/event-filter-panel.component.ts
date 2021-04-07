@@ -19,6 +19,7 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { EntityType } from '@shared/models/entity-type.models';
 import { FilterEvent } from '@shared/models/event.models';
+import { deepTrim } from '@core/utils';
 
 export const EVENT_FILTER_PANEL_DATA = new InjectionToken<any>('AlarmFilterPanelData');
 
@@ -75,7 +76,7 @@ export class EventFilterPanelComponent {
   }
 
   update() {
-    const filter = Object.fromEntries(Object.entries(this.eventFilterFormGroup.value).filter(([_, v]) => v != null && v !== ''));
+    const filter = deepTrim(Object.fromEntries(Object.entries(this.eventFilterFormGroup.value).filter(([_, v]) => v != null && v !== '')));
     this.result = {
       filterParams: filter,
       columns: this.data.columns
