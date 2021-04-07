@@ -18,12 +18,10 @@ package org.thingsboard.server.transport.coap;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
-import org.eclipse.californium.core.network.CoapEndpoint;
-import org.eclipse.californium.core.server.resources.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.transport.coapserver.CoapServerService;
+import org.thingsboard.server.coapserver.CoapServerService;
 import org.thingsboard.server.transport.coap.efento.CoapEfentoTransportResource;
 
 import javax.annotation.PostConstruct;
@@ -65,8 +63,6 @@ public class CoapTransportService {
 
     @PreDestroy
     public void shutdown() {
-        log.info("Stopping CoAP transport!");
-        coapServer.destroy();
         log.info("CoAP transport stopped!");
     }
 }

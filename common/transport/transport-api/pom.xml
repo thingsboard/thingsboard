@@ -124,14 +124,6 @@
             <groupId>org.eclipse.leshan</groupId>
             <artifactId>leshan-server-cf</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.eclipse.californium</groupId>
-            <artifactId>californium-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.californium</groupId>
-            <artifactId>scandium</artifactId>
-        </dependency>
     </dependencies>
 
     <build>

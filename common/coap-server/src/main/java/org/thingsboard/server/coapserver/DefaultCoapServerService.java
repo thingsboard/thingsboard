@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.coapserver;
+package org.thingsboard.server.coapserver;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapServer;
@@ -61,9 +61,9 @@ public class DefaultCoapServerService implements CoapServerService {
         if (dtlsSessionsExecutor != null) {
             dtlsSessionsExecutor.shutdownNow();
         }
-        log.info("Stopping CoAP transport!");
+        log.info("Stopping CoAP server!");
         server.destroy();
-        log.info("CoAP transport stopped!");
+        log.info("CoAP server stopped!");
     }
 
     @Override

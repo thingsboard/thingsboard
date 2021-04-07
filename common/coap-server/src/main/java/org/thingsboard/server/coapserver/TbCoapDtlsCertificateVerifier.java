@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.coapserver;
+package org.thingsboard.server.coapserver;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
