@@ -42,6 +42,7 @@
         <module>transport</module>
         <module>dao-api</module>
         <module>stats</module>
+        <module>coap-server</module>
     </modules>
 
 </project>

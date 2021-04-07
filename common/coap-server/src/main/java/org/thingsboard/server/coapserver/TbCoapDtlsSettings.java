@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.coapserver;
+package org.thingsboard.server.coapserver;
 
 import com.google.common.io.Resources;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +39,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 @Slf4j
-@ConditionalOnExpression("'${transport.type:null}'=='null' || ('${transport.type}'=='local' && '${transport.coap.enabled}'=='true')")
+@ConditionalOnExpression("'${transport.coap.enabled}'=='true'")
 @ConditionalOnProperty(prefix = "transport.coap.dtls", value = "enabled", havingValue = "true", matchIfMissing = false)
 @Component
 public class TbCoapDtlsSettings {

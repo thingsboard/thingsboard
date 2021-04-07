@@ -41,6 +41,10 @@
             <artifactId>transport-api</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.thingsboard.common</groupId>
+            <artifactId>coap-server</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.eclipse.californium</groupId>
             <artifactId>californium-core</artifactId>
         </dependency>
