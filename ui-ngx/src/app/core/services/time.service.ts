@@ -79,7 +79,7 @@ export class TimeService {
 
   public boundMinInterval(min: number): number {
     if (isDefined(min)) {
-      min = Math.floor(min / 1000) * 1000;
+      min = Math.ceil(min / 1000) * 1000;
     }
     return this.toBound(min, MIN_INTERVAL, MAX_INTERVAL, MIN_INTERVAL);
   }
