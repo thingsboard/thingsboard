@@ -52,6 +52,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
@@ -110,18 +111,24 @@ public class DeviceController extends BaseController {
     @RequestMapping(value = "/device", method = RequestMethod.POST)
     @ResponseBody
     public Device saveDevice(@RequestBody Device device,
-                             @RequestParam(name = "accessToken", required = false) String accessToken) throws ThingsboardException {
+                             @RequestParam(name = "accessToken", required = false) String accessToken,
+                             @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         try {
-            device.setTenantId(getCurrentUser().getTenantId());
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getCurrentUser().getTenantId();
+
+            device.setTenantId(currentTenantId);
 
             checkEntity(device.getId(), device, Resource.DEVICE);
 
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
 
             tbClusterService.onDeviceChange(savedDevice, null);
-            tbClusterService.pushMsgToCore(new DeviceNameOrTypeUpdateMsg(savedDevice.getTenantId(),
+            tbClusterService.pushMsgToCore(new DeviceNameOrTypeUpdateMsg(currentTenantId,
                     savedDevice.getId(), savedDevice.getName(), savedDevice.getType()), null);
-            tbClusterService.onEntityStateChange(savedDevice.getTenantId(), savedDevice.getId(),
+            tbClusterService.onEntityStateChange(currentTenantId, savedDevice.getId(),
                     device.getId() == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(savedDevice.getId(), savedDevice,
