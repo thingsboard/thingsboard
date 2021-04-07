@@ -17,15 +17,21 @@ package org.thingsboard.server.common.data.device.profile;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import org.apache.commons.lang3.ArrayUtils;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.transport.snmp.SnmpMapping;
 import org.thingsboard.server.common.data.transport.snmp.configs.SnmpCommunicationConfig;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Data
 public class SnmpDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
-    private int timeoutMs;
-    private int retries;
+    private Integer timeoutMs;
+    private Integer retries;
     private List<SnmpCommunicationConfig> communicationConfigs;
 
     @Override
@@ -36,12 +42,16 @@ public class SnmpDeviceProfileTransportConfiguration implements DeviceProfileTra
     @Override
     public void validate() {
         if (!isValid()) {
-            throw new IllegalArgumentException("Transport configuration is not valid");
+            throw new IllegalArgumentException("SNMP transport configuration is not valid");
         }
     }
 
     @JsonIgnore
     private boolean isValid() {
-        return true;
+        return timeoutMs != null && timeoutMs >= 0 && retries != null && retries >= 0
+                && communicationConfigs != null && !communicationConfigs.isEmpty()
+                && communicationConfigs.stream().allMatch(config -> config != null && config.isValid())
+                && communicationConfigs.stream().flatMap(config -> config.getMappings().stream()).map(SnmpMapping::getOid)
+                .distinct().count() == communicationConfigs.stream().mapToInt(config -> config.getMappings().size()).sum();
     }
 }

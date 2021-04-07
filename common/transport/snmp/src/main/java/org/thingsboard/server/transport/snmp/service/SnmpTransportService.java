@@ -28,9 +28,11 @@ import org.snmp4j.mp.MPv3;
 import org.snmp4j.security.SecurityModels;
 import org.snmp4j.security.SecurityProtocols;
 import org.snmp4j.security.USM;
+import org.snmp4j.smi.Integer32;
 import org.snmp4j.smi.Null;
 import org.snmp4j.smi.OID;
 import org.snmp4j.smi.OctetString;
+import org.snmp4j.smi.Variable;
 import org.snmp4j.smi.VariableBinding;
 import org.snmp4j.transport.DefaultTcpTransportMapping;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
@@ -143,7 +145,7 @@ public class SnmpTransportService implements TbTransportService {
                     sendRequest(sessionContext, communicationConfig);
                 }
             } catch (Exception e) {
-                log.error("Failed to send SNMP request for device {}: {}", sessionContext.getDeviceId(), e.getMessage());
+                log.error("Failed to send SNMP request for device {}: {}", sessionContext.getDeviceId(), e.toString());
             }
         }, queryingFrequency, queryingFrequency, TimeUnit.MILLISECONDS);
     }
@@ -192,7 +194,24 @@ public class SnmpTransportService implements TbTransportService {
         pdu.addAll(communicationConfig.getMappings().stream()
                 .filter(mapping -> values.isEmpty() || values.containsKey(mapping.getKey()))
                 .map(mapping -> Optional.ofNullable(values.get(mapping.getKey()))
-                        .map(value -> new VariableBinding(new OID(mapping.getOid()), new OctetString(values.get(mapping.getKey()))))
+                        .map(value -> {
+                            Variable variable;
+                            switch (mapping.getDataType()) {
+                                case LONG:
+                                    try {
+                                        variable = new Integer32(Integer.parseInt(value));
+                                        break;
+                                    } catch (NumberFormatException ignored) {
+                                    }
+                                case DOUBLE:
+                                case BOOLEAN:
+                                case STRING:
+                                case JSON:
+                                default:
+                                    variable = new OctetString(value);
+                            }
+                            return new VariableBinding(new OID(mapping.getOid()), variable);
+                        })
                         .orElseGet(() -> new VariableBinding(new OID(mapping.getOid()))))
                 .collect(Collectors.toList()));
 
@@ -267,7 +286,9 @@ public class SnmpTransportService implements TbTransportService {
         responses.forEach((spec, response) -> {
             Optional.ofNullable(responseProcessors.get(spec))
                     .ifPresent(responseProcessor -> {
-                        responseProcessor.accept(response, sessionContext);
+                        if (!response.entrySet().isEmpty()) {
+                            responseProcessor.accept(response, sessionContext);
+                        }
                     });
         });
 

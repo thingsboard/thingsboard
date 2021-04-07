@@ -89,18 +89,12 @@ public class SnmpTransportContext extends TransportContext {
         managedDevicesIds.stream()
                 .map(protoEntityService::getDeviceById)
                 .collect(Collectors.toList())
-                .forEach(device -> {
-                    try {
-                        establishDeviceSession(device);
-                    } catch (Exception e) {
-                        log.error("Failed to establish session for SNMP device {}: {}", device.getId(), e.getMessage());
-                    }
-                });
+                .forEach(this::establishDeviceSession);
     }
 
     private void establishDeviceSession(Device device) {
         if (device == null) return;
-        log.info("Establishing SNMP device session for device {}", device.getId());
+        log.info("Establishing SNMP session for device {}", device.getId());
 
         DeviceProfileId deviceProfileId = device.getDeviceProfileId();
         DeviceProfile deviceProfile = deviceProfileCache.get(deviceProfileId);
@@ -114,18 +108,24 @@ public class SnmpTransportContext extends TransportContext {
         SnmpDeviceProfileTransportConfiguration profileTransportConfiguration = (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
         SnmpDeviceTransportConfiguration deviceTransportConfiguration = (SnmpDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
 
-        DeviceSessionContext deviceSessionContext = new DeviceSessionContext(
-                device, deviceProfile, credentials.getCredentialsId(),
-                profileTransportConfiguration, deviceTransportConfiguration, this
-        );
-        registerSessionMsgListener(deviceSessionContext);
+        DeviceSessionContext deviceSessionContext;
+        try {
+            deviceSessionContext = new DeviceSessionContext(
+                    device, deviceProfile, credentials.getCredentialsId(),
+                    profileTransportConfiguration, deviceTransportConfiguration, this
+            );
+            registerSessionMsgListener(deviceSessionContext);
+        } catch (Exception e) {
+            log.error("Failed to establish session for SNMP device {}: {}", device.getId(), e.getMessage());
+            return;
+        }
         sessions.put(device.getId(), deviceSessionContext);
         snmpTransportService.createQueryingTasks(deviceSessionContext);
         log.info("Established SNMP device session for device {}", device.getId());
     }
 
     private void updateDeviceSession(DeviceSessionContext sessionContext, Device device, DeviceProfile deviceProfile) {
-        log.info("Updating SNMP device session for device {}", device.getId());
+        log.info("Updating SNMP session for device {}", device.getId());
 
         DeviceCredentials credentials = protoEntityService.getDeviceCredentialsByDeviceId(device.getId());
         if (credentials.getCredentialsType() != DeviceCredentialsType.ACCESS_TOKEN) {
@@ -137,16 +137,20 @@ public class SnmpTransportContext extends TransportContext {
         SnmpDeviceProfileTransportConfiguration newProfileTransportConfiguration = (SnmpDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration();
         SnmpDeviceTransportConfiguration newDeviceTransportConfiguration = (SnmpDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
 
-        if (!newProfileTransportConfiguration.equals(sessionContext.getProfileTransportConfiguration())) {
-            sessionContext.setProfileTransportConfiguration(newProfileTransportConfiguration);
-            sessionContext.initializeTarget(newProfileTransportConfiguration, newDeviceTransportConfiguration);
-            snmpTransportService.cancelQueryingTasks(sessionContext);
-            snmpTransportService.createQueryingTasks(sessionContext);
-        } else if (!newDeviceTransportConfiguration.equals(sessionContext.getDeviceTransportConfiguration())) {
-            sessionContext.setDeviceTransportConfiguration(newDeviceTransportConfiguration);
-            sessionContext.initializeTarget(newProfileTransportConfiguration, newDeviceTransportConfiguration);
-        } else {
-            log.trace("Configuration of the device {} was not updated", device);
+        try {
+            if (!newProfileTransportConfiguration.equals(sessionContext.getProfileTransportConfiguration())) {
+                sessionContext.setProfileTransportConfiguration(newProfileTransportConfiguration);
+                sessionContext.initializeTarget(newProfileTransportConfiguration, newDeviceTransportConfiguration);
+                snmpTransportService.cancelQueryingTasks(sessionContext);
+                snmpTransportService.createQueryingTasks(sessionContext);
+            } else if (!newDeviceTransportConfiguration.equals(sessionContext.getDeviceTransportConfiguration())) {
+                sessionContext.setDeviceTransportConfiguration(newDeviceTransportConfiguration);
+                sessionContext.initializeTarget(newProfileTransportConfiguration, newDeviceTransportConfiguration);
+            } else {
+                log.trace("Configuration of the device {} was not updated", device);
+            }
+        } catch (Exception e) {
+            log.error("Failed to update session for SNMP device {}: {}", sessionContext.getDeviceId(), e.getMessage());
         }
     }
 
@@ -156,8 +160,8 @@ public class SnmpTransportContext extends TransportContext {
         sessionContext.close();
         snmpAuthService.cleanUpSnmpAuthInfo(sessionContext);
         transportService.deregisterSession(sessionContext.getSessionInfo());
-        sessions.remove(sessionContext.getDeviceId());
         snmpTransportService.cancelQueryingTasks(sessionContext);
+        sessions.remove(sessionContext.getDeviceId());
         log.trace("Unregistered and removed session");
     }
 

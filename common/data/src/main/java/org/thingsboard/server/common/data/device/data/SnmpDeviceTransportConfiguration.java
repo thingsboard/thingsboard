@@ -17,16 +17,21 @@ package org.thingsboard.server.common.data.device.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.ToString;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.transport.snmp.AuthenticationProtocol;
 import org.thingsboard.server.common.data.transport.snmp.PrivacyProtocol;
 import org.thingsboard.server.common.data.transport.snmp.SnmpProtocolVersion;
 
+import java.util.Objects;
+
 @Data
+@ToString(of = {"host", "port", "protocolVersion"})
 public class SnmpDeviceTransportConfiguration implements DeviceTransportConfiguration {
-    private String address;
-    private int port;
+    private String host;
+    private Integer port;
     private SnmpProtocolVersion protocolVersion;
 
     /*
@@ -60,6 +65,21 @@ public class SnmpDeviceTransportConfiguration implements DeviceTransportConfigur
 
     @JsonIgnore
     private boolean isValid() {
-        return true;
+        boolean isValid = StringUtils.isNotBlank(host) && port != null && protocolVersion != null;
+        if (isValid) {
+            switch (protocolVersion) {
+                case V1:
+                case V2C:
+                    isValid = StringUtils.isNotEmpty(community);
+                    break;
+                case V3:
+                    isValid = StringUtils.isNotBlank(username) && StringUtils.isNotBlank(securityName)
+                            && contextName != null && authenticationProtocol != null
+                            && StringUtils.isNotBlank(authenticationPassphrase)
+                            && privacyProtocol != null && privacyPassphrase != null && engineId != null;
+                    break;
+            }
+        }
+        return isValid;
     }
 }
