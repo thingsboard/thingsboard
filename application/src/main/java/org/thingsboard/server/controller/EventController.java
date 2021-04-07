@@ -26,8 +26,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.event.DebugRuleNodeEvent;
+import org.thingsboard.server.common.data.event.ErrorEvent;
 import org.thingsboard.server.common.data.event.EventProvisionConfiguration;
-import org.thingsboard.server.common.data.event.EventType;
+import org.thingsboard.server.common.data.event.LifeCycleEvent;
+import org.thingsboard.server.common.data.event.StatisticsEvent;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -136,11 +138,26 @@ public class EventController extends BaseController {
 
             TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
 
-            if(eventProvisionConfiguration.getEventType() == EventType.DEBUG_RULE_NODE) {
-                return checkNotNull(eventService.findDebugRuleNodeEvents(
+            switch (eventProvisionConfiguration.getEventType()) {
+                case DEBUG_RULE_NODE: return checkNotNull(eventService.findDebugRuleNodeEvents(
                         tenantId,
                         entityId,
                         (DebugRuleNodeEvent) eventProvisionConfiguration,
+                        pageLink));
+                case ERROR: return checkNotNull(eventService.findErrorEvents(
+                        tenantId,
+                        entityId,
+                        (ErrorEvent) eventProvisionConfiguration,
+                        pageLink));
+                case STATS: return checkNotNull(eventService.findStatisticsEvents(
+                        tenantId,
+                        entityId,
+                        (StatisticsEvent) eventProvisionConfiguration,
+                        pageLink));
+                case LC_EVENT: return checkNotNull(eventService.findLifeCycleEvents(
+                        tenantId,
+                        entityId,
+                        (LifeCycleEvent) eventProvisionConfiguration,
                         pageLink));
             }
 

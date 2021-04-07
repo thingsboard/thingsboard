@@ -25,6 +25,9 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.event.DebugRuleNodeEvent;
+import org.thingsboard.server.common.data.event.ErrorEvent;
+import org.thingsboard.server.common.data.event.LifeCycleEvent;
+import org.thingsboard.server.common.data.event.StatisticsEvent;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -170,6 +173,59 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
                                 debugRuleNodeEvent.getDataSearch(),
                                 debugRuleNodeEvent.getMetadataSearch(),
                                 DaoUtil.toPageable(pageLink))
+        );
+    }
+
+    @Override
+    public PageData<Event> findErrorEvents(UUID tenantId, EntityId entityId, ErrorEvent errorEvent, TimePageLink pageLink) {
+        Long startTime = pageLink.getStartTime() == null ? 0 : pageLink.getStartTime();
+        Long endTime = pageLink.getEndTime() == null ? 0 : pageLink.getEndTime();
+        return DaoUtil.toPageData(
+                eventRepository.findErrorEvents(
+                    tenantId,
+                    entityId.getId(),
+                    entityId.getEntityType().name(),
+                    startTime,
+                    endTime,
+                    errorEvent.getServer(),
+                    errorEvent.getMethod(),
+                    DaoUtil.toPageable(pageLink))
+        );
+    }
+
+    @Override
+    public PageData<Event> findLifeCycleEvents(UUID tenantId, EntityId entityId, LifeCycleEvent lifeCycleEvent, TimePageLink pageLink) {
+        Long startTime = pageLink.getStartTime() == null ? 0 : pageLink.getStartTime();
+        Long endTime = pageLink.getEndTime() == null ? 0 : pageLink.getEndTime();
+        return DaoUtil.toPageData(
+                eventRepository.findLifeCycleEvents(
+                        tenantId,
+                        entityId.getId(),
+                        entityId.getEntityType().name(),
+                        startTime,
+                        endTime,
+                        lifeCycleEvent.isError(),
+                        lifeCycleEvent.getStatus(),
+                        lifeCycleEvent.getServer(),
+                        DaoUtil.toPageable(pageLink))
+        );
+    }
+
+    @Override
+    public PageData<Event> findStatisticsEvents(UUID tenantId, EntityId entityId, StatisticsEvent statisticsEvent, TimePageLink pageLink) {
+        Long startTime = pageLink.getStartTime() == null ? 0 : pageLink.getStartTime();
+        Long endTime = pageLink.getEndTime() == null ? 0 : pageLink.getEndTime();
+        return DaoUtil.toPageData(
+                eventRepository.findStatisticsEvents(
+                        tenantId,
+                        entityId.getId(),
+                        entityId.getEntityType().name(),
+                        startTime,
+                        endTime,
+                        statisticsEvent.getServer(),
+                        statisticsEvent.getMessagesProcessed(),
+                        statisticsEvent.getErrorsOccured(),
+                        DaoUtil.toPageable(pageLink))
         );
     }
 

@@ -18,17 +18,11 @@ package org.thingsboard.server.common.data.event;
 import lombok.Data;
 
 @Data
-public class DebugRuleNodeEvent implements EventProvisionConfiguration {
-
-    private String type;
-    private String server;
-    private String dataSearch;
-    private String metadataSearch;
-    private String entityName;
-    private String relationType;
-    private String messageId;
-    private String messageType;
+public class LifeCycleEvent implements EventProvisionConfiguration {
     private boolean isError;
+    private String server;
+    private String status;
+    private String event;
 
     public void setIsError(boolean isError) {
         this.isError = isError;
@@ -36,6 +30,6 @@ public class DebugRuleNodeEvent implements EventProvisionConfiguration {
 
     @Override
     public EventType getEventType() {
-        return EventType.DEBUG_RULE_NODE;
+        return EventType.LC_EVENT;
     }
 }
