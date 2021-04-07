@@ -52,7 +52,7 @@ public class TenantController extends BaseController {
     @Autowired
     private TenantService tenantService;
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/{tenantId}", method = RequestMethod.GET)
     @ResponseBody
     public Tenant getTenantById(@PathVariable("tenantId") String strTenantId) throws ThingsboardException {
@@ -65,7 +65,7 @@ public class TenantController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/info/{tenantId}", method = RequestMethod.GET)
     @ResponseBody
     public TenantInfo getTenantInfoById(@PathVariable("tenantId") String strTenantId) throws ThingsboardException {
@@ -78,7 +78,7 @@ public class TenantController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/tenant", method = RequestMethod.POST)
     @ResponseBody
     public Tenant saveTenant(@RequestBody Tenant tenant) throws ThingsboardException {
@@ -101,7 +101,7 @@ public class TenantController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/tenant/{tenantId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteTenant(@PathVariable("tenantId") String strTenantId) throws ThingsboardException {
@@ -118,7 +118,7 @@ public class TenantController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/tenants", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<Tenant> getTenants(@RequestParam int pageSize,
@@ -134,7 +134,7 @@ public class TenantController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/tenantInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<TenantInfo> getTenantInfos(@RequestParam int pageSize,

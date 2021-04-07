@@ -52,7 +52,7 @@ public class OAuth2Controller extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/oauth2/config", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public OAuth2ClientsParams getCurrentOAuth2Params() throws ThingsboardException {
@@ -64,7 +64,7 @@ public class OAuth2Controller extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/oauth2/config", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
     public OAuth2ClientsParams saveOAuth2Params(@RequestBody OAuth2ClientsParams oauth2Params) throws ThingsboardException {
@@ -77,7 +77,7 @@ public class OAuth2Controller extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/oauth2/loginProcessingUrl", method = RequestMethod.GET)
     @ResponseBody
     public String getLoginProcessingUrl() throws ThingsboardException {

@@ -34,7 +34,7 @@ import java.util.List;
 @RequestMapping("/api")
 public class QueueController extends BaseController {
 
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/queues", params = {"serviceType"}, method = RequestMethod.GET)
     @ResponseBody
     public List<String> getTenantQueuesByServiceType(@RequestParam String serviceType) throws ThingsboardException {

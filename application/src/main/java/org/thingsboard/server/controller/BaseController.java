@@ -62,6 +62,7 @@ import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -356,6 +357,10 @@ public abstract class BaseController {
 
     protected TenantId getTenantId() throws ThingsboardException {
         return getCurrentUser().getTenantId();
+    }
+
+    protected Authority getAuthority() throws ThingsboardException {
+        return getCurrentUser().getAuthority();
     }
 
     Customer checkCustomerId(CustomerId customerId, Operation operation) throws ThingsboardException {

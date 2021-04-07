@@ -80,7 +80,7 @@ public class EntityViewController extends BaseController {
     @Autowired
     private TimeseriesService tsService;
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/entityView/{entityViewId}", method = RequestMethod.GET)
     @ResponseBody
     public EntityView getEntityViewById(@PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
@@ -92,7 +92,7 @@ public class EntityViewController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/entityView/info/{entityViewId}", method = RequestMethod.GET)
     @ResponseBody
     public EntityViewInfo getEntityViewInfoById(@PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
@@ -105,7 +105,7 @@ public class EntityViewController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/entityView", method = RequestMethod.POST)
     @ResponseBody
     public EntityView saveEntityView(@RequestBody EntityView entityView) throws ThingsboardException {
@@ -337,7 +337,7 @@ public class EntityViewController extends BaseController {
                 keys);
     }
 
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN')")
     @RequestMapping(value = "/entityView/{entityViewId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteEntityView(@PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
@@ -357,7 +357,7 @@ public class EntityViewController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/entityViews", params = {"entityViewName"}, method = RequestMethod.GET)
     @ResponseBody
     public EntityView getTenantEntityView(
@@ -370,7 +370,7 @@ public class EntityViewController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN')")
     @RequestMapping(value = "/customer/{customerId}/entityView/{entityViewId}", method = RequestMethod.POST)
     @ResponseBody
     public EntityView assignEntityViewToCustomer(@PathVariable(CUSTOMER_ID) String strCustomerId,
@@ -397,7 +397,7 @@ public class EntityViewController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN')")
     @RequestMapping(value = "/customer/entityView/{entityViewId}", method = RequestMethod.DELETE)
     @ResponseBody
     public EntityView unassignEntityViewFromCustomer(@PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
@@ -423,7 +423,7 @@ public class EntityViewController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/customer/{customerId}/entityViews", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<EntityView> getCustomerEntityViews(
@@ -450,7 +450,7 @@ public class EntityViewController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/customer/{customerId}/entityViewInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<EntityViewInfo> getCustomerEntityViewInfos(
@@ -477,7 +477,7 @@ public class EntityViewController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/entityViews", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<EntityView> getTenantEntityViews(
@@ -501,7 +501,7 @@ public class EntityViewController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/entityViewInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<EntityViewInfo> getTenantEntityViewInfos(
@@ -524,7 +524,7 @@ public class EntityViewController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/entityViews", method = RequestMethod.POST)
     @ResponseBody
     public List<EntityView> findByQuery(@RequestBody EntityViewSearchQuery query) throws ThingsboardException {
@@ -548,7 +548,7 @@ public class EntityViewController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/entityView/types", method = RequestMethod.GET)
     @ResponseBody
     public List<EntitySubtype> getEntityViewTypes() throws ThingsboardException {
@@ -562,7 +562,7 @@ public class EntityViewController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN')")
     @RequestMapping(value = "/customer/public/entityView/{entityViewId}", method = RequestMethod.POST)
     @ResponseBody
     public EntityView assignEntityViewToPublicCustomer(@PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {

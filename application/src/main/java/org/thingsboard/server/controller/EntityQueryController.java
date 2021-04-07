@@ -47,7 +47,7 @@ public class EntityQueryController extends BaseController {
 
     private static final int MAX_PAGE_SIZE = 100;
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/entitiesQuery/count", method = RequestMethod.POST)
     @ResponseBody
     public long countEntitiesByQuery(@RequestBody EntityCountQuery query) throws ThingsboardException {
@@ -59,7 +59,7 @@ public class EntityQueryController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/entitiesQuery/find", method = RequestMethod.POST)
     @ResponseBody
     public PageData<EntityData> findEntityDataByQuery(@RequestBody EntityDataQuery query) throws ThingsboardException {
@@ -71,7 +71,7 @@ public class EntityQueryController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarmsQuery/find", method = RequestMethod.POST)
     @ResponseBody
     public PageData<AlarmData> findAlarmDataByQuery(@RequestBody AlarmDataQuery query) throws ThingsboardException {
@@ -83,7 +83,7 @@ public class EntityQueryController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/entitiesQuery/find/keys", method = RequestMethod.POST)
     @ResponseBody
     public DeferredResult<ResponseEntity> findEntityTimeseriesAndAttributesKeysByQuery(@RequestBody EntityDataQuery query,

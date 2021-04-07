@@ -59,7 +59,7 @@ public class AdminController extends BaseController {
     @Autowired
     private UpdateService updateService;
 
-    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/settings/{key}", method = RequestMethod.GET)
     @ResponseBody
     public AdminSettings getAdminSettings(@PathVariable("key") String key) throws ThingsboardException {
@@ -75,7 +75,7 @@ public class AdminController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/settings", method = RequestMethod.POST)
     @ResponseBody
     public AdminSettings saveAdminSettings(@RequestBody AdminSettings adminSettings) throws ThingsboardException {
@@ -94,7 +94,7 @@ public class AdminController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/securitySettings", method = RequestMethod.GET)
     @ResponseBody
     public SecuritySettings getSecuritySettings() throws ThingsboardException {
@@ -106,7 +106,7 @@ public class AdminController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/securitySettings", method = RequestMethod.POST)
     @ResponseBody
     public SecuritySettings saveSecuritySettings(@RequestBody SecuritySettings securitySettings) throws ThingsboardException {
@@ -119,7 +119,7 @@ public class AdminController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/settings/testMail", method = RequestMethod.POST)
     public void sendTestMail(@RequestBody AdminSettings adminSettings) throws ThingsboardException {
         try {
@@ -134,7 +134,7 @@ public class AdminController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/settings/testSms", method = RequestMethod.POST)
     public void sendTestSms(@RequestBody TestSmsRequest testSmsRequest) throws ThingsboardException {
         try {
@@ -145,7 +145,7 @@ public class AdminController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/updates", method = RequestMethod.GET)
     @ResponseBody
     public UpdateMessage checkUpdates() throws ThingsboardException {

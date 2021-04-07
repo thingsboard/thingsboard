@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api")
 public class AuditLogController extends BaseController {
 
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN')")
     @RequestMapping(value = "/audit/logs/customer/{customerId}", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<AuditLog> getAuditLogsByCustomerId(
@@ -68,7 +68,7 @@ public class AuditLogController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN')")
     @RequestMapping(value = "/audit/logs/user/{userId}", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<AuditLog> getAuditLogsByUserId(
@@ -92,7 +92,7 @@ public class AuditLogController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN')")
     @RequestMapping(value = "/audit/logs/entity/{entityType}/{entityId}", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<AuditLog> getAuditLogsByEntityId(
@@ -118,7 +118,7 @@ public class AuditLogController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN')")
     @RequestMapping(value = "/audit/logs", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<AuditLog> getAuditLogs(

@@ -37,7 +37,7 @@ import java.util.List;
 public class OAuth2ConfigTemplateController extends BaseController {
     private static final String CLIENT_REGISTRATION_TEMPLATE_ID = "clientRegistrationTemplateId";
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
     public OAuth2ClientRegistrationTemplate saveClientRegistrationTemplate(@RequestBody OAuth2ClientRegistrationTemplate clientRegistrationTemplate) throws ThingsboardException {
@@ -49,7 +49,7 @@ public class OAuth2ConfigTemplateController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/{clientRegistrationTemplateId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteClientRegistrationTemplate(@PathVariable(CLIENT_REGISTRATION_TEMPLATE_ID) String strClientRegistrationTemplateId) throws ThingsboardException {
@@ -63,7 +63,7 @@ public class OAuth2ConfigTemplateController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public List<OAuth2ClientRegistrationTemplate> getClientRegistrationTemplates() throws ThingsboardException {

@@ -45,7 +45,7 @@ import org.thingsboard.server.service.security.permission.Resource;
 @Slf4j
 public class TenantProfileController extends BaseController {
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/tenantProfile/{tenantProfileId}", method = RequestMethod.GET)
     @ResponseBody
     public TenantProfile getTenantProfileById(@PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
@@ -58,7 +58,7 @@ public class TenantProfileController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/tenantProfileInfo/{tenantProfileId}", method = RequestMethod.GET)
     @ResponseBody
     public EntityInfo getTenantProfileInfoById(@PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
@@ -71,7 +71,7 @@ public class TenantProfileController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/tenantProfileInfo/default", method = RequestMethod.GET)
     @ResponseBody
     public EntityInfo getDefaultTenantProfileInfo() throws ThingsboardException {
@@ -82,7 +82,7 @@ public class TenantProfileController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/tenantProfile", method = RequestMethod.POST)
     @ResponseBody
     public TenantProfile saveTenantProfile(@RequestBody TenantProfile tenantProfile) throws ThingsboardException {
@@ -106,7 +106,7 @@ public class TenantProfileController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/tenantProfile/{tenantProfileId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteTenantProfile(@PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
@@ -121,7 +121,7 @@ public class TenantProfileController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/tenantProfile/{tenantProfileId}/default", method = RequestMethod.POST)
     @ResponseBody
     public TenantProfile setDefaultTenantProfile(@PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
@@ -136,7 +136,7 @@ public class TenantProfileController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/tenantProfiles", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<TenantProfile> getTenantProfiles(@RequestParam int pageSize,
@@ -152,7 +152,7 @@ public class TenantProfileController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN')")
     @RequestMapping(value = "/tenantProfileInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<EntityInfo> getTenantProfileInfos(@RequestParam int pageSize,
