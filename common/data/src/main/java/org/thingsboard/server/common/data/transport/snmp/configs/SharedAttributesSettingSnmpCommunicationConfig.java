@@ -28,9 +28,4 @@ public class SharedAttributesSettingSnmpCommunicationConfig extends SnmpCommunic
     public SnmpMethod getMethod() {
         return SnmpMethod.SET;
     }
-
-    @Override
-    public boolean isValid() {
-        return true;
-    }
 }

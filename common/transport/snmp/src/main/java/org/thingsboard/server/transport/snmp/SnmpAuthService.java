@@ -24,7 +24,6 @@ import org.snmp4j.security.SecurityLevel;
 import org.snmp4j.security.SecurityModel;
 import org.snmp4j.security.SecurityProtocols;
 import org.snmp4j.security.USM;
-import org.snmp4j.security.UsmUser;
 import org.snmp4j.smi.GenericAddress;
 import org.snmp4j.smi.OID;
 import org.snmp4j.smi.OctetString;
@@ -98,7 +97,7 @@ public class SnmpAuthService {
                 throw new UnsupportedOperationException("SNMP protocol version " + protocolVersion + " is not supported");
         }
 
-        target.setAddress(GenericAddress.parse(snmpUnderlyingProtocol + ":" + deviceTransportConfig.getAddress() + "/" + deviceTransportConfig.getPort()));
+        target.setAddress(GenericAddress.parse(snmpUnderlyingProtocol + ":" + deviceTransportConfig.getHost() + "/" + deviceTransportConfig.getPort()));
         target.setTimeout(profileTransportConfig.getTimeoutMs());
         target.setRetries(profileTransportConfig.getRetries());
         target.setVersion(protocolVersion.getCode());

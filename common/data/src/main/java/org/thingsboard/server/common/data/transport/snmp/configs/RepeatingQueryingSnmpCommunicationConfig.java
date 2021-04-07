@@ -31,6 +31,6 @@ public abstract class RepeatingQueryingSnmpCommunicationConfig extends SnmpCommu
 
     @Override
     public boolean isValid() {
-        return true;
+        return super.isValid() && queryingFrequencyMs != null && queryingFrequencyMs > 0;
     }
 }

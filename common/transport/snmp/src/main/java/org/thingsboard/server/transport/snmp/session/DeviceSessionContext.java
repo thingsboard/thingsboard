@@ -63,8 +63,6 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     private final Device device;
 
     private final SnmpTransportContext snmpTransportContext;
-    private final SnmpTransportService snmpTransportService;
-    private final SnmpAuthService snmpAuthService;
 
     @Getter
     @Setter
@@ -80,7 +78,7 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     public DeviceSessionContext(Device device, DeviceProfile deviceProfile, String token,
                                 SnmpDeviceProfileTransportConfiguration profileTransportConfiguration,
                                 SnmpDeviceTransportConfiguration deviceTransportConfiguration,
-                                SnmpTransportContext snmpTransportContext) {
+                                SnmpTransportContext snmpTransportContext) throws Exception {
         super(UUID.randomUUID());
         super.setDeviceId(device.getId());
         super.setDeviceProfile(deviceProfile);
@@ -88,8 +86,6 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
 
         this.token = token;
         this.snmpTransportContext = snmpTransportContext;
-        this.snmpTransportService = snmpTransportContext.getSnmpTransportService();
-        this.snmpAuthService = snmpTransportContext.getSnmpAuthService();
 
         this.profileTransportConfiguration = profileTransportConfiguration;
         this.deviceTransportConfiguration = deviceTransportConfiguration;
@@ -113,13 +109,13 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     @Override
     public void onResponse(ResponseEvent event) {
         if (isActive) {
-            snmpTransportService.processResponseEvent(this, event);
+            snmpTransportContext.getSnmpTransportService().processResponseEvent(this, event);
         }
     }
 
-    public void initializeTarget(SnmpDeviceProfileTransportConfiguration profileTransportConfig, SnmpDeviceTransportConfiguration deviceTransportConfig) {
+    public void initializeTarget(SnmpDeviceProfileTransportConfiguration profileTransportConfig, SnmpDeviceTransportConfiguration deviceTransportConfig) throws Exception {
         log.trace("Initializing target for SNMP session of device {}", device);
-        this.target = snmpAuthService.setUpSnmpTarget(profileTransportConfig, deviceTransportConfig);
+        this.target = snmpTransportContext.getSnmpAuthService().setUpSnmpTarget(profileTransportConfig, deviceTransportConfig);
         log.info("SNMP target initialized: {}", target);
     }
 
@@ -152,7 +148,7 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
                                     entry -> entry.getValue().isJsonPrimitive() ? entry.getValue().getAsString() : entry.getValue().toString()
                             ));
                     try {
-                        snmpTransportService.sendRequest(this, communicationConfig, sharedAttributes);
+                        snmpTransportContext.getSnmpTransportService().sendRequest(this, communicationConfig, sharedAttributes);
                     } catch (Exception e) {
                         log.error("Failed to send request with shared attributes to SNMP device {}: {}", getDeviceId(), e.getMessage());
                     }

@@ -49,12 +49,6 @@ public abstract class SnmpCommunicationConfig {
 
     @JsonIgnore
     public boolean isValid() {
-        return true;
-    }
-
-    public void validate() {
-        if (!isValid()) {
-            throw new IllegalArgumentException("Communication config is not valid");
-        }
+        return mappings != null && !mappings.isEmpty() && mappings.stream().allMatch(mapping -> mapping != null && mapping.isValid());
     }
 }
