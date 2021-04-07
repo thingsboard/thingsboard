@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration>
+<configuration scan="false">
+
+    <appender name="fileLogAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FOLDER}/${LOG_FILENAME}.log</file>
+        <rollingPolicy
+                class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_FOLDER}/${LOG_FILENAME}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="org.thingsboard.server" level="${LOG_LEVEL:-INFO}" />
+    <logger name="org.thingsboard.server.service.queue" level="${LOG_LEVEL:-INFO}" />
+    <logger name="org.thingsboard.server.service.transport" level="${LOG_LEVEL:-INFO}" />
+    <logger name="org.thingsboard.server.service.subscription" level="${LOG_LEVEL:-INFO}"/>
+    <logger name="org.thingsboard.server.service.telemetry" level="${LOG_LEVEL:-INFO}"/>
+    <logger name="com.google.common.util.concurrent.AggregateFuture" level="OFF" />
+    <logger name="com.microsoft.azure.servicebus.primitives.CoreMessageReceiver" level="OFF" />
+
+    <root level="${LOG_LEVEL:-INFO}">
+        <appender-ref ref="fileLogAppender"/>
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+</configuration>
