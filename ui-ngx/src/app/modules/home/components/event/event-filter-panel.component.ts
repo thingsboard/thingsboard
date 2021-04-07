@@ -18,11 +18,12 @@ import { Component, Inject, InjectionToken } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { EntityType } from '@shared/models/entity-type.models';
+import { FilterEvent } from '@shared/models/event.models';
 
 export const EVENT_FILTER_PANEL_DATA = new InjectionToken<any>('AlarmFilterPanelData');
 
 export interface EventFilterPanelData {
-  filterParams: any;
+  filterParams: FilterEvent;
   columns: Array<FilterEntityColumn>;
 }
 
@@ -39,7 +40,14 @@ export interface FilterEntityColumn {
 })
 export class EventFilterPanelComponent {
 
-  private readonly excludeColumns = ['createdTime', 'data', 'metadata'];
+  private readonly excludeColumns = ['createdTime'];
+
+  private readonly convertNameMap = new Map<string, string>([
+    ['data', 'dataSearch'],
+    ['metadata', 'metadataSearch'],
+    ['entity', 'entityName'],
+    ['error', 'isError']
+  ]);
 
   eventFilterFormGroup: FormGroup;
 
@@ -57,6 +65,9 @@ export class EventFilterPanelComponent {
     this.eventFilterFormGroup = this.fb.group({});
     this.data.columns.forEach((column) => {
       if (!this.excludeColumns.includes(column.key)) {
+        if (this.convertNameMap.has(column.key)) {
+          column.key = this.convertNameMap.get(column.key);
+        }
         this.showColumns.push(column);
         this.eventFilterFormGroup.addControl(column.key, this.fb.control(this.data.filterParams[column.key] || null));
       }

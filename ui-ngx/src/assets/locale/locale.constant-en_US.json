@@ -1357,6 +1357,7 @@
         "method": "Method",
         "type": "Type",
         "entity": "Entity",
+        "entity-id": "Entity Id",
         "message-id": "Message Id",
         "message-type": "Message Type",
         "data-type": "Data Type",

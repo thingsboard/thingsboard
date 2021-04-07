@@ -20,7 +20,7 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import { DebugEventType, Event, EventType } from '@shared/models/event.models';
+import { DebugEventType, Event, EventType, FilterEvent } from '@shared/models/event.models';
 import { TimePageLink } from '@shared/models/page/page-link';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
@@ -52,7 +52,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
   eventTypeValue: EventType | DebugEventType;
 
-  private filterParams = {};
+  private filterParams: FilterEvent = {};
 
   set eventType(eventType: EventType | DebugEventType) {
     if (this.eventTypeValue !== eventType) {
@@ -294,13 +294,17 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     overlayRef.backdropClick().subscribe(() => {
       overlayRef.dispose();
     });
+    const columns = this.columns.map((column) => {
+      if (column.key === 'msgId') {
+        return {title: 'event.entity-id', key: 'entityId'};
+      }
+      return {title: column.title, key: column.key};
+    });
     const providers: StaticProvider[] = [
       {
         provide: EVENT_FILTER_PANEL_DATA,
         useValue: {
-          columns: this.columns.map((column) => {
-            return {title: column.title, key: column.key};
-          }),
+          columns,
           filterParams: this.filterParams
         } as EventFilterPanelData
       },

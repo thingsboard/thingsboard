@@ -29,10 +29,10 @@
           </mat-select>
         </mat-form-field>
       </ng-template>
-      <ng-template [ngSwitchCase]="'entity'">
+      <ng-template [ngSwitchCase]="'entityName'">
         <mat-form-field>
           <mat-label>{{ column.title | translate}}</mat-label>
-          <mat-select formControlName="entity">
+          <mat-select formControlName="entityName">
             <mat-option [value]="null">{{ 'event.all-events' | translate}}</mat-option>
             <mat-option *ngFor="let entityType of entityTypes" [value]="entityType">
               {{ entityType }}
@@ -40,8 +40,8 @@
           </mat-select>
         </mat-form-field>
       </ng-template>
-      <ng-template [ngSwitchCase]="'error'">
-        <tb-checkbox formControlName="error" [falseValue]="null" style="display: block; padding-bottom: 16px;">
+      <ng-template [ngSwitchCase]="'isError'">
+        <tb-checkbox formControlName="isError" [falseValue]="null" style="display: block; padding-bottom: 16px;">
           {{ 'event.has-error' | translate }}
         </tb-checkbox>
       </ng-template>

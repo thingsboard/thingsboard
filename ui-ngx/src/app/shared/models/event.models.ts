@@ -19,6 +19,7 @@ import { TenantId } from '@shared/models/id/tenant-id';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EventId } from './id/event-id';
 import { ContentType } from '@shared/models/constants';
+import { EntityType } from '@shared/models/entity-type.models';
 
 export enum EventType {
   ERROR = 'ERROR',
@@ -82,4 +83,16 @@ export interface Event extends BaseData<EventId> {
   type: string;
   uid: string;
   body: EventBody;
+}
+
+export interface FilterEvent {
+  type?: string;
+  server?: string;
+  dataSearch?: string;
+  metadataSearch?: string;
+  entityName?: EntityType;
+  relationType?: string;
+  messageId?: string;
+  messageType?: string;
+  isError?: boolean;
 }
