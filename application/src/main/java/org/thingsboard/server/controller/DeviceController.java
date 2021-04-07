@@ -128,7 +128,7 @@ public class DeviceController extends BaseController {
             tbClusterService.onDeviceChange(savedDevice, null);
             tbClusterService.pushMsgToCore(new DeviceNameOrTypeUpdateMsg(currentTenantId,
                     savedDevice.getId(), savedDevice.getName(), savedDevice.getType()), null);
-            tbClusterService.onEntityStateChange(currentTenantId, savedDevice.getId(),
+            tbClusterService.onEntityStateChange(savedDevice.getTenantId(), savedDevice.getId(),
                     device.getId() == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(savedDevice.getId(), savedDevice,
@@ -151,12 +151,17 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN')")
     @RequestMapping(value = "/device/{deviceId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteDevice(@PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+    public void deleteDevice(@PathVariable(DEVICE_ID) String strDeviceId, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter(DEVICE_ID, strDeviceId);
         try {
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getCurrentUser().getTenantId();
+
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
             Device device = checkDeviceId(deviceId, Operation.DELETE);
-            deviceService.deleteDevice(getCurrentUser().getTenantId(), deviceId);
+            deviceService.deleteDevice(currentTenantId, deviceId);
 
             tbClusterService.onDeviceDeleted(device, null);
             tbClusterService.onEntityStateChange(device.getTenantId(), deviceId, ComponentLifecycleEvent.DELETED);
