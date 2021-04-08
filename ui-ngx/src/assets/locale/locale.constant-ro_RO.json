@@ -945,7 +945,6 @@
         "body": "Corp",
         "method": "Metodă",
         "type": "Tip",
-        "entity": "Entitate",
         "message-id": "ID Mesaj",
         "message-type": "Tip Mesaj",
         "data-type": "Tip Date",
@@ -958,7 +957,8 @@
         "failed": "Eşuat",
         "messages-processed": "Mesaje procesate",
         "errors-occurred": "Au apărut erori",
-        "all-events": "Toate"
+        "all-events": "Toate",
+        "entity-type": "Tip Entitate"
     },
     "extension": {
         "extensions": "Extensii",

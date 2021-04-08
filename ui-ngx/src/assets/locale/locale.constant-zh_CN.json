@@ -1334,7 +1334,6 @@
     "body": "整体",
     "data": "数据",
     "data-type": "数据类型",
-    "entity": "实体",
     "error": "错误",
     "errors-occurred": "错误发生",
     "event": "事件",
@@ -1357,7 +1356,8 @@
     "type-error": "错误",
     "type-lc-event": "生命周期事件",
     "type-stats": "类型统计",
-    "all-events": "全部"
+    "all-events": "全部",
+    "entity-type": "实体类型"
   },
   "extension": {
     "add": "添加扩展",

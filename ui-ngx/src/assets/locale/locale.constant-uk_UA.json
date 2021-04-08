@@ -1201,7 +1201,6 @@
         "out": "Out",
         "metadata": "Метадані",
         "message": "Повідомлення",
-        "entity": "Сутність",
         "message-id": "Id повідомлення",
         "message-type": "Тип повідомлення",
         "data-type": "Тип даних",
@@ -1213,7 +1212,8 @@
         "failed": "Невдача",
         "messages-processed": "Повідомлення опрацьовані",
         "errors-occurred": "Виникли помилки",
-        "all-events": "Всі"
+        "all-events": "Всі",
+        "entity-type": "Тип сутності"
     },
     "extension": {
         "extensions": "Розширення",

@@ -905,7 +905,6 @@
     "body": "Inhalt",
     "method": "Methode",
     "type": "Typ",
-    "entity": "Entität",
     "message-id": "Nachrichten-Id",
     "message-type": "Nachrichten-Typ",
     "data-type": "Datentyp",
@@ -918,7 +917,8 @@
     "failed": "Fehlgeschlagen",
     "messages-processed": "Nachrichten verarbeitet",
     "errors-occurred": "Fehler aufgetreten",
-    "all-events": "Alle"
+    "all-events": "Alle",
+    "entity-type": "Entitätstyp"
   },
   "extension": {
     "extensions": "Erweiterungen",

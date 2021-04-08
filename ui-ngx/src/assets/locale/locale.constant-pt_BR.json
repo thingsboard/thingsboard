@@ -997,7 +997,6 @@
     "body": "Corpo",
     "method": "Método",
     "type": "Tipo",
-    "entity": "Entidade",
     "message-id": "ID de mensagem",
     "message-type": "Tipo de Mensagem",
     "data-type": "Tipo de Dados",
@@ -1010,7 +1009,8 @@
     "failed": "Falhou",
     "messages-processed": "Mensagens processadas",
     "errors-occurred": "Erros",
-    "all-events": "Tudo"
+    "all-events": "Tudo",
+    "entity-type": "Tipo de entidade"
   },
   "extension": {
     "extensions": "Extensões",

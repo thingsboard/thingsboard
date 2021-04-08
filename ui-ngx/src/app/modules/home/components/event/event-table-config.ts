@@ -20,7 +20,7 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import { DebugEventType, Event, EventType, FilterEvent } from '@shared/models/event.models';
+import { DebugEventType, Event, EventType, FilterEventBody } from '@shared/models/event.models';
 import { TimePageLink } from '@shared/models/page/page-link';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
@@ -45,20 +45,22 @@ import { ComponentPortal } from '@angular/cdk/portal';
 import {
   EVENT_FILTER_PANEL_DATA,
   EventFilterPanelComponent,
-  EventFilterPanelData
+  EventFilterPanelData,
+  FilterEntityColumn
 } from '@home/components/event/event-filter-panel.component';
 
 export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
   eventTypeValue: EventType | DebugEventType;
 
-  private filterParams: FilterEvent = {};
+  private filterParams: FilterEventBody = {};
+  private filterColumns: FilterEntityColumn[] = [];
 
   set eventType(eventType: EventType | DebugEventType) {
     if (this.eventTypeValue !== eventType) {
       this.eventTypeValue = eventType;
       this.updateColumns(true);
-      this.filterParams = {};
+      this.updateFilterColumns();
     }
   }
 
@@ -115,6 +117,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
     this.updateColumns();
+    this.updateFilterColumns();
 
     this.headerActionDescriptors.push({
       name: this.translate.instant('asset.make-public'),
@@ -192,7 +195,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
             }), false, key => ({
               padding: '0 12px 0 0'
             })),
-          new EntityTableColumn<Event>('entity', 'event.entity', '100px',
+          new EntityTableColumn<Event>('entityName', 'event.entity-type', '100px',
             (entity) => entity.body.entityName, entity => ({
               padding: '0 12px 0 0',
             }), false, key => ({
@@ -273,6 +276,44 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     });
   }
 
+  private updateFilterColumns() {
+    this.filterParams = {};
+    this.filterColumns = [{key: 'server', title: 'event.server'}];
+    switch (this.eventType) {
+      case EventType.ERROR:
+        this.filterColumns.push(
+          {key: 'method', title: 'event.method'}
+        );
+        break;
+      case EventType.LC_EVENT:
+        this.filterColumns.push(
+          {key: 'method', title: 'event.event'},
+          {key: 'status', title: 'event.status'},
+          {key: 'isError', title: 'event.error'}
+        );
+        break;
+      case EventType.STATS:
+        this.filterColumns.push(
+          {key: 'messagesProcessed', title: 'event.messages-processed'},
+          {key: 'errorsOccurred', title: 'event.errors-occurred'}
+        );
+        break;
+      case DebugEventType.DEBUG_RULE_NODE:
+      case DebugEventType.DEBUG_RULE_CHAIN:
+        this.filterColumns.push(
+          {key: 'msgDirectionType', title: 'event.type'},
+          {key: 'entityId', title: 'event.entity-id'},
+          {key: 'entityName', title: 'event.entity-type'},
+          {key: 'msgType', title: 'event.message-type'},
+          {key: 'relationType', title: 'event.relation-type'},
+          {key: 'dataSearch', title: 'event.event.data'},
+          {key: 'metadataSearch', title: 'event.metadata'},
+          {key: 'isError', title: 'event.error'}
+        );
+        break;
+    }
+  }
+
   private editEventFilter($event: MouseEvent) {
     if ($event) {
       $event.stopPropagation();
@@ -294,17 +335,11 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     overlayRef.backdropClick().subscribe(() => {
       overlayRef.dispose();
     });
-    const columns = this.columns.map((column) => {
-      if (column.key === 'msgId') {
-        return {title: 'event.entity-id', key: 'entityId'};
-      }
-      return {title: column.title, key: column.key};
-    });
     const providers: StaticProvider[] = [
       {
         provide: EVENT_FILTER_PANEL_DATA,
         useValue: {
-          columns,
+          columns: this.filterColumns,
           filterParams: this.filterParams
         } as EventFilterPanelData
       },

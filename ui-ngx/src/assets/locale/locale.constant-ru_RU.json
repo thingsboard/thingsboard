@@ -948,7 +948,6 @@
         "body": "Тело",
         "method": "Метод",
         "type": "Тип",
-        "entity": "Объект",
         "message-id": "ИД сообщения",
         "message-type": "Тип сообщения",
         "data-type": "Тип данных",
@@ -961,7 +960,8 @@
         "failed": "Неудача",
         "messages-processed": "Сообщения обработаны",
         "errors-occurred": "Возникли ошибки",
-        "all-events": "Все"
+        "all-events": "Все",
+        "entity-type": "Тип объекта"
     },
     "extension": {
         "extensions": "Расширение",

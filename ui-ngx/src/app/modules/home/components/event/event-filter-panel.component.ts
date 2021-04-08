@@ -18,13 +18,13 @@ import { Component, Inject, InjectionToken } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { EntityType } from '@shared/models/entity-type.models';
-import { FilterEvent } from '@shared/models/event.models';
+import { FilterEventBody } from '@shared/models/event.models';
 import { deepTrim } from '@core/utils';
 
 export const EVENT_FILTER_PANEL_DATA = new InjectionToken<any>('AlarmFilterPanelData');
 
 export interface EventFilterPanelData {
-  filterParams: FilterEvent;
+  filterParams: FilterEventBody;
   columns: Array<FilterEntityColumn>;
 }
 
@@ -41,20 +41,10 @@ export interface FilterEntityColumn {
 })
 export class EventFilterPanelComponent {
 
-  private readonly excludeColumns = ['createdTime'];
-
-  private readonly convertNameMap = new Map<string, string>([
-    ['data', 'dataSearch'],
-    ['metadata', 'metadataSearch'],
-    ['entity', 'entityName'],
-    ['error', 'isError']
-  ]);
-
   eventFilterFormGroup: FormGroup;
-
   result: EventFilterPanelData;
 
-  eventTypes = ['IN', 'OUT'];
+  msgDirectionTypes = ['IN', 'OUT'];
   entityTypes = Object.keys(EntityType);
 
   showColumns: FilterEntityColumn[] = [];
@@ -65,18 +55,13 @@ export class EventFilterPanelComponent {
               private fb: FormBuilder) {
     this.eventFilterFormGroup = this.fb.group({});
     this.data.columns.forEach((column) => {
-      if (!this.excludeColumns.includes(column.key)) {
-        if (this.convertNameMap.has(column.key)) {
-          column.key = this.convertNameMap.get(column.key);
-        }
-        this.showColumns.push(column);
-        this.eventFilterFormGroup.addControl(column.key, this.fb.control(this.data.filterParams[column.key] || null));
-      }
+      this.showColumns.push(column);
+      this.eventFilterFormGroup.addControl(column.key, this.fb.control(this.data.filterParams[column.key] || ''));
     });
   }
 
   update() {
-    const filter = deepTrim(Object.fromEntries(Object.entries(this.eventFilterFormGroup.value).filter(([_, v]) => v != null && v !== '')));
+    const filter = deepTrim(Object.fromEntries(Object.entries(this.eventFilterFormGroup.value).filter(([_, v]) => v !== '')));
     this.result = {
       filterParams: filter,
       columns: this.data.columns

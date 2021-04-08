@@ -865,7 +865,6 @@
     "body": "整體",
     "method": "方法",
     "type": "類型",
-    "entity": "實體",
     "message-id": "消息ID",
     "message-type": "消息類型",
     "data-type": "資料類型",
@@ -878,7 +877,8 @@
     "failed": "失敗",
     "messages-processed": "消息處理",
     "errors-occurred": "錯誤發生",
-    "all-events": "所有"
+    "all-events": "所有",
+    "entity-type": "實體類型"
   },
   "extension": {
     "extensions": "擴展",

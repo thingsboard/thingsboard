@@ -18,13 +18,13 @@
 <form fxLayout="column" class="mat-content mat-padding" [formGroup]="eventFilterFormGroup" (ngSubmit)="update()">
   <ng-container *ngFor="let column of showColumns">
     <ng-container [ngSwitch]="column.key">
-      <ng-template [ngSwitchCase]="'type'">
+      <ng-template [ngSwitchCase]="'msgDirectionType'">
         <mat-form-field>
           <mat-label>{{ column.title | translate}}</mat-label>
           <mat-select formControlName="type">
-            <mat-option [value]="null">{{ 'event.all-events' | translate}}</mat-option>
-            <mat-option *ngFor="let eventType of eventTypes" [value]="eventType">
-              {{ eventType }}
+            <mat-option [value]="">{{ 'event.all-events' | translate}}</mat-option>
+            <mat-option *ngFor="let msgDirectionType of msgDirectionTypes" [value]="msgDirectionType">
+              {{ msgDirectionType }}
             </mat-option>
           </mat-select>
         </mat-form-field>
@@ -33,7 +33,7 @@
         <mat-form-field>
           <mat-label>{{ column.title | translate}}</mat-label>
           <mat-select formControlName="entityName">
-            <mat-option [value]="null">{{ 'event.all-events' | translate}}</mat-option>
+            <mat-option [value]="">{{ 'event.all-events' | translate}}</mat-option>
             <mat-option *ngFor="let entityType of entityTypes" [value]="entityType">
               {{ entityType }}
             </mat-option>
@@ -41,7 +41,7 @@
         </mat-form-field>
       </ng-template>
       <ng-template [ngSwitchCase]="'isError'">
-        <tb-checkbox formControlName="isError" [falseValue]="null" style="display: block; padding-bottom: 16px;">
+        <tb-checkbox formControlName="isError" [falseValue]="" style="display: block; padding-bottom: 16px;">
           {{ 'event.has-error' | translate }}
         </tb-checkbox>
       </ng-template>

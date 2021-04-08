@@ -1329,7 +1329,6 @@
         "body": "Body",
         "method": "방법",
         "type": "유형",
-        "entity": "개체",
         "message-id": "메시지 ID",
         "message-type": "메시지 유형",
         "data-type": "데이터 유형",
@@ -1342,7 +1341,8 @@
         "failed": "실패",
         "messages-processed": "처리된 메시지",
         "errors-occurred": "오류가 발생했습니다",
-        "all-events": "모두"
+        "all-events": "모두",
+        "entity-type": "개체 유형"
     },
     "extension": {
         "extensions": "확장",

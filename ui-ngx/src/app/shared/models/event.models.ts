@@ -85,14 +85,35 @@ export interface Event extends BaseData<EventId> {
   body: EventBody;
 }
 
-export interface FilterEvent {
-  type?: string;
+export interface BaseFilterEventBody {
   server?: string;
-  dataSearch?: string;
-  metadataSearch?: string;
-  entityName?: EntityType;
-  relationType?: string;
-  messageId?: string;
-  messageType?: string;
+}
+
+export interface ErrorFilterEventBody extends BaseFilterEventBody {
+  method?: string;
+}
+
+export interface LcFilterEventEventBody extends BaseFilterEventBody {
+  method?: string;
+  status?: string;
   isError?: boolean;
 }
+
+export interface StatsFilterEventBody extends BaseFilterEventBody {
+  messagesProcessed?: string;
+  errorsOccurred?: string;
+}
+
+export interface DebugFilterRuleNodeEventBody extends BaseFilterEventBody {
+  msgDirectionType?: string;
+  entityId?: string;
+  entityName?: EntityType;
+  msgId?: string;
+  msgType?: string;
+  relationType?: string;
+  dataSearch?: string;
+  metadataSearch?: string;
+  isError?: boolean;
+}
+
+export type FilterEventBody = ErrorFilterEventBody & LcFilterEventEventBody & StatsFilterEventBody & DebugFilterRuleNodeEventBody;
