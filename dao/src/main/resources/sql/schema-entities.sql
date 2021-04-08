@@ -176,14 +176,14 @@ CREATE TABLE IF NOT EXISTS rule_node_state (
 );
 
 CREATE TABLE IF NOT EXISTS firmware (
-                                        id uuid NOT NULL CONSTRAINT firmware_pkey PRIMARY KEY,
-                                        created_time bigint NOT NULL,
-                                        tenant_id uuid NOT NULL,
-                                        title varchar(255) NOT NULL,
-                                        search_text varchar(255),
-                                        file_name varchar(255) NOT NULL,
-                                        content_type varchar(255) NOT NULL,
-                                        data bytea
+    id uuid NOT NULL CONSTRAINT firmware_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    title varchar(255) NOT NULL,
+    search_text varchar(255),
+    file_name varchar(255) NOT NULL,
+    content_type varchar(255) NOT NULL,
+    data bytea
 );
 
 CREATE TABLE IF NOT EXISTS device_profile (
