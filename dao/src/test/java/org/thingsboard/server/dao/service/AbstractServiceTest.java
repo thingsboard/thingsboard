@@ -51,6 +51,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.dao.firmware.FirmwareService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.resource.TbResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -146,6 +147,9 @@ public abstract class AbstractServiceTest {
     @Autowired
     protected TbResourceService resourceService;
 
+    @Autowired
+    protected FirmwareService firmwareService;
+
     class IdComparator<D extends HasId> implements Comparator<D> {
         @Override
         public int compare(D o1, D o2) {
@@ -192,7 +196,7 @@ public abstract class AbstractServiceTest {
 
     @Bean
     public AuditLogLevelFilter auditLogLevelFilter() {
-        Map<String,String> mask = new HashMap<>();
+        Map<String, String> mask = new HashMap<>();
         for (EntityType entityType : EntityType.values()) {
             mask.put(entityType.name().toLowerCase(), AuditLogLevelMask.RW.name());
         }

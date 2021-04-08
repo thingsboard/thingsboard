@@ -15,9 +15,30 @@
  */
 package org.thingsboard.server.common.data;
 
-/**
- * @author Andrew Shvayka
- */
-public enum EntityType {
-    TENANT, CUSTOMER, USER, DASHBOARD, ASSET, DEVICE, ALARM, RULE_CHAIN, RULE_NODE, ENTITY_VIEW, WIDGETS_BUNDLE, WIDGET_TYPE, TENANT_PROFILE, DEVICE_PROFILE, API_USAGE_STATE, TB_RESOURCE, FIRMWARE;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.id.FirmwareId;
+
+import java.nio.ByteBuffer;
+
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class Firmware extends FirmwareInfo {
+
+    private static final long serialVersionUID = 3091601761339422546L;
+
+    private transient ByteBuffer data;
+
+    public Firmware() {
+        super();
+    }
+
+    public Firmware(FirmwareId id) {
+        super(id);
+    }
+
+    public Firmware(Firmware firmware) {
+        super(firmware);
+        this.data = firmware.getData();
+    }
 }

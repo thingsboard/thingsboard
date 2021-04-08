@@ -26,6 +26,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 @EqualsAndHashCode(callSuper = true)
 public class TbResourceInfo extends SearchTextBased<TbResourceId> implements HasTenantId {
 
+    private static final long serialVersionUID = 7282664529021651736L;
+
     private TenantId tenantId;
     private String title;
     private ResourceType resourceType;

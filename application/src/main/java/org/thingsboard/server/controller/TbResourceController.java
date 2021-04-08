@@ -55,12 +55,6 @@ public class TbResourceController extends BaseController {
 
     public static final String RESOURCE_ID = "resourceId";
 
-    private final TbResourceService resourceService;
-
-    public TbResourceController(TbResourceService resourceService) {
-        this.resourceService = resourceService;
-    }
-
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/resource/{resourceId}/download", method = RequestMethod.GET)
     @ResponseBody
@@ -187,7 +181,7 @@ public class TbResourceController extends BaseController {
     @RequestMapping(value = "/resource/{resourceId}", method = RequestMethod.DELETE)
     @ResponseBody
     public void deleteResource(@PathVariable("resourceId") String strResourceId) throws ThingsboardException {
-        checkParameter("resourceId", strResourceId);
+        checkParameter(RESOURCE_ID, strResourceId);
         try {
             TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
             TbResource tbResource = checkResourceId(resourceId, Operation.DELETE);

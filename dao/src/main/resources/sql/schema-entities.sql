@@ -25,7 +25,7 @@ CREATE OR REPLACE PROCEDURE insert_tb_schema_settings()
 $$
 BEGIN
     IF (SELECT COUNT(*) FROM tb_schema_settings) = 0 THEN
-        INSERT INTO tb_schema_settings (schema_version) VALUES (3002000);
+        INSERT INTO tb_schema_settings (schema_version) VALUES (3003000);
     END IF;
 END;
 $$;
@@ -175,6 +175,17 @@ CREATE TABLE IF NOT EXISTS rule_node_state (
     CONSTRAINT fk_rule_node_state_node_id FOREIGN KEY (rule_node_id) REFERENCES rule_node(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS firmware (
+                                        id uuid NOT NULL CONSTRAINT firmware_pkey PRIMARY KEY,
+                                        created_time bigint NOT NULL,
+                                        tenant_id uuid NOT NULL,
+                                        title varchar(255) NOT NULL,
+                                        search_text varchar(255),
+                                        file_name varchar(255) NOT NULL,
+                                        content_type varchar(255) NOT NULL,
+                                        data bytea
+);
+
 CREATE TABLE IF NOT EXISTS device_profile (
     id uuid NOT NULL CONSTRAINT device_profile_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
@@ -187,12 +198,14 @@ CREATE TABLE IF NOT EXISTS device_profile (
     search_text varchar(255),
     is_default boolean,
     tenant_id uuid,
+    firmware_id uuid,
     default_rule_chain_id uuid,
     default_queue_name varchar(255),
     provision_device_key varchar,
     CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),
     CONSTRAINT device_provision_key_unq_key UNIQUE (provision_device_key),
-    CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id)
+    CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id),
+    CONSTRAINT fk_firmware_device_profile FOREIGN KEY (firmware_id) REFERENCES firmware(id)
 );
 
 CREATE TABLE IF NOT EXISTS device (
@@ -207,8 +220,10 @@ CREATE TABLE IF NOT EXISTS device (
     label varchar(255),
     search_text varchar(255),
     tenant_id uuid,
+    firmware_id uuid,
     CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name),
-    CONSTRAINT fk_device_profile FOREIGN KEY (device_profile_id) REFERENCES device_profile(id)
+    CONSTRAINT fk_device_profile FOREIGN KEY (device_profile_id) REFERENCES device_profile(id),
+    CONSTRAINT fk_firmware_device FOREIGN KEY (firmware_id) REFERENCES firmware(id)
 );
 
 CREATE TABLE IF NOT EXISTS device_credentials (

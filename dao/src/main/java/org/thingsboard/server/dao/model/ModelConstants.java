@@ -153,6 +153,7 @@ public class ModelConstants {
     public static final String DEVICE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
     public static final String DEVICE_DEVICE_PROFILE_ID_PROPERTY = "device_profile_id";
     public static final String DEVICE_DEVICE_DATA_PROPERTY = "device_data";
+    public static final String DEVICE_FIRMWARE_ID_PROPERTY = "firmware_id";
 
     public static final String DEVICE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_and_search_text";
     public static final String DEVICE_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_by_type_and_search_text";
@@ -176,6 +177,7 @@ public class ModelConstants {
     public static final String DEVICE_PROFILE_DEFAULT_RULE_CHAIN_ID_PROPERTY = "default_rule_chain_id";
     public static final String DEVICE_PROFILE_DEFAULT_QUEUE_NAME_PROPERTY = "default_queue_name";
     public static final String DEVICE_PROFILE_PROVISION_DEVICE_KEY = "provision_device_key";
+    public static final String DEVICE_PROFILE_FIRMWARE_ID_PROPERTY = "firmware_id";
 
     /**
      * Cassandra entityView constants.
@@ -466,6 +468,16 @@ public class ModelConstants {
     public static final String RESOURCE_TITLE_COLUMN = TITLE_PROPERTY;
     public static final String RESOURCE_FILE_NAME_COLUMN = "file_name";
     public static final String RESOURCE_DATA_COLUMN = "data";
+
+    /**
+     * Firmware constants.
+     */
+    public static final String FIRMWARE_TABLE_NAME = "firmware";
+    public static final String FIRMWARE_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
+    public static final String FIRMWARE_TITLE_COLUMN = TITLE_PROPERTY;
+    public static final String FIRMWARE_FILE_NAME_COLUMN = "file_name";
+    public static final String FIRMWARE_CONTENT_TYPE_COLUMN = "content_type";
+    public static final String FIRMWARE_DATA_COLUMN = "data";
 
     /**
      * Cassandra attributes and timeseries constants.
