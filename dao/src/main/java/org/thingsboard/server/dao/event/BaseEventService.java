@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.event.DebugRuleNodeEvent;
 import org.thingsboard.server.common.data.event.ErrorEvent;
+import org.thingsboard.server.common.data.event.EventProvisionConfiguration;
 import org.thingsboard.server.common.data.event.LifeCycleEvent;
 import org.thingsboard.server.common.data.event.StatisticsEvent;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -115,23 +116,8 @@ public class BaseEventService implements EventService {
     }
 
     @Override
-    public PageData<Event> findDebugRuleNodeEvents(TenantId tenantId, EntityId entityId, DebugRuleNodeEvent debugRuleNodeEvent, TimePageLink pageLink) {
-        return eventDao.findDebugRuleNodeEvents(tenantId.getId(), entityId, debugRuleNodeEvent, pageLink);
-    }
-
-    @Override
-    public PageData<Event> findErrorEvents(TenantId tenantId, EntityId entityId, ErrorEvent errorEvent, TimePageLink pageLink) {
-        return eventDao.findErrorEvents(tenantId.getId(), entityId, errorEvent, pageLink);
-    }
-
-    @Override
-    public PageData<Event> findStatisticsEvents(TenantId tenantId, EntityId entityId, StatisticsEvent statisticsEvent, TimePageLink pageLink) {
-        return eventDao.findStatisticsEvents(tenantId.getId(), entityId, statisticsEvent, pageLink);
-    }
-
-    @Override
-    public PageData<Event> findLifeCycleEvents(TenantId tenantId, EntityId entityId, LifeCycleEvent lifeCycleEvent, TimePageLink pageLink) {
-        return eventDao.findLifeCycleEvents(tenantId.getId(), entityId, lifeCycleEvent, pageLink);
+    public PageData<Event> findEventsByFilter(TenantId tenantId, EntityId entityId, EventProvisionConfiguration eventProvisionConfiguration, TimePageLink pageLink) {
+        return eventDao.findEventByFilter(tenantId.getId(), entityId, eventProvisionConfiguration, pageLink);
     }
 
     @Override

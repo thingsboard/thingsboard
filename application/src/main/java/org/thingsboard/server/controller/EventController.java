@@ -137,31 +137,7 @@ public class EventController extends BaseController {
             }
 
             TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
-
-            switch (eventProvisionConfiguration.getEventType()) {
-                case DEBUG_RULE_NODE: return checkNotNull(eventService.findDebugRuleNodeEvents(
-                        tenantId,
-                        entityId,
-                        (DebugRuleNodeEvent) eventProvisionConfiguration,
-                        pageLink));
-                case ERROR: return checkNotNull(eventService.findErrorEvents(
-                        tenantId,
-                        entityId,
-                        (ErrorEvent) eventProvisionConfiguration,
-                        pageLink));
-                case STATS: return checkNotNull(eventService.findStatisticsEvents(
-                        tenantId,
-                        entityId,
-                        (StatisticsEvent) eventProvisionConfiguration,
-                        pageLink));
-                case LC_EVENT: return checkNotNull(eventService.findLifeCycleEvents(
-                        tenantId,
-                        entityId,
-                        (LifeCycleEvent) eventProvisionConfiguration,
-                        pageLink));
-            }
-
-            throw new ThingsboardException("Not supported type: " + eventProvisionConfiguration.getEventType(), ThingsboardErrorCode.INVALID_ARGUMENTS);
+            return checkNotNull(eventService.findEventsByFilter(tenantId, entityId, eventProvisionConfiguration, pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }

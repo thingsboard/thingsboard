@@ -21,7 +21,7 @@
       <ng-template [ngSwitchCase]="'msgDirectionType'">
         <mat-form-field>
           <mat-label>{{ column.title | translate}}</mat-label>
-          <mat-select formControlName="type">
+          <mat-select formControlName="msgDirectionType">
             <mat-option [value]="">{{ 'event.all-events' | translate}}</mat-option>
             <mat-option *ngFor="let msgDirectionType of msgDirectionTypes" [value]="msgDirectionType">
               {{ msgDirectionType }}

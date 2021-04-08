@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.event.DebugRuleNodeEvent;
 import org.thingsboard.server.common.data.event.ErrorEvent;
+import org.thingsboard.server.common.data.event.EventProvisionConfiguration;
 import org.thingsboard.server.common.data.event.LifeCycleEvent;
 import org.thingsboard.server.common.data.event.StatisticsEvent;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -92,13 +93,8 @@ public interface EventDao extends Dao<Event> {
      */
     PageData<Event> findEvents(UUID tenantId, EntityId entityId, String eventType, TimePageLink pageLink);
 
-    PageData<Event> findDebugRuleNodeEvents(UUID tenantId, EntityId entityId, DebugRuleNodeEvent debugRuleNodeEvent, TimePageLink pageLink);
+    PageData<Event> findEventByFilter(UUID tenantId, EntityId entityId, EventProvisionConfiguration eventProvisionConfiguration, TimePageLink pageLink);
 
-    PageData<Event> findErrorEvents(UUID tenantId, EntityId entityId, ErrorEvent errorEvent, TimePageLink pageLink);
-
-    PageData<Event> findLifeCycleEvents(UUID tenantId, EntityId entityId, LifeCycleEvent lifeCycleEvent, TimePageLink pageLink);
-
-    PageData<Event> findStatisticsEvents(UUID tenantId, EntityId entityId, StatisticsEvent statisticsEvent, TimePageLink pageLink);
     /**
      * Find latest events by tenantId, entityId and eventType.
      *

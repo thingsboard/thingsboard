@@ -20,14 +20,14 @@ import lombok.Data;
 @Data
 public class DebugRuleNodeEvent implements EventProvisionConfiguration {
 
-    private String type;
+    private String msgDirectionType;
     private String server;
     private String dataSearch;
     private String metadataSearch;
     private String entityName;
     private String relationType;
-    private String messageId;
-    private String messageType;
+    private String entityId;
+    private String msgType;
     private boolean isError;
 
     public void setIsError(boolean isError) {

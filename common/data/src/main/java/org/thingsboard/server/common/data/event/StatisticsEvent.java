@@ -20,8 +20,8 @@ import lombok.Data;
 @Data
 public class StatisticsEvent implements EventProvisionConfiguration {
     private String server;
-    private int messagesProcessed;
-    private int errorsOccured;
+    private Integer messagesProcessed;
+    private Integer errorsOccured;
 
     @Override
     public EventType getEventType() {

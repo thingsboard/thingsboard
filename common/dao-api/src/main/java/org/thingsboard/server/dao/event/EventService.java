@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.event.DebugRuleNodeEvent;
 import org.thingsboard.server.common.data.event.ErrorEvent;
+import org.thingsboard.server.common.data.event.EventProvisionConfiguration;
 import org.thingsboard.server.common.data.event.LifeCycleEvent;
 import org.thingsboard.server.common.data.event.StatisticsEvent;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -45,13 +46,7 @@ public interface EventService {
 
     List<Event> findLatestEvents(TenantId tenantId, EntityId entityId, String eventType, int limit);
 
-    PageData<Event> findDebugRuleNodeEvents(TenantId tenantId, EntityId entityId, DebugRuleNodeEvent debugRuleNodeEvent, TimePageLink pageLink);
-
-    PageData<Event> findErrorEvents(TenantId tenantId, EntityId entityId, ErrorEvent errorEvent, TimePageLink pageLink);
-
-    PageData<Event> findStatisticsEvents(TenantId tenantId, EntityId entityId, StatisticsEvent statisticsEvent, TimePageLink pageLink);
-
-    PageData<Event> findLifeCycleEvents(TenantId tenantId, EntityId entityId, LifeCycleEvent lifeCycleEvent, TimePageLink pageLink);
+    PageData<Event> findEventsByFilter(TenantId tenantId, EntityId entityId, EventProvisionConfiguration eventProvisionConfiguration, TimePageLink pageLink);
 
     void removeEvents(TenantId tenantId, EntityId entityId);
 
