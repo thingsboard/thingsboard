@@ -46,8 +46,6 @@ transport:
     bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${COAP_BIND_PORT:5683}"
     timeout: "${COAP_TIMEOUT:10000}"
-<<<<<<< HEAD
-=======
     dtls:
       # Enable/disable DTLS 1.2 support
       enabled: "${COAP_DTLS_ENABLED:false}"
@@ -70,7 +68,6 @@ transport:
       x509:
         dtls_session_inactivity_timeout: "${TB_COAP_X509_DTLS_SESSION_INACTIVITY_TIMEOUT:86400000}"
         dtls_session_report_timeout: "${TB_COAP_X509_DTLS_SESSION_REPORT_TIMEOUT:1800000}"
->>>>>>> 023007221... init commit: coap-server component
   sessions:
     inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
     report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:30000}"
