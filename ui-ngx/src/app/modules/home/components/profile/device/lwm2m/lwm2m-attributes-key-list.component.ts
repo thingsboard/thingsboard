@@ -31,14 +31,8 @@ import {Subscription} from "rxjs";
 import {PageComponent} from "@shared/components/page.component";
 import {Store} from "@ngrx/store";
 import {AppState} from "@core/core.state";
-import {
-  ATTRIBUTE_KEYS,
-  ATTRIBUTE_LWM2M_MAP,
-  attributeLwm2mKeyValidator,
-  attributeLwm2mValueNumberValidator,
-  attributeLwm2mValueValidator,
-} from "@home/components/profile/device/lwm2m/lwm2m-profile-config.models";
-import {isEmptyStr, isUndefinedOrNull} from "@core/utils";
+import {ATTRIBUTE_KEYS, ATTRIBUTE_LWM2M_MAP} from "@home/components/profile/device/lwm2m/lwm2m-profile-config.models";
+import {isDefinedAndNotNull, isEmpty, isEmptyStr, isUndefinedOrNull} from "@core/utils";
 
 
 @Component({
@@ -63,8 +57,6 @@ export class Lwm2mAttributesKeyListComponent extends PageComponent implements Co
   attrKeys = ATTRIBUTE_KEYS;
 
   attributeLwm2mMap = ATTRIBUTE_LWM2M_MAP;
-
-  attributeLwm2mValueValidatorF = attributeLwm2mValueValidator;
 
   @Input() disabled: boolean;
 
@@ -118,8 +110,8 @@ export class Lwm2mAttributesKeyListComponent extends PageComponent implements Co
       for (const property of Object.keys(keyValMap)) {
         if (Object.prototype.hasOwnProperty.call(keyValMap, property)) {
           keyValsControls.push(this.fb.group({
-            key: [property, [Validators.required, attributeLwm2mKeyValidator]],
-            value: [keyValMap[property], attributeLwm2mValueValidator(property)]
+            key: [property, [Validators.required, this.attributeLwm2mKeyValidator]],
+            value: [keyValMap[property], this.attributeLwm2mValueValidator(property)]
           }));
         }
       }
@@ -143,7 +135,7 @@ export class Lwm2mAttributesKeyListComponent extends PageComponent implements Co
   public addKeyVal() {
     const keyValsFormArray = this.kvListFormGroup.get('keyVals') as FormArray;
     keyValsFormArray.push(this.fb.group({
-      key: ['', [Validators.required, attributeLwm2mKeyValidator]],
+      key: ['', [Validators.required, this.attributeLwm2mKeyValidator]],
       value: ['', []]
     }));
   }
@@ -177,8 +169,8 @@ export class Lwm2mAttributesKeyListComponent extends PageComponent implements Co
         fg.get('value').setErrors(null);
       }
       else {
-        fg.get('value').setValidators(attributeLwm2mValueNumberValidator);
-        fg.get('value').setErrors(attributeLwm2mValueNumberValidator(fg.get('value')));
+        fg.get('value').setValidators(this.attributeLwm2mValueNumberValidator);
+        fg.get('value').setErrors(this.attributeLwm2mValueNumberValidator(fg.get('value')));
       }
     });
   }
@@ -201,5 +193,31 @@ export class Lwm2mAttributesKeyListComponent extends PageComponent implements Co
     else {
       this.propagateChange(null);
     }
+  }
+
+
+  private attributeLwm2mKeyValidator = (control: AbstractControl) => {
+    const key = control.value as string;
+    if (isDefinedAndNotNull(key) && !isEmpty(key)) {
+      if (!ATTRIBUTE_KEYS.includes(key)) {
+        return {
+          validAttributeKey: true
+        };
+      }
+    }
+    return null;
+  }
+
+  private attributeLwm2mValueNumberValidator = (control: AbstractControl) => {
+    if (isNaN(Number(control.value)) || Number(control.value) < 0) {
+      return {
+        'validAttributeValue': true
+      };
+    }
+    return null;
+  }
+
+  private attributeLwm2mValueValidator = (property: string): Object [] => {
+    return property === 'ver'?  [] : [this.attributeLwm2mValueNumberValidator];
   }
 }

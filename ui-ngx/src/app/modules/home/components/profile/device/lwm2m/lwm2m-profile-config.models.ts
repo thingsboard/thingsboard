@@ -14,9 +14,6 @@
 /// limitations under the License.
 ///
 
-import {AbstractControl} from "@angular/forms";
-import {isDefinedAndNotNull, isEmpty} from "@core/utils";
-
 export const PAGE_SIZE_LIMIT = 50;
 export const INSTANCES = 'instances';
 export const RESOURCES = 'resources';
@@ -234,29 +231,3 @@ export interface ObjectLwM2M {
   attributeLwm2m?: {};
   instances?: Instance [];
 }
-
-export function attributeLwm2mKeyValidator(control: AbstractControl) {
-  const key = control.value as string;
-  if (isDefinedAndNotNull(key) && !isEmpty(key)) {
-    if (!ATTRIBUTE_KEYS.includes(key)) {
-      return {
-        validAttributeKey: true
-      };
-    }
-  }
-  return null;
-}
-
-export function attributeLwm2mValueNumberValidator(control: AbstractControl) {
-  if (isNaN(Number(control.value))) {
-    return {
-      'validAttributeValue': true
-    };
-  }
-  return null;
-}
-
-export function attributeLwm2mValueValidator(property: string): Object [] {
-   return property === 'ver'?  [] : [attributeLwm2mValueNumberValidator];
-}
-

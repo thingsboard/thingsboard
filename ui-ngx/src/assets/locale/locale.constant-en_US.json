@@ -1152,7 +1152,7 @@
             "key-name-tip": "Key Name in Camel format",
             "attribute-lwm2m-tip": "Attributes Lwm2m",
             "valid-attribute-lwm2m-key": "Name have be only '{{attrEnums}}'",
-            "valid-attribute-lwm2m-value": "Value have be Long, Double or null/empty",
+            "valid-attribute-lwm2m-value": "Value have be Long, Double and greater than zero or null/empty",
             "no-data": "No attributes",
             "key-name": "Key Name",
             "attribute-lwm2m-name": "Name attribute",
