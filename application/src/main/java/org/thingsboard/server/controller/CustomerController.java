@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -96,9 +97,14 @@ public class CustomerController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN')")
     @RequestMapping(value = "/customer", method = RequestMethod.POST)
     @ResponseBody
-    public Customer saveCustomer(@RequestBody Customer customer) throws ThingsboardException {
+    public Customer saveCustomer(@RequestBody Customer customer, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         try {
-            customer.setTenantId(getCurrentUser().getTenantId());
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
+
+            customer.setTenantId(currentTenantId);
 
             checkEntity(customer.getId(), customer, Resource.CUSTOMER);
 
@@ -121,12 +127,16 @@ public class CustomerController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN')")
     @RequestMapping(value = "/customer/{customerId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteCustomer(@PathVariable(CUSTOMER_ID) String strCustomerId) throws ThingsboardException {
+    public void deleteCustomer(@PathVariable(CUSTOMER_ID) String strCustomerId, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter(CUSTOMER_ID, strCustomerId);
         try {
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             Customer customer = checkCustomerId(customerId, Operation.DELETE);
-            customerService.deleteCustomer(getTenantId(), customerId);
+            customerService.deleteCustomer(currentTenantId, customerId);
 
             logEntityAction(customerId, customer,
                     customer.getId(),
@@ -150,11 +160,15 @@ public class CustomerController extends BaseController {
                                            @RequestParam int page,
                                            @RequestParam(required = false) String textSearch,
                                            @RequestParam(required = false) String sortProperty,
+                                           @RequestParam(name = "tenantId", required = false) TenantId tenantId,
                                            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            TenantId tenantId = getCurrentUser().getTenantId();
-            return checkNotNull(customerService.findCustomersByTenantId(tenantId, pageLink));
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
+            return checkNotNull(customerService.findCustomersByTenantId(currentTenantId, pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -164,10 +178,13 @@ public class CustomerController extends BaseController {
     @RequestMapping(value = "/tenant/customers", params = {"customerTitle"}, method = RequestMethod.GET)
     @ResponseBody
     public Customer getTenantCustomer(
-            @RequestParam String customerTitle) throws ThingsboardException {
+            @RequestParam String customerTitle, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         try {
-            TenantId tenantId = getCurrentUser().getTenantId();
-            return checkNotNull(customerService.findCustomerByTenantIdAndTitle(tenantId, customerTitle));
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
+            return checkNotNull(customerService.findCustomerByTenantIdAndTitle(currentTenantId, customerTitle));
         } catch (Exception e) {
             throw handleException(e);
         }

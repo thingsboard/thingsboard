@@ -90,13 +90,18 @@ public class AssetController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/asset", method = RequestMethod.POST)
     @ResponseBody
-    public Asset saveAsset(@RequestBody Asset asset) throws ThingsboardException {
+    public Asset saveAsset(@RequestBody Asset asset, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         try {
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
+
             if (TB_SERVICE_QUEUE.equals(asset.getType())) {
                 throw new ThingsboardException("Unable to save asset with type " + TB_SERVICE_QUEUE, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
             }
 
-            asset.setTenantId(getCurrentUser().getTenantId());
+            asset.setTenantId(currentTenantId);
 
            checkEntity(asset.getId(), asset, Resource.ASSET);
 
@@ -117,12 +122,17 @@ public class AssetController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN')")
     @RequestMapping(value = "/asset/{assetId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteAsset(@PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
+    public void deleteAsset(@PathVariable(ASSET_ID) String strAssetId, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter(ASSET_ID, strAssetId);
         try {
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
+
             AssetId assetId = new AssetId(toUUID(strAssetId));
             Asset asset = checkAssetId(assetId, Operation.DELETE);
-            assetService.deleteAsset(getTenantId(), assetId);
+            assetService.deleteAsset(currentTenantId, assetId);
 
             logEntityAction(assetId, asset,
                     asset.getCustomerId(),
@@ -141,17 +151,22 @@ public class AssetController extends BaseController {
     @RequestMapping(value = "/customer/{customerId}/asset/{assetId}", method = RequestMethod.POST)
     @ResponseBody
     public Asset assignAssetToCustomer(@PathVariable("customerId") String strCustomerId,
+                                       @RequestParam(name = "tenantId", required = false) TenantId tenantId,
                                        @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
         checkParameter(ASSET_ID, strAssetId);
         try {
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             Customer customer = checkCustomerId(customerId, Operation.READ);
 
             AssetId assetId = new AssetId(toUUID(strAssetId));
             checkAssetId(assetId, Operation.ASSIGN_TO_CUSTOMER);
 
-            Asset savedAsset = checkNotNull(assetService.assignAssetToCustomer(getTenantId(), assetId, customerId));
+            Asset savedAsset = checkNotNull(assetService.assignAssetToCustomer(currentTenantId, assetId, customerId));
 
             logEntityAction(assetId, savedAsset,
                     savedAsset.getCustomerId(),
@@ -171,9 +186,13 @@ public class AssetController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN')")
     @RequestMapping(value = "/customer/asset/{assetId}", method = RequestMethod.DELETE)
     @ResponseBody
-    public Asset unassignAssetFromCustomer(@PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
+    public Asset unassignAssetFromCustomer(@PathVariable(ASSET_ID) String strAssetId, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter(ASSET_ID, strAssetId);
         try {
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
             AssetId assetId = new AssetId(toUUID(strAssetId));
             Asset asset = checkAssetId(assetId, Operation.UNASSIGN_FROM_CUSTOMER);
             if (asset.getCustomerId() == null || asset.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
@@ -182,7 +201,7 @@ public class AssetController extends BaseController {
 
             Customer customer = checkCustomerId(asset.getCustomerId(), Operation.READ);
 
-            Asset savedAsset = checkNotNull(assetService.unassignAssetFromCustomer(getTenantId(), assetId));
+            Asset savedAsset = checkNotNull(assetService.unassignAssetFromCustomer(currentTenantId, assetId));
 
             logEntityAction(assetId, asset,
                     asset.getCustomerId(),
@@ -202,13 +221,17 @@ public class AssetController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN')")
     @RequestMapping(value = "/customer/public/asset/{assetId}", method = RequestMethod.POST)
     @ResponseBody
-    public Asset assignAssetToPublicCustomer(@PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
+    public Asset assignAssetToPublicCustomer(@PathVariable(ASSET_ID) String strAssetId, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter(ASSET_ID, strAssetId);
         try {
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
             AssetId assetId = new AssetId(toUUID(strAssetId));
             Asset asset = checkAssetId(assetId, Operation.ASSIGN_TO_CUSTOMER);
             Customer publicCustomer = customerService.findOrCreatePublicCustomer(asset.getTenantId());
-            Asset savedAsset = checkNotNull(assetService.assignAssetToCustomer(getTenantId(), assetId, publicCustomer.getId()));
+            Asset savedAsset = checkNotNull(assetService.assignAssetToCustomer(currentTenantId, assetId, publicCustomer.getId()));
 
             logEntityAction(assetId, savedAsset,
                     savedAsset.getCustomerId(),
@@ -234,14 +257,18 @@ public class AssetController extends BaseController {
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String sortProperty,
+            @RequestParam(name = "tenantId", required = false) TenantId tenantId,
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
-            TenantId tenantId = getCurrentUser().getTenantId();
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             if (type != null && type.trim().length()>0) {
-                return checkNotNull(assetService.findAssetsByTenantIdAndType(tenantId, type, pageLink));
+                return checkNotNull(assetService.findAssetsByTenantIdAndType(currentTenantId, type, pageLink));
             } else {
-                return checkNotNull(assetService.findAssetsByTenantId(tenantId, pageLink));
+                return checkNotNull(assetService.findAssetsByTenantId(currentTenantId, pageLink));
             }
         } catch (Exception e) {
             throw handleException(e);
@@ -257,14 +284,18 @@ public class AssetController extends BaseController {
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String sortProperty,
+            @RequestParam(name = "tenantId", required = false) TenantId tenantId,
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
-            TenantId tenantId = getCurrentUser().getTenantId();
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             if (type != null && type.trim().length() > 0) {
-                return checkNotNull(assetService.findAssetInfosByTenantIdAndType(tenantId, type, pageLink));
+                return checkNotNull(assetService.findAssetInfosByTenantIdAndType(currentTenantId, type, pageLink));
             } else {
-                return checkNotNull(assetService.findAssetInfosByTenantId(tenantId, pageLink));
+                return checkNotNull(assetService.findAssetInfosByTenantId(currentTenantId, pageLink));
             }
         } catch (Exception e) {
             throw handleException(e);
@@ -275,10 +306,13 @@ public class AssetController extends BaseController {
     @RequestMapping(value = "/tenant/assets", params = {"assetName"}, method = RequestMethod.GET)
     @ResponseBody
     public Asset getTenantAsset(
-            @RequestParam String assetName) throws ThingsboardException {
+            @RequestParam String assetName, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         try {
-            TenantId tenantId = getCurrentUser().getTenantId();
-            return checkNotNull(assetService.findAssetByTenantIdAndName(tenantId, assetName));
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
+            return checkNotNull(assetService.findAssetByTenantIdAndName(currentTenantId, assetName));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -294,17 +328,21 @@ public class AssetController extends BaseController {
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String sortProperty,
+            @RequestParam(name = "tenantId", required = false) TenantId tenantId,
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
         try {
-            TenantId tenantId = getCurrentUser().getTenantId();
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             checkCustomerId(customerId, Operation.READ);
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             if (type != null && type.trim().length()>0) {
-                return checkNotNull(assetService.findAssetsByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink));
+                return checkNotNull(assetService.findAssetsByTenantIdAndCustomerIdAndType(currentTenantId, customerId, type, pageLink));
             } else {
-                return checkNotNull(assetService.findAssetsByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+                return checkNotNull(assetService.findAssetsByTenantIdAndCustomerId(currentTenantId, customerId, pageLink));
             }
         } catch (Exception e) {
             throw handleException(e);
@@ -321,17 +359,21 @@ public class AssetController extends BaseController {
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String sortProperty,
+            @RequestParam(name = "tenantId", required = false) TenantId tenantId,
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
         try {
-            TenantId tenantId = getCurrentUser().getTenantId();
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             checkCustomerId(customerId, Operation.READ);
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             if (type != null && type.trim().length() > 0) {
-                return checkNotNull(assetService.findAssetInfosByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink));
+                return checkNotNull(assetService.findAssetInfosByTenantIdAndCustomerIdAndType(currentTenantId, customerId, type, pageLink));
             } else {
-                return checkNotNull(assetService.findAssetInfosByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+                return checkNotNull(assetService.findAssetInfosByTenantIdAndCustomerId(currentTenantId, customerId, pageLink));
             }
         } catch (Exception e) {
             throw handleException(e);
@@ -342,11 +384,14 @@ public class AssetController extends BaseController {
     @RequestMapping(value = "/assets", params = {"assetIds"}, method = RequestMethod.GET)
     @ResponseBody
     public List<Asset> getAssetsByIds(
-            @RequestParam("assetIds") String[] strAssetIds) throws ThingsboardException {
+            @RequestParam("assetIds") String[] strAssetIds, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkArrayParameter("assetIds", strAssetIds);
         try {
             SecurityUser user = getCurrentUser();
-            TenantId tenantId = user.getTenantId();
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
             CustomerId customerId = user.getCustomerId();
             List<AssetId> assetIds = new ArrayList<>();
             for (String strAssetId : strAssetIds) {
@@ -354,9 +399,9 @@ public class AssetController extends BaseController {
             }
             ListenableFuture<List<Asset>> assets;
             if (customerId == null || customerId.isNullUid()) {
-                assets = assetService.findAssetsByTenantIdAndIdsAsync(tenantId, assetIds);
+                assets = assetService.findAssetsByTenantIdAndIdsAsync(currentTenantId, assetIds);
             } else {
-                assets = assetService.findAssetsByTenantIdCustomerIdAndIdsAsync(tenantId, customerId, assetIds);
+                assets = assetService.findAssetsByTenantIdCustomerIdAndIdsAsync(currentTenantId, customerId, assetIds);
             }
             return checkNotNull(assets.get());
         } catch (Exception e) {
@@ -367,13 +412,17 @@ public class AssetController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/assets", method = RequestMethod.POST)
     @ResponseBody
-    public List<Asset> findByQuery(@RequestBody AssetSearchQuery query) throws ThingsboardException {
+    public List<Asset> findByQuery(@RequestBody AssetSearchQuery query, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkNotNull(query);
         checkNotNull(query.getParameters());
         checkNotNull(query.getAssetTypes());
         checkEntityId(query.getParameters().getEntityId(), Operation.READ);
         try {
-            List<Asset> assets = checkNotNull(assetService.findAssetsByQuery(getTenantId(), query).get());
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
+            List<Asset> assets = checkNotNull(assetService.findAssetsByQuery(currentTenantId, query).get());
             assets = assets.stream().filter(asset -> {
                 try {
                     accessControlService.checkPermission(getCurrentUser(), Resource.ASSET, Operation.READ, asset.getId(), asset);
@@ -391,11 +440,13 @@ public class AssetController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/asset/types", method = RequestMethod.GET)
     @ResponseBody
-    public List<EntitySubtype> getAssetTypes() throws ThingsboardException {
+    public List<EntitySubtype> getAssetTypes(@RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         try {
-            SecurityUser user = getCurrentUser();
-            TenantId tenantId = user.getTenantId();
-            ListenableFuture<List<EntitySubtype>> assetTypes = assetService.findAssetTypesByTenantId(tenantId);
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
+            ListenableFuture<List<EntitySubtype>> assetTypes = assetService.findAssetTypesByTenantId(currentTenantId);
             return checkNotNull(assetTypes.get());
         } catch (Exception e) {
             throw handleException(e);

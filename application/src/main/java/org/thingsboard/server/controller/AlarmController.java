@@ -39,10 +39,12 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.UUID;
@@ -51,7 +53,6 @@ import java.util.UUID;
 @TbCoreComponent
 @RequestMapping("/api")
 public class AlarmController extends BaseController {
-
     public static final String ALARM_ID = "alarmId";
 
     @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -83,9 +84,14 @@ public class AlarmController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm", method = RequestMethod.POST)
     @ResponseBody
-    public Alarm saveAlarm(@RequestBody Alarm alarm) throws ThingsboardException {
+    public Alarm saveAlarm(@RequestBody Alarm alarm, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         try {
-            alarm.setTenantId(getCurrentUser().getTenantId());
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
+
+            alarm.setTenantId(currentTenantId);
 
             checkEntity(alarm.getId(), alarm, Resource.ALARM);
 
@@ -104,12 +110,17 @@ public class AlarmController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/{alarmId}", method = RequestMethod.DELETE)
     @ResponseBody
-    public Boolean deleteAlarm(@PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
+    public Boolean deleteAlarm(@PathVariable(ALARM_ID) String strAlarmId,@RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
         try {
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
+
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
             checkAlarmId(alarmId, Operation.WRITE);
-            return alarmService.deleteAlarm(getTenantId(), alarmId);
+            return alarmService.deleteAlarm(currentTenantId, alarmId);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -118,13 +129,18 @@ public class AlarmController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/{alarmId}/ack", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public void ackAlarm(@PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
+    public void ackAlarm(@PathVariable(ALARM_ID) String strAlarmId, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
         try {
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
+
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
             Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
             long ackTs = System.currentTimeMillis();
-            alarmService.ackAlarm(getCurrentUser().getTenantId(), alarmId, ackTs).get();
+            alarmService.ackAlarm(currentTenantId, alarmId, ackTs).get();
             alarm.setAckTs(ackTs);
             alarm.setStatus(alarm.getStatus().isCleared() ? AlarmStatus.CLEARED_ACK : AlarmStatus.ACTIVE_ACK);
             logEntityAction(alarm.getOriginator(), alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_ACK, null);
@@ -136,13 +152,18 @@ public class AlarmController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/{alarmId}/clear", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public void clearAlarm(@PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
+    public void clearAlarm(@PathVariable(ALARM_ID) String strAlarmId, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
         try {
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
+
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
             Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
             long clearTs = System.currentTimeMillis();
-            alarmService.clearAlarm(getCurrentUser().getTenantId(), alarmId, null, clearTs).get();
+            alarmService.clearAlarm(currentTenantId, alarmId, null, clearTs).get();
             alarm.setClearTs(clearTs);
             alarm.setStatus(alarm.getStatus().isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK);
             logEntityAction(alarm.getOriginator(), alarm, getCurrentUser().getCustomerId(), ActionType.ALARM_CLEAR, null);
@@ -167,7 +188,9 @@ public class AlarmController extends BaseController {
             @RequestParam(required = false) Long startTime,
             @RequestParam(required = false) Long endTime,
             @RequestParam(required = false) String offset,
-            @RequestParam(required = false) Boolean fetchOriginator
+            @RequestParam(required = false) Boolean fetchOriginator,
+            @RequestParam(name = "tenantId", required = false) TenantId tenantId
+
     ) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
@@ -185,7 +208,12 @@ public class AlarmController extends BaseController {
             idOffsetUuid = toUUID(offset);
         }
         try {
-            return checkNotNull(alarmService.findAlarms(getCurrentUser().getTenantId(), new AlarmQuery(entityId, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator, idOffsetUuid)).get());
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
+
+            return checkNotNull(alarmService.findAlarms(currentTenantId, new AlarmQuery(entityId, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator, idOffsetUuid)).get());
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -198,7 +226,9 @@ public class AlarmController extends BaseController {
             @PathVariable("entityType") String strEntityType,
             @PathVariable("entityId") String strEntityId,
             @RequestParam(required = false) String searchStatus,
-            @RequestParam(required = false) String status
+            @RequestParam(required = false) String status,
+            @RequestParam(name = "tenantId", required = false) TenantId tenantId
+
     ) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
@@ -211,10 +241,13 @@ public class AlarmController extends BaseController {
         }
         checkEntityId(entityId, Operation.READ);
         try {
-            return alarmService.findHighestAlarmSeverity(getCurrentUser().getTenantId(), entityId, alarmSearchStatus, alarmStatus);
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
+            return alarmService.findHighestAlarmSeverity(currentTenantId, entityId, alarmSearchStatus, alarmStatus);
         } catch (Exception e) {
             throw handleException(e);
         }
     }
-
 }

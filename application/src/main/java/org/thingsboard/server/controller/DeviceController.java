@@ -117,7 +117,7 @@ public class DeviceController extends BaseController {
             TenantId currentTenantId =
                 getAuthority() == Authority.ROOT && tenantId != null
                     ? tenantId
-                    : getCurrentUser().getTenantId();
+                    : getTenantId();
 
             device.setTenantId(currentTenantId);
 
@@ -128,7 +128,7 @@ public class DeviceController extends BaseController {
             tbClusterService.onDeviceChange(savedDevice, null);
             tbClusterService.pushMsgToCore(new DeviceNameOrTypeUpdateMsg(currentTenantId,
                     savedDevice.getId(), savedDevice.getName(), savedDevice.getType()), null);
-            tbClusterService.onEntityStateChange(savedDevice.getTenantId(), savedDevice.getId(),
+            tbClusterService.onEntityStateChange(currentTenantId, savedDevice.getId(),
                     device.getId() == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(savedDevice.getId(), savedDevice,
@@ -157,14 +157,14 @@ public class DeviceController extends BaseController {
             TenantId currentTenantId =
                 getAuthority() == Authority.ROOT && tenantId != null
                     ? tenantId
-                    : getCurrentUser().getTenantId();
+                    : getTenantId();
 
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
             Device device = checkDeviceId(deviceId, Operation.DELETE);
             deviceService.deleteDevice(currentTenantId, deviceId);
 
             tbClusterService.onDeviceDeleted(device, null);
-            tbClusterService.onEntityStateChange(device.getTenantId(), deviceId, ComponentLifecycleEvent.DELETED);
+            tbClusterService.onEntityStateChange(currentTenantId, deviceId, ComponentLifecycleEvent.DELETED);
 
             logEntityAction(deviceId, device,
                     device.getCustomerId(),
@@ -184,17 +184,22 @@ public class DeviceController extends BaseController {
     @RequestMapping(value = "/customer/{customerId}/device/{deviceId}", method = RequestMethod.POST)
     @ResponseBody
     public Device assignDeviceToCustomer(@PathVariable("customerId") String strCustomerId,
-                                         @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+                                         @PathVariable(DEVICE_ID) String strDeviceId, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
         checkParameter(DEVICE_ID, strDeviceId);
         try {
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
+
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             Customer customer = checkCustomerId(customerId, Operation.READ);
 
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
             checkDeviceId(deviceId, Operation.ASSIGN_TO_CUSTOMER);
 
-            Device savedDevice = checkNotNull(deviceService.assignDeviceToCustomer(getCurrentUser().getTenantId(), deviceId, customerId));
+            Device savedDevice = checkNotNull(deviceService.assignDeviceToCustomer(currentTenantId, deviceId, customerId));
 
             logEntityAction(deviceId, savedDevice,
                     savedDevice.getCustomerId(),
@@ -212,9 +217,15 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN')")
     @RequestMapping(value = "/customer/device/{deviceId}", method = RequestMethod.DELETE)
     @ResponseBody
-    public Device unassignDeviceFromCustomer(@PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+    public Device unassignDeviceFromCustomer(@PathVariable(DEVICE_ID) String strDeviceId, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter(DEVICE_ID, strDeviceId);
         try {
+
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
+
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
             Device device = checkDeviceId(deviceId, Operation.UNASSIGN_FROM_CUSTOMER);
             if (device.getCustomerId() == null || device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
@@ -222,7 +233,7 @@ public class DeviceController extends BaseController {
             }
             Customer customer = checkCustomerId(device.getCustomerId(), Operation.READ);
 
-            Device savedDevice = checkNotNull(deviceService.unassignDeviceFromCustomer(getCurrentUser().getTenantId(), deviceId));
+            Device savedDevice = checkNotNull(deviceService.unassignDeviceFromCustomer(currentTenantId, deviceId));
 
             logEntityAction(deviceId, device,
                     device.getCustomerId(),
@@ -240,13 +251,18 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN')")
     @RequestMapping(value = "/customer/public/device/{deviceId}", method = RequestMethod.POST)
     @ResponseBody
-    public Device assignDeviceToPublicCustomer(@PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+    public Device assignDeviceToPublicCustomer(@PathVariable(DEVICE_ID) String strDeviceId, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter(DEVICE_ID, strDeviceId);
         try {
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
+
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
             Device device = checkDeviceId(deviceId, Operation.ASSIGN_TO_CUSTOMER);
             Customer publicCustomer = customerService.findOrCreatePublicCustomer(device.getTenantId());
-            Device savedDevice = checkNotNull(deviceService.assignDeviceToCustomer(getCurrentUser().getTenantId(), deviceId, publicCustomer.getId()));
+            Device savedDevice = checkNotNull(deviceService.assignDeviceToCustomer(currentTenantId, deviceId, publicCustomer.getId()));
 
             logEntityAction(deviceId, savedDevice,
                     savedDevice.getCustomerId(),
@@ -264,12 +280,17 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/{deviceId}/credentials", method = RequestMethod.GET)
     @ResponseBody
-    public DeviceCredentials getDeviceCredentialsByDeviceId(@PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+    public DeviceCredentials getDeviceCredentialsByDeviceId(@PathVariable(DEVICE_ID) String strDeviceId, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter(DEVICE_ID, strDeviceId);
         try {
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
+
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
             Device device = checkDeviceId(deviceId, Operation.READ_CREDENTIALS);
-            DeviceCredentials deviceCredentials = checkNotNull(deviceCredentialsService.findDeviceCredentialsByDeviceId(getCurrentUser().getTenantId(), deviceId));
+            DeviceCredentials deviceCredentials = checkNotNull(deviceCredentialsService.findDeviceCredentialsByDeviceId(currentTenantId, deviceId));
             logEntityAction(deviceId, device,
                     device.getCustomerId(),
                     ActionType.CREDENTIALS_READ, null, strDeviceId);
@@ -285,13 +306,18 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN')")
     @RequestMapping(value = "/device/credentials", method = RequestMethod.POST)
     @ResponseBody
-    public DeviceCredentials saveDeviceCredentials(@RequestBody DeviceCredentials deviceCredentials) throws ThingsboardException {
+    public DeviceCredentials saveDeviceCredentials(@RequestBody DeviceCredentials deviceCredentials, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkNotNull(deviceCredentials);
         try {
-            Device device = checkDeviceId(deviceCredentials.getDeviceId(), Operation.WRITE_CREDENTIALS);
-            DeviceCredentials result = checkNotNull(deviceCredentialsService.updateDeviceCredentials(getCurrentUser().getTenantId(), deviceCredentials));
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
 
-            tbClusterService.pushMsgToCore(new DeviceCredentialsUpdateNotificationMsg(getCurrentUser().getTenantId(), deviceCredentials.getDeviceId()), null);
+            Device device = checkDeviceId(deviceCredentials.getDeviceId(), Operation.WRITE_CREDENTIALS);
+            DeviceCredentials result = checkNotNull(deviceCredentialsService.updateDeviceCredentials(currentTenantId, deviceCredentials));
+
+            tbClusterService.pushMsgToCore(new DeviceCredentialsUpdateNotificationMsg(currentTenantId, deviceCredentials.getDeviceId()), null);
 
             logEntityAction(device.getId(), device,
                     device.getCustomerId(),
@@ -314,14 +340,18 @@ public class DeviceController extends BaseController {
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String sortProperty,
-            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+            @RequestParam(required = false) String sortOrder,
+            @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         try {
-            TenantId tenantId = getCurrentUser().getTenantId();
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             if (type != null && type.trim().length() > 0) {
-                return checkNotNull(deviceService.findDevicesByTenantIdAndType(tenantId, type, pageLink));
+                return checkNotNull(deviceService.findDevicesByTenantIdAndType(currentTenantId, type, pageLink));
             } else {
-                return checkNotNull(deviceService.findDevicesByTenantId(tenantId, pageLink));
+                return checkNotNull(deviceService.findDevicesByTenantId(currentTenantId, pageLink));
             }
         } catch (Exception e) {
             throw handleException(e);
@@ -338,17 +368,21 @@ public class DeviceController extends BaseController {
             @RequestParam(required = false) String deviceProfileId,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String sortProperty,
-            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+            @RequestParam(required = false) String sortOrder,
+            @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         try {
-            TenantId tenantId = getCurrentUser().getTenantId();
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             if (type != null && type.trim().length() > 0) {
-                return checkNotNull(deviceService.findDeviceInfosByTenantIdAndType(tenantId, type, pageLink));
+                return checkNotNull(deviceService.findDeviceInfosByTenantIdAndType(currentTenantId, type, pageLink));
             } else if (deviceProfileId != null && deviceProfileId.length() > 0) {
                 DeviceProfileId profileId = new DeviceProfileId(toUUID(deviceProfileId));
-                return checkNotNull(deviceService.findDeviceInfosByTenantIdAndDeviceProfileId(tenantId, profileId, pageLink));
+                return checkNotNull(deviceService.findDeviceInfosByTenantIdAndDeviceProfileId(currentTenantId, profileId, pageLink));
             } else {
-                return checkNotNull(deviceService.findDeviceInfosByTenantId(tenantId, pageLink));
+                return checkNotNull(deviceService.findDeviceInfosByTenantId(currentTenantId, pageLink));
             }
         } catch (Exception e) {
             throw handleException(e);
@@ -359,10 +393,14 @@ public class DeviceController extends BaseController {
     @RequestMapping(value = "/tenant/devices", params = {"deviceName"}, method = RequestMethod.GET)
     @ResponseBody
     public Device getTenantDevice(
-            @RequestParam String deviceName) throws ThingsboardException {
+            @RequestParam String deviceName,
+            @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         try {
-            TenantId tenantId = getCurrentUser().getTenantId();
-            return checkNotNull(deviceService.findDeviceByTenantIdAndName(tenantId, deviceName));
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
+            return checkNotNull(deviceService.findDeviceByTenantIdAndName(currentTenantId, deviceName));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -378,17 +416,21 @@ public class DeviceController extends BaseController {
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String sortProperty,
-            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+            @RequestParam(required = false) String sortOrder,
+            @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
         try {
-            TenantId tenantId = getCurrentUser().getTenantId();
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             checkCustomerId(customerId, Operation.READ);
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             if (type != null && type.trim().length() > 0) {
-                return checkNotNull(deviceService.findDevicesByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink));
+                return checkNotNull(deviceService.findDevicesByTenantIdAndCustomerIdAndType(currentTenantId, customerId, type, pageLink));
             } else {
-                return checkNotNull(deviceService.findDevicesByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+                return checkNotNull(deviceService.findDevicesByTenantIdAndCustomerId(currentTenantId, customerId, pageLink));
             }
         } catch (Exception e) {
             throw handleException(e);
@@ -406,20 +448,24 @@ public class DeviceController extends BaseController {
             @RequestParam(required = false) String deviceProfileId,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String sortProperty,
-            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+            @RequestParam(required = false) String sortOrder,
+            @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
         try {
-            TenantId tenantId = getCurrentUser().getTenantId();
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             checkCustomerId(customerId, Operation.READ);
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             if (type != null && type.trim().length() > 0) {
-                return checkNotNull(deviceService.findDeviceInfosByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink));
+                return checkNotNull(deviceService.findDeviceInfosByTenantIdAndCustomerIdAndType(currentTenantId, customerId, type, pageLink));
             } else if (deviceProfileId != null && deviceProfileId.length() > 0) {
                 DeviceProfileId profileId = new DeviceProfileId(toUUID(deviceProfileId));
-                return checkNotNull(deviceService.findDeviceInfosByTenantIdAndCustomerIdAndDeviceProfileId(tenantId, customerId, profileId, pageLink));
+                return checkNotNull(deviceService.findDeviceInfosByTenantIdAndCustomerIdAndDeviceProfileId(currentTenantId, customerId, profileId, pageLink));
             } else {
-                return checkNotNull(deviceService.findDeviceInfosByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+                return checkNotNull(deviceService.findDeviceInfosByTenantIdAndCustomerId(currentTenantId, customerId, pageLink));
             }
         } catch (Exception e) {
             throw handleException(e);
@@ -430,11 +476,15 @@ public class DeviceController extends BaseController {
     @RequestMapping(value = "/devices", params = {"deviceIds"}, method = RequestMethod.GET)
     @ResponseBody
     public List<Device> getDevicesByIds(
-            @RequestParam("deviceIds") String[] strDeviceIds) throws ThingsboardException {
+            @RequestParam("deviceIds") String[] strDeviceIds,
+            @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkArrayParameter("deviceIds", strDeviceIds);
         try {
             SecurityUser user = getCurrentUser();
-            TenantId tenantId = user.getTenantId();
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
             CustomerId customerId = user.getCustomerId();
             List<DeviceId> deviceIds = new ArrayList<>();
             for (String strDeviceId : strDeviceIds) {
@@ -442,9 +492,9 @@ public class DeviceController extends BaseController {
             }
             ListenableFuture<List<Device>> devices;
             if (customerId == null || customerId.isNullUid()) {
-                devices = deviceService.findDevicesByTenantIdAndIdsAsync(tenantId, deviceIds);
+                devices = deviceService.findDevicesByTenantIdAndIdsAsync(currentTenantId, deviceIds);
             } else {
-                devices = deviceService.findDevicesByTenantIdCustomerIdAndIdsAsync(tenantId, customerId, deviceIds);
+                devices = deviceService.findDevicesByTenantIdCustomerIdAndIdsAsync(currentTenantId, customerId, deviceIds);
             }
             return checkNotNull(devices.get());
         } catch (Exception e) {
@@ -455,13 +505,18 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/devices", method = RequestMethod.POST)
     @ResponseBody
-    public List<Device> findByQuery(@RequestBody DeviceSearchQuery query) throws ThingsboardException {
+    public List<Device> findByQuery(@RequestBody DeviceSearchQuery query, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkNotNull(query);
         checkNotNull(query.getParameters());
         checkNotNull(query.getDeviceTypes());
         checkEntityId(query.getParameters().getEntityId(), Operation.READ);
         try {
-            List<Device> devices = checkNotNull(deviceService.findDevicesByQuery(getCurrentUser().getTenantId(), query).get());
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
+
+            List<Device> devices = checkNotNull(deviceService.findDevicesByQuery(currentTenantId, query).get());
             devices = devices.stream().filter(device -> {
                 try {
                     accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, Operation.READ, device.getId(), device);
@@ -479,11 +534,13 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/types", method = RequestMethod.GET)
     @ResponseBody
-    public List<EntitySubtype> getDeviceTypes() throws ThingsboardException {
+    public List<EntitySubtype> getDeviceTypes(@RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         try {
-            SecurityUser user = getCurrentUser();
-            TenantId tenantId = user.getTenantId();
-            ListenableFuture<List<EntitySubtype>> deviceTypes = deviceService.findDeviceTypesByTenantId(tenantId);
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
+            ListenableFuture<List<EntitySubtype>> deviceTypes = deviceService.findDeviceTypesByTenantId(currentTenantId);
             return checkNotNull(deviceTypes.get());
         } catch (Exception e) {
             throw handleException(e);
@@ -494,16 +551,20 @@ public class DeviceController extends BaseController {
     @RequestMapping(value = "/customer/device/{deviceName}/claim", method = RequestMethod.POST)
     @ResponseBody
     public DeferredResult<ResponseEntity> claimDevice(@PathVariable(DEVICE_NAME) String deviceName,
-                                                      @RequestBody(required = false) ClaimRequest claimRequest) throws ThingsboardException {
+                                                      @RequestBody(required = false) ClaimRequest claimRequest,
+                                                      @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter(DEVICE_NAME, deviceName);
         try {
             final DeferredResult<ResponseEntity> deferredResult = new DeferredResult<>();
 
             SecurityUser user = getCurrentUser();
-            TenantId tenantId = user.getTenantId();
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
             CustomerId customerId = user.getCustomerId();
 
-            Device device = checkNotNull(deviceService.findDeviceByTenantIdAndName(tenantId, deviceName));
+            Device device = checkNotNull(deviceService.findDeviceByTenantIdAndName(currentTenantId, deviceName));
             accessControlService.checkPermission(user, Resource.DEVICE, Operation.CLAIM_DEVICES,
                     device.getId(), device);
             String secretKey = getSecretKey(claimRequest);
@@ -540,19 +601,23 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/customer/device/{deviceName}/claim", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public DeferredResult<ResponseEntity> reClaimDevice(@PathVariable(DEVICE_NAME) String deviceName) throws ThingsboardException {
+    public DeferredResult<ResponseEntity> reClaimDevice(@PathVariable(DEVICE_NAME) String deviceName,
+                                                        @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter(DEVICE_NAME, deviceName);
         try {
             final DeferredResult<ResponseEntity> deferredResult = new DeferredResult<>();
 
             SecurityUser user = getCurrentUser();
-            TenantId tenantId = user.getTenantId();
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
 
-            Device device = checkNotNull(deviceService.findDeviceByTenantIdAndName(tenantId, deviceName));
+            Device device = checkNotNull(deviceService.findDeviceByTenantIdAndName(currentTenantId, deviceName));
             accessControlService.checkPermission(user, Resource.DEVICE, Operation.CLAIM_DEVICES,
                     device.getId(), device);
 
-            ListenableFuture<List<Void>> future = claimDevicesService.reClaimDevice(tenantId, device);
+            ListenableFuture<List<Void>> future = claimDevicesService.reClaimDevice(currentTenantId, device);
             Futures.addCallback(future, new FutureCallback<List<Void>>() {
                 @Override
                 public void onSuccess(@Nullable List<Void> result) {
@@ -586,10 +651,15 @@ public class DeviceController extends BaseController {
     @RequestMapping(value = "/tenant/{tenantId}/device/{deviceId}", method = RequestMethod.POST)
     @ResponseBody
     public Device assignDeviceToTenant(@PathVariable(TENANT_ID) String strTenantId,
-                                       @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+                                       @PathVariable(DEVICE_ID) String strDeviceId, 
+                                       @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter(TENANT_ID, strTenantId);
         checkParameter(DEVICE_ID, strDeviceId);
         try {
+            TenantId currentTenantId =
+                getAuthority() == Authority.ROOT && tenantId != null
+                    ? tenantId
+                    : getTenantId();
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
             Device device = checkDeviceId(deviceId, Operation.ASSIGN_TO_TENANT);
 
@@ -605,7 +675,7 @@ public class DeviceController extends BaseController {
                     assignedDevice.getCustomerId(),
                     ActionType.ASSIGNED_TO_TENANT, null, strTenantId, newTenant.getName());
 
-            Tenant currentTenant = tenantService.findTenantById(getTenantId());
+            Tenant currentTenant = tenantService.findTenantById(currentTenantId);
             pushAssignedFromNotification(currentTenant, newTenantId, assignedDevice);
 
             return assignedDevice;

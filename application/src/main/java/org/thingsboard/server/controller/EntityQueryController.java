@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.query.EntityQueryService;
 
@@ -88,15 +89,21 @@ public class EntityQueryController extends BaseController {
     @ResponseBody
     public DeferredResult<ResponseEntity> findEntityTimeseriesAndAttributesKeysByQuery(@RequestBody EntityDataQuery query,
                                                                                        @RequestParam("timeseries") boolean isTimeseries,
-                                                                                       @RequestParam("attributes") boolean isAttributes) throws ThingsboardException {
-        TenantId tenantId = getTenantId();
+                                                                                       @RequestParam("attributes") boolean isAttributes,
+                                                                                       @RequestParam(name = "tenantId", required = false) TenantId tenantId)
+                                                                                        throws ThingsboardException {
+                                                                                            
+        TenantId currentTenantId =
+        getAuthority() == Authority.ROOT && tenantId != null
+        ? tenantId
+        : getTenantId();
         checkNotNull(query);
         try {
             EntityDataPageLink pageLink = query.getPageLink();
             if (pageLink.getPageSize() > MAX_PAGE_SIZE) {
                 pageLink.setPageSize(MAX_PAGE_SIZE);
             }
-            return entityQueryService.getKeysByQuery(getCurrentUser(), tenantId, query, isTimeseries, isAttributes);
+            return entityQueryService.getKeysByQuery(getCurrentUser(), currentTenantId, query, isTimeseries, isAttributes);
         } catch (Exception e) {
             throw handleException(e);
         }

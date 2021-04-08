@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -84,10 +85,14 @@ public class AuthController extends BaseController {
 
     @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/auth/user", method = RequestMethod.GET)
-    public @ResponseBody User getUser() throws ThingsboardException {
+    public @ResponseBody User getUser(@RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         try {
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
             SecurityUser securityUser = getCurrentUser();
-            return userService.findUserById(securityUser.getTenantId(), securityUser.getId());
+            return userService.findUserById(currentTenantId, securityUser.getId());
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -96,16 +101,25 @@ public class AuthController extends BaseController {
     @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/auth/logout", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public void logout(HttpServletRequest request) throws ThingsboardException {
-        logLogoutAction(request);
+    public void logout(HttpServletRequest request,@RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
+        TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
+        logLogoutAction(request, currentTenantId);
     }
 
     @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/auth/changePassword", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
     public void changePassword (
-            @RequestBody JsonNode changePasswordRequest) throws ThingsboardException {
+            @RequestBody JsonNode changePasswordRequest,
+            @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         try {
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
             String currentPassword = changePasswordRequest.get("currentPassword").asText();
             String newPassword = changePasswordRequest.get("newPassword").asText();
             SecurityUser securityUser = getCurrentUser();
@@ -113,12 +127,12 @@ public class AuthController extends BaseController {
             if (!passwordEncoder.matches(currentPassword, userCredentials.getPassword())) {
                 throw new ThingsboardException("Current password doesn't match!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
             }
-            systemSecurityService.validatePassword(securityUser.getTenantId(), newPassword, userCredentials);
+            systemSecurityService.validatePassword(currentTenantId, newPassword, userCredentials);
             if (passwordEncoder.matches(newPassword, userCredentials.getPassword())) {
                 throw new ThingsboardException("New password should be different from existing!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
             }
             userCredentials.setPassword(passwordEncoder.encode(newPassword));
-            userService.replaceUserCredentials(securityUser.getTenantId(), userCredentials);
+            userService.replaceUserCredentials(currentTenantId, userCredentials);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -162,12 +176,17 @@ public class AuthController extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     public void requestResetPasswordByEmail (
             @RequestBody JsonNode resetPasswordByEmailRequest,
-            HttpServletRequest request) throws ThingsboardException {
+            HttpServletRequest request,
+            @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         try {
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
             String email = resetPasswordByEmailRequest.get("email").asText();
             UserCredentials userCredentials = userService.requestPasswordReset(TenantId.SYS_TENANT_ID, email);
             User user = userService.findUserById(TenantId.SYS_TENANT_ID, userCredentials.getUserId());
-            String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
+            String baseUrl = systemSecurityService.getBaseUrl(currentTenantId, user.getCustomerId(), request);
             String resetUrl = String.format("%s/api/noauth/resetPassword?resetToken=%s", baseUrl,
                     userCredentials.getResetToken());
             
@@ -204,9 +223,14 @@ public class AuthController extends BaseController {
     @ResponseBody
     public JsonNode activateUser(
             @RequestBody JsonNode activateRequest,
+            @RequestParam(name = "tenantId", required = false) TenantId tenantId,
             @RequestParam(required = false, defaultValue = "true") boolean sendActivationMail,
             HttpServletRequest request) throws ThingsboardException {
         try {
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
             String activateToken = activateRequest.get("activateToken").asText();
             String password = activateRequest.get("password").asText();
             systemSecurityService.validatePassword(TenantId.SYS_TENANT_ID, password, null);
@@ -215,7 +239,7 @@ public class AuthController extends BaseController {
             User user = userService.findUserById(TenantId.SYS_TENANT_ID, credentials.getUserId());
             UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
             SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal);
-            String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
+            String baseUrl = systemSecurityService.getBaseUrl(currentTenantId, user.getCustomerId(), request);
             String loginUrl = String.format("%s/login", baseUrl);
             String email = user.getEmail();
 
@@ -245,8 +269,13 @@ public class AuthController extends BaseController {
     @ResponseBody
     public JsonNode resetPassword(
             @RequestBody JsonNode resetPasswordRequest,
+            @RequestParam(name = "tenantId", required = false) TenantId tenantId,
             HttpServletRequest request) throws ThingsboardException {
         try {
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
             String resetToken = resetPasswordRequest.get("resetToken").asText();
             String password = resetPasswordRequest.get("password").asText();
             UserCredentials userCredentials = userService.findUserCredentialsByResetToken(TenantId.SYS_TENANT_ID, resetToken);
@@ -262,7 +291,7 @@ public class AuthController extends BaseController {
                 User user = userService.findUserById(TenantId.SYS_TENANT_ID, userCredentials.getUserId());
                 UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
                 SecurityUser securityUser = new SecurityUser(user, userCredentials.isEnabled(), principal);
-                String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
+                String baseUrl = systemSecurityService.getBaseUrl(currentTenantId, user.getCustomerId(), request);
                 String loginUrl = String.format("%s/login", baseUrl);
                 String email = user.getEmail();
                 mailService.sendPasswordWasResetEmail(loginUrl, email);
@@ -283,8 +312,12 @@ public class AuthController extends BaseController {
         }
     }
 
-    private void logLogoutAction(HttpServletRequest request) throws ThingsboardException {
+    private void logLogoutAction(HttpServletRequest request, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         try {
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
             SecurityUser user = getCurrentUser();
             RestAuthenticationDetails details = new RestAuthenticationDetails(request);
             String clientAddress = details.getClientAddress();
@@ -325,7 +358,7 @@ public class AuthController extends BaseController {
                 }
             }
             auditLogService.logEntityAction(
-                    user.getTenantId(), user.getCustomerId(), user.getId(),
+                    currentTenantId, user.getCustomerId(), user.getId(),
                     user.getName(), user.getId(), null, ActionType.LOGOUT, null, clientAddress, browser, os, device);
 
         } catch (Exception e) {

@@ -29,10 +29,12 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationInfo;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 
@@ -54,15 +56,19 @@ public class EntityRelationController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/relation", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public void saveRelation(@RequestBody EntityRelation relation) throws ThingsboardException {
+    public void saveRelation(@RequestBody EntityRelation relation, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         try {
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
             checkNotNull(relation);
             checkEntityId(relation.getFrom(), Operation.WRITE);
             checkEntityId(relation.getTo(), Operation.WRITE);
             if (relation.getTypeGroup() == null) {
                 relation.setTypeGroup(RelationTypeGroup.COMMON);
             }
-            relationService.saveRelation(getTenantId(), relation);
+            relationService.saveRelation(currentTenantId, relation);
             logEntityAction(relation.getFrom(), null, getCurrentUser().getCustomerId(),
                     ActionType.RELATION_ADD_OR_UPDATE, null, relation);
             logEntityAction(relation.getTo(), null, getCurrentUser().getCustomerId(),
@@ -83,6 +89,7 @@ public class EntityRelationController extends BaseController {
                                @RequestParam(FROM_TYPE) String strFromType,
                                @RequestParam(RELATION_TYPE) String strRelationType,
                                @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup,
+                               @RequestParam(name = "tenantId", required = false) TenantId tenantId,
                                @RequestParam(TO_ID) String strToId, @RequestParam(TO_TYPE) String strToType) throws ThingsboardException {
         checkParameter(FROM_ID, strFromId);
         checkParameter(FROM_TYPE, strFromType);
@@ -96,7 +103,11 @@ public class EntityRelationController extends BaseController {
         RelationTypeGroup relationTypeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         EntityRelation relation = new EntityRelation(fromId, toId, strRelationType, relationTypeGroup);
         try {
-            Boolean found = relationService.deleteRelation(getTenantId(), fromId, toId, strRelationType, relationTypeGroup);
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
+            Boolean found = relationService.deleteRelation(currentTenantId, fromId, toId, strRelationType, relationTypeGroup);
             if (!found) {
                 throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
             }
@@ -117,13 +128,18 @@ public class EntityRelationController extends BaseController {
     @RequestMapping(value = "/relations", method = RequestMethod.DELETE, params = {"id", "type"})
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteRelations(@RequestParam("entityId") String strId,
-                                @RequestParam("entityType") String strType) throws ThingsboardException {
+                                @RequestParam("entityType") String strType,
+                                @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter("entityId", strId);
         checkParameter("entityType", strType);
         EntityId entityId = EntityIdFactory.getByTypeAndId(strType, strId);
         checkEntityId(entityId, Operation.WRITE);
         try {
-            relationService.deleteEntityRelations(getTenantId(), entityId);
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
+            relationService.deleteEntityRelations(currentTenantId, entityId);
             logEntityAction(entityId, null, getCurrentUser().getCustomerId(), ActionType.RELATIONS_DELETED, null);
         } catch (Exception e) {
             logEntityAction(entityId, null, getCurrentUser().getCustomerId(), ActionType.RELATIONS_DELETED, e);
@@ -138,8 +154,13 @@ public class EntityRelationController extends BaseController {
                                       @RequestParam(FROM_TYPE) String strFromType,
                                       @RequestParam(RELATION_TYPE) String strRelationType,
                                       @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup,
-                                      @RequestParam(TO_ID) String strToId, @RequestParam(TO_TYPE) String strToType) throws ThingsboardException {
+                                      @RequestParam(TO_ID) String strToId, @RequestParam(TO_TYPE) String strToType,
+                                      @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         try {
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
             checkParameter(FROM_ID, strFromId);
             checkParameter(FROM_TYPE, strFromType);
             checkParameter(RELATION_TYPE, strRelationType);
@@ -150,7 +171,7 @@ public class EntityRelationController extends BaseController {
             checkEntityId(fromId, Operation.READ);
             checkEntityId(toId, Operation.READ);
             RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
-            return checkNotNull(relationService.getRelation(getTenantId(), fromId, toId, strRelationType, typeGroup));
+            return checkNotNull(relationService.getRelation(currentTenantId, fromId, toId, strRelationType, typeGroup));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -161,14 +182,19 @@ public class EntityRelationController extends BaseController {
     @ResponseBody
     public List<EntityRelation> findByFrom(@RequestParam(FROM_ID) String strFromId,
                                            @RequestParam(FROM_TYPE) String strFromType,
-                                           @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup) throws ThingsboardException {
+                                           @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup,
+                                           @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter(FROM_ID, strFromId);
         checkParameter(FROM_TYPE, strFromType);
         EntityId entityId = EntityIdFactory.getByTypeAndId(strFromType, strFromId);
         checkEntityId(entityId, Operation.READ);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         try {
-            return checkNotNull(filterRelationsByReadPermission(relationService.findByFrom(getTenantId(), entityId, typeGroup)));
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
+            return checkNotNull(filterRelationsByReadPermission(relationService.findByFrom(currentTenantId, entityId, typeGroup)));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -179,14 +205,19 @@ public class EntityRelationController extends BaseController {
     @ResponseBody
     public List<EntityRelationInfo> findInfoByFrom(@RequestParam(FROM_ID) String strFromId,
                                                    @RequestParam(FROM_TYPE) String strFromType,
-                                                   @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup) throws ThingsboardException {
+                                                   @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup,
+                                                   @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter(FROM_ID, strFromId);
         checkParameter(FROM_TYPE, strFromType);
         EntityId entityId = EntityIdFactory.getByTypeAndId(strFromType, strFromId);
         checkEntityId(entityId, Operation.READ);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         try {
-            return checkNotNull(filterRelationsByReadPermission(relationService.findInfoByFrom(getTenantId(), entityId, typeGroup).get()));
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
+            return checkNotNull(filterRelationsByReadPermission(relationService.findInfoByFrom(currentTenantId, entityId, typeGroup).get()));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -198,7 +229,8 @@ public class EntityRelationController extends BaseController {
     public List<EntityRelation> findByFrom(@RequestParam(FROM_ID) String strFromId,
                                            @RequestParam(FROM_TYPE) String strFromType,
                                            @RequestParam(RELATION_TYPE) String strRelationType,
-                                           @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup) throws ThingsboardException {
+                                           @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup,
+                                           @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter(FROM_ID, strFromId);
         checkParameter(FROM_TYPE, strFromType);
         checkParameter(RELATION_TYPE, strRelationType);
@@ -206,7 +238,11 @@ public class EntityRelationController extends BaseController {
         checkEntityId(entityId, Operation.READ);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         try {
-            return checkNotNull(filterRelationsByReadPermission(relationService.findByFromAndType(getTenantId(), entityId, strRelationType, typeGroup)));
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
+            return checkNotNull(filterRelationsByReadPermission(relationService.findByFromAndType(currentTenantId, entityId, strRelationType, typeGroup)));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -217,14 +253,19 @@ public class EntityRelationController extends BaseController {
     @ResponseBody
     public List<EntityRelation> findByTo(@RequestParam(TO_ID) String strToId,
                                          @RequestParam(TO_TYPE) String strToType,
-                                         @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup) throws ThingsboardException {
+                                         @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup,
+                                         @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter(TO_ID, strToId);
         checkParameter(TO_TYPE, strToType);
         EntityId entityId = EntityIdFactory.getByTypeAndId(strToType, strToId);
         checkEntityId(entityId, Operation.READ);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         try {
-            return checkNotNull(filterRelationsByReadPermission(relationService.findByTo(getTenantId(), entityId, typeGroup)));
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
+            return checkNotNull(filterRelationsByReadPermission(relationService.findByTo(currentTenantId, entityId, typeGroup)));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -235,14 +276,19 @@ public class EntityRelationController extends BaseController {
     @ResponseBody
     public List<EntityRelationInfo> findInfoByTo(@RequestParam(TO_ID) String strToId,
                                                  @RequestParam(TO_TYPE) String strToType,
-                                                 @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup) throws ThingsboardException {
+                                                 @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup,
+                                                 @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter(TO_ID, strToId);
         checkParameter(TO_TYPE, strToType);
         EntityId entityId = EntityIdFactory.getByTypeAndId(strToType, strToId);
         checkEntityId(entityId, Operation.READ);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         try {
-            return checkNotNull(filterRelationsByReadPermission(relationService.findInfoByTo(getTenantId(), entityId, typeGroup).get()));
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
+            return checkNotNull(filterRelationsByReadPermission(relationService.findInfoByTo(currentTenantId, entityId, typeGroup).get()));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -254,7 +300,8 @@ public class EntityRelationController extends BaseController {
     public List<EntityRelation> findByTo(@RequestParam(TO_ID) String strToId,
                                          @RequestParam(TO_TYPE) String strToType,
                                          @RequestParam(RELATION_TYPE) String strRelationType,
-                                         @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup) throws ThingsboardException {
+                                         @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup,
+                                         @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkParameter(TO_ID, strToId);
         checkParameter(TO_TYPE, strToType);
         checkParameter(RELATION_TYPE, strRelationType);
@@ -262,7 +309,11 @@ public class EntityRelationController extends BaseController {
         checkEntityId(entityId, Operation.READ);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         try {
-            return checkNotNull(filterRelationsByReadPermission(relationService.findByToAndType(getTenantId(), entityId, strRelationType, typeGroup)));
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
+            return checkNotNull(filterRelationsByReadPermission(relationService.findByToAndType(currentTenantId, entityId, strRelationType, typeGroup)));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -271,13 +322,17 @@ public class EntityRelationController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/relations", method = RequestMethod.POST)
     @ResponseBody
-    public List<EntityRelation> findByQuery(@RequestBody EntityRelationsQuery query) throws ThingsboardException {
+    public List<EntityRelation> findByQuery(@RequestBody EntityRelationsQuery query, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkNotNull(query);
         checkNotNull(query.getParameters());
         checkNotNull(query.getFilters());
         checkEntityId(query.getParameters().getEntityId(), Operation.READ);
         try {
-            return checkNotNull(filterRelationsByReadPermission(relationService.findByQuery(getTenantId(), query).get()));
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
+            return checkNotNull(filterRelationsByReadPermission(relationService.findByQuery(currentTenantId, query).get()));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -286,13 +341,17 @@ public class EntityRelationController extends BaseController {
     @PreAuthorize("hasAnyAuthority('ROOT', 'SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/relations/info", method = RequestMethod.POST)
     @ResponseBody
-    public List<EntityRelationInfo> findInfoByQuery(@RequestBody EntityRelationsQuery query) throws ThingsboardException {
+    public List<EntityRelationInfo> findInfoByQuery(@RequestBody EntityRelationsQuery query, @RequestParam(name = "tenantId", required = false) TenantId tenantId) throws ThingsboardException {
         checkNotNull(query);
         checkNotNull(query.getParameters());
         checkNotNull(query.getFilters());
         checkEntityId(query.getParameters().getEntityId(), Operation.READ);
         try {
-            return checkNotNull(filterRelationsByReadPermission(relationService.findInfoByQuery(getTenantId(), query).get()));
+            TenantId currentTenantId =
+            getAuthority() == Authority.ROOT && tenantId != null
+                ? tenantId
+                : getTenantId();
+            return checkNotNull(filterRelationsByReadPermission(relationService.findInfoByQuery(currentTenantId, query).get()));
         } catch (Exception e) {
             throw handleException(e);
         }
