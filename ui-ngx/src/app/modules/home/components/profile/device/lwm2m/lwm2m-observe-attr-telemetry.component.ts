@@ -28,19 +28,19 @@ import {
 import {Store} from '@ngrx/store';
 import {AppState} from '@core/core.state';
 import {coerceBooleanProperty} from '@angular/cdk/coercion';
-import {CLIENT_LWM2M, Instance, INSTANCES, ObjectLwM2M, ResourceLwM2M, RESOURCES} from './profile-config.models';
+import {CLIENT_LWM2M, Instance, INSTANCES, ObjectLwM2M, ResourceLwM2M, RESOURCES} from './lwm2m-profile-config.models';
 import {deepClone, isDefinedAndNotNull, isEqual, isUndefined} from '@core/utils';
 import {MatDialog} from '@angular/material/dialog';
 import {TranslateService} from '@ngx-translate/core';
 import {
-  Lwm2mObjectAddInstancesComponent,
-  Lwm2mObjectAddInstancesData
-} from '@home/components/profile/device/lwm2m/lwm2m-object-add-instances.component';
+  Lwm2mObjectAddInstancesData,
+  Lwm2mObjectAddInstancesDialogComponent
+} from '@home/components/profile/device/lwm2m/lwm2m-object-add-instances-dialog.component';
 
 @Component({
   selector: 'tb-profile-lwm2m-observe-attr-telemetry',
   templateUrl: './lwm2m-observe-attr-telemetry.component.html',
-  styleUrls: ['./lwm2m-observe-attr-telemetry.component.css'],
+  styleUrls: [ './lwm2m-observe-attr-telemetry.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -82,6 +82,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
     });
     this.observeAttrTelemetryFormGroup.valueChanges.subscribe(value => {
       if (isUndefined(this.disabled) || !this.disabled) {
+        // debugger
         this.propagateChangeState(value);
       }
     });
@@ -103,6 +104,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
       } else if (JSON.stringify(value) !== JSON.stringify(this.valuePrev)) {
         this.valuePrev = value;
         if (this.observeAttrTelemetryFormGroup.valid) {
+          debugger
           this.propagateChange(value);
         } else {
           this.propagateChange(null);
@@ -222,7 +224,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
       $event.stopPropagation();
       $event.preventDefault();
     }
-    this.dialog.open<Lwm2mObjectAddInstancesComponent, Lwm2mObjectAddInstancesData, object>(Lwm2mObjectAddInstancesComponent, {
+    this.dialog.open<Lwm2mObjectAddInstancesDialogComponent, Lwm2mObjectAddInstancesData, object>(Lwm2mObjectAddInstancesDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {

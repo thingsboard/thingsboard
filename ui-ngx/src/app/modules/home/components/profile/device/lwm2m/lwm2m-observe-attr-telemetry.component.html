@@ -22,7 +22,7 @@
       [formGroupName]="i">
       <mat-expansion-panel-header>
         <mat-panel-title fxLayoutAlign="start center">
-          <b><i>{{ objectLwM2M.get('name').value}}</i></b>&nbsp;&lt;id: {{ objectLwM2M.get('keyId').value}}>
+          <b><i>{{ objectLwM2M.get('name').value}}</i></b>&nbsp;&lt;{{ objectLwM2M.get('keyId').value}}>
         </mat-panel-title>
         <mat-panel-description fxLayoutAlign="end center" *ngIf="!disabled">
           <button type="button"
@@ -45,8 +45,8 @@
               <mat-panel-title>
                 <div class="tb-panel-title-height" fxFlex="100">
                   <div fxLayout="row" fxFill>
-                    <div fxFlex="44">
-                      Instance [<b>{{instances.get('id').value}}</b>]
+                    <div fxFlex="27">
+                      {{'device-profile.lwm2m.instance-label' | translate}} <<b>{{instances.get('id').value}}</b>>
                     </div>
                     <div class="checkbox-padding" fxFlex="10">
                       <mat-checkbox color="primary"
@@ -84,7 +84,11 @@
                                     matTooltipPosition="above">
                       </mat-checkbox>
                     </div>
-                    <div class="checkbox-padding" fxFlex="25">
+                    <div fxFlex="20">
+                    </div>
+                    <div fxFlex="15">
+                    </div>
+                    <div fxFlex="5">
                     </div>
                   </div>
                 </div>
