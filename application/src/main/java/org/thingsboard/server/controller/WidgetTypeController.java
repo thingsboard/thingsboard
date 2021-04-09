@@ -73,12 +73,12 @@ public class WidgetTypeController extends BaseController {
             }
 
             checkEntity(widgetTypeDetails.getId(), widgetTypeDetails, Resource.WIDGET_TYPE);
-            WidgetType savedWidgetType = widgetTypeService.saveWidgetType(widgetTypeDetails);
+            WidgetTypeDetails savedWidgetTypeDetails = widgetTypeService.saveWidgetType(widgetTypeDetails);
 
-            sendEntityNotificationMsg(getTenantId(), savedWidgetType.getId(),
+            sendEntityNotificationMsg(getTenantId(), savedWidgetTypeDetails.getId(),
                     widgetTypeDetails.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
 
-            return checkNotNull(widgetTypeDetails);
+            return checkNotNull(savedWidgetTypeDetails);
         } catch (Exception e) {
             throw handleException(e);
         }
