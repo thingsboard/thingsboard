@@ -34,6 +34,4 @@ public abstract class DebugEvent implements EventFilter {
         this.isError = isError;
     }
 
-    @Override
-    public abstract EventType getEventType();
 }
