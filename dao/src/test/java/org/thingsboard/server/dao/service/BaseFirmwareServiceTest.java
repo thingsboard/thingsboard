@@ -20,6 +20,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.Firmware;
@@ -39,8 +40,11 @@ public abstract class BaseFirmwareServiceTest extends AbstractServiceTest {
 
     public static final String TITLE = "My firmware";
     private static final String FILE_NAME = "filename.txt";
+    private static final String VERSION = "v1.0";
     private static final String CONTENT_TYPE = "text/plain";
-    private static final ByteBuffer DATA = ByteBuffer.wrap(new byte[]{0});
+    private static final String CHECKSUM_ALGORITHM = "sha256";
+    private static final String CHECKSUM = "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a";
+    private static final ByteBuffer DATA = ByteBuffer.wrap(new byte[]{1});
 
     private IdComparator<FirmwareInfo> idComparator = new IdComparator<>();
 
@@ -65,8 +69,11 @@ public abstract class BaseFirmwareServiceTest extends AbstractServiceTest {
         Firmware firmware = new Firmware();
         firmware.setTenantId(tenantId);
         firmware.setTitle(TITLE);
+        firmware.setVersion(VERSION);
         firmware.setFileName(FILE_NAME);
         firmware.setContentType(CONTENT_TYPE);
+        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
+        firmware.setChecksum(CHECKSUM);
         firmware.setData(DATA);
         Firmware savedFirmware = firmwareService.saveFirmware(firmware);
 
@@ -79,7 +86,7 @@ public abstract class BaseFirmwareServiceTest extends AbstractServiceTest {
         Assert.assertEquals(firmware.getContentType(), savedFirmware.getContentType());
         Assert.assertEquals(firmware.getData(), savedFirmware.getData());
 
-        savedFirmware.setTitle("My new firmware");
+        savedFirmware.setAdditionalInfo(JacksonUtil.newObjectNode());
         firmwareService.saveFirmware(savedFirmware);
 
         Firmware foundFirmware = firmwareService.findFirmwareById(tenantId, savedFirmware.getId());
@@ -88,12 +95,52 @@ public abstract class BaseFirmwareServiceTest extends AbstractServiceTest {
         firmwareService.deleteFirmware(tenantId, savedFirmware.getId());
     }
 
+    @Test
+    public void testSaveFirmwareInfoAndUpdateWithData() {
+        FirmwareInfo firmwareInfo = new FirmwareInfo();
+        firmwareInfo.setTenantId(tenantId);
+        firmwareInfo.setTitle(TITLE);
+        firmwareInfo.setVersion(VERSION);
+        FirmwareInfo savedFirmwareInfo = firmwareService.saveFirmwareInfo(firmwareInfo);
+
+        Assert.assertNotNull(savedFirmwareInfo);
+        Assert.assertNotNull(savedFirmwareInfo.getId());
+        Assert.assertTrue(savedFirmwareInfo.getCreatedTime() > 0);
+        Assert.assertEquals(firmwareInfo.getTenantId(), savedFirmwareInfo.getTenantId());
+        Assert.assertEquals(firmwareInfo.getTitle(), savedFirmwareInfo.getTitle());
+
+        Firmware firmware = new Firmware(savedFirmwareInfo.getId());
+        firmware.setCreatedTime(firmwareInfo.getCreatedTime());
+        firmware.setTenantId(tenantId);
+        firmware.setTitle(TITLE);
+        firmware.setVersion(VERSION);
+        firmware.setFileName(FILE_NAME);
+        firmware.setContentType(CONTENT_TYPE);
+        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
+        firmware.setChecksum(CHECKSUM);
+        firmware.setData(DATA);
+
+        firmwareService.saveFirmware(firmware);
+
+        savedFirmwareInfo.setAdditionalInfo(JacksonUtil.newObjectNode());
+        firmwareService.saveFirmwareInfo(savedFirmwareInfo);
+
+        Firmware foundFirmware = firmwareService.findFirmwareById(tenantId, firmware.getId());
+        firmware.setAdditionalInfo(JacksonUtil.newObjectNode());
+        Assert.assertEquals(foundFirmware.getTitle(), firmware.getTitle());
+
+        firmwareService.deleteFirmware(tenantId, savedFirmwareInfo.getId());
+    }
+
     @Test(expected = DataValidationException.class)
     public void testSaveFirmwareWithEmptyTenant() {
         Firmware firmware = new Firmware();
         firmware.setTitle(TITLE);
+        firmware.setVersion(VERSION);
         firmware.setFileName(FILE_NAME);
         firmware.setContentType(CONTENT_TYPE);
+        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
+        firmware.setChecksum(CHECKSUM);
         firmware.setData(DATA);
         firmwareService.saveFirmware(firmware);
     }
@@ -102,8 +149,11 @@ public abstract class BaseFirmwareServiceTest extends AbstractServiceTest {
     public void testSaveFirmwareWithEmptyTitle() {
         Firmware firmware = new Firmware();
         firmware.setTenantId(tenantId);
+        firmware.setVersion(VERSION);
         firmware.setFileName(FILE_NAME);
         firmware.setContentType(CONTENT_TYPE);
+        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
+        firmware.setChecksum(CHECKSUM);
         firmware.setData(DATA);
         firmwareService.saveFirmware(firmware);
     }
@@ -113,7 +163,10 @@ public abstract class BaseFirmwareServiceTest extends AbstractServiceTest {
         Firmware firmware = new Firmware();
         firmware.setTenantId(tenantId);
         firmware.setTitle(TITLE);
+        firmware.setVersion(VERSION);
         firmware.setContentType(CONTENT_TYPE);
+        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
+        firmware.setChecksum(CHECKSUM);
         firmware.setData(DATA);
         firmwareService.saveFirmware(firmware);
     }
@@ -123,7 +176,10 @@ public abstract class BaseFirmwareServiceTest extends AbstractServiceTest {
         Firmware firmware = new Firmware();
         firmware.setTenantId(tenantId);
         firmware.setTitle(TITLE);
+        firmware.setVersion(VERSION);
         firmware.setFileName(FILE_NAME);
+        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
+        firmware.setChecksum(CHECKSUM);
         firmware.setData(DATA);
         firmwareService.saveFirmware(firmware);
     }
@@ -133,8 +189,11 @@ public abstract class BaseFirmwareServiceTest extends AbstractServiceTest {
         Firmware firmware = new Firmware();
         firmware.setTenantId(tenantId);
         firmware.setTitle(TITLE);
+        firmware.setVersion(VERSION);
         firmware.setFileName(FILE_NAME);
         firmware.setContentType(CONTENT_TYPE);
+        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
+        firmware.setChecksum(CHECKSUM);
         firmwareService.saveFirmware(firmware);
     }
 
@@ -143,21 +202,76 @@ public abstract class BaseFirmwareServiceTest extends AbstractServiceTest {
         Firmware firmware = new Firmware();
         firmware.setTenantId(new TenantId(Uuids.timeBased()));
         firmware.setTitle(TITLE);
+        firmware.setVersion(VERSION);
         firmware.setFileName(FILE_NAME);
         firmware.setContentType(CONTENT_TYPE);
+        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
+        firmware.setChecksum(CHECKSUM);
         firmware.setData(DATA);
         firmwareService.saveFirmware(firmware);
     }
 
+    @Test(expected = DataValidationException.class)
+    public void testSaveFirmwareWithEmptyChecksum() {
+        Firmware firmware = new Firmware();
+        firmware.setTenantId(new TenantId(Uuids.timeBased()));
+        firmware.setTitle(TITLE);
+        firmware.setVersion(VERSION);
+        firmware.setFileName(FILE_NAME);
+        firmware.setContentType(CONTENT_TYPE);
+        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
+        firmware.setData(DATA);
+        firmwareService.saveFirmware(firmware);
+    }
 
+    @Test(expected = DataValidationException.class)
+    public void testSaveFirmwareInfoWithExistingTitleAndVersion() {
+        FirmwareInfo firmwareInfo = new FirmwareInfo();
+        firmwareInfo.setTenantId(tenantId);
+        firmwareInfo.setTitle(TITLE);
+        firmwareInfo.setVersion(VERSION);
+        firmwareService.saveFirmwareInfo(firmwareInfo);
+
+        FirmwareInfo newFirmwareInfo = new FirmwareInfo();
+        newFirmwareInfo.setTenantId(tenantId);
+        newFirmwareInfo.setTitle(TITLE);
+        newFirmwareInfo.setVersion(VERSION);
+        firmwareService.saveFirmwareInfo(newFirmwareInfo);
+    }
+
+    @Test(expected = DataValidationException.class)
+    public void testSaveFirmwareWithExistingTitleAndVersion() {
+        Firmware firmware = new Firmware();
+        firmware.setTenantId(tenantId);
+        firmware.setTitle(TITLE);
+        firmware.setVersion(VERSION);
+        firmware.setFileName(FILE_NAME);
+        firmware.setContentType(CONTENT_TYPE);
+        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
+        firmware.setChecksum(CHECKSUM);
+        firmware.setData(DATA);
+        firmwareService.saveFirmware(firmware);
+
+        Firmware newFirmware = new Firmware();
+        newFirmware.setTenantId(tenantId);
+        newFirmware.setTitle(TITLE);
+        newFirmware.setVersion(VERSION);
+        newFirmware.setFileName(FILE_NAME);
+        newFirmware.setContentType(CONTENT_TYPE);
+        newFirmware.setData(DATA);
+        firmwareService.saveFirmware(newFirmware);
+    }
 
     @Test(expected = DataValidationException.class)
     public void testDeleteFirmwareWithReferenceByDevice() {
         Firmware firmware = new Firmware();
         firmware.setTenantId(tenantId);
         firmware.setTitle(TITLE);
+        firmware.setVersion(VERSION);
         firmware.setFileName(FILE_NAME);
         firmware.setContentType(CONTENT_TYPE);
+        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
+        firmware.setChecksum(CHECKSUM);
         firmware.setData(DATA);
         Firmware savedFirmware = firmwareService.saveFirmware(firmware);
 
@@ -181,8 +295,11 @@ public abstract class BaseFirmwareServiceTest extends AbstractServiceTest {
         Firmware firmware = new Firmware();
         firmware.setTenantId(tenantId);
         firmware.setTitle(TITLE);
+        firmware.setVersion(VERSION);
         firmware.setFileName(FILE_NAME);
         firmware.setContentType(CONTENT_TYPE);
+        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
+        firmware.setChecksum(CHECKSUM);
         firmware.setData(DATA);
         Firmware savedFirmware = firmwareService.saveFirmware(firmware);
 
@@ -203,8 +320,11 @@ public abstract class BaseFirmwareServiceTest extends AbstractServiceTest {
         Firmware firmware = new Firmware();
         firmware.setTenantId(tenantId);
         firmware.setTitle(TITLE);
+        firmware.setVersion(VERSION);
         firmware.setFileName(FILE_NAME);
         firmware.setContentType(CONTENT_TYPE);
+        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
+        firmware.setChecksum(CHECKSUM);
         firmware.setData(DATA);
         Firmware savedFirmware = firmwareService.saveFirmware(firmware);
 
@@ -219,8 +339,11 @@ public abstract class BaseFirmwareServiceTest extends AbstractServiceTest {
         Firmware firmware = new Firmware();
         firmware.setTenantId(tenantId);
         firmware.setTitle(TITLE);
+        firmware.setVersion(VERSION);
         firmware.setFileName(FILE_NAME);
         firmware.setContentType(CONTENT_TYPE);
+        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
+        firmware.setChecksum(CHECKSUM);
         firmware.setData(DATA);
         Firmware savedFirmware = firmwareService.saveFirmware(firmware);
 
@@ -238,8 +361,11 @@ public abstract class BaseFirmwareServiceTest extends AbstractServiceTest {
             Firmware firmware = new Firmware();
             firmware.setTenantId(tenantId);
             firmware.setTitle(TITLE);
+            firmware.setVersion(VERSION + i);
             firmware.setFileName(FILE_NAME);
             firmware.setContentType(CONTENT_TYPE);
+            firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
+            firmware.setChecksum(CHECKSUM);
             firmware.setData(DATA);
             firmwares.add(new FirmwareInfo(firmwareService.saveFirmware(firmware)));
         }

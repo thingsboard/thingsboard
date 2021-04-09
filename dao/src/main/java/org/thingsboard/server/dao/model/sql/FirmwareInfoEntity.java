@@ -15,29 +15,34 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.FirmwareInfo;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_CONTENT_TYPE_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_FILE_NAME_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TENANT_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TITLE_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_VERSION_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
+@TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = FIRMWARE_TABLE_NAME)
 public class FirmwareInfoEntity extends BaseSqlEntity<FirmwareInfo> implements SearchTextEntity<FirmwareInfo> {
 
@@ -47,11 +52,12 @@ public class FirmwareInfoEntity extends BaseSqlEntity<FirmwareInfo> implements S
     @Column(name = FIRMWARE_TITLE_COLUMN)
     private String title;
 
-    @Column(name = FIRMWARE_FILE_NAME_COLUMN)
-    private String fileName;
+    @Column(name = FIRMWARE_VERSION_COLUMN)
+    private String version;
 
-    @Column(name = FIRMWARE_CONTENT_TYPE_COLUMN)
-    private String contentType;
+    @Type(type = "json")
+    @Column(name = ModelConstants.FIRMWARE_ADDITIONAL_INFO_COLUMN)
+    private JsonNode additionalInfo;
 
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
@@ -65,8 +71,8 @@ public class FirmwareInfoEntity extends BaseSqlEntity<FirmwareInfo> implements S
         this.setUuid(firmware.getUuidId());
         this.tenantId = firmware.getTenantId().getId();
         this.title = firmware.getTitle();
-        this.fileName = firmware.getFileName();
-        this.contentType = firmware.getContentType();
+        this.version = firmware.getVersion();
+        this.additionalInfo = firmware.getAdditionalInfo();
     }
 
     @Override
@@ -85,8 +91,8 @@ public class FirmwareInfoEntity extends BaseSqlEntity<FirmwareInfo> implements S
         firmware.setCreatedTime(createdTime);
         firmware.setTenantId(new TenantId(tenantId));
         firmware.setTitle(title);
-        firmware.setFileName(fileName);
-        firmware.setContentType(contentType);
+        firmware.setVersion(version);
+        firmware.setAdditionalInfo(additionalInfo);
         return firmware;
     }
 }

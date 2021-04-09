@@ -475,9 +475,14 @@ public class ModelConstants {
     public static final String FIRMWARE_TABLE_NAME = "firmware";
     public static final String FIRMWARE_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
     public static final String FIRMWARE_TITLE_COLUMN = TITLE_PROPERTY;
+    public static final String FIRMWARE_VERSION_COLUMN = "version";
     public static final String FIRMWARE_FILE_NAME_COLUMN = "file_name";
     public static final String FIRMWARE_CONTENT_TYPE_COLUMN = "content_type";
+    public static final String FIRMWARE_CHECKSUM_ALGORITHM_COLUMN = "checksum_algorithm";
+    public static final String FIRMWARE_CHECKSUM_COLUMN = "checksum";
     public static final String FIRMWARE_DATA_COLUMN = "data";
+    public static final String FIRMWARE_ADDITIONAL_INFO_COLUMN = ADDITIONAL_INFO_PROPERTY;
+
 
     /**
      * Cassandra attributes and timeseries constants.

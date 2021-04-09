@@ -24,14 +24,13 @@ import org.thingsboard.server.common.data.id.TenantId;
 @Slf4j
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class FirmwareInfo extends SearchTextBased<FirmwareId> implements HasTenantId {
+public class FirmwareInfo extends SearchTextBasedWithAdditionalInfo<FirmwareId> implements HasTenantId {
 
     private static final long serialVersionUID = 3168391583570815419L;
 
     private TenantId tenantId;
     private String title;
-    private String fileName;
-    private String contentType;
+    private String version;
 
     public FirmwareInfo() {
         super();
@@ -45,8 +44,7 @@ public class FirmwareInfo extends SearchTextBased<FirmwareId> implements HasTena
         super(firmwareInfo);
         this.tenantId = firmwareInfo.getTenantId();
         this.title = firmwareInfo.getTitle();
-        this.fileName = firmwareInfo.getFileName();
-        this.contentType = firmwareInfo.getContentType();
+        this.version = firmwareInfo.getVersion();
     }
 
     @Override

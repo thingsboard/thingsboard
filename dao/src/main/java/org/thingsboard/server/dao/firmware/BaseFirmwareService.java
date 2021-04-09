@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.dao.firmware;
 
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
@@ -54,10 +56,35 @@ public class BaseFirmwareService implements FirmwareService {
     }
 
     @Override
+    public FirmwareInfo saveFirmwareInfo(FirmwareInfo firmwareInfo) {
+        log.trace("Executing saveFirmwareInfo [{}]", firmwareInfo);
+        firmwareInfoValidator.validate(firmwareInfo, FirmwareInfo::getTenantId);
+        try {
+            return firmwareInfoDao.save(firmwareInfo.getTenantId(), firmwareInfo);
+        } catch (Exception t) {
+            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
+            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("firmware_tenant_title_version_unq_key")) {
+                throw new DataValidationException("Firmware with such title and version already exists!");
+            } else {
+                throw t;
+            }
+        }
+    }
+
+    @Override
     public Firmware saveFirmware(Firmware firmware) {
         log.trace("Executing saveFirmware [{}]", firmware);
-        firmwareValidator.validate(firmware, Firmware::getTenantId);
-        return firmwareDao.save(firmware.getTenantId(), firmware);
+        firmwareValidator.validate(firmware, FirmwareInfo::getTenantId);
+        try {
+            return firmwareDao.save(firmware.getTenantId(), firmware);
+        } catch (Exception t) {
+            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
+            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("firmware_tenant_title_version_unq_key")) {
+                throw new DataValidationException("Firmware with such title and version already exists!");
+            } else {
+                throw t;
+            }
+        }
     }
 
     @Override
@@ -107,6 +134,42 @@ public class BaseFirmwareService implements FirmwareService {
         tenantFirmwareRemover.removeEntities(tenantId, tenantId);
     }
 
+    private DataValidator<FirmwareInfo> firmwareInfoValidator = new DataValidator<>() {
+
+        @Override
+        protected void validateDataImpl(TenantId tenantId, FirmwareInfo firmware) {
+            if (firmware.getTenantId() == null) {
+                throw new DataValidationException("Firmware should be assigned to tenant!");
+            } else {
+                Tenant tenant = tenantDao.findById(firmware.getTenantId(), firmware.getTenantId().getId());
+                if (tenant == null) {
+                    throw new DataValidationException("Firmware is referencing to non-existent tenant!");
+                }
+            }
+
+            if (StringUtils.isEmpty(firmware.getTitle())) {
+                throw new DataValidationException("Firmware title should be specified!");
+            }
+
+            if (StringUtils.isEmpty(firmware.getVersion())) {
+                throw new DataValidationException("Firmware version should be specified!");
+            }
+        }
+
+        @Override
+        protected void validateUpdate(TenantId tenantId, FirmwareInfo firmware) {
+            FirmwareInfo firmwareOld = firmwareInfoDao.findById(tenantId, firmware.getUuidId());
+
+            if (!firmwareOld.getTitle().equals(firmware.getTitle())) {
+                throw new DataValidationException("Updating firmware title is prohibited!");
+            }
+
+            if (!firmwareOld.getVersion().equals(firmware.getVersion())) {
+                throw new DataValidationException("Updating firmware version is prohibited!");
+            }
+        }
+    };
+
     private DataValidator<Firmware> firmwareValidator = new DataValidator<>() {
 
         @Override
@@ -123,21 +186,90 @@ public class BaseFirmwareService implements FirmwareService {
             if (StringUtils.isEmpty(firmware.getTitle())) {
                 throw new DataValidationException("Firmware title should be specified!");
             }
+
+            if (StringUtils.isEmpty(firmware.getVersion())) {
+                throw new DataValidationException("Firmware version should be specified!");
+            }
+
             if (StringUtils.isEmpty(firmware.getFileName())) {
                 throw new DataValidationException("Firmware file name should be specified!");
             }
+
             if (StringUtils.isEmpty(firmware.getContentType())) {
                 throw new DataValidationException("Firmware content type should be specified!");
             }
+
+            if (StringUtils.isEmpty(firmware.getChecksum())) {
+                throw new DataValidationException("Firmware checksum should be specified!");
+            }
+
             ByteBuffer data = firmware.getData();
             if (data == null || !data.hasArray() || data.array().length == 0) {
                 throw new DataValidationException("Firmware data should be specified!");
+            }
+
+            if (firmware.getChecksumAlgorithm() != null) {
+                HashFunction hashFunction;
+                switch (firmware.getChecksumAlgorithm()) {
+                    case "sha256":
+                        hashFunction = Hashing.sha256();
+                        break;
+                    case "md5":
+                        hashFunction = Hashing.md5();
+                        break;
+                    case "crc32":
+                        hashFunction = Hashing.crc32();
+                        break;
+                    default:
+                        throw new DataValidationException("Unknown checksum algorithm!");
+                }
+
+                String currentChecksum = hashFunction.hashBytes(data.array()).toString();
+                ;
+
+                if (!currentChecksum.equals(firmware.getChecksum())) {
+                    throw new DataValidationException("Wrong firmware file!");
+                }
+            }
+        }
+
+        @Override
+        protected void validateUpdate(TenantId tenantId, Firmware firmware) {
+            Firmware firmwareOld = firmwareDao.findById(tenantId, firmware.getUuidId());
+
+            if (!firmwareOld.getTitle().equals(firmware.getTitle())) {
+                throw new DataValidationException("Updating firmware title is prohibited!");
+            }
+
+            if (!firmwareOld.getVersion().equals(firmware.getVersion())) {
+                throw new DataValidationException("Updating firmware version is prohibited!");
+            }
+
+            if (firmwareOld.getFileName() != null && !firmwareOld.getFileName().equals(firmware.getFileName())) {
+                throw new DataValidationException("Updating firmware file name is prohibited!");
+            }
+
+            if (firmwareOld.getContentType() != null && !firmwareOld.getContentType().equals(firmware.getContentType())) {
+                throw new DataValidationException("Updating firmware content type is prohibited!");
+            }
+
+            if (firmwareOld.getChecksumAlgorithm() != null && !firmwareOld.getChecksumAlgorithm().equals(firmware.getChecksumAlgorithm())) {
+                throw new DataValidationException("Updating firmware content type is prohibited!");
+            }
+
+            if (firmwareOld.getChecksum() != null && !firmwareOld.getChecksum().equals(firmware.getChecksum())) {
+                throw new DataValidationException("Updating firmware content type is prohibited!");
+            }
+
+            if (firmwareOld.getData() != null && !firmwareOld.getData().equals(firmware.getData())) {
+                throw new DataValidationException("Updating firmware data is prohibited!");
             }
         }
     };
 
     private PaginatedRemover<TenantId, FirmwareInfo> tenantFirmwareRemover =
             new PaginatedRemover<>() {
+
 
                 @Override
                 protected PageData<FirmwareInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {

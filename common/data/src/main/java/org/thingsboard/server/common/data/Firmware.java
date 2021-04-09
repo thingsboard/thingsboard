@@ -27,6 +27,14 @@ public class Firmware extends FirmwareInfo {
 
     private static final long serialVersionUID = 3091601761339422546L;
 
+    private String fileName;
+
+    private String contentType;
+
+    private String checksumAlgorithm;
+
+    private String checksum;
+
     private transient ByteBuffer data;
 
     public Firmware() {
@@ -39,6 +47,10 @@ public class Firmware extends FirmwareInfo {
 
     public Firmware(Firmware firmware) {
         super(firmware);
+        this.fileName = firmware.getFileName();
+        this.contentType = firmware.getContentType();
         this.data = firmware.getData();
+        this.checksumAlgorithm = firmware.getChecksumAlgorithm();
+        this.checksum = firmware.getChecksum();
     }
 }

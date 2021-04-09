@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.Firmware;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
@@ -59,6 +60,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.firmware.FirmwareService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -106,6 +108,9 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
 
     @Autowired
     private CacheManager cacheManager;
+
+    @Autowired
+    private FirmwareService firmwareService;
 
     private final Lock findOrCreateLock = new ReentrantLock();
 
@@ -389,6 +394,15 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                         }
                     }
 
+                    if (deviceProfile.getFirmwareId() != null) {
+                        Firmware firmware = firmwareService.findFirmwareById(tenantId, deviceProfile.getFirmwareId());
+                        if (firmware == null) {
+                            throw new DataValidationException("Can't assign non-existent firmware!");
+                        }
+                        if (firmware.getData() == null) {
+                            throw new DataValidationException("Can't assign firmware with empty data!");
+                        }
+                    }
                 }
 
                 @Override

@@ -32,10 +32,15 @@ CREATE TABLE IF NOT EXISTS firmware (
     created_time bigint NOT NULL,
     tenant_id uuid NOT NULL,
     title varchar(255) NOT NULL,
+    version varchar(255) NOT NULL,
+    file_name varchar(255),
+    content_type varchar(255),
+    checksum_algorithm varchar(32),
+    checksum varchar(1020),
+    data binary,
+    additional_info varchar,
     search_text varchar(255),
-    file_name varchar(255) NOT NULL,
-    content_type varchar(255) NOT NULL,
-    data bytea
+    CONSTRAINT firmware_tenant_title_version_unq_key UNIQUE (tenant_id, title, version)
 );
 
 ALTER TABLE device_profile

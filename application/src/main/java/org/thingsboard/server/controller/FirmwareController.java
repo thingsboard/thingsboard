@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 
 import java.nio.ByteBuffer;
 
@@ -97,14 +98,36 @@ public class FirmwareController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/firmware", method = RequestMethod.POST)
     @ResponseBody
-    public Firmware saveFirmware(@RequestParam("title") String title,
-                                 @RequestBody MultipartFile firmwareFile) throws ThingsboardException {
-        checkParameter("title", title);
+    public FirmwareInfo saveFirmwareInfo(@RequestParam("title") FirmwareInfo firmwareInfo) throws ThingsboardException {
+        checkEntity(firmwareInfo.getId(), firmwareInfo, Resource.FIRMWARE);
         try {
-            checkNotNull(firmwareFile);
-            Firmware firmware = new Firmware();
+            return firmwareService.saveFirmwareInfo(firmwareInfo);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/firmware/{firmwareId}", method = RequestMethod.POST)
+    @ResponseBody
+    public Firmware saveFirmwareData(@PathVariable(FIRMWARE_ID) String strFirmwareId,
+                                     @RequestParam String checksum,
+                                     @RequestParam String checksumAlgorithm,
+                                     @RequestBody MultipartFile firmwareFile) throws ThingsboardException {
+        checkParameter(FIRMWARE_ID, strFirmwareId);
+        checkParameter("checksum", checksum);
+        try {
+            FirmwareId firmwareId = new FirmwareId(toUUID(strFirmwareId));
+            FirmwareInfo info = checkFirmwareInfoId(firmwareId, Operation.READ);
+
+            Firmware firmware = new Firmware(firmwareId);
+            firmware.setCreatedTime(info.getCreatedTime());
             firmware.setTenantId(getTenantId());
-            firmware.setTitle(title);
+            firmware.setVersion(info.getVersion());
+            firmware.setAdditionalInfo(info.getAdditionalInfo());
+
+            firmware.setChecksumAlgorithm(checksumAlgorithm);
+            firmware.setChecksum(checksum);
             firmware.setFileName(firmwareFile.getOriginalFilename());
             firmware.setContentType(firmwareFile.getContentType());
             firmware.setData(ByteBuffer.wrap(firmwareFile.getBytes()));

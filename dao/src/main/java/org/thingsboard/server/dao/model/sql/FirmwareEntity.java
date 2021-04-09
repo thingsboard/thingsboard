@@ -15,13 +15,18 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Firmware;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -29,17 +34,21 @@ import javax.persistence.Table;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_CHECKSUM_ALGORITHM_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_CHECKSUM_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_CONTENT_TYPE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_DATA_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_FILE_NAME_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TENANT_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TITLE_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_VERSION_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
+@TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = FIRMWARE_TABLE_NAME)
 public class FirmwareEntity extends BaseSqlEntity<Firmware> implements SearchTextEntity<Firmware> {
 
@@ -49,14 +58,27 @@ public class FirmwareEntity extends BaseSqlEntity<Firmware> implements SearchTex
     @Column(name = FIRMWARE_TITLE_COLUMN)
     private String title;
 
+    @Column(name = FIRMWARE_VERSION_COLUMN)
+    private String version;
+
     @Column(name = FIRMWARE_FILE_NAME_COLUMN)
     private String fileName;
 
     @Column(name = FIRMWARE_CONTENT_TYPE_COLUMN)
     private String contentType;
 
+    @Column(name = FIRMWARE_CHECKSUM_ALGORITHM_COLUMN)
+    private String checksumAlgorithm;
+
+    @Column(name = FIRMWARE_CHECKSUM_COLUMN)
+    private String checksum;
+
     @Column(name = FIRMWARE_DATA_COLUMN, columnDefinition = "BINARY")
     private byte[] data;
+
+    @Type(type = "json")
+    @Column(name = ModelConstants.FIRMWARE_ADDITIONAL_INFO_COLUMN)
+    private JsonNode additionalInfo;
 
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
@@ -70,9 +92,13 @@ public class FirmwareEntity extends BaseSqlEntity<Firmware> implements SearchTex
         this.setUuid(firmware.getUuidId());
         this.tenantId = firmware.getTenantId().getId();
         this.title = firmware.getTitle();
+        this.version = firmware.getVersion();
         this.fileName = firmware.getFileName();
         this.contentType = firmware.getContentType();
+        this.checksumAlgorithm = firmware.getChecksumAlgorithm();
+        this.checksum = firmware.getChecksum();
         this.data = firmware.getData().array();
+        this.additionalInfo = firmware.getAdditionalInfo();
     }
 
     @Override
@@ -91,9 +117,15 @@ public class FirmwareEntity extends BaseSqlEntity<Firmware> implements SearchTex
         firmware.setCreatedTime(createdTime);
         firmware.setTenantId(new TenantId(tenantId));
         firmware.setTitle(title);
+        firmware.setVersion(version);
         firmware.setFileName(fileName);
         firmware.setContentType(contentType);
-        firmware.setData(ByteBuffer.wrap(data));
+        firmware.setChecksumAlgorithm(checksumAlgorithm);
+        firmware.setChecksum(checksum);
+        if (data != null) {
+            firmware.setData(ByteBuffer.wrap(data));
+        }
+        firmware.setAdditionalInfo(additionalInfo);
         return firmware;
     }
 }
