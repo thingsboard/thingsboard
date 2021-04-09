@@ -31,7 +31,6 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.entityview.EntityViewDao;
 import org.thingsboard.server.dao.model.sql.EntityViewEntity;
 import org.thingsboard.server.dao.model.sql.EntityViewInfoEntity;
-import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
 import java.util.ArrayList;
@@ -51,9 +50,6 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
 
     @Autowired
     private EntityViewRepository entityViewRepository;
-
-    @Autowired
-    private RelationDao relationDao;
 
     @Override
     protected Class<EntityViewEntity> getEntityClass() {
