@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Base64Utils;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 
-import java.io.IOException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 

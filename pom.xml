@@ -47,6 +47,7 @@
         <jjwt.version>0.7.0</jjwt.version>
         <json-path.version>2.2.0</json-path.version>
         <junit.version>4.12</junit.version>
+        <jupiter.version>5.7.1</jupiter.version>
         <slf4j.version>1.7.7</slf4j.version>
         <logback.version>1.2.3</logback.version>
         <mockito.version>3.3.3</mockito.version>
@@ -116,6 +117,10 @@
         <protobuf-dynamic.version>1.0.2TB</protobuf-dynamic.version>
         <wire-schema.version>3.4.0</wire-schema.version>
         <twilio.version>7.54.2</twilio.version>
+        <hibernate-validator.version>6.0.13.Final</hibernate-validator.version>
+        <javax.el.version>3.0.0</javax.el.version>
+        <javax.validation-api.version>2.0.1.Final</javax.validation-api.version>
+        <antisamy.version>1.6.2</antisamy.version>
     </properties>
 
     <modules>
@@ -1351,6 +1356,12 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-params</artifactId>
+                <version>${jupiter.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.dbunit</groupId>
                 <artifactId>dbunit</artifactId>
                 <version>${dbunit.version}</version>
@@ -1544,6 +1555,36 @@
                     <exclusion>
                         <groupId>io.jsonwebtoken</groupId>
                         <artifactId>jjwt-impl</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.hibernate.validator</groupId>
+                <artifactId>hibernate-validator</artifactId>
+                <version>${hibernate-validator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish</groupId>
+                <artifactId>javax.el</artifactId>
+                <version>${javax.el.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.validation</groupId>
+                <artifactId>validation-api</artifactId>
+                <version>${javax.validation-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.owasp.antisamy</groupId>
+                <artifactId>antisamy</artifactId>
+                <version>${antisamy.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs-annotations</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
