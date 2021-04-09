@@ -13,37 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.coap;
+package org.thingsboard.server.coapserver;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.transport.TransportContext;
-import org.thingsboard.server.transport.coap.adaptors.JsonCoapAdaptor;
-import org.thingsboard.server.transport.coap.adaptors.ProtoCoapAdaptor;
-import org.thingsboard.server.transport.coap.efento.adaptor.EfentoCoapAdaptor;
 
-
-/**
- * Created by ashvayka on 18.10.18.
- */
 @Slf4j
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.coap.enabled}'=='true')")
 @Component
-public class CoapTransportContext extends TransportContext {
+public class CoapServerContext {
 
     @Getter
-    @Autowired
-    private JsonCoapAdaptor jsonCoapAdaptor;
+    @Value("${transport.coap.bind_address}")
+    private String host;
 
     @Getter
-    @Autowired
-    private ProtoCoapAdaptor protoCoapAdaptor;
+    @Value("${transport.coap.bind_port}")
+    private Integer port;
 
     @Getter
-    @Autowired
-    private EfentoCoapAdaptor efentoCoapAdaptor;
+    @Value("${transport.coap.timeout}")
+    private Long timeout;
+
+    @Getter
+    @Autowired(required = false)
+    private TbCoapDtlsSettings dtlsSettings;
 
 }
