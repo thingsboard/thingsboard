@@ -18,7 +18,7 @@ package org.thingsboard.server.common.data.event;
 import lombok.Data;
 
 @Data
-public class LifeCycleEvent implements EventProvisionConfiguration {
+public class LifeCycleEvent implements EventFilter {
     private boolean isError;
     private String server;
     private String status;

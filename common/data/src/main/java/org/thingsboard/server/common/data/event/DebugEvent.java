@@ -18,7 +18,7 @@ package org.thingsboard.server.common.data.event;
 import lombok.Data;
 
 @Data
-public class DebugRuleNodeEvent implements EventProvisionConfiguration {
+public class DebugEvent implements EventFilter {
 
     private String msgDirectionType;
     private String server;

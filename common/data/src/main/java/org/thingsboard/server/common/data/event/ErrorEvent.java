@@ -18,7 +18,7 @@ package org.thingsboard.server.common.data.event;
 import lombok.Data;
 
 @Data
-public class ErrorEvent implements EventProvisionConfiguration {
+public class ErrorEvent implements EventFilter {
     private String server;
     private String method;
 

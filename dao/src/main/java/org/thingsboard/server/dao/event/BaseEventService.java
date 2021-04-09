@@ -23,11 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Event;
-import org.thingsboard.server.common.data.event.DebugRuleNodeEvent;
-import org.thingsboard.server.common.data.event.ErrorEvent;
-import org.thingsboard.server.common.data.event.EventProvisionConfiguration;
-import org.thingsboard.server.common.data.event.LifeCycleEvent;
-import org.thingsboard.server.common.data.event.StatisticsEvent;
+import org.thingsboard.server.common.data.event.EventFilter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -116,8 +112,8 @@ public class BaseEventService implements EventService {
     }
 
     @Override
-    public PageData<Event> findEventsByFilter(TenantId tenantId, EntityId entityId, EventProvisionConfiguration eventProvisionConfiguration, TimePageLink pageLink) {
-        return eventDao.findEventByFilter(tenantId.getId(), entityId, eventProvisionConfiguration, pageLink);
+    public PageData<Event> findEventsByFilter(TenantId tenantId, EntityId entityId, EventFilter eventFilter, TimePageLink pageLink) {
+        return eventDao.findEventByFilter(tenantId.getId(), entityId, eventFilter, pageLink);
     }
 
     @Override

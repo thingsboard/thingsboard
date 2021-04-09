@@ -85,7 +85,7 @@ public interface EventRepository extends PagingAndSortingRepository<EventEntity,
                     "e.tenant_id = :tenantId " +
                     "AND e.entity_type = :entityType " +
                     "AND e.entity_id = :entityId " +
-                    "AND e.event_type = 'DEBUG_RULE_NODE' " +
+                    "AND e.event_type = :eventType " +
                     "AND ((:startTime IS NULL) OR (e.created_time >= :startTime)) " +
                     "AND ((:endTime IS NULL) OR (e.created_time <= :endTime)) " +
                     "AND (lower(cast(json_object_field(cast(e.body AS json), 'type') as varchar)) " +
@@ -109,7 +109,7 @@ public interface EventRepository extends PagingAndSortingRepository<EventEntity,
                     "e.tenant_id = :tenantId " +
                     "AND e.entity_type = :entityType " +
                     "AND e.entity_id = :entityId " +
-                    "AND e.event_type = 'DEBUG_RULE_NODE' " +
+                    "AND e.event_type = :eventType " +
                     "AND ((:startTime IS NULL) OR (e.created_time >= :startTime)) " +
                     "AND ((:endTime IS NULL) OR (e.created_time <= :endTime)) " +
                     "AND (lower(cast(json_object_field(cast(e.body AS json), 'type') as varchar)) " +
@@ -133,6 +133,7 @@ public interface EventRepository extends PagingAndSortingRepository<EventEntity,
     Page<EventEntity> findDebugRuleNodeEvents(@Param("tenantId") UUID tenantId,
                                               @Param("entityId") UUID entityId,
                                               @Param("entityType") String entityType,
+                                              @Param("eventType") String eventType,
                                               @Param("startTime") Long startTime,
                                               @Param("endTime") Long endTIme,
                                               @Param("type") String type,

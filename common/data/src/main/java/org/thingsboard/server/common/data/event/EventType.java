@@ -16,5 +16,5 @@
 package org.thingsboard.server.common.data.event;
 
 public enum EventType {
-    ALARM, ERROR, LC_EVENT, STATS, DEBUG_RULE_NODE, DEBUG_RULE_CHAIN
+    ERROR, LC_EVENT, STATS, DEBUG_RULE_NODE, DEBUG_RULE_CHAIN
 }

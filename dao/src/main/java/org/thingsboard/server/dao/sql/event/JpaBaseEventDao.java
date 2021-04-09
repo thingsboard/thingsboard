@@ -24,13 +24,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Event;
-import org.thingsboard.server.common.data.event.DebugRuleNodeEvent;
+import org.thingsboard.server.common.data.event.DebugEvent;
 import org.thingsboard.server.common.data.event.ErrorEvent;
-import org.thingsboard.server.common.data.event.EventProvisionConfiguration;
+import org.thingsboard.server.common.data.event.EventFilter;
 import org.thingsboard.server.common.data.event.LifeCycleEvent;
 import org.thingsboard.server.common.data.event.StatisticsEvent;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -155,27 +153,29 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
     }
 
     @Override
-    public PageData<Event> findEventByFilter(UUID tenantId, EntityId entityId, EventProvisionConfiguration eventProvisionConfiguration, TimePageLink pageLink) {
-        switch (eventProvisionConfiguration.getEventType()) {
+    public PageData<Event> findEventByFilter(UUID tenantId, EntityId entityId, EventFilter eventFilter, TimePageLink pageLink) {
+        switch (eventFilter.getEventType()) {
             case DEBUG_RULE_NODE:
+            case DEBUG_RULE_CHAIN:
                 return DaoUtil.toPageData(
-                    eventRepository.findDebugRuleNodeEvents(
-                            tenantId,
-                            entityId.getId(),
-                            entityId.getEntityType().name(),
-                            pageLink.getStartTime(),
-                            pageLink.getEndTime(),
-                            ((DebugRuleNodeEvent) eventProvisionConfiguration).getMsgDirectionType(),
-                            ((DebugRuleNodeEvent) eventProvisionConfiguration).getServer(),
-                            ((DebugRuleNodeEvent) eventProvisionConfiguration).getEntityName(),
-                            ((DebugRuleNodeEvent) eventProvisionConfiguration).getRelationType(),
-                            ((DebugRuleNodeEvent) eventProvisionConfiguration).getEntityId(),
-                            ((DebugRuleNodeEvent) eventProvisionConfiguration).getMsgType(),
-                            ((DebugRuleNodeEvent) eventProvisionConfiguration).isError(),
-                            ((DebugRuleNodeEvent) eventProvisionConfiguration).getDataSearch(),
-                            ((DebugRuleNodeEvent) eventProvisionConfiguration).getMetadataSearch(),
-                            DaoUtil.toPageable(pageLink))
-            );
+                        eventRepository.findDebugRuleNodeEvents(
+                                tenantId,
+                                entityId.getId(),
+                                entityId.getEntityType().name(),
+                                eventFilter.getEventType().name(),
+                                pageLink.getStartTime(),
+                                pageLink.getEndTime(),
+                                ((DebugEvent) eventFilter).getMsgDirectionType(),
+                                ((DebugEvent) eventFilter).getServer(),
+                                ((DebugEvent) eventFilter).getEntityName(),
+                                ((DebugEvent) eventFilter).getRelationType(),
+                                ((DebugEvent) eventFilter).getEntityId(),
+                                ((DebugEvent) eventFilter).getMsgType(),
+                                ((DebugEvent) eventFilter).isError(),
+                                ((DebugEvent) eventFilter).getDataSearch(),
+                                ((DebugEvent) eventFilter).getMetadataSearch(),
+                                DaoUtil.toPageable(pageLink))
+                );
             case LC_EVENT:
                 return DaoUtil.toPageData(
                     eventRepository.findLifeCycleEvents(
@@ -184,9 +184,9 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
                             entityId.getEntityType().name(),
                             pageLink.getStartTime(),
                             pageLink.getEndTime(),
-                            ((LifeCycleEvent) eventProvisionConfiguration).isError(),
-                            ((LifeCycleEvent) eventProvisionConfiguration).getStatus(),
-                            ((LifeCycleEvent) eventProvisionConfiguration).getServer(),
+                            ((LifeCycleEvent) eventFilter).isError(),
+                            ((LifeCycleEvent) eventFilter).getStatus(),
+                            ((LifeCycleEvent) eventFilter).getServer(),
                             DaoUtil.toPageable(pageLink))
                     );
 
@@ -198,8 +198,8 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
                                 entityId.getEntityType().name(),
                                 pageLink.getStartTime(),
                                 pageLink.getEndTime(),
-                                ((ErrorEvent) eventProvisionConfiguration).getServer(),
-                                ((ErrorEvent) eventProvisionConfiguration).getMethod(),
+                                ((ErrorEvent) eventFilter).getServer(),
+                                ((ErrorEvent) eventFilter).getMethod(),
                                 DaoUtil.toPageable(pageLink))
                 );
             case STATS:
@@ -210,12 +210,12 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
                             entityId.getEntityType().name(),
                             pageLink.getStartTime(),
                             pageLink.getEndTime(),
-                            ((StatisticsEvent) eventProvisionConfiguration).getServer(),
-                            ((StatisticsEvent) eventProvisionConfiguration).getMessagesProcessed(),
-                            ((StatisticsEvent) eventProvisionConfiguration).getErrorsOccured(),
+                            ((StatisticsEvent) eventFilter).getServer(),
+                            ((StatisticsEvent) eventFilter).getMessagesProcessed(),
+                            ((StatisticsEvent) eventFilter).getErrorsOccured(),
                             DaoUtil.toPageable(pageLink))
             );
-            default: throw new RuntimeException("Not supported event type: " + eventProvisionConfiguration.getEventType());
+            default: throw new RuntimeException("Not supported event type: " + eventFilter.getEventType());
         }
     }
 

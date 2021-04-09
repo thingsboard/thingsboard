@@ -25,12 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Event;
-import org.thingsboard.server.common.data.event.DebugRuleNodeEvent;
-import org.thingsboard.server.common.data.event.ErrorEvent;
-import org.thingsboard.server.common.data.event.EventProvisionConfiguration;
-import org.thingsboard.server.common.data.event.LifeCycleEvent;
-import org.thingsboard.server.common.data.event.StatisticsEvent;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.event.EventFilter;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -118,7 +113,7 @@ public class EventController extends BaseController {
             @RequestParam("tenantId") String strTenantId,
             @RequestParam int pageSize,
             @RequestParam int page,
-            @RequestBody EventProvisionConfiguration eventProvisionConfiguration,
+            @RequestBody EventFilter eventFilter,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String sortProperty,
             @RequestParam(required = false) String sortOrder,
@@ -137,7 +132,7 @@ public class EventController extends BaseController {
             }
 
             TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
-            return checkNotNull(eventService.findEventsByFilter(tenantId, entityId, eventProvisionConfiguration, pageLink));
+            return checkNotNull(eventService.findEventsByFilter(tenantId, entityId, eventFilter, pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }
