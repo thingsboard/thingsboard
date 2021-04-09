@@ -15,25 +15,9 @@
  */
 package org.thingsboard.server.common.data.event;
 
-import lombok.Data;
-
-@Data
-public abstract class DebugEvent implements EventFilter {
-
-    private String msgDirectionType;
-    private String server;
-    private String dataSearch;
-    private String metadataSearch;
-    private String entityName;
-    private String relationType;
-    private String entityId;
-    private String msgType;
-    private boolean isError;
-
-    public void setIsError(boolean isError) {
-        this.isError = isError;
-    }
-
+public class DebugRuleNodeEvent extends DebugEvent {
     @Override
-    public abstract EventType getEventType();
+    public EventType getEventType() {
+        return EventType.DEBUG_RULE_NODE;
+    }
 }

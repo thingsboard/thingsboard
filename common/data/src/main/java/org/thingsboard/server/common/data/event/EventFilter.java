@@ -26,7 +26,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         include = JsonTypeInfo.As.PROPERTY,
         property = "eventType")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = DebugEvent.class, names = {"DEBUG_RULE_NODE", "DEBUG_RULE_CHAIN"}),
+        @JsonSubTypes.Type(value = DebugRuleNodeEvent.class, name = "DEBUG_RULE_NODE"),
+        @JsonSubTypes.Type(value = DebugRuleChainEvent.class, name = "DEBUG_RULE_CHAIN"),
         @JsonSubTypes.Type(value = ErrorEvent.class, name = "ERROR"),
         @JsonSubTypes.Type(value = LifeCycleEvent.class, name = "LC_EVENT"),
         @JsonSubTypes.Type(value = StatisticsEvent.class, name = "STATS")
