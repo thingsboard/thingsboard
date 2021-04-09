@@ -39,6 +39,8 @@ import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -59,6 +61,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -77,7 +80,6 @@ import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -99,6 +101,7 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.resource.TbResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
@@ -111,6 +114,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.lwm2m.LwM2MModelsRepository;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -226,6 +230,9 @@ public abstract class BaseController {
     protected PartitionService partitionService;
 
     @Autowired
+    protected TbResourceService resourceService;
+
+    @Autowired
     protected TbQueueProducerProvider producerProvider;
 
     @Autowired
@@ -233,6 +240,9 @@ public abstract class BaseController {
 
     @Autowired
     protected TbDeviceProfileCache deviceProfileCache;
+
+    @Autowired
+    protected LwM2MModelsRepository lwM2MModelsRepository;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -457,6 +467,9 @@ public abstract class BaseController {
                 case WIDGET_TYPE:
                     checkWidgetTypeId(new WidgetTypeId(entityId.getId()), operation);
                     return;
+                case TB_RESOURCE:
+                    checkResourceId(new TbResourceId(entityId.getId()), operation);
+                    return;
                 default:
                     throw new IllegalArgumentException("Unsupported entity type: " + entityId.getEntityType());
             }
@@ -662,6 +675,30 @@ public abstract class BaseController {
         checkNotNull(ruleNode);
         checkRuleChain(ruleNode.getRuleChainId(), operation);
         return ruleNode;
+    }
+
+    TbResource checkResourceId(TbResourceId resourceId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(resourceId, "Incorrect resourceId " + resourceId);
+            TbResource resource = resourceService.findResourceById(getCurrentUser().getTenantId(), resourceId);
+            checkNotNull(resource);
+            accessControlService.checkPermission(getCurrentUser(), Resource.TB_RESOURCE, operation, resourceId, resource);
+            return resource;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    TbResourceInfo checkResourceInfoId(TbResourceId resourceId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(resourceId, "Incorrect resourceId " + resourceId);
+            TbResourceInfo resourceInfo = resourceService.findResourceInfoById(getCurrentUser().getTenantId(), resourceId);
+            checkNotNull(resourceInfo);
+            accessControlService.checkPermission(getCurrentUser(), Resource.TB_RESOURCE, operation, resourceId, resourceInfo);
+            return resourceInfo;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -880,8 +917,8 @@ public abstract class BaseController {
 
     protected void processDashboardIdFromAdditionalInfo(ObjectNode additionalInfo, String requiredFields) throws ThingsboardException {
         String dashboardId = additionalInfo.has(requiredFields) ? additionalInfo.get(requiredFields).asText() : null;
-        if(dashboardId != null && !dashboardId.equals("null")) {
-            if(dashboardService.findDashboardById(getTenantId(), new DashboardId(UUID.fromString(dashboardId))) == null) {
+        if (dashboardId != null && !dashboardId.equals("null")) {
+            if (dashboardService.findDashboardById(getTenantId(), new DashboardId(UUID.fromString(dashboardId))) == null) {
                 additionalInfo.remove(requiredFields);
             }
         }

@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
+import org.thingsboard.rule.engine.api.msg.DeviceCredentialsUpdateNotificationMsg;
 import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
@@ -36,6 +37,9 @@ import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
@@ -61,6 +65,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcResponseM
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
@@ -450,11 +455,19 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         dumpSessions();
     }
 
-    void processCredentialsUpdate() {
-        sessions.forEach(this::notifyTransportAboutClosedSession);
-        attributeSubscriptions.clear();
-        rpcSubscriptions.clear();
-        dumpSessions();
+    void processCredentialsUpdate(TbActorMsg msg) {
+        if (((DeviceCredentialsUpdateNotificationMsg) msg).getDeviceCredentials().getCredentialsType() == DeviceCredentialsType.LWM2M_CREDENTIALS) {
+            log.info("1) LwM2Mtype: ");
+            sessions.forEach((k, v) -> {
+                notifyTransportAboutProfileUpdate(k, v, ((DeviceCredentialsUpdateNotificationMsg) msg).getDeviceCredentials());
+            });
+        } else {
+            sessions.forEach(this::notifyTransportAboutClosedSession);
+            attributeSubscriptions.clear();
+            rpcSubscriptions.clear();
+            dumpSessions();
+
+        }
     }
 
     private void notifyTransportAboutClosedSession(UUID sessionId, SessionInfoMetaData sessionMd) {
@@ -462,6 +475,18 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 .setSessionIdMSB(sessionId.getMostSignificantBits())
                 .setSessionIdLSB(sessionId.getLeastSignificantBits())
                 .setSessionCloseNotification(SessionCloseNotificationProto.getDefaultInstance()).build();
+        systemContext.getTbCoreToTransportService().process(sessionMd.getSessionInfo().getNodeId(), msg);
+    }
+
+    void notifyTransportAboutProfileUpdate(UUID sessionId, SessionInfoMetaData sessionMd, DeviceCredentials deviceCredentials) {
+        log.info("2) LwM2Mtype: ");
+        TransportProtos.ToTransportUpdateCredentialsProto.Builder notification = TransportProtos.ToTransportUpdateCredentialsProto.newBuilder();
+        notification.addCredentialsId(deviceCredentials.getCredentialsId());
+        notification.addCredentialsValue(deviceCredentials.getCredentialsValue());
+        ToTransportMsg msg = ToTransportMsg.newBuilder()
+                .setSessionIdMSB(sessionId.getMostSignificantBits())
+                .setSessionIdLSB(sessionId.getLeastSignificantBits())
+                .setToTransportUpdateCredentialsNotification(notification).build();
         systemContext.getTbCoreToTransportService().process(sessionMd.getSessionInfo().getNodeId(), msg);
     }
 

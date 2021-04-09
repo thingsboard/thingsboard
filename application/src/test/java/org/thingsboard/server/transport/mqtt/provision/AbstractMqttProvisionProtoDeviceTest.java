@@ -36,7 +36,7 @@ import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
-import org.thingsboard.server.dao.util.mapping.JacksonUtil;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.gen.transport.TransportProtos.CredentialsDataProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CredentialsType;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceCredentialsMsg;

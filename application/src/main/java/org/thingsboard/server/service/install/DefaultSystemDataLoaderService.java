@@ -445,6 +445,11 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         installScripts.loadSystemWidgets();
     }
 
+    @Override
+    public void loadSystemLwm2mResources() throws Exception {
+        installScripts.loadSystemLwm2mResources();
+    }
+
     private User createUser(Authority authority,
                             TenantId tenantId,
                             CustomerId customerId,

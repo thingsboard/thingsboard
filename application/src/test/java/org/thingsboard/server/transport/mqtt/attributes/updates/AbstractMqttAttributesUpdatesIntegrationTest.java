@@ -25,7 +25,7 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
-import org.thingsboard.server.dao.util.mapping.JacksonUtil;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.transport.mqtt.attributes.AbstractMqttAttributesIntegrationTest;
 
 import java.nio.charset.StandardCharsets;

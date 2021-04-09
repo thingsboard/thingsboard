@@ -20,10 +20,10 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
+import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -35,16 +35,16 @@ import java.util.concurrent.Executors;
  */
 @Slf4j
 @Data
-@Service
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true')")
 public abstract class TransportContext {
 
     protected final ObjectMapper mapper = new ObjectMapper();
 
     @Autowired
     private TransportService transportService;
+
     @Autowired
     private TbServiceInfoProvider serviceInfoProvider;
+
     @Autowired
     private SchedulerComponent scheduler;
 

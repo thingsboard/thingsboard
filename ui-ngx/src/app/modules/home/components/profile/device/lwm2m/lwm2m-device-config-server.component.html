@@ -1,0 +1,126 @@
+<!--
+
+    Copyright © 2016-2021 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="serverFormGroup" style="min-width: 400px;">
+  <div class="mat-padding">
+    <div fxLayout="column">
+      <div fxLayout="row" fxLayoutGap="8px">
+        <mat-form-field class="mat-block">
+          <mat-label>{{ 'device-profile.lwm2m.mode' | translate }}</mat-label>
+          <mat-select formControlName="securityMode">
+            <mat-option *ngFor="let securityMode of securityConfigLwM2MTypes"
+                        [value]="securityMode">
+              {{ credentialTypeLwM2MNamesMap.get(securityConfigLwM2MType[securityMode]) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field class="mat-block">
+          <mat-label>{{ 'device-profile.lwm2m.server-host' | translate }}</mat-label>
+          <input matInput type="text" formControlName="host" required
+                 matTooltip="{{'device-profile.lwm2m.server-host-tip' | translate}}"
+                 matTooltipPosition="above">
+          <mat-error *ngIf="serverFormGroup.get('host').hasError('required')">
+            {{ 'device-profile.lwm2m.server-host' | translate }}
+            <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="mat-block">
+          <mat-label>{{ 'device-profile.lwm2m.server-port' | translate }}</mat-label>
+          <input matInput type="number" formControlName="port" required
+                 matTooltip="{{'device-profile.lwm2m.server-port-tip' | translate}}"
+                 matTooltipPosition="above">
+          <mat-error *ngIf="serverFormGroup.get('port').hasError('required')">
+            {{ 'device-profile.lwm2m.server-port' | translate }}
+            <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="mat-block">
+          <mat-label>{{ 'device-profile.lwm2m.short-id' | translate }}</mat-label>
+          <input matInput type="number" formControlName="serverId" required
+                 matTooltip="{{'device-profile.lwm2m.short-id-tip' | translate}}"
+                 matTooltipPosition="above">
+          <mat-error *ngIf="serverFormGroup.get('serverId').hasError('required')">
+            {{ 'device-profile.lwm2m.short-id' | translate }}
+            <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+    <div fxLayout="column">
+      <div fxLayout="row" fxLayoutGap="10px">
+        <mat-form-field class="mat-block">
+          <mat-label>{{ 'device-profile.lwm2m.client-hold-off-time' | translate }}</mat-label>
+          <input matInput type="number" formControlName="clientHoldOffTime" required
+                 matTooltip="{{'device-profile.lwm2m.client-hold-off-time-tip' | translate}}"
+                 matTooltipPosition="above">
+          <mat-error *ngIf="serverFormGroup.get('clientHoldOffTime').hasError('required')">
+            {{ 'device-profile.lwm2m.client-hold-off-time' | translate }}
+            <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="mat-block">
+          <mat-label>{{ 'device-profile.lwm2m.bootstrap-server-account-timeout' | translate }}</mat-label>
+          <input matInput type="number" formControlName="bootstrapServerAccountTimeout" required
+                 matTooltip="{{'device-profile.lwm2m.bootstrap-server-account-timeout-tip' | translate}}"
+                 matTooltipPosition="above">
+          <mat-error *ngIf="serverFormGroup.get('bootstrapServerAccountTimeout').hasError('required')">
+            {{ 'device-profile.lwm2m.bootstrap-server-account-timeout' | translate }}
+            <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
+          </mat-error>
+        </mat-form-field>
+        <mat-checkbox formControlName="bootstrapServerIs" color="primary">
+          {{ 'device-profile.lwm2m.bootstrap-server' | translate }}
+        </mat-checkbox>
+      </div>
+      <div *ngIf="serverFormGroup.get('securityMode').value === securityConfigLwM2MType.RPK ||
+        serverFormGroup.get('securityMode').value === securityConfigLwM2MType.X509">
+        <mat-form-field class="mat-block">
+          <mat-label>{{ 'device-profile.lwm2m.server-public-key' | translate }}</mat-label>
+          <textarea matInput
+                    #serverPublicKey
+                    maxlength="{{lenMaxServerPublicKey}}"
+                    cdkTextareaAutosize
+                    cdkAutosizeMinRows="1"
+                    cols="1" required
+                    style="overflow:hidden"
+                    formControlName="serverPublicKey"
+                    matTooltip="{{'device-profile.lwm2m.server-public-key-tip' | translate}}"
+          ></textarea>
+          <mat-hint align="end">{{serverPublicKey.value?.length || 0}}/{{lenMaxServerPublicKey}}</mat-hint>
+          <mat-error *ngIf="serverFormGroup.get('serverPublicKey').hasError('required')">
+            {{ 'device-profile.lwm2m.server-public-key' | translate }}
+            <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
+          </mat-error>
+          <mat-error *ngIf="serverFormGroup.get('serverPublicKey').hasError('pattern') &&
+                              (serverFormGroup.get('securityMode').value === securityConfigLwM2MType.RPK ||
+                              serverFormGroup.get('securityMode').value === securityConfigLwM2MType.X509)">
+            {{ 'device-profile.lwm2m.server-public-key' | translate }}
+            <strong>{{ 'device-profile.lwm2m.pattern_hex_dec' | translate: {
+              count: 0} }}</strong>
+          </mat-error>
+          <mat-error *ngIf="(serverFormGroup.get('serverPublicKey').hasError('maxlength') ||
+                    serverFormGroup.get('serverPublicKey').hasError('minlength')) &&
+                              serverFormGroup.get('securityMode').value === securityConfigLwM2MType.RPK">
+            {{ 'device-profile.lwm2m.server-public-key' | translate }}
+            <strong>{{ 'device-profile.lwm2m.pattern_hex_dec' | translate: {
+              count: lenMaxServerPublicKey } }}</strong>
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+  </div>
+</section>

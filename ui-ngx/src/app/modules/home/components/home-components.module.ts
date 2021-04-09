@@ -96,8 +96,7 @@ import { DeviceProfileTransportConfigurationComponent } from '@home/components/p
 import { DeviceProfileDialogComponent } from '@home/components/profile/device-profile-dialog.component';
 import { DeviceProfileAutocompleteComponent } from '@home/components/profile/device-profile-autocomplete.component';
 import { MqttDeviceProfileTransportConfigurationComponent } from '@home/components/profile/device/mqtt-device-profile-transport-configuration.component';
-import { Lwm2mDeviceProfileTransportConfigurationComponent } from '@home/components/profile/device/lwm2m-device-profile-transport-configuration.component';
-import {CoapDeviceProfileTransportConfigurationComponent} from '@home/components/profile/device/coap-device-profile-transport-configuration.component';
+import { CoapDeviceProfileTransportConfigurationComponent } from '@home/components/profile/device/coap-device-profile-transport-configuration.component';
 import { DeviceProfileAlarmsComponent } from '@home/components/profile/alarm/device-profile-alarms.component';
 import { DeviceProfileAlarmComponent } from '@home/components/profile/alarm/device-profile-alarm.component';
 import { CreateAlarmRulesComponent } from '@home/components/profile/alarm/create-alarm-rules.component';
@@ -120,6 +119,7 @@ import { SmsProviderConfigurationComponent } from '@home/components/sms/sms-prov
 import { AwsSnsProviderConfigurationComponent } from '@home/components/sms/aws-sns-provider-configuration.component';
 import { TwilioSmsProviderConfigurationComponent } from '@home/components/sms/twilio-sms-provider-configuration.component';
 import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-device-credentials.component';
+import { Lwm2mProfileComponentsModule } from '@home/components/profile/device/lwm2m/lwm2m-profile-components.module';
 import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
 import { DashboardToolbarComponent } from '@home/components/dashboard-page/dashboard-toolbar.component';
 import { StatesControllerModule } from '@home/components/dashboard-page/states/states-controller.module';
@@ -213,7 +213,6 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
       DeviceProfileConfigurationComponent,
       DefaultDeviceProfileTransportConfigurationComponent,
       MqttDeviceProfileTransportConfigurationComponent,
-      Lwm2mDeviceProfileTransportConfigurationComponent,
       CoapDeviceProfileTransportConfigurationComponent,
       DeviceProfileTransportConfigurationComponent,
       CreateAlarmRulesComponent,
@@ -254,6 +253,7 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
     CommonModule,
     SharedModule,
     SharedHomeComponentsModule,
+    Lwm2mProfileComponentsModule,
     StatesControllerModule
   ],
   exports: [
@@ -316,7 +316,6 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
     DeviceProfileConfigurationComponent,
     DefaultDeviceProfileTransportConfigurationComponent,
     MqttDeviceProfileTransportConfigurationComponent,
-    Lwm2mDeviceProfileTransportConfigurationComponent,
     CoapDeviceProfileTransportConfigurationComponent,
     DeviceProfileTransportConfigurationComponent,
     CreateAlarmRulesComponent,
@@ -337,6 +336,7 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
     AlarmScheduleDialogComponent,
     EditAlarmDetailsDialogComponent,
     DeviceProfileProvisionConfigurationComponent,
+    AlarmScheduleComponent,
     SmsProviderConfigurationComponent,
     AwsSnsProviderConfigurationComponent,
     TwilioSmsProviderConfigurationComponent,

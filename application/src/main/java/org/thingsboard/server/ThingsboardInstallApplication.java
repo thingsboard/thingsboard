@@ -30,7 +30,8 @@ import java.util.Arrays;
         "org.thingsboard.server.service.component",
         "org.thingsboard.server.service.install",
         "org.thingsboard.server.dao",
-        "org.thingsboard.server.common.stats"})
+        "org.thingsboard.server.common.stats",
+        "org.thingsboard.server.cache"})
 public class ThingsboardInstallApplication {
 
     private static final String SPRING_CONFIG_NAME_KEY = "--spring.config.name";

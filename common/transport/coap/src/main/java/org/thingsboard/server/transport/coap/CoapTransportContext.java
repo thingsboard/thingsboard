@@ -26,6 +26,7 @@ import org.thingsboard.server.transport.coap.efento.adaptor.EfentoCoapAdaptor;
 import org.thingsboard.server.transport.coap.adaptors.JsonCoapAdaptor;
 import org.thingsboard.server.transport.coap.adaptors.ProtoCoapAdaptor;
 
+
 /**
  * Created by ashvayka on 18.10.18.
  */

@@ -35,6 +35,9 @@ services:
   tb-coap-transport:
     volumes:
       - tb-coap-transport-log-volume:/var/log/tb-coap-transport
+  tb-lwm2m-transport:
+    volumes:
+      - tb-lwm2m-transport-log-volume:/var/log/tb-lwm2m-transport
   tb-http-transport1:
     volumes:
       - tb-http-transport-log-volume:/var/log/tb-http-transport
@@ -58,6 +61,9 @@ volumes:
   tb-coap-transport-log-volume:
     external: true
     name: ${TB_COAP_TRANSPORT_LOG_VOLUME}
+  tb-lwm2m-transport-log-volume:
+    external: true
+    name: ${TB_LWM2M_TRANSPORT_LOG_VOLUME}
   tb-http-transport-log-volume:
     external: true
     name: ${TB_HTTP_TRANSPORT_LOG_VOLUME}

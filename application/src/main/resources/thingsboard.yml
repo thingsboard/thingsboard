@@ -362,6 +362,9 @@ caffeine:
     attributes:
       timeToLiveInMinutes: 1440
       maxSize: 100000
+    tokensOutdatageTime:
+      timeToLiveInMinutes: 20000
+      maxSize: 10000
 
 redis:
   # standalone or cluster
@@ -505,7 +508,7 @@ js:
   # Built-in JVM JavaScript environment properties
   local:
     # Use Sandboxed (secured) JVM JavaScript environment
-    use_js_sandbox: "${USE_LOCAL_JS_SANDBOX:true}"
+    use_js_sandbox: "${USE_LOCAL_JS_SANDBOX:false}"
     # Specify thread pool size for JavaScript sandbox resource monitor
     monitor_thread_pool_size: "${LOCAL_JS_SANDBOX_MONITOR_THREAD_POOL_SIZE:4}"
     # Maximum CPU time in milliseconds allowed for script execution
@@ -601,6 +604,67 @@ transport:
       x509:
         dtls_session_inactivity_timeout: "${TB_COAP_X509_DTLS_SESSION_INACTIVITY_TIMEOUT:86400000}"
         dtls_session_report_timeout: "${TB_COAP_X509_DTLS_SESSION_REPORT_TIMEOUT:1800000}"
+  # Local LwM2M transport parameters
+  lwm2m:
+    # Enable/disable lvm2m transport protocol.
+    enabled: "${LWM2M_ENABLED:true}"
+    #   We choose a default timeout a bit higher to the MAX_TRANSMIT_WAIT(62-93s) which is the time from starting to
+    #   send a Confirmable message to the time when an acknowledgement is no longer expected.
+    #   DEFAULT_TIMEOUT = 2 * 60 * 1000l; 2 min in ms
+    timeout: "${LWM2M_TIMEOUT:120000}"
+    recommended_ciphers: "${LWM2M_RECOMMENDED_CIPHERS:false}"
+    recommended_supported_groups: "${LWM2M_RECOMMENDED_SUPPORTED_GROUPS:true}"
+    response_pool_size: "${LWM2M_RESPONSE_POOL_SIZE:100}"
+    registered_pool_size: "${LWM2M_REGISTERED_POOL_SIZE:10}"
+    update_registered_pool_size: "${LWM2M_UPDATE_REGISTERED_POOL_SIZE:10}"
+    un_registered_pool_size: "${LWM2M_UN_REGISTERED_POOL_SIZE:10}"
+    secure:
+      # Certificate_x509:
+      # To get helps about files format and how to generate it, see: https://github.com/eclipse/leshan/wiki/Credential-files-format
+      # Create new X509 Certificates: common/transport/lwm2m/src/main/resources/credentials/shell/lwM2M_credentials.sh
+      key_store_type: "${LWM2M_KEYSTORE_TYPE:JKS}"
+      # key_store_path_file: "${KEY_STORE_PATH_FILE:/common/transport/lwm2m/src/main/resources/credentials/serverKeyStore.jks"
+      key_store_path_file: "${KEY_STORE_PATH_FILE:}"
+      key_store_password: "${LWM2M_KEYSTORE_PASSWORD_SERVER:server_ks_password}"
+      root_alias: "${LWM2M_SERVER_ROOT_CA:rootca}"
+      enable_gen_new_key_psk_rpk: "${ENABLE_GEN_NEW_KEY_PSK_RPK:false}"
+    server:
+      id: "${LWM2M_SERVER_ID:123}"
+      bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
+      bind_port_no_sec: "${LWM2M_BIND_PORT_NO_SEC:5685}"
+      secure:
+        bind_address_security: "${LWM2M_BIND_ADDRESS_SECURITY:0.0.0.0}"
+        bind_port_security: "${LWM2M_BIND_PORT_SECURITY:5686}"
+        #  create_rpk: "${CREATE_RPK:}"
+        # Only for RPK: Public & Private Key. If the keystore file is missing or not working
+        #  - Public Key (Hex): [3059301306072a8648ce3d020106082a8648ce3d0301070342000405064b9e6762dd8d8b8a52355d7b4d8b9a3d64e6d2ee277d76c248861353f3585eeb1838e4f9e37b31fa347aef5ce3431eb54e0a2506910c5e0298817445721b]
+        #  - Private Key (Hex): [308193020100301306072a8648ce3d020106082a8648ce3d030107047930770201010420dc774b309e547ceb48fee547e104ce201a9c48c449dc5414cd04e7f5cf05f67ba00a06082a8648ce3d030107a1440342000405064b9e6762dd8d8b8a52355d7b4d8b9a3d64e6d2ee277d76c248861353f3585eeb1838e4f9e37b31fa347aef5ce3431eb54e0a2506910c5e0298817445721b],
+        #  - Elliptic Curve parameters  : [secp256r1 [NIST P-256, X9.62 prime256v1] (1.2.840.10045.3.1.7)]
+        public_x: "${LWM2M_SERVER_PUBLIC_X:05064b9e6762dd8d8b8a52355d7b4d8b9a3d64e6d2ee277d76c248861353f358}"
+        public_y: "${LWM2M_SERVER_PUBLIC_Y:5eeb1838e4f9e37b31fa347aef5ce3431eb54e0a2506910c5e0298817445721b}"
+        private_encoded: "${LWM2M_SERVER_PRIVATE_ENCODED:308193020100301306072a8648ce3d020106082a8648ce3d030107047930770201010420dc774b309e547ceb48fee547e104ce201a9c48c449dc5414cd04e7f5cf05f67ba00a06082a8648ce3d030107a1440342000405064b9e6762dd8d8b8a52355d7b4d8b9a3d64e6d2ee277d76c248861353f3585eeb1838e4f9e37b31fa347aef5ce3431eb54e0a2506910c5e0298817445721b}"
+        # Only Certificate_x509:
+        alias: "${LWM2M_KEYSTORE_ALIAS_SERVER:server}"
+    bootstrap:
+      enable: "${LWM2M_ENABLED_BS:true}"
+      id: "${LWM2M_SERVER_ID_BS:111}"
+      bind_address: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
+      bind_port_no_sec: "${LWM2M_BIND_PORT_NO_SEC_BS:5687}"
+      secure:
+        bind_address_security: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
+        bind_port_security: "${LWM2M_BIND_PORT_SECURITY_BS:5688}"
+        #  Only for RPK: Public & Private Key. If the keystore file is missing or not working
+        #  - Elliptic Curve parameters  : [secp256r1 [NIST P-256, X9.62 prime256v1] (1.2.840.10045.3.1.7)]
+        #  - Public Key (Hex): [3059301306072a8648ce3d020106082a8648ce3d030107034200045017c87a1c1768264656b3b355434b0def6edb8b9bf166a4762d9930cd730f913fc4e61bcd8901ec27c424114c3e887ed372497f0c2cf85839b8443e76988b34]
+        #  - Private Key (Hex): [308193020100301306072a8648ce3d020106082a8648ce3d0301070479307702010104205ecafd90caa7be45c42e1f3f32571632b8409e6e6249d7124f4ba56fab3c8083a00a06082a8648ce3d030107a144034200045017c87a1c1768264656b3b355434b0def6edb8b9bf166a4762d9930cd730f913fc4e61bcd8901ec27c424114c3e887ed372497f0c2cf85839b8443e76988b34],
+        public_x: "${LWM2M_SERVER_PUBLIC_X_BS:5017c87a1c1768264656b3b355434b0def6edb8b9bf166a4762d9930cd730f91}"
+        public_y: "${LWM2M_SERVER_PUBLIC_Y_BS:3fc4e61bcd8901ec27c424114c3e887ed372497f0c2cf85839b8443e76988b34}"
+        private_encoded: "${LWM2M_SERVER_PRIVATE_ENCODED_BS:308193020100301306072a8648ce3d020106082a8648ce3d0301070479307702010104205ecafd90caa7be45c42e1f3f32571632b8409e6e6249d7124f4ba56fab3c8083a00a06082a8648ce3d030107a144034200045017c87a1c1768264656b3b355434b0def6edb8b9bf166a4762d9930cd730f913fc4e61bcd8901ec27c424114c3e887ed372497f0c2cf85839b8443e76988b34}"
+        # Only Certificate_x509:
+        alias: "${LWM2M_KEYSTORE_ALIAS_BS:bootstrap}"
+    # Use redis for Security and Registration stores
+    redis.enabled: "${LWM2M_REDIS_ENABLED:false}"
+
 swagger:
   api_path_regex: "${SWAGGER_API_PATH_REGEX:/api.*}"
   security_path_regex: "${SWAGGER_SECURITY_PATH_REGEX:/api.*}"

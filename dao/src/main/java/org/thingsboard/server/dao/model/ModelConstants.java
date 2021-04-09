@@ -457,6 +457,17 @@ public class ModelConstants {
     public static final String API_USAGE_STATE_SMS_EXEC_COLUMN = "sms_exec";
 
     /**
+     * Resource constants.
+     */
+    public static final String RESOURCE_TABLE_NAME = "resource";
+    public static final String RESOURCE_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
+    public static final String RESOURCE_TYPE_COLUMN = "resource_type";
+    public static final String RESOURCE_KEY_COLUMN = "resource_key";
+    public static final String RESOURCE_TITLE_COLUMN = TITLE_PROPERTY;
+    public static final String RESOURCE_FILE_NAME_COLUMN = "file_name";
+    public static final String RESOURCE_DATA_COLUMN = "data";
+
+    /**
      * Cassandra attributes and timeseries constants.
      */
     public static final String ATTRIBUTES_KV_CF = "attributes_kv_cf";

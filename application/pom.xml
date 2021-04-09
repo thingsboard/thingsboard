@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.2.2-SNAPSHOT</version>
+        <version>3.3.0-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <artifactId>application</artifactId>
@@ -84,6 +84,10 @@
         <dependency>
             <groupId>org.thingsboard.common.transport</groupId>
             <artifactId>coap</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.transport</groupId>
+            <artifactId>lwm2m</artifactId>
         </dependency>
         <dependency>
             <groupId>org.thingsboard</groupId>

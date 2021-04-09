@@ -58,6 +58,7 @@ import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
+import org.thingsboard.server.dao.device.claim.ReclaimResult;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -278,9 +279,7 @@ public class DeviceController extends BaseController {
         try {
             Device device = checkDeviceId(deviceCredentials.getDeviceId(), Operation.WRITE_CREDENTIALS);
             DeviceCredentials result = checkNotNull(deviceCredentialsService.updateDeviceCredentials(getCurrentUser().getTenantId(), deviceCredentials));
-
-            tbClusterService.pushMsgToCore(new DeviceCredentialsUpdateNotificationMsg(getCurrentUser().getTenantId(), deviceCredentials.getDeviceId()), null);
-
+            tbClusterService.pushMsgToCore(new DeviceCredentialsUpdateNotificationMsg(getCurrentUser().getTenantId(), deviceCredentials.getDeviceId(), result), null);
             logEntityAction(device.getId(), device,
                     device.getCustomerId(),
                     ActionType.CREDENTIALS_UPDATED, null, deviceCredentials);
@@ -505,6 +504,13 @@ public class DeviceController extends BaseController {
                         if (result.getResponse().equals(ClaimResponse.SUCCESS)) {
                             status = HttpStatus.OK;
                             deferredResult.setResult(new ResponseEntity<>(result, status));
+
+                            try {
+                                logEntityAction(user, device.getId(), result.getDevice(), customerId, ActionType.ASSIGNED_TO_CUSTOMER, null,
+                                        device.getId().toString(), customerId.toString(), customerService.findCustomerById(tenantId, customerId).getName());
+                            } catch (ThingsboardException e) {
+                                throw new RuntimeException(e);
+                            }
                         } else {
                             status = HttpStatus.BAD_REQUEST;
                             deferredResult.setResult(new ResponseEntity<>(result.getResponse(), status));
@@ -540,14 +546,20 @@ public class DeviceController extends BaseController {
             accessControlService.checkPermission(user, Resource.DEVICE, Operation.CLAIM_DEVICES,
                     device.getId(), device);
 
-            ListenableFuture<List<Void>> future = claimDevicesService.reClaimDevice(tenantId, device);
-            Futures.addCallback(future, new FutureCallback<List<Void>>() {
+            ListenableFuture<ReclaimResult> result = claimDevicesService.reClaimDevice(tenantId, device);
+            Futures.addCallback(result, new FutureCallback<>() {
                 @Override
-                public void onSuccess(@Nullable List<Void> result) {
-                    if (result != null) {
-                        deferredResult.setResult(new ResponseEntity(HttpStatus.OK));
-                    } else {
-                        deferredResult.setResult(new ResponseEntity(HttpStatus.BAD_REQUEST));
+                public void onSuccess(ReclaimResult reclaimResult) {
+                    deferredResult.setResult(new ResponseEntity(HttpStatus.OK));
+
+                    Customer unassignedCustomer = reclaimResult.getUnassignedCustomer();
+                    if (unassignedCustomer != null) {
+                        try {
+                            logEntityAction(user, device.getId(), device, device.getCustomerId(), ActionType.UNASSIGNED_FROM_CUSTOMER, null,
+                                    device.getId().toString(), unassignedCustomer.getId().toString(), unassignedCustomer.getName());
+                        } catch (ThingsboardException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
                 }
 
