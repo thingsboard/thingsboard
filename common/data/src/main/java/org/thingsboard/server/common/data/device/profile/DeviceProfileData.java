@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.device.profile;
 import lombok.Data;
 
 import java.io.Serializable;
+import javax.validation.Valid;
 import java.util.List;
 
 @Data
@@ -26,6 +27,7 @@ public class DeviceProfileData implements Serializable {
     private DeviceProfileConfiguration configuration;
     private DeviceProfileTransportConfiguration transportConfiguration;
     private DeviceProfileProvisionConfiguration provisionConfiguration;
+    @Valid
     private List<DeviceProfileAlarm> alarms;
 
 }

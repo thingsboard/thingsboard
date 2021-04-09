@@ -41,6 +41,7 @@ public class TenantAdminPermissions extends AbstractPermissions {
         put(Resource.WIDGET_TYPE, widgetsPermissionChecker);
         put(Resource.DEVICE_PROFILE, tenantEntityPermissionChecker);
         put(Resource.API_USAGE_STATE, tenantEntityPermissionChecker);
+        put(Resource.TB_RESOURCE, tbResourcePermissionChecker);
         put(Resource.EDGE, tenantEntityPermissionChecker);
     }
 
@@ -89,6 +90,21 @@ public class TenantAdminPermissions extends AbstractPermissions {
     };
 
     private static final PermissionChecker widgetsPermissionChecker = new PermissionChecker() {
+
+        @Override
+        public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
+            if (entity.getTenantId() == null || entity.getTenantId().isNullUid()) {
+                return operation == Operation.READ;
+            }
+            if (!user.getTenantId().equals(entity.getTenantId())) {
+                return false;
+            }
+            return true;
+        }
+
+    };
+
+    private static final PermissionChecker tbResourcePermissionChecker = new PermissionChecker() {
 
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {

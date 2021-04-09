@@ -16,10 +16,14 @@
 package org.thingsboard.server.common.data.asset;
 
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.HasCustomerId;
+import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 @EqualsAndHashCode(callSuper = true)
 public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements HasName, HasTenantId, HasCustomerId {
@@ -28,8 +32,11 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
 
     private TenantId tenantId;
     private CustomerId customerId;
+    @NoXss
     private String name;
+    @NoXss
     private String type;
+    @NoXss
     private String label;
 
     public Asset() {

@@ -17,8 +17,10 @@ package org.thingsboard.server.common.data.device.profile;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.Serializable;
+import javax.validation.Valid;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -26,9 +28,12 @@ import java.util.TreeMap;
 public class DeviceProfileAlarm implements Serializable {
 
     private String id;
+    @NoXss
     private String alarmType;
 
+    @Valid
     private TreeMap<AlarmSeverity, AlarmRule> createRules;
+    @Valid
     private AlarmRule clearRule;
 
     // Hidden in advanced settings

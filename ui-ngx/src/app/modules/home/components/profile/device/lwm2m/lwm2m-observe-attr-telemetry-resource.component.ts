@@ -14,13 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input } from '@angular/core';
-import { ControlValueAccessor, FormArray, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
-import { ResourceLwM2M } from '@home/components/profile/device/lwm2m/profile-config.models';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
+import {Component, forwardRef, Input} from '@angular/core';
+import {ControlValueAccessor, FormArray, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators} from '@angular/forms';
+import {ResourceLwM2M} from '@home/components/profile/device/lwm2m/profile-config.models';
+import {Store} from '@ngrx/store';
+import {AppState} from '@core/core.state';
 import _ from 'lodash';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import {coerceBooleanProperty} from '@angular/cdk/coercion';
 
 @Component({
   selector: 'tb-profile-lwm2m-observe-attr-telemetry-resource',
@@ -95,7 +95,7 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
     } else {
       this.resourceFormArray.clear();
       resourcesLwM2M.forEach(resourceLwM2M => {
-        this.resourceFormArray.push(this.fb.group({
+        this.resourceFormArray.push(this.fb.group( {
           id: resourceLwM2M.id,
           name: resourceLwM2M.name,
           observe: resourceLwM2M.observe,
@@ -123,5 +123,11 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
 
   trackByParams = (index: number): number => {
     return index;
+  }
+
+  updateObserve = (index: number):  void =>{
+    if (this.resourceFormArray.at(index).value.attribute === false && this.resourceFormArray.at(index).value.telemetry === false) {
+      this.resourceFormArray.at(index).patchValue({observe: false});
+    }
   }
 }

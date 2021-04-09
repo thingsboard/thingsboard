@@ -919,11 +919,11 @@
         "lwm2m-key-required": "LwM2M Security config key is required.",
         "lwm2m-value": "LwM2M Security config",
         "lwm2m-value-required": "LwM2M Security config value is required.",
-        "lwm2m-value-json-error": "LwM2M Security config value is not json format.",
+        "lwm2m-value-format-error": "Security config value must be in LwM2M Security config format.",
         "lwm2m-endpoint": "Client endpoint/identity",
         "lwm2m-security-info": "Security Config Info",
         "lwm2m-value-edit": "Edit Security config",
-        "lwm2m-value-edit-tip": "Edit security config json editor",
+        "lwm2m-credentials-value-tip": "Edit security config json editor",
         "lwm2m-security-config": {
           "identity": "Client Identity",
           "client-key": "Client Key",
@@ -1150,8 +1150,15 @@
         "schedule-time-from": "From",
         "schedule-time-to": "To",
         "schedule-days-of-week-required": "At least one day of week should be selected.",
+        "create-device-profile": "Create new device profile",
+        "import": "Import device profile",
+        "export": "Export device profile",
+        "export-failed-error": "Unable to export device profile: {{error}}",
+        "device-profile-file": "Device profile file",
+        "invalid-device-profile-file-error": "Unable to import device profile: Invalid device profile data structure.",
         "lwm2m": {
-            "client-only-observe-after-connect": "{ count, plural, 1 {Strategy 1: Only Observe Request to the client after the initial connection} other {Strategy 2: Read All Resources & Observe Request to the client after registration} }",
+            "client-only-observe-after-connect-label": "Strategy",
+            "client-only-observe-after-connect": "{ count, plural, 1 {1: Only Observe Request to the client after the initial connection} other {2: Read All Resources & Observe Request to the client after registration} }",
             "client-only-observe-after-connect-tip": "{ count, plural, 1 {Strategy 1: After the initial connection of the LWM2M Client, the server sends Observe resources Request to the client, those resources that are marked as observation in the Device profile and which exist on the LWM2M client.} other {Strategy  2: After the registration, request the client to read all the resource values for all objects that the LWM2M client has,\n then execute:  the server sends Observe resources Request to the client, those resources that are marked as observation in the Device profile and which exist on the LWM2M client.} }",
             "object-list": "Object list",
             "object-list-empty": "No objects selected.",
@@ -1199,13 +1206,7 @@
             "bootstrap-server-account-timeout": "Account after the timeout",
             "bootstrap-server-account-timeout-tip": "Bootstrap-Server Account after the timeout value given by this resource.",
             "config-json-tab": "Json Config Profile Device"
-        },
-        "create-device-profile": "Create new device profile",
-        "import": "Import device profile",
-        "export": "Export device profile",
-        "export-failed-error": "Unable to export device profile: {{error}}",
-        "device-profile-file": "Device profile file",
-        "invalid-device-profile-file-error": "Unable to import device profile: Invalid device profile data structure."
+        }
     },
     "dialog": {
         "close": "Close dialog"
@@ -2147,6 +2148,31 @@
         "additional-info": "Additional info (JSON)",
         "invalid-additional-info": "Unable to parse additional info json.",
         "no-relations-text": "No relations found"
+    },
+    "resource": {
+        "add": "Add Resource",
+        "delete": "Delete resource",
+        "delete-resource-text": "Be careful, after the confirmation the resource will become unrecoverable.",
+        "delete-resource-title": "Are you sure you want to delete the resource '{{resourceTitle}}'?",
+        "delete-resources-action-title": "Delete { count, plural, 1 {1 resource} other {# resources} }",
+        "delete-resources-text": "Be careful, after the confirmation all selected resources will be removed.",
+        "delete-resources-title": "Are you sure you want to delete { count, plural, 1 {1 resource} other {# resources} }?",
+        "drop-file": "Drop a resource file or click to select a file to upload.",
+        "empty": "Resource is empty",
+        "export": "Export resource",
+        "management": "Resource management",
+        "no-resource-matching": "No resource matching '{{widgetsBundle}}' were found.",
+        "no-resource-text": "No resources found",
+        "open-widgets-bundle": "Open widgets bundle",
+        "resource": "Resource",
+        "resource-library-details": "Resource library details",
+        "resource-type": "Resource type",
+        "resources-library": "Resources library",
+        "search": "Search resources",
+        "selected-resources": "{ count, plural, 1 {1 resource} other {# resources} } selected",
+        "system": "System",
+        "title": "Title",
+        "title-required": "Title is required."
     },
     "rulechain": {
         "rulechain": "Rule chain",

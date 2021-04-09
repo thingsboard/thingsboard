@@ -18,15 +18,21 @@ package org.thingsboard.server.common.data.device.profile;
 import lombok.Data;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.KeyFilterPredicate;
+import org.thingsboard.server.common.data.validation.NoXss;
+
+import javax.validation.Valid;
 
 import java.io.Serializable;
 
 @Data
 public class AlarmConditionFilter implements Serializable {
 
+    @Valid
     private AlarmConditionFilterKey key;
     private EntityKeyValueType valueType;
+    @NoXss
     private Object value;
+    @Valid
     private KeyFilterPredicate predicate;
 
 }

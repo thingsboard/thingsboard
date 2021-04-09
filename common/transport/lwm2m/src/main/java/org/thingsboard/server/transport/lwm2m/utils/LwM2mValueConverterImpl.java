@@ -145,6 +145,8 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                         }
                         DateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
                         return formatter.format(new Date(timeValue));
+                    case OPAQUE:
+                        return Hex.encodeHexString((byte[])value);
                     default:
                         break;
                 }
@@ -155,7 +157,7 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                     log.debug("Trying to convert hexadecimal string [{}] to byte array", value);
                     // TODO check if we shouldn't instead assume that the string contains Base64 encoded data
                     try {
-                        return Hex.decodeHex(((String) value).toCharArray());
+                        return Hex.decodeHex(((String)value).toCharArray());
                     } catch (IllegalArgumentException e) {
                         throw new CodecException("Unable to convert hexastring [%s] to byte array for resource %s", value,
                                 resourcePath);

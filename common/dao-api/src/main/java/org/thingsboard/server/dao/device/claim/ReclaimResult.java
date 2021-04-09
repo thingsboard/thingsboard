@@ -13,29 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.dao.device.claim;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.thingsboard.server.common.data.id.TenantId;
-
-import java.io.Serializable;
+import org.thingsboard.server.common.data.Customer;
 
 @Data
-public class Resource implements HasTenantId, Serializable {
-
-    private static final long serialVersionUID = 7379609705527272306L;
-
-    private TenantId tenantId;
-    private ResourceType resourceType;
-    private String resourceId;
-    private String value;
-
-    @Override
-    public String toString() {
-        return "Resource{" +
-                "tenantId=" + tenantId +
-                ", resourceType=" + resourceType +
-                ", resourceId='" + resourceId + '\'' +
-                '}';
-    }
+@AllArgsConstructor
+public class ReclaimResult {
+    Customer unassignedCustomer;
 }

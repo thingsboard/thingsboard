@@ -464,8 +464,10 @@ public class ModelConstants {
     public static final String RESOURCE_TABLE_NAME = "resource";
     public static final String RESOURCE_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
     public static final String RESOURCE_TYPE_COLUMN = "resource_type";
-    public static final String RESOURCE_ID_COLUMN = "resource_id";
-    public static final String RESOURCE_VALUE_COLUMN = "resource_value";
+    public static final String RESOURCE_KEY_COLUMN = "resource_key";
+    public static final String RESOURCE_TITLE_COLUMN = TITLE_PROPERTY;
+    public static final String RESOURCE_FILE_NAME_COLUMN = "file_name";
+    public static final String RESOURCE_DATA_COLUMN = "data";
 
     /**
      * Edge constants.

@@ -13,27 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.mqtt.util;
+package org.thingsboard.server.dao.service.sql;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.Base64Utils;
-import org.thingsboard.server.common.msg.EncryptionUtil;
+import org.thingsboard.server.dao.service.BaseTbResourceServiceTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
-import java.io.IOException;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateEncodingException;
-
-/**
- * @author Valerii Sosliuk
- */
-@Slf4j
-public class SslUtil {
-
-    private SslUtil() {
-    }
-
-    public static String getCertificateString(Certificate cert)
-            throws CertificateEncodingException {
-        return EncryptionUtil.trimNewLines(Base64Utils.encodeToString(cert.getEncoded()));
-    }
+@DaoSqlTest
+public class TbResourceServiceSqlTest extends BaseTbResourceServiceTest {
 }

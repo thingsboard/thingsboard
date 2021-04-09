@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -35,6 +36,7 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
     private static final long serialVersionUID = -5656679015121935465L;
 
     private TenantId tenantId;
+    @NoXss
     private String name;
     private RuleChainType type;
     private RuleNodeId firstRuleNodeId;

@@ -22,6 +22,7 @@ import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.californium.core.network.config.NetworkConfig;
+import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mNode;
@@ -32,6 +33,7 @@ import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.node.codec.CodecException;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.californium.LeshanServerBuilder;
+import org.eclipse.leshan.server.registration.Registration;
 import org.nustaq.serialization.FSTConfiguration;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
@@ -47,13 +49,11 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.Optional;
 
-@Slf4j
-//@Component("LwM2MTransportHandler")
-//@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' )|| ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
-public class LwM2mTransportHandler {
+import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
+import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 
-    // We choose a default timeout a bit higher to the MAX_TRANSMIT_WAIT(62-93s) which is the time from starting to
-    // send a Confirmable message to the time when an acknowledgement is no longer expected.
+@Slf4j
+public class LwM2mTransportHandler {
 
     public static final String BASE_DEVICE_API_TOPIC = "v1/devices/me";
     public static final String ATTRIBUTE = "attribute";
@@ -84,6 +84,8 @@ public class LwM2mTransportHandler {
     public static final String LOG_LW2M_ERROR = "error";
     public static final String LOG_LW2M_WARN = "warn";
 
+    public static final int LWM2M_STRATEGY_1 = 1;
+    public static final int LWM2M_STRATEGY_2 = 2;
 
     public static final String CLIENT_NOT_AUTHORIZED = "Client not authorized";
 
@@ -109,39 +111,6 @@ public class LwM2mTransportHandler {
     public static final String EVENT_AWAKE = "AWAKE";
     public static final String SERVICE_CHANNEL = "SERVICE";
     public static final String RESPONSE_CHANNEL = "RESP";
-
-//    @Autowired
-//    @Qualifier("LeshanServerCert")
-//    private LeshanServer lhServerCert;
-//
-//    @Autowired
-//    @Qualifier("LeshanServerNoSecPskRpk")
-//    private LeshanServer lhServerNoSecPskRpk;
-
-//    @Autowired
-//    @Qualifier("ServerListenerCert")
-//    private LwM2mServerListener serverListenerCert;
-//
-//    @Autowired
-//    @Qualifier("ServerListenerNoSecPskRpk")
-//    private LwM2mServerListener serverListenerNoSecPskRpk;
-
-
-//    @PostConstruct
-//    public void init() {
-//        try {
-//            serverListenerCert.init(lhServerCert);
-//            this.lhServerCert.getRegistrationService().addListener(serverListenerCert.registrationListener);
-//            this.lhServerCert.getPresenceService().addListener(serverListenerCert.presenceListener);
-//            this.lhServerCert.getObservationService().addListener(serverListenerCert.observationListener);
-//            serverListenerNoSecPskRpk.init(lhServerNoSecPskRpk);
-//            this.lhServerNoSecPskRpk.getRegistrationService().addListener(serverListenerNoSecPskRpk.registrationListener);
-//            this.lhServerNoSecPskRpk.getPresenceService().addListener(serverListenerNoSecPskRpk.presenceListener);
-//            this.lhServerNoSecPskRpk.getObservationService().addListener(serverListenerNoSecPskRpk.observationListener);
-//        } catch (Exception e) {
-//            log.error("init [{}]", e.toString());
-//        }
-//    }
 
     public static NetworkConfig getCoapConfig(Integer serverPortNoSec, Integer serverSecurePort) {
         NetworkConfig coapConfig;
@@ -202,10 +171,10 @@ public class LwM2mTransportHandler {
 
     /**
      * @return deviceProfileBody with Observe&Attribute&Telemetry From Thingsboard
-     * Example: 
+     * Example:
      * property: {"clientLwM2mSettings": {
-     *      clientUpdateValueAfterConnect: false;
-     *       }
+     * clientUpdateValueAfterConnect: false;
+     * }
      * property: "observeAttr"
      * {"keyName": {
      * "/3/0/1": "modelNumber",
@@ -222,7 +191,7 @@ public class LwM2mTransportHandler {
             try {
                 ObjectMapper mapper = new ObjectMapper();
                 String profileStr = mapper.writeValueAsString(profile);
-                JsonObject profileJson = (profileStr  != null) ? validateJson(profileStr) : null;
+                JsonObject profileJson = (profileStr != null) ? validateJson(profileStr) : null;
                 return (getValidateCredentialsBodyFromThingsboard(profileJson)) ? LwM2mTransportHandler.getNewProfileParameters(profileJson, deviceProfile.getTenantId()) : null;
             } catch (IOException e) {
                 log.error("", e);
@@ -246,9 +215,9 @@ public class LwM2mTransportHandler {
         return null;
     }
 
-    public static boolean getClientOnlyObserveAfterConnect (LwM2mClientProfile profile) {
-        return profile.getPostClientLwM2mSettings().getAsJsonObject().has("clientOnlyObserveAfterConnect") &&
-                profile.getPostClientLwM2mSettings().getAsJsonObject().get("clientOnlyObserveAfterConnect").getAsBoolean();
+    public static int getClientOnlyObserveAfterConnect(LwM2mClientProfile profile) {
+        return profile.getPostClientLwM2mSettings().getAsJsonObject().has("clientOnlyObserveAfterConnect") ?
+                profile.getPostClientLwM2mSettings().getAsJsonObject().get("clientOnlyObserveAfterConnect").getAsInt() : 1;
     }
 
     private static boolean getValidateCredentialsBodyFromThingsboard(JsonObject objectMsg) {
@@ -345,5 +314,50 @@ public class LwM2mTransportHandler {
                 log.trace("[{}] Failed to publish msg", e.toString());
             }
         };
+    }
+
+    public static String convertToObjectIdFromIdVer(String key) {
+        try {
+            String[] keyArray = key.split(LWM2M_SEPARATOR_PATH);
+            if (keyArray.length > 1 && keyArray[1].split(LWM2M_SEPARATOR_KEY).length == 2) {
+                keyArray[1] = keyArray[1].split(LWM2M_SEPARATOR_KEY)[0];
+                return StringUtils.join(keyArray, LWM2M_SEPARATOR_PATH);
+            } else {
+                return key;
+            }
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static String convertToIdVerFromObjectId(String path, Registration registration) {
+        String ver = registration.getSupportedObject().get(new LwM2mPath(path).getObjectId());
+        try {
+            String[] keyArray = path.split(LWM2M_SEPARATOR_PATH);
+            if (keyArray.length > 1) {
+                keyArray[1] = keyArray[1] + LWM2M_SEPARATOR_KEY + ver;
+                return StringUtils.join(keyArray, LWM2M_SEPARATOR_PATH);
+            } else {
+                return path;
+            }
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static Integer validateObjectIdFromKey(String key) {
+        try {
+            return Integer.parseInt(key.split(LWM2M_SEPARATOR_PATH)[1].split(LWM2M_SEPARATOR_KEY)[0]);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static String validateObjectVerFromKey(String key) {
+        try {
+            return (key.split(LWM2M_SEPARATOR_PATH)[1].split(LWM2M_SEPARATOR_KEY)[1]);
+        } catch (Exception e) {
+            return ObjectModel.DEFAULT_VERSION;
+        }
     }
 }

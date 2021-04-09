@@ -16,62 +16,76 @@
 package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.Resource;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.model.ToData;
+import org.thingsboard.server.dao.model.BaseSqlEntity;
+import org.thingsboard.server.dao.model.SearchTextEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.IdClass;
 import javax.persistence.Table;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_ID_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_KEY_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TENANT_ID_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TITLE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TYPE_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_VALUE_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = RESOURCE_TABLE_NAME)
-@IdClass(ResourceCompositeKey.class)
-public class ResourceEntity implements ToData<Resource> {
+public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implements SearchTextEntity<TbResourceInfo> {
 
-    @Id
     @Column(name = RESOURCE_TENANT_ID_COLUMN, columnDefinition = "uuid")
     private UUID tenantId;
 
-    @Id
+    @Column(name = RESOURCE_TITLE_COLUMN)
+    private String title;
+
     @Column(name = RESOURCE_TYPE_COLUMN)
     private String resourceType;
 
-    @Id
-    @Column(name = RESOURCE_ID_COLUMN)
-    private String resourceId;
+    @Column(name = RESOURCE_KEY_COLUMN)
+    private String resourceKey;
 
-    @Column(name = RESOURCE_VALUE_COLUMN)
-    private String value;
+    @Column(name = SEARCH_TEXT_PROPERTY)
+    private String searchText;
 
-    public ResourceEntity() {
+    public TbResourceInfoEntity() {
     }
 
-    public ResourceEntity(Resource resource) {
+    public TbResourceInfoEntity(TbResourceInfo resource) {
+        if (resource.getId() != null) {
+            this.id = resource.getId().getId();
+        }
+        this.createdTime = resource.getCreatedTime();
         this.tenantId = resource.getTenantId().getId();
+        this.title = resource.getTitle();
         this.resourceType = resource.getResourceType().name();
-        this.resourceId = resource.getResourceId();
-        this.value = resource.getValue();
+        this.resourceKey = resource.getResourceKey();
+        this.searchText = resource.getSearchText();
     }
 
     @Override
-    public Resource toData() {
-        Resource resource = new Resource();
+    public TbResourceInfo toData() {
+        TbResourceInfo resource = new TbResourceInfo(new TbResourceId(id));
+        resource.setCreatedTime(createdTime);
         resource.setTenantId(new TenantId(tenantId));
+        resource.setTitle(title);
         resource.setResourceType(ResourceType.valueOf(resourceType));
-        resource.setResourceId(resourceId);
-        resource.setValue(value);
+        resource.setResourceKey(resourceKey);
+        resource.setSearchText(searchText);
         return resource;
+    }
+
+    @Override
+    public String getSearchTextSource() {
+        return title;
     }
 }

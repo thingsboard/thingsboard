@@ -15,26 +15,27 @@
  */
 package org.thingsboard.server.dao.resource;
 
-import org.thingsboard.server.common.data.Resource;
 import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
 
-public interface ResourceDao {
+public interface TbResourceDao extends Dao<TbResource> {
 
-    Resource saveResource(Resource resource);
+    TbResource getResource(TenantId tenantId, ResourceType resourceType, String resourceId);
 
-    Resource getResource(TenantId tenantId, ResourceType resourceType, String resourceId);
+    PageData<TbResource> findAllByTenantId(TenantId tenantId, PageLink pageLink);
 
-    void deleteResource(TenantId tenantId, ResourceType resourceType, String resourceId);
+    PageData<TbResource> findResourcesByTenantIdAndResourceType(TenantId tenantId,
+                                                                ResourceType resourceType,
+                                                                PageLink pageLink);
 
-    PageData<Resource> findAllByTenantId(TenantId tenantId, PageLink pageLink);
-
-
-    List<Resource> findAllByTenantIdResourceType(TenantId tenantId, ResourceType resourceType);
-
-    void removeAllByTenantId(TenantId tenantId);
+    List<TbResource> findResourcesByTenantIdAndResourceType(TenantId tenantId,
+                                                            ResourceType resourceType,
+                                                            String[] objectIds,
+                                                            String searchText);
 }

@@ -15,13 +15,15 @@
  */
 package org.thingsboard.server.common.transport;
 
-import org.thingsboard.server.common.data.Resource;
 import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.TenantId;
+
+import java.util.Optional;
 
 public interface TransportResourceCache {
 
-    Resource get(TenantId tenantId, ResourceType resourceType, String resourceId);
+    Optional<TbResource> get(TenantId tenantId, ResourceType resourceType, String resourceId);
 
     void update(TenantId tenantId, ResourceType resourceType, String resourceI);
 

@@ -22,6 +22,7 @@ import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
+import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 
@@ -30,8 +31,10 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.thingsboard.server.common.data.ResourceType.LWM2M_MODEL;
+import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
 
 @Slf4j
 public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
@@ -49,12 +52,9 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
         this.lwM2mClientContext = lwM2mClientContext;
         this.lwM2mTransportContextServer = lwM2mTransportContextServer;
     }
-    private String getIdVer(ObjectModel objectModel) {
-        return objectModel.id + "##" + ((objectModel.getVersion() == null || objectModel.getVersion().isEmpty()) ? ObjectModel.DEFAULT_VERSION : objectModel.getVersion());
-    }
 
-    private String getIdVer(Integer objectId, String version) {
-        return objectId != null ? objectId + "##" + ((version == null || version.isEmpty()) ? ObjectModel.DEFAULT_VERSION : version) : null;
+     private String getKeyIdVer(Integer objectId, String version) {
+        return objectId != null ? objectId + LWM2M_SEPARATOR_KEY + ((version == null || version.isEmpty()) ? ObjectModel.DEFAULT_VERSION : version) : null;
     }
 
     /**
@@ -65,8 +65,7 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
      */
     @Override
     public LwM2mModel getObjectModel(Registration registration) {
-        return new DynamicModel(registration
-        );
+        return new DynamicModel(registration);
     }
 
     private class DynamicModel implements LwM2mModel {
@@ -86,6 +85,7 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
                 if (objectModel != null)
                     return objectModel.resources.get(resourceId);
                 else
+                    log.warn("TbResources (Object model) with id [{}/0/{}] not found on the server", objectId, resourceId);
                     return null;
             } catch (Exception e) {
                 log.error("", e);
@@ -105,12 +105,11 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
         @Override
         public Collection<ObjectModel> getObjectModels() {
             Map<Integer, String> supportedObjects = this.registration.getSupportedObject();
-            Collection<ObjectModel> result = new ArrayList(supportedObjects.size());
-            Iterator i$ = supportedObjects.entrySet().iterator();
-
+            Collection<ObjectModel> result = new ArrayList<>(supportedObjects.size());
+            Iterator<Map.Entry<Integer, String>> i$ = supportedObjects.entrySet().iterator();
             while (i$.hasNext()) {
-                Map.Entry<Integer, String> supportedObject = (Map.Entry) i$.next();
-                ObjectModel objectModel = this.getObjectModelDynamic((Integer) supportedObject.getKey(), (String) supportedObject.getValue());
+                Map.Entry<Integer, String> supportedObject = i$.next();
+                ObjectModel objectModel = this.getObjectModelDynamic(supportedObject.getKey(), supportedObject.getValue());
                 if (objectModel != null) {
                     result.add(objectModel);
                 }
@@ -119,18 +118,16 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
         }
 
         private ObjectModel getObjectModelDynamic(Integer objectId, String version) {
-            String key = getIdVer(objectId, version);
-            String xmlB64 = lwM2mTransportContextServer.getTransportResourceCache().get(
-                    this.tenantId,
-                    LWM2M_MODEL,
-                    key).
-                    getValue();
-            return xmlB64 != null && !xmlB64.isEmpty() ?
-                    lwM2mTransportContextServer.parseFromXmlToObjectModel(
-                            Base64.getDecoder().decode(xmlB64),
-                            key + ".xml",
-                            new DefaultDDFFileValidator()) :
-                    null;
+            String key = getKeyIdVer(objectId, version);
+
+            Optional<TbResource> tbResource = lwM2mTransportContextServer
+                    .getTransportResourceCache()
+                    .get(this.tenantId, LWM2M_MODEL, key);
+
+            return tbResource.map(resource -> lwM2mTransportContextServer.parseFromXmlToObjectModel(
+                    Base64.getDecoder().decode(resource.getData()),
+                    key + ".xml",
+                    new DefaultDDFFileValidator())).orElse(null);
         }
     }
 }
