@@ -16,11 +16,13 @@
 package org.thingsboard.server.common.data.device.profile;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
 public class AlarmConditionFilterKey {
 
     private final AlarmConditionKeyType type;
+    @NoXss
     private final String key;
 
 }

@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile;
+package org.thingsboard.server.transport.coap;
 
 import lombok.Data;
-
-import javax.validation.Valid;
-import java.util.List;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.gen.transport.TransportProtos;
 
 @Data
-public class DeviceProfileData {
+public class TbCoapDtlsSessionInfo {
 
-    private DeviceProfileConfiguration configuration;
-    private DeviceProfileTransportConfiguration transportConfiguration;
-    private DeviceProfileProvisionConfiguration provisionConfiguration;
-    @Valid
-    private List<DeviceProfileAlarm> alarms;
+    private TransportProtos.SessionInfoProto sessionInfoProto;
+    private DeviceProfile deviceProfile;
+    private long lastActivityTime;
 
+
+    public TbCoapDtlsSessionInfo(TransportProtos.SessionInfoProto sessionInfoProto, DeviceProfile deviceProfile) {
+        this.sessionInfoProto = sessionInfoProto;
+        this.deviceProfile = deviceProfile;
+        this.lastActivityTime = System.currentTimeMillis();
+    }
 }

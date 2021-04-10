@@ -586,6 +586,24 @@ transport:
     bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${COAP_BIND_PORT:5683}"
     timeout: "${COAP_TIMEOUT:10000}"
+    dtls:
+      # Enable/disable DTLS 1.2 support
+      enabled: "${COAP_DTLS_ENABLED:false}"
+      # Secure mode. Allowed values: NO_AUTH, X509
+      mode: "${COAP_DTLS_SECURE_MODE:NO_AUTH}"
+      # Path to the key store that holds the certificate
+      key_store: "${COAP_DTLS_KEY_STORE:coapserver.jks}"
+      # Password used to access the key store
+      key_store_password: "${COAP_DTLS_KEY_STORE_PASSWORD:server_ks_password}"
+      # Password used to access the key
+      key_password: "${COAP_DTLS_KEY_PASSWORD:server_key_password}"
+      # Key alias
+      key_alias: "${COAP_DTLS_KEY_ALIAS:serveralias}"
+      # Skip certificate validity check for client certificates.
+      skip_validity_check_for_client_cert: "${COAP_DTLS_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
+      x509:
+        dtls_session_inactivity_timeout: "${TB_COAP_X509_DTLS_SESSION_INACTIVITY_TIMEOUT:86400000}"
+        dtls_session_report_timeout: "${TB_COAP_X509_DTLS_SESSION_REPORT_TIMEOUT:1800000}"
   # Local LwM2M transport parameters
   lwm2m:
     # Enable/disable lvm2m transport protocol.
