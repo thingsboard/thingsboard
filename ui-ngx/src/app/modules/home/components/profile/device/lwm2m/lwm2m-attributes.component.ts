@@ -28,6 +28,7 @@ import {
 } from "@home/components/profile/device/lwm2m/lwm2m-attributes-dialog.component";
 import {MatDialog} from "@angular/material/dialog";
 import {TranslateService} from "@ngx-translate/core";
+import {ATTRIBUTE_LWM2M_LABEL} from "@home/components/profile/device/lwm2m/lwm2m-profile-config.models";
 
 
 @Component({
@@ -42,7 +43,8 @@ import {TranslateService} from "@ngx-translate/core";
 })
 export class Lwm2mAttributesComponent implements ControlValueAccessor {
   attributeLwm2mFormGroup: FormGroup;
-  disabled = false;
+  attributeLwm2mLabel = ATTRIBUTE_LWM2M_LABEL;
+  // disabled   = false;
 
   private requiredValue: boolean;
   private dirty = false;
@@ -51,7 +53,13 @@ export class Lwm2mAttributesComponent implements ControlValueAccessor {
   attributeLwm2m: {};
 
   @Input()
+  isAttributeTelemetry: boolean;
+
+  @Input()
   destName: string;
+
+  @Input()
+  disabled: boolean;
 
   @Output()
   updateAttributeLwm2m = new EventEmitter<any>();
@@ -95,17 +103,37 @@ export class Lwm2mAttributesComponent implements ControlValueAccessor {
 
   writeValue(value: {} | null): void {}
 
-
-  attributeLwm2mToString = (attributeLwm2m: {}): string => {
-    return this.isIconEditAdd (attributeLwm2m) ? JSON.stringify(attributeLwm2m) :this.translate.instant('device-profile.lwm2m.no-data');
+  attributeLwm2mToString = (): string => {
+    return this.isIconEditAdd () ? this.attributeLwm2mLabelToString() : this.translate.instant('device-profile.lwm2m.no-data');
   }
 
-  isDisableBtn (attributeLwm2m: {}): boolean {
-    return this.disabled ? !(isDefinedAndNotNull(attributeLwm2m) && !isEmpty(attributeLwm2m) && this.disabled) :  this.disabled;
+  private attributeLwm2mLabelToString = (): string => {
+    let label = JSON.stringify(this.attributeLwm2m);
+    label = deepClone(label.replace('{', ''));
+    label = deepClone(label.replace('}', ''));
+    this.attributeLwm2mLabel.forEach((value: string, key: string) => {
+      const dest = '\"' + key + '\"\:';
+      label = deepClone(label.replace(dest, value));
+    });
+    return label;
   }
 
-  isIconEditAdd (attributeLwm2m: {}): boolean {
-    return isDefinedAndNotNull(attributeLwm2m) && !isEmpty(attributeLwm2m);
+  isDisableBtn (): boolean {
+    return this.disabled || this.isAttributeTelemetry ? !(isDefinedAndNotNull(this.attributeLwm2m) && !isEmpty(this.attributeLwm2m) && this.disabled) :  this.disabled;
+  }
+
+  isIconView (): boolean {
+    return this.isAttributeTelemetry || this.disabled;
+  }
+
+  isIconEditAdd (): boolean {
+    return isDefinedAndNotNull(this.attributeLwm2m) && !isEmpty(this.attributeLwm2m);
+  }
+
+  isToolTipLabel (): string {
+    return this.disabled ? this.translate.instant('device-profile.lwm2m.attribute-lwm2m-tip') :
+      this.isAttributeTelemetry ? this.translate.instant('device-profile.lwm2m.attribute-lwm2m-disable-tip') :
+        this.translate.instant('device-profile.lwm2m.attribute-lwm2m-tip');
   }
 
   public editAttributesLwm2m = ($event: Event): void => {

@@ -138,6 +138,11 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
   updateObserve = (index: number):  void =>{
     if (this.resourceFormArray.at(index).value.attribute === false && this.resourceFormArray.at(index).value.telemetry === false) {
       this.resourceFormArray.at(index).patchValue({observe: false});
+      this.resourceFormArray.at(index).patchValue({attributeLwm2m: {}});
     }
+  }
+
+  disableObserve = (index: number):  boolean =>{
+    return !this.resourceFormArray.at(index).value.telemetry && !this.resourceFormArray.at(index).value.attribute;
   }
 }

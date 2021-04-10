@@ -17,16 +17,16 @@
 -->
 <div fxLayout="row" [formGroup]="attributeLwm2mFormGroup">
   <div fxFlex fxLayout="column" class="resource-name-lw-end" fxLayoutAlign="center"
-       matTooltip="{{'device-profile.lwm2m.attribute-lwm2m-tip' | translate}}" matTooltipPosition="above">
-    {{attributeLwm2mToString(attributeLwm2mFormGroup.get('attributeLwm2m').value)}}
+       [matTooltip]="isToolTipLabel()" matTooltipPosition="above">
+    {{attributeLwm2mToString()}}
   </div>
   <button type="button"
-          disabled="{{isDisableBtn (attributeLwm2mFormGroup.get('attributeLwm2m').value)}}"
+          [disabled]="isDisableBtn()"
           mat-button mat-icon-button
           (click)="editAttributesLwm2m($event)"
-          matTooltip="{{ (disabled ? 'action.view' : attributeLwm2mFormGroup.get('attributeLwm2m').value  ? 'action.edit' : 'action.add' ) | translate }}"
+          [matTooltip]="(isIconView() ? 'action.view' : isIconEditAdd()  ? 'action.edit' : 'action.add' ) | translate"
           matTooltipPosition="above">
     <mat-icon
-      class="material-icons">{{disabled ? 'visibility' : isIconEditAdd(attributeLwm2mFormGroup.get('attributeLwm2m').value) ? 'edit' : 'add' }}</mat-icon>
+      class="material-icons">{{isIconView() ? 'visibility' : isIconEditAdd() ? 'edit' : 'add' }}</mat-icon>
   </button>
 </div>

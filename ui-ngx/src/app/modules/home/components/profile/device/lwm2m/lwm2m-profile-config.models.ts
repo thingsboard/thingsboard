@@ -42,32 +42,55 @@ export const KEY_REGEXP_NUMBER = /^(\-?|\+?)\d*$/;
 export const INSTANCES_ID_VALUE_MIN = 0;
 export const INSTANCES_ID_VALUE_MAX = 65535;
 
-export enum ATTRIBUTE_LWM2M_ENUM {
-  dim = 'Dimension',
-  ver = 'Object version',
-  pmin = 'Minimum period',
-  pmax = 'Maximum period',
-  gt = 'Greater than',
-  lt = 'Lesser than',
-  st = 'Step'
+export enum ATTRIBUTE_LWM2M {
+  dim = 'dim',
+  ver = 'ver',
+  pmin = 'pmin',
+  pmax = 'pmax',
+  gt = 'gt',
+  lt = 'lt',
+  st = 'st'
 }
 
-export interface ATTRIBUTE_LWM2M {
-  key: string;
-  value: string;
-}
+export const ATTRIBUTE_LWM2M_LABEL = new Map<ATTRIBUTE_LWM2M, string>(
+  [
+    [ATTRIBUTE_LWM2M.dim, 'dim='],
+    [ATTRIBUTE_LWM2M.ver, 'ver='],
+    [ATTRIBUTE_LWM2M.pmin, 'pmin='],
+    [ATTRIBUTE_LWM2M.pmax, 'pmax='],
+    [ATTRIBUTE_LWM2M.gt, '>'],
+    [ATTRIBUTE_LWM2M.lt, '<'],
+    [ATTRIBUTE_LWM2M.st, 'st='],
 
-function getAttributeLwm2m(key: string, value: string): ATTRIBUTE_LWM2M {
-  return {
-    key: key,
-    value: value
-  };
-}
+  ]
+);
 
-export const ATTRIBUTE_LWM2M_MAP = Object.entries(ATTRIBUTE_LWM2M_ENUM).
-          map(keyValue => (getAttributeLwm2m(keyValue[0], keyValue[1])));
+// export interface ATTRIBUTE_LWM2M {
+//   key: string;
+//   value: string;
+// }
+//
+// function getAttributeLwm2m(key: string, value: string): ATTRIBUTE_LWM2M {
+//   return {
+//     key: key,
+//     value: value
+//   };
+// }
 
-export const ATTRIBUTE_KEYS = Object.keys(ATTRIBUTE_LWM2M_ENUM) as string[];
+export const ATTRIBUTE_LWM2M_MAP = new Map<ATTRIBUTE_LWM2M, string>(
+  [
+    [ATTRIBUTE_LWM2M.dim, 'Dimension'],
+    [ATTRIBUTE_LWM2M.ver, 'Object version'],
+    [ATTRIBUTE_LWM2M.pmin, 'Minimum period'],
+    [ATTRIBUTE_LWM2M.pmax, 'Maximum period'],
+    [ATTRIBUTE_LWM2M.gt, 'Greater than'],
+    [ATTRIBUTE_LWM2M.lt, 'Lesser than'],
+    [ATTRIBUTE_LWM2M.st, 'Step'],
+
+  ]
+);
+
+export const ATTRIBUTE_KEYS = Object.keys(ATTRIBUTE_LWM2M) as string[];
 
 export enum SECURITY_CONFIG_MODE {
   PSK = 'PSK',
@@ -205,7 +228,7 @@ export interface ResourceLwM2M {
   observe: boolean;
   attribute: boolean;
   telemetry: boolean;
-  keyName: string;
+  keyName: {};
   attributeLwm2m?: {};
 }
 

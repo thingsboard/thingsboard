@@ -20,7 +20,7 @@
        *ngFor="let resourceLwM2M of resourceFormArray.controls; let i = index; trackBy: trackByParams">
     <div class="vertical-padding" fxLayout="column" fxFill [formGroupName]="i">
       <div fxLayout="row" fxFill fxLayoutAlign="start center" [fxShow]="!i">
-        <div fxFlex="25">
+        <div fxFlex="20">
             <mat-label translate>device-profile.lwm2m.resource-label</mat-label>
         </div>
         <div fxFlex="10">
@@ -32,10 +32,10 @@
         <div fxFlex="10">
           <mat-label translate>device-profile.lwm2m.observe-label</mat-label>
         </div>
-        <div fxFlex="25">
+        <div fxFlex>
             <mat-label translate>device-profile.lwm2m.key-name-label</mat-label>
         </div>
-        <div fxFlex  fxFlexOffset="1">
+        <div fxFlex="17" fxFlexOffset="0">
           <mat-label translate>device-profile.lwm2m.attribute-lwm2m-label</mat-label>
         </div>
       </div>
@@ -60,7 +60,8 @@
         </div>
         <div fxFlex="10" fxLayoutAlign="center center">
           <mat-checkbox formControlName="observe" color="primary"
-                        matTooltip="{{'device-profile.lwm2m.is-observe-tip' | translate}}"
+                        [disabled]="disableObserve(i)"
+                        matTooltip="{{(disableObserve(i) ? 'device-profile.lwm2m.not-observe-tip' : 'device-profile.lwm2m.is-observe-tip') | translate}}"
                         matTooltipPosition="above">
           </mat-checkbox>
         </div>
@@ -80,7 +81,9 @@
           <tb-profile-lwm2m-attributes
             formControlName="attributeLwm2m"
             [attributeLwm2m]="resourceLwM2M.get('attributeLwm2m').value"
+            [isAttributeTelemetry]="disableObserve(i)"
             [destName]="getNameResourceLwm2m(resourceLwM2M.value)"
+            [disabled]="this.disabled"
             (updateAttributeLwm2m)="updateAttributeLwm2m($event, i)">
           </tb-profile-lwm2m-attributes>
         </div>

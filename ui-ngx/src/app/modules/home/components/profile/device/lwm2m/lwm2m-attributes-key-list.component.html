@@ -31,9 +31,9 @@
       <mat-form-field class="mat-block"  style="max-heights: 400px">
         <mat-label></mat-label>
         <mat-select [formControl]="keyValControl.get('key')">
-          <mat-option *ngFor="let attributeLwm2m of attributeLwm2mMap"
-                      [value]="attributeLwm2m.key">
-            {{ attributeLwm2m.value }}
+          <mat-option *ngFor="let attributeLwm2m of attrKeys"
+                      [value]="attributeLwm2m">
+            {{ attributeLwm2mMap.get(attrKey[attributeLwm2m]) }}
           </mat-option>
         </mat-select>
       </mat-form-field>

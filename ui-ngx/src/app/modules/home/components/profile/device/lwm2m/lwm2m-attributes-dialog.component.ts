@@ -23,7 +23,6 @@ import {Router} from "@angular/router";
 import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
 import {FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm} from "@angular/forms";
 import {TranslateService} from "@ngx-translate/core";
-import {isDefinedAndNotNull} from "@core/utils";
 import {JsonObject} from "@angular/compiler-cli/ngcc/src/packages/entry_point";
 
 export interface Lwm2mAttributesDialogData {
@@ -64,7 +63,6 @@ export class Lwm2mAttributesDialogComponent extends DialogComponent<Lwm2mAttribu
     });
     this.attributeLwm2mDialogFormGroup.patchValue({keyFilters: this.attributeLwm2m});
     this.attributeLwm2mDialogFormGroup.get('keyFilters').valueChanges.subscribe((attributes) => {
-      debugger
       this.attributeLwm2m = attributes;
     });
     if (this.readonly) {
@@ -88,9 +86,5 @@ export class Lwm2mAttributesDialogComponent extends DialogComponent<Lwm2mAttribu
 
   cancel(): void {
     this.dialogRef.close(null);
-  }
-
-  attributeLwm2mToString = (keyFilters: {}): string => {
-    return isDefinedAndNotNull(keyFilters) ? JSON.stringify(keyFilters) : "---";
   }
 }

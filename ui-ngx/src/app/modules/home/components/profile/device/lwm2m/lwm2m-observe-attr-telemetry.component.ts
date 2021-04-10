@@ -82,7 +82,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
     });
     this.observeAttrTelemetryFormGroup.valueChanges.subscribe(value => {
       if (isUndefined(this.disabled) || !this.disabled) {
-        // debugger
         this.propagateChangeState(value);
       }
     });
@@ -104,7 +103,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
       } else if (JSON.stringify(value) !== JSON.stringify(this.valuePrev)) {
         this.valuePrev = value;
         if (this.observeAttrTelemetryFormGroup.valid) {
-          debugger
           this.propagateChange(value);
         } else {
           this.propagateChange(null);
@@ -145,6 +143,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
         name: objectLwM2M.name,
         multiple: objectLwM2M.multiple,
         mandatory: objectLwM2M.mandatory,
+        attributeLwm2m: objectLwM2M.attributeLwm2m,
         instances: this.createInstanceLwM2M(objectLwM2M.instances)
       });
     }));
@@ -154,6 +153,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
     return this.fb.array(instancesLwM2M.map((instanceLwM2M) => {
       return this.fb.group({
         id: instanceLwM2M.id,
+        attributeLwm2m: {value: instanceLwM2M.attributeLwm2m, disabled: this.disabled},
         resources: {value: instanceLwM2M.resources, disabled: this.disabled}
       });
     }));
@@ -242,6 +242,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
   }
 
   private updateInstancesIds = (data: Lwm2mObjectAddInstancesData): void => {
+    debugger
     const objectLwM2MFormGroup = (this.observeAttrTelemetryFormGroup.get(CLIENT_LWM2M) as FormArray).controls
       .find(e => e.value.keyId === data.objectKeyId) as FormGroup;
     const instancesArray = objectLwM2MFormGroup.value.instances as Instance [];
@@ -251,6 +252,8 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
       r.attribute = false;
       r.telemetry = false;
       r.observe = false;
+      r.keyName = {};
+      r.attributeLwm2m = {};
     });
     const valueOld = this.instancesToSetId(instancesArray);
     if (!isEqual(valueOld, data.instancesIds)) {
@@ -288,6 +291,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
   private pushInstance = (instancesFormArray: FormArray, x: number, instanceNew: Instance): void => {
     instancesFormArray.push(this.fb.group({
       id: x,
+      attributeLwm2m: instanceNew.attributeLwm2m,
       resources: {value: instanceNew.resources, disabled: this.disabled}
     }));
   }
@@ -298,5 +302,25 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
 
   private instancesToSetId = (instances: Instance[]): Set<number> => {
     return new Set(instances.map(x => x.id));
+  }
+
+  getNameObjectLwm2m = (objectName: string, idVerObj: string): string => {
+    return  objectName + ' <' + idVerObj + '>';
+  }
+  getNameInstanceLwm2m = (instance: Instance, idVerObj: string): string => {
+    return  ' instance <' + idVerObj + '/' + instance.id +'>';
+  }
+
+  updateAttributeLwm2mObject = (event: Event, objectKeyId: number): void => {
+    const objectLwM2MFormGroup = (this.observeAttrTelemetryFormGroup.get(CLIENT_LWM2M) as FormArray).controls
+      .find(e => e.value.keyId === objectKeyId) as FormGroup;
+    objectLwM2MFormGroup.patchValue({attributeLwm2m: event});
+  }
+
+  updateAttributeLwm2mInstance = (event: Event, indexInstance: number, objectKeyId: number): void => {
+    const objectLwM2MFormGroup = (this.observeAttrTelemetryFormGroup.get(CLIENT_LWM2M) as FormArray).controls
+      .find(e => e.value.keyId === objectKeyId) as FormGroup;
+    const instancesFormArray = objectLwM2MFormGroup.get(INSTANCES) as FormArray;
+    instancesFormArray.at(indexInstance).patchValue({attributeLwm2m: event});
   }
 }

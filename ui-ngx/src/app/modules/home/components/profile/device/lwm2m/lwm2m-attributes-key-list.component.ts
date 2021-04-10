@@ -31,7 +31,11 @@ import {Subscription} from "rxjs";
 import {PageComponent} from "@shared/components/page.component";
 import {Store} from "@ngrx/store";
 import {AppState} from "@core/core.state";
-import {ATTRIBUTE_KEYS, ATTRIBUTE_LWM2M_MAP} from "@home/components/profile/device/lwm2m/lwm2m-profile-config.models";
+import {
+  ATTRIBUTE_KEYS,
+  ATTRIBUTE_LWM2M,
+  ATTRIBUTE_LWM2M_MAP
+} from "@home/components/profile/device/lwm2m/lwm2m-profile-config.models";
 import {isDefinedAndNotNull, isEmpty, isEmptyStr, isUndefinedOrNull} from "@core/utils";
 
 
@@ -55,6 +59,8 @@ import {isDefinedAndNotNull, isEmpty, isEmptyStr, isUndefinedOrNull} from "@core
 export class Lwm2mAttributesKeyListComponent extends PageComponent implements ControlValueAccessor, OnInit, Validator {
 
   attrKeys = ATTRIBUTE_KEYS;
+
+  attrKey = ATTRIBUTE_LWM2M;
 
   attributeLwm2mMap = ATTRIBUTE_LWM2M_MAP;
 
@@ -143,7 +149,6 @@ export class Lwm2mAttributesKeyListComponent extends PageComponent implements Co
   public validate(c?: FormControl) {
     const kvList: { key: string; value: string }[] = this.kvListFormGroup.get('keyVals').value;
     let valid = true;
-    debugger
     for (const entry of kvList) {
       if (isUndefinedOrNull(entry.key) || isEmptyStr(entry.key) || !ATTRIBUTE_KEYS.includes(entry.key)) {
         valid = false;
@@ -181,7 +186,6 @@ export class Lwm2mAttributesKeyListComponent extends PageComponent implements Co
       const kvList: { key: string; value: string }[] = this.kvListFormGroup.get('keyVals').value;
       const keyValMap: { [key: string]: string | number } = {};
       kvList.forEach((entry) => {
-        debugger
         if (isUndefinedOrNull(entry.value) || entry.key === 'ver' || isEmptyStr(entry.value.toString())) {
           keyValMap[entry.key] = entry.value.toString();
         } else {
