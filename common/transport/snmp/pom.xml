@@ -58,5 +58,11 @@
             <groupId>org.snmp4j</groupId>
             <artifactId>snmp4j</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.snmp4j</groupId>
+            <artifactId>snmp4j-agent</artifactId>
+            <version>3.3.6</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

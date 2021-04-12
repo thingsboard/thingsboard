@@ -189,6 +189,11 @@ transport:
   # Local LwM2M transport parameters
   snmp:
     enabled: "${SNMP_ENABLED:true}"
+    response_processing:
+      # parallelism level for executor (workStealingPool) that is responsible for handling responses from SNMP devices
+      parallelism_level: "${SNMP_RESPONSE_PROCESSING_PARALLELISM_LEVEL:20}"
+    # to configure SNMP to work over UDP or TCP
+    underlying_protocol: "${SNMP_UNDERLYING_PROTOCOL:udp}"
 
 queue:
   type: "${TB_QUEUE_TYPE:in-memory}" # in-memory or kafka (Apache Kafka) or aws-sqs (AWS SQS) or pubsub (PubSub) or service-bus (Azure Service Bus) or rabbitmq (RabbitMQ)

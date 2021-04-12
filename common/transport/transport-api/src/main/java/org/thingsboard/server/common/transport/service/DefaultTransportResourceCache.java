@@ -19,8 +19,8 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.TransportResourceCache;
 import org.thingsboard.server.common.transport.TransportService;
@@ -53,7 +53,7 @@ public class DefaultTransportResourceCache implements TransportResourceCache {
     }
 
     @Override
-    public TbResource get(TenantId tenantId, ResourceType resourceType, String resourceKey) {
+    public Optional<TbResource> get(TenantId tenantId, ResourceType resourceType, String resourceKey) {
         ResourceCompositeKey compositeKey = new ResourceCompositeKey(tenantId, resourceType, resourceKey);
         TbResource resource;
 
@@ -79,7 +79,7 @@ public class DefaultTransportResourceCache implements TransportResourceCache {
             }
         }
 
-        return resource;
+        return Optional.ofNullable(resource);
     }
 
     private TbResource fetchResource(ResourceCompositeKey compositeKey) {

@@ -648,6 +648,11 @@ transport:
     redis.enabled: "${LWM2M_REDIS_ENABLED:false}"
   snmp:
     enabled: "${SNMP_ENABLED:true}"
+    response_processing:
+      # parallelism level for executor (workStealingPool) that is responsible for handling responses from SNMP devices
+      parallelism_level: "${SNMP_RESPONSE_PROCESSING_PARALLELISM_LEVEL:20}"
+    # to configure SNMP to work over UDP or TCP
+    underlying_protocol: "${SNMP_UNDERLYING_PROTOCOL:udp}"
 
 swagger:
   api_path_regex: "${SWAGGER_API_PATH_REGEX:/api.*}"

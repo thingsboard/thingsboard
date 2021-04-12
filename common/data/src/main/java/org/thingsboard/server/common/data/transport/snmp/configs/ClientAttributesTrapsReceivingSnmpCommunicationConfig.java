@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport;
+package org.thingsboard.server.common.data.transport.snmp.configs;
 
-import org.thingsboard.server.common.data.ResourceType;
-import org.thingsboard.server.common.data.TbResource;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.transport.snmp.SnmpCommunicationSpec;
 
-import java.util.Optional;
-
-public interface TransportResourceCache {
-
-    Optional<TbResource> get(TenantId tenantId, ResourceType resourceType, String resourceId);
-
-    void update(TenantId tenantId, ResourceType resourceType, String resourceI);
-
-    void evict(TenantId tenantId, ResourceType resourceType, String resourceId);
+public class ClientAttributesTrapsReceivingSnmpCommunicationConfig extends SnmpCommunicationConfig {
+    @Override
+    public SnmpCommunicationSpec getSpec() {
+        return SnmpCommunicationSpec.CLIENT_ATTRIBUTES_TRAPS_RECEIVING;
+    }
 }

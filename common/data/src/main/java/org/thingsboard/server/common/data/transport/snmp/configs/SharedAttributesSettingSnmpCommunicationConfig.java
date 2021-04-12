@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.transport.snmp;
+package org.thingsboard.server.common.data.transport.snmp.configs;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Data;
-import org.apache.commons.lang3.StringUtils;
-import org.thingsboard.server.common.data.kv.DataType;
+import org.thingsboard.server.common.data.transport.snmp.SnmpCommunicationSpec;
+import org.thingsboard.server.common.data.transport.snmp.SnmpMethod;
 
-import java.util.regex.Pattern;
+public class SharedAttributesSettingSnmpCommunicationConfig extends SnmpCommunicationConfig {
+    @Override
+    public SnmpCommunicationSpec getSpec() {
+        return SnmpCommunicationSpec.SHARED_ATTRIBUTES_SETTING;
+    }
 
-@Data
-public class SnmpMapping {
-    private String oid;
-    private String key;
-    private DataType dataType;
+    @Override
+    public SnmpMethod getMethod() {
+        return SnmpMethod.SET;
+    }
 
-    private static final Pattern OID_PATTERN = Pattern.compile("^\\.?([0-2])((\\.0)|(\\.[1-9][0-9]*))*$");
-
-    @JsonIgnore
+    @Override
     public boolean isValid() {
-        return StringUtils.isNotEmpty(oid) && OID_PATTERN.matcher(oid).matches() &&
-                StringUtils.isNotBlank(key) && dataType != null;
+        return true;
     }
 }

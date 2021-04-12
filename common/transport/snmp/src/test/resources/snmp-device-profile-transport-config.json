@@ -1,0 +1,53 @@
+{
+  "timeoutMs": 500,
+  "retries": 0,
+  "communicationConfigs": [
+    {
+      "spec": "TELEMETRY_QUERYING",
+      "queryingFrequencyMs": 3000,
+      "mappings": [
+        {
+          "oid": ".1.3.6.1.2.1.1.1.50",
+          "key": "temperature",
+          "dataType": "LONG"
+        },
+        {
+          "oid": ".1.3.6.1.2.1.2.1.52",
+          "key": "humidity",
+          "dataType": "DOUBLE"
+        }
+      ]
+    },
+    {
+      "spec": "CLIENT_ATTRIBUTES_QUERYING",
+      "queryingFrequencyMs": 5000,
+      "mappings": [
+        {
+          "oid": ".1.3.6.1.2.1.3.1.54",
+          "key": "isCool",
+          "dataType": "STRING"
+        }
+      ]
+    },
+    {
+      "spec": "SHARED_ATTRIBUTES_SETTING",
+      "mappings": [
+        {
+          "oid": ".1.3.6.1.2.1.7.1.58",
+          "key": "shared",
+          "dataType": "STRING"
+        }
+      ]
+    },
+    {
+      "spec": "TELEMETRY_TRAPS_RECEIVING",
+      "mappings": [
+        {
+          "oid": ".1.3.6.1.2.8.7.1.56",
+          "key": "temperature_trap",
+          "dataType": "LONG"
+        }
+      ]
+    }
+  ]
+}

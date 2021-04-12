@@ -13,27 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device;
+package org.thingsboard.server.common.data.transport.snmp.configs;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.thingsboard.server.common.data.transport.snmp.SnmpCommunicationSpec;
 
-import java.util.HashMap;
-import java.util.Map;
-
-public abstract class JsonBasedTransportConfiguration {
-
-    @JsonIgnore
-    private final Map<String, Object> properties = new HashMap<>();
-
-    @JsonAnyGetter
-    public Map<String, Object> properties() {
-        return this.properties;
-    }
-
-    @JsonAnySetter
-    public void put(String name, Object value) {
-        this.properties.put(name, value);
+public class ClientAttributesQueryingSnmpCommunicationConfig extends RepeatingQueryingSnmpCommunicationConfig {
+    @Override
+    public SnmpCommunicationSpec getSpec() {
+        return SnmpCommunicationSpec.CLIENT_ATTRIBUTES_QUERYING;
     }
 }
