@@ -443,7 +443,7 @@ class AlarmRuleState {
     }
 
     private <T> T getPredicateValue(DataSnapshot data, FilterPredicateValue<T> value, AlarmConditionFilter filter, Function<EntityKeyValue, T> transformFunction) {
-        EntityKeyValue ekv = getDynamicPredicateValue(data, value);
+        EntityKeyValue ekv = getDynamicPredicateValue(data, value.getDynamicValue());
         if (ekv != null) {
             T result = transformFunction.apply(ekv);
             if (result != null) {
