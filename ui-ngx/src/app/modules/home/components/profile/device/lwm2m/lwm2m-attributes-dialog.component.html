@@ -18,7 +18,8 @@
 <form [formGroup]="attributeLwm2mDialogFormGroup" (ngSubmit)="save()" style="width: 500px;">
   <mat-toolbar color="primary">
     <div fxFlex fxLayout="column" fxLayoutAlign="start">
-      <h2>{{ (readonly ? 'device-profile.lwm2m.attribute-lwm2m-toolbar-view' : 'device-profile.lwm2m.attribute-lwm2m-toolbar-edit') | translate }}</h2>
+      <h2>{{ (readonly ? 'device-profile.lwm2m.attribute-lwm2m-toolbar-view' :
+        'device-profile.lwm2m.attribute-lwm2m-toolbar-edit') | translate }}</h2>
     </div>
     <span fxFlex></span>
     <button mat-icon-button

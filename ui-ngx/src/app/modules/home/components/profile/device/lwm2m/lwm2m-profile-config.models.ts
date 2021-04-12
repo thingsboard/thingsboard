@@ -16,7 +16,9 @@
 
 export const PAGE_SIZE_LIMIT = 50;
 export const INSTANCES = 'instances';
+export const INSTANCE = 'instance';
 export const RESOURCES = 'resources';
+export const ATTRIBUTE_LWM2M = 'attributeLwm2m';
 export const CLIENT_LWM2M = 'clientLwM2M';
 export const CLIENT_LWM2M_SETTINGS = 'clientLwM2mSettings';
 export const OBSERVE_ATTR_TELEMETRY = 'observeAttrTelemetry';
@@ -42,7 +44,7 @@ export const KEY_REGEXP_NUMBER = /^(\-?|\+?)\d*$/;
 export const INSTANCES_ID_VALUE_MIN = 0;
 export const INSTANCES_ID_VALUE_MAX = 65535;
 
-export enum ATTRIBUTE_LWM2M {
+export enum ATTRIBUTE_LWM2M_ENUM {
   dim = 'dim',
   ver = 'ver',
   pmin = 'pmin',
@@ -52,45 +54,33 @@ export enum ATTRIBUTE_LWM2M {
   st = 'st'
 }
 
-export const ATTRIBUTE_LWM2M_LABEL = new Map<ATTRIBUTE_LWM2M, string>(
+export const ATTRIBUTE_LWM2M_LABEL = new Map<ATTRIBUTE_LWM2M_ENUM, string>(
   [
-    [ATTRIBUTE_LWM2M.dim, 'dim='],
-    [ATTRIBUTE_LWM2M.ver, 'ver='],
-    [ATTRIBUTE_LWM2M.pmin, 'pmin='],
-    [ATTRIBUTE_LWM2M.pmax, 'pmax='],
-    [ATTRIBUTE_LWM2M.gt, '>'],
-    [ATTRIBUTE_LWM2M.lt, '<'],
-    [ATTRIBUTE_LWM2M.st, 'st='],
+    [ATTRIBUTE_LWM2M_ENUM.dim, 'dim='],
+    [ATTRIBUTE_LWM2M_ENUM.ver, 'ver='],
+    [ATTRIBUTE_LWM2M_ENUM.pmin, 'pmin='],
+    [ATTRIBUTE_LWM2M_ENUM.pmax, 'pmax='],
+    [ATTRIBUTE_LWM2M_ENUM.gt, '>'],
+    [ATTRIBUTE_LWM2M_ENUM.lt, '<'],
+    [ATTRIBUTE_LWM2M_ENUM.st, 'st='],
 
   ]
 );
 
-// export interface ATTRIBUTE_LWM2M {
-//   key: string;
-//   value: string;
-// }
-//
-// function getAttributeLwm2m(key: string, value: string): ATTRIBUTE_LWM2M {
-//   return {
-//     key: key,
-//     value: value
-//   };
-// }
-
-export const ATTRIBUTE_LWM2M_MAP = new Map<ATTRIBUTE_LWM2M, string>(
+export const ATTRIBUTE_LWM2M_MAP = new Map<ATTRIBUTE_LWM2M_ENUM, string>(
   [
-    [ATTRIBUTE_LWM2M.dim, 'Dimension'],
-    [ATTRIBUTE_LWM2M.ver, 'Object version'],
-    [ATTRIBUTE_LWM2M.pmin, 'Minimum period'],
-    [ATTRIBUTE_LWM2M.pmax, 'Maximum period'],
-    [ATTRIBUTE_LWM2M.gt, 'Greater than'],
-    [ATTRIBUTE_LWM2M.lt, 'Lesser than'],
-    [ATTRIBUTE_LWM2M.st, 'Step'],
+    [ATTRIBUTE_LWM2M_ENUM.dim, 'Dimension'],
+    [ATTRIBUTE_LWM2M_ENUM.ver, 'Object version'],
+    [ATTRIBUTE_LWM2M_ENUM.pmin, 'Minimum period'],
+    [ATTRIBUTE_LWM2M_ENUM.pmax, 'Maximum period'],
+    [ATTRIBUTE_LWM2M_ENUM.gt, 'Greater than'],
+    [ATTRIBUTE_LWM2M_ENUM.lt, 'Lesser than'],
+    [ATTRIBUTE_LWM2M_ENUM.st, 'Step'],
 
   ]
 );
 
-export const ATTRIBUTE_KEYS = Object.keys(ATTRIBUTE_LWM2M) as string[];
+export const ATTRIBUTE_KEYS = Object.keys(ATTRIBUTE_LWM2M_ENUM) as string[];
 
 export enum SECURITY_CONFIG_MODE {
   PSK = 'PSK',

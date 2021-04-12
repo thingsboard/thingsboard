@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import {Component, forwardRef,} from '@angular/core';
+import {Component, forwardRef} from '@angular/core';
 import {ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators} from '@angular/forms';
 import {Store} from '@ngrx/store';
 import {AppState} from '@core/core.state';

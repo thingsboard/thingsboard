@@ -27,6 +27,7 @@
             <tb-profile-lwm2m-attributes
               formControlName="attributeLwm2m"
               [attributeLwm2m]="objectLwM2M.get('attributeLwm2m').value"
+              [isAttributeTelemetry]="disableObserveObject(i)"
               [destName]="getNameObjectLwm2m( objectLwM2M.get('name').value, objectLwM2M.get('keyId').value)"
               [disabled]="this.disabled"
               (updateAttributeLwm2m)="updateAttributeLwm2mObject($event, objectLwM2M.get('keyId').value)">
@@ -99,6 +100,7 @@
                       <tb-profile-lwm2m-attributes
                         formControlName="attributeLwm2m"
                         [attributeLwm2m]="instances.get('attributeLwm2m').value"
+                        [isAttributeTelemetry]="disableObserveInstance(instances)"
                         [destName]="getNameInstanceLwm2m(instances.value, objectLwM2M.get('keyId').value)"
                         [disabled]="this.disabled"
                         (updateAttributeLwm2m)="updateAttributeLwm2mInstance($event, y, objectLwM2M.get('keyId').value)">

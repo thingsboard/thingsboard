@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//:host {
-.tb-kv-map {
-  span.no-data-found {
-    position: relative;
-    display: flex;
-    height: 40px;
+:host {
+  .tb-kv-map {
+    span.no-data-found {
+      position: relative;
+      display: flex;
+      height: 40px;
 
-    &.disabled {
-      color: rgba(0, 0, 0, .38);
+      &.disabled {
+        color: rgba(0, 0, 0, .38);
+      }
     }
   }
 }
-//}
 
 :host ::ng-deep {
   .mat-form-field-wrapper {

@@ -14,7 +14,6 @@
 /// limitations under the License.
 ///
 
-
 import {Component, forwardRef, Input} from '@angular/core';
 import {
   AbstractControl,
@@ -28,7 +27,17 @@ import {
 import {Store} from '@ngrx/store';
 import {AppState} from '@core/core.state';
 import {coerceBooleanProperty} from '@angular/cdk/coercion';
-import {CLIENT_LWM2M, Instance, INSTANCES, ObjectLwM2M, ResourceLwM2M, RESOURCES} from './lwm2m-profile-config.models';
+import {
+  ATTRIBUTE,
+  ATTRIBUTE_LWM2M,
+  CLIENT_LWM2M,
+  Instance,
+  INSTANCES,
+  ObjectLwM2M,
+  ResourceLwM2M,
+  RESOURCES,
+  TELEMETRY
+} from './lwm2m-profile-config.models';
 import {deepClone, isDefinedAndNotNull, isEqual, isUndefined} from '@core/utils';
 import {MatDialog} from '@angular/material/dialog';
 import {TranslateService} from '@ngx-translate/core';
@@ -56,6 +65,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
 
   valuePrev = null as any;
   observeAttrTelemetryFormGroup: FormGroup;
+  resources = RESOURCES;
 
   get required(): boolean {
     return this.requiredValue;
@@ -318,9 +328,39 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
   }
 
   updateAttributeLwm2mInstance = (event: Event, indexInstance: number, objectKeyId: number): void => {
+
     const objectLwM2MFormGroup = (this.observeAttrTelemetryFormGroup.get(CLIENT_LWM2M) as FormArray).controls
       .find(e => e.value.keyId === objectKeyId) as FormGroup;
     const instancesFormArray = objectLwM2MFormGroup.get(INSTANCES) as FormArray;
     instancesFormArray.at(indexInstance).patchValue({attributeLwm2m: event});
+  }
+
+  disableObserveInstance = (instance: AbstractControl): boolean => {
+    const checkedAttrTelemetry = this.observeInstance(instance);
+    if (checkedAttrTelemetry) {
+      instance.get(ATTRIBUTE_LWM2M).patchValue(null);
+    }
+    return checkedAttrTelemetry;
+  }
+
+  disableObserveObject = (index: number): boolean => {
+    const object = (this.observeAttrTelemetryFormGroup.get(CLIENT_LWM2M) as FormArray).at(index) as FormGroup;
+    const instances = object.controls.instances as FormArray;
+    const checkedAttrTelemetry = instances.controls.filter(instance => !this.disableObserveInstance(instance));
+    if (checkedAttrTelemetry.length === 0) {
+      object.controls.attributeLwm2m.patchValue(null);
+    }
+    return checkedAttrTelemetry.length === 0;
+  }
+
+
+  observeInstance = (instance: AbstractControl): boolean => {
+    const resources = instance.get(RESOURCES).value as ResourceLwM2M[];
+    if (isDefinedAndNotNull(resources)) {
+      const checkedAttribute = resources.filter(resource => resource[ATTRIBUTE]);
+      const checkedTelemetry = resources.filter(resource => resource[TELEMETRY]);
+      return checkedAttribute.length === 0 && checkedTelemetry.length === 0;
+    }
+    return false;
   }
 }

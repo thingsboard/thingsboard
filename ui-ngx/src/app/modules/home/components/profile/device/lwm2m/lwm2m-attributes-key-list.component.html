@@ -57,10 +57,12 @@
       {{ 'device-profile.lwm2m.key-name' | translate }}
       <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
     </mat-error>
-    <mat-error fxLayout="row" *ngIf="keyValControl.get('key').hasError('validAttributeKey')" style="font-size: smaller">
+    <mat-error fxLayout="row" *ngIf="keyValControl.get('key').hasError('validAttributeKey')"
+               style="font-size: smaller">
       {{ 'device-profile.lwm2m.valid-attribute-lwm2m-key' | translate: {attrEnums: attrKeys} }}
     </mat-error>
-    <mat-error fxLayout="row" *ngIf="keyValControl.get('value').hasError('validAttributeValue')" style="font-size: smaller">
+    <mat-error fxLayout="row" *ngIf="keyValControl.get('value').hasError('validAttributeValue')"
+               style="font-size: smaller">
       {{ 'device-profile.lwm2m.valid-attribute-lwm2m-value' | translate: {attrEnums: attrKeys} }}
     </mat-error>
   </div>

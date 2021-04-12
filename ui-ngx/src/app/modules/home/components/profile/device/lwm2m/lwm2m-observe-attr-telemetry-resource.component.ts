@@ -16,7 +16,7 @@
 
 import {Component, forwardRef, Input} from '@angular/core';
 import {ControlValueAccessor, FormArray, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators} from '@angular/forms';
-import {ResourceLwM2M} from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
+import {ResourceLwM2M, RESOURCES} from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
 import {Store} from '@ngrx/store';
 import {AppState} from '@core/core.state';
 import _ from 'lodash';
@@ -74,7 +74,7 @@ export class Lwm2mObserveAttrTelemetryResourceComponent implements ControlValueA
   }
 
   get resourceFormArray(): FormArray{
-    return this.resourceFormGroup.get('resources') as FormArray;
+    return this.resourceFormGroup.get(RESOURCES) as FormArray;
   }
 
   setDisabledState(isDisabled: boolean): void {

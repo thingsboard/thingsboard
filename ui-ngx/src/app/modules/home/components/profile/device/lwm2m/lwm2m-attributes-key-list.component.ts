@@ -33,7 +33,7 @@ import {Store} from "@ngrx/store";
 import {AppState} from "@core/core.state";
 import {
   ATTRIBUTE_KEYS,
-  ATTRIBUTE_LWM2M,
+  ATTRIBUTE_LWM2M_ENUM,
   ATTRIBUTE_LWM2M_MAP
 } from "@home/components/profile/device/lwm2m/lwm2m-profile-config.models";
 import {isDefinedAndNotNull, isEmpty, isEmptyStr, isUndefinedOrNull} from "@core/utils";
@@ -60,7 +60,7 @@ export class Lwm2mAttributesKeyListComponent extends PageComponent implements Co
 
   attrKeys = ATTRIBUTE_KEYS;
 
-  attrKey = ATTRIBUTE_LWM2M;
+  attrKey = ATTRIBUTE_LWM2M_ENUM;
 
   attributeLwm2mMap = ATTRIBUTE_LWM2M_MAP;
 

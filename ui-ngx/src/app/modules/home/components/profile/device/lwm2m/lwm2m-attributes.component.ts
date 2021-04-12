@@ -44,7 +44,6 @@ import {ATTRIBUTE_LWM2M_LABEL} from "@home/components/profile/device/lwm2m/lwm2m
 export class Lwm2mAttributesComponent implements ControlValueAccessor {
   attributeLwm2mFormGroup: FormGroup;
   attributeLwm2mLabel = ATTRIBUTE_LWM2M_LABEL;
-  // disabled   = false;
 
   private requiredValue: boolean;
   private dirty = false;
@@ -119,7 +118,8 @@ export class Lwm2mAttributesComponent implements ControlValueAccessor {
   }
 
   isDisableBtn (): boolean {
-    return this.disabled || this.isAttributeTelemetry ? !(isDefinedAndNotNull(this.attributeLwm2m) && !isEmpty(this.attributeLwm2m) && this.disabled) :  this.disabled;
+    return this.disabled || this.isAttributeTelemetry ? !(isDefinedAndNotNull(this.attributeLwm2m) &&
+      !isEmpty(this.attributeLwm2m) && this.disabled) :  this.disabled;
   }
 
   isIconView (): boolean {
