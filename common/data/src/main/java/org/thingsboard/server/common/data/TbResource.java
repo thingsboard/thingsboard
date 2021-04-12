@@ -19,6 +19,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TbResourceId;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 @Slf4j
 @Data
@@ -27,6 +28,7 @@ public class TbResource extends TbResourceInfo {
 
     private static final long serialVersionUID = 7379609705527272306L;
 
+    @NoXss
     private String fileName;
 
     private String data;

@@ -25,6 +25,7 @@ import java.util.List;
 public class DeviceProfileData implements Serializable {
 
     private DeviceProfileConfiguration configuration;
+    @Valid
     private DeviceProfileTransportConfiguration transportConfiguration;
     private DeviceProfileProvisionConfiguration provisionConfiguration;
     @Valid
