@@ -206,16 +206,16 @@ public class BaseFirmwareService implements FirmwareService {
                 throw new DataValidationException("Firmware content type should be specified!");
             }
 
-            if (StringUtils.isEmpty(firmware.getChecksum())) {
-                throw new DataValidationException("Firmware checksum should be specified!");
-            }
-
             ByteBuffer data = firmware.getData();
             if (data == null || !data.hasArray() || data.array().length == 0) {
                 throw new DataValidationException("Firmware data should be specified!");
             }
 
             if (firmware.getChecksumAlgorithm() != null) {
+                if (StringUtils.isEmpty(firmware.getChecksum())) {
+                    throw new DataValidationException("Firmware checksum should be specified!");
+                }
+
                 HashFunction hashFunction;
                 switch (firmware.getChecksumAlgorithm()) {
                     case "sha256":
@@ -232,7 +232,6 @@ public class BaseFirmwareService implements FirmwareService {
                 }
 
                 String currentChecksum = hashFunction.hashBytes(data.array()).toString();
-                ;
 
                 if (!currentChecksum.equals(firmware.getChecksum())) {
                     throw new DataValidationException("Wrong firmware file!");

@@ -112,11 +112,10 @@ public class FirmwareController extends BaseController {
     @RequestMapping(value = "/firmware/{firmwareId}", method = RequestMethod.POST)
     @ResponseBody
     public Firmware saveFirmwareData(@PathVariable(FIRMWARE_ID) String strFirmwareId,
-                                     @RequestParam String checksum,
+                                     @RequestParam(required = false) String checksum,
                                      @RequestParam(required = false) String checksumAlgorithm,
-                                     @RequestBody MultipartFile firmwareFile) throws ThingsboardException {
+                                     @RequestBody MultipartFile file) throws ThingsboardException {
         checkParameter(FIRMWARE_ID, strFirmwareId);
-        checkParameter("checksum", checksum);
         try {
             FirmwareId firmwareId = new FirmwareId(toUUID(strFirmwareId));
             FirmwareInfo info = checkFirmwareInfoId(firmwareId, Operation.READ);
@@ -130,9 +129,9 @@ public class FirmwareController extends BaseController {
 
             firmware.setChecksumAlgorithm(checksumAlgorithm);
             firmware.setChecksum(checksum);
-            firmware.setFileName(firmwareFile.getOriginalFilename());
-            firmware.setContentType(firmwareFile.getContentType());
-            firmware.setData(ByteBuffer.wrap(firmwareFile.getBytes()));
+            firmware.setFileName(file.getOriginalFilename());
+            firmware.setContentType(file.getContentType());
+            firmware.setData(ByteBuffer.wrap(file.getBytes()));
             return firmwareService.saveFirmware(firmware);
         } catch (Exception e) {
             throw handleException(e);

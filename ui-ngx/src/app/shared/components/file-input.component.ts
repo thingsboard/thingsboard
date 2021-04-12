@@ -105,6 +105,9 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
   @Input()
   readAsBinary = false;
 
+  @Input()
+  workFromFileObj = false;
+
   private multipleFileValue = false;
 
   @Input()
@@ -124,6 +127,7 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
 
   fileName: string | string[];
   fileContent: any;
+  files: File[];
 
   @ViewChild('flow', {static: true})
   flow: FlowDirective;
@@ -151,15 +155,17 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
           }
         });
         if (readers.length) {
-          Promise.all(readers).then((filesContent) => {
-            filesContent = filesContent.filter(content => content.fileContent != null);
-            if (filesContent.length === 1) {
-              this.fileContent = filesContent[0].fileContent;
-              this.fileName = filesContent[0].fileName;
+          Promise.all(readers).then((files) => {
+            files = files.filter(file => file.fileContent != null || file.files != null);
+            if (files.length === 1) {
+              this.fileContent = files[0].fileContent;
+              this.fileName = files[0].fileName;
+              this.files = files[0].files;
               this.updateModel();
-            } else if (filesContent.length > 1) {
-              this.fileContent = filesContent.map(content => content.fileContent);
-              this.fileName = filesContent.map(content => content.fileName);
+            } else if (files.length > 1) {
+              this.fileContent = files.map(content => content.fileContent);
+              this.fileName = files.map(content => content.fileName);
+              this.files = files.map(content => content.files);
               this.updateModel();
             }
           });
@@ -177,21 +183,27 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
       reader.onload = () => {
         let fileName = null;
         let fileContent = null;
+        let files = null;
         if (typeof reader.result === 'string') {
           fileContent = reader.result;
           if (fileContent && fileContent.length > 0) {
-            if (this.contentConvertFunction) {
-              fileContent = this.contentConvertFunction(fileContent);
-            }
-            if (fileContent) {
+            if (!this.workFromFileObj) {
+              if (this.contentConvertFunction) {
+                fileContent = this.contentConvertFunction(fileContent);
+              }
+              if (fileContent) {
+                fileName = file.name;
+              }
+            } else {
+              files = file.file;
               fileName = file.name;
             }
           }
         }
-        resolve({fileContent, fileName});
+        resolve({fileContent, fileName, files});
       };
       reader.onerror = () => {
-        resolve({fileContent: null, fileName: null});
+        resolve({fileContent: null, fileName: null, files: null});
       };
       if (this.readAsBinary) {
         reader.readAsBinaryString(file.file);
@@ -227,7 +239,11 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
   }
 
   writeValue(value: any): void {
-    this.fileName = this.existingFileName || null;
+    let fileName = null;
+    if (this.workFromFileObj && value instanceof File) {
+      fileName = Array.isArray(value) ? value.map(file => file.name) : value.name;
+    }
+    this.fileName = this.existingFileName || fileName;
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -242,13 +258,18 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
   }
 
   private updateModel() {
-    this.propagateChange(this.fileContent);
-    this.fileNameChanged.emit(this.fileName);
+    if (this.workFromFileObj) {
+      this.propagateChange(this.files);
+    } else {
+      this.propagateChange(this.fileContent);
+      this.fileNameChanged.emit(this.fileName);
+    }
   }
 
   clearFile() {
     this.fileName = null;
     this.fileContent = null;
+    this.files = null;
     this.updateModel();
   }
 
