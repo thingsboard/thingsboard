@@ -250,3 +250,4 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     });
   }
 }
+

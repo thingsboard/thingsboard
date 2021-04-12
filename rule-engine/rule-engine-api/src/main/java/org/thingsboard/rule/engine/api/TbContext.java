@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -42,6 +43,8 @@ import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeEventService;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
@@ -152,6 +155,8 @@ public interface TbContext {
     // TODO: Does this changes the message?
     TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, String action);
 
+    void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId);
+
     /*
      *
      *  METHODS TO PROCESS THE MESSAGES
@@ -197,6 +202,10 @@ public interface TbContext {
     EntityViewService getEntityViewService();
 
     RuleEngineDeviceProfileCache getDeviceProfileCache();
+
+    EdgeService getEdgeService();
+
+    EdgeEventService getEdgeEventService();
 
     ListeningExecutor getJsExecutor();
 

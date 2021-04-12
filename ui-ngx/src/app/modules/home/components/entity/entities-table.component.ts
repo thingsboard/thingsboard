@@ -56,9 +56,7 @@ import { DialogService } from '@core/services/dialog.service';
 import { AddEntityDialogComponent } from './add-entity-dialog.component';
 import { AddEntityDialogData, EntityAction } from '@home/models/entity/entity-component.models';
 import {
-  calculateIntervalEndTime,
-  calculateIntervalStartTime,
-  getCurrentTime,
+  calculateIntervalStartEndTime,
   HistoryWindowType,
   Timewindow
 } from '@shared/models/time/time.models';
@@ -303,9 +301,9 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
         timePageLink.startTime = currentTime - this.timewindow.history.timewindowMs;
         timePageLink.endTime = currentTime;
       } else if (this.timewindow.history.historyType === HistoryWindowType.INTERVAL) {
-        const currentDate = getCurrentTime();
-        timePageLink.startTime = calculateIntervalStartTime(this.timewindow.history.quickInterval, currentDate);
-        timePageLink.endTime = calculateIntervalEndTime(this.timewindow.history.quickInterval, currentDate);
+        const startEndTime = calculateIntervalStartEndTime(this.timewindow.history.quickInterval);
+        timePageLink.startTime = startEndTime[0];
+        timePageLink.endTime = startEndTime[1];
       } else {
         timePageLink.startTime = this.timewindow.history.fixedTimewindow.startTimeMs;
         timePageLink.endTime = this.timewindow.history.fixedTimewindow.endTimeMs;

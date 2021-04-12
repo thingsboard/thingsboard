@@ -106,8 +106,8 @@ public interface EntityViewDao extends Dao<EntityView> {
      * @return the list of entity view objects
      */
     PageData<EntityView> findEntityViewsByTenantIdAndCustomerId(UUID tenantId,
-                                                            UUID customerId,
-                                                            PageLink pageLink);
+                                                                UUID customerId,
+                                                                PageLink pageLink);
 
     /**
      * Find entity view infos by tenantId, customerId and page link.
@@ -129,9 +129,9 @@ public interface EntityViewDao extends Dao<EntityView> {
      * @return the list of entity view objects
      */
     PageData<EntityView> findEntityViewsByTenantIdAndCustomerIdAndType(UUID tenantId,
-                                                                   UUID customerId,
-                                                                   String type,
-                                                                   PageLink pageLink);
+                                                                       UUID customerId,
+                                                                       String type,
+                                                                       PageLink pageLink);
 
     /**
      * Find entity view infos by tenantId, customerId, type and page link.
@@ -152,5 +152,31 @@ public interface EntityViewDao extends Dao<EntityView> {
      * @return the list of tenant entity view type objects
      */
     ListenableFuture<List<EntitySubtype>> findTenantEntityViewTypesAsync(UUID tenantId);
+
+    /**
+     * Find entity views by tenantId, edgeId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param edgeId   the edgeId
+     * @param pageLink the page link
+     * @return the list of entity view objects
+     */
+    PageData<EntityView> findEntityViewsByTenantIdAndEdgeId(UUID tenantId,
+                                                            UUID edgeId,
+                                                            PageLink pageLink);
+
+    /**
+     * Find entity views by tenantId, edgeId, type and page link.
+     *
+     * @param tenantId the tenantId
+     * @param edgeId   the edgeId
+     * @param type the type
+     * @param pageLink the page link
+     * @return the list of entity view objects
+     */
+    PageData<EntityView> findEntityViewsByTenantIdAndEdgeIdAndType(UUID tenantId,
+                                                            UUID edgeId,
+                                                            String type,
+                                                            PageLink pageLink);
 
 }

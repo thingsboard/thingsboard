@@ -40,7 +40,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
-import org.thingsboard.server.common.data.query.AlarmDataPageLink;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -325,16 +324,6 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         Set<AlarmSeverity> alarmSeverities = alarmDao.findAlarmSeverities(tenantId, entityId, statusList);
 
         return alarmSeverities.stream().min(AlarmSeverity::compareTo).orElse(null);
-    }
-
-    private void deleteRelation(TenantId tenantId, EntityRelation alarmRelation) {
-        log.debug("Deleting Alarm relation: {}", alarmRelation);
-        relationService.deleteRelation(tenantId, alarmRelation);
-    }
-
-    private void createRelation(TenantId tenantId, EntityRelation alarmRelation) {
-        log.debug("Creating Alarm relation: {}", alarmRelation);
-        relationService.saveRelation(tenantId, alarmRelation);
     }
 
     private Alarm merge(Alarm existing, Alarm alarm) {
