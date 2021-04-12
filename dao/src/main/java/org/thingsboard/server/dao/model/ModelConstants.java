@@ -371,11 +371,13 @@ public class ModelConstants {
     public static final String RULE_CHAIN_COLUMN_FAMILY_NAME = "rule_chain";
     public static final String RULE_CHAIN_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String RULE_CHAIN_NAME_PROPERTY = "name";
+    public static final String RULE_CHAIN_TYPE_PROPERTY = "type";
     public static final String RULE_CHAIN_FIRST_RULE_NODE_ID_PROPERTY = "first_rule_node_id";
     public static final String RULE_CHAIN_ROOT_PROPERTY = "root";
     public static final String RULE_CHAIN_CONFIGURATION_PROPERTY = "configuration";
 
     public static final String RULE_CHAIN_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "rule_chain_by_tenant_and_search_text";
+    public static final String RULE_CHAIN_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "rule_chain_by_tenant_by_type_and_search_text";
 
     /**
      * Cassandra rule node constants.
@@ -466,6 +468,43 @@ public class ModelConstants {
     public static final String RESOURCE_TITLE_COLUMN = TITLE_PROPERTY;
     public static final String RESOURCE_FILE_NAME_COLUMN = "file_name";
     public static final String RESOURCE_DATA_COLUMN = "data";
+
+    /**
+     * Edge constants.
+     */
+    public static final String EDGE_COLUMN_FAMILY_NAME = "edge";
+    public static final String EDGE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String EDGE_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
+    public static final String EDGE_ROOT_RULE_CHAIN_ID_PROPERTY = "root_rule_chain_id";
+    public static final String EDGE_NAME_PROPERTY = "name";
+    public static final String EDGE_LABEL_PROPERTY = "label";
+    public static final String EDGE_TYPE_PROPERTY = "type";
+    public static final String EDGE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String EDGE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "edge_by_tenant_and_search_text";
+    public static final String EDGE_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "edge_by_tenant_by_type_and_search_text";
+    public static final String EDGE_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "edge_by_customer_and_search_text";
+    public static final String EDGE_BY_CUSTOMER_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "edge_by_customer_by_type_and_search_text";
+    public static final String EDGE_BY_TENANT_AND_NAME_VIEW_NAME = "edge_by_tenant_and_name";
+    public static final String EDGE_BY_ROUTING_KEY_VIEW_NAME = "edge_by_routing_key";
+
+    public static final String EDGE_ROUTING_KEY_PROPERTY = "routing_key";
+    public static final String EDGE_SECRET_PROPERTY = "secret";
+    public static final String EDGE_LICENSE_KEY_PROPERTY = "edge_license_key";
+    public static final String EDGE_CLOUD_ENDPOINT_KEY_PROPERTY = "cloud_endpoint";
+
+    /**
+     * Edge queue constants.
+     */
+    public static final String EDGE_EVENT_COLUMN_FAMILY_NAME = "edge_event";
+    public static final String EDGE_EVENT_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String EDGE_EVENT_EDGE_ID_PROPERTY = "edge_id";
+    public static final String EDGE_EVENT_TYPE_PROPERTY = "edge_event_type";
+    public static final String EDGE_EVENT_ACTION_PROPERTY = "edge_event_action";
+    public static final String EDGE_EVENT_UID_PROPERTY = "edge_event_uid";
+    public static final String EDGE_EVENT_ENTITY_ID_PROPERTY = "entity_id";
+    public static final String EDGE_EVENT_BODY_PROPERTY = "body";
+
+    public static final String EDGE_EVENT_BY_ID_VIEW_NAME = "edge_event_by_id";
 
     /**
      * Cassandra attributes and timeseries constants.

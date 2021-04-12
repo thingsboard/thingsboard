@@ -26,15 +26,19 @@ import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.customer.CustomerDao;
+import org.thingsboard.server.dao.edge.EdgeDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -42,8 +46,6 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
-
-import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -64,6 +66,9 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     @Autowired
     private CustomerDao customerDao;
+    
+    @Autowired
+    private EdgeDao edgeDao;
 
     @Autowired
     @Lazy
@@ -117,7 +122,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         if (dashboard.addAssignedCustomer(customer)) {
             try {
                 createRelation(tenantId, new EntityRelation(customerId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD));
-            } catch (ExecutionException | InterruptedException e) {
+            } catch (Exception e) {
                 log.warn("[{}] Failed to create dashboard relation. Customer Id: [{}]", dashboardId, customerId);
                 throw new RuntimeException(e);
             }
@@ -137,7 +142,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         if (dashboard.removeAssignedCustomer(customer)) {
             try {
                 deleteRelation(tenantId, new EntityRelation(customerId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD));
-            } catch (ExecutionException | InterruptedException e) {
+            } catch (Exception e) {
                 log.warn("[{}] Failed to delete dashboard relation. Customer Id: [{}]", dashboardId, customerId);
                 throw new RuntimeException(e);
             }
@@ -154,16 +159,6 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         } else {
             return dashboard;
         }
-    }
-
-    private void deleteRelation(TenantId tenantId, EntityRelation dashboardRelation) throws ExecutionException, InterruptedException {
-        log.debug("Deleting Dashboard relation: {}", dashboardRelation);
-        relationService.deleteRelationAsync(tenantId, dashboardRelation).get();
-    }
-
-    private void createRelation(TenantId tenantId, EntityRelation dashboardRelation) throws ExecutionException, InterruptedException {
-        log.debug("Creating Dashboard relation: {}", dashboardRelation);
-        relationService.saveRelationAsync(tenantId, dashboardRelation).get();
     }
 
     @Override
@@ -220,6 +215,50 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         new CustomerDashboardsUpdater(customer).removeEntities(tenantId, customer);
     }
 
+    @Override
+    public Dashboard assignDashboardToEdge(TenantId tenantId, DashboardId dashboardId, EdgeId edgeId) {
+        Dashboard dashboard = findDashboardById(tenantId, dashboardId);
+        Edge edge = edgeDao.findById(tenantId, edgeId.getId());
+        if (edge == null) {
+            throw new DataValidationException("Can't assign dashboard to non-existent edge!");
+        }
+        if (!edge.getTenantId().equals(dashboard.getTenantId())) {
+            throw new DataValidationException("Can't assign dashboard to edge from different tenant!");
+        }
+        try {
+            createRelation(tenantId, new EntityRelation(edgeId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+        } catch (Exception e) {
+            log.warn("[{}] Failed to create dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
+            throw new RuntimeException(e);
+        }
+        return dashboard;
+    }
+
+    @Override
+    public Dashboard unassignDashboardFromEdge(TenantId tenantId, DashboardId dashboardId, EdgeId edgeId) {
+        Dashboard dashboard = findDashboardById(tenantId, dashboardId);
+        Edge edge = edgeDao.findById(tenantId, edgeId.getId());
+        if (edge == null) {
+            throw new DataValidationException("Can't unassign dashboard from non-existent edge!");
+        }
+        try {
+            deleteRelation(tenantId, new EntityRelation(edgeId, dashboardId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+        } catch (Exception e) {
+            log.warn("[{}] Failed to delete dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
+            throw new RuntimeException(e);
+        }
+        return dashboard;
+    }
+
+    @Override
+    public PageData<DashboardInfo> findDashboardsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink) {
+        log.trace("Executing findDashboardsByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
+        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        Validator.validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
+        Validator.validatePageLink(pageLink);
+        return dashboardInfoDao.findDashboardsByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
+    }
+
     private DataValidator<Dashboard> dashboardValidator =
             new DataValidator<Dashboard>() {
                 @Override
@@ -259,9 +298,9 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             deleteDashboard(tenantId, new DashboardId(entity.getUuidId()));
         }
     };
-    
+
     private class CustomerDashboardsUnassigner extends PaginatedRemover<Customer, DashboardInfo> {
-        
+
         private Customer customer;
 
         CustomerDashboardsUnassigner(Customer customer) {

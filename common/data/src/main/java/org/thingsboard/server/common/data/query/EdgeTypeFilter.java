@@ -13,23 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.coap;
+package org.thingsboard.server.common.data.query;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.gen.transport.TransportProtos;
 
 @Data
-public class TbCoapDtlsSessionInfo {
+public class EdgeTypeFilter implements EntityFilter {
 
-    private TransportProtos.SessionInfoProto sessionInfoProto;
-    private DeviceProfile deviceProfile;
-    private long lastActivityTime;
-
-
-    public TbCoapDtlsSessionInfo(TransportProtos.SessionInfoProto sessionInfoProto, DeviceProfile deviceProfile) {
-        this.sessionInfoProto = sessionInfoProto;
-        this.deviceProfile = deviceProfile;
-        this.lastActivityTime = System.currentTimeMillis();
+    @Override
+    public EntityFilterType getType() {
+        return EntityFilterType.EDGE_TYPE;
     }
+
+    private String edgeType;
+
+    private String edgeNameFilter;
+
 }
