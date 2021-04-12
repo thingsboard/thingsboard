@@ -20,7 +20,7 @@
     <mat-tab label="{{ 'device-profile.lwm2m.model-tab' | translate }}">
       <ng-template matTabContent>
         <section [formGroup]="lwm2mDeviceProfileFormGroup">
-          <div class="mat-padding" style="padding-bottom: 0px">
+          <div *ngIf="false" class="mat-padding" style="padding-bottom: 0px">
             <mat-form-field class="mat-block">
               <mat-label>{{ 'device-profile.lwm2m.client-only-observe-after-connect-label' | translate }}</mat-label>
               <mat-select formControlName="clientOnlyObserveAfterConnect"

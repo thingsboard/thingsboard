@@ -48,6 +48,10 @@ public class CoapTransportContext extends TransportContext {
     private Long timeout;
 
     @Getter
+    @Autowired(required = false)
+    private TbCoapDtlsSettings dtlsSettings;
+
+    @Getter
     @Autowired
     private JsonCoapAdaptor jsonCoapAdaptor;
 

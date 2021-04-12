@@ -127,9 +127,9 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   private initWriteValue = (): void => {
-    const modelValue = {objectIds: null, objectsList: []} as ModelValue;
+    const modelValue = {objectIds: [], objectsList: []} as ModelValue;
     modelValue.objectIds = this.getObjectsFromJsonAllConfig();
-    if (modelValue.objectIds !== null) {
+    if (modelValue.objectIds.length > 0) {
       const sortOrder = {
         property: 'id',
         direction: Direction.ASC
@@ -205,13 +205,13 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       if (this.includesNotZeroInstance(attributeArray, telemetryArray)) {
         this.addInstances(attributeArray, telemetryArray, objectLwM2MS);
       }
-      if (isDefinedAndNotNull(observeArray)) {
+      if (isDefinedAndNotNull(observeArray) && observeArray.length > 0) {
         this.updateObserveAttrTelemetryObjects(observeArray, objectLwM2MS, OBSERVE);
       }
-      if (isDefinedAndNotNull(attributeArray)) {
+      if (isDefinedAndNotNull(attributeArray) && attributeArray.length > 0) {
         this.updateObserveAttrTelemetryObjects(attributeArray, objectLwM2MS, ATTRIBUTE);
       }
-      if (isDefinedAndNotNull(telemetryArray)) {
+      if (isDefinedAndNotNull(telemetryArray) && telemetryArray.length > 0) {
         this.updateObserveAttrTelemetryObjects(telemetryArray, objectLwM2MS, TELEMETRY);
       }
       if (isDefinedAndNotNull(keyNameJson)) {
@@ -368,7 +368,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         });
       }
     }
-    return (objectsIds.size > 0) ? Array.from(objectsIds) : null;
+    return (objectsIds.size > 0) ? Array.from(objectsIds) : [];
   }
 
   private upDateJsonAllConfig = (): void => {

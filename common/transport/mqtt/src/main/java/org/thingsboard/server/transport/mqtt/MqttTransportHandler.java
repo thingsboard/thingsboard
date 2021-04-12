@@ -66,7 +66,7 @@ import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
 import org.thingsboard.server.transport.mqtt.session.GatewaySessionHandler;
 import org.thingsboard.server.transport.mqtt.session.MqttTopicMatcher;
-import org.thingsboard.server.transport.mqtt.util.SslUtil;
+import org.thingsboard.server.common.transport.util.SslUtil;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 import java.security.cert.Certificate;
