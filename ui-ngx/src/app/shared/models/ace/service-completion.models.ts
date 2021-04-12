@@ -18,13 +18,13 @@ import { FunctionArg, FunctionArgType, TbEditorCompletions } from '@shared/model
 
 export const entityIdHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/id/entity-id.ts#L20">EntityId</a>';
 
-export const  baseDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/base-data.ts#L22">Base data</a>';
+export const baseDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/base-data.ts#L22">Base data</a>';
 
 export const alarmDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/query/query.models.ts#L573">Alarm data</a>';
 
-export const  alarmDataQueryHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/query/query.models.ts#L558">Alarm data query</a>';
+export const alarmDataQueryHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/query/query.models.ts#L558">Alarm data query</a>';
 
-export  const  attributeScopeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/telemetry/telemetry.models.ts#L37">Attribute scope</a>';
+export const attributeScopeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/telemetry/telemetry.models.ts#L37">Attribute scope</a>';
 
 export const entityTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/entity-type.models.ts#L36">EntityType</a>';
 
@@ -32,15 +32,15 @@ export const pageDataHref = '<a href="https://github.com/thingsboard/thingsboard
 
 export const deviceInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/device.models.ts#L33">DeviceInfo</a>';
 
-export  const  assetInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/asset.models.ts#L32">AssetInfo</a>';
+export const assetInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/asset.models.ts#L32">AssetInfo</a>';
 
 export const entityViewInfoHref = '<a href = "https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/entity-view.models.ts#L47">EntityViewInfo</a>';
 
 export const entityRelationsQueryHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/relation.models.ts#L69">EntityRelationsQuery</a>';
 
-export const  entityRelationInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/relation.models.ts#L87">EntityRelationInfo</a>';
+export const entityRelationInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/relation.models.ts#L87">EntityRelationInfo</a>';
 
-export  const dashboardInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/dashboard.models.ts#L25">DashboardInfo</a>';
+export const dashboardInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/dashboard.models.ts#L25">DashboardInfo</a>';
 
 export const deviceHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/device.models.ts#L24">Device</a>';
 
@@ -50,7 +50,7 @@ export const entityViewHref = '<a href="https://github.com/thingsboard/thingsboa
 
 export const entityRelationHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/relation.models.ts#L79">Entity relation</a>';
 
-export  const dashboardHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/dashboard.models.ts#L102">Dashboard</a>';
+export const dashboardHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/dashboard.models.ts#L102">Dashboard</a>';
 
 export const customerHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/customer.model.ts#L21">Customer</a>';
 
@@ -62,7 +62,7 @@ export const aggregationTypeHref = '<a href="https://github.com/thingsboard/thin
 
 export const dataSortOrderHref = '<a href="https://github.com/thingsboard/thingsboard/blob/627c0577b08452308f925cecb3860e35292c649e/ui-ngx/src/app/shared/models/telemetry/telemetry.models.ts#L95">Data Sort Order</a>';
 
-export  const  userHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/user.model.ts#L23">User</a>';
+export const userHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/user.model.ts#L23">User</a>';
 
 export const entityDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/query/query.models.ts#L567">Entity data</a>';
 

@@ -44,6 +44,7 @@
         <module>stats</module>
         <module>cache</module>
         <module>coap-server</module>
+        <module>edge-api</module>
     </modules>
 
 </project>

@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -147,6 +148,9 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
                 break;
             case RULE_CHAIN:
                 hasName = ruleChainService.findRuleChainByIdAsync(tenantId, new RuleChainId(entityId.getId()));
+                break;
+            case EDGE:
+                hasName = edgeService.findEdgeByIdAsync(tenantId, new EdgeId(entityId.getId()));
                 break;
             default:
                 throw new IllegalStateException("Not Implemented!");

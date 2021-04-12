@@ -20,8 +20,10 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.Valid;
 
+import java.io.Serializable;
+
 @Data
-public class AlarmRule {
+public class AlarmRule implements Serializable {
 
     @Valid
     private AlarmCondition condition;
