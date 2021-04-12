@@ -34,6 +34,8 @@ public interface FirmwareService {
 
     PageData<FirmwareInfo> findTenantFirmwaresByTenantId(TenantId tenantId, PageLink pageLink);
 
+    PageData<FirmwareInfo> findTenantFirmwaresByTenantIdAndHasData(TenantId tenantId, boolean hasData, PageLink pageLink);
+
     void deleteFirmware(TenantId tenantId, FirmwareId firmwareId);
 
     void deleteFirmwaresByTenantId(TenantId tenantId);

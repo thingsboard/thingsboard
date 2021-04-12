@@ -27,4 +27,6 @@ public interface FirmwareInfoDao extends Dao<FirmwareInfo> {
 
     PageData<FirmwareInfo> findFirmwareInfoByTenantId(TenantId tenantId, PageLink pageLink);
 
+    PageData<FirmwareInfo> findFirmwareInfoByTenantIdAndHasData(TenantId tenantId, boolean hasData, PageLink pageLink);
+
 }

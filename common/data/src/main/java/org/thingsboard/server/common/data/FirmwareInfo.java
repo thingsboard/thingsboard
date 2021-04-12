@@ -31,6 +31,7 @@ public class FirmwareInfo extends SearchTextBasedWithAdditionalInfo<FirmwareId> 
     private TenantId tenantId;
     private String title;
     private String version;
+    private boolean hasData;
 
     public FirmwareInfo() {
         super();

@@ -110,6 +110,13 @@ public class BaseFirmwareService implements FirmwareService {
     }
 
     @Override
+    public PageData<FirmwareInfo> findTenantFirmwaresByTenantIdAndHasData(TenantId tenantId, boolean hasData, PageLink pageLink) {
+        log.trace("Executing findTenantFirmwaresByTenantIdAndHasData, tenantId [{}], hasData [{}] pageLink [{}]", tenantId, hasData, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validatePageLink(pageLink);
+        return firmwareInfoDao.findFirmwareInfoByTenantIdAndHasData(tenantId, hasData, pageLink);    }
+
+    @Override
     public void deleteFirmware(TenantId tenantId, FirmwareId firmwareId) {
         log.trace("Executing deleteFirmware [{}]", firmwareId);
         validateId(firmwareId, INCORRECT_FIRMWARE_ID + firmwareId);

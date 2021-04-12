@@ -482,6 +482,7 @@ public class ModelConstants {
     public static final String FIRMWARE_CHECKSUM_COLUMN = "checksum";
     public static final String FIRMWARE_DATA_COLUMN = "data";
     public static final String FIRMWARE_ADDITIONAL_INFO_COLUMN = ADDITIONAL_INFO_PROPERTY;
+    public static final String FIRMWARE_HAS_DATA_PROPERTY = "has_data";
 
 
     /**
