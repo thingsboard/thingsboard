@@ -44,9 +44,11 @@
       <tb-file-input
         formControlName="data"
         required
-        [convertToBase64]="true"
+        [readAsBinary]="true"
         [allowedExtensions]="getAllowedExtensions()"
+        [contentConvertFunction]="convertToBase64File"
         [accept]="getAcceptType()"
+        [multipleFile]="entityForm.get('resourceType').value === resourceType.LWM2M_MODEL"
         dropLabel="{{'resource.drop-file' | translate}}"
         [existingFileName]="entityForm.get('fileName')?.value"
         (fileNameChanged)="entityForm?.get('fileName').patchValue($event)">

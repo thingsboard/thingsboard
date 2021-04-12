@@ -18,10 +18,10 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
-import { Observable } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { Resource, ResourceInfo } from '@shared/models/resource.models';
-import { map } from 'rxjs/operators';
+import { catchError, map, mergeMap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -65,6 +65,25 @@ export class ResourceService {
           return null;
         } catch (e) {
           throw e;
+        }
+      })
+    );
+  }
+
+  public saveResources(resources: Resource[], config?: RequestConfig) {
+    let partSize = 100;
+    partSize = resources.length > partSize ? partSize : resources.length;
+    const resourceObservables = [];
+    for (let i = 0; i < partSize; i++) {
+      resourceObservables.push(this.saveResource(resources[i], config).pipe(catchError(error => of(error))));
+    }
+    return forkJoin(resourceObservables).pipe(
+      mergeMap((resource) => {
+        resources.splice(0, partSize);
+        if (resources.length) {
+          return this.saveResources(resources, config);
+        } else {
+          return of(resource);
         }
       })
     );

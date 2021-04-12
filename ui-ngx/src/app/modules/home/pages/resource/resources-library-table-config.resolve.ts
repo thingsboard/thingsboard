@@ -85,8 +85,25 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
 
     this.config.entitiesFetchFunction = pageLink => this.resourceService.getResources(pageLink) as Observable<PageData<Resource>>;
     this.config.loadEntity = id => this.resourceService.getResource(id.id);
-    this.config.saveEntity = resource => this.resourceService.saveResource(resource);
+    this.config.saveEntity = resource => this.saveResource(resource);
     this.config.deleteEntity = id => this.resourceService.deleteResource(id.id);
+  }
+
+  saveResource(resource) {
+    if (Array.isArray(resource.data)) {
+      const resources = [];
+      resource.data.forEach((data, index) => {
+        resources.push({
+          resourceType: resource.resourceType,
+          data,
+          fileName: resource.fileName[index],
+          title: resource.title
+        });
+      });
+      return this.resourceService.saveResources(resources, {resendRequest: true});
+    } else {
+      return this.resourceService.saveResource(resource);
+    }
   }
 
   resolve(): EntityTableConfig<Resource> {
