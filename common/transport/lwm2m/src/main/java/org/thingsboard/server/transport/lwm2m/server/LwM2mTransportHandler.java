@@ -56,8 +56,19 @@ import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPA
 public class LwM2mTransportHandler {
 
     public static final String BASE_DEVICE_API_TOPIC = "v1/devices/me";
+
+    public static final String CLIENT_LWM2M_SETTINGS = "clientLwM2mSettings";
+    public static final String BOOTSTRAP = "bootstrap";
+    public static final String SERVERS = "servers";
+    public static final String LWM2M_SERVER = "lwm2mServer";
+    public static final String BOOTSTRAP_SERVER = "bootstrapServer";
+    public static final String OBSERVE_ATTRIBUTE_TELEMETRY = "observeAttr";
     public static final String ATTRIBUTE = "attribute";
     public static final String TELEMETRY = "telemetry";
+    public static final String KEY_NAME = "keyName";
+    public static final String OBSERVE = "observe";
+    public static final String ATTRIBUTE_LWM2M = "attributeLwm2m";
+
     private static final String REQUEST = "/request";
     private static final String RESPONSE = "/response";
     private static final String ATTRIBUTES = "/" + ATTRIBUTE;
@@ -70,14 +81,6 @@ public class LwM2mTransportHandler {
     public static final String DEVICE_TELEMETRY_TOPIC = BASE_DEVICE_API_TOPIC + TELEMETRIES;
 
     public static final long DEFAULT_TIMEOUT = 2 * 60 * 1000L; // 2min in ms
-    public static final String OBSERVE_ATTRIBUTE_TELEMETRY = "observeAttr";
-    public static final String CLIENT_LWM2M_SETTINGS = "clientLwM2mSettings";
-    public static final String KEY_NAME = "keyName";
-    public static final String OBSERVE = "observe";
-    public static final String BOOTSTRAP = "bootstrap";
-    public static final String SERVERS = "servers";
-    public static final String LWM2M_SERVER = "lwm2mServer";
-    public static final String BOOTSTRAP_SERVER = "bootstrapServer";
 
     public static final String LOG_LW2M_TELEMETRY = "logLwm2m";
     public static final String LOG_LW2M_INFO = "info";
@@ -166,7 +169,8 @@ public class LwM2mTransportHandler {
         lwM2MClientProfile.setPostAttributeProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE).getAsJsonArray());
         lwM2MClientProfile.setPostTelemetryProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(TELEMETRY).getAsJsonArray());
         lwM2MClientProfile.setPostObserveProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(OBSERVE).getAsJsonArray());
-        return lwM2MClientProfile;
+        lwM2MClientProfile.setPostAttributeLwm2mProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE_LWM2M).getAsJsonObject());
+        return  lwM2MClientProfile;
     }
 
     /**
@@ -184,6 +188,9 @@ public class LwM2mTransportHandler {
      * "attribute":["/2/0/1","/3/0/9"],
      * "telemetry":["/1/0/1","/2/0/1","/6/0/1"],
      * "observe":["/2/0","/2/0/0","/4/0/2"]}
+     * "attributeLwm2m": {"/3_1.0": {"ver": "currentTimeTest11"},
+     *                    "/3_1.0/0": {"gt": 17},
+     *                    "/3_1.0/0/9": {"pmax": 45}, "/3_1.2": {ver": "3_1.2"}}
      */
     public static LwM2mClientProfile getLwM2MClientProfileFromThingsboard(DeviceProfile deviceProfile) {
         if (deviceProfile != null && ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties().size() > 0) {
