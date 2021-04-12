@@ -16,7 +16,9 @@
 
 export const PAGE_SIZE_LIMIT = 50;
 export const INSTANCES = 'instances';
+export const INSTANCE = 'instance';
 export const RESOURCES = 'resources';
+export const ATTRIBUTE_LWM2M = 'attributeLwm2m';
 export const CLIENT_LWM2M = 'clientLwM2M';
 export const CLIENT_LWM2M_SETTINGS = 'clientLwM2mSettings';
 export const OBSERVE_ATTR_TELEMETRY = 'observeAttrTelemetry';
@@ -33,7 +35,7 @@ export const DEFAULT_CLIENT_HOLD_OFF_TIME = 1;
 export const DEFAULT_LIFE_TIME = 300;
 export const DEFAULT_MIN_PERIOD = 1;
 export const DEFAULT_NOTIF_IF_DESIBLED = true;
-export const DEFAULT_BINDING = 'U';
+export const DEFAULT_BINDING = 'UQ';
 export const DEFAULT_BOOTSTRAP_SERVER_ACCOUNT_TIME_OUT = 0;
 export const LEN_MAX_PUBLIC_KEY_RPK = 182;
 export const LEN_MAX_PUBLIC_KEY_X509 = 3000;
@@ -41,6 +43,44 @@ export const KEY_REGEXP_HEX_DEC = /^[-+]?[0-9A-Fa-f]+\.?[0-9A-Fa-f]*?$/;
 export const KEY_REGEXP_NUMBER = /^(\-?|\+?)\d*$/;
 export const INSTANCES_ID_VALUE_MIN = 0;
 export const INSTANCES_ID_VALUE_MAX = 65535;
+
+export enum ATTRIBUTE_LWM2M_ENUM {
+  dim = 'dim',
+  ver = 'ver',
+  pmin = 'pmin',
+  pmax = 'pmax',
+  gt = 'gt',
+  lt = 'lt',
+  st = 'st'
+}
+
+export const ATTRIBUTE_LWM2M_LABEL = new Map<ATTRIBUTE_LWM2M_ENUM, string>(
+  [
+    [ATTRIBUTE_LWM2M_ENUM.dim, 'dim='],
+    [ATTRIBUTE_LWM2M_ENUM.ver, 'ver='],
+    [ATTRIBUTE_LWM2M_ENUM.pmin, 'pmin='],
+    [ATTRIBUTE_LWM2M_ENUM.pmax, 'pmax='],
+    [ATTRIBUTE_LWM2M_ENUM.gt, '>'],
+    [ATTRIBUTE_LWM2M_ENUM.lt, '<'],
+    [ATTRIBUTE_LWM2M_ENUM.st, 'st='],
+
+  ]
+);
+
+export const ATTRIBUTE_LWM2M_MAP = new Map<ATTRIBUTE_LWM2M_ENUM, string>(
+  [
+    [ATTRIBUTE_LWM2M_ENUM.dim, 'Dimension'],
+    [ATTRIBUTE_LWM2M_ENUM.ver, 'Object version'],
+    [ATTRIBUTE_LWM2M_ENUM.pmin, 'Minimum period'],
+    [ATTRIBUTE_LWM2M_ENUM.pmax, 'Maximum period'],
+    [ATTRIBUTE_LWM2M_ENUM.gt, 'Greater than'],
+    [ATTRIBUTE_LWM2M_ENUM.lt, 'Lesser than'],
+    [ATTRIBUTE_LWM2M_ENUM.st, 'Step'],
+
+  ]
+);
+
+export const ATTRIBUTE_KEYS = Object.keys(ATTRIBUTE_LWM2M_ENUM) as string[];
 
 export enum SECURITY_CONFIG_MODE {
   PSK = 'PSK',
@@ -54,7 +94,7 @@ export const SECURITY_CONFIG_MODE_NAMES = new Map<SECURITY_CONFIG_MODE, string>(
     [SECURITY_CONFIG_MODE.PSK, 'Pre-Shared Key'],
     [SECURITY_CONFIG_MODE.RPK, 'Raw Public Key'],
     [SECURITY_CONFIG_MODE.X509, 'X.509 Certificate'],
-    [SECURITY_CONFIG_MODE.NO_SEC, 'No Security'],
+    [SECURITY_CONFIG_MODE.NO_SEC, 'No Security']
   ]
 );
 
@@ -90,7 +130,7 @@ interface BootstrapSecurityConfig {
   lwm2mServer: ServerSecurityConfig;
 }
 
-export interface ProfileConfigModels {
+export interface Lwm2mProfileConfigModels {
   clientLwM2mSettings: ClientLwM2mSettings;
   observeAttr: ObservableAttributes;
   bootstrap: BootstrapSecurityConfig;
@@ -100,11 +140,13 @@ export interface ProfileConfigModels {
 export interface ClientLwM2mSettings {
   clientOnlyObserveAfterConnect: number;
 }
+
 export interface ObservableAttributes {
   observe: string[];
   attribute: string[];
   telemetry: string[];
   keyName: {};
+  attributeLwm2m: {};
 }
 
 export function getDefaultBootstrapServersSecurityConfig(): BootstrapServersSecurityConfig {
@@ -151,7 +193,16 @@ function getDefaultProfileObserveAttrConfig(): ObservableAttributes {
     observe: [],
     attribute: [],
     telemetry: [],
-    keyName: {}
+    keyName: {},
+    attributeLwm2m: {}
+  };
+}
+
+export function getDefaultProfileConfig(hostname?: any): Lwm2mProfileConfigModels {
+  return {
+    clientLwM2mSettings: getDefaultProfileClientLwM2mSettingsConfig(),
+    observeAttr: getDefaultProfileObserveAttrConfig(),
+    bootstrap: getDefaultProfileBootstrapSecurityConfig((hostname) ? hostname : DEFAULT_HOST_NAME)
   };
 }
 
@@ -161,25 +212,19 @@ function getDefaultProfileClientLwM2mSettingsConfig(): ClientLwM2mSettings {
   };
 }
 
-export function getDefaultProfileConfig(hostname?: any): ProfileConfigModels {
-  return {
-    clientLwM2mSettings: getDefaultProfileClientLwM2mSettingsConfig(),
-    observeAttr: getDefaultProfileObserveAttrConfig(),
-    bootstrap: getDefaultProfileBootstrapSecurityConfig((hostname) ? hostname : DEFAULT_HOST_NAME)
-  };
-}
-
 export interface ResourceLwM2M {
   id: number;
   name: string;
   observe: boolean;
   attribute: boolean;
   telemetry: boolean;
-  keyName: string;
+  keyName: {};
+  attributeLwm2m?: {};
 }
 
 export interface Instance {
   id: number;
+  attributeLwm2m?: {};
   resources: ResourceLwM2M[];
 }
 
@@ -190,11 +235,12 @@ export interface Instance {
  * mandatory == false => Optional
  */
 export interface ObjectLwM2M {
+
   id: number;
   keyId: string;
   name: string;
   multiple?: boolean;
   mandatory?: boolean;
+  attributeLwm2m?: {};
   instances?: Instance [];
 }
-

@@ -21,7 +21,7 @@ import {Store} from '@ngrx/store';
 import {AppState} from '@core/core.state';
 import {Observable} from 'rxjs';
 import {filter, map, mergeMap, publishReplay, refCount, tap} from 'rxjs/operators';
-import {ModelValue, ObjectLwM2M, PAGE_SIZE_LIMIT} from './profile-config.models';
+import {ModelValue, ObjectLwM2M, PAGE_SIZE_LIMIT} from './lwm2m-profile-config.models';
 import {DeviceProfileService} from '@core/http/device-profile.service';
 import {Direction} from '@shared/models/page/sort-order';
 import {isDefined, isDefinedAndNotNull, isString} from '@core/utils';
