@@ -24,7 +24,9 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.NoXss;
 
+import javax.validation.Valid;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
@@ -36,17 +38,22 @@ import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalIn
 public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements HasName, HasTenantId {
 
     private TenantId tenantId;
+    @NoXss
     private String name;
+    @NoXss
     private String description;
     private boolean isDefault;
     private DeviceProfileType type;
     private DeviceTransportType transportType;
     private DeviceProfileProvisionType provisionType;
     private RuleChainId defaultRuleChainId;
+    @NoXss
     private String defaultQueueName;
+    @Valid
     private transient DeviceProfileData profileData;
     @JsonIgnore
     private byte[] profileDataBytes;
+    @NoXss
     private String provisionDeviceKey;
 
     public DeviceProfile() {

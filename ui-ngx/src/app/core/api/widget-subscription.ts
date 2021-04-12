@@ -37,12 +37,11 @@ import {
 } from '@app/shared/models/widget.models';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
-  calculateIntervalEndTime,
-  calculateIntervalStartTime,
+  calculateIntervalStartEndTime,
   calculateTsOffset, ComparisonDuration,
   createSubscriptionTimewindow,
   createTimewindowForComparison,
-  getCurrentTime, isHistoryTypeTimewindow,
+  isHistoryTypeTimewindow,
   SubscriptionTimewindow,
   Timewindow, timewindowTypeChanged,
   toHistoryTimewindow,
@@ -1106,11 +1105,9 @@ export class WidgetSubscription implements IWidgetSubscription {
     this.timeWindow.timezone = this.subscriptionTimewindow.timezone;
     if (this.subscriptionTimewindow.realtimeWindowMs) {
       if (this.subscriptionTimewindow.quickInterval) {
-        const currentDate = getCurrentTime(this.subscriptionTimewindow.timezone);
-        this.timeWindow.maxTime = calculateIntervalEndTime(
-          this.subscriptionTimewindow.quickInterval, currentDate) + this.subscriptionTimewindow.tsOffset;
-        this.timeWindow.minTime = calculateIntervalStartTime(
-          this.subscriptionTimewindow.quickInterval, currentDate) + this.subscriptionTimewindow.tsOffset;
+        const startEndTime = calculateIntervalStartEndTime(this.subscriptionTimewindow.quickInterval, this.subscriptionTimewindow.timezone);
+        this.timeWindow.maxTime = startEndTime[1] + this.subscriptionTimewindow.tsOffset;
+        this.timeWindow.minTime = startEndTime[0] + this.subscriptionTimewindow.tsOffset;
       } else {
         this.timeWindow.maxTime = moment().valueOf() + this.subscriptionTimewindow.tsOffset + this.timeWindow.stDiff;
         this.timeWindow.minTime = this.timeWindow.maxTime - this.subscriptionTimewindow.realtimeWindowMs;

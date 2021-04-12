@@ -46,7 +46,7 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
 
   deviceCredentials$: Subject<DeviceCredentials>;
 
-  deviceScope: 'tenant' | 'customer' | 'customer_user';
+  deviceScope: 'tenant' | 'customer' | 'customer_user' | 'edge';
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,

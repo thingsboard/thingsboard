@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -93,4 +94,12 @@ public interface DeviceService {
     Device saveDevice(ProvisionRequest provisionRequest, DeviceProfile profile);
 
     List<UUID> findDevicesIdsByDeviceProfileTransportType(DeviceTransportType transportType);
+
+    Device assignDeviceToEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId);
+
+    Device unassignDeviceFromEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId);
+
+    PageData<Device> findDevicesByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink);
+
+    PageData<Device> findDevicesByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, PageLink pageLink);
 }

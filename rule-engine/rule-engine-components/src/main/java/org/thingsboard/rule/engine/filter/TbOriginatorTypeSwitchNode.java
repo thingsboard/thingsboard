@@ -16,8 +16,13 @@
 package org.thingsboard.rule.engine.filter;
 
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
+import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -66,6 +71,9 @@ public class TbOriginatorTypeSwitchNode implements TbNode {
                 break;
             case ENTITY_VIEW:
                 relationType = "Entity View";
+                break;
+            case EDGE:
+                relationType = "Edge";
                 break;
             case RULE_CHAIN:
                 relationType = "Rule chain";

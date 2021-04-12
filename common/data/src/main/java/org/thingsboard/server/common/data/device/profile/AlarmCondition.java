@@ -17,15 +17,16 @@ package org.thingsboard.server.common.data.device.profile;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
-import org.thingsboard.server.common.data.query.KeyFilter;
 
+import java.io.Serializable;
+import javax.validation.Valid;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class AlarmCondition {
+public class AlarmCondition implements Serializable {
 
+    @Valid
     private List<AlarmConditionFilter> condition;
     private AlarmConditionSpec spec;
 

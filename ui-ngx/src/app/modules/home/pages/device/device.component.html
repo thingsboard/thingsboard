@@ -40,6 +40,12 @@
           [fxShow]="!isEdit">
     {{ (deviceScope === 'customer_user' ? 'device.view-credentials' : 'device.manage-credentials') | translate }}
   </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'unassignFromEdge')"
+          [fxShow]="!isEdit && deviceScope === 'edge'">
+    {{ 'edge.unassign-from-edge' | translate }}
+  </button>
   <button mat-raised-button color="primary" fxFlex.xs
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
