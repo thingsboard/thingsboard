@@ -25,10 +25,22 @@ import org.thingsboard.server.dao.model.sql.FirmwareInfoEntity;
 import java.util.UUID;
 
 public interface FirmwareInfoRepository extends CrudRepository<FirmwareInfoEntity, UUID> {
-    @Query("SELECT fi FROM FirmwareInfoEntity fi WHERE " +
-            "fi.tenantId = :tenantId " +
-            "AND LOWER(fi.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+    @Query("SELECT new FirmwareInfoEntity(f.id, f.createdTime, f.tenantId, f.title, f.version, f.additionalInfo, f.data IS NOT NULL) FROM FirmwareEntity f WHERE " +
+            "f.tenantId = :tenantId " +
+            "AND LOWER(f.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
     Page<FirmwareInfoEntity> findAllByTenantId(@Param("tenantId") UUID tenantId,
-                                                           @Param("searchText") String searchText,
-                                                           Pageable pageable);
+                                               @Param("searchText") String searchText,
+                                               Pageable pageable);
+
+    @Query("SELECT new FirmwareInfoEntity(f.id, f.createdTime, f.tenantId, f.title, f.version, f.additionalInfo, f.data IS NOT NULL) FROM FirmwareEntity f WHERE " +
+            "f.tenantId = :tenantId " +
+            "AND ((f.data IS NOT NULL AND :hasData = true) OR (f.data IS NULL AND :hasData = false ))" +
+            "AND LOWER(f.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+    Page<FirmwareInfoEntity> findAllByTenantIdAndHasData(@Param("tenantId") UUID tenantId,
+                                                         @Param("hasData") boolean hasData,
+                                                         @Param("searchText") String searchText,
+                                                         Pageable pageable);
+
+    @Query("SELECT new FirmwareInfoEntity(f.id, f.createdTime, f.tenantId, f.title, f.version, f.additionalInfo, f.data IS NOT NULL) FROM FirmwareEntity f WHERE f.id = :id")
+    FirmwareInfoEntity findFirmwareInfoById(@Param("id") UUID id);
 }

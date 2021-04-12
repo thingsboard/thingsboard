@@ -717,7 +717,7 @@ public abstract class BaseController {
             validateId(firmwareId, "Incorrect firmwareId " + firmwareId);
             Firmware firmware = firmwareService.findFirmwareById(getCurrentUser().getTenantId(), firmwareId);
             checkNotNull(firmware);
-            accessControlService.checkPermission(getCurrentUser(), Resource.TB_RESOURCE, operation, firmwareId, firmware);
+            accessControlService.checkPermission(getCurrentUser(), Resource.FIRMWARE, operation, firmwareId, firmware);
             return firmware;
         } catch (Exception e) {
             throw handleException(e, false);

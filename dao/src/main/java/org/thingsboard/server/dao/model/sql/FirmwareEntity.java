@@ -124,6 +124,7 @@ public class FirmwareEntity extends BaseSqlEntity<Firmware> implements SearchTex
         firmware.setChecksum(checksum);
         if (data != null) {
             firmware.setData(ByteBuffer.wrap(data));
+            firmware.setHasData(true);
         }
         firmware.setAdditionalInfo(additionalInfo);
         return firmware;

@@ -98,7 +98,8 @@ public class FirmwareController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/firmware", method = RequestMethod.POST)
     @ResponseBody
-    public FirmwareInfo saveFirmwareInfo(@RequestParam("title") FirmwareInfo firmwareInfo) throws ThingsboardException {
+    public FirmwareInfo saveFirmwareInfo(@RequestBody FirmwareInfo firmwareInfo) throws ThingsboardException {
+        firmwareInfo.setTenantId(getTenantId());
         checkEntity(firmwareInfo.getId(), firmwareInfo, Resource.FIRMWARE);
         try {
             return firmwareService.saveFirmwareInfo(firmwareInfo);
@@ -112,7 +113,7 @@ public class FirmwareController extends BaseController {
     @ResponseBody
     public Firmware saveFirmwareData(@PathVariable(FIRMWARE_ID) String strFirmwareId,
                                      @RequestParam String checksum,
-                                     @RequestParam String checksumAlgorithm,
+                                     @RequestParam(required = false) String checksumAlgorithm,
                                      @RequestBody MultipartFile firmwareFile) throws ThingsboardException {
         checkParameter(FIRMWARE_ID, strFirmwareId);
         checkParameter("checksum", checksum);
@@ -123,6 +124,7 @@ public class FirmwareController extends BaseController {
             Firmware firmware = new Firmware(firmwareId);
             firmware.setCreatedTime(info.getCreatedTime());
             firmware.setTenantId(getTenantId());
+            firmware.setTitle(info.getTitle());
             firmware.setVersion(info.getVersion());
             firmware.setAdditionalInfo(info.getAdditionalInfo());
 
@@ -138,7 +140,7 @@ public class FirmwareController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/firmware", method = RequestMethod.GET)
+    @RequestMapping(value = "/firmwares", method = RequestMethod.GET)
     @ResponseBody
     public PageData<FirmwareInfo> getFirmwares(@RequestParam int pageSize,
                                                @RequestParam int page,
@@ -148,6 +150,23 @@ public class FirmwareController extends BaseController {
         try {
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             return checkNotNull(firmwareService.findTenantFirmwaresByTenantId(getTenantId(), pageLink));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/firmwares/{hasData}", method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<FirmwareInfo> getFirmwares(@PathVariable("hasData") boolean hasData,
+                                               @RequestParam int pageSize,
+                                               @RequestParam int page,
+                                               @RequestParam(required = false) String textSearch,
+                                               @RequestParam(required = false) String sortProperty,
+                                               @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        try {
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            return checkNotNull(firmwareService.findTenantFirmwaresByTenantIdAndHasData(getTenantId(), hasData, pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }

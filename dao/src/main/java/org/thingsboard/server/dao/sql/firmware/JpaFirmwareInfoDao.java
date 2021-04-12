@@ -49,10 +49,35 @@ public class JpaFirmwareInfoDao extends JpaAbstractSearchTextDao<FirmwareInfoEnt
     }
 
     @Override
+    public FirmwareInfo findById(TenantId tenantId, UUID id) {
+        return DaoUtil.getData(firmwareInfoRepository.findFirmwareInfoById(id));
+    }
+
+    @Override
+    public FirmwareInfo save(TenantId tenantId, FirmwareInfo firmwareInfo) {
+        FirmwareInfo savedFirmware = super.save(tenantId, firmwareInfo);
+        if (firmwareInfo.getId() == null) {
+            return savedFirmware;
+        } else {
+            return findById(tenantId, savedFirmware.getId().getId());
+        }
+    }
+
+    @Override
     public PageData<FirmwareInfo> findFirmwareInfoByTenantId(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(firmwareInfoRepository
                 .findAllByTenantId(
                         tenantId.getId(),
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<FirmwareInfo> findFirmwareInfoByTenantIdAndHasData(TenantId tenantId, boolean hasData, PageLink pageLink) {
+        return DaoUtil.toPageData(firmwareInfoRepository
+                .findAllByTenantIdAndHasData(
+                        tenantId.getId(),
+                        hasData,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
     }

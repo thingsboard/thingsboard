@@ -20,6 +20,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.FirmwareInfo;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -31,8 +32,10 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_HAS_DATA_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TENANT_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TITLE_COLUMN;
@@ -62,6 +65,10 @@ public class FirmwareInfoEntity extends BaseSqlEntity<FirmwareInfo> implements S
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
 
+//    @Column(name = FIRMWARE_HAS_DATA_PROPERTY, insertable = false, updatable = false)
+    @Transient
+    private boolean hasData;
+
     public FirmwareInfoEntity() {
         super();
     }
@@ -73,6 +80,16 @@ public class FirmwareInfoEntity extends BaseSqlEntity<FirmwareInfo> implements S
         this.title = firmware.getTitle();
         this.version = firmware.getVersion();
         this.additionalInfo = firmware.getAdditionalInfo();
+    }
+
+    public FirmwareInfoEntity(UUID id, long createdTime, UUID tenantId, String title, String version, Object additionalInfo, boolean hasData) {
+        this.id = id;
+        this.createdTime = createdTime;
+        this.tenantId = tenantId;
+        this.title = title;
+        this.version = version;
+        this.hasData = hasData;
+        this.additionalInfo = JacksonUtil.convertValue(additionalInfo, JsonNode.class);
     }
 
     @Override
@@ -93,6 +110,7 @@ public class FirmwareInfoEntity extends BaseSqlEntity<FirmwareInfo> implements S
         firmware.setTitle(title);
         firmware.setVersion(version);
         firmware.setAdditionalInfo(additionalInfo);
+        firmware.setHasData(hasData);
         return firmware;
     }
 }
