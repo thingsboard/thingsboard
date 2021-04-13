@@ -1,0 +1,93 @@
+<!--
+
+    Copyright © 2016-2021 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="resourceFormGroup" class="mat-padding">
+  <div fxLayout="row" fxFill formArrayName="resources"
+       *ngFor="let resourceLwM2M of resourceFormArray.controls; let i = index; trackBy: trackByParams">
+    <div class="vertical-padding" fxLayout="column" fxFill [formGroupName]="i">
+      <div fxLayout="row" fxFill fxLayoutAlign="start center" [fxShow]="!i">
+        <div fxFlex="20">
+            <mat-label translate>device-profile.lwm2m.resource-label</mat-label>
+        </div>
+        <div fxFlex="10">
+            <mat-label translate>device-profile.lwm2m.attribute-label</mat-label>
+        </div>
+        <div fxFlex="10">
+            <mat-label translate>device-profile.lwm2m.telemetry-label</mat-label>
+        </div>
+        <div fxFlex="10">
+          <mat-label translate>device-profile.lwm2m.observe-label</mat-label>
+        </div>
+        <div fxFlex>
+            <mat-label translate>device-profile.lwm2m.key-name-label</mat-label>
+        </div>
+        <div fxFlex="17" fxFlexOffset="0">
+          <mat-label translate>device-profile.lwm2m.attribute-lwm2m-label</mat-label>
+        </div>
+      </div>
+      <div fxLayout="row" fxFill fxLayoutAlign="start center">
+        <div class="resource-name-lw" fxFlex="25"
+             matTooltip="{{'device-profile.lwm2m.resource-tip' | translate}}" matTooltipPosition="above">
+          <<b>{{resourceLwM2M.get('id').value}}</b>> <b><i>{{resourceLwM2M.get('name').value}}</i></b>
+        </div>
+        <div fxFlex="10" fxLayoutAlign="center center">
+          <mat-checkbox formControlName="attribute" color="warn"
+                        [checked]="updateObserve(i)"
+                        matTooltip="{{'device-profile.lwm2m.is-attr-tip' | translate}}"
+                        matTooltipPosition="above">
+          </mat-checkbox>
+        </div>
+        <div fxFlex="10" fxLayoutAlign="center center">
+          <mat-checkbox formControlName="telemetry" color="primary"
+                        [checked]="updateObserve(i)"
+                        matTooltip="{{'device-profile.lwm2m.is-telemetry-tip' | translate}}"
+                        matTooltipPosition="above">
+          </mat-checkbox>
+        </div>
+        <div fxFlex="10" fxLayoutAlign="center center">
+          <mat-checkbox formControlName="observe" color="primary"
+                        [disabled]="disableObserve(i)"
+                        matTooltip="{{(disableObserve(i) ? 'device-profile.lwm2m.not-observe-tip' : 'device-profile.lwm2m.is-observe-tip') | translate}}"
+                        matTooltipPosition="above">
+          </mat-checkbox>
+        </div>
+        <mat-form-field fxFlex="25">
+          <mat-label  *ngIf="resourceLwM2M.get('keyName').hasError('required')">
+            {{ 'device-profile.lwm2m.key-name-label' | translate }}</mat-label>
+          <input  class="resource-name-lw" matInput type="text" formControlName="keyName" required
+                 matTooltip="{{'device-profile.lwm2m.key-name-tip' | translate}}"
+                 (input)="updateValueKeyName($event, i)"
+                 matTooltipPosition="above">
+          <mat-error *ngIf="resourceLwM2M.get('keyName').hasError('required')">
+            {{ 'device-profile.lwm2m.key-name' | translate }}
+            <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
+          </mat-error>
+        </mat-form-field>
+        <div fxFlex="20" class="resource-name-lw-end" fxFlexOffset="5">
+          <tb-profile-lwm2m-attributes
+            formControlName="attributeLwm2m"
+            [attributeLwm2m]="resourceLwM2M.get('attributeLwm2m').value"
+            [isAttributeTelemetry]="disableObserve(i)"
+            [destName]="getNameResourceLwm2m(resourceLwM2M.value)"
+            [disabled]="this.disabled"
+            (updateAttributeLwm2m)="updateAttributeLwm2m($event, i)">
+          </tb-profile-lwm2m-attributes>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

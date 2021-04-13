@@ -28,7 +28,7 @@ import { UserService } from './user.service';
 import { DashboardService } from '@core/http/dashboard.service';
 import { Direction } from '@shared/models/page/sort-order';
 import { PageData } from '@shared/models/page/page-data';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Authority } from '@shared/models/authority.enum';
@@ -45,6 +45,7 @@ import { DataKey, Datasource, DatasourceType, KeyInfo } from '@app/shared/models
 import { UtilsService } from '@core/services/utils.service';
 import { AliasFilterType, EntityAlias, EntityAliasFilter, EntityAliasFilterResult } from '@shared/models/alias.models';
 import {
+  EdgeImportEntityData,
   EntitiesKeysByQuery,
   entityFields,
   EntityInfo,
@@ -52,7 +53,7 @@ import {
   ImportEntityData
 } from '@shared/models/entity.models';
 import { EntityRelationService } from '@core/http/entity-relation.service';
-import { deepClone, isDefined, isDefinedAndNotNull } from '@core/utils';
+import { deepClone, generateSecret, guid, isDefined, isDefinedAndNotNull } from '@core/utils';
 import { Asset } from '@shared/models/asset.models';
 import { Device, DeviceCredentialsType } from '@shared/models/device.models';
 import { AttributeService } from '@core/http/attribute.service';
@@ -74,6 +75,11 @@ import {
   StringOperation
 } from '@shared/models/query/query.models';
 import { alarmFields } from '@shared/models/alarm.models';
+import { EdgeService } from "@core/http/edge.service";
+import { Edge, EdgeEventType } from '@shared/models/edge.models';
+import { RuleChainType } from "@shared/models/rule-chain.models";
+import { WidgetService } from "@core/http/widget.service";
+import { DeviceProfileService } from "@core/http/device-profile.service";
 
 @Injectable({
   providedIn: 'root'
@@ -84,6 +90,7 @@ export class EntityService {
     private http: HttpClient,
     private store: Store<AppState>,
     private deviceService: DeviceService,
+    private edgeService: EdgeService,
     private assetService: AssetService,
     private entityViewService: EntityViewService,
     private tenantService: TenantService,
@@ -93,6 +100,8 @@ export class EntityService {
     private dashboardService: DashboardService,
     private entityRelationService: EntityRelationService,
     private attributeService: AttributeService,
+    private widgetService: WidgetService,
+    private deviceProfileService: DeviceProfileService,
     private utils: UtilsService
   ) { }
 
@@ -106,6 +115,9 @@ export class EntityService {
         break;
       case EntityType.ASSET:
         observable = this.assetService.getAsset(entityId, config);
+        break;
+      case EntityType.EDGE:
+        observable = this.edgeService.getEdge(entityId, config);
         break;
       case EntityType.ENTITY_VIEW:
         observable = this.entityViewService.getEntityView(entityId, config);
@@ -173,6 +185,9 @@ export class EntityService {
         break;
       case EntityType.ASSET:
         observable = this.assetService.getAssets(entityIds, config);
+        break;
+      case EntityType.EDGE:
+        observable = this.edgeService.getEdges(entityIds, config);
         break;
       case EntityType.ENTITY_VIEW:
         observable = this.getEntitiesByIdsObservable(
@@ -282,6 +297,14 @@ export class EntityService {
           entitiesObservable = this.assetService.getTenantAssetInfos(pageLink, subType, config);
         }
         break;
+      case EntityType.EDGE:
+        pageLink.sortOrder.property = 'name';
+        if (authUser.authority === Authority.CUSTOMER_USER) {
+          entitiesObservable = this.edgeService.getCustomerEdgeInfos(customerId, pageLink, subType, config);
+        } else {
+          entitiesObservable = this.edgeService.getTenantEdgeInfos(pageLink, subType, config);
+        }
+        break;
       case EntityType.ENTITY_VIEW:
         pageLink.sortOrder.property = 'name';
         if (authUser.authority === Authority.CUSTOMER_USER) {
@@ -309,7 +332,12 @@ export class EntityService {
         break;
       case EntityType.RULE_CHAIN:
         pageLink.sortOrder.property = 'name';
-        entitiesObservable = this.ruleChainService.getRuleChains(pageLink, config);
+        if (RuleChainType[subType]) {
+          entitiesObservable = this.ruleChainService.getRuleChains(pageLink, subType as RuleChainType, config);
+        } else {
+          // safe fallback to default core type
+          entitiesObservable = this.ruleChainService.getRuleChains(pageLink, RuleChainType.CORE, config);
+        }
         break;
       case EntityType.DASHBOARD:
         pageLink.sortOrder.property = 'title';
@@ -489,6 +517,8 @@ export class EntityService {
           return entityTypes.indexOf(EntityType.ASSET)  > -1 ? true : false;
         case AliasFilterType.deviceType:
           return entityTypes.indexOf(EntityType.DEVICE)  > -1 ? true : false;
+        case AliasFilterType.edgeType:
+          return entityTypes.indexOf(EntityType.EDGE) > -1 ? true : false;
         case AliasFilterType.entityViewType:
           return entityTypes.indexOf(EntityType.ENTITY_VIEW)  > -1 ? true : false;
         case AliasFilterType.relationsQuery:
@@ -515,6 +545,8 @@ export class EntityService {
           return entityTypes.indexOf(EntityType.ASSET)  > -1 ? true : false;
         case AliasFilterType.deviceSearchQuery:
           return entityTypes.indexOf(EntityType.DEVICE)  > -1 ? true : false;
+        case AliasFilterType.edgeSearchQuery:
+          return entityTypes.indexOf(EntityType.EDGE) > -1 ? true : false;
         case AliasFilterType.entityViewSearchQuery:
           return entityTypes.indexOf(EntityType.ENTITY_VIEW)  > -1 ? true : false;
       }
@@ -550,14 +582,20 @@ export class EntityService {
         return entityType === EntityType.ASSET;
       case AliasFilterType.deviceType:
         return entityType === EntityType.DEVICE;
+      case AliasFilterType.edgeType:
+        return entityType === EntityType.EDGE;
       case AliasFilterType.entityViewType:
         return entityType === EntityType.ENTITY_VIEW;
       case AliasFilterType.relationsQuery:
+        return true;
+      case AliasFilterType.apiUsageState:
         return true;
       case AliasFilterType.assetSearchQuery:
         return entityType === EntityType.ASSET;
       case AliasFilterType.deviceSearchQuery:
         return entityType === EntityType.DEVICE;
+      case AliasFilterType.edgeSearchQuery:
+        return entityType === EntityType.EDGE;
       case AliasFilterType.entityViewSearchQuery:
         return entityType === EntityType.ENTITY_VIEW;
     }
@@ -566,15 +604,18 @@ export class EntityService {
 
   public prepareAllowedEntityTypesList(allowedEntityTypes: Array<EntityType | AliasEntityType>,
                                        useAliasEntityTypes?: boolean): Array<EntityType | AliasEntityType> {
-    const authUser = getCurrentAuthUser(this.store);
+    const authState = getCurrentAuthState(this.store);
     const entityTypes: Array<EntityType | AliasEntityType> = [];
-    switch (authUser.authority) {
+    switch (authState.authUser.authority) {
       case Authority.SYS_ADMIN:
         entityTypes.push(EntityType.TENANT);
         break;
       case Authority.TENANT_ADMIN:
         entityTypes.push(EntityType.DEVICE);
         entityTypes.push(EntityType.ASSET);
+        if (authState.edgesSupportEnabled) {
+          entityTypes.push(EntityType.EDGE);
+        }
         entityTypes.push(EntityType.ENTITY_VIEW);
         entityTypes.push(EntityType.TENANT);
         entityTypes.push(EntityType.CUSTOMER);
@@ -588,6 +629,9 @@ export class EntityService {
       case Authority.CUSTOMER_USER:
         entityTypes.push(EntityType.DEVICE);
         entityTypes.push(EntityType.ASSET);
+        if (authState.edgesSupportEnabled) {
+          entityTypes.push(EntityType.EDGE);
+        }
         entityTypes.push(EntityType.ENTITY_VIEW);
         entityTypes.push(EntityType.CUSTOMER);
         entityTypes.push(EntityType.USER);
@@ -599,7 +643,7 @@ export class EntityService {
     }
     if (useAliasEntityTypes) {
       entityTypes.push(AliasEntityType.CURRENT_USER);
-      if (authUser.authority !== Authority.SYS_ADMIN) {
+      if (authState.authUser.authority !== Authority.SYS_ADMIN) {
         entityTypes.push(AliasEntityType.CURRENT_USER_OWNER);
       }
     }
@@ -640,6 +684,7 @@ export class EntityService {
         entityFieldKeys.push(entityFields.type.keyName);
         break;
       case EntityType.DEVICE:
+      case EntityType.EDGE:
       case EntityType.ASSET:
         entityFieldKeys.push(entityFields.name.keyName);
         entityFieldKeys.push(entityFields.type.keyName);
@@ -833,6 +878,9 @@ export class EntityService {
       case AliasFilterType.apiUsageState:
         result.entityFilter = deepClone(filter);
         return of(result);
+      case AliasFilterType.edgeType:
+        result.entityFilter = deepClone(filter);
+        return of(result);
       case AliasFilterType.relationsQuery:
         result.stateEntity = filter.rootStateEntity;
         let rootEntityType;
@@ -854,6 +902,7 @@ export class EntityService {
         }
       case AliasFilterType.assetSearchQuery:
       case AliasFilterType.deviceSearchQuery:
+      case AliasFilterType.edgeSearchQuery:
       case AliasFilterType.entityViewSearchQuery:
         result.stateEntity = filter.rootStateEntity;
         if (result.stateEntity && stateEntityId) {
@@ -889,6 +938,51 @@ export class EntityService {
 
   public saveEntityParameters(entityType: EntityType, entityData: ImportEntityData, update: boolean,
                               config?: RequestConfig): Observable<ImportEntitiesResultInfo> {
+    const saveEntityObservable: Observable<BaseData<EntityId>> = this.getSaveEntityObservable(entityType, entityData, config);
+    return saveEntityObservable.pipe(
+      mergeMap((entity) => {
+        return this.saveEntityData(entity.id, entityData, config).pipe(
+          map(() => {
+            return { create: { entity: 1 } } as ImportEntitiesResultInfo;
+          }),
+          catchError(err => of({ error: { entity: 1 } } as ImportEntitiesResultInfo))
+        );
+      }),
+      catchError(err => {
+        if (update) {
+          let findEntityObservable: Observable<BaseData<EntityId>>;
+          switch (entityType) {
+            case EntityType.DEVICE:
+              findEntityObservable = this.deviceService.findByName(entityData.name, config);
+              break;
+            case EntityType.ASSET:
+              findEntityObservable = this.assetService.findByName(entityData.name, config);
+              break;
+            case EntityType.EDGE:
+              findEntityObservable = this.edgeService.findByName(entityData.name, config);
+              break;
+          }
+          return findEntityObservable.pipe(
+            mergeMap((entity) => {
+              const updateEntityTasks: Observable<any>[] = this.getUpdateEntityTasks(entityType, entityData, entity, config);
+              return forkJoin(updateEntityTasks).pipe(
+                map(() => {
+                  return { update: { entity: 1 } } as ImportEntitiesResultInfo;
+                }),
+                catchError(updateError => of({ error: { entity: 1 } } as ImportEntitiesResultInfo))
+              );
+            }),
+            catchError(findErr => of({ error: { entity: 1 } } as ImportEntitiesResultInfo))
+          );
+        } else {
+          return of({ error: { entity: 1 } } as ImportEntitiesResultInfo);
+        }
+      })
+    );
+  }
+
+  private getSaveEntityObservable(entityType: EntityType, entityData: ImportEntityData,
+                                  config?: RequestConfig): Observable<BaseData<EntityId>> {
     let saveEntityObservable: Observable<BaseData<EntityId>>;
     switch (entityType) {
       case EntityType.DEVICE:
@@ -919,70 +1013,92 @@ export class EntityService {
         };
         saveEntityObservable = this.assetService.saveAsset(asset, config);
         break;
+      case EntityType.EDGE:
+        const edgeEntityData: EdgeImportEntityData = entityData as EdgeImportEntityData;
+        const edge: Edge = {
+          name: edgeEntityData.name,
+          type: edgeEntityData.type,
+          label: edgeEntityData.label,
+          additionalInfo: {
+            description: edgeEntityData.description
+          },
+          edgeLicenseKey: edgeEntityData.edgeLicenseKey,
+          cloudEndpoint: edgeEntityData.cloudEndpoint !== '' ? edgeEntityData.cloudEndpoint : window.location.origin,
+          routingKey: edgeEntityData.routingKey !== '' ? edgeEntityData.routingKey : guid(),
+          secret: edgeEntityData.secret !== '' ? edgeEntityData.secret : generateSecret(20)
+        };
+        saveEntityObservable = this.edgeService.saveEdge(edge, config);
+        break;
     }
-    return saveEntityObservable.pipe(
-      mergeMap((entity) => {
-        return this.saveEntityData(entity.id, entityData, config).pipe(
-          map(() => {
-            return { create: { entity: 1 } } as ImportEntitiesResultInfo;
-          }),
-          catchError(err => of({ error: { entity: 1 } } as ImportEntitiesResultInfo))
-        );
-      }),
-      catchError(err => {
-        if (update) {
-          let findEntityObservable: Observable<BaseData<EntityId>>;
-          switch (entityType) {
+    return saveEntityObservable;
+
+  }
+
+  private getUpdateEntityTasks(entityType: EntityType,  entityData: ImportEntityData | EdgeImportEntityData,
+                               entity: BaseData<EntityId>, config?: RequestConfig): Observable<any>[] {
+    const tasks: Observable<any>[] = [];
+    let result;
+    let additionalInfo;
+    switch (entityType) {
+      case EntityType.ASSET:
+      case EntityType.DEVICE:
+        result = entity as (Device | Asset);
+        additionalInfo = result.additionalInfo || {};
+        if (result.label !== entityData.label ||
+          result.type !== entityData.type ||
+          additionalInfo.description !== entityData.description ||
+          (result.id.entityType === EntityType.DEVICE && (additionalInfo.gateway !== entityData.gateway)) ) {
+          result.label = entityData.label;
+          result.type = entityData.type;
+          result.additionalInfo = additionalInfo;
+          result.additionalInfo.description = entityData.description;
+          if (result.id.entityType === EntityType.DEVICE) {
+            result.additionalInfo.gateway = entityData.gateway;
+          }
+          switch (result.id.entityType) {
             case EntityType.DEVICE:
-              findEntityObservable = this.deviceService.findByName(entityData.name, config);
+              tasks.push(this.deviceService.saveDevice(result, config));
               break;
             case EntityType.ASSET:
-              findEntityObservable = this.assetService.findByName(entityData.name, config);
+              tasks.push(this.assetService.saveAsset(result, config));
               break;
           }
-          return findEntityObservable.pipe(
-            mergeMap((entity) => {
-              const tasks: Observable<any>[] = [];
-              const result: Device & Asset = entity as (Device | Asset);
-              const additionalInfo = result.additionalInfo || {};
-              if (result.label !== entityData.label ||
-                 result.type !== entityData.type ||
-                 additionalInfo.description !== entityData.description ||
-                 (result.id.entityType === EntityType.DEVICE && (additionalInfo.gateway !== entityData.gateway)) ) {
-                result.label = entityData.label;
-                result.type = entityData.type;
-                result.additionalInfo = additionalInfo;
-                result.additionalInfo.description = entityData.description;
-                if (result.id.entityType === EntityType.DEVICE) {
-                  result.additionalInfo.gateway = entityData.gateway;
-                }
-                if (result.id.entityType === EntityType.DEVICE && result.deviceProfileId) {
-                  delete result.deviceProfileId;
-                }
-                switch (result.id.entityType) {
-                  case EntityType.DEVICE:
-                    tasks.push(this.deviceService.saveDevice(result, config));
-                    break;
-                  case EntityType.ASSET:
-                    tasks.push(this.assetService.saveAsset(result, config));
-                    break;
-                }
-              }
-              tasks.push(this.saveEntityData(entity.id, entityData, config));
-              return forkJoin(tasks).pipe(
-                map(() => {
-                  return { update: { entity: 1 } } as ImportEntitiesResultInfo;
-                }),
-                catchError(updateError => of({ error: { entity: 1 } } as ImportEntitiesResultInfo))
-              );
-            }),
-            catchError(findErr => of({ error: { entity: 1 } } as ImportEntitiesResultInfo))
-          );
-        } else {
-          return of({ error: { entity: 1 } } as ImportEntitiesResultInfo);
         }
-      })
-    );
+        tasks.push(this.saveEntityData(entity.id, entityData, config));
+        break;
+      case EntityType.EDGE:
+        result = entity as Edge;
+        additionalInfo = result.additionalInfo || {};
+        const edgeEntityData: EdgeImportEntityData = entityData as EdgeImportEntityData;
+        if (result.label !== edgeEntityData.label ||
+          result.type !== edgeEntityData.type ||
+          (edgeEntityData.cloudEndpoint !== '' && result.cloudEndpoint !== edgeEntityData.cloudEndpoint) ||
+          (edgeEntityData.edgeLicenseKey !== '' && result.edgeLicenseKey !== edgeEntityData.edgeLicenseKey) ||
+          (edgeEntityData.routingKey !== '' && result.routingKey !== edgeEntityData.routingKey) ||
+          (edgeEntityData.secret !== '' && result.secret !== edgeEntityData.secret) ||
+          additionalInfo.description !== edgeEntityData.description) {
+          result.label = edgeEntityData.label;
+          result.type = edgeEntityData.type;
+          result.additionalInfo = additionalInfo;
+          result.additionalInfo.description = edgeEntityData.description;
+          if (edgeEntityData.cloudEndpoint !== '') {
+            result.cloudEndpoint = edgeEntityData.cloudEndpoint;
+          }
+          if (edgeEntityData.edgeLicenseKey !== '') {
+            result.edgeLicenseKey = edgeEntityData.edgeLicenseKey;
+          }
+          if (edgeEntityData.routingKey !== '') {
+            result.routingKey = edgeEntityData.routingKey;
+          }
+          if (edgeEntityData.secret !== '') {
+            result.secret = edgeEntityData.secret;
+          }
+          tasks.push(this.edgeService.saveEdge(result, config));
+        }
+        tasks.push(this.saveEntityData(entity.id, edgeEntityData, config));
+        break;
+    }
+    return tasks;
   }
 
   public saveEntityData(entityId: EntityId, entityData: ImportEntityData, config?: RequestConfig): Observable<any> {
@@ -1193,5 +1309,63 @@ export class EntityService {
       const dataKey = this.utils.createKey(keyInfo, type);
       datasource.dataKeys.push(dataKey);
     });
+  }
+
+  public getAssignedToEdgeEntitiesByType(edgeId: string, entityType: EntityType, pageLink: PageLink): Observable<PageData<any>> {
+    let entitiesObservable: Observable<PageData<any>>;
+    switch (entityType) {
+      case (EntityType.ASSET):
+        entitiesObservable = this.assetService.getEdgeAssets(edgeId, pageLink);
+        break;
+      case (EntityType.DEVICE):
+        entitiesObservable = this.deviceService.getEdgeDevices(edgeId, pageLink);
+        break;
+      case (EntityType.ENTITY_VIEW):
+        entitiesObservable = this.entityViewService.getEdgeEntityViews(edgeId, pageLink);
+        break;
+      case (EntityType.DASHBOARD):
+        entitiesObservable = this.dashboardService.getEdgeDashboards(edgeId, pageLink);
+        break;
+      case (EntityType.RULE_CHAIN):
+        entitiesObservable = this.ruleChainService.getEdgeRuleChains(edgeId, pageLink);
+        break;
+    }
+    return entitiesObservable;
+  }
+
+  public getEdgeEventContentByEntityType(entity: any): Observable<any> {
+    let entityObservable: Observable<any>;
+    const entityId: string = entity.entityId;
+    const entityType: any = entity.type;
+    switch (entityType) {
+      case EdgeEventType.DASHBOARD:
+      case EdgeEventType.ALARM:
+      case EdgeEventType.RULE_CHAIN:
+      case EdgeEventType.EDGE:
+      case EdgeEventType.USER:
+      case EdgeEventType.CUSTOMER:
+      case EdgeEventType.TENANT:
+      case EdgeEventType.ASSET:
+      case EdgeEventType.DEVICE:
+      case EdgeEventType.ENTITY_VIEW:
+        entityObservable = this.getEntity(entityType, entityId, { ignoreLoading: true, ignoreErrors: true });
+        break;
+      case EdgeEventType.RULE_CHAIN_METADATA:
+        entityObservable = this.ruleChainService.getRuleChainMetadata(entityId);
+        break;
+      case EdgeEventType.WIDGET_TYPE:
+        entityObservable = this.widgetService.getWidgetTypeById(entityId);
+        break;
+      case EdgeEventType.WIDGETS_BUNDLE:
+        entityObservable = this.widgetService.getWidgetsBundle(entityId);
+        break;
+      case EdgeEventType.DEVICE_PROFILE:
+        entityObservable = this.deviceProfileService.getDeviceProfile(entityId);
+        break;
+      case EdgeEventType.RELATION:
+        entityObservable = of(entity.body);
+        break;
+    }
+    return entityObservable;
   }
 }

@@ -19,8 +19,10 @@ import org.thingsboard.rule.engine.api.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -71,4 +73,10 @@ public interface TbClusterService {
     void onDeviceChange(Device device, TbQueueCallback callback);
 
     void onDeviceDeleted(Device device, TbQueueCallback callback);
+
+    void onResourceChange(TbResource resource, TbQueueCallback callback);
+
+    void onResourceDeleted(TbResource resource, TbQueueCallback callback);
+
+    void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId);
 }

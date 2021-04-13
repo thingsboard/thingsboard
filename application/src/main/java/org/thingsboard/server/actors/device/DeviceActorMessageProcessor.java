@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.actors.device;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -24,18 +25,29 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
+import org.thingsboard.rule.engine.api.msg.DeviceEdgeUpdateMsg;
+import org.thingsboard.rule.engine.api.msg.DeviceCredentialsUpdateNotificationMsg;
 import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
@@ -61,8 +73,10 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcResponseM
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
+import org.thingsboard.server.service.rpc.FromDeviceRpcResponseActorMsg;
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
@@ -98,6 +112,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     private String deviceName;
     private String deviceType;
     private TbMsgMetaData defaultMetaData;
+    private EdgeId edgeId;
 
     DeviceActorMessageProcessor(ActorSystemContext systemContext, TenantId tenantId, DeviceId deviceId) {
         super(systemContext);
@@ -120,10 +135,30 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             this.defaultMetaData = new TbMsgMetaData();
             this.defaultMetaData.putValue("deviceName", deviceName);
             this.defaultMetaData.putValue("deviceType", deviceType);
+            if (systemContext.isEdgesEnabled()) {
+                this.edgeId = findRelatedEdgeId();
+            }
             return true;
         } else {
             return false;
         }
+    }
+
+    private EdgeId findRelatedEdgeId() {
+        List<EntityRelation> result =
+                systemContext.getRelationService().findByToAndType(tenantId, deviceId, EntityRelation.EDGE_TYPE, RelationTypeGroup.COMMON);
+        if (result != null && result.size() > 0) {
+            EntityRelation relationToEdge = result.get(0);
+            if (relationToEdge.getFrom() != null && relationToEdge.getFrom().getId() != null) {
+                log.trace("[{}][{}] found edge [{}] for device", tenantId, deviceId, relationToEdge.getFrom().getId());
+                return new EdgeId(relationToEdge.getFrom().getId());
+            } else {
+                log.trace("[{}][{}] edge relation is empty {}", tenantId, deviceId, relationToEdge);
+            }
+        } else {
+            log.trace("[{}][{}] device doesn't have any related edge", tenantId, deviceId);
+        }
+        return null;
     }
 
     void processRpcRequest(TbActorCtx context, ToDeviceRpcRequestActorMsg msg) {
@@ -138,15 +173,22 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             return;
         }
 
-        boolean sent = rpcSubscriptions.size() > 0;
-        Set<UUID> syncSessionSet = new HashSet<>();
-        rpcSubscriptions.forEach((key, value) -> {
-            sendToTransport(rpcRequest, key, value.getNodeId());
-            if (SessionType.SYNC == value.getType()) {
-                syncSessionSet.add(key);
-            }
-        });
-        syncSessionSet.forEach(rpcSubscriptions::remove);
+        boolean sent;
+        if (systemContext.isEdgesEnabled() && edgeId != null) {
+            log.debug("[{}][{}] device is related to edge [{}]. Saving RPC request to edge queue", tenantId, deviceId, edgeId.getId());
+            saveRpcRequestToEdgeQueue(request, rpcRequest.getRequestId());
+            sent = true;
+        } else {
+            sent = rpcSubscriptions.size() > 0;
+            Set<UUID> syncSessionSet = new HashSet<>();
+            rpcSubscriptions.forEach((key, value) -> {
+                sendToTransport(rpcRequest, key, value.getNodeId());
+                if (SessionType.SYNC == value.getType()) {
+                    syncSessionSet.add(key);
+                }
+            });
+            syncSessionSet.forEach(rpcSubscriptions::remove);
+        }
 
         if (request.isOneway() && sent) {
             log.debug("[{}] Rpc command response sent [{}]!", deviceId, request.getId());
@@ -158,6 +200,17 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             log.debug("[{}] RPC request {} is sent!", deviceId, request.getId());
         } else {
             log.debug("[{}] RPC request {} is NOT sent!", deviceId, request.getId());
+        }
+    }
+
+    void processRpcResponsesFromEdge(TbActorCtx context, FromDeviceRpcResponseActorMsg responseMsg) {
+        log.debug("[{}] Processing rpc command response from edge session", deviceId);
+        ToDeviceRpcRequestMetadata requestMd = toDeviceRpcPendingMap.remove(responseMsg.getRequestId());
+        boolean success = requestMd != null;
+        if (success) {
+            systemContext.getTbCoreDeviceRpcService().processRpcResponseFromDeviceActor(responseMsg.getMsg());
+        } else {
+            log.debug("[{}] Rpc command response [{}] is stale!", deviceId, responseMsg.getRequestId());
         }
     }
 
@@ -450,11 +503,19 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         dumpSessions();
     }
 
-    void processCredentialsUpdate() {
-        sessions.forEach(this::notifyTransportAboutClosedSession);
-        attributeSubscriptions.clear();
-        rpcSubscriptions.clear();
-        dumpSessions();
+    void processCredentialsUpdate(TbActorMsg msg) {
+        if (((DeviceCredentialsUpdateNotificationMsg) msg).getDeviceCredentials().getCredentialsType() == DeviceCredentialsType.LWM2M_CREDENTIALS) {
+            log.info("1) LwM2Mtype: ");
+            sessions.forEach((k, v) -> {
+                notifyTransportAboutProfileUpdate(k, v, ((DeviceCredentialsUpdateNotificationMsg) msg).getDeviceCredentials());
+            });
+        } else {
+            sessions.forEach(this::notifyTransportAboutClosedSession);
+            attributeSubscriptions.clear();
+            rpcSubscriptions.clear();
+            dumpSessions();
+
+        }
     }
 
     private void notifyTransportAboutClosedSession(UUID sessionId, SessionInfoMetaData sessionMd) {
@@ -465,12 +526,29 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         systemContext.getTbCoreToTransportService().process(sessionMd.getSessionInfo().getNodeId(), msg);
     }
 
+    void notifyTransportAboutProfileUpdate(UUID sessionId, SessionInfoMetaData sessionMd, DeviceCredentials deviceCredentials) {
+        log.info("2) LwM2Mtype: ");
+        TransportProtos.ToTransportUpdateCredentialsProto.Builder notification = TransportProtos.ToTransportUpdateCredentialsProto.newBuilder();
+        notification.addCredentialsId(deviceCredentials.getCredentialsId());
+        notification.addCredentialsValue(deviceCredentials.getCredentialsValue());
+        ToTransportMsg msg = ToTransportMsg.newBuilder()
+                .setSessionIdMSB(sessionId.getMostSignificantBits())
+                .setSessionIdLSB(sessionId.getLeastSignificantBits())
+                .setToTransportUpdateCredentialsNotification(notification).build();
+        systemContext.getTbCoreToTransportService().process(sessionMd.getSessionInfo().getNodeId(), msg);
+    }
+
     void processNameOrTypeUpdate(DeviceNameOrTypeUpdateMsg msg) {
         this.deviceName = msg.getDeviceName();
         this.deviceType = msg.getDeviceType();
         this.defaultMetaData = new TbMsgMetaData();
         this.defaultMetaData.putValue("deviceName", deviceName);
         this.defaultMetaData.putValue("deviceType", deviceType);
+    }
+
+    void processEdgeUpdate(DeviceEdgeUpdateMsg msg) {
+        log.trace("[{}] Processing edge update {}", deviceId, msg);
+        this.edgeId = msg.getEdgeId();
     }
 
     private void sendToTransport(GetAttributeResponseMsg responseMsg, SessionInfoProto sessionInfo) {
@@ -505,6 +583,36 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         systemContext.getTbCoreToTransportService().process(nodeId, msg);
     }
 
+    private void saveRpcRequestToEdgeQueue(ToDeviceRpcRequest msg, Integer requestId) {
+        EdgeEvent edgeEvent = new EdgeEvent();
+        edgeEvent.setTenantId(tenantId);
+        edgeEvent.setAction(EdgeEventActionType.RPC_CALL);
+        edgeEvent.setEntityId(deviceId.getId());
+        edgeEvent.setType(EdgeEventType.DEVICE);
+
+        ObjectNode body = mapper.createObjectNode();
+        body.put("requestId", requestId);
+        body.put("requestUUID", msg.getId().toString());
+        body.put("oneway", msg.isOneway());
+        body.put("expirationTime", msg.getExpirationTime());
+        body.put("method", msg.getBody().getMethod());
+        body.put("params", msg.getBody().getParams());
+        edgeEvent.setBody(body);
+
+        edgeEvent.setEdgeId(edgeId);
+        ListenableFuture<EdgeEvent> future = systemContext.getEdgeEventService().saveAsync(edgeEvent);
+        Futures.addCallback(future, new FutureCallback<EdgeEvent>() {
+            @Override
+            public void onSuccess( EdgeEvent result) {
+                systemContext.getClusterService().onEdgeEventUpdate(tenantId, edgeId);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("[{}] Can't save edge event [{}] for edge [{}]", tenantId.getId(), edgeEvent, edgeId.getId(), t);
+            }
+        }, systemContext.getDbCallbackExecutor());
+    }
 
     private List<TsKvProto> toTsKvProtos(@Nullable List<AttributeKvEntry> result) {
         List<TsKvProto> clientAttributes;

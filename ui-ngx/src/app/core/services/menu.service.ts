@@ -18,13 +18,13 @@ import { Injectable } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '../core.state';
-import { selectAuthUser, selectIsAuthenticated } from '../auth/auth.selectors';
+import { selectAuth, selectIsAuthenticated } from '../auth/auth.selectors';
 import { take } from 'rxjs/operators';
 import { HomeSection, MenuSection } from '@core/services/menu.models';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { Authority } from '@shared/models/authority.enum';
-import { AuthUser } from '@shared/models/user.model';
 import { guid } from '@core/utils';
+import { AuthState } from '@core/auth/auth.models';
 
 @Injectable({
   providedIn: 'root'
@@ -45,23 +45,23 @@ export class MenuService {
   }
 
   private buildMenu() {
-    this.store.pipe(select(selectAuthUser), take(1)).subscribe(
-      (authUser: AuthUser) => {
-        if (authUser) {
+    this.store.pipe(select(selectAuth), take(1)).subscribe(
+      (authState: AuthState) => {
+        if (authState.authUser) {
           let menuSections: Array<MenuSection>;
           let homeSections: Array<HomeSection>;
-          switch (authUser.authority) {
+          switch (authState.authUser.authority) {
             case Authority.SYS_ADMIN:
-              menuSections = this.buildSysAdminMenu(authUser);
-              homeSections = this.buildSysAdminHome(authUser);
+              menuSections = this.buildSysAdminMenu(authState);
+              homeSections = this.buildSysAdminHome(authState);
               break;
             case Authority.TENANT_ADMIN:
-              menuSections = this.buildTenantAdminMenu(authUser);
-              homeSections = this.buildTenantAdminHome(authUser);
+              menuSections = this.buildTenantAdminMenu(authState);
+              homeSections = this.buildTenantAdminHome(authState);
               break;
             case Authority.CUSTOMER_USER:
-              menuSections = this.buildCustomerUserMenu(authUser);
-              homeSections = this.buildCustomerUserHome(authUser);
+              menuSections = this.buildCustomerUserMenu(authState);
+              homeSections = this.buildCustomerUserHome(authState);
               break;
           }
           this.menuSections$.next(menuSections);
@@ -71,7 +71,7 @@ export class MenuService {
     );
   }
 
-  private buildSysAdminMenu(authUser: any): Array<MenuSection> {
+  private buildSysAdminMenu(authState: AuthState): Array<MenuSection> {
     const sections: Array<MenuSection> = [];
     sections.push(
       {
@@ -102,6 +102,13 @@ export class MenuService {
         type: 'link',
         path: '/widgets-bundles',
         icon: 'now_widgets'
+      },
+      {
+        id: guid(),
+        name: 'resource.resources-library',
+        type: 'link',
+        path: '/resources-library',
+        icon: 'folder'
       },
       {
         id: guid(),
@@ -152,7 +159,7 @@ export class MenuService {
     return sections;
   }
 
-  private buildSysAdminHome(authUser: any): Array<HomeSection> {
+  private buildSysAdminHome(authState: AuthState): Array<HomeSection> {
     const homeSections: Array<HomeSection> = [];
     homeSections.push(
       {
@@ -178,6 +185,16 @@ export class MenuService {
             name: 'widget.widget-library',
             icon: 'now_widgets',
             path: '/widgets-bundles'
+          }
+        ]
+      },
+      {
+        name: 'resource.management',
+        places: [
+          {
+            name: 'resource.resources-library',
+            icon: 'folder',
+            path: '/resources-library'
           }
         ]
       },
@@ -215,7 +232,7 @@ export class MenuService {
     return homeSections;
   }
 
-  private buildTenantAdminMenu(authUser: any): Array<MenuSection> {
+  private buildTenantAdminMenu(authState: AuthState): Array<MenuSection> {
     const sections: Array<MenuSection> = [];
     sections.push(
       {
@@ -268,7 +285,37 @@ export class MenuService {
         type: 'link',
         path: '/entityViews',
         icon: 'view_quilt'
-      },
+      }
+    );
+    if (authState.edgesSupportEnabled) {
+      sections.push(
+        {
+          id: guid(),
+          name: 'edge.management',
+          type: 'toggle',
+          path: '/edges',
+          height: '80px',
+          icon: 'router',
+          pages: [
+            {
+              id: guid(),
+              name: 'edge.edge-instances',
+              type: 'link',
+              path: '/edges',
+              icon: 'router'
+            },
+            {
+              id: guid(),
+              name: 'edge.rulechain-templates',
+              type: 'link',
+              path: '/edges/ruleChains',
+              icon: 'settings_ethernet'
+            }
+          ]
+        }
+      );
+    }
+    sections.push(
       {
         id: guid(),
         name: 'widget.widget-library',
@@ -282,6 +329,13 @@ export class MenuService {
         type: 'link',
         path: '/dashboards',
         icon: 'dashboards'
+      },
+      {
+        id: guid(),
+        name: 'resource.resources-library',
+        type: 'link',
+        path: '/resources-library',
+        icon: 'folder'
       },
       {
         id: guid(),
@@ -309,7 +363,7 @@ export class MenuService {
     return sections;
   }
 
-  private buildTenantAdminHome(authUser: any): Array<HomeSection> {
+  private buildTenantAdminHome(authState: AuthState): Array<HomeSection> {
     const homeSections: Array<HomeSection> = [];
     homeSections.push(
       {
@@ -367,6 +421,37 @@ export class MenuService {
             path: '/entityViews'
           }
         ]
+      }
+    );
+    if (authState.edgesSupportEnabled) {
+      homeSections.push(
+        {
+          name: 'edge.management',
+          places: [
+            {
+              name: 'edge.edge-instances',
+              icon: 'router',
+              path: '/edges'
+            },
+            {
+              name: 'edge.rulechain-templates',
+              icon: 'settings_ethernet',
+              path: '/edges/ruleChains'
+            }
+          ]
+        }
+      );
+    }
+    homeSections.push(
+      {
+        name: 'resource.management',
+        places: [
+          {
+            name: 'resource.resources-library',
+            icon: 'folder',
+            path: '/resources-library'
+          }
+        ]
       },
       {
         name: 'dashboard.management',
@@ -402,7 +487,7 @@ export class MenuService {
     return homeSections;
   }
 
-  private buildCustomerUserMenu(authUser: any): Array<MenuSection> {
+  private buildCustomerUserMenu(authState: AuthState): Array<MenuSection> {
     const sections: Array<MenuSection> = [];
     sections.push(
       {
@@ -433,7 +518,20 @@ export class MenuService {
         type: 'link',
         path: '/entityViews',
         icon: 'view_quilt'
-      },
+      }
+    );
+    if (authState.edgesSupportEnabled) {
+      sections.push(
+        {
+          id: guid(),
+          name: 'edge.edge-instances',
+          type: 'link',
+          path: '/edges',
+          icon: 'router'
+        }
+      );
+    }
+    sections.push(
       {
         id: guid(),
         name: 'dashboard.dashboards',
@@ -445,8 +543,9 @@ export class MenuService {
     return sections;
   }
 
-  private buildCustomerUserHome(authUser: any): Array<HomeSection> {
-    const homeSections: Array<HomeSection> = [
+  private buildCustomerUserHome(authState: AuthState): Array<HomeSection> {
+    const homeSections: Array<HomeSection> = [];
+    homeSections.push(
       {
         name: 'asset.view-assets',
         places: [
@@ -476,7 +575,23 @@ export class MenuService {
             path: '/entityViews'
           }
         ]
-      },
+      }
+    );
+    if (authState.edgesSupportEnabled) {
+      homeSections.push(
+        {
+          name: 'edge.management',
+          places: [
+            {
+              name: 'edge.edge-instances',
+              icon: 'router',
+              path: '/edges'
+            }
+          ]
+        }
+      );
+    }
+    homeSections.push(
       {
         name: 'dashboard.view-dashboards',
         places: [
@@ -487,7 +602,7 @@ export class MenuService {
           }
         ]
       }
-    ];
+    );
     return homeSections;
   }
 

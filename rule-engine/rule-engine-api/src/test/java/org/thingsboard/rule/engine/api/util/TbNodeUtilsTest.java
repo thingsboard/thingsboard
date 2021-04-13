@@ -23,7 +23,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.dao.util.mapping.JacksonUtil;
+import org.thingsboard.common.util.JacksonUtil;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TbNodeUtilsTest {

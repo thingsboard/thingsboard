@@ -17,6 +17,7 @@ package org.thingsboard.server.service.security.model.token;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.jsonwebtoken.Claims;
+import org.thingsboard.server.common.data.security.model.JwtToken;
 
 public final class AccessJwtToken implements JwtToken {
     private final String rawToken;

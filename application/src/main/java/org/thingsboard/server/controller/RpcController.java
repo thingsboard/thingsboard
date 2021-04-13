@@ -97,13 +97,9 @@ public class RpcController extends BaseController {
     private DeferredResult<ResponseEntity> handleDeviceRPCRequest(boolean oneWay, DeviceId deviceId, String requestBody) throws ThingsboardException {
         try {
             JsonNode rpcRequestBody = jsonMapper.readTree(requestBody);
-            String requestData;
-            if (rpcRequestBody.get("params").isTextual()) {
-                requestData = rpcRequestBody.get("params").asText();
-            } else {
-                requestData = jsonMapper.writeValueAsString(rpcRequestBody.get("params"));
-            }
-            RpcRequest cmd = new RpcRequest(rpcRequestBody.get("method").asText(), requestData);
+            RpcRequest cmd = new RpcRequest(rpcRequestBody.get("method").asText(),
+                    jsonMapper.writeValueAsString(rpcRequestBody.get("params")));
+
             if (rpcRequestBody.has("timeout")) {
                 cmd.setTimeout(rpcRequestBody.get("timeout").asLong());
             }

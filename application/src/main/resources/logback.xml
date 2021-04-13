@@ -34,6 +34,9 @@
 
 <!--    <logger name="org.thingsboard.server.service.subscription" level="TRACE"/>-->
 <!--    <logger name="org.thingsboard.server.service.telemetry" level="TRACE"/>-->
+<!--    <logger name="org.eclipse.californium.scandium.DTLSConnector" level="TRACE" />-->
+<!--    <logger name="org.eclipse.californium.scandium.dtls.Handshaker" level="DEBUG" />-->
+
     <logger name="com.microsoft.azure.servicebus.primitives.CoreMessageReceiver" level="OFF" />
 
     <root level="INFO">

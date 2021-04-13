@@ -21,7 +21,7 @@ In this example `thingsboard/tb` image will be used. You can choose any other im
 Execute the following command to run this docker directly:
 
 ` 
-$ docker run -it -p 9090:9090 -p 1883:1883 -p 5683:5683/udp -v ~/.mytb-data:/data --name mytb thingsboard/tb
+$ docker run -it -p 9090:9090 -p 1883:1883 -p 5683:5683/udp  -p 5685:5685/udp -v ~/.mytb-data:/data --name mytb thingsboard/tb
 ` 
 
 Where: 
@@ -31,6 +31,7 @@ Where:
 - `-p 9090:9090`            - connect local port 9090 to exposed internal HTTP port 9090
 - `-p 1883:1883`            - connect local port 1883 to exposed internal MQTT port 1883    
 - `-p 5683:5683`            - connect local port 5683 to exposed internal COAP port 5683 
+- `-p 5685:5685`            - connect local port 5685 to exposed internal COAP port 5685 (lwm2m) 
 - `-v ~/.mytb-data:/data`   - mounts the host's dir `~/.mytb-data` to ThingsBoard DataBase data directory
 - `--name mytb`             - friendly local name of this machine
 - `thingsboard/tb`          - docker image, can be also `thingsboard/tb-postgres` or `thingsboard/tb-cassandra`
@@ -45,6 +46,7 @@ Where:
 > $ VBoxManage controlvm "default" natpf1 "tcp-port9090,tcp,,9090,,9090"  
 > $ VBoxManage controlvm "default" natpf1 "tcp-port1883,tcp,,1883,,1883"
 > $ VBoxManage controlvm "default" natpf1 "tcp-port5683,tcp,,5683,,5683"
+> $ VBoxManage controlvm "default" natpf1 "tcp-port5683,tcp,,5685,,5685"
 > ```
 
 After executing `docker run` command you can open `http://{your-host-ip}:9090` in you browser (for ex. `http://localhost:9090`). You should see ThingsBoard login page.

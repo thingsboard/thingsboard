@@ -21,8 +21,8 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
+import org.thingsboard.server.dao.device.claim.ReclaimResult;
 
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public interface ClaimDevicesService {
@@ -31,6 +31,6 @@ public interface ClaimDevicesService {
 
     ListenableFuture<ClaimResult> claimDevice(Device device, CustomerId customerId, String secretKey) throws ExecutionException, InterruptedException;
 
-    ListenableFuture<List<Void>> reClaimDevice(TenantId tenantId, Device device);
+    ListenableFuture<ReclaimResult> reClaimDevice(TenantId tenantId, Device device);
 
 }

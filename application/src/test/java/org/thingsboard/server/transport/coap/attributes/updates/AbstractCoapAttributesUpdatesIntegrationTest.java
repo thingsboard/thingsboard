@@ -26,9 +26,9 @@ import org.eclipse.californium.core.coap.Request;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.transport.coap.attributes.AbstractCoapAttributesIntegrationTest;
 import org.thingsboard.server.common.msg.session.FeatureType;
-import org.thingsboard.server.dao.util.mapping.JacksonUtil;
 
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;

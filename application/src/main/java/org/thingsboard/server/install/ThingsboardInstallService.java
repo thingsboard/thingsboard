@@ -191,6 +191,12 @@ public class ThingsboardInstallService {
                                 databaseTsUpgradeService.upgradeDatabase("3.2.1");
                             }
                             databaseEntitiesUpgradeService.upgradeDatabase("3.2.1");
+                        case "3.2.2":
+                            log.info("Upgrading ThingsBoard from version 3.2.2 to 3.3.0 ...");
+                            databaseEntitiesUpgradeService.upgradeDatabase("3.2.2");
+
+                            dataUpdateService.updateData("3.2.2");
+
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
                             break;
@@ -226,6 +232,7 @@ public class ThingsboardInstallService {
                 systemDataLoaderService.createAdminSettings();
                 systemDataLoaderService.loadSystemWidgets();
                 systemDataLoaderService.createOAuth2Templates();
+                systemDataLoaderService.loadSystemLwm2mResources();
 //                systemDataLoaderService.loadSystemPlugins();
 //                systemDataLoaderService.loadSystemRules();
 

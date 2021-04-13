@@ -49,7 +49,11 @@ export enum ImportEntityColumnType {
   entityField = 'ENTITY_FIELD',
   accessToken = 'ACCESS_TOKEN',
   isGateway = 'IS_GATEWAY',
-  description = 'DESCRIPTION'
+  description = 'DESCRIPTION',
+  edgeLicenseKey = 'EDGE_LICENSE_KEY',
+  cloudEndpoint = 'CLOUD_ENDPOINT',
+  routingKey = 'ROUTING_KEY',
+  secret = 'SECRET'
 }
 
 export const importEntityObjectColumns =
@@ -68,6 +72,10 @@ export const importEntityColumnTypeTranslations = new Map<ImportEntityColumnType
     [ImportEntityColumnType.accessToken, 'import.column-type.access-token'],
     [ImportEntityColumnType.isGateway, 'import.column-type.isgateway'],
     [ImportEntityColumnType.description, 'import.column-type.description'],
+    [ImportEntityColumnType.edgeLicenseKey, 'import.column-type.edge-license-key'],
+    [ImportEntityColumnType.cloudEndpoint, 'import.column-type.cloud-endpoint'],
+    [ImportEntityColumnType.routingKey, 'import.column-type.routing-key'],
+    [ImportEntityColumnType.secret, 'import.column-type.secret']
   ]
 );
 

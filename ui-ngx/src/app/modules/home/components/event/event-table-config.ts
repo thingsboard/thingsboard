@@ -360,3 +360,4 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     this.cd.detectChanges();
   }
 }
+

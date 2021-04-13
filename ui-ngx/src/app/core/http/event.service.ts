@@ -44,4 +44,5 @@ export class EventService {
     return this.http.post<PageData<Event>>(`/api/events/${entityId.entityType}/${entityId.id}` +
       `${pageLink.toQuery()}&tenantId=${tenantId}`, {...filters, eventType}, defaultHttpOptionsFromConfig(config));
   }
+  
 }

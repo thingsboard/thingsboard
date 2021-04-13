@@ -446,6 +446,43 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.error("Failed updating schema!!!", e);
                 }
                 break;
+            case "3.2.2":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    try {
+                        conn.createStatement().execute("CREATE TABLE IF NOT EXISTS resource ( " +
+                                "id uuid NOT NULL CONSTRAINT resource_pkey PRIMARY KEY, " +
+                                "created_time bigint NOT NULL, " +
+                                "tenant_id uuid NOT NULL, " +
+                                "title varchar(255) NOT NULL, " +
+                                "resource_type varchar(32) NOT NULL, " +
+                                "resource_key varchar(255) NOT NULL, " +
+                                "search_text varchar(255), " +
+                                "file_name varchar(255) NOT NULL, " +
+                                "data varchar, " +
+                                "CONSTRAINT resource_unq_key UNIQUE (tenant_id, resource_type, resource_key)" +
+                                ");");
+
+                        conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3003000;");
+                        installScripts.loadSystemLwm2mResources();
+
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.2.2", SCHEMA_UPDATE_SQL);
+                        loadSql(schemaUpdateFile, conn);
+                        try {
+                            conn.createStatement().execute("ALTER TABLE rule_chain ADD COLUMN type varchar(255) DEFAULT 'CORE'"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                        } catch (Exception ignored) {}
+
+                        log.info("Load Edge TTL functions ...");
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.2.2", "schema_update_ttl.sql");
+                        loadSql(schemaUpdateFile, conn);
+                        log.info("Edge TTL functions successfully loaded!");
+
+                    } catch (Exception e) {
+                        log.error("Failed updating schema!!!", e);
+                    }
+                    log.info("Schema updated.");
+                }
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
         }
