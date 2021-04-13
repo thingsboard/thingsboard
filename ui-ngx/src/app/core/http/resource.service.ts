@@ -70,12 +70,12 @@ export class ResourceService {
     );
   }
 
-  public saveResources(resources: Resource[], config?: RequestConfig) {
+  public saveResources(resources: Resource[], config?: RequestConfig): Observable<Resource[]> {
     let partSize = 100;
     partSize = resources.length > partSize ? partSize : resources.length;
-    const resourceObservables = [];
+    const resourceObservables: Observable<Resource>[] = [];
     for (let i = 0; i < partSize; i++) {
-      resourceObservables.push(this.saveResource(resources[i], config).pipe(catchError(error => of(error))));
+      resourceObservables.push(this.saveResource(resources[i], config).pipe(catchError(() => of({} as Resource))));
     }
     return forkJoin(resourceObservables).pipe(
       mergeMap((resource) => {

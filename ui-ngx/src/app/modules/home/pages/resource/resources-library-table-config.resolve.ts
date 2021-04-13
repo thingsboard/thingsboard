@@ -24,7 +24,6 @@ import {
 import { Resolve } from '@angular/router';
 import { Resource, ResourceInfo, ResourceTypeTranslationMap } from '@shared/models/resource.models';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
-import { Direction } from '@shared/models/page/sort-order';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
@@ -34,13 +33,14 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Authority } from '@shared/models/authority.enum';
 import { ResourcesLibraryComponent } from '@home/pages/resource/resources-library.component';
-import { Observable } from 'rxjs/internal/Observable';
-import { PageData } from '@shared/models/page/page-data';
+import { PageLink } from '@shared/models/page/page-link';
+import { EntityAction } from '@home/models/entity/entity-component.models';
+import { map } from 'rxjs/operators';
 
 @Injectable()
-export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableConfig<Resource>> {
+export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableConfig<Resource, PageLink, ResourceInfo>> {
 
-  private readonly config: EntityTableConfig<Resource> = new EntityTableConfig<Resource>();
+  private readonly config: EntityTableConfig<Resource, PageLink, ResourceInfo> = new EntityTableConfig<Resource, PageLink, ResourceInfo>();
   private readonly resourceTypesTranslationMap = ResourceTypeTranslationMap;
 
   constructor(private store: Store<AppState>,
@@ -52,17 +52,16 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
     this.config.entityComponent = ResourcesLibraryComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.TB_RESOURCE);
     this.config.entityResources = entityTypeResources.get(EntityType.TB_RESOURCE);
-    this.config.defaultSortOrder = {property: 'title', direction: Direction.ASC};
 
     this.config.entityTitle = (resource) => resource ?
       resource.title : '';
 
     this.config.columns.push(
       new DateEntityTableColumn<ResourceInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<ResourceInfo>('title', 'widgets-bundle.title', '60%'),
+      new EntityTableColumn<ResourceInfo>('title', 'resource.title', '60%'),
       new EntityTableColumn<ResourceInfo>('resourceType', 'resource.resource-type', '40%',
         entity => this.resourceTypesTranslationMap.get(entity.resourceType)),
-      new EntityTableColumn<ResourceInfo>('tenantId', 'widgets-bundle.system', '60px',
+      new EntityTableColumn<ResourceInfo>('tenantId', 'resource.system', '60px',
         entity => {
           return checkBoxCell(entity.tenantId.id === NULL_UUID);
         }),
@@ -83,10 +82,12 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
     this.config.deleteEntitiesTitle = count => this.translate.instant('resource.delete-resources-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('resource.delete-resources-text');
 
-    this.config.entitiesFetchFunction = pageLink => this.resourceService.getResources(pageLink) as Observable<PageData<Resource>>;
+    this.config.entitiesFetchFunction = pageLink => this.resourceService.getResources(pageLink);
     this.config.loadEntity = id => this.resourceService.getResource(id.id);
     this.config.saveEntity = resource => this.saveResource(resource);
     this.config.deleteEntity = id => this.resourceService.deleteResource(id.id);
+
+    this.config.onEntityAction = action => this.onResourceAction(action);
   }
 
   saveResource(resource) {
@@ -100,13 +101,15 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
           title: resource.title
         });
       });
-      return this.resourceService.saveResources(resources, {resendRequest: true});
+      return this.resourceService.saveResources(resources, {resendRequest: true}).pipe(
+        map((response) => response[0])
+      );
     } else {
       return this.resourceService.saveResource(resource);
     }
   }
 
-  resolve(): EntityTableConfig<Resource> {
+  resolve(): EntityTableConfig<Resource, PageLink, ResourceInfo> {
     this.config.tableTitle = this.translate.instant('resource.resources-library');
     const authUser = getCurrentAuthUser(this.store);
     this.config.deleteEnabled = (resource) => this.isResourceEditable(resource, authUser.authority);
@@ -122,7 +125,16 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
     this.resourceService.downloadResource(resource.id.id).subscribe();
   }
 
-  private isResourceEditable(resource: Resource, authority: Authority): boolean {
+  onResourceAction(action: EntityAction<ResourceInfo>): boolean {
+    switch (action.action) {
+      case 'uploadResource':
+        this.exportResource(action.event, action.entity);
+        return true;
+    }
+    return false;
+  }
+
+  private isResourceEditable(resource: ResourceInfo, authority: Authority): boolean {
     if (authority === Authority.TENANT_ADMIN) {
       return resource && resource.tenantId && resource.tenantId.id !== NULL_UUID;
     } else {
