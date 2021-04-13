@@ -24,12 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
-import org.eclipse.leshan.core.node.LwM2mMultipleResource;
-import org.eclipse.leshan.core.node.LwM2mNode;
-import org.eclipse.leshan.core.node.LwM2mObject;
-import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
-import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.node.codec.CodecException;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.californium.LeshanServerBuilder;
@@ -147,19 +142,19 @@ public class LwM2mTransportHandler {
                 throw new CodecException("Invalid value type for resource %s, type %s", resourcePath, type);
         }
     }
-
-    public static LwM2mNode getLvM2mNodeToObject(LwM2mNode content) {
-        if (content instanceof LwM2mObject) {
-            return (LwM2mObject) content;
-        } else if (content instanceof LwM2mObjectInstance) {
-            return (LwM2mObjectInstance) content;
-        } else if (content instanceof LwM2mSingleResource) {
-            return (LwM2mSingleResource) content;
-        } else if (content instanceof LwM2mMultipleResource) {
-            return (LwM2mMultipleResource) content;
-        }
-        return null;
-    }
+//
+//    public static LwM2mNode getLvM2mNodeToObject(LwM2mNode content) {
+//        if (content instanceof LwM2mObject) {
+//            return (LwM2mObject) content;
+//        } else if (content instanceof LwM2mObjectInstance) {
+//            return (LwM2mObjectInstance) content;
+//        } else if (content instanceof LwM2mSingleResource) {
+//            return (LwM2mSingleResource) content;
+//        } else if (content instanceof LwM2mMultipleResource) {
+//            return (LwM2mMultipleResource) content;
+//        }
+//        return null;
+//    }
 
     public static LwM2mClientProfile getNewProfileParameters(JsonObject profilesConfigData, TenantId tenantId) {
         LwM2mClientProfile lwM2MClientProfile = new LwM2mClientProfile();
@@ -199,7 +194,7 @@ public class LwM2mTransportHandler {
                 ObjectMapper mapper = new ObjectMapper();
                 String profileStr = mapper.writeValueAsString(profile);
                 JsonObject profileJson = (profileStr != null) ? validateJson(profileStr) : null;
-                return (getValidateCredentialsBodyFromThingsboard(profileJson)) ? LwM2mTransportHandler.getNewProfileParameters(profileJson, deviceProfile.getTenantId()) : null;
+                return getValidateCredentialsBodyFromThingsboard(profileJson) ? LwM2mTransportHandler.getNewProfileParameters(profileJson, deviceProfile.getTenantId()) : null;
             } catch (IOException e) {
                 log.error("", e);
             }
@@ -247,7 +242,10 @@ public class LwM2mTransportHandler {
                 objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(TELEMETRY).isJsonArray() &&
                 objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(OBSERVE) &&
                 !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(OBSERVE).isJsonNull() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(OBSERVE).isJsonArray());
+                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(OBSERVE).isJsonArray() &&
+                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(ATTRIBUTE_LWM2M) &&
+                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE_LWM2M).isJsonNull() &&
+                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE_LWM2M).isJsonObject());
     }
 
     private static boolean getValidateBootstrapProfileFromThingsboard(JsonObject objectMsg) {

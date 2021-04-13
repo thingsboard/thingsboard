@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import {DeviceProfileTransportConfiguration, DeviceTransportType} from '@shared/models/device.models';
+import {DeviceProfileTransportConfiguration} from '@shared/models/device.models';
 import {Component, forwardRef, Inject, Input} from '@angular/core';
 import {ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators} from '@angular/forms';
 import {Store} from '@ngrx/store';
@@ -358,6 +358,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       this.configurationValue.observeAttr.observe = observeArray;
       this.configurationValue.observeAttr.attribute = attributeArray;
       this.configurationValue.observeAttr.telemetry = telemetryArray;
+      this.configurationValue.observeAttr.keyName = this.sortObjectKeyPathJson(KEY_NAME, keyNameNew);
       this.configurationValue.observeAttr.attributeLwm2m = attributeLwm2m;
     }
   }
