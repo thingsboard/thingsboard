@@ -23,8 +23,6 @@ import { PageData } from '@shared/models/page/page-data';
 import { Firmware, FirmwareInfo } from '@shared/models/firmware.models';
 import { catchError, map, mergeMap } from 'rxjs/operators';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
-import { InterceptorHttpParams } from '@core/interceptors/interceptor-http-params';
-import { InterceptorConfig } from '@core/interceptors/interceptor-config';
 
 @Injectable({
   providedIn: 'root'
@@ -37,10 +35,11 @@ export class FirmwareService {
   }
 
   public getFirmwares(pageLink: PageLink, hasData?: boolean, config?: RequestConfig): Observable<PageData<FirmwareInfo>> {
-    let url = `/api/firmwares${pageLink.toQuery()}`;
+    let url = `/api/firmwares`;
     if (isDefinedAndNotNull(hasData)) {
-      url += `&hasData=${hasData}`;
+      url += `/${hasData}`;
     }
+    url += `${pageLink.toQuery()}`;
     return this.http.get<PageData<FirmwareInfo>>(url, defaultHttpOptionsFromConfig(config));
   }
 

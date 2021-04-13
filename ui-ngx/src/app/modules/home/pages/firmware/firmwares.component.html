@@ -28,6 +28,16 @@
           [fxShow]="!hideDelete() && !isEdit">
     {{'resource.delete' | translate }}
   </button>
+  <div fxLayout="row" fxLayout.xs="column">
+    <button mat-raised-button
+            ngxClipboard
+            (cbOnSuccess)="onFirmwareIdCopied($event)"
+            [cbContent]="entity?.id?.id"
+            [fxShow]="!isEdit">
+      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      <span translate>firmware.copyId</span>
+    </button>
+  </div>
 </div>
 <div class="mat-padding" fxLayout="column">
   <form [formGroup]="entityForm">

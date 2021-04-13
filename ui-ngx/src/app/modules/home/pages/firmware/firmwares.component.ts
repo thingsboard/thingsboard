@@ -24,6 +24,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { EntityComponent } from '@home/components/entity/entity.component';
 import { ChecksumAlgorithm, ChecksumAlgorithmTranslationMap, Firmware } from '@shared/models/firmware.models';
 import { distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
 
 @Component({
   selector: 'tb-firmware',
@@ -108,5 +109,16 @@ export class FirmwaresComponent extends EntityComponent<Firmware> implements OnI
         description: entity.additionalInfo ? entity.additionalInfo.description : ''
       }
     });
+  }
+
+  onFirmwareIdCopied($event) {
+    this.store.dispatch(new ActionNotificationShow(
+      {
+        message: this.translate.instant('firmware.idCopiedMessage'),
+        type: 'success',
+        duration: 750,
+        verticalPosition: 'bottom',
+        horizontalPosition: 'right'
+      }));
   }
 }

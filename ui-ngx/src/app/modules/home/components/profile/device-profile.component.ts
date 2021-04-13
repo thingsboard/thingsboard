@@ -53,11 +53,11 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
 
   entityType = EntityType;
 
-  deviceProfileTypes = Object.keys(DeviceProfileType);
+  deviceProfileTypes = Object.values(DeviceProfileType);
 
   deviceProfileTypeTranslations = deviceProfileTypeTranslationMap;
 
-  deviceTransportTypes = Object.keys(DeviceTransportType);
+  deviceTransportTypes = Object.values(DeviceTransportType);
 
   deviceTransportTypeTranslations = deviceTransportTypeTranslationMap;
 
@@ -109,6 +109,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
         }),
         defaultRuleChainId: [entity && entity.defaultRuleChainId ? entity.defaultRuleChainId.id : null, []],
         defaultQueueName: [entity ? entity.defaultQueueName : '', []],
+        firmwareId: [entity ? entity.firmwareId : null],
         description: [entity ? entity.description : '', []],
       }
     );
@@ -184,6 +185,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     }}, {emitEvent: false});
     this.entityForm.patchValue({defaultRuleChainId: entity.defaultRuleChainId ? entity.defaultRuleChainId.id : null}, {emitEvent: false});
     this.entityForm.patchValue({defaultQueueName: entity.defaultQueueName}, {emitEvent: false});
+    this.entityForm.patchValue({firmwareId: entity.firmwareId}, {emitEvent: false});
     this.entityForm.patchValue({description: entity.description}, {emitEvent: false});
   }
 
