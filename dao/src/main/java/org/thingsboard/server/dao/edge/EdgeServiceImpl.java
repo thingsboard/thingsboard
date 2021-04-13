@@ -586,7 +586,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
 
     @Override
     public Object activateInstance(String edgeLicenseSecret, String releaseDate) {
-        Map<String, String> params = new HashMap();
+        Map<String, String> params = new HashMap<>();
         params.put("licenseSecret", edgeLicenseSecret);
         params.put("releaseDate", releaseDate);
         return this.restTemplate.postForEntity(EDGE_LICENSE_SERVER_ENDPOINT + "/api/license/activateInstance?licenseSecret={licenseSecret}&releaseDate={releaseDate}", (Object) null, Object.class, params);

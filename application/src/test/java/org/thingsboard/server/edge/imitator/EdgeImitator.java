@@ -270,7 +270,8 @@ public class EdgeImitator {
         responsesLatch = new CountDownLatch(messageAmount);
     }
 
-    public <T> Optional<T> findMessageByType(Class<T> tClass) {
+    @SuppressWarnings("unchecked")
+    public <T extends AbstractMessage> Optional<T> findMessageByType(Class<T> tClass) {
         Optional<T> result;
         try {
             lock.lock();
