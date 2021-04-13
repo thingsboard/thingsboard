@@ -305,17 +305,25 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         restTemplate.postForLocation(baseURL + "/api/alarm/{alarmId}/clear", null, alarmId.getId());
     }
 
-    public PageData<AlarmInfo> getAlarms(EntityId entityId, AlarmSearchStatus searchStatus, AlarmStatus status, TimePageLink pageLink, Boolean fetchOriginator) {
+    public PageData<AlarmInfo> getAlarms(EntityId entityId, AlarmSearchStatus searchStatus, AlarmStatus status, TimePageLink pageLink, String offset, Boolean fetchOriginator) {
+        String urlSecondPart = "/api/alarm/{entityType}/{entityId}?fetchOriginator={fetchOriginator}&";
         Map<String, String> params = new HashMap<>();
         params.put("entityType", entityId.getEntityType().name());
         params.put("entityId", entityId.getId().toString());
-        params.put("searchStatus", searchStatus.name());
-        params.put("status", status.name());
+        if(searchStatus != null) {
+            params.put("searchStatus", searchStatus.name());
+            urlSecondPart += "searchStatus={searchStatus}&";
+        }
+        if(status != null) {
+            params.put("status", status.name());
+            urlSecondPart += "status={status}&";
+        }
         params.put("fetchOriginator", String.valueOf(fetchOriginator));
+        params.put("offset", offset);
         addTimePageLinkToParam(params, pageLink);
 
         return restTemplate.exchange(
-                baseURL + "/api/alarm/{entityType}/{entityId}?searchStatus={searchStatus}&status={status}&fetchOriginator={fetchOriginator}&" + getTimeUrlParams(pageLink),
+                baseURL +  urlSecondPart + getUrlParams(pageLink) + getTimeUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<AlarmInfo>>() {
@@ -2841,7 +2849,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     private String getTimeUrlParams(TimePageLink pageLink) {
-        String urlParams = "limit={limit}&ascOrder={ascOrder}";
+        String urlParams = "";
         if (pageLink.getStartTime() != null) {
             urlParams += "&startTime={startTime}";
         }
