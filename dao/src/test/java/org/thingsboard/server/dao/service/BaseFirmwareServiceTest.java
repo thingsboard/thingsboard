@@ -337,6 +337,20 @@ public abstract class BaseFirmwareServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testFindFirmwareInfoById() {
+        FirmwareInfo firmware = new FirmwareInfo();
+        firmware.setTenantId(tenantId);
+        firmware.setTitle(TITLE);
+        firmware.setVersion(VERSION);
+        FirmwareInfo savedFirmware = firmwareService.saveFirmwareInfo(firmware);
+
+        FirmwareInfo foundFirmware = firmwareService.findFirmwareInfoById(tenantId, savedFirmware.getId());
+        Assert.assertNotNull(foundFirmware);
+        Assert.assertEquals(savedFirmware, foundFirmware);
+        firmwareService.deleteFirmware(tenantId, savedFirmware.getId());
+    }
+
+    @Test
     public void testDeleteFirmware() {
         Firmware firmware = new Firmware();
         firmware.setTenantId(tenantId);
@@ -403,24 +417,46 @@ public abstract class BaseFirmwareServiceTest extends AbstractServiceTest {
     public void testFindTenantFirmwaresByTenantIdAndHasData() {
         List<FirmwareInfo> firmwares = new ArrayList<>();
         for (int i = 0; i < 165; i++) {
-            Firmware firmware = new Firmware();
-            firmware.setTenantId(tenantId);
-            firmware.setTitle(TITLE);
-            firmware.setVersion(VERSION + i);
-            firmware.setFileName(FILE_NAME);
-            firmware.setContentType(CONTENT_TYPE);
-            firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
-            firmware.setChecksum(CHECKSUM);
-            firmware.setData(DATA);
-
-            FirmwareInfo info = new FirmwareInfo(firmwareService.saveFirmware(firmware));
-            info.setHasData(true);
-            firmwares.add(info);
+            FirmwareInfo firmwareInfo = new FirmwareInfo();
+            firmwareInfo.setTenantId(tenantId);
+            firmwareInfo.setTitle(TITLE);
+            firmwareInfo.setVersion(VERSION + i);
+            firmwares.add(firmwareService.saveFirmwareInfo(firmwareInfo));
         }
 
         List<FirmwareInfo> loadedFirmwares = new ArrayList<>();
         PageLink pageLink = new PageLink(16);
         PageData<FirmwareInfo> pageData;
+        do {
+            pageData = firmwareService.findTenantFirmwaresByTenantIdAndHasData(tenantId, false, pageLink);
+            loadedFirmwares.addAll(pageData.getData());
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        Collections.sort(firmwares, idComparator);
+        Collections.sort(loadedFirmwares, idComparator);
+
+        Assert.assertEquals(firmwares, loadedFirmwares);
+
+        firmwares.forEach(f -> {
+            Firmware firmware = new Firmware(f.getId());
+            firmware.setCreatedTime(f.getCreatedTime());
+            firmware.setTenantId(f.getTenantId());
+            firmware.setTitle(f.getTitle());
+            firmware.setVersion(f.getVersion());
+            firmware.setFileName(FILE_NAME);
+            firmware.setContentType(CONTENT_TYPE);
+            firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
+            firmware.setChecksum(CHECKSUM);
+            firmware.setData(DATA);
+            firmwareService.saveFirmware(firmware);
+            f.setHasData(true);
+        });
+
+        loadedFirmwares = new ArrayList<>();
+        pageLink = new PageLink(16);
         do {
             pageData = firmwareService.findTenantFirmwaresByTenantIdAndHasData(tenantId, true, pageLink);
             loadedFirmwares.addAll(pageData.getData());

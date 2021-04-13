@@ -46,6 +46,7 @@ public class FirmwareInfo extends SearchTextBasedWithAdditionalInfo<FirmwareId> 
         this.tenantId = firmwareInfo.getTenantId();
         this.title = firmwareInfo.getTitle();
         this.version = firmwareInfo.getVersion();
+        this.hasData = firmwareInfo.isHasData();
     }
 
     @Override
