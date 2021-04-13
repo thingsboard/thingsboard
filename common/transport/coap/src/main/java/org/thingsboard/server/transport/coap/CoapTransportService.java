@@ -18,17 +18,15 @@ package org.thingsboard.server.transport.coap;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
-import org.eclipse.californium.core.network.CoapEndpoint;
-import org.eclipse.californium.core.server.resources.Resource;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.coapserver.CoapServerService;
 import org.thingsboard.server.transport.coap.efento.CoapEfentoTransportResource;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
 @Service("CoapTransportService")
@@ -42,49 +40,30 @@ public class CoapTransportService {
     private static final String MEASUREMENTS = "m";
 
     @Autowired
+    private CoapServerService coapServerService;
+
+    @Autowired
     private CoapTransportContext coapTransportContext;
 
-    private CoapServer server;
+    private CoapServer coapServer;
 
     @PostConstruct
     public void init() throws UnknownHostException {
         log.info("Starting CoAP transport...");
-        log.info("Starting CoAP transport server");
-
-        this.server = new CoapServer();
-        createResources();
-        Resource root = this.server.getRoot();
-        TbCoapServerMessageDeliverer messageDeliverer = new TbCoapServerMessageDeliverer(root);
-        this.server.setMessageDeliverer(messageDeliverer);
-
-        InetAddress addr = InetAddress.getByName(coapTransportContext.getHost());
-        InetSocketAddress sockAddr = new InetSocketAddress(addr, coapTransportContext.getPort());
-
-        CoapEndpoint.Builder coapEndpoitBuilder = new CoapEndpoint.Builder();
-        coapEndpoitBuilder.setInetSocketAddress(sockAddr);
-        CoapEndpoint coapEndpoint = coapEndpoitBuilder.build();
-
-        server.addEndpoint(coapEndpoint);
-        server.start();
-        log.info("CoAP transport started!");
-    }
-
-    private void createResources() {
+        coapServer = coapServerService.getCoapServer();
         CoapResource api = new CoapResource(API);
-        api.add(new CoapTransportResource(coapTransportContext, V1));
+        api.add(new CoapTransportResource(coapTransportContext, coapServerService, V1));
 
         CoapResource efento = new CoapResource(EFENTO);
         CoapEfentoTransportResource efentoMeasurementsTransportResource = new CoapEfentoTransportResource(coapTransportContext, MEASUREMENTS);
         efento.add(efentoMeasurementsTransportResource);
-
-        server.add(api);
-        server.add(efento);
+        coapServer.add(api);
+        coapServer.add(efento);
+        log.info("CoAP transport started!");
     }
 
     @PreDestroy
     public void shutdown() {
-        log.info("Stopping CoAP transport!");
-        this.server.destroy();
         log.info("CoAP transport stopped!");
     }
 }

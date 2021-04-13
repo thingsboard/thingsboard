@@ -38,7 +38,7 @@ import { isEqual } from '@core/utils';
 })
 export class DashboardFormComponent extends EntityComponent<Dashboard> {
 
-  dashboardScope: 'tenant' | 'customer' | 'customer_user';
+  dashboardScope: 'tenant' | 'customer' | 'customer_user' | 'edge';
   customerId: string;
 
   publicLink: string;

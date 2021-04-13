@@ -87,6 +87,10 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 log.info("Updating data from version 3.1.1 to 3.2.0 ...");
                 tenantsRootRuleChainUpdater.updateEntities(null);
                 break;
+            case "3.2.2":
+                log.info("Updating data from version 3.2.2 to 3.3.0 ...");
+                tenantsDefaultEdgeRuleChainUpdater.updateEntities(null);
+                break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
         }
@@ -106,6 +110,27 @@ public class DefaultDataUpdateService implements DataUpdateService {
                         RuleChain ruleChain = ruleChainService.getRootTenantRuleChain(tenant.getId());
                         if (ruleChain == null) {
                             installScripts.createDefaultRuleChains(tenant.getId());
+                        }
+                    } catch (Exception e) {
+                        log.error("Unable to update Tenant", e);
+                    }
+                }
+            };
+
+    private PaginatedUpdater<String, Tenant> tenantsDefaultEdgeRuleChainUpdater =
+            new PaginatedUpdater<String, Tenant>() {
+
+                @Override
+                protected PageData<Tenant> findEntities(String region, PageLink pageLink) {
+                    return tenantService.findTenants(pageLink);
+                }
+
+                @Override
+                protected void updateEntity(Tenant tenant) {
+                    try {
+                        RuleChain defaultEdgeRuleChain = ruleChainService.getEdgeTemplateRootRuleChain(tenant.getId());
+                        if (defaultEdgeRuleChain == null) {
+                            installScripts.createDefaultEdgeRuleChains(tenant.getId());
                         }
                     } catch (Exception e) {
                         log.error("Unable to update Tenant", e);

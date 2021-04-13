@@ -122,7 +122,7 @@ public class LwM2mTransportRequest {
             DownlinkRequest request = null;
             ContentFormat contentFormat = contentFormatParam != null ? ContentFormat.fromName(contentFormatParam.toUpperCase()) : null;
             LwM2mClient lwM2MClient = lwM2mClientContext.getLwM2mClientWithReg(registration, null);
-            ResourceModel resource = lwM2MClient.getResourceModel(target);
+            ResourceModel resource = lwM2MClient.getResourceModel(targetIdVer);
             timeoutInMs = timeoutInMs > 0 ? timeoutInMs : DEFAULT_TIMEOUT;
             switch (typeOper) {
                 case GET_TYPE_OPER_READ:

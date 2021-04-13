@@ -115,6 +115,7 @@ export const HelpLinks = {
     users: helpBaseUrl + '/docs/user-guide/ui/users',
     devices: helpBaseUrl + '/docs/user-guide/ui/devices',
     deviceProfiles: helpBaseUrl + '/docs/user-guide/ui/device-profiles',
+    edges: helpBaseUrl + '/docs/user-guide/ui/edges',
     assets: helpBaseUrl + '/docs/user-guide/ui/assets',
     entityViews: helpBaseUrl + '/docs/user-guide/ui/entity-views',
     entitiesImport: helpBaseUrl + '/docs/user-guide/bulk-provisioning',
@@ -127,6 +128,8 @@ export const HelpLinks = {
     widgetsConfigRpc: helpBaseUrl +  '/docs/user-guide/ui/dashboards#rpc',
     widgetsConfigAlarm: helpBaseUrl +  '/docs/user-guide/ui/dashboards#alarm',
     widgetsConfigStatic: helpBaseUrl +  '/docs/user-guide/ui/dashboards#static',
+    ruleNodePushToCloud: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#push-to-cloud',
+    ruleNodePushToEdge: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#push-to-edge'
   }
 };
 

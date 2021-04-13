@@ -20,7 +20,8 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class DashboardInfo extends SearchTextBased<DashboardId> implements HasName, HasTenantId {
 

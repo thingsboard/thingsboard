@@ -20,15 +20,23 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.Getter;
+import org.thingsboard.server.common.data.validation.NoXss;
+
+import javax.validation.Valid;
+
+import java.io.Serializable;
 
 @Data
-public class FilterPredicateValue<T> {
+public class FilterPredicateValue<T> implements Serializable {
 
     @Getter
+    @NoXss
     private final T defaultValue;
     @Getter
+    @NoXss
     private final T userValue;
     @Getter
+    @Valid
     private final DynamicValue<T> dynamicValue;
 
     public FilterPredicateValue(T defaultValue) {
