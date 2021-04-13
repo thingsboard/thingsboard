@@ -103,7 +103,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
       return this.dashboardService.saveDashboard(dashboard as Dashboard);
     };
     this.config.onEntityAction = action => this.onDashboardAction(action);
-    this.config.detailsReadonly = () => this.config.componentsData.dashboardScope === 'customer_user';
+    this.config.detailsReadonly = () => (this.config.componentsData.dashboardScope === 'customer_user' || this.config.componentsData.dashboardScope === 'edge_customer_user');
   }
 
   resolve(route: ActivatedRouteSnapshot): Observable<EntityTableConfig<DashboardInfo | Dashboard>> {
@@ -147,7 +147,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
         this.config.cellActionDescriptors = this.configureCellActions(this.config.componentsData.dashboardScope);
         this.config.groupActionDescriptors = this.configureGroupActions(this.config.componentsData.dashboardScope);
         this.config.addActionDescriptors = this.configureAddActions(this.config.componentsData.dashboardScope);
-        this.config.addEnabled = this.config.componentsData.dashboardScope !== 'customer_user';
+        this.config.addEnabled = !(this.config.componentsData.dashboardScope === 'customer_user' || this.config.componentsData.dashboardScope === 'edge_customer_user');
         this.config.entitiesDeleteEnabled = this.config.componentsData.dashboardScope === 'tenant';
         this.config.deleteEnabled = () => this.config.componentsData.dashboardScope === 'tenant';
         return this.config;

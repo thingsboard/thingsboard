@@ -104,7 +104,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
         ));
     };
     this.config.onEntityAction = action => this.onAssetAction(action);
-    this.config.detailsReadonly = () => this.config.componentsData.assetScope === 'customer_user';
+    this.config.detailsReadonly = () => (this.config.componentsData.assetScope === 'customer_user' || this.config.componentsData.assetScope === 'edge_customer_user');
 
     this.config.headerComponent = AssetTableHeaderComponent;
 
@@ -151,7 +151,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
         this.config.cellActionDescriptors = this.configureCellActions(this.config.componentsData.assetScope);
         this.config.groupActionDescriptors = this.configureGroupActions(this.config.componentsData.assetScope);
         this.config.addActionDescriptors = this.configureAddActions(this.config.componentsData.assetScope);
-        this.config.addEnabled = this.config.componentsData.assetScope !== 'customer_user';
+        this.config.addEnabled = !(this.config.componentsData.assetScope === 'customer_user' || this.config.componentsData.assetScope === 'edge_customer_user');
         this.config.entitiesDeleteEnabled = this.config.componentsData.assetScope === 'tenant';
         this.config.deleteEnabled = () => this.config.componentsData.assetScope === 'tenant';
         return this.config;
