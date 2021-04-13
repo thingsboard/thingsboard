@@ -74,7 +74,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
 
         if (!config.isUseMessageAlarmData()) {
             alarmType = TbNodeUtils.processPattern(this.config.getAlarmType(), msg);
-            if(!EnumUtils.isValidEnum(AlarmSeverity.class, this.config.getSeverity())) {
+            if(this.config.isDynamicSeverity()) {
                 alarmSeverity = TbNodeUtils.processPattern(this.config.getSeverity(), msg);
                 if(!EnumUtils.isValidEnum(AlarmSeverity.class, alarmSeverity)) {
                     ctx.tellFailure(msg, new TbNodeException("Used incorrect pattern or Alarm Severity not included in message: " + alarmSeverity));

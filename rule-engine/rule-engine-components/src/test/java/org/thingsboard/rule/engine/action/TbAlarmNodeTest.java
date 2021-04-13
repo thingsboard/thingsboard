@@ -391,6 +391,7 @@ public class TbAlarmNodeTest {
         config.setSeverity("$[alarmSeverity]");
         config.setAlarmType("SomeType");
         config.setAlarmDetailsBuildJs("DETAILS");
+        config.setDynamicSeverity(true);
         ObjectMapper mapper = new ObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
@@ -451,6 +452,7 @@ public class TbAlarmNodeTest {
         config.setSeverity("${alarmSeverity}");
         config.setAlarmType("SomeType");
         config.setAlarmDetailsBuildJs("DETAILS");
+        config.setDynamicSeverity(true);
         ObjectMapper mapper = new ObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 

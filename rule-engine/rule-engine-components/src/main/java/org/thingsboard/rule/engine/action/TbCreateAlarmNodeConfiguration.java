@@ -28,6 +28,7 @@ public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigura
     private String severity;
     private boolean propagate;
     private boolean useMessageAlarmData;
+    private boolean dynamicSeverity;
 
     private List<String> relationTypes;
 
@@ -44,6 +45,7 @@ public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigura
         configuration.setPropagate(false);
         configuration.setUseMessageAlarmData(false);
         configuration.setRelationTypes(Collections.emptyList());
+        configuration.setDynamicSeverity(false);
         return configuration;
     }
 }
