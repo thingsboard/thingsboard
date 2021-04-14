@@ -42,6 +42,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbSnmpTransportComponent;
 import org.thingsboard.server.transport.snmp.service.ProtoTransportEntityService;
+import org.thingsboard.server.transport.snmp.service.SnmpAuthService;
 import org.thingsboard.server.transport.snmp.service.SnmpTransportBalancingService;
 import org.thingsboard.server.transport.snmp.service.SnmpTransportService;
 import org.thingsboard.server.transport.snmp.session.DeviceSessionContext;
@@ -116,7 +117,7 @@ public class SnmpTransportContext extends TransportContext {
             );
             registerSessionMsgListener(deviceSessionContext);
         } catch (Exception e) {
-            log.error("Failed to establish session for SNMP device {}: {}", device.getId(), e.getMessage());
+            log.error("Failed to establish session for SNMP device {}: {}", device.getId(), e.toString());
             return;
         }
         sessions.put(device.getId(), deviceSessionContext);
@@ -177,7 +178,9 @@ public class SnmpTransportContext extends TransportContext {
                             );
 
                             transportService.registerAsyncSession(sessionInfo, deviceSessionContext);
-                            transportService.process(sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build(), null);
+                            transportService.process(sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build(), TransportServiceCallback.EMPTY);
+                            transportService.process(sessionInfo, TransportProtos.SubscribeToRPCMsg.newBuilder().build(), TransportServiceCallback.EMPTY);
+
                             deviceSessionContext.setSessionInfo(sessionInfo);
                             deviceSessionContext.setDeviceInfo(msg.getDeviceInfo());
                         } else {

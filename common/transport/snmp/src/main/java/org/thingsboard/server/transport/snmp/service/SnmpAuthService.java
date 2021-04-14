@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.snmp;
+package org.thingsboard.server.transport.snmp.service;
 
 import lombok.RequiredArgsConstructor;
 import org.snmp4j.AbstractTarget;
@@ -24,6 +24,7 @@ import org.snmp4j.security.SecurityLevel;
 import org.snmp4j.security.SecurityModel;
 import org.snmp4j.security.SecurityProtocols;
 import org.snmp4j.security.USM;
+import org.snmp4j.smi.Address;
 import org.snmp4j.smi.GenericAddress;
 import org.snmp4j.smi.OID;
 import org.snmp4j.smi.OctetString;
@@ -35,6 +36,8 @@ import org.thingsboard.server.common.data.transport.snmp.SnmpProtocolVersion;
 import org.thingsboard.server.queue.util.TbSnmpTransportComponent;
 import org.thingsboard.server.transport.snmp.service.SnmpTransportService;
 import org.thingsboard.server.transport.snmp.session.DeviceSessionContext;
+
+import java.util.Optional;
 
 @Service
 @TbSnmpTransportComponent
@@ -97,7 +100,8 @@ public class SnmpAuthService {
                 throw new UnsupportedOperationException("SNMP protocol version " + protocolVersion + " is not supported");
         }
 
-        target.setAddress(GenericAddress.parse(snmpUnderlyingProtocol + ":" + deviceTransportConfig.getHost() + "/" + deviceTransportConfig.getPort()));
+        Address address = GenericAddress.parse(snmpUnderlyingProtocol + ":" + deviceTransportConfig.getHost() + "/" + deviceTransportConfig.getPort());
+        target.setAddress(Optional.ofNullable(address).orElseThrow(() -> new IllegalArgumentException("Address of the SNMP device is invalid")));
         target.setTimeout(profileTransportConfig.getTimeoutMs());
         target.setRetries(profileTransportConfig.getRetries());
         target.setVersion(protocolVersion.getCode());
