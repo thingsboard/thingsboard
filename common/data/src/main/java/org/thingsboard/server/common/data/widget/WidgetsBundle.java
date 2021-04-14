@@ -19,6 +19,7 @@ import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.util.Arrays;
 
@@ -27,9 +28,12 @@ public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements H
     private static final long serialVersionUID = -7627368878362410489L;
 
     private TenantId tenantId;
+    @NoXss
     private String alias;
+    @NoXss
     private String title;
     private String image;
+    @NoXss
     private String description;
 
     public WidgetsBundle() {
