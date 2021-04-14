@@ -127,6 +127,10 @@ export function isEmpty(obj: any): boolean {
   return true;
 }
 
+export function isLiteralObject(value: any) {
+  return (!!value) && (value.constructor === Object);
+}
+
 export function formatValue(value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined {
   if (isDefinedAndNotNull(value) && isNumeric(value) &&
     (isDefinedAndNotNull(dec) || isDefinedAndNotNull(units) || Number(value).toString() === value)) {
