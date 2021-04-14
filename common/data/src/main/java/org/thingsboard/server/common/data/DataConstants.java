@@ -91,4 +91,19 @@ public class DataConstants {
     public static final String USERNAME = "username";
     public static final String PASSWORD = "password";
 
+    //firmware
+    //telemetry
+    public static final String CURRENT_FIRMWARE_TITLE = "cur_fw_title";
+    public static final String CURRENT_FIRMWARE_VERSION = "cur_fw_version";
+    public static final String TARGET_FIRMWARE_TITLE = "target_fw_title";
+    public static final String TARGET_FIRMWARE_VERSION = "target_fw_version";
+    public static final String CURRENT_FIRMWARE_STATE = "cur_fw_state";
+
+    //attributes
+    //telemetry
+    public static final String FIRMWARE_TITLE = "fw_title";
+    public static final String FIRMWARE_VERSION = "fw_version";
+    public static final String FIRMWARE_SIZE = "fw_size";
+    public static final String FIRMWARE_CHECKSUM = "fw_checksum";
+    public static final String FIRMWARE_CHECKSUM_ALGORITHM = "fw_checksum_algorithm";
 }

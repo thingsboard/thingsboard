@@ -15,7 +15,9 @@
  */
 package org.thingsboard.server.controller;
 
+import com.google.common.hash.Hashing;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -126,6 +128,11 @@ public class FirmwareController extends BaseController {
             firmware.setTitle(info.getTitle());
             firmware.setVersion(info.getVersion());
             firmware.setAdditionalInfo(info.getAdditionalInfo());
+
+            if (StringUtils.isEmpty(checksumAlgorithm)) {
+                checksumAlgorithm = "sha256";
+                checksum = Hashing.sha256().hashBytes(file.getBytes()).toString();
+            }
 
             firmware.setChecksumAlgorithm(checksumAlgorithm);
             firmware.setChecksum(checksum);

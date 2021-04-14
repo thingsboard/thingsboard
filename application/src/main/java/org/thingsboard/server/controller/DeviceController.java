@@ -70,6 +70,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
@@ -117,13 +118,25 @@ public class DeviceController extends BaseController {
 
             checkEntity(device.getId(), device, Resource.DEVICE);
 
+            boolean created = device.getId() == null;
+
+            boolean isFirmwareChanged = false;
+
+            if (created) {
+                isFirmwareChanged = true;
+            } else {
+                Device oldDevice = deviceService.findDeviceById(getTenantId(), device.getId());
+                if (!Objects.equals(device.getFirmwareId(), oldDevice.getFirmwareId()) || !oldDevice.getDeviceProfileId().equals(device.getDeviceProfileId())) {
+                    isFirmwareChanged = true;
+                }
+            }
+
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
 
             tbClusterService.onDeviceChange(savedDevice, null);
             tbClusterService.pushMsgToCore(new DeviceNameOrTypeUpdateMsg(savedDevice.getTenantId(),
                     savedDevice.getId(), savedDevice.getName(), savedDevice.getType()), null);
-            tbClusterService.onEntityStateChange(savedDevice.getTenantId(), savedDevice.getId(),
-                    device.getId() == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+            tbClusterService.onEntityStateChange(savedDevice.getTenantId(), savedDevice.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(savedDevice.getId(), savedDevice,
                     savedDevice.getCustomerId(),
@@ -134,12 +147,19 @@ public class DeviceController extends BaseController {
             } else {
                 deviceStateService.onDeviceUpdated(savedDevice);
             }
+
+            if (isFirmwareChanged) {
+                firmwareStateService.update(savedDevice, created);
+            }
+
             return savedDevice;
-        } catch (Exception e) {
+        } catch (
+                Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE), device,
                     null, device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
             throw handleException(e);
         }
+
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")

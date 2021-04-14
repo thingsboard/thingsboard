@@ -119,6 +119,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.firmware.FirmwareStateService;
 import org.thingsboard.server.service.lwm2m.LwM2MModelsRepository;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
@@ -239,6 +240,9 @@ public abstract class BaseController {
 
     @Autowired
     protected FirmwareService firmwareService;
+
+    @Autowired
+    protected FirmwareStateService firmwareStateService;
 
     @Autowired
     protected TbQueueProducerProvider producerProvider;

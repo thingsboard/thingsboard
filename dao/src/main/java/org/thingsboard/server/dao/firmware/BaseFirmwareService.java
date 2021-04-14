@@ -114,7 +114,8 @@ public class BaseFirmwareService implements FirmwareService {
         log.trace("Executing findTenantFirmwaresByTenantIdAndHasData, tenantId [{}], hasData [{}] pageLink [{}]", tenantId, hasData, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validatePageLink(pageLink);
-        return firmwareInfoDao.findFirmwareInfoByTenantIdAndHasData(tenantId, hasData, pageLink);    }
+        return firmwareInfoDao.findFirmwareInfoByTenantIdAndHasData(tenantId, hasData, pageLink);
+    }
 
     @Override
     public void deleteFirmware(TenantId tenantId, FirmwareId firmwareId) {
@@ -211,31 +212,32 @@ public class BaseFirmwareService implements FirmwareService {
                 throw new DataValidationException("Firmware data should be specified!");
             }
 
-            if (firmware.getChecksumAlgorithm() != null) {
-                if (StringUtils.isEmpty(firmware.getChecksum())) {
-                    throw new DataValidationException("Firmware checksum should be specified!");
-                }
+            if (StringUtils.isEmpty(firmware.getChecksumAlgorithm())) {
+                throw new DataValidationException("Firmware checksum algorithm should be specified!");
+            }
+            if (StringUtils.isEmpty(firmware.getChecksum())) {
+                throw new DataValidationException("Firmware checksum should be specified!");
+            }
 
-                HashFunction hashFunction;
-                switch (firmware.getChecksumAlgorithm()) {
-                    case "sha256":
-                        hashFunction = Hashing.sha256();
-                        break;
-                    case "md5":
-                        hashFunction = Hashing.md5();
-                        break;
-                    case "crc32":
-                        hashFunction = Hashing.crc32();
-                        break;
-                    default:
-                        throw new DataValidationException("Unknown checksum algorithm!");
-                }
+            HashFunction hashFunction;
+            switch (firmware.getChecksumAlgorithm()) {
+                case "sha256":
+                    hashFunction = Hashing.sha256();
+                    break;
+                case "md5":
+                    hashFunction = Hashing.md5();
+                    break;
+                case "crc32":
+                    hashFunction = Hashing.crc32();
+                    break;
+                default:
+                    throw new DataValidationException("Unknown checksum algorithm!");
+            }
 
-                String currentChecksum = hashFunction.hashBytes(data.array()).toString();
+            String currentChecksum = hashFunction.hashBytes(data.array()).toString();
 
-                if (!currentChecksum.equals(firmware.getChecksum())) {
-                    throw new DataValidationException("Wrong firmware file!");
-                }
+            if (!currentChecksum.equals(firmware.getChecksum())) {
+                throw new DataValidationException("Wrong firmware file!");
             }
         }
 
