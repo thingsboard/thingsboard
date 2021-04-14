@@ -17,8 +17,10 @@ package org.thingsboard.server.service.install;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -136,6 +138,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     @Autowired
     private RuleChainService ruleChainService;
 
+    @Value("${edges.enabled}")
+    private boolean edgesEnabled;
+
     @Bean
     protected BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -234,6 +239,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         demoTenant.setTitle("Tenant");
         demoTenant = tenantService.saveTenant(demoTenant);
         installScripts.loadDemoRuleChains(demoTenant.getId());
+        if (edgesEnabled) {
+            installScripts.createDefaultEdgeRuleChains(demoTenant.getId());
+        }
         createUser(Authority.TENANT_ADMIN, demoTenant.getId(), null, "tenant@thingsboard.org", "tenant");
 
         Customer customerA = new Customer();
