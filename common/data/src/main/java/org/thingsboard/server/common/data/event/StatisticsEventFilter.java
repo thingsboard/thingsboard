@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.event;
 
 import lombok.Data;
+import org.eclipse.leshan.core.util.StringUtils;
 
 @Data
 public class StatisticsEventFilter implements EventFilter {
@@ -26,5 +27,10 @@ public class StatisticsEventFilter implements EventFilter {
     @Override
     public EventType getEventType() {
         return EventType.STATS;
+    }
+
+    @Override
+    public boolean hasFilterForJsonBody() {
+        return !StringUtils.isEmpty(server) || (messagesProcessed != null && messagesProcessed > 0) || (errorsOccurred != null && errorsOccurred > 0);
     }
 }

@@ -16,14 +16,21 @@
 package org.thingsboard.server.common.data.event;
 
 import lombok.Data;
+import org.eclipse.leshan.core.util.StringUtils;
 
 @Data
 public class ErrorEventFilter implements EventFilter {
     private String server;
     private String method;
+    private String error;
 
     @Override
     public EventType getEventType() {
         return EventType.ERROR;
+    }
+
+    @Override
+    public boolean hasFilterForJsonBody() {
+        return !StringUtils.isEmpty(server) || !StringUtils.isEmpty(method) || !StringUtils.isEmpty(error);
     }
 }

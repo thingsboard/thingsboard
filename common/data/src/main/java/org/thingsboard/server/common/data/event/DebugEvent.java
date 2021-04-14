@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.event;
 
 import lombok.Data;
+import org.eclipse.leshan.core.util.StringUtils;
 
 @Data
 public abstract class DebugEvent implements EventFilter {
@@ -33,6 +34,12 @@ public abstract class DebugEvent implements EventFilter {
 
     public void setIsError(boolean isError) {
         this.isError = isError;
+    }
+
+    @Override
+    public boolean hasFilterForJsonBody() {
+        return !StringUtils.isEmpty(msgDirectionType) || !StringUtils.isEmpty(server) || !StringUtils.isEmpty(dataSearch) || !StringUtils.isEmpty(metadataSearch)
+                || !StringUtils.isEmpty(entityName) || !StringUtils.isEmpty(relationType) || !StringUtils.isEmpty(entityId) || !StringUtils.isEmpty(msgType) || !StringUtils.isEmpty(error) || isError;
     }
 
 }

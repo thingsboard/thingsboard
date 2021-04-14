@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.event.DebugEvent;
 import org.thingsboard.server.common.data.event.ErrorEventFilter;
 import org.thingsboard.server.common.data.event.EventFilter;
+import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.event.LifeCycleEventFilter;
 import org.thingsboard.server.common.data.event.StatisticsEventFilter;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -154,18 +155,22 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
 
     @Override
     public PageData<Event> findEventByFilter(UUID tenantId, EntityId entityId, EventFilter eventFilter, TimePageLink pageLink) {
-        switch (eventFilter.getEventType()) {
-            case DEBUG_RULE_NODE:
-            case DEBUG_RULE_CHAIN:
-                return findEventByFilter(tenantId, entityId, (DebugEvent) eventFilter, pageLink);
-            case LC_EVENT:
-                return findEventByFilter(tenantId, entityId, (LifeCycleEventFilter) eventFilter, pageLink);
-            case ERROR:
-                return findEventByFilter(tenantId, entityId, (ErrorEventFilter) eventFilter, pageLink);
-            case STATS:
-                return findEventByFilter(tenantId, entityId, (StatisticsEventFilter) eventFilter, pageLink);
-            default:
-                throw new RuntimeException("Not supported event type: " + eventFilter.getEventType());
+        if (eventFilter.hasFilterForJsonBody()) {
+            switch (eventFilter.getEventType()) {
+                case DEBUG_RULE_NODE:
+                case DEBUG_RULE_CHAIN:
+                    return findEventByFilter(tenantId, entityId, (DebugEvent) eventFilter, pageLink);
+                case LC_EVENT:
+                    return findEventByFilter(tenantId, entityId, (LifeCycleEventFilter) eventFilter, pageLink);
+                case ERROR:
+                    return findEventByFilter(tenantId, entityId, (ErrorEventFilter) eventFilter, pageLink);
+                case STATS:
+                    return findEventByFilter(tenantId, entityId, (StatisticsEventFilter) eventFilter, pageLink);
+                default:
+                    throw new RuntimeException("Not supported event type: " + eventFilter.getEventType());
+            }
+        } else {
+            return findEvents(tenantId, entityId, eventFilter.getEventType().name(), pageLink);
         }
     }
 
@@ -201,6 +206,7 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
                         notNull(pageLink.getEndTime()),
                         eventFilter.getServer(),
                         eventFilter.getMethod(),
+                        eventFilter.getError(),
                         DaoUtil.toPageable(pageLink))
         );
     }

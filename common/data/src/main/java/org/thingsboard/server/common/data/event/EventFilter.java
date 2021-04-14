@@ -34,4 +34,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 public interface EventFilter {
     @JsonIgnore
     EventType getEventType();
+
+    boolean hasFilterForJsonBody();
+
 }

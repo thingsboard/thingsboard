@@ -127,7 +127,7 @@ public class EventController extends BaseController {
             EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
             checkEntityId(entityId, Operation.READ);
 
-            if(sortProperty != null && sortProperty.equals("createdTime")) {
+            if(sortProperty != null && sortProperty.equals("createdTime") && eventFilter.hasFilterForJsonBody()) {
                 sortProperty = ModelConstants.CREATED_TIME_PROPERTY;
             }
 

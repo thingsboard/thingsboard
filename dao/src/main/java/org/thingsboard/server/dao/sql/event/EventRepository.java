@@ -81,36 +81,42 @@ public interface EventRepository extends PagingAndSortingRepository<EventEntity,
                                                                   Pageable pageable);
 
     @Query(nativeQuery = true,
-            value = "SELECT * FROM event e WHERE " +
+            value = "SELECT e.id, e.created_time, e.body, e.entity_id, e.entity_type, e.event_type, e.event_uid, e.tenant_id, ts  FROM " +
+                    "(SELECT *, e.body\\:\\:jsonb as json_body FROM event e WHERE " +
                     "e.tenant_id = :tenantId " +
                     "AND e.entity_type = :entityType " +
                     "AND e.entity_id = :entityId " +
                     "AND e.event_type = :eventType " +
                     "AND e.created_time >= :startTime AND (:endTime = 0 OR e.created_time <= :endTime) " +
-                    "AND (:type IS NULL OR lower(e.body\\:\\:json->>'type') LIKE concat('%', lower(:type\\:\\:varchar), '%')) " +
-                    "AND (:server IS NULL OR lower(e.body\\:\\:json->>'server') LIKE concat('%', lower(:server\\:\\:varchar), '%')) " +
-                    "AND (:entityName IS NULL OR lower(e.body\\:\\:json->>'entityName') LIKE concat('%', lower(:entityName\\:\\:varchar), '%')) " +
-                    "AND (:relationType IS NULL OR lower(e.body\\:\\:json->>'relationType') LIKE concat('%', lower(:relationType\\:\\:varchar), '%')) " +
-                    "AND (:bodyEntityId IS NULL OR lower(e.body\\:\\:json->>'entityId') LIKE concat('%', lower(:bodyEntityId\\:\\:varchar), '%')) " +
-                    "AND (:msgType IS NULL OR lower(e.body\\:\\:json->>'msgType') LIKE concat('%', lower(:msgType\\:\\:varchar), '%')) " +
-                    "AND ((:isError = FALSE) OR (e.body\\:\\:json->>'error') LIKE concat('%', lower(:error\\:\\:varchar), '%')) " +
-                    "AND (:data IS NULL OR lower(e.body\\:\\:json->>'data') LIKE concat('%', lower(:data\\:\\:varchar), '%')) " +
-                    "AND (:metadata IS NULL OR lower(e.body\\:\\:json->>'metadata') LIKE concat('%', lower(:metadata\\:\\:varchar), '%')) ",
-            countQuery = "SELECT count(*) FROM event e WHERE " +
+                    ") AS e WHERE " +
+                    "(:type IS NULL OR lower(json_body->>'type') LIKE concat('%', lower(:type\\:\\:varchar), '%')) " +
+                    "AND (:server IS NULL OR lower(json_body->>'server') LIKE concat('%', lower(:server\\:\\:varchar), '%')) " +
+                    "AND (:entityName IS NULL OR lower(json_body->>'entityName') LIKE concat('%', lower(:entityName\\:\\:varchar), '%')) " +
+                    "AND (:relationType IS NULL OR lower(json_body->>'relationType') LIKE concat('%', lower(:relationType\\:\\:varchar), '%')) " +
+                    "AND (:bodyEntityId IS NULL OR lower(json_body->>'entityId') LIKE concat('%', lower(:bodyEntityId\\:\\:varchar), '%')) " +
+                    "AND (:msgType IS NULL OR lower(json_body->>'msgType') LIKE concat('%', lower(:msgType\\:\\:varchar), '%')) " +
+                    "AND ((:isError = FALSE) OR (json_body->>'error') IS NOT NULL) " +
+                    "AND (:error IS NULL OR lower(json_body->>'error') LIKE concat('%', lower(:error\\:\\:varchar), '%')) " +
+                    "AND (:data IS NULL OR lower(json_body->>'data') LIKE concat('%', lower(:data\\:\\:varchar), '%')) " +
+                    "AND (:metadata IS NULL OR lower(json_body->>'metadata') LIKE concat('%', lower(:metadata\\:\\:varchar), '%')) ",
+            countQuery = "SELECT count(*) FROM " +
+                    "(SELECT *, e.body\\:\\:jsonb as json_body FROM event e WHERE " +
                     "e.tenant_id = :tenantId " +
                     "AND e.entity_type = :entityType " +
                     "AND e.entity_id = :entityId " +
                     "AND e.event_type = :eventType " +
                     "AND e.created_time >= :startTime AND (:endTime = 0 OR e.created_time <= :endTime) " +
-                    "AND (:type IS NULL OR lower(e.body\\:\\:json->>'type') LIKE concat('%', lower(:type\\:\\:varchar), '%')) " +
-                    "AND (:server IS NULL OR lower(e.body\\:\\:json->>'server') LIKE concat('%', lower(:server\\:\\:varchar), '%')) " +
-                    "AND (:entityName IS NULL OR lower(e.body\\:\\:json->>'entityName') LIKE concat('%', lower(:entityName\\:\\:varchar), '%')) " +
-                    "AND (:relationType IS NULL OR lower(e.body\\:\\:json->>'relationType') LIKE concat('%', lower(:relationType\\:\\:varchar), '%')) " +
-                    "AND (:bodyEntityId IS NULL OR lower(e.body\\:\\:json->>'entityId') LIKE concat('%', lower(:bodyEntityId\\:\\:varchar), '%')) " +
-                    "AND (:msgType IS NULL OR lower(e.body\\:\\:json->>'msgType') LIKE concat('%', lower(:msgType\\:\\:varchar), '%')) " +
-                    "AND ((:isError = FALSE) OR (e.body\\:\\:json->>'error') LIKE concat('%', lower(:error\\:\\:varchar), '%')) " +
-                    "AND (:data IS NULL OR lower(e.body\\:\\:json->>'data') LIKE concat('%', lower(:data\\:\\:varchar), '%')) " +
-                    "AND (:metadata IS NULL OR lower(e.body\\:\\:json->>'metadata') LIKE concat('%', lower(:metadata\\:\\:varchar), '%'))"
+                    ") AS e WHERE " +
+                    "(:type IS NULL OR lower(json_body->>'type') LIKE concat('%', lower(:type\\:\\:varchar), '%')) " +
+                    "AND (:server IS NULL OR lower(json_body->>'server') LIKE concat('%', lower(:server\\:\\:varchar), '%')) " +
+                    "AND (:entityName IS NULL OR lower(json_body->>'entityName') LIKE concat('%', lower(:entityName\\:\\:varchar), '%')) " +
+                    "AND (:relationType IS NULL OR lower(json_body->>'relationType') LIKE concat('%', lower(:relationType\\:\\:varchar), '%')) " +
+                    "AND (:bodyEntityId IS NULL OR lower(json_body->>'entityId') LIKE concat('%', lower(:bodyEntityId\\:\\:varchar), '%')) " +
+                    "AND (:msgType IS NULL OR lower(json_body->>'msgType') LIKE concat('%', lower(:msgType\\:\\:varchar), '%')) " +
+                    "AND ((:isError = FALSE) OR (json_body->>'error') IS NOT NULL) " +
+                    "AND (:error IS NULL OR lower(json_body->>'error') LIKE concat('%', lower(:error\\:\\:varchar), '%')) " +
+                    "AND (:data IS NULL OR lower(json_body->>'data') LIKE concat('%', lower(:data\\:\\:varchar), '%')) " +
+                    "AND (:metadata IS NULL OR lower(json_body->>'metadata') LIKE concat('%', lower(:metadata\\:\\:varchar), '%'))"
     )
     Page<EventEntity> findDebugRuleNodeEvents(@Param("tenantId") UUID tenantId,
                                               @Param("entityId") UUID entityId,
@@ -131,22 +137,28 @@ public interface EventRepository extends PagingAndSortingRepository<EventEntity,
                                               Pageable pageable);
 
     @Query(nativeQuery = true,
-            value = "SELECT * FROM event e WHERE " +
+            value = "SELECT e.id, e.created_time, e.body, e.entity_id, e.entity_type, e.event_type, e.event_uid, e.tenant_id, ts  FROM " +
+                    "(SELECT *, e.body\\:\\:jsonb as json_body FROM event e WHERE " +
                     "e.tenant_id = :tenantId " +
                     "AND e.entity_type = :entityType " +
                     "AND e.entity_id = :entityId " +
                     "AND e.event_type = 'ERROR' " +
                     "AND e.created_time >= :startTime AND (:endTime = 0 OR e.created_time <= :endTime) " +
-                    "AND (:server IS NULL OR lower(e.body\\:\\:json->>'server') LIKE concat('%', lower(:server\\:\\:varchar), '%')) " +
-                    "AND (:method IS NULL OR lower(e.body\\:\\:json->>'method') LIKE concat('%', lower(:method\\:\\:varchar), '%'))",
-            countQuery = "SELECT count(*) FROM event e WHERE " +
+                    ") AS e WHERE " +
+                    "(:server IS NULL OR lower(json_body->>'server') LIKE concat('%', lower(:server\\:\\:varchar), '%')) " +
+                    "AND (:method IS NULL OR lower(json_body->>'method') LIKE concat('%', lower(:method\\:\\:varchar), '%')) " +
+                    "AND (:error IS NULL OR lower(json_body->>'error') LIKE concat('%', lower(:error\\:\\:varchar), '%'))",
+            countQuery = "SELECT count(*) FROM " +
+                    "(SELECT *, e.body\\:\\:jsonb as json_body FROM event e WHERE " +
                     "e.tenant_id = :tenantId " +
                     "AND e.entity_type = :entityType " +
                     "AND e.entity_id = :entityId " +
                     "AND e.event_type = 'ERROR' " +
                     "AND e.created_time >= :startTime AND (:endTime = 0 OR e.created_time <= :endTime) " +
-                    "AND (:server IS NULL OR lower(e.body\\:\\:json->>'server') LIKE concat('%', lower(:server\\:\\:varchar), '%')) " +
-                    "AND (:method IS NULL OR lower(e.body\\:\\:json->>'method') LIKE concat('%', lower(:method\\:\\:varchar), '%'))")
+                    ") AS e WHERE " +
+                    "(:server IS NULL OR lower(json_body->>'server') LIKE concat('%', lower(:server\\:\\:varchar), '%')) " +
+                    "AND (:method IS NULL OR lower(json_body->>'method') LIKE concat('%', lower(:method\\:\\:varchar), '%')) " +
+                    "AND (:error IS NULL OR lower(json_body->>'error') LIKE concat('%', lower(:error\\:\\:varchar), '%'))")
     Page<EventEntity> findErrorEvents(@Param("tenantId") UUID tenantId,
                                       @Param("entityId") UUID entityId,
                                       @Param("entityType") String entityType,
@@ -154,30 +166,35 @@ public interface EventRepository extends PagingAndSortingRepository<EventEntity,
                                       @Param("endTime") Long endTIme,
                                       @Param("server") String server,
                                       @Param("method") String method,
+                                      @Param("error") String error,
                                       Pageable pageable);
 
     @Query(nativeQuery = true,
-            value = "SELECT * FROM event e WHERE " +
+            value = "SELECT e.id, e.created_time, e.body, e.entity_id, e.entity_type, e.event_type, e.event_uid, e.tenant_id, ts  FROM " +
+                    "(SELECT *, e.body\\:\\:jsonb as json_body FROM event e WHERE " +
                     "e.tenant_id = :tenantId " +
                     "AND e.entity_type = :entityType " +
                     "AND e.entity_id = :entityId " +
                     "AND e.event_type = 'LC_EVENT' " +
                     "AND e.created_time >= :startTime AND (:endTime = 0 OR e.created_time <= :endTime) " +
-                    "AND (:server IS NULL OR lower(e.body\\:\\:json->>'server') LIKE concat('%', lower(:server\\:\\:varchar), '%')) " +
-                    "AND (:event IS NULL OR lower(e.body\\:\\:json->>'event') LIKE concat('%', lower(:event\\:\\:varchar), '%')) " +
-                    "AND ((:statusFilterEnabled = FALSE) OR lower(e.body\\:\\:json->>'success')\\:\\:boolean = :statusFilter) " +
-                    "AND (:error IS NULL OR lower(e.body\\:\\:json->>'error') LIKE concat('%', lower(:error\\:\\:varchar), '%'))"
+                    ") AS e WHERE " +
+                    "(:server IS NULL OR lower(json_body->>'server') LIKE concat('%', lower(:server\\:\\:varchar), '%')) " +
+                    "AND (:event IS NULL OR lower(json_body->>'event') LIKE concat('%', lower(:event\\:\\:varchar), '%')) " +
+                    "AND ((:statusFilterEnabled = FALSE) OR lower(json_body->>'success')\\:\\:boolean = :statusFilter) " +
+                    "AND (:error IS NULL OR lower(json_body->>'error') LIKE concat('%', lower(:error\\:\\:varchar), '%'))"
             ,
-            countQuery = "SELECT count(*) FROM event e WHERE " +
+            countQuery = "SELECT count(*) FROM " +
+                    "(SELECT *, e.body\\:\\:jsonb as json_body FROM event e WHERE " +
                     "e.tenant_id = :tenantId " +
                     "AND e.entity_type = :entityType " +
                     "AND e.entity_id = :entityId " +
                     "AND e.event_type = 'LC_EVENT' " +
                     "AND e.created_time >= :startTime AND (:endTime = 0 OR e.created_time <= :endTime) " +
-                    "AND (:server IS NULL OR lower(e.body\\:\\:json->>'server') LIKE concat('%', lower(:server\\:\\:varchar), '%')) " +
-                    "AND (:event IS NULL OR lower(e.body\\:\\:json->>'event') LIKE concat('%', lower(:event\\:\\:varchar), '%')) " +
-                    "AND ((:statusFilterEnabled = FALSE) OR lower(e.body\\:\\:json->>'success')\\:\\:boolean = :statusFilter) " +
-                    "AND (:error IS NULL OR lower(e.body\\:\\:json->>'error') LIKE concat('%', lower(:error\\:\\:varchar), '%'))"
+                    ") AS e WHERE " +
+                    "(:server IS NULL OR lower(json_body->>'server') LIKE concat('%', lower(:server\\:\\:varchar), '%')) " +
+                    "AND (:event IS NULL OR lower(json_body->>'event') LIKE concat('%', lower(:event\\:\\:varchar), '%')) " +
+                    "AND ((:statusFilterEnabled = FALSE) OR lower(json_body->>'success')\\:\\:boolean = :statusFilter) " +
+                    "AND (:error IS NULL OR lower(json_body->>'error') LIKE concat('%', lower(:error\\:\\:varchar), '%'))"
     )
     Page<EventEntity> findLifeCycleEvents(@Param("tenantId") UUID tenantId,
                                           @Param("entityId") UUID entityId,
@@ -192,24 +209,28 @@ public interface EventRepository extends PagingAndSortingRepository<EventEntity,
                                           Pageable pageable);
 
     @Query(nativeQuery = true,
-            value = "SELECT * FROM event e WHERE " +
+            value = "SELECT e.id, e.created_time, e.body, e.entity_id, e.entity_type, e.event_type, e.event_uid, e.tenant_id, ts  FROM " +
+                    "(SELECT *, e.body\\:\\:jsonb as json_body FROM event e WHERE " +
                     "e.tenant_id = :tenantId " +
                     "AND e.entity_type = :entityType " +
                     "AND e.entity_id = :entityId " +
                     "AND e.event_type = 'STATS' " +
                     "AND e.created_time >= :startTime AND (:endTime = 0 OR e.created_time <= :endTime) " +
-                    "AND (:server IS NULL OR lower(e.body\\:\\:json->>'server') LIKE concat('%', lower(:server\\:\\:varchar), '%')) " +
-                    "AND (:messagesProcessed = 0 OR (e.body\\:\\:json->>'messagesProcessed')\\:\\:integer >= :messagesProcessed) " +
-                    "AND (:errorsOccurred = 0 OR (e.body\\:\\:json->>'errorsOccurred')\\:\\:integer >= :errorsOccurred) ",
-            countQuery = "SELECT count(*) FROM event e WHERE " +
+                    ") AS e WHERE " +
+                    "(:server IS NULL OR lower(e.body\\:\\:json->>'server') LIKE concat('%', lower(:server\\:\\:varchar), '%')) " +
+                    "AND (:messagesProcessed = 0 OR (json_body->>'messagesProcessed')\\:\\:integer >= :messagesProcessed) " +
+                    "AND (:errorsOccurred = 0 OR (json_body->>'errorsOccurred')\\:\\:integer >= :errorsOccurred) ",
+            countQuery = "SELECT count(*) FROM " +
+                    "(SELECT *, e.body\\:\\:jsonb as json_body FROM event e WHERE " +
                     "e.tenant_id = :tenantId " +
                     "AND e.entity_type = :entityType " +
                     "AND e.entity_id = :entityId " +
-                    "AND e.event_type = 'STATS' " +
+                    "AND e.event_type = 'LC_EVENT' " +
                     "AND e.created_time >= :startTime AND (:endTime = 0 OR e.created_time <= :endTime) " +
-                    "AND (:server IS NULL OR lower(e.body\\:\\:json->>'server') LIKE concat('%', lower(:server\\:\\:varchar), '%')) " +
-                    "AND (:messagesProcessed = 0 OR (e.body\\:\\:json->>'messagesProcessed')\\:\\:integer >= :messagesProcessed) " +
-                    "AND (:errorsOccurred = 0 OR (e.body\\:\\:json->>'errorsOccurred')\\:\\:integer >= :errorsOccurred) ")
+                    ") AS e WHERE " +
+                    "(:server IS NULL OR lower(e.body\\:\\:json->>'server') LIKE concat('%', lower(:server\\:\\:varchar), '%')) " +
+                    "AND (:messagesProcessed = 0 OR (json_body->>'messagesProcessed')\\:\\:integer >= :messagesProcessed) " +
+                    "AND (:errorsOccurred = 0 OR (json_body->>'errorsOccurred')\\:\\:integer >= :errorsOccurred) ")
     Page<EventEntity> findStatisticsEvents(@Param("tenantId") UUID tenantId,
                                            @Param("entityId") UUID entityId,
                                            @Param("entityType") String entityType,
