@@ -27,6 +27,8 @@ import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfigu
 import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.transport.snmp.SnmpCommunicationSpec;
+import org.thingsboard.server.common.data.transport.snmp.config.SnmpCommunicationConfig;
+import org.thingsboard.server.common.data.transport.snmp.config.impl.ToDeviceRpcCommandSettingSnmpCommunicationConfig;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
@@ -36,13 +38,13 @@ import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponse
 import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseNotificationProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
-import org.thingsboard.server.transport.snmp.SnmpAuthService;
 import org.thingsboard.server.transport.snmp.SnmpTransportContext;
-import org.thingsboard.server.transport.snmp.service.SnmpTransportService;
 
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -64,16 +66,12 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
 
     private final SnmpTransportContext snmpTransportContext;
 
-    @Getter
-    @Setter
-    private long previousRequestExecutedAt = 0;
     private final AtomicInteger msgIdSeq = new AtomicInteger(0);
     @Getter
     private boolean isActive = true;
 
     @Getter
-    @Setter
-    private List<ScheduledFuture<?>> queryingTasks = new LinkedList<>();
+    private final List<ScheduledFuture<?>> queryingTasks = new LinkedList<>();
 
     public DeviceSessionContext(Device device, DeviceProfile deviceProfile, String token,
                                 SnmpDeviceProfileTransportConfiguration profileTransportConfiguration,
@@ -116,7 +114,7 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     public void initializeTarget(SnmpDeviceProfileTransportConfiguration profileTransportConfig, SnmpDeviceTransportConfiguration deviceTransportConfig) throws Exception {
         log.trace("Initializing target for SNMP session of device {}", device);
         this.target = snmpTransportContext.getSnmpAuthService().setUpSnmpTarget(profileTransportConfig, deviceTransportConfig);
-        log.info("SNMP target initialized: {}", target);
+        log.debug("SNMP target initialized: {}", target);
     }
 
     public void close() {
@@ -138,20 +136,14 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
 
     @Override
     public void onAttributeUpdate(AttributeUpdateNotificationMsg attributeUpdateNotification) {
-        profileTransportConfiguration.getCommunicationConfigs().stream()
-                .filter(config -> config.getSpec() == SnmpCommunicationSpec.SHARED_ATTRIBUTES_SETTING)
-                .findFirst()
+        getCommunicationConfigForSpec(SnmpCommunicationSpec.SHARED_ATTRIBUTES_SETTING)
                 .ifPresent(communicationConfig -> {
                     Map<String, String> sharedAttributes = JsonConverter.toJson(attributeUpdateNotification).entrySet().stream()
                             .collect(Collectors.toMap(
                                     Map.Entry::getKey,
                                     entry -> entry.getValue().isJsonPrimitive() ? entry.getValue().getAsString() : entry.getValue().toString()
                             ));
-                    try {
-                        snmpTransportContext.getSnmpTransportService().sendRequest(this, communicationConfig, sharedAttributes);
-                    } catch (Exception e) {
-                        log.error("Failed to send request with shared attributes to SNMP device {}: {}", getDeviceId(), e.getMessage());
-                    }
+                    snmpTransportContext.getSnmpTransportService().sendRequest(this, communicationConfig, sharedAttributes);
                 });
     }
 
@@ -161,9 +153,23 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
 
     @Override
     public void onToDeviceRpcRequest(ToDeviceRpcRequestMsg toDeviceRequest) {
+        getCommunicationConfigForSpec(SnmpCommunicationSpec.TO_DEVICE_RPC_COMMAND_SETTING)
+                .ifPresent(communicationConfig -> {
+                    String value = JsonConverter.toJson(toDeviceRequest, true).toString();
+                    snmpTransportContext.getSnmpTransportService().sendRequest(
+                            this, communicationConfig,
+                            Map.of(ToDeviceRpcCommandSettingSnmpCommunicationConfig.RPC_COMMAND_KEY_NAME, value)
+                    );
+                });
     }
 
     @Override
     public void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse) {
+    }
+
+    private Optional<SnmpCommunicationConfig> getCommunicationConfigForSpec(SnmpCommunicationSpec spec) {
+        return profileTransportConfiguration.getCommunicationConfigs().stream()
+                .filter(config -> config.getSpec() == spec)
+                .findFirst();
     }
 }

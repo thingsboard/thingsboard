@@ -13,24 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.transport.snmp.configs;
+package org.thingsboard.server.common.data.transport.snmp.config.impl;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.transport.snmp.SnmpCommunicationSpec;
 import org.thingsboard.server.common.data.transport.snmp.SnmpMethod;
+import org.thingsboard.server.common.data.transport.snmp.config.MultipleMappingsSnmpCommunicationConfig;
 
-@EqualsAndHashCode(callSuper = true)
-@Data
-public abstract class RepeatingQueryingSnmpCommunicationConfig extends SnmpCommunicationConfig {
-    private Long queryingFrequencyMs;
+public class SharedAttributesSettingSnmpCommunicationConfig extends MultipleMappingsSnmpCommunicationConfig {
+
+    @Override
+    public SnmpCommunicationSpec getSpec() {
+        return SnmpCommunicationSpec.SHARED_ATTRIBUTES_SETTING;
+    }
 
     @Override
     public SnmpMethod getMethod() {
-        return SnmpMethod.GET;
+        return SnmpMethod.SET;
     }
 
-    @Override
-    public boolean isValid() {
-        return super.isValid() && queryingFrequencyMs != null && queryingFrequencyMs > 0;
-    }
 }

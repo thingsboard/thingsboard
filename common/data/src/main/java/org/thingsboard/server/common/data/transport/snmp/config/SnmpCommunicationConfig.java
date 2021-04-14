@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.transport.snmp.configs;
+package org.thingsboard.server.common.data.transport.snmp.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -23,6 +23,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.transport.snmp.SnmpCommunicationSpec;
 import org.thingsboard.server.common.data.transport.snmp.SnmpMapping;
 import org.thingsboard.server.common.data.transport.snmp.SnmpMethod;
+import org.thingsboard.server.common.data.transport.snmp.config.impl.ClientAttributesQueryingSnmpCommunicationConfig;
+import org.thingsboard.server.common.data.transport.snmp.config.impl.SharedAttributesSettingSnmpCommunicationConfig;
+import org.thingsboard.server.common.data.transport.snmp.config.impl.TelemetryQueryingSnmpCommunicationConfig;
 
 import java.util.List;
 
@@ -33,22 +36,19 @@ import java.util.List;
         @Type(value = ClientAttributesQueryingSnmpCommunicationConfig.class, name = "CLIENT_ATTRIBUTES_QUERYING"),
         @Type(value = SharedAttributesSettingSnmpCommunicationConfig.class, name = "SHARED_ATTRIBUTES_SETTING")
 })
-public abstract class SnmpCommunicationConfig {
-    protected List<SnmpMapping> mappings;
+public interface SnmpCommunicationConfig {
 
-    public List<SnmpMapping> getMappings() {
-        return mappings;
-    }
-
-    public abstract SnmpCommunicationSpec getSpec();
+    SnmpCommunicationSpec getSpec();
 
     @JsonIgnore
-    public SnmpMethod getMethod() {
+    default SnmpMethod getMethod() {
         return null;
     }
 
     @JsonIgnore
-    public boolean isValid() {
-        return mappings != null && !mappings.isEmpty() && mappings.stream().allMatch(mapping -> mapping != null && mapping.isValid());
-    }
+    List<SnmpMapping> getAllMappings();
+
+    @JsonIgnore
+    boolean isValid();
+
 }

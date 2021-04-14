@@ -13,14 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.transport.snmp;
+package org.thingsboard.server.common.data.transport.snmp.config;
 
-public enum SnmpCommunicationSpec {
-    TELEMETRY_QUERYING,
+import lombok.Data;
+import org.thingsboard.server.common.data.transport.snmp.SnmpMapping;
 
-    CLIENT_ATTRIBUTES_QUERYING,
-    SHARED_ATTRIBUTES_SETTING,
+import java.util.List;
 
-    TO_DEVICE_RPC_COMMAND_SETTING,
-    TO_DEVICE_RPC_RESPONSE_QUERYING
+@Data
+public abstract class MultipleMappingsSnmpCommunicationConfig implements SnmpCommunicationConfig {
+    protected List<SnmpMapping> mappings;
+
+    @Override
+    public boolean isValid() {
+        return mappings != null && !mappings.isEmpty() && mappings.stream().allMatch(mapping -> mapping != null && mapping.isValid());
+    }
+
+    @Override
+    public List<SnmpMapping> getAllMappings() {
+        return mappings;
+    }
 }

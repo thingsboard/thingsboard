@@ -17,16 +17,11 @@ package org.thingsboard.server.common.data.device.profile;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import org.apache.commons.lang3.ArrayUtils;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.transport.snmp.SnmpMapping;
-import org.thingsboard.server.common.data.transport.snmp.configs.SnmpCommunicationConfig;
+import org.thingsboard.server.common.data.transport.snmp.config.SnmpCommunicationConfig;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Data
 public class SnmpDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
@@ -51,7 +46,7 @@ public class SnmpDeviceProfileTransportConfiguration implements DeviceProfileTra
         return timeoutMs != null && timeoutMs >= 0 && retries != null && retries >= 0
                 && communicationConfigs != null && !communicationConfigs.isEmpty()
                 && communicationConfigs.stream().allMatch(config -> config != null && config.isValid())
-                && communicationConfigs.stream().flatMap(config -> config.getMappings().stream()).map(SnmpMapping::getOid)
-                .distinct().count() == communicationConfigs.stream().mapToInt(config -> config.getMappings().size()).sum();
+                && communicationConfigs.stream().flatMap(config -> config.getAllMappings().stream()).map(SnmpMapping::getOid)
+                .distinct().count() == communicationConfigs.stream().mapToInt(config -> config.getAllMappings().size()).sum();
     }
 }
