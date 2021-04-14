@@ -17,6 +17,27 @@
 import { environment as env } from '@env/environment';
 import { TranslateService } from '@ngx-translate/core';
 import * as _moment from 'moment';
+// Supported Langs: cs_CZ,de_DE,el_GR,en_US,es_ES,fa_IR,fr_FR,it_IT,ja_JA,ka_GE,ko_KR,lv_LV,pt_BR,ro_RO,ru_RU,
+// sl_SI,tr_TR,uk_UA,zh_CN,zh_TW
+import 'moment/locale/cs';
+import 'moment/locale/de';
+import 'moment/locale/el';
+import 'moment/locale/es';
+import 'moment/locale/fa';
+import 'moment/locale/fr';
+import 'moment/locale/it';
+import 'moment/locale/ja';
+import 'moment/locale/ka';
+import 'moment/locale/ko';
+import 'moment/locale/lv';
+import 'moment/locale/pt';
+import 'moment/locale/ro';
+import 'moment/locale/ru';
+import 'moment/locale/sl';
+import 'moment/locale/tr';
+import 'moment/locale/uk';
+import 'moment/locale/zh-cn';
+import 'moment/locale/zh-tw';
 
 export function updateUserLang(translate: TranslateService, userLang: string) {
   let targetLang = userLang;

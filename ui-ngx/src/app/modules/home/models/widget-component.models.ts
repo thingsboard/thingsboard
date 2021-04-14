@@ -48,9 +48,9 @@ import { RafService } from '@core/services/raf.service';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { WidgetLayout } from '@shared/models/dashboard.models';
-import { formatValue, isDefined } from '@core/utils';
+import { isDefined, isDefinedAndNotNull, isNumeric} from '@core/utils';
 import { forkJoin, of } from 'rxjs';
-import { Store } from '@ngrx/store';
+import {select, Store} from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
   NotificationHorizontalPosition,
@@ -77,6 +77,8 @@ import { PageLink } from '@shared/models/page/page-link';
 import { SortOrder } from '@shared/models/page/sort-order';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
+import {environment as env} from "@env/environment";
+import {selectUserLang} from "@core/settings/settings.selectors";
 
 export interface IWidgetAction {
   name: string;
@@ -199,7 +201,31 @@ export class WidgetContext {
   };
 
   utils: IWidgetUtils = {
-    formatValue
+    formatValue: (value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined => {
+      let locale = env.defaultLang.replace('_', '-');
+      this.store.pipe(
+        select(selectUserLang)).subscribe((data) => {
+          if (isDefinedAndNotNull(data)) locale = data.replace('_', '-')
+      });
+
+      if (isDefinedAndNotNull(value) && isNumeric(value) &&
+        (isDefinedAndNotNull(dec) || isDefinedAndNotNull(units) || Number(value).toString() === value)) {
+        let formatted: string | number = Number(value);
+        if (isDefinedAndNotNull(dec)) {
+          formatted = formatted.toFixed(dec);
+        }
+        if (!showZeroDecimals) {
+          formatted = (Number(formatted));
+        }
+        formatted = Number(formatted).toLocaleString(locale);
+        if (isDefinedAndNotNull(units) && units.length > 0) {
+          formatted += ' ' + units;
+        }
+        return formatted;
+      } else {
+        return value !== null ? value : '';
+      }
+    }
   };
 
   $container: JQuery<HTMLElement>;
