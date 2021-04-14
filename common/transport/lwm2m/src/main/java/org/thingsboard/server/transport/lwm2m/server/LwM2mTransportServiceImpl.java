@@ -993,7 +993,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
                 if (!pathSend.isEmpty()) {
                     ConcurrentHashMap<String, Object> finalParams = lwm2mAttributesNew;
                     pathSend.forEach(target -> lwM2mTransportRequest.sendAllRequest(registration, target, PUT_TYPE_OPER_WRITE_ATTRIBUTES, ContentFormat.TLV.getName(),
-                            null, finalParams, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getTimeout()));
+                            null, finalParams.get(target), this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getTimeout()));
                 }
             });
         }
@@ -1005,10 +1005,15 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
                 Set<String> pathSend = analyzerParameters.getPathPostParametersDel().stream().filter(target -> clientObjects.contains("/" + target.split(LWM2M_SEPARATOR_PATH)[1]))
                         .collect(Collectors.toUnmodifiableSet());
                 if (!pathSend.isEmpty()) {
-                    lwm2mAttributesNew.values().clear();
-                    ConcurrentHashMap<String, Object> finalParams = lwm2mAttributesNew;
-                    pathSend.forEach(target -> lwM2mTransportRequest.sendAllRequest(registration, target, PUT_TYPE_OPER_WRITE_ATTRIBUTES, ContentFormat.TLV.getName(),
-                            null, finalParams, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getTimeout()));
+                    ConcurrentHashMap<String, Object> finalParams = lwm2mAttributesOld;
+                    pathSend.forEach(target -> {
+                        Map<String, Object> map = (Map<String, Object>) finalParams.get(target);
+                        for (String key: map.keySet()) {
+                            map.put(key, "");
+                        }
+                       lwM2mTransportRequest.sendAllRequest(registration, target, PUT_TYPE_OPER_WRITE_ATTRIBUTES, ContentFormat.TLV.getName(),
+                            null, map, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getTimeout());
+                    });
                 }
             });
         }

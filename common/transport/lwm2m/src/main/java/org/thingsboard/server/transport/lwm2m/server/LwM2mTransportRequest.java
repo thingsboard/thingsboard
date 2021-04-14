@@ -171,19 +171,6 @@ public class LwM2mTransportRequest {
                     break;
                 case PUT_TYPE_OPER_WRITE_ATTRIBUTES:
                     request = createWriteAttributeRequest (target, params);
-//                    Attribute pmin = new Attribute(MINIMUM_PERIOD, Integer.toUnsignedLong(Integer.parseInt("1")));
-//                    Attribute pmax = new Attribute(MAXIMUM_PERIOD, Integer.toUnsignedLong(Integer.parseInt("10")));
-//                    Attribute[] attrs = {pmin, pmax};
-//                    AttributeSet attrSet = new AttributeSet(attrs);
-//                    request = new WriteAttributesRequest(target, attrSet);
-
-//                    if (resultIds.isResource()) {
-//                        request = new WriteAttributesRequest(resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), attrSet);
-//                    } else if (resultIds.isObjectInstance()) {
-//                        request = new WriteAttributesRequest(resultIds.getObjectId(), resultIds.getObjectInstanceId(), attrSet);
-//                    } else if (resultIds.getObjectId() >= 0) {
-//                        request = new WriteAttributesRequest(resultIds.getObjectId(), attrSet);
-//                    }
                     break;
                 default:
             }

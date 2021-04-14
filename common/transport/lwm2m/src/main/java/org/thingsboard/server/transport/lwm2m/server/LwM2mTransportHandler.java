@@ -176,7 +176,7 @@ public class LwM2mTransportHandler {
         lwM2MClientProfile.setPostTelemetryProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(TELEMETRY).getAsJsonArray());
         lwM2MClientProfile.setPostObserveProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(OBSERVE).getAsJsonArray());
         lwM2MClientProfile.setPostAttributeLwm2mProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE_LWM2M).getAsJsonObject());
-        return  lwM2MClientProfile;
+        return lwM2MClientProfile;
     }
 
     /**
@@ -408,19 +408,21 @@ public class LwM2mTransportHandler {
      *   Attribute pmax = new Attribute(MAXIMUM_PERIOD, "60");
      *   Attribute [] attrs = {gt, st};
      */
-    public static DownlinkRequest createWriteAttributeRequest (String target, Object params) {;
-        AttributeSet attrSet = new AttributeSet(createWriteAttributes (params));
-        return new WriteAttributesRequest(target, attrSet);
+    public static DownlinkRequest createWriteAttributeRequest(String target, Object params) {
+        AttributeSet attrSet = new AttributeSet(createWriteAttributes(params));
+        return attrSet.getAttributes().size() > 0 ? new WriteAttributesRequest(target, attrSet) : null;
     }
 
-    private static  Attribute[] createWriteAttributes (Object params) {
+    private static Attribute[] createWriteAttributes(Object params) {
         List attributeLists = new ArrayList<Attribute>();
         ObjectMapper oMapper = new ObjectMapper();
         Map<String, Object> map = oMapper.convertValue(params, ConcurrentHashMap.class);
-        map.forEach( (k, v) -> {
-            attributeLists.add(new Attribute(k,
-                    (DIMENSION.equals(k) || MINIMUM_PERIOD.equals(k) || MAXIMUM_PERIOD.equals(k)) ?
-                            ((Double)v).longValue() : v));
+        map.forEach((k, v) -> {
+            if (!v.toString().isEmpty()) {
+                attributeLists.add(new Attribute(k,
+                        (DIMENSION.equals(k) || MINIMUM_PERIOD.equals(k) || MAXIMUM_PERIOD.equals(k)) ?
+                                ((Double) v).longValue() : v));
+            }
         });
         return (Attribute[]) attributeLists.toArray(Attribute[]::new);
     }
