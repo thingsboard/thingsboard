@@ -1943,7 +1943,7 @@
     "selected-rulechains": "已选择 { count, plural, 1 {# 个规则链} other {# 个规则链} }",
     "set-root": "设置为根规则链",
     "set-root-rulechain-text": "确认之后，规则链将变为根规格链，并将处理所有传入的传输消息。",
-    "set-root-rulechain-title": "您确定要生成规则链'{{RuleChainName}}'根吗？",
+    "set-root-rulechain-title": "您确定要生成规则链'{{ruleChainName}}'根吗？",
     "system": "系统"
   },
   "rulenode": {
