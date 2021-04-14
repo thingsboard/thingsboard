@@ -23,6 +23,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
@@ -31,32 +32,85 @@ import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Slf4j
 @Ignore
 @RunWith(MockitoJUnitRunner.class)
 public class GraalNashornPerformanceTest {
-    private final int NUMBER_OF_INVOCATIONS = 1500;
-    private final String FUNCTION =
-            "var data = msg;\n" +
-            "var metadata = metadata;\n" +
-            "var deviceName = data.devName;\n" +
-            "var deviceType = 'thermostat';\n" +
+    private final int NUMBER_OF_INVOCATIONS = 100000;
+
+    private static final String FUNCTION = "var relations = [];\n" +
             "\n" +
-            "var result = {\n" +
-            "   deviceName: deviceName,\n" +
-            "   deviceType: deviceType,\n" +
-            "   telemetry: {\n" +
-            "       temperature: data.msg.temp,\n" +
-            "       humidity: data.msg.humidity\n" +
-            "   }, \n" +
-            "   metadata: metadata\n" +
-            "};\n" +
+            "switch (msg.type) {\n" +
+            "    case 'Low Battery':\n" +
+            "        if (metadata.lowBattEmailEnabled === 'true'){\n" +
+            "            relations.push('Low Battery Email');\n" +
+            "        }\n" +
+            "        if (metadata.lowBattSmsEnabled === 'true'){\n" +
+            "            relations.push('Low Battery SMS');\n" +
+            "        }\n" +
+            "        break;\n" +
+            "    case 'Low Temperature':\n" +
+            "        if (metadata.lowTempEmailEnabled === 'true'){\n" +
+            "            relations.push('Low Temperature Email');\n" +
+            "        }\n" +
+            "        if (metadata.lowTempSmsEnabled === 'true'){\n" +
+            "            relations.push('Low Temperature SMS');\n" +
+            "        }\n" +
+            "        break;\n" +
+            "    case 'Device Inactive':\n" +
+            "        if (metadata.inactivityEmailEnabled === 'true'){\n" +
+            "            relations.push('Device Inactive Email');\n" +
+            "        }\n" +
+            "        if (metadata.inactivitySmsEnabled === 'true'){\n" +
+            "            relations.push('Device Inactive SMS');\n" +
+            "        }\n" +
+            "        break;        \n" +
+            "    case 'Daily Consumption Threshold Exceeded':\n" +
+            "        if (metadata.dailyConsumptionEmailEnabled === 'true'){\n" +
+            "            relations.push('Daily Consumption Email');\n" +
+            "        }\n" +
+            "        if (metadata.dailyConsumptionSmsEnabled === 'true'){\n" +
+            "            relations.push('Daily Consumption SMS');\n" +
+            "        }\n" +
+            "        break; \n" +
+            "    case 'Weekly Consumption Threshold Exceeded':\n" +
+            "        if (metadata.weeklyConsumptionEmailEnabled === 'true'){\n" +
+            "            relations.push('Weekly Consumption Email');\n" +
+            "        }\n" +
+            "        if (metadata.weeklyConsumptionSmsEnabled === 'true'){\n" +
+            "            relations.push('Weekly Consumption SMS');\n" +
+            "        }\n" +
+            "        break;\n" +
+            "    case 'Leakage Detected':\n" +
+            "        if (metadata.leakageEmailEnabled === 'true'){\n" +
+            "            relations.push('Leakage Detected Email');\n" +
+            "        }\n" +
+            "        if (metadata.leakageSmsEnabled === 'true'){\n" +
+            "            relations.push('Leakage Detected SMS');\n" +
+            "        }\n" +
+            "        break;        \n" +
+            "    default:\n" +
+            "        relations.push('Other');\n" +
+            "}\n" +
             "\n" +
+            "return relations;";
+
+    private static final String FUNCTION2 = "var result = [];\n" +
+            "switch (metadata.deviceType) {\n" +
+            "    case 'FSL_Telemetry': \n" +
+            "        result = ['Asset'];\n" +
+            "        break;\n" +
+            "    default:\n" +
+            "        result = ['Asset'];\n" +
+            "}\n" +
             "return result;";
 
-    private final String data = "{\"devName\": \"TBD01\", \"msg\": {\"temp\": 11, \"humidity\": 77}}";
-    private final String metadata = "{\"data\": 40}";
+    private final String data = "{\"type\": \"Weekly Consumption Threshold Exceeded\", \"msg\": {\"temp\": %s, \"humidity\": %s}}";
+    private final String metadata = "{\"weeklyConsumptionSmsEnabled\": \"true\", \"deviceType\": \"FSL_Speed\"}";
 
     private final TenantId tenantId = new TenantId(UUID.randomUUID());
 
@@ -75,22 +129,33 @@ public class GraalNashornPerformanceTest {
 
     @Test
     public void graalPerformanceTest() throws Exception {
-        var executorService = new JsExecutorService();
-        executorService.init();
-        GraalJsInvokeService graalJsInvokeService = new GraalJsInvokeService(tbApiUsageStateService, tbApiUsageClient, executorService);
-        graalJsInvokeService.initEngine();
+        var executor = Executors.newSingleThreadExecutor();
+        try {
+            var executorService = new JsExecutorService();
+            executorService.init();
+            GraalJsInvokeService graalJsInvokeService = new GraalJsInvokeService(tbApiUsageStateService, tbApiUsageClient, executorService);
+            graalJsInvokeService.initSandbox(executor);
+            ReflectionTestUtils.setField(graalJsInvokeService, "useJsSandbox", true);
 
-        printStatistics(testExecutor(graalJsInvokeService), "Graal Executor");
+            printStatistics(testExecutor(graalJsInvokeService), "Graal Executor");
+        } finally {
+            executor.shutdownNow();
+        }
     }
 
     @Test
     public void nashornPerformanceTest() throws Exception {
-        var executorService = new JsExecutorService();
-        executorService.init();
-        NashornJsInvokeService nashornJsInvokeService = new NashornJsInvokeService(tbApiUsageStateService, tbApiUsageClient, executorService);
-        nashornJsInvokeService.initEngine();
-
-        printStatistics(testExecutor(nashornJsInvokeService), "Nashorn Executor");
+        var executor = Executors.newSingleThreadExecutor();
+        try {
+            var executorService = new JsExecutorService();
+            executorService.init();
+            NashornJsInvokeService nashornJsInvokeService = new NashornJsInvokeService(tbApiUsageStateService, tbApiUsageClient, executorService);
+            nashornJsInvokeService.initSandbox(executor);
+            ReflectionTestUtils.setField(nashornJsInvokeService, "useJsSandbox", true);
+            printStatistics(testExecutor(nashornJsInvokeService), "Nashorn Executor");
+        } finally {
+            executor.shutdownNow();
+        }
     }
 
     private void printStatistics(List<Long> allIterationsResultTime, String executorName) {
@@ -105,17 +170,17 @@ public class GraalNashornPerformanceTest {
     private List<Long> testExecutor(AbstractLocalJsInvokeService executor) throws Exception {
         int counter = 0;
         long startTime;
-        long endTime;
         List<Long> allIterationsResultTime = new ArrayList<>(NUMBER_OF_INVOCATIONS);
-        UUID scriptId = executor.eval(tenantId, JsScriptType.RULE_NODE_SCRIPT, FUNCTION).get();
+        UUID scriptId = executor.eval(tenantId, JsScriptType.RULE_NODE_SCRIPT, FUNCTION2).get();
+        int temperature = 42;
+        int humidity = 73;
+        System.out.println(executor.invokeFunction(tenantId, scriptId, String.format(data, temperature++, humidity++), metadata, "POST_TELEMETRY_REQUEST").get());
         while (counter < NUMBER_OF_INVOCATIONS) {
             startTime = System.nanoTime();
-            executor.invokeFunction(tenantId, scriptId, data, metadata, "POST_TELEMETRY_REQUEST").get();
-            endTime = System.nanoTime() - startTime;
-            allIterationsResultTime.add(endTime);
+            executor.invokeFunction(tenantId, scriptId, String.format(data, temperature++, humidity++), metadata, "POST_TELEMETRY_REQUEST").get();
+            allIterationsResultTime.add(System.nanoTime() - startTime);
             counter++;
         }
-
         return allIterationsResultTime;
     }
 

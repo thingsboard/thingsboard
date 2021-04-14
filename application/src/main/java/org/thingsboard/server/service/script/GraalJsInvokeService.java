@@ -38,7 +38,6 @@ public class GraalJsInvokeService extends AbstractLocalJsInvokeService {
     private GraalSandbox sandbox;
     private ScriptEngine engine;
 
-
     public GraalJsInvokeService(TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient, JsExecutorService jsExecutor) {
         super(apiUsageStateService, apiUsageClient, jsExecutor);
     }
