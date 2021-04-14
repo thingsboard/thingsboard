@@ -22,10 +22,14 @@ import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.californium.core.network.config.NetworkConfig;
+import org.eclipse.leshan.core.attributes.Attribute;
+import org.eclipse.leshan.core.attributes.AttributeSet;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.codec.CodecException;
+import org.eclipse.leshan.core.request.DownlinkRequest;
+import org.eclipse.leshan.core.request.WriteAttributesRequest;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.californium.LeshanServerBuilder;
 import org.eclipse.leshan.server.registration.Registration;
@@ -39,11 +43,18 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientProfile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
+import static org.eclipse.leshan.core.attributes.Attribute.DIMENSION;
+import static org.eclipse.leshan.core.attributes.Attribute.MAXIMUM_PERIOD;
+import static org.eclipse.leshan.core.attributes.Attribute.MINIMUM_PERIOD;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 
@@ -364,5 +375,53 @@ public class LwM2mTransportHandler {
         } catch (Exception e) {
             return ObjectModel.DEFAULT_VERSION;
         }
+    }
+
+    /**
+     * As example:
+     * a)Write-Attributes/3/0/9?pmin=1 means the Battery Level value will be notified
+     * to the Server with a minimum interval of 1sec;
+     * this value is set at theResource level.
+     * b)Write-Attributes/3/0/9?pmin means the Battery Level will be notified
+     * to the Server with a minimum value (pmin) given by the default one
+     * (resource 2 of Object Server ID=1),
+     * or with another value if this Attribute has been set at another level
+     * (Object or Object Instance: see section5.1.1).
+     * c)Write-Attributes/3/0?pmin=10 means that all Resources of Instance 0 of the Object ‘Device (ID:3)’
+     * will be notified to the Server with a minimum interval of 10 sec;
+     * this value is set at the Object Instance level.
+     * d)Write-Attributes /3/0/9?gt=45&st=10 means the Battery Level will be notified to the Server
+     * when:
+     * a.old value is 20 and new value is 35 due to step condition
+     * b.old value is 45 and new value is 50 due to gt condition
+     * c.old value is 50 and new value is 40 due to both gt and step conditions
+     * d.old value is 35 and new value is 20 due to step conditione)
+     * Write-Attributes /3/0/9?lt=20&gt=85&st=10 means the Battery Level will be notified to the Server
+     * when:
+     * a.old value is 17 and new value is 24 due to lt condition
+     * b.old value is 75 and new value is 90 due to both gt and step conditions
+     *   String uriQueries = "pmin=10&pmax=60";
+     *   AttributeSet attributes = AttributeSet.parse(uriQueries);
+     *   WriteAttributesRequest request = new WriteAttributesRequest(target, attributes);
+     *   Attribute gt = new Attribute(GREATER_THAN, Double.valueOf("45"));
+     *   Attribute st = new Attribute(LESSER_THAN, Double.valueOf("10"));
+     *   Attribute pmax = new Attribute(MAXIMUM_PERIOD, "60");
+     *   Attribute [] attrs = {gt, st};
+     */
+    public static DownlinkRequest createWriteAttributeRequest (String target, Object params) {;
+        AttributeSet attrSet = new AttributeSet(createWriteAttributes (params));
+        return new WriteAttributesRequest(target, attrSet);
+    }
+
+    private static  Attribute[] createWriteAttributes (Object params) {
+        List attributeLists = new ArrayList<Attribute>();
+        ObjectMapper oMapper = new ObjectMapper();
+        Map<String, Object> map = oMapper.convertValue(params, ConcurrentHashMap.class);
+        map.forEach( (k, v) -> {
+            attributeLists.add(new Attribute(k,
+                    (DIMENSION.equals(k) || MINIMUM_PERIOD.equals(k) || MAXIMUM_PERIOD.equals(k)) ?
+                            ((Double)v).longValue() : v));
+        });
+        return (Attribute[]) attributeLists.toArray(Attribute[]::new);
     }
 }

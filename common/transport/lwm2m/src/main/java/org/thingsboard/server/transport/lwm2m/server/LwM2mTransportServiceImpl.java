@@ -80,6 +80,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandle
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.DEVICE_ATTRIBUTES_REQUEST;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.DEVICE_ATTRIBUTES_TOPIC;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.DEVICE_TELEMETRY_TOPIC;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.GET_TYPE_OPER_DISCOVER;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.GET_TYPE_OPER_OBSERVE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.GET_TYPE_OPER_READ;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_ERROR;
@@ -506,6 +507,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
             // #1
             this.initReadAttrTelemetryObserveToClient(registration, lwM2MClient, GET_TYPE_OPER_OBSERVE, clientObjects);
             this.initReadAttrTelemetryObserveToClient(registration, lwM2MClient, PUT_TYPE_OPER_WRITE_ATTRIBUTES, clientObjects);
+            this.initReadAttrTelemetryObserveToClient(registration, lwM2MClient, GET_TYPE_OPER_DISCOVER, clientObjects);
         }
     }
 
@@ -629,6 +631,8 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         } else if (GET_TYPE_OPER_OBSERVE.equals(typeOper)) {
             result = JacksonUtil.fromString(lwM2MClientProfile.getPostObserveProfile().toString(),
                     new TypeReference<>() {});
+        } else if (GET_TYPE_OPER_DISCOVER.equals(typeOper)) {
+            result = this.getPathForWriteAttributes (lwM2MClientProfile.getPostAttributeLwm2mProfile()).keySet();;
         } else if (PUT_TYPE_OPER_WRITE_ATTRIBUTES.equals(typeOper)) {
             params =  this.getPathForWriteAttributes (lwM2MClientProfile.getPostAttributeLwm2mProfile());
             result = params.keySet();
