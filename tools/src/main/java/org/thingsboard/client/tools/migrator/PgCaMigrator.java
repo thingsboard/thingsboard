@@ -50,6 +50,9 @@ public class PgCaMigrator {
 
     private long currentWriterCount = 1;
 
+    private boolean willLatestMigrate;
+    private boolean willTsMigrate;
+
     private final File sourceFile;
     private final boolean castStringIfPossible;
 
@@ -58,18 +61,18 @@ public class PgCaMigrator {
     private CQLSSTableWriter currentTsWriter;
     private CQLSSTableWriter currentPartitionsWriter;
     private CQLSSTableWriter currentTsLatestWriter;
-    private final Set<String> partitions = new HashSet<>();
+    private final Set<List<Object>> partitions = new HashSet<>();
 
     private File outTsDir;
     private File outTsLatestDir;
 
     public PgCaMigrator(File sourceFile,
-                                File ourTsDir,
-                                File outTsPartitionDir,
-                                File outTsLatestDir,
-                                RelatedEntitiesParser allEntityIdsAndTypes,
-                                DictionaryParser dictionaryParser,
-                                boolean castStringsIfPossible) {
+                        File ourTsDir,
+                        File outTsPartitionDir,
+                        File outTsLatestDir,
+                        RelatedEntitiesParser allEntityIdsAndTypes,
+                        DictionaryParser dictionaryParser,
+                        boolean castStringsIfPossible) {
         this.sourceFile = sourceFile;
         this.entityIdsAndTypes = allEntityIdsAndTypes;
         this.keyParser = dictionaryParser;
@@ -77,11 +80,13 @@ public class PgCaMigrator {
         if(outTsLatestDir != null) {
             this.currentTsLatestWriter = WriterBuilder.getLatestWriter(outTsLatestDir);
             this.outTsLatestDir = outTsLatestDir;
+            this.willLatestMigrate = true;
         }
         if(ourTsDir != null) {
             this.currentTsWriter = WriterBuilder.getTsWriter(ourTsDir);
             this.currentPartitionsWriter = WriterBuilder.getPartitionWriter(outTsPartitionDir);
             this.outTsDir = ourTsDir;
+            this.willTsMigrate = true;
         }
     }
 
@@ -94,45 +99,46 @@ public class PgCaMigrator {
         try {
             while(iterator.hasNext()) {
                 line = iterator.nextLine();
-                if(!isLatestDone && isBlockLatestStarted(line)) {
+                if(isLatestDone && isTsDone) break;
+                if(willLatestMigrate && !isLatestDone && isBlockLatestStarted(line)) {
                     System.out.println("START TO MIGRATE LATEST");
                     long start = System.currentTimeMillis();
-                    processBlock(iterator, currentTsLatestWriter, outTsLatestDir, this::toValuesLatest);
+                    processBlock(iterator, currentTsLatestWriter, WriterBuilder::getLatestWriter, outTsLatestDir, this::toValuesLatest);
                     System.out.println("TOTAL LINES MIGRATED: " + linesLatestMigrated + ", FORMING OF SSL FOR LATEST TS FINISHED WITH TIME: " + (System.currentTimeMillis() - start) + " ms.");
                     isLatestDone = true;
                 }
 
-                if(!isTsDone && isBlockTsStarted(line)) {
+                if(willTsMigrate && !isTsDone && isBlockTsStarted(line)) {
                     System.out.println("START TO MIGRATE TS");
                     long start = System.currentTimeMillis();
-                    processBlock(iterator, currentTsWriter, outTsDir, this::toValuesTs);
+                    processBlock(iterator, currentTsWriter, WriterBuilder::getTsWriter, outTsDir, this::toValuesTs);
                     System.out.println("TOTAL LINES MIGRATED: " + linesTsMigrated + ", FORMING OF SSL FOR TS FINISHED WITH TIME: " + (System.currentTimeMillis() - start) + " ms.");
                     isTsDone = true;
                 }
             }
 
-            System.out.println("Partitions collected " + partitions.size());
-            long startTs = System.currentTimeMillis();
-            for (String partition : partitions) {
-                String[] split = partition.split("\\|");
-                List<Object> values = Lists.newArrayList();
-                values.add(split[0]);
-                values.add(UUID.fromString(split[1]));
-                values.add(split[2]);
-                values.add(Long.parseLong(split[3]));
-                currentPartitionsWriter.addRow(values);
-            }
+            if(willTsMigrate) {
+                System.out.println("Partitions collected " + partitions.size());
+                long startTs = System.currentTimeMillis();
+                for (var partition : partitions) {
+                    currentPartitionsWriter.addRow(partition);
+                }
 
-            System.out.println(new Date() + " Migrated partitions " + partitions.size() + " in " + (System.currentTimeMillis() - startTs));
+                System.out.println(new Date() + " Migrated partitions " + partitions.size() + " in " + (System.currentTimeMillis() - startTs) + "(ms)");
+            }
 
             System.out.println();
             System.out.println("Finished migrate Telemetry");
 
         } finally {
             iterator.close();
-            currentTsLatestWriter.close();
-            currentTsWriter.close();
-            currentPartitionsWriter.close();
+            if(willLatestMigrate) {
+                currentTsLatestWriter.close();
+            }
+            if(willTsMigrate) {
+                currentTsWriter.close();
+                currentPartitionsWriter.close();
+            }
         }
     }
 
@@ -179,6 +185,9 @@ public class PgCaMigrator {
 
         List<Object> result = new ArrayList<>();
 
+        if(entityIdsAndTypes.getEntityType(raw.get(0)) == null) {
+            return null;
+        }
         addTypeIdKey(result, raw);
         addPartitions(result, raw);
         addValues(result, raw);
@@ -205,11 +214,13 @@ public class PgCaMigrator {
     }
 
     private void processPartitions(List<Object> values) {
-        String key = values.get(0) + "|" + values.get(1) + "|" + values.get(2) + "|" + values.get(3);
-        partitions.add(key);
+        partitions.add(List.of(values.get(0),
+                values.get(1),
+                values.get(2),
+                values.get(4)));
     }
 
-    private void processBlock(LineIterator iterator, CQLSSTableWriter writer, File outDir, Function<List<String>, List<Object>> function) {
+    private void processBlock(LineIterator iterator, CQLSSTableWriter writer, Function<File, CQLSSTableWriter> writerCreator, File outDir, Function<List<String>, List<Object>> function) {
         String currentLine;
         long linesProcessed = 0;
         while(iterator.hasNext()) {
@@ -228,13 +239,15 @@ public class PgCaMigrator {
                 if (this.currentWriterCount == 0) {
                     System.out.println(new Date() + " close writer " + new Date());
                     writer.close();
-                    writer = WriterBuilder.getLatestWriter(outDir);
+                    writer = writerCreator.apply(outDir);
                 }
 
-                if (this.castStringIfPossible) {
-                    writer.addRow(castToNumericIfPossible(values));
-                } else {
-                    writer.addRow(values);
+                if(values != null) {
+                    if (this.castStringIfPossible) {
+                        writer.addRow(castToNumericIfPossible(values));
+                    } else {
+                        writer.addRow(values);
+                    }
                 }
 
                 currentWriterCount++;
@@ -243,6 +256,8 @@ public class PgCaMigrator {
                 }
             } catch (Exception ex) {
                 System.out.println(ex.getMessage() + " -> " + currentLine);
+                ex.printStackTrace();
+                System.out.println("current writer: " + outDir.getAbsolutePath());
             }
         }
     }
