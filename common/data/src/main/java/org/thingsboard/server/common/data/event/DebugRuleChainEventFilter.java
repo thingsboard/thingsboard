@@ -15,21 +15,9 @@
  */
 package org.thingsboard.server.common.data.event;
 
-import lombok.Data;
-
-@Data
-public class LifeCycleEvent implements EventFilter {
-    private boolean isError;
-    private String server;
-    private String status;
-    private String event;
-
-    public void setIsError(boolean isError) {
-        this.isError = isError;
-    }
-
+public class DebugRuleChainEventFilter extends DebugEvent {
     @Override
     public EventType getEventType() {
-        return EventType.LC_EVENT;
+        return EventType.DEBUG_RULE_CHAIN;
     }
 }

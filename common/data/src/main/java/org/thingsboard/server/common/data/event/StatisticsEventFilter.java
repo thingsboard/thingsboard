@@ -15,9 +15,16 @@
  */
 package org.thingsboard.server.common.data.event;
 
-public class DebugRuleNodeEvent extends DebugEvent {
+import lombok.Data;
+
+@Data
+public class StatisticsEventFilter implements EventFilter {
+    private String server;
+    private Integer messagesProcessed;
+    private Integer errorsOccurred;
+
     @Override
     public EventType getEventType() {
-        return EventType.DEBUG_RULE_NODE;
+        return EventType.STATS;
     }
 }

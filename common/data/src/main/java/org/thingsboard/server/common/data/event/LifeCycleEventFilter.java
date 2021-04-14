@@ -15,9 +15,17 @@
  */
 package org.thingsboard.server.common.data.event;
 
-public class DebugRuleChainEvent extends DebugEvent {
+import lombok.Data;
+
+@Data
+public class LifeCycleEventFilter implements EventFilter {
+    private String server;
+    private String event;
+    private String status;
+    private String error;
+
     @Override
     public EventType getEventType() {
-        return EventType.DEBUG_RULE_CHAIN;
+        return EventType.LC_EVENT;
     }
 }

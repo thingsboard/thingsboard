@@ -20,17 +20,16 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
         property = "eventType")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = DebugRuleNodeEvent.class, name = "DEBUG_RULE_NODE"),
-        @JsonSubTypes.Type(value = DebugRuleChainEvent.class, name = "DEBUG_RULE_CHAIN"),
-        @JsonSubTypes.Type(value = ErrorEvent.class, name = "ERROR"),
-        @JsonSubTypes.Type(value = LifeCycleEvent.class, name = "LC_EVENT"),
-        @JsonSubTypes.Type(value = StatisticsEvent.class, name = "STATS")
+        @JsonSubTypes.Type(value = DebugRuleNodeEventFilter.class, name = "DEBUG_RULE_NODE"),
+        @JsonSubTypes.Type(value = DebugRuleChainEventFilter.class, name = "DEBUG_RULE_CHAIN"),
+        @JsonSubTypes.Type(value = ErrorEventFilter.class, name = "ERROR"),
+        @JsonSubTypes.Type(value = LifeCycleEventFilter.class, name = "LC_EVENT"),
+        @JsonSubTypes.Type(value = StatisticsEventFilter.class, name = "STATS")
 })
 public interface EventFilter {
     @JsonIgnore

@@ -29,6 +29,7 @@ public abstract class DebugEvent implements EventFilter {
     private String entityId;
     private String msgType;
     private boolean isError;
+    private String error;
 
     public void setIsError(boolean isError) {
         this.isError = isError;

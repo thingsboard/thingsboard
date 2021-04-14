@@ -18,13 +18,12 @@ package org.thingsboard.server.common.data.event;
 import lombok.Data;
 
 @Data
-public class StatisticsEvent implements EventFilter {
+public class ErrorEventFilter implements EventFilter {
     private String server;
-    private Integer messagesProcessed;
-    private Integer errorsOccured;
+    private String method;
 
     @Override
     public EventType getEventType() {
-        return EventType.STATS;
+        return EventType.ERROR;
     }
 }
