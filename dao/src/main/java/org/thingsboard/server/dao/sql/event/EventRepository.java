@@ -80,4 +80,172 @@ public interface EventRepository extends PagingAndSortingRepository<EventEntity,
                                                                   @Param("endTime") Long endTime,
                                                                   Pageable pageable);
 
+    @Query(nativeQuery = true,
+            value = "SELECT * FROM event e WHERE " +
+                    "e.tenant_id = :tenantId " +
+                    "AND e.entity_type = :entityType " +
+                    "AND e.entity_id = :entityId " +
+                    "AND e.event_type = :eventType " +
+                    "AND ((:startTime IS NULL) OR (e.created_time >= cast(cast(:startTime as varchar) as bigint))) " +
+                    "AND ((:endTime IS NULL) OR (e.created_time >= cast(cast(:endTime as varchar) as bigint))) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'type') as varchar)) " +
+                    "LIKE  concat('%', lower(cast(:type AS VARCHAR)), '%')) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'server') as varchar)) " +
+                    "LIKE  concat('%', lower(cast(:server AS VARCHAR)), '%')) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'entityName') as varchar)) " +
+                    "LIKE  concat('%', lower(cast(:entityName AS VARCHAR)), '%')) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'relationType') as varchar)) " +
+                    "LIKE  concat('%', lower(cast(:relationType AS VARCHAR)), '%')) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'msgId') as varchar)) " +
+                    "LIKE  concat('%', lower(cast(:bodyEntityId AS VARCHAR)), '%')) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'msgType') as varchar)) " +
+                    "LIKE  concat('%', lower(cast(:messageType AS VARCHAR)), '%')) " +
+                    "AND ((:isError = FALSE) OR (json_object_field(cast(e.body as json), 'error') is not null)) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'data') as varchar)) " +
+                    "LIKE  concat('%', lower(cast(:dataSearch AS VARCHAR)), '%')) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'metadata') as varchar)) " +
+                    "LIKE  concat('%', lower(cast(:metadataSearch AS VARCHAR)), '%')) ",
+            countQuery = "SELECT count(*) FROM event e WHERE " +
+                    "e.tenant_id = :tenantId " +
+                    "AND e.entity_type = :entityType " +
+                    "AND e.entity_id = :entityId " +
+                    "AND e.event_type = :eventType " +
+                    "AND ((:startTime IS NULL) OR (e.created_time >= cast(cast(:startTime as varchar) as bigint))) " +
+                    "AND ((:endTime IS NULL) OR (e.created_time >= cast(cast(:endTime as varchar) as bigint))) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'type') as varchar)) " +
+                    "LIKE  concat('%', lower(cast(:type AS VARCHAR)), '%')) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'server') as varchar)) " +
+                    "LIKE  concat('%', lower(cast(:server AS VARCHAR)), '%')) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'entityName') as varchar)) " +
+                    "LIKE  concat('%', lower(cast(:entityName AS VARCHAR)), '%')) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'relationType') as varchar)) " +
+                    "LIKE  concat('%', lower(cast(:relationType AS VARCHAR)), '%')) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'entityId') as varchar)) " +
+                    "LIKE  concat('%', lower(cast(:bodyEntityId AS VARCHAR)), '%')) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'msgType') as varchar)) " +
+                    "LIKE  concat('%', lower(cast(:messageType AS VARCHAR)), '%')) " +
+                    "AND ((:isError = FALSE) OR (json_object_field(cast(e.body as json), 'error') is not null)) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'data') as varchar)) " +
+                    "LIKE  concat('%', lower(cast(:dataSearch AS VARCHAR)), '%')) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'metadata') as varchar)) " +
+                    "LIKE  concat('%', lower(cast(:metadataSearch AS VARCHAR)), '%')) "
+    )
+    Page<EventEntity> findDebugRuleNodeEvents(@Param("tenantId") UUID tenantId,
+                                              @Param("entityId") UUID entityId,
+                                              @Param("entityType") String entityType,
+                                              @Param("eventType") String eventType,
+                                              @Param("startTime") Long startTime,
+                                              @Param("endTime") Long endTIme,
+                                              @Param("type") String type,
+                                              @Param("server") String server,
+                                              @Param("entityName") String entityName,
+                                              @Param("relationType") String relationType,
+                                              @Param("bodyEntityId") String bodyEntityId,
+                                              @Param("messageType") String messageType,
+                                              @Param("isError") boolean isError,
+                                              @Param("dataSearch") String dataSearch,
+                                              @Param("metadataSearch") String metadataSearch,
+                                              Pageable pageable);
+
+    @Query(nativeQuery = true,
+            value = "SELECT * FROM event e WHERE " +
+                    "e.tenant_id = :tenantId " +
+                    "AND e.entity_type = :entityType " +
+                    "AND e.entity_id = :entityId " +
+                    "AND e.event_type = 'ERROR' " +
+                    "AND ((:startTime IS NULL) OR (e.created_time >= cast(cast(:startTime as varchar) as bigint))) " +
+                    "AND ((:endTime IS NULL) OR (e.created_time >= cast(cast(:endTime as varchar) as bigint))) " +
+                    "AND (lower(cast(json_object_field(cast(e.body as json), 'server') as varchar )) " +
+                    "LIKE concat('%', lower(cast(:server as varchar)), '%')) " +
+                    "AND (lower(cast(json_object_field(cast(e.body as json), 'method') as varchar )) " +
+                    "LIKE concat('%', lower(cast(:method as varchar)), '%')) ",
+            countQuery = "SELECT count(*) FROM event e WHERE " +
+                    "e.tenant_id = :tenantId " +
+                    "AND e.entity_type = :entityType " +
+                    "AND e.entity_id = :entityId " +
+                    "AND e.event_type = 'ERROR' " +
+                    "AND ((:startTime IS NULL) OR (e.created_time >= cast(cast(:startTime as varchar) as bigint))) " +
+                    "AND ((:endTime IS NULL) OR (e.created_time >= cast(cast(:endTime as varchar) as bigint))) " +
+                    "AND (lower(cast(json_object_field(cast(e.body as json), 'server') as varchar )) " +
+                    "LIKE concat('%', lower(cast(:server as varchar)), '%')) " +
+                    "AND (lower(cast(json_object_field(cast(e.body as json), 'method') as varchar )) " +
+                    "LIKE concat('%', lower(cast(:method as varchar)), '%')) ")
+    Page<EventEntity> findErrorEvents(@Param("tenantId") UUID tenantId,
+                                      @Param("entityId") UUID entityId,
+                                      @Param("entityType") String entityType,
+                                      @Param("startTime") Long startTime,
+                                      @Param("endTime") Long endTIme,
+                                      @Param("server") String server,
+                                      @Param("method") String method,
+                                      Pageable pageable);
+
+    @Query(nativeQuery = true,
+            value = "SELECT * FROM event e WHERE " +
+                    "e.tenant_id = :tenantId " +
+                    "AND e.entity_type = :entityType " +
+                    "AND e.entity_id = :entityId " +
+                    "AND e.event_type = 'LC_EVENT' " +
+                    "AND ((:startTime IS NULL) OR (e.created_time >= cast(cast(:startTime as varchar) as bigint))) " +
+                    "AND ((:endTime IS NULL) OR (e.created_time >= cast(cast(:endTime as varchar) as bigint))) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'server') AS VARCHAR )) " +
+                    "LIKE concat('%', lower(cast(:server AS VARCHAR)), '%')) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'event') AS VARCHAR )) " +
+                    "LIKE concat('%', lower(cast(:event AS VARCHAR)), '%')) " +
+                    "AND ((:isError = FALSE) OR (cast(jsonb_object_field(cast(e.body AS jsonb), 'success') as boolean) = FALSE))",
+            countQuery = "SELECT count(*) FROM event e WHERE " +
+                    "e.tenant_id = :tenantId " +
+                    "AND e.entity_type = :entityType " +
+                    "AND e.entity_id = :entityId " +
+                    "AND e.event_type = 'LC_EVENT' " +
+                    "AND ((:startTime IS NULL) OR (e.created_time >= cast(cast(:startTime as varchar) as bigint))) " +
+                    "AND ((:endTime IS NULL) OR (e.created_time >= cast(cast(:endTime as varchar) as bigint))) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'server') AS VARCHAR )) " +
+                    "LIKE concat('%', lower(cast(:server AS VARCHAR)), '%')) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'event') AS VARCHAR )) " +
+                    "LIKE concat('%', lower(cast(:event AS VARCHAR)), '%')) " +
+                    "AND ((:isError = FALSE) OR (cast(jsonb_object_field(cast(e.body AS jsonb), 'success') as boolean) = FALSE))")
+    Page<EventEntity> findLifeCycleEvents(@Param("tenantId") UUID tenantId,
+                                          @Param("entityId") UUID entityId,
+                                          @Param("entityType") String entityType,
+                                          @Param("startTime") Long startTime,
+                                          @Param("endTime") Long endTIme,
+                                          @Param("isError") boolean isError,
+                                          @Param("event") String event,
+                                          @Param("server") String server,
+                                          Pageable pageable);
+
+    @Query(nativeQuery = true,
+            value = "SELECT * FROM event e WHERE " +
+                    "e.tenant_id = :tenantId " +
+                    "AND e.entity_type = :entityType " +
+                    "AND e.entity_id = :entityId " +
+                    "AND e.event_type = 'STATS' " +
+                    "AND ((:startTime IS NULL) OR (e.created_time >= cast(cast(:startTime as varchar) as bigint))) " +
+                    "AND ((:endTime IS NULL) OR (e.created_time >= cast(cast(:endTime as varchar) as bigint))) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'server') AS VARCHAR )) " +
+                    "LIKE concat('%', lower(cast(:server AS VARCHAR)), '%')) " +
+                    "AND ((:messagesProcessed is null) OR (cast(jsonb_object_field(cast(e.body AS jsonb), 'messagesProcessed') AS INTEGER) = cast(cast(:messagesProcessed as varchar) as integer))) " +
+                    "AND ((:errorsOccured is null) OR (cast(jsonb_object_field(cast(e.body AS jsonb), 'errorsOccured') AS INTEGER) = cast(cast(:errorsOccured as varchar) as integer))) ",
+            countQuery = "SELECT count(*) FROM event e WHERE " +
+                    "e.tenant_id = :tenantId " +
+                    "e.tenant_id = :tenantId " +
+                    "AND e.entity_type = :entityType " +
+                    "AND e.entity_id = :entityId " +
+                    "AND e.event_type = 'STATS' " +
+                    "AND ((:startTime IS NULL) OR (e.created_time >= cast(cast(:startTime as varchar) as bigint))) " +
+                    "AND ((:endTime IS NULL) OR (e.created_time >= cast(cast(:endTime as varchar) as bigint))) " +
+                    "AND (lower(cast(json_object_field(cast(e.body AS json), 'server') AS VARCHAR )) " +
+                    "LIKE concat('%', lower(cast(:server AS VARCHAR)), '%')) " +
+                    "AND ((:messagesProcessed is null) OR (cast(jsonb_object_field(cast(e.body AS jsonb), 'messagesProcessed') AS INTEGER) = cast(cast(:messagesProcessed as varchar) as integer))) " +
+                    "AND ((:errorsOccured is null) OR (cast(jsonb_object_field(cast(e.body AS jsonb), 'errorsOccured') AS INTEGER) = cast(cast(:errorsOccured as varchar) as integer))) ")
+    Page<EventEntity> findStatisticsEvents(@Param("tenantId") UUID tenantId,
+                                           @Param("entityId") UUID entityId,
+                                           @Param("entityType") String entityType,
+                                           @Param("startTime") Long startTime,
+                                           @Param("endTime") Long endTIme,
+                                           @Param("server") String server,
+                                           @Param("messagesProcessed") Integer messagesProcessed,
+                                           @Param("errorsOccured") Integer errorsOccured,
+                                           Pageable pageable);
+
 }

@@ -1629,7 +1629,6 @@
         "body": "Body",
         "method": "Method",
         "type": "Type",
-        "entity": "Entity",
         "message-id": "Message Id",
         "message-type": "Message Type",
         "data-type": "Data Type",
@@ -1641,7 +1640,11 @@
         "success": "Success",
         "failed": "Failed",
         "messages-processed": "Messages processed",
-        "errors-occurred": "Errors occurred"
+        "errors-occurred": "Errors occurred",
+        "all-events": "All",
+        "has-error": "Has error",
+        "entity-id": "Entity Id",
+        "entity-type": "Entity type"
     },
     "extension": {
         "extensions": "Extensions",

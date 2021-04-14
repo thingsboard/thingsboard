@@ -1521,7 +1521,6 @@
         "body": "Cuerpo",
         "method": "Método",
         "type": "Tipo",
-        "entity": "Entidad",
         "message-id": "Id Mensaje",
         "message-type": "Tipo Mensaje",
         "data-type": "Tipo de Datos",
@@ -1533,7 +1532,9 @@
         "success": "Éxito",
         "failed": "Fallo",
         "messages-processed": "Mensajes procesados",
-        "errors-occurred": "Ocurrieron errores"
+        "errors-occurred": "Ocurrieron errores",
+        "all-events": "Todos",
+        "entity-type": "Tipo de entidad"
     },
     "extension": {
         "extensions": "Extensiones",

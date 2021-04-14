@@ -1094,7 +1094,6 @@
     "body": "Inhalt",
     "method": "Methode",
     "type": "Typ",
-    "entity": "Entität",
     "message-id": "Nachrichten-Id",
     "message-type": "Nachrichten-Typ",
     "data-type": "Datentyp",
@@ -1106,7 +1105,9 @@
     "success": "Erfolg",
     "failed": "Fehlgeschlagen",
     "messages-processed": "Nachrichten verarbeitet",
-    "errors-occurred": "Fehler aufgetreten"
+    "errors-occurred": "Fehler aufgetreten",
+    "all-events": "Alle",
+    "entity-type": "Entitätstyp"
   },
   "extension": {
     "extensions": "Erweiterungen",

@@ -24,6 +24,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.event.DebugEvent;
+import org.thingsboard.server.common.data.event.ErrorEvent;
+import org.thingsboard.server.common.data.event.EventFilter;
+import org.thingsboard.server.common.data.event.LifeCycleEvent;
+import org.thingsboard.server.common.data.event.StatisticsEvent;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -145,6 +150,87 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
                                 pageLink.getStartTime(),
                                 pageLink.getEndTime(),
                                 DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<Event> findEventByFilter(UUID tenantId, EntityId entityId, EventFilter eventFilter, TimePageLink pageLink) {
+        switch (eventFilter.getEventType()) {
+            case DEBUG_RULE_NODE:
+            case DEBUG_RULE_CHAIN:
+                return findEventByFilter(tenantId, entityId, (DebugEvent) eventFilter, pageLink);
+            case LC_EVENT:
+                return findEventByFilter(tenantId, entityId, (LifeCycleEvent) eventFilter, pageLink);
+            case ERROR:
+                return findEventByFilter(tenantId, entityId, (ErrorEvent) eventFilter, pageLink);
+            case STATS:
+                return findEventByFilter(tenantId, entityId, (StatisticsEvent) eventFilter, pageLink);
+            default: throw new RuntimeException("Not supported event type: " + eventFilter.getEventType());
+        }
+    }
+
+    private PageData<Event> findEventByFilter(UUID tenantId, EntityId entityId, DebugEvent eventFilter, TimePageLink pageLink) {
+        return DaoUtil.toPageData(
+                eventRepository.findDebugRuleNodeEvents(
+                        tenantId,
+                        entityId.getId(),
+                        entityId.getEntityType().name(),
+                        eventFilter.getEventType().name(),
+                        pageLink.getStartTime(),
+                        pageLink.getEndTime(),
+                        eventFilter.getMsgDirectionType(),
+                        eventFilter.getServer(),
+                        eventFilter.getEntityName(),
+                        eventFilter.getRelationType(),
+                        eventFilter.getEntityId(),
+                        eventFilter.getMsgType(),
+                        eventFilter.isError(),
+                        eventFilter.getDataSearch(),
+                        eventFilter.getMetadataSearch(),
+                        DaoUtil.toPageable(pageLink)));
+    }
+
+    private PageData<Event> findEventByFilter(UUID tenantId, EntityId entityId, ErrorEvent eventFilter, TimePageLink pageLink) {
+        return DaoUtil.toPageData(
+                eventRepository.findErrorEvents(
+                        tenantId,
+                        entityId.getId(),
+                        entityId.getEntityType().name(),
+                        pageLink.getStartTime(),
+                        pageLink.getEndTime(),
+                        eventFilter.getServer(),
+                        eventFilter.getMethod(),
+                        DaoUtil.toPageable(pageLink))
+        );
+    }
+
+    private PageData<Event> findEventByFilter(UUID tenantId, EntityId entityId, LifeCycleEvent eventFilter, TimePageLink pageLink) {
+        return DaoUtil.toPageData(
+                eventRepository.findLifeCycleEvents(
+                        tenantId,
+                        entityId.getId(),
+                        entityId.getEntityType().name(),
+                        pageLink.getStartTime(),
+                        pageLink.getEndTime(),
+                        eventFilter.isError(),
+                        eventFilter.getStatus(),
+                        eventFilter.getServer(),
+                        DaoUtil.toPageable(pageLink))
+        );
+    }
+
+    private PageData<Event> findEventByFilter(UUID tenantId, EntityId entityId, StatisticsEvent eventFilter, TimePageLink pageLink) {
+        return DaoUtil.toPageData(
+                eventRepository.findStatisticsEvents(
+                        tenantId,
+                        entityId.getId(),
+                        entityId.getEntityType().name(),
+                        pageLink.getStartTime(),
+                        pageLink.getEndTime(),
+                        eventFilter.getServer(),
+                        eventFilter.getMessagesProcessed(),
+                        eventFilter.getErrorsOccured(),
+                        DaoUtil.toPageable(pageLink))
+        );
     }
 
     @Override
