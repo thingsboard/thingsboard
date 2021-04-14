@@ -259,16 +259,10 @@ public class InstallScripts {
         try {
             createDefaultRuleChains(tenantId);
             createDefaultRuleChain(tenantId, "Thermostat");
-            loadEdgeDemoRuleChains(tenantId);
         } catch (Exception e) {
             log.error("Unable to load dashboard from json", e);
             throw new RuntimeException("Unable to load dashboard from json", e);
         }
-    }
-
-    private void loadEdgeDemoRuleChains(TenantId tenantId) throws Exception {
-        Path edgeDemoRuleChainsDir = Paths.get(getDataDir(), JSON_DIR, DEMO_DIR, EDGE_MANAGEMENT, RULE_CHAINS_DIR);
-        loadRuleChainsFromPath(tenantId, edgeDemoRuleChainsDir);
     }
 
     public void createOAuth2Templates() throws Exception {
