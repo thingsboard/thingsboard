@@ -87,7 +87,7 @@ public interface EventRepository extends PagingAndSortingRepository<EventEntity,
                     "AND e.entity_id = :entityId " +
                     "AND e.event_type = :eventType " +
                     "AND ((:startTime IS NULL) OR (e.created_time >= cast(cast(:startTime as varchar) as bigint))) " +
-                    "AND ((:endTime IS NULL) OR (e.created_time >= cast(cast(:endTime as varchar) as bigint))) " +
+                    "AND ((:endTime IS NULL) OR (e.created_time <= cast(cast(:endTime as varchar) as bigint))) " +
                     "AND (lower(cast(json_object_field(cast(e.body AS json), 'type') as varchar)) " +
                     "LIKE  concat('%', lower(cast(:type AS VARCHAR)), '%')) " +
                     "AND (lower(cast(json_object_field(cast(e.body AS json), 'server') as varchar)) " +
@@ -111,7 +111,7 @@ public interface EventRepository extends PagingAndSortingRepository<EventEntity,
                     "AND e.entity_id = :entityId " +
                     "AND e.event_type = :eventType " +
                     "AND ((:startTime IS NULL) OR (e.created_time >= cast(cast(:startTime as varchar) as bigint))) " +
-                    "AND ((:endTime IS NULL) OR (e.created_time >= cast(cast(:endTime as varchar) as bigint))) " +
+                    "AND ((:endTime IS NULL) OR (e.created_time <= cast(cast(:endTime as varchar) as bigint))) " +
                     "AND (lower(cast(json_object_field(cast(e.body AS json), 'type') as varchar)) " +
                     "LIKE  concat('%', lower(cast(:type AS VARCHAR)), '%')) " +
                     "AND (lower(cast(json_object_field(cast(e.body AS json), 'server') as varchar)) " +
@@ -154,7 +154,7 @@ public interface EventRepository extends PagingAndSortingRepository<EventEntity,
                     "AND e.entity_id = :entityId " +
                     "AND e.event_type = 'ERROR' " +
                     "AND ((:startTime IS NULL) OR (e.created_time >= cast(cast(:startTime as varchar) as bigint))) " +
-                    "AND ((:endTime IS NULL) OR (e.created_time >= cast(cast(:endTime as varchar) as bigint))) " +
+                    "AND ((:endTime IS NULL) OR (e.created_time <= cast(cast(:endTime as varchar) as bigint))) " +
                     "AND (lower(cast(json_object_field(cast(e.body as json), 'server') as varchar )) " +
                     "LIKE concat('%', lower(cast(:server as varchar)), '%')) " +
                     "AND (lower(cast(json_object_field(cast(e.body as json), 'method') as varchar )) " +
@@ -165,7 +165,7 @@ public interface EventRepository extends PagingAndSortingRepository<EventEntity,
                     "AND e.entity_id = :entityId " +
                     "AND e.event_type = 'ERROR' " +
                     "AND ((:startTime IS NULL) OR (e.created_time >= cast(cast(:startTime as varchar) as bigint))) " +
-                    "AND ((:endTime IS NULL) OR (e.created_time >= cast(cast(:endTime as varchar) as bigint))) " +
+                    "AND ((:endTime IS NULL) OR (e.created_time <= cast(cast(:endTime as varchar) as bigint))) " +
                     "AND (lower(cast(json_object_field(cast(e.body as json), 'server') as varchar )) " +
                     "LIKE concat('%', lower(cast(:server as varchar)), '%')) " +
                     "AND (lower(cast(json_object_field(cast(e.body as json), 'method') as varchar )) " +
@@ -186,7 +186,7 @@ public interface EventRepository extends PagingAndSortingRepository<EventEntity,
                     "AND e.entity_id = :entityId " +
                     "AND e.event_type = 'LC_EVENT' " +
                     "AND ((:startTime IS NULL) OR (e.created_time >= cast(cast(:startTime as varchar) as bigint))) " +
-                    "AND ((:endTime IS NULL) OR (e.created_time >= cast(cast(:endTime as varchar) as bigint))) " +
+                    "AND ((:endTime IS NULL) OR (e.created_time <= cast(cast(:endTime as varchar) as bigint))) " +
                     "AND (lower(cast(json_object_field(cast(e.body AS json), 'server') AS VARCHAR )) " +
                     "LIKE concat('%', lower(cast(:server AS VARCHAR)), '%')) " +
                     "AND (lower(cast(json_object_field(cast(e.body AS json), 'event') AS VARCHAR )) " +
@@ -198,7 +198,7 @@ public interface EventRepository extends PagingAndSortingRepository<EventEntity,
                     "AND e.entity_id = :entityId " +
                     "AND e.event_type = 'LC_EVENT' " +
                     "AND ((:startTime IS NULL) OR (e.created_time >= cast(cast(:startTime as varchar) as bigint))) " +
-                    "AND ((:endTime IS NULL) OR (e.created_time >= cast(cast(:endTime as varchar) as bigint))) " +
+                    "AND ((:endTime IS NULL) OR (e.created_time <= cast(cast(:endTime as varchar) as bigint))) " +
                     "AND (lower(cast(json_object_field(cast(e.body AS json), 'server') AS VARCHAR )) " +
                     "LIKE concat('%', lower(cast(:server AS VARCHAR)), '%')) " +
                     "AND (lower(cast(json_object_field(cast(e.body AS json), 'event') AS VARCHAR )) " +
@@ -221,7 +221,7 @@ public interface EventRepository extends PagingAndSortingRepository<EventEntity,
                     "AND e.entity_id = :entityId " +
                     "AND e.event_type = 'STATS' " +
                     "AND ((:startTime IS NULL) OR (e.created_time >= cast(cast(:startTime as varchar) as bigint))) " +
-                    "AND ((:endTime IS NULL) OR (e.created_time >= cast(cast(:endTime as varchar) as bigint))) " +
+                    "AND ((:endTime IS NULL) OR (e.created_time <= cast(cast(:endTime as varchar) as bigint))) " +
                     "AND (lower(cast(json_object_field(cast(e.body AS json), 'server') AS VARCHAR )) " +
                     "LIKE concat('%', lower(cast(:server AS VARCHAR)), '%')) " +
                     "AND ((:messagesProcessed is null) OR (cast(jsonb_object_field(cast(e.body AS jsonb), 'messagesProcessed') AS INTEGER) = cast(cast(:messagesProcessed as varchar) as integer))) " +
@@ -233,7 +233,7 @@ public interface EventRepository extends PagingAndSortingRepository<EventEntity,
                     "AND e.entity_id = :entityId " +
                     "AND e.event_type = 'STATS' " +
                     "AND ((:startTime IS NULL) OR (e.created_time >= cast(cast(:startTime as varchar) as bigint))) " +
-                    "AND ((:endTime IS NULL) OR (e.created_time >= cast(cast(:endTime as varchar) as bigint))) " +
+                    "AND ((:endTime IS NULL) OR (e.created_time <= cast(cast(:endTime as varchar) as bigint))) " +
                     "AND (lower(cast(json_object_field(cast(e.body AS json), 'server') AS VARCHAR )) " +
                     "LIKE concat('%', lower(cast(:server AS VARCHAR)), '%')) " +
                     "AND ((:messagesProcessed is null) OR (cast(jsonb_object_field(cast(e.body AS jsonb), 'messagesProcessed') AS INTEGER) = cast(cast(:messagesProcessed as varchar) as integer))) " +
