@@ -127,6 +127,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -305,7 +306,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         restTemplate.postForLocation(baseURL + "/api/alarm/{alarmId}/clear", null, alarmId.getId());
     }
 
-    public PageData<AlarmInfo> getAlarms(EntityId entityId, AlarmSearchStatus searchStatus, AlarmStatus status, TimePageLink pageLink, String offset, Boolean fetchOriginator) {
+    public PageData<AlarmInfo> getAlarms(EntityId entityId, AlarmSearchStatus searchStatus, AlarmStatus status, TimePageLink pageLink, UUID offset, Boolean fetchOriginator) {
         String urlSecondPart = "/api/alarm/{entityType}/{entityId}?fetchOriginator={fetchOriginator}&";
         Map<String, String> params = new HashMap<>();
         params.put("entityType", entityId.getEntityType().name());
@@ -319,7 +320,10 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
             urlSecondPart += "status={status}&";
         }
         params.put("fetchOriginator", String.valueOf(fetchOriginator));
-        params.put("offset", offset);
+        if(offset != null) {
+            params.put("offset", offset.toString());
+            urlSecondPart += "offset={offset}&";
+        }
         addTimePageLinkToParam(params, pageLink);
 
         return restTemplate.exchange(
