@@ -32,7 +32,7 @@ import {
   CsvToJsonResult,
   ImportEntityColumnType
 } from '@home/components/import-export/import-export.models';
-import { ImportEntitiesResultInfo, ImportEntityData } from '@app/shared/models/entity.models';
+import { EdgeImportEntityData, ImportEntitiesResultInfo, ImportEntityData } from '@app/shared/models/entity.models';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
 
 export interface ImportDialogCsvData {
@@ -186,25 +186,14 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
     return columnsParam;
   }
 
+
   private addEntities() {
     const importData = this.parseData;
     const parameterColumns: CsvColumnParam[] = this.columnTypesFormGroup.get('columnsParam').value;
     const entitiesData: ImportEntityData[] = [];
     let sentDataLength = 0;
     for (let row = 0; row < importData.rows.length; row++) {
-      const entityData: ImportEntityData = {
-        name: '',
-        type: '',
-        description: '',
-        gateway: null,
-        label: '',
-        accessToken: '',
-        attributes: {
-          server: [],
-          shared: []
-        },
-        timeseries: []
-      };
+      const entityData: ImportEntityData = this.constructDraftImportEntityData();
       const i = row;
       for (let j = 0; j < parameterColumns.length; j++) {
         switch (parameterColumns[j].type) {
@@ -244,6 +233,18 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
           case ImportEntityColumnType.description:
             entityData.description = importData.rows[i][j];
             break;
+          case ImportEntityColumnType.edgeLicenseKey:
+            (entityData as EdgeImportEntityData).edgeLicenseKey = importData.rows[i][j];
+            break;
+          case ImportEntityColumnType.cloudEndpoint:
+            (entityData as EdgeImportEntityData).cloudEndpoint = importData.rows[i][j];
+            break;
+          case ImportEntityColumnType.routingKey:
+            (entityData as EdgeImportEntityData).routingKey = importData.rows[i][j];
+            break;
+          case ImportEntityColumnType.secret:
+            (entityData as EdgeImportEntityData).secret = importData.rows[i][j];
+            break;
         }
       }
       entitiesData.push(entityData);
@@ -264,5 +265,32 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
       }
     );
   }
+
+  private constructDraftImportEntityData(): ImportEntityData {
+    const entityData: ImportEntityData = {
+      name: '',
+      type: '',
+      description: '',
+      gateway: null,
+      label: '',
+      accessToken: '',
+      attributes: {
+        server: [],
+        shared: []
+      },
+      timeseries: []
+    };
+    if (this.entityType === EntityType.EDGE) {
+      const edgeEntityData: EdgeImportEntityData = entityData as EdgeImportEntityData;
+      edgeEntityData.edgeLicenseKey = '';
+      edgeEntityData.cloudEndpoint = '';
+      edgeEntityData.routingKey = '';
+      edgeEntityData.secret = '';
+      return edgeEntityData;
+    } else {
+      return entityData;
+    }
+  }
+
 
 }

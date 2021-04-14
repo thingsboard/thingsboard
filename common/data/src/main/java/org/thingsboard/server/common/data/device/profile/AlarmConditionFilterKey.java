@@ -18,8 +18,10 @@ package org.thingsboard.server.common.data.device.profile;
 import lombok.Data;
 import org.thingsboard.server.common.data.validation.NoXss;
 
+import java.io.Serializable;
+
 @Data
-public class AlarmConditionFilterKey {
+public class AlarmConditionFilterKey implements Serializable {
 
     private final AlarmConditionKeyType type;
     @NoXss

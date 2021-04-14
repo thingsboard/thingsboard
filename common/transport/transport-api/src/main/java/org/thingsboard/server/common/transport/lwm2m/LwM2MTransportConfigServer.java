@@ -207,6 +207,8 @@ public class LwM2MTransportConfigServer {
             FULL_FILE_PATH = Paths.get(BASE_DIR_PATH.replaceAll("bin$", ""));
         } else if (BASE_DIR_PATH.endsWith("conf")) {
             FULL_FILE_PATH = Paths.get(BASE_DIR_PATH.replaceAll("conf$", ""));
+        } else if (BASE_DIR_PATH.endsWith("application")) {
+            FULL_FILE_PATH = Paths.get(BASE_DIR_PATH.substring(0, BASE_DIR_PATH.length() - "application".length()));
         } else {
             FULL_FILE_PATH = Paths.get(BASE_DIR_PATH);
         }

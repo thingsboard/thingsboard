@@ -17,12 +17,15 @@ package org.thingsboard.server.common.data.widget;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
 public class WidgetTypeInfo extends BaseWidgetType {
 
     private String image;
+    @NoXss
     private String description;
+    @NoXss
     private String widgetType;
 
     public WidgetTypeInfo() {
