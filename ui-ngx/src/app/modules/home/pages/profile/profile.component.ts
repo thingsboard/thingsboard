@@ -16,7 +16,7 @@
 
 import { Component, OnInit } from '@angular/core';
 import { UserService } from '@core/http/user.service';
-import { User } from '@shared/models/user.model';
+import { AuthUser, User } from '@shared/models/user.model';
 import { Authority } from '@shared/models/authority.enum';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -33,6 +33,7 @@ import { DialogService } from '@core/services/dialog.service';
 import { AuthService } from '@core/auth/auth.service';
 import { ActivatedRoute } from '@angular/router';
 import { isDefinedAndNotNull } from '@core/utils';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 
 @Component({
   selector: 'tb-profile',
@@ -45,6 +46,7 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
   profile: FormGroup;
   user: User;
   languageList = env.supportedLangs;
+  private readonly authUser: AuthUser;
 
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
@@ -55,6 +57,7 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
               public dialogService: DialogService,
               public fb: FormBuilder) {
     super(store);
+    this.authUser = getCurrentAuthUser(this.store);
   }
 
   ngOnInit() {
@@ -132,6 +135,10 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
 
   confirmForm(): FormGroup {
     return this.profile;
+  }
+
+  isSysAdmin(): boolean {
+    return this.authUser.authority === Authority.SYS_ADMIN;
   }
 
 }
