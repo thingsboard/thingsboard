@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.server;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.Response;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mNode;
@@ -31,6 +32,7 @@ import org.eclipse.leshan.core.request.ExecuteRequest;
 import org.eclipse.leshan.core.request.ObserveRequest;
 import org.eclipse.leshan.core.request.ReadRequest;
 import org.eclipse.leshan.core.request.WriteRequest;
+import org.eclipse.leshan.core.request.exception.ClientSleepingException;
 import org.eclipse.leshan.core.response.CancelObservationResponse;
 import org.eclipse.leshan.core.response.DeleteResponse;
 import org.eclipse.leshan.core.response.DiscoverResponse;
@@ -55,7 +57,6 @@ import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static org.eclipse.californium.core.coap.CoAP.ResponseCode.isSuccess;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.DEFAULT_TIMEOUT;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.GET_TYPE_OPER_DISCOVER;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.GET_TYPE_OPER_OBSERVE;
@@ -172,13 +173,19 @@ public class LwM2mTransportRequest {
                 case PUT_TYPE_OPER_WRITE_ATTRIBUTES:
                     request = createWriteAttributeRequest (target, params);
                     break;
-                default:
             }
 
             if (request != null) {
-                this.sendRequest(registration, lwM2MClient, request, timeoutInMs);
-            }
-            else {
+                try {
+                    this.sendRequest(registration, lwM2MClient, request, timeoutInMs);
+                } catch (ClientSleepingException e) {
+                    DownlinkRequest finalRequest = request;
+                    long finalTimeoutInMs = timeoutInMs;
+                    lwM2MClient.getQueuedRequests().add(() -> sendRequest(registration, lwM2MClient, finalRequest, finalTimeoutInMs));
+                } catch (Exception e) {
+                    log.error("[{}] [{}] [{}] Failed to send downlink.", registration.getEndpoint(), targetIdVer, typeOper, e);
+                }
+            } else {
                 log.error("[{}], [{}] - [{}] error SendRequest", registration.getEndpoint(), typeOper, targetIdVer);
             }
         }
@@ -197,7 +204,7 @@ public class LwM2mTransportRequest {
             if (!lwM2MClient.isInit()) {
                 lwM2MClient.initValue(this.serviceImpl, convertToIdVerFromObjectId(request.getPath().toString(), registration));
             }
-            if (isSuccess(((Response) response.getCoapResponse()).getCode())) {
+            if (CoAP.ResponseCode.isSuccess(((Response) response.getCoapResponse()).getCode())) {
                 this.handleResponse(registration, request.getPath().toString(), response, request);
                 if (request instanceof WriteRequest && ((WriteRequest) request).isReplaceRequest()) {
                     String msg = String.format("%s: sendRequest Replace: CoapCde - %s Lwm2m code - %d name - %s Resource path - %s value - %s SendRequest to Client",
@@ -240,7 +247,7 @@ public class LwM2mTransportRequest {
                 case FLOAT:     // Double
                     return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Double.parseDouble(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Double.parseDouble(value.toString()));
                 case TIME:      // Date
-                    Date date =  new Date(Long.decode(value.toString()));
+                    Date date = new Date(Long.decode(value.toString()));
                     return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, date) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, date);
                 case OPAQUE:    // byte[] value, base64
                     return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Hex.decodeHex(value.toString().toCharArray())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Hex.decodeHex(value.toString().toCharArray()));

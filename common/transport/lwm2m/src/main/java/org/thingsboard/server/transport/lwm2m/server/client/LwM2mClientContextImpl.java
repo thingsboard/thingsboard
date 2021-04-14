@@ -34,9 +34,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
-import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.NO_SEC;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertToIdVerFromObjectId;
 
 @Service
 @TbLwM2mTransportComponent
@@ -176,6 +175,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     /**
+     * if isVer - ok or default ver=DEFAULT_LWM2M_VERSION
      * @param registration -
      * @return - all objectIdVer in client
      */
@@ -184,9 +184,8 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         Set<String> clientObjects = ConcurrentHashMap.newKeySet();
         Arrays.stream(registration.getObjectLinks()).forEach(url -> {
             LwM2mPath pathIds = new LwM2mPath(url.getUrl());
-            if (pathIds.isObjectInstance()) {
-                clientObjects.add(LWM2M_SEPARATOR_PATH + pathIds.getObjectId() +
-                        LWM2M_SEPARATOR_KEY + registration.getSupportedVersion(pathIds.getObjectId()));
+            if (!pathIds.isRoot()) {
+                clientObjects.add(convertToIdVerFromObjectId(url.getUrl(),  registration));
             }
         });
         return (clientObjects.size() > 0) ? clientObjects : null;

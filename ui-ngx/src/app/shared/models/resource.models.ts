@@ -14,9 +14,9 @@
 /// limitations under the License.
 ///
 
-import { BaseData } from '@shared/models/base-data';
-import { TenantId } from '@shared/models/id/tenant-id';
-import { TbResourceId } from '@shared/models/id/tb-resource-id';
+import {BaseData} from '@shared/models/base-data';
+import {TenantId} from '@shared/models/id/tenant-id';
+import {TbResourceId} from '@shared/models/id/tb-resource-id';
 
 export enum ResourceType {
   LWM2M_MODEL = 'LWM2M_MODEL',
@@ -58,4 +58,9 @@ export interface ResourceInfo extends BaseData<TbResourceId> {
 export interface Resource extends ResourceInfo {
   data: string;
   fileName: string;
+}
+
+export interface Resources extends ResourceInfo {
+  data: string|string[];
+  fileName: string|string[];
 }

@@ -44,31 +44,31 @@
     <button mat-raised-button color="primary"
             [disabled]="(isLoading$ | async)"
             (click)="onEntityAction($event, 'openEdgeAssets')"
-            [fxShow]="!isEdit">
+            [fxShow]="!isEdit && edgeScope !== 'customer'">
       {{'edge.manage-edge-assets' | translate }}
     </button>
     <button mat-raised-button color="primary"
             [disabled]="(isLoading$ | async)"
             (click)="onEntityAction($event, 'openEdgeDevices')"
-            [fxShow]="!isEdit">
+            [fxShow]="!isEdit && edgeScope !== 'customer'">
       {{'edge.manage-edge-devices' | translate }}
     </button>
     <button mat-raised-button color="primary"
             [disabled]="(isLoading$ | async)"
             (click)="onEntityAction($event, 'openEdgeEntityViews')"
-            [fxShow]="!isEdit">
+            [fxShow]="!isEdit && edgeScope !== 'customer'">
       {{'edge.manage-edge-entity-views' | translate }}
     </button>
     <button mat-raised-button color="primary"
             [disabled]="(isLoading$ | async)"
             (click)="onEntityAction($event, 'openEdgeDashboards')"
-            [fxShow]="!isEdit">
+            [fxShow]="!isEdit && edgeScope !== 'customer'">
       {{'edge.manage-edge-dashboards' | translate }}
     </button>
     <button mat-raised-button color="primary"
             [disabled]="(isLoading$ | async)"
             (click)="onEntityAction($event, 'openEdgeRuleChains')"
-            [fxShow]="!isEdit && (edgeScope === 'tenant' || edgeScope === 'customer')">
+            [fxShow]="!isEdit && edgeScope === 'tenant'">
       {{'edge.manage-edge-rulechains' | translate }}
     </button>
   </div>
@@ -85,7 +85,7 @@
             ngxClipboard
             (cbOnSuccess)="onEdgeInfoCopied('key')"
             [cbContent]="entity?.routingKey"
-            [fxShow]="!isEdit && (edgeScope === 'tenant' || edgeScope === 'customer')">
+            [fxShow]="!isEdit && edgeScope !== 'customer_user'">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>edge.copy-edge-key</span>
     </button>
@@ -93,7 +93,7 @@
             ngxClipboard
             (cbOnSuccess)="onEdgeInfoCopied('secret')"
             [cbContent]="entity?.secret"
-            [fxShow]="!isEdit && (edgeScope === 'tenant' || edgeScope === 'customer')">
+            [fxShow]="!isEdit && edgeScope !== 'customer_user'">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>edge.copy-edge-secret</span>
     </button>
@@ -101,7 +101,7 @@
             ngxClipboard
             [disabled]="(isLoading$ | async)"
             (click)="onEntityAction($event, 'syncEdge')"
-            [fxShow]="!isEdit && (edgeScope === 'tenant' || edgeScope === 'customer')">
+            [fxShow]="!isEdit && edgeScope !== 'customer_user'">
       <mat-icon svgIcon="mdi:sync"></mat-icon>
       <span translate>edge.sync</span>
     </button>
@@ -132,7 +132,7 @@
         [required]="true"
         [entityType]="entityType.EDGE">
       </tb-entity-subtype-autocomplete>
-      <div [fxShow]="(edgeScope === 'tenant' || edgeScope === 'customer')">
+      <div [fxShow]="edgeScope !== 'customer_user'">
         <div class="tb-hint" [innerHTML]="'edge.edge-license-key-hint' | translate"></div>
         <mat-form-field class="mat-block">
           <mat-label translate>edge.edge-license-key</mat-label>
@@ -142,7 +142,7 @@
           </mat-error>
         </mat-form-field>
       </div>
-      <div [fxShow]="(edgeScope === 'tenant' || edgeScope === 'customer')">
+      <div [fxShow]="edgeScope !== 'customer_user'">
         <div translate class="tb-hint">edge.cloud-endpoint-hint</div>
         <mat-form-field class="mat-block">
           <mat-label translate>edge.cloud-endpoint</mat-label>
@@ -153,7 +153,7 @@
         </mat-form-field>
       </div>
     </fieldset>
-    <div fxLayout="row" [fxShow]="(edgeScope === 'tenant' || edgeScope === 'customer')">
+    <div fxLayout="row" [fxShow]="edgeScope !== 'customer_user'">
         <mat-form-field class="mat-block" fxFlex>
           <mat-label translate>edge.edge-key</mat-label>
           <input matInput formControlName="routingKey">
@@ -164,7 +164,7 @@
         <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       </button>
     </div>
-    <div fxLayout="row" [fxShow]="(edgeScope === 'tenant' || edgeScope === 'customer')">
+    <div fxLayout="row" [fxShow]="edgeScope !== 'customer_user'">
         <mat-form-field class="mat-block" fxFlex>
           <mat-label translate>edge.edge-secret</mat-label>
           <input matInput formControlName="secret">

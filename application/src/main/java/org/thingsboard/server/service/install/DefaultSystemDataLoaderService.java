@@ -17,10 +17,8 @@ package org.thingsboard.server.service.install;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -60,11 +58,8 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.DynamicValueSourceType;
-import org.thingsboard.server.common.data.query.EntityKey;
-import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
-import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.security.Authority;
@@ -137,9 +132,6 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Autowired
     private RuleChainService ruleChainService;
-
-    @Value("${edges.enabled}")
-    private boolean edgesEnabled;
 
     @Bean
     protected BCryptPasswordEncoder passwordEncoder() {
@@ -239,9 +231,6 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         demoTenant.setTitle("Tenant");
         demoTenant = tenantService.saveTenant(demoTenant);
         installScripts.loadDemoRuleChains(demoTenant.getId());
-        if (edgesEnabled) {
-            installScripts.createDefaultEdgeRuleChains(demoTenant.getId());
-        }
         createUser(Authority.TENANT_ADMIN, demoTenant.getId(), null, "tenant@thingsboard.org", "tenant");
 
         Customer customerA = new Customer();

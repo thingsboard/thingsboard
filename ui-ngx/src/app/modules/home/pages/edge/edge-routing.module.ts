@@ -14,27 +14,30 @@
 /// limitations under the License.
 ///
 
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
-import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
-import { Authority } from '@shared/models/authority.enum';
-import { EdgesTableConfigResolver } from '@home/pages/edge/edges-table-config.resolver'
-import { AssetsTableConfigResolver } from '@home/pages/asset/assets-table-config.resolver';
-import { DevicesTableConfigResolver } from '@home/pages/device/devices-table-config.resolver';
-import { EntityViewsTableConfigResolver } from '@home/pages/entity-view/entity-views-table-config.resolver';
-import { DashboardsTableConfigResolver } from '@home/pages/dashboard/dashboards-table-config.resolver';
-import { RuleChainsTableConfigResolver } from '@home/pages/rulechain/rulechains-table-config.resolver';
-import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
-import { dashboardBreadcumbLabelFunction, DashboardResolver } from '@home/pages/dashboard/dashboard-routing.module';
-import { BreadCrumbConfig } from '@shared/components/breadcrumb';
-import { RuleChainPageComponent } from '@home/pages/rulechain/rulechain-page.component';
-import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
-import { RuleChainType } from '@shared/models/rule-chain.models';
+import {NgModule} from '@angular/core';
+import {RouterModule, Routes} from '@angular/router';
+import {EntitiesTableComponent} from '@home/components/entity/entities-table.component';
+import {Authority} from '@shared/models/authority.enum';
+import {EdgesTableConfigResolver} from '@home/pages/edge/edges-table-config.resolver'
+import {AssetsTableConfigResolver} from '@home/pages/asset/assets-table-config.resolver';
+import {DevicesTableConfigResolver} from '@home/pages/device/devices-table-config.resolver';
+import {EntityViewsTableConfigResolver} from '@home/pages/entity-view/entity-views-table-config.resolver';
+import {DashboardsTableConfigResolver} from '@home/pages/dashboard/dashboards-table-config.resolver';
+import {RuleChainsTableConfigResolver} from '@home/pages/rulechain/rulechains-table-config.resolver';
+import {DashboardPageComponent} from '@home/components/dashboard-page/dashboard-page.component';
+import {dashboardBreadcumbLabelFunction, DashboardResolver} from '@home/pages/dashboard/dashboard-routing.module';
+import {BreadCrumbConfig} from '@shared/components/breadcrumb';
+import {RuleChainPageComponent} from '@home/pages/rulechain/rulechain-page.component';
+import {ConfirmOnExitGuard} from '@core/guards/confirm-on-exit.guard';
+import {RuleChainType} from '@shared/models/rule-chain.models';
 import {
   importRuleChainBreadcumbLabelFunction,
   ResolvedRuleChainMetaDataResolver,
-  ruleChainBreadcumbLabelFunction, RuleChainImportGuard,
-  RuleChainResolver, RuleNodeComponentsResolver, TooltipsterResolver
+  ruleChainBreadcumbLabelFunction,
+  RuleChainImportGuard,
+  RuleChainResolver,
+  RuleNodeComponentsResolver,
+  TooltipsterResolver
 } from '@home/pages/rulechain/rulechain-routing.module';
 
 const routes: Routes = [
@@ -56,21 +59,6 @@ const routes: Routes = [
         },
         resolve: {
           entitiesTableConfig: EdgesTableConfigResolver
-        }
-      },
-      {
-        path: ':edgeId/ruleChains',
-        component: EntitiesTableComponent,
-        data: {
-          auth: [Authority.TENANT_ADMIN],
-          ruleChainsType: 'edge',
-          breadcrumb: {
-            label: 'edge.edge-rulechains',
-            icon: 'settings_ethernet'
-          },
-        },
-        resolve: {
-          entitiesTableConfig: RuleChainsTableConfigResolver
         }
       },
       {
@@ -152,6 +140,50 @@ const routes: Routes = [
             },
             resolve: {
               dashboard: DashboardResolver
+            }
+          }
+        ]
+      },
+      {
+        path: ':edgeId/ruleChains',
+        data: {
+          breadcrumb: {
+            label: 'edge.edge-rulechains',
+            icon: 'settings_ethernet'
+          }
+        },
+        children: [
+          {
+            path: '',
+            component: EntitiesTableComponent,
+            data: {
+              auth: [Authority.TENANT_ADMIN],
+              title: 'edge.rulechains',
+              ruleChainsType: 'edge'
+            },
+            resolve: {
+              entitiesTableConfig: RuleChainsTableConfigResolver
+            }
+          },
+          {
+            path: ':ruleChainId',
+            component: RuleChainPageComponent,
+            canDeactivate: [ConfirmOnExitGuard],
+            data: {
+              breadcrumb: {
+                labelFunction: ruleChainBreadcumbLabelFunction,
+                icon: 'settings_ethernet'
+              } as BreadCrumbConfig<RuleChainPageComponent>,
+              auth: [Authority.TENANT_ADMIN],
+              title: 'rulechain.edge-rulechain',
+              import: false,
+              ruleChainType: RuleChainType.EDGE
+            },
+            resolve: {
+              ruleChain: RuleChainResolver,
+              ruleChainMetaData: ResolvedRuleChainMetaDataResolver,
+              ruleNodeComponents: RuleNodeComponentsResolver,
+              tooltipster: TooltipsterResolver
             }
           }
         ]

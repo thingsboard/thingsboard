@@ -14,14 +14,14 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
-import { Subject } from 'rxjs';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { TranslateService } from '@ngx-translate/core';
-import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { EntityComponent } from '@home/components/entity/entity.component';
+import {Component, Inject, OnDestroy, OnInit} from '@angular/core';
+import {Subject} from 'rxjs';
+import {Store} from '@ngrx/store';
+import {AppState} from '@core/core.state';
+import {TranslateService} from '@ngx-translate/core';
+import {EntityTableConfig} from '@home/models/entity/entities-table-config.models';
+import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {EntityComponent} from '@home/components/entity/entity.component';
 import {
   Resource,
   ResourceType,
@@ -29,7 +29,7 @@ import {
   ResourceTypeMIMETypes,
   ResourceTypeTranslationMap
 } from '@shared/models/resource.models';
-import { distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import {pairwise, startWith, takeUntil} from 'rxjs/operators';
 
 @Component({
   selector: 'tb-resources-library',
@@ -54,15 +54,22 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
   ngOnInit() {
     super.ngOnInit();
     this.entityForm.get('resourceType').valueChanges.pipe(
-      distinctUntilChanged((oldValue, newValue) => [oldValue, newValue].includes(this.resourceType.LWM2M_MODEL)),
+      startWith(ResourceType.LWM2M_MODEL),
+      pairwise(),
       takeUntil(this.destroy$)
-    ).subscribe((type) => {
+    ).subscribe(([previousType, type]) => {
+      if (previousType === this.resourceType.LWM2M_MODEL) {
+        this.entityForm.get('title').setValidators(Validators.required);
+        this.entityForm.get('title').updateValueAndValidity({emitEvent: false});
+      }
       if (type === this.resourceType.LWM2M_MODEL) {
         this.entityForm.get('title').clearValidators();
-      } else {
-        this.entityForm.get('title').setValidators(Validators.required);
+        this.entityForm.get('title').updateValueAndValidity({emitEvent: false});
       }
-      this.entityForm.get('title').updateValueAndValidity({emitEvent: false});
+      this.entityForm.patchValue({
+        data: null,
+        fileName: null
+      }, {emitEvent: false});
     });
   }
 
@@ -118,5 +125,9 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
     } catch (e) {
       return '*/*';
     }
+  }
+
+  convertToBase64File(data: string): string {
+    return window.btoa(data);
   }
 }

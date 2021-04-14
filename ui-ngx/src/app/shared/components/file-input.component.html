@@ -18,7 +18,7 @@
 <div class="tb-container">
   <label class="tb-title">{{ label }}</label>
   <ng-container #flow="flow"
-                [flowConfig]="{singleFile: true, allowDuplicateUploads: true}">
+                [flowConfig]="{allowDuplicateUploads: true}">
     <div class="tb-file-select-container">
       <div class="tb-file-clear-container">
         <button mat-button mat-icon-button color="primary"
@@ -34,7 +34,7 @@
            flowDrop
            [flow]="flow.flowJs">
         <label for="{{inputId}}">{{ dropLabel }}</label>
-        <input class="file-input" flowButton type="file" [flow]="flow.flowJs" [flowAttributes]="{accept: accept}" id="{{inputId}}">
+        <input class="file-input" flowButton #flowInput type="file" [flow]="flow.flowJs" [flowAttributes]="{accept: accept}" id="{{inputId}}">
       </div>
     </div>
   </ng-container>

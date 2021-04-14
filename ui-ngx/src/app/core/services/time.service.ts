@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {
   AggregationType,
   DAY,
@@ -23,11 +23,11 @@ import {
   SECOND,
   Timewindow
 } from '@shared/models/time/time.models';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { defaultHttpOptions } from '@core/http/http-utils';
-import { map } from 'rxjs/operators';
-import { isDefined } from '@core/utils';
+import {HttpClient} from '@angular/common/http';
+import {Observable} from 'rxjs';
+import {defaultHttpOptions} from '@core/http/http-utils';
+import {map} from 'rxjs/operators';
+import {isDefined} from '@core/utils';
 
 export interface TimeInterval {
   name: string;
@@ -79,7 +79,7 @@ export class TimeService {
 
   public boundMinInterval(min: number): number {
     if (isDefined(min)) {
-      min = Math.floor(min / 1000) * 1000;
+      min = Math.ceil(min / 1000) * 1000;
     }
     return this.toBound(min, MIN_INTERVAL, MAX_INTERVAL, MIN_INTERVAL);
   }

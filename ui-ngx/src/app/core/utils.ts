@@ -15,11 +15,11 @@
 ///
 
 import _ from 'lodash';
-import { Observable, Subject } from 'rxjs';
-import { finalize, share } from 'rxjs/operators';
-import { Datasource } from '@app/shared/models/widget.models';
-import { EntityId } from '@shared/models/id/entity-id';
-import { NULL_UUID } from '@shared/models/id/has-uuid';
+import {Observable, Subject} from 'rxjs';
+import {finalize, share} from 'rxjs/operators';
+import {Datasource} from '@app/shared/models/widget.models';
+import {EntityId} from '@shared/models/id/entity-id';
+import {NULL_UUID} from '@shared/models/id/has-uuid';
 
 const varsRegex = /\${([^}]*)}/g;
 
@@ -125,6 +125,10 @@ export function isEmpty(obj: any): boolean {
     }
   }
   return true;
+}
+
+export function isLiteralObject(value: any) {
+  return (!!value) && (value.constructor === Object);
 }
 
 export function formatValue(value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined {

@@ -14,17 +14,17 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
-import { Ace } from 'ace-builds';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { ActionNotificationHide, ActionNotificationShow } from '@core/notification/notification.actions';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
-import { guid, isUndefined } from '@core/utils';
-import { ResizeObserver } from '@juggle/resize-observer';
-import { getAce } from '@shared/models/ace/ace.models';
+import {Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {ControlValueAccessor, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator} from '@angular/forms';
+import {Ace} from 'ace-builds';
+import {coerceBooleanProperty} from '@angular/cdk/coercion';
+import {ActionNotificationHide, ActionNotificationShow} from '@core/notification/notification.actions';
+import {Store} from '@ngrx/store';
+import {AppState} from '@core/core.state';
+import {CancelAnimationFrame, RafService} from '@core/services/raf.service';
+import {guid, isDefinedAndNotNull, isLiteralObject, isUndefined} from '@core/utils';
+import {ResizeObserver} from '@juggle/resize-observer';
+import {getAce} from '@shared/models/ace/ace.models';
 
 @Component({
   selector: 'tb-json-object-edit',
@@ -230,8 +230,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
     this.contentValue = '';
     this.objectValid = false;
     try {
-
-      if (this.modelValue) {
+      if (isDefinedAndNotNull(this.modelValue)) {
         this.contentValue = JSON.stringify(this.modelValue, isUndefined(this.sort) ? undefined :
           (key, objectValue) => {
             return this.sort(key, objectValue);
@@ -260,6 +259,9 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
       if (this.contentValue && this.contentValue.length > 0) {
         try {
           data = JSON.parse(this.contentValue);
+          if (!isLiteralObject(data)) {
+            throw new TypeError(`Value is not a valid JSON`);
+          }
           this.objectValid = true;
           this.validationError = '';
         } catch (ex) {

@@ -55,6 +55,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.eclipse.leshan.core.attributes.Attribute.DIMENSION;
 import static org.eclipse.leshan.core.attributes.Attribute.MAXIMUM_PERIOD;
 import static org.eclipse.leshan.core.attributes.Attribute.MINIMUM_PERIOD;
+import static org.eclipse.leshan.core.attributes.Attribute.OBJECT_VERSION;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 
@@ -418,7 +419,7 @@ public class LwM2mTransportHandler {
         ObjectMapper oMapper = new ObjectMapper();
         Map<String, Object> map = oMapper.convertValue(params, ConcurrentHashMap.class);
         map.forEach((k, v) -> {
-            if (!v.toString().isEmpty()) {
+            if (!v.toString().isEmpty() || (v.toString().isEmpty() && OBJECT_VERSION.equals(k))) {
                 attributeLists.add(new Attribute(k,
                         (DIMENSION.equals(k) || MINIMUM_PERIOD.equals(k) || MAXIMUM_PERIOD.equals(k)) ?
                                 ((Double) v).longValue() : v));
