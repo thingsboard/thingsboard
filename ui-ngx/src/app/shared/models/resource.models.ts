@@ -59,3 +59,8 @@ export interface Resource extends ResourceInfo {
   data: string;
   fileName: string;
 }
+
+export interface Resources extends ResourceInfo {
+  data: string|string[];
+  fileName: string|string[];
+}

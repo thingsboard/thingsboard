@@ -17,6 +17,7 @@
 import {
   AfterViewInit,
   Component,
+  ElementRef,
   EventEmitter,
   forwardRef,
   Input,
@@ -102,16 +103,33 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
   existingFileName: string;
 
   @Input()
-  convertToBase64 = false;
+  readAsBinary = false;
+
+  private multipleFileValue = false;
+
+  @Input()
+  set multipleFile(value: boolean) {
+    this.multipleFileValue = value;
+    if (this.flow?.flowJs) {
+      this.updateMultipleFileMode(this.multipleFile);
+    }
+  }
+
+  get multipleFile(): boolean {
+    return this.multipleFileValue;
+  }
 
   @Output()
-  fileNameChanged = new EventEmitter<string>();
+  fileNameChanged = new EventEmitter<string|string[]>();
 
-  fileName: string;
+  fileName: string | string[];
   fileContent: any;
 
   @ViewChild('flow', {static: true})
   flow: FlowDirective;
+
+  @ViewChild('flowInput', {static: true})
+  flowInput: ElementRef;
 
   autoUploadSubscription: Subscription;
 
@@ -125,34 +143,60 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
 
   ngAfterViewInit() {
     this.autoUploadSubscription = this.flow.events$.subscribe(event => {
-      if (event.type === 'fileAdded') {
-        const file = event.event[0] as flowjs.FlowFile;
-        if (this.filterFile(file)) {
-          const reader = new FileReader();
-          reader.onload = (loadEvent) => {
-            if (typeof reader.result === 'string') {
-              const fileContent = this.convertToBase64 ? window.btoa(reader.result) : reader.result;
-              if (fileContent && fileContent.length > 0) {
-                if (this.contentConvertFunction) {
-                  this.fileContent = this.contentConvertFunction(fileContent);
-                } else {
-                  this.fileContent = fileContent;
-                }
-                if (this.fileContent) {
-                  this.fileName = file.name;
-                } else {
-                  this.fileName = null;
-                }
-                this.updateModel();
-              }
+      if (event.type === 'filesAdded') {
+        const readers = [];
+        (event.event[0] as flowjs.FlowFile[]).forEach(file => {
+          if (this.filterFile(file)) {
+            readers.push(this.readerAsFile(file));
+          }
+        });
+        if (readers.length) {
+          Promise.all(readers).then((filesContent) => {
+            filesContent = filesContent.filter(content => content.fileContent != null);
+            if (filesContent.length === 1) {
+              this.fileContent = filesContent[0].fileContent;
+              this.fileName = filesContent[0].fileName;
+              this.updateModel();
+            } else if (filesContent.length > 1) {
+              this.fileContent = filesContent.map(content => content.fileContent);
+              this.fileName = filesContent.map(content => content.fileName);
+              this.updateModel();
             }
-          };
-          if (this.convertToBase64) {
-            reader.readAsBinaryString(file.file);
-          } else {
-            reader.readAsText(file.file);
+          });
+        }
+      }
+    });
+    if (!this.multipleFile) {
+      this.updateMultipleFileMode(this.multipleFile);
+    }
+  }
+
+  private readerAsFile(file: flowjs.FlowFile): Promise<any> {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        let fileName = null;
+        let fileContent = null;
+        if (typeof reader.result === 'string') {
+          fileContent = reader.result;
+          if (fileContent && fileContent.length > 0) {
+            if (this.contentConvertFunction) {
+              fileContent = this.contentConvertFunction(fileContent);
+            }
+            if (fileContent) {
+              fileName = file.name;
+            }
           }
         }
+        resolve({fileContent, fileName});
+      };
+      reader.onerror = () => {
+        resolve({fileContent: null, fileName: null});
+      };
+      if (this.readAsBinary) {
+        reader.readAsBinaryString(file.file);
+      } else {
+        reader.readAsText(file.file);
       }
     });
   }
@@ -206,5 +250,12 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
     this.fileName = null;
     this.fileContent = null;
     this.updateModel();
+  }
+
+  private updateMultipleFileMode(multiple: boolean) {
+    this.flow.flowJs.opts.singleFile = !multiple;
+    if (!multiple) {
+      this.flowInput.nativeElement.removeAttribute('multiple');
+    }
   }
 }

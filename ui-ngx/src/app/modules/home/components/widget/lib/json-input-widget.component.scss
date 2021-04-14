@@ -13,17 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.config;
 
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
+.tb-json-input {
+  width: 100%;
+  height: 100%;
+  padding: 5px;
 
-@Controller
-public class WebConfig {
+  &__form {
+    overflow: auto;
+    height: 100%;
+  }
 
-    @RequestMapping(value = {"/assets", "/assets/", "/{path:^(?!api$)(?!assets$)(?!static$)(?!webjars$)[^\\.]*}/**"})
-    public String redirect() {
-        return "forward:/index.html";
-    }
+  &__error {
+    text-align: center;
+    font-size: 18px;
+    color: #a0a0a0;
+  }
+}
 
+.tb-toast {
+  font-size: 14px!important;
 }

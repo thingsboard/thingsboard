@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.thingsboard.server.transport.lwm2m.server;
 
-:host {
-  min-width: 364px;
+public interface LwM2mQueuedRequest {
+    void send();
 }
