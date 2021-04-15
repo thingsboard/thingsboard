@@ -32,6 +32,7 @@ import org.thingsboard.server.gen.edge.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.DeviceCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.DeviceCredentialsUpdateMsg;
+import org.thingsboard.server.gen.edge.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.DownlinkMsg;
@@ -58,6 +59,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class EdgeImitator {
@@ -154,88 +156,93 @@ public class EdgeImitator {
 
     private ListenableFuture<List<Void>> processDownlinkMsg(DownlinkMsg downlinkMsg) {
         List<ListenableFuture<Void>> result = new ArrayList<>();
-        if (downlinkMsg.getDeviceUpdateMsgList() != null && !downlinkMsg.getDeviceUpdateMsgList().isEmpty()) {
+        if (downlinkMsg.getDeviceUpdateMsgCount() > 0) {
             for (DeviceUpdateMsg deviceUpdateMsg: downlinkMsg.getDeviceUpdateMsgList()) {
                 result.add(saveDownlinkMsg(deviceUpdateMsg));
             }
         }
-        if (downlinkMsg.getDeviceCredentialsUpdateMsgList() != null && !downlinkMsg.getDeviceCredentialsUpdateMsgList().isEmpty()) {
+        if (downlinkMsg.getDeviceProfileUpdateMsgCount() > 0) {
+            for (DeviceProfileUpdateMsg deviceProfileUpdateMsg : downlinkMsg.getDeviceProfileUpdateMsgList()) {
+                result.add(saveDownlinkMsg(deviceProfileUpdateMsg));
+            }
+        }
+        if (downlinkMsg.getDeviceCredentialsUpdateMsgCount() > 0) {
             for (DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg: downlinkMsg.getDeviceCredentialsUpdateMsgList()) {
                 result.add(saveDownlinkMsg(deviceCredentialsUpdateMsg));
             }
         }
-        if (downlinkMsg.getAssetUpdateMsgList() != null && !downlinkMsg.getAssetUpdateMsgList().isEmpty()) {
+        if (downlinkMsg.getAssetUpdateMsgCount() > 0) {
             for (AssetUpdateMsg assetUpdateMsg: downlinkMsg.getAssetUpdateMsgList()) {
                 result.add(saveDownlinkMsg(assetUpdateMsg));
             }
         }
-        if (downlinkMsg.getRuleChainUpdateMsgList() != null && !downlinkMsg.getRuleChainUpdateMsgList().isEmpty()) {
+        if (downlinkMsg.getRuleChainUpdateMsgCount() > 0) {
             for (RuleChainUpdateMsg ruleChainUpdateMsg: downlinkMsg.getRuleChainUpdateMsgList()) {
                 result.add(saveDownlinkMsg(ruleChainUpdateMsg));
             }
         }
-        if (downlinkMsg.getRuleChainMetadataUpdateMsgList() != null && !downlinkMsg.getRuleChainMetadataUpdateMsgList().isEmpty()) {
+        if (downlinkMsg.getRuleChainMetadataUpdateMsgCount() > 0) {
             for (RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg: downlinkMsg.getRuleChainMetadataUpdateMsgList()) {
                 result.add(saveDownlinkMsg(ruleChainMetadataUpdateMsg));
             }
         }
-        if (downlinkMsg.getDashboardUpdateMsgList() != null && !downlinkMsg.getDashboardUpdateMsgList().isEmpty()) {
+        if (downlinkMsg.getDashboardUpdateMsgCount() > 0) {
             for (DashboardUpdateMsg dashboardUpdateMsg: downlinkMsg.getDashboardUpdateMsgList()) {
                 result.add(saveDownlinkMsg(dashboardUpdateMsg));
             }
         }
-        if (downlinkMsg.getRelationUpdateMsgList() != null && !downlinkMsg.getRelationUpdateMsgList().isEmpty()) {
+        if (downlinkMsg.getRelationUpdateMsgCount() > 0) {
             for (RelationUpdateMsg relationUpdateMsg: downlinkMsg.getRelationUpdateMsgList()) {
                 result.add(saveDownlinkMsg(relationUpdateMsg));
             }
         }
-        if (downlinkMsg.getAlarmUpdateMsgList() != null && !downlinkMsg.getAlarmUpdateMsgList().isEmpty()) {
+        if (downlinkMsg.getAlarmUpdateMsgCount() > 0) {
             for (AlarmUpdateMsg alarmUpdateMsg: downlinkMsg.getAlarmUpdateMsgList()) {
                 result.add(saveDownlinkMsg(alarmUpdateMsg));
             }
         }
-        if (downlinkMsg.getEntityDataList() != null && !downlinkMsg.getEntityDataList().isEmpty()) {
+        if (downlinkMsg.getEntityDataCount() > 0) {
             for (EntityDataProto entityData: downlinkMsg.getEntityDataList()) {
                 result.add(saveDownlinkMsg(entityData));
             }
         }
-        if (downlinkMsg.getEntityViewUpdateMsgList() != null && !downlinkMsg.getEntityViewUpdateMsgList().isEmpty()) {
+        if (downlinkMsg.getEntityViewUpdateMsgCount() > 0) {
             for (EntityViewUpdateMsg entityViewUpdateMsg: downlinkMsg.getEntityViewUpdateMsgList()) {
                 result.add(saveDownlinkMsg(entityViewUpdateMsg));
             }
         }
-        if (downlinkMsg.getCustomerUpdateMsgList() != null && !downlinkMsg.getCustomerUpdateMsgList().isEmpty()) {
+        if (downlinkMsg.getCustomerUpdateMsgCount() > 0) {
             for (CustomerUpdateMsg customerUpdateMsg: downlinkMsg.getCustomerUpdateMsgList()) {
                 result.add(saveDownlinkMsg(customerUpdateMsg));
             }
         }
-        if (downlinkMsg.getWidgetsBundleUpdateMsgList() != null && !downlinkMsg.getWidgetsBundleUpdateMsgList().isEmpty()) {
+        if (downlinkMsg.getWidgetsBundleUpdateMsgCount() > 0) {
             for (WidgetsBundleUpdateMsg widgetsBundleUpdateMsg: downlinkMsg.getWidgetsBundleUpdateMsgList()) {
                 result.add(saveDownlinkMsg(widgetsBundleUpdateMsg));
             }
         }
-        if (downlinkMsg.getWidgetTypeUpdateMsgList() != null && !downlinkMsg.getWidgetTypeUpdateMsgList().isEmpty()) {
+        if (downlinkMsg.getWidgetTypeUpdateMsgCount() > 0) {
             for (WidgetTypeUpdateMsg widgetTypeUpdateMsg: downlinkMsg.getWidgetTypeUpdateMsgList()) {
                 result.add(saveDownlinkMsg(widgetTypeUpdateMsg));
             }
         }
-        if (downlinkMsg.getUserUpdateMsgList() != null && !downlinkMsg.getUserUpdateMsgList().isEmpty()) {
+        if (downlinkMsg.getUserUpdateMsgCount() > 0) {
             for (UserUpdateMsg userUpdateMsg: downlinkMsg.getUserUpdateMsgList()) {
                 onUserUpdate(userUpdateMsg);
                 result.add(saveDownlinkMsg(userUpdateMsg));
             }
         }
-        if (downlinkMsg.getUserCredentialsUpdateMsgList() != null && !downlinkMsg.getUserCredentialsUpdateMsgList().isEmpty()) {
+        if (downlinkMsg.getUserCredentialsUpdateMsgCount() > 0) {
             for (UserCredentialsUpdateMsg userCredentialsUpdateMsg: downlinkMsg.getUserCredentialsUpdateMsgList()) {
                 result.add(saveDownlinkMsg(userCredentialsUpdateMsg));
             }
         }
-        if (downlinkMsg.getDeviceRpcCallMsgList() != null && !downlinkMsg.getDeviceRpcCallMsgList().isEmpty()) {
+        if (downlinkMsg.getDeviceRpcCallMsgCount() > 0) {
             for (DeviceRpcCallMsg deviceRpcCallMsg: downlinkMsg.getDeviceRpcCallMsgList()) {
                 result.add(saveDownlinkMsg(deviceRpcCallMsg));
             }
         }
-        if (downlinkMsg.getDeviceCredentialsRequestMsgList() != null && !downlinkMsg.getDeviceCredentialsRequestMsgList().isEmpty()) {
+        if (downlinkMsg.getDeviceCredentialsRequestMsgCount() > 0) {
             for (DeviceCredentialsRequestMsg deviceCredentialsRequestMsg: downlinkMsg.getDeviceCredentialsRequestMsgList()) {
                 result.add(saveDownlinkMsg(deviceCredentialsRequestMsg));
             }
@@ -256,15 +263,21 @@ public class EdgeImitator {
         return Futures.immediateFuture(null);
     }
 
-    public void waitForMessages() throws InterruptedException {
-        messagesLatch.await(5, TimeUnit.SECONDS);
+    public boolean waitForMessages() throws InterruptedException {
+        return waitForMessages(5);
+    }
+
+    public boolean waitForMessages(int timeout) throws InterruptedException {
+        return messagesLatch.await(timeout, TimeUnit.SECONDS);
     }
 
     public void expectMessageAmount(int messageAmount) {
         messagesLatch = new CountDownLatch(messageAmount);
     }
 
-    public void waitForResponses() throws InterruptedException { responsesLatch.await(5, TimeUnit.SECONDS); }
+    public boolean waitForResponses() throws InterruptedException {
+        return responsesLatch.await(5, TimeUnit.SECONDS);
+    }
 
     public void expectResponsesAmount(int messageAmount) {
         responsesLatch = new CountDownLatch(messageAmount);
@@ -276,6 +289,18 @@ public class EdgeImitator {
         try {
             lock.lock();
             result = (Optional<T>) downlinkMsgs.stream().filter(downlinkMsg -> downlinkMsg.getClass().isAssignableFrom(tClass)).findAny();
+        } finally {
+            lock.unlock();
+        }
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends AbstractMessage> List<T> findAllMessagesByType(Class<T> tClass) {
+        List<T> result;
+        try {
+            lock.lock();
+            result = (List<T>) downlinkMsgs.stream().filter(downlinkMsg -> downlinkMsg.getClass().isAssignableFrom(tClass)).collect(Collectors.toList());
         } finally {
             lock.unlock();
         }
