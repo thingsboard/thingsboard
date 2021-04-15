@@ -69,19 +69,10 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
     @Override
     protected ListenableFuture<TbAlarmResult> processAlarm(TbContext ctx, TbMsg msg) {
         String alarmType;
-        String alarmSeverity;
         final Alarm msgAlarm;
 
         if (!config.isUseMessageAlarmData()) {
             alarmType = TbNodeUtils.processPattern(this.config.getAlarmType(), msg);
-            if(this.config.isDynamicSeverity()) {
-                alarmSeverity = TbNodeUtils.processPattern(this.config.getSeverity(), msg);
-                if(!EnumUtils.isValidEnum(AlarmSeverity.class, alarmSeverity)) {
-                    ctx.tellFailure(msg, new TbNodeException("Used incorrect pattern or Alarm Severity not included in message: " + alarmSeverity));
-                    return null;
-                }
-                this.config.setSeverity(alarmSeverity);
-            }
             msgAlarm = null;
         } else {
             try {
@@ -139,11 +130,11 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         ListenableFuture<Alarm> asyncUpdated = Futures.transform(buildAlarmDetails(ctx, msg, existingAlarm.getDetails()), (Function<JsonNode, Alarm>) details -> {
             ctx.logJsEvalResponse();
             if (msgAlarm != null) {
-                existingAlarm.setSeverity(msgAlarm.getSeverity());
+                existingAlarm.setSeverity(processAlarmSeverity(msg));
                 existingAlarm.setPropagate(msgAlarm.isPropagate());
                 existingAlarm.setPropagateRelationTypes(msgAlarm.getPropagateRelationTypes());
             } else {
-                existingAlarm.setSeverity(EnumUtils.getEnum(AlarmSeverity.class, this.config.getSeverity()));
+                existingAlarm.setSeverity(processAlarmSeverity(msg));
                 existingAlarm.setPropagate(config.isPropagate());
                 existingAlarm.setPropagateRelationTypes(relationTypes);
             }
@@ -160,7 +151,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
                 .tenantId(tenantId)
                 .originator(msg.getOriginator())
                 .status(AlarmStatus.ACTIVE_UNACK)
-                .severity(EnumUtils.getEnum(AlarmSeverity.class, this.config.getSeverity()))
+                .severity(processAlarmSeverity(msg))
                 .propagate(config.isPropagate())
                 .type(TbNodeUtils.processPattern(this.config.getAlarmType(), msg))
                 .propagateRelationTypes(relationTypes)
@@ -169,6 +160,24 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
 //                .endTs(System.currentTimeMillis())
                 .details(details)
                 .build();
+    }
+
+    private AlarmSeverity processAlarmSeverity(TbMsg msg) {
+        AlarmSeverity alarmSeverity;
+        if(this.config.isDynamicSeverity()) {
+            String processPattern = TbNodeUtils.processPattern(this.config.getSeverity(), msg);
+            if(!EnumUtils.isValidEnum(AlarmSeverity.class, processPattern)) {
+                alarmSeverity = null;
+            } else {
+                alarmSeverity = EnumUtils.getEnum(AlarmSeverity.class, processPattern);
+            }
+        } else {
+            alarmSeverity = EnumUtils.getEnum(AlarmSeverity.class, this.config.getSeverity());
+        }
+        if(alarmSeverity == null) {
+            throw new RuntimeException("Used incorrect pattern or Alarm Severity not included in message");
+        }
+        return alarmSeverity;
     }
 
 }
