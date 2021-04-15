@@ -77,7 +77,7 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
     );
 
     this.config.deleteEntityTitle = resource => this.translate.instant('resource.delete-resource-title',
-      {resourceTitle: resource.title});
+      { resourceTitle: resource.title });
     this.config.deleteEntityContent = () => this.translate.instant('resource.delete-resource-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('resource.delete-resources-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('resource.delete-resources-text');

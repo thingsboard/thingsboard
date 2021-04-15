@@ -124,7 +124,7 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
   }
 
   @Output()
-  fileNameChanged = new EventEmitter<string | string[]>();
+  fileNameChanged = new EventEmitter<string|string[]>();
 
   fileName: string | string[];
   fileContent: any;

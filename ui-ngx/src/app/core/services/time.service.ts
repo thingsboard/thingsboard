@@ -51,8 +51,7 @@ export class TimeService {
 
   constructor(
     private http: HttpClient
-  ) {
-  }
+  ) {}
 
   public loadMaxDatapointsLimit(): Observable<number> {
     return this.http.get<number>('/api/dashboard/maxDatapointsLimit',

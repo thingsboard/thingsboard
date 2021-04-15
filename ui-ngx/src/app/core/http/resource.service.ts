@@ -14,14 +14,14 @@
 /// limitations under the License.
 ///
 
-import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-import {PageLink} from '@shared/models/page/page-link';
-import {defaultHttpOptionsFromConfig, RequestConfig} from '@core/http/http-utils';
-import {forkJoin, Observable, of} from 'rxjs';
-import {PageData} from '@shared/models/page/page-data';
-import {Resource, ResourceInfo} from '@shared/models/resource.models';
-import {catchError, map, mergeMap} from 'rxjs/operators';
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { PageLink } from '@shared/models/page/page-link';
+import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
+import { forkJoin, Observable, of } from 'rxjs';
+import { PageData } from '@shared/models/page/page-data';
+import { Resource, ResourceInfo } from '@shared/models/resource.models';
+import { catchError, map, mergeMap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -43,14 +43,17 @@ export class ResourceService {
   }
 
   public downloadResource(resourceId: string): Observable<any> {
-    return this.http.get(`/api/resource/${resourceId}/download`, { responseType: 'arraybuffer', observe: 'response' }).pipe(
+    return this.http.get(`/api/resource/${resourceId}/download`, {
+      responseType: 'arraybuffer',
+      observe: 'response'
+    }).pipe(
       map((response) => {
         const headers = response.headers;
         const filename = headers.get('x-filename');
         const contentType = headers.get('content-type');
         const linkElement = document.createElement('a');
         try {
-          const blob = new Blob([response.body], { type: contentType });
+          const blob = new Blob([response.body], {type: contentType});
           const url = URL.createObjectURL(blob);
           linkElement.setAttribute('href', url);
           linkElement.setAttribute('download', filename);

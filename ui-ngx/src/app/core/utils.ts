@@ -287,9 +287,7 @@ export function deepClone<T>(target: T, ignoreFields?: string[]): T {
   }
   if (target instanceof Array) {
     const cp = [] as any[];
-    (target as any[]).forEach((v) => {
-      cp.push(v);
-    });
+    (target as any[]).forEach((v) => { cp.push(v); });
     return cp.map((n: any) => deepClone<any>(n)) as any;
   }
   if (typeof target === 'object' && target !== {}) {
@@ -318,7 +316,6 @@ export function guid(): string {
       .toString(16)
       .substring(1);
   }
-
   return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
     s4() + '-' + s4() + s4() + s4();
 }

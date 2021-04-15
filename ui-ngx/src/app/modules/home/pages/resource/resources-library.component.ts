@@ -14,14 +14,14 @@
 /// limitations under the License.
 ///
 
-import {Component, Inject, OnDestroy, OnInit} from '@angular/core';
-import {Subject} from 'rxjs';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {TranslateService} from '@ngx-translate/core';
-import {EntityTableConfig} from '@home/models/entity/entities-table-config.models';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {EntityComponent} from '@home/components/entity/entity.component';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { Subject } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { TranslateService } from '@ngx-translate/core';
+import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { EntityComponent } from '@home/components/entity/entity.component';
 import {
   Resource,
   ResourceType,
@@ -29,7 +29,7 @@ import {
   ResourceTypeMIMETypes,
   ResourceTypeTranslationMap
 } from '@shared/models/resource.models';
-import {pairwise, startWith, takeUntil} from 'rxjs/operators';
+import { pairwise, startWith, takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-resources-library',
@@ -90,8 +90,10 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
   buildForm(entity: Resource): FormGroup {
     return this.fb.group(
       {
-        resourceType: [{value: entity?.resourceType ? entity.resourceType : ResourceType.LWM2M_MODEL,
-                        disabled: this.isEdit }, [Validators.required]],
+        resourceType: [{
+          value: entity?.resourceType ? entity.resourceType : ResourceType.LWM2M_MODEL,
+          disabled: this.isEdit
+        }, [Validators.required]],
         data: [entity ? entity.data : null, [Validators.required]],
         fileName: [entity ? entity.fileName : null, [Validators.required]],
         title: [entity ? entity.title : '', []]
