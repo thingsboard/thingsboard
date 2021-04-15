@@ -14,9 +14,9 @@
 /// limitations under the License.
 ///
 
-import {Injectable} from '@angular/core';
+import { Injectable } from '@angular/core';
 
-import {ActivatedRouteSnapshot, Resolve, Router} from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
 import {
   CellActionDescriptor,
   checkBoxCell,
@@ -26,45 +26,45 @@ import {
   GroupActionDescriptor,
   HeaderActionDescriptor
 } from '@home/models/entity/entities-table-config.models';
-import {TranslateService} from '@ngx-translate/core';
-import {DatePipe} from '@angular/common';
-import {EntityType, entityTypeResources, entityTypeTranslations} from '@shared/models/entity-type.models';
-import {AddEntityDialogData, EntityAction} from '@home/models/entity/entity-component.models';
-import {Device, DeviceCredentials, DeviceInfo} from '@app/shared/models/device.models';
-import {DeviceComponent} from '@modules/home/pages/device/device.component';
-import {forkJoin, Observable, of, Subject} from 'rxjs';
-import {select, Store} from '@ngrx/store';
-import {selectAuthUser} from '@core/auth/auth.selectors';
-import {map, mergeMap, take, tap} from 'rxjs/operators';
-import {AppState} from '@core/core.state';
-import {DeviceService} from '@app/core/http/device.service';
-import {Authority} from '@app/shared/models/authority.enum';
-import {CustomerService} from '@core/http/customer.service';
-import {Customer} from '@app/shared/models/customer.model';
-import {NULL_UUID} from '@shared/models/id/has-uuid';
-import {BroadcastService} from '@core/services/broadcast.service';
-import {DeviceTableHeaderComponent} from '@modules/home/pages/device/device-table-header.component';
-import {MatDialog} from '@angular/material/dialog';
+import { TranslateService } from '@ngx-translate/core';
+import { DatePipe } from '@angular/common';
+import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { AddEntityDialogData, EntityAction } from '@home/models/entity/entity-component.models';
+import { Device, DeviceCredentials, DeviceInfo } from '@app/shared/models/device.models';
+import { DeviceComponent } from '@modules/home/pages/device/device.component';
+import { forkJoin, Observable, of, Subject } from 'rxjs';
+import { select, Store } from '@ngrx/store';
+import { selectAuthUser } from '@core/auth/auth.selectors';
+import { map, mergeMap, take, tap } from 'rxjs/operators';
+import { AppState } from '@core/core.state';
+import { DeviceService } from '@app/core/http/device.service';
+import { Authority } from '@app/shared/models/authority.enum';
+import { CustomerService } from '@core/http/customer.service';
+import { Customer } from '@app/shared/models/customer.model';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { BroadcastService } from '@core/services/broadcast.service';
+import { DeviceTableHeaderComponent } from '@modules/home/pages/device/device-table-header.component';
+import { MatDialog } from '@angular/material/dialog';
 import {
   DeviceCredentialsDialogComponent,
   DeviceCredentialsDialogData
 } from '@modules/home/pages/device/device-credentials-dialog.component';
-import {DialogService} from '@core/services/dialog.service';
+import { DialogService } from '@core/services/dialog.service';
 import {
   AssignToCustomerDialogComponent,
   AssignToCustomerDialogData
 } from '@modules/home/dialogs/assign-to-customer-dialog.component';
-import {DeviceId} from '@app/shared/models/id/device-id';
+import { DeviceId } from '@app/shared/models/id/device-id';
 import {
   AddEntitiesToCustomerDialogComponent,
   AddEntitiesToCustomerDialogData
 } from '../../dialogs/add-entities-to-customer-dialog.component';
-import {DeviceTabsComponent} from '@home/pages/device/device-tabs.component';
-import {HomeDialogsService} from '@home/dialogs/home-dialogs.service';
-import {DeviceWizardDialogComponent} from '@home/components/wizard/device-wizard-dialog.component';
-import {BaseData, HasId} from '@shared/models/base-data';
-import {isDefinedAndNotNull} from '@core/utils';
-import {EdgeService} from '@core/http/edge.service';
+import { DeviceTabsComponent } from '@home/pages/device/device-tabs.component';
+import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
+import { DeviceWizardDialogComponent } from '@home/components/wizard/device-wizard-dialog.component';
+import { BaseData, HasId } from '@shared/models/base-data';
+import { isDefinedAndNotNull } from '@core/utils';
+import { EdgeService } from '@core/http/edge.service';
 import {
   AddEntitiesToEdgeDialogComponent,
   AddEntitiesToEdgeDialogData
@@ -97,7 +97,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
 
     this.config.addDialogStyle = {width: '600px'};
 
-    this.config.deleteEntityTitle = device => this.translate.instant('device.delete-device-title', { deviceName: device.name });
+    this.config.deleteEntityTitle = device => this.translate.instant('device.delete-device-title', {deviceName: device.name});
     this.config.deleteEntityContent = () => this.translate.instant('device.delete-device-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('device.delete-devices-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('device.delete-devices-text');
@@ -109,7 +109,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           this.broadcast.broadcast('deviceSaved');
         }),
         mergeMap((savedDevice) => this.deviceService.getDeviceInfo(savedDevice.id.id)
-      ));
+        ));
     };
     this.config.onEntityAction = action => this.onDeviceAction(action);
     this.config.detailsReadonly = () => (this.config.componentsData.deviceScope === 'customer_user' || this.config.componentsData.deviceScope === 'edge_customer_user');
@@ -208,7 +208,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       this.config.entitiesFetchFunction = pageLink =>
         this.deviceService.getCustomerDeviceInfosByDeviceProfileId(this.customerId, pageLink,
           this.config.componentsData.deviceProfileId !== null ?
-          this.config.componentsData.deviceProfileId.id : '');
+            this.config.componentsData.deviceProfileId.id : '');
       this.config.deleteEntity = id => this.deviceService.unassignDeviceFromCustomer(id.id);
     }
   }
@@ -250,26 +250,26 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       );
     }
     if (deviceScope === 'customer') {
-        actions.push(
-          {
-            name: this.translate.instant('device.unassign-from-customer'),
-            icon: 'assignment_return',
-            isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && !entity.customerIsPublic),
-            onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
-          },
-          {
-            name: this.translate.instant('device.make-private'),
-            icon: 'reply',
-            isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && entity.customerIsPublic),
-            onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
-          },
-          {
-            name: this.translate.instant('device.manage-credentials'),
-            icon: 'security',
-            isEnabled: () => true,
-            onAction: ($event, entity) => this.manageCredentials($event, entity)
-          }
-        );
+      actions.push(
+        {
+          name: this.translate.instant('device.unassign-from-customer'),
+          icon: 'assignment_return',
+          isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && !entity.customerIsPublic),
+          onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
+        },
+        {
+          name: this.translate.instant('device.make-private'),
+          icon: 'reply',
+          isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && entity.customerIsPublic),
+          onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
+        },
+        {
+          name: this.translate.instant('device.manage-credentials'),
+          icon: 'security',
+          isEnabled: () => true,
+          onAction: ($event, entity) => this.manageCredentials($event, entity)
+        }
+      );
     }
     if (deviceScope === 'customer_user' || deviceScope === 'edge_customer_user') {
       actions.push(
@@ -452,10 +452,10 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       }
     }).afterClosed()
       .subscribe((res) => {
-      if (res) {
-        this.config.table.updateData();
-      }
-    });
+        if (res) {
+          this.config.table.updateData();
+        }
+      });
   }
 
   unassignFromCustomer($event: Event, device: DeviceInfo) {

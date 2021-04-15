@@ -14,9 +14,9 @@
 /// limitations under the License.
 ///
 
-import {Injectable} from '@angular/core';
+import { Injectable } from '@angular/core';
 
-import {ActivatedRouteSnapshot, Resolve, Router} from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
 import {
   CellActionDescriptor,
   checkBoxCell,
@@ -26,22 +26,22 @@ import {
   GroupActionDescriptor,
   HeaderActionDescriptor
 } from '@home/models/entity/entities-table-config.models';
-import {TranslateService} from '@ngx-translate/core';
-import {DatePipe} from '@angular/common';
-import {EntityType, entityTypeResources, entityTypeTranslations} from '@shared/models/entity-type.models';
-import {EntityAction} from '@home/models/entity/entity-component.models';
-import {forkJoin, Observable, of} from 'rxjs';
-import {select, Store} from '@ngrx/store';
-import {selectAuthUser} from '@core/auth/auth.selectors';
-import {map, mergeMap, take, tap} from 'rxjs/operators';
-import {AppState} from '@core/core.state';
-import {Authority} from '@app/shared/models/authority.enum';
-import {CustomerService} from '@core/http/customer.service';
-import {Customer} from '@app/shared/models/customer.model';
-import {NULL_UUID} from '@shared/models/id/has-uuid';
-import {BroadcastService} from '@core/services/broadcast.service';
-import {MatDialog} from '@angular/material/dialog';
-import {DialogService} from '@core/services/dialog.service';
+import { TranslateService } from '@ngx-translate/core';
+import { DatePipe } from '@angular/common';
+import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { EntityAction } from '@home/models/entity/entity-component.models';
+import { forkJoin, Observable, of } from 'rxjs';
+import { select, Store } from '@ngrx/store';
+import { selectAuthUser } from '@core/auth/auth.selectors';
+import { map, mergeMap, take, tap } from 'rxjs/operators';
+import { AppState } from '@core/core.state';
+import { Authority } from '@app/shared/models/authority.enum';
+import { CustomerService } from '@core/http/customer.service';
+import { Customer } from '@app/shared/models/customer.model';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { BroadcastService } from '@core/services/broadcast.service';
+import { MatDialog } from '@angular/material/dialog';
+import { DialogService } from '@core/services/dialog.service';
 import {
   AssignToCustomerDialogComponent,
   AssignToCustomerDialogData
@@ -50,13 +50,13 @@ import {
   AddEntitiesToCustomerDialogComponent,
   AddEntitiesToCustomerDialogData
 } from '../../dialogs/add-entities-to-customer-dialog.component';
-import {EntityView, EntityViewInfo} from '@app/shared/models/entity-view.models';
-import {EntityViewService} from '@core/http/entity-view.service';
-import {EntityViewComponent} from '@modules/home/pages/entity-view/entity-view.component';
-import {EntityViewTableHeaderComponent} from '@modules/home/pages/entity-view/entity-view-table-header.component';
-import {EntityViewId} from '@shared/models/id/entity-view-id';
-import {EntityViewTabsComponent} from '@home/pages/entity-view/entity-view-tabs.component';
-import {EdgeService} from '@core/http/edge.service';
+import { EntityView, EntityViewInfo } from '@app/shared/models/entity-view.models';
+import { EntityViewService } from '@core/http/entity-view.service';
+import { EntityViewComponent } from '@modules/home/pages/entity-view/entity-view.component';
+import { EntityViewTableHeaderComponent } from '@modules/home/pages/entity-view/entity-view-table-header.component';
+import { EntityViewId } from '@shared/models/id/entity-view-id';
+import { EntityViewTabsComponent } from '@home/pages/entity-view/entity-view-tabs.component';
+import { EdgeService } from '@core/http/edge.service';
 import {
   AddEntitiesToEdgeDialogComponent,
   AddEntitiesToEdgeDialogData
@@ -89,7 +89,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
     this.config.addDialogStyle = {maxWidth: '800px'};
 
     this.config.deleteEntityTitle = entityView =>
-      this.translate.instant('entity-view.delete-entity-view-title', { entityViewName: entityView.name });
+      this.translate.instant('entity-view.delete-entity-view-title', {entityViewName: entityView.name});
     this.config.deleteEntityContent = () => this.translate.instant('entity-view.delete-entity-view-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('entity-view.delete-entity-views-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('entity-view.delete-entity-views-text');
@@ -143,8 +143,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
           this.edgeService.getEdge(this.config.componentsData.edgeId).subscribe(
             edge => this.config.tableTitle = edge.name + ': ' + this.translate.instant('entity-view.entity-views')
           );
-        }
-        else {
+        } else {
           this.config.tableTitle = this.translate.instant('entity-view.entity-views');
         }
         this.config.columns = this.configureColumns(this.config.componentsData.entityViewScope);

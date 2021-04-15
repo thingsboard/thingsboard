@@ -14,9 +14,9 @@
 /// limitations under the License.
 ///
 
-import {Injectable} from '@angular/core';
+import { Injectable } from '@angular/core';
 
-import {ActivatedRouteSnapshot, Resolve, Router} from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
 import {
   CellActionDescriptor,
   checkBoxCell,
@@ -26,20 +26,20 @@ import {
   GroupActionDescriptor,
   HeaderActionDescriptor
 } from '@home/models/entity/entities-table-config.models';
-import {TranslateService} from '@ngx-translate/core';
-import {DatePipe} from '@angular/common';
-import {EntityType, entityTypeResources, entityTypeTranslations} from '@shared/models/entity-type.models';
-import {EntityAction} from '@home/models/entity/entity-component.models';
-import {forkJoin, Observable, of} from 'rxjs';
-import {select, Store} from '@ngrx/store';
-import {selectAuthUser} from '@core/auth/auth.selectors';
-import {map, mergeMap, take, tap} from 'rxjs/operators';
-import {AppState} from '@core/core.state';
-import {Authority} from '@app/shared/models/authority.enum';
-import {CustomerService} from '@core/http/customer.service';
-import {Customer} from '@app/shared/models/customer.model';
-import {MatDialog} from '@angular/material/dialog';
-import {DialogService} from '@core/services/dialog.service';
+import { TranslateService } from '@ngx-translate/core';
+import { DatePipe } from '@angular/common';
+import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { EntityAction } from '@home/models/entity/entity-component.models';
+import { forkJoin, Observable, of } from 'rxjs';
+import { select, Store } from '@ngrx/store';
+import { selectAuthUser } from '@core/auth/auth.selectors';
+import { map, mergeMap, take, tap } from 'rxjs/operators';
+import { AppState } from '@core/core.state';
+import { Authority } from '@app/shared/models/authority.enum';
+import { CustomerService } from '@core/http/customer.service';
+import { Customer } from '@app/shared/models/customer.model';
+import { MatDialog } from '@angular/material/dialog';
+import { DialogService } from '@core/services/dialog.service';
 import {
   AddEntitiesToCustomerDialogComponent,
   AddEntitiesToCustomerDialogData
@@ -51,8 +51,8 @@ import {
   isCurrentPublicDashboardCustomer,
   isPublicDashboard
 } from '@app/shared/models/dashboard.models';
-import {DashboardService} from '@app/core/http/dashboard.service';
-import {DashboardFormComponent} from '@modules/home/pages/dashboard/dashboard-form.component';
+import { DashboardService } from '@app/core/http/dashboard.service';
+import { DashboardFormComponent } from '@modules/home/pages/dashboard/dashboard-form.component';
 import {
   ManageDashboardCustomersActionType,
   ManageDashboardCustomersDialogComponent,
@@ -62,9 +62,9 @@ import {
   MakeDashboardPublicDialogComponent,
   MakeDashboardPublicDialogData
 } from '@modules/home/pages/dashboard/make-dashboard-public-dialog.component';
-import {DashboardTabsComponent} from '@home/pages/dashboard/dashboard-tabs.component';
-import {ImportExportService} from '@home/components/import-export/import-export.service';
-import {EdgeService} from '@core/http/edge.service';
+import { DashboardTabsComponent } from '@home/pages/dashboard/dashboard-tabs.component';
+import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { EdgeService } from '@core/http/edge.service';
 import {
   AddEntitiesToEdgeDialogComponent,
   AddEntitiesToEdgeDialogData
@@ -93,7 +93,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     this.config.entityResources = entityTypeResources.get(EntityType.DASHBOARD);
 
     this.config.deleteEntityTitle = dashboard =>
-      this.translate.instant('dashboard.delete-dashboard-title', { dashboardTitle: dashboard.title });
+      this.translate.instant('dashboard.delete-dashboard-title', {dashboardTitle: dashboard.title});
     this.config.deleteEntityContent = () => this.translate.instant('dashboard.delete-dashboard-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('dashboard.delete-dashboards-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('dashboard.delete-dashboards-text');
@@ -363,8 +363,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
       this.router.navigateByUrl(`customers/${this.config.componentsData.customerId}/dashboards/${dashboard.id.id}`);
     } else if (this.config.componentsData.dashboardScope === 'edge') {
       this.router.navigateByUrl(`edges/${this.config.componentsData.edgeId}/dashboards/${dashboard.id.id}`);
-    }
-    else {
+    } else {
       this.router.navigateByUrl(`dashboards/${dashboard.id.id}`);
     }
   }
@@ -421,7 +420,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
           }
         }).afterClosed()
           .subscribe(() => {
-              this.config.table.updateData();
+            this.config.table.updateData();
           });
       }
     );

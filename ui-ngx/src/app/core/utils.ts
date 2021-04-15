@@ -15,11 +15,11 @@
 ///
 
 import _ from 'lodash';
-import {Observable, Subject} from 'rxjs';
-import {finalize, share} from 'rxjs/operators';
-import {Datasource} from '@app/shared/models/widget.models';
-import {EntityId} from '@shared/models/id/entity-id';
-import {NULL_UUID} from '@shared/models/id/has-uuid';
+import { Observable, Subject } from 'rxjs';
+import { finalize, share } from 'rxjs/operators';
+import { Datasource } from '@app/shared/models/widget.models';
+import { EntityId } from '@shared/models/id/entity-id';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 const varsRegex = /\${([^}]*)}/g;
 
@@ -287,11 +287,13 @@ export function deepClone<T>(target: T, ignoreFields?: string[]): T {
   }
   if (target instanceof Array) {
     const cp = [] as any[];
-    (target as any[]).forEach((v) => { cp.push(v); });
+    (target as any[]).forEach((v) => {
+      cp.push(v);
+    });
     return cp.map((n: any) => deepClone<any>(n)) as any;
   }
   if (typeof target === 'object' && target !== {}) {
-    const cp = { ...(target as { [key: string]: any }) } as { [key: string]: any };
+    const cp = {...(target as { [key: string]: any })} as { [key: string]: any };
     Object.keys(cp).forEach(k => {
       if (!ignoreFields || ignoreFields.indexOf(k) === -1) {
         cp[k] = deepClone<any>(cp[k]);
@@ -316,6 +318,7 @@ export function guid(): string {
       .toString(16)
       .substring(1);
   }
+
   return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
     s4() + '-' + s4() + s4() + s4();
 }

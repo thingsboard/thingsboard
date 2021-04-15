@@ -27,15 +27,15 @@ import {
   SimpleChanges,
   ViewChild
 } from '@angular/core';
-import {PageComponent} from '@shared/components/page.component';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {ControlValueAccessor, NG_VALUE_ACCESSOR} from '@angular/forms';
-import {Subscription} from 'rxjs';
-import {coerceBooleanProperty} from '@angular/cdk/coercion';
-import {FlowDirective} from '@flowjs/ngx-flow';
-import {TranslateService} from '@ngx-translate/core';
-import {UtilsService} from '@core/services/utils.service';
+import { PageComponent } from '@shared/components/page.component';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Subscription } from 'rxjs';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { FlowDirective } from '@flowjs/ngx-flow';
+import { TranslateService } from '@ngx-translate/core';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-file-input',
@@ -73,9 +73,11 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
   contentConvertFunction: (content: string) => any;
 
   private requiredValue: boolean;
+
   get required(): boolean {
     return this.requiredValue;
   }
+
   @Input()
   set required(value: boolean) {
     const newVal = coerceBooleanProperty(value);
@@ -85,9 +87,11 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
   }
 
   private requiredAsErrorValue: boolean;
+
   get requiredAsError(): boolean {
     return this.requiredAsErrorValue;
   }
+
   @Input()
   set requiredAsError(value: boolean) {
     const newVal = coerceBooleanProperty(value);
@@ -120,7 +124,7 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
   }
 
   @Output()
-  fileNameChanged = new EventEmitter<string|string[]>();
+  fileNameChanged = new EventEmitter<string | string[]>();
 
   fileName: string | string[];
   fileContent: any;
