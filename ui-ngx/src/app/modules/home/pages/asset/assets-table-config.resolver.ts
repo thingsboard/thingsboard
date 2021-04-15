@@ -89,7 +89,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.ASSET);
     this.config.entityResources = entityTypeResources.get(EntityType.ASSET);
 
-    this.config.deleteEntityTitle = asset => this.translate.instant('asset.delete-asset-title', { assetName: asset.name });
+    this.config.deleteEntityTitle = asset => this.translate.instant('asset.delete-asset-title', {assetName: asset.name});
     this.config.deleteEntityContent = () => this.translate.instant('asset.delete-asset-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('asset.delete-assets-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('asset.delete-assets-text');

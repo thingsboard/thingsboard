@@ -33,8 +33,11 @@ import { RuleChainType } from '@shared/models/rule-chain.models';
 import {
   importRuleChainBreadcumbLabelFunction,
   ResolvedRuleChainMetaDataResolver,
-  ruleChainBreadcumbLabelFunction, RuleChainImportGuard,
-  RuleChainResolver, RuleNodeComponentsResolver, TooltipsterResolver
+  ruleChainBreadcumbLabelFunction,
+  RuleChainImportGuard,
+  RuleChainResolver,
+  RuleNodeComponentsResolver,
+  TooltipsterResolver
 } from '@home/pages/rulechain/rulechain-routing.module';
 
 const routes: Routes = [
@@ -249,7 +252,7 @@ const routes: Routes = [
           }
         ]
       }
-      ]
+    ]
   }];
 
 @NgModule({
@@ -259,4 +262,5 @@ const routes: Routes = [
     EdgesTableConfigResolver
   ]
 })
-export class EdgeRoutingModule { }
+export class EdgeRoutingModule {
+}

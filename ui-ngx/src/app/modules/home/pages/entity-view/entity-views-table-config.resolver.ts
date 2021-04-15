@@ -89,7 +89,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
     this.config.addDialogStyle = {maxWidth: '800px'};
 
     this.config.deleteEntityTitle = entityView =>
-      this.translate.instant('entity-view.delete-entity-view-title', { entityViewName: entityView.name });
+      this.translate.instant('entity-view.delete-entity-view-title', {entityViewName: entityView.name});
     this.config.deleteEntityContent = () => this.translate.instant('entity-view.delete-entity-view-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('entity-view.delete-entity-views-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('entity-view.delete-entity-views-text');
@@ -143,8 +143,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
           this.edgeService.getEdge(this.config.componentsData.edgeId).subscribe(
             edge => this.config.tableTitle = edge.name + ': ' + this.translate.instant('entity-view.entity-views')
           );
-        }
-        else {
+        } else {
           this.config.tableTitle = this.translate.instant('entity-view.entity-views');
         }
         this.config.columns = this.configureColumns(this.config.componentsData.entityViewScope);

@@ -73,9 +73,11 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
   contentConvertFunction: (content: string) => any;
 
   private requiredValue: boolean;
+
   get required(): boolean {
     return this.requiredValue;
   }
+
   @Input()
   set required(value: boolean) {
     const newVal = coerceBooleanProperty(value);
@@ -85,9 +87,11 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
   }
 
   private requiredAsErrorValue: boolean;
+
   get requiredAsError(): boolean {
     return this.requiredAsErrorValue;
   }
+
   @Input()
   set requiredAsError(value: boolean) {
     const newVal = coerceBooleanProperty(value);

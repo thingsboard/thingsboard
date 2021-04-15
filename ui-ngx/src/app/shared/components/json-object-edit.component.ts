@@ -22,7 +22,7 @@ import { ActionNotificationHide, ActionNotificationShow } from '@core/notificati
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
-import { guid, isUndefined, isDefinedAndNotNull, isLiteralObject } from '@core/utils';
+import { guid, isDefinedAndNotNull, isLiteralObject, isUndefined } from '@core/utils';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { getAce } from '@shared/models/ace/ace.models';
 
