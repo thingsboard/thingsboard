@@ -13,20 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.tb-panel-title-height {
-  user-select: none;
-  min-height: 32px;
-}
+package org.thingsboard.server.common.data.event;
 
-.checkbox-padding {
-  padding-left: 22px;
-  text-align:center;
-}
-
-:host{
-  .instance-list {
-    mat-expansion-panel-header {
-      color: inherit;
-    }
-  }
+public enum EventType {
+    ERROR, LC_EVENT, STATS, DEBUG_RULE_NODE, DEBUG_RULE_CHAIN
 }

@@ -322,7 +322,7 @@ actors:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"
     js_print_interval_ms: "${ACTORS_JS_STATISTICS_PRINT_INTERVAL_MS:10000}"
-    persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:3600000}"
+    persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:10000}"
 
 cache:
   # caffeine or redis
@@ -516,7 +516,7 @@ js:
   # Built-in JVM JavaScript environment properties
   local:
     # Use Sandboxed (secured) JVM JavaScript environment
-    use_js_sandbox: "${USE_LOCAL_JS_SANDBOX:false}"
+    use_js_sandbox: "${USE_LOCAL_JS_SANDBOX:true}"
     # Specify thread pool size for JavaScript sandbox resource monitor
     monitor_thread_pool_size: "${LOCAL_JS_SANDBOX_MONITOR_THREAD_POOL_SIZE:4}"
     # Maximum CPU time in milliseconds allowed for script execution

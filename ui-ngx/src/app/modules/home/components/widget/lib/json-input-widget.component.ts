@@ -146,7 +146,7 @@ export class JsonInputWidgetComponent extends PageComponent implements OnInit {
     this.attributeUpdateFormGroup = this.fb.group({
       currentValue: [{}, validators]
     });
-    this.attributeUpdateFormGroup.valueChanges.subscribe( () => {
+    this.attributeUpdateFormGroup.valueChanges.subscribe(() => {
       this.ctx.detectChanges();
     });
   }
@@ -191,14 +191,14 @@ export class JsonInputWidgetComponent extends PageComponent implements OnInit {
       saveAttributeObservable = this.attributeService.saveEntityAttributes(
         entityId,
         this.settings.attributeScope,
-        [ attributeToSave ],
+        [attributeToSave],
         {}
       );
     } else {
       saveAttributeObservable = this.attributeService.saveEntityTimeseries(
         entityId,
         LatestTelemetry.LATEST_TELEMETRY,
-        [ attributeToSave ],
+        [attributeToSave],
         {}
       );
     }

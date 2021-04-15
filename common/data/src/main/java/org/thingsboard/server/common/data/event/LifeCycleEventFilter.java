@@ -13,20 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.tb-panel-title-height {
-  user-select: none;
-  min-height: 32px;
-}
+package org.thingsboard.server.common.data.event;
 
-.checkbox-padding {
-  padding-left: 22px;
-  text-align:center;
-}
+import lombok.Data;
+import org.eclipse.leshan.core.util.StringUtils;
 
-:host{
-  .instance-list {
-    mat-expansion-panel-header {
-      color: inherit;
+@Data
+public class LifeCycleEventFilter implements EventFilter {
+    private String server;
+    private String event;
+    private String status;
+    private String error;
+
+    @Override
+    public EventType getEventType() {
+        return EventType.LC_EVENT;
     }
-  }
+
+    @Override
+    public boolean hasFilterForJsonBody() {
+        return !StringUtils.isEmpty(server) || !StringUtils.isEmpty(event) || !StringUtils.isEmpty(status) || !StringUtils.isEmpty(error);
+    }
 }

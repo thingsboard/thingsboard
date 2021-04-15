@@ -31,7 +31,7 @@ import { isDefined } from '@core/utils';
 
 export interface TimeInterval {
   name: string;
-  translateParams: {[key: string]: any};
+  translateParams: { [key: string]: any };
   value: number;
 }
 
@@ -56,14 +56,14 @@ export class TimeService {
   public loadMaxDatapointsLimit(): Observable<number> {
     return this.http.get<number>('/api/dashboard/maxDatapointsLimit',
       defaultHttpOptions(true)).pipe(
-        map( (limit) => {
-          this.maxDatapointsLimit = limit;
-          if (!this.maxDatapointsLimit || this.maxDatapointsLimit <= MIN_LIMIT) {
-            this.maxDatapointsLimit = MIN_LIMIT + 1;
-          }
-          return this.maxDatapointsLimit;
-        })
-      );
+      map((limit) => {
+        this.maxDatapointsLimit = limit;
+        if (!this.maxDatapointsLimit || this.maxDatapointsLimit <= MIN_LIMIT) {
+          this.maxDatapointsLimit = MIN_LIMIT + 1;
+        }
+        return this.maxDatapointsLimit;
+      })
+    );
   }
 
   public matchesExistingInterval(min: number, max: number, intervalMs: number): boolean {
