@@ -40,6 +40,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
         put(Resource.USER, userPermissionChecker);
         put(Resource.WIDGETS_BUNDLE, widgetsPermissionChecker);
         put(Resource.WIDGET_TYPE, widgetsPermissionChecker);
+        put(Resource.EDGE, customerEntityPermissionChecker);
     }
 
     private static final PermissionChecker customerEntityPermissionChecker =

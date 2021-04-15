@@ -141,6 +141,7 @@ import { FileSizePipe } from '@shared/pipe/file-size.pipe';
 import { WidgetsBundleSearchComponent } from '@shared/components/widgets-bundle-search.component';
 import { SelectableColumnsPipe } from '@shared/pipe/selectable-columns.pipe';
 import { QuickTimeIntervalComponent } from '@shared/components/time/quick-time-interval.component';
+import { MAT_DATE_LOCALE } from '@angular/material/core';
 
 @NgModule({
   providers: [
@@ -154,6 +155,10 @@ import { QuickTimeIntervalComponent } from '@shared/components/time/quick-time-i
     {
       provide: FlowInjectionToken,
       useValue: Flow
+    },
+    {
+      provide: MAT_DATE_LOCALE,
+      useValue: 'en-GB'
     }
   ],
   declarations: [

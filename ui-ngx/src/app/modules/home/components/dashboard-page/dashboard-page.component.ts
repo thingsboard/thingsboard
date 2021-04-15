@@ -90,7 +90,6 @@ import {
 } from '@home/components/alias/entity-aliases-dialog.component';
 import { EntityAliases } from '@app/shared/models/alias.models';
 import { EditWidgetComponent } from '@home/components/dashboard-page/edit-widget.component';
-import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import {
   AddWidgetDialogComponent,
   AddWidgetDialogData
@@ -118,10 +117,10 @@ import { ComponentPortal } from '@angular/cdk/portal';
 import {
   DISPLAY_WIDGET_TYPES_PANEL_DATA,
   DisplayWidgetTypesPanelComponent,
-  DisplayWidgetTypesPanelData,
-  WidgetTypes
+  DisplayWidgetTypesPanelData
 } from '@home/components/dashboard-page/widget-types-panel.component';
 import { DashboardWidgetSelectComponent } from '@home/components/dashboard-page/dashboard-widget-select.component';
+import {AliasEntityType, EntityType} from "@shared/models/entity-type.models";
 
 // @dynamic
 @Component({
@@ -174,6 +173,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   isToolbarOpened = false;
   isToolbarOpenedAnimate = false;
   isRightLayoutOpened = false;
+
+  allowedEntityTypes: Array<EntityType | AliasEntityType> = null;
 
   editingWidget: Widget = null;
   editingWidgetLayout: WidgetLayout = null;
@@ -351,6 +352,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       };
       this.window.parent.postMessage(JSON.stringify(message), '*');
     }
+
+    this.allowedEntityTypes = this.entityService.prepareAllowedEntityTypesList(null, true);
   }
 
   private reset() {
@@ -555,7 +558,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       data: {
         entityAliases: deepClone(this.dashboard.configuration.entityAliases),
         widgets: this.dashboardUtils.getWidgetsArray(this.dashboard),
-        isSingleEntityAlias: false
+        isSingleEntityAlias: false,
+        allowedEntityTypes: this.allowedEntityTypes
       }
     }).afterClosed().subscribe((entityAliases) => {
       if (entityAliases) {
@@ -1183,13 +1187,16 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       overlayRef.dispose();
     });
 
+    const filterWidgetTypes = this.dashboardWidgetSelectComponent.filterWidgetTypes;
+    const widgetTypesList = Array.from(this.dashboardWidgetSelectComponent.widgetTypes.values()).map(type => {
+      return {type, display: filterWidgetTypes === null ? true : filterWidgetTypes.includes(type)};
+    });
+
     const providers: StaticProvider[] = [
       {
         provide: DISPLAY_WIDGET_TYPES_PANEL_DATA,
         useValue: {
-          types: Array.from(this.dashboardWidgetSelectComponent.widgetTypes.values()).map(type => {
-            return {type, display: true};
-          }),
+          types: widgetTypesList,
           typesUpdated: (newTypes) => {
             this.filterWidgetTypes = newTypes.filter(type => type.display).map(type => type.type);
           }

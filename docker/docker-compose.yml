@@ -42,6 +42,7 @@ services:
     image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "8080"
+      - "7070"
     logging:
       driver: "json-file"
       options:
@@ -50,6 +51,7 @@ services:
     environment:
       TB_SERVICE_ID: tb-core1
       TB_SERVICE_TYPE: tb-core
+      EDGES_ENABLED: "true"
     env_file:
       - tb-node.env
     volumes:
@@ -66,6 +68,7 @@ services:
     image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "8080"
+      - "7070"
     logging:
       driver: "json-file"
       options:
@@ -74,6 +77,7 @@ services:
     environment:
       TB_SERVICE_ID: tb-core2
       TB_SERVICE_TYPE: tb-core
+      EDGES_ENABLED: "true"
     env_file:
       - tb-node.env
     volumes:
@@ -199,6 +203,20 @@ services:
       - ./tb-transports/coap/log:/var/log/tb-coap-transport
     depends_on:
       - zookeeper
+  tb-lwm2m-transport:
+    restart: always
+    image: "${DOCKER_REPO}/${LWM2M_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
+    ports:
+      - "5685:5685/udp"
+    environment:
+      TB_SERVICE_ID: tb-lwm2m-transport
+    env_file:
+      - tb-lwm2m-transport.env
+    volumes:
+      - ./tb-transports/lwm2m/conf:/config
+      - ./tb-transports/lwm2m/log:/var/log/tb-lwm2m-transport
+    depends_on:
+      - zookeeper
   tb-web-ui1:
     restart: always
     image: "${DOCKER_REPO}/${WEB_UI_DOCKER_NAME}:${TB_VERSION}"
@@ -225,6 +243,7 @@ services:
      - "80:80"
      - "443:443"
      - "1883:1883"
+     - "7070:7070"
      - "9999:9999"
     cap_add:
      - NET_ADMIN
@@ -232,6 +251,7 @@ services:
       HTTP_PORT: 80
       HTTPS_PORT: 443
       MQTT_PORT: 1883
+      EDGES_RPC_PORT: 7070
       FORCE_HTTPS_REDIRECT: "false"
     links:
         - tb-core1

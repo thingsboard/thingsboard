@@ -39,10 +39,10 @@ import java.util.UUID;
 public class JpaDashboardInfoDao extends JpaAbstractSearchTextDao<DashboardInfoEntity, DashboardInfo> implements DashboardInfoDao {
 
     @Autowired
-    private RelationDao relationDao;
+    private DashboardInfoRepository dashboardInfoRepository;
 
     @Autowired
-    private DashboardInfoRepository dashboardInfoRepository;
+    private RelationDao relationDao;
 
     @Override
     protected Class<DashboardInfoEntity> getEntityClass() {
@@ -69,6 +69,17 @@ public class JpaDashboardInfoDao extends JpaAbstractSearchTextDao<DashboardInfoE
                 .findByTenantIdAndCustomerId(
                         tenantId,
                         customerId,
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<DashboardInfo> findDashboardsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, PageLink pageLink) {
+        log.debug("Try to find dashboards by tenantId [{}], edgeId [{}] and pageLink [{}]", tenantId, edgeId, pageLink);
+        return DaoUtil.toPageData(dashboardInfoRepository
+                .findByTenantIdAndEdgeId(
+                        tenantId,
+                        edgeId,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
     }

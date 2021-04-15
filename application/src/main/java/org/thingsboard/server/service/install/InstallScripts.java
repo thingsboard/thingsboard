@@ -22,18 +22,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
-import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
+import org.thingsboard.server.dao.resource.TbResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
@@ -43,6 +45,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.Optional;
 
 import static org.thingsboard.server.service.install.DatabaseHelper.objectMapper;
@@ -67,8 +70,13 @@ public class InstallScripts {
     public static final String WIDGET_BUNDLES_DIR = "widget_bundles";
     public static final String OAUTH2_CONFIG_TEMPLATES_DIR = "oauth2_config_templates";
     public static final String DASHBOARDS_DIR = "dashboards";
+    public static final String MODELS_DIR = "models";
+    public static final String CREDENTIALS_DIR = "credentials";
+
+    public static final String EDGE_MANAGEMENT = "edge_management";
 
     public static final String JSON_EXT = ".json";
+    public static final String XML_EXT = ".xml";
 
     @Value("${install.data_dir:}")
     private String dataDir;
@@ -88,12 +96,19 @@ public class InstallScripts {
     @Autowired
     private OAuth2ConfigTemplateService oAuth2TemplateService;
 
-    public Path getTenantRuleChainsDir() {
+    @Autowired
+    private TbResourceService resourceService;
+
+    private Path getTenantRuleChainsDir() {
         return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, RULE_CHAINS_DIR);
     }
 
-    public Path getDeviceProfileDefaultRuleChainTemplateFilePath() {
+    private Path getDeviceProfileDefaultRuleChainTemplateFilePath() {
         return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, DEVICE_PROFILE_DIR, "rule_chain_template.json");
+    }
+
+    private Path getEdgeRuleChainsDir() {
+        return Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, EDGE_MANAGEMENT, RULE_CHAINS_DIR);
     }
 
     public String getDataDir() {
@@ -119,7 +134,16 @@ public class InstallScripts {
 
     public void createDefaultRuleChains(TenantId tenantId) throws IOException {
         Path tenantChainsDir = getTenantRuleChainsDir();
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(tenantChainsDir, path -> path.toString().endsWith(InstallScripts.JSON_EXT))) {
+        loadRuleChainsFromPath(tenantId, tenantChainsDir);
+    }
+
+    public void createDefaultEdgeRuleChains(TenantId tenantId) throws IOException {
+        Path edgeChainsDir = getEdgeRuleChainsDir();
+        loadRuleChainsFromPath(tenantId, edgeChainsDir);
+    }
+
+    private void loadRuleChainsFromPath(TenantId tenantId, Path ruleChainsPath) throws IOException {
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(ruleChainsPath, path -> path.toString().endsWith(InstallScripts.JSON_EXT))) {
             dirStream.forEach(
                     path -> {
                         try {
@@ -154,7 +178,6 @@ public class InstallScripts {
         return ruleChain;
     }
 
-
     public void loadSystemWidgets() throws Exception {
         Path widgetBundlesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_BUNDLES_DIR);
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(widgetBundlesDir, path -> path.toString().endsWith(JSON_EXT))) {
@@ -187,6 +210,29 @@ public class InstallScripts {
         }
     }
 
+    public void loadSystemLwm2mResources() throws Exception {
+        Path modelsDir = Paths.get(getDataDir(), MODELS_DIR);
+        if (Files.isDirectory(modelsDir)) {
+            try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(modelsDir, path -> path.toString().endsWith(XML_EXT))) {
+                dirStream.forEach(
+                        path -> {
+                            try {
+                                byte[] fileBytes = Files.readAllBytes(path);
+                                TbResource resource = new TbResource();
+                                resource.setFileName(path.getFileName().toString());
+                                resource.setTenantId(TenantId.SYS_TENANT_ID);
+                                resource.setResourceType(ResourceType.LWM2M_MODEL);
+                                resource.setData(Base64.getEncoder().encodeToString(fileBytes));
+                                resourceService.saveResource(resource);
+                            } catch (Exception e) {
+                                throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", path.toString()));
+                            }
+                        }
+                );
+            }
+        }
+    }
+
     public void loadDashboards(TenantId tenantId, CustomerId customerId) throws Exception {
         Path dashboardsDir = Paths.get(getDataDir(), JSON_DIR, DEMO_DIR, DASHBOARDS_DIR);
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dashboardsDir, path -> path.toString().endsWith(JSON_EXT))) {
@@ -208,7 +254,6 @@ public class InstallScripts {
             );
         }
     }
-
 
     public void loadDemoRuleChains(TenantId tenantId) throws Exception {
         try {

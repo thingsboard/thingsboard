@@ -881,7 +881,6 @@
         "body": "بدنه",
         "method": "روش",
         "type": "نوع",
-        "entity": "موجودي",
         "message-id": "پيام ID",
         "message-type": "نوع پيام",
         "data-type": "نوع داده",
@@ -893,7 +892,9 @@
         "success": "موفقيت",
         "failed": "عدم موفقيت",
         "messages-processed": "پيام پردازش شد",
-        "errors-occurred": "خطاها رخ دادند"
+        "errors-occurred": "خطاها رخ دادند",
+        "all-events": "همه",
+        "entity-type": "نوع موجودي"
     },
     "extension": {
         "extensions": "دنباله ها",

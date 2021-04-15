@@ -162,6 +162,11 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           this.noEntitiesMatchingText = 'device.no-devices-matching';
           this.entityRequiredText = 'device.device-required';
           break;
+        case EntityType.EDGE:
+          this.entityText = 'edge.edge';
+          this.noEntitiesMatchingText = 'edge.no-edges-matching';
+          this.entityRequiredText = 'edge.edge-required';
+          break;
         case EntityType.ENTITY_VIEW:
           this.entityText = 'entity-view.entity-view';
           this.noEntitiesMatchingText = 'entity-view.no-entity-views-matching';

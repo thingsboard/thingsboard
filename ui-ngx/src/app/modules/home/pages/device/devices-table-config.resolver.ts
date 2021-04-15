@@ -64,6 +64,11 @@ import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 import { DeviceWizardDialogComponent } from '@home/components/wizard/device-wizard-dialog.component';
 import { BaseData, HasId } from '@shared/models/base-data';
 import { isDefinedAndNotNull } from '@core/utils';
+import { EdgeService } from '@core/http/edge.service';
+import {
+  AddEntitiesToEdgeDialogComponent,
+  AddEntitiesToEdgeDialogData
+} from '@home/dialogs/add-entities-to-edge-dialog.component';
 
 @Injectable()
 export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<DeviceInfo>> {
@@ -77,6 +82,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
               private deviceService: DeviceService,
               private customerService: CustomerService,
               private dialogService: DialogService,
+              private edgeService: EdgeService,
               private homeDialogs: HomeDialogsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
@@ -91,7 +97,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
 
     this.config.addDialogStyle = {width: '600px'};
 
-    this.config.deleteEntityTitle = device => this.translate.instant('device.delete-device-title', { deviceName: device.name });
+    this.config.deleteEntityTitle = device => this.translate.instant('device.delete-device-title', {deviceName: device.name});
     this.config.deleteEntityContent = () => this.translate.instant('device.delete-device-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('device.delete-devices-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('device.delete-devices-text');
@@ -103,10 +109,10 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           this.broadcast.broadcast('deviceSaved');
         }),
         mergeMap((savedDevice) => this.deviceService.getDeviceInfo(savedDevice.id.id)
-      ));
+        ));
     };
     this.config.onEntityAction = action => this.onDeviceAction(action);
-    this.config.detailsReadonly = () => this.config.componentsData.deviceScope === 'customer_user';
+    this.config.detailsReadonly = () => (this.config.componentsData.deviceScope === 'customer_user' || this.config.componentsData.deviceScope === 'edge_customer_user');
 
     this.config.headerComponent = DeviceTableHeaderComponent;
 
@@ -117,13 +123,19 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     this.config.componentsData = {
       deviceScope: route.data.devicesType,
       deviceProfileId: null,
-      deviceCredentials$: new Subject<DeviceCredentials>()
+      deviceCredentials$: new Subject<DeviceCredentials>(),
+      edgeId: routeParams.edgeId
     };
     this.customerId = routeParams.customerId;
+    this.config.componentsData.edgeId = routeParams.edgeId;
     return this.store.pipe(select(selectAuthUser), take(1)).pipe(
       tap((authUser) => {
         if (authUser.authority === Authority.CUSTOMER_USER) {
-          this.config.componentsData.deviceScope = 'customer_user';
+          if (route.data.devicesType === 'edge') {
+            this.config.componentsData.deviceScope = 'edge_customer_user';
+          } else {
+            this.config.componentsData.deviceScope = 'customer_user';
+          }
           this.customerId = authUser.customerId;
         }
       }),
@@ -137,6 +149,10 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           } else {
             this.config.tableTitle = parentCustomer.title + ': ' + this.translate.instant('device.devices');
           }
+        } else if (this.config.componentsData.deviceScope === 'edge') {
+          this.edgeService.getEdge(this.config.componentsData.edgeId).subscribe(
+            edge => this.config.tableTitle = edge.name + ': ' + this.translate.instant('device.devices')
+          );
         } else {
           this.config.tableTitle = this.translate.instant('device.devices');
         }
@@ -145,7 +161,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
         this.config.cellActionDescriptors = this.configureCellActions(this.config.componentsData.deviceScope);
         this.config.groupActionDescriptors = this.configureGroupActions(this.config.componentsData.deviceScope);
         this.config.addActionDescriptors = this.configureAddActions(this.config.componentsData.deviceScope);
-        this.config.addEnabled = this.config.componentsData.deviceScope !== 'customer_user';
+        this.config.addEnabled = !(this.config.componentsData.deviceScope === 'customer_user' || this.config.componentsData.deviceScope === 'edge_customer_user');
         this.config.entitiesDeleteEnabled = this.config.componentsData.deviceScope === 'tenant';
         this.config.deleteEnabled = () => this.config.componentsData.deviceScope === 'tenant';
         return this.config;
@@ -185,11 +201,14 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           this.config.componentsData.deviceProfileId !== null ?
             this.config.componentsData.deviceProfileId.id : '');
       this.config.deleteEntity = id => this.deviceService.deleteDevice(id.id);
+    } else if (deviceScope === 'edge' || deviceScope === 'edge_customer_user') {
+      this.config.entitiesFetchFunction = pageLink =>
+        this.deviceService.getEdgeDevices(this.config.componentsData.edgeId, pageLink, this.config.componentsData.edgeType);
     } else {
       this.config.entitiesFetchFunction = pageLink =>
         this.deviceService.getCustomerDeviceInfosByDeviceProfileId(this.customerId, pageLink,
           this.config.componentsData.deviceProfileId !== null ?
-          this.config.componentsData.deviceProfileId.id : '');
+            this.config.componentsData.deviceProfileId.id : '');
       this.config.deleteEntity = id => this.deviceService.unassignDeviceFromCustomer(id.id);
     }
   }
@@ -231,34 +250,44 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       );
     }
     if (deviceScope === 'customer') {
-        actions.push(
-          {
-            name: this.translate.instant('device.unassign-from-customer'),
-            icon: 'assignment_return',
-            isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && !entity.customerIsPublic),
-            onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
-          },
-          {
-            name: this.translate.instant('device.make-private'),
-            icon: 'reply',
-            isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && entity.customerIsPublic),
-            onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
-          },
-          {
-            name: this.translate.instant('device.manage-credentials'),
-            icon: 'security',
-            isEnabled: () => true,
-            onAction: ($event, entity) => this.manageCredentials($event, entity)
-          }
-        );
+      actions.push(
+        {
+          name: this.translate.instant('device.unassign-from-customer'),
+          icon: 'assignment_return',
+          isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && !entity.customerIsPublic),
+          onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
+        },
+        {
+          name: this.translate.instant('device.make-private'),
+          icon: 'reply',
+          isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && entity.customerIsPublic),
+          onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
+        },
+        {
+          name: this.translate.instant('device.manage-credentials'),
+          icon: 'security',
+          isEnabled: () => true,
+          onAction: ($event, entity) => this.manageCredentials($event, entity)
+        }
+      );
     }
-    if (deviceScope === 'customer_user') {
+    if (deviceScope === 'customer_user' || deviceScope === 'edge_customer_user') {
       actions.push(
         {
           name: this.translate.instant('device.view-credentials'),
           icon: 'security',
           isEnabled: () => true,
           onAction: ($event, entity) => this.manageCredentials($event, entity)
+        }
+      );
+    }
+    if (deviceScope === 'edge') {
+      actions.push(
+        {
+          name: this.translate.instant('edge.unassign-from-edge'),
+          icon: 'assignment_return',
+          isEnabled: (entity) => true,
+          onAction: ($event, entity) => this.unassignFromEdge($event, entity)
         }
       );
     }
@@ -284,6 +313,16 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           icon: 'assignment_return',
           isEnabled: true,
           onAction: ($event, entities) => this.unassignDevicesFromCustomer($event, entities)
+        }
+      );
+    }
+    if (deviceScope === 'edge') {
+      actions.push(
+        {
+          name: this.translate.instant('device.unassign-devices-from-edge'),
+          icon: 'assignment_return',
+          isEnabled: true,
+          onAction: ($event, entities) => this.unassignDevicesFromEdge($event, entities)
         }
       );
     }
@@ -315,6 +354,16 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           icon: 'add',
           isEnabled: () => true,
           onAction: ($event) => this.addDevicesToCustomer($event)
+        }
+      );
+    }
+    if (deviceScope === 'edge') {
+      actions.push(
+        {
+          name: this.translate.instant('device.assign-new-device'),
+          icon: 'add',
+          isEnabled: () => true,
+          onAction: ($event) => this.addDevicesToEdge($event)
         }
       );
     }
@@ -403,10 +452,10 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       }
     }).afterClosed()
       .subscribe((res) => {
-      if (res) {
-        this.config.table.updateData();
-      }
-    });
+        if (res) {
+          this.config.table.updateData();
+        }
+      });
   }
 
   unassignFromCustomer($event: Event, device: DeviceInfo) {
@@ -499,10 +548,84 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       case 'unassignFromCustomer':
         this.unassignFromCustomer(action.event, action.entity);
         return true;
+      case 'unassignFromEdge':
+        this.unassignFromEdge(action.event, action.entity);
+        return true;
       case 'manageCredentials':
         this.manageCredentials(action.event, action.entity);
         return true;
     }
     return false;
   }
+
+  addDevicesToEdge($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialog.open<AddEntitiesToEdgeDialogComponent, AddEntitiesToEdgeDialogData,
+      boolean>(AddEntitiesToEdgeDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        edgeId: this.config.componentsData.edgeId,
+        entityType: EntityType.DEVICE
+      }
+    }).afterClosed()
+      .subscribe((res) => {
+        if (res) {
+          this.config.table.updateData();
+        }
+      });
+  }
+
+  unassignFromEdge($event: Event, device: DeviceInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialogService.confirm(
+      this.translate.instant('device.unassign-device-from-edge-title', {deviceName: device.name}),
+      this.translate.instant('device.unassign-device-from-edge-text'),
+      this.translate.instant('action.no'),
+      this.translate.instant('action.yes'),
+      true
+    ).subscribe((res) => {
+        if (res) {
+          this.deviceService.unassignDeviceFromEdge(this.config.componentsData.edgeId, device.id.id).subscribe(
+            () => {
+              this.config.table.updateData();
+            }
+          );
+        }
+      }
+    );
+  }
+
+  unassignDevicesFromEdge($event: Event, devices: Array<DeviceInfo>) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialogService.confirm(
+      this.translate.instant('device.unassign-devices-from-edge-title', {count: devices.length}),
+      this.translate.instant('device.unassign-devices-from-edge-text'),
+      this.translate.instant('action.no'),
+      this.translate.instant('action.yes'),
+      true
+    ).subscribe((res) => {
+        if (res) {
+          const tasks: Observable<any>[] = [];
+          devices.forEach(
+            (device) => {
+              tasks.push(this.deviceService.unassignDeviceFromEdge(this.config.componentsData.edgeId, device.id.id));
+            }
+          );
+          forkJoin(tasks).subscribe(
+            () => {
+              this.config.table.updateData();
+            }
+          );
+        }
+      }
+    );
+  }
+
 }

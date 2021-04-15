@@ -35,7 +35,7 @@ export class AssetComponent extends EntityComponent<AssetInfo> {
 
   entityType = EntityType;
 
-  assetScope: 'tenant' | 'customer' | 'customer_user';
+  assetScope: 'tenant' | 'customer' | 'customer_user' | 'edge';
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,

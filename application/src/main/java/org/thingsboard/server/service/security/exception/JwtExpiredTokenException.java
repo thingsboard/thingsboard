@@ -16,7 +16,7 @@
 package org.thingsboard.server.service.security.exception;
 
 import org.springframework.security.core.AuthenticationException;
-import org.thingsboard.server.service.security.model.token.JwtToken;
+import org.thingsboard.server.common.data.security.model.JwtToken;
 
 public class JwtExpiredTokenException extends AuthenticationException {
     private static final long serialVersionUID = -5959543783324224864L;

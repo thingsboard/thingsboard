@@ -48,10 +48,13 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeEventService;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.resource.TbResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
@@ -134,6 +137,12 @@ public abstract class AbstractServiceTest {
     protected RuleChainService ruleChainService;
 
     @Autowired
+    protected EdgeService edgeService;
+
+    @Autowired
+    protected EdgeEventService edgeEventService;
+
+    @Autowired
     private ComponentDescriptorService componentDescriptorService;
 
     @Autowired
@@ -141,6 +150,9 @@ public abstract class AbstractServiceTest {
 
     @Autowired
     protected DeviceProfileService deviceProfileService;
+
+    @Autowired
+    protected TbResourceService resourceService;
 
     class IdComparator<D extends HasId> implements Comparator<D> {
         @Override
