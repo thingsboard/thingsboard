@@ -1300,7 +1300,7 @@
         "make-private-edge-text": "After the confirmation the edge and all its data will be made private and won't be accessible by others.",
         "import": "Import edge",
         "label": "Label",
-        "load-entity-error": "Failed to load data. Entity not found or has been deleted.",
+        "load-entity-error": "Failed to load data. Entity has been deleted.",
         "assign-new-edge": "Assign new edge",
         "manage-edge-dashboards": "Edge dashboards",
         "unassign-from-edge": "Unassign from edge",
