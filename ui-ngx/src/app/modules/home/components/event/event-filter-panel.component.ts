@@ -44,8 +44,11 @@ export class EventFilterPanelComponent {
   eventFilterFormGroup: FormGroup;
   result: EventFilterPanelData;
 
-  msgDirectionTypes = ['IN', 'OUT'];
-  entityTypes = Object.keys(EntityType);
+  private conditionError = false;
+
+  private msgDirectionTypes = ['IN', 'OUT'];
+  private statusTypes = ['Success', 'Failure'];
+  private entityTypes = Object.keys(EntityType);
 
   showColumns: FilterEntityColumn[] = [];
 
@@ -57,7 +60,25 @@ export class EventFilterPanelComponent {
     this.data.columns.forEach((column) => {
       this.showColumns.push(column);
       this.eventFilterFormGroup.addControl(column.key, this.fb.control(this.data.filterParams[column.key] || ''));
+      if (column.key === 'isError') {
+        this.conditionError = true;
+      }
     });
+  }
+
+  isSelector(key: string): string {
+    return ['msgDirectionType', 'status', 'entityName'].includes(key) ? key : '';
+  }
+
+  selectorValues(key: string): string[] {
+    switch (key) {
+      case 'msgDirectionType':
+        return this.msgDirectionTypes;
+      case 'status':
+        return this.statusTypes;
+      case 'entityName':
+        return this.entityTypes;
+    }
   }
 
   update() {
@@ -67,6 +88,10 @@ export class EventFilterPanelComponent {
       columns: this.data.columns
     };
     this.overlayRef.dispose();
+  }
+
+  showErrorMsgFields() {
+    return !this.conditionError || this.eventFilterFormGroup.get('isError').value !== '';
   }
 
   cancel() {

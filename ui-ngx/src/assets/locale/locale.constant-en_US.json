@@ -1616,6 +1616,7 @@
     },
     "event": {
         "event-type": "Event type",
+        "events-filter": "Events Filter",
         "type-error": "Error",
         "type-lc-event": "Lifecycle event",
         "type-stats": "Statistics",

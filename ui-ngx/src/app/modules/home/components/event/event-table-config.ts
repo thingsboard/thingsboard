@@ -120,7 +120,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     this.updateFilterColumns();
 
     this.headerActionDescriptors.push({
-      name: this.translate.instant('asset.make-public'),
+      name: this.translate.instant('event.events-filter'),
       icon: 'filter_list',
       isEnabled: () => true,
       onAction: ($event) => {
@@ -282,14 +282,15 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     switch (this.eventType) {
       case EventType.ERROR:
         this.filterColumns.push(
-          {key: 'method', title: 'event.method'}
+          {key: 'method', title: 'event.method'},
+          {key: 'error', title: 'event.error'}
         );
         break;
       case EventType.LC_EVENT:
         this.filterColumns.push(
           {key: 'method', title: 'event.event'},
           {key: 'status', title: 'event.status'},
-          {key: 'isError', title: 'event.error'}
+          {key: 'error', title: 'event.error'}
         );
         break;
       case EventType.STATS:
@@ -308,7 +309,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
           {key: 'relationType', title: 'event.relation-type'},
           {key: 'dataSearch', title: 'event.data'},
           {key: 'metadataSearch', title: 'event.metadata'},
-          {key: 'isError', title: 'event.error'}
+          {key: 'isError', title: 'event.error'},
+          {key: 'error', title: 'event.error'}
         );
         break;
     }

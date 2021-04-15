@@ -18,32 +18,27 @@
 <form fxLayout="column" class="mat-content mat-padding" [formGroup]="eventFilterFormGroup" (ngSubmit)="update()">
   <ng-container *ngFor="let column of showColumns">
     <ng-container [ngSwitch]="column.key">
-      <ng-template [ngSwitchCase]="'msgDirectionType'">
+      <ng-template [ngSwitchCase]="isSelector(column.key)">
         <mat-form-field>
           <mat-label>{{ column.title | translate}}</mat-label>
-          <mat-select formControlName="msgDirectionType">
+          <mat-select [formControlName]="column.key">
             <mat-option [value]="">{{ 'event.all-events' | translate}}</mat-option>
-            <mat-option *ngFor="let msgDirectionType of msgDirectionTypes" [value]="msgDirectionType">
-              {{ msgDirectionType }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </ng-template>
-      <ng-template [ngSwitchCase]="'entityName'">
-        <mat-form-field>
-          <mat-label>{{ column.title | translate}}</mat-label>
-          <mat-select formControlName="entityName">
-            <mat-option [value]="">{{ 'event.all-events' | translate}}</mat-option>
-            <mat-option *ngFor="let entityType of entityTypes" [value]="entityType">
-              {{ entityType }}
+            <mat-option *ngFor="let value of selectorValues(column.key)" [value]="value">
+              {{ value }}
             </mat-option>
           </mat-select>
         </mat-form-field>
       </ng-template>
       <ng-template [ngSwitchCase]="'isError'">
-        <tb-checkbox formControlName="isError" [falseValue]="" style="display: block; padding-bottom: 16px;">
+        <tb-checkbox formControlName="isError" [falseValue]="''">
           {{ 'event.has-error' | translate }}
         </tb-checkbox>
+      </ng-template>
+      <ng-template [ngSwitchCase]="'error'">
+        <mat-form-field fxHide [fxShow]="showErrorMsgFields()">
+          <mat-label>{{ column.title | translate}}</mat-label>
+          <input matInput type="text" name="errorSearchText" formControlName="error">
+        </mat-form-field>
       </ng-template>
       <ng-container *ngSwitchDefault>
         <mat-form-field>
