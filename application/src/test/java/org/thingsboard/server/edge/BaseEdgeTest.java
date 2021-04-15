@@ -189,46 +189,60 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
     @Test
     public void test() throws Exception {
         testReceivedInitialData();
-        Assert.assertEquals(10, edgeImitator.getDownlinkMsgs().size());
+        int expectedDownlinkSize = 10;
+        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testDevices();
-        Assert.assertEquals(14, edgeImitator.getDownlinkMsgs().size());
+        expectedDownlinkSize = expectedDownlinkSize + 4;
+        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testAssets();
-        Assert.assertEquals(18, edgeImitator.getDownlinkMsgs().size());
+        expectedDownlinkSize = expectedDownlinkSize + 4;
+        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testRuleChains();
-        Assert.assertEquals(21, edgeImitator.getDownlinkMsgs().size());
+        expectedDownlinkSize = expectedDownlinkSize + 3;
+        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testDashboards();
-        Assert.assertEquals(24, edgeImitator.getDownlinkMsgs().size());
+        expectedDownlinkSize = expectedDownlinkSize + 3;
+        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testRelations();
-        Assert.assertEquals(26, edgeImitator.getDownlinkMsgs().size());
+        expectedDownlinkSize = expectedDownlinkSize + 2;
+        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testAlarms();
-        Assert.assertEquals(29, edgeImitator.getDownlinkMsgs().size());
+        expectedDownlinkSize = expectedDownlinkSize + 3;
+        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testEntityView();
-        Assert.assertEquals(31, edgeImitator.getDownlinkMsgs().size());
+        expectedDownlinkSize = expectedDownlinkSize + 2;
+        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testCustomer();
-        Assert.assertEquals(33, edgeImitator.getDownlinkMsgs().size());
+        expectedDownlinkSize = expectedDownlinkSize + 2;
+        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testWidgetsBundleAndWidgetType();
-        Assert.assertEquals(37, edgeImitator.getDownlinkMsgs().size());
+        expectedDownlinkSize = expectedDownlinkSize + 4;
+        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testTimeseries();
-        Assert.assertEquals(38, edgeImitator.getDownlinkMsgs().size());
+        expectedDownlinkSize = expectedDownlinkSize + 1;
+        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testAttributes();
-        Assert.assertEquals(41, edgeImitator.getDownlinkMsgs().size());
+        expectedDownlinkSize = expectedDownlinkSize + 3;
+        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testSendMessagesToCloud();
-        Assert.assertEquals(50, edgeImitator.getDownlinkMsgs().size());
+        expectedDownlinkSize = expectedDownlinkSize + 9;
+        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testRpcCall();
-        Assert.assertEquals(51, edgeImitator.getDownlinkMsgs().size());
+        expectedDownlinkSize = expectedDownlinkSize + 1;
+        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
     }
 
     private Device findDeviceByName(String deviceName) throws Exception {
