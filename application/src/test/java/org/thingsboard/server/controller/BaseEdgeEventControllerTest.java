@@ -103,7 +103,7 @@ public class BaseEdgeEventControllerTest extends AbstractControllerTest {
                             new TypeReference<PageData<EdgeEvent>>() {}, new TimePageLink(4)).getData();
             attempt++;
             Thread.sleep(100);
-        } while (edgeEvents.size() != 4 || attempt < 5);
+        } while (edgeEvents.size() != 4 && attempt < 5);
         Assert.assertEquals(4, edgeEvents.size());
         Assert.assertTrue(edgeEvents.stream().anyMatch(ee -> EdgeEventType.RULE_CHAIN.equals(ee.getType())));
         Assert.assertTrue(edgeEvents.stream().anyMatch(ee -> EdgeEventType.DEVICE.equals(ee.getType())));

@@ -178,7 +178,9 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
     @After
     public void afterTest() throws Exception {
-        edgeImitator.disconnect();
+        try {
+            edgeImitator.disconnect();
+        } catch (Exception ignored) {}
 
         loginSysAdmin();
 
