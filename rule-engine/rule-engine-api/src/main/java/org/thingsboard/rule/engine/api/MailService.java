@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import javax.mail.MessagingException;
+import java.util.Map;
 
 public interface MailService {
 
@@ -41,6 +42,10 @@ public interface MailService {
     void sendPasswordWasResetEmail(String loginLink, String email) throws ThingsboardException;
 
     void send(TenantId tenantId, String from, String to, String cc, String bcc, String subject, String body) throws MessagingException;
+
+    void send(TenantId tenantId, String from, String to, String cc, String bcc, String subject, String body, boolean isHtml) throws MessagingException;
+
+    void send(TenantId tenantId, String from, String to, String cc, String bcc, String subject, String body, boolean isHtml, Map<String, String> images) throws MessagingException;
 
     void sendAccountLockoutEmail( String lockoutEmail, String email, Integer maxFailedLoginAttempts) throws ThingsboardException;
 

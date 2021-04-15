@@ -46,6 +46,7 @@ import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import javax.annotation.PostConstruct;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
+import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -234,9 +235,20 @@ public class DefaultMailService implements MailService {
 
     @Override
     public void send(TenantId tenantId, String from, String to, String cc, String bcc, String subject, String body) throws MessagingException {
+        send(tenantId, from, to, cc, bcc, subject, body, false);
+    }
+
+    @Override
+    public void send(TenantId tenantId, String from, String to, String cc, String bcc, String subject, String body, boolean isHtml) throws MessagingException {
+        send(tenantId, from, to, cc, bcc, subject, body, isHtml, null);
+    }
+
+    @Override
+    public void send(TenantId tenantId, String from, String to, String cc, String bcc, String subject, String body, boolean isHtml, Map<String, String> images) throws MessagingException {
         if (apiUsageStateService.getApiUsageState(tenantId).isEmailSendEnabled()) {
             MimeMessage mailMsg = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mailMsg, "UTF-8");
+            boolean multipart = images != null && !images.isEmpty();
+            MimeMessageHelper helper = new MimeMessageHelper(mailMsg, multipart, "UTF-8");
             helper.setFrom(StringUtils.isBlank(from) ? mailFrom : from);
             helper.setTo(to.split("\\s*,\\s*"));
             if (!StringUtils.isBlank(cc)) {
@@ -246,7 +258,16 @@ public class DefaultMailService implements MailService {
                 helper.setBcc(bcc.split("\\s*,\\s*"));
             }
             helper.setSubject(subject);
-            helper.setText(body);
+            helper.setText(body, isHtml);
+            if (images != null && images.size() > 0) {
+                for (String imgId : images.keySet()) {
+                    String imgValue = images.get(imgId);
+                    String value = imgValue.replaceFirst("^data:image/[^;]*;base64,?", "");
+                    byte[] bytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(value);
+                    String contentType = helper.getFileTypeMap().getContentType(imgId);
+                    helper.addInline(imgId, () -> new ByteArrayInputStream(bytes), contentType);
+                }
+            }
             mailSender.send(helper.getMimeMessage());
             apiUsageClient.report(tenantId, ApiUsageRecordKey.EMAIL_EXEC_COUNT, 1);
         } else {

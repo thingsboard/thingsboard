@@ -18,6 +18,8 @@ package org.thingsboard.rule.engine.mail;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.Map;
+
 @Data
 @Builder
 class EmailPojo {
@@ -28,5 +30,7 @@ class EmailPojo {
     private final String bcc;
     private final String subject;
     private final String body;
+    private final Map<String, String> images;
+    private final boolean html;
 
 }
