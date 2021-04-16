@@ -227,10 +227,6 @@
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>rest</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.eclipse.leshan</groupId>
-            <artifactId>leshan-core</artifactId>
-        </dependency>
     </dependencies>
     <build>
         <plugins>
