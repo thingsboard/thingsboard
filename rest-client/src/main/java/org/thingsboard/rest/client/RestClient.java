@@ -121,13 +121,11 @@ import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -306,11 +304,12 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         restTemplate.postForLocation(baseURL + "/api/alarm/{alarmId}/clear", null, alarmId.getId());
     }
 
-    public PageData<AlarmInfo> getAlarms(EntityId entityId, AlarmSearchStatus searchStatus, AlarmStatus status, TimePageLink pageLink, UUID offset, Boolean fetchOriginator) {
+    public PageData<AlarmInfo> getAlarms(EntityId entityId, AlarmSearchStatus searchStatus, AlarmStatus status, TimePageLink pageLink, Boolean fetchOriginator) {
         String urlSecondPart = "/api/alarm/{entityType}/{entityId}?fetchOriginator={fetchOriginator}&";
         Map<String, String> params = new HashMap<>();
         params.put("entityType", entityId.getEntityType().name());
         params.put("entityId", entityId.getId().toString());
+        params.put("fetchOriginator", String.valueOf(fetchOriginator));
         if(searchStatus != null) {
             params.put("searchStatus", searchStatus.name());
             urlSecondPart += "searchStatus={searchStatus}&";
@@ -319,11 +318,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
             params.put("status", status.name());
             urlSecondPart += "status={status}&";
         }
-        params.put("fetchOriginator", String.valueOf(fetchOriginator));
-        if(offset != null) {
-            params.put("offset", offset.toString());
-            urlSecondPart += "offset={offset}&";
-        }
+
         addTimePageLinkToParam(params, pageLink);
 
         return restTemplate.exchange(
