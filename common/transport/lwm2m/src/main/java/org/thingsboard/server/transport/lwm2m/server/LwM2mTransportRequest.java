@@ -120,7 +120,7 @@ public class LwM2mTransportRequest {
             DownlinkRequest request = null;
             ContentFormat contentFormat = contentFormatParam != null ? ContentFormat.fromName(contentFormatParam.toUpperCase()) : null;
             LwM2mClient lwM2MClient = lwM2mClientContext.getLwM2mClientWithReg(registration, null);
-            ResourceModel resource = lwM2MClient.getResourceModel(targetIdVer);
+            ResourceModel resource = null;
             timeoutInMs = timeoutInMs > 0 ? timeoutInMs : DEFAULT_TIMEOUT;
             switch (typeOper) {
                 case GET_TYPE_OPER_READ:
@@ -142,6 +142,7 @@ public class LwM2mTransportRequest {
                     request = new CancelObservationRequest(observation);
                     break;
                 case POST_TYPE_OPER_EXECUTE:
+                    resource = lwM2MClient.getResourceModel(targetIdVer);
                     if (params != null && resource != null && !resource.multiple) {
                         request = new ExecuteRequest(target, (String) this.converter.convertValue(params, resource.type, ResourceModel.Type.STRING, resultIds));
                     } else {
@@ -150,6 +151,7 @@ public class LwM2mTransportRequest {
                     break;
                 case POST_TYPE_OPER_WRITE_REPLACE:
                     // Request to write a <b>String Single-Instance Resource</b> using the TLV content format.
+                    resource = lwM2MClient.getResourceModel(targetIdVer);
                     if (resource != null && contentFormat != null) {
 //                        if (contentFormat.equals(ContentFormat.TLV) && !resource.multiple) {
                         if (contentFormat.equals(ContentFormat.TLV)) {
@@ -171,7 +173,7 @@ public class LwM2mTransportRequest {
                     }
                     break;
                 case PUT_TYPE_OPER_WRITE_ATTRIBUTES:
-                    request = createWriteAttributeRequest (target, params);
+                    request = createWriteAttributeRequest(target, params);
                     break;
             }
 
@@ -207,12 +209,16 @@ public class LwM2mTransportRequest {
             if (CoAP.ResponseCode.isSuccess(((Response) response.getCoapResponse()).getCode())) {
                 this.handleResponse(registration, request.getPath().toString(), response, request);
                 if (request instanceof WriteRequest && ((WriteRequest) request).isReplaceRequest()) {
+                    LwM2mNode node = ((WriteRequest) request).getNode();
+                    Object value = this.converter.convertValue(((LwM2mSingleResource) node).getValue(),
+                            ((LwM2mSingleResource) node).getType(), ResourceModel.Type.STRING, request.getPath());
                     String msg = String.format("%s: sendRequest Replace: CoapCde - %s Lwm2m code - %d name - %s Resource path - %s value - %s SendRequest to Client",
-                            LOG_LW2M_INFO, ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString(),
-                            ((LwM2mSingleResource) ((WriteRequest) request).getNode()).getValue().toString());
+                            LOG_LW2M_INFO, ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(),
+                            response.getCode().getName(), request.getPath().toString(), value);
                     serviceImpl.sendLogsToThingsboard(msg, registration);
-                    log.info("[{}] [{}] - [{}] [{}] Update SendRequest[{}]", registration.getEndpoint(), ((Response) response.getCoapResponse()).getCode(), response.getCode(), request.getPath().toString(),
-                            ((LwM2mSingleResource) ((WriteRequest) request).getNode()).getValue());
+                    log.debug("[{}] [{}] - [{}] [{}] Update SendRequest[{}]", registration.getEndpoint(),
+                            ((Response) response.getCoapResponse()).getCode(), response.getCode(),
+                            request.getPath().toString(), value);
                 }
             } else {
                 String msg = String.format("%s: sendRequest: CoapCode - %s Lwm2m code - %d name - %s Resource path - %s  SendRequest to Client", LOG_LW2M_ERROR,

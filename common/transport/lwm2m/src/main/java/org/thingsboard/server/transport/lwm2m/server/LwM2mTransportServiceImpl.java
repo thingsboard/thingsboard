@@ -95,7 +95,6 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandle
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertToIdVerFromObjectId;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertToObjectIdFromIdVer;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.getAckCallback;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.validateObjectIdFromKey;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.validateObjectVerFromKey;
 
 @Slf4j
@@ -515,9 +514,10 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
                         null, null, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getTimeout()));
             }
             // #1
+            this.initReadAttrTelemetryObserveToClient(registration, lwM2MClient, GET_TYPE_OPER_READ, clientObjects);
             this.initReadAttrTelemetryObserveToClient(registration, lwM2MClient, GET_TYPE_OPER_OBSERVE, clientObjects);
             this.initReadAttrTelemetryObserveToClient(registration, lwM2MClient, PUT_TYPE_OPER_WRITE_ATTRIBUTES, clientObjects);
-            this.initReadAttrTelemetryObserveToClient(registration, lwM2MClient, GET_TYPE_OPER_DISCOVER, clientObjects);
+//            this.initReadAttrTelemetryObserveToClient(registration, lwM2MClient, GET_TYPE_OPER_DISCOVER, clientObjects);
         }
     }
 
@@ -748,9 +748,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
             if (resName != null && !resName.isEmpty()) {
                 try {
                     String resValue = this.getResourceValueToString(lwM2MClient, path);
-                    if (resValue != null) {
-                        parameters.addProperty(resName, resValue);
-                    }
+                    parameters.addProperty(resName, resValue);
                 } catch (Exception e) {
                     log.error("Failed to add parameters.", e);
                 }
@@ -907,10 +905,14 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
                 //  send Request observe to Client
                 registrationIds.forEach(registrationId -> {
                     Registration registration = lwM2mClientContext.getRegistration(registrationId);
-                    this.readResourceValueObserve(registration, postObserveAnalyzer.getPathPostParametersAdd(), GET_TYPE_OPER_OBSERVE);
+                    if (postObserveAnalyzer.getPathPostParametersAdd().size() > 0) {
+                        this.readResourceValueObserve(registration, postObserveAnalyzer.getPathPostParametersAdd(), GET_TYPE_OPER_OBSERVE);
+                    }
                     // 5.3 del
                     //  send Request cancel observe to Client
-                    this.cancelObserveIsValue(registration, postObserveAnalyzer.getPathPostParametersDel());
+                    if (postObserveAnalyzer.getPathPostParametersDel().size() > 0) {
+                        this.cancelObserveIsValue(registration, postObserveAnalyzer.getPathPostParametersDel());
+                    }
                 });
             }
         }
@@ -1253,11 +1255,11 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         return new ArrayList<>(namesIsWritable);
     }
 
-    private boolean validateResourceInModel(LwM2mClient lwM2mClient, String pathKey, boolean isWritable) {
-        ResourceModel resourceModel = lwM2mClient.getResourceModel(pathKey);
-        Integer objectId = validateObjectIdFromKey(pathKey);
-        String objectVer = validateObjectVerFromKey(pathKey);
-        return resourceModel != null && (isWritable ?
+    private boolean validateResourceInModel(LwM2mClient lwM2mClient, String pathIdVer, boolean isWritableNotOptional) {
+        ResourceModel resourceModel = lwM2mClient.getResourceModel(pathIdVer);
+        Integer objectId = new LwM2mPath(convertToObjectIdFromIdVer(pathIdVer)).getObjectId();
+        String objectVer = validateObjectVerFromKey(pathIdVer);
+        return resourceModel != null && (isWritableNotOptional ?
                 objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)) && resourceModel.operations.isWritable() :
                 objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)));
     }

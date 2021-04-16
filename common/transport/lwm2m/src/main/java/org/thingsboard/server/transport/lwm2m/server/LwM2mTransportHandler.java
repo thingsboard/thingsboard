@@ -362,14 +362,6 @@ public class LwM2mTransportHandler {
         }
     }
 
-    public static Integer validateObjectIdFromKey(String key) {
-        try {
-            return Integer.parseInt(key.split(LWM2M_SEPARATOR_PATH)[1].split(LWM2M_SEPARATOR_KEY)[0]);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
     public static String validateObjectVerFromKey(String key) {
         try {
             return (key.split(LWM2M_SEPARATOR_PATH)[1].split(LWM2M_SEPARATOR_KEY)[1]);
