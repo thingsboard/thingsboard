@@ -46,26 +46,18 @@
               <mat-icon>view_compact</mat-icon>
             </button>
           </div>
-
-          <div fxFlex.lt-md fxLayout="row"
-               fxLayoutAlign.gt-sm="start center"
-               fxLayoutAlign="end center" fxLayoutGap="12px" class="db-logo-and-title" >
-
-            <img [fxShow]="showDashboardLogo() && isFullscreen" [src]="dashboard_logo"
-                 aria-label="white_label_logo" class="whitelabel-logo-db"/>
-
-            <tb-states-component fxFlex.lt-md
-                                 [statesControllerId]="isEdit ? 'default' : dashboardConfiguration.settings.stateControllerId"
-                                 [dashboardCtrl]="this"
-                                 [dashboardId]="(!embedded && dashboard.id) ? dashboard.id.id : ''"
-                                 [isMobile]="isMobile"
-                                 [state]="dashboardCtx.state"
-                                 [currentState]="currentState"
-                                 [syncStateWithQueryParam]="syncStateWithQueryParam"
-                                 [states]="dashboardConfiguration.states">
-            </tb-states-component>
-
-          </div>
+          <tb-states-component fxFlex.lt-md
+                               [statesControllerId]="isEdit ? 'default' : dashboardConfiguration.settings.stateControllerId"
+                               [dashboardCtrl]="this"
+                               [dashboardId]="(!embedded && dashboard.id) ? dashboard.id.id : ''"
+                               [isMobile]="isMobile"
+                               [state]="dashboardCtx.state"
+                               [currentState]="currentState"
+                               [syncStateWithQueryParam]="syncStateWithQueryParam"
+                               [states]="dashboardConfiguration.states">
+          </tb-states-component>
+          <img *ngIf="showDashboardLogo() && isFullscreen" [src]="dashboardLogo"
+               aria-label="dashboard_logo" class="dashboard_logo"/>
         </div>
         <div class="tb-dashboard-action-panel" fxFlex="1 0 auto" fxLayout="row-reverse"
              fxLayoutAlign.gt-sm="start center" fxLayoutAlign="space-between center" fxLayoutGap="12px">
