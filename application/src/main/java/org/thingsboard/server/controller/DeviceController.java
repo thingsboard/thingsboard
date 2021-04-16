@@ -646,7 +646,7 @@ public class DeviceController extends BaseController {
         String data = entityToStr(assignedDevice);
         if (data != null) {
             TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_ASSIGNED_FROM_TENANT, assignedDevice.getId(), getMetaDataForAssignedFrom(currentTenant), TbMsgDataType.JSON, data);
-            tbClusterService.pushMsgToRuleEngine(newTenantId, assignedDevice.getId(), tbMsg, null);
+            tbClusterService.pushMsgToRuleEngine(newTenantId, assignedDevice.getCustomerId(), assignedDevice.getId(), tbMsg, null);
         }
     }
 

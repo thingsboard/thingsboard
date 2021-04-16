@@ -19,6 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -31,6 +34,7 @@ import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 
 import javax.annotation.PostConstruct;
+import java.util.EnumMap;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,8 +51,9 @@ public class DefaultTbApiUsageClient implements TbApiUsageClient {
     @Value("${usage.stats.report.interval:10}")
     private int interval;
 
-    @SuppressWarnings("unchecked")
-    private final ConcurrentMap<TenantId, AtomicLong>[] values = new ConcurrentMap[ApiUsageRecordKey.values().length];
+    private final EnumMap<ApiUsageRecordKey, ConcurrentMap<EntityId, AtomicLong>> stats = new EnumMap<>(ApiUsageRecordKey.class);
+    private final ConcurrentMap<EntityId, TenantId> tenants = new ConcurrentHashMap<>();
+
     private final PartitionService partitionService;
     private final SchedulerComponent scheduler;
     private final TbQueueProducerProvider producerProvider;
@@ -65,55 +70,88 @@ public class DefaultTbApiUsageClient implements TbApiUsageClient {
         if (enabled) {
             msgProducer = this.producerProvider.getTbUsageStatsMsgProducer();
             for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
-                values[key.ordinal()] = new ConcurrentHashMap<>();
+                stats.put(key, new ConcurrentHashMap<>());
             }
-            scheduler.scheduleWithFixedDelay(this::reportStats, new Random().nextInt(interval), interval, TimeUnit.SECONDS);
+            scheduler.scheduleWithFixedDelay(() -> {
+                try {
+                    reportStats();
+                } catch (Exception e) {
+                    log.warn("Failed to report statistics: ", e);
+                }
+            }, new Random().nextInt(interval), interval, TimeUnit.SECONDS);
         }
     }
 
     private void reportStats() {
-        try {
-            ConcurrentMap<TenantId, ToUsageStatsServiceMsg.Builder> report = new ConcurrentHashMap<>();
+        ConcurrentMap<EntityId, ToUsageStatsServiceMsg.Builder> report = new ConcurrentHashMap<>();
 
-            for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
-                values[key.ordinal()].forEach(((tenantId, atomicLong) -> {
-                    long value = atomicLong.getAndSet(0);
-                    if (value > 0) {
-                        ToUsageStatsServiceMsg.Builder msgBuilder = report.computeIfAbsent(tenantId, id -> {
-                            ToUsageStatsServiceMsg.Builder msg = ToUsageStatsServiceMsg.newBuilder();
-                            msg.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
-                            msg.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
-                            return msg;
-                        });
-                        msgBuilder.addValues(UsageStatsKVProto.newBuilder().setKey(key.name()).setValue(value).build());
+        for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
+            ConcurrentMap<EntityId, AtomicLong> statsForKey = stats.get(key);
+            statsForKey.forEach((initiatorId, statsValue) -> {
+                long value = statsValue.get();
+                if (value == 0) return;
+
+                ToUsageStatsServiceMsg.Builder statsMsgBuilder = report.computeIfAbsent(initiatorId, id -> {
+                    ToUsageStatsServiceMsg.Builder newStatsMsgBuilder = ToUsageStatsServiceMsg.newBuilder();
+
+                    TenantId tenantId;
+                    if (initiatorId.getEntityType() == EntityType.TENANT) {
+                        tenantId = (TenantId) initiatorId;
+                    } else {
+                        tenantId = tenants.get(initiatorId);
                     }
-                }));
+
+                    newStatsMsgBuilder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
+                    newStatsMsgBuilder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
+
+                    if (initiatorId.getEntityType() == EntityType.CUSTOMER) {
+                        newStatsMsgBuilder.setCustomerIdMSB(initiatorId.getId().getMostSignificantBits());
+                        newStatsMsgBuilder.setCustomerIdLSB(initiatorId.getId().getLeastSignificantBits());
+                    }
+
+                    return newStatsMsgBuilder;
+                });
+
+                statsMsgBuilder.addValues(UsageStatsKVProto.newBuilder().setKey(key.name()).setValue(value).build());
+            });
+            statsForKey.clear();
+        }
+
+        report.forEach(((initiatorId, builder) -> {
+            //TODO: figure out how to minimize messages into the queue. Maybe group by 100s of messages?
+
+            TenantId tenantId;
+            if (initiatorId.getEntityType() == EntityType.TENANT) {
+                tenantId = (TenantId) initiatorId;
+            } else {
+                tenantId = tenants.get(initiatorId);
             }
 
-            report.forEach(((tenantId, builder) -> {
-                //TODO: figure out how to minimize messages into the queue. Maybe group by 100s of messages?
-                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, tenantId).newByTopic(msgProducer.getDefaultTopic());
-                msgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), builder.build()), null);
-            }));
-            if (!report.isEmpty()) {
-                log.info("Report statistics for: {} tenants", report.size());
-            }
-        } catch (Exception e) {
-            log.warn("Failed to report statistics: ", e);
+            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, initiatorId).newByTopic(msgProducer.getDefaultTopic());
+            msgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), builder.build()), null);
+        }));
+
+        if (!report.isEmpty()) {
+            log.info("Reporting API usage statistics for {} tenants and customers", report.size());
         }
     }
 
     @Override
-    public void report(TenantId tenantId, ApiUsageRecordKey key, long value) {
+    public void report(TenantId tenantId, CustomerId customerId, ApiUsageRecordKey key, long value) {
         if (enabled) {
-            ConcurrentMap<TenantId, AtomicLong> map = values[key.ordinal()];
-            AtomicLong atomicValue = map.computeIfAbsent(tenantId, id -> new AtomicLong());
-            atomicValue.addAndGet(value);
+            ConcurrentMap<EntityId, AtomicLong> statsForKey = stats.get(key);
+
+            statsForKey.computeIfAbsent(tenantId, id -> new AtomicLong()).addAndGet(value);
+
+            if (customerId != null && !customerId.isNullUid()) {
+                statsForKey.computeIfAbsent(customerId, id -> new AtomicLong()).addAndGet(value);
+                tenants.putIfAbsent(customerId, tenantId);
+            }
         }
     }
 
     @Override
-    public void report(TenantId tenantId, ApiUsageRecordKey key) {
-        report(tenantId, key, 1L);
+    public void report(TenantId tenantId, CustomerId customerId, ApiUsageRecordKey key) {
+        report(tenantId, customerId, key, 1);
     }
 }

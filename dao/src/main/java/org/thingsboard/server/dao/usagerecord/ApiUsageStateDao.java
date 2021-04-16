@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.usagerecord;
 
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.Dao;
 
@@ -38,6 +39,8 @@ public interface ApiUsageStateDao extends Dao<ApiUsageState> {
      * @return the corresponding usage record
      */
     ApiUsageState findTenantApiUsageState(UUID tenantId);
+
+    ApiUsageState findApiUsageStateByEntityId(EntityId entityId);
 
     /**
      * Delete usage record by tenantId.

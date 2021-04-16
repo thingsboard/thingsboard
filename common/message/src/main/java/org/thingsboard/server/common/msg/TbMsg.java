@@ -23,6 +23,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -47,6 +48,7 @@ public final class TbMsg implements Serializable {
     private final long ts;
     private final String type;
     private final EntityId originator;
+    private CustomerId customerId;
     private final TbMsgMetaData metaData;
     private final TbMsgDataType dataType;
     private final String data;
