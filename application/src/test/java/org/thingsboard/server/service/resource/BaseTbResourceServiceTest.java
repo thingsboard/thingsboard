@@ -13,28 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service;
+package org.thingsboard.server.service.resource;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.service.AbstractServiceTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@DaoSqlTest
+public class BaseTbResourceServiceTest extends AbstractControllerTest {
 
     private static final String LWM2M_TEST_MODEL = "<LWM2M xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"http://www.openmobilealliance.org/tech/profiles/LWM2M-v1_1.xsd\">\n" +
             "<Object ObjectType=\"MODefinition\">\n" +
@@ -67,18 +76,38 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
 
     private TenantId tenantId;
 
+    @Autowired
+    private TbResourceService resourceService;
+
+    private Tenant savedTenant;
+    private User tenantAdmin;
+
     @Before
-    public void before() {
+    public void beforeTest() throws Exception {
+        loginSysAdmin();
+
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
-        Tenant savedTenant = tenantService.saveTenant(tenant);
-        Assert.assertNotNull(savedTenant);
+        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
         tenantId = savedTenant.getId();
+        Assert.assertNotNull(savedTenant);
+
+        tenantAdmin = new User();
+        tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
+        tenantAdmin.setTenantId(savedTenant.getId());
+        tenantAdmin.setEmail("tenant2@thingsboard.org");
+        tenantAdmin.setFirstName("Joe");
+        tenantAdmin.setLastName("Downs");
+
+        tenantAdmin = createUserAndLogin(tenantAdmin, "testPassword1");
     }
 
     @After
-    public void after() {
-        tenantService.deleteTenant(tenantId);
+    public void afterTest() throws Exception {
+        loginSysAdmin();
+
+        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -239,9 +268,10 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindTenantResourcesByTenantId() throws Exception {
+        loginSysAdmin();
         Tenant tenant = new Tenant();
         tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
+        tenant = doPost("/api/tenant", tenant, Tenant.class);
 
         TenantId tenantId = tenant.getId();
 
@@ -279,14 +309,17 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
 
-        tenantService.deleteTenant(tenantId);
+        doDelete("/api/tenant/" + tenantId.getId().toString())
+                .andExpect(status().isOk());
     }
 
     @Test
     public void testFindAllTenantResourcesByTenantId() throws Exception {
+        loginSysAdmin();
+
         Tenant tenant = new Tenant();
         tenant.setTitle("Test tenant");
-        tenant = tenantService.saveTenant(tenant);
+        tenant = doPost("/api/tenant", tenant, Tenant.class);
 
         TenantId tenantId = tenant.getId();
 
@@ -344,7 +377,8 @@ public abstract class BaseTbResourceServiceTest extends AbstractServiceTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
 
-        tenantService.deleteTenant(tenantId);
+        doDelete("/api/tenant/" + tenantId.getId().toString())
+                .andExpect(status().isOk());
     }
 
 }

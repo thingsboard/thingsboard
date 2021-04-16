@@ -13,11 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.sql;
+:host {
+  width: 100%;
+  min-width: 300px;
+  overflow: auto;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow:
+    0 7px 8px -4px rgba(0, 0, 0, .2),
+    0 13px 19px 2px rgba(0, 0, 0, .14),
+    0 5px 24px 4px rgba(0, 0, 0, .12);
 
-import org.thingsboard.server.dao.service.BaseTbResourceServiceTest;
-import org.thingsboard.server.dao.service.DaoSqlTest;
+  .mat-content {
+    overflow: hidden;
+    background-color: #fff;
+  }
 
-@DaoSqlTest
-public class TbResourceServiceSqlTest extends BaseTbResourceServiceTest {
+  .mat-padding {
+    padding: 16px;
+  }
 }
