@@ -322,7 +322,7 @@ actors:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"
     js_print_interval_ms: "${ACTORS_JS_STATISTICS_PRINT_INTERVAL_MS:10000}"
-    persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:10000}"
+    persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:3600000}"
 
 cache:
   # caffeine or redis
