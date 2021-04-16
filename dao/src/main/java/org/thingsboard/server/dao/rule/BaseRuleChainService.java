@@ -699,16 +699,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         ruleNodeDao.removeById(tenantId, entityId.getId());
     }
 
-    private void createRelation(TenantId tenantId, EntityRelation relation) {
-        log.debug("Creating relation: {}", relation);
-        relationService.saveRelation(tenantId, relation);
-    }
-
-    private void deleteRelation(TenantId tenantId, EntityRelation relation) {
-        log.debug("Deleting relation: {}", relation);
-        relationService.deleteRelation(tenantId, relation);
-    }
-
     private DataValidator<RuleChain> ruleChainValidator =
             new DataValidator<RuleChain>() {
                 @Override
