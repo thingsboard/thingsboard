@@ -24,6 +24,7 @@ import {
   coapDeviceTypeTranslationMap,
   CoapTransportDeviceType,
   defaultAttributesSchema,
+  defaultRpcRequestSchema,
   defaultRpcResponseSchema,
   defaultTelemetrySchema,
   DeviceProfileTransportConfiguration,
@@ -61,6 +62,7 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
     transportPayloadType: [TransportPayloadType.JSON, Validators.required],
     deviceTelemetryProtoSchema: [defaultTelemetrySchema, Validators.required],
     deviceAttributesProtoSchema: [defaultAttributesSchema, Validators.required],
+    deviceRpcRequestProtoSchema: [defaultRpcRequestSchema, Validators.required],
     deviceRpcResponseProtoSchema: [defaultRpcResponseSchema, Validators.required]
   });
 

@@ -28,7 +28,9 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
-  defaultAttributesSchema, defaultRpcResponseSchema,
+  defaultAttributesSchema,
+  defaultRpcRequestSchema,
+  defaultRpcResponseSchema,
   defaultTelemetrySchema,
   DeviceProfileTransportConfiguration,
   DeviceTransportType,
@@ -91,6 +93,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
           transportPayloadType: [TransportPayloadType.JSON, Validators.required],
           deviceTelemetryProtoSchema: [defaultTelemetrySchema, Validators.required],
           deviceAttributesProtoSchema: [defaultAttributesSchema, Validators.required],
+          deviceRpcRequestProtoSchema: [defaultRpcRequestSchema, Validators.required],
           deviceRpcResponseProtoSchema: [defaultRpcResponseSchema, Validators.required]
         })
       }, {validator: this.uniqueDeviceTopicValidator}
@@ -141,16 +144,19 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
       transportPayloadTypeForm.patchValue({
         deviceTelemetryProtoSchema: defaultTelemetrySchema,
         deviceAttributesProtoSchema: defaultAttributesSchema,
+        deviceRpcRequestProtoSchema: defaultRpcRequestSchema,
         deviceRpcResponseProtoSchema: defaultRpcResponseSchema
       }, {emitEvent: false});
     }
     if (type === TransportPayloadType.PROTOBUF && !this.disabled) {
       transportPayloadTypeForm.get('deviceTelemetryProtoSchema').enable({emitEvent: false});
       transportPayloadTypeForm.get('deviceAttributesProtoSchema').enable({emitEvent: false});
+      transportPayloadTypeForm.get('deviceRpcRequestProtoSchema').enable({emitEvent: false});
       transportPayloadTypeForm.get('deviceRpcResponseProtoSchema').enable({emitEvent: false});
     } else {
       transportPayloadTypeForm.get('deviceTelemetryProtoSchema').disable({emitEvent: false});
       transportPayloadTypeForm.get('deviceAttributesProtoSchema').disable({emitEvent: false});
+      transportPayloadTypeForm.get('deviceRpcRequestProtoSchema').enable({emitEvent: false});
       transportPayloadTypeForm.get('deviceRpcResponseProtoSchema').disable({emitEvent: false});
     }
   }

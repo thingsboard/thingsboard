@@ -140,6 +140,16 @@ export const defaultAttributesSchema =
   '  string serialNumber = 2;\n' +
   '}';
 
+export const defaultRpcRequestSchema =
+  'syntax ="proto3";\n' +
+  'package rpc;\n' +
+  '\n' +
+  'message RpcRequestMsg {\n' +
+  '  string method = 1;\n' +
+  '  string requestId = 2;\n' +
+  '  string params = 3;\n' +
+  '}';
+
 export const defaultRpcResponseSchema =
   'syntax ="proto3";\n' +
   'package rpc;\n' +

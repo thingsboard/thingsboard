@@ -144,7 +144,7 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
 
         @Override
         public void onLoad(CoapResponse response) {
-            log.warn("coap response: {}, {}", response, response.getCode());
+            log.warn("coap response: {}, {}", response.getResponseText(), response.getCode());
             assertNotNull(response.getPayload());
             assertEquals(response.getCode(), CoAP.ResponseCode.CONTENT);
             observe = response.getOptions().getObserve();

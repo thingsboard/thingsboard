@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.dao.device;
 
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.DynamicMessage;
 import com.squareup.wire.Syntax;
 import com.squareup.wire.schema.Field;
 import com.squareup.wire.schema.Location;
@@ -87,7 +89,8 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     private static final Location LOCATION = new Location("", "", -1, -1);
     private static final String ATTRIBUTES_PROTO_SCHEMA = "attributes proto schema";
     private static final String TELEMETRY_PROTO_SCHEMA = "telemetry proto schema";
-    public static final String RPC_RESPONSE_PROTO_SCHEMA = "rpc response proto schema";
+    private static final String RPC_REQUEST_PROTO_SCHEMA = "rpc request proto schema";
+    private static final String RPC_RESPONSE_PROTO_SCHEMA = "rpc response proto schema";
 
     private static String invalidSchemaProvidedMessage(String schemaName) {
         return "[Transport Configuration] invalid " + schemaName + " provided!";
@@ -358,9 +361,10 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                     if (transportConfiguration instanceof MqttDeviceProfileTransportConfiguration) {
                         MqttDeviceProfileTransportConfiguration mqttTransportConfiguration = (MqttDeviceProfileTransportConfiguration) transportConfiguration;
                         if (mqttTransportConfiguration.getTransportPayloadTypeConfiguration() instanceof ProtoTransportPayloadConfiguration) {
-                            ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration =
+                            ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration =
                                     (ProtoTransportPayloadConfiguration) mqttTransportConfiguration.getTransportPayloadTypeConfiguration();
-                            validateProtoSchemas(protoTransportPayloadTypeConfiguration);
+                            validateProtoSchemas(protoTransportPayloadConfiguration);
+                            validateRpcRequestDynamicMessageFields(protoTransportPayloadConfiguration);
                         }
                     } else if (transportConfiguration instanceof CoapDeviceProfileTransportConfiguration) {
                         CoapDeviceProfileTransportConfiguration coapDeviceProfileTransportConfiguration = (CoapDeviceProfileTransportConfiguration) transportConfiguration;
@@ -371,6 +375,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                             if (transportPayloadTypeConfiguration instanceof ProtoTransportPayloadConfiguration) {
                                 ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
                                 validateProtoSchemas(protoTransportPayloadConfiguration);
+                                validateRpcRequestDynamicMessageFields(protoTransportPayloadConfiguration);
                             }
                         }
                     }
@@ -418,6 +423,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                     try {
                         validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceAttributesProtoSchema(), ATTRIBUTES_PROTO_SCHEMA);
                         validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceTelemetryProtoSchema(), TELEMETRY_PROTO_SCHEMA);
+                        validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceRpcRequestProtoSchema(), RPC_REQUEST_PROTO_SCHEMA);
                         validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceRpcResponseProtoSchema(), RPC_RESPONSE_PROTO_SCHEMA);
                     } catch (Exception exception) {
                         throw new DataValidationException(exception.getMessage());
@@ -540,6 +546,27 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                 }
 
             };
+
+    private void validateRpcRequestDynamicMessageFields(ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration) {
+        DynamicMessage.Builder rpcRequestDynamicMessageBuilder = protoTransportPayloadTypeConfiguration.getRpcRequestDynamicMessageBuilder(protoTransportPayloadTypeConfiguration.getDeviceRpcRequestProtoSchema());
+        Descriptors.Descriptor rpcRequestDynamicMessageDescriptor = rpcRequestDynamicMessageBuilder.getDescriptorForType();
+        if (rpcRequestDynamicMessageDescriptor == null) {
+            throw new DataValidationException("Failed to get rpcRequestDynamicMessageDescriptor!");
+        } else {
+            Descriptors.FieldDescriptor methodFieldDescriptor = rpcRequestDynamicMessageDescriptor.findFieldByName("method");
+            if (methodFieldDescriptor == null) {
+                throw new DataValidationException("Failed to get field descriptor for field: method!");
+            }
+            Descriptors.FieldDescriptor requestIdFieldDescriptor = rpcRequestDynamicMessageDescriptor.findFieldByName("requestId");
+            if (requestIdFieldDescriptor == null) {
+                throw new DataValidationException("Failed to get field descriptor for field: requestId!");
+            }
+            Descriptors.FieldDescriptor paramsFieldDescriptor = rpcRequestDynamicMessageDescriptor.findFieldByName("params");
+            if (paramsFieldDescriptor == null) {
+                throw new DataValidationException("Failed to get field descriptor for field: params!");
+            }
+        }
+    }
 
     private PaginatedRemover<TenantId, DeviceProfile> tenantDeviceProfilesRemover =
             new PaginatedRemover<TenantId, DeviceProfile>() {

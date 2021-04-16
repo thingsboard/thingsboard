@@ -86,6 +86,15 @@ public abstract class AbstractTransportIntegrationTest extends AbstractControlle
             "  string payload = 1;\n" +
             "}";
 
+    protected static final String DEVICE_RPC_REQUEST_PROTO_SCHEMA = "syntax =\"proto3\";\n" +
+            "package rpc;\n" +
+            "\n" +
+            "message RpcRequestMsg {\n" +
+            "  string method = 1;\n" +
+            "  string requestId = 2;\n" +
+            "  string params = 3;\n" +
+            "}";
+
     protected Tenant savedTenant;
     protected User tenantAdmin;
 

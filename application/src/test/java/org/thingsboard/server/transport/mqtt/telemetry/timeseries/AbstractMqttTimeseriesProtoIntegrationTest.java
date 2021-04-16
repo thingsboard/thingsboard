@@ -119,7 +119,7 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
                 "    }\n" +
                 "  }\n" +
                 "}";
-        super.processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, POST_DATA_TELEMETRY_TOPIC, null, schemaStr, null, null, DeviceProfileProvisionType.DISABLED, null, null);
+        super.processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, POST_DATA_TELEMETRY_TOPIC, null, schemaStr, null, null, null, null, null, DeviceProfileProvisionType.DISABLED);
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         assertTrue(transportConfiguration instanceof MqttDeviceProfileTransportConfiguration);
@@ -172,7 +172,7 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
 
     @Test
     public void testPushMqttTelemetryGateway() throws Exception {
-        super.processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, null, null, null, null, null, DeviceProfileProvisionType.DISABLED, null, null);
+        super.processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, null, null, null, null, null, null, null, null, DeviceProfileProvisionType.DISABLED);
         TransportApiProtos.GatewayTelemetryMsg.Builder gatewayTelemetryMsgProtoBuilder = TransportApiProtos.GatewayTelemetryMsg.newBuilder();
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
         String deviceName1 = "Device A";
@@ -186,7 +186,7 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
 
     @Test
     public void testGatewayConnect() throws Exception {
-        super.processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, POST_DATA_TELEMETRY_TOPIC, null, null, null, null, DeviceProfileProvisionType.DISABLED, null, null);
+        super.processBeforeTest("Test Post Telemetry device proto payload", "Test Post Telemetry gateway proto payload", TransportPayloadType.PROTOBUF, POST_DATA_TELEMETRY_TOPIC, null, null, null, null, null, null, null, DeviceProfileProvisionType.DISABLED);
         String deviceName = "Device A";
         TransportApiProtos.ConnectMsg connectMsgProto = getConnectProto(deviceName);
         MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);

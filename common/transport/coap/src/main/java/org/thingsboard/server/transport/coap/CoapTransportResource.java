@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.coap;
 
 import com.google.gson.JsonParseException;
 import com.google.protobuf.Descriptors;
+import com.google.protobuf.DynamicMessage;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
@@ -261,7 +262,8 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                     TransportProtos.SessionInfoProto currentAttrSession = tokenToSessionIdMap.get(getTokenFromRequest(request));
                     if (currentAttrSession == null) {
                         attributeSubscriptions.add(sessionId);
-                        registerAsyncCoapSession(exchange, sessionInfo, coapTransportAdaptor, getTokenFromRequest(request));
+                        registerAsyncCoapSession(exchange, sessionInfo, coapTransportAdaptor,
+                                transportConfigurationContainer.getRpcRequestDynamicMessageBuilder(), getTokenFromRequest(request));
                         transportService.process(sessionInfo,
                                 TransportProtos.SubscribeToAttributeUpdatesMsg.getDefaultInstance(), new CoapNoOpCallback(exchange));
                     }
@@ -281,7 +283,8 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                     TransportProtos.SessionInfoProto currentRpcSession = tokenToSessionIdMap.get(getTokenFromRequest(request));
                     if (currentRpcSession == null) {
                         rpcSubscriptions.add(sessionId);
-                        registerAsyncCoapSession(exchange, sessionInfo, coapTransportAdaptor, getTokenFromRequest(request));
+                        registerAsyncCoapSession(exchange, sessionInfo, coapTransportAdaptor,
+                                transportConfigurationContainer.getRpcRequestDynamicMessageBuilder(), getTokenFromRequest(request));
                         transportService.process(sessionInfo,
                                 TransportProtos.SubscribeToRPCMsg.getDefaultInstance(),
                                 new CoapNoOpCallback(exchange));
@@ -307,13 +310,15 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                             new CoapOkCallback(exchange, CoAP.ResponseCode.CREATED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
                     break;
                 case TO_SERVER_RPC_REQUEST:
-                    transportService.registerSyncSession(sessionInfo, getCoapSessionListener(exchange, coapTransportAdaptor), timeout);
+                    transportService.registerSyncSession(sessionInfo, getCoapSessionListener(exchange, coapTransportAdaptor,
+                            transportConfigurationContainer.getRpcRequestDynamicMessageBuilder()), timeout);
                     transportService.process(sessionInfo,
                             coapTransportAdaptor.convertToServerRpcRequest(sessionId, request),
                             new CoapNoOpCallback(exchange));
                     break;
                 case GET_ATTRIBUTES_REQUEST:
-                    transportService.registerSyncSession(sessionInfo, getCoapSessionListener(exchange, coapTransportAdaptor), timeout);
+                    transportService.registerSyncSession(sessionInfo, getCoapSessionListener(exchange, coapTransportAdaptor,
+                            transportConfigurationContainer.getRpcRequestDynamicMessageBuilder()), timeout);
                     transportService.process(sessionInfo,
                             coapTransportAdaptor.convertToGetAttributes(sessionId, request),
                             new CoapNoOpCallback(exchange));
@@ -330,14 +335,14 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         return tokenToSessionIdMap.remove(token);
     }
 
-    private void registerAsyncCoapSession(CoapExchange exchange, TransportProtos.SessionInfoProto sessionInfo, CoapTransportAdaptor coapTransportAdaptor, String token) {
+    private void registerAsyncCoapSession(CoapExchange exchange, TransportProtos.SessionInfoProto sessionInfo, CoapTransportAdaptor coapTransportAdaptor, DynamicMessage.Builder rpcRequestDynamicMessageBuilder, String token) {
         tokenToSessionIdMap.putIfAbsent(token, sessionInfo);
-        transportService.registerAsyncSession(sessionInfo, getCoapSessionListener(exchange, coapTransportAdaptor));
+        transportService.registerAsyncSession(sessionInfo, getCoapSessionListener(exchange, coapTransportAdaptor, rpcRequestDynamicMessageBuilder));
         transportService.process(sessionInfo, getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
     }
 
-    private CoapSessionListener getCoapSessionListener(CoapExchange exchange, CoapTransportAdaptor coapTransportAdaptor) {
-        return new CoapSessionListener(exchange, coapTransportAdaptor);
+    private CoapSessionListener getCoapSessionListener(CoapExchange exchange, CoapTransportAdaptor coapTransportAdaptor, DynamicMessage.Builder rpcRequestDynamicMessageBuilder) {
+        return new CoapSessionListener(exchange, coapTransportAdaptor, rpcRequestDynamicMessageBuilder);
     }
 
     private String getTokenFromRequest(Request request) {
@@ -423,10 +428,12 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
 
         private final CoapExchange exchange;
         private final CoapTransportAdaptor coapTransportAdaptor;
+        private final DynamicMessage.Builder rpcRequestDynamicMessageBuilder;
 
-        CoapSessionListener(CoapExchange exchange, CoapTransportAdaptor coapTransportAdaptor) {
+        CoapSessionListener(CoapExchange exchange, CoapTransportAdaptor coapTransportAdaptor, DynamicMessage.Builder rpcRequestDynamicMessageBuilder) {
             this.exchange = exchange;
             this.coapTransportAdaptor = coapTransportAdaptor;
+            this.rpcRequestDynamicMessageBuilder = rpcRequestDynamicMessageBuilder;
         }
 
         @Override
@@ -457,7 +464,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         @Override
         public void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg msg) {
             try {
-                exchange.respond(coapTransportAdaptor.convertToPublish(isConRequest(), msg));
+                exchange.respond(coapTransportAdaptor.convertToPublish(isConRequest(), msg, rpcRequestDynamicMessageBuilder));
             } catch (AdaptorException e) {
                 log.trace("Failed to reply due to error", e);
                 exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
@@ -545,11 +552,14 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                             (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
                     String deviceTelemetryProtoSchema = protoTransportPayloadConfiguration.getDeviceTelemetryProtoSchema();
                     String deviceAttributesProtoSchema = protoTransportPayloadConfiguration.getDeviceAttributesProtoSchema();
+                    String deviceRpcRequestProtoSchema = protoTransportPayloadConfiguration.getDeviceRpcRequestProtoSchema();
                     String deviceRpcResponseProtoSchema = protoTransportPayloadConfiguration.getDeviceRpcResponseProtoSchema();
                     return new TransportConfigurationContainer(false,
                             protoTransportPayloadConfiguration.getTelemetryDynamicMessageDescriptor(deviceTelemetryProtoSchema),
                             protoTransportPayloadConfiguration.getAttributesDynamicMessageDescriptor(deviceAttributesProtoSchema),
-                            protoTransportPayloadConfiguration.getRpcResponseDynamicMessageDescriptor(deviceRpcResponseProtoSchema));
+                            protoTransportPayloadConfiguration.getRpcResponseDynamicMessageDescriptor(deviceRpcResponseProtoSchema),
+                            protoTransportPayloadConfiguration.getRpcRequestDynamicMessageBuilder(deviceRpcRequestProtoSchema)
+                    );
                 }
             } else {
                 throw new AdaptorException("Invalid CoapDeviceTypeConfiguration type: " + coapDeviceTypeConfiguration.getClass().getSimpleName() + "!");
@@ -570,12 +580,14 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         private Descriptors.Descriptor telemetryMsgDescriptor;
         private Descriptors.Descriptor attributesMsgDescriptor;
         private Descriptors.Descriptor rpcResponseMsgDescriptor;
+        private DynamicMessage.Builder rpcRequestDynamicMessageBuilder;
 
-        public TransportConfigurationContainer(boolean jsonPayload, Descriptors.Descriptor telemetryMsgDescriptor, Descriptors.Descriptor attributesMsgDescriptor, Descriptors.Descriptor rpcResponseMsgDescriptor) {
+        public TransportConfigurationContainer(boolean jsonPayload, Descriptors.Descriptor telemetryMsgDescriptor, Descriptors.Descriptor attributesMsgDescriptor, Descriptors.Descriptor rpcResponseMsgDescriptor, DynamicMessage.Builder rpcRequestDynamicMessageBuilder) {
             this.jsonPayload = jsonPayload;
             this.telemetryMsgDescriptor = telemetryMsgDescriptor;
             this.attributesMsgDescriptor = attributesMsgDescriptor;
             this.rpcResponseMsgDescriptor = rpcResponseMsgDescriptor;
+            this.rpcRequestDynamicMessageBuilder = rpcRequestDynamicMessageBuilder;
         }
 
         public TransportConfigurationContainer(boolean jsonPayload) {

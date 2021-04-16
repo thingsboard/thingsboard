@@ -1065,6 +1065,8 @@
         "rpc-response-proto-schema-required": "RPC response proto schema is required.",
         "rpc-response-topic-filter": "RPC response topic filter",
         "rpc-response-topic-filter-required": "RPC response topic filter is required.",
+        "rpc-request-proto-schema": "RPC request proto schema",
+        "rpc-request-proto-schema-required": "RPC request proto schema is required.",
         "not-valid-pattern-topic-filter": "Not valid pattern topic filter",
         "not-valid-single-character": "Invalid use of a single-level wildcard character",
         "not-valid-multi-character": "Invalid use of a multi-level wildcard character",
