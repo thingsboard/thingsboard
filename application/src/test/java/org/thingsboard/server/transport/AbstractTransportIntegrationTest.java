@@ -91,7 +91,7 @@ public abstract class AbstractTransportIntegrationTest extends AbstractControlle
             "\n" +
             "message RpcRequestMsg {\n" +
             "  string method = 1;\n" +
-            "  string requestId = 2;\n" +
+            "  int32 requestId = 2;\n" +
             "  string params = 3;\n" +
             "}";
 

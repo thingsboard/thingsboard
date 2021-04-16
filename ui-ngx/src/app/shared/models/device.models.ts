@@ -146,7 +146,7 @@ export const defaultRpcRequestSchema =
   '\n' +
   'message RpcRequestMsg {\n' +
   '  string method = 1;\n' +
-  '  string requestId = 2;\n' +
+  '  int32 requestId = 2;\n' +
   '  string params = 3;\n' +
   '}';
 
@@ -184,6 +184,13 @@ export const deviceTransportTypeConfigurationInfoMap = new Map<DeviceTransportTy
     ],
     [
       DeviceTransportType.LWM2M,
+      {
+        hasProfileConfiguration: true,
+        hasDeviceConfiguration: false,
+      }
+    ],
+    [
+      DeviceTransportType.COAP,
       {
         hasProfileConfiguration: true,
         hasDeviceConfiguration: false,

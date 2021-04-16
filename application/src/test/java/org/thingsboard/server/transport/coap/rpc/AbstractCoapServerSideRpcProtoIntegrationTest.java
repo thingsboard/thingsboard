@@ -99,7 +99,7 @@ public abstract class AbstractCoapServerSideRpcProtoIntegrationTest extends Abst
         request.setType(CoAP.Type.CON);
         CoapObserveRelation observeRelation = client.observe(request, testCoapCallback);
 
-        String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pins\": \"26\",\"value\": 1}}";
+        String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"26\",\"value\": 1}}";
         String deviceId = savedDevice.getId().getId().toString();
 
         String expected = "{\"payload\":\"{\\\"value1\\\":\\\"A\\\",\\\"value2\\\":\\\"B\\\"}\"}";
