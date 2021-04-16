@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sqlts.insert.latest.psql;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.TransactionStatus;
@@ -37,20 +38,34 @@ import java.util.List;
 @Transactional
 public class PsqlLatestInsertTsRepository extends AbstractInsertRepository implements InsertLatestTsRepository {
 
+    @Value("${sql.ts_latest.update_by_latest_ts:true}")
+    private Boolean updateByLatestTs;
+
     private static final String BATCH_UPDATE =
-            "UPDATE ts_kv_latest SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?, json_v = cast(? AS json) WHERE entity_id = ? and key = ?";
+            "UPDATE ts_kv_latest SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?, json_v = cast(? AS json) WHERE entity_id = ? AND key = ?;";
 
 
     private static final String INSERT_OR_UPDATE =
             "INSERT INTO ts_kv_latest (entity_id, key, ts, bool_v, str_v, long_v, dbl_v,  json_v) VALUES(?, ?, ?, ?, ?, ?, ?, cast(? AS json)) " +
                     "ON CONFLICT (entity_id, key) DO UPDATE SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?, json_v = cast(? AS json);";
 
+    private static final String BATCH_UPDATE_BY_LATEST_TS =
+            "UPDATE ts_kv_latest SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?, json_v = cast(? AS json) WHERE entity_id = ? AND key = ? AND ts <= ?;";
+
+
+    private static final String INSERT_OR_UPDATE_BY_LATEST_TS =
+            "INSERT INTO ts_kv_latest (entity_id, key, ts, bool_v, str_v, long_v, dbl_v,  json_v) VALUES(?, ?, ?, ?, ?, ?, ?, cast(? AS json)) " +
+                    "ON CONFLICT (entity_id, key) DO UPDATE SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?, json_v = cast(? AS json) WHERE ts_kv_latest.ts <= ?;";
+
     @Override
     public void saveOrUpdate(List<TsKvLatestEntity> entities) {
         transactionTemplate.execute(new TransactionCallbackWithoutResult() {
             @Override
             protected void doInTransactionWithoutResult(TransactionStatus status) {
-                int[] result = jdbcTemplate.batchUpdate(BATCH_UPDATE, new BatchPreparedStatementSetter() {
+                String batchUpdateQuery = updateByLatestTs ? BATCH_UPDATE_BY_LATEST_TS : BATCH_UPDATE;
+                String insertOrUpdateQuery = updateByLatestTs ? INSERT_OR_UPDATE_BY_LATEST_TS : INSERT_OR_UPDATE;
+
+                int[] result = jdbcTemplate.batchUpdate(batchUpdateQuery, new BatchPreparedStatementSetter() {
                     @Override
                     public void setValues(PreparedStatement ps, int i) throws SQLException {
                         TsKvLatestEntity tsKvLatestEntity = entities.get(i);
@@ -80,6 +95,9 @@ public class PsqlLatestInsertTsRepository extends AbstractInsertRepository imple
 
                         ps.setObject(7, tsKvLatestEntity.getEntityId());
                         ps.setInt(8, tsKvLatestEntity.getKey());
+                        if (updateByLatestTs) {
+                            ps.setLong(9, tsKvLatestEntity.getTs());
+                        }
                     }
 
                     @Override
@@ -102,7 +120,7 @@ public class PsqlLatestInsertTsRepository extends AbstractInsertRepository imple
                     }
                 }
 
-                jdbcTemplate.batchUpdate(INSERT_OR_UPDATE, new BatchPreparedStatementSetter() {
+                jdbcTemplate.batchUpdate(insertOrUpdateQuery, new BatchPreparedStatementSetter() {
                     @Override
                     public void setValues(PreparedStatement ps, int i) throws SQLException {
                         TsKvLatestEntity tsKvLatestEntity = insertEntities.get(i);
@@ -111,6 +129,9 @@ public class PsqlLatestInsertTsRepository extends AbstractInsertRepository imple
 
                         ps.setLong(3, tsKvLatestEntity.getTs());
                         ps.setLong(9, tsKvLatestEntity.getTs());
+                        if (updateByLatestTs) {
+                            ps.setLong(15, tsKvLatestEntity.getTs());
+                        }
 
                         if (tsKvLatestEntity.getBooleanValue() != null) {
                             ps.setBoolean(4, tsKvLatestEntity.getBooleanValue());

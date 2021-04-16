@@ -243,6 +243,7 @@ sql:
       batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:100}"
       stats_print_interval_ms: "${SQL_TS_LATEST_BATCH_STATS_PRINT_MS:10000}"
       batch_threads: "${SQL_TS_LATEST_BATCH_THREADS:4}"
+      update_by_latest_ts: "${SQL_TS_UPDATE_BY_LATEST_TIMESTAMP:true}"
     # Specify whether to sort entities before batch update. Should be enabled for cluster mode to avoid deadlocks
     batch_sort: "${SQL_BATCH_SORT:false}"
     # Specify whether to remove null characters from strValue of attributes and timeseries before insert
