@@ -488,7 +488,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   public showDashboardLogo(): boolean {
     if (this.dashboard.configuration.settings &&
       isDefined(this.dashboard.configuration.settings.showDashboardLogo)) {
-      return this.dashboard.configuration.settings.showDashboardLogo;
+      return this.dashboard.configuration.settings.showDashboardLogo && (this.forceFullscreen || this.singlePageMode || this.isFullscreen);
     } else {
       return false;
     }
