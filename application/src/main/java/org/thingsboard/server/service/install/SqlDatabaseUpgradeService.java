@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.service.install;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,8 +24,6 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.query.DynamicValue;
-import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -457,69 +453,32 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
             case "3.2.2":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Updating schema ...");
+                    conn.createStatement().execute("CREATE TABLE IF NOT EXISTS resource ( " +
+                            "id uuid NOT NULL CONSTRAINT resource_pkey PRIMARY KEY, " +
+                            "created_time bigint NOT NULL, " +
+                            "tenant_id uuid NOT NULL, " +
+                            "title varchar(255) NOT NULL, " +
+                            "resource_type varchar(32) NOT NULL, " +
+                            "resource_key varchar(255) NOT NULL, " +
+                            "search_text varchar(255), " +
+                            "file_name varchar(255) NOT NULL, " +
+                            "data varchar, " +
+                            "CONSTRAINT resource_unq_key UNIQUE (tenant_id, resource_type, resource_key)" +
+                            ");");
+
+                    conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3003000;");
+                    installScripts.loadSystemLwm2mResources();
+
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.2.2", SCHEMA_UPDATE_SQL);
+                    loadSql(schemaUpdateFile, conn);
                     try {
-                        conn.createStatement().execute("CREATE TABLE IF NOT EXISTS resource ( " +
-                                "id uuid NOT NULL CONSTRAINT resource_pkey PRIMARY KEY, " +
-                                "created_time bigint NOT NULL, " +
-                                "tenant_id uuid NOT NULL, " +
-                                "title varchar(255) NOT NULL, " +
-                                "resource_type varchar(32) NOT NULL, " +
-                                "resource_key varchar(255) NOT NULL, " +
-                                "search_text varchar(255), " +
-                                "file_name varchar(255) NOT NULL, " +
-                                "data varchar, " +
-                                "CONSTRAINT resource_unq_key UNIQUE (tenant_id, resource_type, resource_key)" +
-                                ");");
+                        conn.createStatement().execute("ALTER TABLE rule_chain ADD COLUMN type varchar(255) DEFAULT 'CORE'"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                    } catch (Exception ignored) {}
 
-                        conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3003000;");
-                        installScripts.loadSystemLwm2mResources();
-
-                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.2.2", SCHEMA_UPDATE_SQL);
-                        loadSql(schemaUpdateFile, conn);
-                        try {
-                            conn.createStatement().execute("ALTER TABLE rule_chain ADD COLUMN type varchar(255) DEFAULT 'CORE'"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-                        } catch (Exception ignored) {}
-
-                        log.info("Load Edge TTL functions ...");
-                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.2.2", "schema_update_ttl.sql");
-                        loadSql(schemaUpdateFile, conn);
-                        log.info("Edge TTL functions successfully loaded!");
-
-                    } catch (Exception e) {
-                        log.error("Failed updating schema!!!", e);
-                    }
-                  
-                    deviceProfileRepository.findAll().forEach(deviceProfile -> {
-                        if(deviceProfile.getProfileData().has("alarms")) {
-                            JsonNode array = deviceProfile.getProfileData().get("alarms");
-                            for (JsonNode node : array) {
-                                if (node.has("createRules")) {
-                                    JsonNode createRules = node.get("createRules");
-                                    if (createRules.has("MAJOR")) {
-                                        convertOldSpecToNew(createRules.get("MAJOR").get("condition").get("spec"));
-                                    }
-                                    if (createRules.has("MINOR")) {
-                                        convertOldSpecToNew(createRules.get("MINOR").get("condition").get("spec"));
-                                    }
-                                    if (createRules.has("CRITICAL")) {
-                                        convertOldSpecToNew(createRules.get("CRITICAL").get("condition").get("spec"));
-                                    }
-                                    if (createRules.has("WARNING")) {
-                                        convertOldSpecToNew(createRules.get("WARNING").get("condition").get("spec"));
-                                    }
-                                    if (createRules.has("INDETERMINATE")) {
-                                        convertOldSpecToNew(createRules.get("INDETERMINATE").get("condition").get("spec"));
-                                    }
-                                }
-
-                                if(node.has("clearRule")) {
-                                    convertOldSpecToNew(node.get("clearRule").get("condition").get("spec"));
-                                }
-                            }
-                            deviceProfileRepository.save(deviceProfile);
-                        }
-                    });
-
+                    log.info("Load Edge TTL functions ...");
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.2.2", "schema_update_ttl.sql");
+                    loadSql(schemaUpdateFile, conn);
+                    log.info("Edge TTL functions successfully loaded!");
                     log.info("Schema updated.");
                 } catch (Exception e) {
                     log.error("Failed updating schema!!!", e);
@@ -556,27 +515,4 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
         return isOldSchema;
     }
 
-    private void convertOldSpecToNew(JsonNode spec) {
-        if(spec != null) {
-            if (spec.has("type") && spec.get("type").asText().equals("DURATION")) {
-                if (spec.has("value")) {
-                    long value = spec.get("value").asLong();
-                    var predicate = new FilterPredicateValue<>(
-                            value, null, new DynamicValue<>(null, null, false)
-                    );
-                    ((ObjectNode) spec).remove("value");
-                    ((ObjectNode) spec).putPOJO("predicate", predicate);
-                }
-            } else if (spec.has("type") && spec.get("type").asText().equals("REPEATING")) {
-                if (spec.has("count")) {
-                    int count = spec.get("count").asInt();
-                    var predicate = new FilterPredicateValue<>(
-                            count, null, new DynamicValue<>(null, null, false)
-                    );
-                    ((ObjectNode) spec).remove("count");
-                    ((ObjectNode) spec).putPOJO("predicate", predicate);
-                }
-            }
-        }
-    }
 }

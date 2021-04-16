@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.install.update;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -23,10 +24,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNodeConfiguration;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
@@ -34,14 +38,18 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.query.DynamicValue;
+import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.sql.device.DeviceProfileRepository;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.service.install.InstallScripts;
 
 import java.util.ArrayList;
@@ -72,6 +80,17 @@ public class DefaultDataUpdateService implements DataUpdateService {
     @Autowired
     private TimeseriesService tsService;
 
+    @Autowired
+    private DeviceProfileRepository deviceProfileRepository;
+
+    @Autowired
+    private DeviceProfileService deviceProfileService;
+
+    public static void main(String[] args) {
+        JsonNode node = JacksonUtil.toJsonNode("{\"alarms\": [{\"id\": \"6109e314-c438-ea53-deb7-df16e33eb24f\", \"alarmType\": \"oiuytre\", \"clearRule\": null, \"propagate\": false, \"createRules\": {\"CRITICAL\": {\"schedule\": null, \"condition\": {\"spec\": {\"type\": \"REPEATING\", \"count\": 3}, \"condition\": [{\"key\": {\"key\": \"wer\", \"type\": \"ATTRIBUTE\"}, \"value\": null, \"predicate\": {\"type\": \"NUMERIC\", \"value\": {\"userValue\": null, \"defaultValue\": 5.0, \"dynamicValue\": {\"inherit\": true, \"sourceType\": \"CURRENT_DEVICE\", \"sourceAttribute\": \"egrbr\"}}, \"operation\": \"GREATER\"}, \"valueType\": \"NUMERIC\"}]}, \"alarmDetails\": null}, \"INDETERMINATE\": {\"schedule\": null, \"condition\": {\"spec\": {\"type\": \"DURATION\", \"unit\": \"HOURS\", \"value\": 8}, \"condition\": [{\"key\": {\"key\": \"wegrtd\", \"type\": \"ATTRIBUTE\"}, \"value\": null, \"predicate\": {\"type\": \"BOOLEAN\", \"value\": {\"userValue\": null, \"defaultValue\": true, \"dynamicValue\": null}, \"operation\": \"EQUAL\"}, \"valueType\": \"BOOLEAN\"}]}, \"alarmDetails\": null}}, \"propagateRelationTypes\": null}], \"configuration\": {\"type\": \"DEFAULT\"}, \"provisionConfiguration\": {\"type\": \"DISABLED\", \"provisionDeviceSecret\": null}, \"transportConfiguration\": {\"type\": \"DEFAULT\"}}");
+        node.get("alarms").get(0).get("clearRule");
+    }
+
     @Override
     public void updateData(String fromVersion) throws Exception {
         switch (fromVersion) {
@@ -90,6 +109,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
             case "3.2.2":
                 log.info("Updating data from version 3.2.2 to 3.3.0 ...");
                 tenantsDefaultEdgeRuleChainUpdater.updateEntities(null);
+                deviceProfilesDynamicConditionsUpdater.updateEntities(null);
                 break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
@@ -206,6 +226,38 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 }
             };
 
+    private PaginatedUpdater<String, DeviceProfile> deviceProfilesDynamicConditionsUpdater =
+            new PaginatedUpdater<String, DeviceProfile>() {
+                @Override
+                protected PageData<DeviceProfile> findEntities(String id, PageLink pageLink) {
+                    return DaoUtil.toPageData(deviceProfileRepository.findAll(DaoUtil.toPageable(pageLink)));
+                }
+
+                @Override
+                protected void updateEntity(DeviceProfile entity) {
+                    deviceProfileRepository.findAll().forEach(deviceProfile -> {
+                        if(deviceProfile.getProfileData().has("alarms") &&
+                                !deviceProfile.getProfileData().get("alarms").asText().equals("null")) {
+                            JsonNode array = deviceProfile.getProfileData().get("alarms");
+                            for (JsonNode node : array) {
+                                if (node.has("createRules")) {
+                                    JsonNode createRules = node.get("createRules");
+                                    for(AlarmSeverity severity : AlarmSeverity.values()) {
+                                        if (createRules.has(severity.name())) {
+                                            convertOldSpecToNew(createRules.get(severity.name()).get("condition").get("spec"));
+                                        }
+                                    }
+                                }
+                                if(node.has("clearRule") && !node.get("clearRule").asText().equals("null")) {
+                                    convertOldSpecToNew(node.get("clearRule").get("condition").get("spec"));
+                                }
+                            }
+                            deviceProfileRepository.save(deviceProfile);
+                        }
+                    });
+                }
+            };
+
     private void updateTenantEntityViews(TenantId tenantId) {
         PageLink pageLink = new PageLink(100);
         PageData<EntityView> pageData = entityViewService.findEntityViewByTenantId(tenantId, pageLink);
@@ -259,6 +311,30 @@ public class DefaultDataUpdateService implements DataUpdateService {
             }
             return Futures.immediateFuture(null);
         }, MoreExecutors.directExecutor());
+    }
+
+    private void convertOldSpecToNew(JsonNode spec) {
+        if(spec != null) {
+            if (spec.has("type") && spec.get("type").asText().equals("DURATION")) {
+                if (spec.has("value")) {
+                    long value = spec.get("value").asLong();
+                    var predicate = new FilterPredicateValue<>(
+                            value, null, new DynamicValue<>(null, null, false)
+                    );
+                    ((ObjectNode) spec).remove("value");
+                    ((ObjectNode) spec).putPOJO("predicate", predicate);
+                }
+            } else if (spec.has("type") && spec.get("type").asText().equals("REPEATING")) {
+                if (spec.has("count")) {
+                    int count = spec.get("count").asInt();
+                    var predicate = new FilterPredicateValue<>(
+                            count, null, new DynamicValue<>(null, null, false)
+                    );
+                    ((ObjectNode) spec).remove("count");
+                    ((ObjectNode) spec).putPOJO("predicate", predicate);
+                }
+            }
+        }
     }
 
 }
