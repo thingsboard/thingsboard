@@ -13,24 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.event;
+package org.thingsboard.server.common.data;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.StringUtils;
+public class StringUtils {
 
-@Data
-public class StatisticsEventFilter implements EventFilter {
-    private String server;
-    private Integer messagesProcessed;
-    private Integer errorsOccurred;
-
-    @Override
-    public EventType getEventType() {
-        return EventType.STATS;
+    public static boolean isEmpty(String source) {
+        return source == null || source.isEmpty();
     }
 
-    @Override
-    public boolean hasFilterForJsonBody() {
-        return !StringUtils.isEmpty(server) || (messagesProcessed != null && messagesProcessed > 0) || (errorsOccurred != null && errorsOccurred > 0);
+    public static boolean isNotEmpty(String source) {
+        return source != null && !source.isEmpty();
     }
 }
