@@ -29,6 +29,15 @@
           </mat-select>
         </mat-form-field>
       </ng-template>
+      <ng-template [ngSwitchCase]="isNumberFields(column.key)">
+        <mat-form-field>
+          <mat-label>{{ column.title | translate}}</mat-label>
+          <input matInput type="number" min="0" [name]="column.key" [formControlName]="column.key">
+          <mat-error *ngIf="eventFilterFormGroup.get(column.key).hasError('min')">
+            {{ 'event.min-value' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </ng-template>
       <ng-template [ngSwitchCase]="'isError'">
         <tb-checkbox formControlName="isError" [falseValue]="''">
           {{ 'event.has-error' | translate }}
