@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
@@ -68,12 +69,12 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
     }
 
     @Override
-    public ApiUsageState createDefaultApiUsageState(TenantId tenantId) {
+    public ApiUsageState createDefaultApiUsageState(TenantId tenantId, EntityId entityId) {
         log.trace("Executing createDefaultUsageRecord [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         ApiUsageState apiUsageState = new ApiUsageState();
         apiUsageState.setTenantId(tenantId);
-        apiUsageState.setEntityId(tenantId);
+        apiUsageState.setEntityId(entityId);
         apiUsageState.setTransportState(ApiUsageStateValue.ENABLED);
         apiUsageState.setReExecState(ApiUsageStateValue.ENABLED);
         apiUsageState.setJsExecState(ApiUsageStateValue.ENABLED);
@@ -87,6 +88,7 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         Tenant tenant = tenantDao.findById(tenantId, tenantId.getId());
         TenantProfile tenantProfile = tenantProfileDao.findById(tenantId, tenant.getTenantProfileId().getId());
         TenantProfileConfiguration configuration = tenantProfile.getProfileData().getConfiguration();
+
         List<TsKvEntry> apiUsageStates = new ArrayList<>();
         apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
                 new StringDataEntry(ApiFeature.TRANSPORT.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
@@ -127,6 +129,12 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
     }
 
     @Override
+    public ApiUsageState findApiUsageStateByEntityId(EntityId entityId) {
+        validateId(entityId.getId(), "Invalid entity id");
+        return apiUsageStateDao.findApiUsageStateByEntityId(entityId);
+    }
+
+    @Override
     public ApiUsageState findApiUsageStateById(TenantId tenantId, ApiUsageStateId id) {
         log.trace("Executing findApiUsageStateById, tenantId [{}], apiUsageStateId [{}]", tenantId, id);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
@@ -148,10 +156,8 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
                     }
                     if (apiUsageState.getEntityId() == null) {
                         throw new DataValidationException("UsageRecord should be assigned to entity!");
-                    } else if (!EntityType.TENANT.equals(apiUsageState.getEntityId().getEntityType())) {
-                        throw new DataValidationException("Only Tenant Usage Records are supported!");
-                    } else if (!apiUsageState.getTenantId().getId().equals(apiUsageState.getEntityId().getId())) {
-                        throw new DataValidationException("Can't assign one Usage Record to multiple tenants!");
+                    } else if (apiUsageState.getEntityId().getEntityType() != EntityType.TENANT && apiUsageState.getEntityId().getEntityType() != EntityType.CUSTOMER) {
+                        throw new DataValidationException("Only Tenant and Customer Usage Records are supported!");
                     }
                 }
             };
