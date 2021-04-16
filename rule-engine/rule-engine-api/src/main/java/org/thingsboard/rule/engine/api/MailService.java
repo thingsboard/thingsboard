@@ -22,7 +22,7 @@ import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import javax.mail.MessagingException;
+import java.util.Map;
 
 public interface MailService {
 
@@ -37,12 +37,12 @@ public interface MailService {
     void sendAccountActivatedEmail(String loginLink, String email) throws ThingsboardException;
     
     void sendResetPasswordEmail(String passwordResetLink, String email) throws ThingsboardException;
-    
+
     void sendPasswordWasResetEmail(String loginLink, String email) throws ThingsboardException;
 
-    void send(TenantId tenantId, String from, String to, String cc, String bcc, String subject, String body) throws MessagingException;
-
     void sendAccountLockoutEmail( String lockoutEmail, String email, Integer maxFailedLoginAttempts) throws ThingsboardException;
+
+    void send(TenantId tenantId, String from, String to, String cc, String bcc, String subject, String body, boolean isHtml, Map<String, String> images) throws ThingsboardException;
 
     void sendApiFeatureStateEmail(ApiFeature apiFeature, ApiUsageStateValue stateValue, String email, ApiUsageStateMailMessage msg) throws ThingsboardException;
 }
