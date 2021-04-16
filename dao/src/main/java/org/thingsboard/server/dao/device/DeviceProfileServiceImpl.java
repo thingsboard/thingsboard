@@ -554,17 +554,17 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
             throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Failed to get rpcRequestDynamicMessageDescriptor!");
         } else {
             if (CollectionUtils.isEmpty(rpcRequestDynamicMessageDescriptor.getFields()) || rpcRequestDynamicMessageDescriptor.getFields().size() != 3) {
-                throw new DataValidationException(rpcRequestDynamicMessageDescriptor.getName() + " dynamic message should always contains 3 fields: method, requestId and params!");
+                throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " " + rpcRequestDynamicMessageDescriptor.getName() + " message should always contains 3 fields: method, requestId and params!");
             }
             Descriptors.FieldDescriptor methodFieldDescriptor = rpcRequestDynamicMessageDescriptor.findFieldByName("method");
             if (methodFieldDescriptor == null) {
                 throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Failed to get field descriptor for field: method!");
             } else {
                 if (!Descriptors.FieldDescriptor.Type.STRING.equals(methodFieldDescriptor.getType())) {
-                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Field method has invalid data type. Only string type is supported!");
+                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Field 'method' has invalid data type. Only string type is supported!");
                 }
                 if (methodFieldDescriptor.isRepeated()) {
-                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Field method has invalid label!");
+                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Field 'method' has invalid label!");
                 }
             }
             Descriptors.FieldDescriptor requestIdFieldDescriptor = rpcRequestDynamicMessageDescriptor.findFieldByName("requestId");
@@ -572,18 +572,18 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                 throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Failed to get field descriptor for field: requestId!");
             } else {
                 if (!Descriptors.FieldDescriptor.Type.INT32.equals(requestIdFieldDescriptor.getType())) {
-                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Field requestId has invalid data type. Only int32 type is supported!");
+                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Field 'requestId' has invalid data type. Only int32 type is supported!");
                 }
                 if (requestIdFieldDescriptor.isRepeated()) {
-                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + "Field requestId has invalid label!");
+                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Field 'requestId' has invalid label!");
                 }
             }
             Descriptors.FieldDescriptor paramsFieldDescriptor = rpcRequestDynamicMessageDescriptor.findFieldByName("params");
             if (paramsFieldDescriptor == null) {
-                throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + "Failed to get field descriptor for field: params!");
+                throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Failed to get field descriptor for field: params!");
             } else {
                 if (paramsFieldDescriptor.isRepeated()) {
-                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + "Field params has invalid label!");
+                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + "Field 'params' has invalid label!");
                 }
             }
         }
