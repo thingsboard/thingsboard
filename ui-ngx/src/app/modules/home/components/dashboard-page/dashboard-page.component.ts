@@ -191,6 +191,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   addingLayoutCtx: DashboardPageLayoutContext;
 
+  logo = 'assets/logo_title_white.svg';
 
   dashboardCtx: DashboardContext = {
     instanceId: this.utils.guid(),
@@ -484,6 +485,19 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     }
   }
 
+  public showDashboardLogo(): boolean {
+    if (this.dashboard.configuration.settings &&
+      isDefined(this.dashboard.configuration.settings.showDashboardLogo)) {
+      return this.dashboard.configuration.settings.showDashboardLogo && (this.forceFullscreen || this.singlePageMode || this.isFullscreen);
+    } else {
+      return false;
+    }
+  }
+
+  public get dashboardLogo(): string {
+    return this.dashboard.configuration.settings.dashboardLogoUrl || this.logo;
+  }
+
   public showRightLayoutSwitch(): boolean {
     return this.isMobile && this.layouts.right.show;
   }
@@ -605,7 +619,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         settings: deepClone(this.dashboard.configuration.settings),
-        gridSettings
+        gridSettings,
       }
     }).afterClosed().subscribe((data) => {
       if (data) {

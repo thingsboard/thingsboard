@@ -746,6 +746,8 @@
         "display-filters": "Display filters",
         "display-dashboard-timewindow": "Display timewindow",
         "display-dashboard-export": "Display export",
+        "display-dashboard-logo": "Display logo in dashboard fullscreen mode",
+        "dashboard-logo-image": "Dashboard logo image",
         "import": "Import dashboard",
         "export": "Export dashboard",
         "export-failed-error": "Unable to export dashboard: {{error}}",
