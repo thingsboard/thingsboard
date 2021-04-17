@@ -35,7 +35,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.NO_SEC;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertToIdVerFromObjectId;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertPathFromObjectIdToIdVer;
 
 @Service
 @TbLwM2mTransportComponent
@@ -185,7 +185,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         Arrays.stream(registration.getObjectLinks()).forEach(url -> {
             LwM2mPath pathIds = new LwM2mPath(url.getUrl());
             if (!pathIds.isRoot()) {
-                clientObjects.add(convertToIdVerFromObjectId(url.getUrl(),  registration));
+                clientObjects.add(convertPathFromObjectIdToIdVer(url.getUrl(),  registration));
             }
         });
         return (clientObjects.size() > 0) ? clientObjects : null;

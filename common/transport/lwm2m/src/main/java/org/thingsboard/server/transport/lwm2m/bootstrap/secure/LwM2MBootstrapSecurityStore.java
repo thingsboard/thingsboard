@@ -35,7 +35,6 @@ import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInf
 import org.thingsboard.server.transport.lwm2m.secure.ReadResultSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mSessionMsgListener;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContextServer;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler;
 import org.thingsboard.server.transport.lwm2m.utils.TypeServer;
 
 import java.io.IOException;
@@ -165,13 +164,13 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                     lwM2MBootstrapConfig.bootstrapServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap);
                     lwM2MBootstrapConfig.lwm2mServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer);
                     String logMsg = String.format("%s: getParametersBootstrap: %s Access connect client with bootstrap server.", LOG_LW2M_INFO, store.getEndPoint());
-                    context.sendParametersOnThingsboard(context.getTelemetryMsgObject(logMsg), LwM2mTransportHandler.DEVICE_TELEMETRY_TOPIC, sessionInfo);
+                    context.sendParametersOnThingsboardTelemetry(context.getKvLogyToThingsboard(logMsg), sessionInfo);
                     return lwM2MBootstrapConfig;
                 } else {
                     log.error(" [{}] Different values SecurityMode between of client and profile.", store.getEndPoint());
                     log.error("{} getParametersBootstrap: [{}] Different values SecurityMode between of client and profile.", LOG_LW2M_ERROR, store.getEndPoint());
                     String logMsg = String.format("%s: getParametersBootstrap: %s Different values SecurityMode between of client and profile.", LOG_LW2M_ERROR, store.getEndPoint());
-                    context.sendParametersOnThingsboard(context.getTelemetryMsgObject(logMsg), LwM2mTransportHandler.DEVICE_TELEMETRY_TOPIC, sessionInfo);
+                    context.sendParametersOnThingsboardTelemetry(context.getKvLogyToThingsboard(logMsg), sessionInfo);
                     return null;
                 }
             }

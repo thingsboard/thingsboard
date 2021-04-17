@@ -30,31 +30,35 @@ package org.thingsboard.server.transport.lwm2m.server;
  * limitations under the License.
  */
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.DDFFileParser;
 import org.eclipse.leshan.core.model.DefaultDDFFileValidator;
 import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.eclipse.leshan.core.model.ObjectModel;
+import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.codec.CodecException;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportResourceCache;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigServer;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
-import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
+import org.thingsboard.server.transport.lwm2m.server.client.ResultsResourceValue;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
+import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.BOOLEAN_V;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_TELEMETRY;
 
 @Slf4j
@@ -91,7 +95,7 @@ public class LwM2mTransportContextServer extends TransportContext {
     /**
      * send to Thingsboard Attribute || Telemetry
      *
-     * @param msg   - JsonObject: [{name: value}]
+     * @param msg - JsonObject: [{name: value}]
      * @return - dummy
      */
     private <T> TransportServiceCallback<Void> getPubAckCallbackSendAttrTelemetry(final T msg) {
@@ -108,33 +112,29 @@ public class LwM2mTransportContextServer extends TransportContext {
         };
     }
 
-    public void sendParametersOnThingsboard(JsonElement msg, String topicName, SessionInfoProto sessionInfo) {
-        try {
-            if (topicName.equals(LwM2mTransportHandler.DEVICE_ATTRIBUTES_TOPIC)) {
-                PostAttributeMsg postAttributeMsg = adaptor.convertToPostAttributes(msg);
-                TransportServiceCallback call = this.getPubAckCallbackSendAttrTelemetry(postAttributeMsg);
-                transportService.process(sessionInfo, postAttributeMsg, this.getPubAckCallbackSendAttrTelemetry(call));
-            } else if (topicName.equals(LwM2mTransportHandler.DEVICE_TELEMETRY_TOPIC)) {
-                PostTelemetryMsg postTelemetryMsg = adaptor.convertToPostTelemetry(msg);
-                TransportServiceCallback call = this.getPubAckCallbackSendAttrTelemetry(postTelemetryMsg);
-                transportService.process(sessionInfo, postTelemetryMsg, this.getPubAckCallbackSendAttrTelemetry(call));
-            }
-        } catch (AdaptorException e) {
-            log.error("[{}] Failed to process publish msg [{}]", topicName, e);
-            log.info("[{}] Closing current session due to invalid publish", topicName);
-        }
+    public void sendParametersOnThingsboardAttribute(List<TransportProtos.KeyValueProto> result, SessionInfoProto sessionInfo) {
+        PostAttributeMsg.Builder request = PostAttributeMsg.newBuilder();
+        request.addAllKv(result);
+        PostAttributeMsg postAttributeMsg = request.build();
+        TransportServiceCallback call = this.getPubAckCallbackSendAttrTelemetry(postAttributeMsg);
+        transportService.process(sessionInfo, postAttributeMsg, this.getPubAckCallbackSendAttrTelemetry(call));
     }
 
-    public JsonObject getTelemetryMsgObject(String logMsg) {
-        JsonObject telemetries = new JsonObject();
-        telemetries.addProperty(LOG_LW2M_TELEMETRY, logMsg);
-        return telemetries;
+    public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> result, SessionInfoProto sessionInfo) {
+        PostTelemetryMsg.Builder request = PostTelemetryMsg.newBuilder();
+        TransportProtos.TsKvListProto.Builder builder = TransportProtos.TsKvListProto.newBuilder();
+        builder.setTs(System.currentTimeMillis());
+        builder.addAllKv(result);
+        request.addTsKvList(builder.build());
+        PostTelemetryMsg postTelemetryMsg = request.build();
+        TransportServiceCallback call = this.getPubAckCallbackSendAttrTelemetry(postTelemetryMsg);
+        transportService.process(sessionInfo, postTelemetryMsg, this.getPubAckCallbackSendAttrTelemetry(call));
     }
 
     /**
      * @return - sessionInfo after access connect client
      */
-    public SessionInfoProto getValidateSessionInfo(ValidateDeviceCredentialsResponseMsg msg, long mostSignificantBits, long leastSignificantBits) {
+    public SessionInfoProto getValidateSessionInfo(TransportProtos.ValidateDeviceCredentialsResponseMsg msg, long mostSignificantBits, long leastSignificantBits) {
         return SessionInfoProto.newBuilder()
                 .setNodeId(this.getNodeId())
                 .setSessionIdMSB(mostSignificantBits)
@@ -158,5 +158,119 @@ public class LwM2mTransportContextServer extends TransportContext {
             log.error("Could not parse the XML file [{}]", streamName, e);
             return null;
         }
+    }
+
+    /**
+     *
+     * @param logMsg - info about Logs
+     * @return- KeyValueProto for telemetry (Logs)
+     */
+    public List <TransportProtos.KeyValueProto> getKvLogyToThingsboard(String logMsg) {
+        List <TransportProtos.KeyValueProto> result = new ArrayList<>();
+        result.add(TransportProtos.KeyValueProto.newBuilder()
+                .setKey(LOG_LW2M_TELEMETRY)
+                .setType(TransportProtos.KeyValueType.STRING_V)
+                .setStringV(logMsg).build());
+        return result;
+    }
+
+    /**
+     * @return - KeyValueProto for attribute/telemetry (change value)
+     * @throws CodecException -
+     */
+
+        public TransportProtos.KeyValueProto getKvAttrTelemetryToThingsboard(ResultsResourceValue resultsResourceValue) {
+                switch (resultsResourceValue.getDataType()) {
+                    case BOOLEAN:
+                        return TransportProtos.KeyValueProto.newBuilder()
+                                .setKey(resultsResourceValue.getResourceName())
+                                .setType(BOOLEAN_V)
+                                .setBoolV((Boolean) resultsResourceValue.getValue()).build();
+                    case STRING:
+                        return TransportProtos.KeyValueProto.newBuilder()
+                                .setKey(resultsResourceValue.getResourceName())
+                                .setType(TransportProtos.KeyValueType.STRING_V)
+                                .setStringV((String) resultsResourceValue.getValue()).build();
+                    case LONG:
+                        return TransportProtos.KeyValueProto.newBuilder()
+                                .setKey(resultsResourceValue.getResourceName())
+                                .setType(TransportProtos.KeyValueType.LONG_V)
+                                .setLongV((Long) resultsResourceValue.getValue()).build();
+                    case DOUBLE:
+                        return TransportProtos.KeyValueProto.newBuilder()
+                                .setKey(resultsResourceValue.getResourceName())
+                                .setType(TransportProtos.KeyValueType.DOUBLE_V)
+                                .setDoubleV((Double) resultsResourceValue.getValue()).build();
+                    case JSON:
+                        return TransportProtos.KeyValueProto.newBuilder()
+                                .setKey(resultsResourceValue.getResourceName())
+                                .setType(TransportProtos.KeyValueType.JSON_V)
+                                .setJsonV((String) resultsResourceValue.getValue()).build();
+                    default:
+                        return null;
+                }
+        }
+
+    public DataType getDataTypeEqualsToResourceModelType(ResourceModel.Type resourceType, String resourcePath, boolean isMultiInstances) {
+        if (isMultiInstances) {
+           return DataType.JSON;
+        }
+        else {
+            switch (resourceType) {
+                case BOOLEAN:
+                    return DataType.BOOLEAN;
+                case STRING:
+                case TIME:
+                case OPAQUE:
+                case OBJLNK:
+                    return DataType.STRING;
+                case INTEGER:
+                    return DataType.LONG;
+                case FLOAT:
+                    return DataType.DOUBLE;
+                default:
+            }
+        }
+        throw new CodecException("Invalid DataType for resource %s, got %s, ", resourcePath, resourceType);
+    }
+
+    /**
+     *
+     * @param currentType
+     * @param resourcePath
+     * @return
+     */
+    public ResourceModel.Type getResourceModelTypeEqualsKvProtoValueType(ResourceModel.Type currentType, String resourcePath) {
+        switch (currentType) {
+            case BOOLEAN:
+                return ResourceModel.Type.BOOLEAN;
+            case STRING:
+            case TIME:
+            case OPAQUE:
+            case OBJLNK:
+                return ResourceModel.Type.STRING;
+            case INTEGER:
+                return ResourceModel.Type.INTEGER;
+            case FLOAT:
+                return ResourceModel.Type.FLOAT;
+            default:
+        }
+        throw new CodecException("Invalid ResourceModel_Type for resource %s, got %s", resourcePath, currentType);
+    }
+
+    public Object getValueFromKvProto (TransportProtos.KeyValueProto kv) {
+        switch (kv.getType()) {
+            case BOOLEAN_V:
+                return kv.getBoolV();
+            case LONG_V:
+                return kv.getLongV();
+            case DOUBLE_V:
+                return kv.getDoubleV();
+            case STRING_V:
+                return kv.getStringV();
+            case JSON_V:
+                return kv.getJsonV();
+        }
+        return null;
     }
 }
