@@ -130,7 +130,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         ListenableFuture<Alarm> asyncUpdated = Futures.transform(buildAlarmDetails(ctx, msg, existingAlarm.getDetails()), (Function<JsonNode, Alarm>) details -> {
             ctx.logJsEvalResponse();
             if (msgAlarm != null) {
-                existingAlarm.setSeverity(processAlarmSeverity(msg));
+                existingAlarm.setSeverity(msgAlarm.getSeverity());
                 existingAlarm.setPropagate(msgAlarm.isPropagate());
                 existingAlarm.setPropagateRelationTypes(msgAlarm.getPropagateRelationTypes());
             } else {
