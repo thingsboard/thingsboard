@@ -305,18 +305,18 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public PageData<AlarmInfo> getAlarms(EntityId entityId, AlarmSearchStatus searchStatus, AlarmStatus status, TimePageLink pageLink, Boolean fetchOriginator) {
-        String urlSecondPart = "/api/alarm/{entityType}/{entityId}?fetchOriginator={fetchOriginator}&";
+        String urlSecondPart = "/api/alarm/{entityType}/{entityId}?fetchOriginator={fetchOriginator}";
         Map<String, String> params = new HashMap<>();
         params.put("entityType", entityId.getEntityType().name());
         params.put("entityId", entityId.getId().toString());
         params.put("fetchOriginator", String.valueOf(fetchOriginator));
         if(searchStatus != null) {
             params.put("searchStatus", searchStatus.name());
-            urlSecondPart += "searchStatus={searchStatus}&";
+            urlSecondPart += "&searchStatus={searchStatus}";
         }
         if(status != null) {
             params.put("status", status.name());
-            urlSecondPart += "status={status}&";
+            urlSecondPart += "&status={status}";
         }
 
         addTimePageLinkToParam(params, pageLink);
