@@ -119,6 +119,18 @@ redis:
 
 # LWM2M server parameters
 transport:
+  sessions:
+    inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
+    report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:30000}"
+  json:
+    # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
+    type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:false}"
+    # Maximum allowed string value length when processing Telemetry/Attributes JSON (0 value disables string value length check)
+    max_string_value_length: "${JSON_MAX_STRING_VALUE_LENGTH:0}"
+  client_side_rpc:
+    timeout: "${CLIENT_SIDE_RPC_TIMEOUT:60000}"
+  # Enable/disable http/mqtt/coap transport protocols (has higher priority than certain protocol's 'enabled' property)
+  api_enabled: "${TB_TRANSPORT_API_ENABLED:true}"
   # Local LwM2M transport parameters
   lwm2m:
     # Enable/disable lvm2m transport protocol.
@@ -179,15 +191,6 @@ transport:
         alias: "${LWM2M_KEYSTORE_ALIAS_BS:bootstrap}"
     # Use redis for Security and Registration stores
     redis.enabled: "${LWM2M_REDIS_ENABLED:false}"
-
-  sessions:
-    inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
-    report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:30000}"
-  json:
-    # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
-    type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:false}"
-    # Maximum allowed string value length when processing Telemetry/Attributes JSON (0 value disables string value length check)
-    max_string_value_length: "${JSON_MAX_STRING_VALUE_LENGTH:0}"
 
 queue:
   type: "${TB_QUEUE_TYPE:kafka}" # kafka (Apache Kafka) or aws-sqs (AWS SQS) or pubsub (PubSub) or service-bus (Azure Service Bus) or rabbitmq (RabbitMQ)

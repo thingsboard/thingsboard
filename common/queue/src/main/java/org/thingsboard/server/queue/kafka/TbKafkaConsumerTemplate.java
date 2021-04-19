@@ -72,8 +72,10 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
     protected void doSubscribe(List<String> topicNames) {
         if (!topicNames.isEmpty()) {
             topicNames.forEach(admin::createTopicIfNotExists);
+            log.info("subscribe topics {}", topicNames);
             consumer.subscribe(topicNames);
         } else {
+            log.info("unsubscribe due to empty topic list");
             consumer.unsubscribe();
         }
     }
@@ -102,6 +104,7 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
 
     @Override
     protected void doUnsubscribe() {
+        log.info("unsubscribe topic and close consumer for topic {}", getTopic());
         if (consumer != null) {
             consumer.unsubscribe();
             consumer.close();

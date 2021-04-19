@@ -244,7 +244,8 @@ public class RuleChainController extends BaseController {
             }
 
             RuleChain ruleChain = checkRuleChain(ruleChainMetaData.getRuleChainId(), Operation.WRITE);
-            RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData));
+            checkNotNull(ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData) ? true : null);
+            RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.loadRuleChainMetaData(tenantId, ruleChainMetaData.getRuleChainId()));
 
             if (RuleChainType.CORE.equals(ruleChain.getType())) {
                 tbClusterService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.UPDATED);
