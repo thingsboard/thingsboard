@@ -142,6 +142,7 @@ public class DefaultTbApiUsageClient implements TbApiUsageClient {
             ConcurrentMap<EntityId, AtomicLong> statsForKey = stats.get(key);
 
             statsForKey.computeIfAbsent(tenantId, id -> new AtomicLong()).addAndGet(value);
+            statsForKey.computeIfAbsent(TenantId.SYS_TENANT_ID, id -> new AtomicLong()).addAndGet(value);
 
             if (customerId != null && !customerId.isNullUid()) {
                 statsForKey.computeIfAbsent(customerId, id -> new AtomicLong()).addAndGet(value);

@@ -27,6 +27,12 @@ import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 public class TenantApiUsageState extends BaseApiUsageState {
     @Getter
     @Setter
@@ -41,6 +47,10 @@ public class TenantApiUsageState extends BaseApiUsageState {
         this.tenantProfileData = tenantProfile.getProfileData();
     }
 
+    public TenantApiUsageState(ApiUsageState apiUsageState) {
+        super(apiUsageState);
+    }
+
     public long getProfileThreshold(ApiUsageRecordKey key) {
         return tenantProfileData.getConfiguration().getProfileThreshold(key);
     }
@@ -49,8 +59,7 @@ public class TenantApiUsageState extends BaseApiUsageState {
         return tenantProfileData.getConfiguration().getWarnThreshold(key);
     }
 
-    @Override
-    public Pair<ApiFeature, ApiUsageStateValue> checkStateUpdatedDueToThreshold(ApiFeature feature) {
+    private Pair<ApiFeature, ApiUsageStateValue> checkStateUpdatedDueToThreshold(ApiFeature feature) {
         ApiUsageStateValue featureValue = ApiUsageStateValue.ENABLED;
         for (ApiUsageRecordKey recordKey : ApiUsageRecordKey.getKeys(feature)) {
             long value = get(recordKey);
@@ -67,6 +76,22 @@ public class TenantApiUsageState extends BaseApiUsageState {
             featureValue = ApiUsageStateValue.toMoreRestricted(featureValue, tmpValue);
         }
         return setFeatureValue(feature, featureValue) ? Pair.of(feature, featureValue) : null;
+    }
+
+
+    public Map<ApiFeature, ApiUsageStateValue> checkStateUpdatedDueToThresholds() {
+        return checkStateUpdatedDueToThreshold(new HashSet<>(Arrays.asList(ApiFeature.values())));
+    }
+
+    public Map<ApiFeature, ApiUsageStateValue> checkStateUpdatedDueToThreshold(Set<ApiFeature> features) {
+        Map<ApiFeature, ApiUsageStateValue> result = new HashMap<>();
+        for (ApiFeature feature : features) {
+            Pair<ApiFeature, ApiUsageStateValue> tmp = checkStateUpdatedDueToThreshold(feature);
+            if (tmp != null) {
+                result.put(tmp.getFirst(), tmp.getSecond());
+            }
+        }
+        return result;
     }
 
     @Override

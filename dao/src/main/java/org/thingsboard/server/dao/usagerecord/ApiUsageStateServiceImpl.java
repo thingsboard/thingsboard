@@ -85,10 +85,6 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
 
         ApiUsageState saved = apiUsageStateDao.save(apiUsageState.getTenantId(), apiUsageState);
 
-        Tenant tenant = tenantDao.findById(tenantId, tenantId.getId());
-        TenantProfile tenantProfile = tenantProfileDao.findById(tenantId, tenant.getTenantProfileId().getId());
-        TenantProfileConfiguration configuration = tenantProfile.getProfileData().getConfiguration();
-
         List<TsKvEntry> apiUsageStates = new ArrayList<>();
         apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
                 new StringDataEntry(ApiFeature.TRANSPORT.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
@@ -104,12 +100,19 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
                 new StringDataEntry(ApiFeature.SMS.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
         tsService.save(tenantId, saved.getId(), apiUsageStates, 0L);
 
-        List<TsKvEntry> profileThresholds = new ArrayList<>();
+        if (entityId.getEntityType() == EntityType.TENANT && !entityId.equals(TenantId.SYS_TENANT_ID)) {
+            tenantId = (TenantId) entityId;
+            Tenant tenant = tenantDao.findById(tenantId, tenantId.getId());
+            TenantProfile tenantProfile = tenantProfileDao.findById(tenantId, tenant.getTenantProfileId().getId());
+            TenantProfileConfiguration configuration = tenantProfile.getProfileData().getConfiguration();
 
-        for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
-            profileThresholds.add(new BasicTsKvEntry(saved.getCreatedTime(), new LongDataEntry(key.getApiLimitKey(), configuration.getProfileThreshold(key))));
+            List<TsKvEntry> profileThresholds = new ArrayList<>();
+            for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
+                profileThresholds.add(new BasicTsKvEntry(saved.getCreatedTime(), new LongDataEntry(key.getApiLimitKey(), configuration.getProfileThreshold(key))));
+            }
+            tsService.save(tenantId, saved.getId(), profileThresholds, 0L);
         }
-        tsService.save(tenantId, saved.getId(), profileThresholds, 0L);
+
         return saved;
     }
 
@@ -150,8 +153,8 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
                         throw new DataValidationException("ApiUsageState should be assigned to tenant!");
                     } else {
                         Tenant tenant = tenantDao.findById(requestTenantId, apiUsageState.getTenantId().getId());
-                        if (tenant == null) {
-                            throw new DataValidationException("Asset is referencing to non-existent tenant!");
+                        if (tenant == null && !requestTenantId.equals(TenantId.SYS_TENANT_ID)) {
+                            throw new DataValidationException("ApiUsageState is referencing to non-existent tenant!");
                         }
                     }
                     if (apiUsageState.getEntityId() == null) {
