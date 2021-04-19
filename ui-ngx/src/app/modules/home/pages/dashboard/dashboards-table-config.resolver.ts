@@ -93,7 +93,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     this.config.entityResources = entityTypeResources.get(EntityType.DASHBOARD);
 
     this.config.deleteEntityTitle = dashboard =>
-      this.translate.instant('dashboard.delete-dashboard-title', { dashboardTitle: dashboard.title });
+      this.translate.instant('dashboard.delete-dashboard-title', {dashboardTitle: dashboard.title});
     this.config.deleteEntityContent = () => this.translate.instant('dashboard.delete-dashboard-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('dashboard.delete-dashboards-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('dashboard.delete-dashboards-text');
@@ -103,7 +103,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
       return this.dashboardService.saveDashboard(dashboard as Dashboard);
     };
     this.config.onEntityAction = action => this.onDashboardAction(action);
-    this.config.detailsReadonly = () => this.config.componentsData.dashboardScope === 'customer_user';
+    this.config.detailsReadonly = () => (this.config.componentsData.dashboardScope === 'customer_user' || this.config.componentsData.dashboardScope === 'edge_customer_user');
   }
 
   resolve(route: ActivatedRouteSnapshot): Observable<EntityTableConfig<DashboardInfo | Dashboard>> {
@@ -147,7 +147,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
         this.config.cellActionDescriptors = this.configureCellActions(this.config.componentsData.dashboardScope);
         this.config.groupActionDescriptors = this.configureGroupActions(this.config.componentsData.dashboardScope);
         this.config.addActionDescriptors = this.configureAddActions(this.config.componentsData.dashboardScope);
-        this.config.addEnabled = this.config.componentsData.dashboardScope !== 'customer_user';
+        this.config.addEnabled = !(this.config.componentsData.dashboardScope === 'customer_user' || this.config.componentsData.dashboardScope === 'edge_customer_user');
         this.config.entitiesDeleteEnabled = this.config.componentsData.dashboardScope === 'tenant';
         this.config.deleteEnabled = () => this.config.componentsData.dashboardScope === 'tenant';
         return this.config;
@@ -363,8 +363,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
       this.router.navigateByUrl(`customers/${this.config.componentsData.customerId}/dashboards/${dashboard.id.id}`);
     } else if (this.config.componentsData.dashboardScope === 'edge') {
       this.router.navigateByUrl(`edges/${this.config.componentsData.edgeId}/dashboards/${dashboard.id.id}`);
-    }
-    else {
+    } else {
       this.router.navigateByUrl(`dashboards/${dashboard.id.id}`);
     }
   }
@@ -421,7 +420,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
           }
         }).afterClosed()
           .subscribe(() => {
-              this.config.table.updateData();
+            this.config.table.updateData();
           });
       }
     );

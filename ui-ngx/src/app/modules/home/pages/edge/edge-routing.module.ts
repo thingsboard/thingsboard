@@ -33,8 +33,11 @@ import { RuleChainType } from '@shared/models/rule-chain.models';
 import {
   importRuleChainBreadcumbLabelFunction,
   ResolvedRuleChainMetaDataResolver,
-  ruleChainBreadcumbLabelFunction, RuleChainImportGuard,
-  RuleChainResolver, RuleNodeComponentsResolver, TooltipsterResolver
+  ruleChainBreadcumbLabelFunction,
+  RuleChainImportGuard,
+  RuleChainResolver,
+  RuleNodeComponentsResolver,
+  TooltipsterResolver
 } from '@home/pages/rulechain/rulechain-routing.module';
 
 const routes: Routes = [
@@ -56,21 +59,6 @@ const routes: Routes = [
         },
         resolve: {
           entitiesTableConfig: EdgesTableConfigResolver
-        }
-      },
-      {
-        path: ':edgeId/ruleChains',
-        component: EntitiesTableComponent,
-        data: {
-          auth: [Authority.TENANT_ADMIN],
-          ruleChainsType: 'edge',
-          breadcrumb: {
-            label: 'edge.edge-rulechains',
-            icon: 'settings_ethernet'
-          },
-        },
-        resolve: {
-          entitiesTableConfig: RuleChainsTableConfigResolver
         }
       },
       {
@@ -157,6 +145,50 @@ const routes: Routes = [
         ]
       },
       {
+        path: ':edgeId/ruleChains',
+        data: {
+          breadcrumb: {
+            label: 'edge.edge-rulechains',
+            icon: 'settings_ethernet'
+          }
+        },
+        children: [
+          {
+            path: '',
+            component: EntitiesTableComponent,
+            data: {
+              auth: [Authority.TENANT_ADMIN],
+              title: 'edge.rulechains',
+              ruleChainsType: 'edge'
+            },
+            resolve: {
+              entitiesTableConfig: RuleChainsTableConfigResolver
+            }
+          },
+          {
+            path: ':ruleChainId',
+            component: RuleChainPageComponent,
+            canDeactivate: [ConfirmOnExitGuard],
+            data: {
+              breadcrumb: {
+                labelFunction: ruleChainBreadcumbLabelFunction,
+                icon: 'settings_ethernet'
+              } as BreadCrumbConfig<RuleChainPageComponent>,
+              auth: [Authority.TENANT_ADMIN],
+              title: 'rulechain.edge-rulechain',
+              import: false,
+              ruleChainType: RuleChainType.EDGE
+            },
+            resolve: {
+              ruleChain: RuleChainResolver,
+              ruleChainMetaData: ResolvedRuleChainMetaDataResolver,
+              ruleNodeComponents: RuleNodeComponentsResolver,
+              tooltipster: TooltipsterResolver
+            }
+          }
+        ]
+      },
+      {
         path: 'ruleChains',
         data: {
           breadcrumb: {
@@ -220,7 +252,7 @@ const routes: Routes = [
           }
         ]
       }
-      ]
+    ]
   }];
 
 @NgModule({
@@ -230,4 +262,5 @@ const routes: Routes = [
     EdgesTableConfigResolver
   ]
 })
-export class EdgeRoutingModule { }
+export class EdgeRoutingModule {
+}

@@ -97,7 +97,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
 
     this.config.addDialogStyle = {width: '600px'};
 
-    this.config.deleteEntityTitle = device => this.translate.instant('device.delete-device-title', { deviceName: device.name });
+    this.config.deleteEntityTitle = device => this.translate.instant('device.delete-device-title', {deviceName: device.name});
     this.config.deleteEntityContent = () => this.translate.instant('device.delete-device-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('device.delete-devices-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('device.delete-devices-text');
@@ -109,10 +109,10 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           this.broadcast.broadcast('deviceSaved');
         }),
         mergeMap((savedDevice) => this.deviceService.getDeviceInfo(savedDevice.id.id)
-      ));
+        ));
     };
     this.config.onEntityAction = action => this.onDeviceAction(action);
-    this.config.detailsReadonly = () => this.config.componentsData.deviceScope === 'customer_user';
+    this.config.detailsReadonly = () => (this.config.componentsData.deviceScope === 'customer_user' || this.config.componentsData.deviceScope === 'edge_customer_user');
 
     this.config.headerComponent = DeviceTableHeaderComponent;
 
@@ -161,7 +161,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
         this.config.cellActionDescriptors = this.configureCellActions(this.config.componentsData.deviceScope);
         this.config.groupActionDescriptors = this.configureGroupActions(this.config.componentsData.deviceScope);
         this.config.addActionDescriptors = this.configureAddActions(this.config.componentsData.deviceScope);
-        this.config.addEnabled = this.config.componentsData.deviceScope !== 'customer_user';
+        this.config.addEnabled = !(this.config.componentsData.deviceScope === 'customer_user' || this.config.componentsData.deviceScope === 'edge_customer_user');
         this.config.entitiesDeleteEnabled = this.config.componentsData.deviceScope === 'tenant';
         this.config.deleteEnabled = () => this.config.componentsData.deviceScope === 'tenant';
         return this.config;
@@ -208,7 +208,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       this.config.entitiesFetchFunction = pageLink =>
         this.deviceService.getCustomerDeviceInfosByDeviceProfileId(this.customerId, pageLink,
           this.config.componentsData.deviceProfileId !== null ?
-          this.config.componentsData.deviceProfileId.id : '');
+            this.config.componentsData.deviceProfileId.id : '');
       this.config.deleteEntity = id => this.deviceService.unassignDeviceFromCustomer(id.id);
     }
   }
@@ -250,26 +250,26 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       );
     }
     if (deviceScope === 'customer') {
-        actions.push(
-          {
-            name: this.translate.instant('device.unassign-from-customer'),
-            icon: 'assignment_return',
-            isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && !entity.customerIsPublic),
-            onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
-          },
-          {
-            name: this.translate.instant('device.make-private'),
-            icon: 'reply',
-            isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && entity.customerIsPublic),
-            onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
-          },
-          {
-            name: this.translate.instant('device.manage-credentials'),
-            icon: 'security',
-            isEnabled: () => true,
-            onAction: ($event, entity) => this.manageCredentials($event, entity)
-          }
-        );
+      actions.push(
+        {
+          name: this.translate.instant('device.unassign-from-customer'),
+          icon: 'assignment_return',
+          isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && !entity.customerIsPublic),
+          onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
+        },
+        {
+          name: this.translate.instant('device.make-private'),
+          icon: 'reply',
+          isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && entity.customerIsPublic),
+          onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
+        },
+        {
+          name: this.translate.instant('device.manage-credentials'),
+          icon: 'security',
+          isEnabled: () => true,
+          onAction: ($event, entity) => this.manageCredentials($event, entity)
+        }
+      );
     }
     if (deviceScope === 'customer_user' || deviceScope === 'edge_customer_user') {
       actions.push(
@@ -452,10 +452,10 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       }
     }).afterClosed()
       .subscribe((res) => {
-      if (res) {
-        this.config.table.updateData();
-      }
-    });
+        if (res) {
+          this.config.table.updateData();
+        }
+      });
   }
 
   unassignFromCustomer($event: Event, device: DeviceInfo) {

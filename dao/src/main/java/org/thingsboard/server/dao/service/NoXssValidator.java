@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.service;
 
-import com.google.common.io.Resources;
 import lombok.extern.slf4j.Slf4j;
 import org.owasp.validator.html.AntiSamy;
 import org.owasp.validator.html.Policy;
@@ -25,6 +24,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
+import java.util.Optional;
 
 @Slf4j
 public class NoXssValidator implements ConstraintValidator<NoXss, Object> {
@@ -34,17 +34,21 @@ public class NoXssValidator implements ConstraintValidator<NoXss, Object> {
     @Override
     public void initialize(NoXss constraintAnnotation) {
         if (xssPolicy == null) {
-            try {
-                xssPolicy = Policy.getInstance(Resources.getResource("xss-policy.xml"));
-            } catch (Exception e) {
-                log.error("Failed to set xss policy: {}", e.getMessage());
-            }
+            xssPolicy = Optional.ofNullable(getClass().getClassLoader().getResourceAsStream("xss-policy.xml"))
+                    .map(inputStream -> {
+                        try {
+                            return Policy.getInstance(inputStream);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .orElseThrow(() -> new IllegalStateException("XSS policy file not found"));
         }
     }
 
     @Override
     public boolean isValid(Object value, ConstraintValidatorContext constraintValidatorContext) {
-        if (!(value instanceof String) || ((String) value).isEmpty() || xssPolicy == null) {
+        if (!(value instanceof String) || ((String) value).isEmpty()) {
             return true;
         }
 

@@ -1,0 +1,73 @@
+<!--
+
+    Copyright © 2016-2021 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form fxLayout="column" class="mat-content mat-padding" [formGroup]="eventFilterFormGroup" (ngSubmit)="update()">
+  <ng-container *ngFor="let column of showColumns">
+    <ng-container [ngSwitch]="column.key">
+      <ng-template [ngSwitchCase]="isSelector(column.key)">
+        <mat-form-field>
+          <mat-label>{{ column.title | translate}}</mat-label>
+          <mat-select [formControlName]="column.key">
+            <mat-option [value]="">{{ 'event.all-events' | translate}}</mat-option>
+            <mat-option *ngFor="let value of selectorValues(column.key)" [value]="value">
+              {{ value }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </ng-template>
+      <ng-template [ngSwitchCase]="isNumberFields(column.key)">
+        <mat-form-field>
+          <mat-label>{{ column.title | translate}}</mat-label>
+          <input matInput type="number" min="0" [name]="column.key" [formControlName]="column.key">
+          <mat-error *ngIf="eventFilterFormGroup.get(column.key).hasError('min')">
+            {{ 'event.min-value' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </ng-template>
+      <ng-template [ngSwitchCase]="'isError'">
+        <tb-checkbox formControlName="isError" [falseValue]="''">
+          {{ 'event.has-error' | translate }}
+        </tb-checkbox>
+      </ng-template>
+      <ng-template [ngSwitchCase]="'error'">
+        <mat-form-field fxHide [fxShow]="showErrorMsgFields()">
+          <mat-label>{{ column.title | translate}}</mat-label>
+          <input matInput type="text" name="errorSearchText" formControlName="error">
+        </mat-form-field>
+      </ng-template>
+      <ng-container *ngSwitchDefault>
+        <mat-form-field>
+          <mat-label>{{ column.title | translate}}</mat-label>
+          <input matInput type="text" [name]="column.key" [formControlName]="column.key">
+        </mat-form-field>
+      </ng-container>
+    </ng-container>
+  </ng-container>
+  <div fxLayout="row" class="tb-panel-actions" fxLayoutAlign="end center">
+    <button type="button"
+            mat-button
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button type="submit"
+            mat-raised-button
+            color="primary"
+            [disabled]="eventFilterFormGroup.invalid || !eventFilterFormGroup.dirty">
+      {{ 'action.update' | translate }}
+    </button>
+  </div>
+</form>

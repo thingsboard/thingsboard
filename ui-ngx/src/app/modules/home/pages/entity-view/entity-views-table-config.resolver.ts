@@ -89,7 +89,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
     this.config.addDialogStyle = {maxWidth: '800px'};
 
     this.config.deleteEntityTitle = entityView =>
-      this.translate.instant('entity-view.delete-entity-view-title', { entityViewName: entityView.name });
+      this.translate.instant('entity-view.delete-entity-view-title', {entityViewName: entityView.name});
     this.config.deleteEntityContent = () => this.translate.instant('entity-view.delete-entity-view-text');
     this.config.deleteEntitiesTitle = count => this.translate.instant('entity-view.delete-entity-views-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('entity-view.delete-entity-views-text');
@@ -104,7 +104,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
         ));
     };
     this.config.onEntityAction = action => this.onEntityViewAction(action);
-    this.config.detailsReadonly = () => this.config.componentsData.entityViewScope === 'customer_user';
+    this.config.detailsReadonly = () => (this.config.componentsData.entityViewScope === 'customer_user' || this.config.componentsData.entityViewScope === 'edge_customer_user');
 
     this.config.headerComponent = EntityViewTableHeaderComponent;
 
@@ -143,8 +143,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
           this.edgeService.getEdge(this.config.componentsData.edgeId).subscribe(
             edge => this.config.tableTitle = edge.name + ': ' + this.translate.instant('entity-view.entity-views')
           );
-        }
-        else {
+        } else {
           this.config.tableTitle = this.translate.instant('entity-view.entity-views');
         }
         this.config.columns = this.configureColumns(this.config.componentsData.entityViewScope);
@@ -152,7 +151,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
         this.config.cellActionDescriptors = this.configureCellActions(this.config.componentsData.entityViewScope);
         this.config.groupActionDescriptors = this.configureGroupActions(this.config.componentsData.entityViewScope);
         this.config.addActionDescriptors = this.configureAddActions(this.config.componentsData.entityViewScope);
-        this.config.addEnabled = this.config.componentsData.entityViewScope !== 'customer_user';
+        this.config.addEnabled = !(this.config.componentsData.entityViewScope === 'customer_user' || this.config.componentsData.entityViewScope !== 'edge_customer_user');
         this.config.entitiesDeleteEnabled = this.config.componentsData.entityViewScope === 'tenant';
         this.config.deleteEnabled = () => this.config.componentsData.entityViewScope === 'tenant';
         return this.config;

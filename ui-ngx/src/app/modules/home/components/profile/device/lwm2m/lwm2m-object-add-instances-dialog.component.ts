@@ -30,9 +30,10 @@ export interface Lwm2mObjectAddInstancesData {
 
 @Component({
   selector: 'tb-lwm2m-object-add-instances',
-  templateUrl: './lwm2m-object-add-instances.component.html'
+  templateUrl: './lwm2m-object-add-instances-dialog.component.html'
 })
-export class Lwm2mObjectAddInstancesComponent extends DialogComponent<Lwm2mObjectAddInstancesComponent, object> implements OnInit {
+export class Lwm2mObjectAddInstancesDialogComponent extends DialogComponent<Lwm2mObjectAddInstancesDialogComponent, object>
+  implements OnInit {
 
   instancesFormGroup: FormGroup;
   submitted = false;
@@ -40,7 +41,7 @@ export class Lwm2mObjectAddInstancesComponent extends DialogComponent<Lwm2mObjec
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: Lwm2mObjectAddInstancesData,
-              public dialogRef: MatDialogRef<Lwm2mObjectAddInstancesComponent, object>,
+              public dialogRef: MatDialogRef<Lwm2mObjectAddInstancesDialogComponent, object>,
               public fb: FormBuilder) {
     super(store, router, dialogRef);
   }

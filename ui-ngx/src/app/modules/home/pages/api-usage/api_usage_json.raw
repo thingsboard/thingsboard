@@ -4413,7 +4413,8 @@
       "showDashboardExport": false,
       "toolbarAlwaysOpen": true,
       "titleColor": "rgba(0,0,0,0.870588)",
-      "showFilters": false
+      "showFilters": false,
+      "showDashboardLogo": false
     }
   },
   "name": "Api Usage"

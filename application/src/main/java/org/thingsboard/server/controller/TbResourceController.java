@@ -30,22 +30,19 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.dao.resource.TbResourceService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.resource.TbResourceService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.StringJoiner;
 
 @Slf4j
 @RestController
@@ -54,12 +51,6 @@ import java.util.StringJoiner;
 public class TbResourceController extends BaseController {
 
     public static final String RESOURCE_ID = "resourceId";
-
-    private final TbResourceService resourceService;
-
-    public TbResourceController(TbResourceService resourceService) {
-        this.resourceService = resourceService;
-    }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/resource/{resourceId}/download", method = RequestMethod.GET)
@@ -111,25 +102,13 @@ public class TbResourceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/resource", method = RequestMethod.POST)
     @ResponseBody
-    public List<TbResource> saveResources(@RequestBody List<TbResource> resources) throws ThingsboardException {
+    public TbResource saveResource(@RequestBody TbResource resource) throws ThingsboardException {
         try {
-            List<TbResource> addResources = new ArrayList<>();
-            StringJoiner noSaveResources = new StringJoiner("; ");
-            resources.forEach(resource -> {
-                try {
                     resource.setTenantId(getTenantId());
                     checkEntity(resource.getId(), resource, Resource.TB_RESOURCE);
-                    addResources.add(addResource(resource));
-                } catch (Exception e) {
-                    noSaveResources.add(resource.getFileName());
-                    log.warn("Fail save resource: [{}]", resource.getFileName(), e);
+                    return addResource(resource);
                 }
-            });
-            if (noSaveResources.length() > 0) {
-                throw new ThingsboardException(String.format("Fail save resource: %s", noSaveResources.toString()), ThingsboardErrorCode.INVALID_ARGUMENTS);
-            }
-            return addResources;
-        } catch (Exception e) {
+         catch (Exception e) {
             throw handleException(e);
         }
     }

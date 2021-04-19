@@ -15,13 +15,13 @@
  */
 package org.thingsboard.server.service.edge.rpc.constructor;
 
+import com.google.gson.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
@@ -82,7 +82,7 @@ public class EntityDataMsgConstructor {
                     AttributeDeleteMsg.Builder attributeDeleteMsg = AttributeDeleteMsg.newBuilder();
                     attributeDeleteMsg.setScope(entityData.getAsJsonObject().getAsJsonPrimitive("scope").getAsString());
                     JsonArray jsonArray = entityData.getAsJsonObject().getAsJsonArray("keys");
-                    List<String> keys = new Gson().fromJson(jsonArray.toString(), List.class);
+                    List<String> keys = new Gson().fromJson(jsonArray.toString(), new TypeToken<>(){}.getType());
                     attributeDeleteMsg.addAllAttributeNames(keys);
                     attributeDeleteMsg.build();
                     builder.setAttributeDeleteMsg(attributeDeleteMsg);
