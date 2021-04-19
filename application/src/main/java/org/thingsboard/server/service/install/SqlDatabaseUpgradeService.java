@@ -241,6 +241,12 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     try {
                         conn.createStatement().execute("ALTER TABLE rule_chain ADD COLUMN type varchar(255) DEFAULT 'CORE'"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
                     } catch (Exception e) {}
+
+                    log.info("Load Edge TTL functions ...");
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "2.6.0", "schema_update_ttl.sql");
+                    loadSql(schemaUpdateFile, conn);
+                    log.info("Edge TTL functions successfully loaded!");
+
                     log.info("Schema updated.");
                 }
                 break;
