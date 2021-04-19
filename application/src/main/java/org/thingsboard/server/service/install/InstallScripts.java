@@ -207,17 +207,7 @@ public class InstallScripts {
             log.error("Unable to load dashboard from json", e);
             throw new RuntimeException("Unable to load dashboard from json", e);
         }
-        loadEdgeDemoRuleChains(tenantId);
-    }
-
-    private void loadEdgeDemoRuleChains(TenantId tenantId) throws Exception {
-        Path edgeRuleChainsDir = Paths.get(getDataDir(), JSON_DIR, DEMO_DIR, EDGE_MANAGEMENT, RULE_CHAINS_DIR);
-        try {
-            loadRuleChainFromFile(tenantId, edgeRuleChainsDir.resolve("edge_root_rule_chain.json"));
-        } catch (Exception e) {
-            log.error("Unable to load dashboard from json", e);
-            throw new RuntimeException("Unable to load dashboard from json", e);
-        }
+        createDefaultEdgeRuleChains(tenantId);
     }
 
     private void loadRuleChainFromFile(TenantId tenantId, Path ruleChainPath) {

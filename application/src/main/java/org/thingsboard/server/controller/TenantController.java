@@ -77,9 +77,7 @@ public class TenantController extends BaseController {
             tenant = checkNotNull(tenantService.saveTenant(tenant));
             if (newTenant) {
                 installScripts.createDefaultRuleChains(tenant.getId());
-                if (edgesEnabled) {
-                    installScripts.createDefaultEdgeRuleChains(tenant.getId());
-                }
+                installScripts.createDefaultEdgeRuleChains(tenant.getId());
             }
             return tenant;
         } catch (Exception e) {
