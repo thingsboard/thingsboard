@@ -153,13 +153,19 @@ public class ThingsboardInstallService {
                         }
 
                     case "2.5.5":
-                        log.info("Upgrading ThingsBoard from version 2.5.5 to 2.6.0 ...");
+                        log.info("Upgrading ThingsBoard from version 2.5.5 to 2.5.6 ...");
                         if (databaseTsUpgradeService != null) {
                             databaseTsUpgradeService.upgradeDatabase("2.5.5");
                         }
-                        databaseEntitiesUpgradeService.upgradeDatabase("2.5.5");
 
-                        dataUpdateService.updateData("2.5.5");
+                    case "2.5.6":
+                        log.info("Upgrading ThingsBoard from version 2.5.5 to 2.6.0 ...");
+                        if (databaseTsUpgradeService != null) {
+                            databaseTsUpgradeService.upgradeDatabase("2.5.6");
+                        }
+                        databaseEntitiesUpgradeService.upgradeDatabase("2.5.6");
+
+                        dataUpdateService.updateData("2.5.6");
 
                         log.info("Updating system data...");
 

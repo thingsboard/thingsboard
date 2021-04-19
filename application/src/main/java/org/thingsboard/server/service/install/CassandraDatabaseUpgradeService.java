@@ -308,7 +308,7 @@ public class CassandraDatabaseUpgradeService extends AbstractCassandraDatabaseUp
                 }
                 log.info("Schema updated.");
                 break;
-            case "2.5.5":
+            case "2.5.6":
 
                 log.info("Upgrading Cassandra DataBase from version {} to 2.6.0 ...", fromVersion);
 

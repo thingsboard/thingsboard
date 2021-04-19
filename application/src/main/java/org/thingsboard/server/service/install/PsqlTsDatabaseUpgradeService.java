@@ -196,12 +196,13 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
                 }
                 break;
             case "2.5.4":
+            case "2.5.5":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Load Drop Partitions functions ...");
                     loadSql(conn, "2.4.3", LOAD_DROP_PARTITIONS_FUNCTIONS_SQL);
                 }
                 break;
-            case "2.5.5":
+            case "2.5.6":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Load Edge TTL functions ...");
                     loadSql(conn, "2.6.0", LOAD_TTL_FUNCTIONS_SQL);
