@@ -13,7 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.thingsboard.server.common.data.event;
 
-:host {
-  min-width: 364px;
+import lombok.Data;
+import org.thingsboard.server.common.data.StringUtils;
+
+@Data
+public class StatisticsEventFilter implements EventFilter {
+    private String server;
+    private Integer messagesProcessed;
+    private Integer errorsOccurred;
+
+    @Override
+    public EventType getEventType() {
+        return EventType.STATS;
+    }
+
+    @Override
+    public boolean hasFilterForJsonBody() {
+        return !StringUtils.isEmpty(server) || (messagesProcessed != null && messagesProcessed > 0) || (errorsOccurred != null && errorsOccurred > 0);
+    }
 }

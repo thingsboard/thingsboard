@@ -243,6 +243,7 @@ sql:
       batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:100}"
       stats_print_interval_ms: "${SQL_TS_LATEST_BATCH_STATS_PRINT_MS:10000}"
       batch_threads: "${SQL_TS_LATEST_BATCH_THREADS:4}"
+      update_by_latest_ts: "${SQL_TS_UPDATE_BY_LATEST_TIMESTAMP:true}"
     # Specify whether to sort entities before batch update. Should be enabled for cluster mode to avoid deadlocks
     batch_sort: "${SQL_BATCH_SORT:false}"
     # Specify whether to remove null characters from strValue of attributes and timeseries before insert
@@ -516,7 +517,7 @@ js:
   # Built-in JVM JavaScript environment properties
   local:
     # Use Sandboxed (secured) JVM JavaScript environment
-    use_js_sandbox: "${USE_LOCAL_JS_SANDBOX:false}"
+    use_js_sandbox: "${USE_LOCAL_JS_SANDBOX:true}"
     # Specify thread pool size for JavaScript sandbox resource monitor
     monitor_thread_pool_size: "${LOCAL_JS_SANDBOX_MONITOR_THREAD_POOL_SIZE:4}"
     # Maximum CPU time in milliseconds allowed for script execution

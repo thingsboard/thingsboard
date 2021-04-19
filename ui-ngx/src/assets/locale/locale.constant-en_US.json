@@ -746,6 +746,8 @@
         "display-filters": "Display filters",
         "display-dashboard-timewindow": "Display timewindow",
         "display-dashboard-export": "Display export",
+        "display-dashboard-logo": "Display logo in dashboard fullscreen mode",
+        "dashboard-logo-image": "Dashboard logo image",
         "import": "Import dashboard",
         "export": "Export dashboard",
         "export-failed-error": "Unable to export dashboard: {{error}}",
@@ -1616,6 +1618,7 @@
     },
     "event": {
         "event-type": "Event type",
+        "events-filter": "Events Filter",
         "type-error": "Error",
         "type-lc-event": "Lifecycle event",
         "type-stats": "Statistics",
@@ -1629,7 +1632,6 @@
         "body": "Body",
         "method": "Method",
         "type": "Type",
-        "entity": "Entity",
         "message-id": "Message Id",
         "message-type": "Message Type",
         "data-type": "Data Type",
@@ -1641,7 +1643,14 @@
         "success": "Success",
         "failed": "Failed",
         "messages-processed": "Messages processed",
-        "errors-occurred": "Errors occurred"
+        "min-messages-processed": "Minimum messages processed",
+        "errors-occurred": "Errors occurred",
+        "min-errors-occurred": "Minimum errors occurred",
+        "min-value": "Minimum value is 0.",
+        "all-events": "All",
+        "has-error": "Has error",
+        "entity-id": "Entity Id",
+        "entity-type": "Entity type"
     },
     "extension": {
         "extensions": "Extensions",
