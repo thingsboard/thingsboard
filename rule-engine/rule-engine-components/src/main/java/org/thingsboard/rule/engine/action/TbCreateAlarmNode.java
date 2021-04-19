@@ -58,6 +58,16 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
 
     private static ObjectMapper mapper = new ObjectMapper();
     private List<String> relationTypes;
+    private AlarmSeverity notDynamicAlarmSeverity;
+
+    @Override
+    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
+        super.init(ctx, configuration);
+        if(!this.config.isDynamicSeverity()) {
+            this.notDynamicAlarmSeverity = AlarmSeverity.valueOf(this.config.getSeverity());
+        }
+    }
+
 
     @Override
     protected TbCreateAlarmNodeConfiguration loadAlarmNodeConfig(TbNodeConfiguration configuration) throws TbNodeException {
@@ -151,7 +161,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
                 .tenantId(tenantId)
                 .originator(msg.getOriginator())
                 .status(AlarmStatus.ACTIVE_UNACK)
-                .severity(processAlarmSeverity(msg))
+                .severity(this.config.isDynamicSeverity() ? processAlarmSeverity(msg) : notDynamicAlarmSeverity)
                 .propagate(config.isPropagate())
                 .type(TbNodeUtils.processPattern(this.config.getAlarmType(), msg))
                 .propagateRelationTypes(relationTypes)
@@ -163,21 +173,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
     }
 
     private AlarmSeverity processAlarmSeverity(TbMsg msg) {
-        AlarmSeverity alarmSeverity;
-        if(this.config.isDynamicSeverity()) {
-            String processPattern = TbNodeUtils.processPattern(this.config.getSeverity(), msg);
-            if(!EnumUtils.isValidEnum(AlarmSeverity.class, processPattern)) {
-                alarmSeverity = null;
-            } else {
-                alarmSeverity = EnumUtils.getEnum(AlarmSeverity.class, processPattern);
-            }
-        } else {
-            alarmSeverity = EnumUtils.getEnum(AlarmSeverity.class, this.config.getSeverity());
-        }
-        if(alarmSeverity == null) {
-            throw new RuntimeException("Used incorrect pattern or Alarm Severity not included in message");
-        }
-        return alarmSeverity;
+        return AlarmSeverity.valueOf(TbNodeUtils.processPattern(this.config.getSeverity(), msg));
     }
 
 }
