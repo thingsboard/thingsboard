@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import {Component, forwardRef, Input} from '@angular/core';
+import { Component, forwardRef, Input } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -24,9 +24,7 @@ import {
   NG_VALUE_ACCESSOR,
   Validators
 } from '@angular/forms';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {coerceBooleanProperty} from '@angular/cdk/coercion';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   ATTRIBUTE,
   ATTRIBUTE_LWM2M,
@@ -38,9 +36,8 @@ import {
   RESOURCES,
   TELEMETRY
 } from './lwm2m-profile-config.models';
-import {deepClone, isDefinedAndNotNull, isEqual, isUndefined} from '@core/utils';
-import {MatDialog} from '@angular/material/dialog';
-import {TranslateService} from '@ngx-translate/core';
+import { deepClone, isDefinedAndNotNull, isEqual, isUndefined } from '@core/utils';
+import { MatDialog } from '@angular/material/dialog';
 import {
   Lwm2mObjectAddInstancesData,
   Lwm2mObjectAddInstancesDialogComponent
@@ -83,10 +80,8 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
   @Input()
   disabled: boolean;
 
-  constructor(private store: Store<AppState>,
-              private fb: FormBuilder,
-              private dialog: MatDialog,
-              public translate: TranslateService) {
+  constructor(private fb: FormBuilder,
+              private dialog: MatDialog) {
     this.observeAttrTelemetryFormGroup = this.fb.group({
       [CLIENT_LWM2M]: this.fb.array([])
     });
@@ -98,7 +93,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
   }
 
   private propagateChange = (v: any) => {
-  };
+  }
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
@@ -189,7 +184,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
     this.observeAttrTelemetryFormGroup.get(CLIENT_LWM2M).updateValueAndValidity();
   }
 
-  trackByParams = (index: number, element: any): number => {
+  trackByParams = (index: number): number => {
     return index;
   }
 
@@ -252,7 +247,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
   }
 
   private updateInstancesIds = (data: Lwm2mObjectAddInstancesData): void => {
-    debugger
     const objectLwM2MFormGroup = (this.observeAttrTelemetryFormGroup.get(CLIENT_LWM2M) as FormArray).controls
       .find(e => e.value.keyId === data.objectKeyId) as FormGroup;
     const instancesArray = objectLwM2MFormGroup.value.instances as Instance [];
@@ -318,7 +312,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
     return  objectName + ' <' + idVerObj + '>';
   }
   getNameInstanceLwm2m = (instance: Instance, idVerObj: string): string => {
-    return  ' instance <' + idVerObj + '/' + instance.id +'>';
+    return  ` instance <${idVerObj}/${instance.id}>`;
   }
 
   updateAttributeLwm2mObject = (event: Event, objectKeyId: number): void => {

@@ -14,10 +14,9 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Inject, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { ControlValueAccessor, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import {
-  DeviceCredentialsDialogLwm2mData,
   KEY_REGEXP_HEX_DEC,
   LEN_MAX_PRIVATE_KEY,
   LEN_MAX_PSK,
@@ -27,10 +26,6 @@ import {
   SECURITY_CONFIG_MODE_NAMES,
   ServerSecurityConfig
 } from '@home/pages/device/lwm2m/security-config.models';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { PageComponent } from '@shared/components/page.component';
 
 @Component({
   selector: 'tb-security-config-server-lwm2m',
@@ -45,7 +40,7 @@ import { PageComponent } from '@shared/components/page.component';
   ]
 })
 
-export class SecurityConfigServerComponent extends PageComponent implements OnInit, ControlValueAccessor {
+export class SecurityConfigServerComponent implements OnInit, ControlValueAccessor {
 
   securityConfigLwM2MType = SECURITY_CONFIG_MODE;
   securityConfigLwM2MTypes = Object.keys(SECURITY_CONFIG_MODE);
@@ -57,15 +52,10 @@ export class SecurityConfigServerComponent extends PageComponent implements OnIn
 
   @Input() serverFormGroup: FormGroup;
 
-  constructor(protected store: Store<AppState>,
-              @Inject(MAT_DIALOG_DATA) public data: DeviceCredentialsDialogLwm2mData,
-              public dialogRef: MatDialogRef<SecurityConfigServerComponent, object>,
-              public fb: FormBuilder) {
-    super(store);
+  constructor() {
   }
 
   ngOnInit(): void {
-    this.registerDisableOnLoadFormControl(this.serverFormGroup.get('securityMode'));
   }
 
   private updateValueFields(serverData: ServerSecurityConfig): void {
@@ -137,6 +127,6 @@ export class SecurityConfigServerComponent extends PageComponent implements OnIn
   registerOnTouched(fn: any): void {
   }
 
-  setDisabledState?(isDisabled: boolean): void {
+  setDisabledState(isDisabled: boolean): void {
   }
 }

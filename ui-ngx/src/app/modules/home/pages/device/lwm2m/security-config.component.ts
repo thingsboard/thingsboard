@@ -15,14 +15,14 @@
 ///
 
 
-import {Component, Inject, OnInit} from '@angular/core';
-import {DialogComponent} from '@shared/components/dialog.component';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {Router} from '@angular/router';
-import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {TranslateService} from '@ngx-translate/core';
+import { Component, Inject, OnInit } from '@angular/core';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { Router } from '@angular/router';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
 import {
   BOOTSTRAP_SERVER,
   BOOTSTRAP_SERVERS,
@@ -38,9 +38,8 @@ import {
   SECURITY_CONFIG_MODE_NAMES,
   SecurityConfigModels
 } from './security-config.models';
-import {WINDOW} from '@core/services/window.service';
-import {MatTabChangeEvent} from '@angular/material/tabs';
-import {MatTab} from '@angular/material/tabs/tab';
+import { MatTabChangeEvent } from '@angular/material/tabs';
+import { MatTab } from '@angular/material/tabs/tab';
 
 @Component({
   selector: 'tb-security-config-lwm2m',
@@ -71,8 +70,7 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
               @Inject(MAT_DIALOG_DATA) public data: DeviceCredentialsDialogLwm2mData,
               public dialogRef: MatDialogRef<SecurityConfigComponent, object>,
               public fb: FormBuilder,
-              public translate: TranslateService,
-              @Inject(WINDOW) private window: Window) {
+              public translate: TranslateService) {
     super(store, router, dialogRef);
   }
 

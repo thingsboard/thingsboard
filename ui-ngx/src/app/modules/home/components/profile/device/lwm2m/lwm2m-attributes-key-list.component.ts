@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import {Component, forwardRef, Input, OnInit} from "@angular/core";
+import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -26,17 +26,17 @@ import {
   NG_VALUE_ACCESSOR,
   Validator,
   Validators
-} from "@angular/forms";
-import {Subscription} from "rxjs";
-import {PageComponent} from "@shared/components/page.component";
-import {Store} from "@ngrx/store";
-import {AppState} from "@core/core.state";
+} from '@angular/forms';
+import { Subscription } from 'rxjs';
 import {
   ATTRIBUTE_KEYS,
   ATTRIBUTE_LWM2M_ENUM,
   ATTRIBUTE_LWM2M_MAP
-} from "@home/components/profile/device/lwm2m/lwm2m-profile-config.models";
-import {isDefinedAndNotNull, isEmpty, isEmptyStr, isUndefinedOrNull} from "@core/utils";
+} from './lwm2m-profile-config.models';
+import { isDefinedAndNotNull, isEmpty, isEmptyStr, isUndefinedOrNull } from '@core/utils';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { PageComponent } from '@shared/components/page.component';
 
 
 @Component({
@@ -98,7 +98,7 @@ export class Lwm2mAttributesKeyListComponent extends PageComponent implements Co
   registerOnTouched(fn: any): void {
   }
 
-  setDisabledState?(isDisabled: boolean): void {
+  setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
       this.kvListFormGroup.disable({emitEvent: false});
@@ -166,10 +166,10 @@ export class Lwm2mAttributesKeyListComponent extends PageComponent implements Co
     };
   }
 
-  private updateValidate (c?: FormControl) {
+  private updateValidate() {
     const kvList = this.kvListFormGroup.get('keyVals') as FormArray;
     kvList.controls.forEach(fg => {
-      if (fg.get('key').value==='ver') {
+      if (fg.get('key').value === 'ver') {
         fg.get('value').setValidators(null);
         fg.get('value').setErrors(null);
       }
@@ -189,7 +189,7 @@ export class Lwm2mAttributesKeyListComponent extends PageComponent implements Co
         if (isUndefinedOrNull(entry.value) || entry.key === 'ver' || isEmptyStr(entry.value.toString())) {
           keyValMap[entry.key] = entry.value.toString();
         } else {
-          keyValMap[entry.key] = Number(entry.value)
+          keyValMap[entry.key] = Number(entry.value);
         }
       });
       this.propagateChange(keyValMap);
@@ -215,13 +215,13 @@ export class Lwm2mAttributesKeyListComponent extends PageComponent implements Co
   private attributeLwm2mValueNumberValidator = (control: AbstractControl) => {
     if (isNaN(Number(control.value)) || Number(control.value) < 0) {
       return {
-        'validAttributeValue': true
+        validAttributeValue: true
       };
     }
     return null;
   }
 
-  private attributeLwm2mValueValidator = (property: string): Object [] => {
-    return property === 'ver'?  [] : [this.attributeLwm2mValueNumberValidator];
+  private attributeLwm2mValueValidator = (property: string): object[] => {
+    return property === 'ver' ?  [] : [this.attributeLwm2mValueNumberValidator];
   }
 }

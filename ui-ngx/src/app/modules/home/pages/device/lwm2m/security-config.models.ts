@@ -73,7 +73,7 @@ export interface SecurityConfigModels {
 }
 
 export function getClientSecurityConfig(securityConfigMode: SECURITY_CONFIG_MODE, endPoint?: string): ClientSecurityConfig {
-  let security = getDefaultClientSecurityConfig();
+  const security = getDefaultClientSecurityConfig();
   security.securityConfigClientMode = securityConfigMode.toString();
   switch (securityConfigMode) {
     case SECURITY_CONFIG_MODE.PSK:
@@ -121,38 +121,34 @@ export function getDefaultSecurityConfig(): SecurityConfigModels {
   return securityConfigModels;
 }
 
-const isSecurityConfigModels = (p: any): p is SecurityConfigModels =>
+const isSecurityConfigModels = (p: any): boolean =>
   p.hasOwnProperty('client') &&
-    isClientSecurityConfigType(p['client']) &&
+    isClientSecurityConfigType(p.client) &&
   p.hasOwnProperty('bootstrap') &&
-    isBootstrapSecurityConfig(p['bootstrap']);
+    isBootstrapSecurityConfig(p.bootstrap);
 
-const isClientSecurityConfigType = (p: any): p is ClientSecurityConfig =>
+const isClientSecurityConfigType = (p: any): boolean =>
   p.hasOwnProperty('securityConfigClientMode') &&
   p.hasOwnProperty('endpoint') &&
   p.hasOwnProperty('identity') &&
   p.hasOwnProperty('key') &&
   p.hasOwnProperty('x509');
 
-const isBootstrapSecurityConfig = (p: any): p is BootstrapSecurityConfig =>
+const isBootstrapSecurityConfig = (p: any): boolean =>
   p.hasOwnProperty('bootstrapServer') &&
-    isServerSecurityConfig(p['bootstrapServer']) &&
+    isServerSecurityConfig(p.bootstrapServer) &&
   p.hasOwnProperty('lwm2mServer') &&
-    isServerSecurityConfig(p['lwm2mServer']);
+    isServerSecurityConfig(p.lwm2mServer);
 
-const isServerSecurityConfig = (p: any): p is ServerSecurityConfig =>
+const isServerSecurityConfig = (p: any): boolean =>
   p.hasOwnProperty('securityMode') &&
   p.hasOwnProperty('clientPublicKeyOrId') &&
   p.hasOwnProperty('clientSecretKey');
 
 export function validateSecurityConfig(config: string): boolean {
   try {
-    const securityConfig= JSON.parse(config);
-    if (isSecurityConfigModels(securityConfig)) {
-      return true;
-    } else {
-      return false;
-    }
+    const securityConfig = JSON.parse(config);
+    return isSecurityConfigModels(securityConfig);
   } catch (e) {
     return false;
   }

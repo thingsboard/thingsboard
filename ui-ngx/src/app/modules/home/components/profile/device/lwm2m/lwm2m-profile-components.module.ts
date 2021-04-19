@@ -14,19 +14,19 @@
 /// limitations under the License.
 ///
 
-import {NgModule} from '@angular/core';
-import {Lwm2mDeviceProfileTransportConfigurationComponent} from './lwm2m-device-profile-transport-configuration.component';
-import {Lwm2mObjectListComponent} from './lwm2m-object-list.component';
-import {Lwm2mObserveAttrTelemetryComponent} from './lwm2m-observe-attr-telemetry.component';
-import {Lwm2mObserveAttrTelemetryResourceComponent} from './lwm2m-observe-attr-telemetry-resource.component';
-import {Lwm2mAttributesDialogComponent} from './lwm2m-attributes-dialog.component';
-import {Lwm2mAttributesComponent} from './lwm2m-attributes.component';
-import {Lwm2mAttributesKeyListComponent} from './lwm2m-attributes-key-list.component';
-import {Lwm2mDeviceConfigServerComponent} from './lwm2m-device-config-server.component';
-import {Lwm2mObjectAddInstancesDialogComponent} from './lwm2m-object-add-instances-dialog.component';
-import {Lwm2mObjectAddInstancesListComponent} from './lwm2m-object-add-instances-list.component';
-import {CommonModule} from '@angular/common';
-import {SharedModule} from '@app/shared/shared.module';
+import { NgModule } from '@angular/core';
+import { Lwm2mDeviceProfileTransportConfigurationComponent } from './lwm2m-device-profile-transport-configuration.component';
+import { Lwm2mObjectListComponent } from './lwm2m-object-list.component';
+import { Lwm2mObserveAttrTelemetryComponent } from './lwm2m-observe-attr-telemetry.component';
+import { Lwm2mObserveAttrTelemetryResourceComponent } from './lwm2m-observe-attr-telemetry-resource.component';
+import { Lwm2mAttributesDialogComponent } from './lwm2m-attributes-dialog.component';
+import { Lwm2mAttributesComponent } from './lwm2m-attributes.component';
+import { Lwm2mAttributesKeyListComponent } from './lwm2m-attributes-key-list.component';
+import { Lwm2mDeviceConfigServerComponent } from './lwm2m-device-config-server.component';
+import { Lwm2mObjectAddInstancesDialogComponent } from './lwm2m-object-add-instances-dialog.component';
+import { Lwm2mObjectAddInstancesListComponent } from './lwm2m-object-add-instances-list.component';
+import { CommonModule } from '@angular/common';
+import { SharedModule } from '@app/shared/shared.module';
 
 @NgModule({
   declarations:

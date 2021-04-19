@@ -14,21 +14,20 @@
 /// limitations under the License.
 ///
 
-import {Component, Inject, OnInit, SkipSelf} from "@angular/core";
-import {ErrorStateMatcher} from "@angular/material/core";
-import {DialogComponent} from "@shared/components/dialog.component";
-import {Store} from "@ngrx/store";
-import {AppState} from "@core/core.state";
-import {Router} from "@angular/router";
-import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
-import {FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm} from "@angular/forms";
-import {TranslateService} from "@ngx-translate/core";
-import {JsonObject} from "@angular/compiler-cli/ngcc/src/packages/entry_point";
+import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
+import { ErrorStateMatcher } from '@angular/material/core';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { Router } from '@angular/router';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm } from '@angular/forms';
+import { JsonObject } from '@angular/compiler-cli/ngcc/src/packages/entry_point';
 
 export interface Lwm2mAttributesDialogData {
   readonly: boolean;
   attributeLwm2m: JsonObject;
-  destName: string
+  destName: string;
 }
 
 @Component({
@@ -37,7 +36,8 @@ export interface Lwm2mAttributesDialogData {
   styleUrls: ['./lwm2m-attributes.component.scss'],
   providers: [{provide: ErrorStateMatcher, useExisting: Lwm2mAttributesDialogComponent}],
 })
-export class Lwm2mAttributesDialogComponent extends DialogComponent<Lwm2mAttributesDialogComponent, Object> implements OnInit, ErrorStateMatcher {
+export class Lwm2mAttributesDialogComponent extends DialogComponent<Lwm2mAttributesDialogComponent, object>
+  implements OnInit, ErrorStateMatcher {
 
   readonly = this.data.readonly;
 
@@ -54,8 +54,7 @@ export class Lwm2mAttributesDialogComponent extends DialogComponent<Lwm2mAttribu
               @Inject(MAT_DIALOG_DATA) public data: Lwm2mAttributesDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<Lwm2mAttributesDialogComponent, object>,
-              private fb: FormBuilder,
-              public translate: TranslateService) {
+              private fb: FormBuilder) {
     super(store, router, dialogRef);
 
     this.attributeLwm2mDialogFormGroup = this.fb.group({
