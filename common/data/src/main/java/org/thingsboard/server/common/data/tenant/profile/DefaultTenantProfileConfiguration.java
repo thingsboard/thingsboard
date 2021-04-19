@@ -15,10 +15,16 @@
  */
 package org.thingsboard.server.common.data.tenant.profile;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.TenantProfileType;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Data
 public class DefaultTenantProfileConfiguration implements TenantProfileConfiguration {
 
