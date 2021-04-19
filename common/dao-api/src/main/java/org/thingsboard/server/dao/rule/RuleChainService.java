@@ -43,7 +43,7 @@ public interface RuleChainService {
 
     boolean setRootRuleChain(TenantId tenantId, RuleChainId ruleChainId);
 
-    RuleChainMetaData saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData);
+    boolean saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData);
 
     RuleChainMetaData loadRuleChainMetaData(TenantId tenantId, RuleChainId ruleChainId);
 
