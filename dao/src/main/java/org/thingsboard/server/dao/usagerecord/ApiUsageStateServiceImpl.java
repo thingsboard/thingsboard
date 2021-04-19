@@ -41,6 +41,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -70,7 +71,8 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
 
     @Override
     public ApiUsageState createDefaultApiUsageState(TenantId tenantId, EntityId entityId) {
-        log.trace("Executing createDefaultUsageRecord [{}]", tenantId);
+        entityId = Objects.requireNonNullElse(entityId, tenantId);
+        log.trace("Executing createDefaultUsageRecord [{}]", entityId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         ApiUsageState apiUsageState = new ApiUsageState();
         apiUsageState.setTenantId(tenantId);
