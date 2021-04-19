@@ -64,7 +64,10 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         super.init(ctx, configuration);
         if(!this.config.isDynamicSeverity()) {
-            this.notDynamicAlarmSeverity = AlarmSeverity.valueOf(this.config.getSeverity());
+            this.notDynamicAlarmSeverity = EnumUtils.getEnum(AlarmSeverity.class, this.config.getSeverity());
+            if(this.notDynamicAlarmSeverity == null) {
+                throw new TbNodeException("Incorrect Alarm Severity value: " + this.config.getSeverity());
+            }
         }
     }
 
@@ -173,7 +176,11 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
     }
 
     private AlarmSeverity processAlarmSeverity(TbMsg msg) {
-        return AlarmSeverity.valueOf(TbNodeUtils.processPattern(this.config.getSeverity(), msg));
+        AlarmSeverity severity = EnumUtils.getEnum(AlarmSeverity.class, TbNodeUtils.processPattern(this.config.getSeverity(), msg));
+        if(severity == null) {
+            throw new RuntimeException("Used incorrect pattern or Alarm Severity not included in message");
+        }
+        return severity;
     }
 
 }
