@@ -547,7 +547,7 @@ transport:
     report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:30000}"
   json:
     # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
-    type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:false}"
+    type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:true}"
     # Maximum allowed string value length when processing Telemetry/Attributes JSON (0 value disables string value length check)
     max_string_value_length: "${JSON_MAX_STRING_VALUE_LENGTH:0}"
   client_side_rpc:
