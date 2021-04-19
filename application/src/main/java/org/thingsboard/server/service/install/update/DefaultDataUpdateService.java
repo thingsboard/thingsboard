@@ -44,7 +44,6 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.sql.device.DeviceProfileRepository;
@@ -82,14 +81,6 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     @Autowired
     private DeviceProfileRepository deviceProfileRepository;
-
-    @Autowired
-    private DeviceProfileService deviceProfileService;
-
-    public static void main(String[] args) {
-        JsonNode node = JacksonUtil.toJsonNode("{\"alarms\": [{\"id\": \"6109e314-c438-ea53-deb7-df16e33eb24f\", \"alarmType\": \"oiuytre\", \"clearRule\": null, \"propagate\": false, \"createRules\": {\"CRITICAL\": {\"schedule\": null, \"condition\": {\"spec\": {\"type\": \"REPEATING\", \"count\": 3}, \"condition\": [{\"key\": {\"key\": \"wer\", \"type\": \"ATTRIBUTE\"}, \"value\": null, \"predicate\": {\"type\": \"NUMERIC\", \"value\": {\"userValue\": null, \"defaultValue\": 5.0, \"dynamicValue\": {\"inherit\": true, \"sourceType\": \"CURRENT_DEVICE\", \"sourceAttribute\": \"egrbr\"}}, \"operation\": \"GREATER\"}, \"valueType\": \"NUMERIC\"}]}, \"alarmDetails\": null}, \"INDETERMINATE\": {\"schedule\": null, \"condition\": {\"spec\": {\"type\": \"DURATION\", \"unit\": \"HOURS\", \"value\": 8}, \"condition\": [{\"key\": {\"key\": \"wegrtd\", \"type\": \"ATTRIBUTE\"}, \"value\": null, \"predicate\": {\"type\": \"BOOLEAN\", \"value\": {\"userValue\": null, \"defaultValue\": true, \"dynamicValue\": null}, \"operation\": \"EQUAL\"}, \"valueType\": \"BOOLEAN\"}]}, \"alarmDetails\": null}}, \"propagateRelationTypes\": null}], \"configuration\": {\"type\": \"DEFAULT\"}, \"provisionConfiguration\": {\"type\": \"DISABLED\", \"provisionDeviceSecret\": null}, \"transportConfiguration\": {\"type\": \"DEFAULT\"}}");
-        node.get("alarms").get(0).get("clearRule");
-    }
 
     @Override
     public void updateData(String fromVersion) throws Exception {
