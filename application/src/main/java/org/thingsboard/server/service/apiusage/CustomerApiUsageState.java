@@ -13,23 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.auth;
+package org.thingsboard.server.service.apiusage;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.EntityType;
 
-@Data
-public class TransportDeviceInfo {
+public class CustomerApiUsageState extends BaseApiUsageState {
+    public CustomerApiUsageState(ApiUsageState apiUsageState) {
+        super(apiUsageState);
+    }
 
-    private TenantId tenantId;
-    private CustomerId customerId;
-    private DeviceProfileId deviceProfileId;
-    private DeviceId deviceId;
-    private String deviceName;
-    private String deviceType;
-    private String additionalInfo;
-
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.CUSTOMER;
+    }
 }

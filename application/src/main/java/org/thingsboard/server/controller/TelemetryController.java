@@ -48,6 +48,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -449,7 +450,7 @@ public class TelemetryController extends BaseController {
                 TenantProfile tenantProfile = tenantProfileCache.get(tenantId);
                 tenantTtl = TimeUnit.DAYS.toSeconds(((DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration()).getDefaultStorageTtlDays());
             }
-            tsSubService.saveAndNotify(tenantId, entityId, entries, tenantTtl, new FutureCallback<Void>() {
+            tsSubService.saveAndNotify(tenantId, user.getCustomerId(), entityId, entries, tenantTtl, new FutureCallback<Void>() {
                 @Override
                 public void onSuccess(@Nullable Void tmp) {
                     logTelemetryUpdated(user, entityId, entries, null);

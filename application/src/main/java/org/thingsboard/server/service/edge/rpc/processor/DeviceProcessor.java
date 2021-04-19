@@ -233,7 +233,7 @@ public class DeviceProcessor extends BaseProcessor {
             ObjectNode entityNode = mapper.valueToTree(device);
             TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceId,
                     getActionTbMsgMetaData(edge, device.getCustomerId()), TbMsgDataType.JSON, mapper.writeValueAsString(entityNode));
-            tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, new TbQueueCallback() {
+            tbClusterService.pushMsgToRuleEngine(tenantId, device.getCustomerId(), deviceId, tbMsg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
                     log.debug("Successfully send ENTITY_CREATED EVENT to rule engine [{}]", device);
