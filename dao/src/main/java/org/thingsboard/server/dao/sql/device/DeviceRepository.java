@@ -190,7 +190,18 @@ public interface DeviceRepository extends PagingAndSortingRepository<DeviceEntit
                                                       @Param("searchText") String searchText,
                                                       Pageable pageable);
 
-    Long countByTenantId(UUID tenantId);
+    /**
+     * Count devices by tenantId.
+     * Custom query applied because default QueryDSL produces slow count(id).
+     * <p>
+     * There is two way to count devices.
+     * OPTIMAL: count(*)
+     *   - returns _row_count_ and use index-only scan (super fast).
+     * SLOW: count(id)
+     *   - returns _NON_NULL_id_count and performs table scan to verify isNull for each id in filtered rows.
+     * */
+    @Query("SELECT count(*) FROM DeviceEntity d WHERE d.tenantId = :tenantId")
+    Long countByTenantId(@Param("tenantId") UUID tenantId);
 
     @Query("SELECT d.id FROM DeviceEntity d " +
             "INNER JOIN DeviceProfileEntity p ON d.deviceProfileId = p.id " +

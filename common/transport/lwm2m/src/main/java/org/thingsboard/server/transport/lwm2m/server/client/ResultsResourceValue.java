@@ -13,11 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.sql;
+package org.thingsboard.server.transport.lwm2m.server.client;
 
-import org.thingsboard.server.dao.service.BaseTbResourceServiceTest;
-import org.thingsboard.server.dao.service.DaoSqlTest;
+import lombok.Data;
+import org.thingsboard.server.common.data.kv.DataType;
 
-@DaoSqlTest
-public class TbResourceServiceSqlTest extends BaseTbResourceServiceTest {
+@Data
+public class ResultsResourceValue {
+    DataType dataType;
+    Object value;
+    String resourceName;
+
+    public ResultsResourceValue (DataType dataType, Object value, String resourceName) {
+        this.dataType = dataType;
+        this.value = value;
+        this.resourceName = resourceName;
+    }
 }

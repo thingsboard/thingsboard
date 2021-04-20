@@ -29,7 +29,7 @@ import {
   ResourceTypeMIMETypes,
   ResourceTypeTranslationMap
 } from '@shared/models/resource.models';
-import { distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { pairwise, startWith, takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-resources-library',
@@ -54,15 +54,22 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
   ngOnInit() {
     super.ngOnInit();
     this.entityForm.get('resourceType').valueChanges.pipe(
-      distinctUntilChanged((oldValue, newValue) => [oldValue, newValue].includes(this.resourceType.LWM2M_MODEL)),
+      startWith(ResourceType.LWM2M_MODEL),
+      pairwise(),
       takeUntil(this.destroy$)
-    ).subscribe((type) => {
+    ).subscribe(([previousType, type]) => {
+      if (previousType === this.resourceType.LWM2M_MODEL) {
+        this.entityForm.get('title').setValidators(Validators.required);
+        this.entityForm.get('title').updateValueAndValidity({emitEvent: false});
+      }
       if (type === this.resourceType.LWM2M_MODEL) {
         this.entityForm.get('title').clearValidators();
-      } else {
-        this.entityForm.get('title').setValidators(Validators.required);
+        this.entityForm.get('title').updateValueAndValidity({emitEvent: false});
       }
-      this.entityForm.get('title').updateValueAndValidity({emitEvent: false});
+      this.entityForm.patchValue({
+        data: null,
+        fileName: null
+      }, {emitEvent: false});
     });
   }
 
@@ -83,8 +90,10 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
   buildForm(entity: Resource): FormGroup {
     return this.fb.group(
       {
-        resourceType: [{value: entity?.resourceType ? entity.resourceType : ResourceType.LWM2M_MODEL,
-                        disabled: this.isEdit }, [Validators.required]],
+        resourceType: [{
+          value: entity?.resourceType ? entity.resourceType : ResourceType.LWM2M_MODEL,
+          disabled: this.isEdit
+        }, [Validators.required]],
         data: [entity ? entity.data : null, [Validators.required]],
         fileName: [entity ? entity.fileName : null, [Validators.required]],
         title: [entity ? entity.title : '', []]
@@ -118,5 +127,9 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
     } catch (e) {
       return '*/*';
     }
+  }
+
+  convertToBase64File(data: string): string {
+    return window.btoa(data);
   }
 }

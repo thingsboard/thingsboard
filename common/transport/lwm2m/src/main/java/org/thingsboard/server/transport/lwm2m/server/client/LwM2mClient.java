@@ -25,18 +25,21 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mQueuedRequest;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServiceImpl;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertToObjectIdFromIdVer;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertPathFromIdVerToObjectId;
 
 @Slf4j
 @Data
@@ -54,6 +57,7 @@ public class LwM2mClient implements Cloneable {
     private final Map<String, ResourceValue> resources;
     private final Map<String, TransportProtos.TsKvProto> delayedRequests;
     private final List<String> pendingRequests;
+    private final Queue<LwM2mQueuedRequest> queuedRequests;
     private boolean init;
 
     public Object clone() throws CloneNotSupportedException {
@@ -71,6 +75,7 @@ public class LwM2mClient implements Cloneable {
         this.profileId = profileId;
         this.sessionId = sessionId;
         this.init = false;
+        this.queuedRequests = new ConcurrentLinkedQueue<>();
     }
 
     public boolean saveResourceValue(String pathRez, LwM2mResource rez, LwM2mModelProvider modelProvider) {
@@ -78,7 +83,7 @@ public class LwM2mClient implements Cloneable {
             this.resources.get(pathRez).setLwM2mResource(rez);
             return true;
         } else {
-            LwM2mPath pathIds = new LwM2mPath(convertToObjectIdFromIdVer(pathRez));
+            LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRez));
             ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
             if (resourceModel != null) {
                 this.resources.put(pathRez, new ResourceValue(rez, resourceModel));
@@ -103,9 +108,9 @@ public class LwM2mClient implements Cloneable {
      * @param modelProvider -
      */
     public void deleteResources(String pathIdVer, LwM2mModelProvider modelProvider) {
-        Set key = getKeysEqualsIdVer(pathIdVer);
+        Set<String> key = getKeysEqualsIdVer(pathIdVer);
         key.forEach(pathRez -> {
-            LwM2mPath pathIds = new LwM2mPath(convertToObjectIdFromIdVer(pathRez.toString()));
+            LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRez));
             ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
             if (resourceModel != null) {
                 this.resources.get(pathRez).setResourceModel(resourceModel);
@@ -122,17 +127,17 @@ public class LwM2mClient implements Cloneable {
      * @param modelProvider -
      */
     public void updateResourceModel(String idVer, LwM2mModelProvider modelProvider) {
-        Set key = getKeysEqualsIdVer(idVer);
-        key.forEach(k -> this.saveResourceModel(k.toString(), modelProvider));
+        Set<String> key = getKeysEqualsIdVer(idVer);
+        key.forEach(k -> this.saveResourceModel(k, modelProvider));
     }
 
     private void saveResourceModel(String pathRez, LwM2mModelProvider modelProvider) {
-        LwM2mPath pathIds = new LwM2mPath(convertToObjectIdFromIdVer(pathRez));
+        LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRez));
         ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
         this.resources.get(pathRez).setResourceModel(resourceModel);
     }
 
-    private Set getKeysEqualsIdVer(String idVer) {
+    private Set<String> getKeysEqualsIdVer(String idVer) {
         return this.resources.keySet()
                 .stream()
                 .filter(e -> idVer.equals(e.split(LWM2M_SEPARATOR_PATH)[1]))

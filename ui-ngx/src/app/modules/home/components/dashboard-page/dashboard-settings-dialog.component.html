@@ -52,7 +52,8 @@
                           formControlName="titleColor">
           </tb-color-input>
         </div>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayout.lt-md="column" fxLayoutAlign.lt-md  fxLayoutGap="8px">
+        <div fxLayout="row" fxLayoutAlign="start center" style="margin-bottom: 8px;"
+             fxLayout.lt-md="column" fxLayoutAlign.lt-md  fxLayoutGap="8px">
           <mat-checkbox fxFlex formControlName="showDashboardsSelect">
             {{ 'dashboard.display-dashboards-selection' | translate }}
           </mat-checkbox>
@@ -69,6 +70,13 @@
             {{ 'dashboard.display-dashboard-export' | translate }}
           </mat-checkbox>
         </div>
+        <mat-checkbox formControlName="showDashboardLogo">
+          {{ 'dashboard.display-dashboard-logo' | translate }}
+        </mat-checkbox>
+        <tb-image-input fxFlex *ngIf="settingsFormGroup.get('showDashboardLogo').value"
+                        label="{{'dashboard.dashboard-logo-image' | translate}}"
+                        formControlName="dashboardLogoUrl">
+        </tb-image-input>
       </div>
       <div *ngIf="gridSettings" [formGroup]="gridSettingsFormGroup">
         <tb-color-input fxFlex

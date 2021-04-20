@@ -20,6 +20,7 @@ import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 @Slf4j
 @Data
@@ -27,6 +28,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 public class TbResourceInfo extends SearchTextBased<TbResourceId> implements HasTenantId {
 
     private TenantId tenantId;
+    @NoXss
     private String title;
     private ResourceType resourceType;
     private String resourceKey;

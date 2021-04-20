@@ -82,8 +82,6 @@
                           <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
                         </mat-error>
                       </mat-form-field>
-                    </div>
-                    <div fxLayout="row" fxLayoutGap="8px">
                       <mat-form-field fxFlex>
                         <mat-label>{{ 'device-profile.lwm2m.default-min-period' | translate }}</mat-label>
                         <input matInput type="number" formControlName="defaultMinPeriod" required>
@@ -93,13 +91,16 @@
                           <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
                         </mat-error>
                       </mat-form-field>
-                      <mat-form-field fxFlex>
+                    </div>
+                    <div fxLayout="row" fxLayoutGap="8px">
+                      <mat-form-field class="mat-block" fxFlex="100">
                         <mat-label>{{ 'device-profile.lwm2m.binding' | translate }}</mat-label>
-                        <input matInput type="text" formControlName="binding" required>
-                        <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('binding').hasError('required')">
-                          {{ 'device-profile.lwm2m.binding' | translate }}
-                          <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
-                        </mat-error>
+                        <mat-select formControlName="binding">
+                          <mat-option *ngFor="let bindingMode of  bindingModeTypes"
+                                      [value]="bindingMode">
+                            {{ bindingModeTypeNamesMap.get(bindingModeType[bindingMode]) }}
+                          </mat-option>
+                        </mat-select>
                       </mat-form-field>
                     </div>
                     <div>

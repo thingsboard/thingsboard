@@ -477,8 +477,8 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
       $event.stopPropagation();
     }
     this.dialogService.confirm(
-      this.translate.instant('edge.unassign-edge-title', {count: edges.length}),
-      this.translate.instant('edge.unassign-edge-text'),
+      this.translate.instant('edge.unassign-edges-title', {count: edges.length}),
+      this.translate.instant('edge.unassign-edges-text'),
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'),
       true

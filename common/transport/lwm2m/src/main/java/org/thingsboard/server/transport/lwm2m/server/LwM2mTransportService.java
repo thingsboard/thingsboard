@@ -52,6 +52,10 @@ public interface LwM2mTransportService extends TbTransportService {
 
     void onResourceDelete(Optional<TransportProtos.ResourceDeleteMsg> resourceDeleteMsgOpt);
 
+    void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg toDeviceRequest);
+
+    void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse);
+
     void doTrigger(Registration registration, String path);
 
     void doDisconnect(TransportProtos.SessionInfoProto sessionInfo);
