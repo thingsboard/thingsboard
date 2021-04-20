@@ -22,7 +22,8 @@ import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   ATTRIBUTE,
-  DEFAULT_BINDING,
+  BINDING_MODE,
+  BINDING_MODE_NAMES,
   getDefaultProfileConfig,
   INSTANCES,
   KEY_NAME,
@@ -55,6 +56,9 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   private requiredValue: boolean;
   private disabled = false;
 
+  bindingModeType = BINDING_MODE;
+  bindingModeTypes = Object.keys(BINDING_MODE);
+  bindingModeTypeNamesMap = BINDING_MODE_NAMES;
   lwm2mDeviceProfileFormGroup: FormGroup;
   lwm2mDeviceConfigFormGroup: FormGroup;
   bootstrapServers: string;
@@ -86,7 +90,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       lifetime: [null, Validators.required],
       defaultMinPeriod: [null, Validators.required],
       notifIfDisabled: [true, []],
-      binding: [DEFAULT_BINDING, Validators.required],
+      binding:[],
       bootstrapServer: [null, Validators.required],
       lwm2mServer: [null, Validators.required],
     });

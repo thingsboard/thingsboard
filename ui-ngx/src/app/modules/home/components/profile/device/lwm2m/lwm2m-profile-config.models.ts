@@ -44,6 +44,35 @@ export const KEY_REGEXP_NUMBER = /^(\-?|\+?)\d*$/;
 export const INSTANCES_ID_VALUE_MIN = 0;
 export const INSTANCES_ID_VALUE_MAX = 65535;
 
+
+export enum BINDING_MODE {
+  U = 'U',
+  UQ = 'UQ',
+  T = 'T',
+  TQ = 'TQ',
+  S = 'S',
+  SQ = 'SQ',
+  US = 'US',
+  TS = 'TS',
+  UQS = 'UQS',
+  TQS = 'TQS'
+}
+
+export const BINDING_MODE_NAMES = new Map<BINDING_MODE, string>(
+  [
+    [BINDING_MODE.U, 'U: UDP connection in standard mode'],
+    [BINDING_MODE.UQ, 'UQ: UDP connection in queue mode'],
+    [BINDING_MODE.US, 'US: both UDP and SMS connections active, both in standard mode'],
+    [BINDING_MODE.UQS, 'UQS: both UDP and SMS connections active; UDP in queue mode, SMS in standard mode'],
+    [BINDING_MODE.T,'T: TCP connection in standard mode'],
+    [BINDING_MODE.TQ, 'TQ: TCP connection in queue mode'],
+    [BINDING_MODE.TS, 'TS: both TCP and SMS connections active, both in standard mode'],
+    [BINDING_MODE.TQS, 'TQS: both TCP and SMS connections active; TCP in queue mode, SMS in standard mode'],
+    [BINDING_MODE.S, 'S: SMS connection in standard mode'],
+    [BINDING_MODE.SQ, 'SQ: SMS connection in queue mode']
+  ]
+);
+
 export enum ATTRIBUTE_LWM2M_ENUM {
   dim = 'dim',
   ver = 'ver',
@@ -62,8 +91,7 @@ export const ATTRIBUTE_LWM2M_LABEL = new Map<ATTRIBUTE_LWM2M_ENUM, string>(
     [ATTRIBUTE_LWM2M_ENUM.pmax, 'pmax='],
     [ATTRIBUTE_LWM2M_ENUM.gt, '>'],
     [ATTRIBUTE_LWM2M_ENUM.lt, '<'],
-    [ATTRIBUTE_LWM2M_ENUM.st, 'st='],
-
+    [ATTRIBUTE_LWM2M_ENUM.st, 'st=']
   ]
 );
 
