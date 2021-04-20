@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.sql.device.DeviceProfileRepository;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
@@ -99,11 +98,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     private DeviceProfileService deviceProfileService;
 
     @Autowired
-    private DeviceProfileRepository deviceProfileRepository;
-
-    @Autowired
     private ApiUsageStateService apiUsageStateService;
-
 
     @Override
     public void upgradeDatabase(String fromVersion) throws Exception {
