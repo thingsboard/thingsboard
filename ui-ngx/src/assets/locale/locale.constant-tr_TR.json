@@ -915,7 +915,6 @@
     "body": "İçerik //(Body)",
     "method": "Yöntem",
     "type": "Tür",
-    "entity": "Varlık",
     "message-id": "Mesaj Kimliği",
     "message-type": "Mesaj tipi",
     "data-type": "Veri tipi",
@@ -927,7 +926,9 @@
     "success": "Başarı",
     "failed": "Başarısız oldu",
     "messages-processed": "Mesajlar işlendi",
-    "errors-occurred": "Hatalar oluştu"
+    "errors-occurred": "Hatalar oluştu",
+    "all-events": "Tümü",
+    "entity-type": "Öğe türü"
   },
   "extension": {
     "extensions": "Uzantılar",

@@ -38,6 +38,7 @@ import { ImportExportService } from '@home/components/import-export/import-expor
 import { NavigationCardsWidgetComponent } from '@home/components/widget/lib/navigation-cards-widget.component';
 import { NavigationCardWidgetComponent } from '@home/components/widget/lib/navigation-card-widget.component';
 import { EdgesOverviewWidgetComponent } from '@home/components/widget/lib/edges-overview-widget.component';
+import { JsonInputWidgetComponent } from '@home/components/widget/lib/json-input-widget.component';
 
 @NgModule({
   declarations:
@@ -51,6 +52,7 @@ import { EdgesOverviewWidgetComponent } from '@home/components/widget/lib/edges-
       EdgesOverviewWidgetComponent,
       DateRangeNavigatorWidgetComponent,
       DateRangeNavigatorPanelComponent,
+      JsonInputWidgetComponent,
       MultipleInputWidgetComponent,
       TripAnimationComponent,
       PhotoCameraInputWidgetComponent,
@@ -72,6 +74,7 @@ import { EdgesOverviewWidgetComponent } from '@home/components/widget/lib/edges-
     EdgesOverviewWidgetComponent,
     RpcWidgetsModule,
     DateRangeNavigatorWidgetComponent,
+    JsonInputWidgetComponent,
     MultipleInputWidgetComponent,
     TripAnimationComponent,
     PhotoCameraInputWidgetComponent,
@@ -84,4 +87,5 @@ import { EdgesOverviewWidgetComponent } from '@home/components/widget/lib/edges-
     ImportExportService
   ]
 })
-export class WidgetComponentsModule { }
+export class WidgetComponentsModule {
+}

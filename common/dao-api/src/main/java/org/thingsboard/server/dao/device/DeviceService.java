@@ -102,4 +102,6 @@ public interface DeviceService {
     PageData<Device> findDevicesByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink);
 
     PageData<Device> findDevicesByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, PageLink pageLink);
+
+    long countByTenantId(TenantId tenantId);
 }

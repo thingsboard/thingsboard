@@ -36,8 +36,8 @@ import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.dao.resource.TbResourceService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.resource.TbResourceService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -51,12 +51,6 @@ import java.util.List;
 public class TbResourceController extends BaseController {
 
     public static final String RESOURCE_ID = "resourceId";
-
-    private final TbResourceService resourceService;
-
-    public TbResourceController(TbResourceService resourceService) {
-        this.resourceService = resourceService;
-    }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/resource/{resourceId}/download", method = RequestMethod.GET)

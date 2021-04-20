@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.client;
 
+import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.springframework.stereotype.Service;
@@ -27,11 +28,14 @@ import org.thingsboard.server.transport.lwm2m.secure.ReadResultSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler;
 import org.thingsboard.server.transport.lwm2m.utils.TypeServer;
 
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.NO_SEC;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertPathFromObjectIdToIdVer;
 
 @Service
 @TbLwM2mTransportComponent
@@ -90,7 +94,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     @Override
     public LwM2mClient updateInSessionsLwM2MClient(Registration registration) {
         if (this.lwM2mClients.get(registration.getEndpoint()) == null) {
-            addLwM2mClientToSession(registration.getEndpoint());
+            this.addLwM2mClientToSession(registration.getEndpoint());
         }
         LwM2mClient lwM2MClient = lwM2mClients.get(registration.getEndpoint());
         lwM2MClient.setRegistration(registration);
@@ -168,5 +172,22 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
             return true;
         }
         return false;
+    }
+
+    /**
+     * if isVer - ok or default ver=DEFAULT_LWM2M_VERSION
+     * @param registration -
+     * @return - all objectIdVer in client
+     */
+    @Override
+    public Set<String> getSupportedIdVerInClient(Registration registration) {
+        Set<String> clientObjects = ConcurrentHashMap.newKeySet();
+        Arrays.stream(registration.getObjectLinks()).forEach(url -> {
+            LwM2mPath pathIds = new LwM2mPath(url.getUrl());
+            if (!pathIds.isRoot()) {
+                clientObjects.add(convertPathFromObjectIdToIdVer(url.getUrl(),  registration));
+            }
+        });
+        return (clientObjects.size() > 0) ? clientObjects : null;
     }
 }

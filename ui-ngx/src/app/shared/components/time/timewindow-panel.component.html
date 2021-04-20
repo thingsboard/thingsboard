@@ -51,7 +51,7 @@
                         [fxShow]="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL"
                         [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
                                 timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL"
-                        style="padding-top: 8px; min-width: 364px"></tb-quick-time-interval>
+                        style="padding-top: 8px"></tb-quick-time-interval>
                     </section>
                   </mat-radio-button>
                 </mat-radio-group>
@@ -75,6 +75,7 @@
                       <tb-timeinterval
                         formControlName="timewindowMs"
                         predefinedName="timewindow.last"
+                        class="history-time-input"
                         [fxShow]="timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL"
                         [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
                                 timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL"
@@ -86,6 +87,7 @@
                       <span translate>timewindow.time-period</span>
                       <tb-datetime-period
                         formControlName="fixedTimewindow"
+                        class="history-time-input"
                         [fxShow]="timewindowForm.get('history.historyType').value === historyTypes.FIXED"
                         [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
                                 timewindowForm.get('history.historyType').value === historyTypes.FIXED"
@@ -97,10 +99,11 @@
                       <span translate>timewindow.interval</span>
                       <tb-quick-time-interval
                         formControlName="quickInterval"
+                        class="history-time-input"
                         [fxShow]="timewindowForm.get('history.historyType').value === historyTypes.INTERVAL"
                         [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
                               timewindowForm.get('history.historyType').value === historyTypes.INTERVAL"
-                        style="padding-top: 8px; min-width: 364px"></tb-quick-time-interval>
+                        style="padding-top: 8px"></tb-quick-time-interval>
                     </section>
                   </mat-radio-button>
                 </mat-radio-group>
@@ -134,21 +137,23 @@
                           (ngModelChange)="onHideAggIntervalChanged()"></mat-checkbox>
           </section>
           <section fxLayout="column" fxFlex [fxShow]="isEdit || !timewindow.hideAggInterval">
-            <div class="limit-slider-container"
-                 fxLayout="row" fxLayoutAlign="start center">
-              <span translate>aggregation.limit</span>
-              <mat-slider fxFlex formControlName="limit"
-                          thumbLabel
-                          [value]="timewindowForm.get('aggregation.limit').value"
-                          min="{{minDatapointsLimit()}}"
-                          max="{{maxDatapointsLimit()}}">
-              </mat-slider>
-              <mat-form-field style="max-width: 80px;">
-                <input matInput formControlName="limit" type="number" step="1"
-                       [value]="timewindowForm.get('aggregation.limit').value"
-                       min="{{minDatapointsLimit()}}"
-                       max="{{maxDatapointsLimit()}}"/>
-              </mat-form-field>
+            <div class="limit-slider-container" fxLayout="row" fxLayoutAlign="start center"
+                                                fxLayout.xs="column"  fxLayoutAlign.xs="stretch">
+              <label translate>aggregation.limit</label>
+              <div fxLayout="row" fxLayoutAlign="start center" fxFlex>
+                <mat-slider fxFlex formControlName="limit"
+                            thumbLabel
+                            [value]="timewindowForm.get('aggregation.limit').value"
+                            min="{{minDatapointsLimit()}}"
+                            max="{{maxDatapointsLimit()}}">
+                </mat-slider>
+                <mat-form-field class="limit-slider-value">
+                  <input matInput formControlName="limit" type="number" step="1"
+                         [value]="timewindowForm.get('aggregation.limit').value"
+                         min="{{minDatapointsLimit()}}"
+                         max="{{maxDatapointsLimit()}}"/>
+                </mat-form-field>
+              </div>
             </div>
           </section>
         </section>

@@ -128,9 +128,10 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
             log.debug("Ignoring application ready event, ZK client is not started, ZK client state [{}]", client.getState());
             return;
         }
+        log.info("Going to publish current server...");
         publishCurrentServer();
-        TransportProtos.ServiceInfo currentService = serviceInfoProvider.getServiceInfo();
-        partitionService.recalculatePartitions(currentService, getOtherServers());
+        log.info("Going to recalculate partitions...");
+        recalculatePartitions();
     }
 
     public synchronized void publishCurrentServer() {
@@ -285,11 +286,19 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
             case CHILD_ADDED:
             case CHILD_UPDATED:
             case CHILD_REMOVED:
-                TransportProtos.ServiceInfo currentService = serviceInfoProvider.getServiceInfo();
-                partitionService.recalculatePartitions(currentService, getOtherServers());
+                recalculatePartitions();
                 break;
             default:
                 break;
         }
     }
+
+    /**
+     * A single entry point to recalculate partitions
+     * Synchronized to ensure that other servers info is up to date
+     * */
+    synchronized void recalculatePartitions() {
+        partitionService.recalculatePartitions(serviceInfoProvider.getServiceInfo(), getOtherServers());
+    }
+
 }

@@ -915,7 +915,6 @@
         "body": "Body",
         "method": "Metodo",
         "type": "Tipo",
-        "entity": "Entità",
         "message-id": "Id Messaggio",
         "message-type": "Tipo Messaggio",
         "data-type": "Tipo di dato",
@@ -927,7 +926,9 @@
         "success": "Success",
         "failed": "Failed",
         "messages-processed": "Messaggi elaborati",
-        "errors-occurred": "Si sono verificati degli errori"
+        "errors-occurred": "Si sono verificati degli errori",
+        "all-events": "Tutte",
+        "entity-type": "Tipo entità"
     },
     "extension": {
         "extensions": "Estensioni",
