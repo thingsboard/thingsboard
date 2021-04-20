@@ -15,23 +15,20 @@
 ///
 
 
-import { Component, Inject, OnInit } from '@angular/core';
-import { DialogComponent } from '@shared/components/dialog.component';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { Router } from '@angular/router';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { TranslateService } from '@ngx-translate/core';
+import {Component, Inject, OnInit} from '@angular/core';
+import {DialogComponent} from '@shared/components/dialog.component';
+import {Store} from '@ngrx/store';
+import {AppState} from '@core/core.state';
+import {Router} from '@angular/router';
+import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
+import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {TranslateService} from '@ngx-translate/core';
 import {
   BOOTSTRAP_SERVER,
   BOOTSTRAP_SERVERS,
-  ClientSecurityConfigNoSEC,
-  ClientSecurityConfigPSK,
-  ClientSecurityConfigRPK,
-  ClientSecurityConfigX509,
+  ClientSecurityConfig,
   DeviceCredentialsDialogLwm2mData,
-  getDefaultClientSecurityConfigType,
+  getClientSecurityConfig,
   JSON_ALL_CONFIG,
   KEY_REGEXP_HEX_DEC,
   LEN_MAX_PSK,
@@ -41,9 +38,9 @@ import {
   SECURITY_CONFIG_MODE_NAMES,
   SecurityConfigModels
 } from './security-config.models';
-import { WINDOW } from '@core/services/window.service';
-import { MatTabChangeEvent } from '@angular/material/tabs';
-import { MatTab } from '@angular/material/tabs/tab';
+import {WINDOW} from '@core/services/window.service';
+import {MatTabChangeEvent} from '@angular/material/tabs';
+import {MatTab} from '@angular/material/tabs/tab';
 
 @Component({
   selector: 'tb-security-config-lwm2m',
@@ -115,20 +112,20 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
       case SECURITY_CONFIG_MODE.NO_SEC:
         break;
       case SECURITY_CONFIG_MODE.PSK:
-        const clientSecurityConfigPSK = jsonAllConfig.client as ClientSecurityConfigPSK;
+        const clientSecurityConfigPSK = jsonAllConfig.client as ClientSecurityConfig;
         this.lwm2mConfigFormGroup.patchValue({
           identityPSK: clientSecurityConfigPSK.identity,
           clientKey: clientSecurityConfigPSK.key,
         }, {emitEvent: false});
         break;
       case SECURITY_CONFIG_MODE.RPK:
-        const clientSecurityConfigRPK = jsonAllConfig.client as ClientSecurityConfigRPK;
+        const clientSecurityConfigRPK = jsonAllConfig.client as ClientSecurityConfig;
         this.lwm2mConfigFormGroup.patchValue({
           clientKey: clientSecurityConfigRPK.key,
         }, {emitEvent: false});
         break;
       case SECURITY_CONFIG_MODE.X509:
-        const clientSecurityConfigX509 = jsonAllConfig.client as ClientSecurityConfigX509;
+        const clientSecurityConfigX509 = jsonAllConfig.client as ClientSecurityConfig;
         this.lwm2mConfigFormGroup.patchValue({
           clientCertificate: clientSecurityConfigX509.x509
         }, {emitEvent: false});
@@ -140,7 +137,7 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
   securityConfigClientModeChanged = (mode: SECURITY_CONFIG_MODE): void => {
     switch (mode) {
       case SECURITY_CONFIG_MODE.NO_SEC:
-        const clientSecurityConfigNoSEC = getDefaultClientSecurityConfigType(mode) as ClientSecurityConfigNoSEC;
+        const clientSecurityConfigNoSEC = getClientSecurityConfig(mode) as ClientSecurityConfig;
         this.jsonAllConfig.client = clientSecurityConfigNoSEC;
         this.lwm2mConfigFormGroup.patchValue({
           jsonAllConfig: this.jsonAllConfig,
@@ -148,8 +145,8 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
         }, {emitEvent: false});
         break;
       case SECURITY_CONFIG_MODE.PSK:
-        const clientSecurityConfigPSK = getDefaultClientSecurityConfigType(mode, this.lwm2mConfigFormGroup.get('endPoint')
-          .value) as ClientSecurityConfigPSK;
+        const clientSecurityConfigPSK = getClientSecurityConfig(mode, this.lwm2mConfigFormGroup.get('endPoint')
+          .value) as ClientSecurityConfig;
         clientSecurityConfigPSK.identity = this.data.endPoint;
         clientSecurityConfigPSK.key = this.lwm2mConfigFormGroup.get('clientKey').value;
         this.jsonAllConfig.client = clientSecurityConfigPSK;
@@ -159,7 +156,7 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
         }, {emitEvent: false});
         break;
       case SECURITY_CONFIG_MODE.RPK:
-        const clientSecurityConfigRPK = getDefaultClientSecurityConfigType(mode) as ClientSecurityConfigRPK;
+        const clientSecurityConfigRPK = getClientSecurityConfig(mode) as ClientSecurityConfig;
         clientSecurityConfigRPK.key = this.lwm2mConfigFormGroup.get('clientKey').value;
         this.jsonAllConfig.client = clientSecurityConfigRPK;
         this.lwm2mConfigFormGroup.patchValue({
@@ -167,7 +164,7 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
         }, {emitEvent: false});
         break;
       case SECURITY_CONFIG_MODE.X509:
-        this.jsonAllConfig.client = getDefaultClientSecurityConfigType(mode) as ClientSecurityConfigX509;
+        this.jsonAllConfig.client = getClientSecurityConfig(mode) as ClientSecurityConfig;
         this.lwm2mConfigFormGroup.patchValue({
           clientCertificate: true
         }, {emitEvent: false});
@@ -236,11 +233,11 @@ export class SecurityConfigComponent extends DialogComponent<SecurityConfigCompo
     if (this.lwm2mConfigFormGroup !== null) {
       if (!this.lwm2mConfigFormGroup.get('endPoint').pristine && this.lwm2mConfigFormGroup.get('endPoint').valid) {
         this.data.endPoint = this.lwm2mConfigFormGroup.get('endPoint').value;
-        // Client mode == PSK
+        /** Client mode == PSK */
         if (this.lwm2mConfigFormGroup.get('securityConfigClientMode').value === SECURITY_CONFIG_MODE.PSK) {
           const endPoint = 'endpoint';
           this.jsonAllConfig.client[endPoint] = this.data.endPoint;
-          this.jsonAllConfig.client[endPoint].markAsPristine({
+          this.lwm2mConfigFormGroup.get('endPoint').markAsPristine({
             onlySelf: true
           });
           this.upDateJsonAllConfig();

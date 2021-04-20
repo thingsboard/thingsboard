@@ -110,12 +110,11 @@ public class TbResourceController extends BaseController {
     @ResponseBody
     public TbResource saveResource(@RequestBody TbResource resource) throws ThingsboardException {
         try {
-            resource.setTenantId(getTenantId());
-            checkEntity(resource.getId(), resource, Resource.TB_RESOURCE);
-            TbResource savedResource = checkNotNull(resourceService.saveResource(resource));
-            tbClusterService.onResourceChange(savedResource, null);
-            return savedResource;
-        } catch (Exception e) {
+                    resource.setTenantId(getTenantId());
+                    checkEntity(resource.getId(), resource, Resource.TB_RESOURCE);
+                    return addResource(resource);
+                }
+         catch (Exception e) {
             throw handleException(e);
         }
     }
@@ -182,5 +181,12 @@ public class TbResourceController extends BaseController {
         } catch (Exception e) {
             throw handleException(e);
         }
+    }
+
+    private TbResource addResource(TbResource resource) throws Exception {
+            checkEntity(resource.getId(), resource, Resource.TB_RESOURCE);
+            TbResource savedResource = checkNotNull(resourceService.saveResource(resource));
+            tbClusterService.onResourceChange(savedResource, null);
+            return savedResource;
     }
 }

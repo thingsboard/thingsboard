@@ -36,7 +36,7 @@
       </mat-form-field>
       <mat-form-field class="mat-block" *ngIf="entityForm.get('resourceType').value !== resourceType.LWM2M_MODEL || !isAdd">
         <mat-label translate>resource.title</mat-label>
-        <input matInput formControlName="title" required [readonly]="entityForm.get('resourceType').value === resourceType.LWM2M_MODEL">
+        <input matInput formControlName="title" required>
         <mat-error *ngIf="entityForm.get('title').hasError('required')">
           {{ 'resource.title-required' | translate }}
         </mat-error>

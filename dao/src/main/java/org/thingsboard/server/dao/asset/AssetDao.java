@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.TenantEntityDao;
 
@@ -167,4 +168,24 @@ public interface AssetDao extends Dao<Asset>, TenantEntityDao {
      */
     ListenableFuture<List<EntitySubtype>> findTenantAssetTypesAsync(UUID tenantId);
 
+    /**
+     * Find assets by tenantId, edgeId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param edgeId the edgeId
+     * @param pageLink the page link
+     * @return the list of asset objects
+     */
+    PageData<Asset> findAssetsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, PageLink pageLink);
+
+    /**
+     * Find assets by tenantId, edgeId, type and page link.
+     *
+     * @param tenantId the tenantId
+     * @param edgeId the edgeId
+     * @param type the type
+     * @param pageLink the page link
+     * @return the list of asset objects
+     */
+    PageData<Asset> findAssetsByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, PageLink pageLink);
 }
