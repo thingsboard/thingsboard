@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.queue.usagestats;
 
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -35,6 +36,7 @@ import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 
 import javax.annotation.PostConstruct;
 import java.util.EnumMap;
+import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,8 +53,7 @@ public class DefaultTbApiUsageClient implements TbApiUsageClient {
     @Value("${usage.stats.report.interval:10}")
     private int interval;
 
-    private final EnumMap<ApiUsageRecordKey, ConcurrentMap<EntityId, AtomicLong>> stats = new EnumMap<>(ApiUsageRecordKey.class);
-    private final ConcurrentMap<EntityId, TenantId> tenants = new ConcurrentHashMap<>();
+    private final EnumMap<ApiUsageRecordKey, ConcurrentMap<OwnerId, AtomicLong>> stats = new EnumMap<>(ApiUsageRecordKey.class);
 
     private final PartitionService partitionService;
     private final SchedulerComponent scheduler;
@@ -83,30 +84,25 @@ public class DefaultTbApiUsageClient implements TbApiUsageClient {
     }
 
     private void reportStats() {
-        ConcurrentMap<EntityId, ToUsageStatsServiceMsg.Builder> report = new ConcurrentHashMap<>();
+        ConcurrentMap<OwnerId, ToUsageStatsServiceMsg.Builder> report = new ConcurrentHashMap<>();
 
         for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
-            ConcurrentMap<EntityId, AtomicLong> statsForKey = stats.get(key);
-            statsForKey.forEach((initiatorId, statsValue) -> {
+            ConcurrentMap<OwnerId, AtomicLong> statsForKey = stats.get(key);
+            statsForKey.forEach((ownerId, statsValue) -> {
                 long value = statsValue.get();
                 if (value == 0) return;
 
-                ToUsageStatsServiceMsg.Builder statsMsgBuilder = report.computeIfAbsent(initiatorId, id -> {
+                ToUsageStatsServiceMsg.Builder statsMsgBuilder = report.computeIfAbsent(ownerId, id -> {
                     ToUsageStatsServiceMsg.Builder newStatsMsgBuilder = ToUsageStatsServiceMsg.newBuilder();
 
-                    TenantId tenantId;
-                    if (initiatorId.getEntityType() == EntityType.TENANT) {
-                        tenantId = (TenantId) initiatorId;
-                    } else {
-                        tenantId = tenants.get(initiatorId);
-                    }
-
+                    TenantId tenantId = ownerId.getTenantId();
                     newStatsMsgBuilder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
                     newStatsMsgBuilder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
 
-                    if (initiatorId.getEntityType() == EntityType.CUSTOMER) {
-                        newStatsMsgBuilder.setCustomerIdMSB(initiatorId.getId().getMostSignificantBits());
-                        newStatsMsgBuilder.setCustomerIdLSB(initiatorId.getId().getLeastSignificantBits());
+                    EntityId entityId = ownerId.getEntityId();
+                    if (entityId != null && entityId.getEntityType() == EntityType.CUSTOMER) {
+                        newStatsMsgBuilder.setCustomerIdMSB(entityId.getId().getMostSignificantBits());
+                        newStatsMsgBuilder.setCustomerIdLSB(entityId.getId().getLeastSignificantBits());
                     }
 
                     return newStatsMsgBuilder;
@@ -117,18 +113,13 @@ public class DefaultTbApiUsageClient implements TbApiUsageClient {
             statsForKey.clear();
         }
 
-        report.forEach(((initiatorId, builder) -> {
+        report.forEach(((ownerId, statsMsg) -> {
             //TODO: figure out how to minimize messages into the queue. Maybe group by 100s of messages?
 
-            TenantId tenantId;
-            if (initiatorId.getEntityType() == EntityType.TENANT) {
-                tenantId = (TenantId) initiatorId;
-            } else {
-                tenantId = tenants.get(initiatorId);
-            }
-
-            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, initiatorId).newByTopic(msgProducer.getDefaultTopic());
-            msgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), builder.build()), null);
+            TenantId tenantId = ownerId.getTenantId();
+            EntityId entityId = Optional.ofNullable(ownerId.getEntityId()).orElse(tenantId);
+            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId).newByTopic(msgProducer.getDefaultTopic());
+            msgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), statsMsg.build()), null);
         }));
 
         if (!report.isEmpty()) {
@@ -139,14 +130,13 @@ public class DefaultTbApiUsageClient implements TbApiUsageClient {
     @Override
     public void report(TenantId tenantId, CustomerId customerId, ApiUsageRecordKey key, long value) {
         if (enabled) {
-            ConcurrentMap<EntityId, AtomicLong> statsForKey = stats.get(key);
+            ConcurrentMap<OwnerId, AtomicLong> statsForKey = stats.get(key);
 
-            statsForKey.computeIfAbsent(tenantId, id -> new AtomicLong()).addAndGet(value);
-            statsForKey.computeIfAbsent(TenantId.SYS_TENANT_ID, id -> new AtomicLong()).addAndGet(value);
+            statsForKey.computeIfAbsent(new OwnerId(tenantId), id -> new AtomicLong()).addAndGet(value);
+            statsForKey.computeIfAbsent(new OwnerId(TenantId.SYS_TENANT_ID), id -> new AtomicLong()).addAndGet(value);
 
             if (customerId != null && !customerId.isNullUid()) {
-                statsForKey.computeIfAbsent(customerId, id -> new AtomicLong()).addAndGet(value);
-                tenants.putIfAbsent(customerId, tenantId);
+                statsForKey.computeIfAbsent(new OwnerId(tenantId, customerId), id -> new AtomicLong()).addAndGet(value);
             }
         }
     }
@@ -154,5 +144,20 @@ public class DefaultTbApiUsageClient implements TbApiUsageClient {
     @Override
     public void report(TenantId tenantId, CustomerId customerId, ApiUsageRecordKey key) {
         report(tenantId, customerId, key, 1);
+    }
+
+    @Data
+    private static class OwnerId {
+        private TenantId tenantId;
+        private EntityId entityId;
+
+        public OwnerId(TenantId tenantId) {
+            this.tenantId = tenantId;
+        }
+
+        public OwnerId(TenantId tenantId, EntityId entityId) {
+            this.tenantId = tenantId;
+            this.entityId = entityId;
+        }
     }
 }
