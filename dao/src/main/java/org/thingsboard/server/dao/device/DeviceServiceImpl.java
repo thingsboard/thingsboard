@@ -172,13 +172,19 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}")
     @Override
     public Device saveDeviceWithAccessToken(Device device, String accessToken) {
-        return doSaveDevice(device, accessToken);
+        return doSaveDevice(device, accessToken, true);
+    }
+
+    @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}")
+    @Override
+    public Device saveDevice(Device device, boolean doValidate) {
+        return doSaveDevice(device, null, doValidate);
     }
 
     @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}")
     @Override
     public Device saveDevice(Device device) {
-        return doSaveDevice(device, null);
+        return doSaveDevice(device, null, true);
     }
 
     @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}")
@@ -188,7 +194,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             Device deviceWithName = this.findDeviceByTenantIdAndName(device.getTenantId(), device.getName());
             device = deviceWithName == null ? device : deviceWithName.updateDevice(device);
         }
-        Device savedDevice = this.saveDeviceWithoutCredentials(device);
+        Device savedDevice = this.saveDeviceWithoutCredentials(device, true);
         deviceCredentials.setDeviceId(savedDevice.getId());
         if (device.getId() == null) {
             deviceCredentials = deviceCredentialsService.createDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
@@ -200,8 +206,8 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         return savedDevice;
     }
 
-    private Device doSaveDevice(Device device, String accessToken) {
-        Device savedDevice = this.saveDeviceWithoutCredentials(device);
+    private Device doSaveDevice(Device device, String accessToken, boolean doValidate) {
+        Device savedDevice = this.saveDeviceWithoutCredentials(device, doValidate);
         if (device.getId() == null) {
             DeviceCredentials deviceCredentials = new DeviceCredentials();
             deviceCredentials.setDeviceId(new DeviceId(savedDevice.getUuidId()));
@@ -212,9 +218,11 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         return savedDevice;
     }
 
-    private Device saveDeviceWithoutCredentials(Device device) {
+    private Device saveDeviceWithoutCredentials(Device device, boolean doValidate) {
         log.trace("Executing saveDevice [{}]", device);
-        deviceValidator.validate(device, Device::getTenantId);
+        if (doValidate) {
+            deviceValidator.validate(device, Device::getTenantId);
+        }
         try {
             DeviceProfile deviceProfile;
             if (device.getDeviceProfileId() == null) {
@@ -509,7 +517,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
         device.setTenantId(tenantId);
         device.setCustomerId(null);
-        return doSaveDevice(device, null);
+        return doSaveDevice(device, null, true);
     }
 
     @Override

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor;
 
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
@@ -190,6 +191,7 @@ public class DeviceProcessor extends BaseProcessor {
                 device = new Device();
                 device.setTenantId(tenantId);
                 device.setId(deviceId);
+                device.setCreatedTime(Uuids.unixTimestamp(deviceId.getId()));
                 created = true;
             }
             // make device private, if edge is public
@@ -203,7 +205,7 @@ public class DeviceProcessor extends BaseProcessor {
                         new UUID(deviceUpdateMsg.getDeviceProfileIdMSB(), deviceUpdateMsg.getDeviceProfileIdLSB()));
                 device.setDeviceProfileId(deviceProfileId);
             }
-            Device savedDevice = deviceService.saveDevice(device);
+            Device savedDevice = deviceService.saveDevice(device, false);
             if (created) {
                 DeviceCredentials deviceCredentials = new DeviceCredentials();
                 deviceCredentials.setDeviceId(new DeviceId(savedDevice.getUuidId()));
