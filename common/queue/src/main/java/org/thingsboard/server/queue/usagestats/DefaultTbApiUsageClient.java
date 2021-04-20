@@ -50,6 +50,8 @@ public class DefaultTbApiUsageClient implements TbApiUsageClient {
 
     @Value("${usage.stats.report.enabled:true}")
     private boolean enabled;
+    @Value("${usage.stats.report.enabled_per_customer:false}")
+    private boolean enabledPerCustomer;
     @Value("${usage.stats.report.interval:10}")
     private int interval;
 
@@ -135,7 +137,7 @@ public class DefaultTbApiUsageClient implements TbApiUsageClient {
             statsForKey.computeIfAbsent(new OwnerId(tenantId), id -> new AtomicLong()).addAndGet(value);
             statsForKey.computeIfAbsent(new OwnerId(TenantId.SYS_TENANT_ID), id -> new AtomicLong()).addAndGet(value);
 
-            if (customerId != null && !customerId.isNullUid()) {
+            if (enabledPerCustomer && customerId != null && !customerId.isNullUid()) {
                 statsForKey.computeIfAbsent(new OwnerId(tenantId, customerId), id -> new AtomicLong()).addAndGet(value);
             }
         }
