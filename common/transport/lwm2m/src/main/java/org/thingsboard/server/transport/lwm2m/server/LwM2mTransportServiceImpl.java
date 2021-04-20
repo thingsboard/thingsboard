@@ -41,7 +41,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
@@ -55,7 +54,6 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientProfile;
 import org.thingsboard.server.transport.lwm2m.server.client.ResultsAddKeyValueProto;
 import org.thingsboard.server.transport.lwm2m.server.client.ResultsAnalyzerParameters;
-import org.thingsboard.server.transport.lwm2m.server.client.ResultsResourceValue;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
@@ -720,12 +718,12 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         return null;
     }
 
-    public TransportProtos.KeyValueProto getKvToThingsboard(String pathIdVer, Registration registration) {
-        ResultsResourceValue resultsResourceValue = getResultsResourceValue(pathIdVer, registration);
-        return resultsResourceValue != null ? this.lwM2mTransportContextServer.getKvAttrTelemetryToThingsboard(resultsResourceValue) : null;
-    }
+//    public TransportProtos.KeyValueProto getKvToThingsboard(String pathIdVer, Registration registration) {
+//        ResultsResourceValue resultsResourceValue = getResultsResourceValue(pathIdVer, registration);
+//        return resultsResourceValue != null ? this.lwM2mTransportContextServer.getKvAttrTelemetryToThingsboard(resultsResourceValue) : null;
+//    }
 
-    private ResultsResourceValue getResultsResourceValue(String pathIdVer, Registration registration) {
+    private TransportProtos.KeyValueProto getKvToThingsboard(String pathIdVer, Registration registration) {
         LwM2mClient lwM2MClient = this.lwM2mClientContext.getLwM2mClientWithReg(null, registration.getId());
         JsonObject names = lwM2mClientContext.getProfiles().get(lwM2MClient.getProfileId()).getPostKeyNameProfile();
         if (names != null && names.has(pathIdVer)) {
@@ -736,7 +734,6 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
                     if (resourceValue != null) {
                         ResourceModel.Type currentType = resourceValue.getType();
                         ResourceModel.Type expectedType = this.lwM2mTransportContextServer.getResourceModelTypeEqualsKvProtoValueType(currentType, pathIdVer);
-                        DataType dataTypeKvProto = this.lwM2mTransportContextServer.getDataTypeEqualsToResourceModelType(currentType, pathIdVer, resourceValue.isMultiInstances());
                         Object valueKvProto = null;
                         if (resourceValue.isMultiInstances()) {
                             valueKvProto = new JsonObject();
@@ -753,7 +750,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
                             valueKvProto = this.converter.convertValue(resourceValue.getValue(), currentType, expectedType,
                                     new LwM2mPath(convertPathFromIdVerToObjectId(pathIdVer)));
                         }
-                        return valueKvProto != null ? new ResultsResourceValue(dataTypeKvProto, valueKvProto, resourceName) : null;
+                        return valueKvProto != null ? this.lwM2mTransportContextServer.getKvAttrTelemetryToThingsboard(currentType, resourceName, valueKvProto, resourceValue.isMultiInstances()) : null;
                     }
                 } catch (Exception e) {
                     log.error("Failed to add parameters.", e);

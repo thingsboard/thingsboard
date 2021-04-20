@@ -39,7 +39,6 @@ import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.codec.CodecException;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportResourceCache;
 import org.thingsboard.server.common.transport.TransportService;
@@ -51,7 +50,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
-import org.thingsboard.server.transport.lwm2m.server.client.ResultsResourceValue;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -179,65 +177,37 @@ public class LwM2mTransportContextServer extends TransportContext {
      * @throws CodecException -
      */
 
-        public TransportProtos.KeyValueProto getKvAttrTelemetryToThingsboard(ResultsResourceValue resultsResourceValue) {
-                switch (resultsResourceValue.getDataType()) {
-                    case BOOLEAN:
-                        return TransportProtos.KeyValueProto.newBuilder()
-                                .setKey(resultsResourceValue.getResourceName())
-                                .setType(BOOLEAN_V)
-                                .setBoolV((Boolean) resultsResourceValue.getValue()).build();
-                    case STRING:
-                        return TransportProtos.KeyValueProto.newBuilder()
-                                .setKey(resultsResourceValue.getResourceName())
-                                .setType(TransportProtos.KeyValueType.STRING_V)
-                                .setStringV((String) resultsResourceValue.getValue()).build();
-                    case LONG:
-                        return TransportProtos.KeyValueProto.newBuilder()
-                                .setKey(resultsResourceValue.getResourceName())
-                                .setType(TransportProtos.KeyValueType.LONG_V)
-                                .setLongV((Long) resultsResourceValue.getValue()).build();
-                    case DOUBLE:
-                        return TransportProtos.KeyValueProto.newBuilder()
-                                .setKey(resultsResourceValue.getResourceName())
-                                .setType(TransportProtos.KeyValueType.DOUBLE_V)
-                                .setDoubleV((Double) resultsResourceValue.getValue()).build();
-                    case JSON:
-                        return TransportProtos.KeyValueProto.newBuilder()
-                                .setKey(resultsResourceValue.getResourceName())
-                                .setType(TransportProtos.KeyValueType.JSON_V)
-                                .setJsonV((String) resultsResourceValue.getValue()).build();
-                    default:
-                        return null;
-                }
-        }
-
-    public DataType getDataTypeEqualsToResourceModelType(ResourceModel.Type resourceType, String resourcePath, boolean isMultiInstances) {
-        if (isMultiInstances) {
-           return DataType.JSON;
-        }
-        else {
-            switch (resourceType) {
-                case BOOLEAN:
-                    return DataType.BOOLEAN;
-                case STRING:
-                case TIME:
-                case OPAQUE:
-                case OBJLNK:
-                    return DataType.STRING;
-                case INTEGER:
-                    return DataType.LONG;
-                case FLOAT:
-                    return DataType.DOUBLE;
-                default:
+        public TransportProtos.KeyValueProto getKvAttrTelemetryToThingsboard(ResourceModel.Type resourceType, String resourceName, Object value, boolean isMultiInstances) {
+            TransportProtos.KeyValueProto.Builder kvProto = TransportProtos.KeyValueProto.newBuilder().setKey(resourceName);
+            if (isMultiInstances) {
+                kvProto.setType(TransportProtos.KeyValueType.JSON_V)
+                        .setJsonV((String) value);
             }
+            else {
+                switch (resourceType) {
+                    case BOOLEAN:
+                        kvProto.setType(BOOLEAN_V).setBoolV((Boolean) value).build();
+                        break;
+                    case STRING:
+                    case TIME:
+                    case OPAQUE:
+                    case OBJLNK:
+                        kvProto.setType(TransportProtos.KeyValueType.STRING_V).setStringV((String) value);
+                        break;
+                    case INTEGER:
+                       kvProto.setType(TransportProtos.KeyValueType.LONG_V).setLongV((Long) value);
+                       break;
+                    case FLOAT:
+                        kvProto.setType(TransportProtos.KeyValueType.DOUBLE_V).setDoubleV((Double) value);
+                }
+            }
+            return kvProto.build();
         }
-        throw new CodecException("Invalid DataType for resource %s, got %s, ", resourcePath, resourceType);
-    }
 
     /**
      *
-     * @param currentType
-     * @param resourcePath
+     * @param currentType -
+     * @param resourcePath -
      * @return
      */
     public ResourceModel.Type getResourceModelTypeEqualsKvProtoValueType(ResourceModel.Type currentType, String resourcePath) {
