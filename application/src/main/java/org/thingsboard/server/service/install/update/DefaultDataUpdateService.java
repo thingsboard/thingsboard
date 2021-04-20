@@ -23,11 +23,12 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNodeConfiguration;
-import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -43,8 +44,8 @@ import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.sql.device.DeviceProfileRepository;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -100,12 +101,42 @@ public class DefaultDataUpdateService implements DataUpdateService {
             case "3.2.2":
                 log.info("Updating data from version 3.2.2 to 3.3.0 ...");
                 tenantsDefaultEdgeRuleChainUpdater.updateEntities(null);
-                deviceProfilesDynamicConditionsUpdater.updateEntities(null);
+                deviceProfileEntityDynamicConditionsUpdater.updateEntities(null);
                 break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
         }
     }
+
+    private final EntityPaginatedUpdater<String, DeviceProfileEntity> deviceProfileEntityDynamicConditionsUpdater =
+            new EntityPaginatedUpdater<String, DeviceProfileEntity>() {
+                @Override
+                protected Page<DeviceProfileEntity> findEntities(String id, Pageable pageable) {
+                    return deviceProfileRepository.findAll(pageable);
+                }
+
+                @Override
+                protected void updateEntity(DeviceProfileEntity deviceProfile) {
+                    if (deviceProfile.getProfileData().has("alarms") &&
+                            !deviceProfile.getProfileData().get("alarms").asText().equals("null")) {
+                        JsonNode array = deviceProfile.getProfileData().get("alarms");
+                        for (JsonNode node : array) {
+                            if (node.has("createRules")) {
+                                JsonNode createRules = node.get("createRules");
+                                for (AlarmSeverity severity : AlarmSeverity.values()) {
+                                    if (createRules.has(severity.name())) {
+                                        convertOldSpecToNew(createRules.get(severity.name()).get("condition").get("spec"));
+                                    }
+                                }
+                            }
+                            if (node.has("clearRule") && !node.get("clearRule").asText().equals("null")) {
+                                convertOldSpecToNew(node.get("clearRule").get("condition").get("spec"));
+                            }
+                        }
+                        deviceProfileRepository.save(deviceProfile);
+                    }
+                }
+            };
 
     private PaginatedUpdater<String, Tenant> tenantsDefaultRuleChainUpdater =
             new PaginatedUpdater<String, Tenant>() {
@@ -214,38 +245,6 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 @Override
                 protected void updateEntity(Tenant tenant) {
                     updateTenantEntityViews(tenant.getId());
-                }
-            };
-
-    private PaginatedUpdater<String, DeviceProfile> deviceProfilesDynamicConditionsUpdater =
-            new PaginatedUpdater<String, DeviceProfile>() {
-                @Override
-                protected PageData<DeviceProfile> findEntities(String id, PageLink pageLink) {
-                    return DaoUtil.toPageData(deviceProfileRepository.findAll(DaoUtil.toPageable(pageLink)));
-                }
-
-                @Override
-                protected void updateEntity(DeviceProfile entity) {
-                    deviceProfileRepository.findAll().forEach(deviceProfile -> {
-                        if(deviceProfile.getProfileData().has("alarms") &&
-                                !deviceProfile.getProfileData().get("alarms").asText().equals("null")) {
-                            JsonNode array = deviceProfile.getProfileData().get("alarms");
-                            for (JsonNode node : array) {
-                                if (node.has("createRules")) {
-                                    JsonNode createRules = node.get("createRules");
-                                    for(AlarmSeverity severity : AlarmSeverity.values()) {
-                                        if (createRules.has(severity.name())) {
-                                            convertOldSpecToNew(createRules.get(severity.name()).get("condition").get("spec"));
-                                        }
-                                    }
-                                }
-                                if(node.has("clearRule") && !node.get("clearRule").asText().equals("null")) {
-                                    convertOldSpecToNew(node.get("clearRule").get("condition").get("spec"));
-                                }
-                            }
-                            deviceProfileRepository.save(deviceProfile);
-                        }
-                    });
                 }
             };
 
