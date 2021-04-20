@@ -926,7 +926,7 @@ public abstract class BaseController {
                         tenantId = ((HasTenantId) entity).getTenantId();
                     }
                 }
-                tbClusterService.pushMsgToRuleEngine(tenantId, customerId, entityId, tbMsg, null);
+                tbClusterService.pushMsgToRuleEngine(tenantId, entityId, tbMsg, null);
             } catch (Exception e) {
                 log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);
             }
