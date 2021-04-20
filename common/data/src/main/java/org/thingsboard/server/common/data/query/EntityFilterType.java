@@ -23,10 +23,12 @@ public enum EntityFilterType {
     ASSET_TYPE("assetType"),
     DEVICE_TYPE("deviceType"),
     ENTITY_VIEW_TYPE("entityViewType"),
+    EDGE_TYPE("edgeType"),
     RELATIONS_QUERY("relationsQuery"),
     ASSET_SEARCH_QUERY("assetSearchQuery"),
     DEVICE_SEARCH_QUERY("deviceSearchQuery"),
     ENTITY_VIEW_SEARCH_QUERY("entityViewSearchQuery"),
+    EDGE_SEARCH_QUERY("edgeSearchQuery"),
     API_USAGE_STATE("apiUsageState");
 
     private final String label;

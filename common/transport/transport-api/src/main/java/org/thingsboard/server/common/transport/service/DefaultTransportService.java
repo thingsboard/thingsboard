@@ -345,7 +345,7 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
-    public void process(TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg msg, TransportServiceCallback<TransportProtos.ValidateDeviceCredentialsResponseMsg> callback)  {
+    public void process(TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg msg, TransportServiceCallback<TransportProtos.ValidateDeviceCredentialsResponseMsg> callback) {
         log.trace("Processing msg: {}", msg);
         TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateDeviceLwM2MCredentialsRequestMsg(msg).build());
         AsyncCallbackTemplate.withCallback(transportApiRequestTemplate.send(protoMsg),
@@ -771,12 +771,21 @@ public class DefaultTransportService implements TransportService {
                 ResourceType resourceType = ResourceType.valueOf(msg.getResourceType());
                 String resourceId = msg.getResourceKey();
                 transportResourceCache.update(tenantId, resourceType, resourceId);
+                sessions.forEach((id, mdRez) -> {
+                    log.warn("ResourceUpdate - [{}] [{}]", id, mdRez);
+                    transportCallbackExecutor.submit(() -> mdRez.getListener().onResourceUpdate(Optional.ofNullable(msg)));
+                });
+
             } else if (toSessionMsg.hasResourceDeleteMsg()) {
                 TransportProtos.ResourceDeleteMsg msg = toSessionMsg.getResourceDeleteMsg();
                 TenantId tenantId = new TenantId(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
                 ResourceType resourceType = ResourceType.valueOf(msg.getResourceType());
                 String resourceId = msg.getResourceKey();
                 transportResourceCache.evict(tenantId, resourceType, resourceId);
+                sessions.forEach((id, mdRez) -> {
+                    log.warn("ResourceDelete - [{}] [{}]", id, mdRez);
+                    transportCallbackExecutor.submit(() -> mdRez.getListener().onResourceDelete(Optional.ofNullable(msg)));
+                });
             } else {
                 //TODO: should we notify the device actor about missed session?
                 log.debug("[{}] Missing session.", sessionId);
@@ -899,7 +908,7 @@ public class DefaultTransportService implements TransportService {
     }
 
     private void sendToRuleEngine(TenantId tenantId, DeviceId deviceId, TransportProtos.SessionInfoProto sessionInfo, JsonObject json,
-                                    TbMsgMetaData metaData, SessionMsgType sessionMsgType, TbQueueCallback callback) {
+                                  TbMsgMetaData metaData, SessionMsgType sessionMsgType, TbQueueCallback callback) {
         DeviceProfileId deviceProfileId = new DeviceProfileId(new UUID(sessionInfo.getDeviceProfileIdMSB(), sessionInfo.getDeviceProfileIdLSB()));
         DeviceProfile deviceProfile = deviceProfileCache.get(deviceProfileId);
         RuleChainId ruleChainId;

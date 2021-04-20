@@ -134,6 +134,8 @@ import { ManageDashboardStatesDialogComponent } from '@home/components/dashboard
 import { DashboardStateDialogComponent } from '@home/components/dashboard-page/states/dashboard-state-dialog.component';
 import { EmbedDashboardDialogComponent } from '@home/components/widget/dialog/embed-dashboard-dialog.component';
 import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
+import { EdgeDownlinkTableComponent } from '@home/components/edge/edge-downlink-table.component';
+import { EdgeDownlinkTableHeaderComponent } from '@home/components/edge/edge-downlink-table-header.component';
 import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-page/widget-types-panel.component';
 
 @NgModule({
@@ -148,6 +150,8 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
       EventContentDialogComponent,
       EventTableHeaderComponent,
       EventTableComponent,
+      EdgeDownlinkTableHeaderComponent,
+      EdgeDownlinkTableComponent,
       RelationTableComponent,
       RelationDialogComponent,
       RelationFiltersComponent,
@@ -265,6 +269,8 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
     EntityDetailsPanelComponent,
     AuditLogTableComponent,
     EventTableComponent,
+    EdgeDownlinkTableHeaderComponent,
+    EdgeDownlinkTableComponent,
     RelationTableComponent,
     RelationFiltersComponent,
     AlarmTableComponent,

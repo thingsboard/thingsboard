@@ -20,7 +20,6 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
@@ -374,7 +373,6 @@ public class DefaultMailService implements MailService {
         }
     }
 
-    @NotNull
     private String getValueAsString(long value) {
         if (value > _1M && value % _1M < _10K) {
             return value / _1M + "M";

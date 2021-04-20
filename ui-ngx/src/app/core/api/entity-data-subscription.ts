@@ -277,7 +277,11 @@ export class EntityDataSubscription {
               dataAggregator.reset(newSubsTw);
             });
           }
-          this.subscriber.setTsOffset(this.subsTw.tsOffset);
+          if (this.entityDataSubscriptionOptions.type === widgetType.timeseries) {
+            this.subscriber.setTsOffset(this.subsTw.tsOffset);
+          } else {
+            this.subscriber.setTsOffset(this.latestTsOffset);
+          }
           targetCommand.query = this.dataCommand.query;
           this.subscriber.subscriptionCommands = [targetCommand];
         } else {
