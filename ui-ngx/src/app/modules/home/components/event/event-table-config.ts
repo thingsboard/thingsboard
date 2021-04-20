@@ -288,7 +288,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         break;
       case EventType.LC_EVENT:
         this.filterColumns.push(
-          {key: 'method', title: 'event.event'},
+          {key: 'event', title: 'event.event'},
           {key: 'status', title: 'event.status'},
           {key: 'error', title: 'event.error'}
         );
