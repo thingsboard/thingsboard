@@ -17,10 +17,6 @@ package org.thingsboard.server.dao.resource;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.leshan.core.model.DDFFileParser;
-import org.eclipse.leshan.core.model.DefaultDDFFileValidator;
-import org.eclipse.leshan.core.model.InvalidDDFFileException;
-import org.eclipse.leshan.core.model.ObjectModel;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ResourceType;
@@ -29,9 +25,6 @@ import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.lwm2m.LwM2mInstance;
-import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
-import org.thingsboard.server.common.data.lwm2m.LwM2mResourceObserve;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -41,63 +34,30 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
-import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_SEARCH_TEXT;
 import static org.thingsboard.server.dao.device.DeviceServiceImpl.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
 @Slf4j
-public class BaseTbResourceService implements TbResourceService {
+public class BaseResourceService implements ResourceService {
 
     public static final String INCORRECT_RESOURCE_ID = "Incorrect resourceId ";
     private final TbResourceDao resourceDao;
     private final TbResourceInfoDao resourceInfoDao;
     private final TenantDao tenantDao;
-    private final DDFFileParser ddfFileParser;
 
-    public BaseTbResourceService(TbResourceDao resourceDao, TbResourceInfoDao resourceInfoDao, TenantDao tenantDao) {
+
+    public BaseResourceService(TbResourceDao resourceDao, TbResourceInfoDao resourceInfoDao, TenantDao tenantDao) {
         this.resourceDao = resourceDao;
         this.resourceInfoDao = resourceInfoDao;
         this.tenantDao = tenantDao;
-        this.ddfFileParser = new DDFFileParser(new DefaultDDFFileValidator());
     }
 
     @Override
-    public TbResource saveResource(TbResource resource) throws InvalidDDFFileException, IOException {
-        log.trace("Executing saveResource [{}]", resource);
-        if (StringUtils.isEmpty(resource.getData())) {
-            throw new DataValidationException("Resource data should be specified!");
-        }
-        if (ResourceType.LWM2M_MODEL.equals(resource.getResourceType())) {
-            List<ObjectModel> objectModels =
-                    ddfFileParser.parseEx(new ByteArrayInputStream(Base64.getDecoder().decode(resource.getData())), resource.getSearchText());
-            if (!objectModels.isEmpty()) {
-                ObjectModel objectModel = objectModels.get(0);
-
-                String resourceKey = objectModel.id + LWM2M_SEPARATOR_KEY + objectModel.getVersion();
-                String name = objectModel.name;
-                resource.setResourceKey(resourceKey);
-                if (resource.getId() == null) {
-                    resource.setTitle(name + " id=" + objectModel.id + " v" + objectModel.getVersion());
-                }
-                resource.setSearchText(resourceKey + LWM2M_SEPARATOR_SEARCH_TEXT + name);
-            } else {
-                throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getSearchText()));
-            }
-        } else {
-            resource.setResourceKey(resource.getFileName());
-        }
-
+    public TbResource saveResource(TbResource resource) {
         resourceValidator.validate(resource, TbResourceInfo::getTenantId);
 
         try {
@@ -111,7 +71,6 @@ public class BaseTbResourceService implements TbResourceService {
                 throw t;
             }
         }
-
     }
 
     @Override
@@ -156,31 +115,17 @@ public class BaseTbResourceService implements TbResourceService {
     }
 
     @Override
-    public List<LwM2mObject> findLwM2mObjectPage(TenantId tenantId, String sortProperty, String sortOrder, PageLink pageLink) {
-        log.trace("Executing findByTenantId [{}]", tenantId);
+    public List<TbResource> findTenantResourcesByResourceTypeAndObjectIds(TenantId tenantId, ResourceType resourceType, String[] objectIds) {
+        log.trace("Executing findTenantResourcesByResourceTypeAndObjectIds [{}][{}][{}]", tenantId, resourceType, objectIds);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        PageData<TbResource> resourcePageData = resourceDao.findResourcesByTenantIdAndResourceType(
-                tenantId,
-                ResourceType.LWM2M_MODEL, pageLink);
-        return resourcePageData.getData().stream()
-                .map(this::toLwM2mObject)
-                .sorted(getComparator(sortProperty, sortOrder))
-                .collect(Collectors.toList());
+        return resourceDao.findResourcesByTenantIdAndResourceType(tenantId, resourceType, objectIds, null);
     }
 
     @Override
-    public List<LwM2mObject> findLwM2mObject(TenantId tenantId, String sortOrder,
-                                             String sortProperty,
-                                             String[] objectIds) {
-        log.trace("Executing findByTenantId [{}]", tenantId);
+    public PageData<TbResource> findTenantResourcesByResourceTypeAndPageLink(TenantId tenantId, ResourceType resourceType, PageLink pageLink) {
+        log.trace("Executing findTenantResourcesByResourceTypeAndPageLink [{}][{}][{}]", tenantId, resourceType, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        List<TbResource> resources = resourceDao.findResourcesByTenantIdAndResourceType(tenantId, ResourceType.LWM2M_MODEL,
-                objectIds,
-                null);
-        return resources.stream()
-                .map(this::toLwM2mObject)
-                .sorted(getComparator(sortProperty, sortOrder))
-                .collect(Collectors.toList());
+        return resourceDao.findResourcesByTenantIdAndResourceType(tenantId, resourceType, pageLink);
     }
 
     @Override
@@ -188,50 +133,6 @@ public class BaseTbResourceService implements TbResourceService {
         log.trace("Executing deleteResourcesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         tenantResourcesRemover.removeEntities(tenantId, tenantId);
-    }
-
-    private LwM2mObject toLwM2mObject(TbResource resource) {
-        try {
-            DDFFileParser ddfFileParser = new DDFFileParser(new DefaultDDFFileValidator());
-            List<ObjectModel> objectModels =
-                    ddfFileParser.parseEx(new ByteArrayInputStream(Base64.getDecoder().decode(resource.getData())), resource.getSearchText());
-            if (objectModels.size() == 0) {
-                return null;
-            } else {
-                ObjectModel obj = objectModels.get(0);
-                LwM2mObject lwM2mObject = new LwM2mObject();
-                lwM2mObject.setId(obj.id);
-                lwM2mObject.setKeyId(resource.getResourceKey());
-                lwM2mObject.setName(obj.name);
-                lwM2mObject.setMultiple(obj.multiple);
-                lwM2mObject.setMandatory(obj.mandatory);
-                LwM2mInstance instance = new LwM2mInstance();
-                instance.setId(0);
-                List<LwM2mResourceObserve> resources = new ArrayList<>();
-                obj.resources.forEach((k, v) -> {
-                    if (!v.operations.isExecutable()) {
-                        LwM2mResourceObserve lwM2MResourceObserve = new LwM2mResourceObserve(k, v.name, false, false, false);
-                        resources.add(lwM2MResourceObserve);
-                    }
-                });
-                instance.setResources(resources.toArray(LwM2mResourceObserve[]::new));
-                lwM2mObject.setInstances(new LwM2mInstance[]{instance});
-                return lwM2mObject;
-            }
-        } catch (IOException | InvalidDDFFileException e) {
-            log.error("Could not parse the XML of objectModel with name [{}]", resource.getSearchText(), e);
-            return null;
-        }
-    }
-
-    private Comparator<? super LwM2mObject> getComparator(String sortProperty, String sortOrder) {
-        Comparator<LwM2mObject> comparator;
-        if ("name".equals(sortProperty)) {
-            comparator = Comparator.comparing(LwM2mObject::getName);
-        } else {
-            comparator = Comparator.comparingLong(LwM2mObject::getId);
-        }
-        return "DESC".equals(sortOrder) ? comparator.reversed() : comparator;
     }
 
     private DataValidator<TbResource> resourceValidator = new DataValidator<>() {
@@ -258,9 +159,6 @@ public class BaseTbResourceService implements TbResourceService {
                 if (tenant == null) {
                     throw new DataValidationException("Resource is referencing to non-existent tenant!");
                 }
-            }
-            if (resource.getResourceType().equals(ResourceType.LWM2M_MODEL) && toLwM2mObject(resource) == null) {
-                throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getSearchText()));
             }
         }
     };

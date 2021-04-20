@@ -22,3 +22,11 @@
   padding-left: 22px;
   text-align:center;
 }
+
+:host{
+  .instance-list {
+    mat-expansion-panel-header {
+      color: inherit;
+    }
+  }
+}

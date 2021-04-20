@@ -19,7 +19,8 @@ import {
   createLabelFromDatasource,
   hashCode,
   isDefined,
-  isDefinedAndNotNull, isFunction,
+  isDefinedAndNotNull,
+  isFunction,
   isNumber,
   isUndefined,
   padValue
@@ -30,7 +31,7 @@ import { Datasource, DatasourceData } from '@shared/models/widget.models';
 import _ from 'lodash';
 import { mapProviderSchema, providerSets } from '@home/components/widget/lib/maps/schemes';
 import { addCondition, mergeSchemes } from '@core/schema-utils';
-import L, {Projection} from "leaflet";
+import L from 'leaflet';
 
 export function getProviderSchema(mapProvider: MapProviders, ignoreImageMap = false) {
   const providerSchema = _.cloneDeep(mapProviderSchema);
@@ -318,22 +319,24 @@ export const parseWithTranslation = {
 };
 
 export function parseData(input: DatasourceData[]): FormattedData[] {
-  return _(input).groupBy(el => el?.datasource?.entityName)
+  return _(input).groupBy(el => el?.datasource.entityId + el?.datasource.entityType)
     .values().value().map((entityArray, i) => {
       const obj: FormattedData = {
         entityName: entityArray[0]?.datasource?.entityName,
-        entityId: entityArray[0]?.datasource?.entityId,
-        entityType: entityArray[0]?.datasource?.entityType,
-        $datasource: entityArray[0]?.datasource,
+        entityId: entityArray[0].datasource.entityId,
+        entityType: entityArray[0].datasource.entityType,
+        $datasource: entityArray[0].datasource,
         dsIndex: i,
         deviceType: null
       };
       entityArray.filter(el => el.data.length).forEach(el => {
-        const indexDate = el?.data?.length ? el.data.length - 1 : 0;
-        obj[el?.dataKey?.label] = el?.data[indexDate][1];
-        obj[el?.dataKey?.label + '|ts'] = el?.data[indexDate][0];
-        if (el?.dataKey?.label === 'type') {
-          obj.deviceType = el?.data[indexDate][1];
+        const indexDate = el.data.length ? el.data.length - 1 : 0;
+        if (!obj.hasOwnProperty(el.dataKey.label) || el.data[indexDate][1] !== '') {
+          obj[el.dataKey.label] = el.data[indexDate][1];
+          obj[el.dataKey.label + '|ts'] = el.data[indexDate][0];
+          if (el.dataKey.label === 'type') {
+            obj.deviceType = el.data[indexDate][1];
+          }
         }
       });
       return obj;

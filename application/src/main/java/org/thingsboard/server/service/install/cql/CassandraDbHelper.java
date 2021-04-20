@@ -159,7 +159,7 @@ public class CassandraDbHelper {
                 } else if (type.getProtocolCode() == ProtocolConstants.DataType.TIMESTAMP) {
                     str = ""+row.getInstant(index).toEpochMilli();
                 } else if (type.getProtocolCode() == ProtocolConstants.DataType.BOOLEAN) {
-                    str = new Boolean(row.getBoolean(index)).toString();
+                    str = Boolean.valueOf(row.getBoolean(index)).toString();
                 } else {
                     str = row.getString(index);
                 }

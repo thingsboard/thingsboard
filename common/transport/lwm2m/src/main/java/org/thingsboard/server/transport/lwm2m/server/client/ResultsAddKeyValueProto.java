@@ -13,7 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.thingsboard.server.transport.lwm2m.server.client;
 
-:host {
-  min-width: 364px;
+import lombok.Data;
+import org.thingsboard.server.gen.transport.TransportProtos;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Data
+public class ResultsAddKeyValueProto {
+    List<TransportProtos.KeyValueProto> resultAttributes;
+    List<TransportProtos.KeyValueProto> resultTelemetries;
+
+    public ResultsAddKeyValueProto() {
+        this.resultAttributes = new ArrayList<>();
+        this.resultTelemetries = new ArrayList<>();
+    }
+
 }

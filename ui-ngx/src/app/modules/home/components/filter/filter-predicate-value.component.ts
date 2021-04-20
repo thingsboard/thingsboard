@@ -19,7 +19,10 @@ import {
   ControlValueAccessor,
   FormBuilder,
   FormGroup,
+  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
+  ValidationErrors,
+  Validator,
   ValidatorFn,
   Validators
 } from '@angular/forms';
@@ -39,10 +42,15 @@ import {
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => FilterPredicateValueComponent),
       multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => FilterPredicateValueComponent),
+      multi: true
     }
   ]
 })
-export class FilterPredicateValueComponent implements ControlValueAccessor, OnInit {
+export class FilterPredicateValueComponent implements ControlValueAccessor, Validator, OnInit {
 
   private readonly inheritModeForSources: DynamicValueSourceType[] = [
     DynamicValueSourceType.CURRENT_CUSTOMER,
@@ -62,7 +70,22 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, OnIn
     }
   }
 
-  @Input() onlyUserDynamicSource = false;
+  private onlyUserDynamicSourceValue = false;
+
+  @Input()
+  set onlyUserDynamicSource(dynamicMode: boolean) {
+    this.onlyUserDynamicSourceValue = dynamicMode;
+    if (this.filterPredicateValueFormGroup) {
+      this.updateValidationDynamicMode();
+      setTimeout(() => {
+        this.updateModel();
+      }, 0);
+    }
+  }
+
+  get onlyUserDynamicSource(): boolean {
+    return this.onlyUserDynamicSourceValue;
+  }
 
   @Input()
   valueType: EntityKeyValueType;
@@ -83,6 +106,7 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, OnIn
   allow = true;
 
   private propagateChange = null;
+  private propagateChangePending = false;
 
   constructor(private fb: FormBuilder) {
   }
@@ -126,6 +150,7 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, OnIn
         this.updateShowInheritMode(sourceType);
       }
     );
+    this.updateValidationDynamicMode();
     this.filterPredicateValueFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
@@ -133,12 +158,18 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, OnIn
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
+    if (this.propagateChangePending) {
+      this.propagateChangePending = false;
+      setTimeout(() => {
+        this.updateModel();
+      }, 0);
+    }
   }
 
   registerOnTouched(fn: any): void {
   }
 
-  setDisabledState?(isDisabled: boolean): void {
+  setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
       this.filterPredicateValueFormGroup.disable({emitEvent: false});
@@ -147,28 +178,35 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, OnIn
     }
   }
 
+  validate(): ValidationErrors | null {
+    return this.filterPredicateValueFormGroup.valid ? null : {
+      filterPredicateValue: {valid: false}
+    };
+  }
+
   writeValue(predicateValue: FilterPredicateValue<string | number | boolean>): void {
+    this.propagateChangePending = false;
     this.filterPredicateValueFormGroup.get('defaultValue').patchValue(predicateValue.defaultValue, {emitEvent: false});
-    this.filterPredicateValueFormGroup.get('dynamicValue.sourceType').patchValue(predicateValue.dynamicValue ?
-      predicateValue.dynamicValue.sourceType : null, {emitEvent: false});
-    this.filterPredicateValueFormGroup.get('dynamicValue.sourceAttribute').patchValue(predicateValue.dynamicValue ?
-      predicateValue.dynamicValue.sourceAttribute : null, {emitEvent: false});
-    this.filterPredicateValueFormGroup.get('dynamicValue.inherit').patchValue(predicateValue.dynamicValue ?
-      predicateValue.dynamicValue.inherit : false, {emitEvent: false});
+    this.filterPredicateValueFormGroup.get('dynamicValue').patchValue({
+      sourceType: predicateValue.dynamicValue ? predicateValue.dynamicValue.sourceType : null,
+      sourceAttribute: predicateValue.dynamicValue ? predicateValue.dynamicValue.sourceAttribute : null,
+      inherit: predicateValue.dynamicValue ? predicateValue.dynamicValue.inherit : false
+    }, {emitEvent: this.onlyUserDynamicSource});
     this.updateShowInheritMode(predicateValue?.dynamicValue?.sourceType);
   }
 
   private updateModel() {
-    let predicateValue: FilterPredicateValue<string | number | boolean> = null;
-    if (this.filterPredicateValueFormGroup.valid) {
-      predicateValue = this.filterPredicateValueFormGroup.getRawValue();
-      if (predicateValue.dynamicValue) {
-        if (!predicateValue.dynamicValue.sourceType || !predicateValue.dynamicValue.sourceAttribute) {
-          predicateValue.dynamicValue = null;
-        }
+    const predicateValue: FilterPredicateValue<string | number | boolean> = this.filterPredicateValueFormGroup.getRawValue();
+    if (predicateValue.dynamicValue) {
+      if (!predicateValue.dynamicValue.sourceType || !predicateValue.dynamicValue.sourceAttribute) {
+        predicateValue.dynamicValue = null;
       }
     }
-    this.propagateChange(predicateValue);
+    if (this.propagateChange) {
+      this.propagateChange(predicateValue);
+    } else {
+      this.propagateChangePending = true;
+    }
   }
 
   private updateShowInheritMode(sourceType: DynamicValueSourceType) {
@@ -178,5 +216,17 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, OnIn
       this.filterPredicateValueFormGroup.get('dynamicValue.inherit').patchValue(false, {emitEvent: false});
       this.inheritMode = false;
     }
+  }
+
+  private updateValidationDynamicMode() {
+    if (this.onlyUserDynamicSource) {
+      this.filterPredicateValueFormGroup.get('dynamicValue.sourceType').setValidators(Validators.required);
+      this.filterPredicateValueFormGroup.get('dynamicValue.sourceAttribute').setValidators(Validators.required);
+    } else {
+      this.filterPredicateValueFormGroup.get('dynamicValue.sourceType').clearValidators();
+      this.filterPredicateValueFormGroup.get('dynamicValue.sourceAttribute').clearValidators();
+    }
+    this.filterPredicateValueFormGroup.get('dynamicValue.sourceType').updateValueAndValidity({emitEvent: false});
+    this.filterPredicateValueFormGroup.get('dynamicValue.sourceAttribute').updateValueAndValidity({emitEvent: false});
   }
 }

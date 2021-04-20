@@ -47,6 +47,7 @@
       <ng-template matExpansionPanelContent>
         <div fxLayout="column" fxLayoutGap="8px" formArrayName="instances">
           <mat-expansion-panel
+            class="instance-list"
             *ngFor="let instances of instancesLwm2mFormArray(objectLwM2M).controls; let y = index;"
             [formGroupName]="y"
             [expanded]="getExpended(objectLwM2M)"
@@ -96,7 +97,7 @@
                     </div>
                     <div fxFlex="10">
                     </div>
-                    <div fxFlex="37" class="resource-name-lw-end" fxFlexOffset="5" disabled="false">
+                    <div fxFlex="37" class="resource-name-lw-end" fxFlexOffset="5">
                       <tb-profile-lwm2m-attributes
                         formControlName="attributeLwm2m"
                         [attributeLwm2m]="instances.get('attributeLwm2m').value"

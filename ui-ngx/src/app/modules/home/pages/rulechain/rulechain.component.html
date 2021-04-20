@@ -19,19 +19,19 @@
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'open')"
-          [fxShow]="!isEdit && (ruleChainScope === 'tenant' || ruleChainScope === 'edges')">
+          [fxShow]="!isEdit">
     {{'rulechain.open-rulechain' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'export')"
-          [fxShow]="!isEdit && (ruleChainScope === 'tenant' || ruleChainScope === 'edges')">
+          [fxShow]="!isEdit">
     {{'rulechain.export' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'setRoot')"
-          [fxShow]="!isEdit && !entity?.root && ruleChainScope === 'tenant'">
+          [fxShow]="!isEdit && ((!entity?.root && ruleChainScope === 'tenant') || (!isEdgeRootRuleChain() && ruleChainScope === 'edge'))">
     {{'rulechain.set-root' | translate }}
   </button>
   <button mat-raised-button color="primary"
@@ -54,12 +54,6 @@
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'setRoot')"
-          [fxShow]="!isEdit && !isEdgeRootRuleChain() && ruleChainScope === 'edge'">
-    {{'rulechain.set-root' | translate }}
-  </button>
-  <button mat-raised-button color="primary"
-          [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'unassignFromEdge')"
           [fxShow]="!isEdit && !isEdgeRootRuleChain() && ruleChainScope === 'edge'">
     {{'edge.unassign-from-edge' | translate }}
@@ -67,7 +61,7 @@
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
-          [fxShow]="!hideDelete() && !isEdit && (ruleChainScope === 'tenant' || ruleChainScope === 'edges')">
+          [fxShow]="!hideDelete() && !isEdit && ruleChainScope !== 'edge'">
     {{'rulechain.delete' | translate }}
   </button>
   <div fxLayout="row">

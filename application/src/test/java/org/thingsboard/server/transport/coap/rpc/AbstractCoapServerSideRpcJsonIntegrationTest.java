@@ -36,12 +36,12 @@ public abstract class AbstractCoapServerSideRpcJsonIntegrationTest extends Abstr
     }
 
     @Test
-    public void testServerMqttOneWayRpc() throws Exception {
+    public void testServerCoapOneWayRpc() throws Exception {
         processOneWayRpcTest();
     }
 
     @Test
-    public void testServerMqttTwoWayRpc() throws Exception {
+    public void testServerCoapTwoWayRpc() throws Exception {
         processTwoWayRpcTest();
     }
 

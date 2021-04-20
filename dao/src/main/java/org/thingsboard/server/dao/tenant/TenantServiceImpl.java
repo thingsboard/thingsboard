@@ -35,7 +35,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.resource.TbResourceService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -90,7 +90,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     private RuleChainService ruleChainService;
 
     @Autowired
-    private TbResourceService resourceService;
+    private ResourceService resourceService;
 
     @Override
     public Tenant findTenantById(TenantId tenantId) {
