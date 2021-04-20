@@ -615,6 +615,11 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         return deviceDao.findDevicesByTenantIdAndEdgeIdAndType(tenantId.getId(), edgeId.getId(), type, pageLink);
     }
 
+    @Override
+    public long countByTenantId(TenantId tenantId) {
+        return deviceDao.countByTenantId(tenantId);
+    }
+
     private DataValidator<Device> deviceValidator =
             new DataValidator<Device>() {
 

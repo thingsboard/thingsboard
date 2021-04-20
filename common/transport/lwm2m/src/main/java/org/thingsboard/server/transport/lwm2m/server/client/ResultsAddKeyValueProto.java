@@ -13,26 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.alarm;
+package org.thingsboard.server.transport.lwm2m.server.client;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.gen.transport.TransportProtos;
 
-/**
- * Created by ashvayka on 11.05.17.
- */
+import java.util.ArrayList;
+import java.util.List;
+
 @Data
-@Builder
-@AllArgsConstructor
-public class AlarmQuery {
+public class ResultsAddKeyValueProto {
+    List<TransportProtos.KeyValueProto> resultAttributes;
+    List<TransportProtos.KeyValueProto> resultTelemetries;
 
-    private EntityId affectedEntityId;
-    private TimePageLink pageLink;
-    private AlarmSearchStatus searchStatus;
-    private AlarmStatus status;
-    private Boolean fetchOriginator;
+    public ResultsAddKeyValueProto() {
+        this.resultAttributes = new ArrayList<>();
+        this.resultTelemetries = new ArrayList<>();
+    }
 
 }

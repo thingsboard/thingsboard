@@ -13,26 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.alarm;
+package org.thingsboard.server.transport.lwm2m.server.client;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.kv.DataType;
 
-/**
- * Created by ashvayka on 11.05.17.
- */
 @Data
-@Builder
-@AllArgsConstructor
-public class AlarmQuery {
+public class ResultsResourceValue {
+    DataType dataType;
+    Object value;
+    String resourceName;
 
-    private EntityId affectedEntityId;
-    private TimePageLink pageLink;
-    private AlarmSearchStatus searchStatus;
-    private AlarmStatus status;
-    private Boolean fetchOriginator;
-
+    public ResultsResourceValue (DataType dataType, Object value, String resourceName) {
+        this.dataType = dataType;
+        this.value = value;
+        this.resourceName = resourceName;
+    }
 }

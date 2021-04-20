@@ -39,7 +39,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertToObjectIdFromIdVer;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertPathFromIdVerToObjectId;
 
 @Slf4j
 @Data
@@ -83,7 +83,7 @@ public class LwM2mClient implements Cloneable {
             this.resources.get(pathRez).setLwM2mResource(rez);
             return true;
         } else {
-            LwM2mPath pathIds = new LwM2mPath(convertToObjectIdFromIdVer(pathRez));
+            LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRez));
             ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
             if (resourceModel != null) {
                 this.resources.put(pathRez, new ResourceValue(rez, resourceModel));
@@ -110,7 +110,7 @@ public class LwM2mClient implements Cloneable {
     public void deleteResources(String pathIdVer, LwM2mModelProvider modelProvider) {
         Set<String> key = getKeysEqualsIdVer(pathIdVer);
         key.forEach(pathRez -> {
-            LwM2mPath pathIds = new LwM2mPath(convertToObjectIdFromIdVer(pathRez));
+            LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRez));
             ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
             if (resourceModel != null) {
                 this.resources.get(pathRez).setResourceModel(resourceModel);
@@ -132,7 +132,7 @@ public class LwM2mClient implements Cloneable {
     }
 
     private void saveResourceModel(String pathRez, LwM2mModelProvider modelProvider) {
-        LwM2mPath pathIds = new LwM2mPath(convertToObjectIdFromIdVer(pathRez));
+        LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRez));
         ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
         this.resources.get(pathRez).setResourceModel(resourceModel);
     }
