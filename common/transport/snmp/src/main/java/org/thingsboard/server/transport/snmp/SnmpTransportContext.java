@@ -152,6 +152,7 @@ public class SnmpTransportContext extends TransportContext {
             }
         } catch (Exception e) {
             log.error("Failed to update session for SNMP device {}: {}", sessionContext.getDeviceId(), e.getMessage());
+            destroyDeviceSession(sessionContext);
         }
     }
 

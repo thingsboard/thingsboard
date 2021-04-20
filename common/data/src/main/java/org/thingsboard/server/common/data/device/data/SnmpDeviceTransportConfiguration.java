@@ -40,7 +40,7 @@ public class SnmpDeviceTransportConfiguration implements DeviceTransportConfigur
     private String community;
 
     /*
-     * For SNMP v3 with User Based Security Model
+     * For SNMP v3
      * */
     private String username;
     private String securityName;
