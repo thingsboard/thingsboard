@@ -25,6 +25,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.core.io.InputStreamSource;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -235,9 +236,18 @@ public class DefaultMailService implements MailService {
 
     @Override
     public void send(TenantId tenantId, String from, String to, String cc, String bcc, String subject, String body, boolean isHtml, Map<String, String> images) throws ThingsboardException {
+        sendMail(tenantId, from, to, cc, bcc, subject, body, isHtml, images, this.mailSender);
+    }
+
+    @Override
+    public void send(TenantId tenantId, String from, String to, String cc, String bcc, String subject, String body, boolean isHtml, Map<String, String> images, JavaMailSender javaMailSender) throws ThingsboardException {
+        sendMail(tenantId, from, to, cc, bcc, subject, body, isHtml, images, javaMailSender);
+    }
+
+    private void sendMail(TenantId tenantId, String from, String to, String cc, String bcc, String subject, String body, boolean isHtml, Map<String, String> images, JavaMailSender javaMailSender) throws ThingsboardException {
         if (apiUsageStateService.getApiUsageState(tenantId).isEmailSendEnabled()) {
             try {
-                MimeMessage mailMsg = mailSender.createMimeMessage();
+                MimeMessage mailMsg = javaMailSender.createMimeMessage();
                 boolean multipart = (images != null && !images.isEmpty());
                 MimeMessageHelper helper = new MimeMessageHelper(mailMsg, multipart, "UTF-8");
                 helper.setFrom(StringUtils.isBlank(from) ? mailFrom : from);
@@ -251,7 +261,7 @@ public class DefaultMailService implements MailService {
                 helper.setSubject(subject);
                 helper.setText(body, isHtml);
 
-                if (images != null && images.size() > 0) {
+                if (multipart) {
                     for (String imgId : images.keySet()) {
                         String imgValue = images.get(imgId);
                         String value = imgValue.replaceFirst("^data:image/[^;]*;base64,?", "");
@@ -261,7 +271,7 @@ public class DefaultMailService implements MailService {
                         helper.addInline(imgId, iss, contentType);
                     }
                 }
-                mailSender.send(helper.getMimeMessage());
+                javaMailSender.send(helper.getMimeMessage());
                 apiUsageClient.report(tenantId, ApiUsageRecordKey.EMAIL_EXEC_COUNT, 1);
             } catch (Exception e) {
                 throw handleException(e);

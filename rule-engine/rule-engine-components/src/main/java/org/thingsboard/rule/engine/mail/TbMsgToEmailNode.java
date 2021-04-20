@@ -32,7 +32,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 import static org.thingsboard.rule.engine.mail.TbSendEmailNode.SEND_EMAIL_TYPE;
@@ -52,19 +51,18 @@ import static org.thingsboard.rule.engine.mail.TbSendEmailNode.SEND_EMAIL_TYPE;
 public class TbMsgToEmailNode implements TbNode {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-
-    private static final String ATTACHMENTS = "attachments";
     private static final String IMAGES = "images";
-    private static final String EMAIL_TIMEZONE = "emailTimezone";
-
-    private static final Pattern dateVarPattern = Pattern.compile("%d\\{([^\\}]*)\\}");
 
     private TbMsgToEmailNodeConfiguration config;
+    private boolean isDynamicHtmlTemplate = false;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgToEmailNodeConfiguration.class);
-    }
+        if(this.config.getMailBodyType().equals("dynamic")) {
+            this.isDynamicHtmlTemplate = true;
+        }
+     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
@@ -89,7 +87,11 @@ public class TbMsgToEmailNode implements TbNode {
         builder.to(fromTemplate(this.config.getToTemplate(), msg));
         builder.cc(fromTemplate(this.config.getCcTemplate(), msg));
         builder.bcc(fromTemplate(this.config.getBccTemplate(), msg));
-        builder.html(Boolean.parseBoolean(fromTemplate(this.config.getIsHtmlTemplate(), msg)));
+        if(isDynamicHtmlTemplate) {
+            builder.html(Boolean.parseBoolean(fromTemplate(this.config.getIsHtmlTemplate(), msg)));
+        } else {
+            builder.html(Boolean.parseBoolean(this.config.getMailBodyType()));
+        }
         builder.subject(fromTemplate(this.config.getSubjectTemplate(), msg));
         builder.body(fromTemplate(this.config.getBodyTemplate(), msg));
         String imagesStr = msg.getMetaData().getValue(IMAGES);

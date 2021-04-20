@@ -28,6 +28,7 @@ public class TbMsgToEmailNodeConfiguration implements NodeConfiguration {
     private String subjectTemplate;
     private String bodyTemplate;
     private String isHtmlTemplate;
+    private String mailBodyType;
 
     @Override
     public TbMsgToEmailNodeConfiguration defaultConfiguration() {
@@ -37,6 +38,7 @@ public class TbMsgToEmailNodeConfiguration implements NodeConfiguration {
         configuration.subjectTemplate = "Device ${deviceType} temperature high";
         configuration.bodyTemplate = "Device ${deviceName} has high temperature ${temp}";
         configuration.isHtmlTemplate = "${isHtml}";
+        configuration.mailBodyType = "dynamic";
         return configuration;
     }
 }
