@@ -161,14 +161,14 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
         ToUsageStatsServiceMsg statsMsg = msg.getValue();
 
         TenantId tenantId = new TenantId(new UUID(statsMsg.getTenantIdMSB(), statsMsg.getTenantIdLSB()));
-        EntityId initiatorId;
+        EntityId entityId;
         if (statsMsg.getCustomerIdMSB() != 0 && statsMsg.getCustomerIdLSB() != 0) {
-            initiatorId = new CustomerId(new UUID(statsMsg.getCustomerIdMSB(), statsMsg.getCustomerIdLSB()));
+            entityId = new CustomerId(new UUID(statsMsg.getCustomerIdMSB(), statsMsg.getCustomerIdLSB()));
         } else {
-            initiatorId = tenantId;
+            entityId = tenantId;
         }
 
-        processEntityUsageStats(tenantId, initiatorId, statsMsg.getValuesList());
+        processEntityUsageStats(tenantId, entityId, statsMsg.getValuesList());
         callback.onSuccess();
     }
 
