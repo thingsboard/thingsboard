@@ -156,8 +156,8 @@ public class TelemetryProcessor extends BaseProcessor {
             Pair<String, RuleChainId> defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
             String queueName = defaultQueueAndRuleChain.getKey();
             RuleChainId ruleChainId = defaultQueueAndRuleChain.getValue();
-            TbMsg tbMsg = TbMsg.newMsg(queueName, SessionMsgType.POST_TELEMETRY_REQUEST.name(), entityId, metaData, gson.toJson(json), ruleChainId, null);
-            tbClusterService.pushMsgToRuleEngine(tenantId, customerId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
+            TbMsg tbMsg = TbMsg.newMsg(queueName, SessionMsgType.POST_TELEMETRY_REQUEST.name(), entityId, customerId, metaData, gson.toJson(json), ruleChainId, null);
+            tbClusterService.pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
                     futureToSet.set(null);
@@ -179,8 +179,8 @@ public class TelemetryProcessor extends BaseProcessor {
         Pair<String, RuleChainId> defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
         String queueName = defaultQueueAndRuleChain.getKey();
         RuleChainId ruleChainId = defaultQueueAndRuleChain.getValue();
-        TbMsg tbMsg = TbMsg.newMsg(queueName, SessionMsgType.POST_ATTRIBUTES_REQUEST.name(), entityId, metaData, gson.toJson(json), ruleChainId, null);
-        tbClusterService.pushMsgToRuleEngine(tenantId, customerId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
+        TbMsg tbMsg = TbMsg.newMsg(queueName, SessionMsgType.POST_ATTRIBUTES_REQUEST.name(), entityId, customerId, metaData, gson.toJson(json), ruleChainId, null);
+        tbClusterService.pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {
                 futureToSet.set(null);
@@ -206,8 +206,8 @@ public class TelemetryProcessor extends BaseProcessor {
                 Pair<String, RuleChainId> defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
                 String queueName = defaultQueueAndRuleChain.getKey();
                 RuleChainId ruleChainId = defaultQueueAndRuleChain.getValue();
-                TbMsg tbMsg = TbMsg.newMsg(queueName, DataConstants.ATTRIBUTES_UPDATED, entityId, metaData, gson.toJson(json), ruleChainId, null);
-                tbClusterService.pushMsgToRuleEngine(tenantId, customerId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
+                TbMsg tbMsg = TbMsg.newMsg(queueName, DataConstants.ATTRIBUTES_UPDATED, entityId, customerId, metaData, gson.toJson(json), ruleChainId, null);
+                tbClusterService.pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
                     @Override
                     public void onSuccess(TbQueueMsgMetadata metadata) {
                         futureToSet.set(null);

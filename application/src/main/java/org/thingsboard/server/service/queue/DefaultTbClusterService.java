@@ -134,12 +134,7 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
-    public void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, TbMsg msg, TbQueueCallback callback) {
-        pushMsgToRuleEngine(tenantId, null, entityId, msg, callback);
-    }
-
-    @Override
-    public void pushMsgToRuleEngine(TenantId tenantId, CustomerId customerId, EntityId entityId, TbMsg tbMsg, TbQueueCallback callback) {
+    public void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, TbMsg tbMsg, TbQueueCallback callback) {
         if (tenantId.isNullUid()) {
             if (entityId.getEntityType().equals(EntityType.TENANT)) {
                 tenantId = new TenantId(entityId.getId());
@@ -154,7 +149,6 @@ public class DefaultTbClusterService implements TbClusterService {
                 tbMsg = transformMsg(tbMsg, deviceProfileCache.get(tenantId, new DeviceProfileId(entityId.getId())));
             }
         }
-        tbMsg.setCustomerId(customerId);
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueName(), tenantId, entityId);
         log.trace("PUSHING msg: {} to:{}", tbMsg, tpi);
         ToRuleEngineMsg msg = ToRuleEngineMsg.newBuilder()
