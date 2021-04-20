@@ -44,7 +44,7 @@ public class SnmpDeviceProfileTransportConfiguration implements DeviceProfileTra
     @JsonIgnore
     private boolean isValid() {
         return timeoutMs != null && timeoutMs >= 0 && retries != null && retries >= 0
-                && communicationConfigs != null && !communicationConfigs.isEmpty()
+                && communicationConfigs != null
                 && communicationConfigs.stream().allMatch(config -> config != null && config.isValid())
                 && communicationConfigs.stream().flatMap(config -> config.getAllMappings().stream()).map(SnmpMapping::getOid)
                 .distinct().count() == communicationConfigs.stream().mapToInt(config -> config.getAllMappings().size()).sum();

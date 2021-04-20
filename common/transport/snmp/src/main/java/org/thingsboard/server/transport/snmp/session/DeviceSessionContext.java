@@ -26,11 +26,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.transport.snmp.SnmpCommunicationSpec;
-import org.thingsboard.server.common.data.transport.snmp.config.SnmpCommunicationConfig;
-import org.thingsboard.server.common.data.transport.snmp.config.impl.ToDeviceRpcCommandSettingSnmpCommunicationConfig;
 import org.thingsboard.server.common.transport.SessionMsgListener;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
@@ -40,15 +36,11 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMs
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.transport.snmp.SnmpTransportContext;
 
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class DeviceSessionContext extends DeviceAwareSessionContext implements SessionMsgListener, ResponseListener {
@@ -136,15 +128,7 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
 
     @Override
     public void onAttributeUpdate(AttributeUpdateNotificationMsg attributeUpdateNotification) {
-        getCommunicationConfigForSpec(SnmpCommunicationSpec.SHARED_ATTRIBUTES_SETTING)
-                .ifPresent(communicationConfig -> {
-                    Map<String, String> sharedAttributes = JsonConverter.toJson(attributeUpdateNotification).entrySet().stream()
-                            .collect(Collectors.toMap(
-                                    Map.Entry::getKey,
-                                    entry -> entry.getValue().isJsonPrimitive() ? entry.getValue().getAsString() : entry.getValue().toString()
-                            ));
-                    snmpTransportContext.getSnmpTransportService().sendRequest(this, communicationConfig, sharedAttributes);
-                });
+        snmpTransportContext.getSnmpTransportService().onAttributeUpdate(this, attributeUpdateNotification);
     }
 
     @Override
@@ -153,23 +137,10 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
 
     @Override
     public void onToDeviceRpcRequest(ToDeviceRpcRequestMsg toDeviceRequest) {
-        getCommunicationConfigForSpec(SnmpCommunicationSpec.TO_DEVICE_RPC_COMMAND_SETTING)
-                .ifPresent(communicationConfig -> {
-                    String value = JsonConverter.toJson(toDeviceRequest, true).toString();
-                    snmpTransportContext.getSnmpTransportService().sendRequest(
-                            this, communicationConfig,
-                            Map.of(ToDeviceRpcCommandSettingSnmpCommunicationConfig.RPC_COMMAND_KEY_NAME, value)
-                    );
-                });
+       snmpTransportContext.getSnmpTransportService().onToDeviceRpcRequest(this, toDeviceRequest);
     }
 
     @Override
     public void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse) {
-    }
-
-    private Optional<SnmpCommunicationConfig> getCommunicationConfigForSpec(SnmpCommunicationSpec spec) {
-        return profileTransportConfiguration.getCommunicationConfigs().stream()
-                .filter(config -> config.getSpec() == spec)
-                .findFirst();
     }
 }
