@@ -58,4 +58,5 @@ script:
   use_sandbox: "true"
   script_body_trace_frequency: "1000000"
   max_active_scripts: "1000"
-  slow_query_log_ms: "0.5000" #millis
+  slow_query_log_ms: "1.000000" #millis
+  slow_query_log_body: "true"

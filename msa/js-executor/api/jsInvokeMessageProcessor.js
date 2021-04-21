@@ -29,6 +29,7 @@ const scriptBodyTraceFrequency = Number(config.get('script.script_body_trace_fre
 const useSandbox = config.get('script.use_sandbox') === 'true';
 const maxActiveScripts = Number(config.get('script.max_active_scripts'));
 const slowQueryLogMs = Number(config.get('script.slow_query_log_ms'));
+const slowQueryLogBody = config.get('script.slow_query_log_body') === 'true';
 
 const {performance} = require('perf_hooks');
 
@@ -88,7 +89,9 @@ JsInvokeMessageProcessor.prototype.onJsInvokeMessage = function(message) {
             }
         }
         logger.warn('[%s] SLOW PROCESSING [%s]ms, functionName [%s], request: ', requestId, tTook, functionName);
-        logger.warn('request: %s', JSON.stringify(request, null, 4))
+        if (slowQueryLogBody) {
+            logger.info('Slow request body: %s', JSON.stringify(request, null, 4))
+        }
     }
 
 }
@@ -167,10 +170,13 @@ JsInvokeMessageProcessor.prototype.processReleaseRequest = function(requestId, r
 }
 
 JsInvokeMessageProcessor.prototype.sendResponse = function (requestId, responseTopic, headers, scriptId, compileResponse, invokeResponse, releaseResponse) {
+    var tStartSending = performance.now();
     var remoteResponse = createRemoteResponse(requestId, compileResponse, invokeResponse, releaseResponse);
     var rawResponse = Buffer.from(JSON.stringify(remoteResponse), 'utf8');
     this.producer.send(responseTopic, scriptId, rawResponse, headers).then(
-        () => {},
+        () => {
+            logger.debug('[%s] Response sent to queue, took [%s]ms, scriptId: [%s]', requestId, (performance.now() - tStartSending), scriptId);
+        },
         (err) => {
             if (err) {
                 logger.error('[%s] Failed to send response to queue: %s', requestId, err.message);
