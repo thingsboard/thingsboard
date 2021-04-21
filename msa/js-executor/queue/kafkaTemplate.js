@@ -37,6 +37,7 @@ function KafkaProducer() {
             {
                 topic: responseTopic,
                 acks: acks,
+                compression: CompressionTypes.GZIP,
                 messages: [
                     {
                         key: scriptId,
