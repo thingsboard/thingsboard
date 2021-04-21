@@ -68,3 +68,4 @@ script:
   use_sandbox: "SCRIPT_USE_SANDBOX"
   script_body_trace_frequency: "SCRIPT_BODY_TRACE_FREQUENCY"
   max_active_scripts: "MAX_ACTIVE_SCRIPTS"
+  slow_query_log_ms: "SLOW_QUERY_LOG_MS"
