@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -269,7 +270,12 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public TbMsg newMsg(String queueName, String type, EntityId originator, TbMsgMetaData metaData, String data) {
-        return TbMsg.newMsg(queueName, type, originator, metaData, data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId());
+        return newMsg(queueName, type, originator, null, metaData, data);
+    }
+
+    @Override
+    public TbMsg newMsg(String queueName, String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data) {
+        return TbMsg.newMsg(queueName, type, originator, customerId, metaData, data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId());
     }
 
     @Override

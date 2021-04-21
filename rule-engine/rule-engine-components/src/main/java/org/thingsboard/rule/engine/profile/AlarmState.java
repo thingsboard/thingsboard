@@ -74,15 +74,15 @@ class AlarmState {
         lastMsgMetaData = msg.getMetaData();
         lastMsgQueueName = msg.getQueueName();
         this.dataSnapshot = data;
-        return createOrClearAlarms(ctx, data, update, AlarmRuleState::eval);
+        return createOrClearAlarms(ctx, msg, data, update, AlarmRuleState::eval);
     }
 
     public boolean process(TbContext ctx, long ts) throws ExecutionException, InterruptedException {
         initCurrentAlarm(ctx);
-        return createOrClearAlarms(ctx, ts, null, AlarmRuleState::eval);
+        return createOrClearAlarms(ctx, null, ts, null, AlarmRuleState::eval);
     }
 
-    public <T> boolean createOrClearAlarms(TbContext ctx, T data, SnapshotUpdate update, BiFunction<AlarmRuleState, T, AlarmEvalResult> evalFunction) {
+    public <T> boolean createOrClearAlarms(TbContext ctx, TbMsg msg, T data, SnapshotUpdate update, BiFunction<AlarmRuleState, T, AlarmEvalResult> evalFunction) {
         boolean stateUpdate = false;
         AlarmRuleState resultState = null;
         log.debug("[{}] processing update: {}", alarmDefinition.getId(), data);
@@ -103,7 +103,7 @@ class AlarmState {
         if (resultState != null) {
             TbAlarmResult result = calculateAlarmResult(ctx, resultState);
             if (result != null) {
-                pushMsg(ctx, result, resultState);
+                pushMsg(ctx, msg, result, resultState);
             }
             stateUpdate = clearAlarmState(stateUpdate, clearState);
         } else if (currentAlarm != null && clearState != null) {
@@ -122,7 +122,7 @@ class AlarmState {
                 );
                 DonAsynchron.withCallback(alarmClearOperationResult,
                         result -> {
-                            pushMsg(ctx, new TbAlarmResult(false, false, true, result.getAlarm()), clearState);
+                            pushMsg(ctx, msg, new TbAlarmResult(false, false, true, result.getAlarm()), clearState);
                         },
                         throwable -> {
                             throw new RuntimeException(throwable);
@@ -165,7 +165,7 @@ class AlarmState {
         }
     }
 
-    public void pushMsg(TbContext ctx, TbAlarmResult alarmResult, AlarmRuleState ruleState) {
+    public void pushMsg(TbContext ctx, TbMsg msg, TbAlarmResult alarmResult, AlarmRuleState ruleState) {
         JsonNode jsonNodes = JacksonUtil.valueToTree(alarmResult.getAlarm());
         String data = jsonNodes.toString();
         TbMsgMetaData metaData = lastMsgMetaData != null ? lastMsgMetaData.copy() : new TbMsgMetaData();
@@ -185,7 +185,8 @@ class AlarmState {
             metaData.putValue(DataConstants.IS_CLEARED_ALARM, Boolean.TRUE.toString());
         }
         setAlarmConditionMetadata(ruleState, metaData);
-        TbMsg newMsg = ctx.newMsg(lastMsgQueueName != null ? lastMsgQueueName : ServiceQueue.MAIN, "ALARM", originator, metaData, data);
+        TbMsg newMsg = ctx.newMsg(lastMsgQueueName != null ? lastMsgQueueName : ServiceQueue.MAIN, "ALARM",
+                originator, msg != null ? msg.getCustomerId() : null, metaData, data);
         ctx.tellNext(newMsg, relationType);
     }
 
