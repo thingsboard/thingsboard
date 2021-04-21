@@ -919,7 +919,7 @@ public abstract class BaseController {
                         entityNode.put("endTs", extractParameter(Long.class, 2, additionalInfo));
                     }
                 }
-                TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
+                TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
                 TenantId tenantId = user.getTenantId();
                 if (tenantId.isNullUid()) {
                     if (entity instanceof HasTenantId) {
