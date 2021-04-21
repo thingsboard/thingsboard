@@ -1159,6 +1159,8 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
                         .setDeviceIdLSB(msg.getDeviceInfo().getDeviceIdLSB())
                         .setTenantIdMSB(msg.getDeviceInfo().getTenantIdMSB())
                         .setTenantIdLSB(msg.getDeviceInfo().getTenantIdLSB())
+                        .setCustomerIdMSB(msg.getDeviceInfo().getCustomerIdMSB())
+                        .setCustomerIdLSB(msg.getDeviceInfo().getCustomerIdLSB())
                         .setDeviceName(msg.getDeviceInfo().getDeviceName())
                         .setDeviceType(msg.getDeviceInfo().getDeviceType())
                         .setDeviceProfileIdLSB(msg.getDeviceInfo().getDeviceProfileIdLSB())
