@@ -88,7 +88,7 @@ JsInvokeMessageProcessor.prototype.onJsInvokeMessage = function(message) {
                 logger.error(err.stack);
             }
         }
-        logger.warn('[%s] SLOW PROCESSING [%s]ms, functionName [%s], request: ', requestId, tTook, functionName);
+        logger.warn('[%s] SLOW PROCESSING [%s]ms, functionName [%s]', requestId, tTook, functionName);
         if (slowQueryLogBody) {
             logger.info('Slow request body: %s', JSON.stringify(request, null, 4))
         }

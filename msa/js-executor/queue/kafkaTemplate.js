@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const {logLevel, Kafka} = require('kafkajs');
+const {logLevel, Kafka, CompressionTypes} = require('kafkajs');
 
 const config = require('config'),
     JsInvokeMessageProcessor = require('../api/jsInvokeMessageProcessor'),
@@ -22,6 +22,7 @@ const config = require('config'),
 const replicationFactor = config.get('kafka.replication_factor');
 const topicProperties = config.get('kafka.topic_properties');
 const kafkaClientId = config.get('kafka.client_id');
+const acks = config.get('kafka.acks');
 
 let kafkaClient;
 let kafkaAdmin;
@@ -35,6 +36,7 @@ function KafkaProducer() {
         return producer.send(
             {
                 topic: responseTopic,
+                acks: acks,
                 messages: [
                     {
                         key: scriptId,
