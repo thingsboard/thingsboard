@@ -360,7 +360,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         @Override
         public void onSuccess(TransportProtos.ProvisionDeviceResponseMsg msg) {
             CoAP.ResponseCode responseCode = CoAP.ResponseCode.CREATED;
-            if (!msg.getStatus().equals(TransportProtos.ProvisionResponseStatus.SUCCESS)) {
+            if (!msg.getStatus().equals(TransportProtos.ResponseStatus.SUCCESS)) {
                 responseCode = CoAP.ResponseCode.BAD_REQUEST;
             }
             if (payloadType.equals(TransportPayloadType.JSON)) {

@@ -281,7 +281,7 @@ actors:
   tenant:
     create_components_on_init: "${ACTORS_TENANT_CREATE_COMPONENTS_ON_INIT:true}"
   session:
-    max_concurrent_sessions_per_device: "${ACTORS_MAX_CONCURRENT_SESSION_PER_DEVICE:1}"
+    max_concurrent_sessions_per_device: "${ACTORS_MAX_CONCURRENT_SESSION_PER_DEVICE:2}"
     sync:
       # Default timeout for processing request using synchronous session (HTTP, CoAP) in milliseconds
       timeout: "${ACTORS_SESSION_SYNC_TIMEOUT:10000}"
@@ -365,6 +365,9 @@ caffeine:
     tokensOutdatageTime:
       timeToLiveInMinutes: 20000
       maxSize: 10000
+    firmwares:
+      timeToLiveInMinutes: 1440
+      maxSize: 100
 
 redis:
   # standalone or cluster

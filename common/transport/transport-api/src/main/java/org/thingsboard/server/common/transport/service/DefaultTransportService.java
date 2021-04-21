@@ -377,7 +377,6 @@ public class DefaultTransportService implements TransportService {
         AsyncCallbackTemplate.withCallback(response, callback::onSuccess, callback::onError, transportCallbackExecutor);
     }
 
-
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SubscriptionInfoProto msg, TransportServiceCallback<Void> callback) {
         if (log.isTraceEnabled()) {
@@ -530,6 +529,19 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
+    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.GetFirmwareRequestMsg msg, TransportServiceCallback<TransportProtos.GetFirmwareResponseMsg> callback) {
+        if (checkLimits(sessionInfo, msg, callback)) {
+            TbProtoQueueMsg<TransportProtos.TransportApiRequestMsg> protoMsg =
+                    new TbProtoQueueMsg<>(UUID.randomUUID(), TransportProtos.TransportApiRequestMsg.newBuilder().setFirmwareRequestMsg(msg).build());
+
+            AsyncCallbackTemplate.withCallback(transportApiRequestTemplate.send(protoMsg), response -> {
+                TransportProtos.GetFirmwareResponseMsg firmwareResponseMsg = response.getValue().getFirmwareResponseMsg();
+                callback.onSuccess(firmwareResponseMsg);
+            }, callback::onError, transportCallbackExecutor);
+        }
+    }
+
+    @Override
     public SessionMetaData reportActivity(TransportProtos.SessionInfoProto sessionInfo) {
         return reportActivityInternal(sessionInfo);
     }
@@ -608,11 +620,11 @@ public class DefaultTransportService implements TransportService {
         sessions.remove(toSessionId(sessionInfo));
     }
 
-    private boolean checkLimits(TransportProtos.SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback) {
+    private boolean checkLimits(TransportProtos.SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<?> callback) {
         return checkLimits(sessionInfo, msg, callback, 0);
     }
 
-    private boolean checkLimits(TransportProtos.SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<Void> callback, int dataPoints) {
+    private boolean checkLimits(TransportProtos.SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<?> callback, int dataPoints) {
         if (log.isTraceEnabled()) {
             log.trace("[{}] Processing msg: {}", toSessionId(sessionInfo), msg);
         }

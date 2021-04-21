@@ -20,6 +20,8 @@ import com.google.common.hash.Hashing;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Firmware;
 import org.thingsboard.server.common.data.FirmwareInfo;
@@ -34,8 +36,10 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.Optional;
 
+import static org.thingsboard.server.common.data.CacheConstants.FIRMWARE_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
@@ -48,11 +52,13 @@ public class BaseFirmwareService implements FirmwareService {
     private final TenantDao tenantDao;
     private final FirmwareDao firmwareDao;
     private final FirmwareInfoDao firmwareInfoDao;
+    private final CacheManager cacheManager;
 
-    public BaseFirmwareService(TenantDao tenantDao, FirmwareDao firmwareDao, FirmwareInfoDao firmwareInfoDao) {
+    public BaseFirmwareService(TenantDao tenantDao, FirmwareDao firmwareDao, FirmwareInfoDao firmwareInfoDao, CacheManager cacheManager) {
         this.tenantDao = tenantDao;
         this.firmwareDao = firmwareDao;
         this.firmwareInfoDao = firmwareInfoDao;
+        this.cacheManager = cacheManager;
     }
 
     @Override
@@ -60,6 +66,10 @@ public class BaseFirmwareService implements FirmwareService {
         log.trace("Executing saveFirmwareInfo [{}]", firmwareInfo);
         firmwareInfoValidator.validate(firmwareInfo, FirmwareInfo::getTenantId);
         try {
+            FirmwareId firmwareId = firmwareInfo.getId();
+            if (firmwareId != null) {
+                cacheManager.getCache(FIRMWARE_CACHE).evict(firmwareId.toString());
+            }
             return firmwareInfoDao.save(firmwareInfo.getTenantId(), firmwareInfo);
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
@@ -76,6 +86,10 @@ public class BaseFirmwareService implements FirmwareService {
         log.trace("Executing saveFirmware [{}]", firmware);
         firmwareValidator.validate(firmware, FirmwareInfo::getTenantId);
         try {
+            FirmwareId firmwareId = firmware.getId();
+            if (firmwareId != null) {
+                cacheManager.getCache(FIRMWARE_CACHE).evict(firmwareId.toString());
+            }
             return firmwareDao.save(firmware.getTenantId(), firmware);
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
@@ -122,6 +136,8 @@ public class BaseFirmwareService implements FirmwareService {
         log.trace("Executing deleteFirmware [{}]", firmwareId);
         validateId(firmwareId, INCORRECT_FIRMWARE_ID + firmwareId);
         try {
+            Cache cache = cacheManager.getCache(FIRMWARE_CACHE);
+            cache.evict(Collections.singletonList(firmwareId));
             firmwareDao.removeById(tenantId, firmwareId.getId());
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
@@ -277,7 +293,6 @@ public class BaseFirmwareService implements FirmwareService {
 
     private PaginatedRemover<TenantId, FirmwareInfo> tenantFirmwareRemover =
             new PaginatedRemover<>() {
-
 
                 @Override
                 protected PageData<FirmwareInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
