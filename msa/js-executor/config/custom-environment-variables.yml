@@ -25,6 +25,7 @@ kafka:
     # Kafka Bootstrap Servers
     servers: "TB_KAFKA_SERVERS"
   replication_factor: "TB_QUEUE_KAFKA_REPLICATION_FACTOR"
+  acks: "TB_KAFKA_ACKS" # -1 = all; 0 = no acknowledgments; 1 = only waits for the leader to acknowledge
   topic_properties: "TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES"
   use_confluent_cloud: "TB_QUEUE_KAFKA_USE_CONFLUENT_CLOUD"
   client_id: "KAFKA_CLIENT_ID" #inject pod name to easy identify the client using /opt/kafka/bin/kafka-consumer-groups.sh
