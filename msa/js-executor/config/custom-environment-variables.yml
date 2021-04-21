@@ -27,6 +27,7 @@ kafka:
   replication_factor: "TB_QUEUE_KAFKA_REPLICATION_FACTOR"
   topic_properties: "TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES"
   use_confluent_cloud: "TB_QUEUE_KAFKA_USE_CONFLUENT_CLOUD"
+  client_id: "KAFKA_CLIENT_ID" #inject pod name to easy identify the client using /opt/kafka/bin/kafka-consumer-groups.sh
   confluent:
     sasl:
       mechanism: "TB_QUEUE_KAFKA_CONFLUENT_SASL_MECHANISM"
