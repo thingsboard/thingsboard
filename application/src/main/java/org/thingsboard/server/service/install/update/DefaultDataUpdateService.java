@@ -23,8 +23,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
@@ -44,6 +42,7 @@ import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -108,11 +107,11 @@ public class DefaultDataUpdateService implements DataUpdateService {
         }
     }
 
-    private final EntityPaginatedUpdater<String, DeviceProfileEntity> deviceProfileEntityDynamicConditionsUpdater =
-            new EntityPaginatedUpdater<String, DeviceProfileEntity>() {
+    private final PaginatedUpdater<String, DeviceProfileEntity> deviceProfileEntityDynamicConditionsUpdater =
+            new PaginatedUpdater<String, DeviceProfileEntity>() {
                 @Override
-                protected Page<DeviceProfileEntity> findEntities(String id, Pageable pageable) {
-                    return deviceProfileRepository.findAll(pageable);
+                protected PageData<DeviceProfileEntity> findEntities(String id, PageLink pageLink) {
+                    return DaoUtil.pageToPageData(deviceProfileRepository.findAll(DaoUtil.toPageable(pageLink)));
                 }
 
                 @Override
@@ -125,12 +124,12 @@ public class DefaultDataUpdateService implements DataUpdateService {
                                 JsonNode createRules = node.get("createRules");
                                 for (AlarmSeverity severity : AlarmSeverity.values()) {
                                     if (createRules.has(severity.name())) {
-                                        convertOldSpecToNew(createRules.get(severity.name()).get("condition").get("spec"));
+                                        convertDeviceProfileAlarmRulesForVersion330(createRules.get(severity.name()).get("condition").get("spec"));
                                     }
                                 }
                             }
                             if (node.has("clearRule") && !node.get("clearRule").asText().equals("null")) {
-                                convertOldSpecToNew(node.get("clearRule").get("condition").get("spec"));
+                                convertDeviceProfileAlarmRulesForVersion330(node.get("clearRule").get("condition").get("spec"));
                             }
                         }
                         deviceProfileRepository.save(deviceProfile);
@@ -303,7 +302,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
         }, MoreExecutors.directExecutor());
     }
 
-    private void convertOldSpecToNew(JsonNode spec) {
+    private void convertDeviceProfileAlarmRulesForVersion330(JsonNode spec) {
         if(spec != null) {
             if (spec.has("type") && spec.get("type").asText().equals("DURATION")) {
                 if (spec.has("value")) {

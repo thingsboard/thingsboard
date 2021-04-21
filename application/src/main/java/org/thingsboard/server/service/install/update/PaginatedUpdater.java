@@ -15,12 +15,10 @@
  */
 package org.thingsboard.server.service.install.update;
 
-import org.thingsboard.server.common.data.SearchTextBased;
-import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
-public abstract class PaginatedUpdater<I, D extends SearchTextBased<? extends UUIDBased>> {
+public abstract class PaginatedUpdater<I, D> {
 
     private static final int DEFAULT_LIMIT = 100;
 
