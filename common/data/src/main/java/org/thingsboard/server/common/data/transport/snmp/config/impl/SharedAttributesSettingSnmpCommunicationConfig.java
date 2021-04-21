@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.transport.snmp.configs;
+package org.thingsboard.server.common.data.transport.snmp.config.impl;
 
 import org.thingsboard.server.common.data.transport.snmp.SnmpCommunicationSpec;
 import org.thingsboard.server.common.data.transport.snmp.SnmpMethod;
+import org.thingsboard.server.common.data.transport.snmp.config.MultipleMappingsSnmpCommunicationConfig;
 
-public class SharedAttributesSettingSnmpCommunicationConfig extends SnmpCommunicationConfig {
+public class SharedAttributesSettingSnmpCommunicationConfig extends MultipleMappingsSnmpCommunicationConfig {
+
     @Override
     public SnmpCommunicationSpec getSpec() {
         return SnmpCommunicationSpec.SHARED_ATTRIBUTES_SETTING;
@@ -29,8 +31,4 @@ public class SharedAttributesSettingSnmpCommunicationConfig extends SnmpCommunic
         return SnmpMethod.SET;
     }
 
-    @Override
-    public boolean isValid() {
-        return true;
-    }
 }

@@ -558,6 +558,14 @@ public class JsonConverter {
         }
     }
 
+    public static JsonElement parse(String json) {
+        return JSON_PARSER.parse(json);
+    }
+
+    public static String toJson(JsonElement element) {
+        return GSON.toJson(element);
+    }
+
     public static void setTypeCastEnabled(boolean enabled) {
         isTypeCastEnabled = enabled;
     }
@@ -599,8 +607,7 @@ public class JsonConverter {
                 .build();
     }
 
-    private static TransportProtos.ProvisionDeviceCredentialsMsg buildProvisionDeviceCredentialsMsg(String
-                                                                                                            provisionKey, String provisionSecret) {
+    private static TransportProtos.ProvisionDeviceCredentialsMsg buildProvisionDeviceCredentialsMsg(String provisionKey, String provisionSecret) {
         return TransportProtos.ProvisionDeviceCredentialsMsg.newBuilder()
                 .setProvisionDeviceKey(provisionKey)
                 .setProvisionDeviceSecret(provisionSecret)

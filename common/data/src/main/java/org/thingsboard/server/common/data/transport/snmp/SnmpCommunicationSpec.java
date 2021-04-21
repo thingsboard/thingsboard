@@ -16,25 +16,10 @@
 package org.thingsboard.server.common.data.transport.snmp;
 
 public enum SnmpCommunicationSpec {
-    TELEMETRY_QUERYING(true),
-    CLIENT_ATTRIBUTES_QUERYING(true),
+    TELEMETRY_QUERYING,
 
+    CLIENT_ATTRIBUTES_QUERYING,
     SHARED_ATTRIBUTES_SETTING,
 
-    TELEMETRY_TRAPS_RECEIVING,
-    CLIENT_ATTRIBUTES_TRAPS_RECEIVING;
-
-    private final boolean isRepeatingQuerying;
-
-    SnmpCommunicationSpec() {
-        this.isRepeatingQuerying = false;
-    }
-
-    SnmpCommunicationSpec(boolean isRepeatingQuerying) {
-        this.isRepeatingQuerying = isRepeatingQuerying;
-    }
-
-    public boolean isRepeatingQuerying() {
-        return isRepeatingQuerying;
-    }
+    TO_DEVICE_RPC_REQUEST,
 }

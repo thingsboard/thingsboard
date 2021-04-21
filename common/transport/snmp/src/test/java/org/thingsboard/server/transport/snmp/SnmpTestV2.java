@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Scanner;
 
-public class SnmpTest {
+public class SnmpTestV2 {
     public static void main(String[] args) throws IOException {
         SnmpDeviceSimulatorV2 device = new SnmpDeviceSimulatorV2(1610, "public");
 

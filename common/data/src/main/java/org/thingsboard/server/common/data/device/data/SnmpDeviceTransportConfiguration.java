@@ -17,18 +17,39 @@ package org.thingsboard.server.common.data.device.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.ToString;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.transport.snmp.AuthenticationProtocol;
+import org.thingsboard.server.common.data.transport.snmp.PrivacyProtocol;
 import org.thingsboard.server.common.data.transport.snmp.SnmpProtocolVersion;
 
+import java.util.Objects;
+
 @Data
+@ToString(of = {"host", "port", "protocolVersion"})
 public class SnmpDeviceTransportConfiguration implements DeviceTransportConfiguration {
-    private String address;
-    private int port;
+    private String host;
+    private Integer port;
     private SnmpProtocolVersion protocolVersion;
+
+    /*
+     * For SNMP v1 and v2c
+     * */
+    private String community;
+
+    /*
+     * For SNMP v3
+     * */
+    private String username;
     private String securityName;
-    private String authenticationPassphrase; // for SNMP v3
-    private String privacyPassphrase; // for SNMP v3
+    private String contextName;
+    private AuthenticationProtocol authenticationProtocol;
+    private String authenticationPassphrase;
+    private PrivacyProtocol privacyProtocol;
+    private String privacyPassphrase;
+    private String engineId;
 
     @Override
     public DeviceTransportType getType() {
@@ -44,7 +65,21 @@ public class SnmpDeviceTransportConfiguration implements DeviceTransportConfigur
 
     @JsonIgnore
     private boolean isValid() {
-        return StringUtils.isNotBlank(address) && port > 0 &&
-                StringUtils.isNotBlank(securityName) && protocolVersion != null;
+        boolean isValid = StringUtils.isNotBlank(host) && port != null && protocolVersion != null;
+        if (isValid) {
+            switch (protocolVersion) {
+                case V1:
+                case V2C:
+                    isValid = StringUtils.isNotEmpty(community);
+                    break;
+                case V3:
+                    isValid = StringUtils.isNotBlank(username) && StringUtils.isNotBlank(securityName)
+                            && contextName != null && authenticationProtocol != null
+                            && StringUtils.isNotBlank(authenticationPassphrase)
+                            && privacyProtocol != null && privacyPassphrase != null && engineId != null;
+                    break;
+            }
+        }
+        return isValid;
     }
 }

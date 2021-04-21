@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.transport.snmp.configs;
+package org.thingsboard.server.common.data.transport.snmp.config.impl;
 
 import org.thingsboard.server.common.data.transport.snmp.SnmpCommunicationSpec;
+import org.thingsboard.server.common.data.transport.snmp.config.RepeatingQueryingSnmpCommunicationConfig;
 
-public class TelemetryTrapsReceivingSnmpCommunicationConfig extends SnmpCommunicationConfig {
+public class ClientAttributesQueryingSnmpCommunicationConfig extends RepeatingQueryingSnmpCommunicationConfig {
+
     @Override
     public SnmpCommunicationSpec getSpec() {
-        return SnmpCommunicationSpec.TELEMETRY_TRAPS_RECEIVING;
+        return SnmpCommunicationSpec.CLIENT_ATTRIBUTES_QUERYING;
     }
 
-    @Override
-    public boolean isValid() {
-        return false;
-    }
 }
