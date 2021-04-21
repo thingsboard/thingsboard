@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import {Component, forwardRef, Input, OnDestroy, OnInit} from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -33,9 +33,9 @@ import {
   DeviceCredentials,
   DeviceCredentialsType
 } from '@shared/models/device.models';
-import {Subscription} from 'rxjs';
-import {distinctUntilChanged} from 'rxjs/operators';
-import {SecurityConfigComponent} from '@home/pages/device/lwm2m/security-config.component';
+import { Subject } from 'rxjs';
+import { distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { SecurityConfigLwm2mComponent } from '@home/components/device/security-config-lwm2m.component';
 import {
   ClientSecurityConfig,
   DEFAULT_END_POINT,
@@ -44,10 +44,10 @@ import {
   getDefaultSecurityConfig,
   JSON_ALL_CONFIG,
   validateSecurityConfig
-} from '@home/pages/device/lwm2m/security-config.models';
-import {TranslateService} from '@ngx-translate/core';
-import {MatDialog} from '@angular/material/dialog';
-import {isDefinedAndNotNull} from '@core/utils';
+} from '@shared/models/lwm2m-security-config.models';
+import { TranslateService } from '@ngx-translate/core';
+import { MatDialog } from '@angular/material/dialog';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-device-credentials',
@@ -67,20 +67,16 @@ import {isDefinedAndNotNull} from '@core/utils';
 })
 export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit, Validator, OnDestroy {
 
-  deviceCredentialsFormGroup: FormGroup;
-
-  subscriptions: Subscription[] = [];
-
   @Input()
   disabled: boolean;
 
-  deviceCredentials: DeviceCredentials = null;
+  private destroy$ = new Subject();
 
-  submitted = false;
+  deviceCredentialsFormGroup: FormGroup;
 
   deviceCredentialsType = DeviceCredentialsType;
 
-  credentialsTypes = Object.keys(DeviceCredentialsType);
+  credentialsTypes = Object.values(DeviceCredentialsType);
 
   credentialTypeNamesMap = credentialTypeNames;
 
@@ -102,16 +98,17 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
       }, {validators: this.atLeastOne(Validators.required, ['clientId', 'userName'])})
     });
     this.deviceCredentialsFormGroup.get('credentialsBasic').disable();
-    this.subscriptions.push(
-      this.deviceCredentialsFormGroup.valueChanges.pipe(distinctUntilChanged()).subscribe(() => {
-        this.updateView();
-      })
-    );
-    this.subscriptions.push(
-      this.deviceCredentialsFormGroup.get('credentialsType').valueChanges.subscribe(() => {
-        this.credentialsTypeChanged();
-      })
-    );
+    this.deviceCredentialsFormGroup.valueChanges.pipe(
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.updateView();
+    });
+    this.deviceCredentialsFormGroup.get('credentialsType').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((type) => {
+      this.credentialsTypeChanged(type);
+    });
   }
 
   ngOnInit(): void {
@@ -121,12 +118,12 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
   }
 
   ngOnDestroy() {
-    this.subscriptions.forEach(s => s.unsubscribe());
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   writeValue(value: DeviceCredentials | null): void {
     if (isDefinedAndNotNull(value)) {
-      this.deviceCredentials = value;
       let credentialsBasic = {clientId: null, userName: null, password: null};
       let credentialsValue = null;
       if (value.credentialsType === DeviceCredentialsType.MQTT_BASIC) {
@@ -179,10 +176,11 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
     };
   }
 
-  credentialsTypeChanged(): void {
+  credentialsTypeChanged(credentialsType: DeviceCredentialsType): void {
+    const credentialsValue = credentialsType === DeviceCredentialsType.LWM2M_CREDENTIALS ? this.lwm2mDefaultConfig : null;
     this.deviceCredentialsFormGroup.patchValue({
       credentialsId: null,
-      credentialsValue: JSON.stringify(getDefaultSecurityConfig(), null, 2),
+      credentialsValue,
       credentialsBasic: {clientId: '', userName: '', password: ''}
     });
     this.updateValidators();
@@ -264,7 +262,7 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
       }
     }
     const credentialsId = this.deviceCredentialsFormGroup.get('credentialsId').value || DEFAULT_END_POINT;
-    this.dialog.open<SecurityConfigComponent, DeviceCredentialsDialogLwm2mData, object>(SecurityConfigComponent, {
+    this.dialog.open<SecurityConfigLwm2mComponent, DeviceCredentialsDialogLwm2mData, object>(SecurityConfigLwm2mComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
@@ -275,8 +273,8 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
       (res) => {
         if (res) {
           this.deviceCredentialsFormGroup.patchValue({
-            credentialsValue: this.isDefautLw2mResponse(res[JSON_ALL_CONFIG]) ? null : JSON.stringify(res[JSON_ALL_CONFIG]),
-            credentialsId: this.isDefautLw2mResponse(res[END_POINT]) ? null : JSON.stringify(res[END_POINT]).split('\"').join('')
+            credentialsValue: this.isDefaultLw2mResponse(res[JSON_ALL_CONFIG]) ? null : JSON.stringify(res[JSON_ALL_CONFIG]),
+            credentialsId: this.isDefaultLw2mResponse(res[END_POINT]) ? null : JSON.stringify(res[END_POINT]).split('\"').join('')
           });
           this.deviceCredentialsFormGroup.get('credentialsValue').markAsDirty();
         }
@@ -284,16 +282,19 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
     );
   }
 
-  private isDefautLw2mResponse(response: object): boolean {
+  private isDefaultLw2mResponse(response: object): boolean {
     return Object.keys(response).length === 0 || JSON.stringify(response) === '[{}]';
   }
 
   private lwm2mConfigJsonValidator(control: FormControl) {
-    return validateSecurityConfig(control.value) ? null: {jsonError: {parsedJson: "error"}};
+    return validateSecurityConfig(control.value) ? null : {jsonError: {parsedJson: 'error'}};
   }
 
-  lwm2mCredentialsValueTip (flag: boolean): string {
-    let jsonConfigDef =  JSON.stringify(getDefaultSecurityConfig(), null, 2);
-    return !flag ? "" : 'Example (mode=\"NoSec\"):\n\r ' + jsonConfigDef;
+  private get lwm2mDefaultConfig(): string {
+    return JSON.stringify(getDefaultSecurityConfig(), null, 2);
+  }
+
+  lwm2mCredentialsValueTooltip(flag: boolean): string {
+    return !flag ? '' : 'Example (mode=\"NoSec\"):\n\r ' + this.lwm2mDefaultConfig;
   }
 }

@@ -17,9 +17,6 @@
 export const JSON_ALL_CONFIG = 'jsonAllConfig';
 export const END_POINT = 'endPoint';
 export const DEFAULT_END_POINT = 'default_client_lwm2m_end_point_no_sec';
-export const BOOTSTRAP_SERVERS = 'servers';
-export const BOOTSTRAP_SERVER = 'bootstrapServer';
-export const LWM2M_SERVER = 'lwm2mServer';
 export const LEN_MAX_PSK = 64;
 export const LEN_MAX_PRIVATE_KEY = 134;
 export const LEN_MAX_PUBLIC_KEY_RPK = 182;
@@ -28,28 +25,28 @@ export const KEY_REGEXP_HEX_DEC = /^[-+]?[0-9A-Fa-f]+\.?[0-9A-Fa-f]*?$/;
 
 
 export interface DeviceCredentialsDialogLwm2mData {
-  jsonAllConfig?: SecurityConfigModels;
+  jsonAllConfig?: Lwm2mSecurityConfigModels;
   endPoint?: string;
 }
 
-export enum SECURITY_CONFIG_MODE {
+export enum Lwm2mSecurityType {
   PSK = 'PSK',
   RPK = 'RPK',
   X509 = 'X509',
   NO_SEC = 'NO_SEC'
 }
 
-export const SECURITY_CONFIG_MODE_NAMES = new Map<SECURITY_CONFIG_MODE, string>(
+export const Lwm2mSecurityTypeTranslationMap = new Map<Lwm2mSecurityType, string>(
   [
-    [SECURITY_CONFIG_MODE.PSK, 'Pre-Shared Key'],
-    [SECURITY_CONFIG_MODE.RPK, 'Raw Public Key'],
-    [SECURITY_CONFIG_MODE.X509, 'X.509 Certificate'],
-    [SECURITY_CONFIG_MODE.NO_SEC, 'No Security'],
+    [Lwm2mSecurityType.PSK, 'Pre-Shared Key'],
+    [Lwm2mSecurityType.RPK, 'Raw Public Key'],
+    [Lwm2mSecurityType.X509, 'X.509 Certificate'],
+    [Lwm2mSecurityType.NO_SEC, 'No Security'],
   ]
 );
 
 export interface ClientSecurityConfig {
-  securityConfigClientMode: string;
+  securityConfigClientMode: Lwm2mSecurityType;
   endpoint: string;
   identity: string;
   key: string;
@@ -57,7 +54,7 @@ export interface ClientSecurityConfig {
 }
 
 export interface ServerSecurityConfig {
-  securityMode: string;
+  securityMode: Lwm2mSecurityType;
   clientPublicKeyOrId?: string;
   clientSecretKey?: string;
 }
@@ -67,20 +64,19 @@ interface BootstrapSecurityConfig {
   lwm2mServer: ServerSecurityConfig;
 }
 
-export interface SecurityConfigModels {
+export interface Lwm2mSecurityConfigModels {
   client: ClientSecurityConfig;
   bootstrap: BootstrapSecurityConfig;
 }
 
-export function getClientSecurityConfig(securityConfigMode: SECURITY_CONFIG_MODE, endPoint?: string): ClientSecurityConfig {
-  const security = getDefaultClientSecurityConfig();
-  security.securityConfigClientMode = securityConfigMode.toString();
+export function getClientSecurityConfig(securityConfigMode: Lwm2mSecurityType, endPoint = ''): ClientSecurityConfig {
+  const security = getDefaultClientSecurityConfig(securityConfigMode);
   switch (securityConfigMode) {
-    case SECURITY_CONFIG_MODE.PSK:
+    case Lwm2mSecurityType.PSK:
       security.endpoint =  endPoint;
       security.identity =  endPoint;
       break;
-    case SECURITY_CONFIG_MODE.X509:
+    case Lwm2mSecurityType.X509:
       security.x509 = true;
       break;
   }
@@ -88,9 +84,9 @@ export function getClientSecurityConfig(securityConfigMode: SECURITY_CONFIG_MODE
   return security;
 }
 
-export function getDefaultClientSecurityConfig(): ClientSecurityConfig {
+export function getDefaultClientSecurityConfig(securityConfigMode: Lwm2mSecurityType): ClientSecurityConfig {
   return {
-    securityConfigClientMode: SECURITY_CONFIG_MODE.NO_SEC.toString(),
+    securityConfigClientMode: securityConfigMode,
     endpoint: '',
     identity: '',
     key: '',
@@ -100,7 +96,7 @@ export function getDefaultClientSecurityConfig(): ClientSecurityConfig {
 
 export function getDefaultServerSecurityConfig(): ServerSecurityConfig {
   return {
-    securityMode: SECURITY_CONFIG_MODE.NO_SEC.toString(),
+    securityMode: Lwm2mSecurityType.NO_SEC,
     clientPublicKeyOrId: '',
     clientSecretKey: ''
   };
@@ -113,9 +109,9 @@ function getDefaultBootstrapSecurityConfig(): BootstrapSecurityConfig {
   };
 }
 
-export function getDefaultSecurityConfig(): SecurityConfigModels {
+export function getDefaultSecurityConfig(): Lwm2mSecurityConfigModels {
   const securityConfigModels = {
-    client: getClientSecurityConfig(SECURITY_CONFIG_MODE.NO_SEC),
+    client: getClientSecurityConfig(Lwm2mSecurityType.NO_SEC),
     bootstrap: getDefaultBootstrapSecurityConfig()
   };
   return securityConfigModels;

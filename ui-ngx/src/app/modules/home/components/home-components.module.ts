@@ -137,6 +137,8 @@ import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/emb
 import { EdgeDownlinkTableComponent } from '@home/components/edge/edge-downlink-table.component';
 import { EdgeDownlinkTableHeaderComponent } from '@home/components/edge/edge-downlink-table-header.component';
 import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-page/widget-types-panel.component';
+import { SecurityConfigLwm2mComponent } from '@home/components/device/security-config-lwm2m.component';
+import { SecurityConfigLwm2mServerComponent } from '@home/components/device/security-config-lwm2m-server.component';
 
 @NgModule({
   declarations:
@@ -237,6 +239,8 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
       DeviceWizardDialogComponent,
       DeviceCredentialsComponent,
       CopyDeviceCredentialsComponent,
+      SecurityConfigLwm2mComponent,
+      SecurityConfigLwm2mServerComponent,
       AlarmScheduleDialogComponent,
       EditAlarmDetailsDialogComponent,
       SmsProviderConfigurationComponent,
@@ -339,6 +343,8 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
     DeviceWizardDialogComponent,
     DeviceCredentialsComponent,
     CopyDeviceCredentialsComponent,
+    SecurityConfigLwm2mComponent,
+    SecurityConfigLwm2mServerComponent,
     AlarmScheduleInfoComponent,
     AlarmScheduleComponent,
     AlarmScheduleDialogComponent,
