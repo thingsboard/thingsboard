@@ -54,14 +54,12 @@ public class TbMsgToEmailNode implements TbNode {
     private static final String IMAGES = "images";
 
     private TbMsgToEmailNodeConfiguration config;
-    private boolean isDynamicHtmlTemplate = false;
+    private boolean isDynamicHtmlTemplate;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgToEmailNodeConfiguration.class);
-        if(this.config.getMailBodyType().equals("dynamic")) {
-            this.isDynamicHtmlTemplate = true;
-        }
+        this.isDynamicHtmlTemplate = this.config.getMailBodyType().equals("dynamic");
      }
 
     @Override

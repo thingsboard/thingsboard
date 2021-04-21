@@ -37,8 +37,7 @@ public class TbMsgToEmailNodeConfiguration implements NodeConfiguration {
         configuration.toTemplate = "${userEmail}";
         configuration.subjectTemplate = "Device ${deviceType} temperature high";
         configuration.bodyTemplate = "Device ${deviceName} has high temperature ${temp}";
-        configuration.isHtmlTemplate = "${isHtml}";
-        configuration.mailBodyType = "dynamic";
+        configuration.mailBodyType = "false";
         return configuration;
     }
 }
