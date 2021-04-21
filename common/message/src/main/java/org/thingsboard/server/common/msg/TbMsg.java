@@ -153,7 +153,7 @@ public final class TbMsg implements Serializable {
         this.type = type;
         this.originator = originator;
         if (customerId == null || customerId.isNullUid()) {
-            if (originator.getEntityType() == EntityType.CUSTOMER) {
+            if (originator != null && originator.getEntityType() == EntityType.CUSTOMER) {
                 this.customerId = (CustomerId) originator;
             } else {
                 this.customerId = null;
