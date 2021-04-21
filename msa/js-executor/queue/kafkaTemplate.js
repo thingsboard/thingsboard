@@ -21,6 +21,7 @@ const config = require('config'),
     KafkaJsWinstonLogCreator = require('../config/logger').KafkaJsWinstonLogCreator;
 const replicationFactor = config.get('kafka.replication_factor');
 const topicProperties = config.get('kafka.topic_properties');
+const kafkaClientId = config.get('kafka.client_id');
 
 let kafkaClient;
 let kafkaAdmin;
@@ -61,6 +62,12 @@ function KafkaProducer() {
                 logLevel: logLevel.INFO,
                 logCreator: KafkaJsWinstonLogCreator
         };
+
+        if (kafkaClientId) {
+            kafkaConfig['clientId'] = kafkaClientId;
+        } else {
+            logger.warn('KAFKA_CLIENT_ID is undefined. Consider to define the env variable KAFKA_CLIENT_ID');
+        }
 
         if (useConfluent) {
             kafkaConfig['sasl'] = {
