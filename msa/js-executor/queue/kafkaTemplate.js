@@ -19,10 +19,11 @@ const config = require('config'),
     JsInvokeMessageProcessor = require('../api/jsInvokeMessageProcessor'),
     logger = require('../config/logger')._logger('kafkaTemplate'),
     KafkaJsWinstonLogCreator = require('../config/logger').KafkaJsWinstonLogCreator;
-const replicationFactor = config.get('kafka.replication_factor');
+const replicationFactor = Number(config.get('kafka.replication_factor'));
 const topicProperties = config.get('kafka.topic_properties');
 const kafkaClientId = config.get('kafka.client_id');
-const acks = config.get('kafka.acks');
+const acks = Number(config.get('kafka.acks'));
+const requestTimeout = Number(config.get('kafka.requestTimeout'));
 
 let kafkaClient;
 let kafkaAdmin;
@@ -72,6 +73,8 @@ function KafkaProducer() {
             logger.warn('KAFKA_CLIENT_ID is undefined. Consider to define the env variable KAFKA_CLIENT_ID');
         }
 
+        kafkaConfig['requestTimeout'] = requestTimeout;
+
         if (useConfluent) {
             kafkaConfig['sasl'] = {
                 mechanism: config.get('kafka.confluent.sasl.mechanism'),
@@ -117,6 +120,7 @@ function KafkaProducer() {
 
         logger.info('Started ThingsBoard JavaScript Executor Microservice.');
         await consumer.run({
+            //partitionsConsumedConcurrently: 1, // Default: 1
             eachMessage: async ({topic, partition, message}) => {
                 let headers = message.headers;
                 let key = message.key;

@@ -25,6 +25,8 @@ kafka:
     # Kafka Bootstrap Servers
     servers: "localhost:9092"
   replication_factor: "1"
+  acks: "1" # -1 = all; 0 = no acknowledgments; 1 = only waits for the leader to acknowledge
+  requestTimeout: "30000" # The default value in kafkajs is: 30000
   topic_properties: "retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600;partitions:100;min.insync.replicas:1"
   use_confluent_cloud: false
   client_id: "kafkajs" #inject pod name to easy identify the client using /opt/kafka/bin/kafka-consumer-groups.sh
