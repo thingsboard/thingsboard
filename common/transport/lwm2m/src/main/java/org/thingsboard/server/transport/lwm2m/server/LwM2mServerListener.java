@@ -92,7 +92,8 @@ public class LwM2mServerListener {
         public void onResponse(Observation observation, Registration registration, ObserveResponse response) {
             if (registration != null) {
                 try {
-                    service.onObservationResponse(registration, convertPathFromObjectIdToIdVer(observation.getPath().toString(), registration), response);
+                    service.onObservationResponse(registration, convertPathFromObjectIdToIdVer(observation.getPath().toString(),
+                            registration), response, null);
                 } catch (Exception e) {
                     log.error("[{}] onResponse", e.toString());
 

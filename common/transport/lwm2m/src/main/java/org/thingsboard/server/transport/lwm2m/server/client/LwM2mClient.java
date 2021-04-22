@@ -39,7 +39,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.TRANSPORT_DEFAULT_LWM2M_VERSION;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertPathFromIdVerToObjectId;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.getVerFromPathIdVerOrId;
 
 @Slf4j
 @Data
@@ -94,12 +96,19 @@ public class LwM2mClient implements Cloneable {
         }
     }
 
-    public ResourceModel getResourceModel(String pathRez) {
-        if (this.getResources().get(pathRez) != null) {
-            return this.getResources().get(pathRez).getResourceModel();
-        } else {
-            return null;
-        }
+    public ResourceModel getResourceModel(String pathRez, LwM2mModelProvider modelProvider) {
+        LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRez));
+        String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
+        String verRez = getVerFromPathIdVerOrId(pathRez);
+        return (verRez == null || verSupportedObject.equals(verRez)) ? modelProvider.getObjectModel(registration)
+                .getResourceModel(pathIds.getObjectId(), pathIds.getResourceId()) : null;
+    }
+
+    public boolean isValidObjectVersion (String path) {
+        LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(path));
+        String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
+        String verRez = getVerFromPathIdVerOrId(path);
+        return verRez == null ? TRANSPORT_DEFAULT_LWM2M_VERSION.equals(verSupportedObject) : verRez.equals(verSupportedObject);
     }
 
     /**
