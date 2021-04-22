@@ -26,7 +26,6 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -76,7 +75,7 @@ public class TbSendEmailNode implements TbNode {
             validateType(msg.getType());
             EmailPojo email = getEmail(msg);
             withCallback(ctx.getMailExecutor().executeAsync(() -> {
-                        sendEmail(ctx, email);
+                        sendEmail(ctx, msg, email);
                         return null;
                     }),
                     ok -> ctx.tellSuccess(msg),
@@ -86,9 +85,9 @@ public class TbSendEmailNode implements TbNode {
         }
     }
 
-    private void sendEmail(TbContext ctx, EmailPojo email) throws Exception {
+    private void sendEmail(TbContext ctx, TbMsg msg, EmailPojo email) throws Exception {
         if (this.config.isUseSystemSmtpSettings()) {
-            ctx.getMailService().send(ctx.getTenantId(), email.getFrom(), email.getTo(), email.getCc(),
+            ctx.getMailService().send(ctx.getTenantId(), msg.getCustomerId(), email.getFrom(), email.getTo(), email.getCc(),
                     email.getBcc(), email.getSubject(), email.getBody());
         } else {
             MimeMessage mailMsg = mailSender.createMimeMessage();

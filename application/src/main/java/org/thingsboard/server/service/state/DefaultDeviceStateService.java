@@ -468,6 +468,7 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
                     md.putValue("deviceName", device.getName());
                     md.putValue("deviceType", device.getType());
                     return DeviceStateData.builder()
+                            .customerId(device.getCustomerId())
                             .tenantId(device.getTenantId())
                             .deviceId(device.getId())
                             .deviceCreationTime(device.getCreatedTime())
@@ -507,7 +508,7 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
             if(!persistToTelemetry){
                 md.putValue(DataConstants.SCOPE, SERVER_SCOPE);
             }
-            TbMsg tbMsg = TbMsg.newMsg(msgType, stateData.getDeviceId(), md, TbMsgDataType.JSON, data);
+            TbMsg tbMsg = TbMsg.newMsg(msgType, stateData.getDeviceId(), stateData.getCustomerId(), md, TbMsgDataType.JSON, data);
             clusterService.pushMsgToRuleEngine(stateData.getTenantId(), stateData.getDeviceId(), tbMsg, null);
         } catch (Exception e) {
             log.warn("[{}] Failed to push inactivity alarm: {}", stateData.getDeviceId(), state, e);

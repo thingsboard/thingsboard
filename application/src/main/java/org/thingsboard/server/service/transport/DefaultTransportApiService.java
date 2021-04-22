@@ -86,6 +86,7 @@ import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.resource.TbResourceService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -284,7 +285,7 @@ public class DefaultTransportApiService implements TransportApiService {
 
                     DeviceId deviceId = device.getId();
                     ObjectNode entityNode = mapper.valueToTree(device);
-                    TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceId, metaData, TbMsgDataType.JSON, mapper.writeValueAsString(entityNode));
+                    TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceId, customerId, metaData, TbMsgDataType.JSON, mapper.writeValueAsString(entityNode));
                     tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, null);
                 }
                 GetOrCreateDeviceFromGatewayResponseMsg.Builder builder = GetOrCreateDeviceFromGatewayResponseMsg.newBuilder()
@@ -423,6 +424,8 @@ public class DefaultTransportApiService implements TransportApiService {
         return DeviceInfoProto.newBuilder()
                 .setTenantIdMSB(device.getTenantId().getId().getMostSignificantBits())
                 .setTenantIdLSB(device.getTenantId().getId().getLeastSignificantBits())
+                .setCustomerIdMSB(Optional.ofNullable(device.getCustomerId()).map(customerId -> customerId.getId().getMostSignificantBits()).orElse(0L))
+                .setCustomerIdLSB(Optional.ofNullable(device.getCustomerId()).map(customerId -> customerId.getId().getLeastSignificantBits()).orElse(0L))
                 .setDeviceIdMSB(device.getId().getId().getMostSignificantBits())
                 .setDeviceIdLSB(device.getId().getId().getLeastSignificantBits())
                 .setDeviceName(device.getName())

@@ -125,7 +125,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
         Tenant savedTenant = tenantDao.save(tenant.getId(), tenant);
         if (tenant.getId() == null) {
             deviceProfileService.createDefaultDeviceProfile(savedTenant.getId());
-            apiUsageStateService.createDefaultApiUsageState(savedTenant.getId());
+            apiUsageStateService.createDefaultApiUsageState(savedTenant.getId(), null);
         }
         return savedTenant;
     }

@@ -53,6 +53,8 @@ message SessionInfoProto {
   int64 gwSessionIdLSB = 11;
   int64 deviceProfileIdMSB = 12;
   int64 deviceProfileIdLSB = 13;
+  int64 customerIdMSB = 14;
+  int64 customerIdLSB = 15;
 }
 
 enum SessionEvent {
@@ -110,6 +112,8 @@ message DeviceInfoProto {
   string additionalInfo = 7;
   int64 deviceProfileIdMSB = 8;
   int64 deviceProfileIdLSB = 9;
+  int64 customerIdMSB = 10;
+  int64 customerIdLSB = 11;
 }
 
 /**
@@ -656,4 +660,6 @@ message ToUsageStatsServiceMsg {
   int64 entityIdMSB = 3;
   int64 entityIdLSB = 4;
   repeated UsageStatsKVProto values = 5;
+  int64 customerIdMSB = 6;
+  int64 customerIdLSB = 7;
 }

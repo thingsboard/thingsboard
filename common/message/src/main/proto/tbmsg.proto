@@ -46,4 +46,7 @@ message TbMsgProto {
 
     int64 ts = 15;
     int32 ruleNodeExecCounter = 16;
+
+    int64 customerIdMSB = 17;
+    int64 customerIdLSB = 18;
 }

@@ -63,7 +63,7 @@ public class TbMsgCountNode implements TbNode {
         TbMsgCountNodeConfiguration config = TbNodeUtils.convert(configuration, TbMsgCountNodeConfiguration.class);
         this.delay = TimeUnit.SECONDS.toMillis(config.getInterval());
         this.telemetryPrefix = config.getTelemetryPrefix();
-        scheduleTickMsg(ctx);
+        scheduleTickMsg(ctx, null);
 
     }
 
@@ -78,23 +78,23 @@ public class TbMsgCountNode implements TbNode {
             TbMsgMetaData metaData = new TbMsgMetaData();
             metaData.putValue("delta", Long.toString(System.currentTimeMillis() - lastScheduledTs + delay));
 
-            TbMsg tbMsg = TbMsg.newMsg(msg.getQueueName(), SessionMsgType.POST_TELEMETRY_REQUEST.name(), ctx.getTenantId(), metaData, gson.toJson(telemetryJson));
+            TbMsg tbMsg = TbMsg.newMsg(msg.getQueueName(), SessionMsgType.POST_TELEMETRY_REQUEST.name(), ctx.getTenantId(), msg.getCustomerId(), metaData, gson.toJson(telemetryJson));
             ctx.enqueueForTellNext(tbMsg, SUCCESS);
-            scheduleTickMsg(ctx);
+            scheduleTickMsg(ctx, tbMsg);
         } else {
             messagesProcessed.incrementAndGet();
             ctx.ack(msg);
         }
     }
 
-    private void scheduleTickMsg(TbContext ctx) {
+    private void scheduleTickMsg(TbContext ctx, TbMsg msg) {
         long curTs = System.currentTimeMillis();
         if (lastScheduledTs == 0L) {
             lastScheduledTs = curTs;
         }
         lastScheduledTs = lastScheduledTs + delay;
         long curDelay = Math.max(0L, (lastScheduledTs - curTs));
-        TbMsg tickMsg = ctx.newMsg(ServiceQueue.MAIN, TB_MSG_COUNT_NODE_MSG, ctx.getSelfId(), new TbMsgMetaData(), "");
+        TbMsg tickMsg = ctx.newMsg(ServiceQueue.MAIN, TB_MSG_COUNT_NODE_MSG, ctx.getSelfId(), msg != null ? msg.getCustomerId() : null, new TbMsgMetaData(), "");
         nextTickId = tickMsg.getId();
         ctx.tellSelf(tickMsg, curDelay);
     }

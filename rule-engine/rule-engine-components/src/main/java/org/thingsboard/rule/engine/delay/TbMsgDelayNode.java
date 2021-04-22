@@ -70,7 +70,7 @@ public class TbMsgDelayNode implements TbNode {
         } else {
             if (pendingMsgs.size() < config.getMaxPendingMsgs()) {
                 pendingMsgs.put(msg.getId(), msg);
-                TbMsg tickMsg = ctx.newMsg(ServiceQueue.MAIN, TB_MSG_DELAY_NODE_MSG, ctx.getSelfId(), new TbMsgMetaData(), msg.getId().toString());
+                TbMsg tickMsg = ctx.newMsg(ServiceQueue.MAIN, TB_MSG_DELAY_NODE_MSG, ctx.getSelfId(), msg.getCustomerId(), new TbMsgMetaData(), msg.getId().toString());
                 ctx.tellSelf(tickMsg, getDelay(msg));
                 ctx.ack(msg);
             } else {

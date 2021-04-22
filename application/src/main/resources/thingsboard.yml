@@ -124,6 +124,7 @@ usage:
   stats:
     report:
       enabled: "${USAGE_STATS_REPORT_ENABLED:true}"
+      enabled_per_customer: "${USAGE_STATS_REPORT_PER_CUSTOMER_ENABLED:false}"
       interval: "${USAGE_STATS_REPORT_INTERVAL:10}"
     check:
       cycle: "${USAGE_STATS_CHECK_CYCLE:60000}"
