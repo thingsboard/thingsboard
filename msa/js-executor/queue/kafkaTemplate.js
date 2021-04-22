@@ -24,6 +24,7 @@ const topicProperties = config.get('kafka.topic_properties');
 const kafkaClientId = config.get('kafka.client_id');
 const acks = Number(config.get('kafka.acks'));
 const requestTimeout = Number(config.get('kafka.requestTimeout'));
+const compressionType = (config.get('kafka.requestTimeout') === "gzip") ? CompressionTypes.GZIP : CompressionTypes.None;
 
 let kafkaClient;
 let kafkaAdmin;
@@ -38,7 +39,7 @@ function KafkaProducer() {
             {
                 topic: responseTopic,
                 acks: acks,
-                compression: CompressionTypes.GZIP,
+                compression: compressionType,
                 messages: [
                     {
                         key: scriptId,
