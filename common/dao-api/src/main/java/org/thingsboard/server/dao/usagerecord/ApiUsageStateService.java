@@ -32,5 +32,7 @@ public interface ApiUsageStateService {
 
     void deleteApiUsageStateByTenantId(TenantId tenantId);
 
+    void deleteApiUsageStateByEntityId(EntityId entityId);
+
     ApiUsageState findApiUsageStateById(TenantId tenantId, ApiUsageStateId id);
 }

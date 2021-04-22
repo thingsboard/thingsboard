@@ -48,4 +48,6 @@ public interface ApiUsageStateDao extends Dao<ApiUsageState> {
      * @param tenantId the tenantId
      */
     void deleteApiUsageStateByTenantId(TenantId tenantId);
+
+    void deleteApiUsageStateByEntityId(EntityId entityId);
 }

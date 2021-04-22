@@ -43,6 +43,7 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.dao.user.UserService;
 
 import java.io.IOException;
@@ -78,6 +79,9 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
 
     @Autowired
     private DashboardService dashboardService;
+
+    @Autowired
+    private ApiUsageStateService apiUsageStateService;
 
     @Autowired
     @Lazy
@@ -128,6 +132,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
         edgeService.unassignCustomerEdges(customer.getTenantId(), customerId);
         userService.deleteCustomerUsers(customer.getTenantId(), customerId);
         deleteEntityRelations(tenantId, customerId);
+        apiUsageStateService.deleteApiUsageStateByEntityId(customerId);
         customerDao.removeById(tenantId, customerId.getId());
     }
 
