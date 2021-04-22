@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.NoXss;
 
@@ -48,6 +49,8 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
     @JsonIgnore
     private byte[] deviceDataBytes;
 
+    private FirmwareId firmwareId;
+
     public Device() {
         super();
     }
@@ -65,6 +68,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         this.label = device.getLabel();
         this.deviceProfileId = device.getDeviceProfileId();
         this.setDeviceData(device.getDeviceData());
+        this.firmwareId = device.getFirmwareId();
     }
 
     public Device updateDevice(Device device) {
@@ -159,6 +163,14 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         return getName();
     }
 
+    public FirmwareId getFirmwareId() {
+        return firmwareId;
+    }
+
+    public void setFirmwareId(FirmwareId firmwareId) {
+        this.firmwareId = firmwareId;
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -175,6 +187,8 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         builder.append(", deviceProfileId=");
         builder.append(deviceProfileId);
         builder.append(", deviceData=");
+        builder.append(firmwareId);
+        builder.append(", firmwareId=");
         builder.append(deviceData);
         builder.append(", additionalInfo=");
         builder.append(getAdditionalInfo());

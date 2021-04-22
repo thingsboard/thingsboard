@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
@@ -89,6 +90,9 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
     @Column(name=ModelConstants.DEVICE_PROFILE_PROVISION_DEVICE_KEY)
     private String provisionDeviceKey;
 
+    @Column(name=ModelConstants.DEVICE_PROFILE_FIRMWARE_ID_PROPERTY)
+    private UUID firmwareId;
+
     public DeviceProfileEntity() {
         super();
     }
@@ -113,6 +117,9 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         }
         this.defaultQueueName = deviceProfile.getDefaultQueueName();
         this.provisionDeviceKey = deviceProfile.getProvisionDeviceKey();
+        if (deviceProfile.getFirmwareId() != null) {
+            this.firmwareId = deviceProfile.getFirmwareId().getId();
+        }
     }
 
     @Override
@@ -148,6 +155,11 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         }
         deviceProfile.setDefaultQueueName(defaultQueueName);
         deviceProfile.setProvisionDeviceKey(provisionDeviceKey);
+
+        if (firmwareId != null) {
+            deviceProfile.setFirmwareId(new FirmwareId(firmwareId));
+        }
+
         return deviceProfile;
     }
 }

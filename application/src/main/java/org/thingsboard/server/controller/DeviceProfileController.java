@@ -43,6 +43,7 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @RestController
@@ -143,6 +144,15 @@ public class DeviceProfileController extends BaseController {
 
             checkEntity(deviceProfile.getId(), deviceProfile, Resource.DEVICE_PROFILE);
 
+            boolean isFirmwareChanged = false;
+
+            if (!created) {
+                DeviceProfile oldDeviceProfile = deviceProfileService.findDeviceProfileById(getTenantId(), deviceProfile.getId());
+                if (!Objects.equals(deviceProfile.getFirmwareId(), oldDeviceProfile.getFirmwareId())) {
+                    isFirmwareChanged = true;
+                }
+            }
+
             DeviceProfile savedDeviceProfile = checkNotNull(deviceProfileService.saveDeviceProfile(deviceProfile));
 
             tbClusterService.onDeviceProfileChange(savedDeviceProfile, null);
@@ -152,6 +162,10 @@ public class DeviceProfileController extends BaseController {
             logEntityAction(savedDeviceProfile.getId(), savedDeviceProfile,
                     null,
                     created ? ActionType.ADDED : ActionType.UPDATED, null);
+
+            if (isFirmwareChanged) {
+                firmwareStateService.update(savedDeviceProfile);
+            }
 
             return savedDeviceProfile;
         } catch (Exception e) {

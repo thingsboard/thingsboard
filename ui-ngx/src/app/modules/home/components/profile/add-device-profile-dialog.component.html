@@ -60,6 +60,10 @@
                 {{ 'device-profile.type-required' | translate }}
               </mat-error>
             </mat-form-field>
+            <tb-firmware-autocomplete
+              [useFullEntityId]="true"
+              formControlName="firmwareId">
+            </tb-firmware-autocomplete>
             <mat-form-field class="mat-block">
               <mat-label translate>device-profile.description</mat-label>
               <textarea matInput formControlName="description" rows="2"></textarea>

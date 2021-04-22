@@ -407,7 +407,7 @@ export function sortObjectKeys<T>(obj: T): T {
 }
 
 export function deepTrim<T>(obj: T): T {
-  if (isNumber(obj) || isUndefined(obj) || isString(obj) || obj === null) {
+  if (isNumber(obj) || isUndefined(obj) || isString(obj) || obj === null || obj instanceof File) {
     return obj;
   }
   return Object.keys(obj).reduce((acc, curr) => {

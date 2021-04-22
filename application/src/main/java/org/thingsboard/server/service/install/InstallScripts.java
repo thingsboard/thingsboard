@@ -22,8 +22,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.ResourceType;
-import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -33,7 +31,6 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.dashboard.DashboardService;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import org.thingsboard.server.dao.resource.TbResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -45,7 +42,6 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Base64;
 import java.util.Optional;
 
 import static org.thingsboard.server.service.install.DatabaseHelper.objectMapper;
@@ -193,29 +189,6 @@ public class InstallScripts {
                         }
                     }
             );
-        }
-    }
-
-    public void loadSystemLwm2mResources() throws Exception {
-        Path modelsDir = Paths.get(getDataDir(), MODELS_DIR);
-        if (Files.isDirectory(modelsDir)) {
-            try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(modelsDir, path -> path.toString().endsWith(XML_EXT))) {
-                dirStream.forEach(
-                        path -> {
-                            try {
-                                byte[] fileBytes = Files.readAllBytes(path);
-                                TbResource resource = new TbResource();
-                                resource.setFileName(path.getFileName().toString());
-                                resource.setTenantId(TenantId.SYS_TENANT_ID);
-                                resource.setResourceType(ResourceType.LWM2M_MODEL);
-                                resource.setData(Base64.getEncoder().encodeToString(fileBytes));
-                                resourceService.saveResource(resource);
-                            } catch (Exception e) {
-                                throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", path.toString()));
-                            }
-                        }
-                );
-            }
         }
     }
 

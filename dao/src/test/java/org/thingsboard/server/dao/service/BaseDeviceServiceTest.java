@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -87,6 +88,49 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         Assert.assertEquals(foundDevice.getName(), savedDevice.getName());
         
         deviceService.deleteDevice(tenantId, savedDevice.getId());
+    }
+
+    @Test
+    public void testSaveDeviceWithFirmware() {
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName("My device");
+        device.setType("default");
+        Device savedDevice = deviceService.saveDevice(device);
+
+        Assert.assertNotNull(savedDevice);
+        Assert.assertNotNull(savedDevice.getId());
+        Assert.assertTrue(savedDevice.getCreatedTime() > 0);
+        Assert.assertEquals(device.getTenantId(), savedDevice.getTenantId());
+        Assert.assertNotNull(savedDevice.getCustomerId());
+        Assert.assertEquals(NULL_UUID, savedDevice.getCustomerId().getId());
+        Assert.assertEquals(device.getName(), savedDevice.getName());
+
+        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, savedDevice.getId());
+        Assert.assertNotNull(deviceCredentials);
+        Assert.assertNotNull(deviceCredentials.getId());
+        Assert.assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
+        Assert.assertEquals(DeviceCredentialsType.ACCESS_TOKEN, deviceCredentials.getCredentialsType());
+        Assert.assertNotNull(deviceCredentials.getCredentialsId());
+        Assert.assertEquals(20, deviceCredentials.getCredentialsId().length());
+
+
+        Firmware firmware = new Firmware();
+        firmware.setTenantId(tenantId);
+        firmware.setTitle("my firmware");
+        firmware.setVersion("v1.0");
+        firmware.setFileName("test.txt");
+        firmware.setContentType("text/plain");
+        firmware.setChecksumAlgorithm("sha256");
+        firmware.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
+        firmware.setData(ByteBuffer.wrap(new byte[]{1}));
+        Firmware savedFirmware = firmwareService.saveFirmware(firmware);
+
+        savedDevice.setFirmwareId(savedFirmware.getId());
+
+        deviceService.saveDevice(savedDevice);
+        Device foundDevice = deviceService.findDeviceById(tenantId, savedDevice.getId());
+        Assert.assertEquals(foundDevice.getName(), savedDevice.getName());
     }
     
     @Test(expected = DataValidationException.class)

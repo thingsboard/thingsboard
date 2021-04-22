@@ -32,7 +32,7 @@ import java.util.List;
 public interface TbResourceService {
     TbResource saveResource(TbResource resource) throws InvalidDDFFileException, IOException;
 
-    TbResource getResource(TenantId tenantId, ResourceType resourceType, String resourceId);
+    TbResource getResource(TenantId tenantId, ResourceType resourceType, String resourceKey);
 
     TbResource findResourceById(TenantId tenantId, TbResourceId resourceId);
 

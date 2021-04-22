@@ -48,6 +48,10 @@
               <mat-label translate>device.label</mat-label>
               <input matInput formControlName="label">
             </mat-form-field>
+            <tb-firmware-autocomplete
+              [useFullEntityId]="true"
+              formControlName="firmwareId">
+            </tb-firmware-autocomplete>
             <mat-form-field class="mat-block" style="padding-bottom: 14px;">
               <mat-label translate>device-profile.transport-type</mat-label>
               <mat-select formControlName="transportType" required>

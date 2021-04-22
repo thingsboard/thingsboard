@@ -134,6 +134,7 @@ import { DashboardStateDialogComponent } from '@home/components/dashboard-page/s
 import { EmbedDashboardDialogComponent } from '@home/components/widget/dialog/embed-dashboard-dialog.component';
 import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
 import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-page/widget-types-panel.component';
+import { FirmwareAutocompleteComponent } from '@home/components/firmware/firmware-autocomplete.component';
 
 @NgModule({
   declarations:
@@ -247,7 +248,8 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
       ManageDashboardStatesDialogComponent,
       DashboardStateDialogComponent,
       EmbedDashboardDialogComponent,
-      DisplayWidgetTypesPanelComponent
+      DisplayWidgetTypesPanelComponent,
+      FirmwareAutocompleteComponent
     ],
   imports: [
     CommonModule,
@@ -351,7 +353,8 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
     ManageDashboardStatesDialogComponent,
     DashboardStateDialogComponent,
     EmbedDashboardDialogComponent,
-    DisplayWidgetTypesPanelComponent
+    DisplayWidgetTypesPanelComponent,
+    FirmwareAutocompleteComponent
   ],
   providers: [
     WidgetComponentService,

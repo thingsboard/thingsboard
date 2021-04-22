@@ -74,6 +74,7 @@ import {
   StringOperation
 } from '@shared/models/query/query.models';
 import { alarmFields } from '@shared/models/alarm.models';
+import { FirmwareService } from '@core/http/firmware.service';
 
 @Injectable({
   providedIn: 'root'
@@ -93,6 +94,7 @@ export class EntityService {
     private dashboardService: DashboardService,
     private entityRelationService: EntityRelationService,
     private attributeService: AttributeService,
+    private firmwareService: FirmwareService,
     private utils: UtilsService
   ) { }
 
@@ -127,6 +129,9 @@ export class EntityService {
         break;
       case EntityType.ALARM:
         console.error('Get Alarm Entity is not implemented!');
+        break;
+      case EntityType.FIRMWARE:
+        observable = this.firmwareService.getFirmwareInfo(entityId, config);
         break;
     }
     return observable;
@@ -325,6 +330,10 @@ export class EntityService {
         break;
       case EntityType.ALARM:
         console.error('Get Alarm Entities is not implemented!');
+        break;
+      case EntityType.FIRMWARE:
+        pageLink.sortOrder.property = 'title';
+        entitiesObservable = this.firmwareService.getFirmwares(pageLink, true, config);
         break;
     }
     return entitiesObservable;

@@ -22,6 +22,7 @@ import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.NoXss;
@@ -55,6 +56,8 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
     private byte[] profileDataBytes;
     @NoXss
     private String provisionDeviceKey;
+
+    private FirmwareId firmwareId;
 
     public DeviceProfile() {
         super();
