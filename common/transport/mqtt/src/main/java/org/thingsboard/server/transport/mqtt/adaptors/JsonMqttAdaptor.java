@@ -152,7 +152,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
 
     @Override
     public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, byte[] firmwareChunk, String requestId, int chunk) {
-        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_FIRMWARE_RESPONSE_TOPIC_PREFIX + requestId + "/" + chunk, firmwareChunk));
+        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_FIRMWARE_RESPONSE_TOPIC_PREFIX + requestId + "/chunk/" + chunk, firmwareChunk));
     }
 
     public static JsonElement validateJsonPayload(UUID sessionId, ByteBuf payloadData) throws AdaptorException {

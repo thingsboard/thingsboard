@@ -40,6 +40,7 @@ import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -315,7 +316,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 transportService.process(deviceSessionCtx.getSessionInfo(), claimDeviceMsg, getPubAckCallback(ctx, msgId, claimDeviceMsg));
             } else if ((fwMatcher = FW_PATTERN.matcher(topicName)).find()) {
                 String payload = mqttMsg.content().toString(UTF8);
-                int chunkSize = payload != null ? Integer.parseInt(payload) : 0;
+                int chunkSize = StringUtils.isNotEmpty(payload) ? Integer.parseInt(payload) : 0;
                 String requestId = fwMatcher.group("requestId");
                 int chunk = Integer.parseInt(fwMatcher.group("chunk"));
 
