@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.auth;
+package org.thingsboard.server.transport.lwm2m.server.client;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.gen.transport.TransportProtos;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
-public class TransportDeviceInfo {
+public class ResultsAddKeyValueProto {
+    List<TransportProtos.KeyValueProto> resultAttributes;
+    List<TransportProtos.KeyValueProto> resultTelemetries;
 
-    private TenantId tenantId;
-    private CustomerId customerId;
-    private DeviceProfileId deviceProfileId;
-    private DeviceId deviceId;
-    private String deviceName;
-    private String deviceType;
-    private String additionalInfo;
+    public ResultsAddKeyValueProto() {
+        this.resultAttributes = new ArrayList<>();
+        this.resultTelemetries = new ArrayList<>();
+    }
 
 }

@@ -18,14 +18,12 @@ package org.thingsboard.server.transport.lwm2m.utils;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ResourceModel.Type;
 import org.eclipse.leshan.core.node.LwM2mPath;
+import org.eclipse.leshan.core.node.ObjectLink;
 import org.eclipse.leshan.core.node.codec.CodecException;
 import org.eclipse.leshan.core.node.codec.LwM2mValueConverter;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.core.util.StringUtils;
 
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
 import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -111,15 +109,16 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                     case INTEGER:
                         log.debug("Trying to convert long value {} to date", value);
                         /** let's assume we received the millisecond since 1970/1/1 */
-                        return new Date((Long) value);
+                        return new Date(((Number) value).longValue() * 1000L);
                     case STRING:
                         log.debug("Trying to convert string value {} to date", value);
                         /** let's assume we received an ISO 8601 format date */
                         try {
-                            DatatypeFactory datatypeFactory = DatatypeFactory.newInstance();
-                            XMLGregorianCalendar cal = datatypeFactory.newXMLGregorianCalendar((String) value);
-                            return cal.toGregorianCalendar().getTime();
-                        } catch (DatatypeConfigurationException | IllegalArgumentException e) {
+                            return new Date(Long.decode(value.toString()));
+//                            DatatypeFactory datatypeFactory = DatatypeFactory.newInstance();
+//                            XMLGregorianCalendar cal = datatypeFactory.newXMLGregorianCalendar((String) value);
+//                            return cal.toGregorianCalendar().getTime();
+                        } catch (IllegalArgumentException e) {
                             log.debug("Unable to convert string to date", e);
                             throw new CodecException("Unable to convert string (%s) to date for resource %s", value,
                                     resourcePath);
@@ -147,6 +146,8 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                         return formatter.format(new Date(timeValue));
                     case OPAQUE:
                         return Hex.encodeHexString((byte[])value);
+                    case OBJLNK:
+                        return ObjectLink.decodeFromString((String) value);
                     default:
                         break;
                 }
@@ -164,10 +165,14 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                     }
                 }
                 break;
+            case OBJLNK:
+                if (currentType == Type.STRING) {
+                    return ObjectLink.fromPath(value.toString());
+                }
             default:
         }
 
         throw new CodecException("Invalid value type for resource %s, expected %s, got %s", resourcePath, expectedType,
                 currentType);
     }
-}
+ }

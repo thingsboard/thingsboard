@@ -75,6 +75,8 @@ public class LwM2mTransportHandler {
     public static final String KEY_NAME = "keyName";
     public static final String OBSERVE = "observe";
     public static final String ATTRIBUTE_LWM2M = "attributeLwm2m";
+    public static final String RESOURCE_VALUE = "resValue";
+    public static final String RESOURCE_TYPE = "resType";
 
     private static final String REQUEST = "/request";
     private static final String RESPONSE = "/response";
@@ -333,28 +335,30 @@ public class LwM2mTransportHandler {
         };
     }
 
-    public static String convertToObjectIdFromIdVer(String key) {
+    public static String convertPathFromIdVerToObjectId(String pathIdVer) {
         try {
-            String[] keyArray = key.split(LWM2M_SEPARATOR_PATH);
+            String[] keyArray = pathIdVer.split(LWM2M_SEPARATOR_PATH);
             if (keyArray.length > 1 && keyArray[1].split(LWM2M_SEPARATOR_KEY).length == 2) {
                 keyArray[1] = keyArray[1].split(LWM2M_SEPARATOR_KEY)[0];
                 return StringUtils.join(keyArray, LWM2M_SEPARATOR_PATH);
-            } else {
-                return key;
+            }
+            else {
+                return pathIdVer;
             }
         } catch (Exception e) {
             return null;
         }
     }
 
-    public static String convertToIdVerFromObjectId(String path, Registration registration) {
+    public static String convertPathFromObjectIdToIdVer(String path, Registration registration) {
         String ver = registration.getSupportedObject().get(new LwM2mPath(path).getObjectId());
         try {
             String[] keyArray = path.split(LWM2M_SEPARATOR_PATH);
             if (keyArray.length > 1) {
                 keyArray[1] = keyArray[1] + LWM2M_SEPARATOR_KEY + ver;
                 return StringUtils.join(keyArray, LWM2M_SEPARATOR_PATH);
-            } else {
+            }
+            else {
                 return path;
             }
         } catch (Exception e) {

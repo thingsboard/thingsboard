@@ -124,7 +124,7 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
         return COAP_BASE_URL + token + "/" + FeatureType.RPC.name().toLowerCase() + "/" + requestId;
     }
 
-    private class TestCoapCallback implements CoapHandler {
+    protected class TestCoapCallback implements CoapHandler {
 
         private final CoapClient client;
         private final CountDownLatch latch;
@@ -136,7 +136,7 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
 
         private Integer observe;
 
-        private TestCoapCallback(CoapClient client, CountDownLatch latch, boolean isOneWayRpc) {
+        TestCoapCallback(CoapClient client, CountDownLatch latch, boolean isOneWayRpc) {
             this.client = client;
             this.latch = latch;
             this.isOneWayRpc = isOneWayRpc;
@@ -144,7 +144,7 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
 
         @Override
         public void onLoad(CoapResponse response) {
-            log.warn("coap response: {}, {}", response, response.getCode());
+            log.warn("coap response: {}, {}", response.getResponseText(), response.getCode());
             assertNotNull(response.getPayload());
             assertEquals(response.getCode(), CoAP.ResponseCode.CONTENT);
             observe = response.getOptions().getObserve();

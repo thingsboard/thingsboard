@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.ApiUsageStateFilter;
 import org.thingsboard.server.common.data.query.AssetSearchQueryFilter;
 import org.thingsboard.server.common.data.query.AssetTypeFilter;
 import org.thingsboard.server.common.data.query.DeviceSearchQueryFilter;
@@ -219,8 +220,9 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             " THEN (select additional_info from edge where id = entity_id)" +
             " END as additional_info";
 
-    private static final String SELECT_API_USAGE_STATE = "(select aus.id, aus.created_time, aus.tenant_id, '13814000-1dd2-11b2-8080-808080808080'::uuid as customer_id, " +
-            "(select title from tenant where id = aus.tenant_id) as name from api_usage_state as aus)";
+    private static final String SELECT_API_USAGE_STATE = "(select aus.id, aus.created_time, aus.tenant_id, aus.entity_id, " +
+            "coalesce((select title from tenant where id = aus.entity_id), (select title from customer where id = aus.entity_id)) as name " +
+            "from api_usage_state as aus)";
 
     static {
         entityTableMap.put(EntityType.ASSET, "asset");
@@ -466,6 +468,22 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             case ENTITY_VIEW_SEARCH_QUERY:
             case EDGE_SEARCH_QUERY:
                 return this.defaultPermissionQuery(ctx);
+            case API_USAGE_STATE:
+                CustomerId filterCustomerId = ((ApiUsageStateFilter) entityFilter).getCustomerId();
+                if (ctx.getCustomerId() != null && !ctx.getCustomerId().isNullUid()) {
+                    if (filterCustomerId != null && !filterCustomerId.equals(ctx.getCustomerId())) {
+                        throw new SecurityException("Customer is not allowed to query other customer's data");
+                    }
+                    filterCustomerId = ctx.getCustomerId();
+                }
+
+                ctx.addUuidParameter("permissions_tenant_id", ctx.getTenantId().getId());
+                if (filterCustomerId != null) {
+                    ctx.addUuidParameter("permissions_customer_id", filterCustomerId.getId());
+                    return "e.tenant_id=:permissions_tenant_id and e.entity_id=:permissions_customer_id";
+                } else {
+                    return "e.tenant_id=:permissions_tenant_id and e.entity_id=:permissions_tenant_id";
+                }
             default:
                 if (ctx.getEntityType() == EntityType.TENANT) {
                     ctx.addUuidParameter("permissions_tenant_id", ctx.getTenantId().getId());

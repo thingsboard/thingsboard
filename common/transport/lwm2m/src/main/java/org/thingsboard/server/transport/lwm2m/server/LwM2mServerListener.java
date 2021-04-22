@@ -26,7 +26,7 @@ import org.eclipse.leshan.server.registration.RegistrationUpdate;
 
 import java.util.Collection;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertToIdVerFromObjectId;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertPathFromObjectIdToIdVer;
 
 @Slf4j
 public class LwM2mServerListener {
@@ -92,7 +92,7 @@ public class LwM2mServerListener {
         public void onResponse(Observation observation, Registration registration, ObserveResponse response) {
             if (registration != null) {
                 try {
-                    service.onObservationResponse(registration, convertToIdVerFromObjectId(observation.getPath().toString(), registration), response);
+                    service.onObservationResponse(registration, convertPathFromObjectIdToIdVer(observation.getPath().toString(), registration), response);
                 } catch (Exception e) {
                     log.error("[{}] onResponse", e.toString());
 
@@ -107,7 +107,7 @@ public class LwM2mServerListener {
 
         @Override
         public void newObservation(Observation observation, Registration registration) {
-//            log.info("Received newObservation from [{}] endpoint  [{}] ", observation.getPath(), registration.getEndpoint());
+            log.info("Received newObservation from [{}] endpoint  [{}] ", observation.getPath(), registration.getEndpoint());
         }
     };
 

@@ -40,6 +40,8 @@ public class SessionInfoCreator {
                 .setDeviceIdLSB(msg.getDeviceInfo().getDeviceId().getId().getLeastSignificantBits())
                 .setTenantIdMSB(msg.getDeviceInfo().getTenantId().getId().getMostSignificantBits())
                 .setTenantIdLSB(msg.getDeviceInfo().getTenantId().getId().getLeastSignificantBits())
+                .setCustomerIdMSB(msg.getDeviceInfo().getCustomerId().getId().getMostSignificantBits())
+                .setCustomerIdLSB(msg.getDeviceInfo().getCustomerId().getId().getLeastSignificantBits())
                 .setDeviceName(msg.getDeviceInfo().getDeviceName())
                 .setDeviceType(msg.getDeviceInfo().getDeviceType())
                 .setDeviceProfileIdMSB(msg.getDeviceInfo().getDeviceProfileId().getId().getMostSignificantBits())

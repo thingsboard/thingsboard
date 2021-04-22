@@ -13,23 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.auth;
+package org.thingsboard.server.transport.lwm2m.server.client;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.DataType;
 
 @Data
-public class TransportDeviceInfo {
+public class ResultsResourceValue {
+    DataType dataType;
+    Object value;
+    String resourceName;
 
-    private TenantId tenantId;
-    private CustomerId customerId;
-    private DeviceProfileId deviceProfileId;
-    private DeviceId deviceId;
-    private String deviceName;
-    private String deviceType;
-    private String additionalInfo;
-
+    public ResultsResourceValue (DataType dataType, Object value, String resourceName) {
+        this.dataType = dataType;
+        this.value = value;
+        this.resourceName = resourceName;
+    }
 }
