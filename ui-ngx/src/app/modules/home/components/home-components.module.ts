@@ -25,6 +25,7 @@ import { AuditLogDetailsDialogComponent } from '@home/components/audit-log/audit
 import { AuditLogTableComponent } from '@home/components/audit-log/audit-log-table.component';
 import { EventTableHeaderComponent } from '@home/components/event/event-table-header.component';
 import { EventTableComponent } from '@home/components/event/event-table.component';
+import { EventFilterPanelComponent } from '@home/components/event/event-filter-panel.component';
 import { RelationTableComponent } from '@home/components/relation/relation-table.component';
 import { RelationDialogComponent } from '@home/components/relation/relation-dialog.component';
 import { AlarmTableHeaderComponent } from '@home/components/alarm/alarm-table-header.component';
@@ -133,6 +134,8 @@ import { ManageDashboardStatesDialogComponent } from '@home/components/dashboard
 import { DashboardStateDialogComponent } from '@home/components/dashboard-page/states/dashboard-state-dialog.component';
 import { EmbedDashboardDialogComponent } from '@home/components/widget/dialog/embed-dashboard-dialog.component';
 import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
+import { EdgeDownlinkTableComponent } from '@home/components/edge/edge-downlink-table.component';
+import { EdgeDownlinkTableHeaderComponent } from '@home/components/edge/edge-downlink-table-header.component';
 import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-page/widget-types-panel.component';
 import { FirmwareAutocompleteComponent } from '@home/components/firmware/firmware-autocomplete.component';
 
@@ -148,6 +151,9 @@ import { FirmwareAutocompleteComponent } from '@home/components/firmware/firmwar
       EventContentDialogComponent,
       EventTableHeaderComponent,
       EventTableComponent,
+      EventFilterPanelComponent,
+      EdgeDownlinkTableHeaderComponent,
+      EdgeDownlinkTableComponent,
       RelationTableComponent,
       RelationDialogComponent,
       RelationFiltersComponent,
@@ -265,6 +271,8 @@ import { FirmwareAutocompleteComponent } from '@home/components/firmware/firmwar
     EntityDetailsPanelComponent,
     AuditLogTableComponent,
     EventTableComponent,
+    EdgeDownlinkTableHeaderComponent,
+    EdgeDownlinkTableComponent,
     RelationTableComponent,
     RelationFiltersComponent,
     AlarmTableComponent,

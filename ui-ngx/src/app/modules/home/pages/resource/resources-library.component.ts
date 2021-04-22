@@ -90,8 +90,10 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
   buildForm(entity: Resource): FormGroup {
     return this.fb.group(
       {
-        resourceType: [{value: entity?.resourceType ? entity.resourceType : ResourceType.LWM2M_MODEL,
-                        disabled: this.isEdit }, [Validators.required]],
+        resourceType: [{
+          value: entity?.resourceType ? entity.resourceType : ResourceType.LWM2M_MODEL,
+          disabled: this.isEdit
+        }, [Validators.required]],
         data: [entity ? entity.data : null, [Validators.required]],
         fileName: [entity ? entity.fileName : null, [Validators.required]],
         title: [entity ? entity.title : '', []]

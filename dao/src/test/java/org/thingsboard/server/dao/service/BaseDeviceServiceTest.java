@@ -21,13 +21,20 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceInfo;
+import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.Firmware;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.nio.ByteBuffer;
@@ -38,33 +45,93 @@ import java.util.List;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
-    
+
     private IdComparator<Device> idComparator = new IdComparator<>();
-    
+
     private TenantId tenantId;
+    private TenantId anotherTenantId;
 
     @Before
     public void before() {
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        Tenant savedTenant = tenantService.saveTenant(tenant);
-        Assert.assertNotNull(savedTenant);
-        tenantId = savedTenant.getId();
+        tenantId = createTenant();
+        anotherTenantId = createTenant();
     }
 
     @After
     public void after() {
         tenantService.deleteTenant(tenantId);
+        tenantService.deleteTenant(anotherTenantId);
+
+        tenantProfileService.deleteTenantProfiles(tenantId);
+        tenantProfileService.deleteTenantProfiles(anotherTenantId);
     }
 
     @Test
-    public void testSaveDevice() {
+    public void testSaveDevicesWithoutMaxDeviceLimit() {
+        Device device = this.saveDevice(tenantId, "My device");
+        deleteDevice(tenantId, device);
+    }
+
+    @Test
+    public void testSaveDevicesWithInfiniteMaxDeviceLimit() {
+        TenantProfile defaultTenantProfile = tenantProfileService.findDefaultTenantProfile(tenantId);
+        defaultTenantProfile.getProfileData().setConfiguration(DefaultTenantProfileConfiguration.builder().maxDevices(Long.MAX_VALUE).build());
+        tenantProfileService.saveTenantProfile(tenantId, defaultTenantProfile);
+
+        Device device = this.saveDevice(tenantId, "My device");
+        deleteDevice(tenantId, device);
+    }
+
+    @Test(expected = DataValidationException.class)
+    public void testSaveDevicesWithMaxDeviceOutOfLimit() {
+        TenantProfile defaultTenantProfile = tenantProfileService.findDefaultTenantProfile(tenantId);
+        defaultTenantProfile.getProfileData().setConfiguration(DefaultTenantProfileConfiguration.builder().maxDevices(1).build());
+        tenantProfileService.saveTenantProfile(tenantId, defaultTenantProfile);
+
+        Assert.assertEquals(0, deviceService.countByTenantId(tenantId));
+
+        this.saveDevice(tenantId, "My first device");
+        Assert.assertEquals(1, deviceService.countByTenantId(tenantId));
+
+        this.saveDevice(tenantId, "My second device that out of maxDeviceCount limit");
+    }
+
+    @Test
+    public void testCountByTenantId() {
+        Assert.assertEquals(0, deviceService.countByTenantId(tenantId));
+        Assert.assertEquals(0, deviceService.countByTenantId(anotherTenantId));
+        Assert.assertEquals(0, deviceService.countByTenantId(TenantId.SYS_TENANT_ID));
+
+        Device anotherDevice = this.saveDevice(anotherTenantId, "My device 1");
+        Assert.assertEquals(1, deviceService.countByTenantId(anotherTenantId));
+
+        int maxDevices = 8;
+        List<Device> devices = new ArrayList<>(maxDevices);
+
+        for (int i = 1; i <= maxDevices; i++) {
+            devices.add(this.saveDevice(tenantId, "My device " + i));
+            Assert.assertEquals(i, deviceService.countByTenantId(tenantId));
+        }
+
+        Assert.assertEquals(maxDevices, deviceService.countByTenantId(tenantId));
+        Assert.assertEquals(1, deviceService.countByTenantId(anotherTenantId));
+        Assert.assertEquals(0, deviceService.countByTenantId(TenantId.SYS_TENANT_ID));
+
+        devices.forEach(device -> deleteDevice(tenantId, device));
+        deleteDevice(anotherTenantId, anotherDevice);
+    }
+
+    void deleteDevice(TenantId tenantId, Device device) {
+        deviceService.deleteDevice(tenantId, device.getId());
+    }
+
+    Device saveDevice(TenantId tenantId, final String name) {
         Device device = new Device();
         device.setTenantId(tenantId);
-        device.setName("My device");
+        device.setName(name);
         device.setType("default");
         Device savedDevice = deviceService.saveDevice(device);
-        
+
         Assert.assertNotNull(savedDevice);
         Assert.assertNotNull(savedDevice.getId());
         Assert.assertTrue(savedDevice.getCreatedTime() > 0);
@@ -72,7 +139,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(savedDevice.getCustomerId());
         Assert.assertEquals(NULL_UUID, savedDevice.getCustomerId().getId());
         Assert.assertEquals(device.getName(), savedDevice.getName());
-        
+
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, savedDevice.getId());
         Assert.assertNotNull(deviceCredentials);
         Assert.assertNotNull(deviceCredentials.getId());
@@ -80,14 +147,13 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         Assert.assertEquals(DeviceCredentialsType.ACCESS_TOKEN, deviceCredentials.getCredentialsType());
         Assert.assertNotNull(deviceCredentials.getCredentialsId());
         Assert.assertEquals(20, deviceCredentials.getCredentialsId().length());
-        
-        savedDevice.setName("My new device");
-        
+
+        savedDevice.setName("New " + savedDevice.getName());
+
         deviceService.saveDevice(savedDevice);
         Device foundDevice = deviceService.findDeviceById(tenantId, savedDevice.getId());
         Assert.assertEquals(foundDevice.getName(), savedDevice.getName());
-        
-        deviceService.deleteDevice(tenantId, savedDevice.getId());
+        return foundDevice;
     }
 
     @Test
@@ -140,7 +206,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         device.setTenantId(tenantId);
         deviceService.saveDevice(device);
     }
-    
+
     @Test(expected = DataValidationException.class)
     public void testSaveDeviceWithEmptyTenant() {
         Device device = new Device();
@@ -148,7 +214,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         device.setType("default");
         deviceService.saveDevice(device);
     }
-    
+
     @Test(expected = DataValidationException.class)
     public void testSaveDeviceWithInvalidTenant() {
         Device device = new Device();
@@ -157,7 +223,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         device.setTenantId(new TenantId(Uuids.timeBased()));
         deviceService.saveDevice(device);
     }
-    
+
     @Test(expected = DataValidationException.class)
     public void testAssignDeviceToNonExistentCustomer() {
         Device device = new Device();
@@ -193,7 +259,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
             tenantService.deleteTenant(tenant.getId());
         }
     }
-    
+
     @Test
     public void testFindDeviceById() {
         Device device = new Device();
@@ -242,7 +308,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
             devices.forEach((device) -> { deviceService.deleteDevice(tenantId, device.getId()); });
         }
     }
-    
+
     @Test
     public void testDeleteDevice() {
         Device device = new Device();
@@ -258,15 +324,15 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         DeviceCredentials foundDeviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, savedDevice.getId());
         Assert.assertNull(foundDeviceCredentials);
     }
-    
+
     @Test
     public void testFindDevicesByTenantId() {
         Tenant tenant = new Tenant();
         tenant.setTitle("Test tenant");
         tenant = tenantService.saveTenant(tenant);
-        
+
         TenantId tenantId = tenant.getId();
-        
+
         List<Device> devices = new ArrayList<>();
         for (int i=0;i<178;i++) {
             Device device = new Device();
@@ -275,7 +341,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
             device.setType("default");
             devices.add(deviceService.saveDevice(device));
         }
-        
+
         List<Device> loadedDevices = new ArrayList<>();
         PageLink pageLink = new PageLink(23);
         PageData<Device> pageData = null;
@@ -286,19 +352,19 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
-        
+
         Collections.sort(devices, idComparator);
         Collections.sort(loadedDevices, idComparator);
-        
+
         Assert.assertEquals(devices, loadedDevices);
-        
+
         deviceService.deleteDevicesByTenantId(tenantId);
 
         pageLink = new PageLink(33);
         pageData = deviceService.findDevicesByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
-        
+
         tenantService.deleteTenant(tenantId);
     }
 
@@ -328,7 +394,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
             device.setType("default");
             devicesTitle2.add(new DeviceInfo(deviceService.saveDevice(device), null, false, "default"));
         }
-        
+
         List<DeviceInfo> loadedDevicesTitle1 = new ArrayList<>();
         PageLink pageLink = new PageLink(15, 0, title1);
         PageData<DeviceInfo> pageData = null;
@@ -339,12 +405,12 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
-        
+
         Collections.sort(devicesTitle1, idComparator);
         Collections.sort(loadedDevicesTitle1, idComparator);
-        
+
         Assert.assertEquals(devicesTitle1, loadedDevicesTitle1);
-        
+
         List<DeviceInfo> loadedDevicesTitle2 = new ArrayList<>();
         pageLink = new PageLink(4, 0, title2);
         do {
@@ -357,22 +423,22 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
 
         Collections.sort(devicesTitle2, idComparator);
         Collections.sort(loadedDevicesTitle2, idComparator);
-        
+
         Assert.assertEquals(devicesTitle2, loadedDevicesTitle2);
 
         for (Device device : loadedDevicesTitle1) {
             deviceService.deleteDevice(tenantId, device.getId());
         }
-        
+
         pageLink = new PageLink(4, 0, title1);
         pageData = deviceService.findDeviceInfosByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
-        
+
         for (Device device : loadedDevicesTitle2) {
             deviceService.deleteDevice(tenantId, device.getId());
         }
-        
+
         pageLink = new PageLink(4, 0, title2);
         pageData = deviceService.findDeviceInfosByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
@@ -457,21 +523,21 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }
-    
+
     @Test
     public void testFindDevicesByTenantIdAndCustomerId() {
         Tenant tenant = new Tenant();
         tenant.setTitle("Test tenant");
         tenant = tenantService.saveTenant(tenant);
-        
+
         TenantId tenantId = tenant.getId();
-        
+
         Customer customer = new Customer();
         customer.setTitle("Test customer");
         customer.setTenantId(tenantId);
         customer = customerService.saveCustomer(customer);
         CustomerId customerId = customer.getId();
-        
+
         List<DeviceInfo> devices = new ArrayList<>();
         for (int i=0;i<278;i++) {
             Device device = new Device();
@@ -481,7 +547,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
             device = deviceService.saveDevice(device);
             devices.add(new DeviceInfo(deviceService.assignDeviceToCustomer(tenantId, device.getId(), customerId), customer.getTitle(), customer.isPublic(), "default"));
         }
-        
+
         List<DeviceInfo> loadedDevices = new ArrayList<>();
         PageLink pageLink = new PageLink(23);
         PageData<DeviceInfo> pageData = null;
@@ -492,31 +558,31 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
-        
+
         Collections.sort(devices, idComparator);
         Collections.sort(loadedDevices, idComparator);
-        
+
         Assert.assertEquals(devices, loadedDevices);
-        
+
         deviceService.unassignCustomerDevices(tenantId, customerId);
 
         pageLink = new PageLink(33);
         pageData = deviceService.findDeviceInfosByTenantIdAndCustomerId(tenantId, customerId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
-        
+
         tenantService.deleteTenant(tenantId);
     }
-    
+
     @Test
     public void testFindDevicesByTenantIdCustomerIdAndName() {
-        
+
         Customer customer = new Customer();
         customer.setTitle("Test customer");
         customer.setTenantId(tenantId);
         customer = customerService.saveCustomer(customer);
         CustomerId customerId = customer.getId();
-        
+
         String title1 = "Device title 1";
         List<Device> devicesTitle1 = new ArrayList<>();
         for (int i=0;i<175;i++) {
@@ -543,7 +609,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
             device = deviceService.saveDevice(device);
             devicesTitle2.add(deviceService.assignDeviceToCustomer(tenantId, device.getId(), customerId));
         }
-        
+
         List<Device> loadedDevicesTitle1 = new ArrayList<>();
         PageLink pageLink = new PageLink(15, 0, title1);
         PageData<Device> pageData = null;
@@ -554,12 +620,12 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
-        
+
         Collections.sort(devicesTitle1, idComparator);
         Collections.sort(loadedDevicesTitle1, idComparator);
-        
+
         Assert.assertEquals(devicesTitle1, loadedDevicesTitle1);
-        
+
         List<Device> loadedDevicesTitle2 = new ArrayList<>();
         pageLink = new PageLink(4, 0, title2);
         do {
@@ -572,22 +638,22 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
 
         Collections.sort(devicesTitle2, idComparator);
         Collections.sort(loadedDevicesTitle2, idComparator);
-        
+
         Assert.assertEquals(devicesTitle2, loadedDevicesTitle2);
 
         for (Device device : loadedDevicesTitle1) {
             deviceService.deleteDevice(tenantId, device.getId());
         }
-        
+
         pageLink = new PageLink(4, 0, title1);
         pageData = deviceService.findDevicesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
-        
+
         for (Device device : loadedDevicesTitle2) {
             deviceService.deleteDevice(tenantId, device.getId());
         }
-        
+
         pageLink = new PageLink(4, 0, title2);
         pageData = deviceService.findDevicesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
         Assert.assertFalse(pageData.hasNext());

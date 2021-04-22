@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.event;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.event.EventFilter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -87,6 +88,8 @@ public interface EventDao extends Dao<Event> {
      * @return the event list
      */
     PageData<Event> findEvents(UUID tenantId, EntityId entityId, String eventType, TimePageLink pageLink);
+
+    PageData<Event> findEventByFilter(UUID tenantId, EntityId entityId, EventFilter eventFilter, TimePageLink pageLink);
 
     /**
      * Find latest events by tenantId, entityId and eventType.

@@ -86,6 +86,8 @@ export interface DashboardSettings {
   showDashboardsSelect?: boolean;
   showEntitiesSelect?: boolean;
   showFilters?: boolean;
+  showDashboardLogo?: boolean;
+  dashboardLogoUrl?: string;
   showDashboardTimewindow?: boolean;
   showDashboardExport?: boolean;
   toolbarAlwaysOpen?: boolean;

@@ -145,6 +145,7 @@ CREATE TABLE IF NOT EXISTS rule_chain (
     additional_info varchar,
     configuration varchar(10000000),
     name varchar(255),
+    type varchar(255),
     first_rule_node_id uuid,
     root boolean,
     debug_mode boolean,
@@ -484,6 +485,38 @@ CREATE TABLE IF NOT EXISTS resource (
     CONSTRAINT resource_unq_key UNIQUE (tenant_id, resource_type, resource_key)
 );
 
+CREATE TABLE IF NOT EXISTS edge (
+    id uuid NOT NULL CONSTRAINT edge_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    additional_info varchar,
+    customer_id uuid,
+    root_rule_chain_id uuid,
+    type varchar(255),
+    name varchar(255),
+    label varchar(255),
+    routing_key varchar(255),
+    secret varchar(255),
+    edge_license_key varchar(30),
+    cloud_endpoint varchar(255),
+    search_text varchar(255),
+    tenant_id uuid,
+    CONSTRAINT edge_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT edge_routing_key_unq_key UNIQUE (routing_key)
+);
+
+CREATE TABLE IF NOT EXISTS edge_event (
+    id uuid NOT NULL CONSTRAINT edge_event_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    edge_id uuid,
+    edge_event_type varchar(255),
+    edge_event_uid varchar(255),
+    entity_id uuid,
+    edge_event_action varchar(255),
+    body varchar(10000000),
+    tenant_id uuid,
+    ts bigint NOT NULL
+);
+
 CREATE OR REPLACE PROCEDURE cleanup_events_by_ttl(IN ttl bigint, IN debug_ttl bigint, INOUT deleted bigint)
     LANGUAGE plpgsql AS
 $$
@@ -517,3 +550,20 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+
+CREATE OR REPLACE PROCEDURE cleanup_edge_events_by_ttl(IN ttl bigint, INOUT deleted bigint)
+    LANGUAGE plpgsql AS
+$$
+DECLARE
+    ttl_ts bigint;
+    ttl_deleted_count bigint DEFAULT 0;
+BEGIN
+    IF ttl > 0 THEN
+        ttl_ts := (EXTRACT(EPOCH FROM current_timestamp) * 1000 - ttl::bigint * 1000)::bigint;
+        EXECUTE format(
+                'WITH deleted AS (DELETE FROM edge_event WHERE ts < %L::bigint RETURNING *) SELECT count(*) FROM deleted', ttl_ts) into ttl_deleted_count;
+    END IF;
+    RAISE NOTICE 'Edge events removed by ttl: %', ttl_deleted_count;
+    deleted := ttl_deleted_count;
+END
+$$;

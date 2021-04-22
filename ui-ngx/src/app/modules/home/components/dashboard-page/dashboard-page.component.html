@@ -56,6 +56,8 @@
                                [syncStateWithQueryParam]="syncStateWithQueryParam"
                                [states]="dashboardConfiguration.states">
           </tb-states-component>
+          <img *ngIf="showDashboardLogo()" [src]="dashboardLogo"
+               aria-label="dashboard_logo" class="dashboard_logo"/>
         </div>
         <div class="tb-dashboard-action-panel" fxFlex="1 0 auto" fxLayout="row-reverse"
              fxLayoutAlign.gt-sm="start center" fxLayoutAlign="space-between center" fxLayoutGap="12px">

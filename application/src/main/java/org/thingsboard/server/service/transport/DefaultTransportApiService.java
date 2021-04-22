@@ -61,7 +61,7 @@ import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.device.provision.ProvisionResponse;
 import org.thingsboard.server.dao.firmware.FirmwareService;
 import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.dao.resource.TbResourceService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
@@ -83,6 +83,7 @@ import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.service.resource.TbResourceService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
 import java.util.UUID;
@@ -123,7 +124,7 @@ public class DefaultTransportApiService implements TransportApiService {
                                       RelationService relationService, DeviceCredentialsService deviceCredentialsService,
                                       DeviceStateService deviceStateService, DbCallbackExecutorService dbCallbackExecutorService,
                                       TbClusterService tbClusterService, DataDecodingEncodingService dataDecodingEncodingService,
-                                      DeviceProvisionService deviceProvisionService, TbResourceService resourceService, FirmwareService firmwareService, CacheManager cacheManager, FirmwareCacheWriter firmwareCacheWriter) {
+                                      DeviceProvisionService deviceProvisionService, TbResourceService resourceService, FirmwareService firmwareService, FirmwareCacheWriter firmwareCacheWriter) {
         this.deviceProfileCache = deviceProfileCache;
         this.tenantProfileCache = tenantProfileCache;
         this.apiUsageStateService = apiUsageStateService;

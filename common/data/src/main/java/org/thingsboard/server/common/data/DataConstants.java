@@ -70,6 +70,8 @@ public class DataConstants {
     public static final String ENTITY_ASSIGNED_TO_TENANT = "ENTITY_ASSIGNED_TO_TENANT";
     public static final String PROVISION_SUCCESS = "PROVISION_SUCCESS";
     public static final String PROVISION_FAILURE = "PROVISION_FAILURE";
+    public static final String ENTITY_ASSIGNED_TO_EDGE = "ENTITY_ASSIGNED_TO_EDGE";
+    public static final String ENTITY_UNASSIGNED_FROM_EDGE = "ENTITY_UNASSIGNED_FROM_EDGE";
 
     public static final String RPC_CALL_FROM_SERVER_TO_DEVICE = "RPC_CALL_FROM_SERVER_TO_DEVICE";
 
@@ -106,4 +108,6 @@ public class DataConstants {
     public static final String FIRMWARE_SIZE = "fw_size";
     public static final String FIRMWARE_CHECKSUM = "fw_checksum";
     public static final String FIRMWARE_CHECKSUM_ALGORITHM = "fw_checksum_algorithm";
+    public static final String EDGE_MSG_SOURCE = "edge";
+    public static final String MSG_SOURCE_KEY = "source";
 }

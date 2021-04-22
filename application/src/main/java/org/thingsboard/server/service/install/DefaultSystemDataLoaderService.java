@@ -61,6 +61,7 @@ import org.thingsboard.server.common.data.query.DynamicValueSourceType;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.UserCredentials;
@@ -271,8 +272,8 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         thermostatDeviceProfile.setTransportType(DeviceTransportType.DEFAULT);
         thermostatDeviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
         thermostatDeviceProfile.setDescription("Thermostat device profile");
-        thermostatDeviceProfile.setDefaultRuleChainId(ruleChainService.findTenantRuleChains(
-                demoTenant.getId(), new PageLink(1, 0, "Thermostat")).getData().get(0).getId());
+        thermostatDeviceProfile.setDefaultRuleChainId(ruleChainService.findTenantRuleChainsByType(
+                demoTenant.getId(), RuleChainType.CORE, new PageLink(1, 0, "Thermostat")).getData().get(0).getId());
 
         DeviceProfileData deviceProfileData = new DeviceProfileData();
         DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
@@ -439,6 +440,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         this.deleteSystemWidgetBundle("date");
         this.deleteSystemWidgetBundle("entity_admin_widgets");
         this.deleteSystemWidgetBundle("navigation_widgets");
+        this.deleteSystemWidgetBundle("edge_widgets");
         installScripts.loadSystemWidgets();
     }
 

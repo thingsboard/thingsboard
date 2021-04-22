@@ -63,6 +63,9 @@ import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
+import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -70,6 +73,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationTemplateId;
@@ -105,6 +109,7 @@ import org.thingsboard.server.common.data.rule.DefaultRuleChainCreateRequest;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainData;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
@@ -300,16 +305,24 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public PageData<AlarmInfo> getAlarms(EntityId entityId, AlarmSearchStatus searchStatus, AlarmStatus status, TimePageLink pageLink, Boolean fetchOriginator) {
+        String urlSecondPart = "/api/alarm/{entityType}/{entityId}?fetchOriginator={fetchOriginator}";
         Map<String, String> params = new HashMap<>();
         params.put("entityType", entityId.getEntityType().name());
         params.put("entityId", entityId.getId().toString());
-        params.put("searchStatus", searchStatus.name());
-        params.put("status", status.name());
         params.put("fetchOriginator", String.valueOf(fetchOriginator));
+        if(searchStatus != null) {
+            params.put("searchStatus", searchStatus.name());
+            urlSecondPart += "&searchStatus={searchStatus}";
+        }
+        if(status != null) {
+            params.put("status", status.name());
+            urlSecondPart += "&status={status}";
+        }
+
         addTimePageLinkToParam(params, pageLink);
 
         return restTemplate.exchange(
-                baseURL + "/api/alarm/{entityType}/{entityId}?searchStatus={searchStatus}&status={status}&fetchOriginator={fetchOriginator}&" + getTimeUrlParams(pageLink),
+                baseURL +  urlSecondPart + getTimeUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<AlarmInfo>>() {
@@ -697,22 +710,31 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public List<ComponentDescriptor> getComponentDescriptorsByType(ComponentType componentType) {
+        return getComponentDescriptorsByType(componentType, RuleChainType.CORE);
+    }
+
+    public List<ComponentDescriptor> getComponentDescriptorsByType(ComponentType componentType, RuleChainType ruleChainType) {
         return restTemplate.exchange(
-                baseURL + "/api/components?componentType={componentType}",
+                baseURL + "/api/components/" + componentType.name() + "/?ruleChainType={ruleChainType}",
                 HttpMethod.GET, HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<ComponentDescriptor>>() {
                 },
-                componentType).getBody();
+                ruleChainType).getBody();
     }
 
     public List<ComponentDescriptor> getComponentDescriptorsByTypes(List<ComponentType> componentTypes) {
+        return getComponentDescriptorsByTypes(componentTypes, RuleChainType.CORE);
+    }
+
+    public List<ComponentDescriptor> getComponentDescriptorsByTypes(List<ComponentType> componentTypes, RuleChainType ruleChainType) {
         return restTemplate.exchange(
-                baseURL + "/api/components?componentTypes={componentTypes}",
+                baseURL + "/api/components?componentTypes={componentTypes}&ruleChainType={ruleChainType}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<ComponentDescriptor>>() {
                 },
-                listEnumToString(componentTypes))
+                listEnumToString(componentTypes),
+                ruleChainType)
                 .getBody();
     }
 
@@ -1323,7 +1345,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 HttpEntity.EMPTY, DeviceProfile.class, deviceProfileId).getBody();
     }
 
-    public PageData<DeviceProfile> getTenantDevices(PageLink pageLink) {
+    public PageData<DeviceProfile> getDeviceProfiles(PageLink pageLink) {
         Map<String, String> params = new HashMap<>();
         addPageLinkToParam(params, pageLink);
         return restTemplate.exchange(
@@ -2410,6 +2432,403 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         }
     }
 
+    public Edge saveEdge(Edge edge) {
+        return restTemplate.postForEntity(baseURL + "/api/edge", edge, Edge.class).getBody();
+    }
+
+    public void deleteEdge(EdgeId edgeId) {
+        restTemplate.delete(baseURL + "/api/edge/{edgeId}", edgeId.getId());
+    }
+
+    public Optional<Edge> getEdgeById(EdgeId edgeId) {
+        try {
+            ResponseEntity<Edge> edge = restTemplate.getForEntity(baseURL + "/api/edge/{edgeId}", Edge.class, edgeId.getId());
+            return Optional.ofNullable(edge.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<Edge> assignEdgeToCustomer(CustomerId customerId, EdgeId edgeId) {
+        try {
+            ResponseEntity<Edge> edge = restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/edge/{edgeId}", null, Edge.class, customerId.getId(), edgeId.getId());
+            return Optional.ofNullable(edge.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<Edge> assignEdgeToPublicCustomer(EdgeId edgeId) {
+        try {
+            ResponseEntity<Edge> edge = restTemplate.postForEntity(baseURL + "/api/customer/public/edge/{edgeId}", null, Edge.class, edgeId.getId());
+            return Optional.ofNullable(edge.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<Edge> setRootRuleChain(EdgeId edgeId, RuleChainId ruleChainId) {
+        try {
+            ResponseEntity<Edge> ruleChain = restTemplate.postForEntity(baseURL + "/api/edge/{edgeId}/{ruleChainId}/root", null, Edge.class, edgeId.getId(), ruleChainId.getId());
+            return Optional.ofNullable(ruleChain.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public PageData<Edge> getEdges(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/edges?" + getUrlParams(pageLink),
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<Edge>>() {
+                }, params).getBody();
+    }
+
+    public Optional<Edge> unassignEdgeFromCustomer(EdgeId edgeId) {
+        try {
+            ResponseEntity<Edge> edge = restTemplate.exchange(baseURL + "/api/customer/edge/{edgeId}", HttpMethod.DELETE, HttpEntity.EMPTY, Edge.class, edgeId.getId());
+            return Optional.ofNullable(edge.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<Device> assignDeviceToEdge(EdgeId edgeId, DeviceId deviceId) {
+        try {
+            ResponseEntity<Device> device = restTemplate.postForEntity(baseURL + "/api/edge/{edgeId}/device/{deviceId}", null, Device.class, edgeId.getId(), deviceId.getId());
+            return Optional.ofNullable(device.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<Device> unassignDeviceFromEdge(EdgeId edgeId, DeviceId deviceId) {
+        try {
+            ResponseEntity<Device> device = restTemplate.exchange(baseURL + "/api/edge/{edgeId}/device/{deviceId}", HttpMethod.DELETE, HttpEntity.EMPTY, Device.class, edgeId.getId(), deviceId.getId());
+            return Optional.ofNullable(device.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public PageData<Device> getEdgeDevices(EdgeId edgeId, PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("edgeId", edgeId.getId().toString());
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/edge/{edgeId}/devices?" + getUrlParams(pageLink),
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<Device>>() {
+                }, params).getBody();
+    }
+
+    public Optional<Asset> assignAssetToEdge(EdgeId edgeId, AssetId assetId) {
+        try {
+            ResponseEntity<Asset> asset = restTemplate.postForEntity(baseURL + "/api/edge/{edgeId}/asset/{assetId}", null, Asset.class, edgeId.getId(), assetId.getId());
+            return Optional.ofNullable(asset.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<Asset> unassignAssetFromEdge(EdgeId edgeId, AssetId assetId) {
+        try {
+            ResponseEntity<Asset> asset = restTemplate.exchange(baseURL + "/api/edge/{edgeId}/asset/{assetId}", HttpMethod.DELETE, HttpEntity.EMPTY, Asset.class, edgeId.getId(), assetId.getId());
+            return Optional.ofNullable(asset.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public PageData<Asset> getEdgeAssets(EdgeId edgeId, PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("edgeId", edgeId.getId().toString());
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/edge/{edgeId}/assets?" + getUrlParams(pageLink),
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<Asset>>() {
+                }, params).getBody();
+    }
+
+    public Optional<Dashboard> assignDashboardToEdge(EdgeId edgeId, DashboardId dashboardId) {
+        try {
+            ResponseEntity<Dashboard> dashboard = restTemplate.postForEntity(baseURL + "/api/edge/{edgeId}/dashboard/{dashboardId}", null, Dashboard.class, edgeId.getId(), dashboardId.getId());
+            return Optional.ofNullable(dashboard.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<Dashboard> unassignDashboardFromEdge(EdgeId edgeId, DashboardId dashboardId) {
+        try {
+            ResponseEntity<Dashboard> dashboard = restTemplate.exchange(baseURL + "/api/edge/{edgeId}/dashboard/{dashboardId}", HttpMethod.DELETE, HttpEntity.EMPTY, Dashboard.class, edgeId.getId(), dashboardId.getId());
+            return Optional.ofNullable(dashboard.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public PageData<DashboardInfo> getEdgeDashboards(EdgeId edgeId, TimePageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("edgeId", edgeId.getId().toString());
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/edge/{edgeId}/dashboards?" + getUrlParams(pageLink),
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<DashboardInfo>>() {
+                }, params).getBody();
+    }
+
+    public Optional<EntityView> assignEntityViewToEdge(EdgeId edgeId, EntityViewId entityViewId) {
+        try {
+            ResponseEntity<EntityView> entityView = restTemplate.postForEntity(baseURL + "/api/edge/{edgeId}/entityView/{entityViewId}", null, EntityView.class, edgeId.getId(), entityViewId.getId());
+            return Optional.ofNullable(entityView.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<EntityView> unassignEntityViewFromEdge(EdgeId edgeId, EntityViewId entityViewId) {
+        try {
+            ResponseEntity<EntityView> entityView = restTemplate.exchange(baseURL + "/api/edge/{edgeId}/entityView/{entityViewId}",
+                    HttpMethod.DELETE, HttpEntity.EMPTY, EntityView.class, edgeId.getId(), entityViewId.getId());
+            return Optional.ofNullable(entityView.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public PageData<EntityView> getEdgeEntityViews(EdgeId edgeId, PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("edgeId", edgeId.getId().toString());
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/edge/{edgeId}/entityViews?" + getUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<EntityView>>() {
+                }, params).getBody();
+    }
+
+    public Optional<RuleChain> assignRuleChainToEdge(EdgeId edgeId, RuleChainId ruleChainId) {
+        try {
+            ResponseEntity<RuleChain> ruleChain = restTemplate.postForEntity(baseURL + "/api/edge/{edgeId}/ruleChain/{ruleChainId}", null, RuleChain.class, edgeId.getId(), ruleChainId.getId());
+            return Optional.ofNullable(ruleChain.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<RuleChain> unassignRuleChainFromEdge(EdgeId edgeId, RuleChainId ruleChainId) {
+        try {
+            ResponseEntity<RuleChain> ruleChain = restTemplate.exchange(baseURL + "/api/edge/{edgeId}/ruleChain/{ruleChainId}", HttpMethod.DELETE, HttpEntity.EMPTY, RuleChain.class, edgeId.getId(), ruleChainId.getId());
+            return Optional.ofNullable(ruleChain.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public PageData<RuleChain> getEdgeRuleChains(EdgeId edgeId, TimePageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("edgeId", edgeId.getId().toString());
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/edge/{edgeId}/ruleChains?" + getUrlParams(pageLink),
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<RuleChain>>() {
+                }, params).getBody();
+    }
+
+    public Optional<RuleChain> setAutoAssignToEdgeRuleChain(RuleChainId ruleChainId) {
+        try {
+            ResponseEntity<RuleChain> ruleChain = restTemplate.postForEntity(baseURL + "/api/ruleChain/{ruleChainId}/autoAssignToEdge", null, RuleChain.class, ruleChainId.getId());
+            return Optional.ofNullable(ruleChain.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<RuleChain> unsetAutoAssignToEdgeRuleChain(RuleChainId ruleChainId) {
+        try {
+            ResponseEntity<RuleChain> ruleChain = restTemplate.exchange(baseURL + "/api/ruleChain/{ruleChainId}/autoAssignToEdge", HttpMethod.DELETE, HttpEntity.EMPTY, RuleChain.class, ruleChainId.getId());
+            return Optional.ofNullable(ruleChain.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public List<RuleChain> getAutoAssignToEdgeRuleChains() {
+        return restTemplate.exchange(baseURL + "/api/ruleChain/autoAssignToEdgeRuleChains",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<RuleChain>>() {
+                }).getBody();
+    }
+
+    public Optional<RuleChain> setRootEdgeTemplateRuleChain(RuleChainId ruleChainId) {
+        try {
+            ResponseEntity<RuleChain> ruleChain = restTemplate.postForEntity(baseURL + "/api/ruleChain/{ruleChainId}/edgeTemplateRoot", null, RuleChain.class, ruleChainId.getId());
+            return Optional.ofNullable(ruleChain.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public PageData<Edge> getTenantEdges(String type, PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("type", type);
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/tenant/edges?type={type}&" + getUrlParams(pageLink),
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<Edge>>() {
+                }, params).getBody();
+    }
+
+    public Optional<Edge> getTenantEdge(String edgeName) {
+        try {
+            ResponseEntity<Edge> edge = restTemplate.getForEntity(baseURL + "/api/tenant/edges?edgeName={edgeName}", Edge.class, edgeName);
+            return Optional.ofNullable(edge.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public PageData<Edge> getCustomerEdges(CustomerId customerId, PageLink pageLink, String edgeType) {
+        Map<String, String> params = new HashMap<>();
+        params.put("customerId", customerId.getId().toString());
+        params.put("type", edgeType);
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/customer/{customerId}/edges?type={type}&" + getUrlParams(pageLink),
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<Edge>>() {
+                }, params).getBody();
+    }
+
+    public List<Edge> getEdgesByIds(List<EdgeId> edgeIds) {
+        return restTemplate.exchange(baseURL + "/api/edges?edgeIds={edgeIds}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY, new ParameterizedTypeReference<List<Edge>>() {
+                }, listIdsToString(edgeIds)).getBody();
+    }
+
+    public List<Edge> findByQuery(EdgeSearchQuery query) {
+        return restTemplate.exchange(
+                baseURL + "/api/edges",
+                HttpMethod.POST,
+                new HttpEntity<>(query),
+                new ParameterizedTypeReference<List<Edge>>() {
+                }).getBody();
+    }
+
+    public List<EntitySubtype> getEdgeTypes() {
+        return restTemplate.exchange(
+                baseURL + "/api/edge/types",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<EntitySubtype>>() {
+                }).getBody();
+    }
+
+    public PageData<EdgeEvent> getEdgeEvents(EdgeId edgeId, TimePageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("edgeId", edgeId.toString());
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/edge/{edgeId}/events?" + getUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<EdgeEvent>>() {
+                },
+                params).getBody();
+    }
+
+    public void syncEdge(EdgeId edgeId) {
+        Map<String, String> params = new HashMap<>();
+        params.put("edgeId", edgeId.toString());
+        restTemplate.postForEntity(baseURL + "/api/edge/sync/{edgeId}", null, EdgeId.class, params);
+    }
+
     @Deprecated
     public Optional<JsonNode> getAttributes(String accessToken, String clientKeys, String sharedKeys) {
         Map<String, String> params = new HashMap<>();
@@ -2429,7 +2848,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     private String getTimeUrlParams(TimePageLink pageLink) {
-        String urlParams = "limit={limit}&ascOrder={ascOrder}";
+        String urlParams = getUrlParams(pageLink);
         if (pageLink.getStartTime() != null) {
             urlParams += "&startTime={startTime}";
         }

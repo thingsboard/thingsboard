@@ -83,4 +83,21 @@ export class EntityViewService {
     return this.http.post<Array<EntityView>>('/api/entityViews', query, defaultHttpOptionsFromConfig(config));
   }
 
+  public assignEntityViewToEdge(edgeId: string, entityViewId: string, config?: RequestConfig): Observable<EntityView> {
+    return this.http.post<EntityView>(`/api/edge/${edgeId}/entityView/${entityViewId}`, null,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public unassignEntityViewFromEdge(edgeId: string, entityViewId: string,
+                                    config?: RequestConfig) {
+    return this.http.delete(`/api/edge/${edgeId}/entityView/${entityViewId}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getEdgeEntityViews(edgeId: string, pageLink: PageLink, type: string = '',
+                            config?: RequestConfig): Observable<PageData<EntityViewInfo>> {
+    return this.http.get<PageData<EntityViewInfo>>(`/api/edge/${edgeId}/entityViews${pageLink.toQuery()}&type=${type}`,
+      defaultHttpOptionsFromConfig(config))
+  }
+
 }

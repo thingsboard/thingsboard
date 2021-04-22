@@ -77,7 +77,7 @@
         <curator.version>4.2.0</curator.version>
         <zookeeper.version>3.5.5</zookeeper.version>
         <protobuf.version>3.11.4</protobuf.version>
-        <grpc.version>1.22.1</grpc.version>
+        <grpc.version>1.36.0</grpc.version>
         <lombok.version>1.18.18</lombok.version>
         <paho.client.version>1.2.4</paho.client.version>
         <netty.version>4.1.60.Final</netty.version>
@@ -99,7 +99,7 @@
             org/thingsboard/server/extensions/core/plugin/telemetry/gen/**/*
         </sonar.exclusions>
         <elasticsearch.version>5.0.2</elasticsearch.version>
-        <delight-nashorn-sandbox.version>0.1.31</delight-nashorn-sandbox.version>
+        <delight-nashorn-sandbox.version>0.1.16</delight-nashorn-sandbox.version>
         <kafka.version>2.6.0</kafka.version>
         <bucket4j.version>4.1.1</bucket4j.version>
         <fst.version>2.57</fst.version>
@@ -919,6 +919,11 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.thingsboard.common</groupId>
+                <artifactId>edge-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.thingsboard</groupId>
                 <artifactId>dao</artifactId>
                 <version>${project.version}</version>
@@ -931,6 +936,11 @@
             <dependency>
                 <groupId>org.thingsboard.common</groupId>
                 <artifactId>stats</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common</groupId>
+                <artifactId>coap-server</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1289,6 +1299,11 @@
             <dependency>
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java</artifactId>
+                <version>${protobuf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java-util</artifactId>
                 <version>${protobuf.version}</version>
             </dependency>
             <dependency>

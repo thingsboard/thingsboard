@@ -45,7 +45,7 @@ export const ResourceTypeTranslationMap = new Map<ResourceType, string>(
     [ResourceType.LWM2M_MODEL, 'LWM2M model'],
     [ResourceType.PKCS_12, 'PKCS #12'],
     [ResourceType.JKS, 'JKS']
- ]
+  ]
 );
 
 export interface ResourceInfo extends BaseData<TbResourceId> {

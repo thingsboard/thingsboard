@@ -46,6 +46,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
+import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
@@ -54,6 +55,8 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeEventService;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateExecutor;
@@ -69,7 +72,7 @@ import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
-import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
+import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.executors.SharedEventLoopGroupService;
@@ -296,6 +299,18 @@ public class ActorSystemContext {
     @Getter
     private TbCoreDeviceRpcService tbCoreDeviceRpcService;
 
+    @Lazy
+    @Autowired(required = false)
+    @Getter private EdgeService edgeService;
+
+    @Lazy
+    @Autowired(required = false)
+    @Getter private EdgeEventService edgeEventService;
+
+    @Lazy
+    @Autowired(required = false)
+    @Getter private EdgeRpcService edgeRpcService;
+
     @Value("${actors.session.max_concurrent_sessions_per_device:1}")
     @Getter
     private long maxConcurrentSessionsPerDevice;
@@ -320,6 +335,9 @@ public class ActorSystemContext {
     @Getter
     private long statisticsPersistFrequency;
 
+    @Value("${edges.enabled}")
+    @Getter
+    private boolean edgesEnabled;
 
     @Scheduled(fixedDelayString = "${actors.statistics.js_print_interval_ms}")
     public void printStats() {

@@ -34,6 +34,7 @@ import { MODULES_MAP } from '@shared/public-api';
 import { modulesMap } from '../../common/modules-map';
 import { DeviceProfileModule } from './device-profile/device-profile.module';
 import { ApiUsageModule } from '@home/pages/api-usage/api-usage.module';
+import { EdgeModule } from '@home/pages/edge/edge.module';
 import { ResourceModule } from '@home/pages/resource/resource.module';
 import { FirmwareModule } from '@home/pages/firmware/firmware.module';
 
@@ -47,6 +48,7 @@ import { FirmwareModule } from '@home/pages/firmware/firmware.module';
     DeviceProfileModule,
     DeviceModule,
     AssetModule,
+    EdgeModule,
     EntityViewModule,
     CustomerModule,
     RuleChainModule,

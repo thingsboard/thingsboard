@@ -22,8 +22,10 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.Valid;
 
+import java.io.Serializable;
+
 @Data
-public class AlarmConditionFilter {
+public class AlarmConditionFilter implements Serializable {
 
     @Valid
     private AlarmConditionFilterKey key;

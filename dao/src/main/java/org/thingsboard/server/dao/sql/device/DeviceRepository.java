@@ -169,5 +169,36 @@ public interface DeviceRepository extends PagingAndSortingRepository<DeviceEntit
 
     Long countByDeviceProfileId(UUID deviceProfileId);
 
-    Long countByTenantId(UUID tenantId);
+    @Query("SELECT d FROM DeviceEntity d, RelationEntity re WHERE d.tenantId = :tenantId " +
+            "AND d.id = re.toId AND re.toType = 'DEVICE' AND re.relationTypeGroup = 'EDGE' " +
+            "AND re.relationType = 'Contains' AND re.fromId = :edgeId AND re.fromType = 'EDGE' " +
+            "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+    Page<DeviceEntity> findByTenantIdAndEdgeId(@Param("tenantId") UUID tenantId,
+                                               @Param("edgeId") UUID edgeId,
+                                               @Param("searchText") String searchText,
+                                               Pageable pageable);
+
+    @Query("SELECT d FROM DeviceEntity d, RelationEntity re WHERE d.tenantId = :tenantId " +
+            "AND d.id = re.toId AND re.toType = 'DEVICE' AND re.relationTypeGroup = 'EDGE' " +
+            "AND re.relationType = 'Contains' AND re.fromId = :edgeId AND re.fromType = 'EDGE' " +
+            "AND d.type = :type " +
+            "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+    Page<DeviceEntity> findByTenantIdAndEdgeIdAndType(@Param("tenantId") UUID tenantId,
+                                                      @Param("edgeId") UUID edgeId,
+                                                      @Param("type") String type,
+                                                      @Param("searchText") String searchText,
+                                                      Pageable pageable);
+
+    /**
+     * Count devices by tenantId.
+     * Custom query applied because default QueryDSL produces slow count(id).
+     * <p>
+     * There is two way to count devices.
+     * OPTIMAL: count(*)
+     *   - returns _row_count_ and use index-only scan (super fast).
+     * SLOW: count(id)
+     *   - returns _NON_NULL_id_count and performs table scan to verify isNull for each id in filtered rows.
+     * */
+    @Query("SELECT count(*) FROM DeviceEntity d WHERE d.tenantId = :tenantId")
+    Long countByTenantId(@Param("tenantId") UUID tenantId);
 }

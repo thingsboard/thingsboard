@@ -243,6 +243,7 @@ sql:
       batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:100}"
       stats_print_interval_ms: "${SQL_TS_LATEST_BATCH_STATS_PRINT_MS:10000}"
       batch_threads: "${SQL_TS_LATEST_BATCH_THREADS:4}"
+      update_by_latest_ts: "${SQL_TS_UPDATE_BY_LATEST_TIMESTAMP:true}"
     # Specify whether to sort entities before batch update. Should be enabled for cluster mode to avoid deadlocks
     batch_sort: "${SQL_BATCH_SORT:false}"
     # Specify whether to remove null characters from strValue of attributes and timeseries before insert
@@ -267,6 +268,10 @@ sql:
         execution_interval_ms: "${SQL_TTL_EVENTS_EXECUTION_INTERVAL:86400000}" # Number of milliseconds. The current value corresponds to one day
         events_ttl: "${SQL_TTL_EVENTS_EVENTS_TTL:0}" # Number of seconds
         debug_events_ttl: "${SQL_TTL_EVENTS_DEBUG_EVENTS_TTL:604800}" # Number of seconds. The current value corresponds to one week
+      edge_events:
+        enabled: "${SQL_TTL_EDGE_EVENTS_ENABLED:true}"
+        execution_interval_ms: "${SQL_TTL_EDGE_EVENTS_EXECUTION_INTERVAL:86400000}" # Number of milliseconds. The current value corresponds to one day
+        edge_events_ttl: "${SQL_TTL_EDGE_EVENTS_TTL:2628000}" # Number of seconds. The current value corresponds to one month
 
 # Actor system parameters
 actors:
@@ -281,7 +286,7 @@ actors:
   tenant:
     create_components_on_init: "${ACTORS_TENANT_CREATE_COMPONENTS_ON_INIT:true}"
   session:
-    max_concurrent_sessions_per_device: "${ACTORS_MAX_CONCURRENT_SESSION_PER_DEVICE:2}"
+    max_concurrent_sessions_per_device: "${ACTORS_MAX_CONCURRENT_SESSION_PER_DEVICE:1}"
     sync:
       # Default timeout for processing request using synchronous session (HTTP, CoAP) in milliseconds
       timeout: "${ACTORS_SESSION_SYNC_TIMEOUT:10000}"
@@ -368,6 +373,9 @@ caffeine:
     firmwares:
       timeToLiveInMinutes: 1440
       maxSize: 100
+    edges:
+      timeToLiveInMinutes: 1440
+      maxSize: 0
 
 redis:
   # standalone or cluster
@@ -486,6 +494,7 @@ audit-log:
       "alarm": "${AUDIT_LOG_MASK_ALARM:W}"
       "entity_view": "${AUDIT_LOG_MASK_ENTITY_VIEW:W}"
       "device_profile": "${AUDIT_LOG_MASK_DEVICE_PROFILE:W}"
+      "edge": "${AUDIT_LOG_MASK_EDGE:W}"
   sink:
     # Type of external sink. possible options: none, elasticsearch
     type: "${AUDIT_LOG_SINK_TYPE:none}"
@@ -514,7 +523,7 @@ js:
   # Built-in JVM JavaScript environment properties
   local:
     # Use Sandboxed (secured) JVM JavaScript environment
-    use_js_sandbox: "${USE_LOCAL_JS_SANDBOX:false}"
+    use_js_sandbox: "${USE_LOCAL_JS_SANDBOX:true}"
     # Specify thread pool size for JavaScript sandbox resource monitor
     monitor_thread_pool_size: "${LOCAL_JS_SANDBOX_MONITOR_THREAD_POOL_SIZE:4}"
     # Maximum CPU time in milliseconds allowed for script execution
@@ -595,6 +604,10 @@ transport:
     dtls:
       # Enable/disable DTLS 1.2 support
       enabled: "${COAP_DTLS_ENABLED:false}"
+      # CoAP DTLS bind address
+      bind_address: "${COAP_DTLS_BIND_ADDRESS:0.0.0.0}"
+      # CoAP DTLS bind port
+      bind_port: "${COAP_DTLS_BIND_PORT:5684}"
       # Secure mode. Allowed values: NO_AUTH, X509
       mode: "${COAP_DTLS_SECURE_MODE:NO_AUTH}"
       # Path to the key store that holds the certificate
@@ -670,6 +683,26 @@ transport:
         alias: "${LWM2M_KEYSTORE_ALIAS_BS:bootstrap}"
     # Use redis for Security and Registration stores
     redis.enabled: "${LWM2M_REDIS_ENABLED:false}"
+
+# Edges parameters
+edges:
+  enabled: "${EDGES_ENABLED:false}"
+  rpc:
+    port: "${EDGES_RPC_PORT:7070}"
+    client_max_keep_alive_time_sec: "${EDGES_RPC_CLIENT_MAX_KEEP_ALIVE_TIME_SEC:300}"
+    ssl:
+      # Enable/disable SSL support
+      enabled: "${EDGES_RPC_SSL_ENABLED:false}"
+      cert: "${EDGES_RPC_SSL_CERT:certChainFile.pem}"
+      private_key: "${EDGES_RPC_SSL_PRIVATE_KEY:privateKeyFile.pem}"
+  storage:
+    max_read_records_count: "${EDGES_STORAGE_MAX_READ_RECORDS_COUNT:50}"
+    no_read_records_sleep: "${EDGES_NO_READ_RECORDS_SLEEP:1000}"
+    sleep_between_batches: "${EDGES_SLEEP_BETWEEN_BATCHES:1000}"
+  scheduler_pool_size: "${EDGES_SCHEDULER_POOL_SIZE:4}"
+  edge_events_ttl: "${EDGES_EDGE_EVENTS_TTL:0}"
+  state:
+    persistToTelemetry: "${EDGES_PERSIST_STATE_TO_TELEMETRY:false}"
 
 swagger:
   api_path_regex: "${SWAGGER_API_PATH_REGEX:/api.*}"

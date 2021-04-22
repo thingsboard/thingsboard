@@ -38,7 +38,8 @@ public enum Resource {
     DEVICE_PROFILE(EntityType.DEVICE_PROFILE),
     API_USAGE_STATE(EntityType.API_USAGE_STATE),
     TB_RESOURCE(EntityType.TB_RESOURCE),
-    FIRMWARE(EntityType.FIRMWARE);
+    FIRMWARE(EntityType.FIRMWARE),
+    EDGE(EntityType.EDGE);
 
     private final EntityType entityType;
 

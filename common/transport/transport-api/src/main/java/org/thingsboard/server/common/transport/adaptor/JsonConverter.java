@@ -74,10 +74,14 @@ public class JsonConverter {
 
     private static int maxStringValueLength = 0;
 
-    public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement) throws JsonSyntaxException {
+    public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement, long ts) throws JsonSyntaxException {
         PostTelemetryMsg.Builder builder = PostTelemetryMsg.newBuilder();
-        convertToTelemetry(jsonElement, System.currentTimeMillis(), null, builder);
+        convertToTelemetry(jsonElement, ts, null, builder);
         return builder.build();
+    }
+
+    public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement) throws JsonSyntaxException {
+        return convertToTelemetryProto(jsonElement, System.currentTimeMillis());
     }
 
     private static void convertToTelemetry(JsonElement jsonElement, long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder) {

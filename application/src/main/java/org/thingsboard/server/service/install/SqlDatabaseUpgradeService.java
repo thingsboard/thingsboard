@@ -449,8 +449,16 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
             case "3.2.2":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Updating schema ...");
+                    try {
+                        conn.createStatement().execute("ALTER TABLE rule_chain ADD COLUMN type varchar(255) DEFAULT 'CORE'"); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                    } catch (Exception ignored) {
+                    }
                     schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.2.2", SCHEMA_UPDATE_SQL);
                     loadSql(schemaUpdateFile, conn);
+                    log.info("Load Edge TTL functions ...");
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.2.2", "schema_update_ttl.sql");
+                    loadSql(schemaUpdateFile, conn);
+                    log.info("Edge TTL functions successfully loaded!");
                     conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3003000;");
                     log.info("Schema updated.");
                 } catch (Exception e) {

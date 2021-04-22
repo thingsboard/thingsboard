@@ -43,14 +43,17 @@ export class ResourceService {
   }
 
   public downloadResource(resourceId: string): Observable<any> {
-    return this.http.get(`/api/resource/${resourceId}/download`, { responseType: 'arraybuffer', observe: 'response' }).pipe(
+    return this.http.get(`/api/resource/${resourceId}/download`, {
+      responseType: 'arraybuffer',
+      observe: 'response'
+    }).pipe(
       map((response) => {
         const headers = response.headers;
         const filename = headers.get('x-filename');
         const contentType = headers.get('content-type');
         const linkElement = document.createElement('a');
         try {
-          const blob = new Blob([response.body], { type: contentType });
+          const blob = new Blob([response.body], {type: contentType});
           const url = URL.createObjectURL(blob);
           linkElement.setAttribute('href', url);
           linkElement.setAttribute('download', filename);
@@ -70,12 +73,12 @@ export class ResourceService {
     );
   }
 
-  public saveResources(resources: Resource[], config?: RequestConfig) {
+  public saveResources(resources: Resource[], config?: RequestConfig): Observable<Resource[]> {
     let partSize = 100;
     partSize = resources.length > partSize ? partSize : resources.length;
-    const resourceObservables = [];
+    const resourceObservables: Observable<Resource>[] = [];
     for (let i = 0; i < partSize; i++) {
-      resourceObservables.push(this.saveResource(resources[i], config).pipe(catchError(error => of(error))));
+      resourceObservables.push(this.saveResource(resources[i], config).pipe(catchError(() => of({} as Resource))));
     }
     return forkJoin(resourceObservables).pipe(
       mergeMap((resource) => {

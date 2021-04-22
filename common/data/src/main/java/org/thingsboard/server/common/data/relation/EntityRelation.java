@@ -32,6 +32,7 @@ public class EntityRelation implements Serializable {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
+    public static final String EDGE_TYPE = "ManagedByEdge";
     public static final String CONTAINS_TYPE = "Contains";
     public static final String MANAGES_TYPE = "Manages";
 

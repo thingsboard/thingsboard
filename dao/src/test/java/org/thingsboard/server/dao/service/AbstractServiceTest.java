@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
@@ -48,12 +49,14 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeEventService;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.firmware.FirmwareService;
 import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.dao.resource.TbResourceService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
@@ -68,6 +71,8 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.junit.Assert.assertNotNull;
 
 
 @RunWith(SpringRunner.class)
@@ -136,6 +141,12 @@ public abstract class AbstractServiceTest {
     protected RuleChainService ruleChainService;
 
     @Autowired
+    protected EdgeService edgeService;
+
+    @Autowired
+    protected EdgeEventService edgeEventService;
+
+    @Autowired
     private ComponentDescriptorService componentDescriptorService;
 
     @Autowired
@@ -145,12 +156,13 @@ public abstract class AbstractServiceTest {
     protected DeviceProfileService deviceProfileService;
 
     @Autowired
-    protected TbResourceService resourceService;
+    protected ResourceService resourceService;
+
 
     @Autowired
     protected FirmwareService firmwareService;
 
-    class IdComparator<D extends HasId> implements Comparator<D> {
+    public class IdComparator<D extends HasId> implements Comparator<D> {
         @Override
         public int compare(D o1, D o2) {
             return o1.getId().getId().compareTo(o2.getId().getId());
@@ -219,6 +231,14 @@ public abstract class AbstractServiceTest {
         deviceProfile.setDefault(false);
         deviceProfile.setDefaultRuleChainId(null);
         return deviceProfile;
+    }
+
+    public TenantId createTenant() {
+        Tenant tenant = new Tenant();
+        tenant.setTitle("My tenant " + Uuids.timeBased());
+        Tenant savedTenant = tenantService.saveTenant(tenant);
+        assertNotNull(savedTenant);
+        return savedTenant.getId();
     }
 
 }
