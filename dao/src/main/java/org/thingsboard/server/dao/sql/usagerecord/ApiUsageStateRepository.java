@@ -39,4 +39,8 @@ public interface ApiUsageStateRepository extends CrudRepository<ApiUsageStateEnt
     @Modifying
     @Query("DELETE FROM ApiUsageStateEntity ur WHERE ur.tenantId = :tenantId")
     void deleteApiUsageStateByTenantId(@Param("tenantId") UUID tenantId);
+
+    @Transactional
+    @Modifying
+    void deleteByEntityIdAndEntityType(UUID entityId, String entityType);
 }

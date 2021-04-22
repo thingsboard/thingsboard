@@ -63,4 +63,9 @@ public class JpaApiUsageStateDao extends JpaAbstractDao<ApiUsageStateEntity, Api
     public void deleteApiUsageStateByTenantId(TenantId tenantId) {
         apiUsageStateRepository.deleteApiUsageStateByTenantId(tenantId.getId());
     }
+
+    @Override
+    public void deleteApiUsageStateByEntityId(EntityId entityId) {
+        apiUsageStateRepository.deleteByEntityIdAndEntityType(entityId.getId(), entityId.getEntityType().name());
+    }
 }
