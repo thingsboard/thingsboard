@@ -17,6 +17,7 @@ package org.thingsboard.server.service.apiusage;
 
 import org.springframework.context.ApplicationListener;
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -33,6 +34,10 @@ public interface TbApiUsageStateService extends ApplicationListener<PartitionCha
     void onTenantProfileUpdate(TenantProfileId tenantProfileId);
 
     void onTenantUpdate(TenantId tenantId);
+
+    void onTenantDelete(TenantId tenantId);
+
+    void onCustomerDelete(CustomerId customerId);
 
     void onApiUsageStateUpdate(TenantId tenantId);
 }

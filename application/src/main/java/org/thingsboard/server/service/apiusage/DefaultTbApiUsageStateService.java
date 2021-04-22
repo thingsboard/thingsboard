@@ -111,10 +111,12 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
     @Autowired
     private InternalTelemetryService tsWsService;
 
-    // Tenants that should be processed on this server
+    // Entities that should be processed on this server
     private final Map<EntityId, BaseApiUsageState> myUsageStates = new ConcurrentHashMap<>();
-    // Tenants that should be processed on other servers
+    // Entities that should be processed on other servers
     private final Map<EntityId, ApiUsageState> otherUsageStates = new ConcurrentHashMap<>();
+
+    private final Set<EntityId> deletedEntities = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     @Value("${usage.stats.report.enabled:true}")
     private boolean enabled;
@@ -173,6 +175,8 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
     }
 
     private void processEntityUsageStats(TenantId tenantId, EntityId entityId, List<UsageStatsKVProto> values) {
+        if (deletedEntities.contains(entityId)) return;
+
         BaseApiUsageState usageState;
         List<TsKvEntry> updatedEntries;
         Map<ApiFeature, ApiUsageStateValue> result;
@@ -319,6 +323,18 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
         if (!profileThresholds.isEmpty()) {
             tsWsService.saveAndNotifyInternal(tenantId, id, profileThresholds, VOID_CALLBACK);
         }
+    }
+
+    public void onTenantDelete(TenantId tenantId) {
+        deletedEntities.add(tenantId);
+        myUsageStates.remove(tenantId);
+        otherUsageStates.remove(tenantId);
+    }
+
+    @Override
+    public void onCustomerDelete(CustomerId customerId) {
+        deletedEntities.add(customerId);
+        myUsageStates.remove(customerId);
     }
 
     private void persistAndNotify(BaseApiUsageState state, Map<ApiFeature, ApiUsageStateValue> result) {

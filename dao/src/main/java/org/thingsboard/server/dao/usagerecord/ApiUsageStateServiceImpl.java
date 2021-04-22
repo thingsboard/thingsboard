@@ -70,6 +70,13 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
     }
 
     @Override
+    public void deleteApiUsageStateByEntityId(EntityId entityId) {
+        log.trace("Executing deleteApiUsageStateByEntityId [{}]", entityId);
+        validateId(entityId.getId(), "Invalid entity id");
+        apiUsageStateDao.deleteApiUsageStateByEntityId(entityId);
+    }
+
+    @Override
     public ApiUsageState createDefaultApiUsageState(TenantId tenantId, EntityId entityId) {
         entityId = Objects.requireNonNullElse(entityId, tenantId);
         log.trace("Executing createDefaultUsageRecord [{}]", entityId);
