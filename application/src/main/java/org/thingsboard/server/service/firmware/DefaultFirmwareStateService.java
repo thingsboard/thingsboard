@@ -43,6 +43,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import static org.thingsboard.server.common.data.DataConstants.FIRMWARE_CHECKSUM;
@@ -69,19 +70,30 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
     }
 
     @Override
-    public void update(Device device, boolean created) {
-        FirmwareId firmwareId = device.getFirmwareId();
-        if (firmwareId == null) {
-            DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(device.getTenantId(), device.getDeviceProfileId());
-            firmwareId = deviceProfile.getFirmwareId();
+    public void update(Device device, Device oldDevice) {
+        FirmwareId newFirmwareId = device.getFirmwareId();
+        if (newFirmwareId == null) {
+            DeviceProfile newDeviceProfile = deviceProfileService.findDeviceProfileById(device.getTenantId(), device.getDeviceProfileId());
+            newFirmwareId = newDeviceProfile.getFirmwareId();
         }
-
-        if (firmwareId == null) {
-            if (!created) {
+        if (oldDevice != null) {
+            if (newFirmwareId != null) {
+                FirmwareId oldFirmwareId = oldDevice.getFirmwareId();
+                if (oldFirmwareId == null) {
+                    DeviceProfile oldDeviceProfile = deviceProfileService.findDeviceProfileById(oldDevice.getTenantId(), oldDevice.getDeviceProfileId());
+                    oldFirmwareId = oldDeviceProfile.getFirmwareId();
+                }
+                if (!newFirmwareId.equals(oldFirmwareId)) {
+                    // Device was updated and new firmware is different from previous firmware.
+                    update(device, firmwareService.findFirmwareById(device.getTenantId(), newFirmwareId), System.currentTimeMillis());
+                }
+            } else {
+                // Device was updated and new firmware is not set.
                 remove(device);
             }
-        } else {
-            update(device, firmwareService.findFirmwareById(device.getTenantId(), firmwareId), System.currentTimeMillis());
+        } else if (newFirmwareId != null) {
+            // Device was created and firmware is defined.
+            update(device, firmwareService.findFirmwareById(device.getTenantId(), newFirmwareId), System.currentTimeMillis());
         }
     }
 

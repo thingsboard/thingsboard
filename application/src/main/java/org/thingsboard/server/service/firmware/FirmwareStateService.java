@@ -20,7 +20,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 
 public interface FirmwareStateService {
 
-    void update(Device device, boolean created);
+    void update(Device device, Device oldDevice);
 
     void update(DeviceProfile deviceProfile);
 

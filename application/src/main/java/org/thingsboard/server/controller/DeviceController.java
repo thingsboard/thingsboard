@@ -126,16 +126,11 @@ public class DeviceController extends BaseController {
             checkEntity(device.getId(), device, Resource.DEVICE);
 
             boolean created = device.getId() == null;
-
-            boolean isFirmwareChanged = false;
-
-            if (created) {
-                isFirmwareChanged = true;
+            Device oldDevice;
+            if (!created) {
+                oldDevice = deviceService.findDeviceById(getTenantId(), device.getId());
             } else {
-                Device oldDevice = deviceService.findDeviceById(getTenantId(), device.getId());
-                if (!Objects.equals(device.getFirmwareId(), oldDevice.getFirmwareId()) || !oldDevice.getDeviceProfileId().equals(device.getDeviceProfileId())) {
-                    isFirmwareChanged = true;
-                }
+                oldDevice = null;
             }
 
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
@@ -145,7 +140,7 @@ public class DeviceController extends BaseController {
                     savedDevice.getId(), savedDevice.getName(), savedDevice.getType()), null);
             tbClusterService.onEntityStateChange(savedDevice.getTenantId(), savedDevice.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
 
-            if (device.getId() != null) {
+            if (!created) {
                 sendEntityNotificationMsg(savedDevice.getTenantId(), savedDevice.getId(), EdgeEventActionType.UPDATED);
             }
 
@@ -159,9 +154,7 @@ public class DeviceController extends BaseController {
                 deviceStateService.onDeviceUpdated(savedDevice);
             }
 
-            if (isFirmwareChanged) {
-                firmwareStateService.update(savedDevice, created);
-            }
+            firmwareStateService.update(savedDevice, oldDevice);
 
             return savedDevice;
         } catch (
