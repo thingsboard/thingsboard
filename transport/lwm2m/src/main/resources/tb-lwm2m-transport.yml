@@ -42,40 +42,7 @@ zk:
 
 cache:
   # caffeine or redis
-  type: "${CACHE_TYPE:caffeine}"
-
-caffeine:
-  specs:
-    relations:
-      timeToLiveInMinutes: 1440
-      maxSize: 0
-    deviceCredentials:
-      timeToLiveInMinutes: 1440
-      maxSize: 0
-    devices:
-      timeToLiveInMinutes: 1440
-      maxSize: 0
-    sessions:
-      timeToLiveInMinutes: 1440
-      maxSize: 0
-    assets:
-      timeToLiveInMinutes: 1440
-      maxSize: 0
-    entityViews:
-      timeToLiveInMinutes: 1440
-      maxSize: 0
-    claimDevices:
-      timeToLiveInMinutes: 1
-      maxSize: 0
-    securitySettings:
-      timeToLiveInMinutes: 1440
-      maxSize: 0
-    tenantProfiles:
-      timeToLiveInMinutes: 1440
-      maxSize: 0
-    deviceProfiles:
-      timeToLiveInMinutes: 1440
-      maxSize: 0
+  type: "${CACHE_TYPE:redis}"
 
 redis:
   # standalone or cluster
