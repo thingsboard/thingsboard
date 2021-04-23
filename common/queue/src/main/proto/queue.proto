@@ -359,8 +359,10 @@ message GetFirmwareResponseMsg {
   ResponseStatus responseStatus = 1;
   int64 firmwareIdMSB = 2;
   int64 firmwareIdLSB = 3;
-  string contentType = 4;
-  string fileName = 5;
+  string title = 4;
+  string version = 5;
+  string contentType = 6;
+  string fileName = 7;
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
@@ -656,4 +658,14 @@ message ToUsageStatsServiceMsg {
   int64 entityIdMSB = 3;
   int64 entityIdLSB = 4;
   repeated UsageStatsKVProto values = 5;
+}
+
+message ToFirmwareStateServiceMsg {
+  int64 ts = 1;
+  int64 tenantIdMSB = 2;
+  int64 tenantIdLSB = 3;
+  int64 deviceIdMSB = 4;
+  int64 deviceIdLSB = 5;
+  int64 firmwareIdMSB = 6;
+  int64 firmwareIdLSB = 7;
 }

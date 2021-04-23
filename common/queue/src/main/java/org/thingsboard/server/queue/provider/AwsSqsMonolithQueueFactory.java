@@ -186,6 +186,17 @@ public class AwsSqsMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEng
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), ToUsageStatsServiceMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<ToFirmwareStateServiceMsg>> createToFirmwareStateServiceMsgConsumer() {
+        return new TbAwsSqsConsumerTemplate<>(transportApiAdmin, sqsSettings, coreSettings.getFirmwareTopic(),
+                msg -> new TbProtoQueueMsg<>(msg.getKey(), ToFirmwareStateServiceMsg.parseFrom(msg.getData()), msg.getHeaders()));
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToFirmwareStateServiceMsg>> createToFirmwareStateServiceMsgProducer() {
+        return new TbAwsSqsProducerTemplate<>(coreAdmin, sqsSettings, coreSettings.getFirmwareTopic());
+    }
+
     @PreDestroy
     private void destroy() {
         if (coreAdmin != null) {

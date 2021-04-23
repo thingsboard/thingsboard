@@ -355,6 +355,15 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     }
 
     @Override
+    public PageData<Device> findDevicesByTenantIdAndTypeAndEmptyFirmware(TenantId tenantId, String type, PageLink pageLink) {
+        log.trace("Executing findDevicesByTenantIdAndType, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateString(type, "Incorrect type " + type);
+        validatePageLink(pageLink);
+        return deviceDao.findDevicesByTenantIdAndTypeAndEmptyFirmware(tenantId.getId(), type, pageLink);
+    }
+
+    @Override
     public PageData<DeviceInfo> findDeviceInfosByTenantIdAndType(TenantId tenantId, String type, PageLink pageLink) {
         log.trace("Executing findDeviceInfosByTenantIdAndType, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);

@@ -36,7 +36,6 @@ zk:
   zk_dir: "${ZOOKEEPER_NODES_DIR:/thingsboard}"
 
 cache:
-  # caffeine or redis
   type: "${CACHE_TYPE:redis}"
 
 redis:

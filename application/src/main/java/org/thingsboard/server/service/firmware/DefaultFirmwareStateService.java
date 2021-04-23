@@ -34,16 +34,23 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.firmware.FirmwareService;
+import org.thingsboard.server.gen.transport.TransportProtos.ToFirmwareStateServiceMsg;
+import org.thingsboard.server.queue.TbQueueProducer;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import static org.thingsboard.server.common.data.DataConstants.FIRMWARE_CHECKSUM;
@@ -61,12 +68,18 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
     private final DeviceService deviceService;
     private final DeviceProfileService deviceProfileService;
     private final RuleEngineTelemetryService telemetryService;
+    private final TbQueueProducer<TbProtoQueueMsg<ToFirmwareStateServiceMsg>> fwStateMsgProducer;
 
-    public DefaultFirmwareStateService(FirmwareService firmwareService, DeviceService deviceService, DeviceProfileService deviceProfileService, RuleEngineTelemetryService telemetryService) {
+    public DefaultFirmwareStateService(FirmwareService firmwareService,
+                                       DeviceService deviceService,
+                                       DeviceProfileService deviceProfileService,
+                                       RuleEngineTelemetryService telemetryService,
+                                       TbCoreQueueFactory coreQueueFactory) {
         this.firmwareService = firmwareService;
         this.deviceService = deviceService;
         this.deviceProfileService = deviceProfileService;
         this.telemetryService = telemetryService;
+        this.fwStateMsgProducer = coreQueueFactory.createToFirmwareStateServiceMsgProducer();
     }
 
     @Override
@@ -85,7 +98,7 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
                 }
                 if (!newFirmwareId.equals(oldFirmwareId)) {
                     // Device was updated and new firmware is different from previous firmware.
-                    update(device, firmwareService.findFirmwareById(device.getTenantId(), newFirmwareId), System.currentTimeMillis());
+                    send(device.getTenantId(), device.getId(), newFirmwareId, System.currentTimeMillis());
                 }
             } else {
                 // Device was updated and new firmware is not set.
@@ -93,7 +106,7 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
             }
         } else if (newFirmwareId != null) {
             // Device was created and firmware is defined.
-            update(device, firmwareService.findFirmwareById(device.getTenantId(), newFirmwareId), System.currentTimeMillis());
+            send(device.getTenantId(), device.getId(), newFirmwareId, System.currentTimeMillis());
         }
     }
 
@@ -103,9 +116,8 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
 
         Consumer<Device> updateConsumer;
         if (deviceProfile.getFirmwareId() != null) {
-            Firmware firmware = firmwareService.findFirmwareById(tenantId, deviceProfile.getFirmwareId());
             long ts = System.currentTimeMillis();
-            updateConsumer = d -> update(d, firmware, ts);
+            updateConsumer = d -> send(d.getTenantId(), d.getId(), deviceProfile.getFirmwareId(), ts);
         } else {
             updateConsumer = this::remove;
         }
@@ -113,16 +125,73 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
         PageLink pageLink = new PageLink(100);
         PageData<Device> pageData;
         do {
-            //TODO: create a query which will return devices without firmware
-            pageData = deviceService.findDevicesByTenantIdAndType(tenantId, deviceProfile.getName(), pageLink);
+            pageData = deviceService.findDevicesByTenantIdAndTypeAndEmptyFirmware(tenantId, deviceProfile.getName(), pageLink);
 
-            pageData.getData().stream().filter(d -> d.getFirmwareId() == null).forEach(updateConsumer);
+            pageData.getData().forEach(updateConsumer);
 
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
     }
+
+    @Override
+    public boolean process(ToFirmwareStateServiceMsg msg) {
+        boolean isSuccess = false;
+        FirmwareId targetFirmwareId = new FirmwareId(new UUID(msg.getFirmwareIdMSB(), msg.getFirmwareIdLSB()));
+        DeviceId deviceId = new DeviceId(new UUID(msg.getDeviceIdMSB(), msg.getDeviceIdLSB()));
+        TenantId tenantId = new TenantId(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
+        long ts = msg.getTs();
+
+        Device device = deviceService.findDeviceById(tenantId, deviceId);
+        if (device == null) {
+            log.warn("[{}] [{}] Device was removed during firmware update msg was queued!", tenantId, deviceId);
+        } else {
+            FirmwareId currentFirmwareId = device.getFirmwareId();
+
+            if (currentFirmwareId == null) {
+                currentFirmwareId = deviceProfileService.findDeviceProfileById(tenantId, device.getDeviceProfileId()).getFirmwareId();
+            }
+
+            if (targetFirmwareId.equals(currentFirmwareId)) {
+                update(device, firmwareService.findFirmwareById(device.getTenantId(), targetFirmwareId), ts);
+                isSuccess = true;
+            } else {
+                log.warn("[{}] [{}] Can`t update firmware for the device, target firmwareId: [{}], current firmwareId: [{}]!", tenantId, deviceId, targetFirmwareId, currentFirmwareId);
+            }
+        }
+        return isSuccess;
+    }
+
+    private void send(TenantId tenantId, DeviceId deviceId, FirmwareId firmwareId, long ts) {
+        ToFirmwareStateServiceMsg msg = ToFirmwareStateServiceMsg.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setFirmwareIdMSB(firmwareId.getId().getMostSignificantBits())
+                .setFirmwareIdLSB(firmwareId.getId().getLeastSignificantBits())
+                .setTs(ts)
+                .build();
+
+        TopicPartitionInfo tpi = new TopicPartitionInfo(fwStateMsgProducer.getDefaultTopic(), null, null, false);
+        fwStateMsgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null);
+
+        BasicTsKvEntry status = new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_STATE, FirmwareUpdateStatus.QUEUED.name()));
+
+        telemetryService.saveAndNotify(tenantId, deviceId, Collections.singletonList(status), new FutureCallback<>() {
+            @Override
+            public void onSuccess(@Nullable Void tmp) {
+                log.trace("[{}] Success save firmware status!", deviceId);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.error("[{}] Failed to save firmware status!", deviceId, t);
+            }
+        });
+    }
+
 
     private void update(Device device, Firmware firmware, long ts) {
         TenantId tenantId = device.getTenantId();
@@ -131,6 +200,7 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
         List<TsKvEntry> telemetry = new ArrayList<>();
         telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.TARGET_FIRMWARE_TITLE, firmware.getTitle())));
         telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.TARGET_FIRMWARE_VERSION, firmware.getVersion())));
+        telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_STATE, FirmwareUpdateStatus.INITIATED.name())));
 
         telemetryService.saveAndNotify(tenantId, deviceId, telemetry, new FutureCallback<>() {
             @Override
