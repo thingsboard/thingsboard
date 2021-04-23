@@ -356,6 +356,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     componentRef.onDestroy(() => {
       if (componentRef.instance.result && !isEqual(this.filterParams, componentRef.instance.result.filterParams)) {
         this.filterParams = componentRef.instance.result.filterParams;
+        this.table.paginator.pageIndex = 0;
         this.table.updateData();
       }
     });
