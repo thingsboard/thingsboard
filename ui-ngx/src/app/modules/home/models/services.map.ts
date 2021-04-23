@@ -34,6 +34,8 @@ import { AlarmService } from '@core/http/alarm.service';
 import { Router } from '@angular/router';
 import { BroadcastService } from '@core/services/broadcast.service';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { DeviceProfileService } from '@core/http/device-profile.service';
+import { FirmwareService } from '@core/http/firmware.service';
 
 export const ServicesMap = new Map<string, Type<any>>(
   [
@@ -55,6 +57,8 @@ export const ServicesMap = new Map<string, Type<any>>(
    ['translate', TranslateService],
    ['http', HttpClient],
    ['router', Router],
-   ['importExport', ImportExportService]
+   ['importExport', ImportExportService],
+   ['deviceProfileService', DeviceProfileService],
+   ['firmwareService', FirmwareService]
   ]
 );
