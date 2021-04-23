@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Firmware;
 import org.thingsboard.server.common.data.FirmwareInfo;
@@ -37,6 +38,7 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.thingsboard.server.common.data.CacheConstants.FIRMWARE_CACHE;
@@ -68,7 +70,9 @@ public class BaseFirmwareService implements FirmwareService {
         try {
             FirmwareId firmwareId = firmwareInfo.getId();
             if (firmwareId != null) {
-                cacheManager.getCache(FIRMWARE_CACHE).evict(firmwareId.toString());
+                Cache cache = cacheManager.getCache(FIRMWARE_CACHE);
+                cache.evict(toFirmwareInfoKey(firmwareId));
+                cache.evict(toFirmwareDataKey(firmwareId));
             }
             return firmwareInfoDao.save(firmwareInfo.getTenantId(), firmwareInfo);
         } catch (Exception t) {
@@ -88,7 +92,9 @@ public class BaseFirmwareService implements FirmwareService {
         try {
             FirmwareId firmwareId = firmware.getId();
             if (firmwareId != null) {
-                cacheManager.getCache(FIRMWARE_CACHE).evict(firmwareId.toString());
+                Cache cache = cacheManager.getCache(FIRMWARE_CACHE);
+                cache.evict(toFirmwareInfoKey(firmwareId));
+                cache.evict(toFirmwareDataKey(firmwareId));
             }
             return firmwareDao.save(firmware.getTenantId(), firmware);
         } catch (Exception t) {
@@ -109,6 +115,7 @@ public class BaseFirmwareService implements FirmwareService {
     }
 
     @Override
+    @Cacheable(cacheNames = FIRMWARE_CACHE, key = "{#firmwareId}")
     public FirmwareInfo findFirmwareInfoById(TenantId tenantId, FirmwareId firmwareId) {
         log.trace("Executing findFirmwareInfoById [{}]", firmwareId);
         validateId(firmwareId, INCORRECT_FIRMWARE_ID + firmwareId);
@@ -137,7 +144,8 @@ public class BaseFirmwareService implements FirmwareService {
         validateId(firmwareId, INCORRECT_FIRMWARE_ID + firmwareId);
         try {
             Cache cache = cacheManager.getCache(FIRMWARE_CACHE);
-            cache.evict(Collections.singletonList(firmwareId));
+            cache.evict(toFirmwareInfoKey(firmwareId));
+            cache.evict(toFirmwareDataKey(firmwareId));
             firmwareDao.removeById(tenantId, firmwareId.getId());
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
@@ -315,5 +323,13 @@ public class BaseFirmwareService implements FirmwareService {
         } else {
             return Optional.empty();
         }
+    }
+
+    private static List<FirmwareId> toFirmwareInfoKey(FirmwareId firmwareId) {
+        return Collections.singletonList(firmwareId);
+    }
+
+    private static String toFirmwareDataKey(FirmwareId firmwareId) {
+        return firmwareId.toString();
     }
 }
