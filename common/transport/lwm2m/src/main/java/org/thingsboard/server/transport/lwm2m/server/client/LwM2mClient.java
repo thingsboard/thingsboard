@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
+import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.SecurityInfo;
@@ -27,7 +28,9 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mQueuedRequest;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServiceImpl;
+import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -102,6 +105,20 @@ public class LwM2mClient implements Cloneable {
         String verRez = getVerFromPathIdVerOrId(pathRez);
         return (verRez == null || verSupportedObject.equals(verRez)) ? modelProvider.getObjectModel(registration)
                 .getResourceModel(pathIds.getObjectId(), pathIds.getResourceId()) : null;
+    }
+
+    public Collection<LwM2mResource> getNewResourcesForInstance(String pathRezIdVer, LwM2mModelProvider modelProvider,
+                                                                LwM2mValueConverterImpl converter) {
+        LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRezIdVer));
+        String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
+        String verRez = getVerFromPathIdVerOrId(pathRezIdVer);
+        Collection<LwM2mResource> resources = ConcurrentHashMap.newKeySet();
+        Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
+                .getObjectModel(pathIds.getObjectId()).resources;
+        resourceModels.forEach((k, resourceModel) -> {
+            resources.add(LwM2mSingleResource.newResource(k, converter.convertValue("0", ResourceModel.Type.STRING, resourceModel.type, pathIds), resourceModel.type));
+        });
+        return resources;
     }
 
     public boolean isValidObjectVersion (String path) {

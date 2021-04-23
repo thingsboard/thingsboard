@@ -155,7 +155,7 @@ public class LwM2mTransportHandler {
          * section 5.3.3 of the LW M2M spec).
          * if all resources are to be replaced
          */
-        WRITE_REPLACE(6, "WrightReplace"),
+        WRITE_REPLACE(6, "WriteReplace"),
         /**
          * PUT
          */
@@ -164,8 +164,9 @@ public class LwM2mTransportHandler {
          * 5.3.3 of the LW M2M spec).
          * if this is a partial update request
          */
-        WRITE_UPDATE(7, "WrightUpdate"),
-        WRITE_ATTRIBUTES(8, "WrightAttributes");
+        WRITE_UPDATE(7, "WriteUpdate"),
+        WRITE_ATTRIBUTES(8, "WriteAttributes"),
+        DELETE(9, "Delete");
 
         public int code;
         public String type;

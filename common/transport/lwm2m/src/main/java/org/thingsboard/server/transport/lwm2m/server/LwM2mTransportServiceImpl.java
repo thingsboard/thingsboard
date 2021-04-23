@@ -92,6 +92,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandle
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LwM2mTypeOper.READ;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LwM2mTypeOper.WRITE_ATTRIBUTES;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LwM2mTypeOper.WRITE_REPLACE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LwM2mTypeOper.WRITE_UPDATE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.SERVICE_CHANNEL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertJsonArrayToSet;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertPathFromIdVerToObjectId;
@@ -461,15 +462,17 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
                     lwm2mClientRpcRequest.setErrorMsg(lwm2mClientRpcRequest.targetIdVerKey + " and " +
                             lwm2mClientRpcRequest.keyNameKey + " is null or bad format");
                 }
-//                else if ((READ == lwm2mClientRpcRequest.getTypeOper()
-//                        || WRITE_REPLACE == lwm2mClientRpcRequest.getTypeOper()
-//                        || WRITE_UPDATE == lwm2mClientRpcRequest.getTypeOper())
-//                        && lwm2mClientRpcRequest.getTargetIdVer() !=null
-//                        && !(new LwM2mPath(convertPathFromIdVerToObjectId(lwm2mClientRpcRequest.getTargetIdVer())).isResource()
-//                        || new LwM2mPath(convertPathFromIdVerToObjectId(lwm2mClientRpcRequest.getTargetIdVer())).isResourceInstance())) {
-//                    lwm2mClientRpcRequest.setErrorMsg("Failed parameter " +  lwm2mClientRpcRequest.targetIdVerKey
-//                            + ". Cannot Read from object or from instance");
-//                }
+                else if ((EXECUTE == lwm2mClientRpcRequest.getTypeOper()
+                        || WRITE_REPLACE == lwm2mClientRpcRequest.getTypeOper())
+                        && lwm2mClientRpcRequest.getTargetIdVer() !=null
+                        && !(new LwM2mPath(convertPathFromIdVerToObjectId(lwm2mClientRpcRequest.getTargetIdVer())).isResource()
+                        || new LwM2mPath(convertPathFromIdVerToObjectId(lwm2mClientRpcRequest.getTargetIdVer())).isResourceInstance())) {
+                    lwm2mClientRpcRequest.setErrorMsg("Invalid parameter " +  lwm2mClientRpcRequest.targetIdVerKey
+                            + ". Only Resource or ResourceInstance can be this operation");
+                }
+                else if (WRITE_UPDATE == lwm2mClientRpcRequest.getTypeOper()){
+                    lwm2mClientRpcRequest.setErrorMsg("Procedures In Development...");
+                }
             } else {
                 lwm2mClientRpcRequest.setErrorMsg("Params of request is bad Json format.");
             }
@@ -691,39 +694,6 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         }
     }
 
-//    /**
-//     * @param clientProfile -
-//     * @param path          -
-//     * @return true if path isPresent in postAttributeProfile
-//     */
-//    private boolean validatePathInAttrProfile(LwM2mClientProfile clientProfile, String path) {
-//        try {
-//            List<String> attributesSet = new Gson().fromJson(clientProfile.getPostAttributeProfile(),
-//                    new TypeToken<List<String>>() {
-//                    }.getType());
-//            return attributesSet.stream().anyMatch(p -> p.equals(path));
-//        } catch (Exception e) {
-//            log.error("Fail Validate Path [{}] ClientProfile.Attribute", path, e);
-//            return false;
-//        }
-//    }
-//
-//    /**
-//     * @param clientProfile -
-//     * @param path          -
-//     * @return true if path isPresent in postAttributeProfile
-//     */
-//    private boolean validatePathInTelemetryProfile(LwM2mClientProfile clientProfile, String path) {
-//        try {
-//            List<String> telemetriesSet = new Gson().fromJson(clientProfile.getPostTelemetryProfile(), new TypeToken<List<String>>() {
-//            }.getType());
-//            return telemetriesSet.stream().anyMatch(p -> p.equals(path));
-//        } catch (Exception e) {
-//            log.error("Fail Validate Path [{}] ClientProfile.Telemetry", path, e);
-//            return false;
-//        }
-//    }
-
     /**
      * Start observe/read: Attr/Telemetry
      * #1 - Analyze: path in resource profile == client resource
@@ -838,11 +808,6 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         }
         return null;
     }
-
-//    public TransportProtos.KeyValueProto getKvToThingsboard(String pathIdVer, Registration registration) {
-//        ResultsResourceValue resultsResourceValue = getResultsResourceValue(pathIdVer, registration);
-//        return resultsResourceValue != null ? this.lwM2mTransportContextServer.getKvAttrTelemetryToThingsboard(resultsResourceValue) : null;
-//    }
 
     private TransportProtos.KeyValueProto getKvToThingsboard(String pathIdVer, Registration registration) {
         LwM2mClient lwM2MClient = this.lwM2mClientContext.getLwM2mClientWithReg(null, registration.getId());

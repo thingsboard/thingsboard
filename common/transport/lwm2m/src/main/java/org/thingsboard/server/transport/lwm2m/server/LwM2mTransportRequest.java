@@ -26,6 +26,7 @@ import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.node.ObjectLink;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.request.ContentFormat;
+import org.eclipse.leshan.core.request.DeleteRequest;
 import org.eclipse.leshan.core.request.DiscoverRequest;
 import org.eclipse.leshan.core.request.DownlinkRequest;
 import org.eclipse.leshan.core.request.ExecuteRequest;
@@ -83,7 +84,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandle
 public class LwM2mTransportRequest {
     private ExecutorService executorResponse;
 
-    private LwM2mValueConverterImpl converter;
+    public LwM2mValueConverterImpl converter;
 
     private final LwM2mTransportContextServer lwM2mTransportContextServer;
 
@@ -188,15 +189,21 @@ public class LwM2mTransportRequest {
                             }
                             break;
                         case WRITE_UPDATE:
-//                        ResourceModel resourceModel = leshanServer.getModelProvider().getObjectModel(registration).getObjectModel(resultIds.getObjectId()).resources.get(resultIds.getResourceId());
-//                        ResourceModel.Type typeRes = resourceModel.type;
-                            resourceModel = lwM2MClient.getResourceModel(targetIdVer, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer()
-                                    .getModelProvider());
-                            LwM2mNode node = LwM2mSingleResource.newResource(resultIds.getResourceId(), this.converter.convertValue(params, ResourceModel.Type.STRING, resourceModel.type, resultIds), resourceModel.type);
-                            request = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, target, node);
+//                            LwM2mNode node = null;
+//                            if (resultIds.isObjectInstance()) {
+//                                node = new LwM2mObjectInstance(resultIds.getObjectInstanceId(), lwM2MClient.
+//                                        getNewResourcesForInstance(targetIdVer, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getModelProvider(),
+//                                                this.converter));
+//                                request = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, target, node);
+//                            } else if (resultIds.getObjectId() >= 0) {
+//                                request = new ObserveRequest(resultIds.getObjectId());
+//                            }
                             break;
                         case WRITE_ATTRIBUTES:
                             request = createWriteAttributeRequest(target, params);
+                            break;
+                        case DELETE:
+                            request = new DeleteRequest(target);
                             break;
                     }
 
@@ -210,12 +217,10 @@ public class LwM2mTransportRequest {
                         } catch (Exception e) {
                             log.error("[{}] [{}] [{}] Failed to send downlink.", registration.getEndpoint(), targetIdVer, typeOper, e);
                         }
-                    }
-                    else if (OBSERVE_CANCEL == typeOper && rpcRequest != null) {
+                    } else if (OBSERVE_CANCEL == typeOper && rpcRequest != null) {
                         rpcRequest.setInfoMsg(null);
                         serviceImpl.sentRpcRequest(rpcRequest, CONTENT.name(), null, null);
-                    }
-                    else {
+                    } else {
                         log.error("[{}], [{}] - [{}] error SendRequest", registration.getEndpoint(), typeOper, targetIdVer);
                         if (rpcRequest != null) {
                             String errorMsg = resourceModel == null ? String.format("Path %s not found in object version", targetIdVer) : "SendRequest - null";
@@ -367,6 +372,7 @@ public class LwM2mTransportRequest {
             serviceImpl.onObservationResponse(registration, pathIdVer, (ReadResponse) response, rpcRequest);
         } else if (response instanceof CancelObservationResponse) {
             log.info("[{}] Path [{}] CancelObservationResponse 3_Send", pathIdVer, response);
+
         } else if (response instanceof DeleteResponse) {
             log.info("[{}] Path [{}] DeleteResponse 5_Send", pathIdVer, response);
         } else if (response instanceof DiscoverResponse) {
@@ -376,23 +382,21 @@ public class LwM2mTransportRequest {
             if (rpcRequest != null) {
                 String discoveryMsg = String.format("%s",
                         Arrays.stream(((DiscoverResponse) response).getObjectLinks()).collect(Collectors.toSet()));
-                serviceImpl.sentRpcRequest (rpcRequest, response.getCode().getName(), discoveryMsg, LOG_LW2M_VALUE);
+                serviceImpl.sentRpcRequest(rpcRequest, response.getCode().getName(), discoveryMsg, LOG_LW2M_VALUE);
             }
         } else if (response instanceof ExecuteResponse) {
             log.info("[{}] Path [{}] ExecuteResponse  7_Send", pathIdVer, response);
         } else if (response instanceof WriteAttributesResponse) {
             log.info("[{}] Path [{}] WriteAttributesResponse 8_Send", pathIdVer, response);
-            if (rpcRequest != null) {
-                rpcRequest.setInfoMsg(null);
-                serviceImpl.sentRpcRequest (rpcRequest, response.getCode().getName(), null, null);
-            }
         } else if (response instanceof WriteResponse) {
             log.info("[{}] Path [{}] WriteAttributesResponse 9_Send", pathIdVer, response);
             serviceImpl.onWriteResponseOk(registration, pathIdVer, (WriteRequest) request);
         }
-//        if (rpcRequest != null) {
-//            rpcRequest.setResponseCode(response.getCode().getName());
-//            serviceImpl.onToDeviceRpcResponse(rpcRequest.getDeviceRpcResponseResultMsg(), rpcRequest.getSessionInfo());
-//        }
+        if (rpcRequest != null && (response instanceof ExecuteResponse
+                || response instanceof WriteAttributesResponse
+                || response instanceof DeleteResponse)) {
+            rpcRequest.setInfoMsg(null);
+            serviceImpl.sentRpcRequest(rpcRequest, response.getCode().getName(), null, null);
+        }
     }
 }
