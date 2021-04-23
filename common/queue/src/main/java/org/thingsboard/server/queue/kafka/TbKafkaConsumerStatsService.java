@@ -69,7 +69,7 @@ public class TbKafkaConsumerStatsService {
         this.adminClient = AdminClient.create(kafkaSettings.toAdminProps());
         this.statsPrintScheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("kafka-consumer-stats"));
 
-        Properties consumerProps = kafkaSettings.toConsumerProps();
+        Properties consumerProps = kafkaSettings.toConsumerProps(null);
         consumerProps.put(ConsumerConfig.CLIENT_ID_CONFIG, "consumer-stats-loader-client");
         consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "consumer-stats-loader-client-group");
         this.consumer = new KafkaConsumer<>(consumerProps);

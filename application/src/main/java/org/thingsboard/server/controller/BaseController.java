@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -38,6 +39,8 @@ import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
+import org.thingsboard.server.common.data.Firmware;
+import org.thingsboard.server.common.data.FirmwareInfo;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -67,6 +70,7 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -106,6 +110,7 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.firmware.FirmwareService;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
@@ -123,6 +128,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.firmware.FirmwareStateService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.edge.rpc.EdgeGrpcService;
 import org.thingsboard.server.service.edge.rpc.init.SyncEdgeService;
@@ -244,6 +250,12 @@ public abstract class BaseController {
 
     @Autowired
     protected TbResourceService resourceService;
+
+    @Autowired
+    protected FirmwareService firmwareService;
+
+    @Autowired
+    protected FirmwareStateService firmwareStateService;
 
     @Autowired
     protected TbQueueProducerProvider producerProvider;
@@ -501,6 +513,9 @@ public abstract class BaseController {
                 case TB_RESOURCE:
                     checkResourceId(new TbResourceId(entityId.getId()), operation);
                     return;
+                case FIRMWARE:
+                    checkFirmwareId(new FirmwareId(entityId.getId()), operation);
+                    return;
                 default:
                     throw new IllegalArgumentException("Unsupported entity type: " + entityId.getEntityType());
             }
@@ -751,6 +766,30 @@ public abstract class BaseController {
             checkNotNull(resourceInfo);
             accessControlService.checkPermission(getCurrentUser(), Resource.TB_RESOURCE, operation, resourceId, resourceInfo);
             return resourceInfo;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    Firmware checkFirmwareId(FirmwareId firmwareId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(firmwareId, "Incorrect firmwareId " + firmwareId);
+            Firmware firmware = firmwareService.findFirmwareById(getCurrentUser().getTenantId(), firmwareId);
+            checkNotNull(firmware);
+            accessControlService.checkPermission(getCurrentUser(), Resource.FIRMWARE, operation, firmwareId, firmware);
+            return firmware;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    FirmwareInfo checkFirmwareInfoId(FirmwareId firmwareId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(firmwareId, "Incorrect firmwareId " + firmwareId);
+            FirmwareInfo firmwareInfo = firmwareService.findFirmwareInfoById(getCurrentUser().getTenantId(), firmwareId);
+            checkNotNull(firmwareInfo);
+            accessControlService.checkPermission(getCurrentUser(), Resource.FIRMWARE, operation, firmwareId, firmwareInfo);
+            return firmwareInfo;
         } catch (Exception e) {
             throw handleException(e, false);
         }
@@ -1082,4 +1121,11 @@ public abstract class BaseController {
         }
     }
 
+    protected MediaType parseMediaType(String contentType) {
+        try {
+            return MediaType.parseMediaType(contentType);
+        } catch (Exception e) {
+            return MediaType.APPLICATION_OCTET_STREAM;
+        }
+    }
 }
