@@ -137,7 +137,6 @@ import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/emb
 import { EdgeDownlinkTableComponent } from '@home/components/edge/edge-downlink-table.component';
 import { EdgeDownlinkTableHeaderComponent } from '@home/components/edge/edge-downlink-table-header.component';
 import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-page/widget-types-panel.component';
-import { FirmwareAutocompleteComponent } from '@home/components/firmware/firmware-autocomplete.component';
 
 @NgModule({
   declarations:
@@ -254,8 +253,7 @@ import { FirmwareAutocompleteComponent } from '@home/components/firmware/firmwar
       ManageDashboardStatesDialogComponent,
       DashboardStateDialogComponent,
       EmbedDashboardDialogComponent,
-      DisplayWidgetTypesPanelComponent,
-      FirmwareAutocompleteComponent
+      DisplayWidgetTypesPanelComponent
     ],
   imports: [
     CommonModule,
@@ -361,8 +359,7 @@ import { FirmwareAutocompleteComponent } from '@home/components/firmware/firmwar
     ManageDashboardStatesDialogComponent,
     DashboardStateDialogComponent,
     EmbedDashboardDialogComponent,
-    DisplayWidgetTypesPanelComponent,
-    FirmwareAutocompleteComponent
+    DisplayWidgetTypesPanelComponent
   ],
   providers: [
     WidgetComponentService,
