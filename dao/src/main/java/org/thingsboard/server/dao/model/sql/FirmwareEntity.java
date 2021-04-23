@@ -38,6 +38,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_CHECKSUM_
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_CHECKSUM_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_CONTENT_TYPE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_DATA_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_DATA_SIZE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_FILE_NAME_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TENANT_ID_COLUMN;
@@ -76,6 +77,9 @@ public class FirmwareEntity extends BaseSqlEntity<Firmware> implements SearchTex
     @Column(name = FIRMWARE_DATA_COLUMN, columnDefinition = "BINARY")
     private byte[] data;
 
+    @Column(name = FIRMWARE_DATA_SIZE_COLUMN)
+    private Long dataSize;
+
     @Type(type = "json")
     @Column(name = ModelConstants.FIRMWARE_ADDITIONAL_INFO_COLUMN)
     private JsonNode additionalInfo;
@@ -98,6 +102,7 @@ public class FirmwareEntity extends BaseSqlEntity<Firmware> implements SearchTex
         this.checksumAlgorithm = firmware.getChecksumAlgorithm();
         this.checksum = firmware.getChecksum();
         this.data = firmware.getData().array();
+        this.dataSize = firmware.getDataSize();
         this.additionalInfo = firmware.getAdditionalInfo();
     }
 
@@ -122,6 +127,7 @@ public class FirmwareEntity extends BaseSqlEntity<Firmware> implements SearchTex
         firmware.setContentType(contentType);
         firmware.setChecksumAlgorithm(checksumAlgorithm);
         firmware.setChecksum(checksum);
+        firmware.setDataSize(dataSize);
         if (data != null) {
             firmware.setData(ByteBuffer.wrap(data));
             firmware.setHasData(true);

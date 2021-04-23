@@ -184,13 +184,7 @@ public class BaseFirmwareService implements FirmwareService {
         protected void validateUpdate(TenantId tenantId, FirmwareInfo firmware) {
             FirmwareInfo firmwareOld = firmwareInfoDao.findById(tenantId, firmware.getUuidId());
 
-            if (!firmwareOld.getTitle().equals(firmware.getTitle())) {
-                throw new DataValidationException("Updating firmware title is prohibited!");
-            }
-
-            if (!firmwareOld.getVersion().equals(firmware.getVersion())) {
-                throw new DataValidationException("Updating firmware version is prohibited!");
-            }
+            BaseFirmwareService.validateUpdate(firmware, firmwareOld);
         }
     };
 
@@ -261,35 +255,43 @@ public class BaseFirmwareService implements FirmwareService {
         protected void validateUpdate(TenantId tenantId, Firmware firmware) {
             Firmware firmwareOld = firmwareDao.findById(tenantId, firmware.getUuidId());
 
-            if (!firmwareOld.getTitle().equals(firmware.getTitle())) {
-                throw new DataValidationException("Updating firmware title is prohibited!");
-            }
-
-            if (!firmwareOld.getVersion().equals(firmware.getVersion())) {
-                throw new DataValidationException("Updating firmware version is prohibited!");
-            }
-
-            if (firmwareOld.getFileName() != null && !firmwareOld.getFileName().equals(firmware.getFileName())) {
-                throw new DataValidationException("Updating firmware file name is prohibited!");
-            }
-
-            if (firmwareOld.getContentType() != null && !firmwareOld.getContentType().equals(firmware.getContentType())) {
-                throw new DataValidationException("Updating firmware content type is prohibited!");
-            }
-
-            if (firmwareOld.getChecksumAlgorithm() != null && !firmwareOld.getChecksumAlgorithm().equals(firmware.getChecksumAlgorithm())) {
-                throw new DataValidationException("Updating firmware content type is prohibited!");
-            }
-
-            if (firmwareOld.getChecksum() != null && !firmwareOld.getChecksum().equals(firmware.getChecksum())) {
-                throw new DataValidationException("Updating firmware content type is prohibited!");
-            }
+            BaseFirmwareService.validateUpdate(firmware, firmwareOld);
 
             if (firmwareOld.getData() != null && !firmwareOld.getData().equals(firmware.getData())) {
                 throw new DataValidationException("Updating firmware data is prohibited!");
             }
         }
     };
+
+    private static void validateUpdate(FirmwareInfo firmware, FirmwareInfo firmwareOld) {
+        if (!firmwareOld.getTitle().equals(firmware.getTitle())) {
+            throw new DataValidationException("Updating firmware title is prohibited!");
+        }
+
+        if (!firmwareOld.getVersion().equals(firmware.getVersion())) {
+            throw new DataValidationException("Updating firmware version is prohibited!");
+        }
+
+        if (firmwareOld.getFileName() != null && !firmwareOld.getFileName().equals(firmware.getFileName())) {
+            throw new DataValidationException("Updating firmware file name is prohibited!");
+        }
+
+        if (firmwareOld.getContentType() != null && !firmwareOld.getContentType().equals(firmware.getContentType())) {
+            throw new DataValidationException("Updating firmware content type is prohibited!");
+        }
+
+        if (firmwareOld.getChecksumAlgorithm() != null && !firmwareOld.getChecksumAlgorithm().equals(firmware.getChecksumAlgorithm())) {
+            throw new DataValidationException("Updating firmware content type is prohibited!");
+        }
+
+        if (firmwareOld.getChecksum() != null && !firmwareOld.getChecksum().equals(firmware.getChecksum())) {
+            throw new DataValidationException("Updating firmware content type is prohibited!");
+        }
+
+        if (firmwareOld.getDataSize() != null && !firmwareOld.getDataSize().equals(firmware.getDataSize())) {
+            throw new DataValidationException("Updating firmware data size is prohibited!");
+        }
+    }
 
     private PaginatedRemover<TenantId, FirmwareInfo> tenantFirmwareRemover =
             new PaginatedRemover<>() {

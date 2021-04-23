@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.Firmware;
+import org.thingsboard.server.common.data.FirmwareInfo;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -174,12 +175,21 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
                 .setTs(ts)
                 .build();
 
+        FirmwareInfo firmware = firmwareService.findFirmwareInfoById(tenantId, firmwareId);
+        if (firmware == null) {
+            log.warn("[{}] Failed to send firmware update because firmware was already deleted", firmwareId);
+            return;
+        }
+
         TopicPartitionInfo tpi = new TopicPartitionInfo(fwStateMsgProducer.getDefaultTopic(), null, null, false);
         fwStateMsgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null);
 
-        BasicTsKvEntry status = new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_STATE, FirmwareUpdateStatus.QUEUED.name()));
+        List<TsKvEntry> telemetry = new ArrayList<>();
+        telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.TARGET_FIRMWARE_TITLE, firmware.getTitle())));
+        telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.TARGET_FIRMWARE_VERSION, firmware.getVersion())));
+        telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_STATE, FirmwareUpdateStatus.QUEUED.name())));
 
-        telemetryService.saveAndNotify(tenantId, deviceId, Collections.singletonList(status), new FutureCallback<>() {
+        telemetryService.saveAndNotify(tenantId, deviceId, telemetry, new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable Void tmp) {
                 log.trace("[{}] Success save firmware status!", deviceId);
@@ -193,16 +203,13 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
     }
 
 
-    private void update(Device device, Firmware firmware, long ts) {
+    private void update(Device device, FirmwareInfo firmware, long ts) {
         TenantId tenantId = device.getTenantId();
         DeviceId deviceId = device.getId();
 
-        List<TsKvEntry> telemetry = new ArrayList<>();
-        telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.TARGET_FIRMWARE_TITLE, firmware.getTitle())));
-        telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.TARGET_FIRMWARE_VERSION, firmware.getVersion())));
-        telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_STATE, FirmwareUpdateStatus.INITIATED.name())));
+        BasicTsKvEntry status = new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(DataConstants.FIRMWARE_STATE, FirmwareUpdateStatus.INITIATED.name()));
 
-        telemetryService.saveAndNotify(tenantId, deviceId, telemetry, new FutureCallback<>() {
+        telemetryService.saveAndNotify(tenantId, deviceId, Collections.singletonList(status), new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable Void tmp) {
                 log.trace("[{}] Success save telemetry with target firmware for device!", deviceId);
@@ -219,7 +226,7 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
         attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_TITLE, firmware.getTitle())));
         attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_VERSION, firmware.getVersion())));
 
-        attributes.add(new BaseAttributeKvEntry(ts, new LongDataEntry(FIRMWARE_SIZE, (long) firmware.getData().array().length)));
+        attributes.add(new BaseAttributeKvEntry(ts, new LongDataEntry(FIRMWARE_SIZE, firmware.getDataSize())));
         attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_CHECKSUM_ALGORITHM, firmware.getChecksumAlgorithm())));
         attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_CHECKSUM, firmware.getChecksum())));
         telemetryService.saveAndNotify(tenantId, deviceId, DataConstants.SHARED_SCOPE, attributes, new FutureCallback<>() {

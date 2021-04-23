@@ -151,8 +151,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     @PostConstruct
     public void init() {
         super.init("tb-core-consumer", "tb-core-notifications-consumer");
-        this.usageStatsExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("tb-core-usage-stats-consumer"));
-        this.firmwareStatesExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("tb-core-firmware-notifications-consumer"));
+        this.usageStatsExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-core-usage-stats-consumer"));
+        this.firmwareStatesExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-core-firmware-notifications-consumer"));
     }
 
     @PreDestroy
@@ -363,7 +363,6 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 try {
                     List<TbProtoQueueMsg<ToFirmwareStateServiceMsg>> msgs = firmwareStatesConsumer.poll(getNotificationPollDuration());
                     if (msgs.isEmpty()) {
-                        Thread.sleep(maxProcessingTimeoutPerRecord);
                         continue;
                     }
                     long timeToSleep = maxProcessingTimeoutPerRecord;
@@ -374,10 +373,13 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                             long endTime = System.currentTimeMillis();
                             long spentTime = endTime - startTime;
                             timeToSleep = timeToSleep - spentTime;
-                            if (isSuccessUpdate && timeToSleep > 0) {
-                                log.debug("Spent time per record is: [{}]!", spentTime);
-                                Thread.sleep(timeToSleep);
-                                timeToSleep = maxProcessingTimeoutPerRecord;
+                            if (isSuccessUpdate) {
+                                if (timeToSleep > 0) {
+                                    log.debug("Spent time per record is: [{}]!", spentTime);
+                                    Thread.sleep(timeToSleep);
+                                    timeToSleep = 0;
+                                }
+                                timeToSleep += maxProcessingTimeoutPerRecord;
                             }
                         } catch (Throwable e) {
                             log.warn("Failed to process firmware update msg: {}", msg, e);

@@ -122,6 +122,7 @@ public abstract class BaseFirmwareServiceTest extends AbstractServiceTest {
 
         firmwareService.saveFirmware(firmware);
 
+        savedFirmwareInfo = firmwareService.findFirmwareInfoById(tenantId, savedFirmwareInfo.getId());
         savedFirmwareInfo.setAdditionalInfo(JacksonUtil.newObjectNode());
         firmwareService.saveFirmwareInfo(savedFirmwareInfo);
 
@@ -421,6 +422,11 @@ public abstract class BaseFirmwareServiceTest extends AbstractServiceTest {
             firmwareInfo.setTenantId(tenantId);
             firmwareInfo.setTitle(TITLE);
             firmwareInfo.setVersion(VERSION + i);
+            firmwareInfo.setFileName(FILE_NAME);
+            firmwareInfo.setContentType(CONTENT_TYPE);
+            firmwareInfo.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
+            firmwareInfo.setChecksum(CHECKSUM);
+            firmwareInfo.setDataSize((long) DATA.array().length);
             firmwares.add(firmwareService.saveFirmwareInfo(firmwareInfo));
         }
 
@@ -451,6 +457,7 @@ public abstract class BaseFirmwareServiceTest extends AbstractServiceTest {
             firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
             firmware.setChecksum(CHECKSUM);
             firmware.setData(DATA);
+            firmware.setDataSize((long) DATA.array().length);
             firmwareService.saveFirmware(firmware);
             f.setHasData(true);
         });
