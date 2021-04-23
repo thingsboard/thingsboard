@@ -308,8 +308,13 @@ public class EdgeImitator {
     }
 
     public AbstractMessage getLatestMessage() {
-        return downlinkMsgs.get(downlinkMsgs.size() - 1);
+        return getMessageFromTail(1);
     }
+
+    public AbstractMessage getMessageFromTail(int offset) {
+        return downlinkMsgs.get(downlinkMsgs.size() - offset);
+    }
+
 
     public void ignoreType(Class<? extends AbstractMessage> type) {
         ignoredTypes.add(type);
