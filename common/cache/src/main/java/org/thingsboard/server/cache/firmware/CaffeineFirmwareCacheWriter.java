@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service;
 import static org.thingsboard.server.common.data.CacheConstants.FIRMWARE_CACHE;
 
 @Service
-@ConditionalOnExpression("(('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true') || '${service.type:null}'=='core') && ('${cache.type:null}'=='caffeine' || '${cache.type:null}'=='caffeine')")
+@ConditionalOnExpression("('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core') && ('${cache.type:null}'=='caffeine' || '${cache.type:null}'=='null')")
 public class CaffeineFirmwareCacheWriter implements FirmwareCacheWriter {
 
     private final CacheManager cacheManager;

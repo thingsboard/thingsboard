@@ -207,6 +207,8 @@ public class DeviceApiController {
 
     @RequestMapping(value = "/{deviceToken}/firmware", method = RequestMethod.GET)
     public DeferredResult<ResponseEntity> getFirmware(@PathVariable("deviceToken") String deviceToken,
+                                                      @RequestParam(value = "title") String title,
+                                                      @RequestParam(value = "version") String version,
                                                       @RequestParam(value = "chunkSize", required = false, defaultValue = "0") int chunkSize,
                                                       @RequestParam(value = "chunk", required = false, defaultValue = "0") int chunk) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
@@ -217,7 +219,7 @@ public class DeviceApiController {
                             .setTenantIdLSB(sessionInfo.getTenantIdLSB())
                             .setDeviceIdMSB(sessionInfo.getDeviceIdMSB())
                             .setDeviceIdLSB(sessionInfo.getDeviceIdLSB()).build();
-                    transportContext.getTransportService().process(sessionInfo, requestMsg, new GetFirmwareCallback(responseWriter, chunkSize, chunk));
+                    transportContext.getTransportService().process(sessionInfo, requestMsg, new GetFirmwareCallback(responseWriter, title, version, chunkSize, chunk));
                 }));
         return responseWriter;
     }
@@ -278,11 +280,15 @@ public class DeviceApiController {
 
     private class GetFirmwareCallback implements TransportServiceCallback<TransportProtos.GetFirmwareResponseMsg> {
         private final DeferredResult<ResponseEntity> responseWriter;
+        private final String title;
+        private final String version;
         private final int chuckSize;
         private final int chuck;
 
-        GetFirmwareCallback(DeferredResult<ResponseEntity> responseWriter, int chuckSize, int chuck) {
+        GetFirmwareCallback(DeferredResult<ResponseEntity> responseWriter, String title, String version, int chuckSize, int chuck) {
             this.responseWriter = responseWriter;
+            this.title = title;
+            this.version = version;
             this.chuckSize = chuckSize;
             this.chuck = chuck;
         }
@@ -291,7 +297,7 @@ public class DeviceApiController {
         public void onSuccess(TransportProtos.GetFirmwareResponseMsg firmwareResponseMsg) {
             if (!TransportProtos.ResponseStatus.SUCCESS.equals(firmwareResponseMsg.getResponseStatus())) {
                 responseWriter.setResult(new ResponseEntity<>(HttpStatus.NOT_FOUND));
-            } else {
+            } else if (title.equals(firmwareResponseMsg.getTitle()) && version.equals(firmwareResponseMsg.getVersion())) {
                 String firmwareId = new UUID(firmwareResponseMsg.getFirmwareIdMSB(), firmwareResponseMsg.getFirmwareIdLSB()).toString();
                 ByteArrayResource resource = new ByteArrayResource(transportContext.getFirmwareCacheReader().get(firmwareId, chuckSize, chuck));
                 ResponseEntity<ByteArrayResource> response = ResponseEntity.ok()
@@ -301,6 +307,8 @@ public class DeviceApiController {
                         .contentType(parseMediaType(firmwareResponseMsg.getContentType()))
                         .body(resource);
                 responseWriter.setResult(response);
+            } else {
+                responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
             }
         }
 

@@ -21,7 +21,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Service;
 
 @Service
-@ConditionalOnExpression("(('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true') || '${service.type:null}'=='core') && '${cache.type:null}'=='redis'")
+@ConditionalOnExpression("('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core') && '${cache.type:null}'=='redis'")
 public class RedisFirmwareCacheWriter extends AbstractRedisFirmwareCache implements FirmwareCacheWriter {
 
     public RedisFirmwareCacheWriter(RedisConnectionFactory redisConnectionFactory) {
