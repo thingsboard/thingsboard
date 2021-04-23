@@ -83,6 +83,8 @@ export class FirmwaresComponent extends EntityComponent<Firmware> implements OnI
     const form = this.fb.group({
       title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
       version: [entity ? entity.version : '', [Validators.required, Validators.maxLength(255)]],
+      checksumAlgorithm: [entity ? entity.checksumAlgorithm : null],
+      checksum: [entity ? entity.checksum : '', Validators.maxLength(1020)],
       additionalInfo: this.fb.group(
         {
           description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],
@@ -90,31 +92,45 @@ export class FirmwaresComponent extends EntityComponent<Firmware> implements OnI
       )
     });
     if (this.isAdd) {
-      form.addControl('checksumAlgorithm', this.fb.control(null));
-      form.addControl('checksum', this.fb.control('', Validators.maxLength(1020)));
       form.addControl('file', this.fb.control(null, Validators.required));
+    } else {
+      form.addControl('fileName', this.fb.control(null));
+      form.addControl('dataSize', this.fb.control(null));
+      form.addControl('contentType', this.fb.control(null));
     }
     return form;
   }
 
   updateForm(entity: Firmware) {
-    if (this.isEdit) {
-      this.entityForm.get('title').disable({emitEvent: false});
-      this.entityForm.get('version').disable({emitEvent: false});
-    }
     this.entityForm.patchValue({
       title: entity.title,
       version: entity.version,
+      checksumAlgorithm: entity.checksumAlgorithm,
+      checksum: entity.checksum,
+      fileName: entity.fileName,
+      dataSize: entity.dataSize,
+      contentType: entity.contentType,
       additionalInfo: {
         description: entity.additionalInfo ? entity.additionalInfo.description : ''
       }
     });
   }
 
-  onFirmwareIdCopied($event) {
+  onFirmwareIdCopied() {
     this.store.dispatch(new ActionNotificationShow(
       {
         message: this.translate.instant('firmware.idCopiedMessage'),
+        type: 'success',
+        duration: 750,
+        verticalPosition: 'bottom',
+        horizontalPosition: 'right'
+      }));
+  }
+
+  onFirmwareChecksumCopied() {
+    this.store.dispatch(new ActionNotificationShow(
+      {
+        message: this.translate.instant('firmware.checksum-copied-message'),
         type: 'success',
         duration: 750,
         verticalPosition: 'bottom',
