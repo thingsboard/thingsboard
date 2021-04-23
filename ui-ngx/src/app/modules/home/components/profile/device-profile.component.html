@@ -63,6 +63,10 @@
         [queueType]="serviceType"
         formControlName="defaultQueueName">
       </tb-queue-type-list>
+      <tb-firmware-autocomplete
+        [useFullEntityId]="true"
+        formControlName="firmwareId">
+      </tb-firmware-autocomplete>
       <mat-form-field fxHide class="mat-block">
         <mat-label translate>device-profile.type</mat-label>
         <mat-select formControlName="type" required>

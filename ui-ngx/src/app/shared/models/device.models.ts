@@ -27,6 +27,7 @@ import { KeyFilter } from '@shared/models/query/query.models';
 import { TimeUnit } from '@shared/models/time/time.models';
 import * as _moment from 'moment';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
+import { FirmwareId } from '@shared/models/id/firmware-id';
 
 export enum DeviceProfileType {
   DEFAULT = 'DEFAULT'
@@ -465,6 +466,7 @@ export interface DeviceProfile extends BaseData<DeviceProfileId> {
   provisionDeviceKey?: string;
   defaultRuleChainId?: RuleChainId;
   defaultQueueName?: string;
+  firmwareId?: FirmwareId;
   profileData: DeviceProfileData;
 }
 
@@ -519,6 +521,7 @@ export interface Device extends BaseData<DeviceId> {
   name: string;
   type: string;
   label: string;
+  firmwareId?: FirmwareId;
   deviceProfileId?: DeviceProfileId;
   deviceData?: DeviceData;
   additionalInfo?: any;

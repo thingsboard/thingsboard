@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.utils;
+package org.thingsboard.server.cache.firmware;
 
-public enum TypeServer {
-    BOOTSTRAP(0, "bootstrap"),
-    CLIENT(1, "client");
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 
-    public int code;
-    public String type;
+import static org.thingsboard.server.common.data.CacheConstants.FIRMWARE_CACHE;
 
-    TypeServer(int code, String type) {
-        this.code = code;
-        this.type = type;
+public abstract class AbstractRedisFirmwareCache {
+
+    protected final RedisConnectionFactory redisConnectionFactory;
+
+    protected AbstractRedisFirmwareCache(RedisConnectionFactory redisConnectionFactory) {
+        this.redisConnectionFactory = redisConnectionFactory;
+    }
+
+    protected byte[] toFirmwareCacheKey(String key) {
+        return String.format("%s::%s", FIRMWARE_CACHE, key).getBytes();
     }
 }

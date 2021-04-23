@@ -71,6 +71,8 @@ public class EntityIdFactory {
                 return new ApiUsageStateId(uuid);
             case TB_RESOURCE:
                 return new TbResourceId(uuid);
+            case FIRMWARE:
+                return new FirmwareId(uuid);
             case EDGE:
                 return new EdgeId(uuid);
         }

@@ -75,6 +75,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
@@ -124,15 +125,22 @@ public class DeviceController extends BaseController {
 
             checkEntity(device.getId(), device, Resource.DEVICE);
 
+            boolean created = device.getId() == null;
+            Device oldDevice;
+            if (!created) {
+                oldDevice = deviceService.findDeviceById(getTenantId(), device.getId());
+            } else {
+                oldDevice = null;
+            }
+
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
 
             tbClusterService.onDeviceChange(savedDevice, null);
             tbClusterService.pushMsgToCore(new DeviceNameOrTypeUpdateMsg(savedDevice.getTenantId(),
                     savedDevice.getId(), savedDevice.getName(), savedDevice.getType()), null);
-            tbClusterService.onEntityStateChange(savedDevice.getTenantId(), savedDevice.getId(),
-                    device.getId() == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+            tbClusterService.onEntityStateChange(savedDevice.getTenantId(), savedDevice.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
 
-            if (device.getId() != null) {
+            if (!created) {
                 sendEntityNotificationMsg(savedDevice.getTenantId(), savedDevice.getId(), EdgeEventActionType.UPDATED);
             }
 
@@ -145,12 +153,17 @@ public class DeviceController extends BaseController {
             } else {
                 deviceStateService.onDeviceUpdated(savedDevice);
             }
+
+            firmwareStateService.update(savedDevice, oldDevice);
+
             return savedDevice;
-        } catch (Exception e) {
+        } catch (
+                Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE), device,
                     null, device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
             throw handleException(e);
         }
+
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")

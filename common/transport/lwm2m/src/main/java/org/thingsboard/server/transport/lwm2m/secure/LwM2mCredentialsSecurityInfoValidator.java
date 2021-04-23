@@ -28,7 +28,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MC
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContextServer;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler;
-import org.thingsboard.server.transport.lwm2m.utils.TypeServer;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -59,7 +58,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
      * @param keyValue -
      * @return ValidateDeviceCredentialsResponseMsg and SecurityInfo
      */
-    public ReadResultSecurityStore createAndValidateCredentialsSecurityInfo(String endpoint, TypeServer keyValue) {
+    public ReadResultSecurityStore createAndValidateCredentialsSecurityInfo(String endpoint, LwM2mTransportHandler.LwM2mTypeServer keyValue) {
         CountDownLatch latch = new CountDownLatch(1);
         final ReadResultSecurityStore[] resultSecurityStore = new ReadResultSecurityStore[1];
         contextS.getTransportService().process(ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder().setCredentialsId(endpoint).build(),
@@ -96,7 +95,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
      * @param keyValue -
      * @return SecurityInfo
      */
-    private ReadResultSecurityStore createSecurityInfo(String endPoint, String jsonStr, TypeServer keyValue) {
+    private ReadResultSecurityStore createSecurityInfo(String endPoint, String jsonStr, LwM2mTransportHandler.LwM2mTypeServer keyValue) {
         ReadResultSecurityStore result = new ReadResultSecurityStore();
         JsonObject objectMsg = LwM2mTransportHandler.validateJson(jsonStr);
         if (objectMsg != null && !objectMsg.isJsonNull()) {
@@ -109,7 +108,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
                     && objectMsg.get("client").getAsJsonObject().get("endpoint").isJsonPrimitive()) ? objectMsg.get("client").getAsJsonObject().get("endpoint").getAsString() : null;
             endPoint = (endPointPsk == null || endPointPsk.isEmpty()) ? endPoint : endPointPsk;
             if (object != null && !object.isJsonNull()) {
-                if (keyValue.equals(TypeServer.BOOTSTRAP)) {
+                if (keyValue.equals(LwM2mTransportHandler.LwM2mTypeServer.BOOTSTRAP)) {
                     result.setBootstrapJsonCredential(object);
                     result.setEndPoint(endPoint);
                     result.setSecurityMode(LwM2MSecurityMode.fromSecurityMode(object.get("bootstrapServer").getAsJsonObject().get("securityMode").getAsString().toLowerCase()).code);

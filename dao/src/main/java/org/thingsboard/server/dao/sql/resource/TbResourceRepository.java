@@ -48,8 +48,6 @@ public interface TbResourceRepository extends CrudRepository<TbResourceEntity, U
             @Param("searchText") String search,
             Pageable pageable);
 
-    void removeAllByTenantId(UUID tenantId);
-
     @Query("SELECT tr FROM TbResourceEntity tr " +
             "WHERE tr.resourceType = :resourceType " +
             "AND LOWER(tr.searchText) LIKE LOWER(CONCAT('%', :searchText, '%')) " +

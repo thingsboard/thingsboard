@@ -26,7 +26,6 @@ import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.secure.ReadResultSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler;
-import org.thingsboard.server.transport.lwm2m.utils.TypeServer;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -119,7 +118,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
      */
     @Override
     public LwM2mClient addLwM2mClientToSession(String identity) {
-        ReadResultSecurityStore store = lwM2MCredentialsSecurityInfoValidator.createAndValidateCredentialsSecurityInfo(identity, TypeServer.CLIENT);
+        ReadResultSecurityStore store = lwM2MCredentialsSecurityInfoValidator.createAndValidateCredentialsSecurityInfo(identity, LwM2mTransportHandler.LwM2mTypeServer.CLIENT);
         if (store.getSecurityMode() < LwM2MSecurityMode.DEFAULT_MODE.code) {
             UUID profileUuid = (store.getDeviceProfile() != null && addUpdateProfileParameters(store.getDeviceProfile())) ? store.getDeviceProfile().getUuidId() : null;
             LwM2mClient client;

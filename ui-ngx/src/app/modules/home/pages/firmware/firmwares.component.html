@@ -1,0 +1,97 @@
+<!--
+
+    Copyright © 2016-2021 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-details-buttons" fxLayout.xs="column">
+  <button mat-raised-button color="primary" fxFlex.xs
+          [disabled]="(isLoading$ | async) || !entity?.hasData"
+          (click)="onEntityAction($event, 'uploadFirmware')"
+          [fxShow]="!isEdit">
+    {{'firmware.export' | translate }}
+  </button>
+  <button mat-raised-button color="primary" fxFlex.xs
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'delete')"
+          [fxShow]="!hideDelete() && !isEdit">
+    {{'resource.delete' | translate }}
+  </button>
+  <div fxLayout="row" fxLayout.xs="column">
+    <button mat-raised-button
+            ngxClipboard
+            (cbOnSuccess)="onFirmwareIdCopied($event)"
+            [cbContent]="entity?.id?.id"
+            [fxShow]="!isEdit">
+      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      <span translate>firmware.copyId</span>
+    </button>
+  </div>
+</div>
+<div class="mat-padding" fxLayout="column">
+  <form [formGroup]="entityForm">
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
+      <mat-hint class="tb-hint" translate *ngIf="isAdd">firmware.warning-after-save-no-edit</mat-hint>
+      <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
+        <mat-form-field class="mat-block" fxFlex="45">
+          <mat-label translate>firmware.title</mat-label>
+          <input matInput formControlName="title" type="text" required>
+          <mat-error *ngIf="entityForm.get('title').hasError('required')">
+            {{ 'firmware.title-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="mat-block" fxFlex>
+          <mat-label translate>firmware.version</mat-label>
+          <input matInput formControlName="version" type="text" required>
+          <mat-error *ngIf="entityForm.get('version').hasError('required')">
+            {{ 'firmware.version-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+      <section *ngIf="isAdd" style="padding-bottom: 8px">
+        <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
+          <mat-form-field class="mat-block" fxFlex="45">
+            <mat-label translate>firmware.checksum-algorithm</mat-label>
+            <mat-select formControlName="checksumAlgorithm">
+              <mat-option [value]=null></mat-option>
+              <mat-option *ngFor="let checksumAlgorithm of checksumAlgorithms" [value]="checksumAlgorithm">
+                {{ checksumAlgorithmTranslationMap.get(checksumAlgorithm) }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field class="mat-block" fxFlex>
+            <mat-label translate>firmware.checksum</mat-label>
+            <input matInput formControlName="checksum" type="text"
+                   [required]="entityForm.get('checksumAlgorithm').value != null">
+            <mat-error *ngIf="entityForm.get('checksumAlgorithm').hasError('required')">
+              {{ 'firmware.checksum-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+        <tb-file-input
+          formControlName="file"
+          workFromFileObj="true"
+          required
+          dropLabel="{{'resource.drop-file' | translate}}">
+        </tb-file-input>
+      </section>
+      <div formGroupName="additionalInfo">
+        <mat-form-field class="mat-block">
+          <mat-label translate>firmware.description</mat-label>
+          <textarea matInput formControlName="description" rows="2"></textarea>
+        </mat-form-field>
+      </div>
+    </fieldset>
+  </form>
+</div>
