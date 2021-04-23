@@ -461,11 +461,15 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
                     lwm2mClientRpcRequest.setErrorMsg(lwm2mClientRpcRequest.targetIdVerKey + " and " +
                             lwm2mClientRpcRequest.keyNameKey + " is null or bad format");
                 }
-                else if (READ == lwm2mClientRpcRequest.getTypeOper() && lwm2mClientRpcRequest.getTargetIdVer() !=null
-                        && !new LwM2mPath(convertPathFromIdVerToObjectId(lwm2mClientRpcRequest.getTargetIdVer())).isResource()) {
-                    lwm2mClientRpcRequest.setErrorMsg("Failed parameter " +  lwm2mClientRpcRequest.targetIdVerKey
-                            + ". Cannot Read from object or from instance");
-                }
+//                else if ((READ == lwm2mClientRpcRequest.getTypeOper()
+//                        || WRITE_REPLACE == lwm2mClientRpcRequest.getTypeOper()
+//                        || WRITE_UPDATE == lwm2mClientRpcRequest.getTypeOper())
+//                        && lwm2mClientRpcRequest.getTargetIdVer() !=null
+//                        && !(new LwM2mPath(convertPathFromIdVerToObjectId(lwm2mClientRpcRequest.getTargetIdVer())).isResource()
+//                        || new LwM2mPath(convertPathFromIdVerToObjectId(lwm2mClientRpcRequest.getTargetIdVer())).isResourceInstance())) {
+//                    lwm2mClientRpcRequest.setErrorMsg("Failed parameter " +  lwm2mClientRpcRequest.targetIdVerKey
+//                            + ". Cannot Read from object or from instance");
+//                }
             } else {
                 lwm2mClientRpcRequest.setErrorMsg("Params of request is bad Json format.");
             }
@@ -477,20 +481,21 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
 
     public void sentRpcRequest (Lwm2mClientRpcRequest rpcRequest, String requestCode, String msg, String typeMsg) {
         rpcRequest.setResponseCode(requestCode);
-        if (LOG_LW2M_ERROR.equals(typeMsg)) {
-            if (rpcRequest.getErrorMsg() == null) {
-                rpcRequest.setErrorMsg(msg);
-            }
-        }
-        else if (LOG_LW2M_INFO.equals(typeMsg)) {
-            if (rpcRequest.getInfoMsg() == null) {
-                rpcRequest.setInfoMsg(msg);
-            }
-        }
-        else if (LOG_LW2M_VALUE.equals(typeMsg)) {
-            if (rpcRequest.getValueMsg() == null) {
-                rpcRequest.setValueMsg(msg);
-            }
+            if (LOG_LW2M_ERROR.equals(typeMsg)) {
+                rpcRequest.setInfoMsg(null);
+                rpcRequest.setValueMsg(null);
+                if (rpcRequest.getErrorMsg() == null) {
+                    msg = msg.isEmpty() ? null : msg;
+                    rpcRequest.setErrorMsg(msg);
+                }
+            } else if (LOG_LW2M_INFO.equals(typeMsg)) {
+                if (rpcRequest.getInfoMsg() == null) {
+                    rpcRequest.setInfoMsg(msg);
+                }
+            } else if (LOG_LW2M_VALUE.equals(typeMsg)) {
+                if (rpcRequest.getValueMsg() == null) {
+                    rpcRequest.setValueMsg(msg);
+                }
         }
         this.onToDeviceRpcResponse(rpcRequest.getDeviceRpcResponseResultMsg(), rpcRequest.getSessionInfo());
     }

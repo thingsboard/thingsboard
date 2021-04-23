@@ -70,6 +70,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandle
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_VALUE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LwM2mTypeOper;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LwM2mTypeOper.OBSERVE_CANCEL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LwM2mTypeOper.OBSERVE_READ_ALL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.RESPONSE_CHANNEL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertPathFromIdVerToObjectId;
@@ -209,7 +210,12 @@ public class LwM2mTransportRequest {
                         } catch (Exception e) {
                             log.error("[{}] [{}] [{}] Failed to send downlink.", registration.getEndpoint(), targetIdVer, typeOper, e);
                         }
-                    } else {
+                    }
+                    else if (OBSERVE_CANCEL == typeOper && rpcRequest != null) {
+                        rpcRequest.setInfoMsg(null);
+                        serviceImpl.sentRpcRequest(rpcRequest, CONTENT.name(), null, null);
+                    }
+                    else {
                         log.error("[{}], [{}] - [{}] error SendRequest", registration.getEndpoint(), typeOper, targetIdVer);
                         if (rpcRequest != null) {
                             String errorMsg = resourceModel == null ? String.format("Path %s not found in object version", targetIdVer) : "SendRequest - null";
@@ -295,24 +301,31 @@ public class LwM2mTransportRequest {
                                                        Integer resourceId, Object value, ResourceModel.Type type,
                                                        Registration registration, Lwm2mClientRpcRequest rpcRequest) {
         try {
-            switch (type) {
-                case STRING:    // String
-                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, value.toString()) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, value.toString());
-                case INTEGER:   // Long
-                    final long valueInt = Integer.toUnsignedLong(Integer.parseInt(value.toString()));
-                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, valueInt) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, valueInt);
-                case OBJLNK:    // ObjectLink
-                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, ObjectLink.fromPath(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, ObjectLink.fromPath(value.toString()));
-                case BOOLEAN:   // Boolean
-                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Boolean.parseBoolean(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Boolean.parseBoolean(value.toString()));
-                case FLOAT:     // Double
-                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Double.parseDouble(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Double.parseDouble(value.toString()));
-                case TIME:      // Date
-                    Date date = new Date(Long.decode(value.toString()));
-                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, date) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, date);
-                case OPAQUE:    // byte[] value, base64
-                    return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Hex.decodeHex(value.toString().toCharArray())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Hex.decodeHex(value.toString().toCharArray()));
-                default:
+            if (type != null) {
+                switch (type) {
+                    case STRING:    // String
+                        return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, value.toString()) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, value.toString());
+                    case INTEGER:   // Long
+                        final long valueInt = Integer.toUnsignedLong(Integer.parseInt(value.toString()));
+                        return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, valueInt) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, valueInt);
+                    case OBJLNK:    // ObjectLink
+                        return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, ObjectLink.fromPath(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, ObjectLink.fromPath(value.toString()));
+                    case BOOLEAN:   // Boolean
+                        return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Boolean.parseBoolean(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Boolean.parseBoolean(value.toString()));
+                    case FLOAT:     // Double
+                        return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Double.parseDouble(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Double.parseDouble(value.toString()));
+                    case TIME:      // Date
+                        Date date = new Date(Long.decode(value.toString()));
+                        return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, date) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, date);
+                    case OPAQUE:    // byte[] value, base64
+                        return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Hex.decodeHex(value.toString().toCharArray())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Hex.decodeHex(value.toString().toCharArray()));
+                    default:
+                }
+            }
+            if (rpcRequest != null) {
+                String patn = "/" + objectId + "/" + instanceId + "/" + resourceId;
+                String errorMsg = String.format("Bad ResourceModel Operations (E): Resource path - %s ResourceModel type - %s", patn, type);
+                rpcRequest.setErrorMsg(errorMsg);
             }
             return null;
         } catch (NumberFormatException e) {
@@ -369,6 +382,10 @@ public class LwM2mTransportRequest {
             log.info("[{}] Path [{}] ExecuteResponse  7_Send", pathIdVer, response);
         } else if (response instanceof WriteAttributesResponse) {
             log.info("[{}] Path [{}] WriteAttributesResponse 8_Send", pathIdVer, response);
+            if (rpcRequest != null) {
+                rpcRequest.setInfoMsg(null);
+                serviceImpl.sentRpcRequest (rpcRequest, response.getCode().getName(), null, null);
+            }
         } else if (response instanceof WriteResponse) {
             log.info("[{}] Path [{}] WriteAttributesResponse 9_Send", pathIdVer, response);
             serviceImpl.onWriteResponseOk(registration, pathIdVer, (WriteRequest) request);
