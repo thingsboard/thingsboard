@@ -16,6 +16,7 @@
 package org.thingsboard.server.queue.provider;
 
 import org.thingsboard.server.gen.js.JsInvokeProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ToFirmwareStateServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
@@ -84,6 +85,20 @@ public interface TbCoreQueueFactory extends TbUsageStatsClientQueueFactory {
      * @return
      */
     TbQueueConsumer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> createToUsageStatsServiceMsgConsumer();
+
+    /**
+     * Used to consume messages about firmware update notifications by TB Core Service
+     *
+     * @return
+     */
+    TbQueueConsumer<TbProtoQueueMsg<ToFirmwareStateServiceMsg>> createToFirmwareStateServiceMsgConsumer();
+
+    /**
+     * Used to consume messages about firmware update notifications by TB Core Service
+     *
+     * @return
+     */
+    TbQueueProducer<TbProtoQueueMsg<ToFirmwareStateServiceMsg>> createToFirmwareStateServiceMsgProducer();
 
     /**
      * Used to consume high priority messages by TB Core Service

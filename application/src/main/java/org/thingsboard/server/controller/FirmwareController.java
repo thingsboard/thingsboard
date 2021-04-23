@@ -129,16 +129,18 @@ public class FirmwareController extends BaseController {
             firmware.setVersion(info.getVersion());
             firmware.setAdditionalInfo(info.getAdditionalInfo());
 
+            byte[] data = file.getBytes();
             if (StringUtils.isEmpty(checksumAlgorithm)) {
                 checksumAlgorithm = "sha256";
-                checksum = Hashing.sha256().hashBytes(file.getBytes()).toString();
+                checksum = Hashing.sha256().hashBytes(data).toString();
             }
 
             firmware.setChecksumAlgorithm(checksumAlgorithm);
             firmware.setChecksum(checksum);
             firmware.setFileName(file.getOriginalFilename());
             firmware.setContentType(file.getContentType());
-            firmware.setData(ByteBuffer.wrap(file.getBytes()));
+            firmware.setData(ByteBuffer.wrap(data));
+            firmware.setDataSize((long) data.length);
             return firmwareService.saveFirmware(firmware);
         } catch (Exception e) {
             throw handleException(e);

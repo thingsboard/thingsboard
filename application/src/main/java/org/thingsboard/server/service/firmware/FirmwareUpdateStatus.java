@@ -15,16 +15,6 @@
  */
 package org.thingsboard.server.service.firmware;
 
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.gen.transport.TransportProtos.ToFirmwareStateServiceMsg;
-
-public interface FirmwareStateService {
-
-    void update(Device device, Device oldDevice);
-
-    void update(DeviceProfile deviceProfile);
-
-    boolean process(ToFirmwareStateServiceMsg msg);
-
+public enum FirmwareUpdateStatus {
+    QUEUED, INITIATED, DOWNLOADING, DOWNLOADED, VERIFIED, UPDATING, UPDATED, FAILED
 }

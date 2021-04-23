@@ -35,6 +35,12 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_CHECKSUM_ALGORITHM_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_CHECKSUM_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_CONTENT_TYPE_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_DATA_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_DATA_SIZE_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_FILE_NAME_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_HAS_DATA_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TENANT_ID_COLUMN;
@@ -58,6 +64,21 @@ public class FirmwareInfoEntity extends BaseSqlEntity<FirmwareInfo> implements S
     @Column(name = FIRMWARE_VERSION_COLUMN)
     private String version;
 
+    @Column(name = FIRMWARE_FILE_NAME_COLUMN)
+    private String fileName;
+
+    @Column(name = FIRMWARE_CONTENT_TYPE_COLUMN)
+    private String contentType;
+
+    @Column(name = FIRMWARE_CHECKSUM_ALGORITHM_COLUMN)
+    private String checksumAlgorithm;
+
+    @Column(name = FIRMWARE_CHECKSUM_COLUMN)
+    private String checksum;
+
+    @Column(name = FIRMWARE_DATA_SIZE_COLUMN)
+    private Long dataSize;
+
     @Type(type = "json")
     @Column(name = ModelConstants.FIRMWARE_ADDITIONAL_INFO_COLUMN)
     private JsonNode additionalInfo;
@@ -65,7 +86,6 @@ public class FirmwareInfoEntity extends BaseSqlEntity<FirmwareInfo> implements S
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
 
-//    @Column(name = FIRMWARE_HAS_DATA_PROPERTY, insertable = false, updatable = false)
     @Transient
     private boolean hasData;
 
@@ -79,15 +99,27 @@ public class FirmwareInfoEntity extends BaseSqlEntity<FirmwareInfo> implements S
         this.tenantId = firmware.getTenantId().getId();
         this.title = firmware.getTitle();
         this.version = firmware.getVersion();
+        this.fileName = firmware.getFileName();
+        this.contentType = firmware.getContentType();
+        this.checksumAlgorithm = firmware.getChecksumAlgorithm();
+        this.checksum = firmware.getChecksum();
+        this.dataSize = firmware.getDataSize();
         this.additionalInfo = firmware.getAdditionalInfo();
     }
 
-    public FirmwareInfoEntity(UUID id, long createdTime, UUID tenantId, String title, String version, Object additionalInfo, boolean hasData) {
+    public FirmwareInfoEntity(UUID id, long createdTime, UUID tenantId, String title, String version,
+                              String fileName, String contentType, String checksumAlgorithm, String checksum, Long dataSize,
+                              Object additionalInfo, boolean hasData) {
         this.id = id;
         this.createdTime = createdTime;
         this.tenantId = tenantId;
         this.title = title;
         this.version = version;
+        this.fileName = fileName;
+        this.contentType = contentType;
+        this.checksumAlgorithm = checksumAlgorithm;
+        this.checksum = checksum;
+        this.dataSize = dataSize;
         this.hasData = hasData;
         this.additionalInfo = JacksonUtil.convertValue(additionalInfo, JsonNode.class);
     }
@@ -109,6 +141,11 @@ public class FirmwareInfoEntity extends BaseSqlEntity<FirmwareInfo> implements S
         firmware.setTenantId(new TenantId(tenantId));
         firmware.setTitle(title);
         firmware.setVersion(version);
+        firmware.setFileName(fileName);
+        firmware.setContentType(contentType);
+        firmware.setChecksumAlgorithm(checksumAlgorithm);
+        firmware.setChecksum(checksum);
+        firmware.setDataSize(dataSize);
         firmware.setAdditionalInfo(additionalInfo);
         firmware.setHasData(hasData);
         return firmware;

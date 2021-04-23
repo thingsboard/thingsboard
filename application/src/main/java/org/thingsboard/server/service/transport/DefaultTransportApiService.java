@@ -481,6 +481,8 @@ public class DefaultTransportApiService implements TransportApiService {
                 builder.setResponseStatus(TransportProtos.ResponseStatus.SUCCESS);
                 builder.setFirmwareIdMSB(firmwareId.getId().getMostSignificantBits());
                 builder.setFirmwareIdLSB(firmwareId.getId().getLeastSignificantBits());
+                builder.setTitle(firmware.getTitle());
+                builder.setVersion(firmware.getVersion());
                 builder.setFileName(firmware.getFileName());
                 builder.setContentType(firmware.getContentType());
                 firmwareCacheWriter.put(firmwareId.toString(), firmware.getData().array());

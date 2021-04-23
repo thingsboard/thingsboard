@@ -32,6 +32,12 @@ public class FirmwareInfo extends SearchTextBasedWithAdditionalInfo<FirmwareId> 
     private String title;
     private String version;
     private boolean hasData;
+    private String fileName;
+    private String contentType;
+    private String checksumAlgorithm;
+    private String checksum;
+    private Long dataSize;
+
 
     public FirmwareInfo() {
         super();
@@ -47,6 +53,11 @@ public class FirmwareInfo extends SearchTextBasedWithAdditionalInfo<FirmwareId> 
         this.title = firmwareInfo.getTitle();
         this.version = firmwareInfo.getVersion();
         this.hasData = firmwareInfo.isHasData();
+        this.fileName = firmwareInfo.getFileName();
+        this.contentType = firmwareInfo.getContentType();
+        this.checksumAlgorithm = firmwareInfo.getChecksumAlgorithm();
+        this.checksum = firmwareInfo.getChecksum();
+        this.dataSize = firmwareInfo.getDataSize();
     }
 
     @Override

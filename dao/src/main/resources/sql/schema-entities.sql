@@ -187,6 +187,7 @@ CREATE TABLE IF NOT EXISTS firmware (
     checksum_algorithm varchar(32),
     checksum varchar(1020),
     data bytea,
+    data_size bigint,
     additional_info varchar,
     search_text varchar(255),
     CONSTRAINT firmware_tenant_title_version_unq_key UNIQUE (tenant_id, title, version)
