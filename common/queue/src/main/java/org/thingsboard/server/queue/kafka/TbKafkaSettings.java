@@ -54,6 +54,9 @@ public class TbKafkaSettings {
     @Value("${queue.kafka.retries}")
     private int retries;
 
+    @Value("${queue.kafka.compression.type:none}")
+    private String compressionType;
+
     @Value("${queue.kafka.batch.size}")
     private int batchSize;
 
@@ -135,6 +138,7 @@ public class TbKafkaSettings {
         props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, bufferMemory);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
+        props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, compressionType);
         return props;
     }
 
