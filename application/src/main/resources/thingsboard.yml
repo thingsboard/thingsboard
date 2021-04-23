@@ -372,8 +372,8 @@ caffeine:
       timeToLiveInMinutes: 20000
       maxSize: 10000
     firmwares:
-      timeToLiveInMinutes: 1440
-      maxSize: 100
+      timeToLiveInMinutes: 60
+      maxSize: 10
     edges:
       timeToLiveInMinutes: 1440
       maxSize: 0
