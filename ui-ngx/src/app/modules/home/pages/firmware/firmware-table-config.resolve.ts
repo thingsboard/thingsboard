@@ -29,7 +29,7 @@ import { FirmwareService } from '@core/http/firmware.service';
 import { PageLink } from '@shared/models/page/page-link';
 import { FirmwaresComponent } from '@home/pages/firmware/firmwares.component';
 import { EntityAction } from '@home/models/entity/entity-component.models';
-import { DeviceInfo } from '@shared/models/device.models';
+import { FileSizePipe } from '@shared/pipe/file-size.pipe';
 
 @Injectable()
 export class FirmwareTableConfigResolve implements Resolve<EntityTableConfig<Firmware, PageLink, FirmwareInfo>> {
@@ -38,7 +38,8 @@ export class FirmwareTableConfigResolve implements Resolve<EntityTableConfig<Fir
 
   constructor(private translate: TranslateService,
               private datePipe: DatePipe,
-              private firmwareService: FirmwareService) {
+              private firmwareService: FirmwareService,
+              private fileSize: FileSizePipe) {
     this.config.entityType = EntityType.FIRMWARE;
     this.config.entityComponent = FirmwaresComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.FIRMWARE);
@@ -48,13 +49,20 @@ export class FirmwareTableConfigResolve implements Resolve<EntityTableConfig<Fir
 
     this.config.columns.push(
       new DateEntityTableColumn<FirmwareInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<FirmwareInfo>('title', 'firmware.title', '50%'),
-      new EntityTableColumn<FirmwareInfo>('version', 'firmware.version', '50%')
+      new EntityTableColumn<FirmwareInfo>('title', 'firmware.title', '33%'),
+      new EntityTableColumn<FirmwareInfo>('version', 'firmware.version', '33%'),
+      new EntityTableColumn<FirmwareInfo>('fileName', 'firmware.file-name', '33%'),
+      new EntityTableColumn<FirmwareInfo>('dataSize', 'firmware.file-size', '70px', entity => {
+        return this.fileSize.transform(entity.dataSize || 0);
+      }),
+      new EntityTableColumn<FirmwareInfo>('checksum', 'firmware.checksum', '540px', entity => {
+        return `${entity.checksumAlgorithm}: ${entity.checksum}`;
+      }, () => ({}), false)
     );
 
     this.config.cellActionDescriptors.push(
       {
-        name: this.translate.instant('firmware.export'),
+        name: this.translate.instant('firmware.download'),
         icon: 'file_download',
         isEnabled: (firmware) => firmware.hasData,
         onAction: ($event, entity) => this.exportFirmware($event, entity)

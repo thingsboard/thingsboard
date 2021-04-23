@@ -37,14 +37,15 @@ export interface FirmwareInfo extends BaseData<FirmwareId> {
   title?: string;
   version?: string;
   hasData?: boolean;
+  fileName: string;
+  checksum?: ChecksumAlgorithm;
+  checksumAlgorithm?: string;
+  contentType: string;
+  dataSize?: number;
   additionalInfo?: any;
 }
 
 export interface Firmware extends FirmwareInfo {
   file?: File;
   data: string;
-  fileName: string;
-  checksum?: ChecksumAlgorithm;
-  checksumAlgorithm?: string;
-  contentType: string;
 }

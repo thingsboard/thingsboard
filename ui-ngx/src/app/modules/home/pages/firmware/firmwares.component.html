@@ -20,22 +20,30 @@
           [disabled]="(isLoading$ | async) || !entity?.hasData"
           (click)="onEntityAction($event, 'uploadFirmware')"
           [fxShow]="!isEdit">
-    {{'firmware.export' | translate }}
+    {{ 'firmware.download' | translate }}
   </button>
   <button mat-raised-button color="primary" fxFlex.xs
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
           [fxShow]="!hideDelete() && !isEdit">
-    {{'resource.delete' | translate }}
+    {{ 'firmware.delete' | translate }}
   </button>
   <div fxLayout="row" fxLayout.xs="column">
     <button mat-raised-button
             ngxClipboard
-            (cbOnSuccess)="onFirmwareIdCopied($event)"
+            (cbOnSuccess)="onFirmwareIdCopied()"
             [cbContent]="entity?.id?.id"
             [fxShow]="!isEdit">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>firmware.copyId</span>
+    </button>
+    <button mat-raised-button
+            ngxClipboard
+            (cbOnSuccess)="onFirmwareChecksumCopied()"
+            [cbContent]="entity?.checksum"
+            [fxShow]="!isEdit">
+      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      <span translate>firmware.copy-checksum</span>
     </button>
   </div>
 </div>
@@ -46,45 +54,62 @@
       <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
         <mat-form-field class="mat-block" fxFlex="45">
           <mat-label translate>firmware.title</mat-label>
-          <input matInput formControlName="title" type="text" required>
+          <input matInput formControlName="title" type="text" required [readonly]="!isAdd">
           <mat-error *ngIf="entityForm.get('title').hasError('required')">
             {{ 'firmware.title-required' | translate }}
           </mat-error>
         </mat-form-field>
         <mat-form-field class="mat-block" fxFlex>
           <mat-label translate>firmware.version</mat-label>
-          <input matInput formControlName="version" type="text" required>
+          <input matInput formControlName="version" type="text" required [readonly]="!isAdd">
           <mat-error *ngIf="entityForm.get('version').hasError('required')">
             {{ 'firmware.version-required' | translate }}
           </mat-error>
         </mat-form-field>
       </div>
-      <section *ngIf="isAdd" style="padding-bottom: 8px">
-        <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
-          <mat-form-field class="mat-block" fxFlex="45">
-            <mat-label translate>firmware.checksum-algorithm</mat-label>
-            <mat-select formControlName="checksumAlgorithm">
-              <mat-option [value]=null></mat-option>
-              <mat-option *ngFor="let checksumAlgorithm of checksumAlgorithms" [value]="checksumAlgorithm">
-                {{ checksumAlgorithmTranslationMap.get(checksumAlgorithm) }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field class="mat-block" fxFlex>
-            <mat-label translate>firmware.checksum</mat-label>
-            <input matInput formControlName="checksum" type="text"
-                   [required]="entityForm.get('checksumAlgorithm').value != null">
-            <mat-error *ngIf="entityForm.get('checksumAlgorithm').hasError('required')">
-              {{ 'firmware.checksum-required' | translate }}
-            </mat-error>
-          </mat-form-field>
-        </div>
+      <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayoutGap.sm="8px" fxLayout.xs="column" fxLayout.md="column">
+        <mat-form-field class="mat-block" fxFlex="33">
+          <mat-label translate>firmware.checksum-algorithm</mat-label>
+          <input *ngIf="!isAdd" matInput formControlName="checksumAlgorithm" type="text" [readonly]="isEdit">
+          <mat-select formControlName="checksumAlgorithm" *ngIf="isAdd">
+            <mat-option [value]=null></mat-option>
+            <mat-option *ngFor="let checksumAlgorithm of checksumAlgorithms" [value]="checksumAlgorithm">
+              {{ checksumAlgorithmTranslationMap.get(checksumAlgorithm) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field class="mat-block" fxFlex>
+          <mat-label translate>firmware.checksum</mat-label>
+          <input matInput formControlName="checksum" type="text" [readonly]="!isAdd"
+                 [required]="entityForm.get('checksumAlgorithm').value != null">
+          <mat-error *ngIf="entityForm.get('checksumAlgorithm').hasError('required')">
+            {{ 'firmware.checksum-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+      <section *ngIf="isAdd" style="padding-top: 8px">
         <tb-file-input
           formControlName="file"
           workFromFileObj="true"
           required
           dropLabel="{{'resource.drop-file' | translate}}">
         </tb-file-input>
+      </section>
+      <section *ngIf="!isAdd">
+        <div fxLayout="row" fxLayoutGap.gt-md="8px" fxLayoutGap.sm="8px" fxLayout.xs="column" fxLayout.md="column">
+          <mat-form-field class="mat-block" fxFlex="33">
+            <mat-label translate>firmware.file-name</mat-label>
+            <input matInput formControlName="fileName" type="text" readonly>
+          </mat-form-field>
+          <mat-form-field class="mat-block" fxFlex>
+            <mat-label translate>firmware.file-size-bytes</mat-label>
+            <input matInput formControlName="dataSize" type="text" readonly>
+          </mat-form-field>
+          <mat-form-field class="mat-block" fxFlex>
+            <mat-label translate>firmware.content-type</mat-label>
+            <input matInput formControlName="contentType" type="text" readonly>
+          </mat-form-field>
+        </div>
       </section>
       <div formGroupName="additionalInfo">
         <mat-form-field class="mat-block">
