@@ -98,7 +98,7 @@ public class TbKafkaSettings {
     private List<TbKafkaProperty> other;
 
     @Setter
-    private Map<String, List<TbKafkaProperty>> consumerPropertiesPerTopic;
+    private Map<String, List<TbKafkaProperty>> consumerPropertiesPerTopic = Collections.emptyMap();
 
     public Properties toAdminProps() {
         Properties props = toProps();
