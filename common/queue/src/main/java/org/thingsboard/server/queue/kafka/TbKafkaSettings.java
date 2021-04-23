@@ -31,7 +31,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -95,6 +97,9 @@ public class TbKafkaSettings {
     @Setter
     private List<TbKafkaProperty> other;
 
+    @Setter
+    private Map<String, List<TbKafkaProperty>> consumerPropertiesPerTopic;
+
     public Properties toAdminProps() {
         Properties props = toProps();
         props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, servers);
@@ -103,7 +108,7 @@ public class TbKafkaSettings {
         return props;
     }
 
-    public Properties toConsumerProps() {
+    public Properties toConsumerProps(String topic) {
         Properties props = toProps();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, servers);
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, maxPollRecords);
@@ -113,6 +118,10 @@ public class TbKafkaSettings {
 
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
+
+        consumerPropertiesPerTopic
+                .getOrDefault(topic, Collections.emptyList())
+                .forEach(kv -> props.put(kv.getKey(), kv.getValue()));
         return props;
     }
 
