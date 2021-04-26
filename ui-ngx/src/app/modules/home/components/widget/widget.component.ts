@@ -1152,8 +1152,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     });
   }
 
-
-
   private elementClick($event: Event) {
     for(let key in $event['path']) {
       let e = $event['path'][key] as Element;
