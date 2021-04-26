@@ -1152,21 +1152,28 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     });
   }
 
+
+
   private elementClick($event: Event) {
-    const e = ($event.target || $event.srcElement) as Element;
-    if (e.id) {
-      const descriptors = this.getActionDescriptors('elementClick');
-      if (descriptors.length) {
-        descriptors.forEach((descriptor) => {
-          if (descriptor.name === e.id) {
-            $event.stopPropagation();
-            const entityInfo = this.getActiveEntityInfo();
-            const entityId = entityInfo ? entityInfo.entityId : null;
-            const entityName = entityInfo ? entityInfo.entityName : null;
-            const entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
-            this.handleWidgetAction($event, descriptor, entityId, entityName, null, entityLabel);
-          }
-        });
+    for(let key in $event['path']) {
+      let e = $event['path'][key] as Element;
+      if(e.localName === this.widgetContext.$container[0].localName && e.id === this.widgetContext.$container[0].id){
+        break;
+      }
+      if (e.id) {
+        const descriptors = this.getActionDescriptors('elementClick');
+        if (descriptors.length) {
+          descriptors.forEach((descriptor) => {
+            if (descriptor.name === e.id) {
+              $event.stopPropagation();
+              const entityInfo = this.getActiveEntityInfo();
+              const entityId = entityInfo ? entityInfo.entityId : null;
+              const entityName = entityInfo ? entityInfo.entityName : null;
+              const entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
+              this.handleWidgetAction($event, descriptor, entityId, entityName, null, entityLabel);
+            }
+          });
+        }
       }
     }
   }
