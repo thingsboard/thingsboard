@@ -217,6 +217,18 @@ services:
       - ./tb-transports/lwm2m/log:/var/log/tb-lwm2m-transport
     depends_on:
       - zookeeper
+  tb-snmp-transport:
+    restart: always
+    image: "${DOCKER_REPO}/${SNMP_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
+    environment:
+      TB_SERVICE_ID: tb-snmp-transport
+    env_file:
+      - tb-snmp-transport.env
+    volumes:
+      - ./tb-transports/snmp/conf:/config
+      - ./tb-transports/snmp/log:/var/log/tb-snmp-transport
+    depends_on:
+      - zookeeper
   tb-web-ui1:
     restart: always
     image: "${DOCKER_REPO}/${WEB_UI_DOCKER_NAME}:${TB_VERSION}"
