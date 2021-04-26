@@ -183,19 +183,29 @@ public class SnmpTransportService implements TbTransportService {
         SnmpMethod snmpMethod = SnmpMethod.valueOf(toDeviceRpcRequestMsg.getMethodName());
         JsonObject params = JsonConverter.parse(toDeviceRpcRequestMsg.getParams()).getAsJsonObject();
 
-        String oid = Optional.ofNullable(params.get("oid")).map(JsonElement::getAsString).orElse(null);
+        String key = Optional.ofNullable(params.get("key")).map(JsonElement::getAsString).orElse(null);
         String value = Optional.ofNullable(params.get("value")).map(JsonElement::getAsString).orElse(null);
-        DataType dataType = Optional.ofNullable(params.get("dataType")).map(e -> DataType.valueOf(e.getAsString())).orElse(DataType.STRING);
 
-        if (oid == null || oid.isEmpty()) {
-            throw new IllegalArgumentException("OID in to-device RPC request is not specified");
-        }
         if (value == null && snmpMethod == SnmpMethod.SET) {
             throw new IllegalArgumentException("Value must be specified for SNMP method 'SET'");
         }
 
-        PDU request = pduService.createSingleVariablePdu(sessionContext, snmpMethod, oid, value, dataType);
-        sendRequest(sessionContext, request, new RequestInfo(toDeviceRpcRequestMsg.getRequestId(), SnmpCommunicationSpec.TO_DEVICE_RPC_REQUEST));
+        sessionContext.getProfileTransportConfiguration().getCommunicationConfigs().stream()
+                .filter(communicationConfig -> communicationConfig.getSpec() == SnmpCommunicationSpec.TO_DEVICE_RPC_REQUEST)
+                .findFirst()
+                .ifPresent(communicationConfig -> {
+                    communicationConfig.getAllMappings().stream()
+                            .filter(snmpMapping -> snmpMapping.getKey().equals(key))
+                            .findFirst()
+                            .ifPresent(snmpMapping -> {
+                                String oid = snmpMapping.getOid();
+                                DataType dataType = snmpMapping.getDataType();
+
+                                PDU request = pduService.createSingleVariablePdu(sessionContext, snmpMethod, oid, value, dataType);
+                                RequestInfo requestInfo = new RequestInfo(toDeviceRpcRequestMsg.getRequestId(), communicationConfig.getSpec(), communicationConfig.getAllMappings());
+                                sendRequest(sessionContext, request, requestInfo);
+                            });
+                });
     }
 
 
@@ -238,7 +248,12 @@ public class SnmpTransportService implements TbTransportService {
         responseDataMappers.put(SnmpCommunicationSpec.TO_DEVICE_RPC_REQUEST, (pdu, requestInfo) -> {
             JsonObject responseData = new JsonObject();
             pduService.processPdu(pdu).forEach((oid, value) -> {
-                responseData.addProperty(oid.toDottedString(), value);
+                requestInfo.getResponseMappings().stream()
+                        .filter(snmpMapping -> snmpMapping.getOid().equals(oid.toDottedString()))
+                        .findFirst()
+                        .ifPresent(snmpMapping -> {
+                            responseData.addProperty(snmpMapping.getKey(), value);
+                        });
             });
             return responseData;
         });
@@ -314,13 +329,10 @@ public class SnmpTransportService implements TbTransportService {
         private SnmpCommunicationSpec communicationSpec;
         private List<SnmpMapping> responseMappings;
 
-        public RequestInfo(Integer requestId, SnmpCommunicationSpec communicationSpec) {
+        public RequestInfo(Integer requestId, SnmpCommunicationSpec communicationSpec, List<SnmpMapping> responseMappings) {
             this.requestId = requestId;
             this.communicationSpec = communicationSpec;
-        }
-
-        public RequestInfo(SnmpCommunicationSpec communicationSpec) {
-            this.communicationSpec = communicationSpec;
+            this.responseMappings = responseMappings;
         }
 
         public RequestInfo(SnmpCommunicationSpec communicationSpec, List<SnmpMapping> responseMappings) {
