@@ -281,6 +281,13 @@ export class MenuService {
       },
       {
         id: guid(),
+        name: 'firmware.firmware',
+        type: 'link',
+        path: '/firmwares',
+        icon: 'memory'
+      },
+      {
+        id: guid(),
         name: 'entity-view.entity-views',
         type: 'link',
         path: '/entityViews',
@@ -409,6 +416,11 @@ export class MenuService {
             icon: 'mdi:alpha-d-box',
             isMdiIcon: true,
             path: '/deviceProfiles'
+          },
+          {
+            name: 'firmware.firmware',
+            icon: 'memory',
+            path: '/firmwares'
           }
         ]
       },

@@ -28,6 +28,7 @@ import java.util.Arrays;
         "org.thingsboard.server.dao.service.attributes.sql.*SqlTest",
         "org.thingsboard.server.dao.service.event.sql.*SqlTest",
         "org.thingsboard.server.dao.service.timeseries.sql.*SqlTest"
+
 })
 public class SqlDaoServiceTestSuite {
 

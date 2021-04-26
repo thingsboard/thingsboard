@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.transport.lwm2m.server.client.Lwm2mClientRpcRequest;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -38,9 +39,7 @@ public interface LwM2mTransportService extends TbTransportService {
 
     void setCancelObservations(Registration registration);
 
-    void setCancelObservationRecourse(Registration registration, String path);
-
-    void onObservationResponse(Registration registration, String path, ReadResponse response);
+    void onObservationResponse(Registration registration, String path, ReadResponse response, Lwm2mClientRpcRequest rpcRequest);
 
     void onAttributeUpdate(TransportProtos.AttributeUpdateNotificationMsg msg, TransportProtos.SessionInfoProto sessionInfo);
 
@@ -52,7 +51,9 @@ public interface LwM2mTransportService extends TbTransportService {
 
     void onResourceDelete(Optional<TransportProtos.ResourceDeleteMsg> resourceDeleteMsgOpt);
 
-    void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg toDeviceRequest);
+    void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg toDeviceRequest, TransportProtos.SessionInfoProto sessionInfo);
+
+    void onToDeviceRpcResponse(TransportProtos.ToDeviceRpcResponseMsg toDeviceRpcResponse, TransportProtos.SessionInfoProto sessionInfo);
 
     void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse);
 

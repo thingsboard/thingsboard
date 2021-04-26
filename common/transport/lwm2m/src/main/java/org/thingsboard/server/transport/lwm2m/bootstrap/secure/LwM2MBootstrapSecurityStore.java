@@ -35,7 +35,7 @@ import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInf
 import org.thingsboard.server.transport.lwm2m.secure.ReadResultSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mSessionMsgListener;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContextServer;
-import org.thingsboard.server.transport.lwm2m.utils.TypeServer;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -69,7 +69,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     @Override
     public List<SecurityInfo> getAllByEndpoint(String endPoint) {
-        ReadResultSecurityStore store = lwM2MCredentialsSecurityInfoValidator.createAndValidateCredentialsSecurityInfo(endPoint, TypeServer.BOOTSTRAP);
+        ReadResultSecurityStore store = lwM2MCredentialsSecurityInfoValidator.createAndValidateCredentialsSecurityInfo(endPoint, LwM2mTransportHandler.LwM2mTypeServer.BOOTSTRAP);
         if (store.getBootstrapJsonCredential() != null && store.getSecurityMode() < LwM2MSecurityMode.DEFAULT_MODE.code) {
             /** add value to store  from BootstrapJson */
             this.setBootstrapConfigScurityInfo(store);
@@ -93,7 +93,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     @Override
     public SecurityInfo getByIdentity(String identity) {
-        ReadResultSecurityStore store = lwM2MCredentialsSecurityInfoValidator.createAndValidateCredentialsSecurityInfo(identity, TypeServer.BOOTSTRAP);
+        ReadResultSecurityStore store = lwM2MCredentialsSecurityInfoValidator.createAndValidateCredentialsSecurityInfo(identity, LwM2mTransportHandler.LwM2mTypeServer.BOOTSTRAP);
         if (store.getBootstrapJsonCredential() != null && store.getSecurityMode() < LwM2MSecurityMode.DEFAULT_MODE.code) {
             /** add value to store  from BootstrapJson */
             this.setBootstrapConfigScurityInfo(store);

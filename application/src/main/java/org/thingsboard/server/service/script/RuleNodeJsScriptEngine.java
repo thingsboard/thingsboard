@@ -218,7 +218,7 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
     private JsonNode executeScript(TbMsg msg) throws ScriptException {
         try {
             String[] inArgs = prepareArgs(msg);
-            String eval = sandboxService.invokeFunction(tenantId, this.scriptId, inArgs[0], inArgs[1], inArgs[2]).get().toString();
+            String eval = sandboxService.invokeFunction(tenantId, msg.getCustomerId(), this.scriptId, inArgs[0], inArgs[1], inArgs[2]).get().toString();
             return mapper.readTree(eval);
         } catch (ExecutionException e) {
             if (e.getCause() instanceof ScriptException) {
@@ -235,7 +235,7 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
 
     private ListenableFuture<JsonNode> executeScriptAsync(TbMsg msg) {
         String[] inArgs = prepareArgs(msg);
-        return Futures.transformAsync(sandboxService.invokeFunction(tenantId, this.scriptId, inArgs[0], inArgs[1], inArgs[2]),
+        return Futures.transformAsync(sandboxService.invokeFunction(tenantId, msg.getCustomerId(), this.scriptId, inArgs[0], inArgs[1], inArgs[2]),
                 o -> {
                     try {
                         return Futures.immediateFuture(mapper.readTree(o.toString()));

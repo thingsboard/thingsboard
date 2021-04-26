@@ -54,6 +54,8 @@ message SessionInfoProto {
   int64 gwSessionIdLSB = 11;
   int64 deviceProfileIdMSB = 12;
   int64 deviceProfileIdLSB = 13;
+  int64 customerIdMSB = 14;
+  int64 customerIdLSB = 15;
 }
 
 enum SessionEvent {
@@ -111,6 +113,8 @@ message DeviceInfoProto {
   string additionalInfo = 7;
   int64 deviceProfileIdMSB = 8;
   int64 deviceProfileIdLSB = 9;
+  int64 customerIdMSB = 10;
+  int64 customerIdLSB = 11;
 }
 
 /**
@@ -365,17 +369,35 @@ message ProvisionDeviceCredentialsMsg {
 }
 
 message ProvisionDeviceResponseMsg {
-  ProvisionResponseStatus status = 1;
+  ResponseStatus status = 1;
   CredentialsType credentialsType = 2;
   string credentialsValue = 3;
 }
 
-enum ProvisionResponseStatus {
+enum ResponseStatus {
   UNKNOWN = 0;
   SUCCESS = 1;
   NOT_FOUND = 2;
   FAILURE = 3;
 }
+
+message GetFirmwareRequestMsg {
+  int64 deviceIdMSB = 1;
+  int64 deviceIdLSB = 2;
+  int64 tenantIdMSB = 3;
+  int64 tenantIdLSB = 4;
+}
+
+message GetFirmwareResponseMsg {
+  ResponseStatus responseStatus = 1;
+  int64 firmwareIdMSB = 2;
+  int64 firmwareIdLSB = 3;
+  string title = 4;
+  string version = 5;
+  string contentType = 6;
+  string fileName = 7;
+}
+
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
 message SubscriptionInfoProto {
   int64 lastActivityTime = 1;
@@ -596,9 +618,10 @@ message TransportApiRequestMsg {
   ProvisionDeviceRequestMsg provisionDeviceRequestMsg = 7;
   ValidateDeviceLwM2MCredentialsRequestMsg validateDeviceLwM2MCredentialsRequestMsg = 8;
   GetResourceRequestMsg resourceRequestMsg = 9;
-  GetSnmpDevicesRequestMsg snmpDevicesRequestMsg = 10;
-  GetDeviceRequestMsg deviceRequestMsg = 11;
-  GetDeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 12;
+  GetFirmwareRequestMsg firmwareRequestMsg = 10;
+  GetSnmpDevicesRequestMsg snmpDevicesRequestMsg = 11;
+  GetDeviceRequestMsg deviceRequestMsg = 12;
+  GetDeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 13;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
@@ -610,8 +633,9 @@ message TransportApiResponseMsg {
   GetSnmpDevicesResponseMsg snmpDevicesResponseMsg = 5;
   LwM2MResponseMsg lwM2MResponseMsg = 6;
   GetResourceResponseMsg resourceResponseMsg = 7;
-  GetDeviceResponseMsg deviceResponseMsg = 8;
-  GetDeviceCredentialsResponseMsg deviceCredentialsResponseMsg = 9;
+  GetFirmwareResponseMsg firmwareResponseMsg = 8;
+  GetDeviceResponseMsg deviceResponseMsg = 9;
+  GetDeviceCredentialsResponseMsg deviceCredentialsResponseMsg = 10;
 }
 
 /* Messages that are handled by ThingsBoard Core Service */
@@ -673,4 +697,16 @@ message ToUsageStatsServiceMsg {
   int64 entityIdMSB = 3;
   int64 entityIdLSB = 4;
   repeated UsageStatsKVProto values = 5;
+  int64 customerIdMSB = 6;
+  int64 customerIdLSB = 7;
+}
+
+message ToFirmwareStateServiceMsg {
+  int64 ts = 1;
+  int64 tenantIdMSB = 2;
+  int64 tenantIdLSB = 3;
+  int64 deviceIdMSB = 4;
+  int64 deviceIdLSB = 5;
+  int64 firmwareIdMSB = 6;
+  int64 firmwareIdLSB = 7;
 }
