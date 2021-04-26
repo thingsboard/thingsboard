@@ -29,7 +29,6 @@ import redis.clients.jedis.ScanResult;
 import java.util.Collection;
 import java.util.LinkedList;
 
-@Service
 public class TbLwM2mRedisSecurityStore implements EditableSecurityStore {
     private static final String SEC_EP = "SEC#EP#";
 

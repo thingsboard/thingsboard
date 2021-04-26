@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -73,6 +74,9 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
     @Column(name = ModelConstants.DEVICE_DEVICE_PROFILE_ID_PROPERTY, columnDefinition = "uuid")
     private UUID deviceProfileId;
 
+    @Column(name = ModelConstants.DEVICE_FIRMWARE_ID_PROPERTY, columnDefinition = "uuid")
+    private UUID firmwareId;
+
     @Type(type = "jsonb")
     @Column(name = ModelConstants.DEVICE_DEVICE_DATA_PROPERTY, columnDefinition = "jsonb")
     private JsonNode deviceData;
@@ -95,6 +99,9 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
         if (device.getDeviceProfileId() != null) {
             this.deviceProfileId = device.getDeviceProfileId().getId();
         }
+        if (device.getFirmwareId() != null) {
+            this.firmwareId = device.getFirmwareId().getId();
+        }
         this.deviceData = JacksonUtil.convertValue(device.getDeviceData(), ObjectNode.class);
         this.name = device.getName();
         this.type = device.getType();
@@ -114,6 +121,7 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
         this.label = deviceEntity.getLabel();
         this.searchText = deviceEntity.getSearchText();
         this.additionalInfo = deviceEntity.getAdditionalInfo();
+        this.firmwareId = deviceEntity.getFirmwareId();
     }
 
     @Override
@@ -137,6 +145,9 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
         }
         if (deviceProfileId != null) {
             device.setDeviceProfileId(new DeviceProfileId(deviceProfileId));
+        }
+        if (firmwareId != null) {
+            device.setFirmwareId(new FirmwareId(firmwareId));
         }
         device.setDeviceData(JacksonUtil.convertValue(deviceData, DeviceData.class));
         device.setName(name);

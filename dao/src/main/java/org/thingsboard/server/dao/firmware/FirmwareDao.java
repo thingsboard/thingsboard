@@ -13,20 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.client;
+package org.thingsboard.server.dao.firmware;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.kv.DataType;
+import org.thingsboard.server.common.data.Firmware;
+import org.thingsboard.server.dao.Dao;
 
-@Data
-public class ResultsResourceValue {
-    DataType dataType;
-    Object value;
-    String resourceName;
+public interface FirmwareDao extends Dao<Firmware> {
 
-    public ResultsResourceValue (DataType dataType, Object value, String resourceName) {
-        this.dataType = dataType;
-        this.value = value;
-        this.resourceName = resourceName;
-    }
 }
