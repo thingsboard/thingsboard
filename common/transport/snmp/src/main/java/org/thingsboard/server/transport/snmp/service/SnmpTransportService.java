@@ -190,22 +190,21 @@ public class SnmpTransportService implements TbTransportService {
             throw new IllegalArgumentException("Value must be specified for SNMP method 'SET'");
         }
 
-        sessionContext.getProfileTransportConfiguration().getCommunicationConfigs().stream()
-                .filter(communicationConfig -> communicationConfig.getSpec() == SnmpCommunicationSpec.TO_DEVICE_RPC_REQUEST)
+        SnmpCommunicationConfig communicationConfig = sessionContext.getProfileTransportConfiguration().getCommunicationConfigs().stream()
+                .filter(config -> config.getSpec() == SnmpCommunicationSpec.TO_DEVICE_RPC_REQUEST)
                 .findFirst()
-                .ifPresent(communicationConfig -> {
-                    communicationConfig.getAllMappings().stream()
-                            .filter(snmpMapping -> snmpMapping.getKey().equals(key))
-                            .findFirst()
-                            .ifPresent(snmpMapping -> {
-                                String oid = snmpMapping.getOid();
-                                DataType dataType = snmpMapping.getDataType();
+                .orElseThrow(() -> new IllegalArgumentException("No communication config found with RPC spec"));
+        SnmpMapping snmpMapping = communicationConfig.getAllMappings().stream()
+                .filter(mapping -> mapping.getKey().equals(key))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No SNMP mapping found in the config for specified key"));
 
-                                PDU request = pduService.createSingleVariablePdu(sessionContext, snmpMethod, oid, value, dataType);
-                                RequestInfo requestInfo = new RequestInfo(toDeviceRpcRequestMsg.getRequestId(), communicationConfig.getSpec(), communicationConfig.getAllMappings());
-                                sendRequest(sessionContext, request, requestInfo);
-                            });
-                });
+        String oid = snmpMapping.getOid();
+        DataType dataType = snmpMapping.getDataType();
+
+        PDU request = pduService.createSingleVariablePdu(sessionContext, snmpMethod, oid, value, dataType);
+        RequestInfo requestInfo = new RequestInfo(toDeviceRpcRequestMsg.getRequestId(), communicationConfig.getSpec(), communicationConfig.getAllMappings());
+        sendRequest(sessionContext, request, requestInfo);
     }
 
 
