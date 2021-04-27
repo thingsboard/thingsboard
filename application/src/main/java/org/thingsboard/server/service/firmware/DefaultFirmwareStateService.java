@@ -187,6 +187,7 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
         List<TsKvEntry> telemetry = new ArrayList<>();
         telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.TARGET_FIRMWARE_TITLE, firmware.getTitle())));
         telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.TARGET_FIRMWARE_VERSION, firmware.getVersion())));
+        telemetry.add(new BasicTsKvEntry(ts, new LongDataEntry(DataConstants.TARGET_FIRMWARE_TS, ts)));
         telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_STATE, FirmwareUpdateStatus.QUEUED.name())));
 
         telemetryService.saveAndNotify(tenantId, deviceId, telemetry, new FutureCallback<>() {
