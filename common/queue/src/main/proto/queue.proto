@@ -268,11 +268,13 @@ message GetDeviceCredentialsResponseMsg {
 }
 
 message GetSnmpDevicesRequestMsg {
-
+  int32 page = 1;
+  int32 pageSize = 2;
 }
 
 message GetSnmpDevicesResponseMsg {
   repeated string ids = 1;
+  bool hasNextPage = 2;
 }
 
 message EntityUpdateMsg {

@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
@@ -46,6 +45,8 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
@@ -62,7 +63,6 @@ import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.device.provision.ProvisionResponse;
 import org.thingsboard.server.dao.firmware.FirmwareService;
 import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
@@ -72,9 +72,9 @@ import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileRequ
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetResourceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetSnmpDevicesRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetSnmpDevicesResponseMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.GetResourceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
@@ -91,7 +91,6 @@ import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.resource.TbResourceService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -433,13 +432,15 @@ public class DefaultTransportApiService implements TransportApiService {
         return Futures.immediateFuture(TransportApiResponseMsg.newBuilder().setResourceResponseMsg(builder).build());
     }
 
-    // TODO: request snmp devices with pagination
     private ListenableFuture<TransportApiResponseMsg> handle(GetSnmpDevicesRequestMsg requestMsg) {
-        List<UUID> result = deviceService.findDevicesIdsByDeviceProfileTransportType(DeviceTransportType.SNMP);
+        PageLink pageLink = new PageLink(requestMsg.getPageSize(), requestMsg.getPage());
+        PageData<UUID> result = deviceService.findDevicesIdsByDeviceProfileTransportType(DeviceTransportType.SNMP, pageLink);
+
         GetSnmpDevicesResponseMsg responseMsg = GetSnmpDevicesResponseMsg.newBuilder()
-                .addAllIds(result.stream()
+                .addAllIds(result.getData().stream()
                         .map(UUID::toString)
                         .collect(Collectors.toList()))
+                .setHasNextPage(result.hasNext())
                 .build();
 
         return Futures.immediateFuture(TransportApiResponseMsg.newBuilder()

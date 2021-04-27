@@ -95,7 +95,7 @@ public interface DeviceService {
 
     Device saveDevice(ProvisionRequest provisionRequest, DeviceProfile profile);
 
-    List<UUID> findDevicesIdsByDeviceProfileTransportType(DeviceTransportType transportType);
+    PageData<UUID> findDevicesIdsByDeviceProfileTransportType(DeviceTransportType transportType, PageLink pageLink);
 
     Device assignDeviceToEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId);
 

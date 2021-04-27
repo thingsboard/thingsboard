@@ -42,7 +42,6 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Firmware;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.device.data.CoapDeviceTransportConfiguration;
@@ -62,7 +61,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -580,8 +578,8 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     }
 
     @Override
-    public List<UUID> findDevicesIdsByDeviceProfileTransportType(DeviceTransportType transportType) {
-        return deviceDao.findDevicesIdsByDeviceProfileTransportType(transportType);
+    public PageData<UUID> findDevicesIdsByDeviceProfileTransportType(DeviceTransportType transportType, PageLink pageLink) {
+        return deviceDao.findDevicesIdsByDeviceProfileTransportType(transportType, pageLink);
     }
 
     @Override
