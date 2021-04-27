@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.coapserver.CoapServerService;
+import org.thingsboard.server.coapserver.TbCoapServerComponent;
 import org.thingsboard.server.transport.coap.efento.CoapEfentoTransportResource;
 
 import javax.annotation.PostConstruct;
@@ -30,7 +31,7 @@ import javax.annotation.PreDestroy;
 import java.net.UnknownHostException;
 
 @Service("CoapTransportService")
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.coap.enabled}'=='true')")
+@TbCoapServerComponent
 @Slf4j
 public class CoapTransportService {
 
