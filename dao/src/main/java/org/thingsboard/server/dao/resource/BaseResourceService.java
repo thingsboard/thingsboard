@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.resource;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
@@ -91,6 +92,13 @@ public class BaseResourceService implements ResourceService {
         log.trace("Executing findResourceInfoById [{}] [{}]", tenantId, resourceId);
         Validator.validateId(resourceId, INCORRECT_RESOURCE_ID + resourceId);
         return resourceInfoDao.findById(tenantId, resourceId.getId());
+    }
+
+    @Override
+    public ListenableFuture<TbResourceInfo> findResourceInfoByIdAsync(TenantId tenantId, TbResourceId resourceId) {
+        log.trace("Executing findResourceInfoById [{}] [{}]", tenantId, resourceId);
+        Validator.validateId(resourceId, INCORRECT_RESOURCE_ID + resourceId);
+        return resourceInfoDao.findByIdAsync(tenantId, resourceId.getId());
     }
 
     @Override

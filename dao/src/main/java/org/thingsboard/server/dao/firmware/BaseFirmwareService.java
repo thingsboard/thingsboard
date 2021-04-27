@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.firmware;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
@@ -114,6 +115,12 @@ public class BaseFirmwareService implements FirmwareService {
         validateId(firmwareId, INCORRECT_FIRMWARE_ID + firmwareId);
         return firmwareInfoDao.findById(tenantId, firmwareId.getId());
     }
+
+    @Override
+    public ListenableFuture<FirmwareInfo> findFirmwareInfoByIdAsync(TenantId tenantId, FirmwareId firmwareId) {
+        log.trace("Executing findFirmwareInfoByIdAsync [{}]", firmwareId);
+        validateId(firmwareId, INCORRECT_FIRMWARE_ID + firmwareId);
+        return firmwareInfoDao.findByIdAsync(tenantId, firmwareId.getId());    }
 
     @Override
     public PageData<FirmwareInfo> findTenantFirmwaresByTenantId(TenantId tenantId, PageLink pageLink) {
