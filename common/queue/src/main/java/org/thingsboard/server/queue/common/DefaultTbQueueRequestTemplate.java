@@ -92,10 +92,10 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
             long nextCleanupMs = 0L;
             while (!stopped) {
                 try {
-                    List<Response> responses = responseTemplate.poll(pollInterval);
-                    if (responses.size() > 0) {
-                        log.trace("Polling responses completed, consumer records count [{}]", responses.size());
-                    }
+                    final int pendingRequestsCount = pendingRequests.size();
+                    log.trace("Starting template pool topic {}, for pendingRequests {}", responseTemplate.getTopic(), pendingRequestsCount);
+                    List<Response> responses = responseTemplate.poll(pollInterval); //poll js responses
+                    log.trace("Completed template poll topic {}, for pendingRequests [{}], received [{}]", responseTemplate.getTopic(), pendingRequestsCount, responses.size());
                     responses.forEach(response -> {
                         byte[] requestIdHeader = response.getHeaders().get(REQUEST_ID_HEADER);
                         UUID requestId;
