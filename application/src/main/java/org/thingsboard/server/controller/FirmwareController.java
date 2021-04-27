@@ -80,7 +80,7 @@ public class FirmwareController extends BaseController {
         checkParameter(FIRMWARE_ID, strFirmwareId);
         try {
             FirmwareId firmwareId = new FirmwareId(toUUID(strFirmwareId));
-            return checkFirmwareInfoId(firmwareId, Operation.READ);
+            return checkNotNull(firmwareService.findFirmwareInfoById(getTenantId(), firmwareId));
         } catch (Exception e) {
             throw handleException(e);
         }
