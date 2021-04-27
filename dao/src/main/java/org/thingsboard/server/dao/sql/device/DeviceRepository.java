@@ -215,5 +215,5 @@ public interface DeviceRepository extends PagingAndSortingRepository<DeviceEntit
     @Query("SELECT d.id FROM DeviceEntity d " +
             "INNER JOIN DeviceProfileEntity p ON d.deviceProfileId = p.id " +
             "WHERE p.transportType = :transportType")
-    List<UUID> findIdsByDeviceProfileTransportType(@Param("transportType") DeviceTransportType transportType);
+    Page<UUID> findIdsByDeviceProfileTransportType(@Param("transportType") DeviceTransportType transportType, Pageable pageable);
 }

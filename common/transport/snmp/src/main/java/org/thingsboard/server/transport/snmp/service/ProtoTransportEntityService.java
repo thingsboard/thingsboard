@@ -28,6 +28,7 @@ import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbSnmpTransportComponent;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -81,12 +82,29 @@ public class ProtoTransportEntityService {
     }
 
     public List<UUID> getAllSnmpDevicesIds() {
-        TransportProtos.GetSnmpDevicesResponseMsg devicesIdsResponse = transportService.getSnmpDevicesIds(
-                TransportProtos.GetSnmpDevicesRequestMsg.getDefaultInstance()
-        );
+        List<UUID> result = new ArrayList<>();
 
-        return devicesIdsResponse.getIdsList().stream()
-                .map(UUID::fromString)
-                .collect(Collectors.toList());
+        int page = 0;
+        int pageSize = 512;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+            TransportProtos.GetSnmpDevicesResponseMsg responseMsg = requestSnmpDevicesIds(page, pageSize);
+            result.addAll(responseMsg.getIdsList().stream()
+                    .map(UUID::fromString)
+                    .collect(Collectors.toList()));
+            hasNextPage = responseMsg.getHasNextPage();
+            page++;
+        }
+
+        return result;
+    }
+
+    private TransportProtos.GetSnmpDevicesResponseMsg requestSnmpDevicesIds(int page, int pageSize) {
+        TransportProtos.GetSnmpDevicesRequestMsg requestMsg = TransportProtos.GetSnmpDevicesRequestMsg.newBuilder()
+                .setPage(page)
+                .setPageSize(pageSize)
+                .build();
+        return transportService.getSnmpDevicesIds(requestMsg);
     }
 }
