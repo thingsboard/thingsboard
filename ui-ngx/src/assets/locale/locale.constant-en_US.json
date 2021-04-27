@@ -1493,7 +1493,9 @@
         "type-edge": "Edge",
         "type-edges": "Edges",
         "list-of-edges": "{ count, plural, 1 {One edge} other {List of # edges} }",
-        "edge-name-starts-with": "Edges whose names start with '{{prefix}}'"
+        "edge-name-starts-with": "Edges whose names start with '{{prefix}}'",
+        "type-tb-resource": "Resource",
+        "type-firmware": "Firmware"
     },
     "entity-field": {
         "created-time": "Created time",

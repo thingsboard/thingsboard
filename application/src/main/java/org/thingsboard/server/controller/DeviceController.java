@@ -75,7 +75,6 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
@@ -120,12 +119,12 @@ public class DeviceController extends BaseController {
     @ResponseBody
     public Device saveDevice(@RequestBody Device device,
                              @RequestParam(name = "accessToken", required = false) String accessToken) throws ThingsboardException {
+        boolean created = device.getId() == null;
         try {
             device.setTenantId(getCurrentUser().getTenantId());
 
             checkEntity(device.getId(), device, Resource.DEVICE);
 
-            boolean created = device.getId() == null;
             Device oldDevice;
             if (!created) {
                 oldDevice = deviceService.findDeviceById(getTenantId(), device.getId());
@@ -146,7 +145,7 @@ public class DeviceController extends BaseController {
 
             logEntityAction(savedDevice.getId(), savedDevice,
                     savedDevice.getCustomerId(),
-                    device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
+                    created ? ActionType.ADDED : ActionType.UPDATED, null);
 
             if (device.getId() == null) {
                 deviceStateService.onDeviceAdded(savedDevice);
@@ -157,10 +156,9 @@ public class DeviceController extends BaseController {
             firmwareStateService.update(savedDevice, oldDevice);
 
             return savedDevice;
-        } catch (
-                Exception e) {
+        } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE), device,
-                    null, device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
+                    null, created ? ActionType.ADDED : ActionType.UPDATED, e);
             throw handleException(e);
         }
 
