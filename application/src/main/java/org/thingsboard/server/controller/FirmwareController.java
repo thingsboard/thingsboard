@@ -73,7 +73,7 @@ public class FirmwareController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/firmware/info/{firmwareId}", method = RequestMethod.GET)
     @ResponseBody
     public FirmwareInfo getFirmwareInfoById(@PathVariable(FIRMWARE_ID) String strFirmwareId) throws ThingsboardException {
@@ -158,7 +158,7 @@ public class FirmwareController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/firmwares", method = RequestMethod.GET)
     @ResponseBody
     public PageData<FirmwareInfo> getFirmwares(@RequestParam int pageSize,
@@ -174,7 +174,7 @@ public class FirmwareController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/firmwares/{hasData}", method = RequestMethod.GET)
     @ResponseBody
     public PageData<FirmwareInfo> getFirmwares(@PathVariable("hasData") boolean hasData,
