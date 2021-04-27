@@ -251,7 +251,7 @@ public class SnmpTransportService implements TbTransportService {
                         .filter(snmpMapping -> snmpMapping.getOid().equals(oid.toDottedString()))
                         .findFirst()
                         .ifPresent(snmpMapping -> {
-                            responseData.addProperty(snmpMapping.getKey(), value);
+                            pduService.processValue(snmpMapping.getKey(), snmpMapping.getDataType(), value, responseData);
                         });
             });
             return responseData;
