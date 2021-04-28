@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportContext;
@@ -70,7 +71,7 @@ import java.util.function.Consumer;
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.http.enabled}'=='true')")
 @RequestMapping("/api/v1")
 @Slf4j
-public class DeviceApiController {
+public class DeviceApiController implements TbTransportService {
 
     @Autowired
     private HttpTransportContext transportContext;
@@ -405,6 +406,11 @@ public class DeviceApiController {
         } catch (Exception e) {
             return MediaType.APPLICATION_OCTET_STREAM;
         }
+    }
+
+    @Override
+    public String getName() {
+        return "HTTP";
     }
 
 }

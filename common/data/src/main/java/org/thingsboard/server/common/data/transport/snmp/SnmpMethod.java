@@ -13,25 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.discovery;
+package org.thingsboard.server.common.data.transport.snmp;
 
-import lombok.Getter;
-import org.springframework.context.ApplicationEvent;
+public enum SnmpMethod {
+    GET(-96),
+    SET(-93);
 
-import java.util.concurrent.atomic.AtomicInteger;
+    // codes taken from org.snmp4j.PDU class
+    private final int code;
 
-public class TbApplicationEvent extends ApplicationEvent {
-
-    private static final long serialVersionUID = 3884264064887765146L;
-
-    private static final AtomicInteger sequence = new AtomicInteger();
-
-    @Getter
-    private final int sequenceNumber;
-
-    public TbApplicationEvent(Object source) {
-        super(source);
-        sequenceNumber = sequence.incrementAndGet();
+    SnmpMethod(int code) {
+        this.code = code;
     }
 
+    public int getCode() {
+        return code;
+    }
 }
