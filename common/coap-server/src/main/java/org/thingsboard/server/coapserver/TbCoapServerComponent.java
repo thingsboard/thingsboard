@@ -15,31 +15,12 @@
  */
 package org.thingsboard.server.coapserver;
 
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
-@Slf4j
-@TbCoapServerComponent
-@Component
-public class CoapServerContext {
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-    @Getter
-    @Value("${transport.coap.bind_address}")
-    private String host;
-
-    @Getter
-    @Value("${transport.coap.bind_port}")
-    private Integer port;
-
-    @Getter
-    @Value("${transport.coap.timeout}")
-    private Long timeout;
-
-    @Getter
-    @Autowired(required = false)
-    private TbCoapDtlsSettings dtlsSettings;
-
+@Retention(RetentionPolicy.RUNTIME)
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.coap.enabled}'=='true')")
+public @interface TbCoapServerComponent {
 }
