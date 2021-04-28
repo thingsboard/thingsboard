@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright © 2016-2021 The Thingsboard Authors
 #
@@ -15,14 +14,14 @@
 # limitations under the License.
 #
 
-set -e
+apiVersion: 1
 
-source compose-utils.sh
-
-ADDITIONAL_COMPOSE_QUEUE_ARGS=$(additionalComposeQueueArgs) || exit $?
-
-ADDITIONAL_COMPOSE_ARGS=$(additionalComposeArgs) || exit $?
-
-ADDITIONAL_COMPOSE_MONITORING_ARGS=$(additionalComposeMonitoringArgs) || exit $?
-
-docker-compose -f docker-compose.yml $ADDITIONAL_COMPOSE_ARGS $ADDITIONAL_COMPOSE_QUEUE_ARGS $ADDITIONAL_COMPOSE_MONITORING_ARGS up -d
+providers:
+- name: 'Prometheus'
+  orgId: 1
+  folder: ''
+  type: file
+  disableDeletion: false
+  editable: true
+  options:
+    path: /etc/grafana/provisioning/dashboards
