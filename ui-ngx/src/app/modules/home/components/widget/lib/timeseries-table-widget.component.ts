@@ -93,6 +93,7 @@ interface TimeseriesTableSource {
   header: TimeseriesHeader[];
   stylesInfo: CellStyleInfo[];
   contentsInfo: CellContentInfo[];
+  useDeviceLabel: boolean,
   rowDataTemplate: {[key: string]: any};
 }
 
@@ -129,6 +130,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   private defaultSortOrder = '-0';
   private hideEmptyLines = false;
   public showTimestamp = true;
+  public  useDeviceLabel = false;
   private dateFormatFilter: string;
 
   private rowStylesInfo: RowStyleInfo;
@@ -205,6 +207,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.enableStickyHeader = isDefined(this.settings.enableStickyHeader) ? this.settings.enableStickyHeader : true;
     this.enableStickyAction = isDefined(this.settings.enableStickyAction) ? this.settings.enableStickyAction : true;
     this.hideEmptyLines = isDefined(this.settings.hideEmptyLines) ? this.settings.hideEmptyLines : false;
+    this.useDeviceLabel = isDefined(this.widgetConfig.settings.useDeviceLabel) ? this.widgetConfig.settings.useDeviceLabel : false;
     this.showTimestamp = this.settings.showTimestamp !== false;
     this.dateFormatFilter = (this.settings.showMilliseconds !== true) ? 'yyyy-MM-dd HH:mm:ss' :  'yyyy-MM-dd HH:mm:ss.SSS';
 
@@ -230,6 +233,14 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     cssParser.createStyleElement(namespace, cssString);
     $(this.elementRef.nativeElement).addClass(namespace);
     this.updateDatasources();
+  }
+
+  public getTabLabel(source, useDeviceLabel){
+    if(useDeviceLabel){
+      return source.datasource.entityLabel ? source.datasource.entityLabel : source.datasource.entityName;
+    } else {
+      return source.datasource.entityName;
+    }
   }
 
   private updateDatasources() {
