@@ -20,7 +20,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.server.cache.firmware.FirmwareCacheReader;
+import org.thingsboard.server.cache.firmware.FirmwareDataCache;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 
@@ -53,7 +53,7 @@ public abstract class TransportContext {
 
     @Getter
     @Autowired
-    private FirmwareCacheReader firmwareCacheReader;
+    private FirmwareDataCache firmwareDataCache;
 
     @PostConstruct
     public void init() {

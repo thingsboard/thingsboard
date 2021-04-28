@@ -15,19 +15,13 @@
  */
 package org.thingsboard.server.cache.firmware;
 
-import org.springframework.data.redis.connection.RedisConnectionFactory;
+public interface FirmwareDataCache {
 
-import static org.thingsboard.server.common.data.CacheConstants.FIRMWARE_CACHE;
+    byte[] get(String key);
 
-public abstract class AbstractRedisFirmwareCache {
+    byte[] get(String key, int chunkSize, int chunk);
 
-    protected final RedisConnectionFactory redisConnectionFactory;
+    void put(String key, byte[] value);
 
-    protected AbstractRedisFirmwareCache(RedisConnectionFactory redisConnectionFactory) {
-        this.redisConnectionFactory = redisConnectionFactory;
-    }
-
-    protected byte[] toFirmwareCacheKey(String key) {
-        return String.format("%s::%s", FIRMWARE_CACHE, key).getBytes();
-    }
+    void evict(String key);
 }

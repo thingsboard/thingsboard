@@ -452,7 +452,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                     String strChunk = exchange.getQueryParameter("chunk");
                     int chunkSize = StringUtils.isEmpty(strChunkSize) ? 0 : Integer.parseInt(strChunkSize);
                     int chunk = StringUtils.isEmpty(strChunk) ? 0 : Integer.parseInt(strChunk);
-                    exchange.respond(CoAP.ResponseCode.CONTENT, transportContext.getFirmwareCacheReader().get(firmwareId, chunkSize, chunk));
+                    exchange.respond(CoAP.ResponseCode.CONTENT, transportContext.getFirmwareDataCache().get(firmwareId, chunkSize, chunk));
                 } else {
                     exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
                 }

@@ -15,21 +15,19 @@
  */
 package org.thingsboard.server.cache.firmware;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 
 import static org.thingsboard.server.common.data.CacheConstants.FIRMWARE_CACHE;
 
 @Service
-@ConditionalOnExpression("(('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true') || '${service.type:null}'=='tb-transport') && ('${cache.type:null}'=='caffeine' || '${cache.type:null}'=='null')")
-public class CaffeineFirmwareCacheReader implements FirmwareCacheReader {
+@ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)
+@RequiredArgsConstructor
+public class CaffeineFirmwareCache implements FirmwareDataCache {
 
     private final CacheManager cacheManager;
-
-    public CaffeineFirmwareCacheReader(CacheManager cacheManager) {
-        this.cacheManager = cacheManager;
-    }
 
     @Override
     public byte[] get(String key) {
@@ -56,5 +54,15 @@ public class CaffeineFirmwareCacheReader implements FirmwareCacheReader {
             }
         }
         return new byte[0];
+    }
+
+    @Override
+    public void put(String key, byte[] value) {
+        cacheManager.getCache(FIRMWARE_CACHE).putIfAbsent(key, value);
+    }
+
+    @Override
+    public void evict(String key) {
+        cacheManager.getCache(FIRMWARE_CACHE).evict(key);
     }
 }

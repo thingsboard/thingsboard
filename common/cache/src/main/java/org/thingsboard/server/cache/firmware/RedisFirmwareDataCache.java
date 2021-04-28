@@ -15,18 +15,20 @@
  */
 package org.thingsboard.server.cache.firmware;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Service;
 
-@Service
-@ConditionalOnExpression("(('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true') || '${service.type:null}'=='tb-transport') && '${cache.type:null}'=='redis'")
-public class RedisFirmwareCacheReader extends AbstractRedisFirmwareCache implements FirmwareCacheReader {
+import static org.thingsboard.server.common.data.CacheConstants.FIRMWARE_CACHE;
 
-    public RedisFirmwareCacheReader(RedisConnectionFactory redisConnectionFactory) {
-        super(redisConnectionFactory);
-    }
+@Service
+@ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
+@RequiredArgsConstructor
+public class RedisFirmwareDataCache implements FirmwareDataCache {
+
+    private final RedisConnectionFactory redisConnectionFactory;
 
     @Override
     public byte[] get(String key) {
@@ -46,4 +48,21 @@ public class RedisFirmwareCacheReader extends AbstractRedisFirmwareCache impleme
         }
     }
 
+    @Override
+    public void put(String key, byte[] value) {
+        try (RedisConnection connection = redisConnectionFactory.getConnection()) {
+            connection.set(toFirmwareCacheKey(key), value);
+        }
+    }
+
+    @Override
+    public void evict(String key) {
+        try (RedisConnection connection = redisConnectionFactory.getConnection()) {
+            connection.del(toFirmwareCacheKey(key));
+        }
+    }
+
+    private byte[] toFirmwareCacheKey(String key) {
+        return String.format("%s::%s", FIRMWARE_CACHE, key).getBytes();
+    }
 }
