@@ -206,9 +206,10 @@ public abstract class AbstractOAuth2ClientMapper {
     }
 
     private Optional<DashboardId> getDashboardId(TenantId tenantId, String dashboardName) {
-        PageLink searchTextLink = new PageLink(1, 0, dashboardName);
+        PageLink searchTextLink = new PageLink(Integer.MAX_VALUE, 0, dashboardName);
         PageData<DashboardInfo> dashboardsPage = dashboardService.findDashboardsByTenantId(tenantId, searchTextLink);
         return dashboardsPage.getData().stream()
+                .filter(dashboardInfo -> dashboardName.equals(dashboardInfo.getName()))
                 .findAny()
                 .map(IdBased::getId);
     }
