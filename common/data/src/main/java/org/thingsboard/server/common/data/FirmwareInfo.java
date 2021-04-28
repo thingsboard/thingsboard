@@ -29,6 +29,7 @@ public class FirmwareInfo extends SearchTextBasedWithAdditionalInfo<FirmwareId> 
     private static final long serialVersionUID = 3168391583570815419L;
 
     private TenantId tenantId;
+    private FirmwareType type;
     private String title;
     private String version;
     private boolean hasData;
@@ -50,6 +51,7 @@ public class FirmwareInfo extends SearchTextBasedWithAdditionalInfo<FirmwareId> 
     public FirmwareInfo(FirmwareInfo firmwareInfo) {
         super(firmwareInfo);
         this.tenantId = firmwareInfo.getTenantId();
+        this.type = firmwareInfo.getType();
         this.title = firmwareInfo.getTitle();
         this.version = firmwareInfo.getVersion();
         this.hasData = firmwareInfo.isHasData();

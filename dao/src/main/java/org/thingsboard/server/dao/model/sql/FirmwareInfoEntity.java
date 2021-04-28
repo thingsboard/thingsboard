@@ -22,6 +22,7 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.FirmwareInfo;
+import org.thingsboard.server.common.data.FirmwareType;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
@@ -31,6 +32,8 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.UUID;
@@ -45,6 +48,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_HAS_DATA_
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TENANT_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TITLE_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TYPE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_VERSION_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
 
@@ -57,6 +61,10 @@ public class FirmwareInfoEntity extends BaseSqlEntity<FirmwareInfo> implements S
 
     @Column(name = FIRMWARE_TENANT_ID_COLUMN)
     private UUID tenantId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = FIRMWARE_TYPE_COLUMN)
+    private FirmwareType type;
 
     @Column(name = FIRMWARE_TITLE_COLUMN)
     private String title;
@@ -107,12 +115,13 @@ public class FirmwareInfoEntity extends BaseSqlEntity<FirmwareInfo> implements S
         this.additionalInfo = firmware.getAdditionalInfo();
     }
 
-    public FirmwareInfoEntity(UUID id, long createdTime, UUID tenantId, String title, String version,
+    public FirmwareInfoEntity(UUID id, long createdTime, UUID tenantId, String type, String title, String version,
                               String fileName, String contentType, String checksumAlgorithm, String checksum, Long dataSize,
                               Object additionalInfo, boolean hasData) {
         this.id = id;
         this.createdTime = createdTime;
         this.tenantId = tenantId;
+        this.type = FirmwareType.valueOf(type);
         this.title = title;
         this.version = version;
         this.fileName = fileName;
@@ -139,6 +148,7 @@ public class FirmwareInfoEntity extends BaseSqlEntity<FirmwareInfo> implements S
         FirmwareInfo firmware = new FirmwareInfo(new FirmwareId(id));
         firmware.setCreatedTime(createdTime);
         firmware.setTenantId(new TenantId(tenantId));
+        firmware.setType(type);
         firmware.setTitle(title);
         firmware.setVersion(version);
         firmware.setFileName(fileName);

@@ -22,7 +22,6 @@ import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.Firmware;
 import org.thingsboard.server.common.data.FirmwareInfo;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.FirmwareId;
@@ -35,7 +34,6 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -59,6 +57,11 @@ import static org.thingsboard.server.common.data.DataConstants.FIRMWARE_CHECKSUM
 import static org.thingsboard.server.common.data.DataConstants.FIRMWARE_SIZE;
 import static org.thingsboard.server.common.data.DataConstants.FIRMWARE_TITLE;
 import static org.thingsboard.server.common.data.DataConstants.FIRMWARE_VERSION;
+import static org.thingsboard.server.common.data.DataConstants.SOFTWARE_CHECKSUM;
+import static org.thingsboard.server.common.data.DataConstants.SOFTWARE_CHECKSUM_ALGORITHM;
+import static org.thingsboard.server.common.data.DataConstants.SOFTWARE_SIZE;
+import static org.thingsboard.server.common.data.DataConstants.SOFTWARE_TITLE;
+import static org.thingsboard.server.common.data.DataConstants.SOFTWARE_VERSION;
 
 @Slf4j
 @Service
@@ -185,9 +188,18 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
         fwStateMsgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null);
 
         List<TsKvEntry> telemetry = new ArrayList<>();
-        telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.TARGET_FIRMWARE_TITLE, firmware.getTitle())));
-        telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.TARGET_FIRMWARE_VERSION, firmware.getVersion())));
-        telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_STATE, FirmwareUpdateStatus.QUEUED.name())));
+        switch (firmware.getType()) {
+            case FIRMWARE:
+                telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.TARGET_FIRMWARE_TITLE, firmware.getTitle())));
+                telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.TARGET_FIRMWARE_VERSION, firmware.getVersion())));
+                telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_STATE, FirmwareUpdateStatus.QUEUED.name())));
+                break;
+            case SOFTWARE:
+                telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.TARGET_SOFTWARE_TITLE, firmware.getTitle())));
+                telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.TARGET_SOFTWARE_VERSION, firmware.getVersion())));
+                telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.SOFTWARE_STATE, FirmwareUpdateStatus.QUEUED.name())));
+                break;
+        }
 
         telemetryService.saveAndNotify(tenantId, deviceId, telemetry, new FutureCallback<>() {
             @Override
@@ -223,12 +235,23 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
 
         List<AttributeKvEntry> attributes = new ArrayList<>();
 
-        attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_TITLE, firmware.getTitle())));
-        attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_VERSION, firmware.getVersion())));
+        switch (firmware.getType()) {
+            case SOFTWARE:
+                attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_TITLE, firmware.getTitle())));
+                attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_VERSION, firmware.getVersion())));
+                attributes.add(new BaseAttributeKvEntry(ts, new LongDataEntry(DataConstants.FIRMWARE_SIZE, firmware.getDataSize())));
+                attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_CHECKSUM_ALGORITHM, firmware.getChecksumAlgorithm())));
+                attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_CHECKSUM, firmware.getChecksum())));
+                break;
+            case FIRMWARE:
+                attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(SOFTWARE_TITLE, firmware.getTitle())));
+                attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(SOFTWARE_VERSION, firmware.getVersion())));
+                attributes.add(new BaseAttributeKvEntry(ts, new LongDataEntry(SOFTWARE_SIZE, firmware.getDataSize())));
+                attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(SOFTWARE_CHECKSUM_ALGORITHM, firmware.getChecksumAlgorithm())));
+                attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(SOFTWARE_CHECKSUM, firmware.getChecksum())));
+                break;
+        }
 
-        attributes.add(new BaseAttributeKvEntry(ts, new LongDataEntry(FIRMWARE_SIZE, firmware.getDataSize())));
-        attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_CHECKSUM_ALGORITHM, firmware.getChecksumAlgorithm())));
-        attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_CHECKSUM, firmware.getChecksum())));
         telemetryService.saveAndNotify(tenantId, deviceId, DataConstants.SHARED_SCOPE, attributes, new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable Void tmp) {
@@ -244,7 +267,8 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
 
     private void remove(Device device) {
         telemetryService.deleteAndNotify(device.getTenantId(), device.getId(), DataConstants.SHARED_SCOPE,
-                Arrays.asList(FIRMWARE_TITLE, FIRMWARE_VERSION, FIRMWARE_SIZE, FIRMWARE_CHECKSUM_ALGORITHM, FIRMWARE_CHECKSUM),
+                Arrays.asList(FIRMWARE_TITLE, FIRMWARE_VERSION, FIRMWARE_SIZE, FIRMWARE_CHECKSUM_ALGORITHM, FIRMWARE_CHECKSUM,
+                        SOFTWARE_TITLE, SOFTWARE_VERSION, SOFTWARE_SIZE, SOFTWARE_CHECKSUM_ALGORITHM, SOFTWARE_CHECKSUM),
                 new FutureCallback<>() {
                     @Override
                     public void onSuccess(@Nullable Void tmp) {

@@ -363,10 +363,11 @@ message GetFirmwareResponseMsg {
   ResponseStatus responseStatus = 1;
   int64 firmwareIdMSB = 2;
   int64 firmwareIdLSB = 3;
-  string title = 4;
-  string version = 5;
-  string contentType = 6;
-  string fileName = 7;
+  string type = 4;
+  string title = 5;
+  string version = 6;
+  string contentType = 7;
+  string fileName = 8;
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.

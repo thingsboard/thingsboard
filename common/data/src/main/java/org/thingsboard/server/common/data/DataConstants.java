@@ -93,21 +93,37 @@ public class DataConstants {
     public static final String USERNAME = "username";
     public static final String PASSWORD = "password";
 
+    public static final String EDGE_MSG_SOURCE = "edge";
+    public static final String MSG_SOURCE_KEY = "source";
+
     //firmware
     //telemetry
-    public static final String CURRENT_FIRMWARE_TITLE = "cur_fw_title";
-    public static final String CURRENT_FIRMWARE_VERSION = "cur_fw_version";
+    public static final String CURRENT_FIRMWARE_TITLE = "current_fw_title";
+    public static final String CURRENT_FIRMWARE_VERSION = "current_fw_version";
     public static final String TARGET_FIRMWARE_TITLE = "target_fw_title";
     public static final String TARGET_FIRMWARE_VERSION = "target_fw_version";
     public static final String FIRMWARE_STATE = "fw_state";
 
     //attributes
-    //telemetry
     public static final String FIRMWARE_TITLE = "fw_title";
     public static final String FIRMWARE_VERSION = "fw_version";
     public static final String FIRMWARE_SIZE = "fw_size";
     public static final String FIRMWARE_CHECKSUM = "fw_checksum";
     public static final String FIRMWARE_CHECKSUM_ALGORITHM = "fw_checksum_algorithm";
-    public static final String EDGE_MSG_SOURCE = "edge";
-    public static final String MSG_SOURCE_KEY = "source";
+
+    //software
+    //telemetry
+    public static final String CURRENT_SOFTWARE_TITLE = "current_sw_title";
+    public static final String CURRENT_SOFTWARE_VERSION = "current_sw_version";
+    public static final String TARGET_SOFTWARE_TITLE = "target_sw_title";
+    public static final String TARGET_SOFTWARE_VERSION = "target_sw_version";
+    public static final String SOFTWARE_STATE = "sw_state";
+
+    //attributes
+    public static final String SOFTWARE_TITLE = "sw_title";
+    public static final String SOFTWARE_VERSION = "sw_version";
+    public static final String SOFTWARE_SIZE = "sw_size";
+    public static final String SOFTWARE_CHECKSUM = "sw_checksum";
+    public static final String SOFTWARE_CHECKSUM_ALGORITHM = "sw_checksum_algorithm";
+
 }
