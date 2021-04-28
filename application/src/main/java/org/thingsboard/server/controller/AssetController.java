@@ -15,10 +15,19 @@
  */
 package org.thingsboard.server.controller;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
+import static org.thingsboard.server.dao.asset.BaseAssetService.TB_SERVICE_QUEUE;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -34,9 +43,8 @@ import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeEventType;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -52,13 +60,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.thingsboard.server.dao.asset.BaseAssetService.TB_SERVICE_QUEUE;
-
-import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
+import com.google.common.util.concurrent.ListenableFuture;
 
 @RestController
 @TbCoreComponent
@@ -68,8 +70,7 @@ public class AssetController extends BaseController {
     public static final String ASSET_ID = "assetId";
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/asset/{assetId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/asset/{assetId}")
     public Asset getAssetById(@PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
         checkParameter(ASSET_ID, strAssetId);
         try {
@@ -81,8 +82,7 @@ public class AssetController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/asset/info/{assetId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/asset/info/{assetId}")
     public AssetInfo getAssetInfoById(@PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
         checkParameter(ASSET_ID, strAssetId);
         try {
@@ -94,8 +94,7 @@ public class AssetController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/asset", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/asset")
     public Asset saveAsset(@RequestBody Asset asset) throws ThingsboardException {
         try {
             if (TB_SERVICE_QUEUE.equals(asset.getType())) {
@@ -125,7 +124,7 @@ public class AssetController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/asset/{assetId}", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/asset/{assetId}")
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteAsset(@PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
         checkParameter(ASSET_ID, strAssetId);
@@ -152,8 +151,7 @@ public class AssetController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/{customerId}/asset/{assetId}", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/customer/{customerId}/asset/{assetId}")
     public Asset assignAssetToCustomer(@PathVariable("customerId") String strCustomerId,
                                        @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
@@ -186,8 +184,7 @@ public class AssetController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/asset/{assetId}", method = RequestMethod.DELETE)
-    @ResponseBody
+    @DeleteMapping(value = "/customer/asset/{assetId}")
     public Asset unassignAssetFromCustomer(@PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
         checkParameter(ASSET_ID, strAssetId);
         try {
@@ -220,8 +217,7 @@ public class AssetController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/public/asset/{assetId}", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/customer/public/asset/{assetId}")
     public Asset assignAssetToPublicCustomer(@PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
         checkParameter(ASSET_ID, strAssetId);
         try {
@@ -246,8 +242,7 @@ public class AssetController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/assets", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/assets", params = {"pageSize", "page"})
     public PageData<Asset> getTenantAssets(
             @RequestParam int pageSize,
             @RequestParam int page,
@@ -269,8 +264,7 @@ public class AssetController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/assetInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/assetInfos", params = {"pageSize", "page"})
     public PageData<AssetInfo> getTenantAssetInfos(
             @RequestParam int pageSize,
             @RequestParam int page,
@@ -292,8 +286,7 @@ public class AssetController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/assets", params = {"assetName"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/assets", params = {"assetName"})
     public Asset getTenantAsset(
             @RequestParam String assetName) throws ThingsboardException {
         try {
@@ -305,8 +298,7 @@ public class AssetController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/{customerId}/assets", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/customer/{customerId}/assets", params = {"pageSize", "page"})
     public PageData<Asset> getCustomerAssets(
             @PathVariable("customerId") String strCustomerId,
             @RequestParam int pageSize,
@@ -332,8 +324,7 @@ public class AssetController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/{customerId}/assetInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/customer/{customerId}/assetInfos", params = {"pageSize", "page"})
     public PageData<AssetInfo> getCustomerAssetInfos(
             @PathVariable("customerId") String strCustomerId,
             @RequestParam int pageSize,
@@ -359,8 +350,7 @@ public class AssetController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/assets", params = {"assetIds"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/assets", params = {"assetIds"})
     public List<Asset> getAssetsByIds(
             @RequestParam("assetIds") String[] strAssetIds) throws ThingsboardException {
         checkArrayParameter("assetIds", strAssetIds);
@@ -385,8 +375,7 @@ public class AssetController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/assets", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/assets")
     public List<Asset> findByQuery(@RequestBody AssetSearchQuery query) throws ThingsboardException {
         checkNotNull(query);
         checkNotNull(query.getParameters());
@@ -409,8 +398,7 @@ public class AssetController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/asset/types", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/asset/types")
     public List<EntitySubtype> getAssetTypes() throws ThingsboardException {
         try {
             SecurityUser user = getCurrentUser();
@@ -423,8 +411,7 @@ public class AssetController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edge/{edgeId}/asset/{assetId}", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/edge/{edgeId}/asset/{assetId}")
     public Asset assignAssetToEdge(@PathVariable(EDGE_ID) String strEdgeId,
                                        @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
@@ -489,8 +476,7 @@ public class AssetController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/edge/{edgeId}/assets", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/edge/{edgeId}/assets", params = {"pageSize", "page"})
     public PageData<Asset> getEdgeAssets(
             @PathVariable(EDGE_ID) String strEdgeId,
             @RequestParam int pageSize,

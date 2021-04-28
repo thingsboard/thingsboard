@@ -15,20 +15,21 @@
  */
 package org.thingsboard.server.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -54,11 +55,14 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
-import ua_parser.Client;
 
-import javax.servlet.http.HttpServletRequest;
-import java.net.URI;
-import java.net.URISyntaxException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import ua_parser.Client;
 
 @RestController
 @TbCoreComponent
@@ -75,7 +79,7 @@ public class AuthController extends BaseController {
     private final ApplicationEventPublisher eventPublisher;
 
     @PreAuthorize("isAuthenticated()")
-    @RequestMapping(value = "/auth/user", method = RequestMethod.GET)
+    @GetMapping(value = "/auth/user")
     public @ResponseBody User getUser() throws ThingsboardException {
         try {
             SecurityUser securityUser = getCurrentUser();
@@ -86,14 +90,14 @@ public class AuthController extends BaseController {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @RequestMapping(value = "/auth/logout", method = RequestMethod.POST)
+    @PostMapping(value = "/auth/logout")
     @ResponseStatus(value = HttpStatus.OK)
     public void logout(HttpServletRequest request) throws ThingsboardException {
         logLogoutAction(request);
     }
 
     @PreAuthorize("isAuthenticated()")
-    @RequestMapping(value = "/auth/changePassword", method = RequestMethod.POST)
+    @PostMapping(value = "/auth/changePassword")
     @ResponseStatus(value = HttpStatus.OK)
     public ObjectNode changePassword(@RequestBody JsonNode changePasswordRequest) throws ThingsboardException {
         try {
@@ -123,8 +127,7 @@ public class AuthController extends BaseController {
         }
     }
 
-    @RequestMapping(value = "/noauth/userPasswordPolicy", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/noauth/userPasswordPolicy")
     public UserPasswordPolicy getUserPasswordPolicy() throws ThingsboardException {
         try {
             SecuritySettings securitySettings =
@@ -135,7 +138,7 @@ public class AuthController extends BaseController {
         }
     }
 
-    @RequestMapping(value = "/noauth/activate", params = { "activateToken" }, method = RequestMethod.GET)
+    @GetMapping(value = "/noauth/activate", params = { "activateToken" })
     public ResponseEntity<String> checkActivateToken(
             @RequestParam(value = "activateToken") String activateToken) {
         HttpHeaders headers = new HttpHeaders();
@@ -157,7 +160,7 @@ public class AuthController extends BaseController {
         return new ResponseEntity<>(headers, responseStatus);
     }
 
-    @RequestMapping(value = "/noauth/resetPasswordByEmail", method = RequestMethod.POST)
+    @PostMapping(value = "/noauth/resetPasswordByEmail")
     @ResponseStatus(value = HttpStatus.OK)
     public void requestResetPasswordByEmail (
             @RequestBody JsonNode resetPasswordByEmailRequest,
@@ -176,7 +179,7 @@ public class AuthController extends BaseController {
         }
     }
 
-    @RequestMapping(value = "/noauth/resetPassword", params = { "resetToken" }, method = RequestMethod.GET)
+    @GetMapping(value = "/noauth/resetPassword", params = { "resetToken" })
     public ResponseEntity<String> checkResetToken(
             @RequestParam(value = "resetToken") String resetToken) {
         HttpHeaders headers = new HttpHeaders();
@@ -198,9 +201,8 @@ public class AuthController extends BaseController {
         return new ResponseEntity<>(headers, responseStatus);
     }
 
-    @RequestMapping(value = "/noauth/activate", method = RequestMethod.POST)
+    @PostMapping(value = "/noauth/activate")
     @ResponseStatus(value = HttpStatus.OK)
-    @ResponseBody
     public JsonNode activateUser(
             @RequestBody JsonNode activateRequest,
             @RequestParam(required = false, defaultValue = "true") boolean sendActivationMail,
@@ -242,9 +244,8 @@ public class AuthController extends BaseController {
         }
     }
 
-    @RequestMapping(value = "/noauth/resetPassword", method = RequestMethod.POST)
+    @PostMapping(value = "/noauth/resetPassword")
     @ResponseStatus(value = HttpStatus.OK)
-    @ResponseBody
     public JsonNode resetPassword(
             @RequestBody JsonNode resetPasswordRequest,
             HttpServletRequest request) throws ThingsboardException {

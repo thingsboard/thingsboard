@@ -15,13 +15,16 @@
  */
 package org.thingsboard.server.controller;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
@@ -29,18 +32,13 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
 public class ComponentDescriptorController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN')")
-    @RequestMapping(value = "/component/{componentDescriptorClazz:.+}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/component/{componentDescriptorClazz:.+}")
     public ComponentDescriptor getComponentDescriptorByClazz(@PathVariable("componentDescriptorClazz") String strComponentDescriptorClazz) throws ThingsboardException {
         checkParameter("strComponentDescriptorClazz", strComponentDescriptorClazz);
         try {
@@ -51,8 +49,7 @@ public class ComponentDescriptorController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN')")
-    @RequestMapping(value = "/components/{componentType}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/components/{componentType}")
     public List<ComponentDescriptor> getComponentDescriptorsByType(@PathVariable("componentType") String strComponentType,
                                                                    @RequestParam(value = "ruleChainType", required = false) String strRuleChainType) throws ThingsboardException {
         checkParameter("componentType", strComponentType);
@@ -64,8 +61,7 @@ public class ComponentDescriptorController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN')")
-    @RequestMapping(value = "/components", params = {"componentTypes"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/components", params = {"componentTypes"})
     public List<ComponentDescriptor> getComponentDescriptorsByTypes(@RequestParam("componentTypes") String[] strComponentTypes,
                                                                     @RequestParam(value = "ruleChainType", required = false) String strRuleChainType) throws ThingsboardException {
         checkArrayParameter("componentTypes", strComponentTypes);

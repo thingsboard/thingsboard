@@ -15,29 +15,30 @@
  */
 package org.thingsboard.server.controller;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
-import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
+import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 import org.thingsboard.server.service.update.UpdateService;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @RestController
 @TbCoreComponent
@@ -60,8 +61,7 @@ public class AdminController extends BaseController {
     private UpdateService updateService;
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/settings/{key}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/settings/{key}")
     public AdminSettings getAdminSettings(@PathVariable("key") String key) throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
@@ -76,8 +76,7 @@ public class AdminController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/settings", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/settings")
     public AdminSettings saveAdminSettings(@RequestBody AdminSettings adminSettings) throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
@@ -95,8 +94,7 @@ public class AdminController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/securitySettings", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/securitySettings")
     public SecuritySettings getSecuritySettings() throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
@@ -107,8 +105,7 @@ public class AdminController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/securitySettings", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/securitySettings")
     public SecuritySettings saveSecuritySettings(@RequestBody SecuritySettings securitySettings) throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
@@ -120,7 +117,7 @@ public class AdminController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/settings/testMail", method = RequestMethod.POST)
+    @PostMapping(value = "/settings/testMail")
     public void sendTestMail(@RequestBody AdminSettings adminSettings) throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
@@ -135,7 +132,7 @@ public class AdminController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/settings/testSms", method = RequestMethod.POST)
+    @PostMapping(value = "/settings/testSms")
     public void sendTestSms(@RequestBody TestSmsRequest testSmsRequest) throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
@@ -146,8 +143,7 @@ public class AdminController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/updates", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/updates")
     public UpdateMessage checkUpdates() throws ThingsboardException {
         try {
             return updateService.checkUpdates();

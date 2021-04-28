@@ -15,13 +15,17 @@
  */
 package org.thingsboard.server.controller;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
@@ -34,19 +38,13 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
 public class AuditLogController extends BaseController {
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/audit/logs/customer/{customerId}", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/audit/logs/customer/{customerId}", params = {"pageSize", "page"})
     public PageData<AuditLog> getAuditLogsByCustomerId(
             @PathVariable("customerId") String strCustomerId,
             @RequestParam int pageSize,
@@ -69,8 +67,7 @@ public class AuditLogController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/audit/logs/user/{userId}", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/audit/logs/user/{userId}", params = {"pageSize", "page"})
     public PageData<AuditLog> getAuditLogsByUserId(
             @PathVariable("userId") String strUserId,
             @RequestParam int pageSize,
@@ -93,8 +90,7 @@ public class AuditLogController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/audit/logs/entity/{entityType}/{entityId}", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/audit/logs/entity/{entityType}/{entityId}", params = {"pageSize", "page"})
     public PageData<AuditLog> getAuditLogsByEntityId(
             @PathVariable("entityType") String strEntityType,
             @PathVariable("entityId") String strEntityId,
@@ -119,8 +115,7 @@ public class AuditLogController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/audit/logs", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/audit/logs", params = {"pageSize", "page"})
     public PageData<AuditLog> getAuditLogs(
             @RequestParam int pageSize,
             @RequestParam int page,

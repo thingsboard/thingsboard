@@ -15,17 +15,17 @@
  */
 package org.thingsboard.server.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Customer;
@@ -43,7 +43,9 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.List;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @RestController
 @TbCoreComponent
@@ -54,8 +56,7 @@ public class CustomerController extends BaseController {
     public static final String IS_PUBLIC = "isPublic";
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/{customerId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/customer/{customerId}")
     public Customer getCustomerById(@PathVariable(CUSTOMER_ID) String strCustomerId) throws ThingsboardException {
         checkParameter(CUSTOMER_ID, strCustomerId);
         try {
@@ -71,8 +72,7 @@ public class CustomerController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/{customerId}/shortInfo", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/customer/{customerId}/shortInfo")
     public JsonNode getShortCustomerInfoById(@PathVariable(CUSTOMER_ID) String strCustomerId) throws ThingsboardException {
         checkParameter(CUSTOMER_ID, strCustomerId);
         try {
@@ -89,8 +89,7 @@ public class CustomerController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/{customerId}/title", method = RequestMethod.GET, produces = "application/text")
-    @ResponseBody
+    @GetMapping(value = "/customer/{customerId}/title", produces = "application/text")
     public String getCustomerTitleById(@PathVariable(CUSTOMER_ID) String strCustomerId) throws ThingsboardException {
         checkParameter(CUSTOMER_ID, strCustomerId);
         try {
@@ -103,8 +102,7 @@ public class CustomerController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/customer")
     public Customer saveCustomer(@RequestBody Customer customer) throws ThingsboardException {
         try {
             customer.setTenantId(getCurrentUser().getTenantId());
@@ -132,7 +130,7 @@ public class CustomerController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/{customerId}", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/customer/{customerId}")
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteCustomer(@PathVariable(CUSTOMER_ID) String strCustomerId) throws ThingsboardException {
         checkParameter(CUSTOMER_ID, strCustomerId);
@@ -162,8 +160,7 @@ public class CustomerController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customers", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/customers", params = {"pageSize", "page"})
     public PageData<Customer> getCustomers(@RequestParam int pageSize,
                                            @RequestParam int page,
                                            @RequestParam(required = false) String textSearch,
@@ -179,8 +176,7 @@ public class CustomerController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/customers", params = {"customerTitle"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/customers", params = {"customerTitle"})
     public Customer getTenantCustomer(
             @RequestParam String customerTitle) throws ThingsboardException {
         try {
