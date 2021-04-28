@@ -234,7 +234,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.updateDatasources();
   }
 
-  public getTabLabel(source){
+  public getTabLabel(source: TimeseriesTableSource){
     if(this.useDeviceLabel){
       return source.datasource.entityLabel || source.datasource.entityName;
     } else {
