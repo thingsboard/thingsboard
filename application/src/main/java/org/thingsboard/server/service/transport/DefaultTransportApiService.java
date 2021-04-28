@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Firmware;
+import org.thingsboard.server.common.data.FirmwareInfo;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -471,19 +472,22 @@ public class DefaultTransportApiService implements TransportApiService {
         if (firmwareId == null) {
             builder.setResponseStatus(TransportProtos.ResponseStatus.NOT_FOUND);
         } else {
-            Firmware firmware = firmwareService.findFirmwareById(tenantId, firmwareId);
+            FirmwareInfo firmwareInfo = firmwareService.findFirmwareInfoById(tenantId, firmwareId);
 
-            if (firmware == null) {
+            if (firmwareInfo == null) {
                 builder.setResponseStatus(TransportProtos.ResponseStatus.NOT_FOUND);
             } else {
                 builder.setResponseStatus(TransportProtos.ResponseStatus.SUCCESS);
                 builder.setFirmwareIdMSB(firmwareId.getId().getMostSignificantBits());
                 builder.setFirmwareIdLSB(firmwareId.getId().getLeastSignificantBits());
-                builder.setTitle(firmware.getTitle());
-                builder.setVersion(firmware.getVersion());
-                builder.setFileName(firmware.getFileName());
-                builder.setContentType(firmware.getContentType());
-                firmwareDataCache.put(firmwareId.toString(), firmware.getData().array());
+                builder.setTitle(firmwareInfo.getTitle());
+                builder.setVersion(firmwareInfo.getVersion());
+                builder.setFileName(firmwareInfo.getFileName());
+                builder.setContentType(firmwareInfo.getContentType());
+                if (!firmwareDataCache.has(firmwareId.toString())) {
+                    Firmware firmware = firmwareService.findFirmwareById(tenantId, firmwareId);
+                    firmwareDataCache.put(firmwareId.toString(), firmware.getData().array());
+                }
             }
         }
 

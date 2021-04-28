@@ -20,7 +20,6 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.coap.Response;
@@ -34,6 +33,7 @@ import org.thingsboard.server.coapserver.TbCoapDtlsSessionInfo;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
@@ -448,7 +448,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
             if (msg.getResponseStatus().equals(TransportProtos.ResponseStatus.SUCCESS)) {
                 if (msg.getTitle().equals(title) && msg.getVersion().equals(version)) {
                     String firmwareId = new UUID(msg.getFirmwareIdMSB(), msg.getFirmwareIdLSB()).toString();
-                    String strChunkSize = exchange.getQueryParameter("chunkSize");
+                    String strChunkSize = exchange.getQueryParameter("size");
                     String strChunk = exchange.getQueryParameter("chunk");
                     int chunkSize = StringUtils.isEmpty(strChunkSize) ? 0 : Integer.parseInt(strChunkSize);
                     int chunk = StringUtils.isEmpty(strChunk) ? 0 : Integer.parseInt(strChunk);

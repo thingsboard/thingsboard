@@ -24,4 +24,9 @@ public interface FirmwareDataCache {
     void put(String key, byte[] value);
 
     void evict(String key);
+
+    default boolean has(String firmwareId) {
+        byte[] data = get(firmwareId, 1, 0);
+        return data != null && data.length > 0;
+    }
 }

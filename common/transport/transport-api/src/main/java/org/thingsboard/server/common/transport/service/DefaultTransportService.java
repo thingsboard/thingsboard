@@ -539,8 +539,7 @@ public class DefaultTransportService implements TransportService {
                     new TbProtoQueueMsg<>(UUID.randomUUID(), TransportProtos.TransportApiRequestMsg.newBuilder().setFirmwareRequestMsg(msg).build());
 
             AsyncCallbackTemplate.withCallback(transportApiRequestTemplate.send(protoMsg), response -> {
-                TransportProtos.GetFirmwareResponseMsg firmwareResponseMsg = response.getValue().getFirmwareResponseMsg();
-                callback.onSuccess(firmwareResponseMsg);
+                callback.onSuccess(response.getValue().getFirmwareResponseMsg());
             }, callback::onError, transportCallbackExecutor);
         }
     }
