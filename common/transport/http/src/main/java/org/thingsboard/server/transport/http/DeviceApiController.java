@@ -299,7 +299,7 @@ public class DeviceApiController {
                 responseWriter.setResult(new ResponseEntity<>(HttpStatus.NOT_FOUND));
             } else if (title.equals(firmwareResponseMsg.getTitle()) && version.equals(firmwareResponseMsg.getVersion())) {
                 String firmwareId = new UUID(firmwareResponseMsg.getFirmwareIdMSB(), firmwareResponseMsg.getFirmwareIdLSB()).toString();
-                ByteArrayResource resource = new ByteArrayResource(transportContext.getFirmwareCacheReader().get(firmwareId, chuckSize, chuck));
+                ByteArrayResource resource = new ByteArrayResource(transportContext.getFirmwareDataCache().get(firmwareId, chuckSize, chuck));
                 ResponseEntity<ByteArrayResource> response = ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + firmwareResponseMsg.getFileName())
                         .header("x-filename", firmwareResponseMsg.getFileName())

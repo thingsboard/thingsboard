@@ -23,11 +23,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.cache.firmware.FirmwareCacheWriter;
+import org.thingsboard.server.cache.firmware.FirmwareDataCache;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -61,7 +60,6 @@ import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.device.provision.ProvisionResponse;
 import org.thingsboard.server.dao.firmware.FirmwareService;
 import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
@@ -116,7 +114,7 @@ public class DefaultTransportApiService implements TransportApiService {
     private final DeviceProvisionService deviceProvisionService;
     private final TbResourceService resourceService;
     private final FirmwareService firmwareService;
-    private final FirmwareCacheWriter firmwareCacheWriter;
+    private final FirmwareDataCache firmwareDataCache;
 
     private final ConcurrentMap<String, ReentrantLock> deviceCreationLocks = new ConcurrentHashMap<>();
 
@@ -125,7 +123,7 @@ public class DefaultTransportApiService implements TransportApiService {
                                       RelationService relationService, DeviceCredentialsService deviceCredentialsService,
                                       DeviceStateService deviceStateService, DbCallbackExecutorService dbCallbackExecutorService,
                                       TbClusterService tbClusterService, DataDecodingEncodingService dataDecodingEncodingService,
-                                      DeviceProvisionService deviceProvisionService, TbResourceService resourceService, FirmwareService firmwareService, FirmwareCacheWriter firmwareCacheWriter) {
+                                      DeviceProvisionService deviceProvisionService, TbResourceService resourceService, FirmwareService firmwareService, FirmwareDataCache firmwareDataCache) {
         this.deviceProfileCache = deviceProfileCache;
         this.tenantProfileCache = tenantProfileCache;
         this.apiUsageStateService = apiUsageStateService;
@@ -139,7 +137,7 @@ public class DefaultTransportApiService implements TransportApiService {
         this.deviceProvisionService = deviceProvisionService;
         this.resourceService = resourceService;
         this.firmwareService = firmwareService;
-        this.firmwareCacheWriter = firmwareCacheWriter;
+        this.firmwareDataCache = firmwareDataCache;
     }
 
     @Override
@@ -485,7 +483,7 @@ public class DefaultTransportApiService implements TransportApiService {
                 builder.setVersion(firmware.getVersion());
                 builder.setFileName(firmware.getFileName());
                 builder.setContentType(firmware.getContentType());
-                firmwareCacheWriter.put(firmwareId.toString(), firmware.getData().array());
+                firmwareDataCache.put(firmwareId.toString(), firmware.getData().array());
             }
         }
 
