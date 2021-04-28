@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Firmware;
+import org.thingsboard.server.common.data.firmware.FirmwareType;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
@@ -31,6 +32,8 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Lob;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import java.nio.ByteBuffer;
 import java.util.UUID;
@@ -44,6 +47,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_FILE_NAME
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TENANT_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TITLE_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TYPE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_VERSION_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
 
@@ -56,6 +60,10 @@ public class FirmwareEntity extends BaseSqlEntity<Firmware> implements SearchTex
 
     @Column(name = FIRMWARE_TENANT_ID_COLUMN)
     private UUID tenantId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = FIRMWARE_TYPE_COLUMN)
+    private FirmwareType type;
 
     @Column(name = FIRMWARE_TITLE_COLUMN)
     private String title;
@@ -97,6 +105,7 @@ public class FirmwareEntity extends BaseSqlEntity<Firmware> implements SearchTex
         this.createdTime = firmware.getCreatedTime();
         this.setUuid(firmware.getUuidId());
         this.tenantId = firmware.getTenantId().getId();
+        this.type = firmware.getType();
         this.title = firmware.getTitle();
         this.version = firmware.getVersion();
         this.fileName = firmware.getFileName();
@@ -123,6 +132,7 @@ public class FirmwareEntity extends BaseSqlEntity<Firmware> implements SearchTex
         Firmware firmware = new Firmware(new FirmwareId(id));
         firmware.setCreatedTime(createdTime);
         firmware.setTenantId(new TenantId(tenantId));
+        firmware.setType(type);
         firmware.setTitle(title);
         firmware.setVersion(version);
         firmware.setFileName(fileName);

@@ -16,16 +16,20 @@
 package org.thingsboard.server.service.firmware;
 
 import com.google.common.util.concurrent.FutureCallback;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
+import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.FirmwareInfo;
+import org.thingsboard.server.common.data.firmware.FirmwareKeyUtil;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -41,45 +45,41 @@ import org.thingsboard.server.dao.firmware.FirmwareService;
 import org.thingsboard.server.gen.transport.TransportProtos.ToFirmwareStateServiceMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.queue.TbClusterService;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import static org.thingsboard.server.common.data.DataConstants.FIRMWARE_CHECKSUM;
-import static org.thingsboard.server.common.data.DataConstants.FIRMWARE_CHECKSUM_ALGORITHM;
-import static org.thingsboard.server.common.data.DataConstants.FIRMWARE_SIZE;
-import static org.thingsboard.server.common.data.DataConstants.FIRMWARE_TITLE;
-import static org.thingsboard.server.common.data.DataConstants.FIRMWARE_VERSION;
+import static org.thingsboard.server.common.data.firmware.FirmwareKey.CHECKSUM;
+import static org.thingsboard.server.common.data.firmware.FirmwareKey.CHECKSUM_ALGORITHM;
+import static org.thingsboard.server.common.data.firmware.FirmwareKey.SIZE;
+import static org.thingsboard.server.common.data.firmware.FirmwareKey.STATE;
+import static org.thingsboard.server.common.data.firmware.FirmwareKey.TITLE;
+import static org.thingsboard.server.common.data.firmware.FirmwareKey.TS;
+import static org.thingsboard.server.common.data.firmware.FirmwareKey.VERSION;
+import static org.thingsboard.server.common.data.firmware.FirmwareKeyUtil.getAttributeKey;
+import static org.thingsboard.server.common.data.firmware.FirmwareKeyUtil.getTargetTelemetryKey;
+import static org.thingsboard.server.common.data.firmware.FirmwareKeyUtil.getTelemetryKey;
 
 @Slf4j
 @Service
 @TbCoreComponent
+@RequiredArgsConstructor
 public class DefaultFirmwareStateService implements FirmwareStateService {
 
+    private final TbClusterService tbClusterService;
     private final FirmwareService firmwareService;
     private final DeviceService deviceService;
     private final DeviceProfileService deviceProfileService;
     private final RuleEngineTelemetryService telemetryService;
     private final TbQueueProducer<TbProtoQueueMsg<ToFirmwareStateServiceMsg>> fwStateMsgProducer;
-
-    public DefaultFirmwareStateService(FirmwareService firmwareService,
-                                       DeviceService deviceService,
-                                       DeviceProfileService deviceProfileService,
-                                       RuleEngineTelemetryService telemetryService,
-                                       TbCoreQueueFactory coreQueueFactory) {
-        this.firmwareService = firmwareService;
-        this.deviceService = deviceService;
-        this.deviceProfileService = deviceProfileService;
-        this.telemetryService = telemetryService;
-        this.fwStateMsgProducer = coreQueueFactory.createToFirmwareStateServiceMsgProducer();
-    }
 
     @Override
     public void update(Device device, Device oldDevice) {
@@ -183,10 +183,10 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
         fwStateMsgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null);
 
         List<TsKvEntry> telemetry = new ArrayList<>();
-        telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.TARGET_FIRMWARE_TITLE, firmware.getTitle())));
-        telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.TARGET_FIRMWARE_VERSION, firmware.getVersion())));
-        telemetry.add(new BasicTsKvEntry(ts, new LongDataEntry(DataConstants.TARGET_FIRMWARE_TS, ts)));
-        telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_STATE, FirmwareUpdateStatus.QUEUED.name())));
+        telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(getTargetTelemetryKey(firmware.getType(), TITLE), firmware.getTitle())));
+        telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(getTargetTelemetryKey(firmware.getType(), VERSION), firmware.getVersion())));
+        telemetry.add(new BasicTsKvEntry(ts, new LongDataEntry(getTargetTelemetryKey(firmware.getType(), TS), ts)));
+        telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(getTelemetryKey(firmware.getType(), STATE), FirmwareUpdateStatus.QUEUED.name())));
 
         telemetryService.saveAndNotify(tenantId, deviceId, telemetry, new FutureCallback<>() {
             @Override
@@ -206,7 +206,7 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
         TenantId tenantId = device.getTenantId();
         DeviceId deviceId = device.getId();
 
-        BasicTsKvEntry status = new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(DataConstants.FIRMWARE_STATE, FirmwareUpdateStatus.INITIATED.name()));
+        BasicTsKvEntry status = new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(getTelemetryKey(firmware.getType(), STATE), FirmwareUpdateStatus.INITIATED.name()));
 
         telemetryService.saveAndNotify(tenantId, deviceId, Collections.singletonList(status), new FutureCallback<>() {
             @Override
@@ -221,13 +221,12 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
         });
 
         List<AttributeKvEntry> attributes = new ArrayList<>();
+        attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(firmware.getType(), TITLE), firmware.getTitle())));
+        attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(firmware.getType(), VERSION), firmware.getVersion())));
+        attributes.add(new BaseAttributeKvEntry(ts, new LongDataEntry(getAttributeKey(firmware.getType(), SIZE), firmware.getDataSize())));
+        attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(firmware.getType(), CHECKSUM_ALGORITHM), firmware.getChecksumAlgorithm())));
+        attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(firmware.getType(), CHECKSUM), firmware.getChecksum())));
 
-        attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_TITLE, firmware.getTitle())));
-        attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_VERSION, firmware.getVersion())));
-
-        attributes.add(new BaseAttributeKvEntry(ts, new LongDataEntry(FIRMWARE_SIZE, firmware.getDataSize())));
-        attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_CHECKSUM_ALGORITHM, firmware.getChecksumAlgorithm())));
-        attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_CHECKSUM, firmware.getChecksum())));
         telemetryService.saveAndNotify(tenantId, deviceId, DataConstants.SHARED_SCOPE, attributes, new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable Void tmp) {
@@ -242,12 +241,14 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
     }
 
     private void remove(Device device) {
-        telemetryService.deleteAndNotify(device.getTenantId(), device.getId(), DataConstants.SHARED_SCOPE,
-                Arrays.asList(FIRMWARE_TITLE, FIRMWARE_VERSION, FIRMWARE_SIZE, FIRMWARE_CHECKSUM_ALGORITHM, FIRMWARE_CHECKSUM),
+        telemetryService.deleteAndNotify(device.getTenantId(), device.getId(), DataConstants.SHARED_SCOPE, FirmwareKeyUtil.ALL_ATTRIBUTE_KEYS,
                 new FutureCallback<>() {
                     @Override
                     public void onSuccess(@Nullable Void tmp) {
                         log.trace("[{}] Success remove target firmware attributes!", device.getId());
+                        Set<AttributeKey> keysToNotify = new HashSet<>();
+                        FirmwareKeyUtil.ALL_ATTRIBUTE_KEYS.forEach(key -> keysToNotify.add(new AttributeKey(DataConstants.SHARED_SCOPE, key)));
+                        tbClusterService.pushMsgToCore(DeviceAttributesEventNotificationMsg.onDelete(device.getTenantId(), device.getId(), keysToNotify), null);
                     }
 
                     @Override

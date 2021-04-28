@@ -180,6 +180,8 @@ CREATE TABLE IF NOT EXISTS firmware (
     id uuid NOT NULL CONSTRAINT firmware_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     tenant_id uuid NOT NULL,
+    device_profile_id uuid NOT NULL,
+    type varchar(32) NOT NULL,
     title varchar(255) NOT NULL,
     version varchar(255) NOT NULL,
     file_name varchar(255),
@@ -190,7 +192,8 @@ CREATE TABLE IF NOT EXISTS firmware (
     data_size bigint,
     additional_info varchar,
     search_text varchar(255),
-    CONSTRAINT firmware_tenant_title_version_unq_key UNIQUE (tenant_id, title, version)
+    CONSTRAINT firmware_tenant_title_version_unq_key UNIQUE (tenant_id, title, version),
+    CONSTRAINT fk_firmware_device_profile FOREIGN KEY (device_profile_id) REFERENCES device_profile(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS device_profile (
@@ -206,14 +209,25 @@ CREATE TABLE IF NOT EXISTS device_profile (
     is_default boolean,
     tenant_id uuid,
     firmware_id uuid,
+    software_id uuid,
     default_rule_chain_id uuid,
     default_queue_name varchar(255),
     provision_device_key varchar,
     CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),
     CONSTRAINT device_provision_key_unq_key UNIQUE (provision_device_key),
     CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id),
-    CONSTRAINT fk_firmware_device_profile FOREIGN KEY (firmware_id) REFERENCES firmware(id)
+    CONSTRAINT fk_device_profile_firmware FOREIGN KEY (firmware_id) REFERENCES firmware(id)
+    CONSTRAINT fk_device_profile_software FOREIGN KEY (software_id) REFERENCES firmware(id)
 );
+
+-- We will use one-to-many relation in the first release and extend this feature in case of user requests
+-- CREATE TABLE IF NOT EXISTS device_profile_firmware (
+--     device_profile_id uuid NOT NULL,
+--     firmware_id uuid NOT NULL,
+--     CONSTRAINT device_profile_firmware_unq_key UNIQUE (device_profile_id, firmware_id),
+--     CONSTRAINT fk_device_profile_firmware_device_profile FOREIGN KEY (device_profile_id) REFERENCES device_profile(id) ON DELETE CASCADE,
+--     CONSTRAINT fk_device_profile_firmware_firmware FOREIGN KEY (firmware_id) REFERENCES firmware(id) ON DELETE CASCADE,
+-- );
 
 CREATE TABLE IF NOT EXISTS device (
     id uuid NOT NULL CONSTRAINT device_pkey PRIMARY KEY,
@@ -228,9 +242,11 @@ CREATE TABLE IF NOT EXISTS device (
     search_text varchar(255),
     tenant_id uuid,
     firmware_id uuid,
+    software_id uuid,
     CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name),
     CONSTRAINT fk_device_profile FOREIGN KEY (device_profile_id) REFERENCES device_profile(id),
     CONSTRAINT fk_firmware_device FOREIGN KEY (firmware_id) REFERENCES firmware(id)
+    CONSTRAINT fk_software_device FOREIGN KEY (software_id) REFERENCES firmware(id)
 );
 
 CREATE TABLE IF NOT EXISTS device_credentials (

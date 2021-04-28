@@ -476,6 +476,7 @@ public class ModelConstants {
      */
     public static final String FIRMWARE_TABLE_NAME = "firmware";
     public static final String FIRMWARE_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
+    public static final String FIRMWARE_TYPE_COLUMN = "type";
     public static final String FIRMWARE_TITLE_COLUMN = TITLE_PROPERTY;
     public static final String FIRMWARE_VERSION_COLUMN = "version";
     public static final String FIRMWARE_FILE_NAME_COLUMN = "file_name";
