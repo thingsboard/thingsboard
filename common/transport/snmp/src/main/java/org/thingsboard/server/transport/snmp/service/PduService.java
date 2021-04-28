@@ -151,7 +151,7 @@ public class PduService {
                 .collect(Collectors.toMap(VariableBinding::getOid, VariableBinding::toValueString));
     }
 
-    private void processValue(String key, DataType dataType, String value, JsonObject result) {
+    public void processValue(String key, DataType dataType, String value, JsonObject result) {
         switch (dataType) {
             case LONG:
                 result.addProperty(key, Long.parseLong(value));

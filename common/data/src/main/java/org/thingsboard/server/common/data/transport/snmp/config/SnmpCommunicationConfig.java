@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.transport.snmp.SnmpMethod;
 import org.thingsboard.server.common.data.transport.snmp.config.impl.ClientAttributesQueryingSnmpCommunicationConfig;
 import org.thingsboard.server.common.data.transport.snmp.config.impl.SharedAttributesSettingSnmpCommunicationConfig;
 import org.thingsboard.server.common.data.transport.snmp.config.impl.TelemetryQueryingSnmpCommunicationConfig;
+import org.thingsboard.server.common.data.transport.snmp.config.impl.ToDeviceRpcRequestSnmpCommunicationConfig;
 
 import java.util.List;
 
@@ -34,7 +35,8 @@ import java.util.List;
 @JsonSubTypes({
         @Type(value = TelemetryQueryingSnmpCommunicationConfig.class, name = "TELEMETRY_QUERYING"),
         @Type(value = ClientAttributesQueryingSnmpCommunicationConfig.class, name = "CLIENT_ATTRIBUTES_QUERYING"),
-        @Type(value = SharedAttributesSettingSnmpCommunicationConfig.class, name = "SHARED_ATTRIBUTES_SETTING")
+        @Type(value = SharedAttributesSettingSnmpCommunicationConfig.class, name = "SHARED_ATTRIBUTES_SETTING"),
+        @Type(value = ToDeviceRpcRequestSnmpCommunicationConfig.class, name = "TO_DEVICE_RPC_REQUEST")
 })
 public interface SnmpCommunicationConfig {
 
