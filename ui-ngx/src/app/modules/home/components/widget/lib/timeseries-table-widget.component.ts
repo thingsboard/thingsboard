@@ -129,7 +129,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   private defaultSortOrder = '-0';
   private hideEmptyLines = false;
   public showTimestamp = true;
-  public  useDeviceLabel = false;
+  private useDeviceLabel = false;
   private dateFormatFilter: string;
 
   private rowStylesInfo: RowStyleInfo;
@@ -234,9 +234,9 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.updateDatasources();
   }
 
-  public getTabLabel(source, useDeviceLabel){
-    if(useDeviceLabel){
-      return source.datasource.entityLabel ? source.datasource.entityLabel : source.datasource.entityName;
+  public getTabLabel(source){
+    if(this.useDeviceLabel){
+      return source.datasource.entityLabel || source.datasource.entityName;
     } else {
       return source.datasource.entityName;
     }
