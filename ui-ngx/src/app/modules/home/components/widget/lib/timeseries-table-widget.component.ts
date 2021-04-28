@@ -93,7 +93,6 @@ interface TimeseriesTableSource {
   header: TimeseriesHeader[];
   stylesInfo: CellStyleInfo[];
   contentsInfo: CellContentInfo[];
-  useDeviceLabel: boolean,
   rowDataTemplate: {[key: string]: any};
 }
 
