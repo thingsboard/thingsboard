@@ -38,8 +38,8 @@ export interface FirmwareInfo extends BaseData<FirmwareId> {
   version?: string;
   hasData?: boolean;
   fileName: string;
-  checksum?: ChecksumAlgorithm;
-  checksumAlgorithm?: string;
+  checksum?: string;
+  checksumAlgorithm: ChecksumAlgorithm;
   contentType: string;
   dataSize?: number;
   additionalInfo?: any;

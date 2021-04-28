@@ -115,7 +115,7 @@ public class FirmwareController extends BaseController {
     @ResponseBody
     public Firmware saveFirmwareData(@PathVariable(FIRMWARE_ID) String strFirmwareId,
                                      @RequestParam(required = false) String checksum,
-                                     @RequestParam(required = false) String checksumAlgorithm,
+                                     @RequestParam() String checksumAlgorithm,
                                      @RequestBody MultipartFile file) throws ThingsboardException {
         checkParameter(FIRMWARE_ID, strFirmwareId);
         try {
@@ -129,18 +129,17 @@ public class FirmwareController extends BaseController {
             firmware.setVersion(info.getVersion());
             firmware.setAdditionalInfo(info.getAdditionalInfo());
 
-            byte[] data = file.getBytes();
-            if (StringUtils.isEmpty(checksumAlgorithm)) {
-                checksumAlgorithm = "sha256";
-                checksum = Hashing.sha256().hashBytes(data).toString();
+            ByteBuffer data = ByteBuffer.wrap(file.getBytes());
+            if (StringUtils.isEmpty(checksum)) {
+                checksum = firmwareService.generateChecksum(checksumAlgorithm, data);
             }
 
             firmware.setChecksumAlgorithm(checksumAlgorithm);
             firmware.setChecksum(checksum);
             firmware.setFileName(file.getOriginalFilename());
             firmware.setContentType(file.getContentType());
-            firmware.setData(ByteBuffer.wrap(data));
-            firmware.setDataSize((long) data.length);
+            firmware.setData(data);
+            firmware.setDataSize((long) data.array().length);
             return firmwareService.saveFirmware(firmware);
         } catch (Exception e) {
             throw handleException(e);

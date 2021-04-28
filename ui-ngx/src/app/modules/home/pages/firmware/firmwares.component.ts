@@ -23,7 +23,6 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { EntityComponent } from '@home/components/entity/entity.component';
 import { ChecksumAlgorithm, ChecksumAlgorithmTranslationMap, Firmware } from '@shared/models/firmware.models';
-import { distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 
 @Component({
@@ -45,26 +44,6 @@ export class FirmwaresComponent extends EntityComponent<Firmware> implements OnI
     super(store, fb, entityValue, entitiesTableConfigValue);
   }
 
-  ngOnInit() {
-    super.ngOnInit();
-    if (this.isAdd) {
-      this.entityForm.get('checksumAlgorithm').valueChanges.pipe(
-        map(algorithm => !!algorithm),
-        distinctUntilChanged(),
-        takeUntil(this.destroy$)
-      ).subscribe(
-        setAlgorithm => {
-          if (setAlgorithm) {
-            this.entityForm.get('checksum').setValidators([Validators.maxLength(1020), Validators.required]);
-          } else {
-            this.entityForm.get('checksum').clearValidators();
-          }
-          this.entityForm.get('checksum').updateValueAndValidity({emitEvent: false});
-        }
-      );
-    }
-  }
-
   ngOnDestroy() {
     super.ngOnDestroy();
     this.destroy$.next();
@@ -83,7 +62,7 @@ export class FirmwaresComponent extends EntityComponent<Firmware> implements OnI
     const form = this.fb.group({
       title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
       version: [entity ? entity.version : '', [Validators.required, Validators.maxLength(255)]],
-      checksumAlgorithm: [entity ? entity.checksumAlgorithm : null],
+      checksumAlgorithm: [entity && entity.checksumAlgorithm ? entity.checksumAlgorithm : ChecksumAlgorithm.SHA256],
       checksum: [entity ? entity.checksum : '', Validators.maxLength(1020)],
       additionalInfo: this.fb.group(
         {

@@ -102,6 +102,32 @@ public class BaseFirmwareService implements FirmwareService {
     }
 
     @Override
+    public String generateChecksum(String checksumAlgorithm, ByteBuffer data) {
+
+        if (data == null || !data.hasArray() || data.array().length == 0) {
+            throw new DataValidationException("Firmware data should be specified!");
+        }
+
+        HashFunction hashFunction;
+        switch (checksumAlgorithm) {
+            case "sha256":
+                hashFunction = Hashing.sha256();
+                break;
+            case "md5":
+                hashFunction = Hashing.md5();
+                break;
+            case "crc32":
+                hashFunction = Hashing.crc32();
+                break;
+            default:
+                throw new DataValidationException("Unknown checksum algorithm!");
+        }
+
+        return hashFunction.hashBytes(data.array()).toString();
+    }
+
+
+    @Override
     public Firmware findFirmwareById(TenantId tenantId, FirmwareId firmwareId) {
         log.trace("Executing findFirmwareById [{}]", firmwareId);
         validateId(firmwareId, INCORRECT_FIRMWARE_ID + firmwareId);
@@ -217,11 +243,6 @@ public class BaseFirmwareService implements FirmwareService {
                 throw new DataValidationException("Firmware content type should be specified!");
             }
 
-            ByteBuffer data = firmware.getData();
-            if (data == null || !data.hasArray() || data.array().length == 0) {
-                throw new DataValidationException("Firmware data should be specified!");
-            }
-
             if (StringUtils.isEmpty(firmware.getChecksumAlgorithm())) {
                 throw new DataValidationException("Firmware checksum algorithm should be specified!");
             }
@@ -229,22 +250,7 @@ public class BaseFirmwareService implements FirmwareService {
                 throw new DataValidationException("Firmware checksum should be specified!");
             }
 
-            HashFunction hashFunction;
-            switch (firmware.getChecksumAlgorithm()) {
-                case "sha256":
-                    hashFunction = Hashing.sha256();
-                    break;
-                case "md5":
-                    hashFunction = Hashing.md5();
-                    break;
-                case "crc32":
-                    hashFunction = Hashing.crc32();
-                    break;
-                default:
-                    throw new DataValidationException("Unknown checksum algorithm!");
-            }
-
-            String currentChecksum = hashFunction.hashBytes(data.array()).toString();
+            String currentChecksum = generateChecksum(firmware.getChecksumAlgorithm(), firmware.getData());
 
             if (!currentChecksum.equals(firmware.getChecksum())) {
                 throw new DataValidationException("Wrong firmware file!");

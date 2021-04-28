@@ -22,11 +22,15 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
+import java.nio.ByteBuffer;
+
 public interface FirmwareService {
 
     FirmwareInfo saveFirmwareInfo(FirmwareInfo firmwareInfo);
 
     Firmware saveFirmware(Firmware firmware);
+
+    String generateChecksum(String checksumAlgorithm, ByteBuffer data);
 
     Firmware findFirmwareById(TenantId tenantId, FirmwareId firmwareId);
 
