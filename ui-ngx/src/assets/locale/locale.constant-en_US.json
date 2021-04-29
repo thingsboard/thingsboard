@@ -1928,6 +1928,8 @@
         "idCopiedMessage": "Firmware Id has been copied to clipboard",
         "no-firmware-matching": "No firmware matching '{{entity}}' were found.",
         "no-firmware-text": "No firmwares found",
+        "no-software-matching": "No sowtware matching '{{entity}}' were found.",
+        "no-software-text": "No software found",
         "file-name": "File name",
         "file-size": "File size",
         "file-size-bytes": "File size in bytes",
@@ -1936,8 +1938,15 @@
         "firmware-required": "Firmware is required.",
         "search": "Search firmwares",
         "selected-firmware": "{ count, plural, 1 {1 firmware} other {# firmwares} } selected",
+        "software": "Software",
+        "software-required": "Software is required.",
         "title": "Title",
         "title-required": "Title is required.",
+        "type": "Firmware type",
+        "types": {
+          "firmware": "Firmware",
+          "software": "Software"
+        },
         "version": "Version",
         "version-required": "Version is required.",
         "warning-after-save-no-edit": "Once the firmware is saved, it will not be possible to change the title and version fields."
