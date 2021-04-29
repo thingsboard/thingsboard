@@ -175,24 +175,6 @@ public abstract class BaseFirmwareServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testSaveFirmwareWithEmptyDeviceProfile() {
-        Firmware firmware = new Firmware();
-        firmware.setTenantId(tenantId);
-        firmware.setType(FIRMWARE);
-        firmware.setTitle(TITLE);
-        firmware.setVersion(VERSION);
-        firmware.setFileName(FILE_NAME);
-        firmware.setContentType(CONTENT_TYPE);
-        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
-        firmware.setChecksum(CHECKSUM);
-        firmware.setData(DATA);
-
-        thrown.expect(DataValidationException.class);
-        thrown.expectMessage("Firmware should be assigned to deviceProfile!");
-        firmwareService.saveFirmware(firmware);
-    }
-
-    @Test
     public void testSaveFirmwareWithEmptyType() {
         Firmware firmware = new Firmware();
         firmware.setTenantId(tenantId);
@@ -425,6 +407,39 @@ public abstract class BaseFirmwareServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testUpdateDeviceProfileIdWithReferenceByDevice() {
+        Firmware firmware = new Firmware();
+        firmware.setTenantId(tenantId);
+        firmware.setDeviceProfileId(deviceProfileId);
+        firmware.setType(FIRMWARE);
+        firmware.setTitle(TITLE);
+        firmware.setVersion(VERSION);
+        firmware.setFileName(FILE_NAME);
+        firmware.setContentType(CONTENT_TYPE);
+        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
+        firmware.setChecksum(CHECKSUM);
+        firmware.setData(DATA);
+        Firmware savedFirmware = firmwareService.saveFirmware(firmware);
+
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName("My device");
+        device.setDeviceProfileId(deviceProfileId);
+        device.setFirmwareId(savedFirmware.getId());
+        Device savedDevice = deviceService.saveDevice(device);
+
+        try {
+            thrown.expect(DataValidationException.class);
+            thrown.expectMessage("Can`t update deviceProfileId because firmware is already in use!");
+            savedFirmware.setDeviceProfileId(null);
+            firmwareService.saveFirmware(savedFirmware);
+        } finally {
+            deviceService.deleteDevice(tenantId, savedDevice.getId());
+            firmwareService.deleteFirmware(tenantId, savedFirmware.getId());
+        }
+    }
+
+    @Test
     public void testDeleteFirmwareWithReferenceByDeviceProfile() {
         DeviceProfile deviceProfile = this.createDeviceProfile(tenantId, "Test Device Profile");
         DeviceProfile savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
@@ -449,6 +464,38 @@ public abstract class BaseFirmwareServiceTest extends AbstractServiceTest {
             thrown.expect(DataValidationException.class);
             thrown.expectMessage("The firmware referenced by the device profile cannot be deleted!");
             firmwareService.deleteFirmware(tenantId, savedFirmware.getId());
+        } finally {
+            deviceProfileService.deleteDeviceProfile(tenantId, savedDeviceProfile.getId());
+            firmwareService.deleteFirmware(tenantId, savedFirmware.getId());
+        }
+    }
+
+    @Test
+    public void testUpdateDeviceProfileIdWithReferenceByDeviceProfile() {
+        DeviceProfile deviceProfile = this.createDeviceProfile(tenantId, "Test Device Profile");
+        DeviceProfile savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
+
+        Firmware firmware = new Firmware();
+        firmware.setTenantId(tenantId);
+        firmware.setDeviceProfileId(savedDeviceProfile.getId());
+        firmware.setType(FIRMWARE);
+        firmware.setTitle(TITLE);
+        firmware.setVersion(VERSION);
+        firmware.setFileName(FILE_NAME);
+        firmware.setContentType(CONTENT_TYPE);
+        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
+        firmware.setChecksum(CHECKSUM);
+        firmware.setData(DATA);
+        Firmware savedFirmware = firmwareService.saveFirmware(firmware);
+
+        savedDeviceProfile.setFirmwareId(savedFirmware.getId());
+        deviceProfileService.saveDeviceProfile(savedDeviceProfile);
+
+        try {
+            thrown.expect(DataValidationException.class);
+            thrown.expectMessage("Can`t update deviceProfileId because firmware is already in use!");
+            savedFirmware.setDeviceProfileId(null);
+            firmwareService.saveFirmware(savedFirmware);
         } finally {
             deviceProfileService.deleteDeviceProfile(tenantId, savedDeviceProfile.getId());
             firmwareService.deleteFirmware(tenantId, savedFirmware.getId());

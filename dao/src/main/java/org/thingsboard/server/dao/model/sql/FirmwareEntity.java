@@ -32,9 +32,9 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.Lob;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.Lob;
 import javax.persistence.Table;
 import java.nio.ByteBuffer;
 import java.util.UUID;
@@ -110,7 +110,9 @@ public class FirmwareEntity extends BaseSqlEntity<Firmware> implements SearchTex
         this.createdTime = firmware.getCreatedTime();
         this.setUuid(firmware.getUuidId());
         this.tenantId = firmware.getTenantId().getId();
-        this.deviceProfileId = firmware.getDeviceProfileId().getId();
+        if (firmware.getDeviceProfileId() != null) {
+            this.deviceProfileId = firmware.getDeviceProfileId().getId();
+        }
         this.type = firmware.getType();
         this.title = firmware.getTitle();
         this.version = firmware.getVersion();
@@ -138,7 +140,9 @@ public class FirmwareEntity extends BaseSqlEntity<Firmware> implements SearchTex
         Firmware firmware = new Firmware(new FirmwareId(id));
         firmware.setCreatedTime(createdTime);
         firmware.setTenantId(new TenantId(tenantId));
-        firmware.setDeviceProfileId(new DeviceProfileId(deviceProfileId));
+        if (deviceProfileId != null) {
+            firmware.setDeviceProfileId(new DeviceProfileId(deviceProfileId));
+        }
         firmware.setType(type);
         firmware.setTitle(title);
         firmware.setVersion(version);

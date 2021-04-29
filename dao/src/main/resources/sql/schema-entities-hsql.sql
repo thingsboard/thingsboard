@@ -162,7 +162,7 @@ CREATE TABLE IF NOT EXISTS firmware (
     id uuid NOT NULL CONSTRAINT firmware_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     tenant_id uuid NOT NULL,
-    device_profile_id uuid NOT NULL,
+    device_profile_id uuid ,
     type varchar(32) NOT NULL,
     title varchar(255) NOT NULL,
     version varchar(255) NOT NULL,

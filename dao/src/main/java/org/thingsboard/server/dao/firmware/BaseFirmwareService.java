@@ -191,6 +191,7 @@ public class BaseFirmwareService implements FirmwareService {
         protected void validateUpdate(TenantId tenantId, FirmwareInfo firmware) {
             FirmwareInfo firmwareOld = firmwareInfoDao.findById(tenantId, firmware.getUuidId());
 
+            validateUpdateDeviceProfile(firmware, firmwareOld);
             BaseFirmwareService.validateUpdate(firmware, firmwareOld);
         }
     };
@@ -247,6 +248,7 @@ public class BaseFirmwareService implements FirmwareService {
         protected void validateUpdate(TenantId tenantId, Firmware firmware) {
             Firmware firmwareOld = firmwareDao.findById(tenantId, firmware.getUuidId());
 
+            validateUpdateDeviceProfile(firmware, firmwareOld);
             BaseFirmwareService.validateUpdate(firmware, firmwareOld);
 
             if (firmwareOld.getData() != null && !firmwareOld.getData().equals(firmware.getData())) {
@@ -255,11 +257,15 @@ public class BaseFirmwareService implements FirmwareService {
         }
     };
 
-    private static void validateUpdate(FirmwareInfo firmware, FirmwareInfo firmwareOld) {
-        if (!firmwareOld.getDeviceProfileId().equals(firmware.getDeviceProfileId())) {
-            throw new DataValidationException("Updating firmware deviceProfile is prohibited!");
+    private void validateUpdateDeviceProfile(FirmwareInfo firmware, FirmwareInfo firmwareOld) {
+        if (firmwareOld.getDeviceProfileId() != null && !firmwareOld.getDeviceProfileId().equals(firmware.getDeviceProfileId())) {
+            if (firmwareInfoDao.isFirmwareUsed(firmwareOld.getId(), firmware.getType(), firmwareOld.getDeviceProfileId())) {
+                throw new DataValidationException("Can`t update deviceProfileId because firmware is already in use!");
+            }
         }
+    }
 
+    private static void validateUpdate(FirmwareInfo firmware, FirmwareInfo firmwareOld) {
         if (!firmwareOld.getType().equals(firmware.getType())) {
             throw new DataValidationException("Updating type is prohibited!");
         }
@@ -303,9 +309,7 @@ public class BaseFirmwareService implements FirmwareService {
             }
         }
 
-        if (firmwareInfo.getDeviceProfileId() == null) {
-            throw new DataValidationException("Firmware should be assigned to deviceProfile!");
-        } else {
+        if (firmwareInfo.getDeviceProfileId() != null) {
             DeviceProfile deviceProfile = deviceProfileDao.findById(firmwareInfo.getTenantId(), firmwareInfo.getDeviceProfileId().getId());
             if (deviceProfile == null) {
                 throw new DataValidationException("Firmware is referencing to non-existent device profile!");

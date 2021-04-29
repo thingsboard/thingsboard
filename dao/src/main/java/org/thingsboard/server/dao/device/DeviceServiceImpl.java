@@ -51,6 +51,7 @@ import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.MqttDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.firmware.FirmwareType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -683,6 +684,9 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                         if (firmware == null) {
                             throw new DataValidationException("Can't assign non-existent firmware!");
                         }
+                        if (!firmware.getType().equals(FirmwareType.FIRMWARE)) {
+                            throw new DataValidationException("Can't assign firmware with type: " + firmware.getType());
+                        }
                         if (firmware.getData() == null) {
                             throw new DataValidationException("Can't assign firmware with empty data!");
                         }
@@ -695,6 +699,9 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                         Firmware software = firmwareService.findFirmwareById(tenantId, device.getSoftwareId());
                         if (software == null) {
                             throw new DataValidationException("Can't assign non-existent software!");
+                        }
+                        if (!software.getType().equals(FirmwareType.SOFTWARE)) {
+                            throw new DataValidationException("Can't assign software with type: " + software.getType());
                         }
                         if (software.getData() == null) {
                             throw new DataValidationException("Can't assign software with empty data!");
