@@ -243,7 +243,7 @@ public class EntityKeyMapping {
         } else {
             entityTypeStr = "'" + entityType.name() + "'";
         }
-        ctx.addStringParameter(alias + "_key_id", entityKey.getKey());
+        ctx.addStringParameter(getKeyId(), entityKey.getKey());
         String filterQuery = toQueries(ctx, entityFilter.getType())
                 .filter(StringUtils::isNotEmpty)
                 .collect(Collectors.joining(" and "));
@@ -281,8 +281,12 @@ public class EntityKeyMapping {
 
     private boolean hasFilterValues(QueryContext ctx) {
         return Arrays.stream(ctx.getParameterNames()).anyMatch(parameterName -> {
-            return !parameterName.equals(alias + "_key_id") && parameterName.startsWith(alias);
+            return !parameterName.equals(getKeyId()) && parameterName.startsWith(alias);
         });
+    }
+
+    private String getKeyId() {
+        return alias + "_key_id";
     }
 
     public static String buildSelections(List<EntityKeyMapping> mappings, EntityFilterType filterType, EntityType entityType) {
