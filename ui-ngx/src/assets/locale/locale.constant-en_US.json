@@ -1185,7 +1185,7 @@
             "telemetry-label": "Telemetry",
             "key-name-label": "Key Name",
             "attribute-lwm2m-label": "AttrLwm2m",
-            "resource-tip": "ID & Original Name of the Resource",
+            "resource-tip": "ID & Original Name of the Resource (only Operations isReadable)",
             "is-observe-tip": "Is Observe",
             "not-observe-tip": "To observe select telemetry or attributes first",
             "is-attr-tip": "Is Attribute",

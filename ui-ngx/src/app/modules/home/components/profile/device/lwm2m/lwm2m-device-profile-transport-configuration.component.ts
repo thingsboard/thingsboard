@@ -142,6 +142,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       };
       this.deviceProfileService.getLwm2mObjects(sortOrder, modelValue.objectIds, null).subscribe(
         (objectsList) => {
+          debugger
           modelValue.objectsList = objectsList;
           this.updateWriteValue(modelValue);
         }

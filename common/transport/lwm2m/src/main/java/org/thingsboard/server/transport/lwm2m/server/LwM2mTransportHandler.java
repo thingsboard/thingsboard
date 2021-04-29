@@ -112,6 +112,11 @@ public class LwM2mTransportHandler {
 
     public static final String CLIENT_NOT_AUTHORIZED = "Client not authorized";
 
+    public static final Integer FR_OBJECT_ID = 5;
+    public static final Integer FR_RESOURCE_VER_ID = 7;
+    public static final String FR_PATH_RESOURCE_VER_ID = LWM2M_SEPARATOR_PATH + FR_OBJECT_ID + LWM2M_SEPARATOR_PATH
+            + "0" + LWM2M_SEPARATOR_PATH + FR_RESOURCE_VER_ID;
+
     public enum LwM2mTypeServer {
         BOOTSTRAP(0, "bootstrap"),
         CLIENT(1, "client");
@@ -167,6 +172,8 @@ public class LwM2mTransportHandler {
         WRITE_UPDATE(7, "WriteUpdate"),
         WRITE_ATTRIBUTES(8, "WriteAttributes"),
         DELETE(9, "Delete");
+
+//        READ_INFO_FW(10, "ReadInfoFirmware");
 
         public int code;
         public String type;

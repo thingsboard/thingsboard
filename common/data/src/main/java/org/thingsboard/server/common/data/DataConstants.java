@@ -95,8 +95,8 @@ public class DataConstants {
 
     //firmware
     //telemetry
-    public static final String CURRENT_FIRMWARE_TITLE = "cur_fw_title";
-    public static final String CURRENT_FIRMWARE_VERSION = "cur_fw_version";
+    public static final String CURRENT_FIRMWARE_TITLE = "current_fw_title";
+    public static final String CURRENT_FIRMWARE_VERSION = "current_fw_version";
     public static final String TARGET_FIRMWARE_TITLE = "target_fw_title";
     public static final String TARGET_FIRMWARE_VERSION = "target_fw_version";
     public static final String TARGET_FIRMWARE_TS = "target_fw_ts";
