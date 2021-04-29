@@ -32,7 +32,7 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Authority } from '@shared/models/authority.enum';
-import { ResourcesLibraryComponent } from '@home/pages/resource/resources-library.component';
+import { ResourcesLibraryComponent } from '@home/pages/admin/resource/resources-library.component';
 import { PageLink } from '@shared/models/page/page-link';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { map } from 'rxjs/operators';

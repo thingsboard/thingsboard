@@ -2238,7 +2238,6 @@
         "drop-file": "Drop a resource file or click to select a file to upload.",
         "empty": "Resource is empty",
         "export": "Export resource",
-        "management": "Resource management",
         "no-resource-matching": "No resource matching '{{widgetsBundle}}' were found.",
         "no-resource-text": "No resources found",
         "open-widgets-bundle": "Open widgets bundle",
