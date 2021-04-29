@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.firmware;
 
 import com.google.common.util.concurrent.FutureCallback;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
@@ -45,6 +44,7 @@ import org.thingsboard.server.dao.firmware.FirmwareService;
 import org.thingsboard.server.gen.transport.TransportProtos.ToFirmwareStateServiceMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.queue.TbClusterService;
 
@@ -71,7 +71,6 @@ import static org.thingsboard.server.common.data.firmware.FirmwareKeyUtil.getTel
 @Slf4j
 @Service
 @TbCoreComponent
-@RequiredArgsConstructor
 public class DefaultFirmwareStateService implements FirmwareStateService {
 
     private final TbClusterService tbClusterService;
@@ -80,6 +79,19 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
     private final DeviceProfileService deviceProfileService;
     private final RuleEngineTelemetryService telemetryService;
     private final TbQueueProducer<TbProtoQueueMsg<ToFirmwareStateServiceMsg>> fwStateMsgProducer;
+
+    public DefaultFirmwareStateService(TbClusterService tbClusterService, FirmwareService firmwareService,
+                                       DeviceService deviceService,
+                                       DeviceProfileService deviceProfileService,
+                                       RuleEngineTelemetryService telemetryService,
+                                       TbCoreQueueFactory coreQueueFactory) {
+        this.tbClusterService = tbClusterService;
+        this.firmwareService = firmwareService;
+        this.deviceService = deviceService;
+        this.deviceProfileService = deviceProfileService;
+        this.telemetryService = telemetryService;
+        this.fwStateMsgProducer = coreQueueFactory.createToFirmwareStateServiceMsgProducer();
+    }
 
     @Override
     public void update(Device device, Device oldDevice) {
