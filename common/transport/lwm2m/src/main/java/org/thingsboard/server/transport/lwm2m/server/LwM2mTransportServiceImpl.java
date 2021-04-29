@@ -42,7 +42,6 @@ import org.thingsboard.server.cache.firmware.FirmwareDataCache;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.id.FirmwareId;
-import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
@@ -1430,22 +1429,11 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
      * @return ArrayList  keyNames from profile profileAttr && IsWritable
      */
     private ConcurrentMap<String, String> getNamesFromProfileForSharedAttributes(LwM2mClient lwM2MClient) {
+
         LwM2mClientProfile profile = lwM2mClientContext.getProfile(lwM2MClient.getProfileId());
-//        Set<String> attrSet = new Gson().fromJson(profile.getPostAttributeProfile(),
-//                new TypeToken<HashSet<String>>() {
-//                }.getType());
         return new Gson().fromJson(profile.getPostKeyNameProfile().toString(),
                 new TypeToken<ConcurrentHashMap<String, String>>() {
                 }.getType());
-
-//        ConcurrentMap<String, String> keyNamesIsWritable = keyNamesMap.entrySet()
-//                .stream()
-//                .filter(e -> (attrSet.contains(e.getKey()) && validateResourceInModel(lwM2MClient, e.getKey(), true)))
-//                .collect(Collectors.toConcurrentMap(Map.Entry::getKey, Map.Entry::getValue));
-
-//        Set<String> namesIsWritable = ConcurrentHashMap.newKeySet();
-//        namesIsWritable.addAll(new HashSet<>(keyNamesMap.values()));
-//        return new ArrayList<>(namesIsWritable);
     }
 
     private boolean validateResourceInModel(LwM2mClient lwM2mClient, String pathIdVer, boolean isWritableNotOptional) {
