@@ -42,6 +42,7 @@ import org.thingsboard.server.cache.firmware.FirmwareDataCache;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.id.FirmwareId;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
@@ -1455,6 +1456,11 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
         return resourceModel != null && (isWritableNotOptional ?
                 objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)) && resourceModel.operations.isWritable() :
                 objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)));
+    }
+
+    @Override
+    public String getName() {
+        return "LWM2M";
     }
 
 }
