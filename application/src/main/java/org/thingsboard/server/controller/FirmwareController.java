@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.controller;
 
-import com.google.common.hash.Hashing;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.io.ByteArrayResource;
@@ -33,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.thingsboard.server.common.data.Firmware;
 import org.thingsboard.server.common.data.FirmwareInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.firmware.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -49,6 +49,7 @@ import java.nio.ByteBuffer;
 public class FirmwareController extends BaseController {
 
     public static final String FIRMWARE_ID = "firmwareId";
+    public static final String CHECKSUM_ALGORITHM = "checksumAlgorithm";
 
     @PreAuthorize("hasAnyAuthority( 'TENANT_ADMIN')")
     @RequestMapping(value = "/firmware/{firmwareId}/download", method = RequestMethod.GET)
@@ -115,9 +116,10 @@ public class FirmwareController extends BaseController {
     @ResponseBody
     public Firmware saveFirmwareData(@PathVariable(FIRMWARE_ID) String strFirmwareId,
                                      @RequestParam(required = false) String checksum,
-                                     @RequestParam() String checksumAlgorithm,
+                                     @RequestParam(CHECKSUM_ALGORITHM) String checksumAlgorithmStr,
                                      @RequestBody MultipartFile file) throws ThingsboardException {
         checkParameter(FIRMWARE_ID, strFirmwareId);
+        checkParameter(CHECKSUM_ALGORITHM, checksumAlgorithmStr);
         try {
             FirmwareId firmwareId = new FirmwareId(toUUID(strFirmwareId));
             FirmwareInfo info = checkFirmwareInfoId(firmwareId, Operation.READ);
@@ -129,6 +131,8 @@ public class FirmwareController extends BaseController {
             firmware.setVersion(info.getVersion());
             firmware.setAdditionalInfo(info.getAdditionalInfo());
 
+            ChecksumAlgorithm checksumAlgorithm = ChecksumAlgorithm.valueOf(checksumAlgorithmStr.toUpperCase());
+
             ByteBuffer data = ByteBuffer.wrap(file.getBytes());
             if (StringUtils.isEmpty(checksum)) {
                 checksum = firmwareService.generateChecksum(checksumAlgorithm, data);
@@ -139,7 +143,7 @@ public class FirmwareController extends BaseController {
             firmware.setFileName(file.getOriginalFilename());
             firmware.setContentType(file.getContentType());
             firmware.setData(data);
-            firmware.setDataSize((long) data.array().length);
+            firmware.setDataSize((long) data.capacity());
             return firmwareService.saveFirmware(firmware);
         } catch (Exception e) {
             throw handleException(e);

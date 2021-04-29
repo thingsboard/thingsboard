@@ -22,6 +22,7 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.FirmwareInfo;
+import org.thingsboard.server.common.data.firmware.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
@@ -31,6 +32,8 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.UUID;
@@ -70,8 +73,9 @@ public class FirmwareInfoEntity extends BaseSqlEntity<FirmwareInfo> implements S
     @Column(name = FIRMWARE_CONTENT_TYPE_COLUMN)
     private String contentType;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = FIRMWARE_CHECKSUM_ALGORITHM_COLUMN)
-    private String checksumAlgorithm;
+    private ChecksumAlgorithm checksumAlgorithm;
 
     @Column(name = FIRMWARE_CHECKSUM_COLUMN)
     private String checksum;
@@ -108,7 +112,7 @@ public class FirmwareInfoEntity extends BaseSqlEntity<FirmwareInfo> implements S
     }
 
     public FirmwareInfoEntity(UUID id, long createdTime, UUID tenantId, String title, String version,
-                              String fileName, String contentType, String checksumAlgorithm, String checksum, Long dataSize,
+                              String fileName, String contentType, ChecksumAlgorithm checksumAlgorithm, String checksum, Long dataSize,
                               Object additionalInfo, boolean hasData) {
         this.id = id;
         this.createdTime = createdTime;

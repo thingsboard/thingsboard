@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.firmware.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TenantId;
 
@@ -34,7 +35,7 @@ public class FirmwareInfo extends SearchTextBasedWithAdditionalInfo<FirmwareId> 
     private boolean hasData;
     private String fileName;
     private String contentType;
-    private String checksumAlgorithm;
+    private ChecksumAlgorithm checksumAlgorithm;
     private String checksum;
     private Long dataSize;
 

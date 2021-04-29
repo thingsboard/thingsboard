@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Firmware;
+import org.thingsboard.server.common.data.firmware.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
@@ -30,6 +31,8 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import java.nio.ByteBuffer;
 import java.util.UUID;
@@ -68,8 +71,9 @@ public class FirmwareEntity extends BaseSqlEntity<Firmware> implements SearchTex
     @Column(name = FIRMWARE_CONTENT_TYPE_COLUMN)
     private String contentType;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = FIRMWARE_CHECKSUM_ALGORITHM_COLUMN)
-    private String checksumAlgorithm;
+    private ChecksumAlgorithm checksumAlgorithm;
 
     @Column(name = FIRMWARE_CHECKSUM_COLUMN)
     private String checksum;

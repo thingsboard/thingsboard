@@ -17,6 +17,8 @@ package org.thingsboard.server.dao.firmware;
 
 import org.thingsboard.server.common.data.Firmware;
 import org.thingsboard.server.common.data.FirmwareInfo;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.firmware.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -30,7 +32,9 @@ public interface FirmwareService {
 
     Firmware saveFirmware(Firmware firmware);
 
-    String generateChecksum(String checksumAlgorithm, ByteBuffer data);
+    PageData<String> getSupportedChecksumAlgorithms(PageLink pageLink);
+
+    String generateChecksum(ChecksumAlgorithm checksumAlgorithm, ByteBuffer data) throws ThingsboardException;
 
     Firmware findFirmwareById(TenantId tenantId, FirmwareId firmwareId);
 

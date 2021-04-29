@@ -227,7 +227,7 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
         attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_VERSION, firmware.getVersion())));
 
         attributes.add(new BaseAttributeKvEntry(ts, new LongDataEntry(FIRMWARE_SIZE, firmware.getDataSize())));
-        attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_CHECKSUM_ALGORITHM, firmware.getChecksumAlgorithm())));
+        attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_CHECKSUM_ALGORITHM, firmware.getChecksumAlgorithm().name())));
         attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_CHECKSUM, firmware.getChecksum())));
         telemetryService.saveAndNotify(tenantId, deviceId, DataConstants.SHARED_SCOPE, attributes, new FutureCallback<>() {
             @Override
