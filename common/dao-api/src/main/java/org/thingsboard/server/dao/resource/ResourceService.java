@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.resource;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -33,6 +34,8 @@ public interface ResourceService {
     TbResource findResourceById(TenantId tenantId, TbResourceId resourceId);
 
     TbResourceInfo findResourceInfoById(TenantId tenantId, TbResourceId resourceId);
+
+    ListenableFuture<TbResourceInfo> findResourceInfoByIdAsync(TenantId tenantId, TbResourceId resourceId);
 
     PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TenantId tenantId, PageLink pageLink);
 

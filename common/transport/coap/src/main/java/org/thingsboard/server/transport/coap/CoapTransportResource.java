@@ -28,12 +28,12 @@ import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.eclipse.californium.core.server.resources.ResourceObserver;
-import org.springframework.util.StringUtils;
 import org.thingsboard.server.coapserver.CoapServerService;
 import org.thingsboard.server.coapserver.TbCoapDtlsSessionInfo;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
@@ -120,6 +120,8 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
             processExchangeGetRequest(exchange, featureType.get());
         } else if (featureType.get() == FeatureType.ATTRIBUTES) {
             processRequest(exchange, SessionMsgType.GET_ATTRIBUTES_REQUEST);
+        } else if (featureType.get() == FeatureType.FIRMWARE) {
+            processRequest(exchange, SessionMsgType.GET_FIRMWARE_REQUEST);
         } else {
             log.trace("Invalid feature type parameter");
             exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
@@ -201,7 +203,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         Request request = advanced.getRequest();
 
         String dtlsSessionIdStr = request.getSourceContext().get(DTLS_SESSION_ID_KEY);
-        if (!StringUtils.isEmpty(dtlsSessionIdStr)) {
+        if (StringUtils.isNotEmpty(dtlsSessionIdStr)) {
             if (dtlsSessionIdMap != null) {
                 TbCoapDtlsSessionInfo tbCoapDtlsSessionInfo = dtlsSessionIdMap
                         .computeIfPresent(dtlsSessionIdStr, (dtlsSessionId, dtlsSessionInfo) -> {
@@ -323,6 +325,14 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                             coapTransportAdaptor.convertToGetAttributes(sessionId, request),
                             new CoapNoOpCallback(exchange));
                     break;
+                case GET_FIRMWARE_REQUEST:
+                    TransportProtos.GetFirmwareRequestMsg requestMsg = TransportProtos.GetFirmwareRequestMsg.newBuilder()
+                            .setTenantIdMSB(sessionInfo.getTenantIdMSB())
+                            .setTenantIdLSB(sessionInfo.getTenantIdLSB())
+                            .setDeviceIdMSB(sessionInfo.getDeviceIdMSB())
+                            .setDeviceIdLSB(sessionInfo.getDeviceIdLSB()).build();
+                    transportContext.getTransportService().process(sessionInfo, requestMsg, new FirmwareCallback(exchange));
+                    break;
             }
         } catch (AdaptorException e) {
             log.trace("[{}] Failed to decode message: ", sessionId, e);
@@ -414,6 +424,40 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                 exchange.respond(responseCode, JsonConverter.toJson(msg).toString());
             } else {
                 exchange.respond(responseCode, msg.toByteArray());
+            }
+        }
+
+        @Override
+        public void onError(Throwable e) {
+            log.warn("Failed to process request", e);
+            exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private class FirmwareCallback implements TransportServiceCallback<TransportProtos.GetFirmwareResponseMsg> {
+        private final CoapExchange exchange;
+
+        FirmwareCallback(CoapExchange exchange) {
+            this.exchange = exchange;
+        }
+
+        @Override
+        public void onSuccess(TransportProtos.GetFirmwareResponseMsg msg) {
+            String title = exchange.getQueryParameter("title");
+            String version = exchange.getQueryParameter("version");
+            if (msg.getResponseStatus().equals(TransportProtos.ResponseStatus.SUCCESS)) {
+                if (msg.getTitle().equals(title) && msg.getVersion().equals(version)) {
+                    String firmwareId = new UUID(msg.getFirmwareIdMSB(), msg.getFirmwareIdLSB()).toString();
+                    String strChunkSize = exchange.getQueryParameter("size");
+                    String strChunk = exchange.getQueryParameter("chunk");
+                    int chunkSize = StringUtils.isEmpty(strChunkSize) ? 0 : Integer.parseInt(strChunkSize);
+                    int chunk = StringUtils.isEmpty(strChunk) ? 0 : Integer.parseInt(strChunk);
+                    exchange.respond(CoAP.ResponseCode.CONTENT, transportContext.getFirmwareDataCache().get(firmwareId, chunkSize, chunk));
+                } else {
+                    exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
+                }
+            } else {
+                exchange.respond(CoAP.ResponseCode.NOT_FOUND);
             }
         }
 

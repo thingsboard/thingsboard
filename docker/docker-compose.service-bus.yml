@@ -72,3 +72,8 @@ services:
       - queue-service-bus.env
     depends_on:
       - zookeeper
+  tb-snmp-transport:
+    env_file:
+      - queue-service-bus.env
+    depends_on:
+      - zookeeper

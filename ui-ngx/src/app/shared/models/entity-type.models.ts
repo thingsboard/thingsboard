@@ -287,6 +287,7 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
     [
       EntityType.TB_RESOURCE,
       {
+        type: 'entity.type-tb-resource',
         details: 'resource.resource-library-details',
         add: 'resource.add',
         noEntities: 'resource.no-resource-text',
@@ -297,6 +298,7 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
     [
       EntityType.FIRMWARE,
       {
+        type: 'entity.type-firmware',
         details: 'firmware.firmware-details',
         add: 'firmware.add',
         noEntities: 'firmware.no-firmware-text',
