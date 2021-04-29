@@ -25,7 +25,6 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.eclipse.leshan.core.attributes.Attribute;
 import org.eclipse.leshan.core.attributes.AttributeSet;
 import org.eclipse.leshan.core.model.ObjectModel;
@@ -40,7 +39,6 @@ import org.eclipse.leshan.core.node.codec.CodecException;
 import org.eclipse.leshan.core.request.DownlinkRequest;
 import org.eclipse.leshan.core.request.WriteAttributesRequest;
 import org.eclipse.leshan.core.util.Hex;
-import org.eclipse.leshan.server.californium.LeshanServerBuilder;
 import org.eclipse.leshan.server.registration.Registration;
 import org.nustaq.serialization.FSTConfiguration;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -50,7 +48,6 @@ import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientProfile;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -188,21 +185,6 @@ public class LwM2mTransportHandler {
     public static final String EVENT_AWAKE = "AWAKE";
     public static final String SERVICE_CHANNEL = "SERVICE";
     public static final String RESPONSE_CHANNEL = "RESP";
-
-    public static NetworkConfig getCoapConfig(Integer serverPortNoSec, Integer serverSecurePort) {
-        NetworkConfig coapConfig;
-        File configFile = new File(NetworkConfig.DEFAULT_FILE_NAME);
-        if (configFile.isFile()) {
-            coapConfig = new NetworkConfig();
-            coapConfig.load(configFile);
-        } else {
-            coapConfig = LeshanServerBuilder.createDefaultNetworkConfig();
-            coapConfig.store(configFile);
-        }
-        coapConfig.setString("COAP_PORT", Integer.toString(serverPortNoSec));
-        coapConfig.setString("COAP_SECURE_PORT", Integer.toString(serverSecurePort));
-        return coapConfig;
-    }
 
     public static boolean equalsResourceValue(Object valueOld, Object valueNew, ResourceModel.Type type, LwM2mPath resourcePath) throws CodecException {
         switch (type) {

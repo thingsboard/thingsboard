@@ -1316,7 +1316,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
      */
     private SessionInfoProto getValidateSessionInfo(String registrationId) {
         LwM2mClient lwM2MClient = lwM2mClientContext.getLwM2mClientWithReg(null, registrationId);
-        return getNewSessionInfoProto(lwM2MClient);
+        return lwM2MClient != null ? this.getNewSessionInfoProto(lwM2MClient) : null;
     }
 
     /**

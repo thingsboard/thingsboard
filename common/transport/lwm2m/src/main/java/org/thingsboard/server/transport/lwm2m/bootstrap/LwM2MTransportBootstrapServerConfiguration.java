@@ -55,7 +55,7 @@ import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CBC_SHA256;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CCM_8;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.getCoapConfig;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mNetworkConfig.getCoapConfig;
 
 @Slf4j
 @Component
