@@ -19,6 +19,9 @@ server:
   address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
   # Server bind port
   port: "${HTTP_BIND_PORT:8080}"
+  tomcat:
+    # Maximum size of data that could be send over HTTP form POST request
+    max-http-form-post-size: "${MAX_HTTP_FORM_POST_SIZE:10000000}" # 10Mb
   # Server SSL configuration
   ssl:
     # Enable/disable SSL support
