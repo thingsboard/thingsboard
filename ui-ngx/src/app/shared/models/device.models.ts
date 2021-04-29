@@ -467,6 +467,7 @@ export interface DeviceProfile extends BaseData<DeviceProfileId> {
   defaultRuleChainId?: RuleChainId;
   defaultQueueName?: string;
   firmwareId?: FirmwareId;
+  softwareId?: FirmwareId;
   profileData: DeviceProfileData;
 }
 
@@ -522,6 +523,7 @@ export interface Device extends BaseData<DeviceId> {
   type: string;
   label: string;
   firmwareId?: FirmwareId;
+  softwareId?: FirmwareId;
   deviceProfileId?: DeviceProfileId;
   deviceData?: DeviceData;
   additionalInfo?: any;

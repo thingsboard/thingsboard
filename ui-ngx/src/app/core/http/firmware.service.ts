@@ -20,7 +20,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { defaultHttpOptionsFromConfig, defaultHttpUploadOptions, RequestConfig } from '@core/http/http-utils';
 import { Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
-import { Firmware, FirmwareInfo } from '@shared/models/firmware.models';
+import { Firmware, FirmwareInfo, FirmwareType } from '@shared/models/firmware.models';
 import { catchError, map, mergeMap } from 'rxjs/operators';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
 
@@ -34,12 +34,13 @@ export class FirmwareService {
 
   }
 
-  public getFirmwares(pageLink: PageLink, hasData?: boolean, config?: RequestConfig): Observable<PageData<FirmwareInfo>> {
-    let url = `/api/firmwares`;
-    if (isDefinedAndNotNull(hasData)) {
-      url += `/${hasData}`;
-    }
-    url += `${pageLink.toQuery()}`;
+  public getFirmwares(pageLink: PageLink, config?: RequestConfig): Observable<PageData<FirmwareInfo>> {
+    return this.http.get<PageData<FirmwareInfo>>(`/api/firmwares${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getFirmwaresInfoByDeviceProfileId(pageLink: PageLink, deviceProfileId: string, type: FirmwareType,
+                                           hasData = true, config?: RequestConfig): Observable<PageData<FirmwareInfo>> {
+    const url = `/api/firmwares/${deviceProfileId}/${type}/${hasData}${pageLink.toQuery()}`;
     return this.http.get<PageData<FirmwareInfo>>(url, defaultHttpOptionsFromConfig(config));
   }
 

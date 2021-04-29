@@ -22,7 +22,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { EntityComponent } from '@home/components/entity/entity.component';
-import { ChecksumAlgorithm, ChecksumAlgorithmTranslationMap, Firmware } from '@shared/models/firmware.models';
+import {
+  ChecksumAlgorithm,
+  ChecksumAlgorithmTranslationMap,
+  Firmware,
+  FirmwareType,
+  FirmwareTypeTranslationMap
+} from '@shared/models/firmware.models';
 import { distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 
@@ -36,6 +42,8 @@ export class FirmwaresComponent extends EntityComponent<Firmware> implements OnI
 
   checksumAlgorithms = Object.values(ChecksumAlgorithm);
   checksumAlgorithmTranslationMap = ChecksumAlgorithmTranslationMap;
+  firmwareTypes = Object.values(FirmwareType);
+  firmwareTypeTranslationMap = FirmwareTypeTranslationMap;
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
@@ -83,6 +91,8 @@ export class FirmwaresComponent extends EntityComponent<Firmware> implements OnI
     const form = this.fb.group({
       title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
       version: [entity ? entity.version : '', [Validators.required, Validators.maxLength(255)]],
+      type: [entity?.type ? entity.type : FirmwareType.FIRMWARE, [Validators.required]],
+      deviceProfileId: [entity ? entity.deviceProfileId : null],
       checksumAlgorithm: [entity ? entity.checksumAlgorithm : null],
       checksum: [entity ? entity.checksum : '', Validators.maxLength(1020)],
       additionalInfo: this.fb.group(
@@ -105,6 +115,8 @@ export class FirmwaresComponent extends EntityComponent<Firmware> implements OnI
     this.entityForm.patchValue({
       title: entity.title,
       version: entity.version,
+      type: entity.type,
+      deviceProfileId: entity.deviceProfileId,
       checksumAlgorithm: entity.checksumAlgorithm,
       checksum: entity.checksum,
       fileName: entity.fileName,

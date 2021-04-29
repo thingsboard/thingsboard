@@ -21,7 +21,12 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import { Firmware, FirmwareInfo } from '@shared/models/firmware.models';
+import {
+  ChecksumAlgorithmTranslationMap,
+  Firmware,
+  FirmwareInfo,
+  FirmwareTypeTranslationMap
+} from '@shared/models/firmware.models';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
@@ -49,14 +54,17 @@ export class FirmwareTableConfigResolve implements Resolve<EntityTableConfig<Fir
 
     this.config.columns.push(
       new DateEntityTableColumn<FirmwareInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<FirmwareInfo>('title', 'firmware.title', '33%'),
-      new EntityTableColumn<FirmwareInfo>('version', 'firmware.version', '33%'),
-      new EntityTableColumn<FirmwareInfo>('fileName', 'firmware.file-name', '33%'),
+      new EntityTableColumn<FirmwareInfo>('title', 'firmware.title', '25%'),
+      new EntityTableColumn<FirmwareInfo>('version', 'firmware.version', '25%'),
+      new EntityTableColumn<FirmwareInfo>('type', 'firmware.type', '25%', entity => {
+        return this.translate.instant(FirmwareTypeTranslationMap.get(entity.type));
+      }),
+      new EntityTableColumn<FirmwareInfo>('fileName', 'firmware.file-name', '25%'),
       new EntityTableColumn<FirmwareInfo>('dataSize', 'firmware.file-size', '70px', entity => {
         return this.fileSize.transform(entity.dataSize || 0);
       }),
       new EntityTableColumn<FirmwareInfo>('checksum', 'firmware.checksum', '540px', entity => {
-        return `${entity.checksumAlgorithm}: ${entity.checksum}`;
+        return `${ChecksumAlgorithmTranslationMap.get(entity.checksumAlgorithm)}: ${entity.checksum}`;
       }, () => ({}), false)
     );
 
