@@ -19,18 +19,25 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.support.HttpRequestWrapper;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 import org.thingsboard.rest.client.utils.RestJsonConverter;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ClaimRequest;
@@ -47,6 +54,10 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.Firmware;
+import org.thingsboard.server.common.data.FirmwareInfo;
+import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -76,9 +87,11 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationTemplateId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -2827,6 +2840,153 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         Map<String, String> params = new HashMap<>();
         params.put("edgeId", edgeId.toString());
         restTemplate.postForEntity(baseURL + "/api/edge/sync/{edgeId}", null, EdgeId.class, params);
+    }
+
+    public ResponseEntity<Resource> downloadResource(TbResourceId resourceId) {
+        Map<String, String> params = new HashMap<>();
+        params.put("resourceId", resourceId.getId().toString());
+
+        return restTemplate.exchange(
+                baseURL + "/api/resource/{resourceId}/download",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<>() {},
+                params
+        );
+    }
+
+    public TbResourceInfo getResourceInfoById(TbResourceId resourceId) {
+        Map<String, String> params = new HashMap<>();
+        params.put("resourceId", resourceId.getId().toString());
+
+        return restTemplate.exchange(
+                baseURL + "/api/resource/info/{resourceId}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TbResourceInfo>() {},
+                params
+        ).getBody();
+    }
+
+    public TbResource getResourceId(TbResourceId resourceId) {
+        Map<String, String> params = new HashMap<>();
+        params.put("resourceId", resourceId.getId().toString());
+
+        return restTemplate.exchange(
+                baseURL + "/api/resource/{resourceId}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TbResource>() {},
+                params
+        ).getBody();
+    }
+
+    public TbResource saveResource(TbResource resource) {
+        return restTemplate.postForEntity(
+                baseURL + "/api/resource",
+                resource,
+                TbResource.class
+        ).getBody();
+    }
+
+    public PageData<TbResourceInfo> getResources(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/resource?" + getUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<TbResourceInfo>>() {},
+                params
+        ).getBody();
+    }
+
+    public ResponseEntity<Resource> downloadFirmware(FirmwareId firmwareId) {
+        Map<String, String> params = new HashMap<>();
+        params.put("firmwareId", firmwareId.getId().toString());
+
+        return restTemplate.exchange(
+                baseURL + "/api/firmware/{firmwareId}/download",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<>() {},
+                params
+        );
+    }
+
+    public FirmwareInfo getFirmwareById(FirmwareId firmwareId) {
+        Map<String, String> params = new HashMap<>();
+        params.put("firmwareId", firmwareId.getId().toString());
+
+        return restTemplate.exchange(
+                baseURL + "/api/firmware/info/{firmwareId}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<FirmwareInfo>() {},
+                params
+        ).getBody();
+    }
+
+    public FirmwareInfo saveFirmwareInfo(FirmwareInfo firmwareInfo) {
+        return restTemplate.postForEntity(baseURL + "/api/firmware", firmwareInfo, FirmwareInfo.class).getBody();
+    }
+
+    public Firmware saveFirmwareData(FirmwareId firmwareId, String checkSum, String checksumAlgorithm, MultipartFile file) throws Exception {
+        HttpHeaders header = new HttpHeaders();
+        header.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        MultiValueMap<String, String> fileMap = new LinkedMultiValueMap<>();
+        fileMap.add(HttpHeaders.CONTENT_DISPOSITION, "form-data; name=file; filename=" + file.getName());
+        HttpEntity<ByteArrayResource> fileEntity = new HttpEntity<>(new ByteArrayResource(file.getBytes()), fileMap);
+
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", fileEntity);
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, header);
+
+        Map<String, String> params = new HashMap<>();
+        params.put("firmwareId", firmwareId.getId().toString());
+        String url = "/api/firmware/{firmwareId}";
+
+        if(checkSum != null && checksumAlgorithm != null) {
+            url += "?checkSum={checkSum}&checkSumAlgorithm={checkSumAlgorithm}";
+        }
+
+        return restTemplate.postForEntity(
+                baseURL + url, requestEntity, Firmware.class, params
+        ).getBody();
+    }
+
+    public PageData<FirmwareInfo> getFirmwares(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+
+        return restTemplate.exchange(
+                baseURL + "/api/firmwares?" + getUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<FirmwareInfo>>() {
+                },
+                params
+        ).getBody();
+    }
+
+    public PageData<FirmwareInfo> getFirmwares(boolean hasData, PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("hasData", String.valueOf(hasData));
+        addPageLinkToParam(params, pageLink);
+
+        return restTemplate.exchange(
+                baseURL + "/api/firmwares/{hasData}?" + getUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<FirmwareInfo>>() {
+                },
+                params
+        ).getBody();
+    }
+
+    public void deleteResource(FirmwareId firmwareId) {
+        restTemplate.delete(baseURL + "/api/firmware/{firmwareId}", firmwareId.getId().toString());
     }
 
     @Deprecated
