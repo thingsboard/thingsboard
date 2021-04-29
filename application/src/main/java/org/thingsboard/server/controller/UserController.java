@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
@@ -89,25 +90,18 @@ public class UserController extends BaseController {
         try {
             UserId userId = new UserId(toUUID(strUserId));
             User user = checkUserId(userId, Operation.READ);
-            if(!user.getAdditionalInfo().isNull()) {
-                processDashboardIdFromAdditionalInfo((ObjectNode) user.getAdditionalInfo(), DEFAULT_DASHBOARD);
-                processDashboardIdFromAdditionalInfo((ObjectNode) user.getAdditionalInfo(), HOME_DASHBOARD);
-            }
-            UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
-            if(userCredentials.isEnabled()) {
-                addUserCredentialsEnabled((ObjectNode) user.getAdditionalInfo());
+            if(user.getAdditionalInfo().isObject()) {
+                ObjectNode additionalInfo = (ObjectNode) user.getAdditionalInfo();
+                processDashboardIdFromAdditionalInfo(additionalInfo, DEFAULT_DASHBOARD);
+                processDashboardIdFromAdditionalInfo(additionalInfo, HOME_DASHBOARD);
+                UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
+                if(userCredentials.isEnabled() && !additionalInfo.has("userCredentialsEnabled")) {
+                    additionalInfo.put("userCredentialsEnabled", true);
+                }
             }
             return user;
         } catch (Exception e) {
             throw handleException(e);
-        }
-    }
-
-    private void addUserCredentialsEnabled(ObjectNode additionalInfo) {
-        if(!additionalInfo.isNull()) {
-            if(!additionalInfo.has("userCredentialsEnabled")) {
-                additionalInfo.put("userCredentialsEnabled", true);
-            }
         }
     }
 
