@@ -22,6 +22,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.DefaultTbActorSystem;
@@ -108,7 +109,7 @@ public class DefaultActorService extends TbApplicationEventListener<PartitionCha
         if (poolSize == 1) {
             return Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(dispatcherName));
         } else {
-            return Executors.newWorkStealingPool(poolSize);
+            return ThingsBoardExecutors.newWorkStealingPool(poolSize, dispatcherName);
         }
     }
 

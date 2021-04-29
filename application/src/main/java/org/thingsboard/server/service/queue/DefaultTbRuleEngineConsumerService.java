@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -127,7 +128,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
             consumers.computeIfAbsent(configuration.getName(), queueName -> tbRuleEngineQueueFactory.createToRuleEngineMsgConsumer(configuration));
             consumerStats.put(configuration.getName(), new TbRuleEngineConsumerStats(configuration.getName(), statsFactory));
         }
-        submitExecutor = Executors.newSingleThreadExecutor();
+        submitExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-service-submit-executor"));
     }
 
     @PreDestroy
@@ -160,6 +161,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
 
     private void launchConsumer(TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer, TbRuleEngineQueueConfiguration configuration, TbRuleEngineConsumerStats stats) {
         consumersExecutor.execute(() -> {
+            Thread.currentThread().setName("" + Thread.currentThread().getName() + "-" + configuration.getName());
             while (!stopped) {
                 try {
                     List<TbProtoQueueMsg<ToRuleEngineMsg>> msgs = consumer.poll(pollDuration);
