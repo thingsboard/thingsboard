@@ -686,6 +686,22 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                         if (firmware.getData() == null) {
                             throw new DataValidationException("Can't assign firmware with empty data!");
                         }
+                        if (!firmware.getDeviceProfileId().equals(device.getDeviceProfileId())) {
+                            throw new DataValidationException("Can't assign firmware with different deviceProfile!");
+                        }
+                    }
+
+                    if (device.getSoftwareId() != null) {
+                        Firmware software = firmwareService.findFirmwareById(tenantId, device.getSoftwareId());
+                        if (software == null) {
+                            throw new DataValidationException("Can't assign non-existent software!");
+                        }
+                        if (software.getData() == null) {
+                            throw new DataValidationException("Can't assign software with empty data!");
+                        }
+                        if (!software.getDeviceProfileId().equals(device.getDeviceProfileId())) {
+                            throw new DataValidationException("Can't assign firmware with different deviceProfile!");
+                        }
                     }
                 }
             };

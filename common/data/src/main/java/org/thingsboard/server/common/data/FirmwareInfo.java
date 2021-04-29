@@ -20,6 +20,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.firmware.FirmwareType;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TenantId;
 
@@ -31,6 +32,7 @@ public class FirmwareInfo extends SearchTextBasedWithAdditionalInfo<FirmwareId> 
     private static final long serialVersionUID = 3168391583570815419L;
 
     private TenantId tenantId;
+    private DeviceProfileId deviceProfileId;
     private FirmwareType type;
     private String title;
     private String version;
@@ -53,6 +55,7 @@ public class FirmwareInfo extends SearchTextBasedWithAdditionalInfo<FirmwareId> 
     public FirmwareInfo(FirmwareInfo firmwareInfo) {
         super(firmwareInfo);
         this.tenantId = firmwareInfo.getTenantId();
+        this.deviceProfileId = firmwareInfo.getDeviceProfileId();
         this.type = firmwareInfo.getType();
         this.title = firmwareInfo.getTitle();
         this.version = firmwareInfo.getVersion();

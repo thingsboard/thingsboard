@@ -20,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.FirmwareInfo;
+import org.thingsboard.server.common.data.firmware.FirmwareType;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -73,10 +75,12 @@ public class JpaFirmwareInfoDao extends JpaAbstractSearchTextDao<FirmwareInfoEnt
     }
 
     @Override
-    public PageData<FirmwareInfo> findFirmwareInfoByTenantIdAndHasData(TenantId tenantId, boolean hasData, PageLink pageLink) {
+    public PageData<FirmwareInfo> findFirmwareInfoByTenantIdAndDeviceProfileIdAndTypeAndHasData(TenantId tenantId, DeviceProfileId deviceProfileId, FirmwareType firmwareType, boolean hasData, PageLink pageLink) {
         return DaoUtil.toPageData(firmwareInfoRepository
-                .findAllByTenantIdAndHasData(
+                .findAllByTenantIdAndTypeAndDeviceProfileIdAndHasData(
                         tenantId.getId(),
+                        deviceProfileId.getId(),
+                        firmwareType,
                         hasData,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));

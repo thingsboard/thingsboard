@@ -59,6 +59,8 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
 
     private FirmwareId firmwareId;
 
+    private FirmwareId softwareId;
+
     public DeviceProfile() {
         super();
     }
@@ -77,6 +79,8 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
         this.defaultQueueName = deviceProfile.getDefaultQueueName();
         this.setProfileData(deviceProfile.getProfileData());
         this.provisionDeviceKey = deviceProfile.getProvisionDeviceKey();
+        this.firmwareId = deviceProfile.getFirmwareId();
+        this.softwareId = deviceProfile.getSoftwareId();
     }
 
     @Override

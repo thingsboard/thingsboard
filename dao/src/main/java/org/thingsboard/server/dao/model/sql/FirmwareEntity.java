@@ -22,6 +22,7 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Firmware;
 import org.thingsboard.server.common.data.firmware.FirmwareType;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
@@ -43,6 +44,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_CHECKSUM_
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_CONTENT_TYPE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_DATA_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_DATA_SIZE_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_DEVICE_PROFILE_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_FILE_NAME_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.FIRMWARE_TENANT_ID_COLUMN;
@@ -60,6 +62,9 @@ public class FirmwareEntity extends BaseSqlEntity<Firmware> implements SearchTex
 
     @Column(name = FIRMWARE_TENANT_ID_COLUMN)
     private UUID tenantId;
+
+    @Column(name = FIRMWARE_DEVICE_PROFILE_ID_COLUMN)
+    private UUID deviceProfileId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = FIRMWARE_TYPE_COLUMN)
@@ -105,6 +110,7 @@ public class FirmwareEntity extends BaseSqlEntity<Firmware> implements SearchTex
         this.createdTime = firmware.getCreatedTime();
         this.setUuid(firmware.getUuidId());
         this.tenantId = firmware.getTenantId().getId();
+        this.deviceProfileId = firmware.getDeviceProfileId().getId();
         this.type = firmware.getType();
         this.title = firmware.getTitle();
         this.version = firmware.getVersion();
@@ -132,6 +138,7 @@ public class FirmwareEntity extends BaseSqlEntity<Firmware> implements SearchTex
         Firmware firmware = new Firmware(new FirmwareId(id));
         firmware.setCreatedTime(createdTime);
         firmware.setTenantId(new TenantId(tenantId));
+        firmware.setDeviceProfileId(new DeviceProfileId(deviceProfileId));
         firmware.setType(type);
         firmware.setTitle(title);
         firmware.setVersion(version);
