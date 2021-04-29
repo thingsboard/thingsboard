@@ -39,7 +39,6 @@ import java.util.Collections;
 import java.util.Optional;
 
 @Slf4j
-@ConditionalOnExpression("'${transport.coap.enabled}'=='true'")
 @ConditionalOnProperty(prefix = "transport.coap.dtls", value = "enabled", havingValue = "true", matchIfMissing = false)
 @Component
 public class TbCoapDtlsSettings {
@@ -50,7 +49,7 @@ public class TbCoapDtlsSettings {
     @Value("${transport.coap.dtls.bind_port}")
     private Integer port;
 
-    @Value("${transport.coap.dtls.mode}")
+    @Value("${transport.coap.dtls.mode:NO_AUTH}")
     private String mode;
 
     @Value("${transport.coap.dtls.key_store}")
@@ -65,13 +64,13 @@ public class TbCoapDtlsSettings {
     @Value("${transport.coap.dtls.key_alias}")
     private String keyAlias;
 
-    @Value("${transport.coap.dtls.skip_validity_check_for_client_cert}")
+    @Value("${transport.coap.dtls.x509.skip_validity_check_for_client_cert:false}")
     private boolean skipValidityCheckForClientCert;
 
-    @Value("${transport.coap.dtls.x509.dtls_session_inactivity_timeout}")
+    @Value("${transport.coap.dtls.x509.dtls_session_inactivity_timeout:86400000}")
     private long dtlsSessionInactivityTimeout;
 
-    @Value("${transport.coap.dtls.x509.dtls_session_report_timeout}")
+    @Value("${transport.coap.dtls.x509.dtls_session_report_timeout:1800000}")
     private long dtlsSessionReportTimeout;
 
     @Autowired

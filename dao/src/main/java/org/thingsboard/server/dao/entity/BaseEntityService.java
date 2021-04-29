@@ -31,7 +31,9 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -46,6 +48,8 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.firmware.FirmwareService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
@@ -91,6 +95,12 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
 
     @Autowired
     private EntityQueryDao entityQueryDao;
+
+    @Autowired
+    private ResourceService resourceService;
+
+    @Autowired
+    private FirmwareService firmwareService;
 
     @Override
     public void deleteEntityRelations(TenantId tenantId, EntityId entityId) {
@@ -152,6 +162,12 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             case EDGE:
                 hasName = edgeService.findEdgeByIdAsync(tenantId, new EdgeId(entityId.getId()));
                 break;
+            case TB_RESOURCE:
+                hasName = resourceService.findResourceInfoByIdAsync(tenantId, new TbResourceId(entityId.getId()));
+                break;
+            case FIRMWARE:
+                hasName = firmwareService.findFirmwareInfoByIdAsync(tenantId, new FirmwareId(entityId.getId()));
+                break;
             default:
                 throw new IllegalStateException("Not Implemented!");
         }
@@ -178,9 +194,9 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         if (pageLink == null) {
             throw new IncorrectParameterException("Entity Data Page link must be specified.");
         } else if (pageLink.getPageSize() < 1) {
-            throw new IncorrectParameterException("Incorrect entity data page link page size '"+pageLink.getPageSize()+"'. Page size must be greater than zero.");
+            throw new IncorrectParameterException("Incorrect entity data page link page size '" + pageLink.getPageSize() + "'. Page size must be greater than zero.");
         } else if (pageLink.getPage() < 0) {
-            throw new IncorrectParameterException("Incorrect entity data page link page '"+pageLink.getPage()+"'. Page must be positive integer.");
+            throw new IncorrectParameterException("Incorrect entity data page link page '" + pageLink.getPage() + "'. Page must be positive integer.");
         }
     }
 

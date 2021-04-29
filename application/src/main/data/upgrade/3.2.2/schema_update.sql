@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS firmware (
     content_type varchar(255),
     checksum_algorithm varchar(32),
     checksum varchar(1020),
-    data bytea,
+    data oid,
     data_size bigint,
     additional_info varchar,
     search_text varchar(255),
