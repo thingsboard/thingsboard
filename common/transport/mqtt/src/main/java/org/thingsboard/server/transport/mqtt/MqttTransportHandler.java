@@ -452,7 +452,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         log.trace("[{}] Send firmware [{}] to device!", sessionId, firmwareId);
         ack(ctx, msgId);
         try {
-            byte[] firmwareChunk = context.getFirmwareCacheReader().get(firmwareId, chunkSize, chunk);
+            byte[] firmwareChunk = context.getFirmwareDataCache().get(firmwareId, chunkSize, chunk);
             deviceSessionCtx.getPayloadAdaptor()
                     .convertToPublish(deviceSessionCtx, firmwareChunk, requestId, chunk)
                     .ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);

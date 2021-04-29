@@ -29,8 +29,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Firmware;
 import org.thingsboard.server.common.data.FirmwareInfo;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.firmware.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.id.FirmwareId;
@@ -72,14 +74,14 @@ public class FirmwareController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/firmware/info/{firmwareId}", method = RequestMethod.GET)
     @ResponseBody
     public FirmwareInfo getFirmwareInfoById(@PathVariable(FIRMWARE_ID) String strFirmwareId) throws ThingsboardException {
         checkParameter(FIRMWARE_ID, strFirmwareId);
         try {
             FirmwareId firmwareId = new FirmwareId(toUUID(strFirmwareId));
-            return checkFirmwareInfoId(firmwareId, Operation.READ);
+            return checkNotNull(firmwareService.findFirmwareInfoById(getTenantId(), firmwareId));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -102,11 +104,17 @@ public class FirmwareController extends BaseController {
     @RequestMapping(value = "/firmware", method = RequestMethod.POST)
     @ResponseBody
     public FirmwareInfo saveFirmwareInfo(@RequestBody FirmwareInfo firmwareInfo) throws ThingsboardException {
-        firmwareInfo.setTenantId(getTenantId());
-        checkEntity(firmwareInfo.getId(), firmwareInfo, Resource.FIRMWARE);
+        boolean created = firmwareInfo.getId() == null;
         try {
-            return firmwareService.saveFirmwareInfo(firmwareInfo);
+            firmwareInfo.setTenantId(getTenantId());
+            checkEntity(firmwareInfo.getId(), firmwareInfo, Resource.FIRMWARE);
+            FirmwareInfo savedFirmwareInfo = firmwareService.saveFirmwareInfo(firmwareInfo);
+            logEntityAction(savedFirmwareInfo.getId(), savedFirmwareInfo,
+                    null, created ? ActionType.ADDED : ActionType.UPDATED, null);
+            return savedFirmwareInfo;
         } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.FIRMWARE), firmwareInfo,
+                    null, created ? ActionType.ADDED : ActionType.UPDATED, e);
             throw handleException(e);
         }
     }
@@ -144,13 +152,16 @@ public class FirmwareController extends BaseController {
             firmware.setContentType(file.getContentType());
             firmware.setData(data);
             firmware.setDataSize((long) data.capacity());
-            return firmwareService.saveFirmware(firmware);
+            Firmware savedFirmware = firmwareService.saveFirmware(firmware);
+            logEntityAction(savedFirmware.getId(), savedFirmware, null, ActionType.UPDATED, null);
+            return savedFirmware;
         } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.FIRMWARE), null, null, ActionType.UPDATED, e, strFirmwareId);
             throw handleException(e);
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/firmwares", method = RequestMethod.GET)
     @ResponseBody
     public PageData<FirmwareInfo> getFirmwares(@RequestParam int pageSize,
@@ -166,7 +177,7 @@ public class FirmwareController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/firmwares/{hasData}", method = RequestMethod.GET)
     @ResponseBody
     public PageData<FirmwareInfo> getFirmwares(@PathVariable("hasData") boolean hasData,
@@ -186,13 +197,15 @@ public class FirmwareController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/firmware/{firmwareId}", method = RequestMethod.DELETE)
     @ResponseBody
-    public void deleteResource(@PathVariable("firmwareId") String strFirmwareId) throws ThingsboardException {
+    public void deleteFirmware(@PathVariable("firmwareId") String strFirmwareId) throws ThingsboardException {
         checkParameter(FIRMWARE_ID, strFirmwareId);
         try {
             FirmwareId firmwareId = new FirmwareId(toUUID(strFirmwareId));
-            checkFirmwareInfoId(firmwareId, Operation.DELETE);
+            FirmwareInfo info = checkFirmwareInfoId(firmwareId, Operation.DELETE);
             firmwareService.deleteFirmware(getTenantId(), firmwareId);
+            logEntityAction(firmwareId, info, null, ActionType.DELETED, null, strFirmwareId);
         } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.FIRMWARE), null, null, ActionType.DELETED, e, strFirmwareId);
             throw handleException(e);
         }
     }

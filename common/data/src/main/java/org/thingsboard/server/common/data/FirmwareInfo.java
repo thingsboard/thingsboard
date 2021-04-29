@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +26,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 @Slf4j
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class FirmwareInfo extends SearchTextBasedWithAdditionalInfo<FirmwareId> implements HasTenantId {
+public class FirmwareInfo extends SearchTextBasedWithAdditionalInfo<FirmwareId> implements HasName, HasTenantId {
 
     private static final long serialVersionUID = 3168391583570815419L;
 
@@ -63,6 +64,12 @@ public class FirmwareInfo extends SearchTextBasedWithAdditionalInfo<FirmwareId> 
 
     @Override
     public String getSearchText() {
+        return title;
+    }
+
+    @Override
+    @JsonIgnore
+    public String getName() {
         return title;
     }
 }

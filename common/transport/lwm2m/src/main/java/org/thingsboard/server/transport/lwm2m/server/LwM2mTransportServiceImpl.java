@@ -40,6 +40,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
@@ -1353,4 +1354,10 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
                 objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)) && resourceModel.operations.isWritable() :
                 objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)));
     }
+
+    @Override
+    public String getName() {
+        return "LWM2M";
+    }
+
 }

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.firmware;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Firmware;
 import org.thingsboard.server.common.data.FirmwareInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -39,6 +40,8 @@ public interface FirmwareService {
     Firmware findFirmwareById(TenantId tenantId, FirmwareId firmwareId);
 
     FirmwareInfo findFirmwareInfoById(TenantId tenantId, FirmwareId firmwareId);
+
+    ListenableFuture<FirmwareInfo> findFirmwareInfoByIdAsync(TenantId tenantId, FirmwareId firmwareId);
 
     PageData<FirmwareInfo> findTenantFirmwaresByTenantId(TenantId tenantId, PageLink pageLink);
 

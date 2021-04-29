@@ -22,7 +22,6 @@ import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.Firmware;
 import org.thingsboard.server.common.data.FirmwareInfo;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.FirmwareId;
@@ -35,7 +34,6 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -155,7 +153,7 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
             }
 
             if (targetFirmwareId.equals(currentFirmwareId)) {
-                update(device, firmwareService.findFirmwareById(device.getTenantId(), targetFirmwareId), ts);
+                update(device, firmwareService.findFirmwareInfoById(device.getTenantId(), targetFirmwareId), ts);
                 isSuccess = true;
             } else {
                 log.warn("[{}] [{}] Can`t update firmware for the device, target firmwareId: [{}], current firmwareId: [{}]!", tenantId, deviceId, targetFirmwareId, currentFirmwareId);
@@ -187,6 +185,7 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
         List<TsKvEntry> telemetry = new ArrayList<>();
         telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.TARGET_FIRMWARE_TITLE, firmware.getTitle())));
         telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.TARGET_FIRMWARE_VERSION, firmware.getVersion())));
+        telemetry.add(new BasicTsKvEntry(ts, new LongDataEntry(DataConstants.TARGET_FIRMWARE_TS, ts)));
         telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(DataConstants.FIRMWARE_STATE, FirmwareUpdateStatus.QUEUED.name())));
 
         telemetryService.saveAndNotify(tenantId, deviceId, telemetry, new FutureCallback<>() {

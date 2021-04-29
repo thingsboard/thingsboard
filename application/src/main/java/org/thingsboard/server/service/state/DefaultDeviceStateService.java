@@ -54,7 +54,7 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
+import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.util.TbCoreComponent;

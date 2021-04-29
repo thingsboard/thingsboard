@@ -33,6 +33,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.Lob;
 import javax.persistence.Table;
 import java.nio.ByteBuffer;
 import java.util.UUID;
@@ -78,6 +79,7 @@ public class FirmwareEntity extends BaseSqlEntity<Firmware> implements SearchTex
     @Column(name = FIRMWARE_CHECKSUM_COLUMN)
     private String checksum;
 
+    @Lob
     @Column(name = FIRMWARE_DATA_COLUMN, columnDefinition = "BINARY")
     private byte[] data;
 

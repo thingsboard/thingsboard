@@ -99,6 +99,7 @@ public class DataConstants {
     public static final String CURRENT_FIRMWARE_VERSION = "cur_fw_version";
     public static final String TARGET_FIRMWARE_TITLE = "target_fw_title";
     public static final String TARGET_FIRMWARE_VERSION = "target_fw_version";
+    public static final String TARGET_FIRMWARE_TS = "target_fw_ts";
     public static final String FIRMWARE_STATE = "fw_state";
 
     //attributes
