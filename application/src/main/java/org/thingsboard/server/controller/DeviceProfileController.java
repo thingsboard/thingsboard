@@ -15,17 +15,21 @@
  */
 package org.thingsboard.server.controller;
 
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -43,9 +47,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @TbCoreComponent
@@ -59,8 +61,7 @@ public class DeviceProfileController extends BaseController {
     private TimeseriesService timeseriesService;
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/deviceProfile/{deviceProfileId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/deviceProfile/{deviceProfileId}")
     public DeviceProfile getDeviceProfileById(@PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId) throws ThingsboardException {
         checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
         try {
@@ -72,8 +73,7 @@ public class DeviceProfileController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/deviceProfileInfo/{deviceProfileId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/deviceProfileInfo/{deviceProfileId}")
     public DeviceProfileInfo getDeviceProfileInfoById(@PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId) throws ThingsboardException {
         checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
         try {
@@ -85,8 +85,7 @@ public class DeviceProfileController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/deviceProfileInfo/default", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/deviceProfileInfo/default")
     public DeviceProfileInfo getDefaultDeviceProfileInfo() throws ThingsboardException {
         try {
             return checkNotNull(deviceProfileService.findDefaultDeviceProfileInfo(getTenantId()));
@@ -96,8 +95,7 @@ public class DeviceProfileController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/deviceProfile/devices/keys/timeseries", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/deviceProfile/devices/keys/timeseries")
     public List<String> getTimeseriesKeys(
             @RequestParam(name = DEVICE_PROFILE_ID, required = false) String deviceProfileIdStr) throws ThingsboardException {
         DeviceProfileId deviceProfileId;
@@ -116,8 +114,7 @@ public class DeviceProfileController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/deviceProfile/devices/keys/attributes", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/deviceProfile/devices/keys/attributes")
     public List<String> getAttributesKeys(
             @RequestParam(name = DEVICE_PROFILE_ID, required = false) String deviceProfileIdStr) throws ThingsboardException {
         DeviceProfileId deviceProfileId;
@@ -136,8 +133,7 @@ public class DeviceProfileController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/deviceProfile", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/deviceProfile")
     public DeviceProfile saveDeviceProfile(@RequestBody DeviceProfile deviceProfile) throws ThingsboardException {
         try {
             boolean created = deviceProfile.getId() == null;
@@ -178,7 +174,7 @@ public class DeviceProfileController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/deviceProfile/{deviceProfileId}", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/deviceProfile/{deviceProfileId}")
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteDeviceProfile(@PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId) throws ThingsboardException {
         checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
@@ -205,8 +201,7 @@ public class DeviceProfileController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/deviceProfile/{deviceProfileId}/default", method = RequestMethod.POST)
-    @ResponseBody
+    @GetMapping(value = "/deviceProfile/{deviceProfileId}/default")
     public DeviceProfile setDefaultDeviceProfile(@PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId) throws ThingsboardException {
         checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
         try {
@@ -236,8 +231,7 @@ public class DeviceProfileController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/deviceProfiles", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/deviceProfiles", params = {"pageSize", "page"})
     public PageData<DeviceProfile> getDeviceProfiles(@RequestParam int pageSize,
                                                      @RequestParam int page,
                                                      @RequestParam(required = false) String textSearch,
@@ -252,8 +246,7 @@ public class DeviceProfileController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/deviceProfileInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/deviceProfileInfos", params = {"pageSize", "page"})
     public PageData<DeviceProfileInfo> getDeviceProfileInfos(@RequestParam int pageSize,
                                                              @RequestParam int page,
                                                              @RequestParam(required = false) String textSearch,

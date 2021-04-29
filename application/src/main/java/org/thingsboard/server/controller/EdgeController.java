@@ -15,15 +15,19 @@
  */
 package org.thingsboard.server.controller;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Customer;
@@ -54,9 +58,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.google.common.util.concurrent.ListenableFuture;
 
 @RestController
 @TbCoreComponent
@@ -66,15 +68,13 @@ public class EdgeController extends BaseController {
     public static final String EDGE_ID = "edgeId";
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/edges/enabled", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/edges/enabled")
     public boolean isEdgesSupportEnabled() {
         return edgesEnabled;
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/edge/{edgeId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/edge/{edgeId}")
     public Edge getEdgeById(@PathVariable(EDGE_ID) String strEdgeId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
         try {
@@ -90,8 +90,7 @@ public class EdgeController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/edge/info/{edgeId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/edge/info/{edgeId}")
     public EdgeInfo getEdgeInfoById(@PathVariable(EDGE_ID) String strEdgeId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
         try {
@@ -107,8 +106,7 @@ public class EdgeController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edge", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/edge")
     public Edge saveEdge(@RequestBody Edge edge) throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
@@ -149,7 +147,7 @@ public class EdgeController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edge/{edgeId}", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/edge/{edgeId}")
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteEdge(@PathVariable(EDGE_ID) String strEdgeId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
@@ -177,8 +175,7 @@ public class EdgeController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edges", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/edges", params = {"pageSize", "page"})
     public PageData<Edge> getEdges(@RequestParam int pageSize,
                                    @RequestParam int page,
                                    @RequestParam(required = false) String textSearch,
@@ -194,8 +191,7 @@ public class EdgeController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/{customerId}/edge/{edgeId}", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/customer/{customerId}/edge/{edgeId}")
     public Edge assignEdgeToCustomer(@PathVariable("customerId") String strCustomerId,
                                      @PathVariable(EDGE_ID) String strEdgeId) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
@@ -229,8 +225,7 @@ public class EdgeController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/edge/{edgeId}", method = RequestMethod.DELETE)
-    @ResponseBody
+    @DeleteMapping(value = "/customer/edge/{edgeId}")
     public Edge unassignEdgeFromCustomer(@PathVariable(EDGE_ID) String strEdgeId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
         try {
@@ -263,8 +258,7 @@ public class EdgeController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/public/edge/{edgeId}", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/customer/public/edge/{edgeId}")
     public Edge assignEdgeToPublicCustomer(@PathVariable(EDGE_ID) String strEdgeId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
         try {
@@ -290,8 +284,7 @@ public class EdgeController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/edges", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/edges", params = {"pageSize", "page"})
     public PageData<Edge> getTenantEdges(
             @RequestParam int pageSize,
             @RequestParam int page,
@@ -313,8 +306,7 @@ public class EdgeController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/edgeInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/edgeInfos", params = {"pageSize", "page"})
     public PageData<EdgeInfo> getTenantEdgeInfos(
             @RequestParam int pageSize,
             @RequestParam int page,
@@ -336,8 +328,7 @@ public class EdgeController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/edges", params = {"edgeName"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/edges", params = {"edgeName"})
     public Edge getTenantEdge(@RequestParam String edgeName) throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
@@ -348,8 +339,7 @@ public class EdgeController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edge/{edgeId}/{ruleChainId}/root", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/edge/{edgeId}/{ruleChainId}/root")
     public Edge setRootRuleChain(@PathVariable(EDGE_ID) String strEdgeId,
                                  @PathVariable("ruleChainId") String strRuleChainId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
@@ -380,8 +370,7 @@ public class EdgeController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/{customerId}/edges", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/customer/{customerId}/edges", params = {"pageSize", "page"})
     public PageData<Edge> getCustomerEdges(
             @PathVariable("customerId") String strCustomerId,
             @RequestParam int pageSize,
@@ -415,8 +404,7 @@ public class EdgeController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/{customerId}/edgeInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/customer/{customerId}/edgeInfos", params = {"pageSize", "page"})
     public PageData<EdgeInfo> getCustomerEdgeInfos(
             @PathVariable("customerId") String strCustomerId,
             @RequestParam int pageSize,
@@ -450,8 +438,7 @@ public class EdgeController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/edges", params = {"edgeIds"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/edges", params = {"edgeIds"})
     public List<Edge> getEdgesByIds(
             @RequestParam("edgeIds") String[] strEdgeIds) throws ThingsboardException {
         checkArrayParameter("edgeIds", strEdgeIds);
@@ -482,8 +469,7 @@ public class EdgeController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/edges", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/edges")
     public List<Edge> findByQuery(@RequestBody EdgeSearchQuery query) throws ThingsboardException {
         checkNotNull(query);
         checkNotNull(query.getParameters());
@@ -513,8 +499,7 @@ public class EdgeController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/edge/types", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/edge/types")
     public List<EntitySubtype> getEdgeTypes() throws ThingsboardException {
         try {
             SecurityUser user = getCurrentUser();
@@ -527,7 +512,7 @@ public class EdgeController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edge/sync/{edgeId}", method = RequestMethod.POST)
+    @PostMapping(value = "/edge/sync/{edgeId}")
     public void syncEdge(@PathVariable("edgeId") String strEdgeId) throws ThingsboardException {
         checkParameter("edgeId", strEdgeId);
         try {
@@ -547,8 +532,7 @@ public class EdgeController extends BaseController {
         }
     }
 
-    @RequestMapping(value = "/license/checkInstance", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/license/checkInstance")
     public Object checkInstance(@RequestBody Object request) throws ThingsboardException {
         try {
             return edgeService.checkInstance(request);
@@ -557,8 +541,7 @@ public class EdgeController extends BaseController {
         }
     }
 
-    @RequestMapping(value = "/license/activateInstance", params = {"licenseSecret", "releaseDate"}, method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/license/activateInstance", params = {"licenseSecret", "releaseDate"})
     public Object activateInstance(@RequestParam String licenseSecret,
                                    @RequestParam String releaseDate) throws ThingsboardException {
         try {
@@ -569,8 +552,7 @@ public class EdgeController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edge/missingToRelatedRuleChains/{edgeId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/edge/missingToRelatedRuleChains/{edgeId}")
     public String findMissingToRelatedRuleChains(@PathVariable("edgeId") String strEdgeId) throws ThingsboardException {
         try {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));

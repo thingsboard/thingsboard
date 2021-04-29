@@ -18,11 +18,10 @@ package org.thingsboard.server.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -48,8 +47,7 @@ public class EntityQueryController extends BaseController {
     private static final int MAX_PAGE_SIZE = 100;
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/entitiesQuery/count", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/entitiesQuery/count")
     public long countEntitiesByQuery(@RequestBody EntityCountQuery query) throws ThingsboardException {
         checkNotNull(query);
         try {
@@ -60,8 +58,7 @@ public class EntityQueryController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/entitiesQuery/find", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/entitiesQuery/find")
     public PageData<EntityData> findEntityDataByQuery(@RequestBody EntityDataQuery query) throws ThingsboardException {
         checkNotNull(query);
         try {
@@ -72,8 +69,7 @@ public class EntityQueryController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/alarmsQuery/find", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/alarmsQuery/find")
     public PageData<AlarmData> findAlarmDataByQuery(@RequestBody AlarmDataQuery query) throws ThingsboardException {
         checkNotNull(query);
         try {
@@ -84,8 +80,7 @@ public class EntityQueryController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/entitiesQuery/find/keys", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/entitiesQuery/find/keys")
     public DeferredResult<ResponseEntity> findEntityTimeseriesAndAttributesKeysByQuery(@RequestBody EntityDataQuery query,
                                                                                        @RequestParam("timeseries") boolean isTimeseries,
                                                                                        @RequestParam("attributes") boolean isAttributes) throws ThingsboardException {
