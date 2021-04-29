@@ -74,3 +74,8 @@ services:
       - queue-aws-sqs.env
     depends_on:
       - zookeeper
+  tb-snmp-transport:
+    env_file:
+      - queue-aws-sqs.env
+    depends_on:
+      - zookeeper
