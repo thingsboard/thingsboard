@@ -109,7 +109,9 @@ public class FirmwareInfoEntity extends BaseSqlEntity<FirmwareInfo> implements S
         this.setUuid(firmware.getUuidId());
         this.tenantId = firmware.getTenantId().getId();
         this.type = firmware.getType();
-        this.deviceProfileId = firmware.getDeviceProfileId().getId();
+        if (firmware.getDeviceProfileId() != null) {
+            this.deviceProfileId = firmware.getDeviceProfileId().getId();
+        }
         this.title = firmware.getTitle();
         this.version = firmware.getVersion();
         this.fileName = firmware.getFileName();
@@ -154,7 +156,9 @@ public class FirmwareInfoEntity extends BaseSqlEntity<FirmwareInfo> implements S
         FirmwareInfo firmware = new FirmwareInfo(new FirmwareId(id));
         firmware.setCreatedTime(createdTime);
         firmware.setTenantId(new TenantId(tenantId));
-        firmware.setDeviceProfileId(new DeviceProfileId(deviceProfileId));
+        if (deviceProfileId != null) {
+            firmware.setDeviceProfileId(new DeviceProfileId(deviceProfileId));
+        }
         firmware.setType(type);
         firmware.setTitle(title);
         firmware.setVersion(version);

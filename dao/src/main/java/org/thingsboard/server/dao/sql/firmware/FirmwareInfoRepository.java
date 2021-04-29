@@ -48,4 +48,13 @@ public interface FirmwareInfoRepository extends CrudRepository<FirmwareInfoEntit
 
     @Query("SELECT new FirmwareInfoEntity(f.id, f.createdTime, f.tenantId, f.deviceProfileId, f.type, f.title, f.version, f.fileName, f.contentType, f.checksumAlgorithm, f.checksum, f.dataSize, f.additionalInfo, f.data IS NOT NULL) FROM FirmwareEntity f WHERE f.id = :id")
     FirmwareInfoEntity findFirmwareInfoById(@Param("id") UUID id);
+
+    @Query(value = "SELECT exists(SELECT * " +
+            "FROM device_profile AS dp " +
+            "LEFT JOIN device AS d ON dp.id = d.device_profile_id " +
+            "WHERE dp.id = :deviceProfileId AND " +
+            "(('FIRMWARE' = :type AND (dp.firmware_id = :firmwareId OR d.firmware_id = :firmwareId)) " +
+            "OR ('SOFTWARE' = :type AND (dp.software_id = :firmwareId or d.software_id = :firmwareId))))", nativeQuery = true)
+    boolean isFirmwareUsed(@Param("firmwareId") UUID firmwareId, @Param("deviceProfileId") UUID deviceProfileId, @Param("type") String type);
+
 }
