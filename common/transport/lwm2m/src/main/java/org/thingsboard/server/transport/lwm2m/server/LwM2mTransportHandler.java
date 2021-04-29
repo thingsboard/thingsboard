@@ -72,7 +72,6 @@ import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPA
 @Slf4j
 public class LwM2mTransportHandler {
 
-    //    public static final String BASE_DEVICE_API_TOPIC = "v1/devices/me";
     public static final String TRANSPORT_DEFAULT_LWM2M_VERSION = "1.0";
     public static final String CLIENT_LWM2M_SETTINGS = "clientLwM2mSettings";
     public static final String BOOTSTRAP = "bootstrap";
@@ -85,19 +84,12 @@ public class LwM2mTransportHandler {
     public static final String KEY_NAME = "keyName";
     public static final String OBSERVE_LWM2M = "observe";
     public static final String ATTRIBUTE_LWM2M = "attributeLwm2m";
-//    public static final String RESOURCE_VALUE = "resValue";
-//    public static final String RESOURCE_TYPE = "resType";
 
     private static final String REQUEST = "/request";
-    //    private static final String RESPONSE = "/response";
     private static final String ATTRIBUTES = "/" + ATTRIBUTE;
     public static final String TELEMETRIES = "/" + TELEMETRY;
-    //    public static final String ATTRIBUTES_RESPONSE = ATTRIBUTES + RESPONSE;
     public static final String ATTRIBUTES_REQUEST = ATTRIBUTES + REQUEST;
-    //    public static final String DEVICE_ATTRIBUTES_RESPONSE = ATTRIBUTES_RESPONSE + "/";
     public static final String DEVICE_ATTRIBUTES_REQUEST = ATTRIBUTES_REQUEST + "/";
-//    public static final String DEVICE_ATTRIBUTES_TOPIC = BASE_DEVICE_API_TOPIC + ATTRIBUTES;
-//    public static final String DEVICE_TELEMETRY_TOPIC = BASE_DEVICE_API_TOPIC + TELEMETRIES;
 
     public static final long DEFAULT_TIMEOUT = 2 * 60 * 1000L; // 2min in ms
 

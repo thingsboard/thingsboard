@@ -171,8 +171,6 @@ public class LwM2mTransportRequest {
                             break;
                         case WRITE_REPLACE:
                             // Request to write a <b>String Single-Instance Resource</b> using the TLV content format.
-//                    resource = lwM2MClient.getResourceModel(targetIdVer);
-//                        if (contentFormat.equals(ContentFormat.TLV) && !resource.multiple) {
                             resourceModel = lwM2MClient.getResourceModel(targetIdVer, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer()
                                     .getModelProvider());
                             if (contentFormat.equals(ContentFormat.TLV)) {
@@ -181,7 +179,6 @@ public class LwM2mTransportRequest {
                                         registration, rpcRequest);
                             }
                             // Mode.REPLACE && Request to write a <b>String Single-Instance Resource</b> using the given content format (TEXT, TLV, JSON)
-//                        else if (!contentFormat.equals(ContentFormat.TLV) && !resource.multiple) {
                             else if (!contentFormat.equals(ContentFormat.TLV)) {
                                 request = this.getWriteRequestSingleResource(contentFormat, resultIds.getObjectId(),
                                         resultIds.getObjectInstanceId(), resultIds.getResourceId(), params, resourceModel.type,

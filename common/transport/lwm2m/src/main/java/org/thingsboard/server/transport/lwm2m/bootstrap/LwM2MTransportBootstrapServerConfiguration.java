@@ -93,7 +93,6 @@ public class LwM2MTransportBootstrapServerConfiguration {
         builder.setCoapConfig(getCoapConfig(bootstrapPortNoSec, bootstrapSecurePort));
 
         /** Define model provider (Create Models )*/
-//        builder.setModel(new StaticModel(contextS.getLwM2MTransportConfigServer().getModelsValueCommon()));
 
         /**  Create credentials */
         this.setServerWithCredentials(builder);

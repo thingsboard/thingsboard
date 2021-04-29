@@ -24,11 +24,8 @@ import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Random;
-import java.util.Set;
 
 @Slf4j
 @Component("LwM2MJsonAdaptor")
@@ -53,10 +50,6 @@ public class LwM2MJsonAdaptor implements LwM2MTransportAdaptor  {
         }
     }
 
-//    @Override
-//    public TransportProtos.GetAttributeRequestMsg convertToGetAttributes(List<String> clientKeys, List<String> sharedKeys) throws AdaptorException {
-//        return processGetAttributeRequestMsg(clientKeys, sharedKeys);
-//    }
     @Override
     public TransportProtos.GetAttributeRequestMsg convertToGetAttributes(Collection<String> clientKeys, Collection<String> sharedKeys) throws AdaptorException {
         try {
@@ -75,14 +68,4 @@ public class LwM2MJsonAdaptor implements LwM2MTransportAdaptor  {
             throw new AdaptorException(e);
         }
     }
-
-    private Set<String> toStringSet(JsonElement requestBody, String name) {
-        JsonElement element = requestBody.getAsJsonObject().get(name);
-        if (element != null) {
-            return new HashSet<>(Arrays.asList(element.getAsString().split(",")));
-        } else {
-            return null;
-        }
-    }
-
 }

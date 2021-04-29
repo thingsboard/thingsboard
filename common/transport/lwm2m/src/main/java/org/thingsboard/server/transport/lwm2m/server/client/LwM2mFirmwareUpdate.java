@@ -24,49 +24,4 @@ public class LwM2mFirmwareUpdate {
     private volatile String clientFwVersion;
     private volatile String currentFwVersion;
     private volatile UUID currentFwId;
-//    private Long fw_size;
-//    private String fw_checksum_algorithm;
-//    private String fw_checksum;
-
-
-//    haredUpdated {
-//        ts: 1619444153674
-//        kv {
-//            key: "fw_title"
-//            type: STRING_V
-//            string_v: "manufacture999"
-//        }
-//    }
-//    sharedUpdated {
-//        ts: 1619444153674
-//        kv {
-//            key: "fw_version"
-//            type: STRING_V
-//            string_v: "3.04"
-//        }
-//    }
-//    sharedUpdated {
-//        ts: 1619444153674
-//        kv {
-//            key: "fw_size"
-//            type: LONG_V
-//            long_v: 8781
-//        }
-//    }
-//    sharedUpdated {
-//        ts: 1619444153674
-//        kv {
-//            key: "fw_checksum_algorithm"
-//            type: STRING_V
-//            string_v: "sha256"
-//        }
-//    }
-//    sharedUpdated {
-//        ts: 1619444153674
-//        kv {
-//            key: "fw_checksum"
-//            type: STRING_V
-//            string_v: "93ba4e59aee372ea0a728b463d2604db928f0975a91caec5b564363b28e979c1"
-//        }
-//    }
 }

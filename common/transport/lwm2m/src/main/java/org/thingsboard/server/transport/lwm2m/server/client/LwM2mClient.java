@@ -114,8 +114,6 @@ public class LwM2mClient implements Cloneable {
     public Collection<LwM2mResource> getNewResourcesForInstance(String pathRezIdVer, LwM2mModelProvider modelProvider,
                                                                 LwM2mValueConverterImpl converter) {
         LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRezIdVer));
-//        String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
-//        String verRez = getVerFromPathIdVerOrId(pathRezIdVer);
         Collection<LwM2mResource> resources = ConcurrentHashMap.newKeySet();
         Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
                 .getObjectModel(pathIds.getObjectId()).resources;
