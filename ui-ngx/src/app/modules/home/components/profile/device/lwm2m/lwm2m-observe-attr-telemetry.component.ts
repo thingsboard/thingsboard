@@ -24,6 +24,8 @@ import {
   NG_VALUE_ACCESSOR,
   Validators
 } from '@angular/forms';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   ATTRIBUTE,
@@ -38,6 +40,7 @@ import {
 } from './lwm2m-profile-config.models';
 import { deepClone, isDefinedAndNotNull, isEqual, isUndefined } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';
+import { TranslateService } from '@ngx-translate/core';
 import {
   Lwm2mObjectAddInstancesData,
   Lwm2mObjectAddInstancesDialogComponent
@@ -80,8 +83,10 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
   @Input()
   disabled: boolean;
 
-  constructor(private fb: FormBuilder,
-              private dialog: MatDialog) {
+  constructor(private store: Store<AppState>,
+              private fb: FormBuilder,
+              private dialog: MatDialog,
+              public translate: TranslateService) {
     this.observeAttrTelemetryFormGroup = this.fb.group({
       [CLIENT_LWM2M]: this.fb.array([])
     });
@@ -93,7 +98,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
   }
 
   private propagateChange = (v: any) => {
-  }
+  };
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
@@ -184,7 +189,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
     this.observeAttrTelemetryFormGroup.get(CLIENT_LWM2M).updateValueAndValidity();
   }
 
-  trackByParams = (index: number): number => {
+  trackByParams = (index: number, element: any): number => {
     return index;
   }
 
@@ -312,7 +317,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
     return  objectName + ' <' + idVerObj + '>';
   }
   getNameInstanceLwm2m = (instance: Instance, idVerObj: string): string => {
-    return  ` instance <${idVerObj}/${instance.id}>`;
+    return  ' instance <' + idVerObj + '/' + instance.id +'>';
   }
 
   updateAttributeLwm2mObject = (event: Event, objectKeyId: number): void => {

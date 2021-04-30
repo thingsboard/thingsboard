@@ -57,13 +57,15 @@ public class LwM2mClient implements Cloneable {
     private UUID deviceId;
     private UUID sessionId;
     private UUID profileId;
+    private volatile LwM2mFirmwareUpdate frUpdate;
     private Registration registration;
     private ValidateDeviceCredentialsResponseMsg credentialsResponse;
     private final Map<String, ResourceValue> resources;
     private final Map<String, TransportProtos.TsKvProto> delayedRequests;
-    private final List<String> pendingRequests;
+    private final List<String> pendingReadRequests;
     private final Queue<LwM2mQueuedRequest> queuedRequests;
     private boolean init;
+    private volatile boolean updateFw;
 
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
@@ -75,12 +77,14 @@ public class LwM2mClient implements Cloneable {
         this.securityInfo = securityInfo;
         this.credentialsResponse = credentialsResponse;
         this.delayedRequests = new ConcurrentHashMap<>();
-        this.pendingRequests = new CopyOnWriteArrayList<>();
+        this.pendingReadRequests = new CopyOnWriteArrayList<>();
         this.resources = new ConcurrentHashMap<>();
         this.profileId = profileId;
         this.sessionId = sessionId;
         this.init = false;
+        this.updateFw = false;
         this.queuedRequests = new ConcurrentLinkedQueue<>();
+        this.frUpdate = new LwM2mFirmwareUpdate();
     }
 
     public boolean saveResourceValue(String pathRez, LwM2mResource rez, LwM2mModelProvider modelProvider) {
@@ -103,15 +107,13 @@ public class LwM2mClient implements Cloneable {
         LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRez));
         String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
         String verRez = getVerFromPathIdVerOrId(pathRez);
-        return (verRez == null || verSupportedObject.equals(verRez)) ? modelProvider.getObjectModel(registration)
+        return verRez == null || verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
                 .getResourceModel(pathIds.getObjectId(), pathIds.getResourceId()) : null;
     }
 
     public Collection<LwM2mResource> getNewResourcesForInstance(String pathRezIdVer, LwM2mModelProvider modelProvider,
                                                                 LwM2mValueConverterImpl converter) {
         LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRezIdVer));
-        String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
-        String verRez = getVerFromPathIdVerOrId(pathRezIdVer);
         Collection<LwM2mResource> resources = ConcurrentHashMap.newKeySet();
         Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
                 .getObjectModel(pathIds.getObjectId()).resources;
@@ -170,11 +172,11 @@ public class LwM2mClient implements Cloneable {
                 .collect(Collectors.toSet());
     }
 
-    public void initValue(LwM2mTransportServiceImpl serviceImpl, String path) {
+    public void initReadValue(LwM2mTransportServiceImpl serviceImpl, String path) {
         if (path != null) {
-            this.pendingRequests.remove(path);
+            this.pendingReadRequests.remove(path);
         }
-        if (this.pendingRequests.size() == 0) {
+        if (this.pendingReadRequests.size() == 0) {
             this.init = true;
             serviceImpl.putDelayedUpdateResourcesThingsboard(this);
         }

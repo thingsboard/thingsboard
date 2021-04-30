@@ -39,7 +39,7 @@ public interface LwM2mTransportService extends TbTransportService {
 
     void setCancelObservations(Registration registration);
 
-    void onObservationResponse(Registration registration, String path, ReadResponse response, Lwm2mClientRpcRequest rpcRequest);
+    void onUpdateValueAfterReadResponse(Registration registration, String path, ReadResponse response, Lwm2mClientRpcRequest rpcRequest);
 
     void onAttributeUpdate(TransportProtos.AttributeUpdateNotificationMsg msg, TransportProtos.SessionInfoProto sessionInfo);
 
@@ -60,6 +60,4 @@ public interface LwM2mTransportService extends TbTransportService {
     void doTrigger(Registration registration, String path);
 
     void doDisconnect(TransportProtos.SessionInfoProto sessionInfo);
-
-
 }
