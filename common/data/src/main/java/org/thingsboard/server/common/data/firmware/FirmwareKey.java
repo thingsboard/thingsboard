@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.firmware;
+package org.thingsboard.server.common.data.firmware;
 
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.gen.transport.TransportProtos.ToFirmwareStateServiceMsg;
+import lombok.Getter;
 
-public interface FirmwareStateService {
+public enum FirmwareKey {
 
-    void update(Device device, Device oldDevice);
+    TITLE("title"), VERSION("version"), TS("ts"), STATE("state"), SIZE("size"), CHECKSUM("checksum"), CHECKSUM_ALGORITHM("checksum_algorithm");
 
-    void update(DeviceProfile deviceProfile, boolean isFirmwareChanged, boolean isSoftwareChanged);
+    @Getter
+    private final String value;
 
-    boolean process(ToFirmwareStateServiceMsg msg);
-
+    FirmwareKey(String value) {
+        this.value = value;
+    }
 }

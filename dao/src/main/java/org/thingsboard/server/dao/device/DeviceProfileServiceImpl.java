@@ -56,6 +56,7 @@ import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfilePr
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
+import org.thingsboard.server.common.data.firmware.FirmwareType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -406,8 +407,30 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                         if (firmware == null) {
                             throw new DataValidationException("Can't assign non-existent firmware!");
                         }
+                        if (!firmware.getType().equals(FirmwareType.FIRMWARE)) {
+                            throw new DataValidationException("Can't assign firmware with type: " + firmware.getType());
+                        }
                         if (firmware.getData() == null) {
                             throw new DataValidationException("Can't assign firmware with empty data!");
+                        }
+                        if (!firmware.getDeviceProfileId().equals(deviceProfile.getId())) {
+                            throw new DataValidationException("Can't assign firmware with different deviceProfile!");
+                        }
+                    }
+
+                    if (deviceProfile.getSoftwareId() != null) {
+                        Firmware software = firmwareService.findFirmwareById(tenantId, deviceProfile.getSoftwareId());
+                        if (software == null) {
+                            throw new DataValidationException("Can't assign non-existent software!");
+                        }
+                        if (!software.getType().equals(FirmwareType.SOFTWARE)) {
+                            throw new DataValidationException("Can't assign software with type: " + software.getType());
+                        }
+                        if (software.getData() == null) {
+                            throw new DataValidationException("Can't assign software with empty data!");
+                        }
+                        if (!software.getDeviceProfileId().equals(deviceProfile.getId())) {
+                            throw new DataValidationException("Can't assign firmware with different deviceProfile!");
                         }
                     }
                 }

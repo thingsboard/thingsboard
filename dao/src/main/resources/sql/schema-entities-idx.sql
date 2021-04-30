@@ -45,3 +45,4 @@ CREATE INDEX IF NOT EXISTS idx_asset_type ON asset(tenant_id, type);
 CREATE INDEX IF NOT EXISTS idx_attribute_kv_by_key_and_last_update_ts ON attribute_kv(entity_id, attribute_key, last_update_ts desc);
 
 CREATE INDEX IF NOT EXISTS idx_audit_log_tenant_id_and_created_time ON audit_log(tenant_id, created_time);
+
