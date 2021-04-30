@@ -427,14 +427,14 @@ public class LwM2mTransportRequest {
                 if (((LwM2mSingleResource) node).getType() == ResourceModel.Type.STRING) {
                     valueLength = ((String) ((LwM2mSingleResource) node).getValue()).length();
                     value = ((String) ((LwM2mSingleResource) node).getValue())
-                            .substring(Math.min(valueLength, lwM2mTransportContextServer.getLwM2MTransportConfigServer().getLogMaxLength()));
+                            .substring(Math.min(valueLength, lwM2mTransportContextServer.getLwM2MTransportServerConfig().getLogMaxLength()));
 
                 } else {
                     valueLength = ((byte[]) ((LwM2mSingleResource) node).getValue()).length;
                     value = new String(Arrays.copyOf(((byte[]) ((LwM2mSingleResource) node).getValue()),
-                            Math.min(valueLength, lwM2mTransportContextServer.getLwM2MTransportConfigServer().getLogMaxLength())));
+                            Math.min(valueLength, lwM2mTransportContextServer.getLwM2MTransportServerConfig().getLogMaxLength())));
                 }
-                value = valueLength > lwM2mTransportContextServer.getLwM2MTransportConfigServer().getLogMaxLength() ? value + "..." : value;
+                value = valueLength > lwM2mTransportContextServer.getLwM2MTransportServerConfig().getLogMaxLength() ? value + "..." : value;
                 msg = String.format("%s: Update finished successfully: Lwm2m code - %d Resource path - %s length - %s value - %s",
                         LOG_LW2M_INFO, response.getCode().getCode(), request.getPath().toString(), valueLength, value);
             } else {
