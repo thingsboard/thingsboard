@@ -199,6 +199,10 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
             return new ProvisionResponse(getDeviceCredentials(savedDevice), ProvisionResponseStatus.SUCCESS);
         } catch (Exception e) {
             log.warn("[{}] Error during device creation from provision request: [{}]", provisionRequest.getDeviceName(), provisionRequest, e);
+            Device device = deviceService.findDeviceByTenantIdAndName(profile.getTenantId(), provisionRequest.getDeviceName());
+            if (device != null) {
+                notify(device, provisionRequest, DataConstants.PROVISION_FAILURE, false);
+            }
             throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
         }
     }
