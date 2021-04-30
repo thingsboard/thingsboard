@@ -149,17 +149,6 @@ public class BaseFirmwareService implements FirmwareService {
     }
 
     @Override
-    public PageData<String> getSupportedChecksumAlgorithms(PageLink pageLink) {
-        List<String> methodNames = new ArrayList<>();
-        Method[] hashingMethods = Hashing.class.getMethods();
-        Arrays.stream(hashingMethods).forEach(method -> {
-            methodNames.add(method.getName());
-        });
-        return new PageData<>(methodNames, 1, methodNames.size(), false);
-    }
-
-
-    @Override
     public Firmware findFirmwareById(TenantId tenantId, FirmwareId firmwareId) {
         log.trace("Executing findFirmwareById [{}]", firmwareId);
         validateId(firmwareId, INCORRECT_FIRMWARE_ID + firmwareId);

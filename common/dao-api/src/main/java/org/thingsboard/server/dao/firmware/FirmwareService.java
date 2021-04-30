@@ -33,8 +33,6 @@ public interface FirmwareService {
 
     Firmware saveFirmware(Firmware firmware);
 
-    PageData<String> getSupportedChecksumAlgorithms(PageLink pageLink);
-
     String generateChecksum(ChecksumAlgorithm checksumAlgorithm, ByteBuffer data) throws ThingsboardException;
 
     Firmware findFirmwareById(TenantId tenantId, FirmwareId firmwareId);
