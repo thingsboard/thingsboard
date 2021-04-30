@@ -66,18 +66,18 @@ import java.util.stream.Collectors;
 import static org.eclipse.californium.core.coap.CoAP.ResponseCode.CONTENT;
 import static org.eclipse.leshan.core.ResponseCode.BAD_REQUEST;
 import static org.eclipse.leshan.core.ResponseCode.NOT_FOUND;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.DEFAULT_TIMEOUT;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.FR_PATH_RESOURCE_VER_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_ERROR;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_INFO;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_VALUE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LwM2mTypeOper;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LwM2mTypeOper.OBSERVE_CANCEL;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LwM2mTypeOper.OBSERVE_READ_ALL;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.RESPONSE_CHANNEL;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertPathFromIdVerToObjectId;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertPathFromObjectIdToIdVer;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.createWriteAttributeRequest;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.DEFAULT_TIMEOUT;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.FR_PATH_RESOURCE_VER_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LOG_LW2M_ERROR;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LOG_LW2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LOG_LW2M_VALUE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LwM2mTypeOper;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LwM2mTypeOper.OBSERVE_CANCEL;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LwM2mTypeOper.OBSERVE_READ_ALL;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.RESPONSE_CHANNEL;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.convertPathFromIdVerToObjectId;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.convertPathFromObjectIdToIdVer;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.createWriteAttributeRequest;
 
 @Slf4j
 @Service
@@ -110,7 +110,7 @@ public class LwM2mTransportRequest {
     @PostConstruct
     public void init() {
         this.converter = LwM2mValueConverterImpl.getInstance();
-        executorResponse = Executors.newFixedThreadPool(this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getResponsePoolSize(),
+        executorResponse = Executors.newFixedThreadPool(this.lwM2mTransportContextServer.getLwM2MTransportServerConfig().getResponsePoolSize(),
                 new NamedThreadFactory(String.format("LwM2M %s channel response", RESPONSE_CHANNEL)));
     }
 
@@ -161,7 +161,7 @@ public class LwM2mTransportRequest {
                             leshanServer.getObservationService().cancelObservations(registration, target);
                             break;
                         case EXECUTE:
-                            resourceModel = lwM2MClient.getResourceModel(targetIdVer, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer()
+                            resourceModel = lwM2MClient.getResourceModel(targetIdVer, this.lwM2mTransportContextServer.getLwM2MTransportServerConfig()
                                     .getModelProvider());
                             if (params != null && !resourceModel.multiple) {
                                 request = new ExecuteRequest(target, (String) this.converter.convertValue(params, resourceModel.type, ResourceModel.Type.STRING, resultIds));
@@ -171,7 +171,7 @@ public class LwM2mTransportRequest {
                             break;
                         case WRITE_REPLACE:
                             // Request to write a <b>String Single-Instance Resource</b> using the TLV content format.
-                            resourceModel = lwM2MClient.getResourceModel(targetIdVer, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer()
+                            resourceModel = lwM2MClient.getResourceModel(targetIdVer, this.lwM2mTransportContextServer.getLwM2MTransportServerConfig()
                                     .getModelProvider());
                             if (contentFormat.equals(ContentFormat.TLV)) {
                                 request = this.getWriteRequestSingleResource(null, resultIds.getObjectId(),

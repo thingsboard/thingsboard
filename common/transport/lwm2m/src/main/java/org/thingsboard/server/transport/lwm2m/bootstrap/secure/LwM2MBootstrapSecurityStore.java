@@ -35,7 +35,7 @@ import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInf
 import org.thingsboard.server.transport.lwm2m.secure.ReadResultSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mSessionMsgListener;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContextServer;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -43,12 +43,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.BOOTSTRAP_SERVER;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_ERROR;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_INFO;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LWM2M_SERVER;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.SERVERS;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.getBootstrapParametersFromThingsboard;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.BOOTSTRAP_SERVER;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LOG_LW2M_ERROR;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LOG_LW2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LWM2M_SERVER;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.SERVERS;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.getBootstrapParametersFromThingsboard;
 
 @Slf4j
 @Service("LwM2MBootstrapSecurityStore")
@@ -69,7 +69,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     @Override
     public List<SecurityInfo> getAllByEndpoint(String endPoint) {
-        ReadResultSecurityStore store = lwM2MCredentialsSecurityInfoValidator.createAndValidateCredentialsSecurityInfo(endPoint, LwM2mTransportHandler.LwM2mTypeServer.BOOTSTRAP);
+        ReadResultSecurityStore store = lwM2MCredentialsSecurityInfoValidator.createAndValidateCredentialsSecurityInfo(endPoint, LwM2mTransportHandlerUtil.LwM2mTypeServer.BOOTSTRAP);
         if (store.getBootstrapJsonCredential() != null && store.getSecurityMode() < LwM2MSecurityMode.DEFAULT_MODE.code) {
             /** add value to store  from BootstrapJson */
             this.setBootstrapConfigScurityInfo(store);
@@ -93,7 +93,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     @Override
     public SecurityInfo getByIdentity(String identity) {
-        ReadResultSecurityStore store = lwM2MCredentialsSecurityInfoValidator.createAndValidateCredentialsSecurityInfo(identity, LwM2mTransportHandler.LwM2mTypeServer.BOOTSTRAP);
+        ReadResultSecurityStore store = lwM2MCredentialsSecurityInfoValidator.createAndValidateCredentialsSecurityInfo(identity, LwM2mTransportHandlerUtil.LwM2mTypeServer.BOOTSTRAP);
         if (store.getBootstrapJsonCredential() != null && store.getSecurityMode() < LwM2MSecurityMode.DEFAULT_MODE.code) {
             /** add value to store  from BootstrapJson */
             this.setBootstrapConfigScurityInfo(store);

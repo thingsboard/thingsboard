@@ -31,7 +31,9 @@ import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.eclipse.leshan.server.security.SecurityChecker;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
+import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
@@ -83,13 +85,13 @@ public class LwM2mTransportServerConfiguration {
     @Bean
     public LeshanServer getLeshanServer() {
         log.info("Starting LwM2M transport Server... PostConstruct");
-        return this.getLhServer(this.context.getLwM2MTransportConfigServer().getServerPortNoSec(), this.context.getLwM2MTransportConfigServer().getServerPortSecurity());
+        return this.getLhServer(this.context.getLwM2MTransportServerConfig().getPort(), this.context.getLwM2MTransportServerConfig().getSecurePort());
     }
 
     private LeshanServer getLhServer(Integer serverPortNoSec, Integer serverSecurePort) {
         LeshanServerBuilder builder = new LeshanServerBuilder();
-        builder.setLocalAddress(this.context.getLwM2MTransportConfigServer().getServerHost(), serverPortNoSec);
-        builder.setLocalSecureAddress(this.context.getLwM2MTransportConfigServer().getServerHostSecurity(), serverSecurePort);
+        builder.setLocalAddress(this.context.getLwM2MTransportServerConfig().getHost(), serverPortNoSec);
+        builder.setLocalSecureAddress(this.context.getLwM2MTransportServerConfig().getSecureHost(), serverSecurePort);
         builder.setDecoder(new DefaultLwM2mNodeDecoder());
         /** Use a magic converter to support bad type send by the UI. */
         builder.setEncoder(new DefaultLwM2mNodeEncoder(LwM2mValueConverterImpl.getInstance()));
@@ -102,7 +104,7 @@ public class LwM2mTransportServerConfiguration {
 
         /** Define model provider (Create Models )*/
         LwM2mModelProvider modelProvider = new LwM2mVersionedModelProvider(this.lwM2mClientContext, this.context);
-        this.context.getLwM2MTransportConfigServer().setModelProvider(modelProvider);
+        this.context.getLwM2MTransportServerConfig().setModelProvider(modelProvider);
         builder.setObjectModelProvider(modelProvider);
 
         /**  Create credentials */
@@ -116,8 +118,8 @@ public class LwM2mTransportServerConfiguration {
         /** Create DTLS Config */
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
         dtlsConfig.setServerOnly(true);
-        dtlsConfig.setRecommendedSupportedGroupsOnly(this.context.getLwM2MTransportConfigServer().isRecommendedSupportedGroups());
-        dtlsConfig.setRecommendedCipherSuitesOnly(this.context.getLwM2MTransportConfigServer().isRecommendedCiphers());
+        dtlsConfig.setRecommendedSupportedGroupsOnly(this.context.getLwM2MTransportServerConfig().isRecommendedSupportedGroups());
+        dtlsConfig.setRecommendedCipherSuitesOnly(this.context.getLwM2MTransportServerConfig().isRecommendedCiphers());
         if (this.pskMode) {
             dtlsConfig.setSupportedCipherSuites(
                     TLS_PSK_WITH_AES_128_CCM_8,
@@ -139,9 +141,9 @@ public class LwM2mTransportServerConfiguration {
 
     private void setServerWithCredentials(LeshanServerBuilder builder) {
         try {
-            if (this.context.getLwM2MTransportConfigServer().getKeyStoreValue() != null) {
+            if (this.context.getLwM2MTransportServerConfig().getKeyStoreValue() != null) {
                 if (this.setBuilderX509(builder)) {
-                    X509Certificate rootCAX509Cert = (X509Certificate) this.context.getLwM2MTransportConfigServer().getKeyStoreValue().getCertificate(this.context.getLwM2MTransportConfigServer().getRootAlias());
+                    X509Certificate rootCAX509Cert = (X509Certificate) this.context.getLwM2MTransportServerConfig().getKeyStoreValue().getCertificate(this.context.getLwM2MTransportServerConfig().getRootCertificateAlias());
                     if (rootCAX509Cert != null) {
                         X509Certificate[] trustedCertificates = new X509Certificate[1];
                         trustedCertificates[0] = rootCAX509Cert;
@@ -175,17 +177,11 @@ public class LwM2mTransportServerConfiguration {
     }
 
     private boolean setBuilderX509(LeshanServerBuilder builder) {
-        /**
-         * For deb => KeyStorePathFile == yml or commandline: KEY_STORE_PATH_FILE
-         * For idea => KeyStorePathResource == common/transport/lwm2m/src/main/resources/credentials: in LwM2MTransportContextServer: credentials/serverKeyStore.jks
-         */
         try {
-            X509Certificate serverCertificate = (X509Certificate) this.context.getLwM2MTransportConfigServer().getKeyStoreValue().getCertificate(this.context.getLwM2MTransportConfigServer().getServerAlias());
-            PrivateKey privateKey = (PrivateKey) this.context.getLwM2MTransportConfigServer().getKeyStoreValue().getKey(this.context.getLwM2MTransportConfigServer().getServerAlias(), this.context.getLwM2MTransportConfigServer().getKeyStorePasswordServer() == null ? null : this.context.getLwM2MTransportConfigServer().getKeyStorePasswordServer().toCharArray());
+            X509Certificate serverCertificate = (X509Certificate) this.context.getLwM2MTransportServerConfig().getKeyStoreValue().getCertificate(this.context.getLwM2MTransportServerConfig().getCertificateAlias());
+            PrivateKey privateKey = (PrivateKey) this.context.getLwM2MTransportServerConfig().getKeyStoreValue().getKey(this.context.getLwM2MTransportServerConfig().getCertificateAlias(), this.context.getLwM2MTransportServerConfig().getKeyStorePassword() == null ? null : this.context.getLwM2MTransportServerConfig().getKeyStorePassword().toCharArray());
             PublicKey publicKey = serverCertificate.getPublicKey();
-            if (serverCertificate != null &&
-                    privateKey != null && privateKey.getEncoded().length > 0 &&
-                    publicKey != null && publicKey.getEncoded().length > 0) {
+            if (privateKey != null && privateKey.getEncoded().length > 0 && publicKey != null && publicKey.getEncoded().length > 0) {
                 builder.setPublicKey(serverCertificate.getPublicKey());
                 builder.setPrivateKey(privateKey);
                 builder.setCertificateChain(new X509Certificate[]{serverCertificate});
@@ -212,10 +208,12 @@ public class LwM2mTransportServerConfiguration {
     }
 
     private void infoPramsUri(String mode) {
-        log.info("Server uses [{}]: serverNoSecureURI : [{}], serverSecureURI : [{}]",
-                mode,
-                this.context.getLwM2MTransportConfigServer().getServerHost() + ":" + this.context.getLwM2MTransportConfigServer().getServerPortNoSec(),
-                this.context.getLwM2MTransportConfigServer().getServerHostSecurity() + ":" + this.context.getLwM2MTransportConfigServer().getServerPortSecurity());
+        LwM2MTransportServerConfig lwM2MTransportServerConfig = this.context.getLwM2MTransportServerConfig();
+        log.info("Server uses [{}]: serverNoSecureURI : [{}:{}], serverSecureURI : [{}:{}]", mode,
+                lwM2MTransportServerConfig.getHost(),
+                lwM2MTransportServerConfig.getPort(),
+                lwM2MTransportServerConfig.getSecureHost(),
+                lwM2MTransportServerConfig.getSecurePort());
     }
 
     private boolean setServerRPK(LeshanServerBuilder builder) {
@@ -233,39 +231,26 @@ public class LwM2mTransportServerConfiguration {
         return false;
     }
 
-
-    /**
-     * From yml: server
-     * public_x: "${LWM2M_SERVER_PUBLIC_X:405354ea8893471d9296afbc8b020a5c6201b0bb25812a53b849d4480fa5f069}"
-     * public_y: "${LWM2M_SERVER_PUBLIC_Y:30c9237e946a3a1692c1cafaa01a238a077f632c99371348337512363f28212b}"
-     * private_encoded: "${LWM2M_SERVER_PRIVATE_ENCODED:274671fe40ce937b8a6352cf0a418e8a39e4bf0bb9bf74c910db953c20c73802}"
-     */
     private void generateKeyForRPK() throws NoSuchAlgorithmException, InvalidParameterSpecException, InvalidKeySpecException {
         /** Get Elliptic Curve Parameter spec for secp256r1 */
         AlgorithmParameters algoParameters = AlgorithmParameters.getInstance("EC");
         algoParameters.init(new ECGenParameterSpec("secp256r1"));
         ECParameterSpec parameterSpec = algoParameters.getParameterSpec(ECParameterSpec.class);
-        if (this.context.getLwM2MTransportConfigServer().getServerPublicX() != null &&
-                !this.context.getLwM2MTransportConfigServer().getServerPublicX().isEmpty() &&
-                this.context.getLwM2MTransportConfigServer().getServerPublicY() != null &&
-                !this.context.getLwM2MTransportConfigServer().getServerPublicY().isEmpty()) {
-            /** Get point values */
-            byte[] publicX = Hex.decodeHex(this.context.getLwM2MTransportConfigServer().getServerPublicX().toCharArray());
-            byte[] publicY = Hex.decodeHex(this.context.getLwM2MTransportConfigServer().getServerPublicY().toCharArray());
-            /** Create key specs */
+        LwM2MTransportServerConfig serverConfig = this.context.getLwM2MTransportServerConfig();
+        if (StringUtils.isNotEmpty(serverConfig.getPublicX()) && StringUtils.isNotEmpty(serverConfig.getPublicY())) {
+            byte[] publicX = Hex.decodeHex(serverConfig.getPublicX().toCharArray());
+            byte[] publicY = Hex.decodeHex(serverConfig.getPublicY().toCharArray());
             KeySpec publicKeySpec = new ECPublicKeySpec(new ECPoint(new BigInteger(publicX), new BigInteger(publicY)),
                     parameterSpec);
-            /** Get keys */
             this.publicKey = KeyFactory.getInstance("EC").generatePublic(publicKeySpec);
         }
-        if (this.context.getLwM2MTransportConfigServer().getServerPrivateEncoded() != null &&
-                !this.context.getLwM2MTransportConfigServer().getServerPrivateEncoded().isEmpty()) {
-            /** Get private key */
-            byte[] privateS = Hex.decodeHex(this.context.getLwM2MTransportConfigServer().getServerPrivateEncoded().toCharArray());
+        String privateEncodedKey = serverConfig.getPrivateEncoded();
+        if (StringUtils.isNotEmpty(privateEncodedKey)) {
+            byte[] privateS = Hex.decodeHex(privateEncodedKey.toCharArray());
             try {
                 this.privateKey = KeyFactory.getInstance("EC").generatePrivate(new PKCS8EncodedKeySpec(privateS));
             } catch (InvalidKeySpecException ignore2) {
-                log.error("Invalid Server rpk.PrivateKey.getEncoded () [{}}]. PrivateKey has no EC algorithm", this.context.getLwM2MTransportConfigServer().getServerPrivateEncoded());
+                log.error("Invalid Server rpk.PrivateKey.getEncoded () [{}}]. PrivateKey has no EC algorithm", privateEncodedKey);
             }
         }
     }

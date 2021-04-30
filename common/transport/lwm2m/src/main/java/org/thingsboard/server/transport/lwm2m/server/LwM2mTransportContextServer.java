@@ -43,7 +43,7 @@ import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportResourceCache;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigServer;
+import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
@@ -57,7 +57,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.BOOLEAN_V;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_TELEMETRY;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LOG_LW2M_TELEMETRY;
 
 @Slf4j
 @Component
@@ -65,7 +65,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandle
 public class LwM2mTransportContextServer extends TransportContext {
 
 
-    private final LwM2MTransportConfigServer lwM2MTransportConfigServer;
+    private final LwM2MTransportServerConfig lwM2MTransportServerConfig;
 
     private final TransportService transportService;
 
@@ -75,15 +75,15 @@ public class LwM2mTransportContextServer extends TransportContext {
     @Getter
     private final LwM2MJsonAdaptor adaptor;
 
-    public LwM2mTransportContextServer(LwM2MTransportConfigServer lwM2MTransportConfigServer, TransportService transportService, TransportResourceCache transportResourceCache, LwM2MJsonAdaptor adaptor) {
-        this.lwM2MTransportConfigServer = lwM2MTransportConfigServer;
+    public LwM2mTransportContextServer(LwM2MTransportServerConfig lwM2MTransportServerConfig, TransportService transportService, TransportResourceCache transportResourceCache, LwM2MJsonAdaptor adaptor) {
+        this.lwM2MTransportServerConfig = lwM2MTransportServerConfig;
         this.transportService = transportService;
         this.transportResourceCache = transportResourceCache;
         this.adaptor = adaptor;
     }
 
-    public LwM2MTransportConfigServer getLwM2MTransportConfigServer() {
-        return this.lwM2MTransportConfigServer;
+    public LwM2MTransportServerConfig getLwM2MTransportServerConfig() {
+        return this.lwM2MTransportServerConfig;
     }
 
     public TransportResourceCache getTransportResourceCache() {
