@@ -424,7 +424,7 @@ public class LwM2mTransportRequest {
                 LOG_LW2M_INFO, ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(),
                 response.getCode().getName(), request.getPath().toString(), value);
         serviceImpl.sendLogsToThingsboard(msg, registration.getId());
-        log.warn("[{}] [{}] [{}] - [{}] [{}] Update finished successfully: [{}]", request.getClass().getName().toString(), registration.getEndpoint(),
+        log.trace("[{}] [{}] [{}] - [{}] [{}] Update finished successfully: [{}]", request.getClass().getName().toString(), registration.getEndpoint(),
                 ((Response) response.getCoapResponse()).getCode(), response.getCode(),
                 request.getPath().toString(), value);
     }
