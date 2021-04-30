@@ -613,9 +613,6 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
     public void sendLogsToThingsboard(String logMsg, String registrationId) {
         SessionInfoProto sessionInfo = this.getValidateSessionInfo(registrationId);
         if (logMsg != null && sessionInfo != null) {
-            if(logMsg.length() > 1024){
-                logMsg = logMsg.substring(0, 1024);
-            }
             this.lwM2mTransportContextServer.sendParametersOnThingsboardTelemetry(this.lwM2mTransportContextServer.getKvLogyToThingsboard(logMsg), sessionInfo);
         }
     }

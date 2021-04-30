@@ -27,14 +27,8 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
 
 @Slf4j
 @Component
@@ -76,6 +70,10 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     @Getter
     @Value("${transport.lwm2m.un_registered_pool_size:}")
     private int unRegisteredPoolSize;
+
+    @Getter
+    @Value("${transport.lwm2m.log_max_length:}")
+    private int logMaxLength;
 
     @Getter
     @Value("${transport.lwm2m.security.key_store_type:}")
