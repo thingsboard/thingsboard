@@ -17,6 +17,7 @@
 import { BaseData } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { FirmwareId } from '@shared/models/id/firmware-id';
+import { DeviceProfileId } from '@shared/models/id/device-profile-id';
 
 export enum ChecksumAlgorithm {
   MD5 = 'MD5',
@@ -40,14 +41,28 @@ export const ChecksumAlgorithmTranslationMap = new Map<ChecksumAlgorithm, string
   ]
 );
 
+export enum FirmwareType {
+  FIRMWARE = 'FIRMWARE',
+  SOFTWARE = 'SOFTWARE'
+}
+
+export const FirmwareTypeTranslationMap = new Map<FirmwareType, string>(
+  [
+    [FirmwareType.FIRMWARE, 'firmware.types.firmware'],
+    [FirmwareType.SOFTWARE, 'firmware.types.software']
+  ]
+);
+
 export interface FirmwareInfo extends BaseData<FirmwareId> {
   tenantId?: TenantId;
+  type: FirmwareType;
+  deviceProfileId?: DeviceProfileId;
   title?: string;
   version?: string;
   hasData?: boolean;
   fileName: string;
   checksum?: string;
-  checksumAlgorithm: ChecksumAlgorithm;
+  checksumAlgorithm?: ChecksumAlgorithm;
   contentType: string;
   dataSize?: number;
   additionalInfo?: any;

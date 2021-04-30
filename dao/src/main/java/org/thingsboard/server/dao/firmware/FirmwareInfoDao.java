@@ -16,6 +16,9 @@
 package org.thingsboard.server.dao.firmware;
 
 import org.thingsboard.server.common.data.FirmwareInfo;
+import org.thingsboard.server.common.data.firmware.FirmwareType;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -27,6 +30,8 @@ public interface FirmwareInfoDao extends Dao<FirmwareInfo> {
 
     PageData<FirmwareInfo> findFirmwareInfoByTenantId(TenantId tenantId, PageLink pageLink);
 
-    PageData<FirmwareInfo> findFirmwareInfoByTenantIdAndHasData(TenantId tenantId, boolean hasData, PageLink pageLink);
+    PageData<FirmwareInfo> findFirmwareInfoByTenantIdAndDeviceProfileIdAndTypeAndHasData(TenantId tenantId, DeviceProfileId deviceProfileId, FirmwareType firmwareType, boolean hasData, PageLink pageLink);
+
+    boolean isFirmwareUsed(FirmwareId firmwareId, FirmwareType type, DeviceProfileId deviceProfileId);
 
 }

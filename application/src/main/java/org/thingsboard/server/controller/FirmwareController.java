@@ -35,6 +35,8 @@ import org.thingsboard.server.common.data.FirmwareInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.firmware.ChecksumAlgorithm;
+import org.thingsboard.server.common.data.firmware.FirmwareType;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -135,6 +137,8 @@ public class FirmwareController extends BaseController {
             Firmware firmware = new Firmware(firmwareId);
             firmware.setCreatedTime(info.getCreatedTime());
             firmware.setTenantId(getTenantId());
+            firmware.setDeviceProfileId(info.getDeviceProfileId());
+            firmware.setType(info.getType());
             firmware.setTitle(info.getTitle());
             firmware.setVersion(info.getVersion());
             firmware.setAdditionalInfo(info.getAdditionalInfo());
@@ -178,17 +182,22 @@ public class FirmwareController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/firmwares/{hasData}", method = RequestMethod.GET)
+    @RequestMapping(value = "/firmwares/{deviceProfileId}/{type}/{hasData}", method = RequestMethod.GET)
     @ResponseBody
-    public PageData<FirmwareInfo> getFirmwares(@PathVariable("hasData") boolean hasData,
+    public PageData<FirmwareInfo> getFirmwares(@PathVariable("deviceProfileId") String strDeviceProfileId,
+                                               @PathVariable("type") String strType,
+                                               @PathVariable("hasData") boolean hasData,
                                                @RequestParam int pageSize,
                                                @RequestParam int page,
                                                @RequestParam(required = false) String textSearch,
                                                @RequestParam(required = false) String sortProperty,
                                                @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        checkParameter("deviceProfileId", strDeviceProfileId);
+        checkParameter("type", strType);
         try {
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            return checkNotNull(firmwareService.findTenantFirmwaresByTenantIdAndHasData(getTenantId(), hasData, pageLink));
+            return checkNotNull(firmwareService.findTenantFirmwaresByTenantIdAndDeviceProfileIdAndTypeAndHasData(getTenantId(),
+                    new DeviceProfileId(toUUID(strDeviceProfileId)), FirmwareType.valueOf(strType), hasData, pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }

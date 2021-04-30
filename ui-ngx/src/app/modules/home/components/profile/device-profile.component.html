@@ -65,7 +65,15 @@
       </tb-queue-type-list>
       <tb-firmware-autocomplete
         [useFullEntityId]="true"
+        [type]="firmwareTypes.FIRMWARE"
+        [deviceProfileId]="deviceProfileId?.id"
         formControlName="firmwareId">
+      </tb-firmware-autocomplete>
+      <tb-firmware-autocomplete
+        [useFullEntityId]="true"
+        [type]="firmwareTypes.SOFTWARE"
+        [deviceProfileId]="deviceProfileId?.id"
+        formControlName="softwareId">
       </tb-firmware-autocomplete>
       <mat-form-field fxHide class="mat-block">
         <mat-label translate>device-profile.type</mat-label>

@@ -25,7 +25,6 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.eclipse.leshan.core.attributes.Attribute;
 import org.eclipse.leshan.core.attributes.AttributeSet;
 import org.eclipse.leshan.core.model.ObjectModel;
@@ -40,7 +39,6 @@ import org.eclipse.leshan.core.node.codec.CodecException;
 import org.eclipse.leshan.core.request.DownlinkRequest;
 import org.eclipse.leshan.core.request.WriteAttributesRequest;
 import org.eclipse.leshan.core.util.Hex;
-import org.eclipse.leshan.server.californium.LeshanServerBuilder;
 import org.eclipse.leshan.server.registration.Registration;
 import org.nustaq.serialization.FSTConfiguration;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -50,7 +48,6 @@ import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientProfile;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,7 +69,6 @@ import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPA
 @Slf4j
 public class LwM2mTransportHandler {
 
-    //    public static final String BASE_DEVICE_API_TOPIC = "v1/devices/me";
     public static final String TRANSPORT_DEFAULT_LWM2M_VERSION = "1.0";
     public static final String CLIENT_LWM2M_SETTINGS = "clientLwM2mSettings";
     public static final String BOOTSTRAP = "bootstrap";
@@ -85,19 +81,12 @@ public class LwM2mTransportHandler {
     public static final String KEY_NAME = "keyName";
     public static final String OBSERVE_LWM2M = "observe";
     public static final String ATTRIBUTE_LWM2M = "attributeLwm2m";
-//    public static final String RESOURCE_VALUE = "resValue";
-//    public static final String RESOURCE_TYPE = "resType";
 
     private static final String REQUEST = "/request";
-    //    private static final String RESPONSE = "/response";
     private static final String ATTRIBUTES = "/" + ATTRIBUTE;
     public static final String TELEMETRIES = "/" + TELEMETRY;
-    //    public static final String ATTRIBUTES_RESPONSE = ATTRIBUTES + RESPONSE;
     public static final String ATTRIBUTES_REQUEST = ATTRIBUTES + REQUEST;
-    //    public static final String DEVICE_ATTRIBUTES_RESPONSE = ATTRIBUTES_RESPONSE + "/";
     public static final String DEVICE_ATTRIBUTES_REQUEST = ATTRIBUTES_REQUEST + "/";
-//    public static final String DEVICE_ATTRIBUTES_TOPIC = BASE_DEVICE_API_TOPIC + ATTRIBUTES;
-//    public static final String DEVICE_TELEMETRY_TOPIC = BASE_DEVICE_API_TOPIC + TELEMETRIES;
 
     public static final long DEFAULT_TIMEOUT = 2 * 60 * 1000L; // 2min in ms
 
@@ -111,6 +100,11 @@ public class LwM2mTransportHandler {
     public static final int LWM2M_STRATEGY_2 = 2;
 
     public static final String CLIENT_NOT_AUTHORIZED = "Client not authorized";
+
+    public static final Integer FR_OBJECT_ID = 5;
+    public static final Integer FR_RESOURCE_VER_ID = 7;
+    public static final String FR_PATH_RESOURCE_VER_ID = LWM2M_SEPARATOR_PATH + FR_OBJECT_ID + LWM2M_SEPARATOR_PATH
+            + "0" + LWM2M_SEPARATOR_PATH + FR_RESOURCE_VER_ID;
 
     public enum LwM2mTypeServer {
         BOOTSTRAP(0, "bootstrap"),
@@ -168,6 +162,8 @@ public class LwM2mTransportHandler {
         WRITE_ATTRIBUTES(8, "WriteAttributes"),
         DELETE(9, "Delete");
 
+//        READ_INFO_FW(10, "ReadInfoFirmware");
+
         public int code;
         public String type;
 
@@ -189,21 +185,6 @@ public class LwM2mTransportHandler {
     public static final String EVENT_AWAKE = "AWAKE";
     public static final String SERVICE_CHANNEL = "SERVICE";
     public static final String RESPONSE_CHANNEL = "RESP";
-
-    public static NetworkConfig getCoapConfig(Integer serverPortNoSec, Integer serverSecurePort) {
-        NetworkConfig coapConfig;
-        File configFile = new File(NetworkConfig.DEFAULT_FILE_NAME);
-        if (configFile.isFile()) {
-            coapConfig = new NetworkConfig();
-            coapConfig.load(configFile);
-        } else {
-            coapConfig = LeshanServerBuilder.createDefaultNetworkConfig();
-            coapConfig.store(configFile);
-        }
-        coapConfig.setString("COAP_PORT", Integer.toString(serverPortNoSec));
-        coapConfig.setString("COAP_SECURE_PORT", Integer.toString(serverSecurePort));
-        return coapConfig;
-    }
 
     public static boolean equalsResourceValue(Object valueOld, Object valueNew, ResourceModel.Type type, LwM2mPath resourcePath) throws CodecException {
         switch (type) {

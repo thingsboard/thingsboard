@@ -20,10 +20,13 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Firmware;
 import org.thingsboard.server.common.data.Tenant;
@@ -43,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.thingsboard.server.common.data.firmware.FirmwareType.FIRMWARE;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
@@ -66,6 +70,9 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         tenantProfileService.deleteTenantProfiles(tenantId);
         tenantProfileService.deleteTenantProfiles(anotherTenantId);
     }
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void testSaveDevicesWithoutMaxDeviceLimit() {
@@ -184,6 +191,8 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
 
         Firmware firmware = new Firmware();
         firmware.setTenantId(tenantId);
+        firmware.setDeviceProfileId(device.getDeviceProfileId());
+        firmware.setType(FIRMWARE);
         firmware.setTitle("my firmware");
         firmware.setVersion("v1.0");
         firmware.setFileName("test.txt");
@@ -198,6 +207,40 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         deviceService.saveDevice(savedDevice);
         Device foundDevice = deviceService.findDeviceById(tenantId, savedDevice.getId());
         Assert.assertEquals(foundDevice.getName(), savedDevice.getName());
+    }
+
+    @Test
+    public void testAssignFirmwareToDeviceWithDifferentDeviceProfile() {
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName("My device");
+        device.setType("default");
+        Device savedDevice = deviceService.saveDevice(device);
+
+        Assert.assertNotNull(savedDevice);
+
+        DeviceProfile deviceProfile = createDeviceProfile(tenantId, "New device Profile");
+        DeviceProfile savedProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
+        Assert.assertNotNull(savedProfile);
+
+        Firmware firmware = new Firmware();
+        firmware.setTenantId(tenantId);
+        firmware.setDeviceProfileId(savedProfile.getId());
+        firmware.setType(FIRMWARE);
+        firmware.setTitle("my firmware");
+        firmware.setVersion("v1.0");
+        firmware.setFileName("test.txt");
+        firmware.setContentType("text/plain");
+        firmware.setChecksumAlgorithm(ChecksumAlgorithm.SHA256);
+        firmware.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
+        firmware.setData(ByteBuffer.wrap(new byte[]{1}));
+        Firmware savedFirmware = firmwareService.saveFirmware(firmware);
+
+        savedDevice.setFirmwareId(savedFirmware.getId());
+
+        thrown.expect(DataValidationException.class);
+        thrown.expectMessage("Can't assign firmware with different deviceProfile!");
+        deviceService.saveDevice(savedDevice);
     }
     
     @Test(expected = DataValidationException.class)

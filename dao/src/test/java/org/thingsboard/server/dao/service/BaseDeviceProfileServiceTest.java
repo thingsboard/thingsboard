@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.Firmware;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.firmware.FirmwareType;
 import org.thingsboard.server.common.data.firmware.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -43,6 +44,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.common.data.firmware.FirmwareType.FIRMWARE;
 
 public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
 
@@ -98,6 +101,8 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
 
         Firmware firmware = new Firmware();
         firmware.setTenantId(tenantId);
+        firmware.setDeviceProfileId(savedDeviceProfile.getId());
+        firmware.setType(FIRMWARE);
         firmware.setTitle("my firmware");
         firmware.setVersion("v1.0");
         firmware.setFileName("test.txt");

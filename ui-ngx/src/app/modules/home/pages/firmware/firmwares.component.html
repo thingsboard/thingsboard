@@ -67,10 +67,27 @@
           </mat-error>
         </mat-form-field>
       </div>
+      <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
+        <mat-form-field fxFlex="45">
+          <mat-label translate>firmware.type</mat-label>
+          <input *ngIf="!isAdd" matInput type="text" [readonly]="isEdit" [disabled]="!isEdit"
+                 value="{{ firmwareTypeTranslationMap.get(entityForm.get('type').value) | translate }}">
+          <mat-select formControlName="type" required *ngIf="isAdd">
+            <mat-option *ngFor="let firmwareType of firmwareTypes" [value]="firmwareType">
+              {{ firmwareTypeTranslationMap.get(firmwareType) | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <tb-device-profile-autocomplete
+          formControlName="deviceProfileId" fxFlex
+          [editProfileEnabled]="false">
+        </tb-device-profile-autocomplete>
+      </div>
       <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayoutGap.sm="8px" fxLayout.xs="column" fxLayout.md="column">
         <mat-form-field class="mat-block" fxFlex="33">
           <mat-label translate>firmware.checksum-algorithm</mat-label>
-          <input *ngIf="!isAdd" matInput formControlName="checksumAlgorithm" type="text" [readonly]="isEdit">
+          <input *ngIf="!isAdd" matInput type="text" [readonly]="isEdit" [disabled]="!isEdit"
+                 value="{{ checksumAlgorithmTranslationMap.get(entityForm.get('checksumAlgorithm').value) | translate }}">
           <mat-select formControlName="checksumAlgorithm" *ngIf="isAdd">
             <mat-option *ngFor="let checksumAlgorithm of checksumAlgorithms" [value]="checksumAlgorithm">
               {{ checksumAlgorithmTranslationMap.get(checksumAlgorithm) }}
