@@ -67,7 +67,7 @@ import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPA
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 
 @Slf4j
-public class LwM2mTransportHandler {
+public class LwM2mTransportHandlerUtil {
 
     public static final String TRANSPORT_DEFAULT_LWM2M_VERSION = "1.0";
     public static final String CLIENT_LWM2M_SETTINGS = "clientLwM2mSettings";
@@ -256,7 +256,7 @@ public class LwM2mTransportHandler {
                 ObjectMapper mapper = new ObjectMapper();
                 String profileStr = mapper.writeValueAsString(profile);
                 JsonObject profileJson = (profileStr != null) ? validateJson(profileStr) : null;
-                return getValidateCredentialsBodyFromThingsboard(profileJson) ? LwM2mTransportHandler.getNewProfileParameters(profileJson, deviceProfile.getTenantId()) : null;
+                return getValidateCredentialsBodyFromThingsboard(profileJson) ? LwM2mTransportHandlerUtil.getNewProfileParameters(profileJson, deviceProfile.getTenantId()) : null;
             } catch (IOException e) {
                 log.error("", e);
             }

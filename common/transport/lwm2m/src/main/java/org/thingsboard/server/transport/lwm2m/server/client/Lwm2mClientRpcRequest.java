@@ -21,11 +21,11 @@ import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LwM2mTypeOper;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LwM2mTypeOper;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.validPathIdVer;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.validPathIdVer;
 
 @Data
 public class Lwm2mClientRpcRequest {

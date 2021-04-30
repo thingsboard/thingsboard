@@ -66,7 +66,7 @@ public class LwM2mNetworkConfig {
          * A value of {@code 0} turns off transparent handling of blockwise transfers altogether.
          */
 //        coapConfig.setInt(NetworkConfig.Keys.MAX_RESOURCE_BODY_SIZE, 8192);
-        coapConfig.setInt(NetworkConfig.Keys.MAX_RESOURCE_BODY_SIZE, 16384);
+        coapConfig.setInt(NetworkConfig.Keys.MAX_RESOURCE_BODY_SIZE, 256 * 1024 * 1024);
         /**
          * The default DTLS response matcher.
          * Supported values are STRICT, RELAXED, or PRINCIPAL.
@@ -83,7 +83,7 @@ public class LwM2mNetworkConfig {
          * The block size (number of bytes) to use when doing a blockwise transfer. \
          * This value serves as the upper limit for block size in blockwise transfers
          */
-        coapConfig.setInt(NetworkConfig.Keys.PREFERRED_BLOCK_SIZE, 512);
+        coapConfig.setInt(NetworkConfig.Keys.PREFERRED_BLOCK_SIZE, 1024);
         /**
          * The maximum payload size (in bytes) that can be transferred in a
          *  single message, i.e. without requiring a blockwise transfer.
@@ -91,7 +91,7 @@ public class LwM2mNetworkConfig {
          * In particular, this value cannot exceed the network's MTU if UDP is used as the transport protocol
          * DEFAULT_VALUE = 1024
          */
-        coapConfig.setInt(NetworkConfig.Keys.MAX_MESSAGE_SIZE, 512);
+        coapConfig.setInt(NetworkConfig.Keys.MAX_MESSAGE_SIZE, 1024);
 
         coapConfig.setInt(NetworkConfig.Keys.MAX_RETRANSMIT, 4);
 

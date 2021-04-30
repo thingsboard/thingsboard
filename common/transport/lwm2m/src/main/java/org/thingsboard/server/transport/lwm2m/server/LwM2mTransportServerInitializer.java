@@ -41,7 +41,7 @@ public class LwM2mTransportServerInitializer {
 
     @PostConstruct
     public void init() {
-        if (this.context.getLwM2MTransportConfigServer().getEnableGenNewKeyPskRpk()) {
+        if (this.context.getLwM2MTransportServerConfig().getEnableGenNewKeyPskRpk()) {
             new LWM2MGenerationPSkRPkECC();
         }
         this.startLhServer();

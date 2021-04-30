@@ -16,14 +16,15 @@
 package org.thingsboard.server.service.lwm2m;
 
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.util.Hex;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
-import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigBootstrap;
-import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigServer;
+import org.thingsboard.server.transport.lwm2m.config.LwM2MSecureServerConfig;
+import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConfig;
+import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 
 import java.math.BigInteger;
@@ -42,96 +43,59 @@ import java.security.spec.KeySpec;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true') || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
-public class LwM2MModelsRepository {
+public class LwM2MServerSecurityInfoRepository {
 
-    private static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
-
-    @Autowired
-    LwM2MTransportConfigServer contextServer;
-
-
-    @Autowired
-    LwM2MTransportConfigBootstrap contextBootStrap;
+    private final LwM2MTransportServerConfig serverConfig;
+    private final LwM2MTransportBootstrapConfig bootstrapConfig;
 
     /**
      * @param securityMode
-     * @param bootstrapServerIs
+     * @param bootstrapServer
      * @return ServerSecurityConfig more value is default: Important - port, host, publicKey
      */
-    public ServerSecurityConfig getBootstrapSecurityInfo(String securityMode, boolean bootstrapServerIs) {
+    public ServerSecurityConfig getServerSecurityInfo(String securityMode, boolean bootstrapServer) {
         LwM2MSecurityMode lwM2MSecurityMode = LwM2MSecurityMode.fromSecurityMode(securityMode.toLowerCase());
-        return getBootstrapServer(bootstrapServerIs, lwM2MSecurityMode);
+        ServerSecurityConfig result = getServerSecurityConfig(bootstrapServer ? bootstrapConfig : serverConfig, lwM2MSecurityMode);
+        result.setBootstrapServerIs(bootstrapServer);
+        return result;
     }
 
-    /**
-     * @param bootstrapServerIs
-     * @param mode
-     * @return ServerSecurityConfig more value is default: Important - port, host, publicKey
-     */
-    private ServerSecurityConfig getBootstrapServer(boolean bootstrapServerIs, LwM2MSecurityMode mode) {
+    private ServerSecurityConfig getServerSecurityConfig(LwM2MSecureServerConfig serverConfig, LwM2MSecurityMode mode) {
         ServerSecurityConfig bsServ = new ServerSecurityConfig();
-        bsServ.setBootstrapServerIs(bootstrapServerIs);
-        if (bootstrapServerIs) {
-            bsServ.setServerId(contextBootStrap.getBootstrapServerId());
-            switch (mode) {
-                case NO_SEC:
-                    bsServ.setHost(contextBootStrap.getBootstrapHost());
-                    bsServ.setPort(contextBootStrap.getBootstrapPortNoSec());
-                    bsServ.setServerPublicKey("");
-                    break;
-                case PSK:
-                    bsServ.setHost(contextBootStrap.getBootstrapHostSecurity());
-                    bsServ.setPort(contextBootStrap.getBootstrapPortSecurity());
-                    bsServ.setServerPublicKey("");
-                    break;
-                case RPK:
-                case X509:
-                    bsServ.setHost(contextBootStrap.getBootstrapHostSecurity());
-                    bsServ.setPort(contextBootStrap.getBootstrapPortSecurity());
-                    bsServ.setServerPublicKey(getPublicKey (contextBootStrap.getBootstrapAlias(), this.contextBootStrap.getBootstrapPublicX(), this.contextBootStrap.getBootstrapPublicY()));
-                    break;
-                default:
-                    break;
-            }
-        } else {
-            bsServ.setServerId(contextServer.getServerId());
-            switch (mode) {
-                case NO_SEC:
-                    bsServ.setHost(contextServer.getServerHost());
-                    bsServ.setPort(contextServer.getServerPortNoSec());
-                    bsServ.setServerPublicKey("");
-                    break;
-                case PSK:
-                    bsServ.setHost(contextServer.getServerHostSecurity());
-                    bsServ.setPort(contextServer.getServerPortSecurity());
-                    bsServ.setServerPublicKey("");
-                    break;
-                case RPK:
-                case X509:
-                    bsServ.setHost(contextServer.getServerHostSecurity());
-                    bsServ.setPort(contextServer.getServerPortSecurity());
-                    bsServ.setServerPublicKey(getPublicKey (contextServer.getServerAlias(), this.contextServer.getServerPublicX(), this.contextServer.getServerPublicY()));
-                    break;
-                default:
-                    break;
-            }
+        bsServ.setServerId(serverConfig.getId());
+        switch (mode) {
+            case NO_SEC:
+                bsServ.setHost(serverConfig.getHost());
+                bsServ.setPort(serverConfig.getPort());
+                bsServ.setServerPublicKey("");
+                break;
+            case PSK:
+                bsServ.setHost(serverConfig.getSecureHost());
+                bsServ.setPort(serverConfig.getSecurePort());
+                bsServ.setServerPublicKey("");
+                break;
+            case RPK:
+            case X509:
+                bsServ.setHost(serverConfig.getSecureHost());
+                bsServ.setPort(serverConfig.getSecurePort());
+                bsServ.setServerPublicKey(getPublicKey(serverConfig.getCertificateAlias(), this.serverConfig.getPublicX(), this.serverConfig.getPublicY()));
+                break;
+            default:
+                break;
         }
         return bsServ;
     }
 
-    private String getPublicKey (String alias, String publicServerX, String publicServerY) {
+    private String getPublicKey(String alias, String publicServerX, String publicServerY) {
         String publicKey = getServerPublicKeyX509(alias);
         return publicKey != null ? publicKey : getRPKPublicKey(publicServerX, publicServerY);
     }
 
-    /**
-     * @param alias
-     * @return PublicKey format HexString or null
-     */
     private String getServerPublicKeyX509(String alias) {
         try {
-            X509Certificate serverCertificate = (X509Certificate) contextServer.getKeyStoreValue().getCertificate(alias);
+            X509Certificate serverCertificate = (X509Certificate) serverConfig.getKeyStoreValue().getCertificate(alias);
             return Hex.encodeHexString(serverCertificate.getEncoded());
         } catch (CertificateEncodingException | KeyStoreException e) {
             e.printStackTrace();
@@ -139,11 +103,6 @@ public class LwM2MModelsRepository {
         return null;
     }
 
-    /**
-     * @param publicServerX
-     * @param publicServerY
-     * @return PublicKey format HexString or null
-     */
     private String getRPKPublicKey(String publicServerX, String publicServerY) {
         try {
             /** Get Elliptic Curve Parameter spec for secp256r1 */

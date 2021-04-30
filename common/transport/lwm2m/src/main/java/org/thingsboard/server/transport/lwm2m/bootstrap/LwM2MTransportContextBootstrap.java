@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportContext;
-import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigBootstrap;
+import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConfig;
 
 
 @Slf4j
@@ -42,13 +42,13 @@ import org.thingsboard.server.common.transport.lwm2m.LwM2MTransportConfigBootstr
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true') || '${service.type:null}'=='monolith'")
 public class LwM2MTransportContextBootstrap extends TransportContext {
 
-    private final LwM2MTransportConfigBootstrap lwM2MTransportConfigBootstrap;
+    private final LwM2MTransportBootstrapConfig lwM2MTransportBootstrapConfig;
 
-    public LwM2MTransportContextBootstrap(LwM2MTransportConfigBootstrap ctxBootStrap) {
-        this.lwM2MTransportConfigBootstrap = ctxBootStrap;
+    public LwM2MTransportContextBootstrap(LwM2MTransportBootstrapConfig ctxBootStrap) {
+        this.lwM2MTransportBootstrapConfig = ctxBootStrap;
     }
 
-    public LwM2MTransportConfigBootstrap getCtxBootStrap() {
-        return this.lwM2MTransportConfigBootstrap;
+    public LwM2MTransportBootstrapConfig getCtxBootStrap() {
+        return this.lwM2MTransportBootstrapConfig;
     }
 }
