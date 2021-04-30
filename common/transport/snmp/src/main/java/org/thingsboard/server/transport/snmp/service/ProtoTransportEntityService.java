@@ -81,26 +81,7 @@ public class ProtoTransportEntityService {
                 .orElseThrow(() -> new IllegalArgumentException("Device credentials not found"));
     }
 
-    public List<UUID> getAllSnmpDevicesIds() {
-        List<UUID> result = new ArrayList<>();
-
-        int page = 0;
-        int pageSize = 512;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-            TransportProtos.GetSnmpDevicesResponseMsg responseMsg = requestSnmpDevicesIds(page, pageSize);
-            result.addAll(responseMsg.getIdsList().stream()
-                    .map(UUID::fromString)
-                    .collect(Collectors.toList()));
-            hasNextPage = responseMsg.getHasNextPage();
-            page++;
-        }
-
-        return result;
-    }
-
-    private TransportProtos.GetSnmpDevicesResponseMsg requestSnmpDevicesIds(int page, int pageSize) {
+    public TransportProtos.GetSnmpDevicesResponseMsg getSnmpDevicesIds(int page, int pageSize) {
         TransportProtos.GetSnmpDevicesRequestMsg requestMsg = TransportProtos.GetSnmpDevicesRequestMsg.newBuilder()
                 .setPage(page)
                 .setPageSize(pageSize)

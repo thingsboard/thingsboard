@@ -39,7 +39,8 @@
         </mat-form-field>
       </ng-template>
       <ng-template [ngSwitchCase]="'isError'">
-        <tb-checkbox formControlName="isError" [falseValue]="''">
+        <tb-checkbox formControlName="isError" [falseValue]="''"
+                     (ngModelChange)="changeIsError($event)">
           {{ 'event.has-error' | translate }}
         </tb-checkbox>
       </ng-template>
