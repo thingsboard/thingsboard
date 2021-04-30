@@ -201,7 +201,7 @@ public class DeviceProfileController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @GetMapping(value = "/deviceProfile/{deviceProfileId}/default")
+    @PostMapping(value = "/deviceProfile/{deviceProfileId}/default")
     public DeviceProfile setDefaultDeviceProfile(@PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId) throws ThingsboardException {
         checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
         try {
