@@ -86,6 +86,7 @@ import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPA
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.CLIENT_NOT_AUTHORIZED;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.DEVICE_ATTRIBUTES_REQUEST;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.FR_OBJECT_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.FR_PATH_RESOURCE_VER_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_INFO;
@@ -612,7 +613,8 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
     public void sendLogsToThingsboard(String logMsg, String registrationId) {
         SessionInfoProto sessionInfo = this.getValidateSessionInfo(registrationId);
         if (logMsg != null && sessionInfo != null) {
-            this.lwM2mTransportContextServer.sendParametersOnThingsboardTelemetry(this.lwM2mTransportContextServer.getKvLogyToThingsboard(logMsg), sessionInfo);
+            this.lwM2mTransportContextServer.sendParametersOnThingsboardTelemetry(this.lwM2mTransportContextServer
+                    .getKvLogyToThingsboard(logMsg), sessionInfo);
         }
     }
 
@@ -697,7 +699,6 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
                  **/
                 lwM2MClient.setUpdateFw(false);
                 lwM2MClient.getFrUpdate().setClientFwVersion(lwM2mResource.getValue().toString());
-                log.warn("updateFirmwareClient3");
                 this.updateFirmwareClient(lwM2MClient);
             }
             Set<String> paths = new HashSet<>();
@@ -1372,6 +1373,7 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
                     .setDeviceIdLSB(sessionInfo.getDeviceIdLSB())
                     .setTenantIdMSB(sessionInfo.getTenantIdMSB())
                     .setTenantIdLSB(sessionInfo.getTenantIdLSB())
+                    .setType(FirmwareType.FIRMWARE.name())
                     .build();
             transportService.process(sessionInfo, getFirmwareRequestMsg,
                     new TransportServiceCallback<>() {
@@ -1413,10 +1415,9 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
             int chunkSize = 0;
             int chunk = 0;
             byte[] firmwareChunk = firmwareDataCache.get(lwM2MClient.getFrUpdate().getCurrentFwId().toString(), chunkSize, chunk);
-            Integer objectId = 5;
-            String verSupportedObject = lwM2MClient.getRegistration().getSupportedObject().get(objectId);
-            String targetIdVer = LWM2M_SEPARATOR_PATH + objectId + LWM2M_SEPARATOR_KEY + verSupportedObject + LWM2M_SEPARATOR_PATH + 0 + LWM2M_SEPARATOR_PATH + 0;
-            lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(), targetIdVer, WRITE_REPLACE, ContentFormat.TLV.getName(),
+            String verSupportedObject = lwM2MClient.getRegistration().getSupportedObject().get(FR_OBJECT_ID);
+            String targetIdVer = LWM2M_SEPARATOR_PATH + FR_OBJECT_ID + LWM2M_SEPARATOR_KEY + verSupportedObject + LWM2M_SEPARATOR_PATH + 0 + LWM2M_SEPARATOR_PATH + 0;
+            lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(), targetIdVer, WRITE_REPLACE, ContentFormat.OPAQUE.getName(),
                     firmwareChunk, lwM2mTransportContextServer.getLwM2MTransportConfigServer().getTimeout(), null);
             log.warn("updateFirmwareClient [{}] [{}]", lwM2MClient.getFrUpdate().getCurrentFwVersion(), lwM2MClient.getFrUpdate().getClientFwVersion());
         }

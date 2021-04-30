@@ -108,6 +108,10 @@ public class LwM2MTransportConfigServer {
     private int unRegisteredPoolSize;
 
     @Getter
+    @Value("${transport.lwm2m.log_max_length:}")
+    private int logMaxLength;
+
+    @Getter
     @Value("${transport.lwm2m.secure.key_store_type:}")
     private String keyStoreType;
 

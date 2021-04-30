@@ -111,6 +111,7 @@ transport:
     registered_pool_size: "${LWM2M_REGISTERED_POOL_SIZE:10}"
     update_registered_pool_size: "${LWM2M_UPDATE_REGISTERED_POOL_SIZE:10}"
     un_registered_pool_size: "${LWM2M_UN_REGISTERED_POOL_SIZE:10}"
+    log_max_length: "${LWM2M_LOG_MAX_LENGTH:100}"
     secure:
       # Certificate_x509:
       # To get helps about files format and how to generate it, see: https://github.com/eclipse/leshan/wiki/Credential-files-format
