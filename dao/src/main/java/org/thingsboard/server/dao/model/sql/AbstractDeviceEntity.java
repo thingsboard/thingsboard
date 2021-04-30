@@ -106,7 +106,7 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
             this.firmwareId = device.getFirmwareId().getId();
         }
         if (device.getSoftwareId() != null) {
-            this.firmwareId = device.getSoftwareId().getId();
+            this.softwareId = device.getSoftwareId().getId();
         }
         this.deviceData = JacksonUtil.convertValue(device.getDeviceData(), ObjectNode.class);
         this.name = device.getName();
