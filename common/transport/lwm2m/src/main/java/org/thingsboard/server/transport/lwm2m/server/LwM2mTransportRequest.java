@@ -48,7 +48,6 @@ import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
@@ -83,32 +82,29 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandle
 @Service
 @TbLwM2mTransportComponent
 public class LwM2mTransportRequest {
-    private ExecutorService executorResponse;
 
+    private ExecutorService executorResponse;
     public LwM2mValueConverterImpl converter;
+    private LeshanServer leshanServer;
 
     private final LwM2mTransportContextServer lwM2mTransportContextServer;
-
     private final LwM2mClientContext lwM2mClientContext;
-
-    private final LeshanServer leshanServer;
-
     private final LwM2mTransportServiceImpl serviceImpl;
-
-    private final TransportService transportService;
+    private final LwM2mTransportServerConfiguration lwM2mServerConfiguration;
 
     public LwM2mTransportRequest(LwM2mTransportContextServer lwM2mTransportContextServer,
-                                 LwM2mClientContext lwM2mClientContext, LeshanServer leshanServer,
-                                 LwM2mTransportServiceImpl serviceImpl, TransportService transportService) {
+                                 LwM2mClientContext lwM2mClientContext,
+                                 LwM2mTransportServiceImpl serviceImpl,
+                                 LwM2mTransportServerConfiguration lwM2mServerConfiguration) {
         this.lwM2mTransportContextServer = lwM2mTransportContextServer;
         this.lwM2mClientContext = lwM2mClientContext;
-        this.leshanServer = leshanServer;
         this.serviceImpl = serviceImpl;
-        this.transportService = transportService;
+        this.lwM2mServerConfiguration = lwM2mServerConfiguration;
     }
 
     @PostConstruct
     public void init() {
+        this.leshanServer = this.lwM2mServerConfiguration.getLeshanServer();
         this.converter = LwM2mValueConverterImpl.getInstance();
         executorResponse = Executors.newFixedThreadPool(this.lwM2mTransportContextServer.getLwM2MTransportServerConfig().getResponsePoolSize(),
                 new NamedThreadFactory(String.format("LwM2M %s channel response", RESPONSE_CHANNEL)));

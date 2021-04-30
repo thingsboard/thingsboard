@@ -119,31 +119,29 @@ public class LwM2mTransportServiceImpl implements LwM2mTransportService {
     private ExecutorService executorUnRegistered;
     private LwM2mValueConverterImpl converter;
     private FirmwareDataCache firmwareDataCache;
-
+    private LeshanServer leshanServer;
 
     private final TransportService transportService;
-
     public final LwM2mTransportContextServer lwM2mTransportContextServer;
-
     private final LwM2mClientContext lwM2mClientContext;
-
-    private final LeshanServer leshanServer;
-
     private final LwM2mTransportRequest lwM2mTransportRequest;
+    private final LwM2mTransportServerConfiguration lwM2mServerConfiguration;
 
     public LwM2mTransportServiceImpl(TransportService transportService, LwM2mTransportContextServer lwM2mTransportContextServer,
-                                     LwM2mClientContext lwM2mClientContext, LeshanServer leshanServer,
-                                     @Lazy LwM2mTransportRequest lwM2mTransportRequest, FirmwareDataCache firmwareDataCache) {
+                                     LwM2mClientContext lwM2mClientContext,
+                                     @Lazy LwM2mTransportRequest lwM2mTransportRequest, FirmwareDataCache firmwareDataCache,
+                                     LwM2mTransportServerConfiguration lwM2mServerConfiguration) {
         this.transportService = transportService;
         this.lwM2mTransportContextServer = lwM2mTransportContextServer;
         this.lwM2mClientContext = lwM2mClientContext;
-        this.leshanServer = leshanServer;
         this.lwM2mTransportRequest = lwM2mTransportRequest;
         this.firmwareDataCache = firmwareDataCache;
+        this.lwM2mServerConfiguration = lwM2mServerConfiguration;
     }
 
     @PostConstruct
     public void init() {
+        this.leshanServer = this.lwM2mServerConfiguration.getLeshanServer();
         this.lwM2mTransportContextServer.getScheduler().scheduleAtFixedRate(this::checkInactivityAndReportActivity, new Random().nextInt((int) lwM2mTransportContextServer.getLwM2MTransportServerConfig().getSessionReportTimeout()), lwM2mTransportContextServer.getLwM2MTransportServerConfig().getSessionReportTimeout(), TimeUnit.MILLISECONDS);
         this.executorRegistered = Executors.newFixedThreadPool(this.lwM2mTransportContextServer.getLwM2MTransportServerConfig().getRegisteredPoolSize(),
                 new NamedThreadFactory(String.format("LwM2M %s channel registered", SERVICE_CHANNEL)));

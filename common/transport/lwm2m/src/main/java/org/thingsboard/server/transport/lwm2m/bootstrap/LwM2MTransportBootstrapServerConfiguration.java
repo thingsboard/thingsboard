@@ -23,7 +23,6 @@ import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServer;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServerBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapSecurityStore;
@@ -32,6 +31,8 @@ import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2mDefaultBoots
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContextServer;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.math.BigInteger;
 import java.security.AlgorithmParameters;
 import java.security.KeyFactory;
@@ -66,6 +67,7 @@ public class LwM2MTransportBootstrapServerConfiguration {
     private PublicKey publicKey;
     private PrivateKey privateKey;
     private boolean pskMode = false;
+    private LeshanBootstrapServer lhBServer;
 
     @Autowired
     private LwM2MTransportContextBootstrap contextBs;
@@ -79,14 +81,22 @@ public class LwM2MTransportBootstrapServerConfiguration {
     @Autowired
     private LwM2MInMemoryBootstrapConfigStore lwM2MInMemoryBootstrapConfigStore;
 
-
-    @Bean
-    public LeshanBootstrapServer getLeshanBootstrapServer() {
-        log.info("Prepare and start BootstrapServer... PostConstruct");
-        return this.getLhBootstrapServer(this.contextBs.getCtxBootStrap().getPort(), this.contextBs.getCtxBootStrap().getSecurePort());
+    @PostConstruct
+    public void init() {
+        this.lhBServer = this.getLhBootstrapServer();
+        this.lhBServer.start();
     }
 
-    public LeshanBootstrapServer getLhBootstrapServer(Integer bootstrapPortNoSec, Integer bootstrapSecurePort) {
+    @PreDestroy
+    public void shutdown() throws InterruptedException {
+        log.info("Stopping LwM2M transport Bootstrap Server!");
+        lhBServer.destroy();
+        log.info("LwM2M transport Bootstrap Server stopped!");
+    }
+
+    public LeshanBootstrapServer getLhBootstrapServer() {
+        Integer bootstrapPortNoSec = this.contextBs.getCtxBootStrap().getPort();
+        Integer bootstrapSecurePort = this.contextBs.getCtxBootStrap().getSecurePort();
         LeshanBootstrapServerBuilder builder = new LeshanBootstrapServerBuilder();
         builder.setLocalAddress(this.contextBs.getCtxBootStrap().getHost(), bootstrapPortNoSec);
         builder.setLocalSecureAddress(this.contextBs.getCtxBootStrap().getSecureHost(), bootstrapSecurePort);
