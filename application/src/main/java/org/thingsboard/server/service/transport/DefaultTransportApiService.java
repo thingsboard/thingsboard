@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.device.credentials.ProvisionDeviceCredentialsData;
 import org.thingsboard.server.common.data.device.profile.ProvisionDeviceProfileCredentials;
+import org.thingsboard.server.common.data.firmware.FirmwareType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -455,16 +456,33 @@ public class DefaultTransportApiService implements TransportApiService {
     private ListenableFuture<TransportApiResponseMsg> handle(TransportProtos.GetFirmwareRequestMsg requestMsg) {
         TenantId tenantId = new TenantId(new UUID(requestMsg.getTenantIdMSB(), requestMsg.getTenantIdLSB()));
         DeviceId deviceId = new DeviceId(new UUID(requestMsg.getDeviceIdMSB(), requestMsg.getDeviceIdLSB()));
+        FirmwareType firmwareType = FirmwareType.valueOf(requestMsg.getType());
         Device device = deviceService.findDeviceById(tenantId, deviceId);
 
         if (device == null) {
             return getEmptyTransportApiResponseFuture();
         }
 
-        FirmwareId firmwareId = device.getFirmwareId();
+        FirmwareId firmwareId = null;
+        switch (firmwareType) {
+            case FIRMWARE:
+                firmwareId = device.getFirmwareId();
+                break;
+            case SOFTWARE:
+                firmwareId = device.getSoftwareId();
+                break;
+        }
 
         if (firmwareId == null) {
-            firmwareId = deviceProfileCache.find(device.getDeviceProfileId()).getFirmwareId();
+            DeviceProfile deviceProfile = deviceProfileCache.find(device.getDeviceProfileId());
+            switch (firmwareType) {
+                case FIRMWARE:
+                    firmwareId = deviceProfile.getFirmwareId();
+                    break;
+                case SOFTWARE:
+                    firmwareId = deviceProfile.getSoftwareId();
+                    break;
+            }
         }
 
         TransportProtos.GetFirmwareResponseMsg.Builder builder = TransportProtos.GetFirmwareResponseMsg.newBuilder();

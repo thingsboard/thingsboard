@@ -183,7 +183,7 @@ export class FirmwareAutocompleteComponent implements ControlValueAccessor, OnIn
         this.entityService.getEntity(EntityType.FIRMWARE, firmwareId, {ignoreLoading: true, ignoreErrors: true}).subscribe(
           (entity) => {
             this.modelValue = entity.id.id;
-            this.firmwareFormGroup.get('firmwareId').patchValue(entity, {emitEvent: false});
+            this.firmwareFormGroup.get('firmwareId').patchValue(entity);
           },
           () => {
             this.modelValue = null;
@@ -196,6 +196,7 @@ export class FirmwareAutocompleteComponent implements ControlValueAccessor, OnIn
       } else {
         this.modelValue = null;
         this.firmwareFormGroup.get('firmwareId').patchValue('', {emitEvent: false});
+        this.propagateChange(null);
       }
     } else {
       this.modelValue = null;

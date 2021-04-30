@@ -16,18 +16,40 @@
 package org.thingsboard.server.common.data.firmware;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import static org.thingsboard.server.common.data.firmware.FirmwareType.FIRMWARE;
+import static org.thingsboard.server.common.data.firmware.FirmwareType.SOFTWARE;
 
 public class FirmwareKeyUtil {
 
-    public static final List<String> ALL_ATTRIBUTE_KEYS;
+    public static final List<String> ALL_FW_ATTRIBUTE_KEYS;
+
+    public static final List<String> ALL_SW_ATTRIBUTE_KEYS;
+
     static {
-        ALL_ATTRIBUTE_KEYS = new ArrayList<>();
-        for (FirmwareType type : FirmwareType.values()) {
-            for (FirmwareKey key : FirmwareKey.values()) {
-                ALL_ATTRIBUTE_KEYS.add(getAttributeKey(type, key));
-            }
+        ALL_FW_ATTRIBUTE_KEYS = new ArrayList<>();
+        for (FirmwareKey key : FirmwareKey.values()) {
+            ALL_FW_ATTRIBUTE_KEYS.add(getAttributeKey(FIRMWARE, key));
+
         }
+
+        ALL_SW_ATTRIBUTE_KEYS = new ArrayList<>();
+        for (FirmwareKey key : FirmwareKey.values()) {
+            ALL_SW_ATTRIBUTE_KEYS.add(getAttributeKey(SOFTWARE, key));
+
+        }
+    }
+
+    public static List<String> getAttributeKeys(FirmwareType firmwareType) {
+        switch (firmwareType) {
+            case FIRMWARE:
+                return ALL_FW_ATTRIBUTE_KEYS;
+            case SOFTWARE:
+                return ALL_SW_ATTRIBUTE_KEYS;
+        }
+        return Collections.emptyList();
     }
 
     public static String getAttributeKey(FirmwareType type, FirmwareKey key) {

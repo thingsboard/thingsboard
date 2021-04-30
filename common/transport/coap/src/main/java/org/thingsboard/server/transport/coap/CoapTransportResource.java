@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportC
 import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
+import org.thingsboard.server.common.data.firmware.FirmwareType;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
@@ -122,6 +123,8 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
             processRequest(exchange, SessionMsgType.GET_ATTRIBUTES_REQUEST);
         } else if (featureType.get() == FeatureType.FIRMWARE) {
             processRequest(exchange, SessionMsgType.GET_FIRMWARE_REQUEST);
+        } else if (featureType.get() == FeatureType.SOFTWARE) {
+            processRequest(exchange, SessionMsgType.GET_SOFTWARE_REQUEST);
         } else {
             log.trace("Invalid feature type parameter");
             exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
@@ -326,18 +329,26 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                             new CoapNoOpCallback(exchange));
                     break;
                 case GET_FIRMWARE_REQUEST:
-                    TransportProtos.GetFirmwareRequestMsg requestMsg = TransportProtos.GetFirmwareRequestMsg.newBuilder()
-                            .setTenantIdMSB(sessionInfo.getTenantIdMSB())
-                            .setTenantIdLSB(sessionInfo.getTenantIdLSB())
-                            .setDeviceIdMSB(sessionInfo.getDeviceIdMSB())
-                            .setDeviceIdLSB(sessionInfo.getDeviceIdLSB()).build();
-                    transportContext.getTransportService().process(sessionInfo, requestMsg, new FirmwareCallback(exchange));
+                    getFirmwareCallback(sessionInfo, exchange, FirmwareType.FIRMWARE);
+                    break;
+                case GET_SOFTWARE_REQUEST:
+                    getFirmwareCallback(sessionInfo, exchange, FirmwareType.SOFTWARE);
                     break;
             }
         } catch (AdaptorException e) {
             log.trace("[{}] Failed to decode message: ", sessionId, e);
             exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
         }
+    }
+
+    private void getFirmwareCallback(TransportProtos.SessionInfoProto sessionInfo, CoapExchange exchange, FirmwareType firmwareType) {
+        TransportProtos.GetFirmwareRequestMsg requestMsg = TransportProtos.GetFirmwareRequestMsg.newBuilder()
+                .setTenantIdMSB(sessionInfo.getTenantIdMSB())
+                .setTenantIdLSB(sessionInfo.getTenantIdLSB())
+                .setDeviceIdMSB(sessionInfo.getDeviceIdMSB())
+                .setDeviceIdLSB(sessionInfo.getDeviceIdLSB())
+                .setType(firmwareType.name()).build();
+        transportContext.getTransportService().process(sessionInfo, requestMsg, new FirmwareCallback(exchange));
     }
 
     private TransportProtos.SessionInfoProto lookupAsyncSessionInfo(String token) {

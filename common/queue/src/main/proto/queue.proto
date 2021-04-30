@@ -357,6 +357,7 @@ message GetFirmwareRequestMsg {
   int64 deviceIdLSB = 2;
   int64 tenantIdMSB = 3;
   int64 tenantIdLSB = 4;
+  string type = 5;
 }
 
 message GetFirmwareResponseMsg {
@@ -675,4 +676,5 @@ message ToFirmwareStateServiceMsg {
   int64 deviceIdLSB = 5;
   int64 firmwareIdMSB = 6;
   int64 firmwareIdLSB = 7;
+  string type = 8;
 }
