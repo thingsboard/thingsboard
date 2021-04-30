@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.device.credentials.BasicMqttCredential
 import org.thingsboard.server.common.data.device.credentials.ProvisionDeviceCredentialsData;
 import org.thingsboard.server.common.data.device.profile.ProvisionDeviceProfileCredentials;
 import org.thingsboard.server.common.data.firmware.FirmwareType;
+import org.thingsboard.server.common.data.firmware.FirmwareUtil;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -463,26 +464,10 @@ public class DefaultTransportApiService implements TransportApiService {
             return getEmptyTransportApiResponseFuture();
         }
 
-        FirmwareId firmwareId = null;
-        switch (firmwareType) {
-            case FIRMWARE:
-                firmwareId = device.getFirmwareId();
-                break;
-            case SOFTWARE:
-                firmwareId = device.getSoftwareId();
-                break;
-        }
-
+        FirmwareId firmwareId = FirmwareUtil.getFirmwareId(device, firmwareType);
         if (firmwareId == null) {
             DeviceProfile deviceProfile = deviceProfileCache.find(device.getDeviceProfileId());
-            switch (firmwareType) {
-                case FIRMWARE:
-                    firmwareId = deviceProfile.getFirmwareId();
-                    break;
-                case SOFTWARE:
-                    firmwareId = deviceProfile.getSoftwareId();
-                    break;
-            }
+            firmwareId = FirmwareUtil.getFirmwareId(deviceProfile, firmwareType);
         }
 
         TransportProtos.GetFirmwareResponseMsg.Builder builder = TransportProtos.GetFirmwareResponseMsg.newBuilder();

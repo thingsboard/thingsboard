@@ -15,6 +15,10 @@
  */
 package org.thingsboard.server.common.data.firmware;
 
+import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.HasFirmware;
+import org.thingsboard.server.common.data.id.FirmwareId;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -22,7 +26,8 @@ import java.util.List;
 import static org.thingsboard.server.common.data.firmware.FirmwareType.FIRMWARE;
 import static org.thingsboard.server.common.data.firmware.FirmwareType.SOFTWARE;
 
-public class FirmwareKeyUtil {
+@Slf4j
+public class FirmwareUtil {
 
     public static final List<String> ALL_FW_ATTRIBUTE_KEYS;
 
@@ -70,5 +75,17 @@ public class FirmwareKeyUtil {
 
     public static String getTelemetryKey(FirmwareType type, FirmwareKey key) {
         return type.getKeyPrefix() + "_" + key.getValue();
+    }
+
+    public static FirmwareId getFirmwareId(HasFirmware entity, FirmwareType firmwareType) {
+        switch (firmwareType) {
+            case FIRMWARE:
+                return entity.getFirmwareId();
+            case SOFTWARE:
+                return entity.getSoftwareId();
+            default:
+                log.warn("Unsupported firmware type: [{}]", firmwareType);
+                return null;
+        }
     }
 }

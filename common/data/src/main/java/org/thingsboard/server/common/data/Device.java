@@ -32,7 +32,7 @@ import java.io.IOException;
 
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasName, HasTenantId, HasCustomerId {
+public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasName, HasTenantId, HasCustomerId, HasFirmware {
 
     private static final long serialVersionUID = 2807343040519543363L;
 

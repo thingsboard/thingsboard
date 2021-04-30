@@ -36,7 +36,7 @@ import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalIn
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements HasName, HasTenantId {
+public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements HasName, HasTenantId, HasFirmware {
 
     private TenantId tenantId;
     @NoXss

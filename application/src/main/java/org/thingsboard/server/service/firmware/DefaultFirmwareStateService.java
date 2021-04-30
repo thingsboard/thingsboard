@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.FirmwareInfo;
-import org.thingsboard.server.common.data.firmware.FirmwareKeyUtil;
+import org.thingsboard.server.common.data.firmware.FirmwareUtil;
 import org.thingsboard.server.common.data.firmware.FirmwareType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.FirmwareId;
@@ -66,9 +66,9 @@ import static org.thingsboard.server.common.data.firmware.FirmwareKey.STATE;
 import static org.thingsboard.server.common.data.firmware.FirmwareKey.TITLE;
 import static org.thingsboard.server.common.data.firmware.FirmwareKey.TS;
 import static org.thingsboard.server.common.data.firmware.FirmwareKey.VERSION;
-import static org.thingsboard.server.common.data.firmware.FirmwareKeyUtil.getAttributeKey;
-import static org.thingsboard.server.common.data.firmware.FirmwareKeyUtil.getTargetTelemetryKey;
-import static org.thingsboard.server.common.data.firmware.FirmwareKeyUtil.getTelemetryKey;
+import static org.thingsboard.server.common.data.firmware.FirmwareUtil.getAttributeKey;
+import static org.thingsboard.server.common.data.firmware.FirmwareUtil.getTargetTelemetryKey;
+import static org.thingsboard.server.common.data.firmware.FirmwareUtil.getTelemetryKey;
 import static org.thingsboard.server.common.data.firmware.FirmwareType.FIRMWARE;
 import static org.thingsboard.server.common.data.firmware.FirmwareType.SOFTWARE;
 
@@ -217,30 +217,10 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
         if (device == null) {
             log.warn("[{}] [{}] Device was removed during firmware update msg was queued!", tenantId, deviceId);
         } else {
-            FirmwareId currentFirmwareId;
-
-            switch (firmwareType) {
-                case FIRMWARE:
-                    currentFirmwareId = device.getFirmwareId();
-                    break;
-                case SOFTWARE:
-                    currentFirmwareId = device.getSoftwareId();
-                    break;
-                default:
-                    log.warn("Unsupported firmware type: [{}]", firmwareType);
-                    return false;
-            }
-
+            FirmwareId currentFirmwareId = FirmwareUtil.getFirmwareId(device, firmwareType);
             if (currentFirmwareId == null) {
                 DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(tenantId, device.getDeviceProfileId());
-                switch (firmwareType) {
-                    case FIRMWARE:
-                        currentFirmwareId = deviceProfile.getFirmwareId();
-                        break;
-                    case SOFTWARE:
-                        currentFirmwareId = deviceProfile.getSoftwareId();
-                        break;
-                }
+                currentFirmwareId = FirmwareUtil.getFirmwareId(deviceProfile, firmwareType);
             }
 
             if (targetFirmwareId.equals(currentFirmwareId)) {
@@ -333,13 +313,13 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
     }
 
     private void remove(Device device, FirmwareType firmwareType) {
-        telemetryService.deleteAndNotify(device.getTenantId(), device.getId(), DataConstants.SHARED_SCOPE, FirmwareKeyUtil.getAttributeKeys(firmwareType),
+        telemetryService.deleteAndNotify(device.getTenantId(), device.getId(), DataConstants.SHARED_SCOPE, FirmwareUtil.getAttributeKeys(firmwareType),
                 new FutureCallback<>() {
                     @Override
                     public void onSuccess(@Nullable Void tmp) {
                         log.trace("[{}] Success remove target firmware attributes!", device.getId());
                         Set<AttributeKey> keysToNotify = new HashSet<>();
-                        FirmwareKeyUtil.ALL_FW_ATTRIBUTE_KEYS.forEach(key -> keysToNotify.add(new AttributeKey(DataConstants.SHARED_SCOPE, key)));
+                        FirmwareUtil.ALL_FW_ATTRIBUTE_KEYS.forEach(key -> keysToNotify.add(new AttributeKey(DataConstants.SHARED_SCOPE, key)));
                         tbClusterService.pushMsgToCore(DeviceAttributesEventNotificationMsg.onDelete(device.getTenantId(), device.getId(), keysToNotify), null);
                     }
 
