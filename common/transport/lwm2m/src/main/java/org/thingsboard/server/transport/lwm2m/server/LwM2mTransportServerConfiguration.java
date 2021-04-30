@@ -16,6 +16,8 @@
 package org.thingsboard.server.transport.lwm2m.server;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.core.network.config.NetworkConfig;
+import org.eclipse.californium.core.network.stack.BlockwiseLayer;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeDecoder;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeEncoder;
@@ -57,7 +59,7 @@ import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CBC_SHA256;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CCM_8;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.getCoapConfig;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mNetworkConfig.getCoapConfig;
 
 @Slf4j
 @Component
@@ -92,7 +94,10 @@ public class LwM2mTransportServerConfiguration {
         /** Use a magic converter to support bad type send by the UI. */
         builder.setEncoder(new DefaultLwM2mNodeEncoder(LwM2mValueConverterImpl.getInstance()));
 
+
         /** Create CoAP Config */
+        NetworkConfig networkConfig = getCoapConfig(serverPortNoSec, serverSecurePort);
+        BlockwiseLayer blockwiseLayer = new BlockwiseLayer(networkConfig);
         builder.setCoapConfig(getCoapConfig(serverPortNoSec, serverSecurePort));
 
         /** Define model provider (Create Models )*/
@@ -110,6 +115,7 @@ public class LwM2mTransportServerConfiguration {
 
         /** Create DTLS Config */
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
+        dtlsConfig.setServerOnly(true);
         dtlsConfig.setRecommendedSupportedGroupsOnly(this.context.getLwM2MTransportConfigServer().isRecommendedSupportedGroups());
         dtlsConfig.setRecommendedCipherSuitesOnly(this.context.getLwM2MTransportConfigServer().isRecommendedCiphers());
         if (this.pskMode) {

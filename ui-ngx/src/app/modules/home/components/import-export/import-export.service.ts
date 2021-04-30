@@ -57,6 +57,8 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 import { FiltersInfo } from '@shared/models/query/query.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { DeviceProfile } from '@shared/models/device.models';
+import { TenantProfile } from '@shared/models/tenant.model';
+import { TenantProfileService } from '@core/http/tenant-profile.service';
 
 // @dynamic
 @Injectable()
@@ -70,6 +72,7 @@ export class ImportExportService {
               private dashboardUtils: DashboardUtilsService,
               private widgetService: WidgetService,
               private deviceProfileService: DeviceProfileService,
+              private tenantProfileService: TenantProfileService,
               private entityService: EntityService,
               private ruleChainService: RuleChainService,
               private utils: UtilsService,
@@ -434,7 +437,7 @@ export class ImportExportService {
       (deviceProfile) => {
           let name = deviceProfile.name;
           name = name.toLowerCase().replace(/\W/g, '_');
-          this.exportToPc(this.prepareDeviceProfileExport(deviceProfile), name);
+          this.exportToPc(this.prepareProfileExport(deviceProfile), name);
         },
         (e) => {
           this.handleExportError(e, 'device-profile.export-failed-error');
@@ -455,6 +458,37 @@ export class ImportExportService {
         }
       }),
       catchError((err) => {
+        return of(null);
+      })
+    );
+  }
+
+  public exportTenantProfile(tenantProfileId: string) {
+    this.tenantProfileService.getTenantProfile(tenantProfileId).subscribe(
+      (tenantProfile) => {
+        let name = tenantProfile.name;
+        name = name.toLowerCase().replace(/\W/g, '_');
+        this.exportToPc(this.prepareProfileExport(tenantProfile), name);
+      },
+      (e) => {
+        this.handleExportError(e, 'tenant-profile.export-failed-error');
+      }
+    );
+  }
+
+  public importTenantProfile(): Observable<TenantProfile> {
+    return this.openImportDialog('tenant-profile.import', 'tenant-profile.tenant-profile-file').pipe(
+      mergeMap((tenantProfile: TenantProfile) => {
+        if (!this.validateImportedTenantProfile(tenantProfile)) {
+          this.store.dispatch(new ActionNotificationShow(
+            {message: this.translate.instant('tenant-profile.invalid-tenant-profile-file-error'),
+              type: 'error'}));
+          throw new Error('Invalid tenant profile file');
+        } else {
+          return this.tenantProfileService.saveTenantProfile(tenantProfile);
+        }
+      }),
+      catchError(() => {
         return of(null);
       })
     );
@@ -515,6 +549,13 @@ export class ImportExportService {
       return false;
     }
     return true;
+  }
+
+  private validateImportedTenantProfile(tenantProfile: TenantProfile): boolean {
+    return isDefined(tenantProfile.name)
+      && isDefined(tenantProfile.profileData)
+      && isDefined(tenantProfile.isolatedTbCore)
+      && isDefined(tenantProfile.isolatedTbRuleEngine);
   }
 
   private sumObject(obj1: any, obj2: any): any {
@@ -798,10 +839,10 @@ export class ImportExportService {
     return dashboard;
   }
 
-  private prepareDeviceProfileExport(deviceProfile: DeviceProfile): DeviceProfile {
-    deviceProfile = this.prepareExport(deviceProfile);
-    deviceProfile.default = false;
-    return deviceProfile;
+  private prepareProfileExport<T extends DeviceProfile|TenantProfile>(profile: T): T {
+    profile = this.prepareExport(profile);
+    profile.default = false;
+    return profile;
   }
 
   private prepareExport(data: any): any {

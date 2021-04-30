@@ -17,6 +17,7 @@ package org.thingsboard.server.queue.discovery;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationListener;
+import org.thingsboard.server.queue.discovery.event.TbApplicationEvent;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;

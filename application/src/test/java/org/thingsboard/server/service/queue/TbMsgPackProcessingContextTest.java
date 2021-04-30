@@ -16,10 +16,10 @@
 package org.thingsboard.server.service.queue;
 
 import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -28,39 +28,74 @@ import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrateg
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Slf4j
 @RunWith(MockitoJUnitRunner.class)
 public class TbMsgPackProcessingContextTest {
 
-    @Test
-    public void testHighConcurrencyCase() throws InterruptedException {
-        TbRuleEngineSubmitStrategy strategyMock = mock(TbRuleEngineSubmitStrategy.class);
-        int msgCount = 1000;
-        int parallelCount = 5;
-        ExecutorService executorService = Executors.newFixedThreadPool(parallelCount);
-        try {
-            ConcurrentMap<UUID, TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> messages = new ConcurrentHashMap<>();
-            for (int i = 0; i < msgCount; i++) {
-                messages.put(UUID.randomUUID(), new TbProtoQueueMsg<>(UUID.randomUUID(), null));
-            }
-            when(strategyMock.getPendingMap()).thenReturn(messages);
-            TbMsgPackProcessingContext context = new TbMsgPackProcessingContext("Main", strategyMock);
-            for (UUID uuid : messages.keySet()) {
-                for (int i = 0; i < parallelCount; i++) {
-                    executorService.submit(() -> context.onSuccess(uuid));
-                }
-            }
-            Assert.assertTrue(context.await(10, TimeUnit.SECONDS));
-            Mockito.verify(strategyMock, Mockito.times(msgCount)).onSuccess(Mockito.any(UUID.class));
-        } finally {
+    public static final int TIMEOUT = 10;
+    ExecutorService executorService;
+
+    @After
+    public void tearDown() {
+        if (executorService != null) {
             executorService.shutdownNow();
         }
+    }
+
+    @Test
+    public void testHighConcurrencyCase() throws InterruptedException {
+        //log.warn("preparing the test...");
+        int msgCount = 1000;
+        int parallelCount = 5;
+        executorService = Executors.newFixedThreadPool(parallelCount);
+
+        ConcurrentMap<UUID, TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> messages = new ConcurrentHashMap<>(msgCount);
+        for (int i = 0; i < msgCount; i++) {
+            messages.put(UUID.randomUUID(), new TbProtoQueueMsg<>(UUID.randomUUID(), null));
+        }
+        TbRuleEngineSubmitStrategy strategyMock = mock(TbRuleEngineSubmitStrategy.class);
+        when(strategyMock.getPendingMap()).thenReturn(messages);
+
+        TbMsgPackProcessingContext context = new TbMsgPackProcessingContext("Main", strategyMock);
+        for (UUID uuid : messages.keySet()) {
+            final CountDownLatch readyLatch = new CountDownLatch(parallelCount);
+            final CountDownLatch startLatch = new CountDownLatch(1);
+            final CountDownLatch finishLatch = new CountDownLatch(parallelCount);
+            for (int i = 0; i < parallelCount; i++) {
+                //final String taskName = "" + uuid + " " + i;
+                executorService.submit(() -> {
+                    //log.warn("ready {}", taskName);
+                    readyLatch.countDown();
+                    try {
+                        startLatch.await();
+                    } catch (InterruptedException e) {
+                        Assert.fail("failed to await");
+                    }
+                    //log.warn("go    {}", taskName);
+
+                    context.onSuccess(uuid);
+
+                    finishLatch.countDown();
+                });
+            }
+            assertTrue(readyLatch.await(TIMEOUT, TimeUnit.SECONDS));
+            Thread.yield();
+            startLatch.countDown(); //run all-at-once submitted tasks
+            assertTrue(finishLatch.await(TIMEOUT, TimeUnit.SECONDS));
+        }
+        assertTrue(context.await(TIMEOUT, TimeUnit.SECONDS));
+        verify(strategyMock, times(msgCount)).onSuccess(any(UUID.class));
     }
 }

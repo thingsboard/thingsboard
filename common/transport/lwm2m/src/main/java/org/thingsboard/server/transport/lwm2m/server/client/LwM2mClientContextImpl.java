@@ -82,12 +82,12 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public LwM2mClient getLwM2mClientWithReg(Registration registration, String registrationId) {
-        LwM2mClient client = registrationId != null ?
+        LwM2mClient client = registrationId != null && this.lwM2mClients.containsKey(registrationId) ?
                 this.lwM2mClients.get(registrationId) :
-                this.lwM2mClients.containsKey(registration.getId()) ?
-                        this.lwM2mClients.get(registration.getId()) :
-                        this.lwM2mClients.get(registration.getEndpoint());
-        return client != null ? client : updateInSessionsLwM2MClient(registration);
+                registration !=null && this.lwM2mClients.containsKey(registration.getId()) ?
+                        this.lwM2mClients.get(registration.getId()) : registration !=null && this.lwM2mClients.containsKey(registration) ?
+                        this.lwM2mClients.get(registration.getEndpoint()) : null;
+        return client != null ? client : registration!= null ? updateInSessionsLwM2MClient(registration) : null;
     }
 
     @Override

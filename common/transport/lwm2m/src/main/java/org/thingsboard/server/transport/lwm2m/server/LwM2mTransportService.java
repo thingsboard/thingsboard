@@ -20,13 +20,14 @@ import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.server.client.Lwm2mClientRpcRequest;
 
 import java.util.Collection;
 import java.util.Optional;
 
-public interface LwM2mTransportService {
+public interface LwM2mTransportService extends TbTransportService {
 
     void onRegistered(Registration registration, Collection<Observation> previousObsersations);
 
@@ -38,7 +39,7 @@ public interface LwM2mTransportService {
 
     void setCancelObservations(Registration registration);
 
-    void onObservationResponse(Registration registration, String path, ReadResponse response, Lwm2mClientRpcRequest rpcRequest);
+    void onUpdateValueAfterReadResponse(Registration registration, String path, ReadResponse response, Lwm2mClientRpcRequest rpcRequest);
 
     void onAttributeUpdate(TransportProtos.AttributeUpdateNotificationMsg msg, TransportProtos.SessionInfoProto sessionInfo);
 
@@ -59,6 +60,4 @@ public interface LwM2mTransportService {
     void doTrigger(Registration registration, String path);
 
     void doDisconnect(TransportProtos.SessionInfoProto sessionInfo);
-
-
 }

@@ -621,9 +621,9 @@ transport:
       key_password: "${COAP_DTLS_KEY_PASSWORD:server_key_password}"
       # Key alias
       key_alias: "${COAP_DTLS_KEY_ALIAS:serveralias}"
-      # Skip certificate validity check for client certificates.
-      skip_validity_check_for_client_cert: "${COAP_DTLS_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
       x509:
+        # Skip certificate validity check for client certificates.
+        skip_validity_check_for_client_cert: "${TB_COAP_X509_DTLS_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
         dtls_session_inactivity_timeout: "${TB_COAP_X509_DTLS_SESSION_INACTIVITY_TIMEOUT:86400000}"
         dtls_session_report_timeout: "${TB_COAP_X509_DTLS_SESSION_REPORT_TIMEOUT:1800000}"
   # Local LwM2M transport parameters
@@ -686,6 +686,13 @@ transport:
         alias: "${LWM2M_KEYSTORE_ALIAS_BS:bootstrap}"
     # Use redis for Security and Registration stores
     redis.enabled: "${LWM2M_REDIS_ENABLED:false}"
+  snmp:
+    enabled: "${SNMP_ENABLED:true}"
+    response_processing:
+      # parallelism level for executor (workStealingPool) that is responsible for handling responses from SNMP devices
+      parallelism_level: "${SNMP_RESPONSE_PROCESSING_PARALLELISM_LEVEL:20}"
+    # to configure SNMP to work over UDP or TCP
+    underlying_protocol: "${SNMP_UNDERLYING_PROTOCOL:udp}"
 
 # Edges parameters
 edges:
