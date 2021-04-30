@@ -778,7 +778,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     private void restoreSessions() {
-        sessions.clear();
         log.debug("[{}] Restoring sessions from cache", deviceId);
         DeviceSessionsCacheEntry sessionsDump = null;
         try {
@@ -818,13 +817,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         ensureSessionsCapacity();
 
         log.debug("[{}] Dumping sessions: {}, rpc subscriptions: {}, attribute subscriptions: {} to cache", deviceId, sessions.size(), rpcSubscriptions.size(), attributeSubscriptions.size());
-        List<SessionSubscriptionInfoProto> sessionsList;
-        if (sessions.size() < systemContext.getMaxConcurrentSessionsPerDevice()) {
-            sessionsList = new ArrayList<>(sessions.size());
-        } else {
-            log.warn("[{}] Sessions size {} list more than maxConcurrentSessionsPerDevice {}. Dumping only latest", deviceId, sessions.size(), systemContext.getMaxConcurrentSessionsPerDevice());
-            sessionsList = new ArrayList<>((int) systemContext.getMaxConcurrentSessionsPerDevice());
-        }
+        List<SessionSubscriptionInfoProto> sessionsList = new ArrayList<>(sessions.size());
         sessions.forEach((uuid, sessionMD) -> {
             if (sessionMD.getSessionInfo().getType() == SessionType.SYNC) {
                 return;
@@ -838,14 +831,10 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                     .setSessionIdMSB(uuid.getMostSignificantBits())
                     .setSessionIdLSB(uuid.getLeastSignificantBits())
                     .setNodeId(sessionInfo.getNodeId()).build();
-            if (sessionsList.size() <= systemContext.getMaxConcurrentSessionsPerDevice()) {
-                sessionsList.add(SessionSubscriptionInfoProto.newBuilder()
-                        .setSessionInfo(sessionInfoProto)
-                        .setSubscriptionInfo(subscriptionInfoProto).build());
-                log.debug("[{}] Dumping session: {}", deviceId, sessionMD);
-            } else {
-                log.warn("[{}] Session was not dumped: {}", deviceId, sessionMD);
-            }
+            sessionsList.add(SessionSubscriptionInfoProto.newBuilder()
+                    .setSessionInfo(sessionInfoProto)
+                    .setSubscriptionInfo(subscriptionInfoProto).build());
+            log.debug("[{}] Dumping session: {}", deviceId, sessionMD);
         });
         systemContext.getDeviceSessionCacheService()
                 .put(deviceId, DeviceSessionsCacheEntry.newBuilder()
