@@ -27,7 +27,7 @@ import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mQueuedRequest;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServiceImpl;
+import org.thingsboard.server.transport.lwm2m.server.DefaultLwM2MTransportMsgHandler;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import java.util.Collection;
@@ -172,7 +172,7 @@ public class LwM2mClient implements Cloneable {
                 .collect(Collectors.toSet());
     }
 
-    public void initReadValue(LwM2mTransportServiceImpl serviceImpl, String path) {
+    public void initReadValue(DefaultLwM2MTransportMsgHandler serviceImpl, String path) {
         if (path != null) {
             this.pendingReadRequests.remove(path);
         }

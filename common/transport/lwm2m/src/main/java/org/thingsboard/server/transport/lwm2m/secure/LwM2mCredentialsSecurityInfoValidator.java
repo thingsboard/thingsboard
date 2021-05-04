@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.secure;
 
 import com.google.gson.JsonObject;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.core.util.SecurityUtil;
@@ -26,7 +27,9 @@ import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContextServer;
+import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil;
 
 import java.io.IOException;
@@ -44,13 +47,11 @@ import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.X5
 @Slf4j
 @Component
 @TbLwM2mTransportComponent
+@RequiredArgsConstructor
 public class LwM2mCredentialsSecurityInfoValidator {
 
-    private final LwM2mTransportContextServer contextS;
-
-    public LwM2mCredentialsSecurityInfoValidator(LwM2mTransportContextServer contextS) {
-        this.contextS = contextS;
-    }
+    private final LwM2mTransportContext context;
+    private final LwM2MTransportServerConfig config;
 
     /**
      * Request to thingsboard Response from thingsboard ValidateDeviceLwM2MCredentials
@@ -61,7 +62,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
     public ReadResultSecurityStore createAndValidateCredentialsSecurityInfo(String endpoint, LwM2mTransportHandlerUtil.LwM2mTypeServer keyValue) {
         CountDownLatch latch = new CountDownLatch(1);
         final ReadResultSecurityStore[] resultSecurityStore = new ReadResultSecurityStore[1];
-        contextS.getTransportService().process(ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder().setCredentialsId(endpoint).build(),
+        context.getTransportService().process(ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder().setCredentialsId(endpoint).build(),
                 new TransportServiceCallback<>() {
                     @Override
                     public void onSuccess(ValidateDeviceCredentialsResponseMsg msg) {
@@ -81,7 +82,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
                     }
                 });
         try {
-            latch.await(contextS.getLwM2MTransportServerConfig().getTimeout(), TimeUnit.MILLISECONDS);
+            latch.await(config.getTimeout(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             log.error("Failed to await credentials!", e);
         }

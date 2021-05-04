@@ -31,6 +31,7 @@ package org.thingsboard.server.transport.lwm2m.server;
  */
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.DDFFileParser;
 import org.eclipse.leshan.core.model.DefaultDDFFileValidator;
@@ -39,11 +40,8 @@ import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.codec.CodecException;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.transport.TransportContext;
-import org.thingsboard.server.common.transport.TransportResourceCache;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
@@ -62,33 +60,15 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandle
 @Slf4j
 @Component
 @TbLwM2mTransportComponent
-public class LwM2mTransportContextServer extends TransportContext {
+@RequiredArgsConstructor
+public class LwM2mTransportServerHelper {
 
-
-    private final LwM2MTransportServerConfig lwM2MTransportServerConfig;
+    private final LwM2mTransportContext context;
 
     private final TransportService transportService;
 
-    private final TransportResourceCache transportResourceCache;
-
-
     @Getter
     private final LwM2MJsonAdaptor adaptor;
-
-    public LwM2mTransportContextServer(LwM2MTransportServerConfig lwM2MTransportServerConfig, TransportService transportService, TransportResourceCache transportResourceCache, LwM2MJsonAdaptor adaptor) {
-        this.lwM2MTransportServerConfig = lwM2MTransportServerConfig;
-        this.transportService = transportService;
-        this.transportResourceCache = transportResourceCache;
-        this.adaptor = adaptor;
-    }
-
-    public LwM2MTransportServerConfig getLwM2MTransportServerConfig() {
-        return this.lwM2MTransportServerConfig;
-    }
-
-    public TransportResourceCache getTransportResourceCache() {
-        return this.transportResourceCache;
-    }
 
     /**
      * send to Thingsboard Attribute || Telemetry
@@ -134,7 +114,7 @@ public class LwM2mTransportContextServer extends TransportContext {
      */
     public SessionInfoProto getValidateSessionInfo(TransportProtos.ValidateDeviceCredentialsResponseMsg msg, long mostSignificantBits, long leastSignificantBits) {
         return SessionInfoProto.newBuilder()
-                .setNodeId(this.getNodeId())
+                .setNodeId(context.getNodeId())
                 .setSessionIdMSB(mostSignificantBits)
                 .setSessionIdLSB(leastSignificantBits)
                 .setDeviceIdMSB(msg.getDeviceInfo().getDeviceIdMSB())
@@ -165,8 +145,8 @@ public class LwM2mTransportContextServer extends TransportContext {
      * @param logMsg - info about Logs
      * @return- KeyValueProto for telemetry (Logs)
      */
-    public List <TransportProtos.KeyValueProto> getKvLogyToThingsboard(String logMsg) {
-        List <TransportProtos.KeyValueProto> result = new ArrayList<>();
+    public List<TransportProtos.KeyValueProto> getKvLogyToThingsboard(String logMsg) {
+        List<TransportProtos.KeyValueProto> result = new ArrayList<>();
         result.add(TransportProtos.KeyValueProto.newBuilder()
                 .setKey(LOG_LW2M_TELEMETRY)
                 .setType(TransportProtos.KeyValueType.STRING_V)
@@ -179,32 +159,31 @@ public class LwM2mTransportContextServer extends TransportContext {
      * @throws CodecException -
      */
 
-        public TransportProtos.KeyValueProto getKvAttrTelemetryToThingsboard(ResourceModel.Type resourceType, String resourceName, Object value, boolean isMultiInstances) {
-            TransportProtos.KeyValueProto.Builder kvProto = TransportProtos.KeyValueProto.newBuilder().setKey(resourceName);
-            if (isMultiInstances) {
-                kvProto.setType(TransportProtos.KeyValueType.JSON_V)
-                        .setJsonV((String) value);
+    public TransportProtos.KeyValueProto getKvAttrTelemetryToThingsboard(ResourceModel.Type resourceType, String resourceName, Object value, boolean isMultiInstances) {
+        TransportProtos.KeyValueProto.Builder kvProto = TransportProtos.KeyValueProto.newBuilder().setKey(resourceName);
+        if (isMultiInstances) {
+            kvProto.setType(TransportProtos.KeyValueType.JSON_V)
+                    .setJsonV((String) value);
+        } else {
+            switch (resourceType) {
+                case BOOLEAN:
+                    kvProto.setType(BOOLEAN_V).setBoolV((Boolean) value).build();
+                    break;
+                case STRING:
+                case TIME:
+                case OPAQUE:
+                case OBJLNK:
+                    kvProto.setType(TransportProtos.KeyValueType.STRING_V).setStringV((String) value);
+                    break;
+                case INTEGER:
+                    kvProto.setType(TransportProtos.KeyValueType.LONG_V).setLongV((Long) value);
+                    break;
+                case FLOAT:
+                    kvProto.setType(TransportProtos.KeyValueType.DOUBLE_V).setDoubleV((Double) value);
             }
-            else {
-                switch (resourceType) {
-                    case BOOLEAN:
-                        kvProto.setType(BOOLEAN_V).setBoolV((Boolean) value).build();
-                        break;
-                    case STRING:
-                    case TIME:
-                    case OPAQUE:
-                    case OBJLNK:
-                        kvProto.setType(TransportProtos.KeyValueType.STRING_V).setStringV((String) value);
-                        break;
-                    case INTEGER:
-                       kvProto.setType(TransportProtos.KeyValueType.LONG_V).setLongV((Long) value);
-                       break;
-                    case FLOAT:
-                        kvProto.setType(TransportProtos.KeyValueType.DOUBLE_V).setDoubleV((Double) value);
-                }
-            }
-            return kvProto.build();
         }
+        return kvProto.build();
+    }
 
     /**
      *
@@ -230,7 +209,7 @@ public class LwM2mTransportContextServer extends TransportContext {
         throw new CodecException("Invalid ResourceModel_Type for resource %s, got %s", resourcePath, currentType);
     }
 
-    public Object getValueFromKvProto (TransportProtos.KeyValueProto kv) {
+    public Object getValueFromKvProto(TransportProtos.KeyValueProto kv) {
         switch (kv.getType()) {
             case BOOLEAN_V:
                 return kv.getBoolV();

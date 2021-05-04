@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.DefaultDDFFileValidator;
 import org.eclipse.leshan.core.model.LwM2mModel;
@@ -37,6 +38,7 @@ import static org.thingsboard.server.common.data.ResourceType.LWM2M_MODEL;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
 
 @Slf4j
+@RequiredArgsConstructor
 public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
 
     /**
@@ -46,12 +48,8 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
      * Value = TenantId
      */
     private final LwM2mClientContext lwM2mClientContext;
-    private final LwM2mTransportContextServer lwM2mTransportContextServer;
-
-    public LwM2mVersionedModelProvider(LwM2mClientContext lwM2mClientContext, LwM2mTransportContextServer lwM2mTransportContextServer) {
-        this.lwM2mClientContext = lwM2mClientContext;
-        this.lwM2mTransportContextServer = lwM2mTransportContextServer;
-    }
+    private final LwM2mTransportServerHelper helper;
+    private final LwM2mTransportContext context;
 
      private String getKeyIdVer(Integer objectId, String version) {
         return objectId != null ? objectId + LWM2M_SEPARATOR_KEY + ((version == null || version.isEmpty()) ? ObjectModel.DEFAULT_VERSION : version) : null;
@@ -120,11 +118,9 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
         private ObjectModel getObjectModelDynamic(Integer objectId, String version) {
             String key = getKeyIdVer(objectId, version);
 
-            Optional<TbResource> tbResource = lwM2mTransportContextServer
-                    .getTransportResourceCache()
-                    .get(this.tenantId, LWM2M_MODEL, key);
+            Optional<TbResource> tbResource = context.getTransportResourceCache().get(this.tenantId, LWM2M_MODEL, key);
 
-            return tbResource.map(resource -> lwM2mTransportContextServer.parseFromXmlToObjectModel(
+            return tbResource.map(resource -> helper.parseFromXmlToObjectModel(
                     Base64.getDecoder().decode(resource.getData()),
                     key + ".xml",
                     new DefaultDDFFileValidator())).orElse(null);

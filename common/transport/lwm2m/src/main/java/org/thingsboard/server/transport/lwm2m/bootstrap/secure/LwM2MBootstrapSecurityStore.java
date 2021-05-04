@@ -34,7 +34,8 @@ import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.secure.ReadResultSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mSessionMsgListener;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContextServer;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil;
 
 import java.io.IOException;
@@ -59,12 +60,14 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     private final LwM2mCredentialsSecurityInfoValidator lwM2MCredentialsSecurityInfoValidator;
 
-    private final LwM2mTransportContextServer context;
+    private final LwM2mTransportContext context;
+    private final LwM2mTransportServerHelper helper;
 
-    public LwM2MBootstrapSecurityStore(EditableBootstrapConfigStore bootstrapConfigStore, LwM2mCredentialsSecurityInfoValidator lwM2MCredentialsSecurityInfoValidator, LwM2mTransportContextServer context) {
+    public LwM2MBootstrapSecurityStore(EditableBootstrapConfigStore bootstrapConfigStore, LwM2mCredentialsSecurityInfoValidator lwM2MCredentialsSecurityInfoValidator, LwM2mTransportContext context, LwM2mTransportServerHelper helper) {
         this.bootstrapConfigStore = bootstrapConfigStore;
         this.lwM2MCredentialsSecurityInfoValidator = lwM2MCredentialsSecurityInfoValidator;
         this.context = context;
+        this.helper = helper;
     }
 
     @Override
@@ -158,19 +161,19 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                 LwM2MServerBootstrap profileServerBootstrap = mapper.readValue(bootstrapObject.get(BOOTSTRAP_SERVER).toString(), LwM2MServerBootstrap.class);
                 LwM2MServerBootstrap profileLwm2mServer = mapper.readValue(bootstrapObject.get(LWM2M_SERVER).toString(), LwM2MServerBootstrap.class);
                 UUID sessionUUiD = UUID.randomUUID();
-                TransportProtos.SessionInfoProto sessionInfo = context.getValidateSessionInfo(store.getMsg(), sessionUUiD.getMostSignificantBits(), sessionUUiD.getLeastSignificantBits());
+                TransportProtos.SessionInfoProto sessionInfo = helper.getValidateSessionInfo(store.getMsg(), sessionUUiD.getMostSignificantBits(), sessionUUiD.getLeastSignificantBits());
                 context.getTransportService().registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(null, sessionInfo));
                 if (this.getValidatedSecurityMode(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap, lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer)) {
                     lwM2MBootstrapConfig.bootstrapServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap);
                     lwM2MBootstrapConfig.lwm2mServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer);
                     String logMsg = String.format("%s: getParametersBootstrap: %s Access connect client with bootstrap server.", LOG_LW2M_INFO, store.getEndPoint());
-                    context.sendParametersOnThingsboardTelemetry(context.getKvLogyToThingsboard(logMsg), sessionInfo);
+                    helper.sendParametersOnThingsboardTelemetry(helper.getKvLogyToThingsboard(logMsg), sessionInfo);
                     return lwM2MBootstrapConfig;
                 } else {
                     log.error(" [{}] Different values SecurityMode between of client and profile.", store.getEndPoint());
                     log.error("{} getParametersBootstrap: [{}] Different values SecurityMode between of client and profile.", LOG_LW2M_ERROR, store.getEndPoint());
                     String logMsg = String.format("%s: getParametersBootstrap: %s Different values SecurityMode between of client and profile.", LOG_LW2M_ERROR, store.getEndPoint());
-                    context.sendParametersOnThingsboardTelemetry(context.getKvLogyToThingsboard(logMsg), sessionInfo);
+                    helper.sendParametersOnThingsboardTelemetry(helper.getKvLogyToThingsboard(logMsg), sessionInfo);
                     return null;
                 }
             }
