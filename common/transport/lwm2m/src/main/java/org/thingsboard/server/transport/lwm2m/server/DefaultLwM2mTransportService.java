@@ -117,29 +117,29 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         builder.setLocalAddress(config.getHost(), serverPortNoSec);
         builder.setLocalSecureAddress(config.getSecureHost(), serverSecurePort);
         builder.setDecoder(new DefaultLwM2mNodeDecoder());
-        /** Use a magic converter to support bad type send by the UI. */
+        /* Use a magic converter to support bad type send by the UI. */
         builder.setEncoder(new DefaultLwM2mNodeEncoder(LwM2mValueConverterImpl.getInstance()));
 
 
-        /** Create CoAP Config */
+        /* Create CoAP Config */
         NetworkConfig networkConfig = getCoapConfig(serverPortNoSec, serverSecurePort);
         BlockwiseLayer blockwiseLayer = new BlockwiseLayer(networkConfig);
         builder.setCoapConfig(getCoapConfig(serverPortNoSec, serverSecurePort));
 
-        /** Define model provider (Create Models )*/
+        /* Define model provider (Create Models )*/
         LwM2mModelProvider modelProvider = new LwM2mVersionedModelProvider(this.lwM2mClientContext, this.helper, this.context);
         config.setModelProvider(modelProvider);
         builder.setObjectModelProvider(modelProvider);
 
-        /**  Create credentials */
+        /*  Create credentials */
         this.setServerWithCredentials(builder);
 
-        /** Set securityStore with new registrationStore */
+        /* Set securityStore with new registrationStore */
         builder.setSecurityStore(securityStore);
         builder.setRegistrationStore(registrationStore);
 
 
-        /** Create DTLS Config */
+        /* Create DTLS Config */
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
         dtlsConfig.setServerOnly(true);
         dtlsConfig.setRecommendedSupportedGroupsOnly(config.isRecommendedSupportedGroups());
@@ -156,10 +156,10 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
                     TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256);
         }
 
-        /** Set DTLS Config */
+        /* Set DTLS Config */
         builder.setDtlsConfig(dtlsConfig);
 
-        /** Create LWM2M server */
+        /* Create LWM2M server */
         return builder.build();
     }
 
@@ -173,10 +173,10 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
                         trustedCertificates[0] = rootCAX509Cert;
                         builder.setTrustedCertificates(trustedCertificates);
                     } else {
-                        /** by default trust all */
+                        /* by default trust all */
                         builder.setTrustedCertificates(new X509Certificate[0]);
                     }
-                    /** Set securityStore with registrationStore*/
+                    /* Set securityStore with registrationStore*/
                     builder.setAuthorizer(new DefaultAuthorizer(securityStore, new SecurityChecker() {
                         @Override
                         protected boolean matchX509Identity(String endpoint, String receivedX509CommonName,
@@ -189,7 +189,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
                 this.infoPramsUri("RPK");
                 this.infoParamsServerKey(this.publicKey, this.privateKey);
             } else {
-                /** by default trust all */
+                /* by default trust all */
                 builder.setTrustedCertificates(new X509Certificate[0]);
                 log.info("Unable to load X509 files for LWM2MServer");
                 this.pskMode = true;
@@ -256,7 +256,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
     }
 
     private void generateKeyForRPK() throws NoSuchAlgorithmException, InvalidParameterSpecException, InvalidKeySpecException {
-        /** Get Elliptic Curve Parameter spec for secp256r1 */
+        /* Get Elliptic Curve Parameter spec for secp256r1 */
         AlgorithmParameters algoParameters = AlgorithmParameters.getInstance("EC");
         algoParameters.init(new ECGenParameterSpec("secp256r1"));
         ECParameterSpec parameterSpec = algoParameters.getParameterSpec(ECParameterSpec.class);
@@ -280,17 +280,17 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
     }
 
     private void infoParamsServerKey(PublicKey publicKey, PrivateKey privateKey) {
-        /** Get x coordinate */
+        /* Get x coordinate */
         byte[] x = ((ECPublicKey) publicKey).getW().getAffineX().toByteArray();
         if (x[0] == 0)
             x = Arrays.copyOfRange(x, 1, x.length);
 
-        /** Get Y coordinate */
+        /* Get Y coordinate */
         byte[] y = ((ECPublicKey) publicKey).getW().getAffineY().toByteArray();
         if (y[0] == 0)
             y = Arrays.copyOfRange(y, 1, y.length);
 
-        /** Get Curves params */
+        /* Get Curves params */
         String params = ((ECPublicKey) publicKey).getParams().toString();
         String privHex = Hex.encodeHexString(privateKey.getEncoded());
         log.info(" \n- Public Key (Hex): [{}] \n" +

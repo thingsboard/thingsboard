@@ -87,6 +87,7 @@ import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPA
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.CLIENT_NOT_AUTHORIZED;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.DEVICE_ATTRIBUTES_REQUEST;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.FR_OBJECT_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.FR_PATH_RESOURCE_VER_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LOG_LW2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LOG_LW2M_INFO;
@@ -1420,9 +1421,8 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
             int chunkSize = 0;
             int chunk = 0;
             byte[] firmwareChunk = firmwareDataCache.get(lwM2MClient.getFrUpdate().getCurrentFwId().toString(), chunkSize, chunk);
-            Integer objectId = 5;
-            String verSupportedObject = lwM2MClient.getRegistration().getSupportedObject().get(objectId);
-            String targetIdVer = LWM2M_SEPARATOR_PATH + objectId + LWM2M_SEPARATOR_KEY + verSupportedObject + LWM2M_SEPARATOR_PATH + 0 + LWM2M_SEPARATOR_PATH + 0;
+            String verSupportedObject = lwM2MClient.getRegistration().getSupportedObject().get(FR_OBJECT_ID);
+            String targetIdVer = LWM2M_SEPARATOR_PATH + FR_OBJECT_ID + LWM2M_SEPARATOR_KEY + verSupportedObject + LWM2M_SEPARATOR_PATH + 0 + LWM2M_SEPARATOR_PATH + 0;
             lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(), targetIdVer, WRITE_REPLACE, ContentFormat.OPAQUE.getName(),
                     firmwareChunk, config.getTimeout(), null);
             log.warn("updateFirmwareClient [{}] [{}]", lwM2MClient.getFrUpdate().getCurrentFwVersion(), lwM2MClient.getFrUpdate().getClientFwVersion());

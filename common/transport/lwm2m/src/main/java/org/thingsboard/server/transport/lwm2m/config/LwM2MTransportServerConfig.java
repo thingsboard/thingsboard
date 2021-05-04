@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStore;
@@ -136,18 +137,26 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     @Getter
     @Value("${transport.lwm2m.server.security.alias:}")
     private String certificateAlias;
-    
-    
+
+    @Getter
+    @Value("${transport.lwm2m.log_max_length:}")
+    private int logMaxLength;
+
+
     @PostConstruct
     public void init() {
+        URI uri = null;
         try {
-            File keyStoreFile = new File(Resources.getResource(keyStorePathFile).toURI());
+            uri = Resources.getResource(keyStorePathFile).toURI();
+            log.error("URI: {}", uri);
+            File keyStoreFile = new File(uri);
             InputStream inKeyStore = new FileInputStream(keyStoreFile);
             keyStoreValue = KeyStore.getInstance(keyStoreType);
             keyStoreValue.load(inKeyStore, keyStorePassword == null ? null : keyStorePassword.toCharArray());
         } catch (Exception e) {
             log.error("Unable to lookup LwM2M keystore. Reason: " + e.getMessage(), e);
-            throw new RuntimeException("Failed to lookup LwM2M keystore", e);
+//            Absence of the key store should not block user from using plain LwM2M
+//            throw new RuntimeException("Failed to lookup LwM2M keystore: " + (uri != null ? uri.toString() : ""), e);
         }
     }
 }

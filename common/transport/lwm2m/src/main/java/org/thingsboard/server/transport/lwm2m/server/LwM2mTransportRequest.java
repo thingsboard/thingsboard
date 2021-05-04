@@ -404,17 +404,40 @@ public class LwM2mTransportRequest {
         }
     }
 
-    private void infoWriteResponse(Registration registration, LwM2mResponse response,
-                                   DownlinkRequest request) {
-        LwM2mNode node = ((WriteRequest) request).getNode();
-        Object value = this.converter.convertValue(((LwM2mSingleResource) node).getValue(),
-                ((LwM2mSingleResource) node).getType(), ResourceModel.Type.STRING, request.getPath());
-        String msg = String.format("%s: Update finished successfully: CoapCde - %s Lwm2m code - %d name - %s Resource path - %s value - %s",
-                LOG_LW2M_INFO, ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(),
-                response.getCode().getName(), request.getPath().toString(), value);
-        serviceImpl.sendLogsToThingsboard(msg, registration.getId());
-        log.trace("[{}] [{}] [{}] - [{}] [{}] Update finished successfully: [{}]", request.getClass().getName().toString(), registration.getEndpoint(),
-                ((Response) response.getCoapResponse()).getCode(), response.getCode(),
-                request.getPath().toString(), value);
+    private void infoWriteResponse(Registration registration, LwM2mResponse response, DownlinkRequest request) {
+        try {
+            LwM2mNode node = ((WriteRequest) request).getNode();
+            String msg;
+            Object value;
+            LwM2mSingleResource singleResource = (LwM2mSingleResource) node;
+            if (singleResource.getType() == ResourceModel.Type.STRING || singleResource.getType() == ResourceModel.Type.OPAQUE) {
+                int valueLength;
+                if (singleResource.getType() == ResourceModel.Type.STRING) {
+                    valueLength = ((String) singleResource.getValue()).length();
+                    value = ((String) singleResource.getValue())
+                            .substring(Math.min(valueLength, config.getLogMaxLength()));
+
+                } else {
+                    valueLength = ((byte[]) singleResource.getValue()).length;
+                    value = new String(Arrays.copyOf(((byte[]) singleResource.getValue()),
+                            Math.min(valueLength, config.getLogMaxLength())));
+                }
+                value = valueLength > config.getLogMaxLength() ? value + "..." : value;
+                msg = String.format("%s: Update finished successfully: Lwm2m code - %d Resource path - %s length - %s value - %s",
+                        LOG_LW2M_INFO, response.getCode().getCode(), request.getPath().toString(), valueLength, value);
+            } else {
+                value = this.converter.convertValue(singleResource.getValue(),
+                        singleResource.getType(), ResourceModel.Type.STRING, request.getPath());
+                msg = String.format("%s: Update finished successfully: Lwm2m code - %d Resource path - %s value - %s",
+                        LOG_LW2M_INFO, response.getCode().getCode(), request.getPath().toString(), value);
+            }
+            if (msg != null) {
+                serviceImpl.sendLogsToThingsboard(msg, registration.getId());
+                log.warn("[{}] [{}] [{}] - [{}] [{}] Update finished successfully: [{}]", request.getClass().getName(), registration.getEndpoint(),
+                        ((Response) response.getCoapResponse()).getCode(), response.getCode(), request.getPath().toString(), value);
+            }
+        } catch (Exception e) {
+            log.trace("Fail convert value from request to string. ", e);
+        }
     }
 }
