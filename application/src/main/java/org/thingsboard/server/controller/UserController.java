@@ -15,21 +15,21 @@
  */
 package org.thingsboard.server.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.MailService;
@@ -58,8 +58,12 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.List;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @RestController
@@ -82,8 +86,7 @@ public class UserController extends BaseController {
     private final ApplicationEventPublisher eventPublisher;
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/user/{userId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/user/{userId}")
     public User getUserById(@PathVariable(USER_ID) String strUserId) throws ThingsboardException {
         checkParameter(USER_ID, strUserId);
         try {
@@ -112,15 +115,13 @@ public class UserController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/user/tokenAccessEnabled", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/user/tokenAccessEnabled")
     public boolean isUserTokenAccessEnabled() {
         return userTokenAccessEnabled;
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/user/{userId}/token", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/user/{userId}/token")
     public JsonNode getUserToken(@PathVariable(USER_ID) String strUserId) throws ThingsboardException {
         checkParameter(USER_ID, strUserId);
         try {
@@ -147,8 +148,7 @@ public class UserController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/user", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/user")
     public User saveUser(@RequestBody User user,
                          @RequestParam(required = false, defaultValue = "true") boolean sendActivationMail,
                          HttpServletRequest request) throws ThingsboardException {
@@ -195,7 +195,7 @@ public class UserController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/user/sendActivationMail", method = RequestMethod.POST)
+    @PostMapping(value = "/user/sendActivationMail")
     @ResponseStatus(value = HttpStatus.OK)
     public void sendActivationEmail(
             @RequestParam(value = "email") String email,
@@ -221,8 +221,7 @@ public class UserController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/user/{userId}/activationLink", method = RequestMethod.GET, produces = "text/plain")
-    @ResponseBody
+    @GetMapping(value = "/user/{userId}/activationLink", produces = "text/plain")
     public String getActivationLink(
             @PathVariable(USER_ID) String strUserId,
             HttpServletRequest request) throws ThingsboardException {
@@ -246,7 +245,7 @@ public class UserController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/user/{userId}", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/user/{userId}")
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteUser(@PathVariable(USER_ID) String strUserId) throws ThingsboardException {
         checkParameter(USER_ID, strUserId);
@@ -274,8 +273,7 @@ public class UserController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/users", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/users", params = {"pageSize", "page"})
     public PageData<User> getUsers(
             @RequestParam int pageSize,
             @RequestParam int page,
@@ -296,8 +294,7 @@ public class UserController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenant/{tenantId}/users", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/{tenantId}/users", params = {"pageSize", "page"})
     public PageData<User> getTenantAdmins(
             @PathVariable("tenantId") String strTenantId,
             @RequestParam int pageSize,
@@ -316,8 +313,7 @@ public class UserController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/{customerId}/users", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/customer/{customerId}/users", params = {"pageSize", "page"})
     public PageData<User> getCustomerUsers(
             @PathVariable("customerId") String strCustomerId,
             @RequestParam int pageSize,
@@ -338,8 +334,7 @@ public class UserController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/user/{userId}/userCredentialsEnabled", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/user/{userId}/userCredentialsEnabled")
     public void setUserCredentialsEnabled(@PathVariable(USER_ID) String strUserId,
                                           @RequestParam(required = false, defaultValue = "true") boolean userCredentialsEnabled) throws ThingsboardException {
         checkParameter(USER_ID, strUserId);

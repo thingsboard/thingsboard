@@ -15,15 +15,15 @@
  */
 package org.thingsboard.server.controller;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.EntityInfo;
@@ -34,10 +34,11 @@ import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
+
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @TbCoreComponent
@@ -46,8 +47,7 @@ import org.thingsboard.server.service.security.permission.Resource;
 public class TenantProfileController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenantProfile/{tenantProfileId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenantProfile/{tenantProfileId}")
     public TenantProfile getTenantProfileById(@PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
         checkParameter("tenantProfileId", strTenantProfileId);
         try {
@@ -59,8 +59,7 @@ public class TenantProfileController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenantProfileInfo/{tenantProfileId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenantProfileInfo/{tenantProfileId}")
     public EntityInfo getTenantProfileInfoById(@PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
         checkParameter("tenantProfileId", strTenantProfileId);
         try {
@@ -72,8 +71,7 @@ public class TenantProfileController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenantProfileInfo/default", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenantProfileInfo/default")
     public EntityInfo getDefaultTenantProfileInfo() throws ThingsboardException {
         try {
             return checkNotNull(tenantProfileService.findDefaultTenantProfileInfo(getTenantId()));
@@ -83,8 +81,7 @@ public class TenantProfileController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenantProfile", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/tenantProfile")
     public TenantProfile saveTenantProfile(@RequestBody TenantProfile tenantProfile) throws ThingsboardException {
         try {
             boolean newTenantProfile = tenantProfile.getId() == null;
@@ -107,7 +104,7 @@ public class TenantProfileController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenantProfile/{tenantProfileId}", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/tenantProfile/{tenantProfileId}")
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteTenantProfile(@PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
         checkParameter("tenantProfileId", strTenantProfileId);
@@ -122,8 +119,7 @@ public class TenantProfileController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenantProfile/{tenantProfileId}/default", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/tenantProfile/{tenantProfileId}/default")
     public TenantProfile setDefaultTenantProfile(@PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
         checkParameter("tenantProfileId", strTenantProfileId);
         try {
@@ -137,8 +133,7 @@ public class TenantProfileController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenantProfiles", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenantProfiles", params = {"pageSize", "page"})
     public PageData<TenantProfile> getTenantProfiles(@RequestParam int pageSize,
                                                      @RequestParam int page,
                                                      @RequestParam(required = false) String textSearch,
@@ -153,8 +148,7 @@ public class TenantProfileController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenantProfileInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenantProfileInfos", params = {"pageSize", "page"})
     public PageData<EntityInfo> getTenantProfileInfos(@RequestParam int pageSize,
                                                       @RequestParam int page,
                                                       @RequestParam(required = false) String textSearch,

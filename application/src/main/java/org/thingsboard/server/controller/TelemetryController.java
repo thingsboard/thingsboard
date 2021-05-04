@@ -15,30 +15,36 @@
  */
 package org.thingsboard.server.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonParser;
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -48,7 +54,6 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -83,21 +88,19 @@ import org.thingsboard.server.service.telemetry.TsData;
 import org.thingsboard.server.service.telemetry.exception.InvalidParametersException;
 import org.thingsboard.server.service.telemetry.exception.UncheckedApiException;
 
-import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Created by ashvayka on 22.03.18.
@@ -134,16 +137,14 @@ public class TelemetryController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/{entityType}/{entityId}/keys/attributes", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/{entityType}/{entityId}/keys/attributes")
     public DeferredResult<ResponseEntity> getAttributeKeys(
             @PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr) throws ThingsboardException {
         return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_ATTRIBUTES, entityType, entityIdStr, this::getAttributeKeysCallback);
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/{entityType}/{entityId}/keys/attributes/{scope}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/{entityType}/{entityId}/keys/attributes/{scope}")
     public DeferredResult<ResponseEntity> getAttributeKeysByScope(
             @PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr
             , @PathVariable("scope") String scope) throws ThingsboardException {
@@ -152,8 +153,7 @@ public class TelemetryController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/{entityType}/{entityId}/values/attributes", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/{entityType}/{entityId}/values/attributes")
     public DeferredResult<ResponseEntity> getAttributes(
             @PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
             @RequestParam(name = "keys", required = false) String keysStr) throws ThingsboardException {
@@ -163,8 +163,7 @@ public class TelemetryController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/{entityType}/{entityId}/values/attributes/{scope}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/{entityType}/{entityId}/values/attributes/{scope}")
     public DeferredResult<ResponseEntity> getAttributesByScope(
             @PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
             @PathVariable("scope") String scope,
@@ -175,8 +174,7 @@ public class TelemetryController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/{entityType}/{entityId}/keys/timeseries", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/{entityType}/{entityId}/keys/timeseries")
     public DeferredResult<ResponseEntity> getTimeseriesKeys(
             @PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr) throws ThingsboardException {
         return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_TELEMETRY, entityType, entityIdStr,
@@ -184,8 +182,7 @@ public class TelemetryController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/{entityType}/{entityId}/values/timeseries", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/{entityType}/{entityId}/values/timeseries")
     public DeferredResult<ResponseEntity> getLatestTimeseries(
             @PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
             @RequestParam(name = "keys", required = false) String keysStr,
@@ -198,8 +195,7 @@ public class TelemetryController extends BaseController {
 
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/{entityType}/{entityId}/values/timeseries", method = RequestMethod.GET, params = {"keys", "startTs", "endTs"})
-    @ResponseBody
+    @GetMapping(value = "/{entityType}/{entityId}/values/timeseries", params = {"keys", "startTs", "endTs"})
     public DeferredResult<ResponseEntity> getTimeseries(
             @PathVariable("entityType") String entityType,
             @PathVariable("entityId") String entityIdStr,
@@ -223,8 +219,7 @@ public class TelemetryController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/{deviceId}/{scope}", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/{deviceId}/{scope}")
     public DeferredResult<ResponseEntity> saveDeviceAttributes(@PathVariable("deviceId") String deviceIdStr, @PathVariable("scope") String scope,
                                                                @RequestBody JsonNode request) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE, deviceIdStr);
@@ -232,8 +227,7 @@ public class TelemetryController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/{entityType}/{entityId}/{scope}", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/{entityType}/{entityId}/{scope}")
     public DeferredResult<ResponseEntity> saveEntityAttributesV1(@PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
                                                                  @PathVariable("scope") String scope,
                                                                  @RequestBody JsonNode request) throws ThingsboardException {
@@ -242,8 +236,7 @@ public class TelemetryController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/{entityType}/{entityId}/attributes/{scope}", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/{entityType}/{entityId}/attributes/{scope}")
     public DeferredResult<ResponseEntity> saveEntityAttributesV2(@PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
                                                                  @PathVariable("scope") String scope,
                                                                  @RequestBody JsonNode request) throws ThingsboardException {
@@ -252,8 +245,7 @@ public class TelemetryController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/{entityType}/{entityId}/timeseries/{scope}", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/{entityType}/{entityId}/timeseries/{scope}")
     public DeferredResult<ResponseEntity> saveEntityTelemetry(@PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
                                                               @PathVariable("scope") String scope,
                                                               @RequestBody String requestBody) throws ThingsboardException {
@@ -262,8 +254,7 @@ public class TelemetryController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/{entityType}/{entityId}/timeseries/{scope}/{ttl}", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/{entityType}/{entityId}/timeseries/{scope}/{ttl}")
     public DeferredResult<ResponseEntity> saveEntityTelemetryWithTTL(@PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
                                                                      @PathVariable("scope") String scope, @PathVariable("ttl") Long ttl,
                                                                      @RequestBody String requestBody) throws ThingsboardException {
@@ -272,8 +263,7 @@ public class TelemetryController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/{entityType}/{entityId}/timeseries/delete", method = RequestMethod.DELETE)
-    @ResponseBody
+    @DeleteMapping(value = "/{entityType}/{entityId}/timeseries/delete")
     public DeferredResult<ResponseEntity> deleteEntityTimeseries(@PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
                                                                  @RequestParam(name = "keys") String keysStr,
                                                                  @RequestParam(name = "deleteAllDataForKeys", defaultValue = "false") boolean deleteAllDataForKeys,
@@ -330,8 +320,7 @@ public class TelemetryController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/{deviceId}/{scope}", method = RequestMethod.DELETE)
-    @ResponseBody
+    @DeleteMapping(value = "/{deviceId}/{scope}")
     public DeferredResult<ResponseEntity> deleteEntityAttributes(@PathVariable("deviceId") String deviceIdStr,
                                                                  @PathVariable("scope") String scope,
                                                                  @RequestParam(name = "keys") String keysStr) throws ThingsboardException {
@@ -340,8 +329,7 @@ public class TelemetryController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/{entityType}/{entityId}/{scope}", method = RequestMethod.DELETE)
-    @ResponseBody
+    @DeleteMapping(value = "/{entityType}/{entityId}/{scope}")
     public DeferredResult<ResponseEntity> deleteEntityAttributes(@PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
                                                                  @PathVariable("scope") String scope,
                                                                  @RequestParam(name = "keys") String keysStr) throws ThingsboardException {

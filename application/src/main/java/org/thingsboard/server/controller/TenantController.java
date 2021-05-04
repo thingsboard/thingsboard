@@ -15,17 +15,16 @@
  */
 package org.thingsboard.server.controller;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Tenant;
@@ -41,6 +40,10 @@ import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import lombok.extern.slf4j.Slf4j;
+
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
@@ -54,8 +57,7 @@ public class TenantController extends BaseController {
     private TenantService tenantService;
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/{tenantId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/{tenantId}")
     public Tenant getTenantById(@PathVariable("tenantId") String strTenantId) throws ThingsboardException {
         checkParameter("tenantId", strTenantId);
         try {
@@ -71,8 +73,7 @@ public class TenantController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/info/{tenantId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/info/{tenantId}")
     public TenantInfo getTenantInfoById(@PathVariable("tenantId") String strTenantId) throws ThingsboardException {
         checkParameter("tenantId", strTenantId);
         try {
@@ -84,8 +85,7 @@ public class TenantController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenant", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/tenant")
     public Tenant saveTenant(@RequestBody Tenant tenant) throws ThingsboardException {
         try {
             boolean newTenant = tenant.getId() == null;
@@ -110,7 +110,7 @@ public class TenantController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenant/{tenantId}", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/tenant/{tenantId}")
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteTenant(@PathVariable("tenantId") String strTenantId) throws ThingsboardException {
         checkParameter("tenantId", strTenantId);
@@ -127,8 +127,7 @@ public class TenantController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenants", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenants", params = {"pageSize", "page"})
     public PageData<Tenant> getTenants(@RequestParam int pageSize,
                                        @RequestParam int page,
                                        @RequestParam(required = false) String textSearch,
@@ -143,8 +142,7 @@ public class TenantController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenantInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenantInfos", params = {"pageSize", "page"})
     public PageData<TenantInfo> getTenantInfos(@RequestParam int pageSize,
                                                @RequestParam int page,
                                                @RequestParam(required = false) String textSearch,

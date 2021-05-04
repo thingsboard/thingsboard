@@ -15,18 +15,21 @@
  */
 package org.thingsboard.server.controller;
 
-import lombok.extern.slf4j.Slf4j;
+import java.util.Base64;
+import java.util.List;
+
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TbResource;
@@ -42,8 +45,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.Base64;
-import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
@@ -54,8 +56,7 @@ public class TbResourceController extends BaseController {
     public static final String RESOURCE_ID = "resourceId";
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/resource/{resourceId}/download", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/resource/{resourceId}/download")
     public ResponseEntity<org.springframework.core.io.Resource> downloadResource(@PathVariable(RESOURCE_ID) String strResourceId) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
         try {
@@ -75,8 +76,7 @@ public class TbResourceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/resource/info/{resourceId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/resource/info/{resourceId}")
     public TbResourceInfo getResourceInfoById(@PathVariable(RESOURCE_ID) String strResourceId) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
         try {
@@ -88,8 +88,7 @@ public class TbResourceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/resource/{resourceId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/resource/{resourceId}")
     public TbResource getResourceById(@PathVariable(RESOURCE_ID) String strResourceId) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
         try {
@@ -101,8 +100,7 @@ public class TbResourceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/resource", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/resource")
     public TbResource saveResource(@RequestBody TbResource resource) throws ThingsboardException {
         boolean created = resource.getId() == null;
         try {
@@ -121,8 +119,7 @@ public class TbResourceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/resource", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/resource")
     public PageData<TbResourceInfo> getResources(@RequestParam int pageSize,
                                                  @RequestParam int page,
                                                  @RequestParam(required = false) String textSearch,
@@ -141,8 +138,7 @@ public class TbResourceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/resource/lwm2m/page", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/resource/lwm2m/page")
     public List<LwM2mObject> getLwm2mListObjectsPage(@RequestParam int pageSize,
                                                      @RequestParam int page,
                                                      @RequestParam(required = false) String textSearch,
@@ -157,8 +153,7 @@ public class TbResourceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/resource/lwm2m", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/resource/lwm2m")
     public List<LwM2mObject> getLwm2mListObjects(@RequestParam String sortOrder,
                                                  @RequestParam String sortProperty,
                                                  @RequestParam(required = false) String[] objectIds) throws ThingsboardException {
@@ -170,8 +165,7 @@ public class TbResourceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/resource/{resourceId}", method = RequestMethod.DELETE)
-    @ResponseBody
+    @DeleteMapping(value = "/resource/{resourceId}")
     public void deleteResource(@PathVariable("resourceId") String strResourceId) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
         try {

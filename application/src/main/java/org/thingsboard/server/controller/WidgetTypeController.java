@@ -15,18 +15,19 @@
  */
 package org.thingsboard.server.controller;
 
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -40,7 +41,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
@@ -49,8 +50,7 @@ import java.util.List;
 public class WidgetTypeController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetType/{widgetTypeId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetType/{widgetTypeId}")
     public WidgetTypeDetails getWidgetTypeById(@PathVariable("widgetTypeId") String strWidgetTypeId) throws ThingsboardException {
         checkParameter("widgetTypeId", strWidgetTypeId);
         try {
@@ -62,8 +62,7 @@ public class WidgetTypeController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetType", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/widgetType")
     public WidgetTypeDetails saveWidgetType(@RequestBody WidgetTypeDetails widgetTypeDetails) throws ThingsboardException {
         try {
             if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
@@ -85,7 +84,7 @@ public class WidgetTypeController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetType/{widgetTypeId}", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/widgetType/{widgetTypeId}")
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteWidgetType(@PathVariable("widgetTypeId") String strWidgetTypeId) throws ThingsboardException {
         checkParameter("widgetTypeId", strWidgetTypeId);
@@ -102,8 +101,7 @@ public class WidgetTypeController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetTypes", params = {"isSystem", "bundleAlias"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetTypes", params = {"isSystem", "bundleAlias"})
     public List<WidgetType> getBundleWidgetTypes(
             @RequestParam boolean isSystem,
             @RequestParam String bundleAlias) throws ThingsboardException {
@@ -121,8 +119,7 @@ public class WidgetTypeController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetTypesDetails", params = {"isSystem", "bundleAlias"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetTypesDetails", params = {"isSystem", "bundleAlias"})
     public List<WidgetTypeDetails> getBundleWidgetTypesDetails(
             @RequestParam boolean isSystem,
             @RequestParam String bundleAlias) throws ThingsboardException {
@@ -140,8 +137,7 @@ public class WidgetTypeController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetTypesInfos", params = {"isSystem", "bundleAlias"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetTypesInfos", params = {"isSystem", "bundleAlias"})
     public List<WidgetTypeInfo> getBundleWidgetTypesInfos(
             @RequestParam boolean isSystem,
             @RequestParam String bundleAlias) throws ThingsboardException {
@@ -159,8 +155,7 @@ public class WidgetTypeController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/widgetType", params = {"isSystem", "bundleAlias", "alias"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetType", params = {"isSystem", "bundleAlias", "alias"})
     public WidgetType getWidgetType(
             @RequestParam boolean isSystem,
             @RequestParam String bundleAlias,
