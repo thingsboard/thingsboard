@@ -35,7 +35,6 @@ import { modulesMap } from '../../common/modules-map';
 import { DeviceProfileModule } from './device-profile/device-profile.module';
 import { ApiUsageModule } from '@home/pages/api-usage/api-usage.module';
 import { EdgeModule } from '@home/pages/edge/edge.module';
-import { ResourceModule } from '@home/pages/resource/resource.module';
 import { FirmwareModule } from '@home/pages/firmware/firmware.module';
 
 @NgModule({
@@ -56,7 +55,6 @@ import { FirmwareModule } from '@home/pages/firmware/firmware.module';
     DashboardModule,
     AuditLogModule,
     ApiUsageModule,
-    ResourceModule,
     FirmwareModule,
     UserModule
   ],

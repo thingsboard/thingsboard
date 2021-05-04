@@ -105,5 +105,11 @@ export class EventFilterPanelComponent {
   cancel() {
     this.overlayRef.dispose();
   }
+
+  changeIsError(value: boolean | string) {
+    if (this.conditionError && value === '') {
+      this.eventFilterFormGroup.get('error').reset('', {emitEvent: false});
+    }
+  }
 }
 

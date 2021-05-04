@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.lwm2m;
+package org.thingsboard.server.transport.lwm2m.config;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -29,53 +29,42 @@ import java.util.Map;
 @Slf4j
 @Component
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true') || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
-public class LwM2MTransportConfigBootstrap {
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.enable:}")
-    private Boolean bootstrapEnable;
+public class LwM2MTransportBootstrapConfig implements LwM2MSecureServerConfig {
 
     @Getter
     @Value("${transport.lwm2m.bootstrap.id:}")
-    private Integer bootstrapServerId;
+    private Integer id;
 
     @Getter
     @Value("${transport.lwm2m.bootstrap.bind_address:}")
-    private String bootstrapHost;
+    private String host;
 
     @Getter
-    @Value("${transport.lwm2m.bootstrap.bind_port_no_sec:}")
-    private Integer bootstrapPortNoSec;
+    @Value("${transport.lwm2m.bootstrap.bind_port:}")
+    private Integer port;
 
     @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.bind_address_security:}")
-    private String bootstrapHostSecurity;
+    @Value("${transport.lwm2m.bootstrap.security.bind_address:}")
+    private String secureHost;
 
     @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.bind_port_security:}")
-    private Integer bootstrapPortSecurity;
+    @Value("${transport.lwm2m.bootstrap.security.bind_port:}")
+    private Integer securePort;
 
     @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.public_x:}")
-    private String bootstrapPublicX;
+    @Value("${transport.lwm2m.bootstrap.security.public_x:}")
+    private String publicX;
 
     @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.public_y:}")
-    private String bootstrapPublicY;
+    @Value("${transport.lwm2m.bootstrap.security.public_y:}")
+    private String publicY;
 
     @Getter
-    @Setter
-    private PublicKey bootstrapPublicKey;
+    @Value("${transport.lwm2m.bootstrap.security.private_encoded:}")
+    private String privateEncoded;
 
     @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.private_encoded:}")
-    private String bootstrapPrivateEncoded;
+    @Value("${transport.lwm2m.bootstrap.security.alias:}")
+    private String certificateAlias;
 
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.secure.alias:}")
-    private String bootstrapAlias;
-
-    @Getter
-    @Setter
-    private Map<String /** clientEndPoint */, TransportProtos.ValidateDeviceCredentialsResponseMsg> sessions;
 }

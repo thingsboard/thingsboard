@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.firmware.FirmwareType;
 import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.SessionMsgListener;
@@ -210,19 +211,18 @@ public class DeviceApiController implements TbTransportService {
     public DeferredResult<ResponseEntity> getFirmware(@PathVariable("deviceToken") String deviceToken,
                                                       @RequestParam(value = "title") String title,
                                                       @RequestParam(value = "version") String version,
-                                                      @RequestParam(value = "chunkSize", required = false, defaultValue = "0") int chunkSize,
+                                                      @RequestParam(value = "size", required = false, defaultValue = "0") int size,
                                                       @RequestParam(value = "chunk", required = false, defaultValue = "0") int chunk) {
-        DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
-        transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
-                new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
-                    TransportProtos.GetFirmwareRequestMsg requestMsg = TransportProtos.GetFirmwareRequestMsg.newBuilder()
-                            .setTenantIdMSB(sessionInfo.getTenantIdMSB())
-                            .setTenantIdLSB(sessionInfo.getTenantIdLSB())
-                            .setDeviceIdMSB(sessionInfo.getDeviceIdMSB())
-                            .setDeviceIdLSB(sessionInfo.getDeviceIdLSB()).build();
-                    transportContext.getTransportService().process(sessionInfo, requestMsg, new GetFirmwareCallback(responseWriter, title, version, chunkSize, chunk));
-                }));
-        return responseWriter;
+        return getFirmwareCallback(deviceToken, title, version, size, chunk, FirmwareType.FIRMWARE);
+    }
+
+    @RequestMapping(value = "/{deviceToken}/software", method = RequestMethod.GET)
+    public DeferredResult<ResponseEntity> getSoftware(@PathVariable("deviceToken") String deviceToken,
+                                                      @RequestParam(value = "title") String title,
+                                                      @RequestParam(value = "version") String version,
+                                                      @RequestParam(value = "size", required = false, defaultValue = "0") int size,
+                                                      @RequestParam(value = "chunk", required = false, defaultValue = "0") int chunk) {
+        return getFirmwareCallback(deviceToken, title, version, size, chunk, FirmwareType.SOFTWARE);
     }
 
     @RequestMapping(value = "/provision", method = RequestMethod.POST)
@@ -230,6 +230,21 @@ public class DeviceApiController implements TbTransportService {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
         transportContext.getTransportService().process(JsonConverter.convertToProvisionRequestMsg(json),
                 new DeviceProvisionCallback(responseWriter));
+        return responseWriter;
+    }
+
+    private DeferredResult<ResponseEntity> getFirmwareCallback(String deviceToken, String title, String version, int size, int chunk, FirmwareType firmwareType) {
+        DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
+        transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
+                new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
+                    TransportProtos.GetFirmwareRequestMsg requestMsg = TransportProtos.GetFirmwareRequestMsg.newBuilder()
+                            .setTenantIdMSB(sessionInfo.getTenantIdMSB())
+                            .setTenantIdLSB(sessionInfo.getTenantIdLSB())
+                            .setDeviceIdMSB(sessionInfo.getDeviceIdMSB())
+                            .setDeviceIdLSB(sessionInfo.getDeviceIdLSB())
+                            .setType(firmwareType.name()).build();
+                    transportContext.getTransportService().process(sessionInfo, requestMsg, new GetFirmwareCallback(responseWriter, title, version, size, chunk));
+                }));
         return responseWriter;
     }
 
