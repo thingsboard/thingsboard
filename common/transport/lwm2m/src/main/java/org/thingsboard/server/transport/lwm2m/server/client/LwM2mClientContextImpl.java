@@ -25,7 +25,7 @@ import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.secure.ReadResultSecurityStore;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -34,7 +34,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.NO_SEC;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.convertPathFromObjectIdToIdVer;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
 
 @Service
 @TbLwM2mTransportComponent
@@ -118,7 +118,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
      */
     @Override
     public LwM2mClient addLwM2mClientToSession(String identity) {
-        ReadResultSecurityStore store = lwM2MCredentialsSecurityInfoValidator.createAndValidateCredentialsSecurityInfo(identity, LwM2mTransportHandlerUtil.LwM2mTypeServer.CLIENT);
+        ReadResultSecurityStore store = lwM2MCredentialsSecurityInfoValidator.createAndValidateCredentialsSecurityInfo(identity, LwM2mTransportUtil.LwM2mTypeServer.CLIENT);
         if (store.getSecurityMode() < LwM2MSecurityMode.DEFAULT_MODE.code) {
             UUID profileUuid = (store.getDeviceProfile() != null && addUpdateProfileParameters(store.getDeviceProfile())) ? store.getDeviceProfile().getUuidId() : null;
             LwM2mClient client;
@@ -165,7 +165,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public boolean addUpdateProfileParameters(DeviceProfile deviceProfile) {
-        LwM2mClientProfile lwM2MClientProfile = LwM2mTransportHandlerUtil.getLwM2MClientProfileFromThingsboard(deviceProfile);
+        LwM2mClientProfile lwM2MClientProfile = LwM2mTransportUtil.getLwM2MClientProfileFromThingsboard(deviceProfile);
         if (lwM2MClientProfile != null) {
             profiles.put(deviceProfile.getUuidId(), lwM2MClientProfile);
             return true;

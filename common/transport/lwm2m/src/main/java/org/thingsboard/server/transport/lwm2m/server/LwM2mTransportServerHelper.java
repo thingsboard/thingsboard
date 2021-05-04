@@ -30,7 +30,6 @@ package org.thingsboard.server.transport.lwm2m.server;
  * limitations under the License.
  */
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.DDFFileParser;
@@ -40,7 +39,6 @@ import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.codec.CodecException;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
@@ -55,7 +53,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.BOOLEAN_V;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LOG_LW2M_TELEMETRY;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_TELEMETRY;
 
 @Slf4j
 @Component
@@ -64,10 +62,6 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandle
 public class LwM2mTransportServerHelper {
 
     private final LwM2mTransportContext context;
-
-    private final TransportService transportService;
-
-    @Getter
     private final LwM2MJsonAdaptor adaptor;
 
     /**
@@ -95,7 +89,7 @@ public class LwM2mTransportServerHelper {
         request.addAllKv(result);
         PostAttributeMsg postAttributeMsg = request.build();
         TransportServiceCallback call = this.getPubAckCallbackSendAttrTelemetry(postAttributeMsg);
-        transportService.process(sessionInfo, postAttributeMsg, this.getPubAckCallbackSendAttrTelemetry(call));
+        context.getTransportService().process(sessionInfo, postAttributeMsg, this.getPubAckCallbackSendAttrTelemetry(call));
     }
 
     public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> result, SessionInfoProto sessionInfo) {
@@ -106,7 +100,7 @@ public class LwM2mTransportServerHelper {
         request.addTsKvList(builder.build());
         PostTelemetryMsg postTelemetryMsg = request.build();
         TransportServiceCallback call = this.getPubAckCallbackSendAttrTelemetry(postTelemetryMsg);
-        transportService.process(sessionInfo, postTelemetryMsg, this.getPubAckCallbackSendAttrTelemetry(call));
+        context.getTransportService().process(sessionInfo, postTelemetryMsg, this.getPubAckCallbackSendAttrTelemetry(call));
     }
 
     /**
@@ -191,7 +185,7 @@ public class LwM2mTransportServerHelper {
      * @param resourcePath -
      * @return
      */
-    public ResourceModel.Type getResourceModelTypeEqualsKvProtoValueType(ResourceModel.Type currentType, String resourcePath) {
+    public static ResourceModel.Type getResourceModelTypeEqualsKvProtoValueType(ResourceModel.Type currentType, String resourcePath) {
         switch (currentType) {
             case BOOLEAN:
                 return ResourceModel.Type.BOOLEAN;
@@ -209,7 +203,7 @@ public class LwM2mTransportServerHelper {
         throw new CodecException("Invalid ResourceModel_Type for resource %s, got %s", resourcePath, currentType);
     }
 
-    public Object getValueFromKvProto(TransportProtos.KeyValueProto kv) {
+    public static Object getValueFromKvProto(TransportProtos.KeyValueProto kv) {
         switch (kv.getType()) {
             case BOOLEAN_V:
                 return kv.getBoolV();

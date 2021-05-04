@@ -29,8 +29,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MC
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -59,7 +58,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
      * @param keyValue -
      * @return ValidateDeviceCredentialsResponseMsg and SecurityInfo
      */
-    public ReadResultSecurityStore createAndValidateCredentialsSecurityInfo(String endpoint, LwM2mTransportHandlerUtil.LwM2mTypeServer keyValue) {
+    public ReadResultSecurityStore createAndValidateCredentialsSecurityInfo(String endpoint, LwM2mTransportUtil.LwM2mTypeServer keyValue) {
         CountDownLatch latch = new CountDownLatch(1);
         final ReadResultSecurityStore[] resultSecurityStore = new ReadResultSecurityStore[1];
         context.getTransportService().process(ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder().setCredentialsId(endpoint).build(),
@@ -69,7 +68,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
                         String credentialsBody = msg.getCredentialsBody();
                         resultSecurityStore[0] = createSecurityInfo(endpoint, credentialsBody, keyValue);
                         resultSecurityStore[0].setMsg(msg);
-                        Optional<DeviceProfile> deviceProfileOpt = LwM2mTransportHandlerUtil.decode(msg.getProfileBody().toByteArray());
+                        Optional<DeviceProfile> deviceProfileOpt = LwM2mTransportUtil.decode(msg.getProfileBody().toByteArray());
                         deviceProfileOpt.ifPresent(profile -> resultSecurityStore[0].setDeviceProfile(profile));
                         latch.countDown();
                     }
@@ -96,9 +95,9 @@ public class LwM2mCredentialsSecurityInfoValidator {
      * @param keyValue -
      * @return SecurityInfo
      */
-    private ReadResultSecurityStore createSecurityInfo(String endPoint, String jsonStr, LwM2mTransportHandlerUtil.LwM2mTypeServer keyValue) {
+    private ReadResultSecurityStore createSecurityInfo(String endPoint, String jsonStr, LwM2mTransportUtil.LwM2mTypeServer keyValue) {
         ReadResultSecurityStore result = new ReadResultSecurityStore();
-        JsonObject objectMsg = LwM2mTransportHandlerUtil.validateJson(jsonStr);
+        JsonObject objectMsg = LwM2mTransportUtil.validateJson(jsonStr);
         if (objectMsg != null && !objectMsg.isJsonNull()) {
             JsonObject object = (objectMsg.has(keyValue.type) && !objectMsg.get(keyValue.type).isJsonNull()) ? objectMsg.get(keyValue.type).getAsJsonObject() : null;
             /**
@@ -109,7 +108,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
                     && objectMsg.get("client").getAsJsonObject().get("endpoint").isJsonPrimitive()) ? objectMsg.get("client").getAsJsonObject().get("endpoint").getAsString() : null;
             endPoint = (endPointPsk == null || endPointPsk.isEmpty()) ? endPoint : endPointPsk;
             if (object != null && !object.isJsonNull()) {
-                if (keyValue.equals(LwM2mTransportHandlerUtil.LwM2mTypeServer.BOOTSTRAP)) {
+                if (keyValue.equals(LwM2mTransportUtil.LwM2mTypeServer.BOOTSTRAP)) {
                     result.setBootstrapJsonCredential(object);
                     result.setEndPoint(endPoint);
                     result.setSecurityMode(LwM2MSecurityMode.fromSecurityMode(object.get("bootstrapServer").getAsJsonObject().get("securityMode").getAsString().toLowerCase()).code);

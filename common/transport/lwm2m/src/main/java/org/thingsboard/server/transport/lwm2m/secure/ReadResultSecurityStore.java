@@ -31,8 +31,8 @@ public class ReadResultSecurityStore {
     private int securityMode = DEFAULT_MODE.code;
 
     /** bootstrap */
-    DeviceProfile deviceProfile;
-    JsonObject bootstrapJsonCredential;
-    String endPoint;
-    BootstrapConfig bootstrapConfig;
+    private DeviceProfile deviceProfile;
+    private JsonObject bootstrapJsonCredential;
+    private String endPoint;
+    private BootstrapConfig bootstrapConfig;
 }

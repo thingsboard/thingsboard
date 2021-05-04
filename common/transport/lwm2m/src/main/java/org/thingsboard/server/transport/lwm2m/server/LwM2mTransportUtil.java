@@ -67,7 +67,7 @@ import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPA
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 
 @Slf4j
-public class LwM2mTransportHandlerUtil {
+public class LwM2mTransportUtil {
 
     public static final String TRANSPORT_DEFAULT_LWM2M_VERSION = "1.0";
     public static final String CLIENT_LWM2M_SETTINGS = "clientLwM2mSettings";
@@ -150,8 +150,8 @@ public class LwM2mTransportHandlerUtil {
          * if all resources are to be replaced
          */
         WRITE_REPLACE(6, "WriteReplace"),
-        /**
-         * PUT
+        /*
+          PUT
          */
         /**
          * Adds or updates Resources provided in the new value and leaves other existing Resources unchanged. (see section
@@ -178,7 +178,7 @@ public class LwM2mTransportHandlerUtil {
                     return to;
                 }
             }
-            throw new IllegalArgumentException(String.format("Unsupported typeOper type  : %d", type));
+            throw new IllegalArgumentException(String.format("Unsupported typeOper type  : %s", type));
         }
     }
 
@@ -198,7 +198,7 @@ public class LwM2mTransportHandlerUtil {
             case OBJLNK:
                 return valueOld.equals(valueNew);
             case OPAQUE:
-                return Hex.decodeHex(((String) valueOld).toCharArray()).equals(Hex.decodeHex(((String) valueNew).toCharArray()));
+                return Arrays.equals(Hex.decodeHex(((String) valueOld).toCharArray()), Hex.decodeHex(((String) valueNew).toCharArray()));
             default:
                 throw new CodecException("Invalid value type for resource %s, type %s", resourcePath, type);
         }
@@ -256,7 +256,7 @@ public class LwM2mTransportHandlerUtil {
                 ObjectMapper mapper = new ObjectMapper();
                 String profileStr = mapper.writeValueAsString(profile);
                 JsonObject profileJson = (profileStr != null) ? validateJson(profileStr) : null;
-                return getValidateCredentialsBodyFromThingsboard(profileJson) ? LwM2mTransportHandlerUtil.getNewProfileParameters(profileJson, deviceProfile.getTenantId()) : null;
+                return getValidateCredentialsBodyFromThingsboard(profileJson) ? LwM2mTransportUtil.getNewProfileParameters(profileJson, deviceProfile.getTenantId()) : null;
             } catch (IOException e) {
                 log.error("", e);
             }
@@ -415,7 +415,7 @@ public class LwM2mTransportHandlerUtil {
     }
 
     public static String validPathIdVer(String pathIdVer, Registration registration) throws IllegalArgumentException {
-        if (pathIdVer.indexOf(LWM2M_SEPARATOR_PATH) < 0) {
+        if (!pathIdVer.contains(LWM2M_SEPARATOR_PATH)) {
             throw new IllegalArgumentException(String.format("Error:"));
         } else {
             String[] keyArray = pathIdVer.split(LWM2M_SEPARATOR_PATH);
@@ -488,7 +488,7 @@ public class LwM2mTransportHandlerUtil {
     }
 
     private static Attribute[] createWriteAttributes(Object params) {
-        List attributeLists = new ArrayList<Attribute>();
+        List<Attribute> attributeLists = new ArrayList<>();
         ObjectMapper oMapper = new ObjectMapper();
         Map<String, Object> map = oMapper.convertValue(params, ConcurrentHashMap.class);
         map.forEach((k, v) -> {
@@ -498,7 +498,7 @@ public class LwM2mTransportHandlerUtil {
                                 ((Double) v).longValue() : v));
             }
         });
-        return (Attribute[]) attributeLists.toArray(Attribute[]::new);
+        return attributeLists.toArray(Attribute[]::new);
     }
 
 
