@@ -33,7 +33,6 @@ import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.request.WriteRequest;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.core.util.NamedThreadFactory;
-import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -102,7 +101,6 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandle
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LwM2mTypeOper.READ;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LwM2mTypeOper.WRITE_ATTRIBUTES;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LwM2mTypeOper.WRITE_REPLACE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LwM2mTypeOper.WRITE_UPDATE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.SERVICE_CHANNEL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.convertJsonArrayToSet;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.convertPathFromIdVerToObjectId;
@@ -490,15 +488,17 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                 if (OBSERVE_READ_ALL != lwm2mClientRpcRequest.getTypeOper() && lwm2mClientRpcRequest.getTargetIdVer() == null) {
                     lwm2mClientRpcRequest.setErrorMsg(lwm2mClientRpcRequest.targetIdVerKey + " and " +
                             lwm2mClientRpcRequest.keyNameKey + " is null or bad format");
-                } else if ((EXECUTE == lwm2mClientRpcRequest.getTypeOper()
+                }
+                /**
+                 * EXECUTE && WRITE_REPLACE - only for Resource or ResourceInstance
+                 */
+                else if ((EXECUTE == lwm2mClientRpcRequest.getTypeOper()
                         || WRITE_REPLACE == lwm2mClientRpcRequest.getTypeOper())
                         && lwm2mClientRpcRequest.getTargetIdVer() != null
                         && !(new LwM2mPath(convertPathFromIdVerToObjectId(lwm2mClientRpcRequest.getTargetIdVer())).isResource()
                         || new LwM2mPath(convertPathFromIdVerToObjectId(lwm2mClientRpcRequest.getTargetIdVer())).isResourceInstance())) {
                     lwm2mClientRpcRequest.setErrorMsg("Invalid parameter " + lwm2mClientRpcRequest.targetIdVerKey
                             + ". Only Resource or ResourceInstance can be this operation");
-                } else if (WRITE_UPDATE == lwm2mClientRpcRequest.getTypeOper()) {
-                    lwm2mClientRpcRequest.setErrorMsg("Procedures In Development...");
                 }
             } else {
                 lwm2mClientRpcRequest.setErrorMsg("Params of request is bad Json format.");
@@ -930,7 +930,15 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      * @param request      -
      */
     public void onWriteResponseOk(Registration registration, String path, WriteRequest request) {
-        this.updateResourcesValue(registration, ((LwM2mResource) request.getNode()), path);
+        if (request.getNode() instanceof LwM2mResource) {
+            this.updateResourcesValue(registration, ((LwM2mResource) request.getNode()), path);
+        }
+        else if (request.getNode() instanceof LwM2mObjectInstance) {
+            ((LwM2mObjectInstance) request.getNode()).getResources().forEach((resId, resource) -> {
+                this.updateResourcesValue(registration,  resource, path+ "/" + resId);
+            });
+        }
+
     }
 
     /**
