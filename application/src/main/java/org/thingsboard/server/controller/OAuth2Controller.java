@@ -15,14 +15,18 @@
  */
 package org.thingsboard.server.controller;
 
-import lombok.extern.slf4j.Slf4j;
+import java.util.Enumeration;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -34,9 +38,7 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.utils.MiscUtils;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.Enumeration;
-import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @TbCoreComponent
@@ -47,8 +49,7 @@ public class OAuth2Controller extends BaseController {
     @Autowired
     private OAuth2Configuration oAuth2Configuration;
 
-    @RequestMapping(value = "/noauth/oauth2Clients", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/noauth/oauth2Clients")
     public List<OAuth2ClientInfo> getOAuth2Clients(HttpServletRequest request) throws ThingsboardException {
         try {
             if (log.isDebugEnabled()) {
@@ -66,8 +67,7 @@ public class OAuth2Controller extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/oauth2/config", method = RequestMethod.GET, produces = "application/json")
-    @ResponseBody
+    @GetMapping(value = "/oauth2/config")
     public OAuth2ClientsParams getCurrentOAuth2Params() throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.OAUTH2_CONFIGURATION_INFO, Operation.READ);
@@ -78,7 +78,7 @@ public class OAuth2Controller extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/oauth2/config", method = RequestMethod.POST)
+    @PostMapping(value = "/oauth2/config")
     @ResponseStatus(value = HttpStatus.OK)
     public OAuth2ClientsParams saveOAuth2Params(@RequestBody OAuth2ClientsParams oauth2Params) throws ThingsboardException {
         try {
@@ -91,8 +91,7 @@ public class OAuth2Controller extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/oauth2/loginProcessingUrl", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/oauth2/loginProcessingUrl")
     public String getLoginProcessingUrl() throws ThingsboardException {
         try {
             accessControlService.checkPermission(getCurrentUser(), Resource.OAUTH2_CONFIGURATION_INFO, Operation.READ);

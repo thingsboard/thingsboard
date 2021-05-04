@@ -15,24 +15,24 @@
  */
 package org.thingsboard.server.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.ScriptEngine;
@@ -70,11 +70,13 @@ import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
@@ -103,8 +105,7 @@ public class RuleChainController extends BaseController {
     private boolean debugPerTenantEnabled;
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/ruleChain/{ruleChainId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/ruleChain/{ruleChainId}")
     public RuleChain getRuleChainById(@PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         try {
@@ -116,8 +117,7 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/ruleChain/{ruleChainId}/metadata", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/ruleChain/{ruleChainId}/metadata")
     public RuleChainMetaData getRuleChainMetaData(@PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         try {
@@ -131,8 +131,7 @@ public class RuleChainController extends BaseController {
 
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/ruleChain", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/ruleChain")
     public RuleChain saveRuleChain(@RequestBody RuleChain ruleChain) throws ThingsboardException {
         try {
             boolean created = ruleChain.getId() == null;
@@ -168,8 +167,7 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/ruleChain/device/default", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/ruleChain/device/default")
     public RuleChain saveRuleChain(@RequestBody DefaultRuleChainCreateRequest request) throws ThingsboardException {
         try {
             checkNotNull(request);
@@ -191,8 +189,7 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/ruleChain/{ruleChainId}/root", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/ruleChain/{ruleChainId}/root")
     public RuleChain setRootRuleChain(@PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         try {
@@ -230,8 +227,7 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/ruleChain/metadata", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/ruleChain/metadata")
     public RuleChainMetaData saveRuleChainMetaData(@RequestBody RuleChainMetaData ruleChainMetaData) throws ThingsboardException {
         try {
             TenantId tenantId = getTenantId();
@@ -271,8 +267,7 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/ruleChains", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/ruleChains", params = {"pageSize", "page"})
     public PageData<RuleChain> getRuleChains(
             @RequestParam int pageSize,
             @RequestParam int page,
@@ -294,7 +289,7 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/ruleChain/{ruleChainId}", method = RequestMethod.DELETE)
+    @PostMapping(value = "/ruleChain/{ruleChainId}")
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteRuleChain(@PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
@@ -340,8 +335,7 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/ruleNode/{ruleNodeId}/debugIn", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/ruleNode/{ruleNodeId}/debugIn")
     public JsonNode getLatestRuleNodeDebugInput(@PathVariable(RULE_NODE_ID) String strRuleNodeId) throws ThingsboardException {
         checkParameter(RULE_NODE_ID, strRuleNodeId);
         try {
@@ -366,8 +360,7 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/ruleChain/testScript", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/ruleChain/testScript")
     public JsonNode testScript(@RequestBody JsonNode inputParams) throws ThingsboardException {
         try {
             String script = inputParams.get("script").asText();
@@ -429,8 +422,7 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/ruleChains/export", params = {"limit"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/ruleChains/export", params = {"limit"})
     public RuleChainData exportRuleChains(@RequestParam("limit") int limit) throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
@@ -442,8 +434,7 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/ruleChains/import", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/ruleChains/import")
     public void importRuleChains(@RequestBody RuleChainData ruleChainData, @RequestParam(required = false, defaultValue = "false") boolean overwrite) throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
@@ -489,8 +480,7 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edge/{edgeId}/ruleChain/{ruleChainId}", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/edge/{edgeId}/ruleChain/{ruleChainId}")
     public RuleChain assignRuleChainToEdge(@PathVariable("edgeId") String strEdgeId,
                                            @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter("edgeId", strEdgeId);
@@ -522,8 +512,7 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edge/{edgeId}/ruleChain/{ruleChainId}", method = RequestMethod.DELETE)
-    @ResponseBody
+    @PostMapping(value = "/edge/{edgeId}/ruleChain/{ruleChainId}")
     public RuleChain unassignRuleChainFromEdge(@PathVariable("edgeId") String strEdgeId,
                                                @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter("edgeId", strEdgeId);
@@ -554,8 +543,7 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edge/{edgeId}/ruleChains", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/edge/{edgeId}/ruleChains", params = {"pageSize", "page"})
     public PageData<RuleChain> getEdgeRuleChains(
             @PathVariable("edgeId") String strEdgeId,
             @RequestParam int pageSize,
@@ -576,8 +564,7 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/ruleChain/{ruleChainId}/edgeTemplateRoot", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/ruleChain/{ruleChainId}/edgeTemplateRoot")
     public RuleChain setEdgeTemplateRootRuleChain(@PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         try {
@@ -595,8 +582,7 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/ruleChain/{ruleChainId}/autoAssignToEdge", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/ruleChain/{ruleChainId}/autoAssignToEdge")
     public RuleChain setAutoAssignToEdgeRuleChain(@PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         try {
@@ -614,8 +600,7 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/ruleChain/{ruleChainId}/autoAssignToEdge", method = RequestMethod.DELETE)
-    @ResponseBody
+    @PostMapping(value = "/ruleChain/{ruleChainId}/autoAssignToEdge")
     public RuleChain unsetAutoAssignToEdgeRuleChain(@PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         try {
@@ -633,8 +618,7 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/ruleChain/autoAssignToEdgeRuleChains", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/ruleChain/autoAssignToEdgeRuleChains")
     public List<RuleChain> getAutoAssignToEdgeRuleChains() throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();

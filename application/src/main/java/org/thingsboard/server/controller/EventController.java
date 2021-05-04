@@ -17,12 +17,12 @@ package org.thingsboard.server.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.event.EventFilter;
@@ -46,8 +46,7 @@ public class EventController extends BaseController {
     private EventService eventService;
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/events/{entityType}/{entityId}/{eventType}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/events/{entityType}/{entityId}/{eventType}")
     public PageData<Event> getEvents(
             @PathVariable("entityType") String strEntityType,
             @PathVariable("entityId") String strEntityId,
@@ -75,8 +74,7 @@ public class EventController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/events/{entityType}/{entityId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/events/{entityType}/{entityId}")
     public PageData<Event> getEvents(
             @PathVariable("entityType") String strEntityType,
             @PathVariable("entityId") String strEntityId,
@@ -105,8 +103,7 @@ public class EventController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/events/{entityType}/{entityId}", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/events/{entityType}/{entityId}")
     public PageData<Event> getEvents(
             @PathVariable("entityType") String strEntityType,
             @PathVariable("entityId") String strEntityId,
