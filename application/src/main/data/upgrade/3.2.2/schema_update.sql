@@ -63,6 +63,8 @@ CREATE TABLE IF NOT EXISTS firmware (
     id uuid NOT NULL CONSTRAINT firmware_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     tenant_id uuid NOT NULL,
+    device_profile_id uuid,
+    type varchar(32) NOT NULL,
     title varchar(255) NOT NULL,
     version varchar(255) NOT NULL,
     file_name varchar(255),
@@ -77,10 +79,12 @@ CREATE TABLE IF NOT EXISTS firmware (
 );
 
 ALTER TABLE device_profile
-    ADD COLUMN IF NOT EXISTS firmware_id uuid;
+    ADD COLUMN IF NOT EXISTS firmware_id uuid,
+    ADD COLUMN IF NOT EXISTS software_id uuid;
 
 ALTER TABLE device
-    ADD COLUMN IF NOT EXISTS firmware_id uuid;
+    ADD COLUMN IF NOT EXISTS firmware_id uuid,
+    ADD COLUMN IF NOT EXISTS software_id uuid;
 
 DO $$
     BEGIN
@@ -90,9 +94,21 @@ DO $$
                     FOREIGN KEY (firmware_id) REFERENCES firmware(id);
         END IF;
 
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_software_device_profile') THEN
+            ALTER TABLE device_profile
+                ADD CONSTRAINT fk_software_device_profile
+                    FOREIGN KEY (firmware_id) REFERENCES firmware(id);
+        END IF;
+
         IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_firmware_device') THEN
             ALTER TABLE device
                 ADD CONSTRAINT fk_firmware_device
+                    FOREIGN KEY (firmware_id) REFERENCES firmware(id);
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_software_device') THEN
+            ALTER TABLE device
+                ADD CONSTRAINT fk_software_device
                     FOREIGN KEY (firmware_id) REFERENCES firmware(id);
         END IF;
     END;

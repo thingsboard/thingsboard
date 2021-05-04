@@ -51,10 +51,12 @@ public abstract class TransportContext {
     @Getter
     private ExecutorService executor;
 
-
     @Getter
     @Autowired
     private FirmwareDataCache firmwareDataCache;
+
+    @Autowired
+    private TransportResourceCache transportResourceCache;
 
     @PostConstruct
     public void init() {

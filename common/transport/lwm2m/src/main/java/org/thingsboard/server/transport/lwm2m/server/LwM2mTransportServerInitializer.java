@@ -30,35 +30,4 @@ import javax.annotation.PreDestroy;
 @TbLwM2mTransportComponent
 public class LwM2mTransportServerInitializer {
 
-    @Autowired
-    private LwM2mTransportServiceImpl service;
-
-    @Autowired
-    private LeshanServer leshanServer;
-
-    @Autowired
-    private LwM2mTransportContextServer context;
-
-    @PostConstruct
-    public void init() {
-        if (this.context.getLwM2MTransportConfigServer().getEnableGenNewKeyPskRpk()) {
-            new LWM2MGenerationPSkRPkECC();
-        }
-        this.startLhServer();
-    }
-
-    private void startLhServer() {
-        this.leshanServer.start();
-        LwM2mServerListener lhServerCertListener = new LwM2mServerListener(service);
-        this.leshanServer.getRegistrationService().addListener(lhServerCertListener.registrationListener);
-        this.leshanServer.getPresenceService().addListener(lhServerCertListener.presenceListener);
-        this.leshanServer.getObservationService().addListener(lhServerCertListener.observationListener);
-    }
-
-    @PreDestroy
-    public void shutdown() {
-        log.info("Stopping LwM2M transport Server!");
-        leshanServer.destroy();
-        log.info("LwM2M transport Server stopped!");
-    }
 }

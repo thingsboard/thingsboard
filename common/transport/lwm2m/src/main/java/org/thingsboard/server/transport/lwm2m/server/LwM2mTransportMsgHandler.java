@@ -27,7 +27,7 @@ import org.thingsboard.server.transport.lwm2m.server.client.Lwm2mClientRpcReques
 import java.util.Collection;
 import java.util.Optional;
 
-public interface LwM2mTransportService extends TbTransportService {
+public interface LwM2mTransportMsgHandler {
 
     void onRegistered(Registration registration, Collection<Observation> previousObsersations);
 
@@ -39,7 +39,7 @@ public interface LwM2mTransportService extends TbTransportService {
 
     void setCancelObservations(Registration registration);
 
-    void onObservationResponse(Registration registration, String path, ReadResponse response, Lwm2mClientRpcRequest rpcRequest);
+    void onUpdateValueAfterReadResponse(Registration registration, String path, ReadResponse response, Lwm2mClientRpcRequest rpcRequest);
 
     void onAttributeUpdate(TransportProtos.AttributeUpdateNotificationMsg msg, TransportProtos.SessionInfoProto sessionInfo);
 
@@ -61,5 +61,7 @@ public interface LwM2mTransportService extends TbTransportService {
 
     void doDisconnect(TransportProtos.SessionInfoProto sessionInfo);
 
+    void onAwakeDev(Registration registration);
 
+    void sendLogsToThingsboard(String msg, String registrationId);
 }

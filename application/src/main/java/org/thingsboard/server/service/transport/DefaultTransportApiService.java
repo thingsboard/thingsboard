@@ -41,6 +41,8 @@ import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.device.credentials.ProvisionDeviceCredentialsData;
 import org.thingsboard.server.common.data.device.profile.ProvisionDeviceProfileCredentials;
+import org.thingsboard.server.common.data.firmware.FirmwareType;
+import org.thingsboard.server.common.data.firmware.FirmwareUtil;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -512,16 +514,17 @@ public class DefaultTransportApiService implements TransportApiService {
     private ListenableFuture<TransportApiResponseMsg> handle(TransportProtos.GetFirmwareRequestMsg requestMsg) {
         TenantId tenantId = new TenantId(new UUID(requestMsg.getTenantIdMSB(), requestMsg.getTenantIdLSB()));
         DeviceId deviceId = new DeviceId(new UUID(requestMsg.getDeviceIdMSB(), requestMsg.getDeviceIdLSB()));
+        FirmwareType firmwareType = FirmwareType.valueOf(requestMsg.getType());
         Device device = deviceService.findDeviceById(tenantId, deviceId);
 
         if (device == null) {
             return getEmptyTransportApiResponseFuture();
         }
 
-        FirmwareId firmwareId = device.getFirmwareId();
-
+        FirmwareId firmwareId = FirmwareUtil.getFirmwareId(device, firmwareType);
         if (firmwareId == null) {
-            firmwareId = deviceProfileCache.find(device.getDeviceProfileId()).getFirmwareId();
+            DeviceProfile deviceProfile = deviceProfileCache.find(device.getDeviceProfileId());
+            firmwareId = FirmwareUtil.getFirmwareId(deviceProfile, firmwareType);
         }
 
         TransportProtos.GetFirmwareResponseMsg.Builder builder = TransportProtos.GetFirmwareResponseMsg.newBuilder();
@@ -537,6 +540,7 @@ public class DefaultTransportApiService implements TransportApiService {
                 builder.setResponseStatus(TransportProtos.ResponseStatus.SUCCESS);
                 builder.setFirmwareIdMSB(firmwareId.getId().getMostSignificantBits());
                 builder.setFirmwareIdLSB(firmwareId.getId().getLeastSignificantBits());
+                builder.setType(firmwareInfo.getType().name());
                 builder.setTitle(firmwareInfo.getTitle());
                 builder.setVersion(firmwareInfo.getVersion());
                 builder.setFileName(firmwareInfo.getFileName());

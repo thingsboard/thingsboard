@@ -32,7 +32,8 @@ public enum SessionMsgType {
 
     CLAIM_REQUEST(),
 
-    GET_FIRMWARE_REQUEST;
+    GET_FIRMWARE_REQUEST,
+    GET_SOFTWARE_REQUEST;
 
     private final boolean requiresRulesProcessing;
 

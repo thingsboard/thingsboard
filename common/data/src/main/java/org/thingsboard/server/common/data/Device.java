@@ -32,7 +32,7 @@ import java.io.IOException;
 
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasName, HasTenantId, HasCustomerId {
+public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasName, HasTenantId, HasCustomerId, HasFirmware {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
@@ -50,6 +50,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
     private byte[] deviceDataBytes;
 
     private FirmwareId firmwareId;
+    private FirmwareId softwareId;
 
     public Device() {
         super();
@@ -69,6 +70,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         this.deviceProfileId = device.getDeviceProfileId();
         this.setDeviceData(device.getDeviceData());
         this.firmwareId = device.getFirmwareId();
+        this.softwareId = device.getSoftwareId();
     }
 
     public Device updateDevice(Device device) {
@@ -79,6 +81,8 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         this.label = device.getLabel();
         this.deviceProfileId = device.getDeviceProfileId();
         this.setDeviceData(device.getDeviceData());
+        this.setFirmwareId(device.getFirmwareId());
+        this.setSoftwareId(device.getSoftwareId());
         return this;
     }
 
@@ -169,6 +173,14 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
 
     public void setFirmwareId(FirmwareId firmwareId) {
         this.firmwareId = firmwareId;
+    }
+
+    public FirmwareId getSoftwareId() {
+        return softwareId;
+    }
+
+    public void setSoftwareId(FirmwareId softwareId) {
+        this.softwareId = softwareId;
     }
 
     @Override

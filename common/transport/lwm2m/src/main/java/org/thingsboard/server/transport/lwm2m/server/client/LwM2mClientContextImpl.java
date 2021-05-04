@@ -25,7 +25,7 @@ import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.secure.ReadResultSecurityStore;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -34,7 +34,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.NO_SEC;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertPathFromObjectIdToIdVer;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.convertPathFromObjectIdToIdVer;
 
 @Service
 @TbLwM2mTransportComponent
@@ -82,12 +82,12 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public LwM2mClient getLwM2mClientWithReg(Registration registration, String registrationId) {
-        LwM2mClient client = registrationId != null ?
+        LwM2mClient client = registrationId != null && this.lwM2mClients.containsKey(registrationId) ?
                 this.lwM2mClients.get(registrationId) :
-                this.lwM2mClients.containsKey(registration.getId()) ?
-                        this.lwM2mClients.get(registration.getId()) :
-                        this.lwM2mClients.get(registration.getEndpoint());
-        return client != null ? client : updateInSessionsLwM2MClient(registration);
+                registration !=null && this.lwM2mClients.containsKey(registration.getId()) ?
+                        this.lwM2mClients.get(registration.getId()) : registration !=null && this.lwM2mClients.containsKey(registration) ?
+                        this.lwM2mClients.get(registration.getEndpoint()) : null;
+        return client != null ? client : registration!= null ? updateInSessionsLwM2MClient(registration) : null;
     }
 
     @Override
@@ -118,7 +118,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
      */
     @Override
     public LwM2mClient addLwM2mClientToSession(String identity) {
-        ReadResultSecurityStore store = lwM2MCredentialsSecurityInfoValidator.createAndValidateCredentialsSecurityInfo(identity, LwM2mTransportHandler.LwM2mTypeServer.CLIENT);
+        ReadResultSecurityStore store = lwM2MCredentialsSecurityInfoValidator.createAndValidateCredentialsSecurityInfo(identity, LwM2mTransportHandlerUtil.LwM2mTypeServer.CLIENT);
         if (store.getSecurityMode() < LwM2MSecurityMode.DEFAULT_MODE.code) {
             UUID profileUuid = (store.getDeviceProfile() != null && addUpdateProfileParameters(store.getDeviceProfile())) ? store.getDeviceProfile().getUuidId() : null;
             LwM2mClient client;
@@ -165,7 +165,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public boolean addUpdateProfileParameters(DeviceProfile deviceProfile) {
-        LwM2mClientProfile lwM2MClientProfile = LwM2mTransportHandler.getLwM2MClientProfileFromThingsboard(deviceProfile);
+        LwM2mClientProfile lwM2MClientProfile = LwM2mTransportHandlerUtil.getLwM2MClientProfileFromThingsboard(deviceProfile);
         if (lwM2MClientProfile != null) {
             profiles.put(deviceProfile.getUuidId(), lwM2MClientProfile);
             return true;

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import {Component, forwardRef, Input} from '@angular/core';
+import { Component, forwardRef, Input } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -24,9 +24,9 @@ import {
   NG_VALUE_ACCESSOR,
   Validators
 } from '@angular/forms';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {coerceBooleanProperty} from '@angular/cdk/coercion';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   ATTRIBUTE,
   ATTRIBUTE_LWM2M,
@@ -38,9 +38,9 @@ import {
   RESOURCES,
   TELEMETRY
 } from './lwm2m-profile-config.models';
-import {deepClone, isDefinedAndNotNull, isEqual, isUndefined} from '@core/utils';
-import {MatDialog} from '@angular/material/dialog';
-import {TranslateService} from '@ngx-translate/core';
+import { deepClone, isDefinedAndNotNull, isEqual, isUndefined } from '@core/utils';
+import { MatDialog } from '@angular/material/dialog';
+import { TranslateService } from '@ngx-translate/core';
 import {
   Lwm2mObjectAddInstancesData,
   Lwm2mObjectAddInstancesDialogComponent
@@ -252,7 +252,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
   }
 
   private updateInstancesIds = (data: Lwm2mObjectAddInstancesData): void => {
-    debugger
     const objectLwM2MFormGroup = (this.observeAttrTelemetryFormGroup.get(CLIENT_LWM2M) as FormArray).controls
       .find(e => e.value.keyId === data.objectKeyId) as FormGroup;
     const instancesArray = objectLwM2MFormGroup.value.instances as Instance [];
