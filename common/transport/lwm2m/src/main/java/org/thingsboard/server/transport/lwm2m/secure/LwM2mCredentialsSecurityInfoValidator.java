@@ -24,6 +24,7 @@ import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
@@ -59,12 +60,11 @@ public class LwM2mCredentialsSecurityInfoValidator {
         context.getTransportService().process(ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder().setCredentialsId(endpoint).build(),
                 new TransportServiceCallback<>() {
                     @Override
-                    public void onSuccess(ValidateDeviceCredentialsResponseMsg msg) {
-                        String credentialsBody = msg.getCredentialsBody();
+                    public void onSuccess(ValidateDeviceCredentialsResponse msg) {
+                        String credentialsBody = msg.getCredentials();
                         resultSecurityStore[0] = createSecurityInfo(endpoint, credentialsBody, keyValue);
                         resultSecurityStore[0].setMsg(msg);
-                        Optional<DeviceProfile> deviceProfileOpt = LwM2mTransportUtil.decode(msg.getProfileBody().toByteArray());
-                        deviceProfileOpt.ifPresent(profile -> resultSecurityStore[0].setDeviceProfile(profile));
+                        resultSecurityStore[0].setDeviceProfile(msg.getDeviceProfile());
                         latch.countDown();
                     }
 
@@ -105,7 +105,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
             if (object != null && !object.isJsonNull()) {
                 if (keyValue.equals(LwM2mTransportUtil.LwM2mTypeServer.BOOTSTRAP)) {
                     result.setBootstrapJsonCredential(object);
-                    result.setEndPoint(endpoint);
+                    result.setEndpoint(endpoint);
                     result.setSecurityMode(LwM2MSecurityMode.fromSecurityMode(object.get("bootstrapServer").getAsJsonObject().get("securityMode").getAsString().toLowerCase()).code);
                 } else {
                     LwM2MSecurityMode lwM2MSecurityMode = LwM2MSecurityMode.fromSecurityMode(object.get("securityConfigClientMode").getAsString().toLowerCase());

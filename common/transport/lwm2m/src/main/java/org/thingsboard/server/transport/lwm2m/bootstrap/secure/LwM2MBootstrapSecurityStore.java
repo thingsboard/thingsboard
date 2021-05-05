@@ -103,7 +103,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
             BootstrapConfig bsConfig = store.getBootstrapConfig();
             if (bsConfig.security != null) {
                 try {
-                    bootstrapConfigStore.add(store.getEndPoint(), bsConfig);
+                    bootstrapConfigStore.add(store.getEndpoint(), bsConfig);
                 } catch (InvalidConfigurationException e) {
                     log.error("", e);
                 }
@@ -121,22 +121,22 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
             switch (SecurityMode.valueOf(lwM2MBootstrapConfig.getBootstrapServer().getSecurityMode())) {
                 /* Use RPK only */
                 case PSK:
-                    store.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(store.getEndPoint(),
+                    store.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(store.getEndpoint(),
                             lwM2MBootstrapConfig.getBootstrapServer().getClientPublicKeyOrId(),
                             Hex.decodeHex(lwM2MBootstrapConfig.getBootstrapServer().getClientSecretKey().toCharArray())));
                     store.setSecurityMode(SecurityMode.PSK.code);
                     break;
                 case RPK:
                     try {
-                        store.setSecurityInfo(SecurityInfo.newRawPublicKeyInfo(store.getEndPoint(),
+                        store.setSecurityInfo(SecurityInfo.newRawPublicKeyInfo(store.getEndpoint(),
                                 SecurityUtil.publicKey.decode(Hex.decodeHex(lwM2MBootstrapConfig.getBootstrapServer().getClientPublicKeyOrId().toCharArray()))));
                         store.setSecurityMode(SecurityMode.RPK.code);
                         break;
                     } catch (IOException | GeneralSecurityException e) {
-                        log.error("Unable to decode Client public key for [{}]  [{}]", store.getEndPoint(), e.getMessage());
+                        log.error("Unable to decode Client public key for [{}]  [{}]", store.getEndpoint(), e.getMessage());
                     }
                 case X509:
-                    store.setSecurityInfo(SecurityInfo.newX509CertInfo(store.getEndPoint()));
+                    store.setSecurityInfo(SecurityInfo.newX509CertInfo(store.getEndpoint()));
                     store.setSecurityMode(SecurityMode.X509.code);
                     break;
                 case NO_SEC:
@@ -166,22 +166,22 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                 if (this.getValidatedSecurityMode(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap, lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer)) {
                     lwM2MBootstrapConfig.bootstrapServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap);
                     lwM2MBootstrapConfig.lwm2mServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer);
-                    String logMsg = String.format("%s: getParametersBootstrap: %s Access connect client with bootstrap server.", LOG_LW2M_INFO, store.getEndPoint());
+                    String logMsg = String.format("%s: getParametersBootstrap: %s Access connect client with bootstrap server.", LOG_LW2M_INFO, store.getEndpoint());
                     helper.sendParametersOnThingsboardTelemetry(helper.getKvLogyToThingsboard(logMsg), sessionInfo);
                     return lwM2MBootstrapConfig;
                 } else {
-                    log.error(" [{}] Different values SecurityMode between of client and profile.", store.getEndPoint());
-                    log.error("{} getParametersBootstrap: [{}] Different values SecurityMode between of client and profile.", LOG_LW2M_ERROR, store.getEndPoint());
-                    String logMsg = String.format("%s: getParametersBootstrap: %s Different values SecurityMode between of client and profile.", LOG_LW2M_ERROR, store.getEndPoint());
+                    log.error(" [{}] Different values SecurityMode between of client and profile.", store.getEndpoint());
+                    log.error("{} getParametersBootstrap: [{}] Different values SecurityMode between of client and profile.", LOG_LW2M_ERROR, store.getEndpoint());
+                    String logMsg = String.format("%s: getParametersBootstrap: %s Different values SecurityMode between of client and profile.", LOG_LW2M_ERROR, store.getEndpoint());
                     helper.sendParametersOnThingsboardTelemetry(helper.getKvLogyToThingsboard(logMsg), sessionInfo);
                     return null;
                 }
             }
         } catch (JsonProcessingException e) {
-            log.error("Unable to decode Json or Certificate for [{}]  [{}]", store.getEndPoint(), e.getMessage());
+            log.error("Unable to decode Json or Certificate for [{}]  [{}]", store.getEndpoint(), e.getMessage());
             return null;
         }
-        log.error("Unable to decode Json or Certificate for [{}]", store.getEndPoint());
+        log.error("Unable to decode Json or Certificate for [{}]", store.getEndpoint());
         return null;
     }
 

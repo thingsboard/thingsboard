@@ -79,7 +79,7 @@ public interface TransportService {
                  TransportServiceCallback<ValidateDeviceCredentialsResponse> callback);
 
     void process(ValidateDeviceLwM2MCredentialsRequestMsg msg,
-                 TransportServiceCallback<ValidateDeviceCredentialsResponseMsg> callback);
+                 TransportServiceCallback<ValidateDeviceCredentialsResponse> callback);
 
     void process(GetOrCreateDeviceFromGatewayRequestMsg msg,
                  TransportServiceCallback<GetOrCreateDeviceFromGatewayResponse> callback);

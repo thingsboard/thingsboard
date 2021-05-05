@@ -27,6 +27,7 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
@@ -79,7 +80,7 @@ public class LwM2mClient implements Cloneable {
     @Setter
     private Registration registration;
 
-    private ValidateDeviceCredentialsResponseMsg credentialsResponse;
+    private ValidateDeviceCredentialsResponse credentials;
     @Getter
     private final Map<String, ResourceValue> resources;
     @Getter
@@ -98,11 +99,11 @@ public class LwM2mClient implements Cloneable {
         return super.clone();
     }
 
-    public LwM2mClient(String nodeId, String endpoint, String identity, SecurityInfo securityInfo, ValidateDeviceCredentialsResponseMsg credentialsResponse, UUID profileId, UUID sessionId) {
+    public LwM2mClient(String nodeId, String endpoint, String identity, SecurityInfo securityInfo, ValidateDeviceCredentialsResponse credentials, UUID profileId, UUID sessionId) {
         this.endpoint = endpoint;
         this.identity = identity;
         this.securityInfo = securityInfo;
-        this.credentialsResponse = credentialsResponse;
+        this.credentials = credentials;
         this.delayedRequests = new ConcurrentHashMap<>();
         this.pendingReadRequests = new CopyOnWriteArrayList<>();
         this.resources = new ConcurrentHashMap<>();
@@ -112,8 +113,8 @@ public class LwM2mClient implements Cloneable {
         this.updateFw = false;
         this.queuedRequests = new ConcurrentLinkedQueue<>();
         this.frUpdate = new LwM2mFirmwareUpdate();
-        if (this.credentialsResponse != null && this.credentialsResponse.hasDeviceInfo()) {
-            this.session = createSession(nodeId, sessionId, credentialsResponse);
+        if (this.credentials != null && this.credentials.hasDeviceInfo()) {
+            this.session = createSession(nodeId, sessionId, credentials);
             this.deviceId = new UUID(session.getDeviceIdMSB(), session.getDeviceIdLSB());
             this.profileId = new UUID(session.getDeviceProfileIdMSB(), session.getDeviceProfileIdLSB());
             this.deviceName = session.getDeviceName();
@@ -146,21 +147,21 @@ public class LwM2mClient implements Cloneable {
         builder.setDeviceType(this.deviceProfileName);
     }
 
-    private SessionInfoProto createSession(String nodeId, UUID sessionId, ValidateDeviceCredentialsResponseMsg msg) {
+    private SessionInfoProto createSession(String nodeId, UUID sessionId, ValidateDeviceCredentialsResponse msg) {
         return SessionInfoProto.newBuilder()
                 .setNodeId(nodeId)
                 .setSessionIdMSB(sessionId.getMostSignificantBits())
                 .setSessionIdLSB(sessionId.getLeastSignificantBits())
-                .setDeviceIdMSB(msg.getDeviceInfo().getDeviceIdMSB())
-                .setDeviceIdLSB(msg.getDeviceInfo().getDeviceIdLSB())
-                .setTenantIdMSB(msg.getDeviceInfo().getTenantIdMSB())
-                .setTenantIdLSB(msg.getDeviceInfo().getTenantIdLSB())
-                .setCustomerIdMSB(msg.getDeviceInfo().getCustomerIdMSB())
-                .setCustomerIdLSB(msg.getDeviceInfo().getCustomerIdLSB())
+                .setDeviceIdMSB(msg.getDeviceInfo().getDeviceId().getId().getMostSignificantBits())
+                .setDeviceIdLSB(msg.getDeviceInfo().getDeviceId().getId().getLeastSignificantBits())
+                .setTenantIdMSB(msg.getDeviceInfo().getTenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(msg.getDeviceInfo().getTenantId().getId().getLeastSignificantBits())
+                .setCustomerIdMSB(msg.getDeviceInfo().getCustomerId().getId().getMostSignificantBits())
+                .setCustomerIdLSB(msg.getDeviceInfo().getCustomerId().getId().getLeastSignificantBits())
                 .setDeviceName(msg.getDeviceInfo().getDeviceName())
                 .setDeviceType(msg.getDeviceInfo().getDeviceType())
-                .setDeviceProfileIdLSB(msg.getDeviceInfo().getDeviceProfileIdLSB())
-                .setDeviceProfileIdMSB(msg.getDeviceInfo().getDeviceProfileIdMSB())
+                .setDeviceProfileIdMSB(msg.getDeviceInfo().getDeviceProfileId().getId().getMostSignificantBits())
+                .setDeviceProfileIdLSB(msg.getDeviceInfo().getDeviceProfileId().getId().getLeastSignificantBits())
                 .build();
     }
 
