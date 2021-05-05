@@ -121,7 +121,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
                             if (value.expTime < tickTs) {
                                 ResponseMetaData<Response> staleRequest = pendingRequests.remove(key);
                                 if (staleRequest != null) {
-                                    log.trace("[{}] Request timeout detected, expTime [{}], tickTs [{}]", key, staleRequest.expTime, tickTs);
+                                    log.info("[{}] Request timeout detected, expTime [{}], tickTs [{}]", key, staleRequest.expTime, tickTs);
                                     staleRequest.future.setException(new TimeoutException());
                                 }
                             }
@@ -129,7 +129,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
                         nextCleanupMs = tickTs + maxRequestTimeout;
                     }
                 } catch (Throwable e) {
-                    log.warn("Failed to obtain responses from queue.", e);
+                    log.warn("Failed to obtain responses from queue. Going to sleep " + pollInterval + "ms", e);
                     try {
                         Thread.sleep(pollInterval);
                     } catch (InterruptedException e2) {
