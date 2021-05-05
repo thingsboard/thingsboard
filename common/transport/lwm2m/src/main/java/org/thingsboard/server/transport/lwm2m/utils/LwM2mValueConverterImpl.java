@@ -177,7 +177,6 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                 }
             default:
         }
-
         throw new CodecException("Invalid value type for resource %s, expected %s, got %s", resourcePath, expectedType,
                 currentType);
     }

@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.TRANSPORT_DEFAULT_LWM2M_VERSION;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.convertPathFromIdVerToObjectId;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.equalsResourceTypeGetSimpleName;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.getVerFromPathIdVerOrId;
 
 @Slf4j
@@ -103,23 +104,40 @@ public class LwM2mClient implements Cloneable {
         }
     }
 
-    public ResourceModel getResourceModel(String pathRez, LwM2mModelProvider modelProvider) {
-        LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRez));
+    public ResourceModel getResourceModel(String pathIdVer, LwM2mModelProvider modelProvider) {
+        LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathIdVer));
         String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
-        String verRez = getVerFromPathIdVerOrId(pathRez);
+        String verRez = getVerFromPathIdVerOrId(pathIdVer);
         return verRez == null || verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
                 .getResourceModel(pathIds.getObjectId(), pathIds.getResourceId()) : null;
     }
 
-    public Collection<LwM2mResource> getNewResourcesForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
-                                                                LwM2mValueConverterImpl converter) {
+    public Collection<LwM2mResource> getNewOneResourceForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
+                                                                  LwM2mValueConverterImpl converter) {
         LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRezIdVer));
         Collection<LwM2mResource> resources = ConcurrentHashMap.newKeySet();
         Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
                 .getObjectModel(pathIds.getObjectId()).resources;
         resourceModels.forEach((resId, resourceModel) -> {
             if (resId == pathIds.getResourceId()) {
-                resources.add(LwM2mSingleResource.newResource(resId, converter.convertValue(params, ResourceModel.Type.STRING, resourceModel.type, pathIds), resourceModel.type));
+                resources.add(LwM2mSingleResource.newResource(resId, converter.convertValue(params,
+                        equalsResourceTypeGetSimpleName(params), resourceModel.type, pathIds), resourceModel.type));
+
+            }});
+        return resources;
+    }
+
+    public Collection<LwM2mResource> getNewManyResourcesForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
+                                                                  LwM2mValueConverterImpl converter) {
+        LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRezIdVer));
+        Collection<LwM2mResource> resources = ConcurrentHashMap.newKeySet();
+        Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
+                .getObjectModel(pathIds.getObjectId()).resources;
+        resourceModels.forEach((resId, resourceModel) -> {
+            if (((ConcurrentHashMap) params).containsKey(String.valueOf(resId))) {
+                Object value = ((ConcurrentHashMap) params).get((String.valueOf(resId)));
+                resources.add(LwM2mSingleResource.newResource(resId,
+                        converter.convertValue(value, equalsResourceTypeGetSimpleName(value), resourceModel.type, pathIds), resourceModel.type));
 
             }});
         return resources;
