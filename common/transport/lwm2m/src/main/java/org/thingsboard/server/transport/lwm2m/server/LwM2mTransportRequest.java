@@ -16,13 +16,13 @@
 package org.thingsboard.server.transport.lwm2m.server;
 
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.Response;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mNode;
 import org.eclipse.leshan.core.node.LwM2mPath;
+import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.node.ObjectLink;
 import org.eclipse.leshan.core.observation.Observation;
@@ -57,6 +57,7 @@ import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -108,7 +109,7 @@ public class LwM2mTransportRequest {
      * @param typeOper          -
      * @param contentFormatName -
      */
-    @SneakyThrows
+
     public void sendAllRequest(Registration registration, String targetIdVer, LwM2mTypeOper typeOper,
                                String contentFormatName, Object params, long timeoutInMs, Lwm2mClientRpcRequest rpcRequest) {
         try {
@@ -156,8 +157,7 @@ public class LwM2mTransportRequest {
                             break;
                         case WRITE_REPLACE:
                             // Request to write a <b>String Single-Instance Resource</b> using the TLV content format.
-                            resourceModel = lwM2MClient.getResourceModel(targetIdVer, this.config
-                                    .getModelProvider());
+                            resourceModel = lwM2MClient.getResourceModel(targetIdVer, this.config.getModelProvider());
                             if (contentFormat.equals(ContentFormat.TLV)) {
                                 request = this.getWriteRequestSingleResource(null, resultIds.getObjectId(),
                                         resultIds.getObjectInstanceId(), resultIds.getResourceId(), params, resourceModel.type,
@@ -171,15 +171,31 @@ public class LwM2mTransportRequest {
                             }
                             break;
                         case WRITE_UPDATE:
-//                            LwM2mNode node = null;
-//                            if (resultIds.isObjectInstance()) {
-//                                node = new LwM2mObjectInstance(resultIds.getObjectInstanceId(), lwM2MClient.
-//                                        getNewResourcesForInstance(targetIdVer, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getModelProvider(),
-//                                                this.converter));
-//                                request = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, target, node);
-//                            } else if (resultIds.getObjectId() >= 0) {
-//                                request = new ObserveRequest(resultIds.getObjectId());
-//                            }
+                            if (resultIds.isResource()) {
+                                /**
+                                 * send request: path = '/3/0' node == wM2mObjectInstance
+                                 * with params == "\"resources\": {15: resource:{id:15. value:'+01'...}}
+                                 **/
+                                Collection<LwM2mResource> resources =  lwM2MClient.getNewResourcesForInstance(
+                                        targetIdVer, params,
+                                        this.config.getModelProvider(),
+                                        this.converter);
+                                request = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(),
+                                        resultIds.getObjectInstanceId(), resources);
+                            }
+
+                            /**
+                             *  params = "{\"id\":0,\"resources\":[{\"id\":14,\"value\":\"+5\"},{\"id\":15,\"value\":\"+9\"}]}"
+                             *
+                             *  int rscId = resultIds.getObjectInstanceId();
+                             */
+
+                            else if (resultIds.isObjectInstance()) {
+                                String content = (String) params;
+//                                node = Gson.fromJson((content, LwM2mNode.class);
+                            } else if (resultIds.getObjectId() >= 0) {
+                                request = new ObserveRequest(resultIds.getObjectId());
+                            }
                             break;
                         case WRITE_ATTRIBUTES:
                             request = createWriteAttributeRequest(target, params);
@@ -232,7 +248,11 @@ public class LwM2mTransportRequest {
             String msg = String.format("%s: type operation %s  %s", LOG_LW2M_ERROR,
                     typeOper.name(), e.getMessage());
             serviceImpl.sendLogsToThingsboard(msg, registration.getId());
-            throw new Exception(e);
+            try {
+                throw new Exception(e);
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
         }
     }
 
@@ -244,6 +264,7 @@ public class LwM2mTransportRequest {
 
     @SuppressWarnings("unchecked")
     private void sendRequest(Registration registration, LwM2mClient lwM2MClient, DownlinkRequest request, long timeoutInMs, Lwm2mClientRpcRequest rpcRequest) {
+
         context.getServer().send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
             if (!lwM2MClient.isInit()) {
                 lwM2MClient.initReadValue(this.serviceImpl, convertPathFromObjectIdToIdVer(request.getPath().toString(), registration));

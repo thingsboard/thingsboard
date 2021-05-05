@@ -138,6 +138,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
         /* Create DTLS Config */
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
+
         dtlsConfig.setServerOnly(true);
         dtlsConfig.setRecommendedSupportedGroupsOnly(config.isRecommendedSupportedGroups());
         dtlsConfig.setRecommendedCipherSuitesOnly(config.isRecommendedCiphers());
@@ -152,6 +153,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
                     TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
                     TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256);
         }
+
 
         /* Set DTLS Config */
         builder.setDtlsConfig(dtlsConfig);

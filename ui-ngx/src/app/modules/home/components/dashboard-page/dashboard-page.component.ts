@@ -120,7 +120,8 @@ import {
   DisplayWidgetTypesPanelData
 } from '@home/components/dashboard-page/widget-types-panel.component';
 import { DashboardWidgetSelectComponent } from '@home/components/dashboard-page/dashboard-widget-select.component';
-import {AliasEntityType, EntityType} from "@shared/models/entity-type.models";
+import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
+import { MobileService } from '@core/services/mobile.service';
 
 // @dynamic
 @Component({
@@ -159,6 +160,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   singlePageMode: boolean;
   forceFullscreen = this.authState.forceFullscreen;
 
+  isMobileApp = this.mobileService.isMobileApp();
   isFullscreen = false;
   isEdit = false;
   isEditingWidget = false;
@@ -188,6 +190,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   currentDashboardId: string;
   currentCustomerId: string;
   currentDashboardScope: DashboardPageScope;
+
+  setStateDashboardId = false;
 
   addingLayoutCtx: DashboardPageLayoutContext;
 
@@ -284,6 +288,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private dashboardService: DashboardService,
               private itembuffer: ItemBufferService,
               private importExport: ImportExportService,
+              private mobileService: MobileService,
               private fb: FormBuilder,
               private dialog: MatDialog,
               private translate: TranslateService,
@@ -322,6 +327,19 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
     this.reset();
 
+    this.dashboard = data.dashboard;
+    if (!this.embedded && this.dashboard.id) {
+      this.setStateDashboardId = true;
+    }
+
+    if (this.route.snapshot.queryParamMap.has('hideToolbar')) {
+      this.hideToolbar = this.route.snapshot.queryParamMap.get('hideToolbar') === 'true';
+    }
+
+    if (this.route.snapshot.queryParamMap.has('embedded')) {
+      this.embedded = this.route.snapshot.queryParamMap.get('embedded') === 'true';
+    }
+
     this.currentDashboardId = data.currentDashboardId;
 
     if (this.route.snapshot.params.customerId) {
@@ -332,7 +350,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       this.currentCustomerId = this.authUser.customerId;
     }
 
-    this.dashboard = data.dashboard;
     this.dashboardConfiguration = this.dashboard.configuration;
     this.dashboardCtx.dashboardTimewindow = this.dashboardConfiguration.timewindow;
     this.layouts.main.layoutCtx.widgets = new LayoutWidgetsArray(this.dashboardCtx);
@@ -387,6 +404,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.currentDashboardId = null;
     this.currentCustomerId = null;
     this.currentDashboardScope = null;
+
+    this.setStateDashboardId = false;
 
     this.dashboardCtx.state = null;
   }

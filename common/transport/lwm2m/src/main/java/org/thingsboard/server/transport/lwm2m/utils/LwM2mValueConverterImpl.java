@@ -60,11 +60,14 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
             case INTEGER:
                 switch (currentType) {
                     case FLOAT:
-                        log.debug("Trying to convert float value [{}] to integer", value);
+                        log.debug("Trying to convert float value [{}] to Integer", value);
                         Long longValue = ((Double) value).longValue();
                         if ((double) value == longValue.doubleValue()) {
                             return longValue;
                         }
+                    case STRING:
+                        log.debug("Trying to convert String value [{}] to Integer", value);
+                        return Long.parseLong((String) value);
                     default:
                         break;
                 }
@@ -77,6 +80,9 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                         if ((long) value == floatValue.longValue()) {
                             return floatValue;
                         }
+                    case STRING:
+                        log.debug("Trying to convert String value [{}] to Float", value);
+                        return Float.valueOf((String) value);
                     default:
                         break;
                 }
