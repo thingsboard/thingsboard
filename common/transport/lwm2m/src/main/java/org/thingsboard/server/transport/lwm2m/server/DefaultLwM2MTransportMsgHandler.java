@@ -104,6 +104,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.L
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.READ;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_ATTRIBUTES;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_REPLACE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_UPDATE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertJsonArrayToSet;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromIdVerToObjectId;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
@@ -455,9 +456,23 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                     lwm2mClientRpcRequest.setValue(rpcRequest.get(lwm2mClientRpcRequest.valueKey).getAsString());
                 }
                 if (rpcRequest.has(lwm2mClientRpcRequest.paramsKey) && rpcRequest.get(lwm2mClientRpcRequest.paramsKey).isJsonObject()) {
-                    lwm2mClientRpcRequest.setParams(new Gson().fromJson(rpcRequest.get(lwm2mClientRpcRequest.paramsKey)
+                    ConcurrentHashMap<String, Object> params = new Gson().fromJson(rpcRequest.get(lwm2mClientRpcRequest.paramsKey)
                             .getAsJsonObject().toString(), new TypeToken<ConcurrentHashMap<String, Object>>() {
-                    }.getType()));
+                    }.getType());
+                    if (WRITE_UPDATE == lwm2mClientRpcRequest.getTypeOper()) {
+                        ConcurrentHashMap<String, Object> paramsResourceId = convertParamsToResourceId (params, sessionInfo);
+                        if (paramsResourceId.size() > 0) {
+                            lwm2mClientRpcRequest.setParams(paramsResourceId);
+                        }
+                    }
+                    else {
+                        lwm2mClientRpcRequest.setParams(params);
+                    }
+                }
+                else if (rpcRequest.has(lwm2mClientRpcRequest.paramsKey) && rpcRequest.get(lwm2mClientRpcRequest.paramsKey).isJsonArray()) {
+                    new Gson().fromJson(rpcRequest.get(lwm2mClientRpcRequest.paramsKey)
+                            .getAsJsonObject().toString(), new TypeToken<ConcurrentHashMap<String, Object>>() {
+                    }.getType());
                 }
                 lwm2mClientRpcRequest.setSessionInfo(sessionInfo);
                 if (OBSERVE_READ_ALL != lwm2mClientRpcRequest.getTypeOper() && lwm2mClientRpcRequest.getTargetIdVer() == null) {
@@ -482,6 +497,21 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
             throw new IllegalArgumentException(lwm2mClientRpcRequest.getErrorMsg());
         }
         return lwm2mClientRpcRequest;
+    }
+
+    private ConcurrentHashMap<String, Object> convertParamsToResourceId (ConcurrentHashMap<String, Object> params,
+                                                                         SessionInfoProto sessionInfo) {
+        ConcurrentHashMap<String, Object> paramsIdVer = new ConcurrentHashMap<>();
+        params.forEach((k, v) -> {
+            String targetIdVer = this.getPresentPathIntoProfile(sessionInfo, k);
+            if (targetIdVer != null ) {
+                LwM2mPath targetId = new LwM2mPath(convertPathFromIdVerToObjectId(targetIdVer));
+                if (targetId.isResource()) {
+                    paramsIdVer.put(String.valueOf(targetId.getResourceId()), v);
+                }
+            }
+        });
+        return paramsIdVer;
     }
 
     public void sentRpcRequest(Lwm2mClientRpcRequest rpcRequest, String requestCode, String msg, String typeMsg) {

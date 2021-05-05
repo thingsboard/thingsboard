@@ -197,8 +197,18 @@ public class LwM2mTransportRequest {
                                             targetIdVer, params,
                                             this.config.getModelProvider(),
                                             this.converter);
-                                    request = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(),
-                                            resultIds.getObjectInstanceId(), resources);
+                                    if (resources.size()>0) {
+                                        request = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(),
+                                                resultIds.getObjectInstanceId(), resources);
+                                    }
+                                    else {
+                                        Lwm2mClientRpcRequest rpcRequestClone = (Lwm2mClientRpcRequest) rpcRequest.clone();
+                                        if (rpcRequestClone != null) {
+                                            String errorMsg = String.format("Path %s params is not valid", targetIdVer);
+                                            serviceImpl.sentRpcRequest(rpcRequestClone, BAD_REQUEST.getName(), errorMsg, LOG_LW2M_ERROR);
+                                            rpcRequest = null;
+                                        }
+                                    }
                                 }
                             } else if (resultIds.getObjectId() >= 0) {
                                 request = new ObserveRequest(resultIds.getObjectId());
@@ -218,7 +228,8 @@ public class LwM2mTransportRequest {
                         } catch (ClientSleepingException e) {
                             DownlinkRequest finalRequest = request;
                             long finalTimeoutInMs = timeoutInMs;
-                            lwM2MClient.getQueuedRequests().add(() -> sendRequest(registration, lwM2MClient, finalRequest, finalTimeoutInMs, rpcRequest));
+                            Lwm2mClientRpcRequest finalRpcRequest = rpcRequest;
+                            lwM2MClient.getQueuedRequests().add(() -> sendRequest(registration, lwM2MClient, finalRequest, finalTimeoutInMs, finalRpcRequest));
                         } catch (Exception e) {
                             log.error("[{}] [{}] [{}] Failed to send downlink.", registration.getEndpoint(), targetIdVer, typeOper.name(), e);
                         }
