@@ -24,10 +24,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mObject;
 import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
+import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.request.WriteRequest;
@@ -277,22 +279,30 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     @Override
     public void onUpdateValueAfterReadResponse(Registration registration, String path, ReadResponse response, Lwm2mClientRpcRequest rpcRequest) {
         if (response.getContent() != null) {
+            Object value = null;
             if (response.getContent() instanceof LwM2mObject) {
                 LwM2mObject lwM2mObject = (LwM2mObject) response.getContent();
+                if (rpcRequest != null) {
+                    value = lwM2mObject.toString();
+                }
                 this.updateObjectResourceValue(registration, lwM2mObject, path);
             } else if (response.getContent() instanceof LwM2mObjectInstance) {
                 LwM2mObjectInstance lwM2mObjectInstance = (LwM2mObjectInstance) response.getContent();
+                if (rpcRequest != null) {
+                    value = lwM2mObjectInstance.toString();
+                }
                 this.updateObjectInstanceResourceValue(registration, lwM2mObjectInstance, path);
             } else if (response.getContent() instanceof LwM2mResource) {
                 LwM2mResource lwM2mResource = (LwM2mResource) response.getContent();
                 if (rpcRequest != null) {
-                    Object valueResp = lwM2mResource.isMultiInstances() ? lwM2mResource.getValues() : lwM2mResource.getValue();
-                    Object value = this.converter.convertValue(valueResp, lwM2mResource.getType(), ResourceModel.Type.STRING,
-                            new LwM2mPath(convertPathFromIdVerToObjectId(path)));
-                    rpcRequest.setValueMsg(String.format("%s", value));
-                    this.sentRpcRequest(rpcRequest, response.getCode().getName(), (String) value, LOG_LW2M_VALUE);
+                    value = lwM2mResource.isMultiInstances() ? ((LwM2mMultipleResource) lwM2mResource).toString() :
+                            ((LwM2mSingleResource) lwM2mResource).toString();
                 }
                 this.updateResourcesValue(registration, lwM2mResource, path);
+            }
+            if (rpcRequest != null) {
+                rpcRequest.setValueMsg(String.format("%s", value));
+                this.sentRpcRequest(rpcRequest, response.getCode().getName(), (String) value, LOG_LW2M_VALUE);
             }
         }
     }
@@ -600,10 +610,10 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     /**
      * @param registration -
      * @param lwM2mObject  -
-     * @param path         -
+     * @param pathIdVer         -
      */
-    private void updateObjectResourceValue(Registration registration, LwM2mObject lwM2mObject, String path) {
-        LwM2mPath pathIds = new LwM2mPath(path);
+    private void updateObjectResourceValue(Registration registration, LwM2mObject lwM2mObject, String pathIdVer) {
+        LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathIdVer));
         lwM2mObject.getInstances().forEach((instanceId, instance) -> {
             String pathInstance = pathIds.toString() + "/" + instanceId;
             this.updateObjectInstanceResourceValue(registration, instance, pathInstance);
@@ -613,10 +623,10 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     /**
      * @param registration        -
      * @param lwM2mObjectInstance -
-     * @param path                -
+     * @param pathIdVer           -
      */
-    private void updateObjectInstanceResourceValue(Registration registration, LwM2mObjectInstance lwM2mObjectInstance, String path) {
-        LwM2mPath pathIds = new LwM2mPath(path);
+    private void updateObjectInstanceResourceValue(Registration registration, LwM2mObjectInstance lwM2mObjectInstance, String pathIdVer) {
+        LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathIdVer));
         lwM2mObjectInstance.getResources().forEach((resourceId, resource) -> {
             String pathRez = pathIds.toString() + "/" + resourceId;
             this.updateResourcesValue(registration, resource, pathRez);
@@ -862,10 +872,9 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     public void onWriteResponseOk(Registration registration, String path, WriteRequest request) {
         if (request.getNode() instanceof LwM2mResource) {
             this.updateResourcesValue(registration, ((LwM2mResource) request.getNode()), path);
-        }
-        else if (request.getNode() instanceof LwM2mObjectInstance) {
+        } else if (request.getNode() instanceof LwM2mObjectInstance) {
             ((LwM2mObjectInstance) request.getNode()).getResources().forEach((resId, resource) -> {
-                this.updateResourcesValue(registration,  resource, path+ "/" + resId);
+                this.updateResourcesValue(registration, resource, path + "/" + resId);
             });
         }
 
