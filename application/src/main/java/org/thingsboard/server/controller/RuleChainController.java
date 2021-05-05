@@ -27,6 +27,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -289,7 +290,7 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @PostMapping(value = "/ruleChain/{ruleChainId}")
+    @DeleteMapping(value = "/ruleChain/{ruleChainId}")
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteRuleChain(@PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
@@ -512,7 +513,7 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @PostMapping(value = "/edge/{edgeId}/ruleChain/{ruleChainId}")
+    @DeleteMapping(value = "/edge/{edgeId}/ruleChain/{ruleChainId}")
     public RuleChain unassignRuleChainFromEdge(@PathVariable("edgeId") String strEdgeId,
                                                @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter("edgeId", strEdgeId);
@@ -600,7 +601,7 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @PostMapping(value = "/ruleChain/{ruleChainId}/autoAssignToEdge")
+    @DeleteMapping(value = "/ruleChain/{ruleChainId}/autoAssignToEdge")
     public RuleChain unsetAutoAssignToEdgeRuleChain(@PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
         checkParameter(RULE_CHAIN_ID, strRuleChainId);
         try {
