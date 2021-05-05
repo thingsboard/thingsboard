@@ -32,7 +32,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
-import org.thingsboard.server.transport.lwm2m.secure.ReadResultSecurityStore;
+import org.thingsboard.server.transport.lwm2m.secure.EndpointSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mSessionMsgListener;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
@@ -72,7 +72,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     @Override
     public List<SecurityInfo> getAllByEndpoint(String endPoint) {
-        ReadResultSecurityStore store = lwM2MCredentialsSecurityInfoValidator.createAndValidateCredentialsSecurityInfo(endPoint, LwM2mTransportUtil.LwM2mTypeServer.BOOTSTRAP);
+        EndpointSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfo(endPoint, LwM2mTransportUtil.LwM2mTypeServer.BOOTSTRAP);
         if (store.getBootstrapJsonCredential() != null && store.getSecurityMode() < LwM2MSecurityMode.DEFAULT_MODE.code) {
             /* add value to store  from BootstrapJson */
             this.setBootstrapConfigScurityInfo(store);
@@ -96,7 +96,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     @Override
     public SecurityInfo getByIdentity(String identity) {
-        ReadResultSecurityStore store = lwM2MCredentialsSecurityInfoValidator.createAndValidateCredentialsSecurityInfo(identity, LwM2mTransportUtil.LwM2mTypeServer.BOOTSTRAP);
+        EndpointSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfo(identity, LwM2mTransportUtil.LwM2mTypeServer.BOOTSTRAP);
         if (store.getBootstrapJsonCredential() != null && store.getSecurityMode() < LwM2MSecurityMode.DEFAULT_MODE.code) {
             /* add value to store  from BootstrapJson */
             this.setBootstrapConfigScurityInfo(store);
@@ -113,7 +113,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
         return null;
     }
 
-    private void setBootstrapConfigScurityInfo(ReadResultSecurityStore store) {
+    private void setBootstrapConfigScurityInfo(EndpointSecurityInfo store) {
         /* BootstrapConfig */
         LwM2MBootstrapConfig lwM2MBootstrapConfig = this.getParametersBootstrap(store);
         if (lwM2MBootstrapConfig != null) {
@@ -150,7 +150,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
         }
     }
 
-    private LwM2MBootstrapConfig getParametersBootstrap(ReadResultSecurityStore store) {
+    private LwM2MBootstrapConfig getParametersBootstrap(EndpointSecurityInfo store) {
         try {
             JsonObject bootstrapJsonCredential = store.getBootstrapJsonCredential();
             if (bootstrapJsonCredential != null) {

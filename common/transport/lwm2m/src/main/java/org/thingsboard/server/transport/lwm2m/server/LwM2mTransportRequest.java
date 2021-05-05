@@ -115,7 +115,7 @@ public class LwM2mTransportRequest {
             String target = convertPathFromIdVerToObjectId(targetIdVer);
             DownlinkRequest request = null;
             ContentFormat contentFormat = contentFormatName != null ? ContentFormat.fromName(contentFormatName.toUpperCase()) : ContentFormat.DEFAULT;
-            LwM2mClient lwM2MClient = this.lwM2mClientContext.getLwM2mClientWithReg(registration, null);
+            LwM2mClient lwM2MClient = this.lwM2mClientContext.getOrRegister(registration);
             LwM2mPath resultIds = target != null ? new LwM2mPath(target) : null;
             if (!OBSERVE_READ_ALL.name().equals(typeOper.name()) && resultIds != null && registration != null && resultIds.getObjectId() >= 0 && lwM2MClient != null) {
                 if (lwM2MClient.isValidObjectVersion(targetIdVer)) {

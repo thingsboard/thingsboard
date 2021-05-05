@@ -183,7 +183,6 @@ public class LwM2mTransportUtil {
     }
 
     public static final String EVENT_AWAKE = "AWAKE";
-    public static final String SERVICE_CHANNEL = "SERVICE";
     public static final String RESPONSE_CHANNEL = "RESP";
 
     public static boolean equalsResourceValue(Object valueOld, Object valueNew, ResourceModel.Type type, LwM2mPath resourcePath) throws CodecException {
@@ -249,7 +248,7 @@ public class LwM2mTransportUtil {
      * "/3_1.0/0": {"gt": 17},
      * "/3_1.0/0/9": {"pmax": 45}, "/3_1.2": {ver": "3_1.2"}}
      */
-    public static LwM2mClientProfile getLwM2MClientProfileFromThingsboard(DeviceProfile deviceProfile) {
+    public static LwM2mClientProfile toLwM2MClientProfile(DeviceProfile deviceProfile) {
         if (deviceProfile != null && ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties().size() > 0) {
             Object profile = ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties();
             try {
