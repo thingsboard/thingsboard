@@ -63,6 +63,13 @@ import static org.eclipse.leshan.core.attributes.Attribute.DIMENSION;
 import static org.eclipse.leshan.core.attributes.Attribute.MAXIMUM_PERIOD;
 import static org.eclipse.leshan.core.attributes.Attribute.MINIMUM_PERIOD;
 import static org.eclipse.leshan.core.attributes.Attribute.OBJECT_VERSION;
+import static org.eclipse.leshan.core.model.ResourceModel.Type.BOOLEAN;
+import static org.eclipse.leshan.core.model.ResourceModel.Type.FLOAT;
+import static org.eclipse.leshan.core.model.ResourceModel.Type.INTEGER;
+import static org.eclipse.leshan.core.model.ResourceModel.Type.OBJLNK;
+import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
+import static org.eclipse.leshan.core.model.ResourceModel.Type.STRING;
+import static org.eclipse.leshan.core.model.ResourceModel.Type.TIME;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 
@@ -508,4 +515,24 @@ public class LwM2mTransportHandlerUtil {
         return Sets.newConcurrentHashSet(attributeListOld);
     }
 
+    public static ResourceModel.Type equalsResourceTypeGetSimpleName(Object value) {
+        switch (value.getClass().getSimpleName()) {
+            case "Double":
+                return FLOAT;
+            case "Integer":
+                return INTEGER;
+            case "String":
+                return STRING;
+            case "Boolean":
+                return BOOLEAN;
+            case "byte[]":
+                return OPAQUE;
+            case "Date":
+                return TIME;
+            case "ObjectLink":
+                return OBJLNK;
+            default:
+                return  null;
+        }
+    }
 }

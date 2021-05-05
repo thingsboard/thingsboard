@@ -60,6 +60,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -178,7 +179,7 @@ public class LwM2mTransportRequest {
                                  * send request: path = '/3/0' node == wM2mObjectInstance
                                  * with params == "\"resources\": {15: resource:{id:15. value:'+01'...}}
                                  **/
-                                Collection<LwM2mResource> resources =  lwM2MClient.getNewResourcesForInstance(
+                                Collection<LwM2mResource> resources = lwM2MClient.getNewOneResourceForInstance(
                                         targetIdVer, params,
                                         this.config.getModelProvider(),
                                         this.converter);
@@ -193,8 +194,14 @@ public class LwM2mTransportRequest {
                              */
 
                             else if (resultIds.isObjectInstance()) {
-                                String content = (String) params;
-//                                node = Gson.fromJson((content, LwM2mNode.class);
+                                if (((ConcurrentHashMap) params).size() > 0) {
+                                    Collection<LwM2mResource> resources = lwM2MClient.getNewManyResourcesForInstance(
+                                            targetIdVer, params,
+                                            this.config.getModelProvider(),
+                                            this.converter);
+                                    request = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(),
+                                            resultIds.getObjectInstanceId(), resources);
+                                }
                             } else if (resultIds.getObjectId() >= 0) {
                                 request = new ObserveRequest(resultIds.getObjectId());
                             }
@@ -264,9 +271,9 @@ public class LwM2mTransportRequest {
      * @param timeoutInMs  -
      */
 
-    @SuppressWarnings("unchecked")
-    private void sendRequest(Registration registration, LwM2mClient lwM2MClient, DownlinkRequest request, long timeoutInMs, Lwm2mClientRpcRequest rpcRequest) {
-
+    @SuppressWarnings({"error sendRequest"})
+    private void sendRequest(Registration registration, LwM2mClient lwM2MClient, DownlinkRequest request,
+                             long timeoutInMs, Lwm2mClientRpcRequest rpcRequest) {
         context.getServer().send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
             if (!lwM2MClient.isInit()) {
                 lwM2MClient.initReadValue(this.serviceImpl, convertPathFromObjectIdToIdVer(request.getPath().toString(), registration));
