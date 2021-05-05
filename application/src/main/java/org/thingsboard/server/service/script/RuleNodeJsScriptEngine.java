@@ -102,7 +102,6 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
             String newMessageType = !StringUtils.isEmpty(messageType) ? messageType : msg.getType();
             return TbMsg.transformMsg(msg, newMessageType, msg.getOriginator(), newMetadata, newData);
         } catch (Throwable th) {
-            th.printStackTrace();
             throw new RuntimeException("Failed to unbind message data from javascript result", th);
         }
     }
@@ -141,13 +140,16 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
     }
 
     @Override
-    public TbMsg executeGenerate(TbMsg prevMsg) throws ScriptException {
-        JsonNode result = executeScript(prevMsg);
-        if (!result.isObject()) {
-            log.warn("Wrong result type: {}", result.getNodeType());
-            throw new ScriptException("Wrong result type: " + result.getNodeType());
-        }
-        return unbindMsg(result, prevMsg);
+    public ListenableFuture<TbMsg> executeGenerateAsync(TbMsg prevMsg) {
+        log.trace("execute generate async, prevMsg {}", prevMsg);
+        return Futures.transformAsync(executeScriptAsync(prevMsg), result -> {
+            if (!result.isObject()) {
+                log.warn("Wrong result type: {}", result.getNodeType());
+                throw new ScriptException("Wrong result type: " + result.getNodeType());
+            }
+            return Futures.immediateFuture(unbindMsg(result, prevMsg));
+        }, MoreExecutors.directExecutor());
+
     }
 
     @Override
@@ -234,6 +236,7 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
     }
 
     private ListenableFuture<JsonNode> executeScriptAsync(TbMsg msg) {
+        log.trace("execute script async, msg {}", msg);
         String[] inArgs = prepareArgs(msg);
         return Futures.transformAsync(sandboxService.invokeFunction(tenantId, msg.getCustomerId(), this.scriptId, inArgs[0], inArgs[1], inArgs[2]),
                 o -> {

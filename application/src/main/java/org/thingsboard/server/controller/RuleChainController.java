@@ -74,6 +74,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -86,6 +87,7 @@ public class RuleChainController extends BaseController {
     public static final String RULE_NODE_ID = "ruleNodeId";
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    public static final int TIMEOUT = 20;
 
     @Autowired
     private InstallScripts installScripts;
@@ -391,7 +393,7 @@ public class RuleChainController extends BaseController {
                         output = msgToOutput(engine.executeUpdate(inMsg));
                         break;
                     case "generate":
-                        output = msgToOutput(engine.executeGenerate(inMsg));
+                        output = msgToOutput(engine.executeGenerateAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS));
                         break;
                     case "filter":
                         boolean result = engine.executeFilter(inMsg);

@@ -15,9 +15,12 @@
  */
 package org.thingsboard.rule.engine.debug;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.TbStopWatch;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -35,6 +38,7 @@ import org.thingsboard.server.common.msg.queue.ServiceQueue;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
@@ -64,10 +68,11 @@ public class TbMsgGeneratorNode implements TbNode {
     private EntityId originatorId;
     private UUID nextTickId;
     private TbMsg prevMsg;
-    private volatile boolean initialized;
+    private final AtomicBoolean initialized = new AtomicBoolean(false);
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
+        log.trace("init generator with config {}", configuration);
         this.config = TbNodeUtils.convert(configuration, TbMsgGeneratorNodeConfiguration.class);
         this.delay = TimeUnit.SECONDS.toMillis(config.getPeriodInSeconds());
         this.currentMsgCount = 0;
@@ -81,35 +86,39 @@ public class TbMsgGeneratorNode implements TbNode {
 
     @Override
     public void onPartitionChangeMsg(TbContext ctx, PartitionChangeMsg msg) {
+        log.trace("onPartitionChangeMsg, PartitionChangeMsg {}, config {}", msg, config);
         updateGeneratorState(ctx);
     }
 
     private void updateGeneratorState(TbContext ctx) {
+        log.trace("updateGeneratorState, config {}", config);
         if (ctx.isLocalEntity(originatorId)) {
-            if (!initialized) {
-                initialized = true;
+            if (initialized.compareAndSet(false, true)) {
                 this.jsEngine = ctx.createJsScriptEngine(config.getJsScript(), "prevMsg", "prevMetadata", "prevMsgType");
                 scheduleTickMsg(ctx);
             }
-        } else if (initialized) {
-            initialized = false;
+        } else if (initialized.compareAndSet(true, false)) {
             destroy();
         }
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (initialized && msg.getType().equals(TB_MSG_GENERATOR_NODE_MSG) && msg.getId().equals(nextTickId)) {
+        log.trace("onMsg, config {}, msg {}", config, msg);
+        if (initialized.get() && msg.getType().equals(TB_MSG_GENERATOR_NODE_MSG) && msg.getId().equals(nextTickId)) {
+            TbStopWatch sw = TbStopWatch.startNew();
             withCallback(generate(ctx, msg),
                     m -> {
-                        if (initialized && (config.getMsgCount() == TbMsgGeneratorNodeConfiguration.UNLIMITED_MSG_COUNT || currentMsgCount < config.getMsgCount())) {
+                        log.trace("onMsg onSuccess callback, took {}ms, config {}, msg {}", sw.stopAndGetTotalTimeMillis(), config, msg);
+                        if (initialized.get() && (config.getMsgCount() == TbMsgGeneratorNodeConfiguration.UNLIMITED_MSG_COUNT || currentMsgCount < config.getMsgCount())) {
                             ctx.enqueueForTellNext(m, SUCCESS);
                             scheduleTickMsg(ctx);
                             currentMsgCount++;
                         }
                     },
                     t -> {
-                        if (initialized && (config.getMsgCount() == TbMsgGeneratorNodeConfiguration.UNLIMITED_MSG_COUNT || currentMsgCount < config.getMsgCount())) {
+                        log.warn("onMsg onFailure callback, took {}ms, config {}, msg {}", sw.stopAndGetTotalTimeMillis(), config, msg);
+                        if (initialized.get() && (config.getMsgCount() == TbMsgGeneratorNodeConfiguration.UNLIMITED_MSG_COUNT || currentMsgCount < config.getMsgCount())) {
                             ctx.tellFailure(msg, t);
                             scheduleTickMsg(ctx);
                             currentMsgCount++;
@@ -119,6 +128,7 @@ public class TbMsgGeneratorNode implements TbNode {
     }
 
     private void scheduleTickMsg(TbContext ctx) {
+        log.trace("scheduleTickMsg, config {}", config);
         long curTs = System.currentTimeMillis();
         if (lastScheduledTs == 0L) {
             lastScheduledTs = curTs;
@@ -131,22 +141,26 @@ public class TbMsgGeneratorNode implements TbNode {
     }
 
     private ListenableFuture<TbMsg> generate(TbContext ctx, TbMsg msg) {
-        return ctx.getJsExecutor().executeAsync(() -> {
-            if (prevMsg == null) {
-                prevMsg = ctx.newMsg(ServiceQueue.MAIN, "", originatorId, msg.getCustomerId(), new TbMsgMetaData(), "{}");
-            }
-            if (initialized) {
-                ctx.logJsEvalRequest();
-                TbMsg generated = jsEngine.executeGenerate(prevMsg);
+        log.trace("generate, config {}", config);
+        if (prevMsg == null) {
+            prevMsg = ctx.newMsg(ServiceQueue.MAIN, "", originatorId, msg.getCustomerId(), new TbMsgMetaData(), "{}");
+        }
+        if (initialized.get()) {
+            ctx.logJsEvalRequest();
+            return Futures.transformAsync(jsEngine.executeGenerateAsync(prevMsg), generated -> {
+                log.trace("generate process response, generated {}, config {}", generated, config);
                 ctx.logJsEvalResponse();
                 prevMsg = ctx.newMsg(ServiceQueue.MAIN, generated.getType(), originatorId, msg.getCustomerId(), generated.getMetaData(), generated.getData());
-            }
-            return prevMsg;
-        });
+                return Futures.immediateFuture(prevMsg);
+            }, MoreExecutors.directExecutor());
+        }
+        return Futures.immediateFuture(prevMsg);
+
     }
 
     @Override
     public void destroy() {
+        log.trace("destroy, config {}", config);
         prevMsg = null;
         if (jsEngine != null) {
             jsEngine.destroy();
