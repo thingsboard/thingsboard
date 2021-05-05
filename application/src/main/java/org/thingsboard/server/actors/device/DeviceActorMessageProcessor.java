@@ -864,7 +864,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     void checkSessionsTimeout() {
-        log.info("[{}] checkSessionsTimeout started. Size before check {}", deviceId, sessions.size());
+        log.debug("[{}] checkSessionsTimeout started. Size before check {}", deviceId, sessions.size());
         long expTime = System.currentTimeMillis() - systemContext.getSessionInactivityTimeout();
         Map<UUID, SessionInfoMetaData> sessionsToRemove = sessions.entrySet().stream().filter(kv -> kv.getValue().getLastActivityTime() < expTime).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         sessionsToRemove.forEach((sessionId, sessionMD) -> {
@@ -876,7 +876,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         if (!sessionsToRemove.isEmpty()) {
             dumpSessions();
         }
-        log.info("[{}] checkSessionsTimeout finished. Size after check {}", deviceId, sessions.size());
+        log.debug("[{}] checkSessionsTimeout finished. Size after check {}", deviceId, sessions.size());
     }
 
 }
