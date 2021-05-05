@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
@@ -50,6 +51,7 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
+import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.client.Lwm2mClientRpcRequest;
@@ -66,51 +68,38 @@ import java.util.stream.Collectors;
 import static org.eclipse.californium.core.coap.CoAP.ResponseCode.CONTENT;
 import static org.eclipse.leshan.core.ResponseCode.BAD_REQUEST;
 import static org.eclipse.leshan.core.ResponseCode.NOT_FOUND;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.DEFAULT_TIMEOUT;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.FR_PATH_RESOURCE_VER_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_ERROR;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_INFO;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_VALUE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LwM2mTypeOper;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LwM2mTypeOper.OBSERVE_CANCEL;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LwM2mTypeOper.OBSERVE_READ_ALL;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.RESPONSE_CHANNEL;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertPathFromIdVerToObjectId;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertPathFromObjectIdToIdVer;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.createWriteAttributeRequest;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.DEFAULT_TIMEOUT;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.FR_PATH_RESOURCE_VER_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LOG_LW2M_ERROR;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LOG_LW2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LOG_LW2M_VALUE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LwM2mTypeOper;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LwM2mTypeOper.OBSERVE_CANCEL;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LwM2mTypeOper.OBSERVE_READ_ALL;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.RESPONSE_CHANNEL;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.convertPathFromIdVerToObjectId;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.convertPathFromObjectIdToIdVer;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.createWriteAttributeRequest;
 
 @Slf4j
 @Service
 @TbLwM2mTransportComponent
+@RequiredArgsConstructor
 public class LwM2mTransportRequest {
     private ExecutorService executorResponse;
 
     public LwM2mValueConverterImpl converter;
 
-    private final LwM2mTransportContextServer lwM2mTransportContextServer;
-
+    private final LwM2mTransportContext context;
+    private final LwM2MTransportServerConfig config;
+    private final LwM2mTransportServerHelper lwM2MTransportServerHelper;
     private final LwM2mClientContext lwM2mClientContext;
-
-    private final LeshanServer leshanServer;
-
-    private final LwM2mTransportServiceImpl serviceImpl;
-
-    private final TransportService transportService;
-
-    public LwM2mTransportRequest(LwM2mTransportContextServer lwM2mTransportContextServer,
-                                 LwM2mClientContext lwM2mClientContext, LeshanServer leshanServer,
-                                 LwM2mTransportServiceImpl serviceImpl, TransportService transportService) {
-        this.lwM2mTransportContextServer = lwM2mTransportContextServer;
-        this.lwM2mClientContext = lwM2mClientContext;
-        this.leshanServer = leshanServer;
-        this.serviceImpl = serviceImpl;
-        this.transportService = transportService;
-    }
+    private final DefaultLwM2MTransportMsgHandler serviceImpl;
 
     @PostConstruct
     public void init() {
         this.converter = LwM2mValueConverterImpl.getInstance();
-        executorResponse = Executors.newFixedThreadPool(this.lwM2mTransportContextServer.getLwM2MTransportConfigServer().getResponsePoolSize(),
+        executorResponse = Executors.newFixedThreadPool(this.config.getResponsePoolSize(),
                 new NamedThreadFactory(String.format("LwM2M %s channel response", RESPONSE_CHANNEL)));
     }
 
@@ -158,10 +147,10 @@ public class LwM2mTransportRequest {
                              * At server side this will not remove the observation from the observation store, to do it you need to use
                              * {@code ObservationService#cancelObservation()}
                              */
-                            leshanServer.getObservationService().cancelObservations(registration, target);
+                            context.getServer().getObservationService().cancelObservations(registration, target);
                             break;
                         case EXECUTE:
-                            resourceModel = lwM2MClient.getResourceModel(targetIdVer, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer()
+                            resourceModel = lwM2MClient.getResourceModel(targetIdVer, this.config
                                     .getModelProvider());
                             if (params != null && !resourceModel.multiple) {
                                 request = new ExecuteRequest(target, (String) this.converter.convertValue(params, resourceModel.type, ResourceModel.Type.STRING, resultIds));
@@ -171,7 +160,7 @@ public class LwM2mTransportRequest {
                             break;
                         case WRITE_REPLACE:
                             // Request to write a <b>String Single-Instance Resource</b> using the TLV content format.
-                            resourceModel = lwM2MClient.getResourceModel(targetIdVer, this.lwM2mTransportContextServer.getLwM2MTransportConfigServer()
+                            resourceModel = lwM2MClient.getResourceModel(targetIdVer, this.config
                                     .getModelProvider());
                             if (contentFormat.equals(ContentFormat.TLV)) {
                                 request = this.getWriteRequestSingleResource(null, resultIds.getObjectId(),
@@ -232,7 +221,7 @@ public class LwM2mTransportRequest {
                     serviceImpl.sentRpcRequest(rpcRequest, NOT_FOUND.getName(), errorMsg, LOG_LW2M_ERROR);
                 }
             } else if (OBSERVE_READ_ALL.name().equals(typeOper.name())) {
-                Set<Observation> observations = leshanServer.getObservationService().getObservations(registration);
+                Set<Observation> observations = context.getServer().getObservationService().getObservations(registration);
                 Set<String> observationPaths = observations.stream().map(observation -> observation.getPath().toString()).collect(Collectors.toUnmodifiableSet());
                 String msg = String.format("%s: type operation %s observation paths - %s", LOG_LW2M_INFO,
                         OBSERVE_READ_ALL.type, observationPaths);
@@ -259,7 +248,7 @@ public class LwM2mTransportRequest {
 
     @SuppressWarnings("unchecked")
     private void sendRequest(Registration registration, LwM2mClient lwM2MClient, DownlinkRequest request, long timeoutInMs, Lwm2mClientRpcRequest rpcRequest) {
-        leshanServer.send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
+        context.getServer().send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
             if (!lwM2MClient.isInit()) {
                 lwM2MClient.initReadValue(this.serviceImpl, convertPathFromObjectIdToIdVer(request.getPath().toString(), registration));
             }
@@ -415,17 +404,40 @@ public class LwM2mTransportRequest {
         }
     }
 
-    private void infoWriteResponse(Registration registration, LwM2mResponse response,
-                                   DownlinkRequest request) {
-        LwM2mNode node = ((WriteRequest) request).getNode();
-        Object value = this.converter.convertValue(((LwM2mSingleResource) node).getValue(),
-                ((LwM2mSingleResource) node).getType(), ResourceModel.Type.STRING, request.getPath());
-        String msg = String.format("%s: Update finished successfully: CoapCde - %s Lwm2m code - %d name - %s Resource path - %s value - %s",
-                LOG_LW2M_INFO, ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(),
-                response.getCode().getName(), request.getPath().toString(), value);
-        serviceImpl.sendLogsToThingsboard(msg, registration.getId());
-        log.warn("[{}] [{}] [{}] - [{}] [{}] Update finished successfully: [{}]", request.getClass().getName().toString(), registration.getEndpoint(),
-                ((Response) response.getCoapResponse()).getCode(), response.getCode(),
-                request.getPath().toString(), value);
+    private void infoWriteResponse(Registration registration, LwM2mResponse response, DownlinkRequest request) {
+        try {
+            LwM2mNode node = ((WriteRequest) request).getNode();
+            String msg;
+            Object value;
+            LwM2mSingleResource singleResource = (LwM2mSingleResource) node;
+            if (singleResource.getType() == ResourceModel.Type.STRING || singleResource.getType() == ResourceModel.Type.OPAQUE) {
+                int valueLength;
+                if (singleResource.getType() == ResourceModel.Type.STRING) {
+                    valueLength = ((String) singleResource.getValue()).length();
+                    value = ((String) singleResource.getValue())
+                            .substring(Math.min(valueLength, config.getLogMaxLength()));
+
+                } else {
+                    valueLength = ((byte[]) singleResource.getValue()).length;
+                    value = new String(Arrays.copyOf(((byte[]) singleResource.getValue()),
+                            Math.min(valueLength, config.getLogMaxLength())));
+                }
+                value = valueLength > config.getLogMaxLength() ? value + "..." : value;
+                msg = String.format("%s: Update finished successfully: Lwm2m code - %d Resource path - %s length - %s value - %s",
+                        LOG_LW2M_INFO, response.getCode().getCode(), request.getPath().toString(), valueLength, value);
+            } else {
+                value = this.converter.convertValue(singleResource.getValue(),
+                        singleResource.getType(), ResourceModel.Type.STRING, request.getPath());
+                msg = String.format("%s: Update finished successfully: Lwm2m code - %d Resource path - %s value - %s",
+                        LOG_LW2M_INFO, response.getCode().getCode(), request.getPath().toString(), value);
+            }
+            if (msg != null) {
+                serviceImpl.sendLogsToThingsboard(msg, registration.getId());
+                log.warn("[{}] [{}] [{}] - [{}] [{}] Update finished successfully: [{}]", request.getClass().getName(), registration.getEndpoint(),
+                        ((Response) response.getCoapResponse()).getCode(), response.getCode(), request.getPath().toString(), value);
+            }
+        } catch (Exception e) {
+            log.trace("Fail convert value from request to string. ", e);
+        }
     }
 }

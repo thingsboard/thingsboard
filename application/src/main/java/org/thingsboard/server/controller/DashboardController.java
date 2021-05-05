@@ -533,6 +533,37 @@ public class DashboardController extends BaseController {
         }
     }
 
+    @PreAuthorize("isAuthenticated()")
+    @RequestMapping(value = "/dashboard/home/info", method = RequestMethod.GET)
+    @ResponseBody
+    public HomeDashboardInfo getHomeDashboardInfo() throws ThingsboardException {
+        try {
+            SecurityUser securityUser = getCurrentUser();
+            if (securityUser.isSystemAdmin()) {
+                return null;
+            }
+            User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
+            JsonNode additionalInfo = user.getAdditionalInfo();
+            HomeDashboardInfo homeDashboardInfo;
+            homeDashboardInfo = extractHomeDashboardInfoFromAdditionalInfo(additionalInfo);
+            if (homeDashboardInfo == null) {
+                if (securityUser.isCustomerUser()) {
+                    Customer customer = customerService.findCustomerById(securityUser.getTenantId(), securityUser.getCustomerId());
+                    additionalInfo = customer.getAdditionalInfo();
+                    homeDashboardInfo = extractHomeDashboardInfoFromAdditionalInfo(additionalInfo);
+                }
+                if (homeDashboardInfo == null) {
+                    Tenant tenant = tenantService.findTenantById(securityUser.getTenantId());
+                    additionalInfo = tenant.getAdditionalInfo();
+                    homeDashboardInfo = extractHomeDashboardInfoFromAdditionalInfo(additionalInfo);
+                }
+            }
+            return homeDashboardInfo;
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/dashboard/home/info", method = RequestMethod.GET)
     @ResponseBody
@@ -580,6 +611,22 @@ public class DashboardController extends BaseController {
         } catch (Exception e) {
             throw handleException(e);
         }
+    }
+
+    private HomeDashboardInfo extractHomeDashboardInfoFromAdditionalInfo(JsonNode additionalInfo) {
+        try {
+            if (additionalInfo != null && additionalInfo.has(HOME_DASHBOARD_ID) && !additionalInfo.get(HOME_DASHBOARD_ID).isNull()) {
+                String strDashboardId = additionalInfo.get(HOME_DASHBOARD_ID).asText();
+                DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+                checkDashboardId(dashboardId, Operation.READ);
+                boolean hideDashboardToolbar = true;
+                if (additionalInfo.has(HOME_DASHBOARD_HIDE_TOOLBAR)) {
+                    hideDashboardToolbar = additionalInfo.get(HOME_DASHBOARD_HIDE_TOOLBAR).asBoolean();
+                }
+                return new HomeDashboardInfo(dashboardId, hideDashboardToolbar);
+            }
+        } catch (Exception e) {}
+        return null;
     }
 
     private HomeDashboard extractHomeDashboardFromAdditionalInfo(JsonNode additionalInfo) {

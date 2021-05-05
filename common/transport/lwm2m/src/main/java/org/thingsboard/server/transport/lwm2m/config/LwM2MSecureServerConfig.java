@@ -13,21 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server;
+package org.thingsboard.server.transport.lwm2m.config;
 
-import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.server.californium.LeshanServer;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
-import org.thingsboard.server.transport.lwm2m.secure.LWM2MGenerationPSkRPkECC;
+public interface LwM2MSecureServerConfig {
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+    Integer getId();
 
-@Slf4j
-@Component("LwM2MTransportServerInitializer")
-@TbLwM2mTransportComponent
-public class LwM2mTransportServerInitializer {
+    String getHost();
+
+    Integer getPort();
+
+    String getSecureHost();
+
+    Integer getSecurePort();
+
+    String getPublicX();
+
+    String getPublicY();
+
+    String getPrivateEncoded();
+
+    String getCertificateAlias();
 
 }

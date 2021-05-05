@@ -26,15 +26,15 @@ import org.eclipse.leshan.server.registration.RegistrationUpdate;
 
 import java.util.Collection;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.LOG_LW2M_INFO;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertPathFromObjectIdToIdVer;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LOG_LW2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.convertPathFromObjectIdToIdVer;
 
 @Slf4j
 public class LwM2mServerListener {
 
-    private final LwM2mTransportServiceImpl service;
+    private final LwM2mTransportMsgHandler service;
 
-    public LwM2mServerListener(LwM2mTransportServiceImpl service) {
+    public LwM2mServerListener(LwM2mTransportMsgHandler service) {
         this.service = service;
     }
 

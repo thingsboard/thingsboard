@@ -2721,6 +2721,7 @@
         "open-dashboard": "Navigate to other dashboard",
         "custom": "Custom action",
         "custom-pretty": "Custom action (with HTML template)",
+        "mobile-action": "Mobile action",
         "target-dashboard-state": "Target dashboard state",
         "target-dashboard-state-required": "Target dashboard state is required",
         "set-entity-from-widget": "Set entity from widget",
@@ -2732,7 +2733,19 @@
         "dialog-width": "Dialog width in percents relative to viewport width",
         "dialog-height": "Dialog height in percents relative to viewport height",
         "dialog-size-range-error": "Dialog size percent value should be in a range from 1 to 100.",
-        "open-new-browser-tab": "Open in a new browser tab"
+        "open-new-browser-tab": "Open in a new browser tab",
+        "mobile": {
+          "action-type": "Mobile action type",
+          "action-type-required": "Mobile action type is required",
+          "take-picture-from-gallery": "Take picture from gallery",
+          "take-photo": "Take photo",
+          "map-direction": "Open map directions",
+          "map-location": "Open map location",
+          "scan-qr-code": "Scan QR Code",
+          "make-phone-call": "Make phone call",
+          "get-location": "Get phone location",
+          "take-screenshot": "Take screenshot"
+        }
     },
     "widgets-bundle": {
         "current": "Current bundle",
