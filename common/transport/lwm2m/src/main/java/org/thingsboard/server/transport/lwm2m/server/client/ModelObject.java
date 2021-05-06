@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 import lombok.Data;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.node.LwM2mObjectInstance;
+
 import java.util.Map;
 
 @Data

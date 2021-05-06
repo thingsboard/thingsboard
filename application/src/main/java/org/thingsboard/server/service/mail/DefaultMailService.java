@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.ApiUsageStateMailMessage;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -235,16 +236,16 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void send(TenantId tenantId, String from, String to, String cc, String bcc, String subject, String body, boolean isHtml, Map<String, String> images) throws ThingsboardException {
-        sendMail(tenantId, from, to, cc, bcc, subject, body, isHtml, images, this.mailSender);
+    public void send(TenantId tenantId, CustomerId customerId, String from, String to, String cc, String bcc, String subject, String body, boolean isHtml, Map<String, String> images) throws ThingsboardException {
+        sendMail(tenantId, customerId, from, to, cc, bcc, subject, body, isHtml, images, this.mailSender);
     }
 
     @Override
-    public void send(TenantId tenantId, String from, String to, String cc, String bcc, String subject, String body, boolean isHtml, Map<String, String> images, JavaMailSender javaMailSender) throws ThingsboardException {
-        sendMail(tenantId, from, to, cc, bcc, subject, body, isHtml, images, javaMailSender);
+    public void send(TenantId tenantId, CustomerId customerId, String from, String to, String cc, String bcc, String subject, String body, boolean isHtml, Map<String, String> images, JavaMailSender javaMailSender) throws ThingsboardException {
+        sendMail(tenantId, customerId, from, to, cc, bcc, subject, body, isHtml, images, javaMailSender);
     }
 
-    private void sendMail(TenantId tenantId, String from, String to, String cc, String bcc, String subject, String body, boolean isHtml, Map<String, String> images, JavaMailSender javaMailSender) throws ThingsboardException {
+    private void sendMail(TenantId tenantId, CustomerId customerId, String from, String to, String cc, String bcc, String subject, String body, boolean isHtml, Map<String, String> images, JavaMailSender javaMailSender) throws ThingsboardException {
         if (apiUsageStateService.getApiUsageState(tenantId).isEmailSendEnabled()) {
             try {
                 MimeMessage mailMsg = javaMailSender.createMimeMessage();
@@ -272,7 +273,7 @@ public class DefaultMailService implements MailService {
                     }
                 }
                 javaMailSender.send(helper.getMimeMessage());
-                apiUsageClient.report(tenantId, ApiUsageRecordKey.EMAIL_EXEC_COUNT, 1);
+                apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.EMAIL_EXEC_COUNT, 1);
             } catch (Exception e) {
                 throw handleException(e);
             }

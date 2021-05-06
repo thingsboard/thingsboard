@@ -48,7 +48,7 @@ import { MatHorizontalStepper } from '@angular/material/stepper';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { deepTrim } from '@core/utils';
-import {ServiceType} from "@shared/models/queue.models";
+import { ServiceType } from '@shared/models/queue.models';
 
 export interface AddDeviceProfileDialogData {
   deviceProfileName: string;
@@ -72,13 +72,13 @@ export class AddDeviceProfileDialogComponent extends
 
   entityType = EntityType;
 
-  deviceProfileTypes = Object.keys(DeviceProfileType);
+  deviceProfileTypes = Object.values(DeviceProfileType);
 
   deviceProfileTypeTranslations = deviceProfileTypeTranslationMap;
 
   deviceTransportTypeHints = deviceTransportTypeHintMap;
 
-  deviceTransportTypes = Object.keys(DeviceTransportType);
+  deviceTransportTypes = Object.values(DeviceTransportType);
 
   deviceTransportTypeTranslations = deviceTransportTypeTranslationMap;
 

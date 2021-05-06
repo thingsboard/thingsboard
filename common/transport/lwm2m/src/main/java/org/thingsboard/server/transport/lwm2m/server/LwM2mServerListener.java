@@ -26,14 +26,15 @@ import org.eclipse.leshan.server.registration.RegistrationUpdate;
 
 import java.util.Collection;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertToIdVerFromObjectId;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
 
 @Slf4j
 public class LwM2mServerListener {
 
-    private final LwM2mTransportServiceImpl service;
+    private final LwM2mTransportMsgHandler service;
 
-    public LwM2mServerListener(LwM2mTransportServiceImpl service) {
+    public LwM2mServerListener(LwM2mTransportMsgHandler service) {
         this.service = service;
     }
 
@@ -85,16 +86,19 @@ public class LwM2mServerListener {
 
         @Override
         public void cancelled(Observation observation) {
-            log.info("Received notification cancelled from [{}] ", observation.getPath());
+            String msg = String.format("%s:  Cancel Observation  %s.", LOG_LW2M_INFO, observation.getPath());
+            service.sendLogsToThingsboard(msg, observation.getRegistrationId());
+            log.trace(msg);
         }
 
         @Override
         public void onResponse(Observation observation, Registration registration, ObserveResponse response) {
             if (registration != null) {
                 try {
-                    service.onObservationResponse(registration, convertToIdVerFromObjectId(observation.getPath().toString(), registration), response);
+                    service.onUpdateValueAfterReadResponse(registration, convertPathFromObjectIdToIdVer(observation.getPath().toString(),
+                            registration), response, null);
                 } catch (Exception e) {
-                    log.error("[{}] onResponse", e.toString());
+                    log.error("Observation/Read onResponse", e);
 
                 }
             }
@@ -107,7 +111,10 @@ public class LwM2mServerListener {
 
         @Override
         public void newObservation(Observation observation, Registration registration) {
-//            log.info("Received newObservation from [{}] endpoint  [{}] ", observation.getPath(), registration.getEndpoint());
+            String msg = String.format("%s: Successful start newObservation  %s.", LOG_LW2M_INFO,
+                    observation.getPath());
+            service.sendLogsToThingsboard(msg, registration.getId());
+            log.trace(msg);
         }
     };
 

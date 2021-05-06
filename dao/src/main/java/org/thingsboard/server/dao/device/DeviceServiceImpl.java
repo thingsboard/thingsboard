@@ -36,20 +36,24 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.Firmware;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.device.data.CoapDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
+import org.thingsboard.server.common.data.device.data.DeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.MqttDeviceTransportConfiguration;
+import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.firmware.FirmwareType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -58,7 +62,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -72,6 +75,7 @@ import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.firmware.FirmwareService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
@@ -84,6 +88,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -130,6 +135,9 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     @Autowired
     @Lazy
     private TbTenantProfileCache tenantProfileCache;
+
+    @Autowired
+    private FirmwareService firmwareService;
 
     @Override
     public DeviceInfo findDeviceInfoById(TenantId tenantId, DeviceId deviceId) {
@@ -264,11 +272,14 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                 case MQTT:
                     deviceData.setTransportConfiguration(new MqttDeviceTransportConfiguration());
                     break;
+                case COAP:
+                    deviceData.setTransportConfiguration(new CoapDeviceTransportConfiguration());
+                    break;
                 case LWM2M:
                     deviceData.setTransportConfiguration(new Lwm2mDeviceTransportConfiguration());
                     break;
-                case COAP:
-                    deviceData.setTransportConfiguration(new CoapDeviceTransportConfiguration());
+                case SNMP:
+                    deviceData.setTransportConfiguration(new SnmpDeviceTransportConfiguration());
                     break;
             }
         }
@@ -347,6 +358,24 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         validateString(type, "Incorrect type " + type);
         validatePageLink(pageLink);
         return deviceDao.findDevicesByTenantIdAndType(tenantId.getId(), type, pageLink);
+    }
+
+    @Override
+    public PageData<Device> findDevicesByTenantIdAndTypeAndEmptyFirmware(TenantId tenantId, String type, PageLink pageLink) {
+        log.trace("Executing findDevicesByTenantIdAndTypeAndEmptyFirmware, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateString(type, "Incorrect type " + type);
+        validatePageLink(pageLink);
+        return deviceDao.findDevicesByTenantIdAndTypeAndEmptyFirmware(tenantId.getId(), type, pageLink);
+    }
+
+    @Override
+    public PageData<Device> findDevicesByTenantIdAndTypeAndEmptySoftware(TenantId tenantId, String type, PageLink pageLink) {
+        log.trace("Executing findDevicesByTenantIdAndTypeAndEmptySoftware, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateString(type, "Incorrect type " + type);
+        validatePageLink(pageLink);
+        return deviceDao.findDevicesByTenantIdAndTypeAndEmptySoftware(tenantId.getId(), type, pageLink);
     }
 
     @Override
@@ -559,6 +588,11 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     }
 
     @Override
+    public PageData<UUID> findDevicesIdsByDeviceProfileTransportType(DeviceTransportType transportType, PageLink pageLink) {
+        return deviceDao.findDevicesIdsByDeviceProfileTransportType(transportType, pageLink);
+    }
+
+    @Override
     public Device assignDeviceToEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId) {
         Device device = findDeviceById(tenantId, deviceId);
         Edge edge = edgeService.findEdgeById(tenantId, edgeId);
@@ -615,6 +649,11 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         return deviceDao.findDevicesByTenantIdAndEdgeIdAndType(tenantId.getId(), edgeId.getId(), type, pageLink);
     }
 
+    @Override
+    public long countByTenantId(TenantId tenantId) {
+        return deviceDao.countByTenantId(tenantId);
+    }
+
     private DataValidator<Device> deviceValidator =
             new DataValidator<Device>() {
 
@@ -656,6 +695,41 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                         }
                         if (!customer.getTenantId().getId().equals(device.getTenantId().getId())) {
                             throw new DataValidationException("Can't assign device to customer from different tenant!");
+                        }
+                    }
+                    Optional.ofNullable(device.getDeviceData())
+                            .flatMap(deviceData -> Optional.ofNullable(deviceData.getTransportConfiguration()))
+                            .ifPresent(DeviceTransportConfiguration::validate);
+
+                    if (device.getFirmwareId() != null) {
+                        Firmware firmware = firmwareService.findFirmwareById(tenantId, device.getFirmwareId());
+                        if (firmware == null) {
+                            throw new DataValidationException("Can't assign non-existent firmware!");
+                        }
+                        if (!firmware.getType().equals(FirmwareType.FIRMWARE)) {
+                            throw new DataValidationException("Can't assign firmware with type: " + firmware.getType());
+                        }
+                        if (firmware.getData() == null) {
+                            throw new DataValidationException("Can't assign firmware with empty data!");
+                        }
+                        if (!firmware.getDeviceProfileId().equals(device.getDeviceProfileId())) {
+                            throw new DataValidationException("Can't assign firmware with different deviceProfile!");
+                        }
+                    }
+
+                    if (device.getSoftwareId() != null) {
+                        Firmware software = firmwareService.findFirmwareById(tenantId, device.getSoftwareId());
+                        if (software == null) {
+                            throw new DataValidationException("Can't assign non-existent software!");
+                        }
+                        if (!software.getType().equals(FirmwareType.SOFTWARE)) {
+                            throw new DataValidationException("Can't assign software with type: " + software.getType());
+                        }
+                        if (software.getData() == null) {
+                            throw new DataValidationException("Can't assign software with empty data!");
+                        }
+                        if (!software.getDeviceProfileId().equals(device.getDeviceProfileId())) {
+                            throw new DataValidationException("Can't assign firmware with different deviceProfile!");
                         }
                     }
                 }

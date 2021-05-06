@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.dao.model.sql.DeviceEntity;
 import org.thingsboard.server.dao.model.sql.DeviceInfoEntity;
 
@@ -93,6 +94,24 @@ public interface DeviceRepository extends PagingAndSortingRepository<DeviceEntit
                                              @Param("type") String type,
                                              @Param("textSearch") String textSearch,
                                              Pageable pageable);
+
+    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
+            "AND d.type = :type " +
+            "AND d.firmwareId = null " +
+            "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<DeviceEntity> findByTenantIdAndTypeAndFirmwareIdIsNull(@Param("tenantId") UUID tenantId,
+                                             @Param("type") String type,
+                                             @Param("textSearch") String textSearch,
+                                             Pageable pageable);
+
+    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
+            "AND d.type = :type " +
+            "AND d.softwareId = null " +
+            "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<DeviceEntity> findByTenantIdAndTypeAndSoftwareIdIsNull(@Param("tenantId") UUID tenantId,
+                                                                @Param("type") String type,
+                                                                @Param("textSearch") String textSearch,
+                                                                Pageable pageable);
 
     @Query("SELECT new org.thingsboard.server.dao.model.sql.DeviceInfoEntity(d, c.title, c.additionalInfo, p.name) " +
             "FROM DeviceEntity d " +
@@ -189,5 +208,21 @@ public interface DeviceRepository extends PagingAndSortingRepository<DeviceEntit
                                                       @Param("searchText") String searchText,
                                                       Pageable pageable);
 
-    Long countByTenantId(UUID tenantId);
+    /**
+     * Count devices by tenantId.
+     * Custom query applied because default QueryDSL produces slow count(id).
+     * <p>
+     * There is two way to count devices.
+     * OPTIMAL: count(*)
+     *   - returns _row_count_ and use index-only scan (super fast).
+     * SLOW: count(id)
+     *   - returns _NON_NULL_id_count and performs table scan to verify isNull for each id in filtered rows.
+     * */
+    @Query("SELECT count(*) FROM DeviceEntity d WHERE d.tenantId = :tenantId")
+    Long countByTenantId(@Param("tenantId") UUID tenantId);
+
+    @Query("SELECT d.id FROM DeviceEntity d " +
+            "INNER JOIN DeviceProfileEntity p ON d.deviceProfileId = p.id " +
+            "WHERE p.transportType = :transportType")
+    Page<UUID> findIdsByDeviceProfileTransportType(@Param("transportType") DeviceTransportType transportType, Pageable pageable);
 }

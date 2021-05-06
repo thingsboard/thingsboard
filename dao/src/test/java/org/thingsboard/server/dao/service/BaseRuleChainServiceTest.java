@@ -292,7 +292,8 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
 
         ruleNodes.set(name3Index, ruleNode4);
 
-        RuleChainMetaData updatedRuleChainMetaData = ruleChainService.saveRuleChainMetaData(tenantId, savedRuleChainMetaData);
+        Assert.assertTrue(ruleChainService.saveRuleChainMetaData(tenantId, savedRuleChainMetaData));
+        RuleChainMetaData updatedRuleChainMetaData = ruleChainService.loadRuleChainMetaData(tenantId, savedRuleChainMetaData.getRuleChainId());
 
         Assert.assertEquals(3, updatedRuleChainMetaData.getNodes().size());
         Assert.assertEquals(3, updatedRuleChainMetaData.getConnections().size());
@@ -404,7 +405,8 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         ruleChainMetaData.addConnectionInfo(0,2,"fail");
         ruleChainMetaData.addConnectionInfo(1,2,"success");
 
-        return ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData);
+        Assert.assertTrue(ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData));
+        return ruleChainService.loadRuleChainMetaData(tenantId, ruleChainMetaData.getRuleChainId());
     }
 
     private RuleChainMetaData createRuleChainMetadataWithCirclingRelation() throws Exception {

@@ -26,6 +26,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
@@ -96,23 +97,19 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     private TbTenantProfileCache tenantProfileCache;
 
     @Override
+    @Transactional
     public RuleChain saveRuleChain(RuleChain ruleChain) {
         ruleChainValidator.validate(ruleChain, RuleChain::getTenantId);
         RuleChain savedRuleChain = ruleChainDao.save(ruleChain.getTenantId(), ruleChain);
         if (ruleChain.isRoot() && ruleChain.getId() == null) {
-            try {
-                createRelation(ruleChain.getTenantId(), new EntityRelation(savedRuleChain.getTenantId(), savedRuleChain.getId(),
-                        EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
-            } catch (Exception e) {
-                log.warn("[{}] Failed to create tenant to root rule chain relation. from: [{}], to: [{}]",
-                        savedRuleChain.getTenantId(), savedRuleChain.getTenantId(), savedRuleChain.getId(), e);
-                throw new RuntimeException(e);
-            }
+            createRelation(ruleChain.getTenantId(), new EntityRelation(savedRuleChain.getTenantId(), savedRuleChain.getId(),
+                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
         }
         return savedRuleChain;
     }
 
     @Override
+    @Transactional
     public boolean setRootRuleChain(TenantId tenantId, RuleChainId ruleChainId) {
         RuleChain ruleChain = ruleChainDao.findById(tenantId, ruleChainId.getId());
         if (!ruleChain.isRoot()) {
@@ -145,11 +142,12 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
-    public RuleChainMetaData saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData) {
+    @Transactional
+    public boolean saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData) {
         Validator.validateId(ruleChainMetaData.getRuleChainId(), "Incorrect rule chain id.");
         RuleChain ruleChain = findRuleChainById(tenantId, ruleChainMetaData.getRuleChainId());
         if (ruleChain == null) {
-            return null;
+            return false;
         }
 
         if (CollectionUtils.isNotEmpty(ruleChainMetaData.getConnections())) {
@@ -184,14 +182,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         for (RuleNode node : toAddOrUpdate) {
             node.setRuleChainId(ruleChain.getId());
             RuleNode savedNode = ruleNodeDao.save(tenantId, node);
-            try {
-                createRelation(tenantId, new EntityRelation(ruleChainMetaData.getRuleChainId(), savedNode.getId(),
-                        EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
-            } catch (Exception e) {
-                log.warn("[{}] Failed to create rule chain to rule node relation. from: [{}], to: [{}]",
-                        ruleChainMetaData.getRuleChainId(), savedNode.getId());
-                throw new RuntimeException(e);
-            }
+            createRelation(tenantId, new EntityRelation(ruleChainMetaData.getRuleChainId(), savedNode.getId(),
+                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
             int index = nodes.indexOf(node);
             nodes.set(index, savedNode);
             ruleNodeIndexMap.put(savedNode.getId(), index);
@@ -213,12 +205,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 EntityId from = nodes.get(nodeConnection.getFromIndex()).getId();
                 EntityId to = nodes.get(nodeConnection.getToIndex()).getId();
                 String type = nodeConnection.getType();
-                try {
-                    createRelation(tenantId, new EntityRelation(from, to, type, RelationTypeGroup.RULE_NODE));
-                } catch (Exception e) {
-                    log.warn("[{}] Failed to create rule node relation. from: [{}], to: [{}]", from, to);
-                    throw new RuntimeException(e);
-                }
+                createRelation(tenantId, new EntityRelation(from, to, type, RelationTypeGroup.RULE_NODE));
             }
         }
         if (ruleChainMetaData.getRuleChainConnections() != null) {
@@ -226,16 +213,11 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 EntityId from = nodes.get(nodeToRuleChainConnection.getFromIndex()).getId();
                 EntityId to = nodeToRuleChainConnection.getTargetRuleChainId();
                 String type = nodeToRuleChainConnection.getType();
-                try {
-                    createRelation(tenantId, new EntityRelation(from, to, type, RelationTypeGroup.RULE_NODE, nodeToRuleChainConnection.getAdditionalInfo()));
-                } catch (Exception e) {
-                    log.warn("[{}] Failed to create rule node to rule chain relation. from: [{}], to: [{}]", from, to);
-                    throw new RuntimeException(e);
-                }
+                createRelation(tenantId, new EntityRelation(from, to, type, RelationTypeGroup.RULE_NODE, nodeToRuleChainConnection.getAdditionalInfo()));
             }
         }
 
-        return loadRuleChainMetaData(tenantId, ruleChainMetaData.getRuleChainId());
+        return true;
     }
 
     private void validateCircles(List<NodeConnectionInfo> connectionInfos) {
@@ -410,6 +392,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
+    @Transactional
     public void deleteRuleChainById(TenantId tenantId, RuleChainId ruleChainId) {
         Validator.validateId(ruleChainId, "Incorrect rule chain id for delete request.");
         RuleChain ruleChain = ruleChainDao.findById(tenantId, ruleChainId.getId());
@@ -715,7 +698,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         deleteEntityRelations(tenantId, entityId);
         ruleNodeDao.removeById(tenantId, entityId.getId());
     }
-
 
     private DataValidator<RuleChain> ruleChainValidator =
             new DataValidator<RuleChain>() {

@@ -20,6 +20,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.google.protobuf.Descriptors;
+import com.google.protobuf.DynamicMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.Request;
@@ -64,7 +65,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     }
 
     @Override
-    public TransportProtos.ToDeviceRpcResponseMsg convertToDeviceRpcResponse(UUID sessionId, Request inbound) throws AdaptorException {
+    public TransportProtos.ToDeviceRpcResponseMsg convertToDeviceRpcResponse(UUID sessionId, Request inbound, Descriptors.Descriptor rpcResponseMsgDescriptor) throws AdaptorException {
         Optional<Integer> requestId = CoapTransportResource.getRequestId(inbound);
         String payload = validatePayload(sessionId, inbound, false);
         JsonObject response = new JsonParser().parse(payload).getAsJsonObject();
@@ -95,7 +96,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     }
 
     @Override
-    public Response convertToPublish(boolean isConfirmable, TransportProtos.ToDeviceRpcRequestMsg msg) throws AdaptorException {
+    public Response convertToPublish(boolean isConfirmable, TransportProtos.ToDeviceRpcRequestMsg msg, DynamicMessage.Builder rpcRequestDynamicMessageBuilder) throws AdaptorException {
         return getObserveNotification(isConfirmable, JsonConverter.toJson(msg, true));
     }
 

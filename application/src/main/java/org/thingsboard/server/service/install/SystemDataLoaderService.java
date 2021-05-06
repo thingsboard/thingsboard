@@ -33,6 +33,4 @@ public interface SystemDataLoaderService {
 
     void deleteSystemWidgetBundle(String bundleAlias) throws Exception;
 
-    void loadSystemLwm2mResources() throws Exception;
-
 }

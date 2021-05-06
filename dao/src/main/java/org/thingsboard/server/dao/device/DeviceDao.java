@@ -18,11 +18,11 @@ package org.thingsboard.server.dao.device;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.TenantEntityDao;
 
@@ -80,6 +80,10 @@ public interface DeviceDao extends Dao<Device>, TenantEntityDao {
      * @return the list of device objects
      */
     PageData<Device> findDevicesByTenantIdAndType(UUID tenantId, String type, PageLink pageLink);
+
+    PageData<Device> findDevicesByTenantIdAndTypeAndEmptyFirmware(UUID tenantId, String type, PageLink pageLink);
+
+    PageData<Device> findDevicesByTenantIdAndTypeAndEmptySoftware(UUID tenantId, String type, PageLink pageLink);
 
     /**
      * Find device infos by tenantId, type and page link.
@@ -217,6 +221,7 @@ public interface DeviceDao extends Dao<Device>, TenantEntityDao {
      */
     PageData<Device> findDevicesByTenantIdAndProfileId(UUID tenantId, UUID profileId, PageLink pageLink);
 
+    PageData<UUID> findDevicesIdsByDeviceProfileTransportType(DeviceTransportType transportType, PageLink pageLink);
 
     /**
      * Find devices by tenantId, edgeId and page link.

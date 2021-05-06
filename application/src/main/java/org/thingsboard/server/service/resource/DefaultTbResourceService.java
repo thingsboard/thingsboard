@@ -185,7 +185,7 @@ public class DefaultTbResourceService implements TbResourceService {
                 instance.setId(0);
                 List<LwM2mResourceObserve> resources = new ArrayList<>();
                 obj.resources.forEach((k, v) -> {
-                    if (!v.operations.isExecutable()) {
+                    if (v.operations.isReadable()) {
                         LwM2mResourceObserve lwM2MResourceObserve = new LwM2mResourceObserve(k, v.name, false, false, false);
                         resources.add(lwM2MResourceObserve);
                     }

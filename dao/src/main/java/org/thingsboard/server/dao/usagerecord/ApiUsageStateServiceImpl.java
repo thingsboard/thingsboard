@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
@@ -40,6 +41,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -68,12 +70,20 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
     }
 
     @Override
-    public ApiUsageState createDefaultApiUsageState(TenantId tenantId) {
-        log.trace("Executing createDefaultUsageRecord [{}]", tenantId);
+    public void deleteApiUsageStateByEntityId(EntityId entityId) {
+        log.trace("Executing deleteApiUsageStateByEntityId [{}]", entityId);
+        validateId(entityId.getId(), "Invalid entity id");
+        apiUsageStateDao.deleteApiUsageStateByEntityId(entityId);
+    }
+
+    @Override
+    public ApiUsageState createDefaultApiUsageState(TenantId tenantId, EntityId entityId) {
+        entityId = Objects.requireNonNullElse(entityId, tenantId);
+        log.trace("Executing createDefaultUsageRecord [{}]", entityId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         ApiUsageState apiUsageState = new ApiUsageState();
         apiUsageState.setTenantId(tenantId);
-        apiUsageState.setEntityId(tenantId);
+        apiUsageState.setEntityId(entityId);
         apiUsageState.setTransportState(ApiUsageStateValue.ENABLED);
         apiUsageState.setReExecState(ApiUsageStateValue.ENABLED);
         apiUsageState.setJsExecState(ApiUsageStateValue.ENABLED);
@@ -84,9 +94,6 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
 
         ApiUsageState saved = apiUsageStateDao.save(apiUsageState.getTenantId(), apiUsageState);
 
-        Tenant tenant = tenantDao.findById(tenantId, tenantId.getId());
-        TenantProfile tenantProfile = tenantProfileDao.findById(tenantId, tenant.getTenantProfileId().getId());
-        TenantProfileConfiguration configuration = tenantProfile.getProfileData().getConfiguration();
         List<TsKvEntry> apiUsageStates = new ArrayList<>();
         apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
                 new StringDataEntry(ApiFeature.TRANSPORT.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
@@ -102,12 +109,19 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
                 new StringDataEntry(ApiFeature.SMS.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
         tsService.save(tenantId, saved.getId(), apiUsageStates, 0L);
 
-        List<TsKvEntry> profileThresholds = new ArrayList<>();
+        if (entityId.getEntityType() == EntityType.TENANT && !entityId.equals(TenantId.SYS_TENANT_ID)) {
+            tenantId = (TenantId) entityId;
+            Tenant tenant = tenantDao.findById(tenantId, tenantId.getId());
+            TenantProfile tenantProfile = tenantProfileDao.findById(tenantId, tenant.getTenantProfileId().getId());
+            TenantProfileConfiguration configuration = tenantProfile.getProfileData().getConfiguration();
 
-        for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
-            profileThresholds.add(new BasicTsKvEntry(saved.getCreatedTime(), new LongDataEntry(key.getApiLimitKey(), configuration.getProfileThreshold(key))));
+            List<TsKvEntry> profileThresholds = new ArrayList<>();
+            for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
+                profileThresholds.add(new BasicTsKvEntry(saved.getCreatedTime(), new LongDataEntry(key.getApiLimitKey(), configuration.getProfileThreshold(key))));
+            }
+            tsService.save(tenantId, saved.getId(), profileThresholds, 0L);
         }
-        tsService.save(tenantId, saved.getId(), profileThresholds, 0L);
+
         return saved;
     }
 
@@ -127,6 +141,12 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
     }
 
     @Override
+    public ApiUsageState findApiUsageStateByEntityId(EntityId entityId) {
+        validateId(entityId.getId(), "Invalid entity id");
+        return apiUsageStateDao.findApiUsageStateByEntityId(entityId);
+    }
+
+    @Override
     public ApiUsageState findApiUsageStateById(TenantId tenantId, ApiUsageStateId id) {
         log.trace("Executing findApiUsageStateById, tenantId [{}], apiUsageStateId [{}]", tenantId, id);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
@@ -142,16 +162,14 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
                         throw new DataValidationException("ApiUsageState should be assigned to tenant!");
                     } else {
                         Tenant tenant = tenantDao.findById(requestTenantId, apiUsageState.getTenantId().getId());
-                        if (tenant == null) {
-                            throw new DataValidationException("Asset is referencing to non-existent tenant!");
+                        if (tenant == null && !requestTenantId.equals(TenantId.SYS_TENANT_ID)) {
+                            throw new DataValidationException("ApiUsageState is referencing to non-existent tenant!");
                         }
                     }
                     if (apiUsageState.getEntityId() == null) {
                         throw new DataValidationException("UsageRecord should be assigned to entity!");
-                    } else if (!EntityType.TENANT.equals(apiUsageState.getEntityId().getEntityType())) {
-                        throw new DataValidationException("Only Tenant Usage Records are supported!");
-                    } else if (!apiUsageState.getTenantId().getId().equals(apiUsageState.getEntityId().getId())) {
-                        throw new DataValidationException("Can't assign one Usage Record to multiple tenants!");
+                    } else if (apiUsageState.getEntityId().getEntityType() != EntityType.TENANT && apiUsageState.getEntityId().getEntityType() != EntityType.CUSTOMER) {
+                        throw new DataValidationException("Only Tenant and Customer Usage Records are supported!");
                     }
                 }
             };

@@ -30,6 +30,10 @@ public class MqttTopics {
     private static final String CLAIM = "/claim";
     private static final String SUB_TOPIC = "+";
     private static final String PROVISION = "/provision";
+    private static final String FIRMWARE = "/fw";
+    private static final String SOFTWARE = "/sw";
+    private static final String CHUNK = "/chunk/";
+    private static final String ERROR = "/error";
 
     private static final String ATTRIBUTES_RESPONSE = ATTRIBUTES + RESPONSE;
     private static final String ATTRIBUTES_REQUEST = ATTRIBUTES + REQUEST;
@@ -68,6 +72,21 @@ public class MqttTopics {
     public static final String GATEWAY_RPC_TOPIC = BASE_GATEWAY_API_TOPIC + RPC;
     public static final String GATEWAY_ATTRIBUTES_REQUEST_TOPIC = BASE_GATEWAY_API_TOPIC + ATTRIBUTES_REQUEST;
     public static final String GATEWAY_ATTRIBUTES_RESPONSE_TOPIC = BASE_GATEWAY_API_TOPIC + ATTRIBUTES_RESPONSE;
+
+    // v2 topics
+    public static final String BASE_DEVICE_API_TOPIC_V2 = "v2";
+
+    public static final String REQUEST_ID_PATTERN = "(?<requestId>\\d+)";
+    public static final String CHUNK_PATTERN = "(?<chunk>\\d+)";
+
+    public static final String DEVICE_FIRMWARE_REQUEST_TOPIC_PATTERN = BASE_DEVICE_API_TOPIC_V2 + FIRMWARE + REQUEST + "/" + REQUEST_ID_PATTERN + CHUNK + CHUNK_PATTERN;
+    public static final String DEVICE_FIRMWARE_RESPONSES_TOPIC = BASE_DEVICE_API_TOPIC_V2 + FIRMWARE + RESPONSE + "/" + SUB_TOPIC + CHUNK + SUB_TOPIC;
+    public static final String DEVICE_FIRMWARE_ERROR_TOPIC = BASE_DEVICE_API_TOPIC_V2 + FIRMWARE + ERROR;
+    public static final String DEVICE_FIRMWARE_RESPONSES_TOPIC_FORMAT = BASE_DEVICE_API_TOPIC_V2 + "%s" + RESPONSE + "/"+ "%s" + CHUNK + "%d";
+
+    public static final String DEVICE_SOFTWARE_REQUEST_TOPIC_PATTERN = BASE_DEVICE_API_TOPIC_V2 + SOFTWARE + REQUEST + "/" + REQUEST_ID_PATTERN + CHUNK + CHUNK_PATTERN;
+    public static final String DEVICE_SOFTWARE_RESPONSES_TOPIC = BASE_DEVICE_API_TOPIC_V2 + SOFTWARE + RESPONSE + "/" + SUB_TOPIC + CHUNK + SUB_TOPIC;
+    public static final String DEVICE_SOFTWARE_ERROR_TOPIC = BASE_DEVICE_API_TOPIC_V2 + SOFTWARE + ERROR;
 
     private MqttTopics() {
     }

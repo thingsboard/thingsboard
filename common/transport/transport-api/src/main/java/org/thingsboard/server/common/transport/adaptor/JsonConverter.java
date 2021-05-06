@@ -44,7 +44,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ProvisionResponseStatus;
+import org.thingsboard.server.gen.transport.TransportProtos.ResponseStatus;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvListProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateBasicMqttCredRequestMsg;
@@ -289,7 +289,7 @@ public class JsonConverter {
         return result;
     }
 
-    public static JsonElement toJson(AttributeUpdateNotificationMsg payload) {
+    public static JsonObject toJson(AttributeUpdateNotificationMsg payload) {
         JsonObject result = new JsonObject();
         if (payload.getSharedUpdatedCount() > 0) {
             payload.getSharedUpdatedList().forEach(addToObjectFromProto(result));
@@ -427,12 +427,12 @@ public class JsonConverter {
 
     private static JsonObject toJson(ProvisionDeviceResponseMsg payload, boolean toGateway, int requestId) {
         JsonObject result = new JsonObject();
-        if (payload.getStatus() == TransportProtos.ProvisionResponseStatus.NOT_FOUND) {
+        if (payload.getStatus() == ResponseStatus.NOT_FOUND) {
             result.addProperty("errorMsg", "Provision data was not found!");
-            result.addProperty("status", ProvisionResponseStatus.NOT_FOUND.name());
-        } else if (payload.getStatus() == TransportProtos.ProvisionResponseStatus.FAILURE) {
+            result.addProperty("status", ResponseStatus.NOT_FOUND.name());
+        } else if (payload.getStatus() == TransportProtos.ResponseStatus.FAILURE) {
             result.addProperty("errorMsg", "Failed to provision device!");
-            result.addProperty("status", ProvisionResponseStatus.FAILURE.name());
+            result.addProperty("status", ResponseStatus.FAILURE.name());
         } else {
             if (toGateway) {
                 result.addProperty("id", requestId);
@@ -449,7 +449,7 @@ public class JsonConverter {
                     break;
             }
             result.addProperty("credentialsType", payload.getCredentialsType().name());
-            result.addProperty("status", ProvisionResponseStatus.SUCCESS.name());
+            result.addProperty("status", ResponseStatus.SUCCESS.name());
         }
         return result;
     }
@@ -558,6 +558,14 @@ public class JsonConverter {
         }
     }
 
+    public static JsonElement parse(String json) {
+        return JSON_PARSER.parse(json);
+    }
+
+    public static String toJson(JsonElement element) {
+        return GSON.toJson(element);
+    }
+
     public static void setTypeCastEnabled(boolean enabled) {
         isTypeCastEnabled = enabled;
     }
@@ -599,8 +607,7 @@ public class JsonConverter {
                 .build();
     }
 
-    private static TransportProtos.ProvisionDeviceCredentialsMsg buildProvisionDeviceCredentialsMsg(String
-                                                                                                            provisionKey, String provisionSecret) {
+    private static TransportProtos.ProvisionDeviceCredentialsMsg buildProvisionDeviceCredentialsMsg(String provisionKey, String provisionSecret) {
         return TransportProtos.ProvisionDeviceCredentialsMsg.newBuilder()
                 .setProvisionDeviceKey(provisionKey)
                 .setProvisionDeviceSecret(provisionSecret)

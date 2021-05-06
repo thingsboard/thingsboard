@@ -100,7 +100,7 @@ public class TbMsgGeneratorNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         if (initialized && msg.getType().equals(TB_MSG_GENERATOR_NODE_MSG) && msg.getId().equals(nextTickId)) {
-            withCallback(generate(ctx),
+            withCallback(generate(ctx, msg),
                     m -> {
                         if (initialized && (config.getMsgCount() == TbMsgGeneratorNodeConfiguration.UNLIMITED_MSG_COUNT || currentMsgCount < config.getMsgCount())) {
                             ctx.enqueueForTellNext(m, SUCCESS);
@@ -130,16 +130,16 @@ public class TbMsgGeneratorNode implements TbNode {
         ctx.tellSelf(tickMsg, curDelay);
     }
 
-    private ListenableFuture<TbMsg> generate(TbContext ctx) {
+    private ListenableFuture<TbMsg> generate(TbContext ctx, TbMsg msg) {
         return ctx.getJsExecutor().executeAsync(() -> {
             if (prevMsg == null) {
-                prevMsg = ctx.newMsg(ServiceQueue.MAIN, "", originatorId, new TbMsgMetaData(), "{}");
+                prevMsg = ctx.newMsg(ServiceQueue.MAIN, "", originatorId, msg.getCustomerId(), new TbMsgMetaData(), "{}");
             }
             if (initialized) {
                 ctx.logJsEvalRequest();
                 TbMsg generated = jsEngine.executeGenerate(prevMsg);
                 ctx.logJsEvalResponse();
-                prevMsg = ctx.newMsg(ServiceQueue.MAIN, generated.getType(), originatorId, generated.getMetaData(), generated.getData());
+                prevMsg = ctx.newMsg(ServiceQueue.MAIN, generated.getType(), originatorId, msg.getCustomerId(), generated.getMetaData(), generated.getData());
             }
             return prevMsg;
         });
