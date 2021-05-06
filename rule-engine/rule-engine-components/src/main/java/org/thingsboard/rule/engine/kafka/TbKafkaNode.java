@@ -71,10 +71,6 @@ public class TbKafkaNode implements TbNode {
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        // Ugly workaround to fix org.apache.kafka.common.KafkaException: javax.security.auth.login.LoginException: unable to find LoginModule class
-        // details: https://stackoverflow.com/questions/57574901/kafka-java-client-classloader-doesnt-find-sasl-scram-login-class
-        Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-
         this.config = TbNodeUtils.convert(configuration, TbKafkaNodeConfiguration.class);
         Properties properties = new Properties();
         properties.put(ProducerConfig.CLIENT_ID_CONFIG, "producer-tb-kafka-node-" + ctx.getSelfId().getId().toString() + "-" + ctx.getServiceId());
@@ -92,6 +88,9 @@ public class TbKafkaNode implements TbNode {
         addMetadataKeyValuesAsKafkaHeaders = BooleanUtils.toBooleanDefaultIfNull(config.isAddMetadataKeyValuesAsKafkaHeaders(), false);
         toBytesCharset = config.getKafkaHeadersCharset() != null ? Charset.forName(config.getKafkaHeadersCharset()) : StandardCharsets.UTF_8;
         try {
+            // Ugly workaround to fix org.apache.kafka.common.KafkaException: javax.security.auth.login.LoginException: unable to find LoginModule class
+            // details: https://stackoverflow.com/questions/57574901/kafka-java-client-classloader-doesnt-find-sasl-scram-login-class
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
             this.producer = new KafkaProducer<>(properties);
         } catch (Exception e) {
             throw new TbNodeException(e);
