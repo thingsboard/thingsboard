@@ -135,6 +135,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
         if (StringUtils.isNotEmpty(pskConfig.getIdentity())) {
             try {
                 if (pskConfig.getKey() != null && pskConfig.getKey().length > 0) {
+                    endpoint = StringUtils.isNotEmpty(pskConfig.getEndpoint()) ? pskConfig.getEndpoint() : endpoint;
                     if (endpoint != null && !endpoint.isEmpty()) {
                         result.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(endpoint, pskConfig.getIdentity(), pskConfig.getKey()));
                         result.setSecurityMode(PSK);

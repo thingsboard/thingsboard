@@ -33,16 +33,6 @@ import java.util.Arrays;
 @Slf4j
 public class LWM2MGenerationPSkRPkECC {
 
-//    public LWM2MGenerationPSkRPkECC(Integer dtlsMode) {
-//        switch (LwM2MSecurityMode.fromSecurityMode(dtlsMode)) {
-//            case PSK:
-//                generationPSkKey();
-//                break;
-//            case RPK:
-//                generationRPKECCKey();
-//        }
-//    }
-
     public LWM2MGenerationPSkRPkECC() {
         generationPSkKey();
         generationRPKECCKey();
@@ -102,12 +92,12 @@ public class LWM2MGenerationPSkRPkECC {
             /* Get Curves params */
             String privHex = Hex.encodeHexString(privKey.getEncoded());
             log.info("\nCreating new RPK for the next start... \n" +
-                    " Public Key (Hex): [{}]\n" +
-                    " Private Key (Hex): [{}]" +
-                    " public_x :  [{}] \n" +
-                    " public_y :  [{}] \n" +
-                    " private_encode : [{}] \n" +
-                    " Elliptic Curve parameters  : [{}] \n",
+                            " Public Key (Hex): [{}]\n" +
+                            " Private Key (Hex): [{}]" +
+                            " public_x :  [{}] \n" +
+                            " public_y :  [{}] \n" +
+                            " private_encode : [{}] \n" +
+                            " Elliptic Curve parameters  : [{}] \n",
                     Hex.encodeHexString(pubKey.getEncoded()),
                     privHex,
                     Hex.encodeHexString(x),
