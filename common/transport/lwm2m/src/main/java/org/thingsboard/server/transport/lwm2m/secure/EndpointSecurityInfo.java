@@ -25,14 +25,14 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCreden
 import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.DEFAULT_MODE;
 
 @Data
-public class ReadResultSecurityStore {
+public class EndpointSecurityInfo {
     private ValidateDeviceCredentialsResponseMsg msg;
     private SecurityInfo securityInfo;
     private int securityMode = DEFAULT_MODE.code;
 
     /** bootstrap */
-    DeviceProfile deviceProfile;
-    JsonObject bootstrapJsonCredential;
-    String endPoint;
-    BootstrapConfig bootstrapConfig;
+    private DeviceProfile deviceProfile;
+    private JsonObject bootstrapJsonCredential;
+    private String endPoint;
+    private BootstrapConfig bootstrapConfig;
 }

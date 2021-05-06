@@ -17,8 +17,6 @@ package org.thingsboard.server.transport.lwm2m.server;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.californium.core.network.config.NetworkConfig;
-import org.eclipse.californium.core.network.stack.BlockwiseLayer;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeDecoder;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeEncoder;
@@ -91,40 +89,39 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         if (config.getEnableGenNewKeyPskRpk()) {
             new LWM2MGenerationPSkRPkECC();
         }
-        this.server = getLhServer(config.getPort(), config.getSecurePort());
+        this.server = getLhServer();
         this.startLhServer();
         this.context.setServer(server);
     }
 
     private void startLhServer() {
-        log.info("Starting LwM2M transport Server...");
+        log.info("Starting LwM2M transport server...");
         this.server.start();
         LwM2mServerListener lhServerCertListener = new LwM2mServerListener(handler);
         this.server.getRegistrationService().addListener(lhServerCertListener.registrationListener);
         this.server.getPresenceService().addListener(lhServerCertListener.presenceListener);
         this.server.getObservationService().addListener(lhServerCertListener.observationListener);
+        log.info("Started LwM2M transport server.");
     }
 
     @PreDestroy
     public void shutdown() {
-        log.info("Stopping LwM2M transport Server!");
+        log.info("Stopping LwM2M transport server!");
         server.destroy();
-        log.info("LwM2M transport Server stopped!");
+        log.info("LwM2M transport server stopped!");
     }
 
-    private LeshanServer getLhServer(Integer serverPortNoSec, Integer serverSecurePort) {
+    private LeshanServer getLhServer() {
         LeshanServerBuilder builder = new LeshanServerBuilder();
-        builder.setLocalAddress(config.getHost(), serverPortNoSec);
-        builder.setLocalSecureAddress(config.getSecureHost(), serverSecurePort);
+        builder.setLocalAddress(config.getHost(), config.getPort());
+        builder.setLocalSecureAddress(config.getSecureHost(), config.getSecurePort());
         builder.setDecoder(new DefaultLwM2mNodeDecoder());
         /* Use a magic converter to support bad type send by the UI. */
         builder.setEncoder(new DefaultLwM2mNodeEncoder(LwM2mValueConverterImpl.getInstance()));
 
 
         /* Create CoAP Config */
-        NetworkConfig networkConfig = getCoapConfig(serverPortNoSec, serverSecurePort);
-        BlockwiseLayer blockwiseLayer = new BlockwiseLayer(networkConfig);
-        builder.setCoapConfig(getCoapConfig(serverPortNoSec, serverSecurePort));
+        builder.setCoapConfig(getCoapConfig(config.getPort(), config.getSecurePort()));
 
         /* Define model provider (Create Models )*/
         LwM2mModelProvider modelProvider = new LwM2mVersionedModelProvider(this.lwM2mClientContext, this.helper, this.context);
@@ -141,6 +138,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
         /* Create DTLS Config */
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
+
         dtlsConfig.setServerOnly(true);
         dtlsConfig.setRecommendedSupportedGroupsOnly(config.isRecommendedSupportedGroups());
         dtlsConfig.setRecommendedCipherSuitesOnly(config.isRecommendedCiphers());
@@ -155,6 +153,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
                     TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
                     TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256);
         }
+
 
         /* Set DTLS Config */
         builder.setDtlsConfig(dtlsConfig);

@@ -26,8 +26,8 @@ import org.eclipse.leshan.server.registration.RegistrationUpdate;
 
 import java.util.Collection;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LOG_LW2M_INFO;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.convertPathFromObjectIdToIdVer;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
 
 @Slf4j
 public class LwM2mServerListener {

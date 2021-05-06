@@ -29,8 +29,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MC
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -53,15 +52,10 @@ public class LwM2mCredentialsSecurityInfoValidator {
     private final LwM2mTransportContext context;
     private final LwM2MTransportServerConfig config;
 
-    /**
-     * Request to thingsboard Response from thingsboard ValidateDeviceLwM2MCredentials
-     * @param endpoint -
-     * @param keyValue -
-     * @return ValidateDeviceCredentialsResponseMsg and SecurityInfo
-     */
-    public ReadResultSecurityStore createAndValidateCredentialsSecurityInfo(String endpoint, LwM2mTransportHandlerUtil.LwM2mTypeServer keyValue) {
+
+    public EndpointSecurityInfo getEndpointSecurityInfo(String endpoint, LwM2mTransportUtil.LwM2mTypeServer keyValue) {
         CountDownLatch latch = new CountDownLatch(1);
-        final ReadResultSecurityStore[] resultSecurityStore = new ReadResultSecurityStore[1];
+        final EndpointSecurityInfo[] resultSecurityStore = new EndpointSecurityInfo[1];
         context.getTransportService().process(ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder().setCredentialsId(endpoint).build(),
                 new TransportServiceCallback<>() {
                     @Override
@@ -69,7 +63,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
                         String credentialsBody = msg.getCredentialsBody();
                         resultSecurityStore[0] = createSecurityInfo(endpoint, credentialsBody, keyValue);
                         resultSecurityStore[0].setMsg(msg);
-                        Optional<DeviceProfile> deviceProfileOpt = LwM2mTransportHandlerUtil.decode(msg.getProfileBody().toByteArray());
+                        Optional<DeviceProfile> deviceProfileOpt = LwM2mTransportUtil.decode(msg.getProfileBody().toByteArray());
                         deviceProfileOpt.ifPresent(profile -> resultSecurityStore[0].setDeviceProfile(profile));
                         latch.countDown();
                     }
@@ -91,27 +85,27 @@ public class LwM2mCredentialsSecurityInfoValidator {
 
     /**
      * Create new SecurityInfo
-     * @param endPoint -
+     * @param endpoint -
      * @param jsonStr -
      * @param keyValue -
      * @return SecurityInfo
      */
-    private ReadResultSecurityStore createSecurityInfo(String endPoint, String jsonStr, LwM2mTransportHandlerUtil.LwM2mTypeServer keyValue) {
-        ReadResultSecurityStore result = new ReadResultSecurityStore();
-        JsonObject objectMsg = LwM2mTransportHandlerUtil.validateJson(jsonStr);
+    private EndpointSecurityInfo createSecurityInfo(String endpoint, String jsonStr, LwM2mTransportUtil.LwM2mTypeServer keyValue) {
+        EndpointSecurityInfo result = new EndpointSecurityInfo();
+        JsonObject objectMsg = LwM2mTransportUtil.validateJson(jsonStr);
         if (objectMsg != null && !objectMsg.isJsonNull()) {
             JsonObject object = (objectMsg.has(keyValue.type) && !objectMsg.get(keyValue.type).isJsonNull()) ? objectMsg.get(keyValue.type).getAsJsonObject() : null;
             /**
              * Only PSK
              */
-            String endPointPsk = (objectMsg.has("client")
+            String endpointPsk = (objectMsg.has("client")
                     && objectMsg.get("client").getAsJsonObject().has("endpoint")
                     && objectMsg.get("client").getAsJsonObject().get("endpoint").isJsonPrimitive()) ? objectMsg.get("client").getAsJsonObject().get("endpoint").getAsString() : null;
-            endPoint = (endPointPsk == null || endPointPsk.isEmpty()) ? endPoint : endPointPsk;
+            endpoint = (endpointPsk == null || endpointPsk.isEmpty()) ? endpoint : endpointPsk;
             if (object != null && !object.isJsonNull()) {
-                if (keyValue.equals(LwM2mTransportHandlerUtil.LwM2mTypeServer.BOOTSTRAP)) {
+                if (keyValue.equals(LwM2mTransportUtil.LwM2mTypeServer.BOOTSTRAP)) {
                     result.setBootstrapJsonCredential(object);
-                    result.setEndPoint(endPoint);
+                    result.setEndPoint(endpoint);
                     result.setSecurityMode(LwM2MSecurityMode.fromSecurityMode(object.get("bootstrapServer").getAsJsonObject().get("securityMode").getAsString().toLowerCase()).code);
                 } else {
                     LwM2MSecurityMode lwM2MSecurityMode = LwM2MSecurityMode.fromSecurityMode(object.get("securityConfigClientMode").getAsString().toLowerCase());
@@ -120,13 +114,13 @@ public class LwM2mCredentialsSecurityInfoValidator {
                             createClientSecurityInfoNoSec(result);
                             break;
                         case PSK:
-                            createClientSecurityInfoPSK(result, endPoint, object);
+                            createClientSecurityInfoPSK(result, endpoint, object);
                             break;
                         case RPK:
-                            createClientSecurityInfoRPK(result, endPoint, object);
+                            createClientSecurityInfoRPK(result, endpoint, object);
                             break;
                         case X509:
-                            createClientSecurityInfoX509(result, endPoint);
+                            createClientSecurityInfoX509(result, endpoint);
                             break;
                         default:
                             break;
@@ -137,20 +131,20 @@ public class LwM2mCredentialsSecurityInfoValidator {
         return result;
     }
 
-    private void createClientSecurityInfoNoSec(ReadResultSecurityStore result) {
+    private void createClientSecurityInfoNoSec(EndpointSecurityInfo result) {
         result.setSecurityInfo(null);
         result.setSecurityMode(NO_SEC.code);
     }
 
-    private void createClientSecurityInfoPSK(ReadResultSecurityStore result, String endPoint, JsonObject object) {
+    private void createClientSecurityInfoPSK(EndpointSecurityInfo result, String endpoint, JsonObject object) {
         /** PSK Deserialization */
         String identity = (object.has("identity") && object.get("identity").isJsonPrimitive()) ? object.get("identity").getAsString() : null;
         if (identity != null && !identity.isEmpty()) {
             try {
                 byte[] key = (object.has("key") && object.get("key").isJsonPrimitive()) ? Hex.decodeHex(object.get("key").getAsString().toCharArray()) : null;
                 if (key != null && key.length > 0) {
-                    if (endPoint != null && !endPoint.isEmpty()) {
-                        result.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(endPoint, identity, key));
+                    if (endpoint != null && !endpoint.isEmpty()) {
+                        result.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(endpoint, identity, key));
                         result.setSecurityMode(PSK.code);
                     }
                 }
@@ -162,7 +156,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
         }
     }
 
-    private void createClientSecurityInfoRPK(ReadResultSecurityStore result, String endpoint, JsonObject object) {
+    private void createClientSecurityInfoRPK(EndpointSecurityInfo result, String endpoint, JsonObject object) {
         try {
             if (object.has("key") && object.get("key").isJsonPrimitive()) {
                 byte[] rpkkey = Hex.decodeHex(object.get("key").getAsString().toLowerCase().toCharArray());
@@ -177,7 +171,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
         }
     }
 
-    private void createClientSecurityInfoX509(ReadResultSecurityStore result, String endpoint) {
+    private void createClientSecurityInfoX509(EndpointSecurityInfo result, String endpoint) {
         result.setSecurityInfo(SecurityInfo.newX509CertInfo(endpoint));
         result.setSecurityMode(X509.code);
     }
