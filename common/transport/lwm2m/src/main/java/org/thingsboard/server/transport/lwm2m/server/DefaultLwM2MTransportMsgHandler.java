@@ -646,8 +646,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      */
     private void updateResourcesValue(Registration registration, LwM2mResource lwM2mResource, String path) {
         LwM2mClient lwM2MClient = clientContext.getOrRegister(registration);
-        if (lwM2MClient.saveResourceValue(path, lwM2mResource, this.config
-                .getModelProvider())) {
+        if (lwM2MClient.saveResourceValue(path, lwM2mResource, this.config.getModelProvider())) {
             if (FR_PATH_RESOURCE_VER_ID.equals(convertPathFromIdVerToObjectId(path)) &&
                     lwM2MClient.getFrUpdate().getCurrentFwVersion() != null
                     && !lwM2MClient.getFrUpdate().getCurrentFwVersion().equals(lwM2MClient.getFrUpdate().getClientFwVersion())
