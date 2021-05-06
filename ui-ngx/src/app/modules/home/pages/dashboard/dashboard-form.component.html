@@ -105,6 +105,11 @@
           {{ 'dashboard.title-required' | translate }}
         </mat-error>
       </mat-form-field>
+      <tb-image-input fxFlex
+                      label="{{'dashboard.image' | translate}}"
+                      maxSizeByte="524288"
+                      formControlName="image">
+      </tb-image-input>
       <div formGroupName="configuration" fxLayout="column">
         <mat-form-field class="mat-block">
           <mat-label translate>dashboard.description</mat-label>

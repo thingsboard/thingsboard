@@ -78,7 +78,11 @@ CREATE TABLE IF NOT EXISTS firmware (
     CONSTRAINT firmware_tenant_title_version_unq_key UNIQUE (tenant_id, title, version)
 );
 
+ALTER TABLE dashboard
+    ADD COLUMN IF NOT EXISTS image varchar(1000000);
+
 ALTER TABLE device_profile
+    ADD COLUMN IF NOT EXISTS image varchar(1000000),
     ADD COLUMN IF NOT EXISTS firmware_id uuid,
     ADD COLUMN IF NOT EXISTS software_id uuid;
 

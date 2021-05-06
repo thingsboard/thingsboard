@@ -136,7 +136,8 @@ CREATE TABLE IF NOT EXISTS dashboard (
     assigned_customers varchar(1000000),
     search_text varchar(255),
     tenant_id uuid,
-    title varchar(255)
+    title varchar(255),
+    image varchar(1000000)
 );
 
 CREATE TABLE IF NOT EXISTS rule_chain (
@@ -201,6 +202,7 @@ CREATE TABLE IF NOT EXISTS device_profile (
     created_time bigint NOT NULL,
     name varchar(255),
     type varchar(255),
+    image varchar(1000000),
     transport_type varchar(255),
     provision_type varchar(255),
     profile_data jsonb,

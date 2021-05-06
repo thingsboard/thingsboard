@@ -48,6 +48,8 @@ public interface AlarmDao extends Dao<Alarm> {
 
     PageData<AlarmInfo> findAlarms(TenantId tenantId, AlarmQuery query);
 
+    PageData<AlarmInfo> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query);
+
     PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, CustomerId customerId,
                                                         AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
 

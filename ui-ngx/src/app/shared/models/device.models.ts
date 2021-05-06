@@ -492,6 +492,7 @@ export interface DeviceProfile extends BaseData<DeviceProfileId> {
   description?: string;
   default?: boolean;
   type: DeviceProfileType;
+  image?: string;
   transportType: DeviceTransportType;
   provisionType: DeviceProvisionType;
   provisionDeviceKey?: string;

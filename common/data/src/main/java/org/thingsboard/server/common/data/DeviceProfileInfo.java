@@ -30,21 +30,25 @@ import java.util.UUID;
 @ToString(callSuper = true)
 public class DeviceProfileInfo extends EntityInfo {
 
+    private final String image;
     private final DeviceProfileType type;
     private final DeviceTransportType transportType;
 
     @JsonCreator
     public DeviceProfileInfo(@JsonProperty("id") EntityId id,
                              @JsonProperty("name") String name,
+                             @JsonProperty("image") String image,
                              @JsonProperty("type") DeviceProfileType type,
                              @JsonProperty("transportType") DeviceTransportType transportType) {
         super(id, name);
+        this.image = image;
         this.type = type;
         this.transportType = transportType;
     }
 
-    public DeviceProfileInfo(UUID uuid, String name, DeviceProfileType type, DeviceTransportType transportType) {
+    public DeviceProfileInfo(UUID uuid, String name, String image, DeviceProfileType type, DeviceTransportType transportType) {
         super(EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE_PROFILE, uuid), name);
+        this.image = image;
         this.type = type;
         this.transportType = transportType;
     }

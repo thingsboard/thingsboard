@@ -60,6 +60,9 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
     @Column(name = ModelConstants.DEVICE_PROFILE_TYPE_PROPERTY)
     private DeviceProfileType type;
 
+    @Column(name = ModelConstants.DEVICE_PROFILE_IMAGE_PROPERTY)
+    private String image;
+
     @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.DEVICE_PROFILE_TRANSPORT_TYPE_PROPERTY)
     private DeviceTransportType transportType;
@@ -110,6 +113,7 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         this.setCreatedTime(deviceProfile.getCreatedTime());
         this.name = deviceProfile.getName();
         this.type = deviceProfile.getType();
+        this.image = deviceProfile.getImage();
         this.transportType = deviceProfile.getTransportType();
         this.provisionType = deviceProfile.getProvisionType();
         this.description = deviceProfile.getDescription();
@@ -151,6 +155,7 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         }
         deviceProfile.setName(name);
         deviceProfile.setType(type);
+        deviceProfile.setImage(image);
         deviceProfile.setTransportType(transportType);
         deviceProfile.setProvisionType(provisionType);
         deviceProfile.setDescription(description);

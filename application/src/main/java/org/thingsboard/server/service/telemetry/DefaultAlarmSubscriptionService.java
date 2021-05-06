@@ -128,6 +128,11 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
+    public ListenableFuture<PageData<AlarmInfo>> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query) {
+        return alarmService.findCustomerAlarms(tenantId, customerId, query);
+    }
+
+    @Override
     public AlarmSeverity findHighestAlarmSeverity(TenantId tenantId, EntityId entityId, AlarmSearchStatus alarmSearchStatus, AlarmStatus alarmStatus) {
         return alarmService.findHighestAlarmSeverity(tenantId, entityId, alarmSearchStatus, alarmStatus);
     }

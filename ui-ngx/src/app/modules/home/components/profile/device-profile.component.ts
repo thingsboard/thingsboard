@@ -103,6 +103,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
       {
         name: [entity ? entity.name : '', [Validators.required]],
         type: [entity ? entity.type : null, [Validators.required]],
+        image: [entity ? entity.image : null],
         transportType: [entity ? entity.transportType : null, [Validators.required]],
         profileData: this.fb.group({
           configuration: [entity && !this.isAdd ? entity.profileData?.configuration : {}, Validators.required],
@@ -178,6 +179,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     };
     this.entityForm.patchValue({name: entity.name});
     this.entityForm.patchValue({type: entity.type}, {emitEvent: false});
+    this.entityForm.patchValue({image: entity.image}, {emitEvent: false});
     this.entityForm.patchValue({transportType: entity.transportType}, {emitEvent: false});
     this.entityForm.patchValue({provisionType: entity.provisionType}, {emitEvent: false});
     this.entityForm.patchValue({provisionDeviceKey: entity.provisionDeviceKey}, {emitEvent: false});

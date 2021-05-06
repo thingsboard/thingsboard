@@ -43,6 +43,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
     private String name;
     @NoXss
     private String description;
+    private String image;
     private boolean isDefault;
     private DeviceProfileType type;
     private DeviceTransportType transportType;
@@ -74,6 +75,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
         this.tenantId = deviceProfile.getTenantId();
         this.name = deviceProfile.getName();
         this.description = deviceProfile.getDescription();
+        this.image = deviceProfile.getImage();
         this.isDefault = deviceProfile.isDefault();
         this.defaultRuleChainId = deviceProfile.getDefaultRuleChainId();
         this.defaultQueueName = deviceProfile.getDefaultQueueName();

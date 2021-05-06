@@ -170,6 +170,7 @@ public class ModelConstants {
     public static final String DEVICE_PROFILE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String DEVICE_PROFILE_NAME_PROPERTY = "name";
     public static final String DEVICE_PROFILE_TYPE_PROPERTY = "type";
+    public static final String DEVICE_PROFILE_IMAGE_PROPERTY = "image";
     public static final String DEVICE_PROFILE_TRANSPORT_TYPE_PROPERTY = "transport_type";
     public static final String DEVICE_PROFILE_PROVISION_TYPE_PROPERTY = "provision_type";
     public static final String DEVICE_PROFILE_PROFILE_DATA_PROPERTY = "profile_data";
@@ -333,6 +334,7 @@ public class ModelConstants {
     public static final String DASHBOARD_COLUMN_FAMILY_NAME = "dashboard";
     public static final String DASHBOARD_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String DASHBOARD_TITLE_PROPERTY = TITLE_PROPERTY;
+    public static final String DASHBOARD_IMAGE_PROPERTY = "image";
     public static final String DASHBOARD_CONFIGURATION_PROPERTY = "configuration";
     public static final String DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY = "assigned_customers";
 

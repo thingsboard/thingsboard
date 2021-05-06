@@ -106,6 +106,7 @@ export class AddDeviceProfileDialogComponent extends
       {
         name: [data.deviceProfileName, [Validators.required]],
         type: [DeviceProfileType.DEFAULT, [Validators.required]],
+        image: [null, []],
         defaultRuleChainId: [null, []],
         defaultQueueName: ['', []],
         description: ['', []]
@@ -183,6 +184,7 @@ export class AddDeviceProfileDialogComponent extends
       const deviceProfile: DeviceProfile = {
         name: this.deviceProfileDetailsFormGroup.get('name').value,
         type: this.deviceProfileDetailsFormGroup.get('type').value,
+        image: this.deviceProfileDetailsFormGroup.get('image').value,
         transportType: this.transportConfigFormGroup.get('transportType').value,
         provisionType: deviceProvisionConfiguration.type,
         provisionDeviceKey,
