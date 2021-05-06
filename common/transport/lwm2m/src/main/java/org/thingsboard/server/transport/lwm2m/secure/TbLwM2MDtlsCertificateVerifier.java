@@ -30,6 +30,7 @@ import org.eclipse.californium.scandium.dtls.HandshakeResultHandler;
 import org.eclipse.californium.scandium.dtls.x509.NewAdvancedCertificateVerifier;
 import org.eclipse.californium.scandium.dtls.x509.StaticCertificateVerifier;
 import org.eclipse.californium.scandium.util.ServerNames;
+import org.eclipse.leshan.core.SecurityMode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -42,6 +43,8 @@ import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsRes
 import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
+import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
+import org.thingsboard.server.transport.lwm2m.secure.credentials.X509ClientCredentialsConfig;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
 
 import javax.annotation.PostConstruct;
@@ -104,7 +107,7 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
             return new CertificateVerificationResult(cid, publicKey, null);
         } else {
             try {
-                String credentialsBody = null;
+                boolean x509CredentialsFound = false;
                 CertPath certpath = message.getCertificateChain();
                 X509Certificate[] chain = certpath.getCertificates().toArray(new X509Certificate[0]);
                 for (X509Certificate cert : chain) {
@@ -136,12 +139,15 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                         if (latch.await(10, TimeUnit.SECONDS)) {
                             ValidateDeviceCredentialsResponse msg = deviceCredentialsResponse[0];
                             if (msg != null && org.thingsboard.server.common.data.StringUtils.isNotEmpty(msg.getCredentials())) {
-                                JsonNode credentialsJson = JacksonUtil.toJsonNode(msg.getCredentials());
-                                String certBody = credentialsJson.get("cert").asText();
-                                String endpoint = credentialsJson.get("endpoint").asText();
+                                LwM2MCredentials credentials = JacksonUtil.fromString(msg.getCredentials(), LwM2MCredentials.class);
+                                if(!credentials.getClient().getSecurityConfigClientMode().equals(SecurityMode.X509)){
+                                    continue;
+                                }
+                                X509ClientCredentialsConfig config = (X509ClientCredentialsConfig) credentials.getClient();
+                                String certBody = config.getCert();
+                                String endpoint = config.getEndpoint();
                                 if (strCert.equals(certBody)) {
-                                    //TODO: extract endpoint from credentials body and push to storage
-                                    credentialsBody = msg.getCredentials();
+                                    x509CredentialsFound = true;
                                     DeviceProfile deviceProfile = msg.getDeviceProfile();
                                     if (msg.hasDeviceInfo() && deviceProfile != null) {
                                         sessionStorage.put(endpoint, new TbX509DtlsSessionInfo(cert.getSubjectX500Principal().getName(), msg));
@@ -159,7 +165,7 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                         log.error(e.getMessage(), e);
                     }
                 }
-                if (credentialsBody == null) {
+                if (!x509CredentialsFound) {
                     if (staticCertificateVerifier != null) {
                         staticCertificateVerifier.verifyCertificate(message, session);
                     } else {

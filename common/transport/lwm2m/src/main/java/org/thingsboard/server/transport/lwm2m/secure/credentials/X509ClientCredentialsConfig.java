@@ -9,6 +9,7 @@ import static org.eclipse.leshan.core.SecurityMode.X509;
 public class X509ClientCredentialsConfig implements LwM2MClientCredentialsConfig {
     private boolean allowTrustedOnly;
     private String cert;
+    private String endpoint;
 
     @Override
     public SecurityMode getSecurityConfigClientMode() {
