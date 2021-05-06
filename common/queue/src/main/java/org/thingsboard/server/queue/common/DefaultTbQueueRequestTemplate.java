@@ -31,6 +31,7 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.common.stats.MessagesStats;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,14 +48,14 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
     private final TbQueueProducer<Request> requestTemplate;
     private final TbQueueConsumer<Response> responseTemplate;
     private final ConcurrentMap<UUID, DefaultTbQueueRequestTemplate.ResponseMetaData<Response>> pendingRequests;
-    private final boolean internalExecutor;
+    final boolean internalExecutor;
     private final ExecutorService executor;
     private final long maxRequestTimeout;
     private final long maxPendingRequests;
     private final long pollInterval;
-    private volatile long tickTs = 0L;
-    private volatile long tickSize = 0L;
-    private volatile boolean stopped = false;
+    volatile long tickTs = 0L;
+    volatile long tickSize = 0L;
+    volatile boolean stopped = false;
 
     private MessagesStats messagesStats;
 
@@ -65,7 +66,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
                                          long maxRequestTimeout,
                                          long maxPendingRequests,
                                          long pollInterval,
-                                         ExecutorService executor) {
+                                         @Nullable ExecutorService executor) {
         this.queueAdmin = queueAdmin;
         this.requestTemplate = requestTemplate;
         this.responseTemplate = responseTemplate;
@@ -73,13 +74,10 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         this.maxRequestTimeout = maxRequestTimeout;
         this.maxPendingRequests = maxPendingRequests;
         this.pollInterval = pollInterval;
-        if (executor != null) {
-            internalExecutor = false;
-            this.executor = executor;
-        } else {
-            internalExecutor = true;
-            this.executor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-queue-request-template-" + responseTemplate.getTopic()));
-        }
+        this.internalExecutor = (executor == null);
+        this.executor = internalExecutor
+                ? Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-queue-request-template-" + responseTemplate.getTopic()))
+                : executor;
     }
 
     @Override
