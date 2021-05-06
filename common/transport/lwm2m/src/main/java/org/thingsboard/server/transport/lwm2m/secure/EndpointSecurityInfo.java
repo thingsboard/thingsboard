@@ -15,25 +15,23 @@
  */
 package org.thingsboard.server.transport.lwm2m.secure;
 
-import com.google.gson.JsonObject;
 import lombok.Data;
+import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfig;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
-import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
-
-import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.DEFAULT_MODE;
+import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapConfig;
 
 @Data
 public class EndpointSecurityInfo {
     private ValidateDeviceCredentialsResponse msg;
     private SecurityInfo securityInfo;
-    private int securityMode = DEFAULT_MODE.code;
+    private SecurityMode securityMode;
 
     /** bootstrap */
     private DeviceProfile deviceProfile;
-    private JsonObject bootstrapJsonCredential;
+    private LwM2MBootstrapConfig bootstrapCredentialConfig;
     private String endpoint;
     private BootstrapConfig bootstrapConfig;
 }

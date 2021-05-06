@@ -31,7 +31,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.secure.EndpointSecurityInfo;
-import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mSessionMsgListener;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
@@ -73,7 +72,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
     @Override
     public List<SecurityInfo> getAllByEndpoint(String endPoint) {
         EndpointSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfo(endPoint, LwM2mTransportUtil.LwM2mTypeServer.BOOTSTRAP);
-        if (store.getBootstrapJsonCredential() != null && store.getSecurityMode() < LwM2MSecurityMode.DEFAULT_MODE.code) {
+        if (store.getBootstrapCredentialConfig() != null && store.getSecurityMode() != null) {
             /* add value to store  from BootstrapJson */
             this.setBootstrapConfigScurityInfo(store);
             BootstrapConfig bsConfigNew = store.getBootstrapConfig();
@@ -97,7 +96,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
     @Override
     public SecurityInfo getByIdentity(String identity) {
         EndpointSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfo(identity, LwM2mTransportUtil.LwM2mTypeServer.BOOTSTRAP);
-        if (store.getBootstrapJsonCredential() != null && store.getSecurityMode() < LwM2MSecurityMode.DEFAULT_MODE.code) {
+        if (store.getBootstrapCredentialConfig() != null && store.getSecurityMode() != null) {
             /* add value to store  from BootstrapJson */
             this.setBootstrapConfigScurityInfo(store);
             BootstrapConfig bsConfig = store.getBootstrapConfig();
@@ -118,29 +117,29 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
         LwM2MBootstrapConfig lwM2MBootstrapConfig = this.getParametersBootstrap(store);
         if (lwM2MBootstrapConfig != null) {
             /* Security info */
-            switch (SecurityMode.valueOf(lwM2MBootstrapConfig.getBootstrapServer().getSecurityMode())) {
+            switch (lwM2MBootstrapConfig.getBootstrapServer().getSecurityMode()) {
                 /* Use RPK only */
                 case PSK:
                     store.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(store.getEndpoint(),
                             lwM2MBootstrapConfig.getBootstrapServer().getClientPublicKeyOrId(),
                             Hex.decodeHex(lwM2MBootstrapConfig.getBootstrapServer().getClientSecretKey().toCharArray())));
-                    store.setSecurityMode(SecurityMode.PSK.code);
+                    store.setSecurityMode(SecurityMode.PSK);
                     break;
                 case RPK:
                     try {
                         store.setSecurityInfo(SecurityInfo.newRawPublicKeyInfo(store.getEndpoint(),
                                 SecurityUtil.publicKey.decode(Hex.decodeHex(lwM2MBootstrapConfig.getBootstrapServer().getClientPublicKeyOrId().toCharArray()))));
-                        store.setSecurityMode(SecurityMode.RPK.code);
+                        store.setSecurityMode(SecurityMode.RPK);
                         break;
                     } catch (IOException | GeneralSecurityException e) {
                         log.error("Unable to decode Client public key for [{}]  [{}]", store.getEndpoint(), e.getMessage());
                     }
                 case X509:
                     store.setSecurityInfo(SecurityInfo.newX509CertInfo(store.getEndpoint()));
-                    store.setSecurityMode(SecurityMode.X509.code);
+                    store.setSecurityMode(SecurityMode.X509);
                     break;
                 case NO_SEC:
-                    store.setSecurityMode(SecurityMode.NO_SEC.code);
+                    store.setSecurityMode(SecurityMode.NO_SEC);
                     store.setSecurityInfo(null);
                     break;
                 default:
@@ -152,10 +151,9 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     private LwM2MBootstrapConfig getParametersBootstrap(EndpointSecurityInfo store) {
         try {
-            JsonObject bootstrapJsonCredential = store.getBootstrapJsonCredential();
-            if (bootstrapJsonCredential != null) {
+            LwM2MBootstrapConfig lwM2MBootstrapConfig = store.getBootstrapCredentialConfig();
+            if (lwM2MBootstrapConfig != null) {
                 ObjectMapper mapper = new ObjectMapper();
-                LwM2MBootstrapConfig lwM2MBootstrapConfig = mapper.readValue(bootstrapJsonCredential.toString(), LwM2MBootstrapConfig.class);
                 JsonObject bootstrapObject = getBootstrapParametersFromThingsboard(store.getDeviceProfile());
                 lwM2MBootstrapConfig.servers = mapper.readValue(bootstrapObject.get(SERVERS).toString(), LwM2MBootstrapServers.class);
                 LwM2MServerBootstrap profileServerBootstrap = mapper.readValue(bootstrapObject.get(BOOTSTRAP_SERVER).toString(), LwM2MServerBootstrap.class);

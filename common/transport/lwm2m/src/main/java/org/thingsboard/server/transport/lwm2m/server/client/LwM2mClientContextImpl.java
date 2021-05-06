@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.secure.EndpointSecurityInfo;
-import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
@@ -37,7 +36,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.NO_SEC;
+import static org.eclipse.leshan.core.SecurityMode.NO_SEC;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
 
 @Service
@@ -110,7 +109,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     @Override
     public LwM2mClient fetchClientByEndpoint(String endpoint) {
         EndpointSecurityInfo securityInfo = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfo(endpoint, LwM2mTransportUtil.LwM2mTypeServer.CLIENT);
-        if (securityInfo.getSecurityMode() < LwM2MSecurityMode.DEFAULT_MODE.code) {
+        if (securityInfo.getSecurityMode() != null) {
             if (securityInfo.getDeviceProfile() != null) {
                 toClientProfile(securityInfo.getDeviceProfile());
                 UUID profileUuid = securityInfo.getDeviceProfile().getUuidId();
@@ -119,7 +118,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
                     client = new LwM2mClient(context.getNodeId(), securityInfo.getSecurityInfo().getEndpoint(),
                             securityInfo.getSecurityInfo().getIdentity(), securityInfo.getSecurityInfo(),
                             securityInfo.getMsg(), profileUuid, UUID.randomUUID());
-                } else if (securityInfo.getSecurityMode() == NO_SEC.code) {
+                } else if (NO_SEC.equals(securityInfo.getSecurityMode())) {
                     client = new LwM2mClient(context.getNodeId(), endpoint,
                             null, null,
                             securityInfo.getMsg(), profileUuid, UUID.randomUUID());

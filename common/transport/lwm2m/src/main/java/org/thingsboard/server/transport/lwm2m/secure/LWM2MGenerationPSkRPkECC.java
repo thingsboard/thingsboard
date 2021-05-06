@@ -33,15 +33,15 @@ import java.util.Arrays;
 @Slf4j
 public class LWM2MGenerationPSkRPkECC {
 
-    public LWM2MGenerationPSkRPkECC(Integer dtlsMode) {
-        switch (LwM2MSecurityMode.fromSecurityMode(dtlsMode)) {
-            case PSK:
-                generationPSkKey();
-                break;
-            case RPK:
-                generationRPKECCKey();
-        }
-    }
+//    public LWM2MGenerationPSkRPkECC(Integer dtlsMode) {
+//        switch (LwM2MSecurityMode.fromSecurityMode(dtlsMode)) {
+//            case PSK:
+//                generationPSkKey();
+//                break;
+//            case RPK:
+//                generationRPKECCKey();
+//        }
+//    }
 
     public LWM2MGenerationPSkRPkECC() {
         generationPSkKey();
