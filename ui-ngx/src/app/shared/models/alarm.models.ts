@@ -201,17 +201,15 @@ export class AlarmQuery {
   searchStatus: AlarmSearchStatus;
   status: AlarmStatus;
   fetchOriginator: boolean;
-  offset: string;
 
   constructor(entityId: EntityId, pageLink: TimePageLink,
               searchStatus: AlarmSearchStatus, status: AlarmStatus,
-              fetchOriginator: boolean, offset: string) {
+              fetchOriginator: boolean) {
     this.affectedEntityId = entityId;
     this.pageLink = pageLink;
     this.searchStatus = searchStatus;
     this.status = status;
     this.fetchOriginator = fetchOriginator;
-    this.offset = offset;
   }
 
   public toQuery(): string {
@@ -224,9 +222,6 @@ export class AlarmQuery {
     }
     if (typeof this.fetchOriginator !== 'undefined' && this.fetchOriginator !== null) {
       query += `&fetchOriginator=${this.fetchOriginator}`;
-    }
-    if (isString(this.offset) && this.offset.length) {
-      query += `&offset=${this.offset}`;
     }
     return query;
   }
