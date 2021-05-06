@@ -211,7 +211,6 @@ public class AlarmController extends BaseController {
             @RequestParam(required = false) Long endTime,
             @RequestParam(required = false) Boolean fetchOriginator
     ) throws ThingsboardException {
-        accessControlService.checkPermission(getCurrentUser(), Resource.ALARM, Operation.READ);
         AlarmSearchStatus alarmSearchStatus = StringUtils.isEmpty(searchStatus) ? null : AlarmSearchStatus.valueOf(searchStatus);
         AlarmStatus alarmStatus = StringUtils.isEmpty(status) ? null : AlarmStatus.valueOf(status);
         if (alarmSearchStatus != null && alarmStatus != null) {
