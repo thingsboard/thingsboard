@@ -31,27 +31,27 @@
 package org.thingsboard.server.queue.common;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.BDDMockito;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.internal.util.reflection.Whitebox;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
+import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -61,16 +61,17 @@ public class DefaultTbQueueRequestTemplateTest {
     @Mock
     TbQueueAdmin queueAdmin;
     @Mock
-    ExecutorService executor;
-    @Mock
     TbQueueProducer<TbQueueMsg> requestTemplate;
     @Mock
     TbQueueConsumer<TbQueueMsg> responseTemplate;
+    @Mock
+    ExecutorService executorMock;
 
+    ExecutorService executor;
+    String topic = "js-responses-tb-node-0";
     long maxRequestTimeout = 20;
     long maxPendingRequests = 10000;
     long pollInterval = 25;
-    String topic = "js-responses-tb-node-0";
 
     DefaultTbQueueRequestTemplate inst;
 
@@ -79,35 +80,70 @@ public class DefaultTbQueueRequestTemplateTest {
         willReturn(topic).given(responseTemplate).getTopic();
         inst = new DefaultTbQueueRequestTemplate(
                 queueAdmin, requestTemplate, responseTemplate,
-                maxRequestTimeout, maxPendingRequests, pollInterval, executor);
+                maxRequestTimeout, maxPendingRequests, pollInterval, executorMock);
 
     }
 
+    @After
+    public void tearDown() throws Exception {
+        if (executor != null) {
+            executor.shutdownNow();
+        }
+    }
+
     @Test
-    public void givenExternalExecutor_whenStop_thenDoNotShutdownExecutor() {
-        inst = Mockito.spy(inst);
-        willDoNothing().given(inst).fetchAndProcessResponses();
-        Assert.assertFalse(inst.stopped);
+    public void givenInstance_whenVerifyInitialParameters_thenOK() {
+        assertEquals(maxPendingRequests, inst.maxPendingRequests);
+        assertEquals(maxRequestTimeout, inst.maxRequestTimeout);
+        assertEquals(pollInterval, inst.pollInterval);
+        assertEquals(executorMock, inst.executor);
+        assertFalse(inst.stopped);
+        assertFalse(inst.internalExecutor);
+    }
+
+    @Test
+    public void givenExternalExecutor_whenInitStop_thenOK() {
+        inst = spy(inst);
+        willDoNothing().given(inst).mainLoop();
 
         inst.init();
-        Assert.assertNotEquals(inst.tickTs, 0);
-        Assert.assertFalse(inst.internalExecutor);
+        assertNotEquals(0, inst.tickTs);
+        assertEquals(0, inst.nextCleanupMs);
         verify(queueAdmin, times(1)).createTopicIfNotExists(topic);
         verify(requestTemplate, times(1)).init();
         verify(responseTemplate, times(1)).subscribe();
-        verify(executor, times(1)).submit(any(Runnable.class));
+        verify(executorMock, times(1)).submit(any(Runnable.class));
 
         inst.stop();
-        Assert.assertTrue(inst.stopped);
+        assertTrue(inst.stopped);
         verify(responseTemplate, times(1)).unsubscribe();
         verify(requestTemplate, times(1)).stop();
-        verify(executor, never()).shutdownNow();
+        verify(executorMock, never()).shutdownNow();
     }
 
     @Test
-    public void fetchAndProcessResponses() {
-        inst.init();
+    public void givenMainLoop_whenLoopFewTimes_thenVerifyInvocationCount() throws InterruptedException {
+        inst = spy(inst);
+        executor = inst.createExecutor();
+        CountDownLatch latch = new CountDownLatch(5);
+        willDoNothing().given(inst).sleep();
+        willAnswer(invocation -> {
+            if (latch.getCount() == 1) {
+                inst.stop(); //stop the loop in natural way
+            }
+            if (latch.getCount() == 3 || latch.getCount() == 4) {
+                latch.countDown();
+                throw new RuntimeException("test catch block");
+            }
+            latch.countDown();
+            return null;
+        }).given(inst).fetchAndProcessResponses();
 
-        inst.stop();
+        executor.submit(inst::mainLoop);
+        latch.await(10, TimeUnit.SECONDS);
+
+        verify(inst, times(5)).fetchAndProcessResponses();
+        verify(inst, times(2)).sleep();
     }
+
 }
