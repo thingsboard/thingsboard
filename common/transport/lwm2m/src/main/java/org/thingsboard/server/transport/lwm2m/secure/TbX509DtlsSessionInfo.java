@@ -15,12 +15,13 @@
  */
 package org.thingsboard.server.transport.lwm2m.secure;
 
+import lombok.Data;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 
-public interface TbLwM2MDtlsSessionStorage {
+@Data
+public class TbX509DtlsSessionInfo {
 
-    void put(String endpoint, ValidateDeviceCredentialsResponse msg);
-
-    ValidateDeviceCredentialsResponse get(String endpoint);
+    private final String x509CommonName;
+    private final ValidateDeviceCredentialsResponse credentials;
 
 }

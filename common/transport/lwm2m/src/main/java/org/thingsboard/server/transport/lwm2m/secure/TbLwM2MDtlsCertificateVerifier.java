@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.secure;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.elements.util.CertPathUtil;
@@ -32,6 +33,7 @@ import org.eclipse.californium.scandium.util.ServerNames;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.transport.TransportService;
@@ -40,6 +42,7 @@ import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsRes
 import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
+import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
 
 import javax.annotation.PostConstruct;
 import javax.security.auth.x500.X500Principal;
@@ -60,7 +63,7 @@ import java.util.concurrent.TimeUnit;
 public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVerifier {
 
     private final TransportService transportService;
-    private final TbLwM2MDtlsSessionStorage sessionStorage;
+    private final TbLwM2MDtlsSessionStore sessionStorage;
     private final LwM2MTransportServerConfig config;
 
     @SuppressWarnings("deprecation")
@@ -130,16 +133,24 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                                         latch.countDown();
                                     }
                                 });
-                        latch.await(10, TimeUnit.SECONDS);
-                        ValidateDeviceCredentialsResponse msg = deviceCredentialsResponse[0];
-                        if (msg != null && strCert.equals(msg.getCredentials())) {
-                            credentialsBody = msg.getCredentials();
-                            DeviceProfile deviceProfile = msg.getDeviceProfile();
-                            if (msg.hasDeviceInfo() && deviceProfile != null) {
-                                String endpoint = sha3Hash; //TODO: extract endpoint from credentials body and push to storage
-                                sessionStorage.put(endpoint, msg);
+                        if (latch.await(10, TimeUnit.SECONDS)) {
+                            ValidateDeviceCredentialsResponse msg = deviceCredentialsResponse[0];
+                            if (msg != null && org.thingsboard.server.common.data.StringUtils.isNotEmpty(msg.getCredentials())) {
+                                JsonNode credentialsJson = JacksonUtil.toJsonNode(msg.getCredentials());
+                                String certBody = credentialsJson.get("cert").asText();
+                                String endpoint = credentialsJson.get("endpoint").asText();
+                                if (strCert.equals(certBody)) {
+                                    //TODO: extract endpoint from credentials body and push to storage
+                                    credentialsBody = msg.getCredentials();
+                                    DeviceProfile deviceProfile = msg.getDeviceProfile();
+                                    if (msg.hasDeviceInfo() && deviceProfile != null) {
+                                        sessionStorage.put(endpoint, new TbX509DtlsSessionInfo(cert.getSubjectX500Principal().getName(), msg));
+                                        break;
+                                    }
+                                } else {
+                                    log.trace("[{}][{}] Certificate mismatch. Expected: {}, Actual: {}", endpoint, sha3Hash, strCert, certBody);
+                                }
                             }
-                            break;
                         }
                     } catch (InterruptedException |
                             CertificateEncodingException |

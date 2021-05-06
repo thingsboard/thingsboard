@@ -21,6 +21,7 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.secure.EndpointSecurityInfo;
@@ -134,6 +135,13 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         } else {
             throw new RuntimeException(String.format("Registration failed: FORBIDDEN, endpointId: %s", endpoint));
         }
+    }
+
+    @Override
+    public void registerClient(Registration registration, ValidateDeviceCredentialsResponse credentials) {
+        LwM2mClient client = new LwM2mClient(context.getNodeId(), registration.getEndpoint(), null, null, credentials, credentials.getDeviceProfile().getUuidId(), UUID.randomUUID());
+        lwM2mClientsByEndpoint.put(registration.getEndpoint(), client);
+        lwM2mClientsByRegistrationId.put(registration.getId(), client);
     }
 
     @Override
