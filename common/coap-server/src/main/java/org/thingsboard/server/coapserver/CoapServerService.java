@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public interface CoapServerService {
 
-    CoapServer getCoapServer() throws UnknownHostException;
+    CoapServer getCoapServer() throws Exception;
 
     ConcurrentMap<String, TbCoapDtlsSessionInfo> getDtlsSessionsMap();
 

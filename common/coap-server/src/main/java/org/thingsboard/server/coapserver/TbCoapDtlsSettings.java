@@ -24,7 +24,6 @@ import org.eclipse.californium.scandium.dtls.x509.StaticNewAdvancedCertificateVe
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
@@ -39,7 +38,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 @Slf4j
-@ConditionalOnProperty(prefix = "transport.coap.dtls", value = "enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnExpression("'${transport.coap.security.mode:null}'=='DTLS' || '${transport.coap.security.mode:null}'=='MIXED'")
 @Component
 public class TbCoapDtlsSettings {
 

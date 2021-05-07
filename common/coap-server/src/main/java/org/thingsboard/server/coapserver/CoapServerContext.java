@@ -27,16 +27,12 @@ import org.springframework.stereotype.Component;
 public class CoapServerContext {
 
     @Getter
-    @Value("${transport.coap.bind_address}")
-    private String host;
-
-    @Getter
-    @Value("${transport.coap.bind_port}")
-    private Integer port;
-
-    @Getter
     @Value("${transport.coap.timeout}")
     private Long timeout;
+
+    @Getter
+    @Autowired(required = false)
+    private TbCoapNoSecureSettings noSecureSettings;
 
     @Getter
     @Autowired(required = false)

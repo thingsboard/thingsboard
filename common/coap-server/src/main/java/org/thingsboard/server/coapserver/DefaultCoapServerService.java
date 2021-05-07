@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2021 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,6 @@ package org.thingsboard.server.coapserver;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.core.network.CoapEndpoint;
-import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.eclipse.californium.scandium.DTLSConnector;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
@@ -27,9 +26,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.Random;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -51,7 +47,7 @@ public class DefaultCoapServerService implements CoapServerService {
     private ScheduledExecutorService dtlsSessionsExecutor;
 
     @PostConstruct
-    public void init() throws UnknownHostException {
+    public void init() throws Exception {
         createCoapServer();
     }
 
@@ -66,7 +62,7 @@ public class DefaultCoapServerService implements CoapServerService {
     }
 
     @Override
-    public CoapServer getCoapServer() throws UnknownHostException {
+    public CoapServer getCoapServer() throws Exception {
         if (server != null) {
             return server;
         } else {
@@ -84,16 +80,17 @@ public class DefaultCoapServerService implements CoapServerService {
         return coapServerContext.getTimeout();
     }
 
-    private CoapServer createCoapServer() throws UnknownHostException {
+    private CoapServer createCoapServer() throws Exception {
+        if (!isAnySecurityModeEnabled()) {
+            throw new RuntimeException("Failed to initialize CoAP Server. Invalid CoAP security mode!");
+        }
         server = new CoapServer();
 
-        CoapEndpoint.Builder noSecCoapEndpointBuilder = new CoapEndpoint.Builder();
-        InetAddress addr = InetAddress.getByName(coapServerContext.getHost());
-        InetSocketAddress sockAddr = new InetSocketAddress(addr, coapServerContext.getPort());
-        noSecCoapEndpointBuilder.setInetSocketAddress(sockAddr);
-        noSecCoapEndpointBuilder.setNetworkConfig(NetworkConfig.getStandard());
-        CoapEndpoint noSecCoapEndpoint = noSecCoapEndpointBuilder.build();
-        server.addEndpoint(noSecCoapEndpoint);
+        if (isNoSecureEnabled()) {
+            TbCoapNoSecureSettings noSecureSettings = coapServerContext.getNoSecureSettings();
+            CoapEndpoint noSecureCoapEndpoint = noSecureSettings.getNoSecureCoapEndpoint();
+            server.addEndpoint(noSecureCoapEndpoint);
+        }
 
         if (isDtlsEnabled()) {
             CoapEndpoint.Builder dtlsCoapEndpointBuilder = new CoapEndpoint.Builder();
@@ -115,10 +112,19 @@ public class DefaultCoapServerService implements CoapServerService {
 
         server.start();
         return server;
+
+    }
+
+    private boolean isNoSecureEnabled() {
+        return coapServerContext.getNoSecureSettings() != null;
     }
 
     private boolean isDtlsEnabled() {
         return coapServerContext.getDtlsSettings() != null;
+    }
+
+    private boolean isAnySecurityModeEnabled() {
+        return isNoSecureEnabled() || isDtlsEnabled();
     }
 
     private void evictTimeoutSessions() {

@@ -19,16 +19,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.coapserver.CoapServerService;
 import org.thingsboard.server.coapserver.TbCoapServerComponent;
+import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.transport.coap.efento.CoapEfentoTransportResource;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.net.UnknownHostException;
 
 @Service("CoapTransportService")
 @TbCoapServerComponent
@@ -49,7 +47,7 @@ public class CoapTransportService implements TbTransportService {
     private CoapServer coapServer;
 
     @PostConstruct
-    public void init() throws UnknownHostException {
+    public void init() throws Exception {
         log.info("Starting CoAP transport...");
         coapServer = coapServerService.getCoapServer();
         CoapResource api = new CoapResource(API);
