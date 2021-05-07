@@ -87,7 +87,7 @@ public class DefaultTbQueueRequestTemplateTest {
     ExecutorService executor;
     String topic = "js-responses-tb-node-0";
     long maxRequestTimeout = 10;
-    long maxPendingRequests = 1000;
+    long maxPendingRequests = 32;
     long pollInterval = 5;
 
     DefaultTbQueueRequestTemplate inst;
@@ -124,14 +124,14 @@ public class DefaultTbQueueRequestTemplateTest {
 
         inst.init();
         //assertNotEquals(0, inst.tickTs);
-        assertEquals(0, inst.nextCleanupNs);
+        assertThat(inst.nextCleanupNs, equalTo(0L));
         verify(queueAdmin, times(1)).createTopicIfNotExists(topic);
         verify(requestTemplate, times(1)).init();
         verify(responseTemplate, times(1)).subscribe();
         verify(executorMock, times(1)).submit(any(Runnable.class));
 
         inst.stop();
-        assertTrue(inst.stopped);
+        assertThat(inst.stopped, is(true));
         verify(responseTemplate, times(1)).unsubscribe();
         verify(requestTemplate, times(1)).stop();
         verify(executorMock, never()).shutdownNow();
@@ -165,11 +165,11 @@ public class DefaultTbQueueRequestTemplateTest {
     public void givenMessages_whenSend_thenOK() {
         willDoNothing().given(inst).sendToRequestTemplate(any(), any(), any(), any());
         inst.init();
-        int msgCount = 10;
+        final int msgCount = 10;
         for (int i = 0; i < msgCount; i++) {
             inst.send(getRequestMsgMock());
         }
-        assertEquals(msgCount, inst.pendingRequests.mappingCount());
+        assertThat(inst.pendingRequests.mappingCount(), equalTo((long) msgCount));
         verify(inst, times(msgCount)).sendToRequestTemplate(any(), any(), any(), any());
     }
 
@@ -179,10 +179,10 @@ public class DefaultTbQueueRequestTemplateTest {
         inst.init();
         int msgOverflowCount = 10;
         for (int i = 0; i < inst.maxPendingRequests; i++) {
-            assertFalse(inst.send(getRequestMsgMock()).isDone()); //SettableFuture future - pending only
+            assertThat(inst.send(getRequestMsgMock()).isDone(), is(false)); //SettableFuture future - pending only
         }
         for (int i = 0; i < msgOverflowCount; i++) {
-            assertTrue("max pending requests overflow", inst.send(getRequestMsgMock()).isDone()); //overflow, immediate failed future
+            assertThat("max pending requests overflow", inst.send(getRequestMsgMock()).isDone(), is(true)); //overflow, immediate failed future
         }
         assertThat(inst.pendingRequests.mappingCount(), equalTo(inst.maxPendingRequests));
         verify(inst, times((int) inst.maxPendingRequests)).sendToRequestTemplate(any(), any(), any(), any());
@@ -205,7 +205,7 @@ public class DefaultTbQueueRequestTemplateTest {
         long stepNs = TimeUnit.MILLISECONDS.toNanos(1);
         for (long i = 0; i <= inst.maxRequestTimeoutNs * 2; i = i + stepNs) {
             currentTime.addAndGet(stepNs);
-            assertFalse(inst.send(getRequestMsgMock()).isDone()); //SettableFuture future - pending only
+            assertThat(inst.send(getRequestMsgMock()).isDone(), is(false)); //SettableFuture future - pending only
             if (i % (inst.maxRequestTimeoutNs * 3 / 2) == 0) {
                 inst.fetchAndProcessResponses();
             }
@@ -222,7 +222,6 @@ public class DefaultTbQueueRequestTemplateTest {
         for (int i = 0; i < responseMetaDataList.size(); i++) {
             assertThat("tickTs >= calculatedExpTime", tickTsList.get(i), greaterThanOrEqualTo(responseMetaDataList.get(i).getSubmitTime() + responseMetaDataList.get(i).getTimeout()));
         }
-
     }
 
     TbQueueMsg getRequestMsgMock() {

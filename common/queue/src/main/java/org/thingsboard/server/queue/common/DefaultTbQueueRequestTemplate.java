@@ -158,11 +158,10 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
 
     void setTimeoutException(UUID key, ResponseMetaData<Response> staleRequest, long currentNs) {
         if (currentNs >= staleRequest.getSubmitTime() + staleRequest.getTimeout()) {
-            log.info("Request timeout detected, currentNs [{}], {}, key [{}]", currentNs, staleRequest, key);
+            log.warn("Request timeout detected, currentNs [{}], {}, key [{}]", currentNs, staleRequest, key);
         } else {
             log.error("Request timeout detected, currentNs [{}], {}, key [{}]", currentNs, staleRequest, key);
         }
-
         staleRequest.future.setException(new TimeoutException());
     }
 
@@ -218,7 +217,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         long currentClockNs = getCurrentClockNs();
         SettableFuture<Response> future = SettableFuture.create();
         ResponseMetaData<Response> responseMetaData = new ResponseMetaData<>(currentClockNs + maxRequestTimeoutNs, future, currentClockNs, maxRequestTimeoutNs);
-        log.info("pending {}", responseMetaData); //TODO trace
+        log.trace("pending {}", responseMetaData);
         if (pendingRequests.putIfAbsent(requestId, responseMetaData) != null) {
             log.warn("Pending request already exists [{}]!", maxPendingRequests);
             return Futures.immediateFailedFuture(new RuntimeException("Pending request already exists !" + requestId));
