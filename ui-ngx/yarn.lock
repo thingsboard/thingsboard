@@ -272,6 +272,13 @@
   dependencies:
     tslib "^2.0.0"
 
+"@angular/service-worker@^10.1.5":
+  version "10.2.5"
+  resolved "https://registry.yarnpkg.com/@angular/service-worker/-/service-worker-10.2.5.tgz#85a259db6e0aba35250ebc6c3ee0001d072ae6e5"
+  integrity sha512-8gsI+sg84Oor83w2iyQ99Tmf3sEXXiLT9R/kJ0NuOzRkPW0GV//Hi0y1emTpnp+INzYlCgqRBdp45HlDnynYOA==
+  dependencies:
+    tslib "^2.0.0"
+
 "@ant-design/css-animation@^1.7.2":
   version "1.7.3"
   resolved "https://registry.yarnpkg.com/@ant-design/css-animation/-/css-animation-1.7.3.tgz#60a1c970014e86b28f940510d69e503e428f1136"
