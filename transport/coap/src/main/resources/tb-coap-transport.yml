@@ -86,8 +86,6 @@ redis:
 # COAP server parameters
 transport:
   coap:
-    # Enable/disable coap transport protocol.
-    enabled: "${COAP_ENABLED:true}"
     timeout: "${COAP_TIMEOUT:10000}"
     security:
       # Security mode. Allowed values: NO_SECURE, DTLS, MIXED

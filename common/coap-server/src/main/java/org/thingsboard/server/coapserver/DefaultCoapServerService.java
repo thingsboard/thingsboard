@@ -86,13 +86,13 @@ public class DefaultCoapServerService implements CoapServerService {
         }
         server = new CoapServer();
 
-        if (isNoSecureEnabled()) {
+        if (isNoSecureModeEnabled()) {
             TbCoapNoSecureSettings noSecureSettings = coapServerContext.getNoSecureSettings();
             CoapEndpoint noSecureCoapEndpoint = noSecureSettings.getNoSecureCoapEndpoint();
             server.addEndpoint(noSecureCoapEndpoint);
         }
 
-        if (isDtlsEnabled()) {
+        if (isDtlsModeEnabled()) {
             CoapEndpoint.Builder dtlsCoapEndpointBuilder = new CoapEndpoint.Builder();
             TbCoapDtlsSettings dtlsSettings = coapServerContext.getDtlsSettings();
             DtlsConnectorConfig dtlsConnectorConfig = dtlsSettings.dtlsConnectorConfig();
@@ -115,16 +115,16 @@ public class DefaultCoapServerService implements CoapServerService {
 
     }
 
-    private boolean isNoSecureEnabled() {
+    private boolean isNoSecureModeEnabled() {
         return coapServerContext.getNoSecureSettings() != null;
     }
 
-    private boolean isDtlsEnabled() {
+    private boolean isDtlsModeEnabled() {
         return coapServerContext.getDtlsSettings() != null;
     }
 
     private boolean isAnySecurityModeEnabled() {
-        return isNoSecureEnabled() || isDtlsEnabled();
+        return isNoSecureModeEnabled() || isDtlsModeEnabled();
     }
 
     private void evictTimeoutSessions() {
