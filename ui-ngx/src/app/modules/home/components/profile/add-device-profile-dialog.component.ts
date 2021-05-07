@@ -49,6 +49,7 @@ import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { deepTrim } from '@core/utils';
 import { ServiceType } from '@shared/models/queue.models';
+import { DashboardId } from '@shared/models/id/dashboard-id';
 
 export interface AddDeviceProfileDialogData {
   deviceProfileName: string;
@@ -108,6 +109,7 @@ export class AddDeviceProfileDialogComponent extends
         type: [DeviceProfileType.DEFAULT, [Validators.required]],
         image: [null, []],
         defaultRuleChainId: [null, []],
+        defaultDashboardId: [null, []],
         defaultQueueName: ['', []],
         description: ['', []]
       }
@@ -198,6 +200,9 @@ export class AddDeviceProfileDialogComponent extends
       };
       if (this.deviceProfileDetailsFormGroup.get('defaultRuleChainId').value) {
         deviceProfile.defaultRuleChainId = new RuleChainId(this.deviceProfileDetailsFormGroup.get('defaultRuleChainId').value);
+      }
+      if (this.deviceProfileDetailsFormGroup.get('defaultDashboardId').value) {
+        deviceProfile.defaultDashboardId = new DashboardId(this.deviceProfileDetailsFormGroup.get('defaultDashboardId').value);
       }
       this.deviceProfileService.saveDeviceProfile(deepTrim(deviceProfile)).subscribe(
         (savedDeviceProfile) => {

@@ -87,7 +87,9 @@ public class AlarmDataAdapter {
         alarm.setSeverity(AlarmSeverity.valueOf(row.get(ModelConstants.ALARM_SEVERITY_PROPERTY).toString()));
         alarm.setStatus(AlarmStatus.valueOf(row.get(ModelConstants.ALARM_STATUS_PROPERTY).toString()));
         alarm.setTenantId(new TenantId((UUID) row.get(ModelConstants.TENANT_ID_PROPERTY)));
-        alarm.setCustomerId(new CustomerId((UUID) row.get(ModelConstants.CUSTOMER_ID_PROPERTY)));
+        Object customerIdObj = row.get(ModelConstants.CUSTOMER_ID_PROPERTY);
+        CustomerId customerId = customerIdObj != null ? new CustomerId((UUID) customerIdObj) : null;
+        alarm.setCustomerId(customerId);
         if (row.get(ModelConstants.ALARM_PROPAGATE_RELATION_TYPES) != null) {
             String propagateRelationTypes = row.get(ModelConstants.ALARM_PROPAGATE_RELATION_TYPES).toString();
             if (!StringUtils.isEmpty(propagateRelationTypes)) {

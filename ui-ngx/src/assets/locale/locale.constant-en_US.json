@@ -1048,6 +1048,7 @@
         "profile-configuration": "Profile configuration",
         "transport-configuration": "Transport configuration",
         "default-rule-chain": "Default rule chain",
+        "default-dashboard": "Default dashboard",
         "select-queue-hint": "Select from a drop-down list or add a custom name.",
         "delete-device-profile-title": "Are you sure you want to delete the device profile '{{deviceProfileName}}'?",
         "delete-device-profile-text": "Be careful, after the confirmation the device profile and all related data will become unrecoverable.",

@@ -333,7 +333,8 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
 
         List<DeviceProfileInfo> deviceProfileInfos = deviceProfiles.stream()
                 .map(deviceProfile -> new DeviceProfileInfo(deviceProfile.getId(),
-                        deviceProfile.getName(), deviceProfile.getImage(), deviceProfile.getType(), deviceProfile.getTransportType())).collect(Collectors.toList());
+                        deviceProfile.getName(), deviceProfile.getImage(), deviceProfile.getDefaultDashboardId(),
+                        deviceProfile.getType(), deviceProfile.getTransportType())).collect(Collectors.toList());
 
         Assert.assertEquals(deviceProfileInfos, loadedDeviceProfileInfos);
 

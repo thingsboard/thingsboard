@@ -84,7 +84,8 @@ ALTER TABLE dashboard
 ALTER TABLE device_profile
     ADD COLUMN IF NOT EXISTS image varchar(1000000),
     ADD COLUMN IF NOT EXISTS firmware_id uuid,
-    ADD COLUMN IF NOT EXISTS software_id uuid;
+    ADD COLUMN IF NOT EXISTS software_id uuid,
+    ADD COLUMN IF NOT EXISTS default_dashboard_id uuid;
 
 ALTER TABLE device
     ADD COLUMN IF NOT EXISTS firmware_id uuid,
@@ -107,6 +108,12 @@ DO $$
             ALTER TABLE device_profile
                 ADD CONSTRAINT fk_software_device_profile
                     FOREIGN KEY (firmware_id) REFERENCES firmware(id);
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_default_dashboard_device_profile') THEN
+            ALTER TABLE device_profile
+                ADD CONSTRAINT fk_default_dashboard_device_profile
+                    FOREIGN KEY (default_dashboard_id) REFERENCES dashboard(id);
         END IF;
 
         IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_firmware_device') THEN
