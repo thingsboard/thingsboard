@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS alarm (
     start_ts bigint,
     status varchar(255),
     tenant_id uuid,
+    customer_id uuid,
     propagate_relation_types varchar,
     type varchar(255)
 );

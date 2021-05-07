@@ -120,13 +120,7 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
                                         Pageable pageable);
 
     @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a) FROM AlarmEntity a " +
-            "WHERE a.tenantId = :tenantId " +
-            "AND (" +
-            "a.originatorId IN (SELECT d.id from DeviceEntity d WHERE d.customerId = :customerId) " +
-            "OR a.originatorId IN (SELECT asset.id from AssetEntity asset WHERE asset.customerId = :customerId) " +
-            "OR a.originatorId IN (SELECT u.id from UserEntity u WHERE u.customerId = :customerId) " +
-            "OR a.originatorId = :customerId" +
-            ") " +
+            "WHERE a.tenantId = :tenantId AND a.customerId = :customerId " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
             "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
@@ -137,13 +131,7 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
             countQuery = "" +
                     "SELECT count(a) " +
                     "FROM AlarmEntity a " +
-                    "WHERE a.tenantId = :tenantId " +
-                    "AND (" +
-                    "a.originatorId IN (SELECT d.id from DeviceEntity d WHERE d.customerId = :customerId) " +
-                    "OR a.originatorId IN (SELECT asset.id from AssetEntity asset WHERE asset.customerId = :customerId) " +
-                    "OR a.originatorId IN (SELECT u.id from UserEntity u WHERE u.customerId = :customerId) " +
-                    "OR a.originatorId = :customerId" +
-                    ") " +
+                    "WHERE a.tenantId = :tenantId AND a.customerId = :customerId " +
                     "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
                     "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
                     "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +

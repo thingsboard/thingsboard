@@ -90,6 +90,11 @@ ALTER TABLE device
     ADD COLUMN IF NOT EXISTS firmware_id uuid,
     ADD COLUMN IF NOT EXISTS software_id uuid;
 
+ALTER TABLE alarm
+    ADD COLUMN IF NOT EXISTS customer_id uuid;
+
+DELETE FROM relation WHERE from_type = 'TENANT' AND relation_type_group = 'RULE_CHAIN';
+
 DO $$
     BEGIN
         IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_firmware_device_profile') THEN

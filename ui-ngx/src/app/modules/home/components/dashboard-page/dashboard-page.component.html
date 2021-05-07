@@ -188,12 +188,12 @@
           </mat-drawer-content>
         </mat-drawer-container>
         <section fxLayout="row" class="layout-wrap tb-footer-buttons" fxLayoutAlign="start end">
-          <tb-footer-fab-buttons *ngIf="!embedded"
+          <tb-footer-fab-buttons *ngIf="!embedded && !isMobileApp"
                                  [fxShow]="!isAddingWidget && isEdit && !widgetEditMode"
                                  relative
                                  [footerFabButtons]="addWidgetFabButtons">
           </tb-footer-fab-buttons>
-          <button *ngIf="(isTenantAdmin() || isSystemAdmin()) && !forceFullscreen && !embedded"
+          <button *ngIf="(isTenantAdmin() || isSystemAdmin()) && !forceFullscreen && !embedded && !isMobileApp"
                   mat-fab color="accent" class="tb-btn-footer"
                   [ngClass]="{'tb-hide': !isEdit || isAddingWidget}"
                   [disabled]="isLoading$ | async"
@@ -202,7 +202,7 @@
                   matTooltipPosition="above">
             <mat-icon>done</mat-icon>
           </button>
-          <button *ngIf="(isTenantAdmin() || isSystemAdmin()) && !forceFullscreen && !embedded"
+          <button *ngIf="(isTenantAdmin() || isSystemAdmin()) && !forceFullscreen && !embedded && !isMobileApp"
                   mat-fab color="accent" class="tb-btn-footer"
                   [ngClass]="{'tb-hide': isAddingWidget || (isLoading$ | async)}"
                   [disabled]="isLoading$ | async"

@@ -51,6 +51,15 @@ public interface RuleChainDao extends Dao<RuleChain>, TenantEntityDao {
     PageData<RuleChain> findRuleChainsByTenantIdAndType(UUID tenantId, RuleChainType type, PageLink pageLink);
 
     /**
+     * Find root rule chain by tenantId and type
+     *
+     * @param tenantId the tenantId
+     * @param type the type
+     * @return the rule chain object
+     */
+    RuleChain findRootRuleChainByTenantIdAndType(UUID tenantId, RuleChainType type);
+
+    /**
      * Find rule chains by tenantId, edgeId and page link.
      *
      * @param tenantId the tenantId
