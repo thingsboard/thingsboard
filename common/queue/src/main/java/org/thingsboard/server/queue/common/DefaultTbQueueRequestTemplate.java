@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.TbStopWatch;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueAdmin;
@@ -95,11 +96,13 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
 
     void mainLoop() {
         while (!stopped) {
+            TbStopWatch sw = TbStopWatch.startNew();
             try {
                 fetchAndProcessResponses();
             } catch (Throwable e) {
-                log.warn("Failed to obtain and process responses from queue. Going to sleep " + pollInterval + "ms", e);
-                sleep();
+                long sleepNanos = TimeUnit.MILLISECONDS.toNanos(this.pollInterval) - sw.stopAndGetTotalTimeNanos();
+                log.warn("Failed to obtain and process responses from queue. Going to sleep " + sleepNanos + "ns", e);
+                sleep(sleepNanos);
             }
         }
     }
@@ -149,9 +152,8 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         return responseTemplate.poll(pollInterval);
     }
 
-    void sleep() {
-        Thread.yield();
-        LockSupport.parkNanos(1);
+    void sleep(long nanos) {
+        LockSupport.parkNanos(nanos);
     }
 
     void setTimeoutException(UUID key, ResponseMetaData<Response> staleRequest, long currentNs) {

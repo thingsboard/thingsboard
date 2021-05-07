@@ -54,13 +54,13 @@ import java.util.concurrent.atomic.AtomicLong;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.Matchers.lessThan;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.longThat;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
@@ -141,7 +141,7 @@ public class DefaultTbQueueRequestTemplateTest {
     public void givenMainLoop_whenLoopFewTimes_thenVerifyInvocationCount() throws InterruptedException {
         executor = inst.createExecutor();
         CountDownLatch latch = new CountDownLatch(5);
-        willDoNothing().given(inst).sleep();
+        willDoNothing().given(inst).sleep(anyLong());
         willAnswer(invocation -> {
             if (latch.getCount() == 1) {
                 inst.stop(); //stop the loop in natural way
@@ -158,7 +158,7 @@ public class DefaultTbQueueRequestTemplateTest {
         latch.await(10, TimeUnit.SECONDS);
 
         verify(inst, times(5)).fetchAndProcessResponses();
-        verify(inst, times(2)).sleep();
+        verify(inst, times(2)).sleep(longThat(lessThan(TimeUnit.MILLISECONDS.toNanos(inst.pollInterval))));
     }
 
     @Test
