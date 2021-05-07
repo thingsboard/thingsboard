@@ -112,7 +112,6 @@ public class DefaultCoapServerService implements CoapServerService {
 
         server.start();
         return server;
-
     }
 
     private boolean isNoSecureModeEnabled() {

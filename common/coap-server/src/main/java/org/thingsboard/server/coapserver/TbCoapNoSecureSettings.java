@@ -52,4 +52,5 @@ public class TbCoapNoSecureSettings {
         InetAddress addr = InetAddress.getByName(host);
         return new InetSocketAddress(addr, port);
     }
+
 }
