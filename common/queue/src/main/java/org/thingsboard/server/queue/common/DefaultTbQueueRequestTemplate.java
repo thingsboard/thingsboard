@@ -41,6 +41,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
@@ -97,7 +98,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
             try {
                 fetchAndProcessResponses();
             } catch (Throwable e) {
-                log.warn("Failed to obtain responses from queue. Going to sleep " + pollInterval + "ms", e);
+                log.warn("Failed to obtain and process responses from queue. Going to sleep " + pollInterval + "ms", e);
                 sleep();
             }
         }
@@ -149,11 +150,8 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
     }
 
     void sleep() {
-        try {
-            Thread.sleep(pollInterval);
-        } catch (InterruptedException e2) {
-            log.trace("Failed to wait until the server has capacity to handle new responses", e2);
-        }
+        Thread.yield();
+        LockSupport.parkNanos(1);
     }
 
     void setTimeoutException(UUID key, ResponseMetaData<Response> staleRequest, long currentNs) {
