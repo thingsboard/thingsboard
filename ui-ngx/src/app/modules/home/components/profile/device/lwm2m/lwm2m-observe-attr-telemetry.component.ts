@@ -261,7 +261,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
       r.attribute = false;
       r.telemetry = false;
       r.observe = false;
-      r.keyName = {};
       r.attributeLwm2m = {};
     });
     const valueOld = this.instancesToSetId(instancesArray);
