@@ -206,6 +206,11 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
 
     @Override
     public ListenableFuture<Response> send(Request request) {
+        return send(request, this.maxRequestTimeoutNs);
+    }
+
+    @Override
+    public ListenableFuture<Response> send(Request request, long requestTimeoutNs) {
         if (pendingRequests.mappingCount() >= maxPendingRequests) {
             log.warn("Pending request map is full [{}]! Consider to increase maxPendingRequests or increase processing performance", maxPendingRequests);
             return Futures.immediateFailedFuture(new RuntimeException("Pending request map is full!"));
@@ -216,7 +221,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         request.getHeaders().put(REQUEST_TIME, longToBytes(getCurrentTimeMs()));
         long currentClockNs = getCurrentClockNs();
         SettableFuture<Response> future = SettableFuture.create();
-        ResponseMetaData<Response> responseMetaData = new ResponseMetaData<>(currentClockNs + maxRequestTimeoutNs, future, currentClockNs, maxRequestTimeoutNs);
+        ResponseMetaData<Response> responseMetaData = new ResponseMetaData<>(currentClockNs + requestTimeoutNs, future, currentClockNs, requestTimeoutNs);
         log.trace("pending {}", responseMetaData);
         if (pendingRequests.putIfAbsent(requestId, responseMetaData) != null) {
             log.warn("Pending request already exists [{}]!", maxPendingRequests);
@@ -226,11 +231,18 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         return future;
     }
 
+    /**
+     * MONOTONIC clock instead jumping wall clock.
+     * Wrapped into the method for the test purposes to travel through the time
+     * */
     long getCurrentClockNs() {
-        return System.nanoTime(); //MONOTONIC clock instead wall clock
+        return System.nanoTime();
     }
 
-    long getCurrentTimeMs() { //Wall clock to send Ts to the an external service
+    /**
+     * Wall clock to send timestamp to an external service
+     * */
+    long getCurrentTimeMs() {
         return System.currentTimeMillis();
     }
 
