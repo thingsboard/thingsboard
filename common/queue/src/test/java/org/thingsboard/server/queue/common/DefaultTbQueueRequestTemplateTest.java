@@ -29,23 +29,29 @@
  * OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
  */
 package org.thingsboard.server.queue.common;
-
+import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsg;
-import org.thingsboard.server.queue.TbQueueMsgHeaders;
 import org.thingsboard.server.queue.TbQueueProducer;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -54,12 +60,17 @@ import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+
+@Slf4j
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultTbQueueRequestTemplateTest {
 
@@ -74,9 +85,9 @@ public class DefaultTbQueueRequestTemplateTest {
 
     ExecutorService executor;
     String topic = "js-responses-tb-node-0";
-    long maxRequestTimeout = 20;
+    long maxRequestTimeout = 10;
     long maxPendingRequests = 32;
-    long pollInterval = 25;
+    long pollInterval = 5;
 
     DefaultTbQueueRequestTemplate inst;
 
@@ -171,20 +182,49 @@ public class DefaultTbQueueRequestTemplateTest {
             assertFalse(inst.send(getRequestMsgMock()).isDone()); //SettableFuture future - pending only
         }
         for (int i = 0; i < msgOverflowCount; i++) {
-            assertTrue("max pending requests overflow", inst.send(getRequestMsgMock()).isDone()); //overflow, immediate failed future
+            assertFalse("max pending requests overflow", inst.send(getRequestMsgMock()).isDone()); //overflow, immediate failed future
         }
-        assertEquals(inst.maxPendingRequests, inst.pendingRequests.size());
+        assertThat(inst.pendingRequests.size(), equalTo(inst.maxPendingRequests));
         verify(inst, times((int) inst.maxPendingRequests)).sendToRequestTemplate(any(), any(), any(), any());
     }
 
     @Test
-    public void givenNothing_whenFetchAndProcessResponsesWithTimeout_thenFail() {
+    public void givenNothing_whenSendAndFetchAndProcessResponsesWithTimeout_thenFail() {
+        //given
+        AtomicLong currentTime = new AtomicLong();
+        willAnswer(x -> {
+            log.info("currentTime={}", currentTime.get());
+            return currentTime.get();
+        }).given(inst).getCurrentTime();
+        inst.init();
+        inst.setupNextCleanup();
+        willReturn(Collections.emptyList()).given(inst).doPoll();
+        willDoNothing().given(inst).processResponse(any());
+
+        //when
+        for (int i = 0; i <= inst.maxRequestTimeout*2; i++) {
+            currentTime.incrementAndGet();
+            assertFalse(inst.send(getRequestMsgMock()).isDone()); //SettableFuture future - pending only
+            if (i % (inst.maxRequestTimeout * 3 / 2) == 0) {
+                inst.fetchAndProcessResponses();
+            }
+        }
+
+        //then
+        ArgumentCaptor<DefaultTbQueueRequestTemplate.ResponseMetaData> argumentCaptorResp = ArgumentCaptor.forClass(DefaultTbQueueRequestTemplate.ResponseMetaData.class);
+        ArgumentCaptor<UUID> argumentCaptorUUID = ArgumentCaptor.forClass(UUID.class);
+        ArgumentCaptor<Long> argumentCaptorLong = ArgumentCaptor.forClass(Long.class);
+        verify(inst, atLeastOnce()).setTimeoutException(argumentCaptorUUID.capture(), argumentCaptorResp.capture(), argumentCaptorLong.capture());
+
+        List<DefaultTbQueueRequestTemplate.ResponseMetaData> responseMetaDataList = argumentCaptorResp.getAllValues();
+        List<Long> tickTsList = argumentCaptorLong.getAllValues();
+        for (int i = 0; i < responseMetaDataList.size(); i++) {
+            assertThat("tickTs >= calculatedExpTime", tickTsList.get(i), greaterThanOrEqualTo(responseMetaDataList.get(i).getSubmitTime() + responseMetaDataList.get(i).getTimeout()));
+        }
 
     }
 
     TbQueueMsg getRequestMsgMock() {
-        TbQueueMsg requestMsg = mock(TbQueueMsg.class);
-        willReturn(mock(TbQueueMsgHeaders.class)).given(requestMsg).getHeaders();
-        return requestMsg;
+        return mock(TbQueueMsg.class, RETURNS_DEEP_STUBS);
     }
 }

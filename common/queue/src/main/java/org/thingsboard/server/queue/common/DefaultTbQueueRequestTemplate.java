@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -47,15 +48,16 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
     private final TbQueueAdmin queueAdmin;
     private final TbQueueProducer<Request> requestTemplate;
     private final TbQueueConsumer<Response> responseTemplate;
-    private final ConcurrentMap<UUID, DefaultTbQueueRequestTemplate.ResponseMetaData<Response>> pendingRequests;
+    final ConcurrentMap<UUID, DefaultTbQueueRequestTemplate.ResponseMetaData<Response>> pendingRequests;
     final boolean internalExecutor;
-    private final ExecutorService executor;
-    private final long maxRequestTimeout;
-    private final long maxPendingRequests;
-    private final long pollInterval;
+    final ExecutorService executor;
+    final long maxRequestTimeout;
+    final long maxPendingRequests;
+    final long pollInterval;
     volatile long tickTs = 0L;
     volatile long tickSize = 0L;
     volatile boolean stopped = false;
+    long nextCleanupMs = 0L;
 
     private MessagesStats messagesStats;
 
@@ -75,49 +77,61 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         this.maxPendingRequests = maxPendingRequests;
         this.pollInterval = pollInterval;
         this.internalExecutor = (executor == null);
-        this.executor = internalExecutor
-                ? Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-queue-request-template-" + responseTemplate.getTopic()))
-                : executor;
+        this.executor = internalExecutor ? createExecutor() : executor;
+    }
+
+    ExecutorService createExecutor() {
+        return Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-queue-request-template-" + responseTemplate.getTopic()));
     }
 
     @Override
     public void init() {
         queueAdmin.createTopicIfNotExists(responseTemplate.getTopic());
         requestTemplate.init();
-        tickTs = System.currentTimeMillis();
+        tickTs = getCurrentTime();
         responseTemplate.subscribe();
-        executor.submit(this::fetchAndProcessResponses);
+        executor.submit(this::mainLoop);
     }
 
-    void fetchAndProcessResponses() {
-        long nextCleanupMs = 0L;
+    void mainLoop() {
         while (!stopped) {
             try {
-                final int pendingRequestsCount = pendingRequests.size();
-                log.trace("Starting template pool topic {}, for pendingRequests {}", responseTemplate.getTopic(), pendingRequestsCount);
-                List<Response> responses = doPoll(); //poll js responses
-                log.trace("Completed template poll topic {}, for pendingRequests [{}], received [{}]", responseTemplate.getTopic(), pendingRequestsCount, responses.size());
-                responses.forEach(this::processResponse);
-                responseTemplate.commit();
-                tickTs = System.currentTimeMillis();
-                tickSize = pendingRequests.size();
-                if (nextCleanupMs < tickTs) {
-                    //cleanup;
-                    pendingRequests.forEach((key, value) -> {
-                        if (value.expTime < tickTs) {
-                            ResponseMetaData<Response> staleRequest = pendingRequests.remove(key);
-                            if (staleRequest != null) {
-                                setTimeoutException(key, staleRequest);
-                            }
-                        }
-                    });
-                    nextCleanupMs = tickTs + maxRequestTimeout;
-                }
+                fetchAndProcessResponses();
             } catch (Throwable e) {
                 log.warn("Failed to obtain responses from queue. Going to sleep " + pollInterval + "ms", e);
                 sleep();
             }
         }
+    }
+
+    void fetchAndProcessResponses() {
+        final int pendingRequestsCount = pendingRequests.size();
+        log.info("Starting template pool topic {}, for pendingRequests {}", responseTemplate.getTopic(), pendingRequestsCount);
+        List<Response> responses = doPoll(); //poll js responses
+        //if (responses.size() > 0) {
+        log.trace("Completed template poll topic {}, for pendingRequests [{}], received [{}]", responseTemplate.getTopic(), pendingRequestsCount, responses.size());
+        //}
+        responses.forEach(this::processResponse); //this can take a long time
+        responseTemplate.commit();
+        tickTs = getCurrentTime();
+        tickSize = pendingRequests.size();
+        if (nextCleanupMs < tickTs) {
+            //cleanup;
+            pendingRequests.forEach((key, value) -> {
+                if (value.expTime < tickTs) {
+                    ResponseMetaData<Response> staleRequest = pendingRequests.remove(key);
+                    if (staleRequest != null) {
+                        setTimeoutException(key, staleRequest, tickTs);
+                    }
+                }
+            });
+            setupNextCleanup();
+        }
+    }
+
+    void setupNextCleanup() {
+        nextCleanupMs = tickTs + maxRequestTimeout;
+        log.info("setupNextCleanup {}", nextCleanupMs);
     }
 
     List<Response> doPoll() {
@@ -132,8 +146,13 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         }
     }
 
-    void setTimeoutException(UUID key, ResponseMetaData<Response> staleRequest) {
-        log.info("[{}] Request timeout detected, expTime [{}], tickTs [{}]", key, staleRequest.expTime, tickTs);
+    void setTimeoutException(UUID key, ResponseMetaData<Response> staleRequest, long tickTs) {
+        if (tickTs >= staleRequest.getSubmitTime() + staleRequest.getTimeout()) {
+            log.info("Request timeout detected, tickTs [{}], {}, key [{}]", tickTs, staleRequest, key);
+        } else {
+            log.error("Request timeout detected, tickTs [{}], {}, key [{}]", tickTs, staleRequest, key);
+        }
+
         staleRequest.future.setException(new TimeoutException());
     }
 
@@ -144,10 +163,10 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
             log.error("[{}] Missing requestId in header and body", response);
         } else {
             requestId = bytesToUuid(requestIdHeader);
-            log.trace("[{}] Response received: {}", requestId, response);
+            log.trace("[{}] Response received: {}", requestId, String.valueOf(response).replace("\n", " ")); //TODO remove overhead
             ResponseMetaData<Response> expectedResponse = pendingRequests.remove(requestId);
             if (expectedResponse == null) {
-                log.warn("[{}] Invalid or stale request, response: {}", requestId, response);
+                log.warn("[{}] Invalid or stale request, response: {}", requestId, String.valueOf(response).replace("\n", " "));
             } else {
                 expectedResponse.future.set(response);
             }
@@ -184,11 +203,22 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         UUID requestId = UUID.randomUUID();
         request.getHeaders().put(REQUEST_ID_HEADER, uuidToBytes(requestId));
         request.getHeaders().put(RESPONSE_TOPIC_HEADER, stringToBytes(responseTemplate.getTopic()));
-        request.getHeaders().put(REQUEST_TIME, longToBytes(System.currentTimeMillis()));
+        long currentTime = getCurrentTime();
+        request.getHeaders().put(REQUEST_TIME, longToBytes(currentTime));
         SettableFuture<Response> future = SettableFuture.create();
-        ResponseMetaData<Response> responseMetaData = new ResponseMetaData<>(tickTs + maxRequestTimeout, future);
+        ResponseMetaData<Response> responseMetaData = new ResponseMetaData<>(tickTs + maxRequestTimeout, future, currentTime, maxRequestTimeout);
+        log.info("pending {}", responseMetaData);
         pendingRequests.putIfAbsent(requestId, responseMetaData);
-        log.trace("[{}] Sending request, key [{}], expTime [{}], request {}", requestId, request.getKey(), responseMetaData.expTime, request);
+        sendToRequestTemplate(request, requestId, future, responseMetaData);
+        return future;
+    }
+
+    long getCurrentTime() {
+        return System.currentTimeMillis();
+    }
+
+    void sendToRequestTemplate(Request request, UUID requestId, SettableFuture<Response> future, ResponseMetaData<Response> responseMetaData) {
+        log.trace("[{}] Sending request, key [{}], expTime [{}], request {}", requestId, request.getKey(), responseMetaData.expTime, String.valueOf(request).replace("\n", " "));
         if (messagesStats != null) {
             messagesStats.incrementTotal();
         }
@@ -198,7 +228,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
                 if (messagesStats != null) {
                     messagesStats.incrementSuccessful();
                 }
-                log.trace("[{}] Request sent: {}, request {}", requestId, metadata, request);
+                log.trace("[{}] Request sent: {}, request {}", requestId, metadata, String.valueOf(request).replace("\n", " "));
             }
 
             @Override
@@ -210,16 +240,31 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
                 future.setException(t);
             }
         });
-        return future;
     }
 
-    private static class ResponseMetaData<T> {
+    @Getter
+    static class ResponseMetaData<T> {
+        private final long submitTime;
+        private final long timeout;
         private final long expTime;
         private final SettableFuture<T> future;
 
-        ResponseMetaData(long ts, SettableFuture<T> future) {
+        ResponseMetaData(long ts, SettableFuture<T> future, long submitTime, long timeout) {
+            this.submitTime = submitTime;
+            this.timeout = timeout;
             this.expTime = ts;
             this.future = future;
+        }
+
+        @Override
+        public String toString() {
+            return "ResponseMetaData{" +
+                    "submitTime=" + submitTime +
+                    ", calculatedExpTime=" + (submitTime + timeout) +
+                    ", expTime=" + expTime +
+                    ", deltaMs=" + (expTime - submitTime) +
+                    ", future=" + future +
+                    '}';
         }
     }
 
