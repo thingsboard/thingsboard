@@ -45,6 +45,7 @@ import {
   Lwm2mObjectAddInstancesData,
   Lwm2mObjectAddInstancesDialogComponent
 } from '@home/components/profile/device/lwm2m/lwm2m-object-add-instances-dialog.component';
+import _ from 'lodash';
 
 @Component({
   selector: 'tb-profile-lwm2m-observe-attr-telemetry',
@@ -279,7 +280,8 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
   private addInstancesNew = (idsAdd: Set<number>, objectLwM2MFormGroup: FormGroup, instancesFormArray: FormArray,
                              instanceNew: Instance): void => {
     idsAdd.forEach(x => {
-      this.pushInstance(instancesFormArray, x, instanceNew);
+      instanceNew.resources.forEach(resource => {resource.keyName = _.camelCase(resource.name + x);});
+      this.pushInstance(instancesFormArray, x, deepClone(instanceNew as Instance));
     });
     (instancesFormArray.controls as FormGroup[]).sort((a, b) => a.value.id - b.value.id);
   }
