@@ -193,7 +193,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
 
             @Override
             public void onFailure(Throwable t) {
-                onScriptExecutionError(scriptId);
+                onScriptExecutionError(scriptId, t);
                 if (t instanceof TimeoutException || (t.getCause() != null && t.getCause() instanceof TimeoutException)) {
                     queueTimeoutMsgs.incrementAndGet();
                 }
@@ -205,9 +205,10 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
             if (invokeResult.getSuccess()) {
                 return invokeResult.getResult();
             } else {
-                onScriptExecutionError(scriptId);
+                final RuntimeException e = new RuntimeException(invokeResult.getErrorDetails());
+                onScriptExecutionError(scriptId, e);
                 log.debug("[{}] Failed to compile script due to [{}]: {}", scriptId, invokeResult.getErrorCode().name(), invokeResult.getErrorDetails());
-                throw new RuntimeException(invokeResult.getErrorDetails());
+                throw e;
             }
         }, callbackExecutor);
     }
