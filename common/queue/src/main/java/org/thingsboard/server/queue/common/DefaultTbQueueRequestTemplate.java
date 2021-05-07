@@ -36,10 +36,12 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response extends TbQueueMsg> extends AbstractTbQueueTemplate
@@ -48,16 +50,15 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
     private final TbQueueAdmin queueAdmin;
     private final TbQueueProducer<Request> requestTemplate;
     private final TbQueueConsumer<Response> responseTemplate;
-    final ConcurrentMap<UUID, DefaultTbQueueRequestTemplate.ResponseMetaData<Response>> pendingRequests;
+    final ConcurrentHashMap<UUID, DefaultTbQueueRequestTemplate.ResponseMetaData<Response>> pendingRequests = new ConcurrentHashMap<>();
     final boolean internalExecutor;
     final ExecutorService executor;
-    final long maxRequestTimeout;
+    final long maxRequestTimeoutNs;
     final long maxPendingRequests;
     final long pollInterval;
-    volatile long tickTs = 0L;
-    volatile long tickSize = 0L;
     volatile boolean stopped = false;
-    long nextCleanupMs = 0L;
+    long nextCleanupNs = 0L;
+    private final Lock cleanerLock = new ReentrantLock();
 
     private MessagesStats messagesStats;
 
@@ -72,8 +73,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         this.queueAdmin = queueAdmin;
         this.requestTemplate = requestTemplate;
         this.responseTemplate = responseTemplate;
-        this.pendingRequests = new ConcurrentHashMap<>();
-        this.maxRequestTimeout = maxRequestTimeout;
+        this.maxRequestTimeoutNs = TimeUnit.MILLISECONDS.toNanos(maxRequestTimeout);
         this.maxPendingRequests = maxPendingRequests;
         this.pollInterval = pollInterval;
         this.internalExecutor = (executor == null);
@@ -88,7 +88,6 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
     public void init() {
         queueAdmin.createTopicIfNotExists(responseTemplate.getTopic());
         requestTemplate.init();
-        tickTs = getCurrentTime();
         responseTemplate.subscribe();
         executor.submit(this::mainLoop);
     }
@@ -105,7 +104,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
     }
 
     void fetchAndProcessResponses() {
-        final int pendingRequestsCount = pendingRequests.size();
+        final long pendingRequestsCount = pendingRequests.mappingCount();
         log.info("Starting template pool topic {}, for pendingRequests {}", responseTemplate.getTopic(), pendingRequestsCount);
         List<Response> responses = doPoll(); //poll js responses
         //if (responses.size() > 0) {
@@ -113,25 +112,36 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         //}
         responses.forEach(this::processResponse); //this can take a long time
         responseTemplate.commit();
-        tickTs = getCurrentTime();
-        tickSize = pendingRequests.size();
-        if (nextCleanupMs < tickTs) {
-            //cleanup;
-            pendingRequests.forEach((key, value) -> {
-                if (value.expTime < tickTs) {
-                    ResponseMetaData<Response> staleRequest = pendingRequests.remove(key);
-                    if (staleRequest != null) {
-                        setTimeoutException(key, staleRequest, tickTs);
-                    }
-                }
-            });
-            setupNextCleanup();
+        tryCleanStaleRequests();
+    }
+
+    private boolean tryCleanStaleRequests() {
+        if (!cleanerLock.tryLock()) {
+            return false;
         }
+        try {
+            log.trace("tryCleanStaleRequest...");
+            final long currentNs = getCurrentClockNs();
+            if (nextCleanupNs < currentNs) {
+                pendingRequests.forEach((key, value) -> {
+                    if (value.expTime < currentNs) {
+                        ResponseMetaData<Response> staleRequest = pendingRequests.remove(key);
+                        if (staleRequest != null) {
+                            setTimeoutException(key, staleRequest, currentNs);
+                        }
+                    }
+                });
+                setupNextCleanup();
+            }
+        } finally {
+            cleanerLock.unlock();
+        }
+        return true;
     }
 
     void setupNextCleanup() {
-        nextCleanupMs = tickTs + maxRequestTimeout;
-        log.info("setupNextCleanup {}", nextCleanupMs);
+        nextCleanupNs = getCurrentClockNs() + maxRequestTimeoutNs;
+        log.info("setupNextCleanup {}", nextCleanupNs);
     }
 
     List<Response> doPoll() {
@@ -146,11 +156,11 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         }
     }
 
-    void setTimeoutException(UUID key, ResponseMetaData<Response> staleRequest, long tickTs) {
-        if (tickTs >= staleRequest.getSubmitTime() + staleRequest.getTimeout()) {
-            log.info("Request timeout detected, tickTs [{}], {}, key [{}]", tickTs, staleRequest, key);
+    void setTimeoutException(UUID key, ResponseMetaData<Response> staleRequest, long currentNs) {
+        if (currentNs >= staleRequest.getSubmitTime() + staleRequest.getTimeout()) {
+            log.info("Request timeout detected, currentNs [{}], {}, key [{}]", currentNs, staleRequest, key);
         } else {
-            log.error("Request timeout detected, tickTs [{}], {}, key [{}]", tickTs, staleRequest, key);
+            log.error("Request timeout detected, currentNs [{}], {}, key [{}]", currentNs, staleRequest, key);
         }
 
         staleRequest.future.setException(new TimeoutException());
@@ -197,23 +207,31 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
 
     @Override
     public ListenableFuture<Response> send(Request request) {
-        if (tickSize > maxPendingRequests) {
+        if (pendingRequests.mappingCount() >= maxPendingRequests) {
+            log.warn("Pending request map is full [{}]! Consider to increase maxPendingRequests or increase processing performance", maxPendingRequests);
             return Futures.immediateFailedFuture(new RuntimeException("Pending request map is full!"));
         }
         UUID requestId = UUID.randomUUID();
         request.getHeaders().put(REQUEST_ID_HEADER, uuidToBytes(requestId));
         request.getHeaders().put(RESPONSE_TOPIC_HEADER, stringToBytes(responseTemplate.getTopic()));
-        long currentTime = getCurrentTime();
-        request.getHeaders().put(REQUEST_TIME, longToBytes(currentTime));
+        request.getHeaders().put(REQUEST_TIME, longToBytes(getCurrentTimeMs()));
+        long currentClockNs = getCurrentClockNs();
         SettableFuture<Response> future = SettableFuture.create();
-        ResponseMetaData<Response> responseMetaData = new ResponseMetaData<>(tickTs + maxRequestTimeout, future, currentTime, maxRequestTimeout);
-        log.info("pending {}", responseMetaData);
-        pendingRequests.putIfAbsent(requestId, responseMetaData);
+        ResponseMetaData<Response> responseMetaData = new ResponseMetaData<>(currentClockNs + maxRequestTimeoutNs, future, currentClockNs, maxRequestTimeoutNs);
+        log.info("pending {}", responseMetaData); //TODO trace
+        if (pendingRequests.putIfAbsent(requestId, responseMetaData) != null) {
+            log.warn("Pending request already exists [{}]!", maxPendingRequests);
+            return Futures.immediateFailedFuture(new RuntimeException("Pending request already exists !" + requestId));
+        }
         sendToRequestTemplate(request, requestId, future, responseMetaData);
         return future;
     }
 
-    long getCurrentTime() {
+    long getCurrentClockNs() {
+        return System.nanoTime(); //MONOTONIC clock instead wall clock
+    }
+
+    long getCurrentTimeMs() { //Wall clock to send Ts to the an external service
         return System.currentTimeMillis();
     }
 
@@ -261,8 +279,8 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
             return "ResponseMetaData{" +
                     "submitTime=" + submitTime +
                     ", calculatedExpTime=" + (submitTime + timeout) +
-                    ", expTime=" + expTime +
                     ", deltaMs=" + (expTime - submitTime) +
+                    ", expTime=" + expTime +
                     ", future=" + future +
                     '}';
         }

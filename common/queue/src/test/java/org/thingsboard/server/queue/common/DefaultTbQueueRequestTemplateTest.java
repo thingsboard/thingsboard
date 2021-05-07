@@ -29,6 +29,7 @@
  * OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
  */
 package org.thingsboard.server.queue.common;
+
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -52,9 +53,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.BDDMockito.willDoNothing;
@@ -86,7 +87,7 @@ public class DefaultTbQueueRequestTemplateTest {
     ExecutorService executor;
     String topic = "js-responses-tb-node-0";
     long maxRequestTimeout = 10;
-    long maxPendingRequests = 32;
+    long maxPendingRequests = 1000;
     long pollInterval = 5;
 
     DefaultTbQueueRequestTemplate inst;
@@ -109,12 +110,12 @@ public class DefaultTbQueueRequestTemplateTest {
 
     @Test
     public void givenInstance_whenVerifyInitialParameters_thenOK() {
-        assertEquals(maxPendingRequests, inst.maxPendingRequests);
-        assertEquals(maxRequestTimeout, inst.maxRequestTimeout);
-        assertEquals(pollInterval, inst.pollInterval);
-        assertEquals(executorMock, inst.executor);
-        assertFalse(inst.stopped);
-        assertFalse(inst.internalExecutor);
+        assertThat(inst.maxPendingRequests, equalTo(maxPendingRequests));
+        assertThat(inst.maxRequestTimeoutNs, equalTo(TimeUnit.MILLISECONDS.toNanos(maxRequestTimeout)));
+        assertThat(inst.pollInterval, equalTo(pollInterval));
+        assertThat(inst.executor, is(executorMock));
+        assertThat(inst.stopped, is(false));
+        assertThat(inst.internalExecutor, is(false));
     }
 
     @Test
@@ -122,8 +123,8 @@ public class DefaultTbQueueRequestTemplateTest {
         willDoNothing().given(inst).mainLoop();
 
         inst.init();
-        assertNotEquals(0, inst.tickTs);
-        assertEquals(0, inst.nextCleanupMs);
+        //assertNotEquals(0, inst.tickTs);
+        assertEquals(0, inst.nextCleanupNs);
         verify(queueAdmin, times(1)).createTopicIfNotExists(topic);
         verify(requestTemplate, times(1)).init();
         verify(responseTemplate, times(1)).subscribe();
@@ -168,7 +169,7 @@ public class DefaultTbQueueRequestTemplateTest {
         for (int i = 0; i < msgCount; i++) {
             inst.send(getRequestMsgMock());
         }
-        assertEquals(msgCount, inst.pendingRequests.size());
+        assertEquals(msgCount, inst.pendingRequests.mappingCount());
         verify(inst, times(msgCount)).sendToRequestTemplate(any(), any(), any(), any());
     }
 
@@ -176,15 +177,14 @@ public class DefaultTbQueueRequestTemplateTest {
     public void givenMessagesOverMaxPendingRequests_whenSend_thenImmediateFailedFutureForTheOfRequests() {
         willDoNothing().given(inst).sendToRequestTemplate(any(), any(), any(), any());
         inst.init();
-        assertEquals(0, inst.tickSize);
         int msgOverflowCount = 10;
         for (int i = 0; i < inst.maxPendingRequests; i++) {
             assertFalse(inst.send(getRequestMsgMock()).isDone()); //SettableFuture future - pending only
         }
         for (int i = 0; i < msgOverflowCount; i++) {
-            assertFalse("max pending requests overflow", inst.send(getRequestMsgMock()).isDone()); //overflow, immediate failed future
+            assertTrue("max pending requests overflow", inst.send(getRequestMsgMock()).isDone()); //overflow, immediate failed future
         }
-        assertThat(inst.pendingRequests.size(), equalTo(inst.maxPendingRequests));
+        assertThat(inst.pendingRequests.mappingCount(), equalTo(inst.maxPendingRequests));
         verify(inst, times((int) inst.maxPendingRequests)).sendToRequestTemplate(any(), any(), any(), any());
     }
 
@@ -195,17 +195,18 @@ public class DefaultTbQueueRequestTemplateTest {
         willAnswer(x -> {
             log.info("currentTime={}", currentTime.get());
             return currentTime.get();
-        }).given(inst).getCurrentTime();
+        }).given(inst).getCurrentClockNs();
         inst.init();
         inst.setupNextCleanup();
         willReturn(Collections.emptyList()).given(inst).doPoll();
         willDoNothing().given(inst).processResponse(any());
 
         //when
-        for (int i = 0; i <= inst.maxRequestTimeout*2; i++) {
-            currentTime.incrementAndGet();
+        long stepNs = TimeUnit.MILLISECONDS.toNanos(1);
+        for (long i = 0; i <= inst.maxRequestTimeoutNs * 2; i = i + stepNs) {
+            currentTime.addAndGet(stepNs);
             assertFalse(inst.send(getRequestMsgMock()).isDone()); //SettableFuture future - pending only
-            if (i % (inst.maxRequestTimeout * 3 / 2) == 0) {
+            if (i % (inst.maxRequestTimeoutNs * 3 / 2) == 0) {
                 inst.fetchAndProcessResponses();
             }
         }
