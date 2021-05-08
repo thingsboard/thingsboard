@@ -69,7 +69,6 @@ import static org.eclipse.californium.core.coap.CoAP.ResponseCode.CONTENT;
 import static org.eclipse.leshan.core.ResponseCode.BAD_REQUEST;
 import static org.eclipse.leshan.core.ResponseCode.NOT_FOUND;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.DEFAULT_TIMEOUT;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FR_PATH_RESOURCE_VER_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_VALUE;
@@ -301,25 +300,21 @@ public class LwM2mTransportRequest {
                 if (rpcRequest != null) {
                     serviceImpl.sentRpcRequest(rpcRequest, response.getCode().getName(), response.getErrorMessage(), LOG_LW2M_ERROR);
                 }
-                /* Not Found
-                  set setClient_fw_version = empty
-                 */
-                if (FR_PATH_RESOURCE_VER_ID.equals(request.getPath().toString()) && lwM2MClient.isUpdateFw()) {
-                    lwM2MClient.setUpdateFw(false);
-                    lwM2MClient.getFrUpdate().setClientFwVersion("");
+                /** Not Found
+                  set setClient_fw_info... = empty
+                 **/
+                if (lwM2MClient.getFwUpdate().isInfoFw()) {
+                    lwM2MClient.getFwUpdate().initReadValue(serviceImpl, request.getPath().toString());
                     log.warn("updateFirmwareClient1");
-                    serviceImpl.updateFirmwareClient(lwM2MClient);
                 }
             }
         }, e -> {
-            /* version == null
-              set setClient_fw_version = empty
-             */
-            if (FR_PATH_RESOURCE_VER_ID.equals(request.getPath().toString()) && lwM2MClient.isUpdateFw()) {
-                lwM2MClient.setUpdateFw(false);
-                lwM2MClient.getFrUpdate().setClientFwVersion("");
+            /** version == null
+              set setClient_fw_info... = empty
+            **/
+            if (lwM2MClient.getFwUpdate().isInfoFw()) {
+                lwM2MClient.getFwUpdate().initReadValue(serviceImpl, request.getPath().toString());
                 log.warn("updateFirmwareClient2");
-                serviceImpl.updateFirmwareClient(lwM2MClient);
             }
             if (!lwM2MClient.isInit()) {
                 lwM2MClient.initReadValue(this.serviceImpl, convertPathFromObjectIdToIdVer(request.getPath().toString(), registration));

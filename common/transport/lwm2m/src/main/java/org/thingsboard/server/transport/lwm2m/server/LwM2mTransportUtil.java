@@ -108,10 +108,38 @@ public class LwM2mTransportUtil {
 
     public static final String CLIENT_NOT_AUTHORIZED = "Client not authorized";
 
-    public static final Integer FR_OBJECT_ID = 5;
-    public static final Integer FR_RESOURCE_VER_ID = 7;
-    public static final String FR_PATH_RESOURCE_VER_ID = LWM2M_SEPARATOR_PATH + FR_OBJECT_ID + LWM2M_SEPARATOR_PATH
-            + "0" + LWM2M_SEPARATOR_PATH + FR_RESOURCE_VER_ID;
+    // FirmWare
+    // Package W
+    public static final String FW_PATH_RESOURCE_PACKAGE_ID = "/5/0/0";
+    // State R
+    public static final String FW_PATH_RESOURCE_STATE_ID = "/5/0/3";
+    // Update Result R
+    public static final String FW_PATH_RESOURCE_RESULT_ID = "/5/0/5";
+    // PkgName R
+    public static final String FW_PATH_RESOURCE_NAME_ID = "/5/0/6";
+    // PkgVersion R
+    public static final String FW_PATH_RESOURCE_VER_ID = "/5/0/7";
+
+    // SoftWare
+    // Package W
+    public static final String SW_PATH_RESOURCE_PACKAGE_ID = "/9/0/2";
+    /** State R
+     * 0: INITIAL Before downloading. (see 5.1.2.1)
+     * 1: DOWNLOAD STARTED The downloading process has started and is on-going. (see 5.1.2.2)
+     * 2: DOWNLOADED The package has been completely downloaded  (see 5.1.2.3)
+     * 3: DELIVERED In that state, the package has been correctly downloaded and is ready to be installed.  (see 5.1.2.4)
+     * If executing the Install Resource failed, the state remains at DELIVERED.
+     * If executing the Install Resource was successful, the state changes from DELIVERED to INSTALLED.
+     * After executing the UnInstall Resource, the state changes to INITIAL.
+     * 4: INSTALLED
+     */
+    public static final String SW_PATH_RESOURCE_STATE_ID = "/9/0/3";
+    // Update Result R
+    public static final String SW_PATH_RESOURCE_RESULT_ID = "/9/0/9";
+    // PkgName R
+    public static final String SW_PATH_RESOURCE_NAME_ID = "/9/0/0";
+    // PkgVersion R
+    public static final String SW_PATH_RESOURCE_VER_ID = "/9/0/1";
 
     public enum LwM2mTypeServer {
         BOOTSTRAP(0, "bootstrap"),
@@ -167,9 +195,11 @@ public class LwM2mTransportUtil {
          */
         WRITE_UPDATE(7, "WriteUpdate"),
         WRITE_ATTRIBUTES(8, "WriteAttributes"),
-        DELETE(9, "Delete");
+        DELETE(9, "Delete"),
 
-//        READ_INFO_FW(10, "ReadInfoFirmware");
+        // only for RPC
+        READ_INFO_FW(10, "ReadInfoFirmware"),
+        READ_INFO_SW(11, "ReadInfoSoftware");
 
         public int code;
         public String type;
@@ -186,6 +216,82 @@ public class LwM2mTransportUtil {
                 }
             }
             throw new IllegalArgumentException(String.format("Unsupported typeOper type  : %s", type));
+        }
+    }
+
+    /**
+     /** State R
+     * 0: Idle (before downloading or after successful updating)
+     * 1: Downloading (The data sequence is on the way)
+     * 2: Downloaded
+     * 3: Updating
+     */
+    public enum StateFw {
+        IDLE(0, "Idle"),
+        DOWNLOADING(1, "Downloading"),
+        DOWNLOADED(2, "Downloaded"),
+        UPDATING(3, "Updating");
+
+        public int code;
+        public String type;
+
+        StateFw(int code, String type) {
+            this.code = code;
+            this.type = type;
+        }
+
+        public static StateFw fromStateFw(String type) {
+            for (StateFw to : StateFw.values()) {
+                if (to.type.equals(type)) {
+                    return to;
+                }
+            }
+            throw new IllegalArgumentException(String.format("Unsupported FW State type  : %s", type));
+        }
+    }
+
+    /**
+     * FW Update Result
+     * 0: Initial value. Once the updating process is initiated (Download /Update), this Resource MUST be reset to Initial value.
+     * 1: Firmware updated successfully.
+     * 2: Not enough flash memory for the new firmware package.
+     * 3: Out of RAM during downloading process.
+     * 4: Connection lost during downloading process.
+     * 5: Integrity check failure for new downloaded package.
+     * 6: Unsupported package type.
+     * 7: Invalid URI.
+     * 8: Firmware update failed.
+     * 9: Unsupported protocol.
+     */
+    public enum UpdateResultFw {
+        INITIAL(0, "Initial value", false),
+        UPDATE_SUCCESSFULLY(1, "Firmware updated successfully", false),
+        NOT_ENOUGH(2, "Not enough flash memory for the new firmware package", false),
+        OUT_OFF_RAM(3, "Out of RAM during downloading process", false),
+        CONNECTION_LOST(4, "Connection lost during downloading process", true),
+        INTEGRITY_CHECK_FAILURE(5, "Integrity check failure for new downloaded package", true),
+        UNSUPPORTED_TYPE(6, "Unsupported package type", false),
+        INVALID_URI(7, "Invalid URI", false),
+        UPDATE_FAILED(8, "Firmware update failed", false),
+        UNSUPPORTED_PROTOCOL(9, "Unsupported protocol", false);
+
+        public int code;
+        public String type;
+        public boolean isAgain;
+
+        UpdateResultFw(int code, String type, boolean isAgain) {
+            this.code = code;
+            this.type = type;
+            this.isAgain = isAgain;
+        }
+
+        public static StateFw fromStateFw(String type) {
+            for (StateFw to : StateFw.values()) {
+                if (to.type.equals(type)) {
+                    return to;
+                }
+            }
+            throw new IllegalArgumentException(String.format("Unsupported FW Update Result type  : %s", type));
         }
     }
 
@@ -531,7 +637,7 @@ public class LwM2mTransportUtil {
             case "ObjectLink":
                 return OBJLNK;
             default:
-                return  null;
+                return null;
         }
     }
 }

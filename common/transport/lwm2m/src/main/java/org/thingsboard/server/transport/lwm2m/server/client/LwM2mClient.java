@@ -27,6 +27,7 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.firmware.FirmwareType;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
@@ -49,8 +50,9 @@ import java.util.stream.Collectors;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.TRANSPORT_DEFAULT_LWM2M_VERSION;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromIdVerToObjectId;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.getVerFromPathIdVerOrId;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.equalsResourceTypeGetSimpleName;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.getVerFromPathIdVerOrId;
 
 @Slf4j
 public class LwM2mClient implements Cloneable {
@@ -74,25 +76,25 @@ public class LwM2mClient implements Cloneable {
     private UUID profileId;
     @Getter
     @Setter
-    private volatile LwM2mFirmwareUpdate frUpdate;
+    private volatile LwM2mFwSwUpdate fwUpdate;
+    @Getter
+    @Setter
+    private volatile LwM2mFwSwUpdate swUpdate;
     @Getter
     @Setter
     private Registration registration;
-
     private ValidateDeviceCredentialsResponseMsg credentialsResponse;
     @Getter
     private final Map<String, ResourceValue> resources;
     @Getter
     private final Map<String, TsKvProto> delayedRequests;
     @Getter
+    @Setter
     private final List<String> pendingReadRequests;
     @Getter
     private final Queue<LwM2mQueuedRequest> queuedRequests;
     @Getter
     private boolean init;
-    @Getter
-    @Setter
-    private volatile boolean updateFw;
 
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
@@ -109,9 +111,9 @@ public class LwM2mClient implements Cloneable {
         this.profileId = profileId;
         this.sessionId = sessionId;
         this.init = false;
-        this.updateFw = false;
         this.queuedRequests = new ConcurrentLinkedQueue<>();
-        this.frUpdate = new LwM2mFirmwareUpdate();
+        this.fwUpdate = new LwM2mFwSwUpdate(this, FirmwareType.FIRMWARE.name());
+        this.swUpdate = new LwM2mFwSwUpdate(this, FirmwareType.SOFTWARE.name());
         if (this.credentialsResponse != null && this.credentialsResponse.hasDeviceInfo()) {
             this.session = createSession(nodeId, sessionId, credentialsResponse);
             this.deviceId = new UUID(session.getDeviceIdMSB(), session.getDeviceIdLSB());
@@ -164,20 +166,30 @@ public class LwM2mClient implements Cloneable {
                 .build();
     }
 
-    public boolean saveResourceValue(String pathRez, LwM2mResource rez, LwM2mModelProvider modelProvider) {
-        if (this.resources.get(pathRez) != null && this.resources.get(pathRez).getResourceModel() != null) {
-            this.resources.get(pathRez).setLwM2mResource(rez);
+    public boolean saveResourceValue(String pathRezIdVer, LwM2mResource rez, LwM2mModelProvider modelProvider) {
+        if (this.resources.get(pathRezIdVer) != null && this.resources.get(pathRezIdVer).getResourceModel() != null) {
+            this.resources.get(pathRezIdVer).setLwM2mResource(rez);
             return true;
         } else {
-            LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRez));
+            LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRezIdVer));
             ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
             if (resourceModel != null) {
-                this.resources.put(pathRez, new ResourceValue(rez, resourceModel));
+                this.resources.put(pathRezIdVer, new ResourceValue(rez, resourceModel));
                 return true;
             } else {
                 return false;
             }
         }
+    }
+
+    public Object getResourceValue (String pathRezIdVer, String pathRezId) {
+        String pathRez = pathRezIdVer == null ? convertPathFromObjectIdToIdVer(pathRezId, this.registration) : pathRezIdVer;
+        if (this.resources.get(pathRez) != null) {
+            return  this.resources.get(pathRez).getLwM2mResource().isMultiInstances() ?
+                    this.resources.get(pathRez).getLwM2mResource().getValues() :
+                    this.resources.get(pathRez).getLwM2mResource().getValue();
+        }
+        return null;
     }
 
     public ResourceModel getResourceModel(String pathIdVer, LwM2mModelProvider modelProvider) {
