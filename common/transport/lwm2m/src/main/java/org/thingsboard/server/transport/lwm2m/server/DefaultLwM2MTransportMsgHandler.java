@@ -98,6 +98,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.L
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LWM2M_STRATEGY_2;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.DISCOVER;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.DISCOVER_All;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.EXECUTE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE_CANCEL;
@@ -479,7 +480,9 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                     }.getType());
                 }
                 lwm2mClientRpcRequest.setSessionInfo(sessionInfo);
-                if (OBSERVE_READ_ALL != lwm2mClientRpcRequest.getTypeOper() && lwm2mClientRpcRequest.getTargetIdVer() == null) {
+                if (!(OBSERVE_READ_ALL == lwm2mClientRpcRequest.getTypeOper()
+                        || DISCOVER_All == lwm2mClientRpcRequest.getTypeOper())
+                        && lwm2mClientRpcRequest.getTargetIdVer() == null) {
                     lwm2mClientRpcRequest.setErrorMsg(lwm2mClientRpcRequest.targetIdVerKey + " and " +
                             lwm2mClientRpcRequest.keyNameKey + " is null or bad format");
                 }
@@ -685,9 +688,11 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
             /** version != null
              * set setClient_fw_info... = value
              **/
-            if (lwM2MClient.getFwUpdate().isInfoFw()) {
+            if (lwM2MClient.getFwUpdate().isInfo()) {
                 lwM2MClient.getFwUpdate().initReadValue(this, path);
-                log.warn("updateFirmwareClient3");
+            }
+            if (lwM2MClient.getSwUpdate().isInfo()) {
+                lwM2MClient.getSwUpdate().initReadValue(this, path);
             }
             Set<String> paths = new HashSet<>();
             paths.add(path);
@@ -935,7 +940,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      */
     private void onDeviceProfileUpdate(Set<String> registrationIds, DeviceProfile deviceProfile) {
         LwM2mClientProfile lwM2MClientProfileOld = clientContext.getProfiles().get(deviceProfile.getUuidId()).clone();
-        if (clientContext.toClientProfile(deviceProfile) != null) {
+        if (clientContext.profileUpdate(deviceProfile) != null) {
             // #1
             JsonArray attributeOld = lwM2MClientProfileOld.getPostAttributeProfile();
             Set<String> attributeSetOld = convertJsonArrayToSet(attributeOld);
@@ -945,7 +950,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
             JsonObject keyNameOld = lwM2MClientProfileOld.getPostKeyNameProfile();
             JsonObject attributeLwm2mOld = lwM2MClientProfileOld.getPostAttributeLwm2mProfile();
 
-            LwM2mClientProfile lwM2MClientProfileNew = clientContext.getProfiles().get(deviceProfile.getUuidId());
+            LwM2mClientProfile lwM2MClientProfileNew = clientContext.getProfiles().get(deviceProfile.getUuidId()).clone();
             JsonArray attributeNew = lwM2MClientProfileNew.getPostAttributeProfile();
             Set<String> attributeSetNew = convertJsonArrayToSet(attributeNew);
             JsonArray telemetryNew = lwM2MClientProfileNew.getPostTelemetryProfile();
@@ -994,7 +999,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                     Registration registration = clientContext.getRegistration(registrationId);
                     this.readObserveFromProfile(registration, sendAttrToThingsboard.getPathPostParametersAdd(), READ);
                     // send attr/telemetry to tingsboard for new path
-                    this.updateAttrTelemetry(registration, sendAttrToThingsboard.getPathPostParametersAdd());
+//                    this.updateAttrTelemetry(registration, sendAttrToThingsboard.getPathPostParametersAdd());
                 });
             }
             // #4.2 del
@@ -1355,7 +1360,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     }
 
     private void sendReadFwInfo(LwM2mClient lwM2MClient) {
-        lwM2MClient.getFwUpdate().setInfoFw(true);
+        lwM2MClient.getFwUpdate().setInfo(true);
         lwM2MClient.getFwUpdate().getPendingInfoRequests().add(convertPathFromObjectIdToIdVer(FW_PATH_RESOURCE_VER_ID,
                 lwM2MClient.getRegistration()));
         lwM2MClient.getFwUpdate().getPendingInfoRequests().add(convertPathFromObjectIdToIdVer(FW_PATH_RESOURCE_NAME_ID,
@@ -1371,7 +1376,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     }
 
     private void sendReadSwInfo (LwM2mClient lwM2MClient) {
-        lwM2MClient.getFwUpdate().setInfoFw(true);
+        lwM2MClient.getFwUpdate().setInfo(true);
         lwM2MClient.getFwUpdate().getPendingInfoRequests().add(convertPathFromObjectIdToIdVer(SW_PATH_RESOURCE_VER_ID,
                 lwM2MClient.getRegistration()));
         lwM2MClient.getFwUpdate().getPendingInfoRequests().add(convertPathFromObjectIdToIdVer(SW_PATH_RESOURCE_NAME_ID,

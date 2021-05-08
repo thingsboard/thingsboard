@@ -29,10 +29,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PATH_RESOURCE_NAME_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PATH_RESOURCE_PACKAGE_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PATH_RESOURCE_RESULT_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PATH_RESOURCE_STATE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PATH_RESOURCE_VER_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_REPLACE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_PATH_RESOURCE_NAME_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_PATH_RESOURCE_PACKAGE_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_PATH_RESOURCE_VER_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
 
 @Slf4j
@@ -55,11 +59,9 @@ public class LwM2mFwSwUpdate {
     private volatile String stateUpdate;
     @Getter
     @Setter
-    private volatile boolean infoFw = false;
-    @Getter
-    @Setter
-    private volatile boolean infoSw = false;
-    private String type;
+    private volatile boolean info = false;
+    private final String type;
+    private DefaultLwM2MTransportMsgHandler serviceImpl;
 
     @Getter
     LwM2mClient lwM2MClient;
@@ -75,35 +77,58 @@ public class LwM2mFwSwUpdate {
     }
 
     public void initReadValue(DefaultLwM2MTransportMsgHandler serviceImpl, String pathIdVer) {
+        if (this.serviceImpl == null)  this.serviceImpl = serviceImpl;
         if (pathIdVer != null) {
             this.pendingInfoRequests.remove(pathIdVer);
         }
         if (this.pendingInfoRequests.size() == 0) {
-            this.infoFw = false;
-            boolean conditional = this.type.equals(FirmwareType.FIRMWARE.name()) ? conditionalFwUpdateStart() :
-                    conditionalSwUpdateStart();
-            if (conditional) this.updateFwSw(serviceImpl);
+            this.info = false;
+            if (this.type.equals(FirmwareType.FIRMWARE.name()) && conditionalFwUpdateStart()){
+                this.updateFw();
+            }
+            else if (this.type.equals(FirmwareType.SOFTWARE.name()) && conditionalSwUpdateStart()) {
+                updateSw();
+            }
         }
     }
 
-    private void updateFwSw(DefaultLwM2MTransportMsgHandler serviceImpl) {
-        if (this.conditionalFwUpdateStart()) {
+    private void updateFw() {
+        if (this.type.equals(FirmwareType.FIRMWARE.name())) {
             int chunkSize = 0;
             int chunk = 0;
-            byte[] firmwareChunk = serviceImpl.firmwareDataCache.get(this.currentId.toString(), chunkSize, chunk);
-            String targetIdVer = this.type.equals(FirmwareType.FIRMWARE.name()) ?
-                    convertPathFromObjectIdToIdVer(FW_PATH_RESOURCE_PACKAGE_ID, this.lwM2MClient.getRegistration()) :
-                    convertPathFromObjectIdToIdVer(SW_PATH_RESOURCE_PACKAGE_ID, this.lwM2MClient.getRegistration());
-            serviceImpl.lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(), targetIdVer, WRITE_REPLACE, ContentFormat.OPAQUE.getName(),
-                    firmwareChunk, serviceImpl.config.getTimeout(), null);
+            byte[] firmwareChunk = this.serviceImpl.firmwareDataCache.get(this.currentId.toString(), chunkSize, chunk);
+            String targetIdVer = convertPathFromObjectIdToIdVer(FW_PATH_RESOURCE_PACKAGE_ID, this.lwM2MClient.getRegistration());
+            this.observeStateFwUpdate ();
+            this.serviceImpl.lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(), targetIdVer, WRITE_REPLACE, ContentFormat.OPAQUE.getName(),
+                    firmwareChunk, this.serviceImpl.config.getTimeout(), null);
             this.stateUpdate = FirmwareUpdateStatus.DOWNLOADING.name();
-            log.warn("updateFirmwareClient [{}] [{}] [{}] [{}]",
+            log.warn("updateFirmwareClient [{}] [{}] [{}] [{}] [{}]",
                     lwM2MClient.getFwUpdate().getCurrentVersion(),
                     this.lwM2MClient.getResourceValue(null, FW_PATH_RESOURCE_VER_ID),
                     this.currentTitle,
-                    this.lwM2MClient.getResourceValue(null, FW_PATH_RESOURCE_NAME_ID)
+                    this.lwM2MClient.getResourceValue(null, FW_PATH_RESOURCE_NAME_ID),
+                    this.stateUpdate
             );
         }
+    }
+
+    private void updateSw() {
+        int chunkSize = 0;
+        int chunk = 0;
+        byte[] softwareChunk = this.serviceImpl.firmwareDataCache.get(this.currentId.toString(), chunkSize, chunk);
+        String targetIdVer = convertPathFromObjectIdToIdVer(SW_PATH_RESOURCE_PACKAGE_ID, this.lwM2MClient.getRegistration());
+
+        this.serviceImpl.lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(), targetIdVer, WRITE_REPLACE, ContentFormat.OPAQUE.getName(),
+                softwareChunk, this.serviceImpl.config.getTimeout(), null);
+        this.stateUpdate = FirmwareUpdateStatus.DOWNLOADING.name();
+        log.warn("updateSoftwareClient [{}] [{}] [{}] [{}] [{}]",
+                lwM2MClient.getSwUpdate().getCurrentVersion(),
+                this.lwM2MClient.getResourceValue(null, SW_PATH_RESOURCE_VER_ID),
+                this.currentTitle,
+                this.lwM2MClient.getResourceValue(null, SW_PATH_RESOURCE_NAME_ID),
+                this.stateUpdate
+        );
+        log.warn("updateSoftwareClient");
     }
 
     /**
@@ -128,17 +153,27 @@ public class LwM2mFwSwUpdate {
      * "Update Result" id=5 value change  ==1 "State" id=3  value == 0  "Firmware updated  successfully" отправили прошивку: telemetry - UPDATED
      */
     private boolean conditionalFwUpdateStart() {
-        Integer state = (Integer)this.lwM2MClient.getResourceValue(null, FW_PATH_RESOURCE_STATE_ID);
-        Integer updateResult = (Integer)this.lwM2MClient.getResourceValue(null, FW_PATH_RESOURCE_STATE_ID);
-            // #1
-        boolean conditional = updateResult > 1;
-            // #2
-        if (!conditional) {
-            conditional = ((state==0 || state==-1) && (updateResult == 1 || updateResult ==-1) &&
-                    (this.currentVersion != null && !this.currentVersion.equals(this.lwM2MClient.getResourceValue(null, FW_PATH_RESOURCE_VER_ID)))
-                    || (this.currentTitle != null && !this.currentTitle.equals(this.lwM2MClient.getResourceValue(null, FW_PATH_RESOURCE_NAME_ID))));
-        }
-        return conditional;
+        Long state = (Long)this.lwM2MClient.getResourceValue(null, FW_PATH_RESOURCE_STATE_ID);
+        Long updateResult = (Long)this.lwM2MClient.getResourceValue(null, FW_PATH_RESOURCE_STATE_ID);
+            // #1/#2
+        return updateResult > 1L || ((state == 0L || state == -1L) && (updateResult == 1L || updateResult == -1L) &&
+                (this.currentVersion != null && !this.currentVersion.equals(this.lwM2MClient.getResourceValue(null, FW_PATH_RESOURCE_VER_ID)))
+                || (this.currentTitle != null && !this.currentTitle.equals(this.lwM2MClient.getResourceValue(null, FW_PATH_RESOURCE_NAME_ID))));
+    }
+
+    private void observeStateFwUpdate () {
+        this.serviceImpl.lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(),
+                convertPathFromObjectIdToIdVer(FW_PATH_RESOURCE_STATE_ID, this.lwM2MClient.getRegistration()), OBSERVE,
+                null, null, this.serviceImpl.config.getTimeout(), null);
+        this.serviceImpl.lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(),
+                convertPathFromObjectIdToIdVer(FW_PATH_RESOURCE_RESULT_ID, this.lwM2MClient.getRegistration()), OBSERVE,
+                null, null, this.serviceImpl.config.getTimeout(), null);
+        this.serviceImpl.lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(),
+                convertPathFromObjectIdToIdVer(FW_PATH_RESOURCE_NAME_ID, this.lwM2MClient.getRegistration()), OBSERVE,
+                null, null, this.serviceImpl.config.getTimeout(), null);
+        this.serviceImpl.lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(),
+                convertPathFromObjectIdToIdVer(FW_PATH_RESOURCE_VER_ID, this.lwM2MClient.getRegistration()), OBSERVE,
+                null, null, this.serviceImpl.config.getTimeout(), null);
     }
 
     private boolean conditionalSwUpdateStart() {

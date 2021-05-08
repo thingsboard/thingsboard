@@ -172,19 +172,20 @@ public class LwM2mTransportUtil {
          */
         READ(0, "Read"),
         DISCOVER(1, "Discover"),
-        OBSERVE_READ_ALL(2, "ObserveReadAll"),
+        DISCOVER_All(2, "DiscoverAll"),
+        OBSERVE_READ_ALL(3, "ObserveReadAll"),
         /**
          * POST
          */
-        OBSERVE(3, "Observe"),
-        OBSERVE_CANCEL(4, "ObserveCancel"),
-        EXECUTE(5, "Execute"),
+        OBSERVE(4, "Observe"),
+        OBSERVE_CANCEL(5, "ObserveCancel"),
+        EXECUTE(6, "Execute"),
         /**
          * Replaces the Object Instance or the Resource(s) with the new value provided in the “Write” operation. (see
          * section 5.3.3 of the LW M2M spec).
          * if all resources are to be replaced
          */
-        WRITE_REPLACE(6, "WriteReplace"),
+        WRITE_REPLACE(7, "WriteReplace"),
         /*
           PUT
          */
@@ -193,13 +194,13 @@ public class LwM2mTransportUtil {
          * 5.3.3 of the LW M2M spec).
          * if this is a partial update request
          */
-        WRITE_UPDATE(7, "WriteUpdate"),
-        WRITE_ATTRIBUTES(8, "WriteAttributes"),
-        DELETE(9, "Delete"),
+        WRITE_UPDATE(8, "WriteUpdate"),
+        WRITE_ATTRIBUTES(9, "WriteAttributes"),
+        DELETE(10, "Delete"),
 
         // only for RPC
-        READ_INFO_FW(10, "ReadInfoFirmware"),
-        READ_INFO_SW(11, "ReadInfoSoftware");
+        READ_INFO_FW(11, "ReadInfoFirmware"),
+        READ_INFO_SW(12, "ReadInfoSoftware");
 
         public int code;
         public String type;
@@ -362,7 +363,7 @@ public class LwM2mTransportUtil {
      * "/3_1.0/0/9": {"pmax": 45}, "/3_1.2": {ver": "3_1.2"}}
      */
     public static LwM2mClientProfile toLwM2MClientProfile(DeviceProfile deviceProfile) {
-        if (deviceProfile != null && ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties().size() > 0) {
+        if (((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties().size() > 0) {
             Object profile = ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties();
             try {
                 ObjectMapper mapper = new ObjectMapper();
