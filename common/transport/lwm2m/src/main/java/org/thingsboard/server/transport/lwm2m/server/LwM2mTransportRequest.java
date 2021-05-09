@@ -290,6 +290,7 @@ public class LwM2mTransportRequest {
     private void sendRequest(Registration registration, LwM2mClient lwM2MClient, DownlinkRequest request,
                              long timeoutInMs, Lwm2mClientRpcRequest rpcRequest) {
         context.getServer().send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
+
             if (!lwM2MClient.isInit()) {
                 lwM2MClient.initReadValue(this.serviceImpl, convertPathFromObjectIdToIdVer(request.getPath().toString(), registration));
             }

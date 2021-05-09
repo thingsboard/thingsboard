@@ -43,6 +43,7 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.nustaq.serialization.FSTConfiguration;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
@@ -70,6 +71,12 @@ import static org.eclipse.leshan.core.model.ResourceModel.Type.OBJLNK;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.STRING;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.TIME;
+import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.DOWNLOADED;
+import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.DOWNLOADING;
+import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.FAILED;
+import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.UPDATED;
+import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.UPDATING;
+import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.VERIFIED;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 
@@ -107,39 +114,39 @@ public class LwM2mTransportUtil {
     public static final int LWM2M_STRATEGY_2 = 2;
 
     public static final String CLIENT_NOT_AUTHORIZED = "Client not authorized";
+    public static final String LWM2M_VERSION_DEFAULT = "1.0";
 
     // FirmWare
+    public static final Integer FW_ID = 5;
     // Package W
-    public static final String FW_PATH_RESOURCE_PACKAGE_ID = "/5/0/0";
+    public static final String FW_PACKAGE_ID = "/5/0/0";
     // State R
-    public static final String FW_PATH_RESOURCE_STATE_ID = "/5/0/3";
+    public static final String FW_STATE_ID = "/5/0/3";
     // Update Result R
-    public static final String FW_PATH_RESOURCE_RESULT_ID = "/5/0/5";
+    public static final String FW_RESULT_ID = "/5/0/5";
     // PkgName R
-    public static final String FW_PATH_RESOURCE_NAME_ID = "/5/0/6";
+    public static final String FW_NAME_ID = "/5/0/6";
     // PkgVersion R
-    public static final String FW_PATH_RESOURCE_VER_ID = "/5/0/7";
+    public static final String FW_VER_ID = "/5/0/7";
+    // Update E
+    public static final String FW_UPDATE_ID = "/5/0/2";
 
     // SoftWare
+    public static final Integer SW_ID = 9;
     // Package W
-    public static final String SW_PATH_RESOURCE_PACKAGE_ID = "/9/0/2";
-    /** State R
-     * 0: INITIAL Before downloading. (see 5.1.2.1)
-     * 1: DOWNLOAD STARTED The downloading process has started and is on-going. (see 5.1.2.2)
-     * 2: DOWNLOADED The package has been completely downloaded  (see 5.1.2.3)
-     * 3: DELIVERED In that state, the package has been correctly downloaded and is ready to be installed.  (see 5.1.2.4)
-     * If executing the Install Resource failed, the state remains at DELIVERED.
-     * If executing the Install Resource was successful, the state changes from DELIVERED to INSTALLED.
-     * After executing the UnInstall Resource, the state changes to INITIAL.
-     * 4: INSTALLED
-     */
-    public static final String SW_PATH_RESOURCE_STATE_ID = "/9/0/3";
+    public static final String SW_PACKAGE_ID = "/9/0/2";
+    // Update State R
+    public static final String SW_UPDATE_STATE_ID = "/9/0/7";
     // Update Result R
-    public static final String SW_PATH_RESOURCE_RESULT_ID = "/9/0/9";
+    public static final String SW_RESULT_ID = "/9/0/9";
     // PkgName R
-    public static final String SW_PATH_RESOURCE_NAME_ID = "/9/0/0";
+    public static final String SW_NAME_ID = "/9/0/0";
     // PkgVersion R
-    public static final String SW_PATH_RESOURCE_VER_ID = "/9/0/1";
+    public static final String SW_VER_ID = "/9/0/1";
+    // Install E
+    public static final String SW_INSTALL_ID = "/9/0/4";
+    // Uninstall E
+    public static final String SW_UN_INSTALL_ID = "/9/0/6";
 
     public enum LwM2mTypeServer {
         BOOTSTRAP(0, "bootstrap"),
@@ -221,7 +228,7 @@ public class LwM2mTransportUtil {
     }
 
     /**
-     /** State R
+     * /** State R
      * 0: Idle (before downloading or after successful updating)
      * 1: Downloading (The data sequence is on the way)
      * 2: Downloaded
@@ -241,13 +248,22 @@ public class LwM2mTransportUtil {
             this.type = type;
         }
 
-        public static StateFw fromStateFw(String type) {
+        public static StateFw fromStateFwByType(String type) {
             for (StateFw to : StateFw.values()) {
                 if (to.type.equals(type)) {
                     return to;
                 }
             }
             throw new IllegalArgumentException(String.format("Unsupported FW State type  : %s", type));
+        }
+
+        public static StateFw fromStateFwByCode(int code) {
+            for (StateFw to : StateFw.values()) {
+                if (to.code == code) {
+                    return to;
+                }
+            }
+            throw new IllegalArgumentException(String.format("Unsupported FW State code : %s", code));
         }
     }
 
@@ -268,7 +284,7 @@ public class LwM2mTransportUtil {
         INITIAL(0, "Initial value", false),
         UPDATE_SUCCESSFULLY(1, "Firmware updated successfully", false),
         NOT_ENOUGH(2, "Not enough flash memory for the new firmware package", false),
-        OUT_OFF_RAM(3, "Out of RAM during downloading process", false),
+        OUT_OFF_MEMORY(3, "Out of RAM during downloading process", false),
         CONNECTION_LOST(4, "Connection lost during downloading process", true),
         INTEGRITY_CHECK_FAILURE(5, "Integrity check failure for new downloaded package", true),
         UNSUPPORTED_TYPE(6, "Unsupported package type", false),
@@ -286,20 +302,213 @@ public class LwM2mTransportUtil {
             this.isAgain = isAgain;
         }
 
-        public static StateFw fromStateFw(String type) {
-            for (StateFw to : StateFw.values()) {
+        public static UpdateResultFw fromUpdateResultFwByType(String type) {
+            for (UpdateResultFw to : UpdateResultFw.values()) {
                 if (to.type.equals(type)) {
                     return to;
                 }
             }
             throw new IllegalArgumentException(String.format("Unsupported FW Update Result type  : %s", type));
         }
+
+        public static UpdateResultFw fromUpdateResultFwByCode(int code) {
+            for (UpdateResultFw to : UpdateResultFw.values()) {
+                if (to.code == code) {
+                    return to;
+                }
+            }
+            throw new IllegalArgumentException(String.format("Unsupported FW Update Result code  : %s", code));
+        }
+    }
+
+    /**
+     * FirmwareUpdateStatus {
+     * DOWNLOADING, DOWNLOADED, VERIFIED, UPDATING, UPDATED, FAILED
+     */
+    public static FirmwareUpdateStatus EqualsFwSateToFirmwareUpdateStatus(StateFw stateFw, UpdateResultFw updateResultFw) {
+        switch (updateResultFw) {
+            case INITIAL:
+                switch (stateFw) {
+                    case IDLE:
+                        return VERIFIED;
+                    case DOWNLOADING:
+                        return DOWNLOADING;
+                    case DOWNLOADED:
+                        return DOWNLOADED;
+                    case UPDATING:
+                        return UPDATING;
+                }
+            case UPDATE_SUCCESSFULLY:
+                return UPDATED;
+            case NOT_ENOUGH:
+            case OUT_OFF_MEMORY:
+            case CONNECTION_LOST:
+            case INTEGRITY_CHECK_FAILURE:
+            case UNSUPPORTED_TYPE:
+            case INVALID_URI:
+            case UPDATE_FAILED:
+            case UNSUPPORTED_PROTOCOL:
+                return FAILED;
+            default:
+                throw new CodecException("Invalid value stateFw %s   %s for FirmwareUpdateStatus.", stateFw.name(), updateResultFw.name());
+        }
+    }
+
+    /**
+     * Update State R
+     * 0: INITIAL Before downloading. (see 5.1.2.1)
+     * 1: DOWNLOAD STARTED The downloading process has started and is on-going. (see 5.1.2.2)
+     * 2: DOWNLOADED The package has been completely downloaded  (see 5.1.2.3)
+     * 3: DELIVERED In that state, the package has been correctly downloaded and is ready to be installed.  (see 5.1.2.4)
+     * If executing the Install Resource failed, the state remains at DELIVERED.
+     * If executing the Install Resource was successful, the state changes from DELIVERED to INSTALLED.
+     * After executing the UnInstall Resource, the state changes to INITIAL.
+     * 4: INSTALLED
+     */
+    public enum UpdateStateSw {
+        INITIAL(0, "Initial"),
+        DOWNLOAD_STARTED(1, "DownloadStarted"),
+        DOWNLOADED(2, "Downloaded"),
+        DELIVERED(3, "Delivered"),
+        INSTALLED(4, "Installed");
+
+        public int code;
+        public String type;
+
+        UpdateStateSw(int code, String type) {
+            this.code = code;
+            this.type = type;
+        }
+
+        public static UpdateStateSw fromUpdateStateSwByType(String type) {
+            for (UpdateStateSw to : UpdateStateSw.values()) {
+                if (to.type.equals(type)) {
+                    return to;
+                }
+            }
+            throw new IllegalArgumentException(String.format("Unsupported SW State type  : %s", type));
+        }
+
+        public static UpdateStateSw fromUpdateStateSwByCode(int code) {
+            for (UpdateStateSw to : UpdateStateSw.values()) {
+                if (to.code == code) {
+                    return to;
+                }
+            }
+            throw new IllegalArgumentException(String.format("Unsupported SW State type  : %s", code));
+        }
+    }
+
+    /**
+     * SW Update Result
+     * Contains the result of downloading or installing/uninstalling the software
+     * 0: Initial value.
+     * - Prior to download any new package in the Device, Update Result MUST be reset to this initial value.
+     * - One side effect of executing the Uninstall resource is to reset Update Result to this initial value "0".
+     * 1: Downloading.
+     * - The package downloading process is on-going.
+     * 2: Software successfully installed.
+     * 3: Successfully Downloaded and package integrity verified
+     * (( 4-49, for expansion, of other scenarios))
+     * ** Failed
+     * 50: Not enough storage for the new software package.
+     * 51: Out of memory during downloading process.
+     * 52: Connection lost during downloading process.
+     * 53: Package integrity check failure.
+     * 54: Unsupported package type.
+     * 56: Invalid URI
+     * 57: Device defined update error
+     * 58: Software installation failure
+     * 59: Uninstallation Failure during forUpdate(arg=0)
+     * 60-200 : (for expansion, selection to be in blocks depending on new introduction of features)
+     * This Resource MAY be reported by sending Observe operation.
+     */
+    public enum UpdateResultSw {
+        INITIAL(0, "Initial value", false),
+        DOWNLOADING(1, "Downloading", false),
+        SUCCESSFULLY_INSTALLED(2, "Software successfully installed", false),
+        SUCCESSFULLY_INSTALLED_VERIFIED(3, "Successfully Downloaded and package integrity verified", false),
+        NOT_ENOUGH_STORAGE(50, "Not enough storage for the new software package", true),
+        OUT_OFF_MEMORY(51, "Out of memory during downloading process", true),
+        CONNECTION_LOST(52, "Connection lost during downloading process", false),
+        PACKAGE_CHECK_FAILURE(53, "Package integrity check failure.", false),
+        UNSUPPORTED_PACKAGE_TYPE(54, "Unsupported package type", false),
+        INVALID_URI(56, "Invalid URI", true),
+        UPDATE_ERROR(57, "Device defined update error", true),
+        INSTALL_FAILURE(58, "Software installation failure", true),
+        UN_INSTALL_FAILURE(59, "Uninstallation Failure during forUpdate(arg=0)", true);
+
+        public int code;
+        public String type;
+        public boolean isAgain;
+
+        UpdateResultSw(int code, String type, boolean isAgain) {
+            this.code = code;
+            this.type = type;
+            this.isAgain = isAgain;
+        }
+
+        public static UpdateResultSw fromUpdateResultSwByType(String type) {
+            for (UpdateResultSw to : UpdateResultSw.values()) {
+                if (to.type.equals(type)) {
+                    return to;
+                }
+            }
+            throw new IllegalArgumentException(String.format("Unsupported SW Update Result type  : %s", type));
+        }
+
+        public static UpdateResultSw fromUpdateResultSwByCode(int code) {
+            for (UpdateResultSw to : UpdateResultSw.values()) {
+                if (to.code == code) {
+                    return to;
+                }
+            }
+            throw new IllegalArgumentException(String.format("Unsupported SW Update Result code  : %s", code));
+        }
+    }
+
+    /**
+     * FirmwareUpdateStatus {
+     * DOWNLOADING, DOWNLOADED, VERIFIED, UPDATING, UPDATED, FAILED
+     */
+    public static FirmwareUpdateStatus EqualsSwSateToFirmwareUpdateStatus(UpdateStateSw updateStateSw, UpdateResultSw updateResultSw) {
+        switch (updateResultSw) {
+            case INITIAL:
+                switch (updateStateSw) {
+                    case INITIAL:
+                    case DOWNLOAD_STARTED:
+                        return DOWNLOADING;
+                    case DOWNLOADED:
+                        return DOWNLOADED;
+                    case DELIVERED:
+                        return VERIFIED;
+                }
+            case DOWNLOADING:
+                return DOWNLOADING;
+            case SUCCESSFULLY_INSTALLED:
+                return UPDATED;
+            case SUCCESSFULLY_INSTALLED_VERIFIED:
+                return VERIFIED;
+            case NOT_ENOUGH_STORAGE:
+            case OUT_OFF_MEMORY:
+            case CONNECTION_LOST:
+            case PACKAGE_CHECK_FAILURE:
+            case UNSUPPORTED_PACKAGE_TYPE:
+            case INVALID_URI:
+            case UPDATE_ERROR:
+            case INSTALL_FAILURE:
+            case UN_INSTALL_FAILURE:
+                return FAILED;
+            default:
+                throw new CodecException("Invalid value stateFw %s   %s for FirmwareUpdateStatus.", updateStateSw.name(), updateResultSw.name());
+        }
     }
 
     public static final String EVENT_AWAKE = "AWAKE";
     public static final String RESPONSE_CHANNEL = "RESP";
 
-    public static boolean equalsResourceValue(Object valueOld, Object valueNew, ResourceModel.Type type, LwM2mPath resourcePath) throws CodecException {
+    public static boolean equalsResourceValue(Object valueOld, Object valueNew, ResourceModel.Type type, LwM2mPath
+            resourcePath) throws CodecException {
         switch (type) {
             case BOOLEAN:
             case INTEGER:
@@ -482,7 +691,8 @@ public class LwM2mTransportUtil {
         return StringUtils.join(linkedListOut, "");
     }
 
-    public static <T> TransportServiceCallback<Void> getAckCallback(LwM2mClient lwM2MClient, int requestId, String typeTopic) {
+    public static <T> TransportServiceCallback<Void> getAckCallback(LwM2mClient lwM2MClient,
+                                                                    int requestId, String typeTopic) {
         return new TransportServiceCallback<Void>() {
             @Override
             public void onSuccess(Void dummy) {
@@ -527,7 +737,8 @@ public class LwM2mTransportUtil {
         return null;
     }
 
-    public static String validPathIdVer(String pathIdVer, Registration registration) throws IllegalArgumentException {
+    public static String validPathIdVer(String pathIdVer, Registration registration) throws
+            IllegalArgumentException {
         if (!pathIdVer.contains(LWM2M_SEPARATOR_PATH)) {
             throw new IllegalArgumentException(String.format("Error:"));
         } else {
@@ -543,6 +754,7 @@ public class LwM2mTransportUtil {
 
     public static String convertPathFromObjectIdToIdVer(String path, Registration registration) {
         String ver = registration.getSupportedObject().get(new LwM2mPath(path).getObjectId());
+        ver = ver != null ? ver : LWM2M_VERSION_DEFAULT;
         try {
             String[] keyArray = path.split(LWM2M_SEPARATOR_PATH);
             if (keyArray.length > 1) {

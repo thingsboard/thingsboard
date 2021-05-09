@@ -18,25 +18,43 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.leshan.core.request.ContentFormat;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.firmware.FirmwareKey;
 import org.thingsboard.server.common.data.firmware.FirmwareType;
 import org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.server.DefaultLwM2MTransportMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PATH_RESOURCE_NAME_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PATH_RESOURCE_PACKAGE_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PATH_RESOURCE_RESULT_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PATH_RESOURCE_STATE_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PATH_RESOURCE_VER_ID;
+import static org.thingsboard.server.common.data.firmware.FirmwareKey.STATE;
+import static org.thingsboard.server.common.data.firmware.FirmwareType.FIRMWARE;
+import static org.thingsboard.server.common.data.firmware.FirmwareType.SOFTWARE;
+import static org.thingsboard.server.common.data.firmware.FirmwareUtil.getAttributeKey;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.EqualsFwSateToFirmwareUpdateStatus;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.EqualsSwSateToFirmwareUpdateStatus;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_NAME_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PACKAGE_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_RESULT_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_STATE_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_UPDATE_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_VER_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_REPLACE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_PATH_RESOURCE_NAME_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_PATH_RESOURCE_PACKAGE_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_PATH_RESOURCE_VER_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_INSTALL_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_NAME_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_PACKAGE_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_RESULT_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_UN_INSTALL_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_UPDATE_STATE_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_VER_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
 
 @Slf4j
@@ -58,9 +76,24 @@ public class LwM2mFwSwUpdate {
     @Setter
     private volatile String stateUpdate;
     @Getter
+    private String pathPackageId;
+    @Getter
+    private String pathStateId;
+    @Getter
+    private String pathResultId;
+    @Getter
+    private String pathNameId;
+    @Getter
+    private String pathVerId;
+    @Getter
+    private String pathInstallId;
+    @Getter
+    private String pathUnInstallId;
+
+    @Getter
     @Setter
     private volatile boolean info = false;
-    private final String type;
+    private final FirmwareType type;
     private DefaultLwM2MTransportMsgHandler serviceImpl;
 
     @Getter
@@ -70,65 +103,88 @@ public class LwM2mFwSwUpdate {
     @Setter
     private final List<String> pendingInfoRequests;
 
-    public LwM2mFwSwUpdate(LwM2mClient lwM2MClient, String type) {
+    public LwM2mFwSwUpdate(LwM2mClient lwM2MClient, FirmwareType type) {
         this.lwM2MClient = lwM2MClient;
-        this.type = type;
         this.pendingInfoRequests = new CopyOnWriteArrayList<>();
+        this.type = type;
+        this.initPathId();
+    }
+
+    private void initPathId() {
+        if (this.type.equals(FIRMWARE)) {
+            this.pathPackageId = FW_PACKAGE_ID;
+            this.pathStateId = FW_STATE_ID;
+            this.pathResultId = FW_RESULT_ID;
+            this.pathNameId = FW_NAME_ID;
+            this.pathVerId = FW_VER_ID;
+            this.pathInstallId = FW_UPDATE_ID;
+        } else if (this.type.equals(SOFTWARE)) {
+            this.pathPackageId = SW_PACKAGE_ID;
+            this.pathStateId = SW_UPDATE_STATE_ID;
+            this.pathResultId = SW_RESULT_ID;
+            this.pathNameId = SW_NAME_ID;
+            this.pathVerId = SW_VER_ID;
+            this.pathInstallId = SW_INSTALL_ID;
+            this.pathUnInstallId = SW_UN_INSTALL_ID;
+        }
     }
 
     public void initReadValue(DefaultLwM2MTransportMsgHandler serviceImpl, String pathIdVer) {
-        if (this.serviceImpl == null)  this.serviceImpl = serviceImpl;
+        if (this.serviceImpl == null) this.serviceImpl = serviceImpl;
         if (pathIdVer != null) {
             this.pendingInfoRequests.remove(pathIdVer);
         }
         if (this.pendingInfoRequests.size() == 0) {
             this.info = false;
-            if (this.type.equals(FirmwareType.FIRMWARE.name()) && conditionalFwUpdateStart()){
+            this.stateUpdate = FirmwareUpdateStatus.DOWNLOADING.name();
+            String key = getAttributeKey(this.type, FirmwareKey.STATE);
+            if (this.type.equals(FIRMWARE) && conditionalFwUpdateStart()) {
                 this.updateFw();
-            }
-            else if (this.type.equals(FirmwareType.SOFTWARE.name()) && conditionalSwUpdateStart()) {
-                updateSw();
+            } else if (this.type.equals(FirmwareType.SOFTWARE) && conditionalSwUpdateStart()) {
+                this.updateSw();
             }
         }
     }
 
     private void updateFw() {
-        if (this.type.equals(FirmwareType.FIRMWARE.name())) {
-            int chunkSize = 0;
-            int chunk = 0;
-            byte[] firmwareChunk = this.serviceImpl.firmwareDataCache.get(this.currentId.toString(), chunkSize, chunk);
-            String targetIdVer = convertPathFromObjectIdToIdVer(FW_PATH_RESOURCE_PACKAGE_ID, this.lwM2MClient.getRegistration());
-            this.observeStateFwUpdate ();
-            this.serviceImpl.lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(), targetIdVer, WRITE_REPLACE, ContentFormat.OPAQUE.getName(),
-                    firmwareChunk, this.serviceImpl.config.getTimeout(), null);
-            this.stateUpdate = FirmwareUpdateStatus.DOWNLOADING.name();
-            log.warn("updateFirmwareClient [{}] [{}] [{}] [{}] [{}]",
-                    lwM2MClient.getFwUpdate().getCurrentVersion(),
-                    this.lwM2MClient.getResourceValue(null, FW_PATH_RESOURCE_VER_ID),
-                    this.currentTitle,
-                    this.lwM2MClient.getResourceValue(null, FW_PATH_RESOURCE_NAME_ID),
-                    this.stateUpdate
-            );
-        }
+        int chunkSize = 0;
+        int chunk = 0;
+        byte[] firmwareChunk = this.serviceImpl.firmwareDataCache.get(this.currentId.toString(), chunkSize, chunk);
+        String targetIdVer = convertPathFromObjectIdToIdVer(this.pathPackageId, this.lwM2MClient.getRegistration());
+        this.observeStateFwUpdate();
+        this.serviceImpl.lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(), targetIdVer, WRITE_REPLACE, ContentFormat.OPAQUE.getName(),
+                firmwareChunk, this.serviceImpl.config.getTimeout(), null);
+        this.stateUpdate = FirmwareUpdateStatus.DOWNLOADING.name();
+        String msg = String.format("%s: Start softwareUpdate, pkgVer: %s: pkgName - %s.",
+                LOG_LW2M_INFO, lwM2MClient.getSwUpdate().getCurrentVersion(), this.currentTitle);
+        serviceImpl.sendLogsToThingsboard(msg, lwM2MClient.getRegistration().getId());
+        log.warn("updateFirmwareClient [{}] [{}] [{}] [{}] [{}]",
+                lwM2MClient.getFwUpdate().getCurrentVersion(),
+                this.lwM2MClient.getResourceValue(null, this.pathNameId),
+                this.currentTitle,
+                this.lwM2MClient.getResourceValue(null, this.pathNameId),
+                this.stateUpdate
+        );
     }
 
     private void updateSw() {
         int chunkSize = 0;
         int chunk = 0;
-        byte[] softwareChunk = this.serviceImpl.firmwareDataCache.get(this.currentId.toString(), chunkSize, chunk);
-        String targetIdVer = convertPathFromObjectIdToIdVer(SW_PATH_RESOURCE_PACKAGE_ID, this.lwM2MClient.getRegistration());
-
+        byte[] firmwareChunk = this.serviceImpl.firmwareDataCache.get(this.currentId.toString(), chunkSize, chunk);
+        String targetIdVer = convertPathFromObjectIdToIdVer(SW_PACKAGE_ID, this.lwM2MClient.getRegistration());
+        this.observeStateSwUpdate();
         this.serviceImpl.lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(), targetIdVer, WRITE_REPLACE, ContentFormat.OPAQUE.getName(),
-                softwareChunk, this.serviceImpl.config.getTimeout(), null);
-        this.stateUpdate = FirmwareUpdateStatus.DOWNLOADING.name();
-        log.warn("updateSoftwareClient [{}] [{}] [{}] [{}] [{}]",
+                firmwareChunk, this.serviceImpl.config.getTimeout(), null);
+        String msg = String.format("%s: Start softwareUpdate, pkgVer: %s: pkgName - %s.",
+                LOG_LW2M_INFO, lwM2MClient.getSwUpdate().getCurrentVersion(), this.currentTitle);
+        serviceImpl.sendLogsToThingsboard(msg, lwM2MClient.getRegistration().getId());
+        log.warn("updateFirmwareClient [{}] [{}] [{}] [{}] [{}]",
                 lwM2MClient.getSwUpdate().getCurrentVersion(),
-                this.lwM2MClient.getResourceValue(null, SW_PATH_RESOURCE_VER_ID),
+                this.lwM2MClient.getResourceValue(null, SW_VER_ID),
                 this.currentTitle,
-                this.lwM2MClient.getResourceValue(null, SW_PATH_RESOURCE_NAME_ID),
+                this.lwM2MClient.getResourceValue(null, SW_NAME_ID),
                 this.stateUpdate
         );
-        log.warn("updateSoftwareClient");
     }
 
     /**
@@ -136,10 +192,16 @@ public class LwM2mFwSwUpdate {
      * Проверяем состояние State (5.3) и Update Result (5.5).
      * 1. Если Update Result > 1 (some errors) - Это означает что пред. апдейт не прошел.
      * - Запускаем апдейт в независимости от состяния прошивки и ее версии.
-     * 2. Если Update Result = 1 (or -1) && State = 0 (or -1)  - Это означает что пред. апдейт прошел.
+     * 2. Если Update Result = 1  && State = 0   - Это означает что пред. апдейт прошел.
+     * 3. Если Update Result = 0 && State = 0  && Ver = "" - Это означает что апдейта еще не было.
      * - Проверяем поменялась ли версия и запускаем новый апдейт.
-     * Мониторим состояние Update Result и State и мапим его на наш enum (Failed or Updated) or may be (DOWNLOADING, DOWNLOADED, VERIFIED, UPDATING, UPDATED, FAILED)
+     * Новый апдейт:
+     * 1. Запись новой прошивки в Lwm2mClient
+     * 2. Мониторим итог зиписи:
+     * 2.1  State = 2 "Downloaded" и Update Result = 0 "INITIAL" стартуем Update 5.2 (Execute):
+     * Мониторим состояние Update Result и State и мапим его на наш enum (DOWNLOADING, DOWNLOADED, VERIFIED, UPDATING, UPDATED, FAILED)
      * + пишем лог (в телеметрию отдельным полем error) с подробным статусом.
+     *
      * @valerii.sosliuk Вопрос к клиенту - как будем реагировать на Failed update? Когда повторять операцию?
      * - На update reg?
      * - Или клиент должен послать комканду на рестарт девайса?
@@ -153,30 +215,119 @@ public class LwM2mFwSwUpdate {
      * "Update Result" id=5 value change  ==1 "State" id=3  value == 0  "Firmware updated  successfully" отправили прошивку: telemetry - UPDATED
      */
     private boolean conditionalFwUpdateStart() {
-        Long state = (Long)this.lwM2MClient.getResourceValue(null, FW_PATH_RESOURCE_STATE_ID);
-        Long updateResult = (Long)this.lwM2MClient.getResourceValue(null, FW_PATH_RESOURCE_STATE_ID);
-            // #1/#2
-        return updateResult > 1L || ((state == 0L || state == -1L) && (updateResult == 1L || updateResult == -1L) &&
-                (this.currentVersion != null && !this.currentVersion.equals(this.lwM2MClient.getResourceValue(null, FW_PATH_RESOURCE_VER_ID)))
-                || (this.currentTitle != null && !this.currentTitle.equals(this.lwM2MClient.getResourceValue(null, FW_PATH_RESOURCE_NAME_ID))));
+        Long stateFw = (Long) this.lwM2MClient.getResourceValue(null, this.pathStateId);
+        Long updateResultFw = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
+        String pkgName = (String) this.lwM2MClient.getResourceValue(null, this.pathNameId);
+        // #1/#2
+        boolean condFwUpdateStart =  updateResultFw > LwM2mTransportUtil.UpdateResultFw.UPDATE_SUCCESSFULLY.code ||
+                (
+                    (
+                        (stateFw == LwM2mTransportUtil.StateFw.IDLE.code && updateResultFw == LwM2mTransportUtil.UpdateResultFw.UPDATE_SUCCESSFULLY.code) ||
+                        (stateFw == LwM2mTransportUtil.StateFw.IDLE.code && updateResultFw == LwM2mTransportUtil.UpdateResultFw.INITIAL.code
+                                && StringUtils.trimToEmpty(pkgName).isEmpty())
+                    ) &&
+                    (
+                        (this.currentVersion != null && !this.currentVersion.equals(this.lwM2MClient.getResourceValue(null, this.pathVerId))) ||
+                        (this.currentTitle != null && !this.currentTitle.equals(this.lwM2MClient.getResourceValue(null, this.pathNameId)))
+                    )
+                );
+        if (condFwUpdateStart) {
+            String stateUpdate = StringUtils.trimToEmpty(pkgName).isEmpty() ? FirmwareUpdateStatus.DOWNLOADING.name() :
+                    EqualsFwSateToFirmwareUpdateStatus(LwM2mTransportUtil.StateFw.fromStateFwByCode(stateFw.intValue()),
+                    LwM2mTransportUtil.UpdateResultFw.fromUpdateResultFwByCode(updateResultFw.intValue())).name();
+            this.sendSateOnThingsboardAttribute (stateUpdate);
+        }
+        return condFwUpdateStart;
     }
 
-    private void observeStateFwUpdate () {
+    private boolean conditionalFwUpdateExecute() {
+        Long state = (Long) this.lwM2MClient.getResourceValue(null, this.pathStateId);
+        Long updateResult = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
+        // #1/#2
+        return updateResult == LwM2mTransportUtil.UpdateResultFw.INITIAL.code && state == LwM2mTransportUtil.StateFw.DOWNLOADED.code;
+    }
+
+    private void observeStateFwUpdate() {
         this.serviceImpl.lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(),
-                convertPathFromObjectIdToIdVer(FW_PATH_RESOURCE_STATE_ID, this.lwM2MClient.getRegistration()), OBSERVE,
+                convertPathFromObjectIdToIdVer(this.pathStateId, this.lwM2MClient.getRegistration()), OBSERVE,
                 null, null, this.serviceImpl.config.getTimeout(), null);
         this.serviceImpl.lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(),
-                convertPathFromObjectIdToIdVer(FW_PATH_RESOURCE_RESULT_ID, this.lwM2MClient.getRegistration()), OBSERVE,
-                null, null, this.serviceImpl.config.getTimeout(), null);
-        this.serviceImpl.lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(),
-                convertPathFromObjectIdToIdVer(FW_PATH_RESOURCE_NAME_ID, this.lwM2MClient.getRegistration()), OBSERVE,
-                null, null, this.serviceImpl.config.getTimeout(), null);
-        this.serviceImpl.lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(),
-                convertPathFromObjectIdToIdVer(FW_PATH_RESOURCE_VER_ID, this.lwM2MClient.getRegistration()), OBSERVE,
+                convertPathFromObjectIdToIdVer(this.pathResultId, this.lwM2MClient.getRegistration()), OBSERVE,
                 null, null, this.serviceImpl.config.getTimeout(), null);
     }
 
+    /**
+     * FW: start
+     * Проверяем состояние Update_State (9.7) и Update_Result (9.9).
+     * 1. Если Update Result > 3 (some errors) - Это означает что пред. апдейт не прошел.
+     * - Запускаем апдейт в независимости от состяния прошивки и ее версии.
+     * 2. Если Update Result = 2  && Update State = 4   - Это означает что пред. апдейт прошел
+     * 3. Если Update Result = 0 && Update State = 0 && Ver = "" - Это означает что апдейта еще не было.
+     * 4. Если Update Result = 0 && Update State = 0 - Это означает что пред. апдейт UnInstall
+     * - Проверяем поменялась ли версия и запускаем новый апдейт.
+     * Новый апдейт:
+     * 1. Запись новой прошивки в Lwm2mClient
+     * 2. Мониторим итог зиписи:
+     * 2.1  Update State = 3 "DELIVERED" стартуем Install 9.4 (Execute):
+     * Мониторим состояние Update Result и State и мапим его на наш enum (DOWNLOADING, DOWNLOADED, VERIFIED, UPDATING, UPDATED, FAILED)
+     * + пишем лог (в телеметрию отдельным полем error) с подробным статусом.
+     */
     private boolean conditionalSwUpdateStart() {
-        return false;
+        Long updateState = (Long) this.lwM2MClient.getResourceValue(null, this.pathStateId);
+        Long updateResult = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
+        String pkgName = (String) this.lwM2MClient.getResourceValue(null, this.pathNameId);
+        // #1/#2
+        boolean condSwUpdateStart =  updateResult > LwM2mTransportUtil.UpdateResultSw.SUCCESSFULLY_INSTALLED_VERIFIED.code ||
+                (
+                    (
+                        (
+                            (
+                                (updateState == LwM2mTransportUtil.UpdateStateSw.INSTALLED.code && updateResult == LwM2mTransportUtil.UpdateResultSw.SUCCESSFULLY_INSTALLED.code) ||
+                                        (updateState == LwM2mTransportUtil.UpdateStateSw.INITIAL.code && updateResult == LwM2mTransportUtil.UpdateResultSw.INITIAL.code &&
+                                                StringUtils.trimToEmpty(pkgName).isEmpty())
+                            )
+                        ) &&
+                        (updateState == LwM2mTransportUtil.UpdateStateSw.INITIAL.code && updateResult == LwM2mTransportUtil.UpdateResultSw.INITIAL.code)
+                    ) &&
+                    (
+                        (this.currentVersion != null && !this.currentVersion.equals(this.lwM2MClient.getResourceValue(null, this.pathVerId))) ||
+                        (this.currentTitle != null && !this.currentTitle.equals(this.lwM2MClient.getResourceValue(null, this.pathNameId)))
+                    )
+                );
+        if (condSwUpdateStart) {
+            String stateUpdate = StringUtils.trimToEmpty(pkgName).isEmpty() ? FirmwareUpdateStatus.DOWNLOADING.name() :
+                    EqualsSwSateToFirmwareUpdateStatus(LwM2mTransportUtil.UpdateStateSw.fromUpdateStateSwByCode(updateState.intValue()),
+                            LwM2mTransportUtil.UpdateResultSw.fromUpdateResultSwByCode(updateResult.intValue())).name();
+            this.sendSateOnThingsboardAttribute (stateUpdate);
+        }
+        return condSwUpdateStart;
+
+    }
+
+    private boolean conditionalSwUpdateExecute() {
+        Long updateState = (Long) this.lwM2MClient.getResourceValue(null, this.pathStateId);
+        Long updateResult = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
+        // #1/#2
+        return (updateResult == LwM2mTransportUtil.UpdateResultSw.INITIAL.code || updateResult == LwM2mTransportUtil.UpdateResultSw.SUCCESSFULLY_INSTALLED_VERIFIED.code) &&
+                updateState == LwM2mTransportUtil.UpdateStateSw.DELIVERED.code;
+    }
+
+    private void observeStateSwUpdate() {
+        this.serviceImpl.lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(),
+                convertPathFromObjectIdToIdVer(SW_UPDATE_STATE_ID, this.lwM2MClient.getRegistration()), OBSERVE,
+                null, null, this.serviceImpl.config.getTimeout(), null);
+        this.serviceImpl.lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(),
+                convertPathFromObjectIdToIdVer(SW_RESULT_ID, this.lwM2MClient.getRegistration()), OBSERVE,
+                null, null, this.serviceImpl.config.getTimeout(), null);
+    }
+
+    public void sendSateOnThingsboardAttribute (String stateUpdate) {
+        List<TransportProtos.KeyValueProto> resultAttributes = new ArrayList<>();
+        TransportProtos.KeyValueProto.Builder kvProto = TransportProtos.KeyValueProto.newBuilder().setKey(getAttributeKey(this.type, STATE));
+        kvProto.setType(TransportProtos.KeyValueType.STRING_V).setStringV(stateUpdate);
+        resultAttributes.add(kvProto.build());
+        String  dtr =  DataConstants.SHARED_SCOPE;
+        this.serviceImpl.helper.sendParametersOnThingsboardAttribute(resultAttributes,
+                this.serviceImpl.getSessionInfoOrCloseSession(this.lwM2MClient.getRegistration()));
     }
 }

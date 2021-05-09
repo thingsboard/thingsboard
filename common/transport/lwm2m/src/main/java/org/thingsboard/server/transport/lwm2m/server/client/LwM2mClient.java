@@ -112,8 +112,8 @@ public class LwM2mClient implements Cloneable {
         this.sessionId = sessionId;
         this.init = false;
         this.queuedRequests = new ConcurrentLinkedQueue<>();
-        this.fwUpdate = new LwM2mFwSwUpdate(this, FirmwareType.FIRMWARE.name());
-        this.swUpdate = new LwM2mFwSwUpdate(this, FirmwareType.SOFTWARE.name());
+        this.fwUpdate = new LwM2mFwSwUpdate(this, FirmwareType.FIRMWARE);
+        this.swUpdate = new LwM2mFwSwUpdate(this, FirmwareType.SOFTWARE);
         if (this.credentialsResponse != null && this.credentialsResponse.hasDeviceInfo()) {
             this.session = createSession(nodeId, sessionId, credentialsResponse);
             this.deviceId = new UUID(session.getDeviceIdMSB(), session.getDeviceIdLSB());
