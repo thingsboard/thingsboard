@@ -849,7 +849,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                             Object finalvalueKvProto = valueKvProto;
                             Gson gson = new GsonBuilder().create();
                             resourceValue.getValues().forEach((k, v) -> {
-                                Object val = this.converter.convertValue(resourceValue.getValue(), currentType, expectedType,
+                                Object val = this.converter.convertValue(v, currentType, expectedType,
                                         new LwM2mPath(convertPathFromIdVerToObjectId(pathIdVer)));
                                 JsonElement element = gson.toJsonTree(val, val.getClass());
                                 ((JsonObject) finalvalueKvProto).add(String.valueOf(k), element);

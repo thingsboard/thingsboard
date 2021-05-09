@@ -24,11 +24,13 @@ import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.californium.LeshanServerBuilder;
 import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
+import org.eclipse.leshan.server.californium.registration.InMemoryRegistrationStore;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.security.DefaultAuthorizer;
 import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.eclipse.leshan.server.security.SecurityChecker;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
@@ -57,6 +59,8 @@ import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
@@ -81,6 +85,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
     private final CaliforniumRegistrationStore registrationStore;
     private final EditableSecurityStore securityStore;
     private final LwM2mClientContext lwM2mClientContext;
+    private ScheduledExecutorService registrationStoreExecutor;
 
     private LeshanServer server;
 
@@ -112,6 +117,9 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
     }
 
     private LeshanServer getLhServer() {
+//        this.registrationStoreExecutor = (ScheduledExecutorService) ThingsBoardExecutors.newWorkStealingPool(this.config.getRegistrationStorePoolSize(), "LwM2M registrationStore");
+        this.registrationStoreExecutor = Executors.newScheduledThreadPool(this.config.getRegistrationStorePoolSize(), ThingsBoardThreadFactory.forName("LwM2M registrationStore"));
+
         LeshanServerBuilder builder = new LeshanServerBuilder();
         builder.setLocalAddress(config.getHost(), config.getPort());
         builder.setLocalSecureAddress(config.getSecureHost(), config.getSecurePort());
@@ -119,6 +127,9 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         /* Use a magic converter to support bad type send by the UI. */
         builder.setEncoder(new DefaultLwM2mNodeEncoder(LwM2mValueConverterImpl.getInstance()));
 
+        /* InMemoryRegistrationStore(ScheduledExecutorService schedExecutor, long cleanPeriodInSec) */
+        InMemoryRegistrationStore registrationStore = new InMemoryRegistrationStore(this.registrationStoreExecutor, this.config.getCleanPeriodInSec());
+        builder.setRegistrationStore(registrationStore);
 
         /* Create CoAP Config */
         builder.setCoapConfig(getCoapConfig(config.getPort(), config.getSecurePort()));

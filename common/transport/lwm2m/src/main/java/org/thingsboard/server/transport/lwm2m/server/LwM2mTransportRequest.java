@@ -132,12 +132,16 @@ public class LwM2mTransportRequest {
                             request = new DiscoverRequest(target);
                             break;
                         case OBSERVE:
-                            if (resultIds.isResource()) {
-                                request = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId());
-                            } else if (resultIds.isObjectInstance()) {
-                                request = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId());
-                            } else if (resultIds.getObjectId() >= 0) {
-                                request = new ObserveRequest(contentFormat, resultIds.getObjectId());
+                            Set<Observation> observations = context.getServer().getObservationService().getObservations(registration);
+                            Set<Observation> paths = observations.stream().filter(observation -> observation.getPath().equals(resultIds)).collect(Collectors.toSet());
+                            if (paths.size()==0) {
+                                if (resultIds.isResource()) {
+                                    request = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId());
+                                } else if (resultIds.isObjectInstance()) {
+                                    request = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId());
+                                } else if (resultIds.getObjectId() >= 0) {
+                                    request = new ObserveRequest(contentFormat, resultIds.getObjectId());
+                                }
                             }
                             break;
                         case OBSERVE_CANCEL:
