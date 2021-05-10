@@ -320,8 +320,8 @@ public class LwM2mTransportRequest {
                 /** Not Found
                  set setClient_fw_info... = empty
                  **/
-                if (lwM2MClient.getFwUpdate().isInfoFwSwUpdateStart()) {
-                    lwM2MClient.getFwUpdate().initReadValueStart(serviceImpl, request.getPath().toString());
+                if (lwM2MClient.getFwUpdate().isInfoFwSwUpdate()) {
+                    lwM2MClient.getFwUpdate().initReadValue(serviceImpl, request.getPath().toString());
                     log.warn("updateFirmwareClient1");
                 }
             }
@@ -329,8 +329,8 @@ public class LwM2mTransportRequest {
             /** version == null
              set setClient_fw_info... = empty
              **/
-            if (lwM2MClient.getFwUpdate().isInfoFwSwUpdateStart()) {
-                lwM2MClient.getFwUpdate().initReadValueStart(serviceImpl, request.getPath().toString());
+            if (lwM2MClient.getFwUpdate().isInfoFwSwUpdate()) {
+                lwM2MClient.getFwUpdate().initReadValue(serviceImpl, request.getPath().toString());
                 log.warn("updateFirmwareClient2");
             }
             if (!lwM2MClient.isInit()) {
@@ -482,7 +482,7 @@ public class LwM2mTransportRequest {
                 serviceImpl.sendLogsToThingsboard(msg, registration.getId());
                 log.warn(msg);
                 if (request.getPath().toString().equals(FW_PACKAGE_ID) || request.getPath().toString().equals(SW_PACKAGE_ID)) {
-                    this.executeFwSwUpdate (registration, request);
+                    this.executeFwSwUpdate(registration, request);
                 }
             }
         } catch (Exception e) {
@@ -490,17 +490,15 @@ public class LwM2mTransportRequest {
         }
     }
 
-    private void executeFwSwUpdate (Registration registration, DownlinkRequest request) {
+    private void executeFwSwUpdate(Registration registration, DownlinkRequest request) {
         LwM2mClient lwM2mClient = this.lwM2mClientContext.getClientByRegistrationId(registration.getId());
-        if (request.getPath().toString().equals(FW_PACKAGE_ID)) {
-            if (FirmwareUpdateStatus.DOWNLOADING.name().equals(lwM2mClient.getFwUpdate().getStateUpdate())) {
-                lwM2mClient.getFwUpdate().sendReadInfoFinish();
-            }
+        if (request.getPath().toString().equals(FW_PACKAGE_ID)
+                && FirmwareUpdateStatus.DOWNLOADING.name().equals(lwM2mClient.getFwUpdate().getStateUpdate())) {
+            lwM2mClient.getFwUpdate().sendReadInfoForWrite();
         }
-        if (request.getPath().toString().equals(SW_PACKAGE_ID)) {
-            if (FirmwareUpdateStatus.DOWNLOADING.name().equals(lwM2mClient.getSwUpdate().getStateUpdate())) {
-                lwM2mClient.getSwUpdate().sendReadInfoFinish();
-            }
+        if (request.getPath().toString().equals(SW_PACKAGE_ID)
+                && FirmwareUpdateStatus.DOWNLOADING.name().equals(lwM2mClient.getSwUpdate().getStateUpdate())) {
+            lwM2mClient.getSwUpdate().sendReadInfoForWrite();
         }
     }
 }

@@ -689,17 +689,11 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
             /** version != null
              * set setClient_fw_info... = value
              **/
-            if (lwM2MClient.getFwUpdate().isInfoFwSwUpdateStart()) {
-                lwM2MClient.getFwUpdate().initReadValueStart(this, path);
+            if (lwM2MClient.getFwUpdate().isInfoFwSwUpdate()) {
+                lwM2MClient.getFwUpdate().initReadValue(this, path);
             }
-            if (lwM2MClient.getSwUpdate().isInfoFwSwUpdateStart()) {
-                lwM2MClient.getSwUpdate().initReadValueStart(this, path);
-            }
-            if (lwM2MClient.getFwUpdate().isInfoFwSwUpdateFinish()) {
-                lwM2MClient.getFwUpdate().initReadValueFinish(this, path);
-            }
-            if (lwM2MClient.getSwUpdate().isInfoFwSwUpdateFinish()) {
-                lwM2MClient.getSwUpdate().initReadValueFinish(this, path);
+            if (lwM2MClient.getSwUpdate().isInfoFwSwUpdate()) {
+                lwM2MClient.getSwUpdate().initReadValue(this, path);
             }
             Set<String> paths = new HashSet<>();
             paths.add(path);
@@ -1344,6 +1338,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         if (lwM2MClient.getRegistration().getSupportedVersion(FW_ID) != null) {
             SessionInfoProto sessionInfo = this.getSessionInfoOrCloseSession(lwM2MClient);
             if (sessionInfo != null) {
+                DefaultLwM2MTransportMsgHandler serviceImpl = this;
                 transportService.process(sessionInfo, createFirmwareRequestMsg(sessionInfo, FirmwareType.FIRMWARE.name()),
                         new TransportServiceCallback<>() {
                             @Override
@@ -1353,7 +1348,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                                     lwM2MClient.getFwUpdate().setCurrentVersion(response.getVersion());
                                     lwM2MClient.getFwUpdate().setCurrentTitle(response.getTitle());
                                     lwM2MClient.getFwUpdate().setCurrentId(new FirmwareId(new UUID(response.getFirmwareIdMSB(), response.getFirmwareIdLSB())).getId());
-                                    lwM2MClient.getFwUpdate().sendReadInfoStart();
+                                    lwM2MClient.getFwUpdate().sendReadInfo(serviceImpl);
                                 } else {
                                     log.trace("Firmware [{}] [{}]", lwM2MClient.getDeviceName(), response.getResponseStatus().toString());
                                 }
@@ -1372,6 +1367,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         if (lwM2MClient.getRegistration().getSupportedVersion(SW_ID) != null) {
             SessionInfoProto sessionInfo = this.getSessionInfoOrCloseSession(lwM2MClient);
             if (sessionInfo != null) {
+                DefaultLwM2MTransportMsgHandler serviceImpl = this;
                 transportService.process(sessionInfo, createFirmwareRequestMsg(sessionInfo, FirmwareType.SOFTWARE.name()),
                         new TransportServiceCallback<>() {
                             @Override
@@ -1381,7 +1377,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                                     lwM2MClient.getSwUpdate().setCurrentVersion(response.getVersion());
                                     lwM2MClient.getSwUpdate().setCurrentTitle(response.getTitle());
                                     lwM2MClient.getSwUpdate().setCurrentId(new FirmwareId(new UUID(response.getFirmwareIdMSB(), response.getFirmwareIdLSB())).getId());
-                                    lwM2MClient.getSwUpdate().sendReadInfoStart();
+                                    lwM2MClient.getSwUpdate().sendReadInfo(serviceImpl);
                                 } else {
                                     log.trace("Software [{}] [{}]", lwM2MClient.getDeviceName(), response.getResponseStatus().toString());
                                 }

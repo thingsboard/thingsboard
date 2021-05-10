@@ -35,8 +35,6 @@ import static org.thingsboard.server.common.data.firmware.FirmwareKey.STATE;
 import static org.thingsboard.server.common.data.firmware.FirmwareType.FIRMWARE;
 import static org.thingsboard.server.common.data.firmware.FirmwareType.SOFTWARE;
 import static org.thingsboard.server.common.data.firmware.FirmwareUtil.getAttributeKey;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.EqualsFwSateToFirmwareUpdateStatus;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.EqualsSwSateToFirmwareUpdateStatus;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_NAME_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PACKAGE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_RESULT_ID;
@@ -95,10 +93,7 @@ public class LwM2mFwSwUpdate {
     private String wUpdate;
     @Getter
     @Setter
-    private volatile boolean infoFwSwUpdateStart = false;
-    @Getter
-    @Setter
-    private volatile boolean infoFwSwUpdateFinish = false;
+    private volatile boolean infoFwSwUpdate = false;
     private final FirmwareType type;
     private DefaultLwM2MTransportMsgHandler serviceImpl;
     @Getter
@@ -106,15 +101,12 @@ public class LwM2mFwSwUpdate {
     @Getter
     @Setter
     private final List<String> pendingInfoRequestsStart;
-    @Getter
-    @Setter
-    private final List<String> pendingInfoRequestsFinish;
 
     public LwM2mFwSwUpdate(LwM2mClient lwM2MClient, FirmwareType type) {
         this.lwM2MClient = lwM2MClient;
         this.pendingInfoRequestsStart = new CopyOnWriteArrayList<>();
-        this.pendingInfoRequestsFinish = new CopyOnWriteArrayList<>();
         this.type = type;
+        this.stateUpdate = null;
         this.initPathId();
     }
 
@@ -139,38 +131,34 @@ public class LwM2mFwSwUpdate {
         }
     }
 
-    public void initReadValueStart(DefaultLwM2MTransportMsgHandler serviceImpl, String pathIdVer) {
+    public void initReadValue(DefaultLwM2MTransportMsgHandler serviceImpl, String pathIdVer) {
         if (this.serviceImpl == null) this.serviceImpl = serviceImpl;
         if (pathIdVer != null) {
             this.pendingInfoRequestsStart.remove(pathIdVer);
         }
         if (this.pendingInfoRequestsStart.size() == 0) {
-            this.infoFwSwUpdateStart = false;
-            boolean conditionalStart = this.type.equals(FIRMWARE) ?  this.conditionalFwUpdateStart() :
-                    this.conditionalSwUpdateStart();
-            if (conditionalStart) {
-                this.updateStart();
+            this.infoFwSwUpdate = false;
+            if (!FirmwareUpdateStatus.DOWNLOADING.name().equals(this.stateUpdate)) {
+                boolean conditionalStart = this.type.equals(FIRMWARE) ? this.conditionalFwUpdateStart() :
+                        this.conditionalSwUpdateStart();
+                if (conditionalStart) {
+                    this.writeFwSwWare();
+                    this.stateUpdate = FirmwareUpdateStatus.DOWNLOADING.name();
+                    this.sendLogs(WRITE_REPLACE.name());
+                }
+            } else {
+                boolean conditionalExecute = this.type.equals(FIRMWARE) ? conditionalFwUpdateExecute() :
+                        conditionalSwUpdateExecute();
+                if (conditionalExecute) {
+                    this.stateUpdate = FirmwareUpdateStatus.DOWNLOADED.name();
+                    this.executeFwSwWare();
+                    this.sendLogs(EXECUTE.name());
+                }
             }
         }
     }
 
-    public void initReadValueFinish(DefaultLwM2MTransportMsgHandler serviceImpl, String pathIdVer) {
-        if (this.serviceImpl == null) this.serviceImpl = serviceImpl;
-        if (pathIdVer != null) {
-            this.pendingInfoRequestsFinish.remove(pathIdVer);
-        }
-        if (this.pendingInfoRequestsFinish.size() == 0) {
-            this.infoFwSwUpdateFinish = false;
-            boolean conditionalExecute =  this.type.equals(FIRMWARE) ?  this.conditionalFwUpdateExecute() :
-                    this.conditionalSwUpdateExecute();
-            if (conditionalExecute) {
-                this.updateFinish();
-                log.warn("ExecuteStart [{}]", this.wUpdate);
-            }
-        }
-    }
-
-    private void updateStart() {
+    private void writeFwSwWare() {
         int chunkSize = 0;
         int chunk = 0;
         byte[] firmwareChunk = this.serviceImpl.firmwareDataCache.get(this.currentId.toString(), chunkSize, chunk);
@@ -182,34 +170,37 @@ public class LwM2mFwSwUpdate {
         }
         this.serviceImpl.lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(), targetIdVer, WRITE_REPLACE, ContentFormat.OPAQUE.getName(),
                 firmwareChunk, this.serviceImpl.config.getTimeout(), null);
-        String msg = String.format("%s: Start %s, pkgVer: %s: pkgName - %s.",
-                LOG_LW2M_INFO, this.wUpdate, this.currentVersion, this.currentTitle);
-        serviceImpl.sendLogsToThingsboard(msg, lwM2MClient.getRegistration().getId());
-        log.warn("[{}] [{}] [{}] [{}] [{}] [{}]",
-                this.wUpdate,
-                this.currentVersion,
-                this.lwM2MClient.getResourceValue(null, this.pathVerId),
-                this.currentTitle,
-                this.lwM2MClient.getResourceValue(null, this.pathNameId),
-                this.stateUpdate
-        );
+//        if (!FirmwareUpdateStatus.DOWNLOADED.name().equals(this.stateUpdate)) {
+//            if (StringUtils.trimToEmpty(pkgName).isEmpty()) {
+//                this.stateUpdate = FirmwareUpdateStatus.DOWNLOADING.name();
+//            } else if (this.type.equals(FIRMWARE)) {
+//                this.stateUpdate = EqualsFwSateToFirmwareUpdateStatus(LwM2mTransportUtil.StateFw.fromStateFwByCode(state.intValue()),
+//                        LwM2mTransportUtil.UpdateResultFw.fromUpdateResultFwByCode(updateResult.intValue())).name();
+//            } else if (this.type.equals(FirmwareType.SOFTWARE)) {
+//                this.stateUpdate = EqualsSwSateToFirmwareUpdateStatus(LwM2mTransportUtil.UpdateStateSw.fromUpdateStateSwByCode(state.intValue()),
+//                        LwM2mTransportUtil.UpdateResultSw.fromUpdateResultSwByCode(updateResult.intValue())).name();
+//            }
+//        }
+
+
     }
 
-    public void updateFinish() {
+    private void sendLogs(String typeOper) {
+        this.sendSateOnThingsboard();
+        String msg = String.format("%s: %s, %s, pkgVer: %s: pkgName - %s.",
+                LOG_LW2M_INFO, this.wUpdate, typeOper, this.currentVersion, this.currentTitle);
+        serviceImpl.sendLogsToThingsboard(msg, lwM2MClient.getRegistration().getId());
+        log.warn("{} state: [{}]", msg, this.stateUpdate);
+    }
+
+    public void executeFwSwWare() {
         if (this.type.equals(FIRMWARE)) {
             this.observeStateFwUpdate();
         } else {
             this.observeStateSwUpdate();
         }
-        this.stateUpdate = FirmwareUpdateStatus.DOWNLOADED.name();
-        this.sendSateOnThingsboard (null, null, null);
-        boolean conditionalExecute =  this.type.equals(FIRMWARE) ?  this.conditionalFwUpdateExecute() :
-                this.conditionalSwUpdateExecute();
-        if (conditionalExecute) {
-            log.warn("ExecuteStart [{}]", this.wUpdate);
-            this.serviceImpl.lwM2mTransportRequest.sendAllRequest(this.lwM2MClient.getRegistration(), this.pathInstallId, EXECUTE, ContentFormat.TLV.getName(),
-                    null, 0, null);
-        }
+        this.serviceImpl.lwM2mTransportRequest.sendAllRequest(this.lwM2MClient.getRegistration(), this.pathInstallId, EXECUTE, ContentFormat.TLV.getName(),
+                null, 0, null);
     }
 
     /**
@@ -244,22 +235,22 @@ public class LwM2mFwSwUpdate {
         Long updateResultFw = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
         String pkgName = (String) this.lwM2MClient.getResourceValue(null, this.pathNameId);
         // #1/#2
-        boolean condFwUpdateStart =  updateResultFw > LwM2mTransportUtil.UpdateResultFw.UPDATE_SUCCESSFULLY.code ||
+        return updateResultFw > LwM2mTransportUtil.UpdateResultFw.UPDATE_SUCCESSFULLY.code ||
                 (
-                    (
-                        (stateFw == LwM2mTransportUtil.StateFw.IDLE.code && updateResultFw == LwM2mTransportUtil.UpdateResultFw.UPDATE_SUCCESSFULLY.code) ||
-                        (stateFw == LwM2mTransportUtil.StateFw.IDLE.code && updateResultFw == LwM2mTransportUtil.UpdateResultFw.INITIAL.code
-                                && StringUtils.trimToEmpty(pkgName).isEmpty())
-                    ) &&
-                    (
-                        (this.currentVersion != null && !this.currentVersion.equals(this.lwM2MClient.getResourceValue(null, this.pathVerId))) ||
-                        (this.currentTitle != null && !this.currentTitle.equals(this.lwM2MClient.getResourceValue(null, this.pathNameId)))
-                    )
+                        (
+                                (stateFw == LwM2mTransportUtil.StateFw.IDLE.code && updateResultFw == LwM2mTransportUtil.UpdateResultFw.UPDATE_SUCCESSFULLY.code) ||
+                                        (stateFw == LwM2mTransportUtil.StateFw.IDLE.code && updateResultFw == LwM2mTransportUtil.UpdateResultFw.INITIAL.code
+                                                && StringUtils.trimToEmpty(pkgName).isEmpty())
+                        ) &&
+                                (
+                                        (this.currentVersion != null && !this.currentVersion.equals(this.lwM2MClient.getResourceValue(null, this.pathVerId))) ||
+                                                (this.currentTitle != null && !this.currentTitle.equals(this.lwM2MClient.getResourceValue(null, this.pathNameId)))
+                                )
                 );
-        if (condFwUpdateStart) {
-            this.sendSateOnThingsboard(stateFw, updateResultFw, pkgName);
-        }
-        return condFwUpdateStart;
+//        if (condFwUpdateStart) {
+//            this.sendSateOnThingsboard(stateFw, updateResultFw, pkgName);
+//        }
+//        return condFwUpdateStart;
     }
 
     private boolean conditionalFwUpdateExecute() {
@@ -299,28 +290,24 @@ public class LwM2mFwSwUpdate {
         Long updateResult = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
         String pkgName = (String) this.lwM2MClient.getResourceValue(null, this.pathNameId);
         // #1/#2
-        boolean condSwUpdateStart =  updateResult > LwM2mTransportUtil.UpdateResultSw.SUCCESSFULLY_INSTALLED_VERIFIED.code ||
+        return updateResult > LwM2mTransportUtil.UpdateResultSw.SUCCESSFULLY_INSTALLED_VERIFIED.code ||
                 (
-                    (
                         (
-                            (
-                                (updateState == LwM2mTransportUtil.UpdateStateSw.INSTALLED.code && updateResult == LwM2mTransportUtil.UpdateResultSw.SUCCESSFULLY_INSTALLED.code) ||
-                                        (updateState == LwM2mTransportUtil.UpdateStateSw.INITIAL.code && updateResult == LwM2mTransportUtil.UpdateResultSw.INITIAL.code &&
-                                                StringUtils.trimToEmpty(pkgName).isEmpty())
-                            )
+                                (
+                                        (
+                                                (updateState == LwM2mTransportUtil.UpdateStateSw.INSTALLED.code && updateResult == LwM2mTransportUtil.UpdateResultSw.SUCCESSFULLY_INSTALLED.code) ||
+                                                        (updateState == LwM2mTransportUtil.UpdateStateSw.INITIAL.code && updateResult == LwM2mTransportUtil.UpdateResultSw.INITIAL.code &&
+                                                                StringUtils.trimToEmpty(pkgName).isEmpty())
+                                        )
+                                ) &&
+                                        (updateState == LwM2mTransportUtil.UpdateStateSw.INITIAL.code && updateResult == LwM2mTransportUtil.UpdateResultSw.INITIAL.code)
                         ) &&
-                        (updateState == LwM2mTransportUtil.UpdateStateSw.INITIAL.code && updateResult == LwM2mTransportUtil.UpdateResultSw.INITIAL.code)
-                    ) &&
-                    (
-                        (this.currentVersion != null && !this.currentVersion.equals(this.lwM2MClient.getResourceValue(null, this.pathVerId))) ||
-                        (this.currentTitle != null && !this.currentTitle.equals(this.lwM2MClient.getResourceValue(null, this.pathNameId)))
-                    )
+                                (
+                                        (this.currentVersion != null && !this.currentVersion.equals(this.lwM2MClient.getResourceValue(null, this.pathVerId))) ||
+                                                (this.currentTitle != null && !this.currentTitle.equals(this.lwM2MClient.getResourceValue(null, this.pathNameId)))
+                                )
                 );
-        if (condSwUpdateStart) {
-            this.sendSateOnThingsboard(updateState, updateResult, pkgName);
-        }
-        return condSwUpdateStart;
-
+//        return condSwUpdateStart;
     }
 
     private boolean conditionalSwUpdateExecute() {
@@ -340,18 +327,7 @@ public class LwM2mFwSwUpdate {
                 null, null, this.serviceImpl.config.getTimeout(), null);
     }
 
-    public void sendSateOnThingsboard (Long state, Long updateResult, String pkgName) {
-        if (!FirmwareUpdateStatus.DOWNLOADED.name().equals(this.stateUpdate)) {
-            if (StringUtils.trimToEmpty(pkgName).isEmpty()) {
-                this.stateUpdate = FirmwareUpdateStatus.DOWNLOADING.name();
-            } else if (this.type.equals(FIRMWARE)) {
-                this.stateUpdate = EqualsFwSateToFirmwareUpdateStatus(LwM2mTransportUtil.StateFw.fromStateFwByCode(state.intValue()),
-                        LwM2mTransportUtil.UpdateResultFw.fromUpdateResultFwByCode(updateResult.intValue())).name();
-            } else if (this.type.equals(FirmwareType.SOFTWARE)) {
-                this.stateUpdate = EqualsSwSateToFirmwareUpdateStatus(LwM2mTransportUtil.UpdateStateSw.fromUpdateStateSwByCode(state.intValue()),
-                        LwM2mTransportUtil.UpdateResultSw.fromUpdateResultSwByCode(updateResult.intValue())).name();
-            }
-        }
+    public void sendSateOnThingsboard() {
         if (StringUtils.trimToNull(this.stateUpdate) != null) {
             List<TransportProtos.KeyValueProto> result = new ArrayList<>();
             TransportProtos.KeyValueProto.Builder kvProto = TransportProtos.KeyValueProto.newBuilder().setKey(getAttributeKey(this.type, STATE));
@@ -362,32 +338,23 @@ public class LwM2mFwSwUpdate {
         }
     }
 
-    public void sendReadInfoStart() {
-        this.setInfoFwSwUpdateFinish(true);
+    public void sendReadInfo(DefaultLwM2MTransportMsgHandler serviceImpl) {
+        this.serviceImpl = this.serviceImpl == null ? serviceImpl : this.serviceImpl;
         this.pendingInfoRequestsStart.add(convertPathFromObjectIdToIdVer(
                 this.pathVerId, this.lwM2MClient.getRegistration()));
         this.pendingInfoRequestsStart.add(convertPathFromObjectIdToIdVer(
                 this.pathNameId, this.lwM2MClient.getRegistration()));
+        this.sendReadInfoForWrite();
+    }
+
+    public void sendReadInfoForWrite() {
+
+        this.infoFwSwUpdate = true;
         this.pendingInfoRequestsStart.add(convertPathFromObjectIdToIdVer(
                 this.pathStateId, this.lwM2MClient.getRegistration()));
         this.pendingInfoRequestsStart.add(convertPathFromObjectIdToIdVer(
                 this.pathResultId, this.lwM2MClient.getRegistration()));
         this.pendingInfoRequestsStart.forEach(pathIdVer -> {
-            this.serviceImpl.lwM2mTransportRequest.sendAllRequest(this.lwM2MClient.getRegistration(), pathIdVer, READ, ContentFormat.TLV.getName(),
-                    null, 0, null);
-        });
-    }
-    public void sendReadInfoFinish() {
-        this.setInfoFwSwUpdateFinish(true);
-        this.pendingInfoRequestsFinish.add(convertPathFromObjectIdToIdVer(
-                this.pathVerId, this.lwM2MClient.getRegistration()));
-        this.pendingInfoRequestsFinish.add(convertPathFromObjectIdToIdVer(
-                this.pathNameId, this.lwM2MClient.getRegistration()));
-        this.pendingInfoRequestsFinish.add(convertPathFromObjectIdToIdVer(
-                this.pathStateId, this.lwM2MClient.getRegistration()));
-        this.pendingInfoRequestsFinish.add(convertPathFromObjectIdToIdVer(
-                this.pathResultId, this.lwM2MClient.getRegistration()));
-        this.pendingInfoRequestsFinish.forEach(pathIdVer -> {
             this.serviceImpl.lwM2mTransportRequest.sendAllRequest(this.lwM2MClient.getRegistration(), pathIdVer, READ, ContentFormat.TLV.getName(),
                     null, 0, null);
         });
