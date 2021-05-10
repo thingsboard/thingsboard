@@ -49,6 +49,7 @@ import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
@@ -70,6 +71,7 @@ import static org.eclipse.californium.core.coap.CoAP.ResponseCode.CONTENT;
 import static org.eclipse.leshan.core.ResponseCode.BAD_REQUEST;
 import static org.eclipse.leshan.core.ResponseCode.NOT_FOUND;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.DEFAULT_TIMEOUT;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PACKAGE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_VALUE;
@@ -78,6 +80,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.L
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE_CANCEL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE_READ_ALL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.RESPONSE_CHANNEL;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_PACKAGE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromIdVerToObjectId;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.createWriteAttributeRequest;
@@ -132,16 +135,18 @@ public class LwM2mTransportRequest {
                             request = new DiscoverRequest(target);
                             break;
                         case OBSERVE:
-                            Set<Observation> observations = context.getServer().getObservationService().getObservations(registration);
-                            Set<Observation> paths = observations.stream().filter(observation -> observation.getPath().equals(resultIds)).collect(Collectors.toSet());
-                            if (paths.size()==0) {
-                                if (resultIds.isResource()) {
+                            if (resultIds.isResource()) {
+                                Set<Observation> observations = context.getServer().getObservationService().getObservations(registration);
+                                Set<Observation> paths = observations.stream().filter(observation -> observation.getPath().equals(resultIds)).collect(Collectors.toSet());
+                                if (paths.size() == 0) {
                                     request = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId());
-                                } else if (resultIds.isObjectInstance()) {
-                                    request = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId());
-                                } else if (resultIds.getObjectId() >= 0) {
-                                    request = new ObserveRequest(contentFormat, resultIds.getObjectId());
+                                } else {
+                                    request = new ReadRequest(contentFormat, target);
                                 }
+                            } else if (resultIds.isObjectInstance()) {
+                                request = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId());
+                            } else if (resultIds.getObjectId() >= 0) {
+                                request = new ObserveRequest(contentFormat, resultIds.getObjectId());
                             }
                             break;
                         case OBSERVE_CANCEL:
@@ -315,8 +320,8 @@ public class LwM2mTransportRequest {
                 /** Not Found
                  set setClient_fw_info... = empty
                  **/
-                if (lwM2MClient.getFwUpdate().isInfo()) {
-                    lwM2MClient.getFwUpdate().initReadValue(serviceImpl, request.getPath().toString());
+                if (lwM2MClient.getFwUpdate().isInfoFwSwUpdateStart()) {
+                    lwM2MClient.getFwUpdate().initReadValueStart(serviceImpl, request.getPath().toString());
                     log.warn("updateFirmwareClient1");
                 }
             }
@@ -324,8 +329,8 @@ public class LwM2mTransportRequest {
             /** version == null
              set setClient_fw_info... = empty
              **/
-            if (lwM2MClient.getFwUpdate().isInfo()) {
-                lwM2MClient.getFwUpdate().initReadValue(serviceImpl, request.getPath().toString());
+            if (lwM2MClient.getFwUpdate().isInfoFwSwUpdateStart()) {
+                lwM2MClient.getFwUpdate().initReadValueStart(serviceImpl, request.getPath().toString());
                 log.warn("updateFirmwareClient2");
             }
             if (!lwM2MClient.isInit()) {
@@ -465,21 +470,37 @@ public class LwM2mTransportRequest {
                             Math.min(valueLength, config.getLogMaxLength())));
                 }
                 value = valueLength > config.getLogMaxLength() ? value + "..." : value;
-                msg = String.format("%s: Update finished successfully: Lwm2m code - %d Resource path - %s length - %s value - %s",
+                msg = String.format("%s: Update finished successfully: Lwm2m code - %d Resource path: %s length: %s value: %s",
                         LOG_LW2M_INFO, response.getCode().getCode(), request.getPath().toString(), valueLength, value);
             } else {
                 value = this.converter.convertValue(singleResource.getValue(),
                         singleResource.getType(), ResourceModel.Type.STRING, request.getPath());
-                msg = String.format("%s: Update finished successfully: Lwm2m code - %d Resource path - %s value - %s",
+                msg = String.format("%s: Update finished successfully. Lwm2m code: %d Resource path: %s value: %s",
                         LOG_LW2M_INFO, response.getCode().getCode(), request.getPath().toString(), value);
             }
             if (msg != null) {
                 serviceImpl.sendLogsToThingsboard(msg, registration.getId());
-                log.warn("[{}] [{}] [{}] - [{}] [{}] Update finished successfully: [{}]", request.getClass().getName(), registration.getEndpoint(),
-                        ((Response) response.getCoapResponse()).getCode(), response.getCode(), request.getPath().toString(), value);
+                log.warn(msg);
+                if (request.getPath().toString().equals(FW_PACKAGE_ID) || request.getPath().toString().equals(SW_PACKAGE_ID)) {
+                    this.executeFwSwUpdate (registration, request);
+                }
             }
         } catch (Exception e) {
             log.trace("Fail convert value from request to string. ", e);
+        }
+    }
+
+    private void executeFwSwUpdate (Registration registration, DownlinkRequest request) {
+        LwM2mClient lwM2mClient = this.lwM2mClientContext.getClientByRegistrationId(registration.getId());
+        if (request.getPath().toString().equals(FW_PACKAGE_ID)) {
+            if (FirmwareUpdateStatus.DOWNLOADING.name().equals(lwM2mClient.getFwUpdate().getStateUpdate())) {
+                lwM2mClient.getFwUpdate().sendReadInfoFinish();
+            }
+        }
+        if (request.getPath().toString().equals(SW_PACKAGE_ID)) {
+            if (FirmwareUpdateStatus.DOWNLOADING.name().equals(lwM2mClient.getSwUpdate().getStateUpdate())) {
+                lwM2mClient.getSwUpdate().sendReadInfoFinish();
+            }
         }
     }
 }

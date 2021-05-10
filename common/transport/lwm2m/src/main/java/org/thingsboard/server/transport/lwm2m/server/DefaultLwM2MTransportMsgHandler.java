@@ -689,11 +689,17 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
             /** version != null
              * set setClient_fw_info... = value
              **/
-            if (lwM2MClient.getFwUpdate().isInfo()) {
-                lwM2MClient.getFwUpdate().initReadValue(this, path);
+            if (lwM2MClient.getFwUpdate().isInfoFwSwUpdateStart()) {
+                lwM2MClient.getFwUpdate().initReadValueStart(this, path);
             }
-            if (lwM2MClient.getSwUpdate().isInfo()) {
-                lwM2MClient.getSwUpdate().initReadValue(this, path);
+            if (lwM2MClient.getSwUpdate().isInfoFwSwUpdateStart()) {
+                lwM2MClient.getSwUpdate().initReadValueStart(this, path);
+            }
+            if (lwM2MClient.getFwUpdate().isInfoFwSwUpdateFinish()) {
+                lwM2MClient.getFwUpdate().initReadValueFinish(this, path);
+            }
+            if (lwM2MClient.getSwUpdate().isInfoFwSwUpdateFinish()) {
+                lwM2MClient.getSwUpdate().initReadValueFinish(this, path);
             }
             Set<String> paths = new HashSet<>();
             paths.add(path);
@@ -1347,7 +1353,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                                     lwM2MClient.getFwUpdate().setCurrentVersion(response.getVersion());
                                     lwM2MClient.getFwUpdate().setCurrentTitle(response.getTitle());
                                     lwM2MClient.getFwUpdate().setCurrentId(new FirmwareId(new UUID(response.getFirmwareIdMSB(), response.getFirmwareIdLSB())).getId());
-                                    sendReadFwInfo(lwM2MClient);
+                                    lwM2MClient.getFwUpdate().sendReadInfoStart();
                                 } else {
                                     log.trace("Firmware [{}] [{}]", lwM2MClient.getDeviceName(), response.getResponseStatus().toString());
                                 }
@@ -1355,27 +1361,11 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
 
                             @Override
                             public void onError(Throwable e) {
-                                log.trace("Failed to process firmwareUpdate ", e);
+                                log.warn("Failed to process firmwareUpdate ", e);
                             }
                         });
             }
         }
-    }
-
-    private void sendReadFwInfo(LwM2mClient lwM2MClient) {
-        lwM2MClient.getFwUpdate().setInfo(true);
-        lwM2MClient.getFwUpdate().getPendingInfoRequests().add(convertPathFromObjectIdToIdVer(
-                lwM2MClient.getFwUpdate().getPathVerId(), lwM2MClient.getRegistration()));
-        lwM2MClient.getFwUpdate().getPendingInfoRequests().add(convertPathFromObjectIdToIdVer(
-                lwM2MClient.getFwUpdate().getPathNameId(), lwM2MClient.getRegistration()));
-        lwM2MClient.getFwUpdate().getPendingInfoRequests().add(convertPathFromObjectIdToIdVer(
-                lwM2MClient.getFwUpdate().getPathStateId(), lwM2MClient.getRegistration()));
-        lwM2MClient.getFwUpdate().getPendingInfoRequests().add(convertPathFromObjectIdToIdVer(
-                lwM2MClient.getFwUpdate().getPathResultId(), lwM2MClient.getRegistration()));
-        lwM2MClient.getFwUpdate().getPendingInfoRequests().forEach(pathIdVer -> {
-            lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(), pathIdVer, READ, ContentFormat.TLV.getName(),
-                    null, config.getTimeout(), null);
-        });
     }
 
     public void getInfoSoftwareUpdate(LwM2mClient lwM2MClient) {
@@ -1391,7 +1381,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                                     lwM2MClient.getSwUpdate().setCurrentVersion(response.getVersion());
                                     lwM2MClient.getSwUpdate().setCurrentTitle(response.getTitle());
                                     lwM2MClient.getSwUpdate().setCurrentId(new FirmwareId(new UUID(response.getFirmwareIdMSB(), response.getFirmwareIdLSB())).getId());
-                                    sendReadSwInfo(lwM2MClient);
+                                    lwM2MClient.getSwUpdate().sendReadInfoStart();
                                 } else {
                                     log.trace("Software [{}] [{}]", lwM2MClient.getDeviceName(), response.getResponseStatus().toString());
                                 }
@@ -1404,22 +1394,6 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                         });
             }
         }
-    }
-
-    private void sendReadSwInfo(LwM2mClient lwM2MClient) {
-        lwM2MClient.getSwUpdate().setInfo(true);
-        lwM2MClient.getSwUpdate().getPendingInfoRequests().add(convertPathFromObjectIdToIdVer(
-                lwM2MClient.getSwUpdate().getPathVerId(), lwM2MClient.getRegistration()));
-        lwM2MClient.getSwUpdate().getPendingInfoRequests().add(convertPathFromObjectIdToIdVer(
-                lwM2MClient.getSwUpdate().getPathNameId(), lwM2MClient.getRegistration()));
-        lwM2MClient.getSwUpdate().getPendingInfoRequests().add(convertPathFromObjectIdToIdVer(
-                lwM2MClient.getSwUpdate().getPathStateId(), lwM2MClient.getRegistration()));
-        lwM2MClient.getSwUpdate().getPendingInfoRequests().add(convertPathFromObjectIdToIdVer(
-                lwM2MClient.getSwUpdate().getPathResultId(), lwM2MClient.getRegistration()));
-        lwM2MClient.getSwUpdate().getPendingInfoRequests().forEach(pathIdVer -> {
-            lwM2mTransportRequest.sendAllRequest(lwM2MClient.getRegistration(), pathIdVer, READ, ContentFormat.TLV.getName(),
-                    null, config.getTimeout(), null);
-        });
     }
 
     private TransportProtos.GetFirmwareRequestMsg createFirmwareRequestMsg(SessionInfoProto sessionInfo, String nameFwSW) {

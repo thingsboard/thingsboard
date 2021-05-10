@@ -117,6 +117,7 @@ public class LwM2mTransportUtil {
     public static final String LWM2M_VERSION_DEFAULT = "1.0";
 
     // FirmWare
+    public static final String FW_UPDATE = "Firmware update";
     public static final Integer FW_ID = 5;
     // Package W
     public static final String FW_PACKAGE_ID = "/5/0/0";
@@ -132,6 +133,7 @@ public class LwM2mTransportUtil {
     public static final String FW_UPDATE_ID = "/5/0/2";
 
     // SoftWare
+    public static final String SW_UPDATE = "Software update";
     public static final Integer SW_ID = 9;
     // Package W
     public static final String SW_PACKAGE_ID = "/9/0/2";
