@@ -44,6 +44,7 @@ import java.util.Base64;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_SEARCH_TEXT;
@@ -130,7 +131,7 @@ public class DefaultTbResourceService implements TbResourceService {
         List<TbResource> resources = resourceService.findTenantResourcesByResourceTypeAndObjectIds(tenantId, ResourceType.LWM2M_MODEL,
                 objectIds);
         return resources.stream()
-                .map(this::toLwM2mObject)
+                .flatMap(s -> Stream.ofNullable(toLwM2mObject(s)))
                 .sorted(getComparator(sortProperty, sortOrder))
                 .collect(Collectors.toList());
     }
@@ -141,7 +142,7 @@ public class DefaultTbResourceService implements TbResourceService {
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         PageData<TbResource> resourcePageData = resourceService.findTenantResourcesByResourceTypeAndPageLink(tenantId, ResourceType.LWM2M_MODEL, pageLink);
         return resourcePageData.getData().stream()
-                .map(this::toLwM2mObject)
+                .flatMap(s -> Stream.ofNullable(toLwM2mObject(s)))
                 .sorted(getComparator(sortProperty, sortOrder))
                 .collect(Collectors.toList());
     }
@@ -190,9 +191,14 @@ public class DefaultTbResourceService implements TbResourceService {
                         resources.add(lwM2MResourceObserve);
                     }
                 });
-                instance.setResources(resources.toArray(LwM2mResourceObserve[]::new));
-                lwM2mObject.setInstances(new LwM2mInstance[]{instance});
-                return lwM2mObject;
+                if (resources.size() > 0) {
+                    instance.setResources(resources.toArray(LwM2mResourceObserve[]::new));
+                    lwM2mObject.setInstances(new LwM2mInstance[]{instance});
+                    return lwM2mObject;
+                }
+                else {
+                    return null;
+                }
             }
         } catch (IOException | InvalidDDFFileException e) {
             log.error("Could not parse the XML of objectModel with name [{}]", resource.getSearchText(), e);

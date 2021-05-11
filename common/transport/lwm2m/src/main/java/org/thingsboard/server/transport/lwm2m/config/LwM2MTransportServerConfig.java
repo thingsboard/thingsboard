@@ -65,6 +65,14 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     private int registeredPoolSize;
 
     @Getter
+    @Value("${transport.lwm2m.registration_store_pool_size:}")
+    private int registrationStorePoolSize;
+
+    @Getter
+    @Value("${transport.lwm2m.clean_period_in_sec:}")
+    private int cleanPeriodInSec;
+
+    @Getter
     @Value("${transport.lwm2m.update_registered_pool_size:}")
     private int updateRegisteredPoolSize;
 
