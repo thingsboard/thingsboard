@@ -465,6 +465,7 @@ public class ModelConstants {
     public static final String API_USAGE_STATE_JS_EXEC_COLUMN = "js_exec";
     public static final String API_USAGE_STATE_EMAIL_EXEC_COLUMN = "email_exec";
     public static final String API_USAGE_STATE_SMS_EXEC_COLUMN = "sms_exec";
+    public static final String API_USAGE_STATE_ALARM_EXEC_COLUMN = "alarm_exec";
 
     /**
      * Resource constants.
