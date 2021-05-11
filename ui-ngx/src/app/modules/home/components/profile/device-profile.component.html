@@ -59,10 +59,26 @@
         labelText="device-profile.default-rule-chain"
         formControlName="defaultRuleChainId">
       </tb-rule-chain-autocomplete>
+      <tb-dashboard-autocomplete
+        placeholder="{{'device-profile.default-dashboard' | translate}}"
+        formControlName="defaultDashboardId">
+      </tb-dashboard-autocomplete>
       <tb-queue-type-list
         [queueType]="serviceType"
         formControlName="defaultQueueName">
       </tb-queue-type-list>
+      <tb-firmware-autocomplete
+        [useFullEntityId]="true"
+        [type]="firmwareTypes.FIRMWARE"
+        [deviceProfileId]="deviceProfileId?.id"
+        formControlName="firmwareId">
+      </tb-firmware-autocomplete>
+      <tb-firmware-autocomplete
+        [useFullEntityId]="true"
+        [type]="firmwareTypes.SOFTWARE"
+        [deviceProfileId]="deviceProfileId?.id"
+        formControlName="softwareId">
+      </tb-firmware-autocomplete>
       <mat-form-field fxHide class="mat-block">
         <mat-label translate>device-profile.type</mat-label>
         <mat-select formControlName="type" required>
@@ -74,6 +90,11 @@
           {{ 'device-profile.type-required' | translate }}
         </mat-error>
       </mat-form-field>
+      <tb-image-input fxFlex
+                      label="{{'device-profile.image' | translate}}"
+                      maxSizeByte="524288"
+                      formControlName="image">
+      </tb-image-input>
       <mat-form-field class="mat-block">
         <mat-label translate>device-profile.description</mat-label>
         <textarea matInput formControlName="description" rows="2"></textarea>

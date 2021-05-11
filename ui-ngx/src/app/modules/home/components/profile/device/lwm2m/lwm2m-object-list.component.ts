@@ -14,18 +14,16 @@
 /// limitations under the License.
 ///
 
-import {Component, ElementRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild} from '@angular/core';
-import {ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators} from '@angular/forms';
-import {coerceBooleanProperty} from '@angular/cdk/coercion';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {Observable} from 'rxjs';
-import {filter, map, mergeMap, publishReplay, refCount, tap} from 'rxjs/operators';
-import {ModelValue, ObjectLwM2M, PAGE_SIZE_LIMIT} from './lwm2m-profile-config.models';
-import {DeviceProfileService} from '@core/http/device-profile.service';
-import {Direction} from '@shared/models/page/sort-order';
-import {isDefined, isDefinedAndNotNull, isString} from '@core/utils';
-import {PageLink} from "@shared/models/page/page-link";
+import { Component, ElementRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { Observable } from 'rxjs';
+import { filter, map, mergeMap, publishReplay, refCount, tap } from 'rxjs/operators';
+import { ModelValue, ObjectLwM2M, PAGE_SIZE_LIMIT } from './lwm2m-profile-config.models';
+import { DeviceProfileService } from '@core/http/device-profile.service';
+import { Direction } from '@shared/models/page/sort-order';
+import { isDefined, isDefinedAndNotNull, isString } from '@core/utils';
+import { PageLink } from '@shared/models/page/page-link';
 
 @Component({
   selector: 'tb-profile-lwm2m-object-list',
@@ -71,8 +69,7 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
   private propagateChange = (v: any) => {
   }
 
-  constructor(private store: Store<AppState>,
-              private deviceProfileService: DeviceProfileService,
+  constructor(private deviceProfileService: DeviceProfileService,
               private fb: FormBuilder) {
     this.lwm2mListFormGroup = this.fb.group({
       objectsList: [this.objectsList],
@@ -162,20 +159,20 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
 
   private fetchListObjects = (searchText?: string): Observable<Array<ObjectLwM2M>> =>  {
     this.searchText = searchText;
-      return this.getLwM2mModelsPage().pipe(
-        map(objectLwM2Ms =>  objectLwM2Ms)
-      );
+    return this.getLwM2mModelsPage().pipe(
+      map(objectLwM2Ms =>  objectLwM2Ms)
+    );
   }
 
   private getLwM2mModelsPage(): Observable<Array<ObjectLwM2M>> {
-      const pageLink = new PageLink(PAGE_SIZE_LIMIT, 0, this.searchText, {
-        property: 'id',
-        direction: Direction.ASC
-      });
-      this.lw2mModels = this.deviceProfileService.getLwm2mObjectsPage(pageLink).pipe(
-        publishReplay(1),
-        refCount()
-      );
+    const pageLink = new PageLink(PAGE_SIZE_LIMIT, 0, this.searchText, {
+      property: 'id',
+      direction: Direction.ASC
+    });
+    this.lw2mModels = this.deviceProfileService.getLwm2mObjectsPage(pageLink).pipe(
+      publishReplay(1),
+      refCount()
+    );
     return this.lw2mModels;
   }
 

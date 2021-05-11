@@ -1,0 +1,13 @@
+{
+  "address": "192.168.3.23",
+  "port": 1610,
+  "protocolVersion": "V3",
+
+  "username": "tb-user",
+  "engineId": "qwertyuioa",
+  "securityName": "tb-user",
+  "authenticationProtocol": "SHA_512",
+  "authenticationPassphrase": "sdfghjkloifgh",
+  "privacyProtocol": "DES",
+  "privacyPassphrase": "rtytguijokod"
+}

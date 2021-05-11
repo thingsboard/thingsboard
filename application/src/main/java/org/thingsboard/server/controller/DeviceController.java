@@ -119,38 +119,49 @@ public class DeviceController extends BaseController {
     @ResponseBody
     public Device saveDevice(@RequestBody Device device,
                              @RequestParam(name = "accessToken", required = false) String accessToken) throws ThingsboardException {
+        boolean created = device.getId() == null;
         try {
             device.setTenantId(getCurrentUser().getTenantId());
 
             checkEntity(device.getId(), device, Resource.DEVICE);
+
+            Device oldDevice;
+            if (!created) {
+                oldDevice = deviceService.findDeviceById(getTenantId(), device.getId());
+            } else {
+                oldDevice = null;
+            }
 
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
 
             tbClusterService.onDeviceChange(savedDevice, null);
             tbClusterService.pushMsgToCore(new DeviceNameOrTypeUpdateMsg(savedDevice.getTenantId(),
                     savedDevice.getId(), savedDevice.getName(), savedDevice.getType()), null);
-            tbClusterService.onEntityStateChange(savedDevice.getTenantId(), savedDevice.getId(),
-                    device.getId() == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+            tbClusterService.onEntityStateChange(savedDevice.getTenantId(), savedDevice.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
 
-            if (device.getId() != null) {
+            if (!created) {
                 sendEntityNotificationMsg(savedDevice.getTenantId(), savedDevice.getId(), EdgeEventActionType.UPDATED);
             }
 
             logEntityAction(savedDevice.getId(), savedDevice,
                     savedDevice.getCustomerId(),
-                    device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
+                    created ? ActionType.ADDED : ActionType.UPDATED, null);
 
             if (device.getId() == null) {
                 deviceStateService.onDeviceAdded(savedDevice);
             } else {
                 deviceStateService.onDeviceUpdated(savedDevice);
             }
+
+            firmwareStateService.update(savedDevice, oldDevice);
+
             return savedDevice;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE), device,
-                    null, device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
+                    null, created ? ActionType.ADDED : ActionType.UPDATED, e);
             throw handleException(e);
         }
+
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
@@ -645,7 +656,7 @@ public class DeviceController extends BaseController {
     private void pushAssignedFromNotification(Tenant currentTenant, TenantId newTenantId, Device assignedDevice) {
         String data = entityToStr(assignedDevice);
         if (data != null) {
-            TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_ASSIGNED_FROM_TENANT, assignedDevice.getId(), getMetaDataForAssignedFrom(currentTenant), TbMsgDataType.JSON, data);
+            TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_ASSIGNED_FROM_TENANT, assignedDevice.getId(), assignedDevice.getCustomerId(), getMetaDataForAssignedFrom(currentTenant), TbMsgDataType.JSON, data);
             tbClusterService.pushMsgToRuleEngine(newTenantId, assignedDevice.getId(), tbMsg, null);
         }
     }

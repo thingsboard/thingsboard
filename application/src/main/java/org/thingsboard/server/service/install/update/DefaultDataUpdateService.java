@@ -30,6 +30,9 @@ import org.thingsboard.rule.engine.profile.TbDeviceProfileNodeConfiguration;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
@@ -39,10 +42,14 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.alarm.AlarmDao;
+import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -80,6 +87,15 @@ public class DefaultDataUpdateService implements DataUpdateService {
     private TimeseriesService tsService;
 
     @Autowired
+    private AlarmService alarmService;
+
+    @Autowired
+    private EntityService entityService;
+
+    @Autowired
+    private AlarmDao alarmDao;
+
+    @Autowired
     private DeviceProfileRepository deviceProfileRepository;
 
     @Override
@@ -100,6 +116,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
             case "3.2.2":
                 log.info("Updating data from version 3.2.2 to 3.3.0 ...");
                 tenantsDefaultEdgeRuleChainUpdater.updateEntities(null);
+                tenantsAlarmsCustomerUpdater.updateEntities(null);
                 deviceProfileEntityDynamicConditionsUpdater.updateEntities(null);
                 break;
             default:
@@ -108,7 +125,13 @@ public class DefaultDataUpdateService implements DataUpdateService {
     }
 
     private final PaginatedUpdater<String, DeviceProfileEntity> deviceProfileEntityDynamicConditionsUpdater =
-            new PaginatedUpdater<String, DeviceProfileEntity>() {
+            new PaginatedUpdater<>() {
+
+                @Override
+                protected String getName() {
+                    return "Device Profile Entity Dynamic Conditions Updater";
+                }
+
                 @Override
                 protected PageData<DeviceProfileEntity> findEntities(String id, PageLink pageLink) {
                     return DaoUtil.pageToPageData(deviceProfileRepository.findAll(DaoUtil.toPageable(pageLink)));
@@ -137,8 +160,18 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 }
             };
 
-    private PaginatedUpdater<String, Tenant> tenantsDefaultRuleChainUpdater =
-            new PaginatedUpdater<String, Tenant>() {
+    private final PaginatedUpdater<String, Tenant> tenantsDefaultRuleChainUpdater =
+            new PaginatedUpdater<>() {
+
+                @Override
+                protected String getName() {
+                    return "Tenants default rule chain updater";
+                }
+
+                @Override
+                protected boolean forceReportTotal() {
+                    return true;
+                }
 
                 @Override
                 protected PageData<Tenant> findEntities(String region, PageLink pageLink) {
@@ -158,8 +191,18 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 }
             };
 
-    private PaginatedUpdater<String, Tenant> tenantsDefaultEdgeRuleChainUpdater =
-            new PaginatedUpdater<String, Tenant>() {
+    private final PaginatedUpdater<String, Tenant> tenantsDefaultEdgeRuleChainUpdater =
+            new PaginatedUpdater<>() {
+
+                @Override
+                protected String getName() {
+                    return "Tenants default edge rule chain updater";
+                }
+
+                @Override
+                protected boolean forceReportTotal() {
+                    return true;
+                }
 
                 @Override
                 protected PageData<Tenant> findEntities(String region, PageLink pageLink) {
@@ -179,8 +222,18 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 }
             };
 
-    private PaginatedUpdater<String, Tenant> tenantsRootRuleChainUpdater =
-            new PaginatedUpdater<String, Tenant>() {
+    private final PaginatedUpdater<String, Tenant> tenantsRootRuleChainUpdater =
+            new PaginatedUpdater<>() {
+
+                @Override
+                protected String getName() {
+                    return "Tenants root rule chain updater";
+                }
+
+                @Override
+                protected boolean forceReportTotal() {
+                    return true;
+                }
 
                 @Override
                 protected PageData<Tenant> findEntities(String region, PageLink pageLink) {
@@ -233,8 +286,18 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 }
             };
 
-    private PaginatedUpdater<String, Tenant> tenantsEntityViewsUpdater =
-            new PaginatedUpdater<String, Tenant>() {
+    private final PaginatedUpdater<String, Tenant> tenantsEntityViewsUpdater =
+            new PaginatedUpdater<>() {
+
+                @Override
+                protected String getName() {
+                    return "Tenants entity views updater";
+                }
+
+                @Override
+                protected boolean forceReportTotal() {
+                    return true;
+                }
 
                 @Override
                 protected PageData<Tenant> findEntities(String region, PageLink pageLink) {
@@ -300,6 +363,50 @@ public class DefaultDataUpdateService implements DataUpdateService {
             }
             return Futures.immediateFuture(null);
         }, MoreExecutors.directExecutor());
+    }
+
+    private final PaginatedUpdater<String, Tenant> tenantsAlarmsCustomerUpdater =
+            new PaginatedUpdater<>() {
+
+                @Override
+                protected String getName() {
+                    return "Tenants alarms customer updater";
+                }
+
+                @Override
+                protected boolean forceReportTotal() {
+                    return true;
+                }
+
+                @Override
+                protected PageData<Tenant> findEntities(String region, PageLink pageLink) {
+                    return tenantService.findTenants(pageLink);
+                }
+
+                @Override
+                protected void updateEntity(Tenant tenant) {
+                    updateTenantAlarmsCustomer(tenant.getId());
+                }
+            };
+
+    private void updateTenantAlarmsCustomer(TenantId tenantId) {
+        AlarmQuery alarmQuery = new AlarmQuery(null, new TimePageLink(100), null, null, false);
+        PageData<AlarmInfo> alarms = alarmDao.findAlarms(tenantId, alarmQuery);
+        boolean hasNext = true;
+        while (hasNext) {
+            for (Alarm alarm : alarms.getData()) {
+                if (alarm.getCustomerId() == null && alarm.getOriginator() != null) {
+                    alarm.setCustomerId(entityService.fetchEntityCustomerId(tenantId, alarm.getOriginator()));
+                    alarmDao.save(tenantId, alarm);
+                }
+            }
+            if (alarms.hasNext()) {
+                alarmQuery.setPageLink(alarmQuery.getPageLink().nextPageLink());
+                alarms = alarmDao.findAlarms(tenantId, alarmQuery);
+            } else {
+                hasNext = false;
+            }
+        }
     }
 
     private void convertDeviceProfileAlarmRulesForVersion330(JsonNode spec) {

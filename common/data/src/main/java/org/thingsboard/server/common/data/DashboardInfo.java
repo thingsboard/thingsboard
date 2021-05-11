@@ -30,6 +30,7 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
     private TenantId tenantId;
     @NoXss
     private String title;
+    private String image;
     @Valid
     private Set<ShortCustomerInfo> assignedCustomers;
 
@@ -45,6 +46,7 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
         super(dashboardInfo);
         this.tenantId = dashboardInfo.getTenantId();
         this.title = dashboardInfo.getTitle();
+        this.image = dashboardInfo.getImage();
         this.assignedCustomers = dashboardInfo.getAssignedCustomers();
     }
 
@@ -62,6 +64,14 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
     }
 
     public Set<ShortCustomerInfo> getAssignedCustomers() {

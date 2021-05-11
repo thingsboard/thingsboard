@@ -127,8 +127,8 @@ export const SECURITY_CONFIG_MODE_NAMES = new Map<SECURITY_CONFIG_MODE, string>(
 );
 
 export interface ModelValue {
-  objectIds: string[],
-  objectsList: ObjectLwM2M[]
+  objectIds: string[];
+  objectsList: ObjectLwM2M[];
 }
 
 export interface BootstrapServersSecurityConfig {
@@ -246,7 +246,7 @@ export interface ResourceLwM2M {
   observe: boolean;
   attribute: boolean;
   telemetry: boolean;
-  keyName: {};
+  keyName: string;
   attributeLwm2m?: {};
 }
 

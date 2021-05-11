@@ -91,17 +91,18 @@ export interface BaseFilterEventBody {
 
 export interface ErrorFilterEventBody extends BaseFilterEventBody {
   method?: string;
+  error?: string;
 }
 
 export interface LcFilterEventEventBody extends BaseFilterEventBody {
-  method?: string;
+  event?: string;
   status?: string;
-  isError?: boolean;
+  error?: string;
 }
 
 export interface StatsFilterEventBody extends BaseFilterEventBody {
-  messagesProcessed?: string;
-  errorsOccurred?: string;
+  messagesProcessed?: number;
+  errorsOccurred?: number;
 }
 
 export interface DebugFilterRuleNodeEventBody extends BaseFilterEventBody {
@@ -114,6 +115,7 @@ export interface DebugFilterRuleNodeEventBody extends BaseFilterEventBody {
   dataSearch?: string;
   metadataSearch?: string;
   isError?: boolean;
+  error?: string;
 }
 
 export type FilterEventBody = ErrorFilterEventBody & LcFilterEventEventBody & StatsFilterEventBody & DebugFilterRuleNodeEventBody;

@@ -15,16 +15,15 @@
 ///
 
 import { DeviceProfileTransportConfiguration } from '@shared/models/device.models';
-import { Component, forwardRef, Inject, Input } from '@angular/core';
+import { Component, forwardRef, Input } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
-import { Store } from '@ngrx/store';
-import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   ATTRIBUTE,
   BINDING_MODE,
   BINDING_MODE_NAMES,
   getDefaultProfileConfig,
+  Instance,
   INSTANCES,
   KEY_NAME,
   Lwm2mProfileConfigModels,
@@ -37,9 +36,9 @@ import {
 } from './lwm2m-profile-config.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { deepClone, isDefinedAndNotNull, isEmpty, isUndefined } from '@core/utils';
-import { WINDOW } from '@core/services/window.service';
 import { JsonArray, JsonObject } from '@angular/compiler-cli/ngcc/src/packages/entry_point';
 import { Direction } from '@shared/models/page/sort-order';
+import _ from 'lodash';
 
 @Component({
   selector: 'tb-profile-lwm2m-device-transport-configuration',
@@ -78,10 +77,8 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   private propagateChange = (v: any) => {
   }
 
-  constructor(private store: Store<AppState>,
-              private fb: FormBuilder,
-              private deviceProfileService: DeviceProfileService,
-              @Inject(WINDOW) private window: Window) {
+  constructor(private fb: FormBuilder,
+              private deviceProfileService: DeviceProfileService) {
     this.lwm2mDeviceProfileFormGroup = this.fb.group({
       clientOnlyObserveAfterConnect: [1, []],
       objectIds: [null, Validators.required],
@@ -155,7 +152,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     this.lwm2mDeviceProfileFormGroup.patchValue({
         clientOnlyObserveAfterConnect: this.configurationValue.clientLwM2mSettings.clientOnlyObserveAfterConnect,
         objectIds: value,
-        observeAttrTelemetry: this.getObserveAttrTelemetryObjects(value['objectsList']),
+        observeAttrTelemetry: this.getObserveAttrTelemetryObjects(value.objectsList),
         shortId: this.configurationValue.bootstrap.servers.shortId,
         lifetime: this.configurationValue.bootstrap.servers.lifetime,
         defaultMinPeriod: this.configurationValue.bootstrap.servers.defaultMinPeriod,
@@ -171,7 +168,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     let configuration: DeviceProfileTransportConfiguration = null;
     if (this.lwm2mDeviceConfigFormGroup.valid && this.lwm2mDeviceProfileFormGroup.valid) {
       configuration = this.lwm2mDeviceConfigFormGroup.value.configurationJson;
-      // configuration.type = DeviceTransportType.LWM2M;
     }
     this.propagateChange(configuration);
   }
@@ -206,7 +202,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     if (this.configurationValue.observeAttr && objectLwM2MS.length > 0) {
       const attributeArray = this.configurationValue.observeAttr.attribute;
       const telemetryArray = this.configurationValue.observeAttr.telemetry;
-      let keyNameJson = this.configurationValue.observeAttr.keyName;
+      const keyNameJson = this.configurationValue.observeAttr.keyName;
       if (this.includesNotZeroInstance(attributeArray, telemetryArray)) {
         this.addInstances(attributeArray, telemetryArray, objectLwM2MS);
       }
@@ -236,22 +232,28 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     const isNotZeroInstanceId = (instance) => !instance.includes('/0/');
     return attribute.some(isNotZeroInstanceId) || telemetry.some(isNotZeroInstanceId);
   }
-
   private addInstances = (attribute: string[], telemetry: string[], clientObserveAttrTelemetry: ObjectLwM2M[]): void => {
     const instancesPath = attribute.concat(telemetry)
       .filter(instance => !instance.includes('/0/'))
       .map(instance => instance.slice(1, instance.lastIndexOf('/')))
       .sort(this.sortPath);
-
     new Set(instancesPath).forEach(path => {
       const pathParameter = Array.from(path.split('/'), String);
       const objectLwM2M = clientObserveAttrTelemetry.find(x => x.keyId === pathParameter[0]);
       if (objectLwM2M) {
-        const instance = deepClone(objectLwM2M.instances[0]);
-        instance.id = +pathParameter[1];
+        const instance = this.updateInInstanceKeyName (objectLwM2M.instances[0], +pathParameter[1]);
         objectLwM2M.instances.push(instance);
       }
     });
+  }
+
+  private updateInInstanceKeyName = (instance: Instance, instanceId: number): Instance => {
+    const instanceUpdate = deepClone(instance);
+    instanceUpdate.id = instanceId;
+    instanceUpdate.resources.forEach(resource => {
+      resource.keyName = _.camelCase(resource.name + instanceUpdate.id);
+    })
+    return instanceUpdate;
   }
 
   private updateObserveAttrTelemetryObjects = (parameters: string[], objectLwM2MS: ObjectLwM2M[],
@@ -270,9 +272,9 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   private updateAttributeLwm2m = (objectLwM2MS: ObjectLwM2M[]): void => {
     Object.keys(this.configurationValue.observeAttr.attributeLwm2m).forEach(key => {
       const [objectKeyId, instanceId, resourceId] = Array.from(key.substring(1).split('/'), String);
-      let objectLwM2M = objectLwM2MS.find(objectLwm2m => objectLwm2m.keyId === objectKeyId);
+      const objectLwM2M = objectLwM2MS.find(objectLwm2m => objectLwm2m.keyId === objectKeyId);
       if (objectLwM2M && instanceId) {
-        let instance = objectLwM2M.instances.find(instance => instance.id === +instanceId)
+        const instance = objectLwM2M.instances.find(obj => obj.id === +instanceId);
         if (instance && resourceId) {
           instance.resources.find(resource => resource.id === +resourceId)
             .attributeLwm2m = this.configurationValue.observeAttr.attributeLwm2m[key];
@@ -288,7 +290,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   private updateKeyNameObjects = (objectLwM2MS: ObjectLwM2M[]): void => {
     Object.keys(this.configurationValue.observeAttr.keyName).forEach(key => {
       const [objectKeyId, instanceId, resourceId] = Array.from(key.substring(1).split('/'), String);
-      const objectLwM2M = objectLwM2MS.find(objectLwm2m => objectLwm2m.keyId === objectKeyId)
+      const objectLwM2M = objectLwM2MS.find(objectLwm2m => objectLwm2m.keyId === objectKeyId);
       if (objectLwM2M) {
         objectLwM2M.instances.find(instance => instance.id === +instanceId)
           .resources.find(resource => resource.id === +resourceId)
@@ -299,7 +301,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
 
   private validateKeyNameObjects = (nameJson: JsonObject, attributeArray: JsonArray, telemetryArray: JsonArray): {} => {
     const keyName = JSON.parse(JSON.stringify(nameJson));
-    let keyNameValidate = {};
+    const keyNameValidate = {};
     const keyAttrTelemetry = attributeArray.concat(telemetryArray);
     Object.keys(keyName).forEach(key => {
       if (keyAttrTelemetry.includes(key)) {
@@ -345,9 +347,9 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
                   attributeLwm2m[pathRes] = resource.attributeLwm2m;
                 }
               }
-            })
+            });
           }
-        })
+        });
       }
     });
     if (isUndefined(this.configurationValue.observeAttr)) {
@@ -356,7 +358,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         attribute: attributeArray,
         telemetry: telemetryArray,
         keyName: this.sortObjectKeyPathJson(KEY_NAME, keyNameNew),
-        attributeLwm2m: attributeLwm2m
+        attributeLwm2m
       };
     } else {
       this.configurationValue.observeAttr.observe = observeArray;
@@ -457,7 +459,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   private removeAttributeLwm2mFromJson = (keyId: string): void => {
-    debugger
     const keyNameJson = this.configurationValue.observeAttr.attributeLwm2m;
     Object.keys(keyNameJson).forEach(key => {
       if (key.startsWith(`/${keyId}`)) {

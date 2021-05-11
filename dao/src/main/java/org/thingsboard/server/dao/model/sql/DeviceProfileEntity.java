@@ -21,18 +21,20 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
+import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.dao.util.mapping.JsonBinaryType;
 
 import javax.persistence.Column;
@@ -59,6 +61,9 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
     @Column(name = ModelConstants.DEVICE_PROFILE_TYPE_PROPERTY)
     private DeviceProfileType type;
 
+    @Column(name = ModelConstants.DEVICE_PROFILE_IMAGE_PROPERTY)
+    private String image;
+
     @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.DEVICE_PROFILE_TRANSPORT_TYPE_PROPERTY)
     private DeviceTransportType transportType;
@@ -79,6 +84,9 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
     @Column(name = ModelConstants.DEVICE_PROFILE_DEFAULT_RULE_CHAIN_ID_PROPERTY, columnDefinition = "uuid")
     private UUID defaultRuleChainId;
 
+    @Column(name = ModelConstants.DEVICE_PROFILE_DEFAULT_DASHBOARD_ID_PROPERTY)
+    private UUID defaultDashboardId;
+
     @Column(name = ModelConstants.DEVICE_PROFILE_DEFAULT_QUEUE_NAME_PROPERTY)
     private String defaultQueueName;
 
@@ -86,8 +94,14 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
     @Column(name = ModelConstants.DEVICE_PROFILE_PROFILE_DATA_PROPERTY, columnDefinition = "jsonb")
     private JsonNode profileData;
 
-    @Column(name=ModelConstants.DEVICE_PROFILE_PROVISION_DEVICE_KEY)
+    @Column(name = ModelConstants.DEVICE_PROFILE_PROVISION_DEVICE_KEY)
     private String provisionDeviceKey;
+
+    @Column(name = ModelConstants.DEVICE_PROFILE_FIRMWARE_ID_PROPERTY)
+    private UUID firmwareId;
+
+    @Column(name = ModelConstants.DEVICE_PROFILE_SOFTWARE_ID_PROPERTY)
+    private UUID softwareId;
 
     public DeviceProfileEntity() {
         super();
@@ -103,6 +117,7 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         this.setCreatedTime(deviceProfile.getCreatedTime());
         this.name = deviceProfile.getName();
         this.type = deviceProfile.getType();
+        this.image = deviceProfile.getImage();
         this.transportType = deviceProfile.getTransportType();
         this.provisionType = deviceProfile.getProvisionType();
         this.description = deviceProfile.getDescription();
@@ -111,8 +126,17 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         if (deviceProfile.getDefaultRuleChainId() != null) {
             this.defaultRuleChainId = deviceProfile.getDefaultRuleChainId().getId();
         }
+        if (deviceProfile.getDefaultDashboardId() != null) {
+            this.defaultDashboardId = deviceProfile.getDefaultDashboardId().getId();
+        }
         this.defaultQueueName = deviceProfile.getDefaultQueueName();
         this.provisionDeviceKey = deviceProfile.getProvisionDeviceKey();
+        if (deviceProfile.getFirmwareId() != null) {
+            this.firmwareId = deviceProfile.getFirmwareId().getId();
+        }
+        if (deviceProfile.getSoftwareId() != null) {
+            this.firmwareId = deviceProfile.getSoftwareId().getId();
+        }
     }
 
     @Override
@@ -138,6 +162,7 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         }
         deviceProfile.setName(name);
         deviceProfile.setType(type);
+        deviceProfile.setImage(image);
         deviceProfile.setTransportType(transportType);
         deviceProfile.setProvisionType(provisionType);
         deviceProfile.setDescription(description);
@@ -146,8 +171,20 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         if (defaultRuleChainId != null) {
             deviceProfile.setDefaultRuleChainId(new RuleChainId(defaultRuleChainId));
         }
+        if (defaultDashboardId != null) {
+            deviceProfile.setDefaultDashboardId(new DashboardId(defaultDashboardId));
+        }
         deviceProfile.setDefaultQueueName(defaultQueueName);
         deviceProfile.setProvisionDeviceKey(provisionDeviceKey);
+
+        if (firmwareId != null) {
+            deviceProfile.setFirmwareId(new FirmwareId(firmwareId));
+        }
+
+        if (softwareId != null) {
+            deviceProfile.setSoftwareId(new FirmwareId(softwareId));
+        }
+
         return deviceProfile;
     }
 }

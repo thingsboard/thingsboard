@@ -153,6 +153,8 @@ public class ModelConstants {
     public static final String DEVICE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
     public static final String DEVICE_DEVICE_PROFILE_ID_PROPERTY = "device_profile_id";
     public static final String DEVICE_DEVICE_DATA_PROPERTY = "device_data";
+    public static final String DEVICE_FIRMWARE_ID_PROPERTY = "firmware_id";
+    public static final String DEVICE_SOFTWARE_ID_PROPERTY = "software_id";
 
     public static final String DEVICE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_and_search_text";
     public static final String DEVICE_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_by_type_and_search_text";
@@ -168,14 +170,18 @@ public class ModelConstants {
     public static final String DEVICE_PROFILE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String DEVICE_PROFILE_NAME_PROPERTY = "name";
     public static final String DEVICE_PROFILE_TYPE_PROPERTY = "type";
+    public static final String DEVICE_PROFILE_IMAGE_PROPERTY = "image";
     public static final String DEVICE_PROFILE_TRANSPORT_TYPE_PROPERTY = "transport_type";
     public static final String DEVICE_PROFILE_PROVISION_TYPE_PROPERTY = "provision_type";
     public static final String DEVICE_PROFILE_PROFILE_DATA_PROPERTY = "profile_data";
     public static final String DEVICE_PROFILE_DESCRIPTION_PROPERTY = "description";
     public static final String DEVICE_PROFILE_IS_DEFAULT_PROPERTY = "is_default";
     public static final String DEVICE_PROFILE_DEFAULT_RULE_CHAIN_ID_PROPERTY = "default_rule_chain_id";
+    public static final String DEVICE_PROFILE_DEFAULT_DASHBOARD_ID_PROPERTY = "default_dashboard_id";
     public static final String DEVICE_PROFILE_DEFAULT_QUEUE_NAME_PROPERTY = "default_queue_name";
     public static final String DEVICE_PROFILE_PROVISION_DEVICE_KEY = "provision_device_key";
+    public static final String DEVICE_PROFILE_FIRMWARE_ID_PROPERTY = "firmware_id";
+    public static final String DEVICE_PROFILE_SOFTWARE_ID_PROPERTY = "software_id";
 
     /**
      * Cassandra entityView constants.
@@ -253,6 +259,7 @@ public class ModelConstants {
      */
     public static final String ALARM_COLUMN_FAMILY_NAME = "alarm";
     public static final String ALARM_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String ALARM_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String ALARM_TYPE_PROPERTY = "type";
     public static final String ALARM_DETAILS_PROPERTY = "details";
     public static final String ALARM_ORIGINATOR_ID_PROPERTY = "originator_id";
@@ -329,6 +336,7 @@ public class ModelConstants {
     public static final String DASHBOARD_COLUMN_FAMILY_NAME = "dashboard";
     public static final String DASHBOARD_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String DASHBOARD_TITLE_PROPERTY = TITLE_PROPERTY;
+    public static final String DASHBOARD_IMAGE_PROPERTY = "image";
     public static final String DASHBOARD_CONFIGURATION_PROPERTY = "configuration";
     public static final String DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY = "assigned_customers";
 
@@ -468,6 +476,24 @@ public class ModelConstants {
     public static final String RESOURCE_TITLE_COLUMN = TITLE_PROPERTY;
     public static final String RESOURCE_FILE_NAME_COLUMN = "file_name";
     public static final String RESOURCE_DATA_COLUMN = "data";
+
+    /**
+     * Firmware constants.
+     */
+    public static final String FIRMWARE_TABLE_NAME = "firmware";
+    public static final String FIRMWARE_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
+    public static final String FIRMWARE_DEVICE_PROFILE_ID_COLUMN = "device_profile_id";
+    public static final String FIRMWARE_TYPE_COLUMN = "type";
+    public static final String FIRMWARE_TITLE_COLUMN = TITLE_PROPERTY;
+    public static final String FIRMWARE_VERSION_COLUMN = "version";
+    public static final String FIRMWARE_FILE_NAME_COLUMN = "file_name";
+    public static final String FIRMWARE_CONTENT_TYPE_COLUMN = "content_type";
+    public static final String FIRMWARE_CHECKSUM_ALGORITHM_COLUMN = "checksum_algorithm";
+    public static final String FIRMWARE_CHECKSUM_COLUMN = "checksum";
+    public static final String FIRMWARE_DATA_COLUMN = "data";
+    public static final String FIRMWARE_DATA_SIZE_COLUMN = "data_size";
+    public static final String FIRMWARE_ADDITIONAL_INFO_COLUMN = ADDITIONAL_INFO_PROPERTY;
+    public static final String FIRMWARE_HAS_DATA_PROPERTY = "has_data";
 
     /**
      * Edge constants.

@@ -25,8 +25,12 @@ kafka:
     # Kafka Bootstrap Servers
     servers: "TB_KAFKA_SERVERS"
   replication_factor: "TB_QUEUE_KAFKA_REPLICATION_FACTOR"
+  acks: "TB_KAFKA_ACKS" # -1 = all; 0 = no acknowledgments; 1 = only waits for the leader to acknowledge
+  requestTimeout: "TB_QUEUE_KAFKA_REQUEST_TIMEOUT_MS"
+  compression: "TB_QUEUE_KAFKA_COMPRESSION" # gzip or uncompressed
   topic_properties: "TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES"
   use_confluent_cloud: "TB_QUEUE_KAFKA_USE_CONFLUENT_CLOUD"
+  client_id: "KAFKA_CLIENT_ID" #inject pod name to easy identify the client using /opt/kafka/bin/kafka-consumer-groups.sh
   confluent:
     sasl:
       mechanism: "TB_QUEUE_KAFKA_CONFLUENT_SASL_MECHANISM"
@@ -68,3 +72,5 @@ script:
   use_sandbox: "SCRIPT_USE_SANDBOX"
   script_body_trace_frequency: "SCRIPT_BODY_TRACE_FREQUENCY"
   max_active_scripts: "MAX_ACTIVE_SCRIPTS"
+  slow_query_log_ms: "SLOW_QUERY_LOG_MS" #1.123456
+  slow_query_log_body: "SLOW_QUERY_LOG_BODY" #true or false

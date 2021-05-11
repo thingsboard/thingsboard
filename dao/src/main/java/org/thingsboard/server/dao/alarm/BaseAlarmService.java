@@ -110,6 +110,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             if (alarm.getEndTs() == 0L) {
                 alarm.setEndTs(alarm.getStartTs());
             }
+            alarm.setCustomerId(entityService.fetchEntityCustomerId(alarm.getTenantId(), alarm.getOriginator()));
             if (alarm.getId() == null) {
                 Alarm existing = alarmDao.findLatestByOriginatorAndType(alarm.getTenantId(), alarm.getOriginator(), alarm.getType()).get();
                 if (existing == null || existing.getStatus().isCleared()) {
@@ -292,23 +293,36 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     public ListenableFuture<PageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query) {
         PageData<AlarmInfo> alarms = alarmDao.findAlarms(tenantId, query);
         if (query.getFetchOriginator() != null && query.getFetchOriginator().booleanValue()) {
-            List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(alarms.getData().size());
-            for (AlarmInfo alarmInfo : alarms.getData()) {
-                alarmFutures.add(Futures.transform(
-                        entityService.fetchEntityNameAsync(tenantId, alarmInfo.getOriginator()), originatorName -> {
-                            if (originatorName == null) {
-                                originatorName = "Deleted";
-                            }
-                            alarmInfo.setOriginatorName(originatorName);
-                            return alarmInfo;
-                        }, MoreExecutors.directExecutor()
-                ));
-            }
-            return Futures.transform(Futures.successfulAsList(alarmFutures),
-                    alarmInfos -> new PageData<>(alarmInfos, alarms.getTotalPages(), alarms.getTotalElements(),
-                            alarms.hasNext()), MoreExecutors.directExecutor());
+            return fetchAlarmsOriginators(tenantId, alarms);
         }
         return Futures.immediateFuture(alarms);
+    }
+
+    @Override
+    public ListenableFuture<PageData<AlarmInfo>> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query) {
+        PageData<AlarmInfo> alarms = alarmDao.findCustomerAlarms(tenantId, customerId, query);
+        if (query.getFetchOriginator() != null && query.getFetchOriginator().booleanValue()) {
+            return fetchAlarmsOriginators(tenantId, alarms);
+        }
+        return Futures.immediateFuture(alarms);
+    }
+
+    private ListenableFuture<PageData<AlarmInfo>> fetchAlarmsOriginators(TenantId tenantId, PageData<AlarmInfo> alarms) {
+        List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(alarms.getData().size());
+        for (AlarmInfo alarmInfo : alarms.getData()) {
+            alarmFutures.add(Futures.transform(
+                    entityService.fetchEntityNameAsync(tenantId, alarmInfo.getOriginator()), originatorName -> {
+                        if (originatorName == null) {
+                            originatorName = "Deleted";
+                        }
+                        alarmInfo.setOriginatorName(originatorName);
+                        return alarmInfo;
+                    }, MoreExecutors.directExecutor()
+            ));
+        }
+        return Futures.transform(Futures.successfulAsList(alarmFutures),
+                alarmInfos -> new PageData<>(alarmInfos, alarms.getTotalPages(), alarms.getTotalElements(),
+                        alarms.hasNext()), MoreExecutors.directExecutor());
     }
 
     @Override
@@ -342,6 +356,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         existing.setStatus(alarm.getStatus());
         existing.setSeverity(alarm.getSeverity());
         existing.setDetails(alarm.getDetails());
+        existing.setCustomerId(alarm.getCustomerId());
         existing.setPropagate(existing.isPropagate() || alarm.isPropagate());
         List<String> existingPropagateRelationTypes = existing.getPropagateRelationTypes();
         List<String> newRelationTypes = alarm.getPropagateRelationTypes();

@@ -20,9 +20,11 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Once application is ready or cluster topology changes, this Service will produce {@link PartitionChangeEvent}
@@ -55,4 +57,6 @@ public interface PartitionService {
      * @return
      */
     TopicPartitionInfo getNotificationsTopic(ServiceType serviceType, String serviceId);
+
+    int resolvePartitionIndex(UUID entityId, int partitions);
 }

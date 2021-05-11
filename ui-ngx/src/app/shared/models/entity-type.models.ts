@@ -34,7 +34,8 @@ export enum EntityType {
   WIDGETS_BUNDLE = 'WIDGETS_BUNDLE',
   WIDGET_TYPE = 'WIDGET_TYPE',
   API_USAGE_STATE = 'API_USAGE_STATE',
-  TB_RESOURCE = 'TB_RESOURCE'
+  TB_RESOURCE = 'TB_RESOURCE',
+  FIRMWARE = 'FIRMWARE'
 }
 
 export enum AliasEntityType {
@@ -286,6 +287,7 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
     [
       EntityType.TB_RESOURCE,
       {
+        type: 'entity.type-tb-resource',
         details: 'resource.resource-library-details',
         add: 'resource.add',
         noEntities: 'resource.no-resource-text',
@@ -293,6 +295,17 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         selectedEntities: 'resource.selected-resources'
       }
     ],
+    [
+      EntityType.FIRMWARE,
+      {
+        type: 'entity.type-firmware',
+        details: 'firmware.firmware-details',
+        add: 'firmware.add',
+        noEntities: 'firmware.no-firmware-text',
+        search: 'firmware.search',
+        selectedEntities: 'firmware.selected-firmware'
+      }
+    ]
   ]
 );
 
@@ -374,6 +387,12 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       EntityType.TB_RESOURCE,
       {
         helpLinkId: 'resources'
+      }
+    ],
+    [
+      EntityType.FIRMWARE,
+      {
+        helpLinkId: 'firmware'
       }
     ]
   ]
