@@ -595,4 +595,23 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
         return edge;
     }
 
+    @Test
+    public void testCleanCacheIfEdgeRenamed() {
+        String edgeNameBeforeRename = RandomStringUtils.randomAlphanumeric(15);
+        String edgeNameAfterRename = RandomStringUtils.randomAlphanumeric(15);
+
+        Edge edge = constructEdge(tenantId, edgeNameBeforeRename, "default");
+        edgeService.saveEdge(edge);
+
+        Edge savedEdge = edgeService.findEdgeByTenantIdAndName(tenantId, edgeNameBeforeRename);
+
+        savedEdge.setName(edgeNameAfterRename);
+        edgeService.saveEdge(savedEdge);
+
+        Edge renamedEdge = edgeService.findEdgeByTenantIdAndName(tenantId, edgeNameBeforeRename);
+
+        Assert.assertNull("Can't find edge by name in cache if it was renamed", renamedEdge);
+        edgeService.deleteEdge(tenantId, savedEdge.getId());
+    }
+
 }

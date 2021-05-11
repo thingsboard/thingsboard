@@ -793,4 +793,25 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         customerService.deleteCustomer(tenantId, customerId);
     }
 
+    @Test
+    public void testCleanCacheIfDeviceRenamed() {
+        String deviceNameBeforeRename = RandomStringUtils.randomAlphanumeric(15);
+        String deviceNameAfterRename = RandomStringUtils.randomAlphanumeric(15);
+
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName(deviceNameBeforeRename);
+        device.setType("default");
+        deviceService.saveDevice(device);
+
+        Device savedDevice = deviceService.findDeviceByTenantIdAndName(tenantId, deviceNameBeforeRename);
+
+        savedDevice.setName(deviceNameAfterRename);
+        deviceService.saveDevice(savedDevice);
+
+        Device renamedDevice = deviceService.findDeviceByTenantIdAndName(tenantId, deviceNameBeforeRename);
+
+        Assert.assertNull("Can't find device by name in cache if it was renamed", renamedDevice);
+        deviceService.deleteDevice(tenantId, savedDevice.getId());
+    }
 }
