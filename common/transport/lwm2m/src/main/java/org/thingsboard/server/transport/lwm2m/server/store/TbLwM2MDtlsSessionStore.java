@@ -24,6 +24,9 @@ public interface TbLwM2MDtlsSessionStore {
 
     TbX509DtlsSessionInfo get(String endpoint);
 
+
+    void remove(String endpoint);
+
     //TODO: add way to delete the session by endpoint.
 
 }
