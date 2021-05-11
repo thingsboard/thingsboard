@@ -25,13 +25,16 @@ public enum ApiUsageRecordKey {
     RE_EXEC_COUNT(ApiFeature.RE, "ruleEngineExecutionCount", "ruleEngineExecutionLimit"),
     JS_EXEC_COUNT(ApiFeature.JS, "jsExecutionCount", "jsExecutionLimit"),
     EMAIL_EXEC_COUNT(ApiFeature.EMAIL, "emailCount", "emailLimit"),
-    SMS_EXEC_COUNT(ApiFeature.SMS, "smsCount", "smsLimit");
+    SMS_EXEC_COUNT(ApiFeature.SMS, "smsCount", "smsLimit"),
+    CREATED_ALARMS_COUNT(ApiFeature.ALARM, "createdAlarmsCount", "createdAlarmsLimit");
+
     private static final ApiUsageRecordKey[] JS_RECORD_KEYS = {JS_EXEC_COUNT};
     private static final ApiUsageRecordKey[] RE_RECORD_KEYS = {RE_EXEC_COUNT};
     private static final ApiUsageRecordKey[] DB_RECORD_KEYS = {STORAGE_DP_COUNT};
     private static final ApiUsageRecordKey[] TRANSPORT_RECORD_KEYS = {TRANSPORT_MSG_COUNT, TRANSPORT_DP_COUNT};
     private static final ApiUsageRecordKey[] EMAIL_RECORD_KEYS = {EMAIL_EXEC_COUNT};
     private static final ApiUsageRecordKey[] SMS_RECORD_KEYS = {SMS_EXEC_COUNT};
+    private static final ApiUsageRecordKey[] ALARM_RECORD_KEYS = {CREATED_ALARMS_COUNT};
 
     @Getter
     private final ApiFeature apiFeature;
@@ -60,6 +63,8 @@ public enum ApiUsageRecordKey {
                 return EMAIL_RECORD_KEYS;
             case SMS:
                 return SMS_RECORD_KEYS;
+            case ALARM:
+                return ALARM_RECORD_KEYS;
             default:
                 return new ApiUsageRecordKey[]{};
         }
