@@ -43,7 +43,7 @@ public class TbLwM2MAuthorizer implements Authorizer {
         if (senderIdentity.isX509()) {
             TbX509DtlsSessionInfo sessionInfo = sessionStorage.get(registration.getEndpoint());
             if (sessionInfo != null) {
-                if (senderIdentity.getX509CommonName().equals(sessionInfo.getX509CommonName())) {
+                if (sessionInfo.getX509CommonName().endsWith(senderIdentity.getX509CommonName())) {
                     clientContext.registerClient(registration, sessionInfo.getCredentials());
                     // X509 certificate is valid and matches endpoint.
                     return registration;

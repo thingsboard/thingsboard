@@ -30,21 +30,22 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
 import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
-import org.thingsboard.server.transport.lwm2m.secure.credentials.NoSecClientCredentialsConfig;
+import org.thingsboard.server.transport.lwm2m.secure.credentials.X509ClientCredentialsConfig;
 
 import java.util.Collections;
 import java.util.List;
 
-import static org.eclipse.leshan.client.object.Security.noSec;
+import static org.eclipse.leshan.client.object.Security.x509;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
+public class X509LwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
     protected final String TRANSPORT_CONFIGURATION = "{\n" +
             "  \"type\": \"LWM2M\",\n" +
@@ -70,9 +71,8 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
             "    },\n" +
             "    \"lwm2mServer\": {\n" +
             "      \"host\": \"localhost\",\n" +
-            "      \"port\": 5685,\n" +
+            "      \"port\": 5686,\n" +
             "      \"serverId\": 123,\n" +
-            "      \"securityMode\": \"NO_SEC\",\n" +
             "      \"serverPublicKey\": \"\",\n" +
             "      \"bootstrapServerIs\": false,\n" +
             "      \"clientHoldOffTime\": 1,\n" +
@@ -94,12 +94,14 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
             "  }\n" +
             "}";
 
-    private final int port = 5685;
-    private final Security security =  noSec("coap://localhost:" + port, 123);
-    private final NetworkConfig coapConfig = new NetworkConfig().setString("COAP_PORT", Integer.toString(port));
+
+    private final int port = 5686;
+    private final NetworkConfig coapConfig = new NetworkConfig().setString("COAP_SECURE_PORT", Integer.toString(port));
+    private final String endpoint = "deviceAEndpoint";
+    private final String serverUri = "coaps://localhost:" + port;
 
     @NotNull
-    private Device createDevice(String deviceAEndpoint) throws Exception {
+    private Device createDevice(String credentialsId, X509ClientCredentialsConfig credentialsConfig) throws Exception {
         Device device = new Device();
         device.setName("Device A");
         device.setDeviceProfileId(deviceProfile.getId());
@@ -112,11 +114,13 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
         Assert.assertEquals(device.getId(), deviceCredentials.getDeviceId());
         deviceCredentials.setCredentialsType(DeviceCredentialsType.LWM2M_CREDENTIALS);
 
-        deviceCredentials.setCredentialsId(deviceAEndpoint);
+        deviceCredentials.setCredentialsId(credentialsId);
 
-        LwM2MCredentials noSecCredentials = new LwM2MCredentials();
-        noSecCredentials.setClient(new NoSecClientCredentialsConfig());
-        deviceCredentials.setCredentialsValue(JacksonUtil.toString(noSecCredentials));
+        LwM2MCredentials X509Credentials = new LwM2MCredentials();
+
+        X509Credentials.setClient(credentialsConfig);
+
+        deviceCredentials.setCredentialsValue(JacksonUtil.toString(X509Credentials));
         doPost("/api/device/credentials", deviceCredentials).andExpect(status().isOk());
         return device;
     }
@@ -125,9 +129,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
     public void testConnectAndObserveTelemetry() throws Exception {
         createDeviceProfile(TRANSPORT_CONFIGURATION);
 
-        String deviceAEndpoint = "deviceAEndpoint";
-
-        Device device = createDevice(deviceAEndpoint);
+        Device device = createDevice(endpoint, new X509ClientCredentialsConfig(null, null));
 
         SingleEntityFilter sef = new SingleEntityFilter();
         sef.setSingleEntity(device.getId());
@@ -144,7 +146,47 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
         wsClient.waitForReply();
 
         wsClient.registerWaitForUpdate();
-        LwM2MTestClient client = new LwM2MTestClient(executor, deviceAEndpoint);
+        LwM2MTestClient client = new LwM2MTestClient(executor, endpoint);
+        Security security = x509(serverUri, 123, clientX509Cert.getEncoded(), clientPrivateKeyFromCert.getEncoded(), serverX509Cert.getEncoded());
+        client.init(security, coapConfig);
+        String msg = wsClient.waitForUpdate();
+
+        EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        List<EntityData> eData = update.getUpdate();
+        Assert.assertNotNull(eData);
+        Assert.assertEquals(1, eData.size());
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
+        var tsValue = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("batteryLevel");
+        Assert.assertEquals(42, Long.parseLong(tsValue.getValue()));
+        client.destroy();
+    }
+
+    @Test
+    public void testConnectWithCertAndObserveTelemetry() throws Exception {
+        createDeviceProfile(TRANSPORT_CONFIGURATION);
+        Device device = createDevice(null, new X509ClientCredentialsConfig(SslUtil.getCertificateString(clientX509CertNotTrusted), endpoint));
+
+        SingleEntityFilter sef = new SingleEntityFilter();
+        sef.setSingleEntity(device.getId());
+        LatestValueCmd latestCmd = new LatestValueCmd();
+        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "batteryLevel")));
+        EntityDataQuery edq = new EntityDataQuery(sef, new EntityDataPageLink(1, 0, null, null),
+                Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+
+        EntityDataCmd cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
+        TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
+        wrapper.setEntityDataCmds(Collections.singletonList(cmd));
+
+        wsClient.send(mapper.writeValueAsString(wrapper));
+        wsClient.waitForReply();
+
+        wsClient.registerWaitForUpdate();
+        LwM2MTestClient client = new LwM2MTestClient(executor, endpoint);
+
+        Security security = x509(serverUri, 123, clientX509CertNotTrusted.getEncoded(), clientPrivateKeyFromCert.getEncoded(), serverX509Cert.getEncoded());
+
         client.init(security, coapConfig);
         String msg = wsClient.waitForUpdate();
 

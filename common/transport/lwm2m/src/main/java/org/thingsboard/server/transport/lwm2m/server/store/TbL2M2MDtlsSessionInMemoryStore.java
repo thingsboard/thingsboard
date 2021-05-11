@@ -36,4 +36,9 @@ public class TbL2M2MDtlsSessionInMemoryStore implements TbLwM2MDtlsSessionStore 
     public TbX509DtlsSessionInfo get(String endpoint) {
         return store.get(endpoint);
     }
+
+    @Override
+    public void remove(String endpoint) {
+        store.remove(endpoint);
+    }
 }

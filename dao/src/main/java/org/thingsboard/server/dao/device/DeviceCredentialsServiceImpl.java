@@ -16,6 +16,8 @@
 package org.thingsboard.server.dao.device;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +25,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -33,7 +36,6 @@ import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.thingsboard.common.util.JacksonUtil;
 
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CREDENTIALS_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -76,7 +78,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
     }
 
     private DeviceCredentials saveOrUpdate(TenantId tenantId, DeviceCredentials deviceCredentials) {
-        if(deviceCredentials.getCredentialsType() == null){
+        if (deviceCredentials.getCredentialsType() == null) {
             throw new DataValidationException("Device credentials type should be specified");
         }
         switch (deviceCredentials.getCredentialsType()) {
@@ -140,7 +142,18 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
     }
 
     private void formatSimpleLwm2mCredentials(DeviceCredentials deviceCredentials) {
-
+        ObjectNode json = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(), ObjectNode.class);
+        JsonNode client = json.get("client");
+        if (client != null && client.get("securityConfigClientMode").asText().equals("X509") && client.has("cert")) {
+            JsonNode certJson = client.get("cert");
+            if (!certJson.isNull()) {
+                String cert = EncryptionUtil.trimNewLines(certJson.asText());
+                String sha3Hash = EncryptionUtil.getSha3Hash(cert);
+                deviceCredentials.setCredentialsId(sha3Hash);
+                ((ObjectNode) client).put("cert", cert);
+                deviceCredentials.setCredentialsValue(JacksonUtil.toString(json));
+            }
+        }
     }
 
     @Override
