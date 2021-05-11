@@ -95,7 +95,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
             "}";
 
     private final int port = 5685;
-    private final Security security =  noSec("coap://localhost:" + port, 123);
+    private final Security security = noSec("coap://localhost:" + port, 123);
     private final NetworkConfig coapConfig = new NetworkConfig().setString("COAP_PORT", Integer.toString(port));
 
     @NotNull

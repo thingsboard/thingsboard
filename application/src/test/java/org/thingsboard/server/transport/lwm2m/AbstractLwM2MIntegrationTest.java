@@ -214,7 +214,7 @@ public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
     }
 
     @After
-    public void after() throws InterruptedException {
+    public void after() {
         executor.shutdownNow();
         wsClient.close();
     }
