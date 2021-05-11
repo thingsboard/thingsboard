@@ -18,7 +18,6 @@ package org.thingsboard.server.service.script;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -161,7 +160,8 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
 
     @Override
     protected ListenableFuture<Object> doInvokeFunction(UUID scriptId, String functionName, Object[] args) {
-        String scriptBody = scriptIdToBodysMap.get(scriptId);
+        log.trace("doInvokeFunction js-request for uuid {} with timeout {}ms", scriptId, maxRequestsTimeout);
+        final String scriptBody = scriptIdToBodysMap.get(scriptId);
         if (scriptBody == null) {
             return Futures.immediateFailedFuture(new RuntimeException("No script body found for scriptId: [" + scriptId + "]!"));
         }
@@ -170,7 +170,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .setScriptIdLSB(scriptId.getLeastSignificantBits())
                 .setFunctionName(functionName)
                 .setTimeout((int) maxRequestsTimeout)
-                .setScriptBody(scriptIdToBodysMap.get(scriptId));
+                .setScriptBody(scriptBody);
 
         for (Object arg : args) {
             jsRequestBuilder.addArgs(arg.toString());
@@ -193,7 +193,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
 
             @Override
             public void onFailure(Throwable t) {
-                onScriptExecutionError(scriptId, t);
+                onScriptExecutionError(scriptId, t, scriptBody);
                 if (t instanceof TimeoutException || (t.getCause() != null && t.getCause() instanceof TimeoutException)) {
                     queueTimeoutMsgs.incrementAndGet();
                 }
@@ -206,7 +206,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 return invokeResult.getResult();
             } else {
                 final RuntimeException e = new RuntimeException(invokeResult.getErrorDetails());
-                onScriptExecutionError(scriptId, e);
+                onScriptExecutionError(scriptId, e, scriptBody);
                 log.debug("[{}] Failed to compile script due to [{}]: {}", scriptId, invokeResult.getErrorCode().name(), invokeResult.getErrorDetails());
                 throw e;
             }
