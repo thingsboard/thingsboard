@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.firmware.FirmwareKey;
 import org.thingsboard.server.common.data.firmware.FirmwareType;
+import org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus;
 import org.thingsboard.server.common.data.firmware.FirmwareUtil;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.transport.TransportService;
@@ -88,7 +89,10 @@ import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPA
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper.getValueFromKvProto;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.CLIENT_NOT_AUTHORIZED;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.DEVICE_ATTRIBUTES_REQUEST;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.EqualsFwSateToFirmwareUpdateStatus;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_RESULT_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_STATE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_VALUE;
@@ -694,6 +698,23 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
             }
             if (lwM2MClient.getSwUpdate().isInfoFwSwUpdate()) {
                 lwM2MClient.getSwUpdate().initReadValue(this, path);
+            }
+            if (lwM2MClient.getFwUpdate().getStateUpdate() != null
+                    && !FirmwareUpdateStatus.DOWNLOADING.name().equals(lwM2MClient.getFwUpdate().getStateUpdate())
+                    && (convertPathFromObjectIdToIdVer(FW_STATE_ID, registration).equals(path)
+                        || convertPathFromObjectIdToIdVer(FW_RESULT_ID, registration).equals(path))) {
+                Long stateFw = (Long) lwM2MClient.getResourceValue(null, FW_STATE_ID);
+                Long updateResultFw = (Long) lwM2MClient.getResourceValue(null, FW_RESULT_ID);
+                FirmwareUpdateStatus state = EqualsFwSateToFirmwareUpdateStatus(LwM2mTransportUtil.StateFw.fromStateFwByCode(stateFw.intValue()),
+                        LwM2mTransportUtil.UpdateResultFw.fromUpdateResultFwByCode(updateResultFw.intValue()));
+                if (state != FirmwareUpdateStatus.DOWNLOADING && state != FirmwareUpdateStatus.DOWNLOADED) {
+                    lwM2MClient.getFwUpdate().setStateUpdate(state.name());
+                    lwM2MClient.getFwUpdate().sendLogs(OBSERVE.name());
+                }
+                log.warn ("update Resource [{}]", lwM2mResource);
+            }
+            if (FirmwareUpdateStatus.DOWNLOADED.name().equals(lwM2MClient.getSwUpdate().getStateUpdate())) {
+
             }
             Set<String> paths = new HashSet<>();
             paths.add(path);
