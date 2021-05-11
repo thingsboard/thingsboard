@@ -121,13 +121,16 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
     protected abstract long getMaxBlacklistDuration();
 
     protected void onScriptExecutionError(UUID scriptId, Throwable t) {
-        if (t instanceof TimeoutException || (t.getCause() != null && t.getCause() instanceof TimeoutException)) {
-            log.warn("Script has TimeoutException and will increment counter {} on disabledFunctions for id {}", //TODO remove after test
-                    disabledFunctions.computeIfAbsent(scriptId, key -> new DisableListInfo()).get(),
-                    scriptId);
-            //return; //timeout is not a good reason to disable function
-        }
-        disabledFunctions.computeIfAbsent(scriptId, key -> new DisableListInfo()).incrementAndGet();
+        DisableListInfo disableListInfo = disabledFunctions.computeIfAbsent(scriptId, key -> new DisableListInfo());
+        log.warn("Script has exception and will increment counter {} on disabledFunctions for id {}, exception {}, cause {}",
+                disableListInfo.get(), scriptId, t.getClass(), t.getCause());
+//        if (t instanceof TimeoutException || (t.getCause() != null && t.getCause() instanceof TimeoutException)) {
+//            log.warn("Script has TimeoutException and will increment counter {} on disabledFunctions for id {}", //TODO remove after test
+//                    disableListInfo.get(),
+//                    scriptId);
+//            //return; //timeout is not a good reason to disable function
+//        }
+        disableListInfo.incrementAndGet();
     }
 
     private String generateJsScript(JsScriptType scriptType, String functionName, String scriptBody, String... argNames) {

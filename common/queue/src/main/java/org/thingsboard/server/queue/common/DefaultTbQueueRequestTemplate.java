@@ -109,11 +109,9 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
 
     void fetchAndProcessResponses() {
         final long pendingRequestsCount = pendingRequests.mappingCount();
-        log.info("Starting template pool topic {}, for pendingRequests {}", responseTemplate.getTopic(), pendingRequestsCount);
+        log.trace("Starting template pool topic {}, for pendingRequests {}", responseTemplate.getTopic(), pendingRequestsCount);
         List<Response> responses = doPoll(); //poll js responses
-        //if (responses.size() > 0) {
-        log.info("Completed template poll topic {}, for pendingRequests [{}], received [{}]", responseTemplate.getTopic(), pendingRequestsCount, responses.size()); //TODO reduce verbose after test
-        //}
+        log.trace("Completed template poll topic {}, for pendingRequests [{}], received [{}] responses", responseTemplate.getTopic(), pendingRequestsCount, responses.size());
         responses.forEach(this::processResponse); //this can take a long time
         responseTemplate.commit();
         tryCleanStaleRequests();
