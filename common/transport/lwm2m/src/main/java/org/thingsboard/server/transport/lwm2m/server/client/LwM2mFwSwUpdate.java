@@ -227,10 +227,6 @@ public class LwM2mFwSwUpdate {
                                                 (this.currentTitle != null && !this.currentTitle.equals(this.lwM2MClient.getResourceValue(null, this.pathNameId)))
                                 )
                 );
-//        if (condFwUpdateStart) {
-//            this.sendSateOnThingsboard(stateFw, updateResultFw, pkgName);
-//        }
-//        return condFwUpdateStart;
     }
 
     private boolean conditionalFwUpdateExecute() {
