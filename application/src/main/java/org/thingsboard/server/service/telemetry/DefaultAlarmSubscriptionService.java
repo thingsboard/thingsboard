@@ -87,13 +87,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
 
     @Override
     public Alarm createOrUpdateAlarm(Alarm alarm) {
-        AlarmOperationResult result = alarmService.createOrUpdateAlarm(alarm,
-                () -> {
-                    if (!apiUsageStateService.getApiUsageState(alarm.getTenantId()).isAlarmCreationEnabled()) {
-                        throw new IllegalStateException("Alarms creation is disabled due to API limits");
-                    }
-                },
-                () -> {});
+        AlarmOperationResult result = alarmService.createOrUpdateAlarm(alarm, apiUsageStateService.getApiUsageState(alarm.getTenantId()).isAlarmCreationEnabled());
         if (result.isSuccessful()) {
             onAlarmUpdated(result);
         }

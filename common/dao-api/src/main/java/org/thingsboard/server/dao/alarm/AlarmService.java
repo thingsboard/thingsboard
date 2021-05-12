@@ -29,9 +29,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
-import org.thingsboard.server.common.data.query.AlarmDataPageLink;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
-import org.thingsboard.server.common.msg.queue.TbCallback;
 
 import java.util.Collection;
 
@@ -42,7 +40,7 @@ public interface AlarmService {
 
     AlarmOperationResult createOrUpdateAlarm(Alarm alarm);
 
-    AlarmOperationResult createOrUpdateAlarm(Alarm alarm, Runnable onAlarmCreation, Runnable onAlarmUpdate);
+    AlarmOperationResult createOrUpdateAlarm(Alarm alarm, boolean alarmCreationEnabled);
 
     AlarmOperationResult deleteAlarm(TenantId tenantId, AlarmId alarmId);
 

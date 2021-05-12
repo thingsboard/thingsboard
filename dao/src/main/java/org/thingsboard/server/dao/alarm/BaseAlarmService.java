@@ -41,13 +41,11 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
-import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
-import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -66,7 +64,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -104,11 +101,11 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     @Override
     public AlarmOperationResult createOrUpdateAlarm(Alarm alarm) {
-        return createOrUpdateAlarm(alarm, () -> {}, () -> {});
+        return createOrUpdateAlarm(alarm, true);
     }
 
     @Override
-    public AlarmOperationResult createOrUpdateAlarm(Alarm alarm, Runnable onAlarmCreation, Runnable onAlarmUpdate) {
+    public AlarmOperationResult createOrUpdateAlarm(Alarm alarm, boolean alarmCreationEnabled) {
         alarmDataValidator.validate(alarm, Alarm::getTenantId);
         try {
             if (alarm.getStartTs() == 0L) {
@@ -121,14 +118,14 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             if (alarm.getId() == null) {
                 Alarm existing = alarmDao.findLatestByOriginatorAndType(alarm.getTenantId(), alarm.getOriginator(), alarm.getType()).get();
                 if (existing == null || existing.getStatus().isCleared()) {
-                    onAlarmCreation.run();
+                    if (!alarmCreationEnabled) {
+                        throw new IllegalStateException("Alarm creation is disabled");
+                    }
                     return createAlarm(alarm);
                 } else {
-                    onAlarmUpdate.run();
                     return updateAlarm(existing, alarm);
                 }
             } else {
-                onAlarmUpdate.run();
                 return updateAlarm(alarm).get();
             }
         } catch (ExecutionException | InterruptedException e) {
