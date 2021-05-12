@@ -326,7 +326,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
             case ASSIGNED_TO_CUSTOMER:
             case UNASSIGNED_FROM_CUSTOMER:
                 edgeIdsFuture = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId);
-                Futures.addCallback(edgeIdsFuture, new FutureCallback<List<EdgeId>>() {
+                Futures.addCallback(edgeIdsFuture, new FutureCallback<>() {
                     @Override
                     public void onSuccess(@Nullable List<EdgeId> edgeIds) {
                         if (edgeIds != null && !edgeIds.isEmpty()) {

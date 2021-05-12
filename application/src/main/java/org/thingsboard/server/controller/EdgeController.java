@@ -49,7 +49,6 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.edge.rpc.EdgeGrpcSession;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -536,9 +535,7 @@ public class EdgeController extends BaseController {
                 edgeId = checkNotNull(edgeId);
                 SecurityUser user = getCurrentUser();
                 TenantId tenantId = user.getTenantId();
-                EdgeGrpcSession session = edgeGrpcService.getEdgeGrpcSessionById(tenantId, edgeId);
-                Edge edge = session.getEdge();
-                syncEdgeService.sync(tenantId, edge);
+                edgeGrpcService.startSyncProcess(tenantId, edgeId);
             } else {
                 throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
             }

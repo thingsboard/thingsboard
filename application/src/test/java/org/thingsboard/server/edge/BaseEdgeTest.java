@@ -191,7 +191,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
     @Test
     public void test() throws Exception {
         testReceivedInitialData();
-        int expectedDownlinkSize = 10;
+        int expectedDownlinkSize = 9;
         Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testDevices();
@@ -308,7 +308,8 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
     private void testReceivedInitialData() throws Exception {
         log.info("Checking received data");
-        Assert.assertTrue(edgeImitator.waitForMessages());
+        boolean condition = edgeImitator.waitForMessages();
+        Assert.assertTrue(condition);
 
         EdgeConfiguration configuration = edgeImitator.getConfiguration();
         Assert.assertNotNull(configuration);
@@ -1522,6 +1523,10 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
     private void installation() throws Exception {
         edge = doPost("/api/edge", constructEdge("Test Edge", "test"), Edge.class);
+
+        Device savedDeviceDefault = saveDevice("Edge Device Default", "Default");
+        doPost("/api/edge/" + edge.getId().getId().toString()
+                + "/device/" + savedDeviceDefault.getId().getId().toString(), Device.class);
 
         DeviceProfile deviceProfile = this.createDeviceProfile(CUSTOM_DEVICE_PROFILE_NAME, null);
         extendDeviceProfileData(deviceProfile);

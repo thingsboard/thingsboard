@@ -34,6 +34,7 @@ import org.thingsboard.server.gen.edge.EdgeRpcServiceGrpc;
 import org.thingsboard.server.gen.edge.RequestMsg;
 import org.thingsboard.server.gen.edge.RequestMsgType;
 import org.thingsboard.server.gen.edge.ResponseMsg;
+import org.thingsboard.server.gen.edge.SyncRequestMsg;
 import org.thingsboard.server.gen.edge.UplinkMsg;
 import org.thingsboard.server.gen.edge.UplinkResponseMsg;
 
@@ -102,7 +103,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                                                          Consumer<EdgeConfiguration> onEdgeUpdate,
                                                          Consumer<DownlinkMsg> onDownlink,
                                                          Consumer<Exception> onError) {
-        return new StreamObserver<ResponseMsg>() {
+        return new StreamObserver<>() {
             @Override
             public void onNext(ResponseMsg responseMsg) {
                 if (responseMsg.hasConnectResponseMsg()) {
@@ -195,11 +196,13 @@ public class EdgeGrpcClient implements EdgeRpcClient {
     }
 
     @Override
-    public void sendSyncRequestMsg() {
+    public void sendSyncRequestMsg(boolean syncRequired) {
         try {
             uplinkMsgLock.lock();
+            SyncRequestMsg syncRequestMsg = SyncRequestMsg.newBuilder().setSyncRequired(syncRequired).build();
             this.inputStream.onNext(RequestMsg.newBuilder()
                     .setMsgType(RequestMsgType.SYNC_REQUEST_RPC_MESSAGE)
+                    .setSyncRequestMsg(syncRequestMsg)
                     .build());
         } finally {
             uplinkMsgLock.unlock();

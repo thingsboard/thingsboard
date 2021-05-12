@@ -34,7 +34,7 @@ public interface EdgeRpcClient {
 
     void disconnect(boolean onError) throws InterruptedException;
 
-    void sendSyncRequestMsg();
+    void sendSyncRequestMsg(boolean syncRequired);
 
     void sendUplinkMsg(UplinkMsg uplinkMsg);
 

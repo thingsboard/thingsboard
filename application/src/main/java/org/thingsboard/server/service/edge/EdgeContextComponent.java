@@ -54,7 +54,7 @@ import org.thingsboard.server.service.edge.rpc.constructor.RuleChainMsgConstruct
 import org.thingsboard.server.service.edge.rpc.constructor.UserMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.WidgetTypeMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.WidgetsBundleMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.init.SyncEdgeService;
+import org.thingsboard.server.service.edge.rpc.sync.EdgeRequestsService;
 import org.thingsboard.server.service.edge.rpc.processor.AlarmProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.DeviceProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.RelationProcessor;
@@ -149,7 +149,7 @@ public class EdgeContextComponent {
 
     @Lazy
     @Autowired
-    private SyncEdgeService syncEdgeService;
+    private EdgeRequestsService edgeRequestsService;
 
     @Lazy
     @Autowired

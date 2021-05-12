@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.rpc;
+package org.thingsboard.server.service.edge.rpc.fetch;
 
-import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.id.EdgeId;
+import lombok.AllArgsConstructor;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.user.UserService;
 
-public interface EdgeRpcService {
+@AllArgsConstructor
+public class TenantAdminUsersEdgeEventFetcher extends BaseUsersEdgeEventFetcher {
 
-    void updateEdge(TenantId tenantId, Edge edge);
+    private final UserService userService;
 
-    void deleteEdge(TenantId tenantId, EdgeId edgeId);
-
-    void onEdgeEvent(TenantId tenantId, EdgeId edgeId);
-
-    void startSyncProcess(TenantId tenantId, EdgeId edgeId);
+    @Override
+    protected PageData<User> findUsers(TenantId tenantId, PageLink pageLink) {
+        return userService.findTenantAdmins(tenantId, pageLink);
+    }
 }

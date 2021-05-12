@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.rpc;
+package org.thingsboard.server.service.edge.rpc.fetch;
 
-import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 
-public interface EdgeRpcService {
+public interface EdgeEventFetcher {
 
-    void updateEdge(TenantId tenantId, Edge edge);
+    final int DEFAULT_LIMIT = 100;
 
-    void deleteEdge(TenantId tenantId, EdgeId edgeId);
+    PageLink getPageLink();
 
-    void onEdgeEvent(TenantId tenantId, EdgeId edgeId);
-
-    void startSyncProcess(TenantId tenantId, EdgeId edgeId);
+    PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, EdgeId edgeId, PageLink pageLink);
 }
