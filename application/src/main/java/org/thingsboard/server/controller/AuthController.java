@@ -163,8 +163,12 @@ public class AuthController extends BaseController {
             @RequestBody JsonNode resetPasswordByEmailRequest,
             HttpServletRequest request) throws ThingsboardException {
         try {
+            mailService.testConnection();
             String email = resetPasswordByEmailRequest.get("email").asText();
             UserCredentials userCredentials = userService.requestPasswordReset(TenantId.SYS_TENANT_ID, email);
+            if(userCredentials == null) {
+                return;
+            }
             User user = userService.findUserById(TenantId.SYS_TENANT_ID, userCredentials.getUserId());
             String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
             String resetUrl = String.format("%s/api/noauth/resetPassword?resetToken=%s", baseUrl,
