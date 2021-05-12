@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.edge.rpc.fetch;
 
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -25,20 +24,13 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.edge.rpc.EdgeEventUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
-public abstract class BaseUsersEdgeEventFetcher implements EdgeEventFetcher {
-
-    @Override
-    public PageLink getPageLink() {
-        return new PageLink(DEFAULT_LIMIT);
-    }
+public abstract class BaseUsersEdgeEventFetcher extends BasePageableEdgeEventFetcher {
 
     @Override
     public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, EdgeId edgeId, PageLink pageLink) {

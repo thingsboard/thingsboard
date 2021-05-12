@@ -30,12 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
-public abstract class BaseWidgetsBundlesEdgeEventFetcher implements EdgeEventFetcher {
-
-    @Override
-    public PageLink getPageLink() {
-        return new PageLink(DEFAULT_LIMIT);
-    }
+public abstract class BaseWidgetsBundlesEdgeEventFetcher extends BasePageableEdgeEventFetcher {
 
     @Override
     public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, EdgeId edgeId, PageLink pageLink) {

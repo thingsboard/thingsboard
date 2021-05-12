@@ -33,14 +33,9 @@ import java.util.List;
 
 @AllArgsConstructor
 @Slf4j
-public class AssetsEdgeEventFetcher implements EdgeEventFetcher {
+public class AssetsEdgeEventFetcher extends BasePageableEdgeEventFetcher {
 
     private final AssetService assetService;
-
-    @Override
-    public PageLink getPageLink() {
-        return new PageLink(DEFAULT_LIMIT);
-    }
 
     @Override
     public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, EdgeId edgeId, PageLink pageLink) {

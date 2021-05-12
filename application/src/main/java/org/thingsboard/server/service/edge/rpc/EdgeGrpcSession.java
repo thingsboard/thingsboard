@@ -330,7 +330,6 @@ public final class EdgeGrpcSession implements Closeable {
         if (isConnected() && isSyncCompleted()) {
             Long queueStartTs = getQueueStartTs().get();
             GeneralEdgeEventFetcher fetcher = new GeneralEdgeEventFetcher(
-                    ctx.getEdgeEventStorageSettings().getMaxReadRecordsCount(),
                     queueStartTs,
                     ctx.getEdgeEventService());
             UUID ifOffset = startProcessingEdgeEvents(fetcher);
@@ -343,7 +342,7 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     private UUID startProcessingEdgeEvents(EdgeEventFetcher fetcher) throws InterruptedException {
-        PageLink pageLink = fetcher.getPageLink();
+        PageLink pageLink = fetcher.getPageLink(ctx.getEdgeEventStorageSettings().getMaxReadRecordsCount());
         PageData<EdgeEvent> pageData;
         UUID ifOffset = null;
         boolean success = true;

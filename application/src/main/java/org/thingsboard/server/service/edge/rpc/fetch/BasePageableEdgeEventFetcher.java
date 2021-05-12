@@ -15,15 +15,12 @@
  */
 package org.thingsboard.server.service.edge.rpc.fetch;
 
-import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
-public interface EdgeEventFetcher {
+public abstract class BasePageableEdgeEventFetcher implements EdgeEventFetcher {
 
-    PageLink getPageLink(int pageSize);
-
-    PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, EdgeId edgeId, PageLink pageLink);
+    @Override
+    public PageLink getPageLink(int pageSize) {
+        return new PageLink(pageSize);
+    }
 }

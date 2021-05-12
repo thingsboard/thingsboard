@@ -25,12 +25,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 
 @AllArgsConstructor
 @Slf4j
-public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
-
-    @Override
-    public PageLink getPageLink() {
-        return new PageLink(DEFAULT_LIMIT);
-    }
+public class AdminSettingsEdgeEventFetcher extends BasePageableEdgeEventFetcher {
 
     @Override
     public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, EdgeId edgeId, PageLink pageLink) {

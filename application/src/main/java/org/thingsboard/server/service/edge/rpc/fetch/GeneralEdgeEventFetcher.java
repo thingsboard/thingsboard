@@ -28,14 +28,13 @@ import org.thingsboard.server.dao.edge.EdgeEventService;
 @AllArgsConstructor
 public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
 
-    private final int maxReadRecordsCount;
     private final Long queueStartTs;
     private final EdgeEventService edgeEventService;
 
     @Override
-    public PageLink getPageLink() {
+    public PageLink getPageLink(int pageSize) {
         return new TimePageLink(
-                maxReadRecordsCount,
+                pageSize,
                 0,
                 null,
                 new SortOrder("createdTime", SortOrder.Direction.ASC),
