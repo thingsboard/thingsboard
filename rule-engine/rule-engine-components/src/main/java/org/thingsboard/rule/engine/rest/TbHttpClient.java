@@ -207,7 +207,8 @@ public class TbHttpClient {
         metaData.putValue(STATUS_CODE, response.getStatusCode().value() + "");
         metaData.putValue(STATUS_REASON, response.getStatusCode().getReasonPhrase());
         response.getHeaders().toSingleValueMap().forEach(metaData::putValue);
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, response.getBody());
+        String body = response.getBody() == null ? "{}" : response.getBody();
+        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, body);
     }
 
     private TbMsg processFailureResponse(TbContext ctx, TbMsg origMsg, ResponseEntity<String> response) {
