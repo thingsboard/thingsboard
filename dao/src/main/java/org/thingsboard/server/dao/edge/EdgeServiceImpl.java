@@ -558,8 +558,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
                         if (userById.getCustomerId() == null || userById.getCustomerId().isNullUid()) {
                             pageData = findEdgesByTenantId(tenantId, pageLink);
                         } else {
-//                            pageData = findEdgesByTenantIdAndCustomerId(tenantId, userById.getCustomerId(), pageLink);
-                            pageData = findEdgesByTenantIdAndCustomerId(tenantId, new CustomerId(entityId.getId()), pageLink);
+                            pageData = findEdgesByTenantIdAndCustomerId(tenantId, userById.getCustomerId(), pageLink);
                         }
                         if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
                             result.addAll(pageData.getData());

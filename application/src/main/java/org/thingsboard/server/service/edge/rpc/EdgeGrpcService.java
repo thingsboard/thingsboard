@@ -189,7 +189,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void onEdgeConnect(EdgeId edgeId, EdgeGrpcSession edgeGrpcSession) {
         log.info("[{}] edge [{}] connected successfully.", edgeGrpcSession.getSessionId(), edgeId);
         sessions.put(edgeId, edgeGrpcSession);
-        sessionNewEvents.put(edgeId, false);
+        sessionNewEvents.put(edgeId, true);
         save(edgeId, DefaultDeviceStateService.ACTIVITY_STATE, true);
         save(edgeId, DefaultDeviceStateService.LAST_CONNECT_TIME, System.currentTimeMillis());
         cancelScheduleEdgeEventsCheck(edgeId);
