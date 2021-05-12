@@ -2528,7 +2528,10 @@
         "max-emails-range": "Maximum number of emails sent can't be negative",
         "max-sms": "Maximum number of SMS sent (0 - unlimited)",
         "max-sms-required": "Maximum number of SMS sent is required.",
-        "max-sms-range": "Maximum number of SMS sent can't be negative"
+        "max-sms-range": "Maximum number of SMS sent can't be negative",
+        "max-created-alarms": "Maximum number of alarms created (0 - unlimited)",
+        "max-created-alarms-required": "Maximum number of alarms created is required.",
+        "max-created-alarms-range": "Maximum number of alarms created can't be negative"
     },
     "timeinterval": {
         "seconds-interval": "{ seconds, plural, 1 {1 second} other {# seconds} }",
