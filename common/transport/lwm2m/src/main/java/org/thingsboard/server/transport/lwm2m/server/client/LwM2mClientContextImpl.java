@@ -141,6 +141,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         LwM2mClient client = new LwM2mClient(context.getNodeId(), registration.getEndpoint(), null, null, credentials, credentials.getDeviceProfile().getUuidId(), UUID.randomUUID());
         lwM2mClientsByEndpoint.put(registration.getEndpoint(), client);
         lwM2mClientsByRegistrationId.put(registration.getId(), client);
+        toClientProfile(credentials.getDeviceProfile());
     }
 
     @Override
