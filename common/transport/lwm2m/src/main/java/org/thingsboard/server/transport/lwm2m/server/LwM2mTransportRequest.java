@@ -49,7 +49,6 @@ import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
@@ -70,8 +69,11 @@ import java.util.stream.Collectors;
 import static org.eclipse.californium.core.coap.CoAP.ResponseCode.CONTENT;
 import static org.eclipse.leshan.core.ResponseCode.BAD_REQUEST;
 import static org.eclipse.leshan.core.ResponseCode.NOT_FOUND;
+import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.DOWNLOADED;
+import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.FAILED;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.DEFAULT_TIMEOUT;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PACKAGE_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_UPDATE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_VALUE;
@@ -79,7 +81,9 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.L
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.DISCOVER_All;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE_CANCEL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE_READ_ALL;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_REPLACE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.RESPONSE_CHANNEL;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_INSTALL_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_PACKAGE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromIdVerToObjectId;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
@@ -322,7 +326,11 @@ public class LwM2mTransportRequest {
                  **/
                 if (lwM2MClient.getFwUpdate().isInfoFwSwUpdate()) {
                     lwM2MClient.getFwUpdate().initReadValue(serviceImpl, request.getPath().toString());
-                    log.warn("updateFirmwareClient1");
+                    log.warn("updateFirmwareClient1_FW");
+                }
+                if (lwM2MClient.getSwUpdate().isInfoFwSwUpdate()) {
+                    lwM2MClient.getSwUpdate().initReadValue(serviceImpl, request.getPath().toString());
+                    log.warn("updateFirmwareClient1_SW");
                 }
             }
         }, e -> {
@@ -331,7 +339,17 @@ public class LwM2mTransportRequest {
              **/
             if (lwM2MClient.getFwUpdate().isInfoFwSwUpdate()) {
                 lwM2MClient.getFwUpdate().initReadValue(serviceImpl, request.getPath().toString());
-                log.warn("updateFirmwareClient2");
+                log.warn("updateFirmwareClient2_FW");
+            }
+            if (lwM2MClient.getSwUpdate().isInfoFwSwUpdate()) {
+                lwM2MClient.getSwUpdate().initReadValue(serviceImpl, request.getPath().toString());
+                log.warn("updateFirmwareClient2_SW");
+            }
+            if (request.getPath().toString().equals(FW_PACKAGE_ID) || request.getPath().toString().equals(SW_PACKAGE_ID)) {
+                this.afterWriteErrorFwSWUpdate(registration, request);
+            }
+            if (request.getPath().toString().equals(FW_UPDATE_ID) || request.getPath().toString().equals(SW_INSTALL_ID)) {
+                this.afterExecuteFwSwUpdate(registration, request, false);
             }
             if (!lwM2MClient.isInit()) {
                 lwM2MClient.initReadValue(this.serviceImpl, convertPathFromObjectIdToIdVer(request.getPath().toString(), registration));
@@ -431,7 +449,7 @@ public class LwM2mTransportRequest {
                 serviceImpl.sentRpcRequest(rpcRequest, response.getCode().getName(), discoveryMsg, LOG_LW2M_VALUE);
             }
         } else if (response instanceof ExecuteResponse) {
-            log.info("[{}] Path [{}] ExecuteResponse  7_Send", pathIdVer, response);
+            this.afterExecuteFwSwUpdate(registration, request, true);
         } else if (response instanceof WriteAttributesResponse) {
             log.info("[{}] Path [{}] WriteAttributesResponse 8_Send", pathIdVer, response);
         } else if (response instanceof WriteResponse) {
@@ -482,7 +500,7 @@ public class LwM2mTransportRequest {
                 serviceImpl.sendLogsToThingsboard(msg, registration.getId());
                 log.warn(msg);
                 if (request.getPath().toString().equals(FW_PACKAGE_ID) || request.getPath().toString().equals(SW_PACKAGE_ID)) {
-                    this.executeFwSwUpdate(registration, request);
+                    this.afterWriteSuccessFwSwUpdate(registration, request);
                 }
             }
         } catch (Exception e) {
@@ -490,15 +508,47 @@ public class LwM2mTransportRequest {
         }
     }
 
-    private void executeFwSwUpdate(Registration registration, DownlinkRequest request) {
-        LwM2mClient lwM2mClient = this.lwM2mClientContext.getClientByRegistrationId(registration.getId());
-        if (request.getPath().toString().equals(FW_PACKAGE_ID)
-                && FirmwareUpdateStatus.DOWNLOADING.name().equals(lwM2mClient.getFwUpdate().getStateUpdate())) {
-            lwM2mClient.getFwUpdate().sendReadInfoForWrite();
+    /**
+     * After finish operation FwSwUpdate Write (success):
+     * fw_state/sw_state = DOWNLOADED
+     * send operation Execute
+     */
+    private void afterWriteSuccessFwSwUpdate(Registration registration, DownlinkRequest request) {
+        LwM2mClient lwM2MClient = this.lwM2mClientContext.getClientByRegistrationId(registration.getId());
+        if (request.getPath().toString().equals(FW_PACKAGE_ID) && lwM2MClient.getFwUpdate() != null) {
+            lwM2MClient.getFwUpdate().setStateUpdate(DOWNLOADED.name());
+            lwM2MClient.getFwUpdate().sendLogs(WRITE_REPLACE.name());
+            lwM2MClient.getFwUpdate().executeFwSwWare();
         }
-        if (request.getPath().toString().equals(SW_PACKAGE_ID)
-                && FirmwareUpdateStatus.DOWNLOADING.name().equals(lwM2mClient.getSwUpdate().getStateUpdate())) {
-            lwM2mClient.getSwUpdate().sendReadInfoForWrite();
+        if (request.getPath().toString().equals(SW_PACKAGE_ID) && lwM2MClient.getSwUpdate() != null) {
+            lwM2MClient.getSwUpdate().setStateUpdate(DOWNLOADED.name());
+            lwM2MClient.getSwUpdate().sendLogs(WRITE_REPLACE.name());
+            lwM2MClient.getSwUpdate().executeFwSwWare();
+        }
+    }
+
+    /**
+     * After finish operation FwSwUpdate Write (error):  fw_state = FAILED
+     */
+    private void afterWriteErrorFwSWUpdate(Registration registration, DownlinkRequest request) {
+        LwM2mClient lwM2MClient = this.lwM2mClientContext.getClientByRegistrationId(registration.getId());
+        if (request.getPath().toString().equals(FW_PACKAGE_ID) && lwM2MClient.getFwUpdate() != null) {
+            lwM2MClient.getFwUpdate().setStateUpdate(FAILED.name());
+            lwM2MClient.getFwUpdate().sendLogs(WRITE_REPLACE.name());
+        }
+        if (request.getPath().toString().equals(SW_PACKAGE_ID) && lwM2MClient.getSwUpdate() != null) {
+            lwM2MClient.getSwUpdate().setStateUpdate(FAILED.name());
+            lwM2MClient.getSwUpdate().sendLogs(WRITE_REPLACE.name());
+        }
+    }
+
+    private void afterExecuteFwSwUpdate(Registration registration, DownlinkRequest request, boolean success) {
+        LwM2mClient lwM2MClient = this.lwM2mClientContext.getClientByRegistrationId(registration.getId());
+        if (request.getPath().toString().equals(FW_PACKAGE_ID) && lwM2MClient.getFwUpdate() != null) {
+            lwM2MClient.getFwUpdate().finishFwUpdateExecute(success);
+        }
+        if (request.getPath().toString().equals(SW_PACKAGE_ID) && lwM2MClient.getSwUpdate() != null) {
+            lwM2MClient.getSwUpdate().finishFwUpdateExecute(success);
         }
     }
 }
