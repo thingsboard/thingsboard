@@ -138,7 +138,7 @@ public class KafkaTbTransportQueueFactory implements TbTransportQueueFactory {
         responseBuilder.settings(kafkaSettings);
         responseBuilder.topic(transportNotificationSettings.getNotificationsTopic() + "." + serviceInfoProvider.getServiceId());
         responseBuilder.clientId("transport-api-notifications-" + serviceInfoProvider.getServiceId());
-        responseBuilder.groupId("transport-node-" + serviceInfoProvider.getServiceId());
+        responseBuilder.groupId("transport-node-consumer");
         responseBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToTransportMsg.parseFrom(msg.getData()), msg.getHeaders()));
         responseBuilder.admin(notificationAdmin);
         responseBuilder.statsService(consumerStatsService);

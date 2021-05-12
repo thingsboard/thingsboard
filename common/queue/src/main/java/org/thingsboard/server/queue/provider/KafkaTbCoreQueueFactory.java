@@ -167,7 +167,7 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
         consumerBuilder.settings(kafkaSettings);
         consumerBuilder.topic(partitionService.getNotificationsTopic(ServiceType.TB_CORE, serviceInfoProvider.getServiceId()).getFullTopicName());
         consumerBuilder.clientId("tb-core-notifications-consumer-" + serviceInfoProvider.getServiceId());
-        consumerBuilder.groupId("tb-core-notifications-node-" + serviceInfoProvider.getServiceId());
+        consumerBuilder.groupId("tb-core-notifications-node-consumer");
         consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToCoreNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
         consumerBuilder.admin(notificationAdmin);
         consumerBuilder.statsService(consumerStatsService);
