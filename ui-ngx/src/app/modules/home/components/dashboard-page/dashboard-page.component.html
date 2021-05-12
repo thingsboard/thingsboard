@@ -81,6 +81,12 @@
                   (click)="isFullscreen = !isFullscreen">
             <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
           </button>
+          <button [fxShow]="currentDashboardId && !isEdit && isTenantAdmin() && displayUpdateDashboardImage()" mat-icon-button
+                  matTooltip="{{'dashboard.update-image' | translate}}"
+                  matTooltipPosition="below"
+                  (click)="updateDashboardImage($event)">
+            <mat-icon>wallpaper</mat-icon>
+          </button>
           <button [fxShow]="currentDashboardId && (isEdit || displayExport())" mat-icon-button
                   matTooltip="{{'dashboard.export' | translate}}"
                   matTooltipPosition="below"
@@ -133,6 +139,7 @@
     </tb-dashboard-toolbar>
   </section>
   <section class="tb-dashboard-container tb-absolute-fill"
+           #dashboardContainer
            [ngClass]="{ 'is-fullscreen': forceFullscreen,
            'tb-dashboard-toolbar-opened': toolbarOpened,
            'tb-dashboard-toolbar-animated': isToolbarOpenedAnimate,
@@ -187,7 +194,7 @@
             </tb-dashboard-layout>
           </mat-drawer-content>
         </mat-drawer-container>
-        <section fxLayout="row" class="layout-wrap tb-footer-buttons" fxLayoutAlign="start end">
+        <section data-html2canvas-ignore fxLayout="row" class="layout-wrap tb-footer-buttons" fxLayoutAlign="start end">
           <tb-footer-fab-buttons *ngIf="!embedded && !isMobileApp"
                                  [fxShow]="!isAddingWidget && isEdit && !widgetEditMode"
                                  relative
@@ -212,7 +219,7 @@
             <mat-icon>{{ isEdit ? 'close' : 'edit' }}</mat-icon>
           </button>
         </section>
-        <section class="tb-powered-by-footer" [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">
+        <section data-html2canvas-ignore class="tb-powered-by-footer" [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">
           <span>Powered by <a href="https://thingsboard.io" target="_blank">Thingsboard v.{{ thingsboardVersion }}</a></span>
         </section>
       </mat-drawer-content>
