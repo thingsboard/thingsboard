@@ -194,7 +194,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         DataValidator.validateEmail(email);
         User user = userDao.findByEmail(tenantId, email);
         if (user == null) {
-            throw new IncorrectParameterException(String.format("Unable to find user by email [%s]", email));
+            return null;
         }
         UserCredentials userCredentials = userCredentialsDao.findByUserId(tenantId, user.getUuidId());
         if (!userCredentials.isEnabled()) {
