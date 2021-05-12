@@ -50,7 +50,7 @@ export class ResetPasswordRequestComponent extends PageComponent implements OnIn
         () => {
           this.store.dispatch(new ActionNotificationShow({
             message: this.translate.instant('login.password-link-sent-message'),
-            type: 'warn'
+            type: 'success'
           }));
         }
       );
