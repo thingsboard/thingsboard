@@ -194,11 +194,13 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         DataValidator.validateEmail(email);
         User user = userDao.findByEmail(tenantId, email);
         if (user == null) {
+            log.error(String.format("Unable to find user by email [%s]", email));
             return null;
         }
         UserCredentials userCredentials = userCredentialsDao.findByUserId(tenantId, user.getUuidId());
         if (!userCredentials.isEnabled()) {
-            throw new IncorrectParameterException("Unable to reset password for inactive user");
+            log.error("Unable to reset password for inactive user");
+            return null;
         }
         userCredentials.setResetToken(RandomStringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
         return saveUserCredentials(tenantId, userCredentials);

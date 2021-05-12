@@ -301,7 +301,7 @@ public class DefaultMailService implements MailService {
         try {
             mailSender.testConnection();
         } catch (Exception e) {
-            throw new RuntimeException("Unable to send message.");
+            throw new RuntimeException("Unable to connect to email server");
         }
     }
 
