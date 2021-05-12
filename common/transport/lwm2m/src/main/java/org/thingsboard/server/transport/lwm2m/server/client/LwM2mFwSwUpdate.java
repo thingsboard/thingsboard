@@ -57,6 +57,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.S
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_UPDATE_STATE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_VER_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.splitCamelCaseString;
 
 @Slf4j
 public class LwM2mFwSwUpdate {
@@ -266,32 +267,19 @@ public class LwM2mFwSwUpdate {
      * --- send to telemetry ( key - this is name Update Result in model) (
      * --  fw_state/sw_state = FAILED
      */
-    public void finishFwUpdateExecute(boolean success) {
+    public void finishFwSwUpdateExecute(boolean success) {
         Long updateResult = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
-        if (success && LwM2mTransportUtil.UpdateResultFw.UPDATE_SUCCESSFULLY.code == updateResult) {
+        int updateResultSuccessful = this.type.equals(FIRMWARE) ? LwM2mTransportUtil.UpdateResultFw.UPDATE_SUCCESSFULLY.code :
+                LwM2mTransportUtil.UpdateResultSw.SUCCESSFULLY_INSTALLED.code;
+        if (success && updateResultSuccessful == updateResult.intValue()) {
             this.stateUpdate = FirmwareUpdateStatus.UPDATED.name();
         }
         else {
             this.stateUpdate = FirmwareUpdateStatus.FAILED.name();
-            List<TransportProtos.KeyValueProto> resultTelemetries = null;
-            // TO Do
-            this.serviceImpl.helper.sendParametersOnThingsboardTelemetry(resultTelemetries, this.lwM2MClient.getSession());
-
-        }
-        this.sendLogs(EXECUTE.name());
-    }
-
-    public void finishSwUpdateExecute(boolean success) {
-        Long updateResult = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
-        if (success && LwM2mTransportUtil.UpdateResultSw.SUCCESSFULLY_INSTALLED.code == updateResult) {
-            this.stateUpdate = FirmwareUpdateStatus.UPDATED.name();
-        }
-        else {
-            this.stateUpdate = FirmwareUpdateStatus.FAILED.name();
-            this.stateUpdate = FirmwareUpdateStatus.FAILED.name();
-            List<TransportProtos.KeyValueProto> resultTelemetries = null;
-            // TO Do
-            this.serviceImpl.helper.sendParametersOnThingsboardTelemetry(resultTelemetries, this.lwM2MClient.getSession());
+            String value = LwM2mTransportUtil.UpdateResultFw.fromUpdateResultFwByCode(updateResult.intValue()).type;
+            String key = splitCamelCaseString((String) this.lwM2MClient.getResourceName (null, this.pathResultId));
+            this.serviceImpl.helper.sendParametersOnThingsboardTelemetry(
+                    this.serviceImpl.helper.getKvStringtoThingsboard(key, value), this.lwM2MClient.getSession());
         }
         this.sendLogs(EXECUTE.name());
     }

@@ -545,10 +545,10 @@ public class LwM2mTransportRequest {
     private void afterExecuteFwSwUpdate(Registration registration, DownlinkRequest request, boolean success) {
         LwM2mClient lwM2MClient = this.lwM2mClientContext.getClientByRegistrationId(registration.getId());
         if (request.getPath().toString().equals(FW_PACKAGE_ID) && lwM2MClient.getFwUpdate() != null) {
-            lwM2MClient.getFwUpdate().finishFwUpdateExecute(success);
+            lwM2MClient.getFwUpdate().finishFwSwUpdateExecute(success);
         }
         if (request.getPath().toString().equals(SW_PACKAGE_ID) && lwM2MClient.getSwUpdate() != null) {
-            lwM2MClient.getSwUpdate().finishFwUpdateExecute(success);
+            lwM2MClient.getSwUpdate().finishFwSwUpdateExecute(success);
         }
     }
 }

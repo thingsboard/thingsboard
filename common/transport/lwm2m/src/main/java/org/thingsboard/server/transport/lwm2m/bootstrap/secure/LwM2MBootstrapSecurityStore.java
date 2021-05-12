@@ -47,6 +47,7 @@ import java.util.UUID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.BOOTSTRAP_SERVER;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_TELEMETRY;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LWM2M_SERVER;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SERVERS;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.getBootstrapParametersFromThingsboard;
@@ -167,13 +168,13 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                     lwM2MBootstrapConfig.bootstrapServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap);
                     lwM2MBootstrapConfig.lwm2mServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer);
                     String logMsg = String.format("%s: getParametersBootstrap: %s Access connect client with bootstrap server.", LOG_LW2M_INFO, store.getEndPoint());
-                    helper.sendParametersOnThingsboardTelemetry(helper.getKvLogyToThingsboard(logMsg), sessionInfo);
+                    helper.sendParametersOnThingsboardTelemetry(helper.getKvStringtoThingsboard(LOG_LW2M_TELEMETRY, logMsg), sessionInfo);
                     return lwM2MBootstrapConfig;
                 } else {
                     log.error(" [{}] Different values SecurityMode between of client and profile.", store.getEndPoint());
                     log.error("{} getParametersBootstrap: [{}] Different values SecurityMode between of client and profile.", LOG_LW2M_ERROR, store.getEndPoint());
                     String logMsg = String.format("%s: getParametersBootstrap: %s Different values SecurityMode between of client and profile.", LOG_LW2M_ERROR, store.getEndPoint());
-                    helper.sendParametersOnThingsboardTelemetry(helper.getKvLogyToThingsboard(logMsg), sessionInfo);
+                    helper.sendParametersOnThingsboardTelemetry(helper.getKvStringtoThingsboard(LOG_LW2M_TELEMETRY, logMsg), sessionInfo);
                     return null;
                 }
             }

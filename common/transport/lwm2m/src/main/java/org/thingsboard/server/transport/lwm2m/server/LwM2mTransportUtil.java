@@ -104,7 +104,8 @@ public class LwM2mTransportUtil {
 
     public static final long DEFAULT_TIMEOUT = 2 * 60 * 1000L; // 2min in ms
 
-    public static final String LOG_LW2M_TELEMETRY = "logLwm2m";
+    public static final String
+            LOG_LW2M_TELEMETRY = "logLwm2m";
     public static final String LOG_LW2M_INFO = "info";
     public static final String LOG_LW2M_ERROR = "error";
     public static final String LOG_LW2M_WARN = "warn";

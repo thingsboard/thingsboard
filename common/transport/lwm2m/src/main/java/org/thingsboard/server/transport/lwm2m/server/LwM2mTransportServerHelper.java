@@ -53,7 +53,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.BOOLEAN_V;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_TELEMETRY;
 
 @Slf4j
 @Component
@@ -136,15 +135,15 @@ public class LwM2mTransportServerHelper {
 
     /**
      *
-     * @param logMsg - info about Logs
+     * @param value - info about Logs
      * @return- KeyValueProto for telemetry (Logs)
      */
-    public List<TransportProtos.KeyValueProto> getKvLogyToThingsboard(String logMsg) {
+    public List<TransportProtos.KeyValueProto> getKvStringtoThingsboard(String key, String value) {
         List<TransportProtos.KeyValueProto> result = new ArrayList<>();
         result.add(TransportProtos.KeyValueProto.newBuilder()
-                .setKey(LOG_LW2M_TELEMETRY)
+                .setKey(key)
                 .setType(TransportProtos.KeyValueType.STRING_V)
-                .setStringV(logMsg).build());
+                .setStringV(value).build());
         return result;
     }
 

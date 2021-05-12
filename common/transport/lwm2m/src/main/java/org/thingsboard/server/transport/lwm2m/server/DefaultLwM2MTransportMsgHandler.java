@@ -91,6 +91,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.D
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_TELEMETRY;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_VALUE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LWM2M_STRATEGY_2;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper;
@@ -611,7 +612,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
             if (logMsg.length() > 1024) {
                 logMsg = logMsg.substring(0, 1024);
             }
-            this.helper.sendParametersOnThingsboardTelemetry(this.helper.getKvLogyToThingsboard(logMsg), sessionInfo);
+            this.helper.sendParametersOnThingsboardTelemetry(this.helper.getKvStringtoThingsboard(LOG_LW2M_TELEMETRY, logMsg), sessionInfo);
         }
     }
 
