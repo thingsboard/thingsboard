@@ -294,10 +294,11 @@ export class AuthService {
           })
         );
       } else if (accessToken) {
-        this.utils.updateQueryParam('accessToken', null);
+        const queryParamsToRemove = ['accessToken'];
         if (refreshToken) {
-          this.utils.updateQueryParam('refreshToken', null);
+          queryParamsToRemove.push('refreshToken');
         }
+        this.utils.removeQueryParams(queryParamsToRemove);
         try {
           this.updateAndValidateToken(accessToken, 'jwt_token', false);
           if (refreshToken) {

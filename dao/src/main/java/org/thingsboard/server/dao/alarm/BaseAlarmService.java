@@ -41,7 +41,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
-import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
@@ -102,6 +101,11 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     @Override
     public AlarmOperationResult createOrUpdateAlarm(Alarm alarm) {
+        return createOrUpdateAlarm(alarm, true);
+    }
+
+    @Override
+    public AlarmOperationResult createOrUpdateAlarm(Alarm alarm, boolean alarmCreationEnabled) {
         alarmDataValidator.validate(alarm, Alarm::getTenantId);
         try {
             if (alarm.getStartTs() == 0L) {
@@ -114,6 +118,9 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             if (alarm.getId() == null) {
                 Alarm existing = alarmDao.findLatestByOriginatorAndType(alarm.getTenantId(), alarm.getOriginator(), alarm.getType()).get();
                 if (existing == null || existing.getStatus().isCleared()) {
+                    if (!alarmCreationEnabled) {
+                        throw new IllegalStateException("Alarm creation is disabled");
+                    }
                     return createAlarm(alarm);
                 } else {
                     return updateAlarm(existing, alarm);
@@ -159,7 +166,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         log.debug("New Alarm : {}", alarm);
         Alarm saved = alarmDao.save(alarm.getTenantId(), alarm);
         List<EntityId> propagatedEntitiesList = createAlarmRelations(saved);
-        return new AlarmOperationResult(saved, true, propagatedEntitiesList);
+        return new AlarmOperationResult(saved, true, true, propagatedEntitiesList);
     }
 
     private List<EntityId> createAlarmRelations(Alarm alarm) throws InterruptedException, ExecutionException {

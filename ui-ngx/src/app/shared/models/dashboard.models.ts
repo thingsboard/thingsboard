@@ -91,6 +91,7 @@ export interface DashboardSettings {
   dashboardLogoUrl?: string;
   showDashboardTimewindow?: boolean;
   showDashboardExport?: boolean;
+  showUpdateDashboardImage?: boolean;
   toolbarAlwaysOpen?: boolean;
   titleColor?: string;
 }

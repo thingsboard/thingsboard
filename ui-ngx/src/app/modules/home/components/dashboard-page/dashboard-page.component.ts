@@ -16,7 +16,7 @@
 
 import {
   ChangeDetectorRef,
-  Component,
+  Component, ElementRef,
   Inject,
   Injector,
   Input,
@@ -123,6 +123,11 @@ import { DashboardWidgetSelectComponent } from '@home/components/dashboard-page/
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
 import { MobileService } from '@core/services/mobile.service';
 
+import {
+  DashboardImageDialogComponent,
+  DashboardImageDialogData, DashboardImageDialogResult
+} from '@home/components/dashboard-page/dashboard-image-dialog.component';
+
 // @dynamic
 @Component({
   selector: 'tb-dashboard-page',
@@ -152,6 +157,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   @Input()
   dashboard: Dashboard;
   dashboardConfiguration: DashboardConfiguration;
+
+  @ViewChild('dashboardContainer') dashboardContainer: ElementRef<HTMLElement>;
 
   prevDashboard: Dashboard;
 
@@ -463,6 +470,15 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if (this.dashboard.configuration.settings &&
       isDefined(this.dashboard.configuration.settings.showDashboardExport)) {
       return this.dashboard.configuration.settings.showDashboardExport;
+    } else {
+      return true;
+    }
+  }
+
+  public displayUpdateDashboardImage(): boolean {
+    if (this.dashboard.configuration.settings &&
+      isDefined(this.dashboard.configuration.settings.showUpdateDashboardImage)) {
+      return this.dashboard.configuration.settings.showUpdateDashboardImage;
     } else {
       return true;
     }
@@ -1247,5 +1263,25 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   onCloseSearchBundle() {
     this.searchBundle = '';
+  }
+
+  public updateDashboardImage($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialog.open<DashboardImageDialogComponent, DashboardImageDialogData,
+      DashboardImageDialogResult>(DashboardImageDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        dashboardId: this.dashboard.id,
+        currentImage: this.dashboard.image,
+        dashboardElement: this.dashboardContainer.nativeElement
+      }
+    }).afterClosed().subscribe((result) => {
+      if (result) {
+        this.dashboard.image = result.image;
+      }
+    });
   }
 }

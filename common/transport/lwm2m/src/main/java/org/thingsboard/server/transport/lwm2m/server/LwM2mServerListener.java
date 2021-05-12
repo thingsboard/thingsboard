@@ -88,7 +88,7 @@ public class LwM2mServerListener {
         public void cancelled(Observation observation) {
             String msg = String.format("%s:  Cancel Observation  %s.", LOG_LW2M_INFO, observation.getPath());
             service.sendLogsToThingsboard(msg, observation.getRegistrationId());
-            log.trace(msg);
+            log.warn(msg);
         }
 
         @Override

@@ -24,8 +24,9 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.FirmwareInfo;
-import org.thingsboard.server.common.data.firmware.FirmwareUtil;
 import org.thingsboard.server.common.data.firmware.FirmwareType;
+import org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus;
+import org.thingsboard.server.common.data.firmware.FirmwareUtil;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -66,11 +67,11 @@ import static org.thingsboard.server.common.data.firmware.FirmwareKey.STATE;
 import static org.thingsboard.server.common.data.firmware.FirmwareKey.TITLE;
 import static org.thingsboard.server.common.data.firmware.FirmwareKey.TS;
 import static org.thingsboard.server.common.data.firmware.FirmwareKey.VERSION;
+import static org.thingsboard.server.common.data.firmware.FirmwareType.FIRMWARE;
+import static org.thingsboard.server.common.data.firmware.FirmwareType.SOFTWARE;
 import static org.thingsboard.server.common.data.firmware.FirmwareUtil.getAttributeKey;
 import static org.thingsboard.server.common.data.firmware.FirmwareUtil.getTargetTelemetryKey;
 import static org.thingsboard.server.common.data.firmware.FirmwareUtil.getTelemetryKey;
-import static org.thingsboard.server.common.data.firmware.FirmwareType.FIRMWARE;
-import static org.thingsboard.server.common.data.firmware.FirmwareType.SOFTWARE;
 
 @Slf4j
 @Service

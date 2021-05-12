@@ -54,7 +54,7 @@ public interface LwM2mClientContext {
 
     Map<UUID, LwM2mClientProfile> setProfiles(Map<UUID, LwM2mClientProfile> profiles);
 
-    LwM2mClientProfile toClientProfile(DeviceProfile deviceProfile);
+    LwM2mClientProfile profileUpdate(DeviceProfile deviceProfile);
 
     Set<String> getSupportedIdVerInClient(Registration registration);
 
