@@ -917,15 +917,7 @@
         "access-token-invalid": "Access token length must be from 1 to 20 characters.",
         "rsa-key": "RSA public key",
         "rsa-key-required": "RSA public key is required.",
-        "lwm2m-key": "LwM2M Security config key",
-        "lwm2m-key-required": "LwM2M Security config key is required.",
         "lwm2m-value": "LwM2M Security config",
-        "lwm2m-value-required": "LwM2M Security config value is required.",
-        "lwm2m-value-format-error": "Security config value must be in LwM2M Security config format.",
-        "lwm2m-endpoint": "Client endpoint/identity",
-        "lwm2m-security-info": "Security Config Info",
-        "lwm2m-value-edit": "Edit Security config",
-        "lwm2m-credentials-value-tip": "Edit security config json editor",
         "lwm2m-security-config": {
           "identity": "Client Identity",
           "identity-required": "Client Identity is required.",
@@ -949,7 +941,9 @@
           "client-secret-key-required": "Client Secret Key is required.",
           "client-secret-key-pattern": "Client Secret Key must be hexadecimal format.",
           "client-secret-key-length": "Client Secret Key must be {{ count }} characters.",
-          "config-json-tab": "Json Client Security Config"
+          "config-json-tab": "Json Client Security Config",
+          "client-public-key": "Client public key",
+          "client-public-key-hint": "If client public key is empty, the trusted certificate will be used"
         },
         "client-id": "Client ID",
         "client-id-pattern": "Contains invalid character.",
