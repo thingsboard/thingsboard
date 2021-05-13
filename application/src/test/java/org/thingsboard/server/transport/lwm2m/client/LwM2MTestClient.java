@@ -32,6 +32,7 @@ import org.eclipse.californium.scandium.dtls.SessionAdapter;
 import org.eclipse.leshan.client.californium.LeshanClient;
 import org.eclipse.leshan.client.californium.LeshanClientBuilder;
 import org.eclipse.leshan.client.engine.DefaultRegistrationEngineFactory;
+import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.client.object.Server;
 import org.eclipse.leshan.client.observer.LwM2mClientObserver;
 import org.eclipse.leshan.client.resource.ObjectsInitializer;
@@ -54,7 +55,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static org.eclipse.leshan.client.object.Security.noSec;
 import static org.eclipse.leshan.core.LwM2mId.DEVICE;
 import static org.eclipse.leshan.core.LwM2mId.SECURITY;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
@@ -67,7 +67,7 @@ public class LwM2MTestClient {
     private final String endpoint;
     private LeshanClient client;
 
-    public void init() {
+    public void init(Security security, NetworkConfig coapConfig) {
         String[] resources = new String[]{"0.xml", "1.xml", "2.xml", "3.xml"};
         List<ObjectModel> models = new ArrayList<>();
         for (String resourceName : resources) {
@@ -75,12 +75,9 @@ public class LwM2MTestClient {
         }
         LwM2mModel model = new StaticModel(models);
         ObjectsInitializer initializer = new ObjectsInitializer(model);
-        initializer.setInstancesForObject(SECURITY, noSec("coap://localhost:5685", 123));
+        initializer.setInstancesForObject(SECURITY, security);
         initializer.setInstancesForObject(SERVER, new Server(123, 300, BindingMode.U, false));
         initializer.setInstancesForObject(DEVICE, new SimpleLwM2MDevice());
-
-        NetworkConfig coapConfig = new NetworkConfig();
-        coapConfig.setString("COAP_PORT", Integer.toString(5685));
 
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
         dtlsConfig.setRecommendedCipherSuitesOnly(true);
@@ -256,7 +253,7 @@ public class LwM2MTestClient {
     }
 
     public void destroy() {
-        client.stop(false);
+        client.destroy(true);
     }
 
 }

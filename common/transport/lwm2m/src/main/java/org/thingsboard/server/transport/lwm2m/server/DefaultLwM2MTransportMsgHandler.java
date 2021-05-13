@@ -63,6 +63,7 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientProfile;
 import org.thingsboard.server.transport.lwm2m.server.client.Lwm2mClientRpcRequest;
 import org.thingsboard.server.transport.lwm2m.server.client.ResultsAddKeyValueProto;
 import org.thingsboard.server.transport.lwm2m.server.client.ResultsAnalyzerParameters;
+import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
@@ -129,12 +130,13 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     private final LwM2MJsonAdaptor adaptor;
     private final LwM2mClientContext clientContext;
     private final LwM2mTransportRequest lwM2mTransportRequest;
+    private final TbLwM2MDtlsSessionStore sessionStore;
 
     public DefaultLwM2MTransportMsgHandler(TransportService transportService, LwM2MTransportServerConfig config, LwM2mTransportServerHelper helper,
                                            LwM2mClientContext clientContext,
                                            @Lazy LwM2mTransportRequest lwM2mTransportRequest,
                                            FirmwareDataCache firmwareDataCache,
-                                           LwM2mTransportContext context, LwM2MJsonAdaptor adaptor) {
+                                           LwM2mTransportContext context, LwM2MJsonAdaptor adaptor, TbLwM2MDtlsSessionStore sessionStore) {
         this.transportService = transportService;
         this.config = config;
         this.helper = helper;
@@ -143,6 +145,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         this.firmwareDataCache = firmwareDataCache;
         this.context = context;
         this.adaptor = adaptor;
+        this.sessionStore = sessionStore;
     }
 
     @PostConstruct
@@ -243,6 +246,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         SessionInfoProto sessionInfo = this.getSessionInfoOrCloseSession(registration);
         if (sessionInfo != null) {
             transportService.deregisterSession(sessionInfo);
+            sessionStore.remove(registration.getEndpoint());
             this.doCloseSession(sessionInfo);
             clientContext.removeClientByRegistrationId(registration.getId());
             log.info("Client close session: [{}] unReg [{}] name  [{}] profile ", registration.getId(), registration.getEndpoint(), sessionInfo.getDeviceType());

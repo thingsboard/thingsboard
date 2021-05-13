@@ -21,6 +21,8 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 
+import java.util.ArrayList;
+
 @RunWith(MockitoJUnitRunner.class)
 public class JsonConverterTest {
 
@@ -36,6 +38,12 @@ public class JsonConverterTest {
     public void testParseBigDecimalAsDouble() {
         var result = JsonConverter.convertToTelemetry(JSON_PARSER.parse("{\"meterReadingDelta\": 101E-1}"), 0L);
         Assert.assertEquals(10.1, result.get(0L).get(0).getDoubleValue().get(), 0.0);
+    }
+
+    @Test
+    public void testParseAttributesBigDecimalAsLong() {
+        var result = new ArrayList<>(JsonConverter.convertToAttributes(JSON_PARSER.parse("{\"meterReadingDelta\": 1E1}")));
+        Assert.assertEquals(10L, result.get(0).getLongValue().get().longValue());
     }
 
     @Test
