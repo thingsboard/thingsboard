@@ -309,6 +309,8 @@ public class DefaultMailService implements MailService {
             case EMAIL:
             case SMS:
                 return "send";
+            case ALARM:
+                return "create";
             default:
                 throw new RuntimeException("Not implemented!");
         }
@@ -327,6 +329,8 @@ public class DefaultMailService implements MailService {
             case EMAIL:
             case SMS:
                 return "sent";
+            case ALARM:
+                return "created";
             default:
                 throw new RuntimeException("Not implemented!");
         }

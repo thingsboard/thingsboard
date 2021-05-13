@@ -82,7 +82,8 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
         showDashboardLogo: [isUndefined(this.settings.showDashboardLogo) ? false : this.settings.showDashboardLogo, []],
         dashboardLogoUrl: [isUndefined(this.settings.dashboardLogoUrl) ? null : this.settings.dashboardLogoUrl, []],
         showDashboardTimewindow: [isUndefined(this.settings.showDashboardTimewindow) ? true : this.settings.showDashboardTimewindow, []],
-        showDashboardExport: [isUndefined(this.settings.showDashboardExport) ? true : this.settings.showDashboardExport, []]
+        showDashboardExport: [isUndefined(this.settings.showDashboardExport) ? true : this.settings.showDashboardExport, []],
+        showUpdateDashboardImage: [isUndefined(this.settings.showUpdateDashboardImage) ? true : this.settings.showUpdateDashboardImage, []]
       });
       this.settingsFormGroup.get('stateControllerId').valueChanges.subscribe(
         (stateControllerId: StateControllerId) => {

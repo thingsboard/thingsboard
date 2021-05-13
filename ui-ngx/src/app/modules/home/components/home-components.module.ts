@@ -141,6 +141,7 @@ import { EdgeDownlinkTableHeaderComponent } from '@home/components/edge/edge-dow
 import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-page/widget-types-panel.component';
 import { SecurityConfigLwm2mComponent } from '@home/components/device/security-config-lwm2m.component';
 import { SecurityConfigLwm2mServerComponent } from '@home/components/device/security-config-lwm2m-server.component';
+import { DashboardImageDialogComponent } from '@home/components/dashboard-page/dashboard-image-dialog.component';
 
 @NgModule({
   declarations:
@@ -260,6 +261,7 @@ import { SecurityConfigLwm2mServerComponent } from '@home/components/device/secu
       DashboardSettingsDialogComponent,
       ManageDashboardStatesDialogComponent,
       DashboardStateDialogComponent,
+      DashboardImageDialogComponent,
       EmbedDashboardDialogComponent,
       DisplayWidgetTypesPanelComponent
     ],
@@ -370,6 +372,7 @@ import { SecurityConfigLwm2mServerComponent } from '@home/components/device/secu
     DashboardSettingsDialogComponent,
     ManageDashboardStatesDialogComponent,
     DashboardStateDialogComponent,
+    DashboardImageDialogComponent,
     EmbedDashboardDialogComponent,
     DisplayWidgetTypesPanelComponent
   ],

@@ -130,3 +130,7 @@ DO $$
     END;
 $$;
 
+
+ALTER TABLE api_usage_state
+    ADD COLUMN IF NOT EXISTS alarm_exec VARCHAR(32);
+UPDATE api_usage_state SET alarm_exec = 'ENABLED' WHERE alarm_exec IS NULL;

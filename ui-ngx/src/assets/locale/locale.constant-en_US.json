@@ -667,6 +667,8 @@
         "add-widget": "Add new widget",
         "title": "Title",
         "image": "Dashboard image",
+        "update-image": "Update dashboard image",
+        "take-screenshot": "Take screenshot",
         "select-widget-title": "Select widget",
         "select-widget-value": "{{title}}: select widget",
         "select-widget-subtitle": "List of available widget types",
@@ -748,6 +750,7 @@
         "display-filters": "Display filters",
         "display-dashboard-timewindow": "Display timewindow",
         "display-dashboard-export": "Display export",
+        "display-update-dashboard-image": "Display update dashboard image",
         "display-dashboard-logo": "Display logo in dashboard fullscreen mode",
         "dashboard-logo-image": "Dashboard logo image",
         "import": "Import dashboard",
@@ -1231,7 +1234,6 @@
             "required": " value is required.",
             "mode": "Security config mode",
             "pattern_hex_dec": "{ count, plural, 0 {must be hex decimal format} other {must be # characters} }",
-            "bootstrap-tab": "Bootstrap",
             "servers": "Servers",
             "short-id": "Short ID",
             "short-id-tip": "Short Server ID",
@@ -2528,7 +2530,10 @@
         "max-emails-range": "Maximum number of emails sent can't be negative",
         "max-sms": "Maximum number of SMS sent (0 - unlimited)",
         "max-sms-required": "Maximum number of SMS sent is required.",
-        "max-sms-range": "Maximum number of SMS sent can't be negative"
+        "max-sms-range": "Maximum number of SMS sent can't be negative",
+        "max-created-alarms": "Maximum number of alarms created (0 - unlimited)",
+        "max-created-alarms-required": "Maximum number of alarms created is required.",
+        "max-created-alarms-range": "Maximum number of alarms created can't be negative"
     },
     "timeinterval": {
         "seconds-interval": "{ seconds, plural, 1 {1 second} other {# seconds} }",
