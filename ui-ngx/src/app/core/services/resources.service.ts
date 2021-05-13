@@ -134,6 +134,7 @@ export class ResourcesService {
           try {
             modules = this.extractNgModules(module);
           } catch (e) {
+            console.error(e);
           }
           if (modules && modules.length) {
             import('@angular/compiler').then(
@@ -172,20 +173,42 @@ export class ResourcesService {
       (e) => {
         this.loadedModules[url].error(new Error(`Unable to load module from url: ${url}`));
         delete this.loadedModules[url];
+        console.error(`Unable to load module from url: ${url}`, e);
       }
     );
     return subject.asObservable();
   }
 
-  private extractNgModules(module: any, modules: Type<any>[] = [] ): Type<any>[] {
-    if (module && 'ɵmod' in module) {
-      modules.push(module);
-    } else {
-      for (const k of Object.keys(module)) {
-        this.extractNgModules(module[k], modules);
+  private extractNgModules(module: any, modules: Type<any>[] = []): Type<any>[] {
+    try {
+      let potentialModules = [module];
+      let currentScanDepth = 0;
+
+      while(potentialModules.length && currentScanDepth < 10) {
+        let newPotentialModules = [];
+        for (const module of potentialModules) {
+          if (module && 'ɵmod' in module) {
+            modules.push(module);
+          } else {
+            for (const k of Object.keys(module)) {
+              if(!this.isPrimitive(module[k])) {
+                newPotentialModules.push(module[k]);
+              }
+            }
+          }
+        }
+
+        potentialModules = newPotentialModules;
+        currentScanDepth++;
       }
+    } catch(e) {
+      console.log('Could not load NgModule', e);
     }
     return modules;
+  }
+
+  private isPrimitive(test) {
+    return test !== Object(test);
   }
 
   private loadResourceByType(type: 'css' | 'js', url: string): Observable<any> {
