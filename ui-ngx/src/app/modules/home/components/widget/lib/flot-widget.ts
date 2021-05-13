@@ -24,6 +24,7 @@ import {
   isDefinedAndNotNull,
   isEqual,
   isNumber,
+  isNumeric,
   isUndefined
 } from '@app/core/utils';
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
@@ -841,7 +842,7 @@ export class TbFlot {
     data.forEach((keyData) => {
       if (keyData && keyData.data && keyData.data[0]) {
         const attrValue = keyData.data[0][1];
-        if (isFinite(attrValue)) {
+        if (isNumeric(attrValue) && isFinite(attrValue)) {
           const settings: TbFlotThresholdKeySettings = keyData.dataKey.settings;
           const colorIndex = this.subscription.data.length + allThresholds.length;
           this.generateThreshold(allThresholds, settings.yaxis, settings.lineWidth, settings.color, colorIndex, attrValue);
