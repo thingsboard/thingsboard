@@ -1234,7 +1234,6 @@
             "required": " value is required.",
             "mode": "Security config mode",
             "pattern_hex_dec": "{ count, plural, 0 {must be hex decimal format} other {must be # characters} }",
-            "bootstrap-tab": "Bootstrap",
             "servers": "Servers",
             "short-id": "Short ID",
             "short-id-tip": "Short Server ID",
