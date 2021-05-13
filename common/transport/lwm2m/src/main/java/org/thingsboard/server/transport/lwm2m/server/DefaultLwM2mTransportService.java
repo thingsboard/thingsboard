@@ -117,7 +117,6 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
     }
 
     private LeshanServer getLhServer() {
-//        this.registrationStoreExecutor = (ScheduledExecutorService) ThingsBoardExecutors.newWorkStealingPool(this.config.getRegistrationStorePoolSize(), "LwM2M registrationStore");
         this.registrationStoreExecutor = Executors.newScheduledThreadPool(this.config.getRegistrationStorePoolSize(), ThingsBoardThreadFactory.forName("LwM2M registrationStore"));
 
         LeshanServerBuilder builder = new LeshanServerBuilder();

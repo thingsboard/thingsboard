@@ -43,6 +43,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.F
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_UPDATE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_UPDATE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_VER_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.EXECUTE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE;
@@ -157,7 +158,7 @@ public class LwM2mFwSwUpdate {
     private void writeFwSwWare() {
         this.stateUpdate = FirmwareUpdateStatus.DOWNLOADING.name();
         this.observeStateUpdate();
-        this.sendLogs(WRITE_REPLACE.name());
+        this.sendLogs(WRITE_REPLACE.name(), LOG_LW2M_INFO, null);
         int chunkSize = 0;
         int chunk = 0;
         byte[] firmwareChunk = this.serviceImpl.firmwareDataCache.get(this.currentId.toString(), chunkSize, chunk);
@@ -166,12 +167,14 @@ public class LwM2mFwSwUpdate {
                 firmwareChunk, this.serviceImpl.config.getTimeout(), null);
     }
 
-    public void sendLogs(String typeOper) {
+    public void sendLogs(String typeOper, String typeInfo, String msgError) {
         this.sendSateOnThingsboard();
-        String msg = String.format("%s: %s, %s, pkgVer: %s: pkgName - %s.",
-                LOG_LW2M_INFO, this.wUpdate, typeOper, this.currentVersion, this.currentTitle);
+        String msg = String.format("%s: %s, %s, pkgVer: %s: pkgName - %s state - %s.",
+                typeInfo, this.wUpdate, typeOper, this.currentVersion, this.currentTitle, this.stateUpdate);
+        if (LOG_LW2M_ERROR.equals(typeInfo)) {
+            msg = String.format("%s Error: %s", msg, msgError);
+        }
         serviceImpl.sendLogsToThingsboard(msg, lwM2MClient.getRegistration().getId());
-        log.warn("{} state: [{}]", msg, this.stateUpdate);
     }
 
 
@@ -181,14 +184,10 @@ public class LwM2mFwSwUpdate {
      * send execute
      */
     public void executeFwSwWare() {
-        boolean conditionalExecute = this.type.equals(FIRMWARE) ? conditionalFwUpdateExecute() :
-                conditionalSwUpdateExecute();
-        if (conditionalExecute) {
             this.setStateUpdate(UPDATING.name());
-            this.sendLogs(EXECUTE.name());
+            this.sendLogs(EXECUTE.name(), LOG_LW2M_INFO, null);
             this.serviceImpl.lwM2mTransportRequest.sendAllRequest(this.lwM2MClient.getRegistration(), this.pathInstallId, EXECUTE, ContentFormat.TLV.getName(),
                     null, 0, null);
-        }
     }
 
 
@@ -219,9 +218,27 @@ public class LwM2mFwSwUpdate {
      * Before operation Execute  inspection Update Result :
      * 0 - Initial value
      */
-    private boolean conditionalFwUpdateExecute() {
+    public boolean conditionalFwExecuteStart() {
         Long updateResult = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
         return  LwM2mTransportUtil.UpdateResultFw.INITIAL.code == updateResult;
+    }
+
+    /**
+     * After operation Execute success  inspection Update Result :
+     * 1 - "Firmware updated successfully"
+     */
+    public boolean conditionalFwExecuteAfterSuccess() {
+        Long updateResult = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
+        return  LwM2mTransportUtil.UpdateResultFw.UPDATE_SUCCESSFULLY.code == updateResult;
+    }
+
+    /**
+     * After operation Execute success  inspection Update Result :
+     *  > 1 error: "Firmware updated successfully"
+     */
+    public boolean conditionalFwExecuteAfterError() {
+        Long updateResult = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
+        return  LwM2mTransportUtil.UpdateResultFw.UPDATE_SUCCESSFULLY.code < updateResult;
     }
 
     /**
@@ -251,7 +268,7 @@ public class LwM2mFwSwUpdate {
      * Before operation Execute inspection Update Result :
      * 3 - Successfully Downloaded and package integrity verified
      */
-    private boolean conditionalSwUpdateExecute() {
+    public boolean conditionalSwUpdateExecute() {
         Long updateResult = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
         return LwM2mTransportUtil.UpdateResultSw.SUCCESSFULLY_INSTALLED_VERIFIED.code == updateResult;
     }
@@ -267,21 +284,37 @@ public class LwM2mFwSwUpdate {
      * --- send to telemetry ( key - this is name Update Result in model) (
      * --  fw_state/sw_state = FAILED
      */
-    public void finishFwSwUpdateExecute(boolean success) {
+    public void finishFwSwUpdate(boolean success) {
         Long updateResult = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
-        int updateResultSuccessful = this.type.equals(FIRMWARE) ? LwM2mTransportUtil.UpdateResultFw.UPDATE_SUCCESSFULLY.code :
-                LwM2mTransportUtil.UpdateResultSw.SUCCESSFULLY_INSTALLED.code;
-        if (success && updateResultSuccessful == updateResult.intValue()) {
+        String value = LwM2mTransportUtil.UpdateResultFw.fromUpdateResultFwByCode(updateResult.intValue()).type;
+        String key = splitCamelCaseString((String) this.lwM2MClient.getResourceName (null, this.pathResultId));
+        if (success) {
             this.stateUpdate = FirmwareUpdateStatus.UPDATED.name();
+            this.sendLogs(EXECUTE.name(), LOG_LW2M_INFO, null);
         }
         else {
             this.stateUpdate = FirmwareUpdateStatus.FAILED.name();
-            String value = LwM2mTransportUtil.UpdateResultFw.fromUpdateResultFwByCode(updateResult.intValue()).type;
-            String key = splitCamelCaseString((String) this.lwM2MClient.getResourceName (null, this.pathResultId));
-            this.serviceImpl.helper.sendParametersOnThingsboardTelemetry(
-                    this.serviceImpl.helper.getKvStringtoThingsboard(key, value), this.lwM2MClient.getSession());
+            this.sendLogs(EXECUTE.name(), LOG_LW2M_ERROR, value);
         }
-        this.sendLogs(EXECUTE.name());
+        this.serviceImpl.helper.sendParametersOnThingsboardTelemetry(
+                this.serviceImpl.helper.getKvStringtoThingsboard(key, value), this.lwM2MClient.getSession());
+    }
+
+    /**
+     * After operation Execute success  inspection Update Result :
+     * 2 - "Software successfully installed."
+     */
+    public boolean conditionalSwExecuteAfterSuccess() {
+        Long updateResult = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
+        return  LwM2mTransportUtil.UpdateResultSw.SUCCESSFULLY_INSTALLED.code == updateResult;
+    }
+    /**
+     * After operation Execute success  inspection Update Result :
+     *  >= 50 - error "NOT_ENOUGH_STORAGE"
+     */
+    public boolean conditionalSwExecuteAfterError() {
+        Long updateResult = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
+        return  LwM2mTransportUtil.UpdateResultSw.NOT_ENOUGH_STORAGE.code <= updateResult;
     }
 
     private void observeStateUpdate() {

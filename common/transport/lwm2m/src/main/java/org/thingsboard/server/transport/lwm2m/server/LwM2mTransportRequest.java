@@ -79,6 +79,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.L
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_VALUE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.DISCOVER_All;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.EXECUTE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE_CANCEL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE_READ_ALL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_REPLACE;
@@ -275,7 +276,6 @@ public class LwM2mTransportRequest {
                 String msg = String.format("%s: type operation %s paths - %s", LOG_LW2M_INFO,
                         OBSERVE_READ_ALL.type, paths);
                 serviceImpl.sendLogsToThingsboard(msg, registration.getId());
-                log.warn("[{}] [{}],  [{}]", typeOper.name(), registration.getEndpoint(), msg);
                 if (rpcRequest != null) {
                     String valueMsg = String.format("Paths - %s", paths);
                     serviceImpl.sentRpcRequest(rpcRequest, CONTENT.name(), valueMsg, LOG_LW2M_VALUE);
@@ -326,11 +326,15 @@ public class LwM2mTransportRequest {
                  **/
                 if (lwM2MClient.getFwUpdate().isInfoFwSwUpdate()) {
                     lwM2MClient.getFwUpdate().initReadValue(serviceImpl, request.getPath().toString());
-                    log.warn("updateFirmwareClient1_FW");
                 }
                 if (lwM2MClient.getSwUpdate().isInfoFwSwUpdate()) {
                     lwM2MClient.getSwUpdate().initReadValue(serviceImpl, request.getPath().toString());
-                    log.warn("updateFirmwareClient1_SW");
+                }
+                if (request.getPath().toString().equals(FW_PACKAGE_ID) || request.getPath().toString().equals(SW_PACKAGE_ID)) {
+                    this.afterWriteFwSWUpdateError(registration, request, response.getErrorMessage());
+                }
+                if (request.getPath().toString().equals(FW_UPDATE_ID) || request.getPath().toString().equals(SW_INSTALL_ID)) {
+                    this.afterExecuteFwSwUpdateError(registration, request, response.getErrorMessage());
                 }
             }
         }, e -> {
@@ -339,17 +343,15 @@ public class LwM2mTransportRequest {
              **/
             if (lwM2MClient.getFwUpdate().isInfoFwSwUpdate()) {
                 lwM2MClient.getFwUpdate().initReadValue(serviceImpl, request.getPath().toString());
-                log.warn("updateFirmwareClient2_FW");
             }
             if (lwM2MClient.getSwUpdate().isInfoFwSwUpdate()) {
                 lwM2MClient.getSwUpdate().initReadValue(serviceImpl, request.getPath().toString());
-                log.warn("updateFirmwareClient2_SW");
             }
             if (request.getPath().toString().equals(FW_PACKAGE_ID) || request.getPath().toString().equals(SW_PACKAGE_ID)) {
-                this.afterWriteErrorFwSWUpdate(registration, request);
+                this.afterWriteFwSWUpdateError(registration, request, e.getMessage());
             }
             if (request.getPath().toString().equals(FW_UPDATE_ID) || request.getPath().toString().equals(SW_INSTALL_ID)) {
-                this.afterExecuteFwSwUpdate(registration, request, false);
+                this.afterExecuteFwSwUpdateError(registration, request, e.getMessage());
             }
             if (!lwM2MClient.isInit()) {
                 lwM2MClient.initReadValue(this.serviceImpl, convertPathFromObjectIdToIdVer(request.getPath().toString(), registration));
@@ -449,7 +451,7 @@ public class LwM2mTransportRequest {
                 serviceImpl.sentRpcRequest(rpcRequest, response.getCode().getName(), discoveryMsg, LOG_LW2M_VALUE);
             }
         } else if (response instanceof ExecuteResponse) {
-            this.afterExecuteFwSwUpdate(registration, request, true);
+            log.info("[{}] Path [{}] ExecuteResponse 7_Send", pathIdVer, response);
         } else if (response instanceof WriteAttributesResponse) {
             log.info("[{}] Path [{}] WriteAttributesResponse 8_Send", pathIdVer, response);
         } else if (response instanceof WriteResponse) {
@@ -498,7 +500,6 @@ public class LwM2mTransportRequest {
             }
             if (msg != null) {
                 serviceImpl.sendLogsToThingsboard(msg, registration.getId());
-                log.warn(msg);
                 if (request.getPath().toString().equals(FW_PACKAGE_ID) || request.getPath().toString().equals(SW_PACKAGE_ID)) {
                     this.afterWriteSuccessFwSwUpdate(registration, request);
                 }
@@ -517,38 +518,36 @@ public class LwM2mTransportRequest {
         LwM2mClient lwM2MClient = this.lwM2mClientContext.getClientByRegistrationId(registration.getId());
         if (request.getPath().toString().equals(FW_PACKAGE_ID) && lwM2MClient.getFwUpdate() != null) {
             lwM2MClient.getFwUpdate().setStateUpdate(DOWNLOADED.name());
-            lwM2MClient.getFwUpdate().sendLogs(WRITE_REPLACE.name());
-            lwM2MClient.getFwUpdate().executeFwSwWare();
+            lwM2MClient.getFwUpdate().sendLogs(WRITE_REPLACE.name(), LOG_LW2M_INFO, null);
         }
         if (request.getPath().toString().equals(SW_PACKAGE_ID) && lwM2MClient.getSwUpdate() != null) {
             lwM2MClient.getSwUpdate().setStateUpdate(DOWNLOADED.name());
-            lwM2MClient.getSwUpdate().sendLogs(WRITE_REPLACE.name());
-            lwM2MClient.getSwUpdate().executeFwSwWare();
+            lwM2MClient.getSwUpdate().sendLogs(WRITE_REPLACE.name(), LOG_LW2M_INFO, null);
         }
     }
 
     /**
      * After finish operation FwSwUpdate Write (error):  fw_state = FAILED
      */
-    private void afterWriteErrorFwSWUpdate(Registration registration, DownlinkRequest request) {
+    private void afterWriteFwSWUpdateError(Registration registration, DownlinkRequest request, String msgError) {
         LwM2mClient lwM2MClient = this.lwM2mClientContext.getClientByRegistrationId(registration.getId());
         if (request.getPath().toString().equals(FW_PACKAGE_ID) && lwM2MClient.getFwUpdate() != null) {
             lwM2MClient.getFwUpdate().setStateUpdate(FAILED.name());
-            lwM2MClient.getFwUpdate().sendLogs(WRITE_REPLACE.name());
+            lwM2MClient.getFwUpdate().sendLogs(WRITE_REPLACE.name(), LOG_LW2M_ERROR, msgError);
         }
         if (request.getPath().toString().equals(SW_PACKAGE_ID) && lwM2MClient.getSwUpdate() != null) {
             lwM2MClient.getSwUpdate().setStateUpdate(FAILED.name());
-            lwM2MClient.getSwUpdate().sendLogs(WRITE_REPLACE.name());
+            lwM2MClient.getSwUpdate().sendLogs(WRITE_REPLACE.name(), LOG_LW2M_ERROR, msgError);
         }
     }
 
-    private void afterExecuteFwSwUpdate(Registration registration, DownlinkRequest request, boolean success) {
+    private void afterExecuteFwSwUpdateError(Registration registration, DownlinkRequest request, String msgError) {
         LwM2mClient lwM2MClient = this.lwM2mClientContext.getClientByRegistrationId(registration.getId());
-        if (request.getPath().toString().equals(FW_PACKAGE_ID) && lwM2MClient.getFwUpdate() != null) {
-            lwM2MClient.getFwUpdate().finishFwSwUpdateExecute(success);
+        if (request.getPath().toString().equals(FW_UPDATE_ID) && lwM2MClient.getFwUpdate() != null) {
+            lwM2MClient.getFwUpdate().sendLogs(EXECUTE.name(), LOG_LW2M_ERROR, msgError);
         }
-        if (request.getPath().toString().equals(SW_PACKAGE_ID) && lwM2MClient.getSwUpdate() != null) {
-            lwM2MClient.getSwUpdate().finishFwSwUpdateExecute(success);
+        if (request.getPath().toString().equals(SW_INSTALL_ID) && lwM2MClient.getSwUpdate() != null) {
+            lwM2MClient.getSwUpdate().sendLogs(EXECUTE.name(), LOG_LW2M_ERROR, msgError);
         }
     }
 }

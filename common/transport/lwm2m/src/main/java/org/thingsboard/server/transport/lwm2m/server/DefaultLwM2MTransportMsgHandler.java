@@ -56,6 +56,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.SessionEvent;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
@@ -84,17 +85,20 @@ import java.util.stream.Collectors;
 
 import static org.eclipse.californium.core.coap.CoAP.ResponseCode.BAD_REQUEST;
 import static org.eclipse.leshan.core.attributes.Attribute.OBJECT_VERSION;
+import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.DOWNLOADED;
+import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.FAILED;
+import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.UPDATING;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper.getValueFromKvProto;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.CLIENT_NOT_AUTHORIZED;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.DEVICE_ATTRIBUTES_REQUEST;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_RESULT_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_TELEMETRY;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_VALUE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LWM2M_STRATEGY_2;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.DISCOVER;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.DISCOVER_All;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.EXECUTE;
@@ -106,6 +110,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.L
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_REPLACE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_UPDATE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_RESULT_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertJsonArrayToSet;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromIdVerToObjectId;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
@@ -596,7 +601,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      */
     @Override
     public void onAwakeDev(Registration registration) {
-        log.info("[{}] [{}] Received endpoint Awake version event", registration.getId(), registration.getEndpoint());
+        log.trace("[{}] [{}] Received endpoint Awake version event", registration.getId(), registration.getEndpoint());
         this.sendLogsToThingsboard(LOG_LW2M_INFO + ": Client is awake!", registration.getId());
         //TODO: associate endpointId with device information.
     }
@@ -696,22 +701,60 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
             if (lwM2MClient.getSwUpdate().isInfoFwSwUpdate()) {
                 lwM2MClient.getSwUpdate().initReadValue(this, path);
             }
-//            if (lwM2MClient.getFwUpdate().getStateUpdate() != null
-//                    && !FirmwareUpdateStatus.DOWNLOADING.name().equals(lwM2MClient.getFwUpdate().getStateUpdate())
-//                    && (convertPathFromObjectIdToIdVer(FW_RESULT_ID, registration).equals(path))) {
-//                Long stateFw = (Long) lwM2MClient.getResourceValue(null, FW_STATE_ID);
-//                Long updateResultFw = (Long) lwM2MClient.getResourceValue(null, FW_RESULT_ID);
-//                FirmwareUpdateStatus state = EqualsFwSateToFirmwareUpdateStatus(LwM2mTransportUtil.StateFw.fromStateFwByCode(stateFw.intValue()),
-//                        LwM2mTransportUtil.UpdateResultFw.fromUpdateResultFwByCode(updateResultFw.intValue()));
-//                if (state != FirmwareUpdateStatus.DOWNLOADING && state != FirmwareUpdateStatus.DOWNLOADED) {
-//                    lwM2MClient.getFwUpdate().setStateUpdate(state.name());
-//                    lwM2MClient.getFwUpdate().sendLogs(OBSERVE.name());
-//                }
-//                log.warn ("update Resource [{}]", lwM2mResource);
-//            }
-//            if (FirmwareUpdateStatus.DOWNLOADED.name().equals(lwM2MClient.getSwUpdate().getStateUpdate())) {
-//
-//            }
+
+            /**
+             * Before operation Execute (FwUpdate) inspection Update Result :
+             *  - after finished operation Write result: success (FwUpdate): fw_state = DOWNLOADED
+             *  - before start operation Execute (FwUpdate) Update Result = 0 - Initial value
+             *  - start Execute (FwUpdate)
+             *  After finished operation Execute (FwUpdate) inspection Update Result :
+             *  - after start operation Execute (FwUpdate):  fw_state = UPDATING
+             *  - after success finished operation Execute (FwUpdate) Update Result == 1 ("Firmware updated successfully")
+             *  - finished operation Execute (FwUpdate)
+             */
+            if (lwM2MClient.getFwUpdate() != null
+                    && (convertPathFromObjectIdToIdVer(FW_RESULT_ID, registration).equals(path))) {
+                if (DOWNLOADED.name().equals(lwM2MClient.getFwUpdate().getStateUpdate())
+                        && lwM2MClient.getFwUpdate().conditionalFwExecuteStart()) {
+                    lwM2MClient.getFwUpdate().executeFwSwWare();
+                }
+                else if (UPDATING.name().equals(lwM2MClient.getFwUpdate().getStateUpdate())
+                        && lwM2MClient.getFwUpdate().conditionalFwExecuteAfterSuccess()) {
+                    lwM2MClient.getFwUpdate().finishFwSwUpdate(true);
+                }
+                else if (UPDATING.name().equals(lwM2MClient.getFwUpdate().getStateUpdate())
+                        && lwM2MClient.getFwUpdate().conditionalFwExecuteAfterError()) {
+                    lwM2MClient.getFwUpdate().finishFwSwUpdate(false);
+                }
+            }
+
+            /**
+             * Before operation Execute (SwUpdate) inspection Update Result :
+             *  - after finished operation Write result: success (SwUpdate): fw_state = DOWNLOADED
+             *  - before operation Execute (SwUpdate) Update Result = 3 - Successfully Downloaded and package integrity verified
+             *  - start Execute (SwUpdate)
+             *  After finished operation Execute (SwUpdate) inspection Update Result :
+             *  - after start operation Execute (SwUpdate):  fw_state = UPDATING
+             *  - after success finished operation Execute (SwUpdate) Update Result == 2 "Software successfully installed.""
+             *  - after success finished operation Execute (SwUpdate) Update Result == 2 "Software successfully installed.""
+             *  - finished operation Execute (SwUpdate)
+             */
+            if (lwM2MClient.getSwUpdate() != null
+                    && (convertPathFromObjectIdToIdVer(SW_RESULT_ID, registration).equals(path))) {
+                if (DOWNLOADED.name().equals(lwM2MClient.getSwUpdate().getStateUpdate())
+                        && lwM2MClient.getSwUpdate().conditionalSwUpdateExecute()) {
+                    lwM2MClient.getSwUpdate().executeFwSwWare();
+                }
+                else if (UPDATING.name().equals(lwM2MClient.getSwUpdate().getStateUpdate())
+                        && lwM2MClient.getSwUpdate().conditionalSwExecuteAfterSuccess()) {
+                    lwM2MClient.getSwUpdate().finishFwSwUpdate(true);
+                }
+                else if ((UPDATING.name().equals(lwM2MClient.getSwUpdate().getStateUpdate())
+                        || FAILED.name().equals(lwM2MClient.getSwUpdate().getStateUpdate()))
+                        && lwM2MClient.getSwUpdate().conditionalSwExecuteAfterError()) {
+                    lwM2MClient.getSwUpdate().finishFwSwUpdate(false);
+                }
+            }
             Set<String> paths = new HashSet<>();
             paths.add(path);
             this.updateAttrTelemetry(registration, paths);
@@ -1342,7 +1385,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                     TransportProtos.GetAttributeRequestMsg getAttributeMsg = adaptor.convertToGetAttributes(null, keyNamesMap.values());
                     transportService.process(sessionInfo, getAttributeMsg, getAckCallback(lwM2MClient, getAttributeMsg.getRequestId(), DEVICE_ATTRIBUTES_REQUEST));
                 } catch (AdaptorException e) {
-                    log.warn("Failed to decode get attributes request", e);
+                    log.trace("Failed to decode get attributes request", e);
                 }
             }
 
@@ -1371,7 +1414,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
 
                             @Override
                             public void onError(Throwable e) {
-                                log.warn("Failed to process firmwareUpdate ", e);
+                                log.trace("Failed to process firmwareUpdate ", e);
                             }
                         });
             }
