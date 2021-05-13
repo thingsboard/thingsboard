@@ -334,13 +334,13 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
     public void testGetDefaultEdgeRuleChains() throws Exception {
         RuleChainId ruleChainId = saveRuleChainAndSetAutoAssignToEdge("Default Edge Rule Chain 1");
         saveRuleChainAndSetAutoAssignToEdge("Default Edge Rule Chain 2");
-        List<RuleChain> result = ruleChainService.findAutoAssignToEdgeRuleChainsByTenantId(tenantId).get();
-        Assert.assertEquals(2, result.size());
+        PageData<RuleChain> result = ruleChainService.findAutoAssignToEdgeRuleChainsByTenantId(tenantId, new PageLink(100));
+        Assert.assertEquals(2, result.getData().size());
 
         ruleChainService.unsetAutoAssignToEdgeRuleChain(tenantId, ruleChainId);
 
-        result = ruleChainService.findAutoAssignToEdgeRuleChainsByTenantId(tenantId).get();
-        Assert.assertEquals(1, result.size());
+        result = ruleChainService.findAutoAssignToEdgeRuleChainsByTenantId(tenantId, new PageLink(100));
+        Assert.assertEquals(1, result.getData().size());
     }
 
     @Test

@@ -70,6 +70,7 @@ import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -84,6 +85,8 @@ public class RuleChainController extends BaseController {
 
     public static final String RULE_CHAIN_ID = "ruleChainId";
     public static final String RULE_NODE_ID = "ruleNodeId";
+
+    private static final int DEFAULT_LIMIT = 100;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -477,7 +480,7 @@ public class RuleChainController extends BaseController {
         return objectMapper.writeValueAsString(resultNode);
     }
 
-    private JsonNode convertMsgToOut(TbMsg msg) throws Exception{
+    private JsonNode convertMsgToOut(TbMsg msg) throws Exception {
         ObjectNode msgData = objectMapper.createObjectNode();
         if (!StringUtils.isEmpty(msg.getData())) {
             msgData.set("msg", objectMapper.readTree(msg.getData()));
@@ -632,13 +635,26 @@ public class RuleChainController extends BaseController {
         }
     }
 
+    // TODO: refactor this - add new config to edge rule chain to set it as auto-assign
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain/autoAssignToEdgeRuleChains", method = RequestMethod.GET)
     @ResponseBody
     public List<RuleChain> getAutoAssignToEdgeRuleChains() throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
-            return checkNotNull(ruleChainService.findAutoAssignToEdgeRuleChainsByTenantId(tenantId)).get();
+            List<RuleChain> result = new ArrayList<>();
+            PageLink pageLink = new PageLink(DEFAULT_LIMIT);
+            PageData<RuleChain> pageData;
+            do {
+                pageData = ruleChainService.findAutoAssignToEdgeRuleChainsByTenantId(tenantId, pageLink);
+                if (pageData.getData().size() > 0) {
+                    result.addAll(pageData.getData());
+                    if (pageData.hasNext()) {
+                        pageLink = pageLink.nextPageLink();
+                    }
+                }
+            } while (pageData.hasNext());
+            return checkNotNull(result);
         } catch (Exception e) {
             throw handleException(e);
         }

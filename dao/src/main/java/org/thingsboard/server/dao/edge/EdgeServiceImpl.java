@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Function;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -381,22 +380,19 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     @Override
     public void assignDefaultRuleChainsToEdge(TenantId tenantId, EdgeId edgeId) {
         log.trace("Executing assignDefaultRuleChainsToEdge, tenantId [{}], edgeId [{}]", tenantId, edgeId);
-        ListenableFuture<List<RuleChain>> future = ruleChainService.findAutoAssignToEdgeRuleChainsByTenantId(tenantId);
-        Futures.addCallback(future, new FutureCallback<List<RuleChain>>() {
-            @Override
-            public void onSuccess(List<RuleChain> ruleChains) {
-                if (ruleChains != null && !ruleChains.isEmpty()) {
-                    for (RuleChain ruleChain : ruleChains) {
-                        ruleChainService.assignRuleChainToEdge(tenantId, ruleChain.getId(), edgeId);
-                    }
+        PageLink pageLink = new PageLink(DEFAULT_LIMIT);
+        PageData<RuleChain> pageData;
+        do {
+            pageData = ruleChainService.findAutoAssignToEdgeRuleChainsByTenantId(tenantId, pageLink);
+            if (pageData.getData().size() > 0) {
+                for (RuleChain ruleChain : pageData.getData()) {
+                    ruleChainService.assignRuleChainToEdge(tenantId, ruleChain.getId(), edgeId);
                 }
             }
-
-            @Override
-            public void onFailure(Throwable t) {
-                log.warn("[{}] can't find default edge rule chains [{}]", tenantId.getId(), edgeId.getId(), t);
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
             }
-        }, MoreExecutors.directExecutor());
+        } while (pageData.hasNext());
     }
 
     @Override
