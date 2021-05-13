@@ -143,7 +143,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
 
     void setupNextCleanup() {
         nextCleanupNs = getCurrentClockNs() + maxRequestTimeoutNs;
-        log.info("setupNextCleanup {}", nextCleanupNs);
+        log.trace("setupNextCleanup {}", nextCleanupNs);
     }
 
     List<Response> doPoll() {
