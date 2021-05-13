@@ -77,9 +77,7 @@ public class EdgeImitator {
     @Getter
     private EdgeConfiguration configuration;
     @Getter
-    private UserId userId;
-    @Getter
-    private final List<AbstractMessage> downlinkMsgs;
+    private List<AbstractMessage> downlinkMsgs;
 
     public EdgeImitator(String host, int port, String routingKey, String routingSecret) throws NoSuchFieldException, IllegalAccessException {
         edgeRpcClient = new EdgeGrpcClient();
@@ -266,6 +264,9 @@ public class EdgeImitator {
     }
 
     public void expectMessageAmount(int messageAmount) {
+        // clear downlinks
+        downlinkMsgs.clear();
+
         messagesLatch = new CountDownLatch(messageAmount);
     }
 

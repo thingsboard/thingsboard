@@ -65,7 +65,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
@@ -193,60 +192,32 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
     @Test
     public void test() throws Exception {
         testReceivedInitialData();
-        int expectedDownlinkSize = 9;
-        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testDevices();
-        expectedDownlinkSize = expectedDownlinkSize + 4;
-        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testAssets();
-        expectedDownlinkSize = expectedDownlinkSize + 4;
-        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testRuleChains();
-        expectedDownlinkSize = expectedDownlinkSize + 3;
-        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testDashboards();
-        expectedDownlinkSize = expectedDownlinkSize + 3;
-        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testRelations();
-        expectedDownlinkSize = expectedDownlinkSize + 2;
-        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testAlarms();
-        expectedDownlinkSize = expectedDownlinkSize + 3;
-        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testEntityView();
-        expectedDownlinkSize = expectedDownlinkSize + 3;
-        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testCustomerAndNewUser();
-        expectedDownlinkSize = expectedDownlinkSize + 3;
-        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testWidgetsBundleAndWidgetType();
-        expectedDownlinkSize = expectedDownlinkSize + 4;
-        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testTimeseries();
-        expectedDownlinkSize = expectedDownlinkSize + 1;
-        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testAttributes();
-        expectedDownlinkSize = expectedDownlinkSize + 3;
-        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testSendMessagesToCloud();
-        expectedDownlinkSize = expectedDownlinkSize + 9;
-        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
 
         testRpcCall();
-        expectedDownlinkSize = expectedDownlinkSize + 1;
-        Assert.assertEquals(expectedDownlinkSize, edgeImitator.getDownlinkMsgs().size());
     }
 
     private Device findDeviceByName(String deviceName) throws Exception {
@@ -441,7 +412,6 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
         log.info("Devices tested successfully");
     }
-
 
     private void testAssets() throws Exception {
         log.info("Testing assets");
