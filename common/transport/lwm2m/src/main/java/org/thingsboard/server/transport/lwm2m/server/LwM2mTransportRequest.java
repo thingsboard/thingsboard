@@ -83,7 +83,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.L
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE_CANCEL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE_READ_ALL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_REPLACE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.RESPONSE_CHANNEL;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.RESPONSE_REQUEST_CHANNEL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_INSTALL_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_PACKAGE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromIdVerToObjectId;
@@ -95,7 +95,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.c
 @TbLwM2mTransportComponent
 @RequiredArgsConstructor
 public class LwM2mTransportRequest {
-    private ExecutorService executorResponse;
+    private ExecutorService responseRequestExecutor;
 
     public LwM2mValueConverterImpl converter;
 
@@ -107,8 +107,8 @@ public class LwM2mTransportRequest {
     @PostConstruct
     public void init() {
         this.converter = LwM2mValueConverterImpl.getInstance();
-        executorResponse = Executors.newFixedThreadPool(this.config.getResponsePoolSize(),
-                new NamedThreadFactory(String.format("LwM2M %s channel response", RESPONSE_CHANNEL)));
+        responseRequestExecutor = Executors.newFixedThreadPool(this.config.getResponsePoolSize(),
+                new NamedThreadFactory(String.format("LwM2M %s channel response after request", RESPONSE_REQUEST_CHANNEL)));
     }
 
     /**
@@ -415,7 +415,7 @@ public class LwM2mTransportRequest {
 
     private void handleResponse(Registration registration, final String path, LwM2mResponse response,
                                 DownlinkRequest request, Lwm2mClientRpcRequest rpcRequest) {
-        executorResponse.submit(() -> {
+        responseRequestExecutor.submit(() -> {
             try {
                 this.sendResponse(registration, path, response, request, rpcRequest);
             } catch (Exception e) {

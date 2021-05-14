@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.lwm2m.server;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.response.ObserveResponse;
+import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.server.observation.ObservationListener;
 import org.eclipse.leshan.server.queue.PresenceListener;
 import org.eclipse.leshan.server.registration.Registration;
@@ -25,17 +26,31 @@ import org.eclipse.leshan.server.registration.RegistrationListener;
 import org.eclipse.leshan.server.registration.RegistrationUpdate;
 
 import java.util.Collection;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.OBSERVE_CHANNEL;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.RESPONSE_CHANNEL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
 
 @Slf4j
 public class LwM2mServerListener {
 
     private final LwM2mTransportMsgHandler service;
+    private ExecutorService observationExecutor;
+    private ExecutorService responseExecutor;
 
     public LwM2mServerListener(LwM2mTransportMsgHandler service) {
         this.service = service;
+        this.init();
+    }
+
+    public void init() {
+        responseExecutor = Executors.newFixedThreadPool(this.service.getConfig().getResponsePoolSize(),
+                new NamedThreadFactory(String.format("LwM2M %s channel response", RESPONSE_CHANNEL)));
+        observationExecutor = Executors.newFixedThreadPool(this.service.getConfig().getObservationPoolSize(),
+                new NamedThreadFactory(String.format("LwM2M %s channel observation", OBSERVE_CHANNEL)));
     }
 
     public final RegistrationListener registrationListener = new RegistrationListener() {
@@ -94,13 +109,14 @@ public class LwM2mServerListener {
         @Override
         public void onResponse(Observation observation, Registration registration, ObserveResponse response) {
             if (registration != null) {
-                try {
-                    service.onUpdateValueAfterReadResponse(registration, convertPathFromObjectIdToIdVer(observation.getPath().toString(),
-                            registration), response, null);
-                } catch (Exception e) {
-                    log.error("Observation/Read onResponse", e);
-
-                }
+                responseExecutor.submit(() -> {
+                    try {
+                        service.onUpdateValueAfterReadResponse(registration, convertPathFromObjectIdToIdVer(observation.getPath().toString(),
+                                registration), response, null);
+                    } catch (Exception e) {
+                        log.error("Observation/Read onResponse", e);
+                    }
+                });
             }
         }
 
@@ -111,11 +127,12 @@ public class LwM2mServerListener {
 
         @Override
         public void newObservation(Observation observation, Registration registration) {
-            String msg = String.format("%s: Successful start newObservation  %s.", LOG_LW2M_INFO,
-                    observation.getPath());
-            service.sendLogsToThingsboard(msg, registration.getId());
-            log.trace(msg);
+            observationExecutor.submit(() -> {
+                String msg = String.format("%s: Successful start newObservation  %s.", LOG_LW2M_INFO,
+                        observation.getPath());
+                service.sendLogsToThingsboard(msg, registration.getId());
+                log.warn(msg);
+            });
         }
     };
-
 }

@@ -508,7 +508,9 @@ public class LwM2mTransportUtil {
     }
 
     public static final String EVENT_AWAKE = "AWAKE";
+    public static final String RESPONSE_REQUEST_CHANNEL = "RESP_REQ";
     public static final String RESPONSE_CHANNEL = "RESP";
+    public static final String OBSERVE_CHANNEL = "OBSERVE";
 
     public static boolean equalsResourceValue(Object valueOld, Object valueNew, ResourceModel.Type type, LwM2mPath
             resourcePath) throws CodecException {

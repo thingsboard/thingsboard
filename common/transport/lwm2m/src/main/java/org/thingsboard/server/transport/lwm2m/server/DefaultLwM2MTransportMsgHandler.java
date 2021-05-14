@@ -125,7 +125,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
 
     private ExecutorService registrationExecutor;
     private ExecutorService updateRegistrationExecutor;
-    private ExecutorService unregistrationExecutor;
+    private ExecutorService unRegistrationExecutor;
     private LwM2mValueConverterImpl converter;
 
     private final TransportService transportService;
@@ -157,7 +157,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         this.context.getScheduler().scheduleAtFixedRate(this::reportActivity, new Random().nextInt((int) config.getSessionReportTimeout()), config.getSessionReportTimeout(), TimeUnit.MILLISECONDS);
         this.registrationExecutor = ThingsBoardExecutors.newWorkStealingPool(this.config.getRegisteredPoolSize(), "LwM2M registration");
         this.updateRegistrationExecutor = ThingsBoardExecutors.newWorkStealingPool(this.config.getUpdateRegisteredPoolSize(), "LwM2M update registration");
-        this.unregistrationExecutor = ThingsBoardExecutors.newWorkStealingPool(this.config.getUnRegisteredPoolSize(), "LwM2M unregistration");
+        this.unRegistrationExecutor = ThingsBoardExecutors.newWorkStealingPool(this.config.getUnRegisteredPoolSize(), "LwM2M unRegistration");
         this.converter = LwM2mValueConverterImpl.getInstance();
     }
 
@@ -236,7 +236,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      *                     !!! Warn: if have not finishing unReg, then this operation will be finished on next Client`s connect
      */
     public void unReg(Registration registration, Collection<Observation> observations) {
-        unregistrationExecutor.submit(() -> {
+        unRegistrationExecutor.submit(() -> {
             try {
                 this.setCancelObservations(registration);
                 this.sendLogsToThingsboard(LOG_LW2M_INFO + ": Client unRegistration", registration.getId());
@@ -1406,7 +1406,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                                     lwM2MClient.getFwUpdate().setCurrentVersion(response.getVersion());
                                     lwM2MClient.getFwUpdate().setCurrentTitle(response.getTitle());
                                     lwM2MClient.getFwUpdate().setCurrentId(new FirmwareId(new UUID(response.getFirmwareIdMSB(), response.getFirmwareIdLSB())).getId());
-                                    lwM2MClient.getFwUpdate().sendReadInfo(serviceImpl);
+                                    lwM2MClient.getFwUpdate().sendReadObserveInfo(serviceImpl);
                                 } else {
                                     log.trace("Firmware [{}] [{}]", lwM2MClient.getDeviceName(), response.getResponseStatus().toString());
                                 }
@@ -1435,7 +1435,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                                     lwM2MClient.getSwUpdate().setCurrentVersion(response.getVersion());
                                     lwM2MClient.getSwUpdate().setCurrentTitle(response.getTitle());
                                     lwM2MClient.getSwUpdate().setCurrentId(new FirmwareId(new UUID(response.getFirmwareIdMSB(), response.getFirmwareIdLSB())).getId());
-                                    lwM2MClient.getSwUpdate().sendReadInfo(serviceImpl);
+                                    lwM2MClient.getSwUpdate().sendReadObserveInfo(serviceImpl);
                                 } else {
                                     log.trace("Software [{}] [{}]", lwM2MClient.getDeviceName(), response.getResponseStatus().toString());
                                 }
@@ -1483,6 +1483,10 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         return resourceModel != null && (isWritableNotOptional ?
                 objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)) && resourceModel.operations.isWritable() :
                 objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)));
+    }
+
+    public LwM2MTransportServerConfig getConfig () {
+        return this.config;
     }
 
 }

@@ -47,7 +47,6 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.L
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.EXECUTE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.READ;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_REPLACE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_INSTALL_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_NAME_ID;
@@ -157,7 +156,7 @@ public class LwM2mFwSwUpdate {
      */
     private void writeFwSwWare() {
         this.stateUpdate = FirmwareUpdateStatus.DOWNLOADING.name();
-        this.observeStateUpdate();
+//        this.observeStateUpdate();
         this.sendLogs(WRITE_REPLACE.name(), LOG_LW2M_INFO, null);
         int chunkSize = 0;
         int chunk = 0;
@@ -337,7 +336,7 @@ public class LwM2mFwSwUpdate {
         }
     }
 
-    public void sendReadInfo(DefaultLwM2MTransportMsgHandler serviceImpl) {
+    public void sendReadObserveInfo(DefaultLwM2MTransportMsgHandler serviceImpl) {
         this.infoFwSwUpdate = true;
         this.serviceImpl = this.serviceImpl == null ? serviceImpl : this.serviceImpl;
         this.pendingInfoRequestsStart.add(convertPathFromObjectIdToIdVer(
@@ -349,7 +348,7 @@ public class LwM2mFwSwUpdate {
         this.pendingInfoRequestsStart.add(convertPathFromObjectIdToIdVer(
                 this.pathResultId, this.lwM2MClient.getRegistration()));
         this.pendingInfoRequestsStart.forEach(pathIdVer -> {
-            this.serviceImpl.lwM2mTransportRequest.sendAllRequest(this.lwM2MClient.getRegistration(), pathIdVer, READ, ContentFormat.TLV.getName(),
+            this.serviceImpl.lwM2mTransportRequest.sendAllRequest(this.lwM2MClient.getRegistration(), pathIdVer, OBSERVE, ContentFormat.TLV.getName(),
                     null, 0, null);
         });
 
