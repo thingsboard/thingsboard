@@ -341,6 +341,7 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
             // Adding only devices that are in new partitions
             List<Tenant> tenants = tenantService.findTenants(new PageLink(Integer.MAX_VALUE)).getData();
             for (Tenant tenant : tenants) {
+                log.debug("Finding devices for tenant [{}]", tenant.getName());
                 PageLink pageLink = new PageLink(initFetchPackSize);
                 while (pageLink != null) {
                     List<ListenableFuture<Void>> fetchFutures = new ArrayList<>();
@@ -349,17 +350,23 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
                     for (Device device : page.getData()) {
                         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenant.getId(), device.getId());
                         if (addedPartitions.contains(tpi)) {
+                            log.debug("[{}][{}] Device belong to current partition. tpi [{}]. Fetching state from DB", device.getName(), device.getId(), tpi);
                             ListenableFuture<Void> future = Futures.transform(fetchDeviceState(device), new Function<DeviceStateData, Void>() {
                                 @Nullable
                                 @Override
                                 public Void apply(@Nullable DeviceStateData state) {
+                                    log.debug("[{}][{}] Fetched state from DB [{}]", device.getName(), device.getId(), state);
                                     if (state != null) {
                                         addDeviceUsingState(tpi, state);
+                                    } else {
+                                        log.warn("{}][{}] Fetched null state from DB", device.getName(), device.getId());
                                     }
                                     return null;
                                 }
                             }, executorService);
                             fetchFutures.add(future);
+                        } else {
+                            log.debug("[{}][{}] Device doesn't belong to current partition. tpi [{}]", device.getName(), device.getId(), tpi);
                         }
                     }
                     try {
@@ -475,14 +482,14 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
                     TbMsgMetaData md = new TbMsgMetaData();
                     md.putValue("deviceName", device.getName());
                     md.putValue("deviceType", device.getType());
-                    DeviceStateData.builder()
+                    DeviceStateData deviceStateData = DeviceStateData.builder()
                             .customerId(device.getCustomerId())
                             .tenantId(device.getTenantId())
                             .deviceId(device.getId())
                             .deviceCreationTime(device.getCreatedTime())
                             .metaData(md)
                             .state(deviceState).build();
-                    log.trace("[{}] Fetched device state from the DB {}", device.getId(), deviceStateData);
+                    log.debug("[{}] Fetched device state from the DB {}", device.getId(), deviceStateData);
                     return deviceStateData;
                 } catch (Exception e) {
                     log.warn("[{}] Failed to fetch device state data", device.getId(), e);
