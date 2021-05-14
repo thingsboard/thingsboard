@@ -59,8 +59,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.queue.TbClusterService;
-import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
-import org.thingsboard.server.utils.EventDeduplicationExecutor;
+import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -71,10 +70,12 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -130,13 +131,13 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
     @Getter
     private int initFetchPackSize;
 
-    private ListeningScheduledExecutorService queueExecutor;
-    private ExecutorService executorService;
+    private ListeningScheduledExecutorService scheduledExecutor;
+    private ExecutorService dbCallbackExecutorService;
     private final ConcurrentMap<TopicPartitionInfo, Set<DeviceId>> partitionedDevices = new ConcurrentHashMap<>();
     private final ConcurrentMap<DeviceId, DeviceStateData> deviceStates = new ConcurrentHashMap<>();
     private final ConcurrentMap<DeviceId, Long> deviceLastSavedActivity = new ConcurrentHashMap<>();
-    private volatile EventDeduplicationExecutor<Set<TopicPartitionInfo>> deduplicationExecutor;
 
+    final Queue<Set<TopicPartitionInfo>> subscribeQueue = new ConcurrentLinkedQueue<>();
 
     public DefaultDeviceStateService(TenantService tenantService, DeviceService deviceService,
                                      AttributesService attributesService, TimeseriesService tsService,
@@ -156,21 +157,20 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
 
     @PostConstruct
     public void init() {
-        executorService = Executors.newFixedThreadPool(
+        dbCallbackExecutorService = Executors.newFixedThreadPool(
                 Runtime.getRuntime().availableProcessors(), ThingsBoardThreadFactory.forName("device-state"));
         // Should be always single threaded due to absence of locks.
-        queueExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("device-state-scheduled")));
-        queueExecutor.scheduleAtFixedRate(this::updateState, new Random().nextInt(defaultStateCheckIntervalInSec), defaultStateCheckIntervalInSec, TimeUnit.SECONDS);
-        deduplicationExecutor = new EventDeduplicationExecutor<>(DefaultDeviceStateService.class.getSimpleName(), queueExecutor, this::initStateFromDB);
+        scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("device-state-scheduled")));
+        scheduledExecutor.scheduleAtFixedRate(this::updateState, new Random().nextInt(defaultStateCheckIntervalInSec), defaultStateCheckIntervalInSec, TimeUnit.SECONDS);
     }
 
     @PreDestroy
     public void stop() {
-        if (executorService != null) {
-            executorService.shutdownNow();
+        if (dbCallbackExecutorService != null) {
+            dbCallbackExecutorService.shutdownNow();
         }
-        if (queueExecutor != null) {
-            queueExecutor.shutdownNow();
+        if (scheduledExecutor != null) {
+            scheduledExecutor.shutdownNow();
         }
     }
 
@@ -283,7 +283,7 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
                                 log.warn("Failed to register device to the state service", t);
                                 callback.onFailure(t);
                             }
-                        }, executorService);
+                        }, dbCallbackExecutorService);
                     } else if (proto.getUpdated()) {
                         DeviceStateData stateData = getOrFetchDeviceStateData(device.getId());
                         if (stateData != null) {
@@ -304,25 +304,55 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
         }
     }
 
+    /**
+     * DiscoveryService will call this event from the single thread (one-by-one).
+     * Events order is guaranteed by DiscoveryService.
+     * The only concurrency is expected from the [main] thread on Application started.
+     * Async implementation. Locks is not allowed by design.
+     * Any locks or delays in this module will affect DiscoveryService and entire system
+     */
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
         if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceType())) {
-            deduplicationExecutor.submit(partitionChangeEvent.getPartitions());
+            log.debug("onTbApplicationEvent ServiceType is TB_CORE, processing queue {}", partitionChangeEvent);
+            subscribeQueue.add(partitionChangeEvent.getPartitions());
+            scheduledExecutor.submit(this::pollInitStateFromDB);
         }
     }
 
-    private void initStateFromDB(Set<TopicPartitionInfo> pendingPartitions) {
+    void pollInitStateFromDB() {
+        final Set<TopicPartitionInfo> partitions = getLatestPartitionsFromQueue();
+        if (partitions == null) {
+            log.info("Device state service. Nothing to do. partitions is null");
+            return;
+        }
+        initStateFromDB(partitions);
+    }
+
+    // TODO: move to utils
+    Set<TopicPartitionInfo> getLatestPartitionsFromQueue() {
+        log.debug("getLatestPartitionsFromQueue, queue size {}", subscribeQueue.size());
+        Set<TopicPartitionInfo> partitions = null;
+        while (!subscribeQueue.isEmpty()) {
+            partitions = subscribeQueue.poll();
+            log.debug("polled from the queue partitions {}", partitions);
+        }
+        log.debug("getLatestPartitionsFromQueue, partitions {}", partitions);
+        return partitions;
+    }
+
+    private void initStateFromDB(Set<TopicPartitionInfo> partitions) {
         try {
             log.info("CURRENT PARTITIONS: {}", partitionedDevices.keySet());
-            log.info("NEW PARTITIONS: {}", pendingPartitions);
+            log.info("NEW PARTITIONS: {}", partitions);
 
-            Set<TopicPartitionInfo> addedPartitions = new HashSet<>(pendingPartitions);
+            Set<TopicPartitionInfo> addedPartitions = new HashSet<>(partitions);
             addedPartitions.removeAll(partitionedDevices.keySet());
 
             log.info("ADDED PARTITIONS: {}", addedPartitions);
 
             Set<TopicPartitionInfo> removedPartitions = new HashSet<>(partitionedDevices.keySet());
-            removedPartitions.removeAll(pendingPartitions);
+            removedPartitions.removeAll(partitions);
 
             log.info("REMOVED PARTITIONS: {}", removedPartitions);
 
@@ -363,7 +393,7 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
                                     }
                                     return null;
                                 }
-                            }, executorService);
+                            }, dbCallbackExecutorService);
                             fetchFutures.add(future);
                         } else {
                             log.debug("[{}][{}] Device doesn't belong to current partition. tpi [{}]", device.getName(), device.getId(), tpi);
@@ -454,15 +484,15 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
     private ListenableFuture<DeviceStateData> fetchDeviceState(Device device) {
         if (persistToTelemetry) {
             ListenableFuture<List<TsKvEntry>> tsData = tsService.findLatest(TenantId.SYS_TENANT_ID, device.getId(), PERSISTENT_ATTRIBUTES);
-            return Futures.transform(tsData, extractDeviceStateData(device), executorService);
+            return Futures.transform(tsData, extractDeviceStateData(device), dbCallbackExecutorService);
         } else {
             ListenableFuture<List<AttributeKvEntry>> attrData = attributesService.find(TenantId.SYS_TENANT_ID, device.getId(), DataConstants.SERVER_SCOPE, PERSISTENT_ATTRIBUTES);
-            return Futures.transform(attrData, extractDeviceStateData(device), executorService);
+            return Futures.transform(attrData, extractDeviceStateData(device), dbCallbackExecutorService);
         }
     }
 
     private <T extends KvEntry> Function<List<T>, DeviceStateData> extractDeviceStateData(Device device) {
-        return new Function<>() {
+        return new Function<List<T>, DeviceStateData>() {
             @Nullable
             @Override
             public DeviceStateData apply(@Nullable List<T> data) {
@@ -470,7 +500,21 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
                     long lastActivityTime = getEntryValue(data, LAST_ACTIVITY_TIME, 0L);
                     long inactivityAlarmTime = getEntryValue(data, INACTIVITY_ALARM_TIME, 0L);
                     long inactivityTimeout = getEntryValue(data, INACTIVITY_TIMEOUT, TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec));
-                    boolean active = System.currentTimeMillis() < lastActivityTime + inactivityTimeout;
+                    // voba - fix to use timeseries/attributes for inactivity timeout
+                    if (persistToTelemetry && inactivityTimeout == TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec)) {
+                        try {
+                            Optional<AttributeKvEntry> inactivityTimeoutOpt =
+                                    attributesService.find(TenantId.SYS_TENANT_ID, device.getId(), SERVER_SCOPE, INACTIVITY_TIMEOUT).get();
+                            if (inactivityTimeoutOpt.isPresent() && inactivityTimeoutOpt.get().getLongValue().isPresent()
+                                    && inactivityTimeoutOpt.get().getLongValue().get() > 0) {
+                                inactivityTimeout = inactivityTimeoutOpt.get().getLongValue().get();
+                            }
+                        } catch (Exception ignored) {
+                        }
+                    }
+                    // TODO: voba - do we need to calculate it or it's better to fetch from DB directly?
+                    // boolean active = System.currentTimeMillis() < lastActivityTime + inactivityTimeout;
+                    boolean active = getEntryValue(data, ACTIVITY_STATE, false);
                     DeviceState deviceState = DeviceState.builder()
                             .active(active)
                             .lastConnectTime(getEntryValue(data, LAST_CONNECT_TIME, 0L))
@@ -504,6 +548,17 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
             for (KvEntry entry : kvEntries) {
                 if (entry != null && !StringUtils.isEmpty(entry.getKey()) && entry.getKey().equals(attributeName)) {
                     return entry.getLongValue().orElse(defaultValue);
+                }
+            }
+        }
+        return defaultValue;
+    }
+
+    private boolean getEntryValue(List<? extends KvEntry> kvEntries, String attributeName, boolean defaultValue) {
+        if (kvEntries != null) {
+            for (KvEntry entry : kvEntries) {
+                if (entry != null && !StringUtils.isEmpty(entry.getKey()) && entry.getKey().equals(attributeName)) {
+                    return entry.getBooleanValue().orElse(defaultValue);
                 }
             }
         }
