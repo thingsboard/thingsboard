@@ -367,7 +367,7 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
 
             addedPartitions.forEach(tpi -> partitionedDevices.computeIfAbsent(tpi, key -> ConcurrentHashMap.newKeySet()));
 
-            initDeviceStatesForPartitions(addedPartitions);
+            initPartitions(addedPartitions);
 
             log.info("Managing following partitions:");
             partitionedDevices.forEach((tpi, devices) -> {
@@ -379,8 +379,8 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
     }
 
     //TODO 3.0: replace this dummy search with new functionality to search by partitions using SQL capabilities.
-    // Adding only devices that are in new partitions
-    boolean initDeviceStatesForPartitions(Set<TopicPartitionInfo> addedPartitions) {
+    //Adding only entities that are in new partitions
+    boolean initPartitions(Set<TopicPartitionInfo> addedPartitions) {
         if (addedPartitions.isEmpty()) {
             return false;
         }
