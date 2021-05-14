@@ -270,7 +270,7 @@ public class LwM2mFwSwUpdate {
      */
     public boolean conditionalSwUpdateExecute() {
         Long updateResult = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
-        return LwM2mTransportUtil.UpdateResultSw.SUCCESSFULLY_INSTALLED_VERIFIED.code == updateResult;
+        return LwM2mTransportUtil.UpdateResultSw.SUCCESSFULLY_DOWNLOADED_VERIFIED.code == updateResult;
     }
 
     /**

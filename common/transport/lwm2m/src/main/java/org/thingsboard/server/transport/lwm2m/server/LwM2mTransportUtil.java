@@ -358,7 +358,7 @@ public class LwM2mTransportUtil {
     }
 
     /**
-     * Update State R
+     * SW Update State R
      * 0: INITIAL Before downloading. (see 5.1.2.1)
      * 1: DOWNLOAD STARTED The downloading process has started and is on-going. (see 5.1.2.2)
      * 2: DOWNLOADED The package has been completely downloaded  (see 5.1.2.3)
@@ -430,7 +430,7 @@ public class LwM2mTransportUtil {
         INITIAL(0, "Initial value", false),
         DOWNLOADING(1, "Downloading", false),
         SUCCESSFULLY_INSTALLED(2, "Software successfully installed", false),
-        SUCCESSFULLY_INSTALLED_VERIFIED(3, "Successfully Downloaded and package integrity verified", false),
+        SUCCESSFULLY_DOWNLOADED_VERIFIED(3, "Successfully Downloaded and package integrity verified", false),
         NOT_ENOUGH_STORAGE(50, "Not enough storage for the new software package", true),
         OUT_OFF_MEMORY(51, "Out of memory during downloading process", true),
         CONNECTION_LOST(52, "Connection lost during downloading process", false),
@@ -490,7 +490,7 @@ public class LwM2mTransportUtil {
                 return DOWNLOADING;
             case SUCCESSFULLY_INSTALLED:
                 return UPDATED;
-            case SUCCESSFULLY_INSTALLED_VERIFIED:
+            case SUCCESSFULLY_DOWNLOADED_VERIFIED:
                 return VERIFIED;
             case NOT_ENOUGH_STORAGE:
             case OUT_OFF_MEMORY:
