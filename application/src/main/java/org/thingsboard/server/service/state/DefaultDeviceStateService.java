@@ -456,6 +456,7 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
             deviceIds.add(state.getDeviceId());
             deviceStates.put(state.getDeviceId(), state);
         } else {
+            log.warn("Device belongs to external partition {}" + tpi.getFullTopicName());
             new RuntimeException("Device belongs to external partition " + tpi.getFullTopicName() + "!");
         }
     }
