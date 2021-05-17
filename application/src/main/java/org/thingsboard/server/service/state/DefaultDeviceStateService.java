@@ -386,13 +386,14 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
         for (Tenant tenant : tenants) {
             log.debug("Finding devices for tenant [{}]", tenant.getName());
             final PageLink pageLink = new PageLink(initFetchPackSize);
-            scheduledExecutor.submit(() -> submitNextPage(addedPartitions, tenant, pageLink, scheduledExecutor));
+            scheduledExecutor.submit(() -> processPageAndSubmitNextPage(addedPartitions, tenant, pageLink, scheduledExecutor));
 
         }
         return true;
     }
 
-    private void submitNextPage(final Set<TopicPartitionInfo> addedPartitions, final Tenant tenant, final PageLink pageLink, final ExecutorService executor) {
+    private void processPageAndSubmitNextPage(final Set<TopicPartitionInfo> addedPartitions, final Tenant tenant, final PageLink pageLink, final ExecutorService executor) {
+        log.trace("[{}] Process page {} from {}", tenant, pageLink.getPage(), pageLink.getPageSize());
         List<ListenableFuture<Void>> fetchFutures = new ArrayList<>();
         PageData<Device> page = deviceService.findDevicesByTenantId(tenant.getId(), pageLink);
         for (Device device : page.getData()) {
@@ -433,7 +434,8 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
 
         final PageLink nextPageLink = page.hasNext() ? pageLink.nextPageLink() : null;
         if (nextPageLink != null) {
-            executor.submit(() -> submitNextPage(addedPartitions, tenant, nextPageLink, executor));
+            log.trace("[{}] Submit next page {} from {}", tenant, nextPageLink.getPage(), nextPageLink.getPageSize());
+            executor.submit(() -> processPageAndSubmitNextPage(addedPartitions, tenant, nextPageLink, executor));
         }
     }
 
@@ -449,8 +451,13 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
     }
 
     private void addDeviceUsingState(TopicPartitionInfo tpi, DeviceStateData state) {
-        partitionedDevices.computeIfAbsent(tpi, id -> ConcurrentHashMap.newKeySet()).add(state.getDeviceId());
-        deviceStates.put(state.getDeviceId(), state);
+        Set<DeviceId> deviceIds = partitionedDevices.get(tpi);
+        if (deviceIds != null) {
+            deviceIds.add(state.getDeviceId());
+            deviceStates.put(state.getDeviceId(), state);
+        } else {
+            new RuntimeException("Device belongs to external partition " + tpi.getFullTopicName() + "!");
+        }
     }
 
     void updateInactivityStateIfExpired() {
