@@ -499,7 +499,7 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
 
     @Nonnull
     private DeviceStateData getOrFetchDeviceStateData(DeviceId deviceId) {
-        DeviceStateData deviceStateData = getOrFetchDeviceStateData(deviceId);
+        DeviceStateData deviceStateData = deviceStates.get(deviceId);
         if (deviceStateData != null) {
             return deviceStateData;
         }
