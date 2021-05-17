@@ -38,6 +38,7 @@ import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.codec.CodecException;
+import org.eclipse.leshan.core.request.ContentFormat;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -67,7 +68,7 @@ public class LwM2mTransportServerHelper {
      * send to Thingsboard Attribute || Telemetry
      *
      * @param msg - JsonObject: [{name: value}]
-     * @return - dummy
+     * @return - dummyWriteReplace {\"targetIdVer\":\"/19_1.0/0/0\",\"value\":0082}
      */
     private <T> TransportServiceCallback<Void> getPubAckCallbackSendAttrTelemetry(final T msg) {
         return new TransportServiceCallback<>() {
@@ -134,12 +135,12 @@ public class LwM2mTransportServerHelper {
     }
 
     /**
-     *
      * @param value - info about Logs
      * @return- KeyValueProto for telemetry (Logs)
      */
     public List<TransportProtos.KeyValueProto> getKvStringtoThingsboard(String key, String value) {
         List<TransportProtos.KeyValueProto> result = new ArrayList<>();
+        value = value.replaceAll("<", "").replaceAll(">", "");
         result.add(TransportProtos.KeyValueProto.newBuilder()
                 .setKey(key)
                 .setType(TransportProtos.KeyValueType.STRING_V)
@@ -179,8 +180,7 @@ public class LwM2mTransportServerHelper {
     }
 
     /**
-     *
-     * @param currentType -
+     * @param currentType  -
      * @param resourcePath -
      * @return
      */
@@ -200,6 +200,28 @@ public class LwM2mTransportServerHelper {
             default:
         }
         throw new CodecException("Invalid ResourceModel_Type for resource %s, got %s", resourcePath, currentType);
+    }
+
+    public static ContentFormat convertResourceModelTypeToContentFormat(ResourceModel.Type type) {
+        switch (type) {
+            case BOOLEAN:
+            case STRING:
+            case TIME:
+            case INTEGER:
+            case FLOAT:
+                return ContentFormat.TLV;
+            case OPAQUE:
+                return ContentFormat.OPAQUE;
+            case OBJLNK:
+                return ContentFormat.LINK;
+            default:
+        }
+        throw new CodecException("Invalid ResourceModel_Type for %s ContentFormat.", type);
+    }
+
+    public static ContentFormat getContentFormatByResourceModelType(ResourceModel resourceModel, ContentFormat contentFormat) {
+        return contentFormat.equals(ContentFormat.TLV) ? convertResourceModelTypeToContentFormat(resourceModel.type) :
+                contentFormat;
     }
 
     public static Object getValueFromKvProto(TransportProtos.KeyValueProto kv) {

@@ -61,10 +61,6 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     private int responsePoolSize;
 
     @Getter
-    @Value("${transport.lwm2m.observation_pool_size:}")
-    private int observationPoolSize;
-
-    @Getter
     @Value("${transport.lwm2m.registered_pool_size:}")
     private int registeredPoolSize;
 

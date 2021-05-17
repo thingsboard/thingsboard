@@ -37,7 +37,7 @@ public interface LwM2mTransportMsgHandler {
 
     void onSleepingDev(Registration registration);
 
-    void setCancelObservations(Registration registration);
+    void setCancelObservationsAll(Registration registration);
 
     void onUpdateValueAfterReadResponse(Registration registration, String path, ReadResponse response, Lwm2mClientRpcRequest rpcRequest);
 

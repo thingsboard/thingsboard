@@ -238,7 +238,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     public void unReg(Registration registration, Collection<Observation> observations) {
         unRegistrationExecutor.submit(() -> {
             try {
-                this.setCancelObservations(registration);
+                this.setCancelObservationsAll(registration);
                 this.sendLogsToThingsboard(LOG_LW2M_INFO + ": Client unRegistration", registration.getId());
                 this.closeClientSession(registration);
             } catch (Throwable t) {
@@ -267,13 +267,18 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         //TODO: associate endpointId with device information.
     }
 
+    /**
+     * Cancel observation for All objects for this registration
+     */
     @Override
-    public void setCancelObservations(Registration registration) {
+    public void setCancelObservationsAll(Registration registration) {
         if (registration != null) {
-            Set<Observation> observations = context.getServer().getObservationService().getObservations(registration);
-            observations.forEach(observation -> lwM2mTransportRequest.sendAllRequest(registration,
-                    convertPathFromObjectIdToIdVer(observation.getPath().toString(), registration), OBSERVE_CANCEL,
-                    null, null, this.config.getTimeout(), null));
+            lwM2mTransportRequest.sendAllRequest(registration,null, OBSERVE_CANCEL,
+                    null, null, this.config.getTimeout(), null);
+//            Set<Observation> observations = context.getServer().getObservationService().getObservations(registration);
+//            observations.forEach(observation -> lwM2mTransportRequest.sendAllRequest(registration,
+//                    convertPathFromObjectIdToIdVer(observation.getPath().toString(), registration), OBSERVE_CANCEL,
+//                    null, null, this.config.getTimeout(), null));
         }
     }
 
@@ -309,6 +314,9 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                 this.updateResourcesValue(registration, lwM2mResource, path);
             }
             if (rpcRequest != null) {
+                String msg = String.format("%s: type operation %s path - %s value - %s", LOG_LW2M_INFO,
+                        READ, path, value);
+                this.sendLogsToThingsboard(msg, registration.getId());
                 rpcRequest.setValueMsg(String.format("%s", value));
                 this.sentRpcRequest(rpcRequest, response.getCode().getName(), (String) value, LOG_LW2M_VALUE);
             }
@@ -488,7 +496,8 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                 }
                 lwm2mClientRpcRequest.setSessionInfo(sessionInfo);
                 if (!(OBSERVE_READ_ALL == lwm2mClientRpcRequest.getTypeOper()
-                        || DISCOVER_All == lwm2mClientRpcRequest.getTypeOper())
+                        || DISCOVER_All == lwm2mClientRpcRequest.getTypeOper()
+                        || OBSERVE_CANCEL == lwm2mClientRpcRequest.getTypeOper())
                         && lwm2mClientRpcRequest.getTargetIdVer() == null) {
                     lwm2mClientRpcRequest.setErrorMsg(lwm2mClientRpcRequest.targetIdVerKey + " and " +
                             lwm2mClientRpcRequest.keyNameKey + " is null or bad format");
