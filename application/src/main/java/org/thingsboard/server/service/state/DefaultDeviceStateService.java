@@ -136,7 +136,7 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
     private ListeningScheduledExecutorService scheduledExecutor;
     private ExecutorService deviceStateExecutor;
     private final ConcurrentMap<TopicPartitionInfo, Set<DeviceId>> partitionedDevices = new ConcurrentHashMap<>();
-    private final ConcurrentMap<DeviceId, DeviceStateData> deviceStates = new ConcurrentHashMap<>();
+    final ConcurrentMap<DeviceId, DeviceStateData> deviceStates = new ConcurrentHashMap<>();
     private final ConcurrentMap<DeviceId, Long> deviceLastSavedActivity = new ConcurrentHashMap<>();
 
     final Queue<Set<TopicPartitionInfo>> subscribeQueue = new ConcurrentLinkedQueue<>();
@@ -498,26 +498,28 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
     }
 
     @Nonnull
-    private DeviceStateData getOrFetchDeviceStateData(DeviceId deviceId) {
+    DeviceStateData getOrFetchDeviceStateData(DeviceId deviceId) {
         DeviceStateData deviceStateData = deviceStates.get(deviceId);
         if (deviceStateData != null) {
             return deviceStateData;
         }
+        return fetchDeviceStateData(deviceId);
+    }
 
-        Device device = deviceService.findDeviceById(TenantId.SYS_TENANT_ID, deviceId);
-        if (device != null) {
-            try {
-                deviceStateData = fetchDeviceState(device).get();
-                deviceStates.putIfAbsent(deviceId, deviceStateData);
-            } catch (InterruptedException | ExecutionException e) {
-                log.warn("[{}] Failed to fetch device state!", deviceId, e);
-                throw new RuntimeException(e);
-            }
-        } else {
+    DeviceStateData fetchDeviceStateData(final DeviceId deviceId) {
+        final Device device = deviceService.findDeviceById(TenantId.SYS_TENANT_ID, deviceId);
+        if (device == null) {
             log.warn("[{}] Failed to fetch device by Id!", deviceId);
             throw new RuntimeException("Failed to fetch device by Id " + deviceId);
         }
-        return deviceStateData;
+        try {
+            DeviceStateData deviceStateData = fetchDeviceState(device).get();
+            deviceStates.putIfAbsent(deviceId, deviceStateData);
+            return deviceStateData;
+        } catch (InterruptedException | ExecutionException e) {
+            log.warn("[{}] Failed to fetch device state!", deviceId, e);
+            throw new RuntimeException(e);
+        }
     }
 
     private void sendDeviceEvent(TenantId tenantId, DeviceId deviceId, boolean added, boolean updated, boolean deleted) {
