@@ -18,7 +18,11 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mMultipleResource;
+import org.eclipse.leshan.core.node.LwM2mObject;
+import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
@@ -47,6 +51,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
+import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
+import static org.eclipse.leshan.core.model.ResourceModel.Type.STRING;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.TRANSPORT_DEFAULT_LWM2M_VERSION;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromIdVerToObjectId;
@@ -206,6 +212,53 @@ public class LwM2mClient implements Cloneable {
         String verRez = getVerFromPathIdVerOrId(pathIdVer);
         return verRez == null || verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
                 .getResourceModel(pathIds.getObjectId(), pathIds.getResourceId()) : null;
+    }
+
+    public ObjectModel getObjectModel(String pathIdVer, LwM2mModelProvider modelProvider) {
+        LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathIdVer));
+        String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
+        String verRez = getVerFromPathIdVerOrId(pathIdVer);
+        return verRez == null || verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
+                .getObjectModel(pathIds.getObjectId()) : null;
+    }
+
+    public String objectToString (LwM2mObject lwM2mObject, LwM2mValueConverterImpl converter, String pathIdVer) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("LwM2mObject [id=").append(lwM2mObject.getId()).append(", instances={");
+        lwM2mObject.getInstances().forEach((instId, inst) -> {
+            builder.append(instId).append("=").append(this.instanceToString(inst,  converter, pathIdVer)).append(", ");
+        });
+        int startInd = builder.lastIndexOf(", ");
+        if (startInd > 0) {
+            builder.delete(startInd, startInd + 2);
+        }
+        builder.append("}]");
+        return builder.toString();
+    }
+    public String instanceToString (LwM2mObjectInstance objectInstance, LwM2mValueConverterImpl converter, String pathIdVer) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("LwM2mObjectInstance [id=").append(objectInstance.getId()).append(", resources={");
+        objectInstance.getResources().forEach((resId, res) -> {
+            builder.append(resId).append("=").append(this.resourceToString (res,  converter, pathIdVer)).append(", ");
+        });
+        int startInd = builder.lastIndexOf(", ");
+        if (startInd > 0) {
+            builder.delete(startInd, startInd + 2);
+        }
+        builder.append("}]");
+        return builder.toString();
+    }
+
+    public String resourceToString (LwM2mResource lwM2mResource, LwM2mValueConverterImpl converter, String pathIdVer) {
+        if (!OPAQUE.equals(lwM2mResource.getType())) {
+            return lwM2mResource.isMultiInstances() ? ((LwM2mMultipleResource) lwM2mResource).toString() :
+                    ((LwM2mSingleResource) lwM2mResource).toString();
+        }
+        else {
+            return String.format("LwM2mSingleResource [id=%s, value=%s, type=%s]", lwM2mResource.getId(),
+                    converter.convertValue(lwM2mResource.getValue(),
+                            OPAQUE, STRING, new LwM2mPath(convertPathFromIdVerToObjectId(pathIdVer))), lwM2mResource.getType().name());
+        }
     }
 
     public Collection<LwM2mResource> getNewOneResourceForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,

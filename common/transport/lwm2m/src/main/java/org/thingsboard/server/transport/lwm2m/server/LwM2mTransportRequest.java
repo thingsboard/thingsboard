@@ -288,11 +288,15 @@ public class LwM2mTransportRequest {
             String msg = String.format("%s: type operation %s  %s", LOG_LW2M_ERROR,
                     typeOper.name(), e.getMessage());
             serviceImpl.sendLogsToThingsboard(msg, registration.getId());
-            try {
-                throw new Exception(e);
-            } catch (Exception exception) {
-                exception.printStackTrace();
+            if (rpcRequest != null) {
+                String errorMsg = String.format("Path %s type operation %s  %s", targetIdVer, typeOper.name(), e.getMessage());
+                serviceImpl.sentRpcRequest(rpcRequest, NOT_FOUND.getName(), errorMsg, LOG_LW2M_ERROR);
             }
+//            try {
+//                throw new Exception(e);
+//            } catch (Exception exception) {
+//                exception.printStackTrace();
+//            }
         }
     }
 
@@ -321,6 +325,7 @@ public class LwM2mTransportRequest {
                 if (!lwM2MClient.isInit()) {
                     lwM2MClient.initReadValue(this.serviceImpl, convertPathFromObjectIdToIdVer(request.getPath().toString(), registration));
                 }
+                /** Not Found */
                 if (rpcRequest != null) {
                     serviceImpl.sentRpcRequest(rpcRequest, response.getCode().getName(), response.getErrorMessage(), LOG_LW2M_ERROR);
                 }
@@ -443,8 +448,7 @@ public class LwM2mTransportRequest {
         } else if (response instanceof DeleteResponse) {
             log.warn("[{}] Path [{}] DeleteResponse 5_Send", pathIdVer, response);
         } else if (response instanceof DiscoverResponse) {
-            String discoverValue = String.format("%s",
-                    Arrays.stream(((DiscoverResponse) response).getObjectLinks()).collect(Collectors.toSet()));
+            String discoverValue = Link.serialize(((DiscoverResponse)response).getObjectLinks());
             msgLog = String.format("%s: type operation: %s path: %s value: %s",
                     LOG_LW2M_INFO, DISCOVER.name(), request.getPath().toString(), discoverValue);
             serviceImpl.sendLogsToThingsboard(msgLog, registration.getId());
