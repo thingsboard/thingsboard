@@ -37,6 +37,7 @@ import java.util.LinkedHashMap;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class LinkedHashMapRemoveEldestTest {
@@ -44,7 +45,7 @@ public class LinkedHashMapRemoveEldestTest {
     public static final long MAX_ENTRIES = 10L;
     long removeCount = 0;
 
-    void removeConsumer(Long id, String name) {
+    void removalConsumer(Long id, String name) {
         removeCount++;
         assertThat(id, is(Matchers.lessThan(MAX_ENTRIES)));
         assertThat(name, is(id.toString()));
@@ -54,9 +55,10 @@ public class LinkedHashMapRemoveEldestTest {
     public void givenMap_whenOverSized_thenVerifyRemovedEldest() {
         //given
         LinkedHashMapRemoveEldest<Long, String> map =
-                new LinkedHashMapRemoveEldest<>(MAX_ENTRIES, this::removeConsumer);
+                new LinkedHashMapRemoveEldest<>(MAX_ENTRIES, this::removalConsumer);
 
         assertThat(map.getMaxEntries(), is(MAX_ENTRIES));
+        assertThat(map.getRemovalConsumer(), notNullValue());
         assertThat(map, instanceOf(LinkedHashMap.class));
         assertThat(map, instanceOf(LinkedHashMapRemoveEldest.class));
         assertThat(map.size(), is(0));
