@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.device;
 
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
@@ -28,6 +27,9 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredentials;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -133,7 +135,6 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         deviceCredentials.setCredentialsValue(JacksonUtil.toString(mqttCredentials));
     }
 
-
     private void formatCertData(DeviceCredentials deviceCredentials) {
         String cert = EncryptionUtil.trimNewLines(deviceCredentials.getCredentialsValue());
         String sha3Hash = EncryptionUtil.getSha3Hash(cert);
@@ -142,18 +143,48 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
     }
 
     private void formatSimpleLwm2mCredentials(DeviceCredentials deviceCredentials) {
-        ObjectNode json = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(), ObjectNode.class);
-        JsonNode client = json.get("client");
-        if (client != null && client.get("securityConfigClientMode").asText().equals("X509") && client.has("cert")) {
-            JsonNode certJson = client.get("cert");
-            if (!certJson.isNull()) {
-                String cert = EncryptionUtil.trimNewLines(certJson.asText());
-                String sha3Hash = EncryptionUtil.getSha3Hash(cert);
-                deviceCredentials.setCredentialsId(sha3Hash);
-                ((ObjectNode) client).put("cert", cert);
-                deviceCredentials.setCredentialsValue(JacksonUtil.toString(json));
+        LwM2MClientCredentials clientCredentials;
+        ObjectNode json;
+        try {
+            json = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(), ObjectNode.class);
+            if (json == null) {
+                throw new IllegalArgumentException();
             }
+            clientCredentials = JacksonUtil.convertValue(json.get("client"), LwM2MClientCredentials.class);
+            if (clientCredentials == null) {
+                throw new IllegalArgumentException();
+            }
+        } catch (IllegalArgumentException e) {
+            throw new DataValidationException("Invalid credentials body for LwM2M credentials!");
         }
+
+        String credentialsId;
+
+        switch (clientCredentials.getSecurityConfigClientMode()) {
+            case NO_SEC:
+            case RPK:
+                credentialsId = clientCredentials.getEndpoint();
+                break;
+            case PSK:
+                credentialsId = ((PSKClientCredentials) clientCredentials).getIdentity();
+                break;
+            case X509:
+                X509ClientCredentials x509Config = (X509ClientCredentials) clientCredentials;
+                if (x509Config.getCert() != null) {
+                    String cert = EncryptionUtil.trimNewLines(x509Config.getCert());
+                    String sha3Hash = EncryptionUtil.getSha3Hash(cert);
+                    x509Config.setCert(cert);
+                    ((ObjectNode) json.get("client")).put("cert", cert);
+                    deviceCredentials.setCredentialsValue(JacksonUtil.toString(json));
+                    credentialsId = sha3Hash;
+                } else {
+                    credentialsId = x509Config.getEndpoint();
+                }
+                break;
+            default:
+                throw new DataValidationException("Invalid credentials body for LwM2M credentials!");
+        }
+        deviceCredentials.setCredentialsId(credentialsId);
     }
 
     @Override

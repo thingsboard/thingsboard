@@ -13,20 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.secure.credentials;
+package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-import lombok.Data;
-import org.eclipse.leshan.core.SecurityMode;
-
-import static org.eclipse.leshan.core.SecurityMode.PSK;
-
-@Data
-public class PSKClientCredentialsConfig extends HasKey implements LwM2MClientCredentialsConfig {
-    private String identity;
-    private String endpoint;
-
-    @Override
-    public SecurityMode getSecurityConfigClientMode() {
-        return PSK;
-    }
+public enum LwM2MSecurityMode {
+    PSK, RPK, X509, NO_SEC;
 }

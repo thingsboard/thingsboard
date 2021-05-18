@@ -151,7 +151,7 @@ public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
                     parameterSpec);
             KeySpec privateKeySpec = new ECPrivateKeySpec(new BigInteger(privateS), parameterSpec);
 
-//            // Get keys
+            // Get keys
             serverPublicKey = KeyFactory.getInstance("EC").generatePublic(publicKeySpec);
             serverPrivateKey = KeyFactory.getInstance("EC").generatePrivate(privateKeySpec);
 

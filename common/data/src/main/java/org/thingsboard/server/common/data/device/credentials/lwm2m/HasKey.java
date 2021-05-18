@@ -13,14 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.secure.credentials;
+package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredentials;
-import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapConfig;
+import lombok.SneakyThrows;
+import org.apache.commons.codec.binary.Hex;
 
-@Data
-public class LwM2MCredentials {
-    private LwM2MClientCredentials client;
-    private LwM2MBootstrapConfig bootstrap;
+public abstract class HasKey extends AbstractLwM2MClientCredentials {
+    private byte[] key;
+
+    @SneakyThrows
+    public void setKey(String key) {
+        if (key != null) {
+            this.key = Hex.decodeHex(key.toLowerCase().toCharArray());
+        }
+    }
+
+    public byte[] getKey() {
+        return key;
+    }
 }

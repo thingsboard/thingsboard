@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.secure.credentials;
+package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-import org.eclipse.leshan.core.SecurityMode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import static org.eclipse.leshan.core.SecurityMode.NO_SEC;
-
-public class NoSecClientCredentialsConfig implements LwM2MClientCredentialsConfig {
-
-    @Override
-    public SecurityMode getSecurityConfigClientMode() {
-        return NO_SEC;
-    }
+@Getter
+@Setter
+@NoArgsConstructor
+public abstract class AbstractLwM2MClientCredentials implements LwM2MClientCredentials {
+    private String endpoint;
 }

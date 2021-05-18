@@ -22,6 +22,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredentials;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -37,7 +38,6 @@ import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
 import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
-import org.thingsboard.server.transport.lwm2m.secure.credentials.X509ClientCredentialsConfig;
 
 import java.util.Collections;
 import java.util.List;
@@ -101,7 +101,7 @@ public class X509LwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
     private final String serverUri = "coaps://localhost:" + port;
 
     @NotNull
-    private Device createDevice(String credentialsId, X509ClientCredentialsConfig credentialsConfig) throws Exception {
+    private Device createDevice(X509ClientCredentials clientCredentials) throws Exception {
         Device device = new Device();
         device.setName("Device A");
         device.setDeviceProfileId(deviceProfile.getId());
@@ -114,13 +114,11 @@ public class X509LwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
         Assert.assertEquals(device.getId(), deviceCredentials.getDeviceId());
         deviceCredentials.setCredentialsType(DeviceCredentialsType.LWM2M_CREDENTIALS);
 
-        deviceCredentials.setCredentialsId(credentialsId);
+        LwM2MCredentials credentials = new LwM2MCredentials();
 
-        LwM2MCredentials X509Credentials = new LwM2MCredentials();
+        credentials.setClient(clientCredentials);
 
-        X509Credentials.setClient(credentialsConfig);
-
-        deviceCredentials.setCredentialsValue(JacksonUtil.toString(X509Credentials));
+        deviceCredentials.setCredentialsValue(JacksonUtil.toString(credentials));
         doPost("/api/device/credentials", deviceCredentials).andExpect(status().isOk());
         return device;
     }
@@ -128,8 +126,9 @@ public class X509LwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
     @Test
     public void testConnectAndObserveTelemetry() throws Exception {
         createDeviceProfile(TRANSPORT_CONFIGURATION);
-
-        Device device = createDevice(endpoint, new X509ClientCredentialsConfig(null, null));
+        X509ClientCredentials credentials = new X509ClientCredentials();
+        credentials.setEndpoint(endpoint);
+        Device device = createDevice(credentials);
 
         SingleEntityFilter sef = new SingleEntityFilter();
         sef.setSingleEntity(device.getId());
@@ -166,7 +165,10 @@ public class X509LwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
     @Test
     public void testConnectWithCertAndObserveTelemetry() throws Exception {
         createDeviceProfile(TRANSPORT_CONFIGURATION);
-        Device device = createDevice(null, new X509ClientCredentialsConfig(SslUtil.getCertificateString(clientX509CertNotTrusted), endpoint));
+        X509ClientCredentials credentials = new X509ClientCredentials();
+        credentials.setEndpoint(endpoint);
+        credentials.setCert(SslUtil.getCertificateString(clientX509CertNotTrusted));
+        Device device = createDevice(credentials);
 
         SingleEntityFilter sef = new SingleEntityFilter();
         sef.setSingleEntity(device.getId());

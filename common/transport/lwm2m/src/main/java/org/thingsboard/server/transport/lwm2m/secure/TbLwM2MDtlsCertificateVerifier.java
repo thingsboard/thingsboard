@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.transport.lwm2m.secure;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.elements.util.CertPathUtil;
@@ -30,12 +29,12 @@ import org.eclipse.californium.scandium.dtls.HandshakeResultHandler;
 import org.eclipse.californium.scandium.dtls.x509.NewAdvancedCertificateVerifier;
 import org.eclipse.californium.scandium.dtls.x509.StaticCertificateVerifier;
 import org.eclipse.californium.scandium.util.ServerNames;
-import org.eclipse.leshan.core.SecurityMode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
@@ -44,7 +43,7 @@ import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
-import org.thingsboard.server.transport.lwm2m.secure.credentials.X509ClientCredentialsConfig;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredentials;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
 
 import javax.annotation.PostConstruct;
@@ -140,10 +139,10 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                             ValidateDeviceCredentialsResponse msg = deviceCredentialsResponse[0];
                             if (msg != null && org.thingsboard.server.common.data.StringUtils.isNotEmpty(msg.getCredentials())) {
                                 LwM2MCredentials credentials = JacksonUtil.fromString(msg.getCredentials(), LwM2MCredentials.class);
-                                if(!credentials.getClient().getSecurityConfigClientMode().equals(SecurityMode.X509)){
+                                if(!credentials.getClient().getSecurityConfigClientMode().equals(LwM2MSecurityMode.X509)){
                                     continue;
                                 }
-                                X509ClientCredentialsConfig config = (X509ClientCredentialsConfig) credentials.getClient();
+                                X509ClientCredentials config = (X509ClientCredentials) credentials.getClient();
                                 String certBody = config.getCert();
                                 String endpoint = config.getEndpoint();
                                 if (strCert.equals(certBody)) {
