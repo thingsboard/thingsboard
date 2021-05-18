@@ -36,48 +36,33 @@ import lombok.ToString;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 /**
- * HashMap that removed eldest (by put order) entries
+ * LinkedHashMap that removed eldest entries (by insert order)
  * It guaranteed that size is not greater then maxEntries parameter. And remove time is constant O(1).
- * Use withMaxEntries to setup maxEntries.
- * Because overloaded constructor will look similar to LinkedHashMap(initCapacity)
  * Example:
- *   new LinkedHashMapRemoveEldest<Long, String>().withMaxEntries(100L)
+ *   LinkedHashMapRemoveEldest<Long, String> map =
+ *                 new LinkedHashMapRemoveEldest<>(MAX_ENTRIES, this::removeConsumer);
  * */
 @Getter
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-public class LinkedHashMapRemoveEldest<K,V> extends LinkedHashMap<K,V> {
-    long maxEntries = Long.MAX_VALUE;
+public class LinkedHashMapRemoveEldest<K, V> extends LinkedHashMap<K, V> {
+    final long maxEntries;
+    final BiConsumer<K, V> removeConsumer;
 
-    public LinkedHashMapRemoveEldest() {
-        super();
-    }
-
-    public LinkedHashMapRemoveEldest(int initialCapacity) {
-        super(initialCapacity);
-    }
-
-    public LinkedHashMapRemoveEldest(int initialCapacity, float loadFactor) {
-        super(initialCapacity, loadFactor);
-    }
-
-    public LinkedHashMapRemoveEldest(Map<? extends K, ? extends V> m) {
-        super(m);
-    }
-
-    public LinkedHashMapRemoveEldest(int initialCapacity, float loadFactor, boolean accessOrder) {
-        super(initialCapacity, loadFactor, accessOrder);
-    }
-
-    public LinkedHashMapRemoveEldest<K,V> withMaxEntries(long maxEntries) {
+    public LinkedHashMapRemoveEldest(long maxEntries, BiConsumer<K, V> removeConsumer) {
         this.maxEntries = maxEntries;
-        return this;
+        this.removeConsumer = removeConsumer;
     }
 
     @Override
-    protected boolean removeEldestEntry(Map.Entry eldest) {
-        return size() > maxEntries;
+    protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+        if (size() <= maxEntries) {
+            return false;
+        }
+        removeConsumer.accept(eldest.getKey(), eldest.getValue());
+        return true;
     }
 }
