@@ -13,20 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.secure.credentials;
+package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-import org.eclipse.leshan.core.util.Hex;
+public class NoSecClientCredentials extends AbstractLwM2MClientCredentials {
 
-public class HasKey {
-    private byte[] key;
-
-    public void setKey(String key) {
-        if (key != null) {
-            this.key = Hex.decodeHex(key.toLowerCase().toCharArray());
-        }
-    }
-
-    public byte[] getKey() {
-        return key;
+    @Override
+    public LwM2MSecurityMode getSecurityConfigClientMode() {
+        return LwM2MSecurityMode.NO_SEC;
     }
 }

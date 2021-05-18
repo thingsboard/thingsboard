@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.secure.credentials;
+package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import org.eclipse.leshan.core.SecurityMode;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         property = "securityConfigClientMode")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = NoSecClientCredentialsConfig.class, name = "NO_SEC"),
-        @JsonSubTypes.Type(value = PSKClientCredentialsConfig.class, name = "PSK"),
-        @JsonSubTypes.Type(value = RPKClientCredentialsConfig.class, name = "RPK"),
-        @JsonSubTypes.Type(value = X509ClientCredentialsConfig.class, name = "X509")})
-public interface LwM2MClientCredentialsConfig {
+        @JsonSubTypes.Type(value = NoSecClientCredentials.class, name = "NO_SEC"),
+        @JsonSubTypes.Type(value = PSKClientCredentials.class, name = "PSK"),
+        @JsonSubTypes.Type(value = RPKClientCredentials.class, name = "RPK"),
+        @JsonSubTypes.Type(value = X509ClientCredentials.class, name = "X509")})
+public interface LwM2MClientCredentials {
 
     @JsonIgnore
-    SecurityMode getSecurityConfigClientMode();
+    LwM2MSecurityMode getSecurityConfigClientMode();
+
+    String getEndpoint();
 }

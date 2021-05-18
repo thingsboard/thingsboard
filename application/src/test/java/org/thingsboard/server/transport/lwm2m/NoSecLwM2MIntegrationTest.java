@@ -36,7 +36,7 @@ import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
 import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
-import org.thingsboard.server.transport.lwm2m.secure.credentials.NoSecClientCredentialsConfig;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredentials;
 
 import java.util.Collections;
 import java.util.List;
@@ -112,10 +112,10 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
         Assert.assertEquals(device.getId(), deviceCredentials.getDeviceId());
         deviceCredentials.setCredentialsType(DeviceCredentialsType.LWM2M_CREDENTIALS);
 
-        deviceCredentials.setCredentialsId(deviceAEndpoint);
-
         LwM2MCredentials noSecCredentials = new LwM2MCredentials();
-        noSecCredentials.setClient(new NoSecClientCredentialsConfig());
+        NoSecClientCredentials clientCredentials = new NoSecClientCredentials();
+        clientCredentials.setEndpoint(deviceAEndpoint);
+        noSecCredentials.setClient(clientCredentials);
         deviceCredentials.setCredentialsValue(JacksonUtil.toString(noSecCredentials));
         doPost("/api/device/credentials", deviceCredentials).andExpect(status().isOk());
         return device;
