@@ -17,6 +17,11 @@
 $previewSize: 300px !default;
 
 :host {
+
+  mat-form-field.rect-field {
+    max-width: 60px;
+  }
+
   .tb-image-preview {
     width: auto;
     max-width: $previewSize - 2;

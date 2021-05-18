@@ -468,10 +468,13 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     );
   }
 
-  private detectChanges() {
+  private detectChanges(detectDashboardChanges = false) {
     if (!this.destroyed) {
       try {
         this.cd.detectChanges();
+        if (detectDashboardChanges) {
+          this.widgetContext.dashboard.detectChanges();
+        }
       } catch (e) {
         // console.log(e);
       }
@@ -491,6 +494,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     }
     if (!this.widgetContext.inited && this.isReady()) {
       this.widgetContext.inited = true;
+      this.widgetContext.dashboard.detectChanges();
       if (this.cafs.init) {
         this.cafs.init();
         this.cafs.init = null;
@@ -878,7 +882,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       timeWindowUpdated: (subscription, timeWindowConfig) => {
         this.ngZone.run(() => {
           this.widget.config.timewindow = timeWindowConfig;
-          this.detectChanges();
+          this.detectChanges(true);
         });
       }
     };
