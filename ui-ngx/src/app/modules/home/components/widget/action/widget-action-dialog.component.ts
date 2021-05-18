@@ -28,6 +28,10 @@ import {
   ValidatorFn,
   Validators
 } from '@angular/forms';
+import {
+  WidgetConfigComponentData,
+  WidgetInfo
+} from '@home/models/widget-component.models';
 import { Observable, of } from 'rxjs';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
@@ -46,12 +50,14 @@ import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { CustomActionEditorCompleter } from '@home/components/widget/action/custom-action.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import { MobileActionEditorComponent } from '@home/components/widget/action/mobile-action-editor.component';
+import { widgetType } from '@shared/models/widget.models';
 
 export interface WidgetActionDialogData {
   isAdd: boolean;
   callbacks: WidgetActionCallbacks;
   actionsData: WidgetActionsData;
   action?: WidgetActionDescriptorInfo;
+  modelValue: WidgetConfigComponentData;
 }
 
 @Component({
@@ -67,8 +73,10 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
 
   @ViewChild('mobileActionEditor', {static: false}) mobileActionEditor: MobileActionEditorComponent;
 
+
   widgetActionFormGroup: FormGroup;
   actionTypeFormGroup: FormGroup;
+  widgetInfo: WidgetInfo;
 
   isAdd: boolean;
   action: WidgetActionDescriptorInfo;
@@ -84,6 +92,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
   customActionEditorCompleter = CustomActionEditorCompleter;
 
   submitted = false;
+  widgetType = widgetType;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -139,9 +148,10 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
             this.fb.control(action ? action.targetDashboardStateId : null,
               type === WidgetActionType.openDashboardState ? [Validators.required] : [])
           );
+
           this.actionTypeFormGroup.addControl(
             'setEntityId',
-            this.fb.control(action ? action.setEntityId : true, [])
+            this.fb.control(action ? action.setEntityId : this.data.modelValue.widgetType === widgetType.static ? false : true , [])
           );
           this.actionTypeFormGroup.addControl(
             'stateEntityParamName',
