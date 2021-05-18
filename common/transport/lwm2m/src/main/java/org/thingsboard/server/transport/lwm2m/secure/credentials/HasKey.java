@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2021 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,23 @@
  */
 package org.thingsboard.server.transport.lwm2m.secure.credentials;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import lombok.Getter;
+import lombok.Setter;
 import org.eclipse.leshan.core.util.Hex;
+import org.thingsboard.server.transport.lwm2m.utils.JacksonHexByteArrayDeserializer;
+import org.thingsboard.server.transport.lwm2m.utils.JacksonHexByteArraySerializer;
 
+@Getter
+@Setter
 public class HasKey {
+
+    @JsonDeserialize(using = JacksonHexByteArrayDeserializer.class)
+    @JsonSerialize(using = JacksonHexByteArraySerializer.class)
     private byte[] key;
 
-    public void setKey(String key) {
+    public void setKeyAsString(String key) {
         if (key != null) {
             this.key = Hex.decodeHex(key.toLowerCase().toCharArray());
         }

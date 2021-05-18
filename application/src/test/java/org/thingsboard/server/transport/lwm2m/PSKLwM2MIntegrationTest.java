@@ -1,0 +1,70 @@
+package org.thingsboard.server.transport.lwm2m;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.util.Hex;
+import org.junit.Test;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.transport.lwm2m.secure.credentials.PSKClientCredentialsConfig;
+
+import javax.annotation.PostConstruct;
+import java.nio.charset.StandardCharsets;
+
+import static org.eclipse.leshan.client.object.Security.psk;
+
+@Slf4j
+public class PSKLwM2MIntegrationTest extends SecurityAbstractLw2mIntegrationTest {
+
+    private final int port = 5686;
+    public static final String PSK_TRANSPORT_CONFIGURATION_JSON_FILE_PATH = "lwm2m/transportConfiguration/PSKTransportConfiguration.json";
+    public static final String GOOD_PSK_ID = "Good_Client_identity";
+    public static final byte[] GOOD_PSK_KEY = Hex.decodeHex("73656372657450534b".toCharArray());
+
+    public String transportConfigurationJsonAsString;
+    public ObjectNode transportConfigurationJsonNode;
+
+    @SneakyThrows
+    @PostConstruct
+    public void init() {
+        transportConfigurationJsonNode = initTransportConfigurationObjectNode(PSK_TRANSPORT_CONFIGURATION_JSON_FILE_PATH);
+        ObjectNode lwm2mServerConfiguration = getLvm2mServerConfigurationFromTransportConfiguration(transportConfigurationJsonNode);
+        String serverPublicKeyPSKAsString = Hex.encodeHexString(GOOD_PSK_KEY);
+        lwm2mServerConfiguration.put(SERVER_PUBLIC_KEY, serverPublicKeyPSKAsString);
+        transportConfigurationJsonAsString = JacksonUtil.toString(transportConfigurationJsonNode);
+
+        log.info(
+                String.format(
+                        "Setup LWM2M PSK test with transport configuration : \n%s",
+                        mapper.writerWithDefaultPrettyPrinter().writeValueAsString(transportConfigurationJsonNode)
+                )
+        );
+    }
+
+    @Test
+    public void testConnectAndObserveTelemetry() throws Exception {
+
+        PSKClientCredentialsConfig lwM2MClientCredentialsConfig = initPSKClientCredentialsConfig();
+        testConnectAndObserveTelemetry(
+                transportConfigurationJsonAsString,
+                GOOD_PSK_ID,
+                lwM2MClientCredentialsConfig,
+                psk(
+                        getServerUri(), 123,
+                        GOOD_PSK_ID.getBytes(StandardCharsets.UTF_8),
+                        GOOD_PSK_KEY
+                )
+        );
+    }
+
+    private PSKClientCredentialsConfig initPSKClientCredentialsConfig() {
+        PSKClientCredentialsConfig pskClientCredentialsConfig = new PSKClientCredentialsConfig(GOOD_PSK_ID, getEndpoint());
+        pskClientCredentialsConfig.setKey(GOOD_PSK_KEY);
+        return pskClientCredentialsConfig;
+    }
+
+    @Override
+    public int getPort() {
+        return port;
+    }
+}

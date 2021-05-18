@@ -15,12 +15,18 @@
  */
 package org.thingsboard.server.transport.lwm2m.secure.credentials;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.eclipse.leshan.core.SecurityMode;
 
 import static org.eclipse.leshan.core.SecurityMode.PSK;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class PSKClientCredentialsConfig extends HasKey implements LwM2MClientCredentialsConfig {
     private String identity;
     private String endpoint;

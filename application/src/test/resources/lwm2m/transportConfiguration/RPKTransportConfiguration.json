@@ -1,0 +1,48 @@
+{
+  "type": "LWM2M",
+  "observeAttr": {
+    "keyName": {
+      "/3_1.0/0/9" : "batteryLevel"
+    },
+    "observe": [
+    ],
+    "attribute": [
+    ],
+    "telemetry": [
+      "/3_1.0/0/9"
+    ],
+    "attributeLwm2m": {
+    }
+  },
+  "bootstrap": {
+    "servers": {
+      "binding": "UQ",
+      "shortId": 123,
+      "lifetime": 300,
+      "notifIfDisabled": true,
+      "defaultMinPeriod": 1
+    },
+    "lwm2mServer": {
+      "host": "localhost",
+      "port": 5686,
+      "serverId": 123,
+      "securityMode": "RPK",
+      "serverPublicKey": "",
+      "clientHoldOffTime": 1,
+      "bootstrapServerAccountTimeout": 0
+    },
+    "bootstrapServer": {
+      "host": "localhost",
+      "port": 5687,
+      "serverId": 111,
+      "securityMode": "NO_SEC",
+      "serverPublicKey": "",
+      "bootstrapServerIs": true,
+      "clientHoldOffTime": 1,
+      "bootstrapServerAccountTimeout": 0
+    }
+  },
+  "clientLwM2mSettings": {
+    "clientOnlyObserveAfterConnect": 1
+  }
+}

@@ -71,7 +71,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
 
                     @Override
                     public void onError(Throwable e) {
-                        log.trace("[{}] [{}] Failed to process credentials ", endpoint, e);
+                        log.error("[{}] [{}] Failed to process credentials ", endpoint, e);
                         resultSecurityStore[0] = createSecurityInfo(endpoint, null, null);
                         latch.countDown();
                     }

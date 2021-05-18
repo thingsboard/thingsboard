@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2021 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,18 +16,16 @@
 package org.thingsboard.server.transport.lwm2m;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.leshan.core.util.Hex;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.DeviceProfileProvisionType;
-import org.thingsboard.server.common.data.DeviceProfileType;
-import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.ResourceType;
-import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
@@ -36,62 +34,72 @@ import org.thingsboard.server.controller.AbstractWebsocketTest;
 import org.thingsboard.server.controller.TbTestWebSocketClient;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
-import java.security.AlgorithmParameters;
-import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
-import java.security.KeyStore;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import java.security.spec.ECGenParameterSpec;
-import java.security.spec.ECParameterSpec;
-import java.security.spec.ECPoint;
-import java.security.spec.ECPrivateKeySpec;
-import java.security.spec.ECPublicKeySpec;
-import java.security.spec.KeySpec;
+import java.security.spec.*;
 import java.util.Base64;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 @DaoSqlTest
+@Setter
+@Getter
 public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
 
     protected DeviceProfile deviceProfile;
     protected ScheduledExecutorService executor;
     protected TbTestWebSocketClient wsClient;
 
-    protected final PublicKey clientPublicKey; // client public key used for RPK
-    protected final PrivateKey clientPrivateKey; // client private key used for RPK
-    protected final PublicKey serverPublicKey; // server public key used for RPK
-    protected final PrivateKey serverPrivateKey; // server private key used for RPK
+    public static final String GOOD_PSK_ID = "Good_Client_identity";
+    public static final byte[] GOOD_PSK_KEY = Hex.decodeHex("73656372657450534b".toCharArray());
+
+    protected PublicKey clientPublicKeyRPK; // client public key used for RPK
+    protected PrivateKey clientPrivateKeyRPK; // client private key used for RPK
+    protected PublicKey serverPublicKeyRPK; // server public key used for RPK
+    protected PrivateKey serverPrivateKeyRPK; // server private key used for RPK
+
+    @Value("${transport.lwm2m.server.security.public_x}")
+    private String securityServerPublicX;
+
+    @Value("${transport.lwm2m.server.security.public_y}")
+    private String securityServerPublicY;
+
+    @Value("${transport.lwm2m.server.security.private_encoded}")
+    private String securityPrivateEncoded;
 
     // client private key used for X509
-    protected final PrivateKey clientPrivateKeyFromCert;
+    protected PrivateKey clientPrivateKeyFromCert;
     // server private key used for X509
-    protected final PrivateKey serverPrivateKeyFromCert;
+    protected PrivateKey serverPrivateKeyFromCert;
     // client certificate signed by rootCA with a good CN (CN start by leshan_integration_test)
-    protected final X509Certificate clientX509Cert;
+    protected X509Certificate clientX509Cert;
     // client certificate signed by rootCA but with bad CN (CN does not start by leshan_integration_test)
-    protected final X509Certificate clientX509CertWithBadCN;
+    protected X509Certificate clientX509CertWithBadCN;
     // client certificate self-signed with a good CN (CN start by leshan_integration_test)
-    protected final X509Certificate clientX509CertSelfSigned;
+    protected X509Certificate clientX509CertSelfSigned;
     // client certificate signed by another CA (not rootCA) with a good CN (CN start by leshan_integration_test)
-    protected final X509Certificate clientX509CertNotTrusted;
+    protected X509Certificate clientX509CertNotTrusted;
     // server certificate signed by rootCA
-    protected final X509Certificate serverX509Cert;
+    protected X509Certificate serverX509Cert;
     // self-signed server certificate
-    protected final X509Certificate serverX509CertSelfSigned;
+    protected X509Certificate serverX509CertSelfSigned;
     // rootCA used by the server
-    protected final X509Certificate rootCAX509Cert;
+    protected X509Certificate rootCAX509Cert;
     // certificates trustedby the server (should contain rootCA)
-    protected final Certificate[] trustedCertificates = new Certificate[1];
+    protected Certificate[] trustedCertificates = new Certificate[1];
 
     public AbstractLwM2MIntegrationTest() {
-// create client credentials
+
+    }
+
+    @PostConstruct
+    private void init() {
+        // create client credentials
         try {
             // Get point values
             byte[] publicX = Hex
@@ -112,8 +120,8 @@ public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
             KeySpec privateKeySpec = new ECPrivateKeySpec(new BigInteger(privateS), parameterSpec);
 
             // Get keys
-            clientPublicKey = KeyFactory.getInstance("EC").generatePublic(publicKeySpec);
-            clientPrivateKey = KeyFactory.getInstance("EC").generatePrivate(privateKeySpec);
+            clientPublicKeyRPK = KeyFactory.getInstance("EC").generatePublic(publicKeySpec);
+            clientPrivateKeyRPK = KeyFactory.getInstance("EC").generatePrivate(privateKeySpec);
 
             // Get certificates from key store
             char[] clientKeyStorePwd = "client".toCharArray();
@@ -134,12 +142,18 @@ public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
         // create server credentials
         try {
             // Get point values
+//            byte[] publicX = Hex
+//                    .decodeHex("fcc28728c123b155be410fc1c0651da374fc6ebe7f96606e90d927d188894a73".toCharArray());
+//            byte[] publicY = Hex
+//                    .decodeHex("d2ffaa73957d76984633fc1cc54d0b763ca0559a9dff9706e9f4557dacc3f52a".toCharArray());
+//            byte[] privateS = Hex
+//                    .decodeHex("1dae121ba406802ef07c193c1ee4df91115aabd79c1ed7f4c0ef7ef6a5449400".toCharArray());
             byte[] publicX = Hex
-                    .decodeHex("fcc28728c123b155be410fc1c0651da374fc6ebe7f96606e90d927d188894a73".toCharArray());
+                    .decodeHex(securityServerPublicX.toCharArray());
             byte[] publicY = Hex
-                    .decodeHex("d2ffaa73957d76984633fc1cc54d0b763ca0559a9dff9706e9f4557dacc3f52a".toCharArray());
+                    .decodeHex(securityServerPublicY.toCharArray());
             byte[] privateS = Hex
-                    .decodeHex("1dae121ba406802ef07c193c1ee4df91115aabd79c1ed7f4c0ef7ef6a5449400".toCharArray());
+                    .decodeHex(securityPrivateEncoded.toCharArray());
 
             // Get Elliptic Curve Parameter spec for secp256r1
             AlgorithmParameters algoParameters = AlgorithmParameters.getInstance("EC");
@@ -152,8 +166,8 @@ public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
             KeySpec privateKeySpec = new ECPrivateKeySpec(new BigInteger(privateS), parameterSpec);
 
 //            // Get keys
-            serverPublicKey = KeyFactory.getInstance("EC").generatePublic(publicKeySpec);
-            serverPrivateKey = KeyFactory.getInstance("EC").generatePrivate(privateKeySpec);
+            serverPublicKeyRPK = KeyFactory.getInstance("EC").generatePublic(publicKeySpec);
+            serverPrivateKeyRPK = KeyFactory.getInstance("EC").generatePrivate(privateKeySpec);
 
             // Get certificates from key store
             char[] serverKeyStorePwd = "server".toCharArray();
