@@ -24,6 +24,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.LinkedHashMapRemoveEldest;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.rule.engine.api.msg.DeviceCredentialsUpdateNotificationMsg;
@@ -112,7 +113,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     final TenantId tenantId;
     final DeviceId deviceId;
-    private final LinkedHashMap<UUID, SessionInfoMetaData> sessions;
+    final LinkedHashMapRemoveEldest<UUID, SessionInfoMetaData> sessions;
     private final Map<UUID, SessionInfo> attributeSubscriptions;
     private final Map<UUID, SessionInfo> rpcSubscriptions;
     private final Map<Integer, ToDeviceRpcRequestMetadata> toDeviceRpcPendingMap;
@@ -127,16 +128,16 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         super(systemContext);
         this.tenantId = tenantId;
         this.deviceId = deviceId;
-        this.sessions = new LinkedHashMap<>();
         this.attributeSubscriptions = new HashMap<>();
         this.rpcSubscriptions = new HashMap<>();
         this.toDeviceRpcPendingMap = new HashMap<>();
+        this.sessions = new LinkedHashMapRemoveEldest<>(systemContext.getMaxConcurrentSessionsPerDevice(), this::notifyTransportAboutClosedSession);
         if (initAttributes()) {
             restoreSessions();
         }
     }
 
-    private boolean initAttributes() {
+    boolean initAttributes() {
         Device device = systemContext.getDeviceService().findDeviceById(tenantId, deviceId);
         if (device != null) {
             this.deviceName = device.getName();
@@ -560,8 +561,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             }
             log.info("[{}] Processing new session [{}]. Current sessions size {}", deviceId, sessionId, sessions.size());
 
-            ensureSessionsCapacity();
-
             sessions.put(sessionId, new SessionInfoMetaData(new SessionInfo(SessionType.ASYNC, sessionInfo.getNodeId())));
             if (sessions.size() == 1) {
                 reportSessionOpen();
@@ -580,23 +579,9 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         }
     }
 
-    private void ensureSessionsCapacity() {
-        while (sessions.size() >= systemContext.getMaxConcurrentSessionsPerDevice()) {
-            Optional<UUID> sessionIdToRemove = sessions.keySet().stream().findFirst();
-            if (sessionIdToRemove.isPresent()) {
-                notifyTransportAboutClosedSession(sessionIdToRemove.get(), sessions.remove(sessionIdToRemove.get()), "max concurrent sessions limit reached per device!");
-            } else {
-                log.warn("[{}] Can't remove session because find first returns null", deviceId);
-            }
-        }
-        log.debug("[{}] sessions size after clean up {}", deviceId, sessions.size());
-    }
-
     private void handleSessionActivity(TbActorCtx context, SessionInfoProto sessionInfoProto, SubscriptionInfoProto subscriptionInfo) {
         UUID sessionId = getSessionId(sessionInfoProto);
         Objects.requireNonNull(sessionId);
-
-        ensureSessionsCapacity();
 
         SessionInfoMetaData sessionMD = sessions.computeIfAbsent(sessionId,
                 id -> new SessionInfoMetaData(new SessionInfo(SessionType.ASYNC, sessionInfoProto.getNodeId()), subscriptionInfo.getLastActivityTime()));
@@ -775,7 +760,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         return builder.build();
     }
 
-    private void restoreSessions() {
+    void restoreSessions() {
         log.debug("[{}] Restoring sessions from cache", deviceId);
         DeviceSessionsCacheEntry sessionsDump = null;
         try {
@@ -807,13 +792,9 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             log.debug("[{}] Restored session: {}", deviceId, sessionMD);
         }
         log.debug("[{}] Restored sessions: {}, rpc subscriptions: {}, attribute subscriptions: {}", deviceId, sessions.size(), rpcSubscriptions.size(), attributeSubscriptions.size());
-
-        ensureSessionsCapacity();
     }
 
     private void dumpSessions() {
-        ensureSessionsCapacity();
-
         log.debug("[{}] Dumping sessions: {}, rpc subscriptions: {}, attribute subscriptions: {} to cache", deviceId, sessions.size(), rpcSubscriptions.size(), attributeSubscriptions.size());
         List<SessionSubscriptionInfoProto> sessionsList = new ArrayList<>(sessions.size());
         sessions.forEach((uuid, sessionMD) -> {
