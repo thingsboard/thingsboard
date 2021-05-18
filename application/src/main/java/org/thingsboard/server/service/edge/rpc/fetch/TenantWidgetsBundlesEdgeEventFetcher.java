@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.edge.rpc.fetch;
 
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -24,11 +23,11 @@ import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 @Slf4j
-@AllArgsConstructor
 public class TenantWidgetsBundlesEdgeEventFetcher extends BaseWidgetsBundlesEdgeEventFetcher implements EdgeEventFetcher {
 
-    private final WidgetsBundleService widgetsBundleService;
-
+    public TenantWidgetsBundlesEdgeEventFetcher(WidgetsBundleService widgetsBundleService) {
+        super(widgetsBundleService);
+    }
     @Override
     protected PageData<WidgetsBundle> findWidgetsBundles(TenantId tenantId, PageLink pageLink) {
         return widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, pageLink);
