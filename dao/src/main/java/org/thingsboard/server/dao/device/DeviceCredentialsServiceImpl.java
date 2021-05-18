@@ -158,7 +158,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
             throw new DataValidationException("Invalid credentials body for LwM2M credentials!");
         }
 
-        String credentialsId;
+        String credentialsId = null;
 
         switch (clientCredentials.getSecurityConfigClientMode()) {
             case NO_SEC:
@@ -181,8 +181,9 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                     credentialsId = x509Config.getEndpoint();
                 }
                 break;
-            default:
-                throw new DataValidationException("Invalid credentials body for LwM2M credentials!");
+        }
+        if (credentialsId == null) {
+            throw new DataValidationException("Invalid credentials body for LwM2M credentials!");
         }
         deviceCredentials.setCredentialsId(credentialsId);
     }
