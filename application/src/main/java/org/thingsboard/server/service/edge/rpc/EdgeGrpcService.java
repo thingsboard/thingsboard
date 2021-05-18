@@ -200,7 +200,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     public void startSyncProcess(TenantId tenantId, EdgeId edgeId) {
         EdgeGrpcSession session = sessions.get(edgeId);
         if (session != null && session.isConnected()) {
-            session.startSyncProcess();
+            session.startSyncProcess(tenantId, edgeId);
         } else {
             log.error("[{}] Edge is not connected [{}]", tenantId, edgeId);
             throw new RuntimeException("Edge is not connected");

@@ -188,7 +188,7 @@ public final class EdgeGrpcSession implements Closeable {
                 }
                 if (connected && requestMsg.getMsgType().equals(RequestMsgType.SYNC_REQUEST_RPC_MESSAGE)) {
                     if (requestMsg.getSyncRequestMsg().getSyncRequired()) {
-                        startSyncProcess();
+                        startSyncProcess(edge.getTenantId(), edge.getId());
                     }
                     syncCompleted = true;
                 }
@@ -229,12 +229,12 @@ public final class EdgeGrpcSession implements Closeable {
         };
     }
 
-    public void startSyncProcess() {
-        log.trace("[{}][{}] Staring edge sync process", edge.getTenantId(), edge.getId());
+    public void startSyncProcess(TenantId tenantId, EdgeId edgeId) {
+        log.trace("[{}][{}] Staring edge sync process", tenantId, edgeId);
         syncExecutorService.submit(() -> {
             try {
-                startProcessingEdgeEvents(new TenantWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
                 startProcessingEdgeEvents(new SystemWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
+                startProcessingEdgeEvents(new TenantWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
                 startProcessingEdgeEvents(new DeviceProfilesEdgeEventFetcher(ctx.getDeviceProfileService()));
                 startProcessingEdgeEvents(new RuleChainsEdgeEventFetcher(ctx.getRuleChainService()));
 
