@@ -29,8 +29,7 @@ import {
   Validators
 } from '@angular/forms';
 import {
-  WidgetConfigComponentData,
-  WidgetInfo
+  WidgetConfigComponentData
 } from '@home/models/widget-component.models';
 import { Observable, of } from 'rxjs';
 import { Router } from '@angular/router';
@@ -73,10 +72,8 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
 
   @ViewChild('mobileActionEditor', {static: false}) mobileActionEditor: MobileActionEditorComponent;
 
-
   widgetActionFormGroup: FormGroup;
   actionTypeFormGroup: FormGroup;
-  widgetInfo: WidgetInfo;
 
   isAdd: boolean;
   action: WidgetActionDescriptorInfo;
@@ -148,7 +145,6 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
             this.fb.control(action ? action.targetDashboardStateId : null,
               type === WidgetActionType.openDashboardState ? [Validators.required] : [])
           );
-
           this.actionTypeFormGroup.addControl(
             'setEntityId',
             this.fb.control(action ? action.setEntityId : this.data.modelValue.widgetType === widgetType.static ? false : true , [])
