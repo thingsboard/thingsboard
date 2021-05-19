@@ -23,17 +23,24 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.AlarmUpdateMsg;
+import org.thingsboard.server.gen.edge.DownlinkMsg;
+import org.thingsboard.server.gen.edge.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+
+import java.util.Collections;
 
 @Component
 @Slf4j
 @TbCoreComponent
 public class AlarmProcessor extends BaseProcessor {
 
-    public ListenableFuture<Void> onAlarmUpdate(TenantId tenantId, AlarmUpdateMsg alarmUpdateMsg) {
+    public ListenableFuture<Void> processAlarmFromEdge(TenantId tenantId, AlarmUpdateMsg alarmUpdateMsg) {
         log.trace("[{}] onAlarmUpdate [{}]", tenantId, alarmUpdateMsg);
         EntityId originatorId = getAlarmOriginator(tenantId, alarmUpdateMsg.getOriginatorName(),
                 EntityType.valueOf(alarmUpdateMsg.getOriginatorType()));
@@ -95,5 +102,21 @@ public class AlarmProcessor extends BaseProcessor {
             default:
                 return null;
         }
+    }
+
+    public DownlinkMsg processAlarmToEdge(Edge edge, EdgeEvent edgeEvent, UpdateMsgType msgType) {
+        DownlinkMsg downlinkMsg = null;
+        try {
+            AlarmId alarmId = new AlarmId(edgeEvent.getEntityId());
+            Alarm alarm = alarmService.findAlarmByIdAsync(edgeEvent.getTenantId(), alarmId).get();
+            if (alarm != null) {
+                downlinkMsg = DownlinkMsg.newBuilder()
+                        .addAllAlarmUpdateMsg(Collections.singletonList(alarmMsgConstructor.constructAlarmUpdatedMsg(edge.getTenantId(), msgType, alarm)))
+                        .build();
+            }
+        } catch (Exception e) {
+            log.error("Can't process alarm msg [{}] [{}]", edgeEvent, msgType, e);
+        }
+        return downlinkMsg;
     }
 }

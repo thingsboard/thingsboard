@@ -54,6 +54,17 @@ import org.thingsboard.server.service.edge.rpc.constructor.RuleChainMsgConstruct
 import org.thingsboard.server.service.edge.rpc.constructor.UserMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.WidgetTypeMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.WidgetsBundleMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.processor.AdminSettingsProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.AssetProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.CustomerProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.DashboardProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.DeviceProfileProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.EntityProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.EntityViewProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.RuleChainProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.UserProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.WidgetBundleProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.WidgetTypeProcessor;
 import org.thingsboard.server.service.edge.rpc.sync.EdgeRequestsService;
 import org.thingsboard.server.service.edge.rpc.processor.AlarmProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.DeviceProcessor;
@@ -72,9 +83,6 @@ public class EdgeContextComponent {
     @Autowired
     private EdgeService edgeService;
 
-    @Autowired
-    private PartitionService partitionService;
-
     @Lazy
     @Autowired
     private EdgeEventService edgeEventService;
@@ -85,35 +93,11 @@ public class EdgeContextComponent {
 
     @Lazy
     @Autowired
-    private DeviceService deviceService;
-
-    @Lazy
-    @Autowired
     private DeviceProfileService deviceProfileService;
 
     @Lazy
     @Autowired
-    private DeviceCredentialsService deviceCredentialsService;
-
-    @Lazy
-    @Autowired
-    private EntityViewService entityViewService;
-
-    @Lazy
-    @Autowired
     private AttributesService attributesService;
-
-    @Lazy
-    @Autowired
-    private CustomerService customerService;
-
-    @Lazy
-    @Autowired
-    private RelationService relationService;
-
-    @Lazy
-    @Autowired
-    private AlarmService alarmService;
 
     @Lazy
     @Autowired
@@ -129,23 +113,7 @@ public class EdgeContextComponent {
 
     @Lazy
     @Autowired
-    private ActorService actorService;
-
-    @Lazy
-    @Autowired
     private WidgetsBundleService widgetsBundleService;
-
-    @Lazy
-    @Autowired
-    private WidgetTypeService widgetTypeService;
-
-    @Lazy
-    @Autowired
-    private DeviceStateService deviceStateService;
-
-    @Lazy
-    @Autowired
-    private TbClusterService tbClusterService;
 
     @Lazy
     @Autowired
@@ -153,67 +121,31 @@ public class EdgeContextComponent {
 
     @Lazy
     @Autowired
-    private RuleChainMsgConstructor ruleChainMsgConstructor;
-
-    @Lazy
-    @Autowired
-    private AlarmMsgConstructor alarmMsgConstructor;
-
-    @Lazy
-    @Autowired
-    private DeviceMsgConstructor deviceMsgConstructor;
-
-    @Lazy
-    @Autowired
-    private DeviceProfileMsgConstructor deviceProfileMsgConstructor;
-
-    @Lazy
-    @Autowired
-    private AssetMsgConstructor assetMsgConstructor;
-
-    @Lazy
-    @Autowired
-    private EntityViewMsgConstructor entityViewMsgConstructor;
-
-    @Lazy
-    @Autowired
-    private DashboardMsgConstructor dashboardMsgConstructor;
-
-    @Lazy
-    @Autowired
-    private CustomerMsgConstructor customerMsgConstructor;
-
-    @Lazy
-    @Autowired
-    private UserMsgConstructor userMsgConstructor;
-
-    @Lazy
-    @Autowired
-    private RelationMsgConstructor relationMsgConstructor;
-
-    @Lazy
-    @Autowired
-    private WidgetsBundleMsgConstructor widgetsBundleMsgConstructor;
-
-    @Lazy
-    @Autowired
-    private WidgetTypeMsgConstructor widgetTypeMsgConstructor;
-
-    @Lazy
-    @Autowired
-    private AdminSettingsMsgConstructor adminSettingsMsgConstructor;
-
-    @Lazy
-    @Autowired
-    private EntityDataMsgConstructor entityDataMsgConstructor;
-
-    @Lazy
-    @Autowired
     private AlarmProcessor alarmProcessor;
 
     @Lazy
     @Autowired
+    private DeviceProfileProcessor deviceProfileProcessor;
+
+    @Lazy
+    @Autowired
     private DeviceProcessor deviceProcessor;
+
+    @Lazy
+    @Autowired
+    private EntityProcessor entityProcessor;
+
+    @Lazy
+    @Autowired
+    private AssetProcessor assetProcessor;
+
+    @Lazy
+    @Autowired
+    private EntityViewProcessor entityViewProcessor;
+
+    @Lazy
+    @Autowired
+    private UserProcessor userProcessor;
 
     @Lazy
     @Autowired
@@ -222,6 +154,30 @@ public class EdgeContextComponent {
     @Lazy
     @Autowired
     private TelemetryProcessor telemetryProcessor;
+
+    @Lazy
+    @Autowired
+    private DashboardProcessor dashboardProcessor;
+
+    @Lazy
+    @Autowired
+    private RuleChainProcessor ruleChainProcessor;
+
+    @Lazy
+    @Autowired
+    private CustomerProcessor customerProcessor;
+
+    @Lazy
+    @Autowired
+    private WidgetBundleProcessor widgetBundleProcessor;
+
+    @Lazy
+    @Autowired
+    private WidgetTypeProcessor widgetTypeProcessor;
+
+    @Lazy
+    @Autowired
+    private AdminSettingsProcessor adminSettingsProcessor;
 
     @Lazy
     @Autowired
