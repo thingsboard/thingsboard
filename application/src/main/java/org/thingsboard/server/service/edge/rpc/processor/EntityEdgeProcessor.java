@@ -207,21 +207,5 @@ public class EntityEdgeProcessor extends BaseEdgeProcessor {
                 break;
         }
     }
-
-    private void processActionForAllEdges(TenantId tenantId, EdgeEventType type, EdgeEventActionType actionType, EntityId entityId) {
-        PageLink pageLink = new PageLink(DEFAULT_LIMIT);
-        PageData<Edge> pageData;
-        do {
-            pageData = edgeService.findEdgesByTenantId(tenantId, pageLink);
-            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                for (Edge edge : pageData.getData()) {
-                    saveEdgeEvent(tenantId, edge.getId(), type, actionType, entityId, null);
-                }
-                if (pageData.hasNext()) {
-                    pageLink = pageLink.nextPageLink();
-                }
-            }
-        } while (pageData != null && pageData.hasNext());
-    }
 }
 

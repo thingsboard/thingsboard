@@ -32,6 +32,8 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -216,5 +218,21 @@ public abstract class BaseEdgeProcessor {
         } else {
             return null;
         }
+    }
+
+    protected void processActionForAllEdges(TenantId tenantId, EdgeEventType type, EdgeEventActionType actionType, EntityId entityId) {
+        PageLink pageLink = new PageLink(DEFAULT_LIMIT);
+        PageData<Edge> pageData;
+        do {
+            pageData = edgeService.findEdgesByTenantId(tenantId, pageLink);
+            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                for (Edge edge : pageData.getData()) {
+                    saveEdgeEvent(tenantId, edge.getId(), type, actionType, entityId, null);
+                }
+                if (pageData.hasNext()) {
+                    pageLink = pageLink.nextPageLink();
+                }
+            }
+        } while (pageData != null && pageData.hasNext());
     }
 }
