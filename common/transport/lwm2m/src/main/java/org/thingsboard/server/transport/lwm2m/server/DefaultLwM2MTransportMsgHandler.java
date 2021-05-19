@@ -431,10 +431,9 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
 
     @Override
     public void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg toDeviceRpcRequestMsg, SessionInfoProto sessionInfo) {
-        log.warn("1) [{}]", toDeviceRpcRequestMsg);
+        log.warn("4) RPC-OK finish to [{}]", toDeviceRpcRequestMsg);
         Lwm2mClientRpcRequest lwm2mClientRpcRequest = null;
         try {
-            log.info("[{}] toDeviceRpcRequest", toDeviceRpcRequestMsg);
             Registration registration = clientContext.getClient(new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB())).getRegistration();
             lwm2mClientRpcRequest = this.getDeviceRpcRequest(toDeviceRpcRequestMsg, sessionInfo, registration);
             if (lwm2mClientRpcRequest.getErrorMsg() != null) {

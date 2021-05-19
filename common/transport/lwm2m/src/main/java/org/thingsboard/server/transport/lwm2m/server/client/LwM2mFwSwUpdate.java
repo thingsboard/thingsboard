@@ -113,7 +113,7 @@ public class LwM2mFwSwUpdate {
     }
 
     private void initPathId() {
-        if (this.type.equals(FIRMWARE)) {
+        if (FIRMWARE.equals(this.type) ) {
             this.pathPackageId = FW_PACKAGE_ID;
             this.pathStateId = FW_STATE_ID;
             this.pathResultId = FW_RESULT_ID;
@@ -121,7 +121,7 @@ public class LwM2mFwSwUpdate {
             this.pathVerId = FW_VER_ID;
             this.pathInstallId = FW_UPDATE_ID;
             this.wUpdate = FW_UPDATE;
-        } else if (this.type.equals(SOFTWARE)) {
+        } else if (SOFTWARE.equals(this.type) ) {
             this.pathPackageId = SW_PACKAGE_ID;
             this.pathStateId = SW_UPDATE_STATE_ID;
             this.pathResultId = SW_RESULT_ID;
@@ -285,7 +285,8 @@ public class LwM2mFwSwUpdate {
      */
     public void finishFwSwUpdate(boolean success) {
         Long updateResult = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
-        String value = LwM2mTransportUtil.UpdateResultFw.fromUpdateResultFwByCode(updateResult.intValue()).type;
+        String value = FIRMWARE.equals(this.type) ? LwM2mTransportUtil.UpdateResultFw.fromUpdateResultFwByCode(updateResult.intValue()).type :
+                LwM2mTransportUtil.UpdateResultSw.fromUpdateResultSwByCode(updateResult.intValue()).type;
         String key = splitCamelCaseString((String) this.lwM2MClient.getResourceName (null, this.pathResultId));
         if (success) {
             this.stateUpdate = FirmwareUpdateStatus.UPDATED.name();

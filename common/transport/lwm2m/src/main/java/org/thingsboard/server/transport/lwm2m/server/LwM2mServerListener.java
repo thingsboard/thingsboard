@@ -94,12 +94,12 @@ public class LwM2mServerListener {
         @Override
         public void onResponse(Observation observation, Registration registration, ObserveResponse response) {
             if (registration != null) {
-                if (observation.getPath().isResource() || observation.getPath().isResourceInstance()) {
-                    String msg = String.format("%s: Successful Observation  %s.", LOG_LW2M_INFO,
-                            observation.getPath());
-                    log.warn(msg);
-                    service.sendLogsToThingsboard(msg, registration.getId());
-                }
+//                if (observation.getPath().isResource() || observation.getPath().isResourceInstance()) {
+//                    String msg = String.format("%s: Successful Observation  %s.", LOG_LW2M_INFO,
+//                            observation.getPath());
+//                    log.warn(msg);
+//                    service.sendLogsToThingsboard(msg, registration.getId());
+//                }
                 service.onUpdateValueAfterReadResponse(registration, convertPathFromObjectIdToIdVer(observation.getPath().toString(),
                         registration), response, null);
             }

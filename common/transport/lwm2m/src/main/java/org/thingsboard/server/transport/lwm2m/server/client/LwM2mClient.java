@@ -261,8 +261,8 @@ public class LwM2mClient implements Cloneable {
         }
     }
 
-    public Collection<LwM2mResource> getNewOneResourceForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
-                                                                  LwM2mValueConverterImpl converter) {
+    public Collection<LwM2mResource> getNewResourceForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
+                                                               LwM2mValueConverterImpl converter) {
         LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRezIdVer));
         Collection<LwM2mResource> resources = ConcurrentHashMap.newKeySet();
         Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
@@ -276,8 +276,8 @@ public class LwM2mClient implements Cloneable {
         return resources;
     }
 
-    public Collection<LwM2mResource> getNewManyResourcesForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
-                                                                  LwM2mValueConverterImpl converter) {
+    public Collection<LwM2mResource> getNewResourcesForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
+                                                                LwM2mValueConverterImpl converter) {
         LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRezIdVer));
         Collection<LwM2mResource> resources = ConcurrentHashMap.newKeySet();
         Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)

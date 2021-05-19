@@ -84,6 +84,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.L
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE_CANCEL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE_READ_ALL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_REPLACE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_UPDATE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.RESPONSE_REQUEST_CHANNEL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_INSTALL_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_PACKAGE_ID;
@@ -125,120 +126,14 @@ public class LwM2mTransportRequest {
                                String contentFormatName, Object params, long timeoutInMs, Lwm2mClientRpcRequest rpcRequest) {
         try {
             String target = convertPathFromIdVerToObjectId(targetIdVer);
-            DownlinkRequest request = null;
             ContentFormat contentFormat = contentFormatName != null ? ContentFormat.fromName(contentFormatName.toUpperCase()) : ContentFormat.DEFAULT;
             LwM2mClient lwM2MClient = this.lwM2mClientContext.getOrRegister(registration);
             LwM2mPath resultIds = target != null ? new LwM2mPath(target) : null;
             if (!OBSERVE_READ_ALL.name().equals(typeOper.name()) && resultIds != null && registration != null && resultIds.getObjectId() >= 0 && lwM2MClient != null) {
                 if (lwM2MClient.isValidObjectVersion(targetIdVer)) {
                     timeoutInMs = timeoutInMs > 0 ? timeoutInMs : DEFAULT_TIMEOUT;
-                    ResourceModel resourceModel = null;
-                    switch (typeOper) {
-                        case READ:
-                            request = new ReadRequest(contentFormat, target);
-                            break;
-                        case DISCOVER:
-                            request = new DiscoverRequest(target);
-                            break;
-                        case OBSERVE:
-                            if (resultIds.isResource()) {
-                                Set<Observation> observations = context.getServer().getObservationService().getObservations(registration);
-                                Set<Observation> paths = observations.stream().filter(observation -> observation.getPath().equals(resultIds)).collect(Collectors.toSet());
-                                if (paths.size() == 0) {
-                                    request = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId());
-                                } else {
-                                    request = new ReadRequest(contentFormat, target);
-                                }
-                            } else if (resultIds.isObjectInstance()) {
-                                request = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId());
-                            } else if (resultIds.getObjectId() >= 0) {
-                                request = new ObserveRequest(contentFormat, resultIds.getObjectId());
-                            }
-                            break;
-                        case OBSERVE_CANCEL:
-                            /*
-                              lwM2MTransportRequest.sendAllRequest(lwServer, registration, path, POST_TYPE_OPER_OBSERVE_CANCEL, null, null, null, null, context.getTimeout());
-                              At server side this will not remove the observation from the observation store, to do it you need to use
-                              {@code ObservationService#cancelObservation()}
-                             */
-                            int observeCancelCnt = context.getServer().getObservationService().cancelObservations(registration, target);
-                            String observeCancelMsg = String.format("%s: type operation %s paths: %s count: %d", LOG_LW2M_INFO,
-                                    OBSERVE_CANCEL.name(), target, observeCancelCnt);
-                            this.afterObserveCancel(registration, observeCancelCnt, observeCancelMsg, rpcRequest);
-                            break;
-                        case EXECUTE:
-                            resourceModel = lwM2MClient.getResourceModel(targetIdVer, this.config
-                                    .getModelProvider());
-                            if (params != null && !resourceModel.multiple) {
-                                request = new ExecuteRequest(target, (String) this.converter.convertValue(params, resourceModel.type, ResourceModel.Type.STRING, resultIds));
-                            } else {
-                                request = new ExecuteRequest(target);
-                            }
-                            break;
-                        case WRITE_REPLACE:
-                            /**
-                             * Request to write a <b>String Single-Instance Resource</b> using the TLV content format.
-                             * Type from resourceModel  -> STRING, INTEGER, FLOAT, BOOLEAN, OPAQUE, TIME, OBJLNK
-                             * contentFormat ->           TLV,     TLV,    TLV,   TLV,     OPAQUE, TLV,  LINK
-                             * JSON, TEXT;
-                             **/
-                            resourceModel = lwM2MClient.getResourceModel(targetIdVer, this.config.getModelProvider());
-                            contentFormat = getContentFormatByResourceModelType(resourceModel, contentFormat);
-                            request = this.getWriteRequestSingleResource(contentFormat, resultIds.getObjectId(),
-                                    resultIds.getObjectInstanceId(), resultIds.getResourceId(), params, resourceModel.type,
-                                    registration, rpcRequest);
-                            break;
-                        case WRITE_UPDATE:
-                            if (resultIds.isResource()) {
-                                /**
-                                 * send request: path = '/3/0' node == wM2mObjectInstance
-                                 * with params == "\"resources\": {15: resource:{id:15. value:'+01'...}}
-                                 **/
-                                Collection<LwM2mResource> resources = lwM2MClient.getNewOneResourceForInstance(
-                                        targetIdVer, params,
-                                        this.config.getModelProvider(),
-                                        this.converter);
-                                contentFormat = getContentFormatByResourceModelType(lwM2MClient.getResourceModel(targetIdVer, this.config.getModelProvider()),
-                                        contentFormat);
-                                request = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(),
-                                        resultIds.getObjectInstanceId(), resources);
-                            }
-                            /**
-                             *  params = "{\"id\":0,\"resources\":[{\"id\":14,\"value\":\"+5\"},{\"id\":15,\"value\":\"+9\"}]}"
-                             *  int rscId = resultIds.getObjectInstanceId();
-                             *  contentFormat – Format of the payload (TLV or JSON).
-                             */
-                            else if (resultIds.isObjectInstance()) {
-                                if (((ConcurrentHashMap) params).size() > 0) {
-                                    Collection<LwM2mResource> resources = lwM2MClient.getNewManyResourcesForInstance(
-                                            targetIdVer, params,
-                                            this.config.getModelProvider(),
-                                            this.converter);
-                                    if (resources.size() > 0) {
-                                        contentFormat = contentFormat.equals(ContentFormat.JSON) ? contentFormat : ContentFormat.TLV;
-                                        request = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(),
-                                                resultIds.getObjectInstanceId(), resources);
-                                    } else {
-                                        Lwm2mClientRpcRequest rpcRequestClone = (Lwm2mClientRpcRequest) rpcRequest.clone();
-                                        if (rpcRequestClone != null) {
-                                            String errorMsg = String.format("Path %s params is not valid", targetIdVer);
-                                            serviceImpl.sentRpcRequest(rpcRequestClone, BAD_REQUEST.getName(), errorMsg, LOG_LW2M_ERROR);
-                                            rpcRequest = null;
-                                        }
-                                    }
-                                }
-                            } else if (resultIds.getObjectId() >= 0) {
-                                request = new ObserveRequest(resultIds.getObjectId());
-                            }
-                            break;
-                        case WRITE_ATTRIBUTES:
-                            request = createWriteAttributeRequest(target, params);
-                            break;
-                        case DELETE:
-                            request = new DeleteRequest(target);
-                            break;
-                    }
-
+                    DownlinkRequest request = createRequest (registration, lwM2MClient, typeOper, contentFormat, target,
+                            targetIdVer, resultIds, params, rpcRequest);
                     if (request != null) {
                         try {
                             this.sendRequest(registration, lwM2MClient, request, timeoutInMs, rpcRequest);
@@ -250,9 +145,19 @@ public class LwM2mTransportRequest {
                         } catch (Exception e) {
                             log.error("[{}] [{}] [{}] Failed to send downlink.", registration.getEndpoint(), targetIdVer, typeOper.name(), e);
                         }
-                    } else if (!OBSERVE_CANCEL.name().equals(typeOper.name())) {
+                    }
+                    else if (WRITE_UPDATE.name().equals(typeOper.name())) {
+                        Lwm2mClientRpcRequest rpcRequestClone = (Lwm2mClientRpcRequest) rpcRequest.clone();
+                        if (rpcRequestClone != null) {
+                            String errorMsg = String.format("Path %s params is not valid", targetIdVer);
+                            serviceImpl.sentRpcRequest(rpcRequestClone, BAD_REQUEST.getName(), errorMsg, LOG_LW2M_ERROR);
+                            rpcRequest = null;
+                        }
+                    }
+                    else if (!OBSERVE_CANCEL.name().equals(typeOper.name())) {
                         log.error("[{}], [{}] - [{}] error SendRequest", registration.getEndpoint(), typeOper.name(), targetIdVer);
                         if (rpcRequest != null) {
+                            ResourceModel resourceModel = lwM2MClient.getResourceModel(targetIdVer, this.config.getModelProvider());
                             String errorMsg = resourceModel == null ? String.format("Path %s not found in object version", targetIdVer) : "SendRequest - null";
                             serviceImpl.sentRpcRequest(rpcRequest, NOT_FOUND.getName(), errorMsg, LOG_LW2M_ERROR);
                         }
@@ -292,12 +197,113 @@ public class LwM2mTransportRequest {
                 String errorMsg = String.format("Path %s type operation %s  %s", targetIdVer, typeOper.name(), e.getMessage());
                 serviceImpl.sentRpcRequest(rpcRequest, NOT_FOUND.getName(), errorMsg, LOG_LW2M_ERROR);
             }
-//            try {
-//                throw new Exception(e);
-//            } catch (Exception exception) {
-//                exception.printStackTrace();
-//            }
         }
+    }
+
+    private DownlinkRequest createRequest (Registration registration, LwM2mClient lwM2MClient, LwM2mTypeOper typeOper,
+                                           ContentFormat contentFormat, String target, String targetIdVer,
+                                           LwM2mPath resultIds, Object params, Lwm2mClientRpcRequest rpcRequest) {
+        DownlinkRequest request = null;
+        switch (typeOper) {
+            case READ:
+                request = new ReadRequest(contentFormat, target);
+                break;
+            case DISCOVER:
+                request = new DiscoverRequest(target);
+                break;
+            case OBSERVE:
+                String msg = String.format("%s: Send Observation  %s.", LOG_LW2M_INFO,  targetIdVer);
+                log.warn(msg);
+                if (resultIds.isResource()) {
+                    Set<Observation> observations = context.getServer().getObservationService().getObservations(registration);
+                    Set<Observation> paths = observations.stream().filter(observation -> observation.getPath().equals(resultIds)).collect(Collectors.toSet());
+                    if (paths.size() == 0) {
+                        request = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId());
+                    } else {
+                        request = new ReadRequest(contentFormat, target);
+                    }
+                } else if (resultIds.isObjectInstance()) {
+                    request = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId());
+                } else if (resultIds.getObjectId() >= 0) {
+                    request = new ObserveRequest(contentFormat, resultIds.getObjectId());
+                }
+                break;
+            case OBSERVE_CANCEL:
+                            /*
+                              lwM2MTransportRequest.sendAllRequest(lwServer, registration, path, POST_TYPE_OPER_OBSERVE_CANCEL, null, null, null, null, context.getTimeout());
+                              At server side this will not remove the observation from the observation store, to do it you need to use
+                              {@code ObservationService#cancelObservation()}
+                             */
+                int observeCancelCnt = context.getServer().getObservationService().cancelObservations(registration, target);
+                String observeCancelMsg = String.format("%s: type operation %s paths: %s count: %d", LOG_LW2M_INFO,
+                        OBSERVE_CANCEL.name(), target, observeCancelCnt);
+                this.afterObserveCancel(registration, observeCancelCnt, observeCancelMsg, rpcRequest);
+                break;
+            case EXECUTE:
+                ResourceModel resourceModelExe = lwM2MClient.getResourceModel(targetIdVer, this.config.getModelProvider());
+                if (params != null && !resourceModelExe.multiple) {
+                    request = new ExecuteRequest(target, (String) this.converter.convertValue(params, resourceModelExe.type, ResourceModel.Type.STRING, resultIds));
+                } else {
+                    request = new ExecuteRequest(target);
+                }
+                break;
+            case WRITE_REPLACE:
+                /**
+                 * Request to write a <b>String Single-Instance Resource</b> using the TLV content format.
+                 * Type from resourceModel  -> STRING, INTEGER, FLOAT, BOOLEAN, OPAQUE, TIME, OBJLNK
+                 * contentFormat ->           TLV,     TLV,    TLV,   TLV,     OPAQUE, TLV,  LINK
+                 * JSON, TEXT;
+                 **/
+                ResourceModel resourceModelWrite = lwM2MClient.getResourceModel(targetIdVer, this.config.getModelProvider());
+                contentFormat = getContentFormatByResourceModelType(resourceModelWrite, contentFormat);
+                request = this.getWriteRequestSingleResource(contentFormat, resultIds.getObjectId(),
+                        resultIds.getObjectInstanceId(), resultIds.getResourceId(), params, resourceModelWrite.type,
+                        registration, rpcRequest);
+                break;
+            case WRITE_UPDATE:
+                if (resultIds.isResource()) {
+                    /**
+                     * send request: path = '/3/0' node == wM2mObjectInstance
+                     * with params == "\"resources\": {15: resource:{id:15. value:'+01'...}}
+                     **/
+                    Collection<LwM2mResource> resources = lwM2MClient.getNewResourceForInstance(
+                            targetIdVer, params,
+                            this.config.getModelProvider(),
+                            this.converter);
+                    contentFormat = getContentFormatByResourceModelType(lwM2MClient.getResourceModel(targetIdVer, this.config.getModelProvider()),
+                            contentFormat);
+                    request = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(),
+                            resultIds.getObjectInstanceId(), resources);
+                }
+                /**
+                 *  params = "{\"id\":0,\"resources\":[{\"id\":14,\"value\":\"+5\"},{\"id\":15,\"value\":\"+9\"}]}"
+                 *  int rscId = resultIds.getObjectInstanceId();
+                 *  contentFormat – Format of the payload (TLV or JSON).
+                 */
+                else if (resultIds.isObjectInstance()) {
+                    if (((ConcurrentHashMap) params).size() > 0) {
+                        Collection<LwM2mResource> resources = lwM2MClient.getNewResourcesForInstance(
+                                targetIdVer, params,
+                                this.config.getModelProvider(),
+                                this.converter);
+                        if (resources.size() > 0) {
+                            contentFormat = contentFormat.equals(ContentFormat.JSON) ? contentFormat : ContentFormat.TLV;
+                            request = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(),
+                                    resultIds.getObjectInstanceId(), resources);
+                        }
+                    }
+                } else if (resultIds.getObjectId() >= 0) {
+                    request = new ObserveRequest(resultIds.getObjectId());
+                }
+                break;
+            case WRITE_ATTRIBUTES:
+                request = createWriteAttributeRequest(target, params);
+                break;
+            case DELETE:
+                request = new DeleteRequest(target);
+                break;
+        }
+        return request;
     }
 
     /**
