@@ -34,7 +34,7 @@ import java.util.Collections;
 @Component
 @Slf4j
 @TbCoreComponent
-public class UserProcessor extends BaseProcessor {
+public class UserEdgeProcessor extends BaseEdgeProcessor {
 
     public DownlinkMsg processUserToEdge(Edge edge, EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType edgeEdgeEventActionType) {
         UserId userId = new UserId(edgeEvent.getEntityId());

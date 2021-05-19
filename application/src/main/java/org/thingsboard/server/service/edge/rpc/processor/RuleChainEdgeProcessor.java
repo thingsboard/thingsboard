@@ -34,7 +34,7 @@ import java.util.Collections;
 @Component
 @Slf4j
 @TbCoreComponent
-public class RuleChainProcessor extends BaseProcessor {
+public class RuleChainEdgeProcessor extends BaseEdgeProcessor {
 
     public DownlinkMsg processRuleChainToEdge(Edge edge, EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType action) {
         RuleChainId ruleChainId = new RuleChainId(edgeEvent.getEntityId());

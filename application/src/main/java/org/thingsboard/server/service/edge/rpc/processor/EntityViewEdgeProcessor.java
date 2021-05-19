@@ -17,14 +17,14 @@ package org.thingsboard.server.service.edge.rpc.processor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
-import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.gen.edge.AssetUpdateMsg;
+import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.gen.edge.DownlinkMsg;
+import org.thingsboard.server.gen.edge.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
@@ -33,10 +33,10 @@ import java.util.Collections;
 @Component
 @Slf4j
 @TbCoreComponent
-public class AssetProcessor extends BaseProcessor {
+public class EntityViewEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg processAssetToEdge(Edge edge, EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType action) {
-        AssetId assetId = new AssetId(edgeEvent.getEntityId());
+    public DownlinkMsg processEntityViewToEdge(Edge edge, EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType action) {
+        EntityViewId entityViewId = new EntityViewId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (action) {
             case ADDED:
@@ -44,22 +44,22 @@ public class AssetProcessor extends BaseProcessor {
             case ASSIGNED_TO_EDGE:
             case ASSIGNED_TO_CUSTOMER:
             case UNASSIGNED_FROM_CUSTOMER:
-                Asset asset = assetService.findAssetById(edgeEvent.getTenantId(), assetId);
-                if (asset != null) {
-                    CustomerId customerId = getCustomerIdIfEdgeAssignedToCustomer(asset, edge);
-                    AssetUpdateMsg assetUpdateMsg =
-                            assetMsgConstructor.constructAssetUpdatedMsg(msgType, asset, customerId);
+                EntityView entityView = entityViewService.findEntityViewById(edgeEvent.getTenantId(), entityViewId);
+                if (entityView != null) {
+                    CustomerId customerId = getCustomerIdIfEdgeAssignedToCustomer(entityView, edge);
+                    EntityViewUpdateMsg entityViewUpdateMsg =
+                            entityViewMsgConstructor.constructEntityViewUpdatedMsg(msgType, entityView, customerId);
                     downlinkMsg = DownlinkMsg.newBuilder()
-                            .addAllAssetUpdateMsg(Collections.singletonList(assetUpdateMsg))
+                            .addAllEntityViewUpdateMsg(Collections.singletonList(entityViewUpdateMsg))
                             .build();
                 }
                 break;
             case DELETED:
             case UNASSIGNED_FROM_EDGE:
-                AssetUpdateMsg assetUpdateMsg =
-                        assetMsgConstructor.constructAssetDeleteMsg(assetId);
+                EntityViewUpdateMsg entityViewUpdateMsg =
+                        entityViewMsgConstructor.constructEntityViewDeleteMsg(entityViewId);
                 downlinkMsg = DownlinkMsg.newBuilder()
-                        .addAllAssetUpdateMsg(Collections.singletonList(assetUpdateMsg))
+                        .addAllEntityViewUpdateMsg(Collections.singletonList(entityViewUpdateMsg))
                         .build();
                 break;
         }

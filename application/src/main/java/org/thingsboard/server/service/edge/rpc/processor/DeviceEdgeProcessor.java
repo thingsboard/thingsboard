@@ -68,7 +68,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @Component
 @Slf4j
 @TbCoreComponent
-public class DeviceProcessor extends BaseProcessor {
+public class DeviceEdgeProcessor extends BaseEdgeProcessor {
 
     private static final ReentrantLock deviceCreationLock = new ReentrantLock();
 

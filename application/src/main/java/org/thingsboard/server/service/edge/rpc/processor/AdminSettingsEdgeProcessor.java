@@ -28,7 +28,7 @@ import java.util.Collections;
 @Component
 @Slf4j
 @TbCoreComponent
-public class AdminSettingsProcessor extends BaseProcessor {
+public class AdminSettingsEdgeProcessor extends BaseEdgeProcessor {
 
     public DownlinkMsg processAdminSettingsToEdge(EdgeEvent edgeEvent) {
         AdminSettings adminSettings = mapper.convertValue(edgeEvent.getBody(), AdminSettings.class);

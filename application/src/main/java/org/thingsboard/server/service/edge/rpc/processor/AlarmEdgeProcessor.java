@@ -38,7 +38,7 @@ import java.util.Collections;
 @Component
 @Slf4j
 @TbCoreComponent
-public class AlarmProcessor extends BaseProcessor {
+public class AlarmEdgeProcessor extends BaseEdgeProcessor {
 
     public ListenableFuture<Void> processAlarmFromEdge(TenantId tenantId, AlarmUpdateMsg alarmUpdateMsg) {
         log.trace("[{}] onAlarmUpdate [{}]", tenantId, alarmUpdateMsg);

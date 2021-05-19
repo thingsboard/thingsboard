@@ -17,13 +17,13 @@ package org.thingsboard.server.service.edge.rpc.processor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.gen.edge.DeviceProfileUpdateMsg;
+import org.thingsboard.server.common.data.id.WidgetTypeId;
+import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.gen.edge.DownlinkMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
+import org.thingsboard.server.gen.edge.WidgetTypeUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.Collections;
@@ -31,28 +31,28 @@ import java.util.Collections;
 @Component
 @Slf4j
 @TbCoreComponent
-public class DeviceProfileProcessor extends BaseProcessor {
+public class WidgetTypeEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg processDeviceProfileToEdge(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType action) {
-        DeviceProfileId deviceProfileId = new DeviceProfileId(edgeEvent.getEntityId());
+    public DownlinkMsg processWidgetTypeToEdge(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType edgeEdgeEventActionType) {
+        WidgetTypeId widgetTypeId = new WidgetTypeId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        switch (action) {
+        switch (edgeEdgeEventActionType) {
             case ADDED:
             case UPDATED:
-                DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(edgeEvent.getTenantId(), deviceProfileId);
-                if (deviceProfile != null) {
-                    DeviceProfileUpdateMsg deviceProfileUpdateMsg =
-                            deviceProfileMsgConstructor.constructDeviceProfileUpdatedMsg(msgType, deviceProfile);
+                WidgetType widgetType = widgetTypeService.findWidgetTypeById(edgeEvent.getTenantId(), widgetTypeId);
+                if (widgetType != null) {
+                    WidgetTypeUpdateMsg widgetTypeUpdateMsg =
+                            widgetTypeMsgConstructor.constructWidgetTypeUpdateMsg(msgType, widgetType);
                     downlinkMsg = DownlinkMsg.newBuilder()
-                            .addAllDeviceProfileUpdateMsg(Collections.singletonList(deviceProfileUpdateMsg))
+                            .addAllWidgetTypeUpdateMsg(Collections.singletonList(widgetTypeUpdateMsg))
                             .build();
                 }
                 break;
             case DELETED:
-                DeviceProfileUpdateMsg deviceProfileUpdateMsg =
-                        deviceProfileMsgConstructor.constructDeviceProfileDeleteMsg(deviceProfileId);
+                WidgetTypeUpdateMsg widgetTypeUpdateMsg =
+                        widgetTypeMsgConstructor.constructWidgetTypeDeleteMsg(widgetTypeId);
                 downlinkMsg = DownlinkMsg.newBuilder()
-                        .addAllDeviceProfileUpdateMsg(Collections.singletonList(deviceProfileUpdateMsg))
+                        .addAllWidgetTypeUpdateMsg(Collections.singletonList(widgetTypeUpdateMsg))
                         .build();
                 break;
         }

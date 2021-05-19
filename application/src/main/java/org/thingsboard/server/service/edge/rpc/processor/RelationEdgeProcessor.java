@@ -45,7 +45,7 @@ import java.util.UUID;
 @Component
 @Slf4j
 @TbCoreComponent
-public class RelationProcessor extends BaseProcessor {
+public class RelationEdgeProcessor extends BaseEdgeProcessor {
 
     public ListenableFuture<Void> processRelationFromEdge(TenantId tenantId, RelationUpdateMsg relationUpdateMsg) {
         log.trace("[{}] onRelationUpdate [{}]", tenantId, relationUpdateMsg);

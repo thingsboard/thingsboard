@@ -19,11 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
-import org.thingsboard.server.common.data.id.WidgetTypeId;
-import org.thingsboard.server.common.data.widget.WidgetType;
+import org.thingsboard.server.common.data.id.WidgetsBundleId;
+import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.gen.edge.DownlinkMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
-import org.thingsboard.server.gen.edge.WidgetTypeUpdateMsg;
+import org.thingsboard.server.gen.edge.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.Collections;
@@ -31,32 +31,31 @@ import java.util.Collections;
 @Component
 @Slf4j
 @TbCoreComponent
-public class WidgetTypeProcessor extends BaseProcessor {
+public class WidgetBundleEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg processWidgetTypeToEdge(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType edgeEdgeEventActionType) {
-        WidgetTypeId widgetTypeId = new WidgetTypeId(edgeEvent.getEntityId());
+    public DownlinkMsg processWidgetsBundleToEdge(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType edgeEdgeEventActionType) {
+        WidgetsBundleId widgetsBundleId = new WidgetsBundleId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEdgeEventActionType) {
             case ADDED:
             case UPDATED:
-                WidgetType widgetType = widgetTypeService.findWidgetTypeById(edgeEvent.getTenantId(), widgetTypeId);
-                if (widgetType != null) {
-                    WidgetTypeUpdateMsg widgetTypeUpdateMsg =
-                            widgetTypeMsgConstructor.constructWidgetTypeUpdateMsg(msgType, widgetType);
+                WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleById(edgeEvent.getTenantId(), widgetsBundleId);
+                if (widgetsBundle != null) {
+                    WidgetsBundleUpdateMsg widgetsBundleUpdateMsg =
+                            widgetsBundleMsgConstructor.constructWidgetsBundleUpdateMsg(msgType, widgetsBundle);
                     downlinkMsg = DownlinkMsg.newBuilder()
-                            .addAllWidgetTypeUpdateMsg(Collections.singletonList(widgetTypeUpdateMsg))
+                            .addAllWidgetsBundleUpdateMsg(Collections.singletonList(widgetsBundleUpdateMsg))
                             .build();
                 }
                 break;
             case DELETED:
-                WidgetTypeUpdateMsg widgetTypeUpdateMsg =
-                        widgetTypeMsgConstructor.constructWidgetTypeDeleteMsg(widgetTypeId);
+                WidgetsBundleUpdateMsg widgetsBundleUpdateMsg =
+                        widgetsBundleMsgConstructor.constructWidgetsBundleDeleteMsg(widgetsBundleId);
                 downlinkMsg = DownlinkMsg.newBuilder()
-                        .addAllWidgetTypeUpdateMsg(Collections.singletonList(widgetTypeUpdateMsg))
+                        .addAllWidgetsBundleUpdateMsg(Collections.singletonList(widgetsBundleUpdateMsg))
                         .build();
                 break;
         }
         return downlinkMsg;
     }
-
 }

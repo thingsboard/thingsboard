@@ -17,14 +17,13 @@ package org.thingsboard.server.service.edge.rpc.processor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
-import org.thingsboard.server.common.data.id.WidgetsBundleId;
-import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.gen.edge.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.DownlinkMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
-import org.thingsboard.server.gen.edge.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.Collections;
@@ -32,28 +31,28 @@ import java.util.Collections;
 @Component
 @Slf4j
 @TbCoreComponent
-public class WidgetBundleProcessor extends BaseProcessor {
+public class CustomerEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg processWidgetsBundleToEdge(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType edgeEdgeEventActionType) {
-        WidgetsBundleId widgetsBundleId = new WidgetsBundleId(edgeEvent.getEntityId());
+    public DownlinkMsg processCustomerToEdge(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType action) {
+        CustomerId customerId = new CustomerId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        switch (edgeEdgeEventActionType) {
+        switch (action) {
             case ADDED:
             case UPDATED:
-                WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleById(edgeEvent.getTenantId(), widgetsBundleId);
-                if (widgetsBundle != null) {
-                    WidgetsBundleUpdateMsg widgetsBundleUpdateMsg =
-                            widgetsBundleMsgConstructor.constructWidgetsBundleUpdateMsg(msgType, widgetsBundle);
+                Customer customer = customerService.findCustomerById(edgeEvent.getTenantId(), customerId);
+                if (customer != null) {
+                    CustomerUpdateMsg customerUpdateMsg =
+                            customerMsgConstructor.constructCustomerUpdatedMsg(msgType, customer);
                     downlinkMsg = DownlinkMsg.newBuilder()
-                            .addAllWidgetsBundleUpdateMsg(Collections.singletonList(widgetsBundleUpdateMsg))
+                            .addAllCustomerUpdateMsg(Collections.singletonList(customerUpdateMsg))
                             .build();
                 }
                 break;
             case DELETED:
-                WidgetsBundleUpdateMsg widgetsBundleUpdateMsg =
-                        widgetsBundleMsgConstructor.constructWidgetsBundleDeleteMsg(widgetsBundleId);
+                CustomerUpdateMsg customerUpdateMsg =
+                        customerMsgConstructor.constructCustomerDeleteMsg(customerId);
                 downlinkMsg = DownlinkMsg.newBuilder()
-                        .addAllWidgetsBundleUpdateMsg(Collections.singletonList(widgetsBundleUpdateMsg))
+                        .addAllCustomerUpdateMsg(Collections.singletonList(customerUpdateMsg))
                         .build();
                 break;
         }

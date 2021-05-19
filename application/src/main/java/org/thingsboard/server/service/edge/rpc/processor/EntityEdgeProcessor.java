@@ -34,7 +34,7 @@ import java.util.Collections;
 @Component
 @Slf4j
 @TbCoreComponent
-public class EntityProcessor extends BaseProcessor {
+public class EntityEdgeProcessor extends BaseEdgeProcessor {
 
     public DownlinkMsg processEntityMergeRequestMessageToEdge(Edge edge, EdgeEvent edgeEvent) {
         DownlinkMsg downlinkMsg = null;

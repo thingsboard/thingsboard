@@ -73,7 +73,7 @@ import java.util.UUID;
 @Component
 @Slf4j
 @TbCoreComponent
-public class TelemetryProcessor extends BaseProcessor {
+public class TelemetryEdgeProcessor extends BaseEdgeProcessor {
 
     private final Gson gson = new Gson();
 

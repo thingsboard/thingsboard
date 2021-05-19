@@ -17,11 +17,13 @@ package org.thingsboard.server.service.edge.rpc.processor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.gen.edge.CustomerUpdateMsg;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.gen.edge.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.DownlinkMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -31,28 +33,36 @@ import java.util.Collections;
 @Component
 @Slf4j
 @TbCoreComponent
-public class CustomerProcessor extends BaseProcessor {
+public class DashboardEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg processCustomerToEdge(EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType action) {
-        CustomerId customerId = new CustomerId(edgeEvent.getEntityId());
+    public DownlinkMsg processDashboardToEdge(Edge edge, EdgeEvent edgeEvent, UpdateMsgType msgType, EdgeEventActionType action) {
+        DashboardId dashboardId = new DashboardId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (action) {
             case ADDED:
             case UPDATED:
-                Customer customer = customerService.findCustomerById(edgeEvent.getTenantId(), customerId);
-                if (customer != null) {
-                    CustomerUpdateMsg customerUpdateMsg =
-                            customerMsgConstructor.constructCustomerUpdatedMsg(msgType, customer);
+            case ASSIGNED_TO_EDGE:
+            case ASSIGNED_TO_CUSTOMER:
+            case UNASSIGNED_FROM_CUSTOMER:
+                Dashboard dashboard = dashboardService.findDashboardById(edgeEvent.getTenantId(), dashboardId);
+                if (dashboard != null) {
+                    CustomerId customerId = null;
+                    if (!edge.getCustomerId().isNullUid() && dashboard.isAssignedToCustomer(edge.getCustomerId())) {
+                        customerId = edge.getCustomerId();
+                    }
+                    DashboardUpdateMsg dashboardUpdateMsg =
+                            dashboardMsgConstructor.constructDashboardUpdatedMsg(msgType, dashboard, customerId);
                     downlinkMsg = DownlinkMsg.newBuilder()
-                            .addAllCustomerUpdateMsg(Collections.singletonList(customerUpdateMsg))
+                            .addAllDashboardUpdateMsg(Collections.singletonList(dashboardUpdateMsg))
                             .build();
                 }
                 break;
             case DELETED:
-                CustomerUpdateMsg customerUpdateMsg =
-                        customerMsgConstructor.constructCustomerDeleteMsg(customerId);
+            case UNASSIGNED_FROM_EDGE:
+                DashboardUpdateMsg dashboardUpdateMsg =
+                        dashboardMsgConstructor.constructDashboardDeleteMsg(dashboardId);
                 downlinkMsg = DownlinkMsg.newBuilder()
-                        .addAllCustomerUpdateMsg(Collections.singletonList(customerUpdateMsg))
+                        .addAllDashboardUpdateMsg(Collections.singletonList(dashboardUpdateMsg))
                         .build();
                 break;
         }
