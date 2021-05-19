@@ -1027,11 +1027,14 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       this.forceDashboardMobileMode = true;
       this.isEditingWidget = true;
       if (layoutCtx) {
-        const delayOffset = transition ? 350 : 0;
         const delay = transition ? 400 : 300;
-        setTimeout(() => {
+        if (transition) {
+          setTimeout(() => {
+            layoutCtx.ctrl.highlightWidget(widget.id, delay);
+          }, 350);
+        } else {
           layoutCtx.ctrl.highlightWidget(widget.id, delay);
-        }, delayOffset);
+        }
       }
     }
   }
