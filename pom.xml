@@ -52,11 +52,11 @@
         <logback.version>1.2.3</logback.version>
         <mockito.version>3.3.3</mockito.version>
         <rat.version>0.10</rat.version>
-        <cassandra.version>4.10.0</cassandra.version>
+        <cassandra.version>4.11.1</cassandra.version>
         <metrics.version>4.0.5</metrics.version>
         <cassandra-unit.version>4.3.1.0</cassandra-unit.version>
-        <cassandra-all.version>3.11.10</cassandra-all.version>
-        <cassandra-driver-core.version>3.11.0</cassandra-driver-core.version>
+        <cassandra-all.version>4.0-rc1</cassandra-all.version>
+        <cassandra-driver-core.version>4.0.0</cassandra-driver-core.version>
         <takari-cpsuite.version>1.2.7</takari-cpsuite.version>
         <guava.version>28.2-jre</guava.version>
         <caffeine.version>2.6.1</caffeine.version>

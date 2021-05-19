@@ -274,9 +274,6 @@ start_native_transport: true
 # port for the CQL native transport to listen for clients on
 native_transport_port: 9142
 
-# Whether to start the thrift rpc server.
-start_rpc: false
-
 # Address to broadcast to other Cassandra nodes
 # Leaving this blank will set it to the same value as listen_address
 # broadcast_address: 1.2.3.4
@@ -288,58 +285,9 @@ start_rpc: false
 # Leaving this blank has the same effect it does for ListenAddress,
 # (i.e. it will be based on the configured hostname of the node).
 rpc_address: localhost
-# port for Thrift to listen for clients on
-rpc_port: 9171
 
 # enable or disable keepalive on rpc connections
 rpc_keepalive: true
-
-# Cassandra provides three options for the RPC Server:
-#
-# sync  -> One connection per thread in the rpc pool (see below).
-#          For a very large number of clients, memory will be your limiting
-#          factor; on a 64 bit JVM, 128KB is the minimum stack size per thread.
-#          Connection pooling is very, very strongly recommended.
-#
-# async -> Nonblocking server implementation with one thread to serve
-#          rpc connections.  This is not recommended for high throughput use
-#          cases. Async has been tested to be about 50% slower than sync
-#          or hsha and is deprecated: it will be removed in the next major release.
-#
-# hsha  -> Stands for "half synchronous, half asynchronous." The rpc thread pool
-#          (see below) is used to manage requests, but the threads are multiplexed
-#          across the different clients.
-#
-# The default is sync because on Windows hsha is about 30% slower.  On Linux,
-# sync/hsha performance is about the same, with hsha of course using less memory.
-rpc_server_type: sync
-
-# Uncomment rpc_min|max|thread to set request pool size.
-# You would primarily set max for the sync server to safeguard against
-# misbehaved clients; if you do hit the max, Cassandra will block until one
-# disconnects before accepting more.  The defaults for sync are min of 16 and max
-# unlimited.
-#
-# For the Hsha server, the min and max both default to quadruple the number of
-# CPU cores.
-#
-# This configuration is ignored by the async server.
-#
-# rpc_min_threads: 16
-# rpc_max_threads: 2048
-
-# uncomment to set socket buffer sizes on rpc connections
-# rpc_send_buff_size_in_bytes:
-# rpc_recv_buff_size_in_bytes:
-
-# Frame size for thrift (maximum field length).
-# 0 disables TFramedTransport in favor of TSocket. This option
-# is deprecated; we strongly recommend using Framed mode.
-thrift_framed_transport_size_in_mb: 15
-
-# The max length of a thrift message, including all fields and
-# internal thrift overhead.
-thrift_max_message_length_in_mb: 16
 
 # Set to true to have Cassandra create a hard link to each sstable
 # flushed or streamed locally in a backups/ subdirectory of the
@@ -512,58 +460,6 @@ dynamic_snitch_reset_interval_in_ms: 600000
 # 0.2 means Cassandra would continue to prefer the static snitch values
 # until the pinned host was 20% worse than the fastest.
 dynamic_snitch_badness_threshold: 0.1
-
-# request_scheduler -- Set this to a class that implements
-# RequestScheduler, which will schedule incoming client requests
-# according to the specific policy. This is useful for multi-tenancy
-# with a single Cassandra cluster.
-# NOTE: This is specifically for requests from the client and does
-# not affect inter node communication.
-# org.apache.cassandra.scheduler.NoScheduler - No scheduling takes place
-# org.apache.cassandra.scheduler.RoundRobinScheduler - Round robin of
-# client requests to a node with a separate queue for each
-# request_scheduler_id. The scheduler is further customized by
-# request_scheduler_options as described below.
-request_scheduler: org.apache.cassandra.scheduler.NoScheduler
-
-# Scheduler Options vary based on the type of scheduler
-# NoScheduler - Has no options
-# RoundRobin
-#  - throttle_limit -- The throttle_limit is the number of in-flight
-#                      requests per client.  Requests beyond
-#                      that limit are queued up until
-#                      running requests can complete.
-#                      The value of 80 here is twice the number of
-#                      concurrent_reads + concurrent_writes.
-#  - default_weight -- default_weight is optional and allows for
-#                      overriding the default which is 1.
-#  - weights -- Weights are optional and will default to 1 or the
-#               overridden default_weight. The weight translates into how
-#               many requests are handled during each turn of the
-#               RoundRobin, based on the scheduler id.
-#
-# request_scheduler_options:
-#    throttle_limit: 80
-#    default_weight: 5
-#    weights:
-#      Keyspace1: 1
-#      Keyspace2: 5
-
-# request_scheduler_id -- An identifer based on which to perform
-# the request scheduling. Currently the only valid option is keyspace.
-# request_scheduler_id: keyspace
-
-# index_interval controls the sampling of entries from the primrary
-# row index in terms of space versus time.  The larger the interval,
-# the smaller and less effective the sampling will be.  In technicial
-# terms, the interval coresponds to the number of index entries that
-# are skipped between taking each sample.  All the sampled entries
-# must fit in memory.  Generally, a value between 128 and 512 here
-# coupled with a large key cache size on CFs results in the best trade
-# offs.  This value is not often changed, however if you have many
-# very small rows (many to an OS page), then increasing this will
-# often lower memory usage without a impact on performance.
-index_interval: 128
 
 # Enable or disable inter-node encryption
 # Default settings are TLS v1, RSA 1024-bit keys (it is imperative that
