@@ -85,7 +85,6 @@ import java.util.stream.Collectors;
 import static org.eclipse.californium.core.coap.CoAP.ResponseCode.BAD_REQUEST;
 import static org.eclipse.leshan.core.attributes.Attribute.OBJECT_VERSION;
 import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.DOWNLOADED;
-import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.FAILED;
 import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.UPDATING;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper.getValueFromKvProto;
@@ -763,8 +762,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                 } else if (UPDATING.name().equals(lwM2MClient.getSwUpdate().getStateUpdate())
                         && lwM2MClient.getSwUpdate().conditionalSwExecuteAfterSuccess()) {
                     lwM2MClient.getSwUpdate().finishFwSwUpdate(true);
-                } else if ((UPDATING.name().equals(lwM2MClient.getSwUpdate().getStateUpdate())
-                        || FAILED.name().equals(lwM2MClient.getSwUpdate().getStateUpdate()))
+                } else if (UPDATING.name().equals(lwM2MClient.getSwUpdate().getStateUpdate())
                         && lwM2MClient.getSwUpdate().conditionalSwExecuteAfterError()) {
                     lwM2MClient.getSwUpdate().finishFwSwUpdate(false);
                 }

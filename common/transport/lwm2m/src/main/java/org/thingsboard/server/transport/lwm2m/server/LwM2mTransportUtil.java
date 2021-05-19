@@ -209,8 +209,13 @@ public class LwM2mTransportUtil {
         DELETE(10, "Delete"),
 
         // only for RPC
-        READ_INFO_FW(11, "ReadInfoFirmware"),
-        READ_INFO_SW(12, "ReadInfoSoftware");
+        FW_READ_INFO(11, "FirmwareReadInfo"),
+        FW_UPDATE(12, "FirmwareUpdate"),
+        FW_UPDATE_URL(14, "FirmwareUpdateUrl"),
+        SW_READ_INFO(15, "SoftwareReadInfo"),
+        SW_UPDATE(16, "SoftwareUpdate"),
+        SW_UPDATE_URL(17, "SoftwareUpdateUrl"),
+        SW_UNINSTALL(18, "SoftwareUninstall");
 
         public int code;
         public String type;
