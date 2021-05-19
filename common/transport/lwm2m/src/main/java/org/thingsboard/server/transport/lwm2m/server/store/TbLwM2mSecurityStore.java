@@ -70,7 +70,7 @@ public class TbLwM2mSecurityStore implements EditableSecurityStore {
                     add(securityInfo);
                 }
             } catch (NonUniqueSecurityInfoException e) {
-                log.warn("Failed to add security info: {}", securityInfo, e);
+                log.trace("Failed to add security info: {}", securityInfo, e);
             }
         }
         return securityInfo;
@@ -86,7 +86,7 @@ public class TbLwM2mSecurityStore implements EditableSecurityStore {
                     add(securityInfo);
                 }
             } catch (NonUniqueSecurityInfoException e) {
-                log.warn("Failed to add security info: {}", securityInfo, e);
+                log.trace("Failed to add security info: {}", securityInfo, e);
             }
         }
         return securityInfo;

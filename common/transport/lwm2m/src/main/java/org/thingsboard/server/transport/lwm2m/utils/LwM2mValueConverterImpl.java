@@ -121,9 +121,11 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                         /** let's assume we received an ISO 8601 format date */
                         try {
                             return new Date(Long.decode(value.toString()));
-//                            DatatypeFactory datatypeFactory = DatatypeFactory.newInstance();
-//                            XMLGregorianCalendar cal = datatypeFactory.newXMLGregorianCalendar((String) value);
-//                            return cal.toGregorianCalendar().getTime();
+                            /**
+                            DatatypeFactory datatypeFactory = DatatypeFactory.newInstance();
+                            XMLGregorianCalendar cal = datatypeFactory.newXMLGregorianCalendar((String) value);
+                            return cal.toGregorianCalendar().getTime();
+                             **/
                         } catch (IllegalArgumentException e) {
                             log.debug("Unable to convert string to date", e);
                             throw new CodecException("Unable to convert string (%s) to date for resource %s", value,

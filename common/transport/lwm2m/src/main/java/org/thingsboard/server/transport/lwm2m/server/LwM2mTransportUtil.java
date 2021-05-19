@@ -104,7 +104,8 @@ public class LwM2mTransportUtil {
 
     public static final long DEFAULT_TIMEOUT = 2 * 60 * 1000L; // 2min in ms
 
-    public static final String LOG_LW2M_TELEMETRY = "logLwm2m";
+    public static final String
+            LOG_LW2M_TELEMETRY = "logLwm2m";
     public static final String LOG_LW2M_INFO = "info";
     public static final String LOG_LW2M_ERROR = "error";
     public static final String LOG_LW2M_WARN = "warn";
@@ -208,8 +209,13 @@ public class LwM2mTransportUtil {
         DELETE(10, "Delete"),
 
         // only for RPC
-        READ_INFO_FW(11, "ReadInfoFirmware"),
-        READ_INFO_SW(12, "ReadInfoSoftware");
+        FW_READ_INFO(11, "FirmwareReadInfo"),
+        FW_UPDATE(12, "FirmwareUpdate"),
+        FW_UPDATE_URL(14, "FirmwareUpdateUrl"),
+        SW_READ_INFO(15, "SoftwareReadInfo"),
+        SW_UPDATE(16, "SoftwareUpdate"),
+        SW_UPDATE_URL(17, "SoftwareUpdateUrl"),
+        SW_UNINSTALL(18, "SoftwareUninstall");
 
         public int code;
         public String type;
@@ -357,7 +363,7 @@ public class LwM2mTransportUtil {
     }
 
     /**
-     * Update State R
+     * SW Update State R
      * 0: INITIAL Before downloading. (see 5.1.2.1)
      * 1: DOWNLOAD STARTED The downloading process has started and is on-going. (see 5.1.2.2)
      * 2: DOWNLOADED The package has been completely downloaded  (see 5.1.2.3)
@@ -429,7 +435,7 @@ public class LwM2mTransportUtil {
         INITIAL(0, "Initial value", false),
         DOWNLOADING(1, "Downloading", false),
         SUCCESSFULLY_INSTALLED(2, "Software successfully installed", false),
-        SUCCESSFULLY_INSTALLED_VERIFIED(3, "Successfully Downloaded and package integrity verified", false),
+        SUCCESSFULLY_DOWNLOADED_VERIFIED(3, "Successfully Downloaded and package integrity verified", false),
         NOT_ENOUGH_STORAGE(50, "Not enough storage for the new software package", true),
         OUT_OFF_MEMORY(51, "Out of memory during downloading process", true),
         CONNECTION_LOST(52, "Connection lost during downloading process", false),
@@ -489,7 +495,7 @@ public class LwM2mTransportUtil {
                 return DOWNLOADING;
             case SUCCESSFULLY_INSTALLED:
                 return UPDATED;
-            case SUCCESSFULLY_INSTALLED_VERIFIED:
+            case SUCCESSFULLY_DOWNLOADED_VERIFIED:
                 return VERIFIED;
             case NOT_ENOUGH_STORAGE:
             case OUT_OFF_MEMORY:
@@ -507,7 +513,9 @@ public class LwM2mTransportUtil {
     }
 
     public static final String EVENT_AWAKE = "AWAKE";
+    public static final String RESPONSE_REQUEST_CHANNEL = "RESP_REQ";
     public static final String RESPONSE_CHANNEL = "RESP";
+    public static final String OBSERVE_CHANNEL = "OBSERVE";
 
     public static boolean equalsResourceValue(Object valueOld, Object valueNew, ResourceModel.Type type, LwM2mPath
             resourcePath) throws CodecException {
