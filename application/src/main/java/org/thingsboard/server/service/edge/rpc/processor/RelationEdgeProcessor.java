@@ -15,18 +15,24 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
@@ -37,9 +43,14 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.gen.edge.DownlinkMsg;
 import org.thingsboard.server.gen.edge.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -112,4 +123,43 @@ public class RelationEdgeProcessor extends BaseEdgeProcessor {
                 .build();
     }
 
+    public void processRelationNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) throws JsonProcessingException {
+        EntityRelation relation = mapper.readValue(edgeNotificationMsg.getBody(), EntityRelation.class);
+        if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
+                !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
+            List<ListenableFuture<List<EdgeId>>> futures = new ArrayList<>();
+            futures.add(edgeService.findRelatedEdgeIdsByEntityId(tenantId, relation.getTo()));
+            futures.add(edgeService.findRelatedEdgeIdsByEntityId(tenantId, relation.getFrom()));
+            ListenableFuture<List<List<EdgeId>>> combinedFuture = Futures.allAsList(futures);
+            Futures.addCallback(combinedFuture, new FutureCallback<List<List<EdgeId>>>() {
+                @Override
+                public void onSuccess(@Nullable List<List<EdgeId>> listOfListsEdgeIds) {
+                    Set<EdgeId> uniqueEdgeIds = new HashSet<>();
+                    if (listOfListsEdgeIds != null && !listOfListsEdgeIds.isEmpty()) {
+                        for (List<EdgeId> listOfListsEdgeId : listOfListsEdgeIds) {
+                            if (listOfListsEdgeId != null) {
+                                uniqueEdgeIds.addAll(listOfListsEdgeId);
+                            }
+                        }
+                    }
+                    if (!uniqueEdgeIds.isEmpty()) {
+                        for (EdgeId edgeId : uniqueEdgeIds) {
+                            saveEdgeEvent(tenantId,
+                                    edgeId,
+                                    EdgeEventType.RELATION,
+                                    EdgeEventActionType.valueOf(edgeNotificationMsg.getAction()),
+                                    null,
+                                    mapper.valueToTree(relation));
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    log.warn("[{}] can't find related edge ids by relation to id [{}] and relation from id [{}]" ,
+                            tenantId.getId(), relation.getTo().getId(), relation.getFrom().getId(), t);
+                }
+            }, dbCallbackExecutorService);
+        }
+    }
 }

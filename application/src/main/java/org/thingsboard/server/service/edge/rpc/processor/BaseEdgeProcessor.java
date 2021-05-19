@@ -72,6 +72,8 @@ public abstract class BaseEdgeProcessor {
 
     protected static final ObjectMapper mapper = new ObjectMapper();
 
+    protected static final int DEFAULT_LIMIT = 100;
+
     @Autowired
     protected RuleChainService ruleChainService;
 

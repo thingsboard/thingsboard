@@ -15,25 +15,34 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor;
 
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.DownlinkMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
 @Component
 @Slf4j
@@ -119,4 +128,46 @@ public class AlarmEdgeProcessor extends BaseEdgeProcessor {
         }
         return downlinkMsg;
     }
+
+    public void processAlarmNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
+        AlarmId alarmId = new AlarmId(new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
+        ListenableFuture<Alarm> alarmFuture = alarmService.findAlarmByIdAsync(tenantId, alarmId);
+        Futures.addCallback(alarmFuture, new FutureCallback<Alarm>() {
+            @Override
+            public void onSuccess(@Nullable Alarm alarm) {
+                if (alarm != null) {
+                    EdgeEventType type = EdgeUtils.getEdgeEventTypeByEntityType(alarm.getOriginator().getEntityType());
+                    if (type != null) {
+                        ListenableFuture<List<EdgeId>> relatedEdgeIdsByEntityIdFuture = edgeService.findRelatedEdgeIdsByEntityId(tenantId, alarm.getOriginator());
+                        Futures.addCallback(relatedEdgeIdsByEntityIdFuture, new FutureCallback<List<EdgeId>>() {
+                            @Override
+                            public void onSuccess(@Nullable List<EdgeId> relatedEdgeIdsByEntityId) {
+                                if (relatedEdgeIdsByEntityId != null) {
+                                    for (EdgeId edgeId : relatedEdgeIdsByEntityId) {
+                                        saveEdgeEvent(tenantId,
+                                                edgeId,
+                                                EdgeEventType.ALARM,
+                                                EdgeEventActionType.valueOf(edgeNotificationMsg.getAction()),
+                                                alarmId,
+                                                null);
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(Throwable t) {
+                                log.warn("[{}] can't find related edge ids by entity id [{}]", tenantId.getId(), alarm.getOriginator(), t);
+                            }
+                        }, dbCallbackExecutorService);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("[{}] can't find alarm by id [{}]", tenantId.getId(), alarmId.getId(), t);
+            }
+        }, dbCallbackExecutorService);
+    }
+
 }
