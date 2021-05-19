@@ -79,6 +79,8 @@ public class EdgeImitator {
     @Getter
     private List<AbstractMessage> downlinkMsgs;
 
+    private boolean connected = false;
+
     public EdgeImitator(String host, int port, String routingKey, String routingSecret) throws NoSuchFieldException, IllegalAccessException {
         edgeRpcClient = new EdgeGrpcClient();
         messagesLatch = new CountDownLatch(0);
@@ -100,6 +102,7 @@ public class EdgeImitator {
     }
 
     public void connect() {
+        connected = true;
         edgeRpcClient.connect(routingKey, routingSecret,
                 this::onUplinkResponse,
                 this::onEdgeUpdate,
@@ -110,6 +113,7 @@ public class EdgeImitator {
     }
 
     public void disconnect() throws InterruptedException {
+        connected = false;
         edgeRpcClient.disconnect(false);
     }
 
@@ -131,14 +135,18 @@ public class EdgeImitator {
         Futures.addCallback(future, new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable List<Void> result) {
-                DownlinkResponseMsg downlinkResponseMsg = DownlinkResponseMsg.newBuilder().setSuccess(true).build();
-                edgeRpcClient.sendDownlinkResponseMsg(downlinkResponseMsg);
+                if (connected) {
+                    DownlinkResponseMsg downlinkResponseMsg = DownlinkResponseMsg.newBuilder().setSuccess(true).build();
+                    edgeRpcClient.sendDownlinkResponseMsg(downlinkResponseMsg);
+                }
             }
 
             @Override
             public void onFailure(Throwable t) {
-                DownlinkResponseMsg downlinkResponseMsg = DownlinkResponseMsg.newBuilder().setSuccess(false).setErrorMsg(t.getMessage()).build();
-                edgeRpcClient.sendDownlinkResponseMsg(downlinkResponseMsg);
+                if (connected) {
+                    DownlinkResponseMsg downlinkResponseMsg = DownlinkResponseMsg.newBuilder().setSuccess(false).setErrorMsg(t.getMessage()).build();
+                    edgeRpcClient.sendDownlinkResponseMsg(downlinkResponseMsg);
+                }
             }
         }, MoreExecutors.directExecutor());
     }
