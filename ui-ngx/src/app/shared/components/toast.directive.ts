@@ -356,7 +356,8 @@ export class TbSnackBarComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  action(): void {
+  action(event): void {
+    event.stopPropagation();
     if (this.snackBarRef) {
       this.snackBarRef.dismissWithAction();
     } else {
