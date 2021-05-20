@@ -256,7 +256,6 @@ import {
   animate,
 } from '@angular/animations';
 import { onParentScrollOrWindowResize } from '@core/utils';
-import ClickEvent = JQuery.ClickEvent;
 
 export const toastAnimations: {
   readonly showHideToast: AnimationTriggerMetadata;
