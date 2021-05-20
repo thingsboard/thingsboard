@@ -84,6 +84,7 @@ import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -393,6 +394,7 @@ public final class EdgeGrpcSession implements Closeable {
         return edgeEvents
                 .stream()
                 .map(this::convertToDownlinkMsg)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
