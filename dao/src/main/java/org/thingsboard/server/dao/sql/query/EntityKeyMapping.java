@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 package org.thingsboard.server.dao.sql.query;
 
 import lombok.Data;
-import org.springframework.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
+import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityFilter;
@@ -41,7 +42,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -243,22 +243,21 @@ public class EntityKeyMapping {
         } else {
             entityTypeStr = "'" + entityType.name() + "'";
         }
-        ctx.addStringParameter(alias + "_key_id", entityKey.getKey());
-        String filterQuery = toQueries(ctx, entityFilter.getType()).filter(Objects::nonNull).collect(
-                Collectors.joining(" and "));
-        if (StringUtils.isEmpty(filterQuery)) {
-            filterQuery = "";
-        } else {
+        ctx.addStringParameter(getKeyId(), entityKey.getKey());
+        String filterQuery = toQueries(ctx, entityFilter.getType())
+                .filter(StringUtils::isNotEmpty)
+                .collect(Collectors.joining(" and "));
+        if (StringUtils.isNotEmpty(filterQuery)) {
             filterQuery = " AND (" + filterQuery + ")";
         }
         if (entityKey.getType().equals(EntityKeyType.TIME_SERIES)) {
-            String join = hasFilter() ? "inner join" : "left join";
+            String join = (hasFilter() && hasFilterValues(ctx)) ? "inner join" : "left join";
             return String.format("%s ts_kv_latest %s ON %s.entity_id=entities.id AND %s.key = (select key_id from ts_kv_dictionary where key = :%s_key_id) %s",
                     join, alias, alias, alias, alias, filterQuery);
         } else {
             String query;
             if (!entityKey.getType().equals(EntityKeyType.ATTRIBUTE)) {
-                String join = hasFilter() ? "inner join" : "left join";
+                String join = (hasFilter() && hasFilterValues(ctx)) ? "inner join" : "left join";
                 query = String.format("%s attribute_kv %s ON %s.entity_id=entities.id AND %s.entity_type=%s AND %s.attribute_key=:%s_key_id ",
                         join, alias, alias, alias, entityTypeStr, alias, alias);
                 String scope;
@@ -271,7 +270,7 @@ public class EntityKeyMapping {
                 }
                 query = String.format("%s AND %s.attribute_type='%s' %s", query, alias, scope, filterQuery);
             } else {
-                String join = hasFilter() ? "join LATERAL" : "left join LATERAL";
+                String join = (hasFilter() && hasFilterValues(ctx)) ? "join LATERAL" : "left join LATERAL";
                 query = String.format("%s (select * from attribute_kv %s WHERE %s.entity_id=entities.id AND %s.entity_type=%s AND %s.attribute_key=:%s_key_id %s " +
                                 "ORDER BY %s.last_update_ts DESC limit 1) as %s ON true",
                         join, alias, alias, alias, entityTypeStr, alias, alias, filterQuery, alias, alias);
@@ -280,20 +279,33 @@ public class EntityKeyMapping {
         }
     }
 
+    private boolean hasFilterValues(QueryContext ctx) {
+        return Arrays.stream(ctx.getParameterNames()).anyMatch(parameterName -> {
+            return !parameterName.equals(getKeyId()) && parameterName.startsWith(alias);
+        });
+    }
+
+    private String getKeyId() {
+        return alias + "_key_id";
+    }
+
     public static String buildSelections(List<EntityKeyMapping> mappings, EntityFilterType filterType, EntityType entityType) {
         return mappings.stream().map(mapping -> mapping.toSelection(filterType, entityType)).collect(
                 Collectors.joining(", "));
     }
 
     public static String buildLatestJoins(QueryContext ctx, EntityFilter entityFilter, EntityType entityType, List<EntityKeyMapping> latestMappings, boolean countQuery) {
-        return latestMappings.stream().filter(mapping -> !countQuery || mapping.hasFilter())
-                .map(mapping -> mapping.toLatestJoin(ctx, entityFilter, entityType)).collect(
-                        Collectors.joining(" "));
+        return latestMappings.stream()
+                .filter(mapping -> !countQuery || mapping.hasFilter())
+                .map(mapping -> mapping.toLatestJoin(ctx, entityFilter, entityType))
+                .collect(Collectors.joining(" "));
     }
 
     public static String buildQuery(QueryContext ctx, List<EntityKeyMapping> mappings, EntityFilterType filterType) {
-        return mappings.stream().flatMap(mapping -> mapping.toQueries(ctx, filterType)).filter(Objects::nonNull).collect(
-                Collectors.joining(" AND "));
+        return mappings.stream()
+                .flatMap(mapping -> mapping.toQueries(ctx, filterType))
+                .filter(StringUtils::isNotEmpty)
+                .collect(Collectors.joining(" AND "));
     }
 
     public static List<EntityKeyMapping> prepareKeyMapping(EntityDataQuery query) {
@@ -380,6 +392,30 @@ public class EntityKeyMapping {
         return mappings;
     }
 
+    public static List<EntityKeyMapping> prepareEntityCountKeyMapping(EntityCountQuery query) {
+        Map<EntityKey, List<KeyFilter>> filters =
+                query.getKeyFilters() != null ?
+                        query.getKeyFilters().stream().collect(Collectors.groupingBy(KeyFilter::getKey)) : Collections.emptyMap();
+        int index = 2;
+        List<EntityKeyMapping> mappings = new ArrayList<>();
+        if (!filters.isEmpty()) {
+            for (EntityKey filterField : filters.keySet()) {
+                EntityKeyMapping mapping = new EntityKeyMapping();
+                mapping.setIndex(index);
+                mapping.setAlias(String.format("alias%s", index));
+                mapping.setKeyFilters(filters.get(filterField));
+                mapping.setLatest(!filterField.getType().equals(EntityKeyType.ENTITY_FIELD));
+                mapping.setSelection(false);
+                mapping.setEntityKey(filterField);
+                mappings.add(mapping);
+                index += 1;
+            }
+        }
+
+        return mappings;
+    }
+
+
     private String buildAttributeSelection() {
         return buildTimeSeriesOrAttrSelection(true);
     }
@@ -436,9 +472,8 @@ public class EntityKeyMapping {
                                               ComplexFilterPredicate predicate, EntityFilterType filterType) {
         String result = predicate.getPredicates().stream()
                 .map(keyFilterPredicate -> this.buildPredicateQuery(ctx, alias, key, keyFilterPredicate, filterType))
-                .filter(Objects::nonNull).collect(Collectors.joining(
-                        " " + predicate.getOperation().name() + " "
-                ));
+                .filter(StringUtils::isNotEmpty)
+                .collect(Collectors.joining(" " + predicate.getOperation().name() + " "));
         if (!result.trim().isEmpty()) {
             result = "( " + result + " )";
         }
@@ -494,6 +529,9 @@ public class EntityKeyMapping {
         String operationField = field;
         String paramName = getNextParameterName(field);
         String value = stringFilterPredicate.getValue().getValue();
+        if (value.isEmpty()) {
+            return "";
+        }
         String stringOperationQuery = "";
         if (stringFilterPredicate.isIgnoreCase()) {
             value = value.toLowerCase();
@@ -501,30 +539,26 @@ public class EntityKeyMapping {
         }
         switch (stringFilterPredicate.getOperation()) {
             case EQUAL:
-                stringOperationQuery = String.format("%s = :%s) or (%s is null and :%s = '')", operationField, paramName, operationField, paramName);
+                stringOperationQuery = String.format("%s = :%s)", operationField, paramName);
                 break;
             case NOT_EQUAL:
-                stringOperationQuery = String.format("%s != :%s) or (%s is null and :%s != '')", operationField, paramName, operationField, paramName);
+                stringOperationQuery = String.format("%s != :%s or %s is null)", operationField, paramName, operationField);
                 break;
             case STARTS_WITH:
                 value += "%";
-                stringOperationQuery = String.format("%s like :%s) or (%s is null and :%s = '%%')", operationField, paramName, operationField, paramName);
+                stringOperationQuery = String.format("%s like :%s)", operationField, paramName);
                 break;
             case ENDS_WITH:
                 value = "%" + value;
-                stringOperationQuery = String.format("%s like :%s) or (%s is null and :%s = '%%')", operationField, paramName, operationField, paramName);
+                stringOperationQuery = String.format("%s like :%s)", operationField, paramName);
                 break;
             case CONTAINS:
-                if (value.length() > 0) {
-                    value = "%" + value + "%";
-                }
-                stringOperationQuery = String.format("%s like :%s) or (%s is null and :%s = '')", operationField, paramName, operationField, paramName);
+                value = "%" + value + "%";
+                stringOperationQuery = String.format("%s like :%s)", operationField, paramName);
                 break;
             case NOT_CONTAINS:
-                if (value.length() > 0) {
-                    value = "%" + value + "%";
-                }
-                stringOperationQuery = String.format("%s not like :%s) or (%s is null and :%s != '')", operationField, paramName, operationField, paramName);
+                value = "%" + value + "%";
+                stringOperationQuery = String.format("%s not like :%s or %s is null)", operationField, paramName, operationField);
                 break;
         }
         ctx.addStringParameter(paramName, value);

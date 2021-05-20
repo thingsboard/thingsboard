@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ public enum ThingsboardErrorCode {
     BAD_REQUEST_PARAMS(31),
     ITEM_NOT_FOUND(32),
     TOO_MANY_REQUESTS(33),
-    TOO_MANY_UPDATES(34);
+    TOO_MANY_UPDATES(34),
+    SUBSCRIPTION_VIOLATION(40);
 
     private int errorCode;
 

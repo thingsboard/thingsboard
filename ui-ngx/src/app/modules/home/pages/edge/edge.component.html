@@ -1,0 +1,191 @@
+<!--
+
+    Copyright © 2016-2021 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-details-buttons" fxLayout.xs="column">
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'makePublic')"
+          [fxShow]="!isEdit && edgeScope === 'tenant' && !isAssignedToCustomer(entity) && !entity?.customerIsPublic">
+    {{'edge.make-public' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'assignToCustomer')"
+          [fxShow]="!isEdit && edgeScope === 'tenant' && !isAssignedToCustomer(entity)">
+    {{'edge.assign-to-customer' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'unassignFromCustomer')"
+          [fxShow]="!isEdit && (edgeScope === 'customer' || edgeScope === 'tenant') && isAssignedToCustomer(entity)">
+    {{ (entity?.customerIsPublic ? 'edge.make-private' : 'edge.unassign-from-customer') | translate }}
+  </button>
+  <button mat-raised-button color="primary" fxFlex.xs
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'delete')"
+          [fxShow]="!hideDelete() && !isEdit">
+    {{'edge.delete' | translate }}
+  </button>
+  <div fxLayout="row" fxLayout.xs="column">
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'openEdgeAssets')"
+            [fxShow]="!isEdit && edgeScope !== 'customer'">
+      {{'edge.manage-edge-assets' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'openEdgeDevices')"
+            [fxShow]="!isEdit && edgeScope !== 'customer'">
+      {{'edge.manage-edge-devices' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'openEdgeEntityViews')"
+            [fxShow]="!isEdit && edgeScope !== 'customer'">
+      {{'edge.manage-edge-entity-views' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'openEdgeDashboards')"
+            [fxShow]="!isEdit && edgeScope !== 'customer'">
+      {{'edge.manage-edge-dashboards' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'openEdgeRuleChains')"
+            [fxShow]="!isEdit && edgeScope === 'tenant'">
+      {{'edge.manage-edge-rulechains' | translate }}
+    </button>
+  </div>
+  <div fxLayout="row" fxLayout.xs="column">
+    <button mat-raised-button
+            ngxClipboard
+            (cbOnSuccess)="onEdgeIdCopied($event)"
+            [cbContent]="entity?.id?.id"
+            [fxShow]="!isEdit">
+      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      <span translate>edge.copy-id</span>
+    </button>
+    <button mat-raised-button
+            ngxClipboard
+            (cbOnSuccess)="onEdgeInfoCopied('key')"
+            [cbContent]="entity?.routingKey"
+            [fxShow]="!isEdit && edgeScope !== 'customer_user'">
+      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      <span translate>edge.copy-edge-key</span>
+    </button>
+    <button mat-raised-button
+            ngxClipboard
+            (cbOnSuccess)="onEdgeInfoCopied('secret')"
+            [cbContent]="entity?.secret"
+            [fxShow]="!isEdit && edgeScope !== 'customer_user'">
+      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      <span translate>edge.copy-edge-secret</span>
+    </button>
+    <button mat-raised-button
+            ngxClipboard
+            [disabled]="(isLoading$ | async)"
+            (click)="onEntityAction($event, 'syncEdge')"
+            [fxShow]="!isEdit && edgeScope !== 'customer_user'">
+      <mat-icon svgIcon="mdi:sync"></mat-icon>
+      <span translate>edge.sync</span>
+    </button>
+  </div>
+</div>
+<div class="mat-padding" fxLayout="column">
+  <mat-form-field class="mat-block"
+                  [fxShow]="!isEdit && isAssignedToCustomer(entity)
+                              && !entity?.customerIsPublic && edgeScope === 'tenant'">
+    <mat-label translate>edge.assignedToCustomer</mat-label>
+    <input matInput disabled [ngModel]="entity?.customerTitle">
+  </mat-form-field>
+  <div class="tb-small" style="padding-bottom: 10px; padding-left: 2px;"
+       [fxShow]="!isEdit && entity?.customerIsPublic && edgeScope === 'tenant'">
+    {{ 'edge.edge-public' | translate }}
+  </div>
+  <form [formGroup]="entityForm">
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
+      <mat-form-field class="mat-block">
+        <mat-label translate>edge.name</mat-label>
+        <input matInput formControlName="name" required>
+        <mat-error *ngIf="entityForm.get('name').hasError('required')">
+          {{ 'edge.name-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <tb-entity-subtype-autocomplete
+        formControlName="type"
+        [required]="true"
+        [entityType]="entityType.EDGE">
+      </tb-entity-subtype-autocomplete>
+      <div [fxShow]="edgeScope !== 'customer_user'">
+        <div class="tb-hint" [innerHTML]="'edge.edge-license-key-hint' | translate"></div>
+        <mat-form-field class="mat-block">
+          <mat-label translate>edge.edge-license-key</mat-label>
+          <input matInput formControlName="edgeLicenseKey" required>
+          <mat-error *ngIf="entityForm.get('edgeLicenseKey').hasError('required')">
+            {{ 'edge.edge-license-key-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+      <div [fxShow]="edgeScope !== 'customer_user'">
+        <div translate class="tb-hint">edge.cloud-endpoint-hint</div>
+        <mat-form-field class="mat-block">
+          <mat-label translate>edge.cloud-endpoint</mat-label>
+          <input matInput formControlName="cloudEndpoint" required>
+          <mat-error *ngIf="entityForm.get('cloudEndpoint').hasError('required')">
+            {{ 'edge.cloud-endpoint-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </fieldset>
+    <div fxLayout="row" [fxShow]="edgeScope !== 'customer_user'">
+        <mat-form-field class="mat-block" fxFlex>
+          <mat-label translate>edge.edge-key</mat-label>
+          <input matInput formControlName="routingKey">
+        </mat-form-field>
+      <button mat-button mat-icon-button type="button" ngxClipboard (cbOnSuccess)="onEdgeInfoCopied('key')"
+              [cbContent]="entityForm?.get('routingKey').value"
+              matTooltip="{{'edge.copy-edge-key' | translate}}">
+        <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      </button>
+    </div>
+    <div fxLayout="row" [fxShow]="edgeScope !== 'customer_user'">
+        <mat-form-field class="mat-block" fxFlex>
+          <mat-label translate>edge.edge-secret</mat-label>
+          <input matInput formControlName="secret">
+        </mat-form-field>
+      <button mat-button mat-icon-button type="button" ngxClipboard (cbOnSuccess)="onEdgeInfoCopied('secret')"
+              [cbContent]="entityForm?.get('secret').value"
+              matTooltip="{{'edge.copy-edge-secret' | translate}}">
+        <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      </button>
+    </div>
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
+      <mat-form-field class="mat-block">
+        <mat-label translate>edge.label</mat-label>
+        <input matInput formControlName="label">
+      </mat-form-field>
+      <div formGroupName="additionalInfo" fxLayout="column">
+        <mat-form-field class="mat-block">
+          <mat-label translate>edge.description</mat-label>
+          <textarea matInput formControlName="description" rows="2"></textarea>
+        </mat-form-field>
+      </div>
+    </fieldset>
+  </form>
+</div>

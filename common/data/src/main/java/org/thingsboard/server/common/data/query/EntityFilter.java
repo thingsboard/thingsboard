@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,14 +29,17 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = SingleEntityFilter.class, name = "singleEntity"),
         @JsonSubTypes.Type(value = EntityListFilter.class, name = "entityList"),
         @JsonSubTypes.Type(value = EntityNameFilter.class, name = "entityName"),
+        @JsonSubTypes.Type(value = EntityTypeFilter.class, name = "entityType"),
         @JsonSubTypes.Type(value = AssetTypeFilter.class, name = "assetType"),
         @JsonSubTypes.Type(value = DeviceTypeFilter.class, name = "deviceType"),
+        @JsonSubTypes.Type(value = EdgeTypeFilter.class, name = "edgeType"),
         @JsonSubTypes.Type(value = EntityViewTypeFilter.class, name = "entityViewType"),
         @JsonSubTypes.Type(value = ApiUsageStateFilter.class, name = "apiUsageState"),
         @JsonSubTypes.Type(value = RelationsQueryFilter.class, name = "relationsQuery"),
         @JsonSubTypes.Type(value = AssetSearchQueryFilter.class, name = "assetSearchQuery"),
         @JsonSubTypes.Type(value = DeviceSearchQueryFilter.class, name = "deviceSearchQuery"),
-        @JsonSubTypes.Type(value = EntityViewSearchQueryFilter.class, name = "entityViewSearchQuery")})
+        @JsonSubTypes.Type(value = EntityViewSearchQueryFilter.class, name = "entityViewSearchQuery"),
+        @JsonSubTypes.Type(value = EdgeSearchQueryFilter.class, name = "edgeSearchQuery")})
 public interface EntityFilter {
 
     @JsonIgnore

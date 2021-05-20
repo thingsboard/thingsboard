@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 @EqualsAndHashCode(callSuper = true)
 public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements HasName, HasTenantId, HasCustomerId {
@@ -35,7 +35,9 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
     private CustomerId customerId;
     private String email;
     private Authority authority;
+    @NoXss
     private String firstName;
+    @NoXss
     private String lastName;
 
     public User() {

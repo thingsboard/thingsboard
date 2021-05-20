@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,9 +29,12 @@ import {
 import { EntitiesTableComponent } from '../../components/entity/entities-table.component';
 import { Authority } from '@shared/models/authority.enum';
 import { RuleChainsTableConfigResolver } from '@modules/home/pages/rulechain/rulechains-table-config.resolver';
-import { Observable } from 'rxjs';
+import { from, Observable } from 'rxjs';
 import { BreadCrumbConfig, BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
-import { ResolvedRuleChainMetaData, RuleChain } from '@shared/models/rule-chain.models';
+import {
+  ResolvedRuleChainMetaData,
+  RuleChain, RuleChainType
+} from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleChainPageComponent } from '@home/pages/rulechain/rulechain-page.component';
 import { RuleNodeComponentDescriptor } from '@shared/models/rule-node.models';
@@ -71,7 +74,18 @@ export class RuleNodeComponentsResolver implements Resolve<Array<RuleNodeCompone
   }
 
   resolve(route: ActivatedRouteSnapshot): Observable<Array<RuleNodeComponentDescriptor>> {
-    return this.ruleChainService.getRuleNodeComponents(this.modulesMap);
+    return this.ruleChainService.getRuleNodeComponents(this.modulesMap, route.data.ruleChainType);
+  }
+}
+
+@Injectable()
+export class TooltipsterResolver implements Resolve<any> {
+
+  constructor() {
+  }
+
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
+    return from(import('tooltipster'));
   }
 }
 
@@ -122,7 +136,8 @@ const routes: Routes = [
         component: EntitiesTableComponent,
         data: {
           auth: [Authority.TENANT_ADMIN],
-          title: 'rulechain.rulechains'
+          title: 'rulechain.rulechains',
+          ruleChainsType: 'tenant'
         },
         resolve: {
           entitiesTableConfig: RuleChainsTableConfigResolver
@@ -139,12 +154,14 @@ const routes: Routes = [
           } as BreadCrumbConfig<RuleChainPageComponent>,
           auth: [Authority.TENANT_ADMIN],
           title: 'rulechain.rulechain',
-          import: false
+          import: false,
+          ruleChainType: RuleChainType.CORE
         },
         resolve: {
           ruleChain: RuleChainResolver,
           ruleChainMetaData: ResolvedRuleChainMetaDataResolver,
-          ruleNodeComponents: RuleNodeComponentsResolver
+          ruleNodeComponents: RuleNodeComponentsResolver,
+          tooltipster: TooltipsterResolver
         }
       },
       {
@@ -159,10 +176,12 @@ const routes: Routes = [
           } as BreadCrumbConfig<RuleChainPageComponent>,
           auth: [Authority.TENANT_ADMIN],
           title: 'rulechain.rulechain',
-          import: true
+          import: true,
+          ruleChainType: RuleChainType.CORE
         },
         resolve: {
-          ruleNodeComponents: RuleNodeComponentsResolver
+          ruleNodeComponents: RuleNodeComponentsResolver,
+          tooltipster: TooltipsterResolver
         }
       }
     ]
@@ -178,6 +197,7 @@ const routes: Routes = [
     RuleChainResolver,
     ResolvedRuleChainMetaDataResolver,
     RuleNodeComponentsResolver,
+    TooltipsterResolver,
     RuleChainImportGuard
   ]
 })

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
-import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.SecurityMode;
@@ -24,28 +23,18 @@ import org.eclipse.leshan.core.SecurityMode;
 @Data
 public class LwM2MServerBootstrap {
 
-    @Builder.Default
     String clientPublicKeyOrId = "";
-    @Builder.Default
     String clientSecretKey = "";
-    @Builder.Default
     String serverPublicKey = "";
-    @Builder.Default
     Integer clientHoldOffTime = 1;
-    @Builder.Default
     Integer bootstrapServerAccountTimeout = 0;
 
-    @Builder.Default
     String host = "0.0.0.0";
-    @Builder.Default
     Integer port = 0;
 
-    @Builder.Default
     String securityMode = SecurityMode.NO_SEC.name();
 
-    @Builder.Default
     Integer serverId = 123;
-    @Builder.Default
     boolean bootstrapServerIs = false;
 
     public LwM2MServerBootstrap(){};

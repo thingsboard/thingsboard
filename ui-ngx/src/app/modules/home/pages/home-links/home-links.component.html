@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,23 +15,26 @@
     limitations under the License.
 
 -->
-<mat-grid-list class="tb-home-links" [cols]="cols" rowHeight="280px">
-  <mat-grid-tile [colspan]="sectionColspan(section)" *ngFor="let section of homeSections$| async">
-    <mat-card style="width: 100%;">
-      <mat-card-title>
-        <span translate class="mat-headline">{{section.name}}</span>
-      </mat-card-title>
-      <mat-card-content>
-        <mat-grid-list rowHeight="170px" [cols]="section.places.length">
-          <mat-grid-tile *ngFor="let place of section.places">
-            <a mat-raised-button color="primary" class="tb-card-button" routerLink="{{place.path}}">
-              <mat-icon *ngIf="!place.isMdiIcon" class="material-icons tb-mat-96">{{place.icon}}</mat-icon>
-              <mat-icon *ngIf="place.isMdiIcon" class="tb-mat-96" [svgIcon]="place.icon"></mat-icon>
-              <span translate>{{place.name}}</span>
-            </a>
-          </mat-grid-tile>
-        </mat-grid-list>
-      </mat-card-content>
-    </mat-card>
-  </mat-grid-tile>
-</mat-grid-list>
+<tb-dashboard-page *ngIf="homeDashboard; else homeLinks" [embedded]="true" [dashboard]="homeDashboard" [hideToolbar]="homeDashboard.hideDashboardToolbar"></tb-dashboard-page>
+<ng-template #homeLinks>
+  <mat-grid-list class="tb-home-links" [cols]="cols" rowHeight="280px">
+    <mat-grid-tile [colspan]="sectionColspan(section)" *ngFor="let section of homeSections$| async">
+      <mat-card style="width: 100%;">
+        <mat-card-title>
+          <span translate class="mat-headline">{{section.name}}</span>
+        </mat-card-title>
+        <mat-card-content>
+          <mat-grid-list rowHeight="170px" [cols]="section.places.length">
+            <mat-grid-tile *ngFor="let place of section.places">
+              <a mat-raised-button color="primary" class="tb-card-button" routerLink="{{place.path}}">
+                <mat-icon *ngIf="!place.isMdiIcon" class="material-icons tb-mat-96">{{place.icon}}</mat-icon>
+                <mat-icon *ngIf="place.isMdiIcon" class="tb-mat-96" [svgIcon]="place.icon"></mat-icon>
+                <span translate>{{place.name}}</span>
+              </a>
+            </mat-grid-tile>
+          </mat-grid-list>
+        </mat-card-content>
+      </mat-card>
+    </mat-grid-tile>
+  </mat-grid-list>
+</ng-template>

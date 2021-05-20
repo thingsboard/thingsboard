@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2020 The Thingsboard Authors
+# Copyright © 2016-2021 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ server:
   log_controller_error_stack_trace: "${HTTP_LOG_CONTROLLER_ERROR_STACK_TRACE:false}"
   ws:
     send_timeout: "${TB_SERVER_WS_SEND_TIMEOUT:5000}"
+    ping_timeout: "${TB_SERVER_WS_PING_TIMEOUT:30000}"
     limits:
       # Limit the amount of sessions and subscriptions available on each server. Put values to zero to disable particular limitation
       max_sessions_per_tenant: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SESSIONS_PER_TENANT:0}"
@@ -109,7 +110,7 @@ security:
     # Enable/disable claiming devices, if false -> the device's [claimingAllowed] SERVER_SCOPE attribute must be set to [true] to allow claiming specific device
     allowClaimingByDefault: "${SECURITY_CLAIM_ALLOW_CLAIMING_BY_DEFAULT:true}"
     # Time allowed to claim the device in milliseconds
-    duration: "${SECURITY_CLAIM_DURATION:60000}" # 1 minute, note this value must equal claimDevices.timeToLiveInMinutes value
+    duration: "${SECURITY_CLAIM_DURATION:86400000}" # 1 minute, note this value must equal claimDevices.timeToLiveInMinutes value
   basic:
     enabled: "${SECURITY_BASIC_ENABLED:false}"
   oauth2:
@@ -117,6 +118,16 @@ security:
     loginProcessingUrl: "${SECURITY_OAUTH2_LOGIN_PROCESSING_URL:/login/oauth2/code/}"
     githubMapper:
       emailUrl: "${SECURITY_OAUTH2_GITHUB_MAPPER_EMAIL_URL_KEY:https://api.github.com/user/emails}"
+
+# Usage statistics parameters
+usage:
+  stats:
+    report:
+      enabled: "${USAGE_STATS_REPORT_ENABLED:true}"
+      enabled_per_customer: "${USAGE_STATS_REPORT_PER_CUSTOMER_ENABLED:false}"
+      interval: "${USAGE_STATS_REPORT_INTERVAL:10}"
+    check:
+      cycle: "${USAGE_STATS_CHECK_CYCLE:60000}"
 
 # Dashboard parameters
 dashboard:
@@ -192,8 +203,9 @@ cassandra:
     read_consistency_level: "${CASSANDRA_READ_CONSISTENCY_LEVEL:ONE}"
     write_consistency_level: "${CASSANDRA_WRITE_CONSISTENCY_LEVEL:ONE}"
     default_fetch_size: "${CASSANDRA_DEFAULT_FETCH_SIZE:2000}"
-    # Specify partitioning size for timestamp key-value storage. Example: MINUTES, HOURS, DAYS, MONTHS,INDEFINITE
+    # Specify partitioning size for timestamp key-value storage. Example: MINUTES, HOURS, DAYS, MONTHS, INDEFINITE
     ts_key_value_partitioning: "${TS_KV_PARTITIONING:MONTHS}"
+    ts_key_value_partitions_max_cache_size: "${TS_KV_PARTITIONS_MAX_CACHE_SIZE:100000}"
     ts_key_value_ttl: "${TS_KV_TTL:0}"
     events_ttl: "${TS_EVENTS_TTL:0}"
     # Specify TTL of debug log in seconds. The current value corresponds to one week
@@ -232,6 +244,7 @@ sql:
       batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:100}"
       stats_print_interval_ms: "${SQL_TS_LATEST_BATCH_STATS_PRINT_MS:10000}"
       batch_threads: "${SQL_TS_LATEST_BATCH_THREADS:4}"
+      update_by_latest_ts: "${SQL_TS_UPDATE_BY_LATEST_TIMESTAMP:true}"
     # Specify whether to sort entities before batch update. Should be enabled for cluster mode to avoid deadlocks
     batch_sort: "${SQL_BATCH_SORT:false}"
     # Specify whether to remove null characters from strValue of attributes and timeseries before insert
@@ -256,6 +269,10 @@ sql:
         execution_interval_ms: "${SQL_TTL_EVENTS_EXECUTION_INTERVAL:86400000}" # Number of milliseconds. The current value corresponds to one day
         events_ttl: "${SQL_TTL_EVENTS_EVENTS_TTL:0}" # Number of seconds
         debug_events_ttl: "${SQL_TTL_EVENTS_DEBUG_EVENTS_TTL:604800}" # Number of seconds. The current value corresponds to one week
+      edge_events:
+        enabled: "${SQL_TTL_EDGE_EVENTS_ENABLED:true}"
+        execution_interval_ms: "${SQL_TTL_EDGE_EVENTS_EXECUTION_INTERVAL:86400000}" # Number of milliseconds. The current value corresponds to one day
+        edge_events_ttl: "${SQL_TTL_EDGE_EVENTS_TTL:2628000}" # Number of seconds. The current value corresponds to one month
 
 # Actor system parameters
 actors:
@@ -312,6 +329,9 @@ actors:
 cache:
   # caffeine or redis
   type: "${CACHE_TYPE:caffeine}"
+  attributes:
+    # make sure that if cache.type is 'redis' and cache.attributes.enabled is 'true' that you change 'maxmemory-policy' Redis config property to 'allkeys-lru', 'allkeys-lfu' or 'allkeys-random'
+    enabled: "${CACHE_ATTRIBUTES_ENABLED:true}"
 
 caffeine:
   specs:
@@ -334,8 +354,8 @@ caffeine:
       timeToLiveInMinutes: 1440
       maxSize: 0
     claimDevices:
-      timeToLiveInMinutes: 1
-      maxSize: 0
+      timeToLiveInMinutes: 1440
+      maxSize: 1000
     securitySettings:
       timeToLiveInMinutes: 1440
       maxSize: 0
@@ -343,6 +363,18 @@ caffeine:
       timeToLiveInMinutes: 1440
       maxSize: 0
     deviceProfiles:
+      timeToLiveInMinutes: 1440
+      maxSize: 0
+    attributes:
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
+    tokensOutdatageTime:
+      timeToLiveInMinutes: 20000
+      maxSize: 10000
+    firmwares:
+      timeToLiveInMinutes: 60
+      maxSize: 10
+    edges:
       timeToLiveInMinutes: 1440
       maxSize: 0
 
@@ -417,6 +449,9 @@ spring.resources.chain:
     content:
       enabled: "true"
 
+spring.servlet.multipart.max-file-size: "50MB"
+spring.servlet.multipart.max-request-size: "50MB"
+
 spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: "true"
 spring.jpa.properties.hibernate.order_by.default_null_ordering: "last"
 
@@ -460,6 +495,9 @@ audit-log:
       "alarm": "${AUDIT_LOG_MASK_ALARM:W}"
       "entity_view": "${AUDIT_LOG_MASK_ENTITY_VIEW:W}"
       "device_profile": "${AUDIT_LOG_MASK_DEVICE_PROFILE:W}"
+      "edge": "${AUDIT_LOG_MASK_EDGE:W}"
+      "tb_resource": "${AUDIT_LOG_MASK_RESOURCE:W}"
+      "firmware": "${AUDIT_LOG_MASK_FIRMWARE:W}"
   sink:
     # Type of external sink. possible options: none, elasticsearch
     type: "${AUDIT_LOG_SINK_TYPE:none}"
@@ -488,7 +526,7 @@ js:
   # Built-in JVM JavaScript environment properties
   local:
     # Use Sandboxed (secured) JVM JavaScript environment
-    use_js_sandbox: "${USE_LOCAL_JS_SANDBOX:false}"
+    use_js_sandbox: "${USE_LOCAL_JS_SANDBOX:true}"
     # Specify thread pool size for JavaScript sandbox resource monitor
     monitor_thread_pool_size: "${LOCAL_JS_SANDBOX_MONITOR_THREAD_POOL_SIZE:4}"
     # Maximum CPU time in milliseconds allowed for script execution
@@ -529,6 +567,7 @@ transport:
   http:
     enabled: "${HTTP_ENABLED:true}"
     request_timeout: "${HTTP_REQUEST_TIMEOUT:60000}"
+    max_request_timeout: "${HTTP_MAX_REQUEST_TIMEOUT:300000}"
   # Local MQTT transport parameters
   mqtt:
     # Enable/disable mqtt transport protocol.
@@ -565,74 +604,108 @@ transport:
     bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${COAP_BIND_PORT:5683}"
     timeout: "${COAP_TIMEOUT:10000}"
+    dtls:
+      # Enable/disable DTLS 1.2 support
+      enabled: "${COAP_DTLS_ENABLED:false}"
+      # CoAP DTLS bind address
+      bind_address: "${COAP_DTLS_BIND_ADDRESS:0.0.0.0}"
+      # CoAP DTLS bind port
+      bind_port: "${COAP_DTLS_BIND_PORT:5684}"
+      # Secure mode. Allowed values: NO_AUTH, X509
+      mode: "${COAP_DTLS_SECURE_MODE:NO_AUTH}"
+      # Path to the key store that holds the certificate
+      key_store: "${COAP_DTLS_KEY_STORE:coapserver.jks}"
+      # Password used to access the key store
+      key_store_password: "${COAP_DTLS_KEY_STORE_PASSWORD:server_ks_password}"
+      # Password used to access the key
+      key_password: "${COAP_DTLS_KEY_PASSWORD:server_key_password}"
+      # Key alias
+      key_alias: "${COAP_DTLS_KEY_ALIAS:serveralias}"
+      x509:
+        # Skip certificate validity check for client certificates.
+        skip_validity_check_for_client_cert: "${TB_COAP_X509_DTLS_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
+        dtls_session_inactivity_timeout: "${TB_COAP_X509_DTLS_SESSION_INACTIVITY_TIMEOUT:86400000}"
+        dtls_session_report_timeout: "${TB_COAP_X509_DTLS_SESSION_REPORT_TIMEOUT:1800000}"
   # Local LwM2M transport parameters
   lwm2m:
     # Enable/disable lvm2m transport protocol.
     enabled: "${LWM2M_ENABLED:true}"
-    #   We choose a default timeout a bit higher to the MAX_TRANSMIT_WAIT(62-93s) which is the time from starting to
-    #   send a Confirmable message to the time when an acknowledgement is no longer expected.
-    #   DEFAULT_TIMEOUT = 2 * 60 * 1000l; 2 min in ms
-    timeout: "${LWM2M_TIMEOUT:120000}"
-#    model_path_file: "${LWM2M_MODEL_PATH_FILE:./common/transport/lwm2m/src/main/resources/models/}"
-    model_path_file: "${LWM2M_MODEL_PATH_FILE:}"
-    support_deprecated_ciphers_enable: "${LWM2M_SUPPORT_DEPRECATED_CIPHERS_ENABLED:true}"
-    secure:
-      # Only Certificate_x509:
-      # To get helps about files format and how to generate it, see: https://github.com/eclipse/leshan/wiki/Credential-files-format
-      # Create new X509 Certificates: common/transport/lwm2m/src/main/resources/credentials/shell/lwM2M_credentials.sh
-      key_store_type: "${LWM2M_KEYSTORE_TYPE:JKS}"
-      # key_store_type: "${LWM2M_KEYSTORE_TYPE:PKCS12}"
-#      key_store_path_file: "${KEY_STORE_PATH_FILE:/usr/share/thingsboard/conf/credentials/serverKeyStore.jks}"
-      key_store_path_file: "${KEY_STORE_PATH_FILE:}"
-      key_store_password: "${LWM2M_KEYSTORE_PASSWORD_SERVER:server_ks_password}"
-      root_alias: "${LWM2M_SERVER_ROOT_CA:rootca}"
-      enable_gen_psk_rpk: "${ENABLE_GEN_PSK_RPK:true}"
     server:
+      id: "${LWM2M_SERVER_ID:123}"
       bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
       bind_port: "${LWM2M_BIND_PORT:5685}"
-      bind_port_cert: "${LWM2M_BIND_PORT_CERT:5687}"
-      secure:
-        start_all: "${START_SERVER_ALL:true}"
-        #leshan.core (V1_1)
-        #DTLS security modes:
-        #0: Pre-Shared Key mode
-        #1: Raw Public Key mode
-        #2: Certificate mode X509
-        #3: NoSec mode  *
-        #OMA-TS-LightweightM2M_Core-V1_1_1-20190617-A (add)
-        #4: Certificate mode X509 with EST
-        # If only startAll == false
-        dtls_mode: "${LWM2M_SECURITY_MODE:1}"
-        bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
-        bind_port: "${LWM2M_BIND_PORT_SEC:5686}"
-        bind_port_cert: "${LWM2M_BIND_PORT_SEC_CERT:5688}"
-        # Only RPK: Public & Private Key
-#        create_rpk: "${CREATE_RPK:}"
-        public_x: "${LWM2M_SERVER_PUBLIC_X:405354ea8893471d9296afbc8b020a5c6201b0bb25812a53b849d4480fa5f069}"
-        public_y: "${LWM2M_SERVER_PUBLIC_Y:30c9237e946a3a1692c1cafaa01a238a077f632c99371348337512363f28212b}"
-        private_s: "${LWM2M_SERVER_PRIVATE_S:274671fe40ce937b8a6352cf0a418e8a39e4bf0bb9bf74c910db953c20c73802}"
+      security:
+        bind_address: "${LWM2M_BIND_ADDRESS_SECURITY:0.0.0.0}"
+        bind_port: "${LWM2M_BIND_PORT_SECURITY:5686}"
+        # Only for RPK: Public & Private Key. If the keystore file is missing or not working
+        public_x: "${LWM2M_SERVER_PUBLIC_X:05064b9e6762dd8d8b8a52355d7b4d8b9a3d64e6d2ee277d76c248861353f358}"
+        public_y: "${LWM2M_SERVER_PUBLIC_Y:5eeb1838e4f9e37b31fa347aef5ce3431eb54e0a2506910c5e0298817445721b}"
+        private_encoded: "${LWM2M_SERVER_PRIVATE_ENCODED:308193020100301306072a8648ce3d020106082a8648ce3d030107047930770201010420dc774b309e547ceb48fee547e104ce201a9c48c449dc5414cd04e7f5cf05f67ba00a06082a8648ce3d030107a1440342000405064b9e6762dd8d8b8a52355d7b4d8b9a3d64e6d2ee277d76c248861353f3585eeb1838e4f9e37b31fa347aef5ce3431eb54e0a2506910c5e0298817445721b}"
         # Only Certificate_x509:
         alias: "${LWM2M_KEYSTORE_ALIAS_SERVER:server}"
     bootstrap:
-      enable: "${BOOTSTRAP:true}"
+      enable: "${LWM2M_ENABLED_BS:true}"
+      id: "${LWM2M_SERVER_ID_BS:111}"
       bind_address: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
-      bind_port: "${LWM2M_BIND_PORT_BS:5689}"
-      bind_port_cert: "${LWM2M_BIND_PORT_SER_BS:5691}"
-      secure:
-        start_all: "${START_BOOTSTRAP_ALL:true}"
-        # If only startAll == false
-        dtls_mode: "${LWM2M_SECURITY_MODE_BS:1}"
+      bind_port: "${LWM2M_BIND_PORT_BS:5687}"
+      security:
         bind_address: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
-        bind_port: "${LWM2M_BIND_PORT_SEC_BS:5690}"
-        bind_port_cert: "${LWM2M_BIND_PORT_SEC_CERT_BS:5692}"
-        # Only RPK: Public & Private Key
-        public_x: "${LWM2M_SERVER_PUBLIC_X_BS:993ef2b698c6a9c0c1d8be78b13a9383c0854c7c7c7a504d289b403794648183}"
-        public_y: "${LWM2M_SERVER_PUBLIC_Y_BS:267412d5fc4e5ceb2257cb7fd7f76ebdac2fa9aa100afb162e990074cc0bfaa2}"
-        private_s: "${LWM2M_SERVER_PRIVATE_S_BS:9dbdbb073fc63570693a9aaf1013414e261c571f27e27fc6a8c1c2ad9347875a}"
+        bind_port: "${LWM2M_BIND_PORT_SECURITY_BS:5688}"
+        #  Only for RPK: Public & Private Key. If the keystore file is missing or not working
+        public_x: "${LWM2M_SERVER_PUBLIC_X_BS:5017c87a1c1768264656b3b355434b0def6edb8b9bf166a4762d9930cd730f91}"
+        public_y: "${LWM2M_SERVER_PUBLIC_Y_BS:3fc4e61bcd8901ec27c424114c3e887ed372497f0c2cf85839b8443e76988b34}"
+        private_encoded: "${LWM2M_SERVER_PRIVATE_ENCODED_BS:308193020100301306072a8648ce3d020106082a8648ce3d0301070479307702010104205ecafd90caa7be45c42e1f3f32571632b8409e6e6249d7124f4ba56fab3c8083a00a06082a8648ce3d030107a144034200045017c87a1c1768264656b3b355434b0def6edb8b9bf166a4762d9930cd730f913fc4e61bcd8901ec27c424114c3e887ed372497f0c2cf85839b8443e76988b34}"
         # Only Certificate_x509:
-        alias: "${LWM2M_KEYSTORE_ALIAS_BOOTSTRAP:bootstrap}"
-      # Redis
-    redis_url: "${LWM2M_REDIS_URL:''}"
+        alias: "${LWM2M_KEYSTORE_ALIAS_BS:bootstrap}"
+    security:
+      # Certificate_x509:
+      # To get helps about files format and how to generate it, see: https://github.com/eclipse/leshan/wiki/Credential-files-format
+      # Create new X509 Certificates: common/transport/lwm2m/src/main/resources/credentials/shell/lwM2M_credentials.sh
+      key_store_type: "${LWM2M_KEYSTORE_TYPE:JKS}"
+      # key_store_path_file: "${KEY_STORE_PATH_FILE:/common/transport/lwm2m/src/main/resources/credentials/serverKeyStore.jks"
+      key_store: "${LWM2M_KEY_STORE:lwm2mserver.jks}"
+      key_store_password: "${LWM2M_KEY_STORE_PASSWORD:server_ks_password}"
+      root_alias: "${LWM2M_SERVER_ROOT_CA:rootca}"
+      enable_gen_new_key_psk_rpk: "${ENABLE_GEN_NEW_KEY_PSK_RPK:false}"
+    timeout: "${LWM2M_TIMEOUT:120000}"
+    recommended_ciphers: "${LWM2M_RECOMMENDED_CIPHERS:false}"
+    recommended_supported_groups: "${LWM2M_RECOMMENDED_SUPPORTED_GROUPS:true}"
+    response_pool_size: "${LWM2M_RESPONSE_POOL_SIZE:100}"
+    registered_pool_size: "${LWM2M_REGISTERED_POOL_SIZE:10}"
+    registration_store_pool_size: "${LWM2M_REGISTRATION_STORE_POOL_SIZE:100}"
+    clean_period_in_sec: "${LWM2M_CLEAN_PERIOD_IN_SEC:2}"
+    update_registered_pool_size: "${LWM2M_UPDATE_REGISTERED_POOL_SIZE:10}"
+    un_registered_pool_size: "${LWM2M_UN_REGISTERED_POOL_SIZE:10}"
+    log_max_length: "${LWM2M_LOG_MAX_LENGTH:100}"
+    # Use redis for Security and Registration stores
+    redis.enabled: "${LWM2M_REDIS_ENABLED:false}"
+  snmp:
+    enabled: "${SNMP_ENABLED:true}"
+    response_processing:
+      # parallelism level for executor (workStealingPool) that is responsible for handling responses from SNMP devices
+      parallelism_level: "${SNMP_RESPONSE_PROCESSING_PARALLELISM_LEVEL:20}"
+    # to configure SNMP to work over UDP or TCP
+    underlying_protocol: "${SNMP_UNDERLYING_PROTOCOL:udp}"
+
+# Edges parameters
+edges:
+  enabled: "${EDGES_ENABLED:false}"
+  rpc:
+    port: "${EDGES_RPC_PORT:7070}"
+    client_max_keep_alive_time_sec: "${EDGES_RPC_CLIENT_MAX_KEEP_ALIVE_TIME_SEC:300}"
+    ssl:
+      # Enable/disable SSL support
+      enabled: "${EDGES_RPC_SSL_ENABLED:false}"
+      cert: "${EDGES_RPC_SSL_CERT:certChainFile.pem}"
+      private_key: "${EDGES_RPC_SSL_PRIVATE_KEY:privateKeyFile.pem}"
+  storage:
+    max_read_records_count: "${EDGES_STORAGE_MAX_READ_RECORDS_COUNT:50}"
+    no_read_records_sleep: "${EDGES_NO_READ_RECORDS_SLEEP:1000}"
+    sleep_between_batches: "${EDGES_SLEEP_BETWEEN_BATCHES:1000}"
+  scheduler_pool_size: "${EDGES_SCHEDULER_POOL_SIZE:4}"
+  edge_events_ttl: "${EDGES_EDGE_EVENTS_TTL:0}"
+  state:
+    persistToTelemetry: "${EDGES_PERSIST_STATE_TO_TELEMETRY:false}"
 
 swagger:
   api_path_regex: "${SWAGGER_API_PATH_REGEX:/api.*}"
@@ -659,6 +732,7 @@ queue:
     bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"
     acks: "${TB_KAFKA_ACKS:all}"
     retries: "${TB_KAFKA_RETRIES:1}"
+    compression.type: "${TB_KAFKA_COMPRESSION_TYPE:none}" # none or gzip
     batch.size: "${TB_KAFKA_BATCH_SIZE:16384}"
     linger.ms: "${TB_KAFKA_LINGER_MS:1}"
     buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
@@ -673,13 +747,22 @@ queue:
       sasl.mechanism: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_MECHANISM:PLAIN}"
       sasl.config: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_JAAS_CONFIG:org.apache.kafka.common.security.plain.PlainLoginModule required username=\"CLUSTER_API_KEY\" password=\"CLUSTER_API_SECRET\";}"
       security.protocol: "${TB_QUEUE_KAFKA_CONFLUENT_SECURITY_PROTOCOL:SASL_SSL}"
+    consumer-properties-per-topic:
+      tb_firmware:
+        - key: max.poll.records
+          value: 10
     other:
     topic-properties:
-      rule-engine: "${TB_QUEUE_KAFKA_RE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"
-      core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"
-      transport-api: "${TB_QUEUE_KAFKA_TA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"
-      notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"
-      js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600;partitions:100}"
+      rule-engine: "${TB_QUEUE_KAFKA_RE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      transport-api: "${TB_QUEUE_KAFKA_TA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600;partitions:100;min.insync.replicas:1}"
+      fw-updates: "${TB_QUEUE_KAFKA_FW_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
+    consumer-stats:
+      enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
+      print-interval-ms: "${TB_QUEUE_KAFKA_CONSUMER_STATS_MIN_PRINT_INTERVAL_MS:60000}"
+      kafka-response-timeout-ms: "${TB_QUEUE_KAFKA_CONSUMER_STATS_RESPONSE_TIMEOUT_MS:1000}"
   aws_sqs:
     use_default_credential_provider_chain: "${TB_QUEUE_AWS_SQS_USE_DEFAULT_CREDENTIAL_PROVIDER_CHAIN:false}"
     access_key_id: "${TB_QUEUE_AWS_SQS_ACCESS_KEY_ID:YOUR_KEY}"
@@ -746,6 +829,10 @@ queue:
     poll-interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
     partitions: "${TB_QUEUE_CORE_PARTITIONS:10}"
     pack-processing-timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:2000}"
+    firmware:
+      topic: "${TB_QUEUE_CORE_FW_TOPIC:tb_firmware}"
+      pack-interval-ms: "${TB_QUEUE_CORE_FW_PACK_INTERVAL_MS:60000}"
+      pack-size: "${TB_QUEUE_CORE_FW_PACK_SIZE:100}"
     usage-stats-topic: "${TB_QUEUE_US_TOPIC:tb_usage_stats}"
     stats:
       enabled: "${TB_QUEUE_CORE_STATS_ENABLED:true}"
@@ -823,6 +910,10 @@ queue:
     # For high priority notifications that require minimum latency and processing time
     notifications_topic: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_TOPIC:tb_transport.notifications}"
     poll_interval: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_POLL_INTERVAL_MS:25}"
+
+event:
+  debug:
+    max-symbols: "${TB_MAX_DEBUG_EVENT_SYMBOLS:4096}"
 
 service:
   type: "${TB_SERVICE_TYPE:monolith}" # monolith or tb-core or tb-rule-engine

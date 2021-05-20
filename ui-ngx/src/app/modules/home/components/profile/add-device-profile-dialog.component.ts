@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -48,7 +48,8 @@ import { MatHorizontalStepper } from '@angular/material/stepper';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { deepTrim } from '@core/utils';
-import {ServiceType} from "@shared/models/queue.models";
+import { ServiceType } from '@shared/models/queue.models';
+import { DashboardId } from '@shared/models/id/dashboard-id';
 
 export interface AddDeviceProfileDialogData {
   deviceProfileName: string;
@@ -72,13 +73,13 @@ export class AddDeviceProfileDialogComponent extends
 
   entityType = EntityType;
 
-  deviceProfileTypes = Object.keys(DeviceProfileType);
+  deviceProfileTypes = Object.values(DeviceProfileType);
 
   deviceProfileTypeTranslations = deviceProfileTypeTranslationMap;
 
   deviceTransportTypeHints = deviceTransportTypeHintMap;
 
-  deviceTransportTypes = Object.keys(DeviceTransportType);
+  deviceTransportTypes = Object.values(DeviceTransportType);
 
   deviceTransportTypeTranslations = deviceTransportTypeTranslationMap;
 
@@ -106,7 +107,9 @@ export class AddDeviceProfileDialogComponent extends
       {
         name: [data.deviceProfileName, [Validators.required]],
         type: [DeviceProfileType.DEFAULT, [Validators.required]],
+        image: [null, []],
         defaultRuleChainId: [null, []],
+        defaultDashboardId: [null, []],
         defaultQueueName: ['', []],
         description: ['', []]
       }
@@ -183,6 +186,7 @@ export class AddDeviceProfileDialogComponent extends
       const deviceProfile: DeviceProfile = {
         name: this.deviceProfileDetailsFormGroup.get('name').value,
         type: this.deviceProfileDetailsFormGroup.get('type').value,
+        image: this.deviceProfileDetailsFormGroup.get('image').value,
         transportType: this.transportConfigFormGroup.get('transportType').value,
         provisionType: deviceProvisionConfiguration.type,
         provisionDeviceKey,
@@ -196,6 +200,9 @@ export class AddDeviceProfileDialogComponent extends
       };
       if (this.deviceProfileDetailsFormGroup.get('defaultRuleChainId').value) {
         deviceProfile.defaultRuleChainId = new RuleChainId(this.deviceProfileDetailsFormGroup.get('defaultRuleChainId').value);
+      }
+      if (this.deviceProfileDetailsFormGroup.get('defaultDashboardId').value) {
+        deviceProfile.defaultDashboardId = new DashboardId(this.deviceProfileDetailsFormGroup.get('defaultDashboardId').value);
       }
       this.deviceProfileService.saveDeviceProfile(deepTrim(deviceProfile)).subscribe(
         (savedDeviceProfile) => {

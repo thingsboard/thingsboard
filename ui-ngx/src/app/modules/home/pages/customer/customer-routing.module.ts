@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,9 +24,10 @@ import { CustomersTableConfigResolver } from './customers-table-config.resolver'
 import { DevicesTableConfigResolver } from '@modules/home/pages/device/devices-table-config.resolver';
 import { AssetsTableConfigResolver } from '../asset/assets-table-config.resolver';
 import { DashboardsTableConfigResolver } from '@modules/home/pages/dashboard/dashboards-table-config.resolver';
-import { DashboardPageComponent } from '@home/pages/dashboard/dashboard-page.component';
+import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
 import { BreadCrumbConfig } from '@shared/components/breadcrumb';
 import { dashboardBreadcumbLabelFunction, DashboardResolver } from '@home/pages/dashboard/dashboard-routing.module';
+import { EdgesTableConfigResolver } from '@home/pages/edge/edges-table-config.resolver';
 
 const routes: Routes = [
   {
@@ -94,6 +95,22 @@ const routes: Routes = [
         },
         resolve: {
           entitiesTableConfig: AssetsTableConfigResolver
+        }
+      },
+      {
+        path: ':customerId/edges',
+        component: EntitiesTableComponent,
+        data: {
+          auth: [Authority.TENANT_ADMIN],
+          title: 'customer.edges',
+          edgesType: 'customer',
+          breadcrumb: {
+            label: 'customer.edges',
+            icon: 'router'
+          }
+        },
+        resolve: {
+          entitiesTableConfig: EdgesTableConfigResolver
         }
       },
       {

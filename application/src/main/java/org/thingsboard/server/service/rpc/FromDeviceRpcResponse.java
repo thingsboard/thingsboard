@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import org.thingsboard.rule.engine.api.RpcError;
 
+import java.io.Serializable;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -28,7 +29,7 @@ import java.util.UUID;
  */
 @RequiredArgsConstructor
 @ToString
-public class FromDeviceRpcResponse {
+public class FromDeviceRpcResponse implements Serializable {
     @Getter
     private final UUID id;
     private final String response;

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import { HttpClient } from '@angular/common/http';
 import { TimePageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
-import { DebugEventType, Event, EventType } from '@shared/models/event.models';
+import { DebugEventType, Event, EventType, FilterEventBody } from '@shared/models/event.models';
 
 @Injectable({
   providedIn: 'root'
@@ -38,4 +38,11 @@ export class EventService {
               `${pageLink.toQuery()}&tenantId=${tenantId}`,
       defaultHttpOptionsFromConfig(config));
   }
+
+  public getFilterEvents(entityId: EntityId, eventType: EventType | DebugEventType, tenantId: string,
+                         filters: FilterEventBody, pageLink: TimePageLink, config?: RequestConfig): Observable<PageData<Event>> {
+    return this.http.post<PageData<Event>>(`/api/events/${entityId.entityType}/${entityId.id}` +
+      `${pageLink.toQuery()}&tenantId=${tenantId}`, {...filters, eventType}, defaultHttpOptionsFromConfig(config));
+  }
+  
 }

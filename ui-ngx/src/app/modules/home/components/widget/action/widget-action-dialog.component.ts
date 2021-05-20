@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@ import { DashboardService } from '@core/http/dashboard.service';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { CustomActionEditorCompleter } from '@home/components/widget/action/custom-action.models';
+import { isDefinedAndNotNull } from '@core/utils';
+import { MobileActionEditorComponent } from '@home/components/widget/action/mobile-action-editor.component';
 
 export interface WidgetActionDialogData {
   isAdd: boolean;
@@ -62,6 +64,8 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
                                                  WidgetActionDescriptorInfo> implements OnInit, ErrorStateMatcher {
 
   @ViewChild('dashboardStateInput') dashboardStateInput: ElementRef;
+
+  @ViewChild('mobileActionEditor', {static: false}) mobileActionEditor: MobileActionEditorComponent;
 
   widgetActionFormGroup: FormGroup;
   actionTypeFormGroup: FormGroup;
@@ -145,12 +149,38 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
           );
           if (type === WidgetActionType.openDashboard) {
             this.actionTypeFormGroup.addControl(
+              'openNewBrowserTab',
+              this.fb.control(action ? action.openNewBrowserTab : false, [])
+            );
+            this.actionTypeFormGroup.addControl(
               'targetDashboardId',
               this.fb.control(action ? action.targetDashboardId : null,
                 [Validators.required])
             );
             this.setupSelectedDashboardStateIds(action ? action.targetDashboardId : null);
           } else {
+            if (type === WidgetActionType.openDashboardState) {
+              this.actionTypeFormGroup.addControl(
+                'openInSeparateDialog',
+                this.fb.control(action ? action.openInSeparateDialog : false, [])
+              );
+              this.actionTypeFormGroup.addControl(
+                'dialogTitle',
+                this.fb.control(action ? action.dialogTitle : '', [])
+              );
+              this.actionTypeFormGroup.addControl(
+                'dialogHideDashboardToolbar',
+                this.fb.control(action && isDefinedAndNotNull(action.dialogHideDashboardToolbar) ? action.dialogHideDashboardToolbar : true, [])
+              );
+              this.actionTypeFormGroup.addControl(
+                'dialogWidth',
+                this.fb.control(action ? action.dialogWidth : null, [Validators.min(1), Validators.max(100)])
+              );
+              this.actionTypeFormGroup.addControl(
+                'dialogHeight',
+                this.fb.control(action ? action.dialogHeight : null, [Validators.min(1), Validators.max(100)])
+              );
+            }
             this.actionTypeFormGroup.addControl(
               'openRightLayout',
               this.fb.control(action ? action.openRightLayout : false, [])
@@ -168,6 +198,12 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
           this.actionTypeFormGroup.addControl(
             'customAction',
             this.fb.control(toCustomAction(action), [Validators.required])
+          );
+          break;
+        case WidgetActionType.mobileAction:
+          this.actionTypeFormGroup.addControl(
+            'mobileAction',
+            this.fb.control(action ? action.mobileAction : null, [Validators.required])
           );
           break;
       }
@@ -286,14 +322,19 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
 
   save(): void {
     this.submitted = true;
-    const type: WidgetActionType = this.widgetActionFormGroup.get('type').value;
-    let result: WidgetActionDescriptorInfo;
-    if (type === WidgetActionType.customPretty) {
-      result = {...this.widgetActionFormGroup.value, ...this.actionTypeFormGroup.get('customAction').value};
-    } else {
-      result = {...this.widgetActionFormGroup.value, ...this.actionTypeFormGroup.value};
+    if (this.mobileActionEditor != null) {
+      this.mobileActionEditor.validateOnSubmit();
     }
-    result.id = this.action.id;
-    this.dialogRef.close(result);
+    if (this.widgetActionFormGroup.valid && this.actionTypeFormGroup.valid) {
+      const type: WidgetActionType = this.widgetActionFormGroup.get('type').value;
+      let result: WidgetActionDescriptorInfo;
+      if (type === WidgetActionType.customPretty) {
+        result = {...this.widgetActionFormGroup.value, ...this.actionTypeFormGroup.get('customAction').value};
+      } else {
+        result = {...this.widgetActionFormGroup.value, ...this.actionTypeFormGroup.value};
+      }
+      result.id = this.action.id;
+      this.dialogRef.close(result);
+    }
   }
 }

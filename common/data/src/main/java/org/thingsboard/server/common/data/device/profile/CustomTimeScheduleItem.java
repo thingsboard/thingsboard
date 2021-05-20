@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@ package org.thingsboard.server.common.data.device.profile;
 
 import lombok.Data;
 
-import java.util.List;
+import java.io.Serializable;
 
 @Data
-public class CustomTimeScheduleItem {
+public class CustomTimeScheduleItem implements Serializable {
 
     private boolean enabled;
     private int dayOfWeek;

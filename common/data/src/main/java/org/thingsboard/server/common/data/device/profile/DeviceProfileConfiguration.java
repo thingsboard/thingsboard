@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.DeviceProfileType;
 
+import java.io.Serializable;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -28,7 +30,7 @@ import org.thingsboard.server.common.data.DeviceProfileType;
         property = "type")
 @JsonSubTypes({
          @JsonSubTypes.Type(value = DefaultDeviceProfileConfiguration.class, name = "DEFAULT")})
-public interface DeviceProfileConfiguration {
+public interface DeviceProfileConfiguration extends Serializable {
 
     @JsonIgnore
     DeviceProfileType getType();

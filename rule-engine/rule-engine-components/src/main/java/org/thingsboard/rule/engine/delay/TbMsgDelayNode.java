@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @Slf4j
@@ -71,7 +70,7 @@ public class TbMsgDelayNode implements TbNode {
         } else {
             if (pendingMsgs.size() < config.getMaxPendingMsgs()) {
                 pendingMsgs.put(msg.getId(), msg);
-                TbMsg tickMsg = ctx.newMsg(ServiceQueue.MAIN, TB_MSG_DELAY_NODE_MSG, ctx.getSelfId(), new TbMsgMetaData(), msg.getId().toString());
+                TbMsg tickMsg = ctx.newMsg(ServiceQueue.MAIN, TB_MSG_DELAY_NODE_MSG, ctx.getSelfId(), msg.getCustomerId(), new TbMsgMetaData(), msg.getId().toString());
                 ctx.tellSelf(tickMsg, getDelay(msg));
                 ctx.ack(msg);
             } else {
@@ -84,7 +83,7 @@ public class TbMsgDelayNode implements TbNode {
         int periodInSeconds;
         if (config.isUseMetadataPeriodInSecondsPatterns()) {
             if (isParsable(msg, config.getPeriodInSecondsPattern())) {
-                periodInSeconds = Integer.parseInt(TbNodeUtils.processPattern(config.getPeriodInSecondsPattern(), msg.getMetaData()));
+                periodInSeconds = Integer.parseInt(TbNodeUtils.processPattern(config.getPeriodInSecondsPattern(), msg));
             } else {
                 throw new RuntimeException("Can't parse period in seconds from metadata using pattern: " + config.getPeriodInSecondsPattern());
             }
@@ -95,7 +94,7 @@ public class TbMsgDelayNode implements TbNode {
     }
 
     private boolean isParsable(TbMsg msg, String pattern) {
-        return NumberUtils.isParsable(TbNodeUtils.processPattern(pattern, msg.getMetaData()));
+        return NumberUtils.isParsable(TbNodeUtils.processPattern(pattern, msg));
     }
 
     @Override

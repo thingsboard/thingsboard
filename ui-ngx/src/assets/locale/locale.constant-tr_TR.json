@@ -915,7 +915,6 @@
     "body": "İçerik //(Body)",
     "method": "Yöntem",
     "type": "Tür",
-    "entity": "Varlık",
     "message-id": "Mesaj Kimliği",
     "message-type": "Mesaj tipi",
     "data-type": "Veri tipi",
@@ -927,7 +926,9 @@
     "success": "Başarı",
     "failed": "Başarısız oldu",
     "messages-processed": "Mesajlar işlendi",
-    "errors-occurred": "Hatalar oluştu"
+    "errors-occurred": "Hatalar oluştu",
+    "all-events": "Tümü",
+    "entity-type": "Öğe türü"
   },
   "extension": {
     "extensions": "Uzantılar",
@@ -1464,7 +1465,7 @@
     "timeseries": "Zaman serisi",
     "search-data": "Arama verileri",
     "no-data-found": "Veri bulunamadı",
-    "latest-values": "Son değerler",
+    "latest": "Son değerler",
     "rpc": "Kontrol göstergesi",
     "alarm": "Alarm göstergesi",
     "static": "Statik gösterge",

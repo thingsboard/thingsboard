@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,6 +16,12 @@
 
 -->
 <div class="tb-details-buttons" fxLayout.xs="column" *ngIf="!standalone">
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'export')"
+          [fxShow]="!isEdit">
+    {{'device-profile.export' | translate }}
+  </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'setDefault')"
@@ -53,10 +59,26 @@
         labelText="device-profile.default-rule-chain"
         formControlName="defaultRuleChainId">
       </tb-rule-chain-autocomplete>
+      <tb-dashboard-autocomplete
+        placeholder="{{'device-profile.default-dashboard' | translate}}"
+        formControlName="defaultDashboardId">
+      </tb-dashboard-autocomplete>
       <tb-queue-type-list
         [queueType]="serviceType"
         formControlName="defaultQueueName">
       </tb-queue-type-list>
+      <tb-firmware-autocomplete
+        [useFullEntityId]="true"
+        [type]="firmwareTypes.FIRMWARE"
+        [deviceProfileId]="deviceProfileId?.id"
+        formControlName="firmwareId">
+      </tb-firmware-autocomplete>
+      <tb-firmware-autocomplete
+        [useFullEntityId]="true"
+        [type]="firmwareTypes.SOFTWARE"
+        [deviceProfileId]="deviceProfileId?.id"
+        formControlName="softwareId">
+      </tb-firmware-autocomplete>
       <mat-form-field fxHide class="mat-block">
         <mat-label translate>device-profile.type</mat-label>
         <mat-select formControlName="type" required>
@@ -68,6 +90,11 @@
           {{ 'device-profile.type-required' | translate }}
         </mat-error>
       </mat-form-field>
+      <tb-image-input fxFlex
+                      label="{{'device-profile.image' | translate}}"
+                      maxSizeByte="524288"
+                      formControlName="image">
+      </tb-image-input>
       <mat-form-field class="mat-block">
         <mat-label translate>device-profile.description</mat-label>
         <textarea matInput formControlName="description" rows="2"></textarea>
@@ -91,10 +118,12 @@
                 <div translate>device-profile.profile-configuration</div>
               </mat-panel-title>
             </mat-expansion-panel-header>
-            <tb-device-profile-configuration
-              formControlName="configuration"
-              required>
-            </tb-device-profile-configuration>
+            <ng-template matExpansionPanelContent>
+              <tb-device-profile-configuration
+                formControlName="configuration"
+                required>
+              </tb-device-profile-configuration>
+            </ng-template>
           </mat-expansion-panel>
           <mat-expansion-panel *ngIf="displayTransportConfiguration" [expanded]="true">
             <mat-expansion-panel-header>
@@ -102,10 +131,12 @@
                 <div translate>device-profile.transport-configuration</div>
               </mat-panel-title>
             </mat-expansion-panel-header>
-            <tb-device-profile-transport-configuration
-              formControlName="transportConfiguration"
-              required>
-            </tb-device-profile-transport-configuration>
+            <ng-template matExpansionPanelContent>
+              <tb-device-profile-transport-configuration
+                formControlName="transportConfiguration"
+                required>
+              </tb-device-profile-transport-configuration>
+            </ng-template>
           </mat-expansion-panel>
           <mat-expansion-panel [expanded]="false">
             <mat-expansion-panel-header>
@@ -115,10 +146,12 @@
                       entityForm.get('profileData.alarms').value.length : 0} }}</div>
               </mat-panel-title>
             </mat-expansion-panel-header>
-            <tb-device-profile-alarms
-              formControlName="alarms"
-              [deviceProfileId]="deviceProfileId">
-            </tb-device-profile-alarms>
+            <ng-template matExpansionPanelContent>
+              <tb-device-profile-alarms
+                formControlName="alarms"
+                [deviceProfileId]="deviceProfileId">
+              </tb-device-profile-alarms>
+            </ng-template>
           </mat-expansion-panel>
           <mat-expansion-panel [expanded]="true">
             <mat-expansion-panel-header>
@@ -126,9 +159,11 @@
                 <div translate>device-profile.device-provisioning</div>
               </mat-panel-title>
             </mat-expansion-panel-header>
-            <tb-device-profile-provision-configuration
-              formControlName="provisionConfiguration">
-            </tb-device-profile-provision-configuration>
+            <ng-template matExpansionPanelContent>
+              <tb-device-profile-provision-configuration
+                formControlName="provisionConfiguration">
+              </tb-device-profile-provision-configuration>
+            </ng-template>
           </mat-expansion-panel>
         </mat-accordion>
       </div>

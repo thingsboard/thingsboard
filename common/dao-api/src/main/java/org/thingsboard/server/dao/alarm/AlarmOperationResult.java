@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.alarm;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -27,17 +26,21 @@ import java.util.List;
 public class AlarmOperationResult {
     private final Alarm alarm;
     private final boolean successful;
+    private final boolean created;
     private final List<EntityId> propagatedEntitiesList;
 
     public AlarmOperationResult(Alarm alarm, boolean successful) {
-        this.alarm = alarm;
-        this.successful = successful;
-        this.propagatedEntitiesList = Collections.emptyList();
+        this(alarm, successful, Collections.emptyList());
     }
 
     public AlarmOperationResult(Alarm alarm, boolean successful, List<EntityId> propagatedEntitiesList) {
+        this(alarm, successful, false, propagatedEntitiesList);
+    }
+
+    public AlarmOperationResult(Alarm alarm, boolean successful, boolean created, List<EntityId> propagatedEntitiesList) {
         this.alarm = alarm;
         this.successful = successful;
+        this.created = created;
         this.propagatedEntitiesList = propagatedEntitiesList;
     }
 }

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,13 +19,13 @@
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'disableAccount')"
-          [fxShow]="!isEdit && isUserCredentialsEnabled()">
+          [fxShow]="!isEdit && isUserCredentialPresent() && isUserCredentialsEnabled()">
     {{'user.disable-account' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'enableAccount')"
-          [fxShow]="!isEdit && !isUserCredentialsEnabled()">
+          [fxShow]="!isEdit && isUserCredentialPresent() && !isUserCredentialsEnabled()">
     {{'user.enable-account' | translate }}
   </button>
   <button mat-raised-button color="primary"
@@ -93,6 +93,20 @@
             ></tb-dashboard-autocomplete>
             <mat-checkbox fxFlex formControlName="defaultDashboardFullscreen">
               {{ 'user.always-fullscreen' | translate }}
+            </mat-checkbox>
+          </section>
+          <section fxFlex fxLayout="column" fxLayout.gt-sm="row">
+            <tb-dashboard-autocomplete
+              fxFlex
+              placeholder="{{ 'dashboard.home-dashboard' | translate }}"
+              formControlName="homeDashboardId"
+              [dashboardsScope]="entity?.authority === authority.TENANT_ADMIN ? 'tenant' : 'customer'"
+              [tenantId]="entity?.tenantId?.id"
+              [customerId]="entity?.customerId?.id"
+              [selectFirstDashboard]="false"
+            ></tb-dashboard-autocomplete>
+            <mat-checkbox fxFlex formControlName="homeDashboardHideToolbar">
+              {{ 'dashboard.home-dashboard-hide-toolbar' | translate }}
             </mat-checkbox>
           </section>
         </section>

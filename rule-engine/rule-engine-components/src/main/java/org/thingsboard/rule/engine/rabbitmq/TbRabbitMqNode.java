@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,24 @@
 package org.thingsboard.rule.engine.rabbitmq;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import com.rabbitmq.client.*;
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.MessageProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.nio.charset.Charset;
-import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
@@ -90,11 +97,11 @@ public class TbRabbitMqNode implements TbNode {
     private TbMsg publishMessage(TbContext ctx, TbMsg msg) throws Exception {
         String exchangeName = "";
         if (!StringUtils.isEmpty(this.config.getExchangeNamePattern())) {
-            exchangeName = TbNodeUtils.processPattern(this.config.getExchangeNamePattern(), msg.getMetaData());
+            exchangeName = TbNodeUtils.processPattern(this.config.getExchangeNamePattern(), msg);
         }
         String routingKey = "";
         if (!StringUtils.isEmpty(this.config.getRoutingKeyPattern())) {
-            routingKey = TbNodeUtils.processPattern(this.config.getRoutingKeyPattern(), msg.getMetaData());
+            routingKey = TbNodeUtils.processPattern(this.config.getRoutingKeyPattern(), msg);
         }
         AMQP.BasicProperties properties = null;
         if (!StringUtils.isEmpty(this.config.getMessageProperties())) {

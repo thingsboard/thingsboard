@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,14 +17,16 @@
 import L, { Icon, LeafletMouseEvent } from 'leaflet';
 import { FormattedData, MarkerSettings } from './map-models';
 import {
-  aspectCache,
   bindPopupActions,
   createTooltip,
+} from './maps-utils';
+import {
+  aspectCache,
   fillPattern,
   parseWithTranslation,
   processPattern,
   safeExecute
-} from './maps-utils';
+} from './common-maps-utils';
 import tinycolor from 'tinycolor2';
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import LeafletMap from './leaflet-map';

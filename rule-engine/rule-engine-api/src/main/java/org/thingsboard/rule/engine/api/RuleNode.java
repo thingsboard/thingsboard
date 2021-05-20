@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.api;
 
 import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -56,5 +57,7 @@ public @interface RuleNode {
     String docUrl() default "";
 
     boolean customRelations() default false;
+
+    RuleChainType[] ruleChainTypes() default {RuleChainType.CORE, RuleChainType.EDGE};
 
 }

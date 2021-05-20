@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import {
   ComponentFactoryResolver,
   ComponentRef,
   ElementRef,
+  Inject,
   Injector,
   Input,
   NgZone,
@@ -38,12 +39,12 @@ import {
   defaultLegendConfig,
   LegendConfig,
   LegendData,
-  LegendPosition,
+  LegendPosition, MobileActionResult,
   Widget,
   WidgetActionDescriptor,
   widgetActionSources,
   WidgetActionType,
-  WidgetComparisonSettings,
+  WidgetComparisonSettings, WidgetMobileActionDescriptor, WidgetMobileActionType,
   WidgetResource,
   widgetType,
   WidgetTypeParameters
@@ -54,7 +55,7 @@ import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
 import { UtilsService } from '@core/services/utils.service';
 import { forkJoin, Observable, of, ReplaySubject, Subscription, throwError } from 'rxjs';
-import { deepClone, isDefined, objToBase64URI } from '@core/utils';
+import { deepClone, insertVariable, isDefined, objToBase64, objToBase64URI, validateEntityId } from '@core/utils';
 import {
   IDynamicWidgetComponent,
   WidgetContext,
@@ -76,7 +77,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { ActivatedRoute, Router } from '@angular/router';
 import cssjs from '@core/css/css';
 import { ResourcesService } from '@core/services/resources.service';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TimeService } from '@core/services/time.service';
 import { DeviceService } from '@app/core/http/device.service';
@@ -93,6 +94,11 @@ import { EntityDataService } from '@core/api/entity-data.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NotificationType } from '@core/notification/notification.models';
 import { AlarmDataService } from '@core/api/alarm-data.service';
+import { MatDialog } from '@angular/material/dialog';
+import { ComponentType } from '@angular/cdk/portal';
+import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
+import { MobileService } from '@core/services/mobile.service';
+import { DialogService } from '@core/services/dialog.service';
 
 @Component({
   selector: 'tb-widget',
@@ -161,6 +167,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private componentFactoryResolver: ComponentFactoryResolver,
               private elementRef: ElementRef,
               private injector: Injector,
+              private dialog: MatDialog,
+              @Inject(EMBED_DASHBOARD_DIALOG_TOKEN) private embedDashboardDialogComponent: ComponentType<any>,
               private widgetService: WidgetService,
               private resources: ResourcesService,
               private timeService: TimeService,
@@ -171,6 +179,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private alarmDataService: AlarmDataService,
               private translate: TranslateService,
               private utils: UtilsService,
+              private mobileService: MobileService,
+              private dialogs: DialogService,
               private raf: RafService,
               private ngZone: NgZone,
               private cd: ChangeDetectorRef) {
@@ -458,10 +468,13 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     );
   }
 
-  private detectChanges() {
+  private detectChanges(detectDashboardChanges = false) {
     if (!this.destroyed) {
       try {
         this.cd.detectChanges();
+        if (detectDashboardChanges) {
+          this.widgetContext.dashboard.detectChanges();
+        }
       } catch (e) {
         // console.log(e);
       }
@@ -481,6 +494,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     }
     if (!this.widgetContext.inited && this.isReady()) {
       this.widgetContext.inited = true;
+      this.widgetContext.dashboard.detectChanges();
       if (this.cafs.init) {
         this.cafs.init();
         this.cafs.init = null;
@@ -851,6 +865,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       onInitialPageDataChanged: (subscription, nextPageData) => {
         this.reInit();
       },
+      forceReInit: () => {
+        this.reInit();
+      },
       dataLoading: (subscription) => {
         if (this.loadingData !== subscription.loadingData) {
           this.loadingData = subscription.loadingData;
@@ -865,7 +882,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       timeWindowUpdated: (subscription, timeWindowConfig) => {
         this.ngZone.run(() => {
           this.widget.config.timewindow = timeWindowConfig;
-          this.detectChanges();
+          this.detectChanges(true);
         });
       }
     };
@@ -889,6 +906,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         hasDataPageLink: this.typeParameters.hasDataPageLink,
         singleEntity: this.typeParameters.singleEntity,
         warnOnPageDataOverflow: this.typeParameters.warnOnPageDataOverflow,
+        ignoreDataUpdateOnIntervalTick: this.typeParameters.ignoreDataUpdateOnIntervalTick,
         comparisonEnabled: comparisonSettings.comparisonEnabled,
         timeForComparison: comparisonSettings.timeForComparison
       };
@@ -997,7 +1015,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     const type = descriptor.type;
     const targetEntityParamName = descriptor.stateEntityParamName;
     let targetEntityId: EntityId;
-    if (descriptor.setEntityId) {
+    if (descriptor.setEntityId && validateEntityId(entityId)) {
       targetEntityId = entityId;
     }
     switch (type) {
@@ -1007,7 +1025,11 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         const params = deepClone(this.widgetContext.stateController.getStateParams());
         this.updateEntityParams(params, targetEntityParamName, targetEntityId, entityName, entityLabel);
         if (type === WidgetActionType.openDashboardState) {
-          this.widgetContext.stateController.openState(targetDashboardStateId, params, descriptor.openRightLayout);
+          if (descriptor.openInSeparateDialog) {
+            this.openDashboardStateInDialog(descriptor, entityId, entityName, additionalParams, entityLabel);
+          } else {
+            this.widgetContext.stateController.openState(targetDashboardStateId, params, descriptor.openRightLayout);
+          }
         } else {
           this.widgetContext.stateController.updateState(targetDashboardStateId, params, descriptor.openRightLayout);
         }
@@ -1029,7 +1051,11 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         } else {
           url = `/dashboards/${targetDashboardId}?state=${state}`;
         }
-        this.router.navigateByUrl(url);
+        if (descriptor.openNewBrowserTab) {
+          window.open(url, '_blank');
+        } else {
+          this.router.navigateByUrl(url);
+        }
         break;
       case WidgetActionType.custom:
         const customFunction = descriptor.customFunction;
@@ -1076,7 +1102,234 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           }
         );
         break;
+      case WidgetActionType.mobileAction:
+        const mobileAction = descriptor.mobileAction;
+        this.handleMobileAction($event, mobileAction, entityId, entityName, additionalParams, entityLabel);
+        break;
     }
+  }
+
+  private handleMobileAction($event: Event, mobileAction: WidgetMobileActionDescriptor,
+                             entityId?: EntityId, entityName?: string, additionalParams?: any, entityLabel?: string) {
+    const type = mobileAction.type;
+    let argsObservable: Observable<any[]>;
+    switch (type) {
+      case WidgetMobileActionType.takePictureFromGallery:
+      case WidgetMobileActionType.takePhoto:
+      case WidgetMobileActionType.scanQrCode:
+      case WidgetMobileActionType.getLocation:
+      case WidgetMobileActionType.takeScreenshot:
+        argsObservable = of([]);
+        break;
+      case WidgetMobileActionType.mapDirection:
+      case WidgetMobileActionType.mapLocation:
+        const getLocationFunctionString = mobileAction.getLocationFunction;
+        const getLocationFunction = new Function('$event', 'widgetContext', 'entityId',
+          'entityName', 'additionalParams', 'entityLabel', getLocationFunctionString);
+        const locationArgs = getLocationFunction($event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
+        if (locationArgs && locationArgs instanceof Observable) {
+          argsObservable = locationArgs;
+        } else {
+          argsObservable = of(locationArgs);
+        }
+        argsObservable = argsObservable.pipe(map(latLng => {
+          let valid = false;
+          if (Array.isArray(latLng) && latLng.length === 2) {
+            if (typeof latLng[0] === 'number' && typeof latLng[1] === 'number') {
+              valid = true;
+            }
+          }
+          if (valid) {
+            return latLng;
+          } else {
+            throw new Error('Location function did not return valid array of latitude/longitude!');
+          }
+        }));
+        break;
+      case WidgetMobileActionType.makePhoneCall:
+        const getPhoneNumberFunctionString = mobileAction.getPhoneNumberFunction;
+        const getPhoneNumberFunction = new Function('$event', 'widgetContext', 'entityId',
+          'entityName', 'additionalParams', 'entityLabel', getPhoneNumberFunctionString);
+        const phoneNumberArg = getPhoneNumberFunction($event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
+        if (phoneNumberArg && phoneNumberArg instanceof Observable) {
+          argsObservable = phoneNumberArg.pipe(map(phoneNumber => [phoneNumber]));
+        } else {
+          argsObservable = of([phoneNumberArg]);
+        }
+        argsObservable = argsObservable.pipe(map(phoneNumberArr => {
+          let valid = false;
+          if (Array.isArray(phoneNumberArr) && phoneNumberArr.length === 1) {
+            if (phoneNumberArr[0] !== null) {
+              valid = true;
+            }
+          }
+          if (valid) {
+            return phoneNumberArr;
+          } else {
+            throw new Error('Phone number function did not return valid number!');
+          }
+        }));
+        break;
+    }
+    argsObservable.subscribe((args) => {
+      this.mobileService.handleWidgetMobileAction(type, ...args).subscribe(
+        (result) => {
+          if (result) {
+            if (result.hasError) {
+              this.handleWidgetMobileActionError(result.error, $event, mobileAction, entityId, entityName, additionalParams, entityLabel);
+            } else if (result.hasResult) {
+              const actionResult = result.result;
+              switch (type) {
+                case WidgetMobileActionType.takePictureFromGallery:
+                case WidgetMobileActionType.takePhoto:
+                case WidgetMobileActionType.takeScreenshot:
+                  const imageUrl = actionResult.imageUrl;
+                  if (mobileAction.processImageFunction && mobileAction.processImageFunction.length) {
+                    try {
+                      const processImageFunction = new Function('imageUrl', '$event', 'widgetContext', 'entityId',
+                        'entityName', 'additionalParams', 'entityLabel', mobileAction.processImageFunction);
+                      processImageFunction(imageUrl, $event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  }
+                  break;
+                case WidgetMobileActionType.scanQrCode:
+                  const code = actionResult.code;
+                  const format = actionResult.format;
+                  if (mobileAction.processQrCodeFunction && mobileAction.processQrCodeFunction.length) {
+                    try {
+                      const processQrCodeFunction = new Function('code', 'format', '$event', 'widgetContext', 'entityId',
+                        'entityName', 'additionalParams', 'entityLabel', mobileAction.processQrCodeFunction);
+                      processQrCodeFunction(code, format, $event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  }
+                  break;
+                case WidgetMobileActionType.getLocation:
+                  const latitude = actionResult.latitude;
+                  const longitude = actionResult.longitude;
+                  if (mobileAction.processLocationFunction && mobileAction.processLocationFunction.length) {
+                    try {
+                      const processLocationFunction = new Function('latitude', 'longitude', '$event', 'widgetContext', 'entityId',
+                        'entityName', 'additionalParams', 'entityLabel', mobileAction.processLocationFunction);
+                      processLocationFunction(latitude, longitude, $event, this.widgetContext,
+                        entityId, entityName, additionalParams, entityLabel);
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  }
+                  break;
+                case WidgetMobileActionType.mapDirection:
+                case WidgetMobileActionType.mapLocation:
+                case WidgetMobileActionType.makePhoneCall:
+                  const launched = actionResult.launched;
+                  if (mobileAction.processLaunchResultFunction && mobileAction.processLaunchResultFunction.length) {
+                    try {
+                      const processLaunchResultFunction = new Function('launched', '$event', 'widgetContext', 'entityId',
+                        'entityName', 'additionalParams', 'entityLabel', mobileAction.processLaunchResultFunction);
+                      processLaunchResultFunction(launched, $event, this.widgetContext,
+                        entityId, entityName, additionalParams, entityLabel);
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  }
+                  break;
+              }
+            } else {
+              if (mobileAction.handleEmptyResultFunction && mobileAction.handleEmptyResultFunction.length) {
+                try {
+                  const handleEmptyResultFunction = new Function('$event', 'widgetContext', 'entityId',
+                    'entityName', 'additionalParams', 'entityLabel', mobileAction.handleEmptyResultFunction);
+                  handleEmptyResultFunction($event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
+                } catch (e) {
+                  console.error(e);
+                }
+              }
+            }
+          }
+        }
+      );
+    },
+    (err) => {
+      let errorMessage;
+      if (err && typeof err === 'string') {
+        errorMessage = err;
+      } else if (err && err.message) {
+        errorMessage = err.message;
+      }
+      errorMessage = `Failed to get mobile action arguments${errorMessage ? `: ${errorMessage}` : '!'}`;
+      this.handleWidgetMobileActionError(errorMessage, $event, mobileAction, entityId, entityName, additionalParams, entityLabel);
+    });
+  }
+
+  private handleWidgetMobileActionError(error: string, $event: Event, mobileAction: WidgetMobileActionDescriptor,
+                                        entityId?: EntityId, entityName?: string, additionalParams?: any, entityLabel?: string) {
+    if (mobileAction.handleErrorFunction && mobileAction.handleErrorFunction.length) {
+      try {
+        const handleErrorFunction = new Function('error', '$event', 'widgetContext', 'entityId',
+          'entityName', 'additionalParams', 'entityLabel', mobileAction.handleErrorFunction);
+        handleErrorFunction(error, $event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }
+
+  private openDashboardStateInDialog(descriptor: WidgetActionDescriptor,
+                                     entityId?: EntityId, entityName?: string, additionalParams?: any, entityLabel?: string) {
+    const dashboard = deepClone(this.widgetContext.stateController.dashboardCtrl.dashboardCtx.getDashboard());
+    const stateObject: StateObject = {};
+    stateObject.params = {};
+    const targetEntityParamName = descriptor.stateEntityParamName;
+    const targetDashboardStateId = descriptor.targetDashboardStateId;
+    let targetEntityId: EntityId;
+    if (descriptor.setEntityId) {
+      targetEntityId = entityId;
+    }
+    this.updateEntityParams(stateObject.params, targetEntityParamName, targetEntityId, entityName, entityLabel);
+    if (targetDashboardStateId) {
+      stateObject.id = targetDashboardStateId;
+    }
+    let title = descriptor.dialogTitle;
+    if (!title) {
+      if (targetDashboardStateId && dashboard.configuration.states) {
+        const dashboardState = dashboard.configuration.states[targetDashboardStateId];
+        if (dashboardState) {
+          title = dashboardState.name;
+        }
+      }
+    }
+    if (!title) {
+      title = dashboard.title;
+    }
+    title = this.utils.customTranslation(title, title);
+    const params = stateObject.params;
+    const paramsEntityName = params && params.entityName ? params.entityName : '';
+    const paramsEntityLabel = params && params.entityLabel ? params.entityLabel : '';
+    title = insertVariable(title, 'entityName', paramsEntityName);
+    title = insertVariable(title, 'entityLabel', paramsEntityLabel);
+    for (const prop of Object.keys(params)) {
+      if (params[prop] && params[prop].entityName) {
+        title = insertVariable(title, prop + ':entityName', params[prop].entityName);
+      }
+      if (params[prop] && params[prop].entityLabel) {
+        title = insertVariable(title, prop + ':entityLabel', params[prop].entityLabel);
+      }
+    }
+    this.dialog.open(this.embedDashboardDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        dashboard,
+        state: objToBase64([ stateObject ]),
+        title,
+        hideToolbar: descriptor.dialogHideDashboardToolbar,
+        width: descriptor.dialogWidth,
+        height: descriptor.dialogHeight
+      }
+    });
   }
 
   private elementClick($event: Event) {

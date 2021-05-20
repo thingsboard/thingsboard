@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ export * from './customer.service';
 export * from './dashboard.service';
 export * from './device.service';
 export * from './entity.service';
+export * from './edge.service';
 export * from './entity-relation.service';
 export * from './entity-view.service';
 export * from './event.service';

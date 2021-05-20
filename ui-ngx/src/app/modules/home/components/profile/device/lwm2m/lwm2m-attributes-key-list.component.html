@@ -1,0 +1,83 @@
+<!--
+
+    Copyright © 2016-2021 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section fxLayout="column" class="tb-kv-map" [formGroup]="kvListFormGroup">
+  <div>
+    <mat-label translate class="tb-title no-padding">device-profile.lwm2m.attribute-lwm2m-destination</mat-label>
+    <mat-label class="tb-editor-area-title-panel">{{ titleText }}</mat-label>
+  </div>
+  <div fxLayout="row" fxLayoutGap="8px" style="max-height: 40px; margin-top: 8px;">
+    <mat-label fxFlex class="tb-title no-padding" translate>device-profile.lwm2m.attribute-lwm2m-name</mat-label>
+    <mat-label fxFlex class="tb-title no-padding" translate>device-profile.lwm2m.attribute-lwm2m-value</mat-label>
+    <div [fxShow]="!disabled" style="width: 40px;"></div>
+  </div>
+  <div fxLayout="column" formArrayName="keyVals"
+       *ngFor="let keyValControl of keyValsFormArray().controls; let $index = index">
+    <div fxLayout="row"  fxLayoutAlign="start center" fxLayoutGap="8px">
+      <mat-form-field class="mat-block"  style="max-heights: 400px">
+        <mat-label></mat-label>
+        <mat-select [formControl]="keyValControl.get('key')">
+          <mat-option *ngFor="let attributeLwm2m of attrKeys"
+                      [value]="attributeLwm2m">
+            {{ attributeLwm2mMap.get(attrKey[attributeLwm2m]) }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field fxFlex floatLabel="always" hideRequiredMarker class="mat-block"
+                      style="max-height: 40px;">
+        <mat-label></mat-label>
+        <input [formControl]="keyValControl.get('value')" matInput
+               placeholder="{{ ('key-val.value') | translate }}"/>
+      </mat-form-field>
+      <button mat-button mat-icon-button color="primary"
+              [fxShow]="!disabled"
+              type="button"
+              (click)="removeKeyVal($index)"
+              [disabled]="isLoading$ | async"
+              matTooltip="{{ 'device-profile.lwm2m.attribute-lwm2m-remove-tip' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <mat-error *ngIf="keyValControl.get('key').hasError('required')" style="font-size: smaller">
+      {{ 'device-profile.lwm2m.key-name' | translate }}
+      <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
+    </mat-error>
+    <mat-error fxLayout="row" *ngIf="keyValControl.get('key').hasError('validAttributeKey')"
+               style="font-size: smaller">
+      {{ 'device-profile.lwm2m.valid-attribute-lwm2m-key' | translate: {attrEnums: attrKeys} }}
+    </mat-error>
+    <mat-error fxLayout="row" *ngIf="keyValControl.get('value').hasError('validAttributeValue')"
+               style="font-size: smaller">
+      {{ 'device-profile.lwm2m.valid-attribute-lwm2m-value' | translate: {attrEnums: attrKeys} }}
+    </mat-error>
+  </div>
+  <span [fxShow]="!keyValsFormArray().length"
+        fxLayoutAlign="center center" [ngClass]="{'disabled': disabled}"
+        class="no-data-found" translate>{{noDataText ? noDataText : 'device-profile.lwm2m.no-data'}}</span>
+  <div style="margin-top: 8px;">
+    <button mat-button mat-raised-button color="primary"
+            [fxShow]="!disabled"
+            [disabled]="isLoading$ | async"
+            (click)="addKeyVal()"
+            type="button"
+            matTooltip="{{ 'device-profile.lwm2m.attribute-lwm2m-add-tip' | translate }}"
+            matTooltipPosition="above">
+      {{ 'action.add' | translate }}
+    </button>
+  </div>
+</section>

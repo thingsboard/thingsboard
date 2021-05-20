@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,23 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.Getter;
+import org.thingsboard.server.common.data.validation.NoXss;
+
+import javax.validation.Valid;
+
+import java.io.Serializable;
 
 @Data
-public class FilterPredicateValue<T> {
+public class FilterPredicateValue<T> implements Serializable {
 
     @Getter
+    @NoXss
     private final T defaultValue;
     @Getter
+    @NoXss
     private final T userValue;
     @Getter
+    @Valid
     private final DynamicValue<T> dynamicValue;
 
     public FilterPredicateValue(T defaultValue) {

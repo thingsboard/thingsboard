@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -39,6 +39,12 @@
           (click)="onEntityAction($event, 'manageCredentials')"
           [fxShow]="!isEdit">
     {{ (deviceScope === 'customer_user' ? 'device.view-credentials' : 'device.manage-credentials') | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'unassignFromEdge')"
+          [fxShow]="!isEdit && deviceScope === 'edge'">
+    {{ 'edge.unassign-from-edge' | translate }}
   </button>
   <button mat-raised-button color="primary" fxFlex.xs
           [disabled]="(isLoading$ | async)"
@@ -95,14 +101,32 @@
         <mat-label translate>device.label</mat-label>
         <input matInput formControlName="label">
       </mat-form-field>
+      <tb-firmware-autocomplete
+        [useFullEntityId]="true"
+        [type]="firmwareTypes.FIRMWARE"
+        [deviceProfileId]="entityForm.get('deviceProfileId').value?.id"
+        formControlName="firmwareId">
+      </tb-firmware-autocomplete>
+      <tb-firmware-autocomplete
+        [useFullEntityId]="true"
+        [type]="firmwareTypes.SOFTWARE"
+        [deviceProfileId]="entityForm.get('deviceProfileId').value?.id"
+        formControlName="softwareId">
+      </tb-firmware-autocomplete>
       <tb-device-data
         formControlName="deviceData"
         required>
       </tb-device-data>
       <div formGroupName="additionalInfo" fxLayout="column">
-        <mat-checkbox fxFlex formControlName="gateway" style="padding-bottom: 16px;">
-          {{ 'device.is-gateway' | translate }}
-        </mat-checkbox>
+        <div fxLayout="row" fxLayout.xs="column" style="padding-bottom: 16px;">
+          <mat-checkbox fxFlex.gt-sm="30" fxFlex formControlName="gateway">
+            {{ 'device.is-gateway' | translate }}
+          </mat-checkbox>
+          <mat-checkbox fxFlex *ngIf="entityForm.get('additionalInfo.gateway').value"
+                        formControlName="overwriteActivityTime">
+            {{ 'device.overwrite-activity-time' | translate }}
+          </mat-checkbox>
+        </div>
         <mat-form-field class="mat-block">
           <mat-label translate>device.description</mat-label>
           <textarea matInput formControlName="description" rows="2"></textarea>

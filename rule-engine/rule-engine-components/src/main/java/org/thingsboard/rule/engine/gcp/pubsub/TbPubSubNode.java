@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,11 @@ import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -35,8 +39,6 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-
-import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
 @RuleNode(
@@ -91,8 +93,8 @@ public class TbPubSubNode implements TbNode {
         PubsubMessage.Builder pubsubMessageBuilder = PubsubMessage.newBuilder();
         pubsubMessageBuilder.setData(data);
         this.config.getMessageAttributes().forEach((k, v) -> {
-            String name = TbNodeUtils.processPattern(k, msg.getMetaData());
-            String val = TbNodeUtils.processPattern(v, msg.getMetaData());
+            String name = TbNodeUtils.processPattern(k, msg);
+            String val = TbNodeUtils.processPattern(v, msg);
             pubsubMessageBuilder.putAttributes(name, val);
         });
         ApiFuture<String> messageIdFuture = this.pubSubClient.publish(pubsubMessageBuilder.build());

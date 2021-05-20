@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 const forwardUrl = "http://localhost:8080";
 const wsForwardUrl = "ws://localhost:8080";
 const ruleNodeUiforwardUrl = forwardUrl;
@@ -27,15 +26,15 @@ const PROXY_CONFIG = {
     "target": ruleNodeUiforwardUrl,
     "secure": false,
   },
+  "/static/widgets": {
+    "target": forwardUrl,
+    "secure": false,
+  },
   "/oauth2": {
     "target": forwardUrl,
     "secure": false,
   },
   "/login/oauth2": {
-    "target": forwardUrl,
-    "secure": false,
-  },
-  "/static": {
     "target": forwardUrl,
     "secure": false,
   },

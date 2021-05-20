@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,15 +42,25 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
     private final KafkaConsumer<String, byte[]> consumer;
     private final TbKafkaDecoder<T> decoder;
 
+    private final TbKafkaConsumerStatsService statsService;
+    private final String groupId;
+
     @Builder
     private TbKafkaConsumerTemplate(TbKafkaSettings settings, TbKafkaDecoder<T> decoder,
                                     String clientId, String groupId, String topic,
-                                    TbQueueAdmin admin) {
+                                    TbQueueAdmin admin, TbKafkaConsumerStatsService statsService) {
         super(topic);
-        Properties props = settings.toConsumerProps();
+        Properties props = settings.toConsumerProps(topic);
         props.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
         if (groupId != null) {
             props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        }
+
+        this.statsService = statsService;
+        this.groupId = groupId;
+
+        if (statsService != null) {
+            statsService.registerClientGroup(groupId);
         }
 
         this.admin = admin;
@@ -62,8 +72,10 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
     protected void doSubscribe(List<String> topicNames) {
         if (!topicNames.isEmpty()) {
             topicNames.forEach(admin::createTopicIfNotExists);
+            log.info("subscribe topics {}", topicNames);
             consumer.subscribe(topicNames);
         } else {
+            log.info("unsubscribe due to empty topic list");
             consumer.unsubscribe();
         }
     }
@@ -92,10 +104,13 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
 
     @Override
     protected void doUnsubscribe() {
+        log.info("unsubscribe topic and close consumer for topic {}", getTopic());
         if (consumer != null) {
             consumer.unsubscribe();
             consumer.close();
         }
+        if (statsService != null) {
+            statsService.unregisterClientGroup(groupId);
+        }
     }
-
 }

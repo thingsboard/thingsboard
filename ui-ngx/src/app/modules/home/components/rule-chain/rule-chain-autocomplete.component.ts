@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import { EntityService } from '@core/http/entity.service';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { RuleChainType } from '@app/shared/models/rule-chain.models';
 
 @Component({
   selector: 'tb-rule-chain-autocomplete',
@@ -187,8 +188,9 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
 
   fetchRuleChain(searchText?: string): Observable<Array<BaseData<EntityId>>> {
     this.searchText = searchText;
+    // voba: at the moment device profiles are not supported by edge, so 'core' hardcoded
     return this.entityService.getEntitiesByNameFilter(EntityType.RULE_CHAIN, searchText,
-      50, null, {ignoreLoading: true});
+      50, RuleChainType.CORE, {ignoreLoading: true});
   }
 
   clear() {

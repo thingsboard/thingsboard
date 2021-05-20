@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package org.thingsboard.rule.engine.mqtt;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
-import org.thingsboard.rule.engine.mqtt.credentials.AnonymousCredentials;
-import org.thingsboard.rule.engine.mqtt.credentials.MqttClientCredentials;
+import org.thingsboard.rule.engine.credentials.AnonymousCredentials;
+import org.thingsboard.rule.engine.credentials.ClientCredentials;
 
 @Data
 public class TbMqttNodeConfiguration implements NodeConfiguration<TbMqttNodeConfiguration> {
@@ -31,7 +31,7 @@ public class TbMqttNodeConfiguration implements NodeConfiguration<TbMqttNodeConf
 
     private boolean cleanSession;
     private boolean ssl;
-    private MqttClientCredentials credentials;
+    private ClientCredentials credentials;
 
     @Override
     public TbMqttNodeConfiguration defaultConfiguration() {

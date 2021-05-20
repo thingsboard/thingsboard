@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,27 @@ package org.thingsboard.server.transport.lwm2m.utils;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ResourceModel.Type;
 import org.eclipse.leshan.core.node.LwM2mPath;
+import org.eclipse.leshan.core.node.ObjectLink;
 import org.eclipse.leshan.core.node.codec.CodecException;
 import org.eclipse.leshan.core.node.codec.LwM2mValueConverter;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.core.util.StringUtils;
 
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
+import java.math.BigInteger;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 
 @Slf4j
 public class LwM2mValueConverterImpl implements LwM2mValueConverter {
+
+    private static final LwM2mValueConverterImpl INSTANCE = new LwM2mValueConverterImpl();
+
+    public static LwM2mValueConverterImpl getInstance() {
+        return INSTANCE;
+    }
 
     @Override
     public Object convertValue(Object value, Type currentType, Type expectedType, LwM2mPath resourcePath)
@@ -43,16 +52,22 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
             /** expected type */
             return value;
         }
+        if (currentType == null) {
+            currentType = OPAQUE;
+        }
 
         switch (expectedType) {
             case INTEGER:
                 switch (currentType) {
                     case FLOAT:
-                        log.debug("Trying to convert float value [{}] to integer", value);
+                        log.debug("Trying to convert float value [{}] to Integer", value);
                         Long longValue = ((Double) value).longValue();
                         if ((double) value == longValue.doubleValue()) {
                             return longValue;
                         }
+                    case STRING:
+                        log.debug("Trying to convert String value [{}] to Integer", value);
+                        return Long.parseLong((String) value);
                     default:
                         break;
                 }
@@ -65,6 +80,9 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                         if ((long) value == floatValue.longValue()) {
                             return floatValue;
                         }
+                    case STRING:
+                        log.debug("Trying to convert String value [{}] to Float", value);
+                        return Float.valueOf((String) value);
                     default:
                         break;
                 }
@@ -97,15 +115,18 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                     case INTEGER:
                         log.debug("Trying to convert long value {} to date", value);
                         /** let's assume we received the millisecond since 1970/1/1 */
-                        return new Date((Long) value);
+                        return new Date(((Number) value).longValue() * 1000L);
                     case STRING:
                         log.debug("Trying to convert string value {} to date", value);
                         /** let's assume we received an ISO 8601 format date */
                         try {
+                            return new Date(Long.decode(value.toString()));
+                            /**
                             DatatypeFactory datatypeFactory = DatatypeFactory.newInstance();
                             XMLGregorianCalendar cal = datatypeFactory.newXMLGregorianCalendar((String) value);
                             return cal.toGregorianCalendar().getTime();
-                        } catch (DatatypeConfigurationException | IllegalArgumentException e) {
+                             **/
+                        } catch (IllegalArgumentException e) {
                             log.debug("Unable to convert string to date", e);
                             throw new CodecException("Unable to convert string (%s) to date for resource %s", value,
                                     resourcePath);
@@ -120,6 +141,21 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                     case INTEGER:
                     case FLOAT:
                         return String.valueOf(value);
+                    case TIME:
+                        String DATE_FORMAT = "MMM d, yyyy HH:mm a";
+                        Long timeValue;
+                        try {
+                            timeValue = ((Date) value).getTime();
+                        }
+                        catch (Exception e){
+                           timeValue = new BigInteger((byte [])value).longValue();
+                        }
+                        DateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
+                        return formatter.format(new Date(timeValue));
+                    case OPAQUE:
+                        return Hex.encodeHexString((byte[])value);
+                    case OBJLNK:
+                        return ObjectLink.decodeFromString((String) value);
                     default:
                         break;
                 }
@@ -130,17 +166,20 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                     log.debug("Trying to convert hexadecimal string [{}] to byte array", value);
                     // TODO check if we shouldn't instead assume that the string contains Base64 encoded data
                     try {
-                        return Hex.decodeHex(((String) value).toCharArray());
+                        return Hex.decodeHex(((String)value).toCharArray());
                     } catch (IllegalArgumentException e) {
                         throw new CodecException("Unable to convert hexastring [%s] to byte array for resource %s", value,
                                 resourcePath);
                     }
                 }
                 break;
+            case OBJLNK:
+                if (currentType == Type.STRING) {
+                    return ObjectLink.fromPath(value.toString());
+                }
             default:
         }
-
         throw new CodecException("Invalid value type for resource %s, expected %s, got %s", resourcePath, expectedType,
                 currentType);
     }
-}
+ }

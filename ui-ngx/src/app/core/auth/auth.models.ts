@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,21 +16,20 @@
 
 import { AuthUser, User } from '@shared/models/user.model';
 
-export interface AuthPayload {
-  authUser: AuthUser;
-  userDetails: User;
+export interface SysParamsState {
   userTokenAccessEnabled: boolean;
   allowedDashboardIds: string[];
+  edgesSupportEnabled: boolean;
+}
+
+export interface AuthPayload extends SysParamsState {
+  authUser: AuthUser;
+  userDetails: User;
   forceFullscreen: boolean;
 }
 
-export interface AuthState {
+export interface AuthState extends AuthPayload {
   isAuthenticated: boolean;
   isUserLoaded: boolean;
-  authUser: AuthUser;
-  userDetails: User;
-  userTokenAccessEnabled: boolean;
-  allowedDashboardIds: string[];
-  forceFullscreen: boolean;
   lastPublicDashboardId: string;
 }

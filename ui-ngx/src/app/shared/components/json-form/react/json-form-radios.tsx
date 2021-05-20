@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,17 @@ class ThingsboardRadios extends React.Component<JsonFormFieldProps, JsonFormFiel
       );
     });
 
+    let row = false;
+    if (this.props.form.direction === 'row') {
+      row = true;
+    }
+
     return (
       <FormControl component='fieldset'
                    className={this.props.form.htmlClass}
                    disabled={this.props.form.readonly}>
         <FormLabel component='legend'>{this.props.form.title}</FormLabel>
-        <RadioGroup name={this.props.form.title} value={this.props.value} onChange={(e) => {
+        <RadioGroup row={row} name={this.props.form.title} value={this.props.value} onChange={(e) => {
           this.props.onChangeValidate(e);
         }}>
           {items}

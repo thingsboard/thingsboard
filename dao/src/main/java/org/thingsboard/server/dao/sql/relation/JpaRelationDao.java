@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,12 +49,17 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     private RelationInsertRepository relationInsertRepository;
 
     @Override
-    public ListenableFuture<List<EntityRelation>> findAllByFrom(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup) {
-        return service.submit(() -> DaoUtil.convertDataList(
+    public ListenableFuture<List<EntityRelation>> findAllByFromAsync(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup) {
+        return service.submit(() -> findAllByFrom(tenantId, from, typeGroup));
+    }
+
+    @Override
+    public List<EntityRelation> findAllByFrom(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup) {
+        return DaoUtil.convertDataList(
                 relationRepository.findAllByFromIdAndFromTypeAndRelationTypeGroup(
                         from.getId(),
                         from.getEntityType().name(),
-                        typeGroup.name())));
+                        typeGroup.name()));
     }
 
     @Override
@@ -68,12 +73,17 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     }
 
     @Override
-    public ListenableFuture<List<EntityRelation>> findAllByTo(TenantId tenantId, EntityId to, RelationTypeGroup typeGroup) {
-        return service.submit(() -> DaoUtil.convertDataList(
+    public ListenableFuture<List<EntityRelation>> findAllByToAsync(TenantId tenantId, EntityId to, RelationTypeGroup typeGroup) {
+        return service.submit(() -> findAllByTo(tenantId, to, typeGroup));
+    }
+
+    @Override
+    public List<EntityRelation> findAllByTo(TenantId tenantId, EntityId to, RelationTypeGroup typeGroup) {
+        return DaoUtil.convertDataList(
                 relationRepository.findAllByToIdAndToTypeAndRelationTypeGroup(
                         to.getId(),
                         to.getEntityType().name(),
-                        typeGroup.name())));
+                        typeGroup.name()));
     }
 
     @Override

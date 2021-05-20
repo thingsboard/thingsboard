@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,13 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.EntityViewInfo;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.objects.AttributesEntityView;
 import org.thingsboard.server.common.data.objects.TelemetryEntityView;
@@ -49,7 +55,6 @@ import java.util.concurrent.TimeUnit;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -347,8 +352,8 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
         Thread.sleep(1000);
 
-        List<Map<String, Object>> values = doGetAsync("/api/plugins/telemetry/ENTITY_VIEW/" + savedView.getId().getId().toString() +
-                "/values/attributes?keys=" + String.join(",", actualAttributesSet), List.class);
+        List<Map<String, Object>> values = doGetAsyncTyped("/api/plugins/telemetry/ENTITY_VIEW/" + savedView.getId().getId().toString() +
+                "/values/attributes?keys=" + String.join(",", actualAttributesSet), new TypeReference<>() {});
 
         assertEquals("value1", getValue(values, "caKey1"));
         assertEquals(true, getValue(values, "caKey2"));
@@ -364,8 +369,8 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         Set<String> expectedActualAttributesSet = new HashSet<>(Arrays.asList("caKey1", "caKey2", "caKey3", "caKey4"));
         assertTrue(actualAttributesSet.containsAll(expectedActualAttributesSet));
 
-        List<Map<String, Object>> valueTelemetryOfDevices = doGetAsync("/api/plugins/telemetry/DEVICE/" + testDevice.getId().getId().toString() +
-                "/values/attributes?keys=" + String.join(",", actualAttributesSet), List.class);
+        List<Map<String, Object>> valueTelemetryOfDevices = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + testDevice.getId().getId().toString() +
+                "/values/attributes?keys=" + String.join(",", actualAttributesSet), new TypeReference<>() {});
 
         EntityView view = new EntityView();
         view.setEntityId(testDevice.getId());
@@ -379,8 +384,8 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
         Thread.sleep(1000);
 
-        List<Map<String, Object>> values = doGetAsync("/api/plugins/telemetry/ENTITY_VIEW/" + savedView.getId().getId().toString() +
-                "/values/attributes?keys=" + String.join(",", actualAttributesSet), List.class);
+        List<Map<String, Object>> values = doGetAsyncTyped("/api/plugins/telemetry/ENTITY_VIEW/" + savedView.getId().getId().toString() +
+                "/values/attributes?keys=" + String.join(",", actualAttributesSet), new TypeReference<>() {});
         assertEquals(0, values.size());
     }
 
@@ -449,12 +454,12 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     }
 
     private Set<String> getTelemetryKeys(String type, String id) throws Exception {
-        return new HashSet<>(doGetAsync("/api/plugins/telemetry/" + type + "/" + id + "/keys/timeseries", List.class));
+        return new HashSet<>(doGetAsyncTyped("/api/plugins/telemetry/" + type + "/" + id + "/keys/timeseries", new TypeReference<>() {}));
     }
 
     private Map<String, List<Map<String, String>>> getTelemetryValues(String type, String id, Set<String> keys, Long startTs, Long endTs) throws Exception {
-        return doGetAsync("/api/plugins/telemetry/" + type + "/" + id +
-                "/values/timeseries?keys=" + String.join(",", keys) + "&startTs=" + startTs + "&endTs=" + endTs, Map.class);
+        return doGetAsyncTyped("/api/plugins/telemetry/" + type + "/" + id +
+                "/values/timeseries?keys=" + String.join(",", keys) + "&startTs=" + startTs + "&endTs=" + endTs, new TypeReference<>() {});
     }
 
     private Set<String> getAttributesByKeys(String stringKV) throws Exception {
@@ -479,7 +484,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         client.publish("v1/devices/me/attributes", message);
         Thread.sleep(1000);
         client.disconnect();
-        return new HashSet<>(doGetAsync("/api/plugins/telemetry/DEVICE/" + viewDeviceId + "/keys/attributes", List.class));
+        return new HashSet<>(doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + viewDeviceId + "/keys/attributes", new TypeReference<>() {}));
     }
 
     private Object getValue(List<Map<String, Object>> values, String stringValue) {
@@ -567,5 +572,32 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         } while (pageData.hasNext());
 
         return loadedItems;
+    }
+
+    @Test
+    public void testAssignEntityViewToEdge() throws Exception {
+        Edge edge = constructEdge("My edge", "default");
+        Edge savedEdge = doPost("/api/edge", edge, Edge.class);
+
+        EntityView savedEntityView = getNewSavedEntityView("My entityView");
+
+        doPost("/api/edge/" + savedEdge.getId().getId().toString()
+                + "/device/" + testDevice.getId().getId().toString(), Device.class);
+
+        doPost("/api/edge/" + savedEdge.getId().getId().toString()
+                + "/entityView/" + savedEntityView.getId().getId().toString(), EntityView.class);
+
+        PageData<EntityView> pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId().toString() + "/entityViews?",
+                new TypeReference<PageData<EntityView>>() {}, new PageLink(100));
+
+        Assert.assertEquals(1, pageData.getData().size());
+
+        doDelete("/api/edge/" + savedEdge.getId().getId().toString()
+                + "/entityView/" + savedEntityView.getId().getId().toString(), EntityView.class);
+
+        pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId().toString() + "/entityViews?",
+                new TypeReference<PageData<EntityView>>() {}, new PageLink(100));
+
+        Assert.assertEquals(0, pageData.getData().size());
     }
 }

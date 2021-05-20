@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,8 +21,9 @@ import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { isDefinedAndNotNull } from '@core/utils';
 import {
-  phoneNumberPattern,
-  SmsProviderConfiguration, SmsProviderType,
+  phoneNumberPatternTwilio,
+  SmsProviderConfiguration,
+  SmsProviderType,
   TwilioSmsProviderConfiguration
 } from '@shared/models/settings.models';
 
@@ -40,7 +41,7 @@ export class TwilioSmsProviderConfigurationComponent implements ControlValueAcce
 
   twilioSmsProviderConfigurationFormGroup: FormGroup;
 
-  phoneNumberPattern = phoneNumberPattern;
+  phoneNumberPatternTwilio = phoneNumberPatternTwilio;
 
   private requiredValue: boolean;
 
@@ -71,9 +72,9 @@ export class TwilioSmsProviderConfigurationComponent implements ControlValueAcce
 
   ngOnInit() {
     this.twilioSmsProviderConfigurationFormGroup = this.fb.group({
-      numberFrom: [null, [Validators.required, Validators.pattern(phoneNumberPattern)]],
-      accountSid: [null, [Validators.required]],
-      accountToken: [null, [Validators.required]]
+      numberFrom: [null, [Validators.required, Validators.pattern(phoneNumberPatternTwilio)]],
+      accountSid: [null, Validators.required],
+      accountToken: [null, Validators.required]
     });
     this.twilioSmsProviderConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();

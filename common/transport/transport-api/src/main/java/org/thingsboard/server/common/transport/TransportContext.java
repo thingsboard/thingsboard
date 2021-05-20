@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.server.cache.firmware.FirmwareDataCache;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 
@@ -35,25 +35,32 @@ import java.util.concurrent.Executors;
  */
 @Slf4j
 @Data
-@Service
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true')")
 public abstract class TransportContext {
 
     protected final ObjectMapper mapper = new ObjectMapper();
 
     @Autowired
     private TransportService transportService;
+
     @Autowired
     private TbServiceInfoProvider serviceInfoProvider;
+
     @Autowired
     private SchedulerComponent scheduler;
 
     @Getter
     private ExecutorService executor;
 
+    @Getter
+    @Autowired
+    private FirmwareDataCache firmwareDataCache;
+
+    @Autowired
+    private TransportResourceCache transportResourceCache;
+
     @PostConstruct
     public void init() {
-        executor = Executors.newWorkStealingPool(50);
+        executor = ThingsBoardExecutors.newWorkStealingPool(50, getClass());
     }
 
     @PreDestroy

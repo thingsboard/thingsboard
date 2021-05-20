@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,15 +23,12 @@ import { Authority } from '@shared/models/authority.enum';
 import { GeneralSettingsComponent } from '@modules/home/pages/admin/general-settings.component';
 import { SecuritySettingsComponent } from '@modules/home/pages/admin/security-settings.component';
 import { OAuth2SettingsComponent } from '@home/pages/admin/oauth2-settings.component';
-import { User } from '@shared/models/user.model';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { UserService } from '@core/http/user.service';
 import { Observable } from 'rxjs';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { OAuth2Service } from '@core/http/oauth2.service';
-import { UserProfileResolver } from '@home/pages/profile/profile-routing.module';
 import { SmsProviderComponent } from '@home/pages/admin/sms-provider.component';
+import { HomeSettingsComponent } from '@home/pages/admin/home-settings.component';
+import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
+import { ResourcesLibraryTableConfigResolver } from '@home/pages/admin/resource/resources-library-table-config.resolve';
 
 @Injectable()
 export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
@@ -48,7 +45,7 @@ const routes: Routes = [
   {
     path: 'settings',
     data: {
-      auth: [Authority.SYS_ADMIN],
+      auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
       breadcrumb: {
         label: 'admin.system-settings',
         icon: 'settings'
@@ -57,8 +54,13 @@ const routes: Routes = [
     children: [
       {
         path: '',
-        redirectTo: 'general',
-        pathMatch: 'full'
+        data: {
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+          redirectTo: {
+            SYS_ADMIN: '/settings/general',
+            TENANT_ADMIN: '/settings/home'
+          }
+        }
       },
       {
         path: 'general',
@@ -127,6 +129,34 @@ const routes: Routes = [
         resolve: {
           loginProcessingUrl: OAuth2LoginProcessingUrlResolver
         }
+      },
+      {
+        path: 'home',
+        component: HomeSettingsComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.TENANT_ADMIN],
+          title: 'admin.home-settings',
+          breadcrumb: {
+            label: 'admin.home-settings',
+            icon: 'settings_applications'
+          }
+        }
+      },
+      {
+        path: 'resources-library',
+        component: EntitiesTableComponent,
+        data: {
+          auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
+          title: 'resource.resources-library',
+          breadcrumb: {
+            label: 'resource.resources-library',
+            icon: 'folder'
+          }
+        },
+        resolve: {
+          entitiesTableConfig: ResourcesLibraryTableConfigResolver
+        }
       }
     ]
   }
@@ -136,7 +166,8 @@ const routes: Routes = [
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule],
   providers: [
-    OAuth2LoginProcessingUrlResolver
+    OAuth2LoginProcessingUrlResolver,
+    ResourcesLibraryTableConfigResolver
   ]
 })
 export class AdminRoutingModule { }

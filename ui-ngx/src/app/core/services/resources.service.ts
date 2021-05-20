@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -78,28 +78,31 @@ export class ResourcesService {
       (module) => {
         const modules = this.extractNgModules(module);
         if (modules.length) {
-          const tasks: Promise<ModuleWithComponentFactories<any>>[] = [];
-          for (const m of modules) {
-            tasks.push(this.compiler.compileModuleAndAllComponentsAsync(m));
-          }
-          forkJoin(tasks).subscribe((compiled) => {
-            try {
-              const componentFactories: ComponentFactory<any>[] = [];
-              for (const c of compiled) {
-                c.ngModuleFactory.create(this.injector);
-                componentFactories.push(...c.componentFactories);
+          import('@angular/compiler').then(
+            () => {
+              const tasks: Promise<ModuleWithComponentFactories<any>>[] = [];
+              for (const m of modules) {
+                tasks.push(this.compiler.compileModuleAndAllComponentsAsync(m));
               }
-              this.loadedFactories[url].next(componentFactories);
-              this.loadedFactories[url].complete();
-            } catch (e) {
-              this.loadedFactories[url].error(new Error(`Unable to init module from url: ${url}`));
-              delete this.loadedFactories[url];
-            }
-          },
-          (e) => {
-              this.loadedFactories[url].error(new Error(`Unable to compile module from url: ${url}`));
-              delete this.loadedFactories[url];
-          });
+              forkJoin(tasks).subscribe((compiled) => {
+                  try {
+                    const componentFactories: ComponentFactory<any>[] = [];
+                    for (const c of compiled) {
+                      c.ngModuleFactory.create(this.injector);
+                      componentFactories.push(...c.componentFactories);
+                    }
+                    this.loadedFactories[url].next(componentFactories);
+                    this.loadedFactories[url].complete();
+                  } catch (e) {
+                    this.loadedFactories[url].error(new Error(`Unable to init module from url: ${url}`));
+                    delete this.loadedFactories[url];
+                  }
+                },
+                (e) => {
+                  this.loadedFactories[url].error(new Error(`Unable to compile module from url: ${url}`));
+                  delete this.loadedFactories[url];
+                });            }
+          );
         } else {
           this.loadedFactories[url].error(new Error(`Module '${url}' doesn't have default export!`));
           delete this.loadedFactories[url];
@@ -133,26 +136,30 @@ export class ResourcesService {
           } catch (e) {
           }
           if (modules && modules.length) {
-            const tasks: Promise<ModuleWithComponentFactories<any>>[] = [];
-            for (const m of modules) {
-              tasks.push(this.compiler.compileModuleAndAllComponentsAsync(m));
-            }
-            forkJoin(tasks).subscribe((compiled) => {
-                try {
-                  for (const c of compiled) {
-                    c.ngModuleFactory.create(this.injector);
-                  }
-                  this.loadedModules[url].next(modules);
-                  this.loadedModules[url].complete();
-                } catch (e) {
-                  this.loadedModules[url].error(new Error(`Unable to init module from url: ${url}`));
-                  delete this.loadedModules[url];
+            import('@angular/compiler').then(
+              () => {
+                const tasks: Promise<ModuleWithComponentFactories<any>>[] = [];
+                for (const m of modules) {
+                  tasks.push(this.compiler.compileModuleAndAllComponentsAsync(m));
                 }
-              },
-              (e) => {
-                this.loadedModules[url].error(new Error(`Unable to compile module from url: ${url}`));
-                delete this.loadedModules[url];
-              });
+                forkJoin(tasks).subscribe((compiled) => {
+                    try {
+                      for (const c of compiled) {
+                        c.ngModuleFactory.create(this.injector);
+                      }
+                      this.loadedModules[url].next(modules);
+                      this.loadedModules[url].complete();
+                    } catch (e) {
+                      this.loadedModules[url].error(new Error(`Unable to init module from url: ${url}`));
+                      delete this.loadedModules[url];
+                    }
+                  },
+                  (e) => {
+                    this.loadedModules[url].error(new Error(`Unable to compile module from url: ${url}`));
+                    delete this.loadedModules[url];
+                  });
+              }
+            );
           } else {
             this.loadedModules[url].error(new Error(`Module '${url}' doesn't have default export or not NgModule!`));
             delete this.loadedModules[url];

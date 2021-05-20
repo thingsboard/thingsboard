@@ -1,0 +1,85 @@
+<!--
+
+    Copyright © 2016-2021 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="widget-select">
+  <div *ngIf="widgetsBundle; else bundles">
+    <div *ngIf="(widgets$ | async)?.length; else loadingWidgets" fxFlexFill fxLayoutGap="12px grid" fxLayout="row wrap">
+      <div *ngFor="let widget of widgets$ | async" class="mat-card-container">
+        <mat-card fxFlexFill fxLayout="row" fxLayoutGap="16px" (click)="onWidgetClicked($event, widget)">
+          <div class="preview-container" fxFlex="45">
+            <img class="preview" [src]="getPreviewImage(widget.image)" alt="{{ widget.title }}">
+          </div>
+          <div fxFlex fxLayout="column">
+            <mat-card-title>{{widget.title}}</mat-card-title>
+            <mat-card-subtitle>{{ 'widget.' + widget.type | translate }}</mat-card-subtitle>
+            <mat-card-content *ngIf="widget.description">
+              {{ widget.description }}
+            </mat-card-content>
+          </div>
+        </mat-card>
+      </div>
+    </div>
+    <ng-template #loadingWidgets>
+      <div *ngIf="loadingWidgets$ | async; else emptyBundle" fxLayout="column"
+           fxLayoutAlign="center center" class="tb-absolute-fill">
+        <span class="mat-headline" style="padding-bottom: 20px;">
+          {{ 'widget.loading-widgets' | translate }}
+        </span>
+        <mat-spinner color="accent" strokeWidth="5"></mat-spinner>
+      </div>
+      <ng-template #emptyBundle>
+        <span translate
+              style="display: flex;"
+              fxLayoutAlign="center center"
+              class="mat-headline tb-absolute-fill">widgets-bundle.empty</span>
+      </ng-template>
+    </ng-template>
+  </div>
+  <ng-template #bundles>
+    <div *ngIf="(widgetsBundles$ | async)?.length; else loadingWidgetBundles" fxFlexFill fxLayoutGap="12px grid" fxLayout="row wrap">
+      <div *ngFor="let widgetsBundle of widgetsBundles$ | async" class="mat-card-container">
+        <mat-card fxFlexFill fxLayout="row" fxLayoutGap="16px" (click)="selectBundle($event, widgetsBundle)">
+          <div class="preview-container" fxFlex="45">
+            <img class="preview" [src]=getPreviewImage(widgetsBundle.image) alt="{{ widgetsBundle.title }}">
+          </div>
+          <div fxFlex fxLayout="column">
+            <mat-card-title>{{ widgetsBundle.title }}</mat-card-title>
+            <mat-card-subtitle *ngIf="isSystem(widgetsBundle)" translate>widgets-bundle.system</mat-card-subtitle>
+            <mat-card-content *ngIf="widgetsBundle.description">
+              {{ widgetsBundle.description }}
+            </mat-card-content>
+          </div>
+        </mat-card>
+      </div>
+    </div>
+    <ng-template #loadingWidgetBundles>
+      <div *ngIf="loadingWidgetBundles$ | async; else noWidgetBundles" fxLayout="column"
+           fxLayoutAlign="center center" class="tb-absolute-fill">
+        <span class="mat-headline" style="padding-bottom: 20px;">
+          {{ 'widgets-bundle.loading-widgets-bundles' | translate }}
+        </span>
+        <mat-spinner strokeWidth="5"></mat-spinner>
+      </div>
+      <ng-template #noWidgetBundles>
+        <span translate
+              style="display: flex;"
+              fxLayoutAlign="center center"
+              class="mat-headline tb-absolute-fill">widgets-bundle.no-widgets-bundles-text</span>
+      </ng-template>
+    </ng-template>
+  </ng-template>
+</div>

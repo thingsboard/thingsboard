@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
@@ -37,6 +36,7 @@ import org.thingsboard.server.common.data.ApiUsageStateMailMessage;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -234,7 +234,7 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void send(TenantId tenantId, String from, String to, String cc, String bcc, String subject, String body) throws MessagingException {
+    public void send(TenantId tenantId, CustomerId customerId, String from, String to, String cc, String bcc, String subject, String body) throws MessagingException {
         if (apiUsageStateService.getApiUsageState(tenantId).isEmailSendEnabled()) {
             MimeMessage mailMsg = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mailMsg, "UTF-8");
@@ -249,7 +249,7 @@ public class DefaultMailService implements MailService {
             helper.setSubject(subject);
             helper.setText(body);
             mailSender.send(helper.getMimeMessage());
-            apiUsageClient.report(tenantId, ApiUsageRecordKey.EMAIL_EXEC_COUNT, 1);
+            apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.EMAIL_EXEC_COUNT, 1);
         } else {
             throw new RuntimeException("Email sending is disabled due to API limits!");
         }
@@ -309,6 +309,8 @@ public class DefaultMailService implements MailService {
             case EMAIL:
             case SMS:
                 return "send";
+            case ALARM:
+                return "create";
             default:
                 throw new RuntimeException("Not implemented!");
         }
@@ -327,6 +329,8 @@ public class DefaultMailService implements MailService {
             case EMAIL:
             case SMS:
                 return "sent";
+            case ALARM:
+                return "created";
             default:
                 throw new RuntimeException("Not implemented!");
         }
@@ -374,7 +378,6 @@ public class DefaultMailService implements MailService {
         }
     }
 
-    @NotNull
     private String getValueAsString(long value) {
         if (value > _1M && value % _1M < _10K) {
             return value / _1M + "M";

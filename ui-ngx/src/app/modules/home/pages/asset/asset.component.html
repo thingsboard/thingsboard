@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -33,6 +33,12 @@
           (click)="onEntityAction($event, 'unassignFromCustomer')"
           [fxShow]="!isEdit && (assetScope === 'customer' || assetScope === 'tenant') && isAssignedToCustomer(entity)">
     {{ (entity?.customerIsPublic ? 'asset.make-private' : 'asset.unassign-from-customer') | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'unassignFromEdge')"
+          [fxShow]="!isEdit && assetScope === 'edge'">
+    {{ 'edge.unassign-from-edge' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"

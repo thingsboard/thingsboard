@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
     [
       widgetType.latest,
       {
-        name: 'widget.latest-values',
+        name: 'widget.latest',
         icon: 'track_changes',
         configHelpLinkId: 'widgetsConfigLatest',
         template: {
@@ -154,6 +154,7 @@ export interface WidgetTypeParameters {
   hasDataPageLink?: boolean;
   singleEntity?: boolean;
   warnOnPageDataOverflow?: boolean;
+  ignoreDataUpdateOnIntervalTick?: boolean;
 }
 
 export interface WidgetControllerDescriptor {
@@ -164,12 +165,26 @@ export interface WidgetControllerDescriptor {
   actionSources?: {[actionSourceId: string]: WidgetActionSource};
 }
 
-export interface WidgetType extends BaseData<WidgetTypeId> {
+export interface BaseWidgetType extends BaseData<WidgetTypeId> {
   tenantId: TenantId;
   bundleAlias: string;
   alias: string;
   name: string;
+}
+
+export interface WidgetType extends BaseWidgetType {
   descriptor: WidgetTypeDescriptor;
+}
+
+export interface WidgetTypeInfo extends BaseWidgetType {
+  image: string;
+  description: string;
+  widgetType: widgetType;
+}
+
+export interface WidgetTypeDetails extends WidgetType {
+  image: string;
+  description: string;
 }
 
 export enum LegendDirection {
@@ -246,13 +261,15 @@ export interface DataKey extends KeyInfo {
 
 export enum DatasourceType {
   function = 'function',
-  entity = 'entity'
+  entity = 'entity',
+  entityCount = 'entityCount'
 }
 
 export const datasourceTypeTranslationMap = new Map<DatasourceType, string>(
   [
     [ DatasourceType.function, 'function.function' ],
-    [ DatasourceType.entity, 'entity.entity' ]
+    [ DatasourceType.entity, 'entity.entity' ],
+    [ DatasourceType.entityCount, 'entity.entities-count' ]
   ]
 );
 
@@ -315,7 +332,19 @@ export enum WidgetActionType {
   updateDashboardState = 'updateDashboardState',
   openDashboard = 'openDashboard',
   custom = 'custom',
-  customPretty = 'customPretty'
+  customPretty = 'customPretty',
+  mobileAction = 'mobileAction'
+}
+
+export enum WidgetMobileActionType {
+  takePictureFromGallery = 'takePictureFromGallery',
+  takePhoto = 'takePhoto',
+  mapDirection = 'mapDirection',
+  mapLocation = 'mapLocation',
+  scanQrCode = 'scanQrCode',
+  makePhoneCall = 'makePhoneCall',
+  getLocation = 'getLocation',
+  takeScreenshot = 'takeScreenshot'
 }
 
 export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
@@ -324,9 +353,89 @@ export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
     [ WidgetActionType.updateDashboardState, 'widget-action.update-dashboard-state' ],
     [ WidgetActionType.openDashboard, 'widget-action.open-dashboard' ],
     [ WidgetActionType.custom, 'widget-action.custom' ],
-    [ WidgetActionType.customPretty, 'widget-action.custom-pretty' ]
+    [ WidgetActionType.customPretty, 'widget-action.custom-pretty' ],
+    [ WidgetActionType.mobileAction, 'widget-action.mobile-action' ]
   ]
 );
+
+export const widgetMobileActionTypeTranslationMap = new Map<WidgetMobileActionType, string>(
+  [
+    [ WidgetMobileActionType.takePictureFromGallery, 'widget-action.mobile.take-picture-from-gallery' ],
+    [ WidgetMobileActionType.takePhoto, 'widget-action.mobile.take-photo' ],
+    [ WidgetMobileActionType.mapDirection, 'widget-action.mobile.map-direction' ],
+    [ WidgetMobileActionType.mapLocation, 'widget-action.mobile.map-location' ],
+    [ WidgetMobileActionType.scanQrCode, 'widget-action.mobile.scan-qr-code' ],
+    [ WidgetMobileActionType.makePhoneCall, 'widget-action.mobile.make-phone-call' ],
+    [ WidgetMobileActionType.getLocation, 'widget-action.mobile.get-location' ],
+    [ WidgetMobileActionType.takeScreenshot, 'widget-action.mobile.take-screenshot' ]
+  ]
+);
+
+export interface MobileLaunchResult {
+  launched: boolean;
+}
+
+export interface MobileImageResult {
+  imageUrl: string;
+}
+
+export interface MobileQrCodeResult {
+  code: string;
+  format: string;
+}
+
+export interface MobileLocationResult {
+  latitude: number;
+  longitude: number;
+}
+
+export type MobileActionResult = MobileLaunchResult &
+                                 MobileImageResult &
+                                 MobileQrCodeResult &
+                                 MobileLocationResult;
+
+export interface WidgetMobileActionResult<T extends MobileActionResult> {
+  result?: T;
+  hasResult: boolean;
+  error?: string;
+  hasError: boolean;
+}
+
+export interface ProcessImageDescriptor {
+  processImageFunction: string;
+}
+
+export interface ProcessLaunchResultDescriptor {
+  processLaunchResultFunction?: string;
+}
+
+export interface LaunchMapDescriptor extends ProcessLaunchResultDescriptor {
+  getLocationFunction: string;
+}
+
+export interface ScanQrCodeDescriptor {
+  processQrCodeFunction: string;
+}
+
+export interface MakePhoneCallDescriptor extends ProcessLaunchResultDescriptor {
+  getPhoneNumberFunction: string;
+}
+
+export interface GetLocationDescriptor {
+  processLocationFunction: string;
+}
+
+export type WidgetMobileActionDescriptors = ProcessImageDescriptor &
+                                            LaunchMapDescriptor &
+                                            ScanQrCodeDescriptor &
+                                            MakePhoneCallDescriptor &
+                                            GetLocationDescriptor;
+
+export interface WidgetMobileActionDescriptor extends WidgetMobileActionDescriptors {
+  type: WidgetMobileActionType;
+  handleErrorFunction?: string;
+  handleEmptyResultFunction?: string;
+}
 
 export interface CustomActionDescriptor {
   customFunction?: string;
@@ -344,8 +453,15 @@ export interface WidgetActionDescriptor extends CustomActionDescriptor {
   targetDashboardId?: string;
   targetDashboardStateId?: string;
   openRightLayout?: boolean;
+  openNewBrowserTab?: boolean;
+  openInSeparateDialog?: boolean;
+  dialogTitle?: string;
+  dialogHideDashboardToolbar?: boolean;
+  dialogWidth?: number;
+  dialogHeight?: number;
   setEntityId?: boolean;
   stateEntityParamName?: string;
+  mobileAction?: WidgetMobileActionDescriptor;
 }
 
 export interface WidgetComparisonSettings {
@@ -390,19 +506,24 @@ export interface WidgetConfig {
   [key: string]: any;
 }
 
-export interface Widget {
-  id?: string;
+export interface Widget extends WidgetInfo{
   typeId?: WidgetTypeId;
-  isSystemType: boolean;
-  bundleAlias: string;
-  typeAlias: string;
-  type: widgetType;
-  title: string;
   sizeX: number;
   sizeY: number;
   row: number;
   col: number;
   config: WidgetConfig;
+}
+
+export interface WidgetInfo {
+  id?: string;
+  isSystemType: boolean;
+  bundleAlias: string;
+  typeAlias: string;
+  type: widgetType;
+  title: string;
+  image?: string;
+  description?: string;
 }
 
 export interface GroupInfo {
@@ -420,7 +541,7 @@ export interface JsonSchema {
 export interface JsonSettingsSchema {
   schema?: JsonSchema;
   form?: any[];
-  groupInfoes?: GroupInfo[]
+  groupInfoes?: GroupInfo[];
 }
 
 export interface WidgetPosition {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,15 @@ package org.thingsboard.server.service.queue.processing;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbActorMsg;
@@ -34,8 +35,9 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
+import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
+import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
@@ -56,7 +58,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
-public abstract class AbstractConsumerService<N extends com.google.protobuf.GeneratedMessageV3> implements ApplicationListener<PartitionChangeEvent> {
+public abstract class AbstractConsumerService<N extends com.google.protobuf.GeneratedMessageV3> extends TbApplicationEventListener<PartitionChangeEvent> {
 
     protected volatile ExecutorService consumersExecutor;
     protected volatile ExecutorService notificationsConsumerExecutor;
@@ -71,7 +73,8 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected final TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer;
 
     public AbstractConsumerService(ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
-                                   TbTenantProfileCache tenantProfileCache, TbDeviceProfileCache deviceProfileCache, TbApiUsageStateService apiUsageStateService, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
+                                   TbTenantProfileCache tenantProfileCache, TbDeviceProfileCache deviceProfileCache,
+                                   TbApiUsageStateService apiUsageStateService, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
         this.actorContext = actorContext;
         this.encodingService = encodingService;
         this.tenantProfileCache = tenantProfileCache;
@@ -165,6 +168,8 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                     tenantProfileCache.evict(componentLifecycleMsg.getTenantId());
                     if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
                         apiUsageStateService.onTenantUpdate(componentLifecycleMsg.getTenantId());
+                    } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.DELETED)) {
+                        apiUsageStateService.onTenantDelete((TenantId) componentLifecycleMsg.getEntityId());
                     }
                 } else if (EntityType.DEVICE_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
                     deviceProfileCache.evict(componentLifecycleMsg.getTenantId(), new DeviceProfileId(componentLifecycleMsg.getEntityId().getId()));
@@ -172,6 +177,10 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                     deviceProfileCache.evict(componentLifecycleMsg.getTenantId(), new DeviceId(componentLifecycleMsg.getEntityId().getId()));
                 } else if (EntityType.API_USAGE_STATE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
                     apiUsageStateService.onApiUsageStateUpdate(componentLifecycleMsg.getTenantId());
+                } else if (EntityType.CUSTOMER.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+                    if (componentLifecycleMsg.getEvent() == ComponentLifecycleEvent.DELETED) {
+                        apiUsageStateService.onCustomerDelete((CustomerId) componentLifecycleMsg.getEntityId());
+                    }
                 }
             }
             log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg);

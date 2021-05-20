@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.usagerecord;
 
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.Dao;
 
@@ -39,10 +40,14 @@ public interface ApiUsageStateDao extends Dao<ApiUsageState> {
      */
     ApiUsageState findTenantApiUsageState(UUID tenantId);
 
+    ApiUsageState findApiUsageStateByEntityId(EntityId entityId);
+
     /**
      * Delete usage record by tenantId.
      *
      * @param tenantId the tenantId
      */
     void deleteApiUsageStateByTenantId(TenantId tenantId);
+
+    void deleteApiUsageStateByEntityId(EntityId entityId);
 }

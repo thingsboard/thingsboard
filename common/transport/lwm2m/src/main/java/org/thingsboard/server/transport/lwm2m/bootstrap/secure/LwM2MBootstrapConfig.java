@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
-import lombok.Builder;
 import lombok.Data;
 import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.request.BindingMode;
@@ -26,12 +25,12 @@ import java.nio.charset.StandardCharsets;
 
 @Data
 public class LwM2MBootstrapConfig {
-    /**
-     * interface BootstrapSecurityConfig
-     *   servers: BootstrapServersSecurityConfig,
-     *   bootstrapServer: ServerSecurityConfig,
-     *   lwm2mServer: ServerSecurityConfig
-     * }
+    /*
+      interface BootstrapSecurityConfig
+        servers: BootstrapServersSecurityConfig,
+        bootstrapServer: ServerSecurityConfig,
+        lwm2mServer: ServerSecurityConfig
+      }
      */
     /** -servers
      *   shortId: number,
@@ -40,7 +39,6 @@ public class LwM2MBootstrapConfig {
      *   notifIfDisabled: boolean,
      *   binding: string
      * */
-    @Builder.Default
     LwM2MBootstrapServers servers;
 
     /** -bootstrapServer, lwm2mServer
@@ -62,10 +60,10 @@ public class LwM2MBootstrapConfig {
 
     public BootstrapConfig getLwM2MBootstrapConfig() {
         BootstrapConfig configBs = new BootstrapConfig();
-        /** Delete old security objects */
+        /* Delete old security objects */
         configBs.toDelete.add("/0");
         configBs.toDelete.add("/1");
-        /** Server Configuration (object 1) as defined in LWM2M 1.0.x TS. */
+        /* Server Configuration (object 1) as defined in LWM2M 1.0.x TS. */
         BootstrapConfig.ServerConfig server0 = new BootstrapConfig.ServerConfig();
         server0.shortId = servers.getShortId();
         server0.lifetime = servers.getLifetime();
@@ -73,10 +71,10 @@ public class LwM2MBootstrapConfig {
         server0.notifIfDisabled = servers.isNotifIfDisabled();
         server0.binding = BindingMode.valueOf(servers.getBinding());
         configBs.servers.put(0, server0);
-        /** Security Configuration (object 0) as defined in LWM2M 1.0.x TS. Bootstrap instance = 0 */
+        /* Security Configuration (object 0) as defined in LWM2M 1.0.x TS. Bootstrap instance = 0 */
         this.bootstrapServer.setBootstrapServerIs(true);
         configBs.security.put(0, setServerSecuruty(this.bootstrapServer.getHost(), this.bootstrapServer.getPort(), this.bootstrapServer.isBootstrapServerIs(), this.bootstrapServer.getSecurityMode(), this.bootstrapServer.getClientPublicKeyOrId(), this.bootstrapServer.getServerPublicKey(), this.bootstrapServer.getClientSecretKey(), this.bootstrapServer.getServerId()));
-        /** Security Configuration (object 0) as defined in LWM2M 1.0.x TS. Server instance = 1 */
+        /* Security Configuration (object 0) as defined in LWM2M 1.0.x TS. Server instance = 1 */
         configBs.security.put(1, setServerSecuruty(this.lwm2mServer.getHost(), this.lwm2mServer.getPort(), this.lwm2mServer.isBootstrapServerIs(), this.lwm2mServer.getSecurityMode(), this.lwm2mServer.getClientPublicKeyOrId(), this.lwm2mServer.getServerPublicKey(), this.lwm2mServer.getClientSecretKey(), this.lwm2mServer.getServerId()));
         return configBs;
     }
@@ -94,9 +92,8 @@ public class LwM2MBootstrapConfig {
     }
 
     private byte[] setPublicKeyOrId(String publicKeyOrIdStr, String securityMode) {
-        byte[] publicKey = (publicKeyOrIdStr == null || publicKeyOrIdStr.isEmpty()) ? new byte[]{} :
+        return (publicKeyOrIdStr == null || publicKeyOrIdStr.isEmpty()) ? new byte[]{} :
                 SecurityMode.valueOf(securityMode).equals(SecurityMode.PSK) ? publicKeyOrIdStr.getBytes(StandardCharsets.UTF_8) :
                         Hex.decodeHex(publicKeyOrIdStr.toCharArray());
-        return publicKey;
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,26 +36,35 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.Firmware;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
+import org.thingsboard.server.common.data.device.data.CoapDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
+import org.thingsboard.server.common.data.device.data.DeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.MqttDeviceTransportConfiguration;
+import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
+import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.firmware.FirmwareType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
@@ -64,21 +73,23 @@ import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
-import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.firmware.FirmwareService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
-import org.thingsboard.server.dao.util.mapping.JacksonUtil;
+import org.thingsboard.common.util.JacksonUtil;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -99,6 +110,8 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     public static final String INCORRECT_PAGE_LINK = "Incorrect page link ";
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
     public static final String INCORRECT_DEVICE_ID = "Incorrect deviceId ";
+    public static final String INCORRECT_EDGE_ID = "Incorrect edgeId ";
+
     @Autowired
     private DeviceDao deviceDao;
 
@@ -115,9 +128,6 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     private DeviceProfileService deviceProfileService;
 
     @Autowired
-    private EntityViewService entityViewService;
-
-    @Autowired
     private CacheManager cacheManager;
 
     @Autowired
@@ -126,6 +136,9 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     @Autowired
     @Lazy
     private TbTenantProfileCache tenantProfileCache;
+
+    @Autowired
+    private FirmwareService firmwareService;
 
     @Override
     public DeviceInfo findDeviceInfoById(TenantId tenantId, DeviceId deviceId) {
@@ -177,10 +190,40 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         return doSaveDevice(device, null);
     }
 
+    @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}")
+    @Override
+    public Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials) {
+        if (device.getId() == null) {
+            Device deviceWithName = this.findDeviceByTenantIdAndName(device.getTenantId(), device.getName());
+            device = deviceWithName == null ? device : deviceWithName.updateDevice(device);
+        }
+        Device savedDevice = this.saveDeviceWithoutCredentials(device);
+        deviceCredentials.setDeviceId(savedDevice.getId());
+        if (device.getId() == null) {
+            deviceCredentials = deviceCredentialsService.createDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
+        }
+        else {
+            deviceCredentials.setId(deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), savedDevice.getId()).getId());
+            deviceCredentials = deviceCredentialsService.updateDeviceCredentials(device.getTenantId(), deviceCredentials);
+        }
+        return savedDevice;
+    }
+
     private Device doSaveDevice(Device device, String accessToken) {
+        Device savedDevice = this.saveDeviceWithoutCredentials(device);
+        if (device.getId() == null) {
+            DeviceCredentials deviceCredentials = new DeviceCredentials();
+            deviceCredentials.setDeviceId(new DeviceId(savedDevice.getUuidId()));
+            deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+            deviceCredentials.setCredentialsId(!StringUtils.isEmpty(accessToken) ? accessToken : RandomStringUtils.randomAlphanumeric(20));
+            deviceCredentialsService.createDeviceCredentials(device.getTenantId(), deviceCredentials);
+        }
+        return savedDevice;
+    }
+
+    private Device saveDeviceWithoutCredentials(Device device) {
         log.trace("Executing saveDevice [{}]", device);
         deviceValidator.validate(device, Device::getTenantId);
-        Device savedDevice;
         try {
             DeviceProfile deviceProfile;
             if (device.getDeviceProfileId() == null) {
@@ -198,24 +241,17 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             }
             device.setType(deviceProfile.getName());
             device.setDeviceData(syncDeviceData(deviceProfile, device.getDeviceData()));
-
-            savedDevice = deviceDao.save(device.getTenantId(), device);
+            return deviceDao.save(device.getTenantId(), device);
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_name_unq_key")) {
+                // remove device from cache in case null value cached in the distributed redis.
+                removeDeviceFromCacheByName(device.getTenantId(), device.getName());
                 throw new DataValidationException("Device with such name already exists!");
             } else {
                 throw t;
             }
         }
-        if (device.getId() == null) {
-            DeviceCredentials deviceCredentials = new DeviceCredentials();
-            deviceCredentials.setDeviceId(new DeviceId(savedDevice.getUuidId()));
-            deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
-            deviceCredentials.setCredentialsId(!StringUtils.isEmpty(accessToken) ? accessToken : RandomStringUtils.randomAlphanumeric(20));
-            deviceCredentialsService.createDeviceCredentials(device.getTenantId(), deviceCredentials);
-        }
-        return savedDevice;
     }
 
     private DeviceData syncDeviceData(DeviceProfile deviceProfile, DeviceData deviceData) {
@@ -237,8 +273,14 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                 case MQTT:
                     deviceData.setTransportConfiguration(new MqttDeviceTransportConfiguration());
                     break;
+                case COAP:
+                    deviceData.setTransportConfiguration(new CoapDeviceTransportConfiguration());
+                    break;
                 case LWM2M:
                     deviceData.setTransportConfiguration(new Lwm2mDeviceTransportConfiguration());
+                    break;
+                case SNMP:
+                    deviceData.setTransportConfiguration(new SnmpDeviceTransportConfiguration());
                     break;
             }
         }
@@ -281,13 +323,14 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         }
         deleteEntityRelations(tenantId, deviceId);
 
-        List<Object> list = new ArrayList<>();
-        list.add(device.getTenantId());
-        list.add(device.getName());
-        Cache cache = cacheManager.getCache(DEVICE_CACHE);
-        cache.evict(list);
+        removeDeviceFromCacheByName(tenantId, device.getName());
 
         deviceDao.removeById(tenantId, deviceId.getId());
+    }
+
+    private void removeDeviceFromCacheByName(TenantId tenantId, String name) {
+        Cache cache = cacheManager.getCache(DEVICE_CACHE);
+        cache.evict(Arrays.asList(tenantId, name));
     }
 
     @Override
@@ -313,6 +356,24 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         validateString(type, "Incorrect type " + type);
         validatePageLink(pageLink);
         return deviceDao.findDevicesByTenantIdAndType(tenantId.getId(), type, pageLink);
+    }
+
+    @Override
+    public PageData<Device> findDevicesByTenantIdAndTypeAndEmptyFirmware(TenantId tenantId, String type, PageLink pageLink) {
+        log.trace("Executing findDevicesByTenantIdAndTypeAndEmptyFirmware, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateString(type, "Incorrect type " + type);
+        validatePageLink(pageLink);
+        return deviceDao.findDevicesByTenantIdAndTypeAndEmptyFirmware(tenantId.getId(), type, pageLink);
+    }
+
+    @Override
+    public PageData<Device> findDevicesByTenantIdAndTypeAndEmptySoftware(TenantId tenantId, String type, PageLink pageLink) {
+        log.trace("Executing findDevicesByTenantIdAndTypeAndEmptySoftware, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateString(type, "Incorrect type " + type);
+        validatePageLink(pageLink);
+        return deviceDao.findDevicesByTenantIdAndTypeAndEmptySoftware(tenantId.getId(), type, pageLink);
     }
 
     @Override
@@ -512,6 +573,8 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                 case X509_CERTIFICATE:
                     deviceCredentials.setCredentialsValue(provisionRequest.getCredentialsData().getX509CertHash());
                     break;
+                case LWM2M_CREDENTIALS:
+                    break;
             }
             try {
                 deviceCredentialsService.updateDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
@@ -522,13 +585,80 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         return savedDevice;
     }
 
+    @Override
+    public PageData<UUID> findDevicesIdsByDeviceProfileTransportType(DeviceTransportType transportType, PageLink pageLink) {
+        return deviceDao.findDevicesIdsByDeviceProfileTransportType(transportType, pageLink);
+    }
+
+    @Override
+    public Device assignDeviceToEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId) {
+        Device device = findDeviceById(tenantId, deviceId);
+        Edge edge = edgeService.findEdgeById(tenantId, edgeId);
+        if (edge == null) {
+            throw new DataValidationException("Can't assign device to non-existent edge!");
+        }
+        if (!edge.getTenantId().getId().equals(device.getTenantId().getId())) {
+            throw new DataValidationException("Can't assign device to edge from different tenant!");
+        }
+        try {
+            createRelation(tenantId, new EntityRelation(edgeId, deviceId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+        } catch (Exception e) {
+            log.warn("[{}] Failed to create device relation. Edge Id: [{}]", deviceId, edgeId);
+            throw new RuntimeException(e);
+        }
+        return device;
+    }
+
+    @Override
+    public Device unassignDeviceFromEdge(TenantId tenantId, DeviceId deviceId, EdgeId edgeId) {
+        Device device = findDeviceById(tenantId, deviceId);
+        Edge edge = edgeService.findEdgeById(tenantId, edgeId);
+        if (edge == null) {
+            throw new DataValidationException("Can't unassign device from non-existent edge!");
+        }
+
+        checkAssignedEntityViewsToEdge(tenantId, deviceId, edgeId);
+
+        try {
+            deleteRelation(tenantId, new EntityRelation(edgeId, deviceId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+        } catch (Exception e) {
+            log.warn("[{}] Failed to delete device relation. Edge Id: [{}]", deviceId, edgeId);
+            throw new RuntimeException(e);
+        }
+        return device;
+    }
+
+    @Override
+    public PageData<Device> findDevicesByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink) {
+        log.trace("Executing findDevicesByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
+        validatePageLink(pageLink);
+        return deviceDao.findDevicesByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
+    }
+
+    @Override
+    public PageData<Device> findDevicesByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, PageLink pageLink) {
+        log.trace("Executing findDevicesByTenantIdAndEdgeIdAndType, tenantId [{}], edgeId [{}], type [{}] pageLink [{}]", tenantId, edgeId, type, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
+        validateString(type, "Incorrect type " + type);
+        validatePageLink(pageLink);
+        return deviceDao.findDevicesByTenantIdAndEdgeIdAndType(tenantId.getId(), edgeId.getId(), type, pageLink);
+    }
+
+    @Override
+    public long countByTenantId(TenantId tenantId) {
+        return deviceDao.countByTenantId(tenantId);
+    }
+
     private DataValidator<Device> deviceValidator =
             new DataValidator<Device>() {
 
                 @Override
                 protected void validateCreate(TenantId tenantId, Device device) {
                     DefaultTenantProfileConfiguration profileConfiguration =
-                            (DefaultTenantProfileConfiguration)tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
+                            (DefaultTenantProfileConfiguration) tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
                     long maxDevices = profileConfiguration.getMaxDevices();
                     validateNumberOfEntitiesPerTenant(tenantId, deviceDao, maxDevices, EntityType.DEVICE);
                 }
@@ -538,6 +668,9 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                     Device old = deviceDao.findById(device.getTenantId(), device.getId().getId());
                     if (old == null) {
                         throw new DataValidationException("Can't update non existing device!");
+                    }
+                    if (!old.getName().equals(device.getName())) {
+                        removeDeviceFromCacheByName(tenantId, old.getName());
                     }
                 }
 
@@ -563,6 +696,41 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                         }
                         if (!customer.getTenantId().getId().equals(device.getTenantId().getId())) {
                             throw new DataValidationException("Can't assign device to customer from different tenant!");
+                        }
+                    }
+                    Optional.ofNullable(device.getDeviceData())
+                            .flatMap(deviceData -> Optional.ofNullable(deviceData.getTransportConfiguration()))
+                            .ifPresent(DeviceTransportConfiguration::validate);
+
+                    if (device.getFirmwareId() != null) {
+                        Firmware firmware = firmwareService.findFirmwareById(tenantId, device.getFirmwareId());
+                        if (firmware == null) {
+                            throw new DataValidationException("Can't assign non-existent firmware!");
+                        }
+                        if (!firmware.getType().equals(FirmwareType.FIRMWARE)) {
+                            throw new DataValidationException("Can't assign firmware with type: " + firmware.getType());
+                        }
+                        if (firmware.getData() == null) {
+                            throw new DataValidationException("Can't assign firmware with empty data!");
+                        }
+                        if (!firmware.getDeviceProfileId().equals(device.getDeviceProfileId())) {
+                            throw new DataValidationException("Can't assign firmware with different deviceProfile!");
+                        }
+                    }
+
+                    if (device.getSoftwareId() != null) {
+                        Firmware software = firmwareService.findFirmwareById(tenantId, device.getSoftwareId());
+                        if (software == null) {
+                            throw new DataValidationException("Can't assign non-existent software!");
+                        }
+                        if (!software.getType().equals(FirmwareType.SOFTWARE)) {
+                            throw new DataValidationException("Can't assign software with type: " + software.getType());
+                        }
+                        if (software.getData() == null) {
+                            throw new DataValidationException("Can't assign software with empty data!");
+                        }
+                        if (!software.getDeviceProfileId().equals(device.getDeviceProfileId())) {
+                            throw new DataValidationException("Can't assign firmware with different deviceProfile!");
                         }
                     }
                 }

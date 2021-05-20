@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.discovery.ClusterTopologyChangeEvent;
-import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
+import org.thingsboard.server.queue.discovery.event.ClusterTopologyChangeEvent;
+import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.telemetry.sub.AlarmSubscriptionUpdate;
@@ -63,9 +64,37 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
 
     private ExecutorService subscriptionUpdateExecutor;
 
+    private TbApplicationEventListener<PartitionChangeEvent> partitionChangeListener = new TbApplicationEventListener<>() {
+        @Override
+        protected void onTbApplicationEvent(PartitionChangeEvent event) {
+            if (ServiceType.TB_CORE.equals(event.getServiceType())) {
+                currentPartitions.clear();
+                currentPartitions.addAll(event.getPartitions());
+            }
+        }
+    };
+
+    private TbApplicationEventListener<ClusterTopologyChangeEvent> clusterTopologyChangeListener = new TbApplicationEventListener<>() {
+        @Override
+        protected void onTbApplicationEvent(ClusterTopologyChangeEvent event) {
+            if (event.getServiceQueueKeys().stream().anyMatch(key -> ServiceType.TB_CORE.equals(key.getServiceType()))) {
+                /*
+                 * If the cluster topology has changed, we need to push all current subscriptions to SubscriptionManagerService again.
+                 * Otherwise, the SubscriptionManagerService may "forget" those subscriptions in case of restart.
+                 * Although this is resource consuming operation, it is cheaper than sending ping/pong commands periodically
+                 * It is also cheaper then caching the subscriptions by entity id and then lookup of those caches every time we have new telemetry in SubscriptionManagerService.
+                 * Even if we cache locally the list of active subscriptions by entity id, it is still time consuming operation to get them from cache
+                 * Since number of subscriptions is usually much less then number of devices that are pushing data.
+                 */
+                subscriptionsBySessionId.values().forEach(map -> map.values()
+                        .forEach(sub -> pushSubscriptionToManagerService(sub, true)));
+            }
+        }
+    };
+
     @PostConstruct
     public void initExecutor() {
-        subscriptionUpdateExecutor = Executors.newWorkStealingPool(20);
+        subscriptionUpdateExecutor = ThingsBoardExecutors.newWorkStealingPool(20, getClass());
     }
 
     @PreDestroy
@@ -77,28 +106,14 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
 
     @Override
     @EventListener(PartitionChangeEvent.class)
-    public void onApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
-        if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceType())) {
-            currentPartitions.clear();
-            currentPartitions.addAll(partitionChangeEvent.getPartitions());
-        }
+    public void onApplicationEvent(PartitionChangeEvent event) {
+        partitionChangeListener.onApplicationEvent(event);
     }
 
     @Override
     @EventListener(ClusterTopologyChangeEvent.class)
     public void onApplicationEvent(ClusterTopologyChangeEvent event) {
-        if (event.getServiceQueueKeys().stream().anyMatch(key -> ServiceType.TB_CORE.equals(key.getServiceType()))) {
-            /*
-             * If the cluster topology has changed, we need to push all current subscriptions to SubscriptionManagerService again.
-             * Otherwise, the SubscriptionManagerService may "forget" those subscriptions in case of restart.
-             * Although this is resource consuming operation, it is cheaper than sending ping/pong commands periodically
-             * It is also cheaper then caching the subscriptions by entity id and then lookup of those caches every time we have new telemetry in SubscriptionManagerService.
-             * Even if we cache locally the list of active subscriptions by entity id, it is still time consuming operation to get them from cache
-             * Since number of subscriptions is usually much less then number of devices that are pushing data.
-             */
-            subscriptionsBySessionId.values().forEach(map -> map.values()
-                    .forEach(sub -> pushSubscriptionToManagerService(sub, true)));
-        }
+        clusterTopologyChangeListener.onApplicationEvent(event);
     }
 
     //TODO 3.1: replace null callbacks with callbacks from websocket service.
@@ -123,6 +138,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void onSubscriptionUpdate(String sessionId, TelemetrySubscriptionUpdate update, TbCallback callback) {
         TbSubscription subscription = subscriptionsBySessionId
                 .getOrDefault(sessionId, Collections.emptyMap()).get(update.getSubscriptionId());
@@ -143,6 +159,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void onSubscriptionUpdate(String sessionId, AlarmSubscriptionUpdate update, TbCallback callback) {
         TbSubscription subscription = subscriptionsBySessionId
                 .getOrDefault(sessionId, Collections.emptyMap()).get(update.getSubscriptionId());

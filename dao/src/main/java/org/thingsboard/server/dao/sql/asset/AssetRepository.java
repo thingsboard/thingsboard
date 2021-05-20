@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.AssetEntity;
 import org.thingsboard.server.dao.model.sql.AssetInfoEntity;
+import org.thingsboard.server.dao.model.sql.RuleChainEntity;
 
 import java.util.List;
 import java.util.UUID;
@@ -121,6 +122,26 @@ public interface AssetRepository extends PagingAndSortingRepository<AssetEntity,
 
     @Query("SELECT DISTINCT a.type FROM AssetEntity a WHERE a.tenantId = :tenantId")
     List<String> findTenantAssetTypes(@Param("tenantId") UUID tenantId);
+
+    @Query("SELECT a FROM AssetEntity a, RelationEntity re WHERE a.tenantId = :tenantId " +
+            "AND a.id = re.toId AND re.toType = 'ASSET' AND re.relationTypeGroup = 'EDGE' " +
+            "AND re.relationType = 'Contains' AND re.fromId = :edgeId AND re.fromType = 'EDGE' " +
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+    Page<AssetEntity> findByTenantIdAndEdgeId(@Param("tenantId") UUID tenantId,
+                                              @Param("edgeId") UUID edgeId,
+                                              @Param("searchText") String searchText,
+                                              Pageable pageable);
+
+    @Query("SELECT a FROM AssetEntity a, RelationEntity re WHERE a.tenantId = :tenantId " +
+            "AND a.id = re.toId AND re.toType = 'ASSET' AND re.relationTypeGroup = 'EDGE' " +
+            "AND re.relationType = 'Contains' AND re.fromId = :edgeId AND re.fromType = 'EDGE' " +
+            "AND a.type = :type " +
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+    Page<AssetEntity> findByTenantIdAndEdgeIdAndType(@Param("tenantId") UUID tenantId,
+                                              @Param("edgeId") UUID edgeId,
+                                              @Param("type") String type,
+                                              @Param("searchText") String searchText,
+                                              Pageable pageable);
 
     Long countByTenantIdAndTypeIsNot(UUID tenantId, String type);
 }

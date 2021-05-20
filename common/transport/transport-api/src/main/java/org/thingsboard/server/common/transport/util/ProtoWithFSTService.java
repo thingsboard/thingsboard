@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@ package org.thingsboard.server.common.transport.util;
 import lombok.extern.slf4j.Slf4j;
 import org.nustaq.serialization.FSTConfiguration;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 
 import java.util.Optional;
 
@@ -32,8 +30,9 @@ public class ProtoWithFSTService implements DataDecodingEncodingService {
     @Override
     public <T> Optional<T> decode(byte[] byteArray) {
         try {
-            T msg = (T) config.asObject(byteArray);
-            return Optional.of(msg);
+            @SuppressWarnings("unchecked")
+            T msg = byteArray != null && byteArray.length > 0 ? (T) config.asObject(byteArray) : null;
+            return Optional.ofNullable(msg);
         } catch (IllegalArgumentException e) {
             log.error("Error during deserialization message, [{}]", e.getMessage());
             return Optional.empty();

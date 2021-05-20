@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,10 @@ import java.util.List;
 @Data
 public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfiguration implements NodeConfiguration<TbCreateAlarmNodeConfiguration> {
 
-    private AlarmSeverity severity;
+    private String severity;
     private boolean propagate;
     private boolean useMessageAlarmData;
+    private boolean dynamicSeverity;
 
     private List<String> relationTypes;
 
@@ -40,10 +41,11 @@ public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigura
                 "}\n" +
                 "return details;");
         configuration.setAlarmType("General Alarm");
-        configuration.setSeverity(AlarmSeverity.CRITICAL);
+        configuration.setSeverity(AlarmSeverity.CRITICAL.name());
         configuration.setPropagate(false);
         configuration.setUseMessageAlarmData(false);
         configuration.setRelationTypes(Collections.emptyList());
+        configuration.setDynamicSeverity(false);
         return configuration;
     }
 }

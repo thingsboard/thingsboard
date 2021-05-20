@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import { Component, OnInit } from '@angular/core';
 import { FcNodeComponent } from 'ngx-flowchart/dist/ngx-flowchart';
 import { FcRuleNode, RuleNodeType } from '@shared/models/rule-node.models';
 import { Router } from '@angular/router';
+import { RuleChainType } from '@app/shared/models/rule-chain.models';
 
 @Component({
   // tslint:disable-next-line:component-selector
@@ -48,7 +49,12 @@ export class RuleNodeComponent extends FcNodeComponent implements OnInit {
       $event.stopPropagation();
     }
     if (node.targetRuleChainId) {
-      this.router.navigateByUrl(`/ruleChains/${node.targetRuleChainId}`);
+      if (node.ruleChainType === RuleChainType.EDGE) {
+        this.router.navigateByUrl(`/edges/ruleChains/${node.targetRuleChainId}`);
+      } else {
+        this.router.navigateByUrl(`/ruleChains/${node.targetRuleChainId}`);
+      }
+
     }
   }
 }

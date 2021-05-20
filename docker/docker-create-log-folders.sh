@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2016-2020 The Thingsboard Authors
+# Copyright © 2016-2021 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,3 +24,5 @@ mkdir -p tb-transports/lwm2m/log && sudo chown -R 799:799 tb-transports/lwm2m/lo
 mkdir -p tb-transports/http/log && sudo chown -R 799:799 tb-transports/http/log
 
 mkdir -p tb-transports/mqtt/log && sudo chown -R 799:799 tb-transports/mqtt/log
+
+mkdir -p tb-transports/snmp/log && sudo chown -R 799:799 tb-transports/snmp/log

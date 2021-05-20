@@ -948,7 +948,6 @@
         "body": "Тело",
         "method": "Метод",
         "type": "Тип",
-        "entity": "Объект",
         "message-id": "ИД сообщения",
         "message-type": "Тип сообщения",
         "data-type": "Тип данных",
@@ -960,7 +959,9 @@
         "success": "Успех",
         "failed": "Неудача",
         "messages-processed": "Сообщения обработаны",
-        "errors-occurred": "Возникли ошибки"
+        "errors-occurred": "Возникли ошибки",
+        "all-events": "Все",
+        "entity-type": "Тип объекта"
     },
     "extension": {
         "extensions": "Расширение",
@@ -1541,7 +1542,7 @@
         "timeseries": "Телеметрия",
         "search-data": "Поиск данных",
         "no-data-found": "Данные не найдено",
-        "latest-values": "Последние значения",
+        "latest": "Последние значения",
         "rpc": "Управляющий виджет",
         "alarm": "Виджет оповещений",
         "static": "Статический виджет",

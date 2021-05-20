@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,13 @@
  */
 package org.thingsboard.server.common.transport.adaptor;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.util.JsonFormat;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -32,6 +37,7 @@ import java.util.List;
 @Slf4j
 public class ProtoConverter {
 
+    public static final Gson GSON = new Gson();
     public static final JsonParser JSON_PARSER = new JsonParser();
 
     public static TransportProtos.PostTelemetryMsg convertToTelemetryProto(byte[] payload) throws InvalidProtocolBufferException, IllegalArgumentException {
@@ -73,6 +79,9 @@ public class ProtoConverter {
     }
 
     public static TransportProtos.ClaimDeviceMsg convertToClaimDeviceProto(DeviceId deviceId, byte[] bytes) throws InvalidProtocolBufferException {
+        if (bytes == null) {
+            return buildClaimDeviceMsg(deviceId, DataConstants.DEFAULT_SECRET_KEY, 0);
+        }
         TransportApiProtos.ClaimDevice proto = TransportApiProtos.ClaimDevice.parseFrom(bytes);
         String secretKey = proto.getSecretKey() != null ? proto.getSecretKey() : DataConstants.DEFAULT_SECRET_KEY;
         long durationMs = proto.getDurationMs();
@@ -163,5 +172,22 @@ public class ProtoConverter {
             }
         });
         return kvList;
+    }
+
+    public static byte[] convertToRpcRequest(TransportProtos.ToDeviceRpcRequestMsg toDeviceRpcRequestMsg, DynamicMessage.Builder rpcRequestDynamicMessageBuilder) throws AdaptorException {
+        rpcRequestDynamicMessageBuilder.clear();
+        JsonObject rpcRequestJson = new JsonObject();
+        rpcRequestJson.addProperty("method", toDeviceRpcRequestMsg.getMethodName());
+        rpcRequestJson.addProperty("requestId", toDeviceRpcRequestMsg.getRequestId());
+        String params = toDeviceRpcRequestMsg.getParams();
+        try {
+            JsonElement paramsElement = JSON_PARSER.parse(params);
+            rpcRequestJson.add("params", paramsElement);
+            JsonFormat.parser().ignoringUnknownFields().merge(GSON.toJson(rpcRequestJson), rpcRequestDynamicMessageBuilder);
+            DynamicMessage dynamicRpcRequest = rpcRequestDynamicMessageBuilder.build();
+            return dynamicRpcRequest.toByteArray();
+        } catch (Exception e) {
+            throw new AdaptorException("Failed to convert ToDeviceRpcRequestMsg to Dynamic Rpc request message due to: ", e);
+        }
     }
 }

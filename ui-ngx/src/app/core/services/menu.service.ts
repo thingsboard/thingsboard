@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,13 +18,13 @@ import { Injectable } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '../core.state';
-import { selectAuthUser, selectIsAuthenticated } from '../auth/auth.selectors';
+import { selectAuth, selectIsAuthenticated } from '../auth/auth.selectors';
 import { take } from 'rxjs/operators';
 import { HomeSection, MenuSection } from '@core/services/menu.models';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { Authority } from '@shared/models/authority.enum';
-import { AuthUser } from '@shared/models/user.model';
 import { guid } from '@core/utils';
+import { AuthState } from '@core/auth/auth.models';
 
 @Injectable({
   providedIn: 'root'
@@ -45,23 +45,23 @@ export class MenuService {
   }
 
   private buildMenu() {
-    this.store.pipe(select(selectAuthUser), take(1)).subscribe(
-      (authUser: AuthUser) => {
-        if (authUser) {
+    this.store.pipe(select(selectAuth), take(1)).subscribe(
+      (authState: AuthState) => {
+        if (authState.authUser) {
           let menuSections: Array<MenuSection>;
           let homeSections: Array<HomeSection>;
-          switch (authUser.authority) {
+          switch (authState.authUser.authority) {
             case Authority.SYS_ADMIN:
-              menuSections = this.buildSysAdminMenu(authUser);
-              homeSections = this.buildSysAdminHome(authUser);
+              menuSections = this.buildSysAdminMenu(authState);
+              homeSections = this.buildSysAdminHome(authState);
               break;
             case Authority.TENANT_ADMIN:
-              menuSections = this.buildTenantAdminMenu(authUser);
-              homeSections = this.buildTenantAdminHome(authUser);
+              menuSections = this.buildTenantAdminMenu(authState);
+              homeSections = this.buildTenantAdminHome(authState);
               break;
             case Authority.CUSTOMER_USER:
-              menuSections = this.buildCustomerUserMenu(authUser);
-              homeSections = this.buildCustomerUserHome(authUser);
+              menuSections = this.buildCustomerUserMenu(authState);
+              homeSections = this.buildCustomerUserHome(authState);
               break;
           }
           this.menuSections$.next(menuSections);
@@ -71,7 +71,7 @@ export class MenuService {
     );
   }
 
-  private buildSysAdminMenu(authUser: any): Array<MenuSection> {
+  private buildSysAdminMenu(authState: AuthState): Array<MenuSection> {
     const sections: Array<MenuSection> = [];
     sections.push(
       {
@@ -108,7 +108,7 @@ export class MenuService {
         name: 'admin.system-settings',
         type: 'toggle',
         path: '/settings',
-        height: '200px',
+        height: '240px',
         icon: 'settings',
         pages: [
           {
@@ -145,6 +145,13 @@ export class MenuService {
             type: 'link',
             path: '/settings/oauth2',
             icon: 'security'
+          },
+          {
+            id: guid(),
+            name: 'resource.resources-library',
+            type: 'link',
+            path: '/settings/resources-library',
+            icon: 'folder'
           }
         ]
       }
@@ -152,7 +159,7 @@ export class MenuService {
     return sections;
   }
 
-  private buildSysAdminHome(authUser: any): Array<HomeSection> {
+  private buildSysAdminHome(authState: AuthState): Array<HomeSection> {
     const homeSections: Array<HomeSection> = [];
     homeSections.push(
       {
@@ -208,6 +215,11 @@ export class MenuService {
             name: 'admin.oauth2.oauth2',
             icon: 'security',
             path: '/settings/oauth2'
+          },
+          {
+            name: 'resource.resources-library',
+            icon: 'folder',
+            path: '/resources-library'
           }
         ]
       }
@@ -215,7 +227,7 @@ export class MenuService {
     return homeSections;
   }
 
-  private buildTenantAdminMenu(authUser: any): Array<MenuSection> {
+  private buildTenantAdminMenu(authState: AuthState): Array<MenuSection> {
     const sections: Array<MenuSection> = [];
     sections.push(
       {
@@ -223,6 +235,7 @@ export class MenuService {
         name: 'home.home',
         type: 'link',
         path: '/home',
+        notExact: true,
         icon: 'home'
       },
       {
@@ -263,11 +276,48 @@ export class MenuService {
       },
       {
         id: guid(),
+        name: 'firmware.firmware',
+        type: 'link',
+        path: '/firmwares',
+        icon: 'memory'
+      },
+      {
+        id: guid(),
         name: 'entity-view.entity-views',
         type: 'link',
         path: '/entityViews',
         icon: 'view_quilt'
-      },
+      }
+    );
+    if (authState.edgesSupportEnabled) {
+      sections.push(
+        {
+          id: guid(),
+          name: 'edge.management',
+          type: 'toggle',
+          path: '/edges',
+          height: '80px',
+          icon: 'router',
+          pages: [
+            {
+              id: guid(),
+              name: 'edge.edge-instances',
+              type: 'link',
+              path: '/edges',
+              icon: 'router'
+            },
+            {
+              id: guid(),
+              name: 'edge.rulechain-templates',
+              type: 'link',
+              path: '/edges/ruleChains',
+              icon: 'settings_ethernet'
+            }
+          ]
+        }
+      );
+    }
+    sections.push(
       {
         id: guid(),
         name: 'widget.widget-library',
@@ -296,12 +346,36 @@ export class MenuService {
         path: '/usage',
         icon: 'insert_chart',
         notExact: true
+      },
+      {
+        id: guid(),
+        name: 'admin.system-settings',
+        type: 'toggle',
+        path: '/settings',
+        height: '80px',
+        icon: 'settings',
+        pages: [
+          {
+            id: guid(),
+            name: 'admin.home-settings',
+            type: 'link',
+            path: '/settings/home',
+            icon: 'settings_applications'
+          },
+          {
+            id: guid(),
+            name: 'resource.resources-library',
+            type: 'link',
+            path: '/settings/resources-library',
+            icon: 'folder'
+          }
+        ]
       }
     );
     return sections;
   }
 
-  private buildTenantAdminHome(authUser: any): Array<HomeSection> {
+  private buildTenantAdminHome(authState: AuthState): Array<HomeSection> {
     const homeSections: Array<HomeSection> = [];
     homeSections.push(
       {
@@ -347,6 +421,11 @@ export class MenuService {
             icon: 'mdi:alpha-d-box',
             isMdiIcon: true,
             path: '/deviceProfiles'
+          },
+          {
+            name: 'firmware.firmware',
+            icon: 'memory',
+            path: '/firmwares'
           }
         ]
       },
@@ -359,7 +438,28 @@ export class MenuService {
             path: '/entityViews'
           }
         ]
-      },
+      }
+    );
+    if (authState.edgesSupportEnabled) {
+      homeSections.push(
+        {
+          name: 'edge.management',
+          places: [
+            {
+              name: 'edge.edge-instances',
+              icon: 'router',
+              path: '/edges'
+            },
+            {
+              name: 'edge.rulechain-templates',
+              icon: 'settings_ethernet',
+              path: '/edges/ruleChains'
+            }
+          ]
+        }
+      );
+    }
+    homeSections.push(
       {
         name: 'dashboard.management',
         places: [
@@ -389,12 +489,27 @@ export class MenuService {
             path: '/usage'
           }
         ]
+      },
+      {
+        name: 'admin.system-settings',
+        places: [
+          {
+            name: 'admin.home-settings',
+            icon: 'settings_applications',
+            path: '/settings/home'
+          },
+          {
+            name: 'resource.resources-library',
+            icon: 'folder',
+            path: '/settings/resources-library'
+          }
+        ]
       }
     );
     return homeSections;
   }
 
-  private buildCustomerUserMenu(authUser: any): Array<MenuSection> {
+  private buildCustomerUserMenu(authState: AuthState): Array<MenuSection> {
     const sections: Array<MenuSection> = [];
     sections.push(
       {
@@ -402,6 +517,7 @@ export class MenuService {
         name: 'home.home',
         type: 'link',
         path: '/home',
+        notExact: true,
         icon: 'home'
       },
       {
@@ -424,7 +540,20 @@ export class MenuService {
         type: 'link',
         path: '/entityViews',
         icon: 'view_quilt'
-      },
+      }
+    );
+    if (authState.edgesSupportEnabled) {
+      sections.push(
+        {
+          id: guid(),
+          name: 'edge.edge-instances',
+          type: 'link',
+          path: '/edges',
+          icon: 'router'
+        }
+      );
+    }
+    sections.push(
       {
         id: guid(),
         name: 'dashboard.dashboards',
@@ -436,8 +565,9 @@ export class MenuService {
     return sections;
   }
 
-  private buildCustomerUserHome(authUser: any): Array<HomeSection> {
-    const homeSections: Array<HomeSection> = [
+  private buildCustomerUserHome(authState: AuthState): Array<HomeSection> {
+    const homeSections: Array<HomeSection> = [];
+    homeSections.push(
       {
         name: 'asset.view-assets',
         places: [
@@ -467,7 +597,23 @@ export class MenuService {
             path: '/entityViews'
           }
         ]
-      },
+      }
+    );
+    if (authState.edgesSupportEnabled) {
+      homeSections.push(
+        {
+          name: 'edge.management',
+          places: [
+            {
+              name: 'edge.edge-instances',
+              icon: 'router',
+              path: '/edges'
+            }
+          ]
+        }
+      );
+    }
+    homeSections.push(
       {
         name: 'dashboard.view-dashboards',
         places: [
@@ -478,7 +624,7 @@ export class MenuService {
           }
         ]
       }
-    ];
+    );
     return homeSections;
   }
 

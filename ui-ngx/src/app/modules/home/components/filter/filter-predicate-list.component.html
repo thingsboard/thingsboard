@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -26,12 +26,12 @@
       <span fxFlex="8"></span>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" fxFlex="92">
         <div fxFlex fxLayout="row" fxLayoutGap="8px">
-          <div fxFlex="40" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div fxFlex="30" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
             <label fxFlex translate class="tb-title no-padding">filter.operation.operation</label>
             <label *ngIf="valueType === valueTypeEnum.STRING"
                    translate class="tb-title no-padding" style="min-width: 70px;">filter.ignore-case</label>
           </div>
-          <label fxFlex="60" translate class="tb-title no-padding">filter.value</label>
+          <label fxFlex="70" translate class="tb-title no-padding">filter.value</label>
         </div>
         <label *ngIf="displayUserParameters"
                translate class="tb-title no-padding" style="width: 60px;">filter.user-parameters</label>
@@ -53,6 +53,7 @@
               [valueType]="valueType"
               [displayUserParameters]="displayUserParameters"
               [allowUserDynamicSource]="allowUserDynamicSource"
+              [onlyUserDynamicSource]="onlyUserDynamicSource"
               [key]="key"
               [formControl]="predicateControl">
             </tb-filter-predicate>

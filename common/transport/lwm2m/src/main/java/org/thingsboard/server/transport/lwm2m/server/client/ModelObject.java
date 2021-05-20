@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,11 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 import lombok.Data;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.node.LwM2mObjectInstance;
+
 import java.util.Map;
 
 @Data
-public class ModelObject {
+public class ModelObject  implements Cloneable {
     /**
      * model one on all instance
      * for each instance only id resource with parameters of resources (observe, attr, telemetry)
@@ -37,5 +38,9 @@ public class ModelObject {
     public boolean removeInstance (int id ) {
         LwM2mObjectInstance instance = this.instances.get(id);
          return this.instances.remove(id, instance);
+    }
+
+    public ModelObject clone() throws CloneNotSupportedException {
+        return (ModelObject) super.clone();
     }
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,7 +27,8 @@ import {
   deleteNullProperties,
   guid,
   isDefined,
-  isDefinedAndNotNull, isString,
+  isDefinedAndNotNull,
+  isString,
   isUndefined
 } from '@core/utils';
 import { WindowMessage } from '@shared/models/window-message.model';
@@ -409,9 +410,23 @@ export class UtilsService {
     return decodeURIComponent(results[2].replace(/\+/g, ' '));
   }
 
+  public removeQueryParams(keys: Array<string>) {
+    let params = this.window.location.search;
+    for (const key of keys) {
+      params = this.updateUrlQueryString(params, key, null);
+    }
+    const baseUrlPart = [baseUrl(), this.window.location.pathname].join('');
+    this.window.history.replaceState({}, '', baseUrlPart + params);
+  }
+
   public updateQueryParam(name: string, value: string | null) {
     const baseUrlPart = [baseUrl(), this.window.location.pathname].join('');
     const urlQueryString = this.window.location.search;
+    const params = this.updateUrlQueryString(urlQueryString, name, value);
+    this.window.history.replaceState({}, '', baseUrlPart + params);
+  }
+
+  private updateUrlQueryString(urlQueryString: string, name: string, value: string | null): string {
     let newParam = '';
     let params = '';
     if (value !== null) {
@@ -424,13 +439,16 @@ export class UtilsService {
           newParam = '$1' + newParam;
         }
         params = urlQueryString.replace(keyRegex, newParam);
+        if (params.startsWith('&')) {
+          params = '?' + params.substring(1);
+        }
       } else if (newParam) {
         params = urlQueryString + '&' + newParam;
       }
     } else if (newParam) {
       params = '?' + newParam;
     }
-    this.window.history.replaceState({}, '', baseUrlPart + params);
+    return params;
   }
 
   public baseUrl(): string {

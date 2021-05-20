@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,5 +45,15 @@ public interface DashboardInfoDao extends Dao<DashboardInfo> {
      * @return the list of dashboard objects
      */
     PageData<DashboardInfo> findDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, PageLink pageLink);
+
+    /**
+     * Find dashboards by tenantId, edgeId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param edgeId the edgeId
+     * @param pageLink the page link
+     * @return the list of dashboard objects
+     */
+    PageData<DashboardInfo> findDashboardsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, PageLink pageLink);
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 const config = require('config'), logger = require('./config/logger')._logger('main');
+
+logger.info('===CONFIG BEGIN===');
+logger.info(JSON.stringify(config, null, 4));
+logger.info('===CONFIG END===');
 
 const serviceType = config.get('queue_type');
 switch (serviceType) {

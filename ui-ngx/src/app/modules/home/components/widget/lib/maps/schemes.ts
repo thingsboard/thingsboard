@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -13,6 +13,8 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 ///
+
+import { JsonSettingsSchema } from '@shared/models/widget.models';
 
 export const googleMapSettingsSchema =
 {
@@ -869,6 +871,15 @@ export const pointSchema =
                 title: 'Point color',
                 type: 'string'
             },
+            useColorPointFunction: {
+                title: 'Use color point function',
+                type: 'boolean',
+                default: false
+            },
+            colorPointFunction: {
+                title: 'Color point function: f(data, dsData, dsIndex)',
+                type: 'string'
+            },
             pointSize: {
                 title: 'Point size (px)',
                 type: 'number',
@@ -896,6 +907,11 @@ export const pointSchema =
         {
             key: 'pointColor',
             type: 'color'
+        },
+        'useColorPointFunction',
+        {
+          key: 'colorPointFunction',
+          type: 'javascript'
         },
         'pointSize',
         'usePointAsAnchor',
@@ -1095,4 +1111,32 @@ export const tripAnimationSchema = {
             }
         ]
     }]
+};
+
+interface IProvider {
+  schema: JsonSettingsSchema;
+  name: string;
+}
+
+export const providerSets: { [key: string]: IProvider } = {
+  'openstreet-map': {
+    schema: openstreetMapSettingsSchema,
+    name: 'openstreet-map'
+  },
+  'tencent-map': {
+    schema: tencentMapSettingsSchema,
+    name: 'tencent-map'
+  },
+  'google-map': {
+    schema: googleMapSettingsSchema,
+    name: 'google-map'
+  },
+  here: {
+    schema: hereMapSettingsSchema,
+    name: 'here'
+  },
+  'image-map': {
+    schema: imageMapSettingsSchema,
+    name: 'image-map'
+  }
 };

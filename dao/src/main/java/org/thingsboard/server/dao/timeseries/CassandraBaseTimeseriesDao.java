@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -61,6 +62,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
@@ -79,11 +82,16 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
 
     protected static List<Long> FIXED_PARTITION = Arrays.asList(new Long[]{0L});
 
+    private CassandraTsPartitionsCache cassandraTsPartitionsCache;
+
     @Autowired
     private Environment environment;
 
     @Value("${cassandra.query.ts_key_value_partitioning}")
     private String partitioning;
+
+    @Value("${cassandra.query.ts_key_value_partitions_max_cache_size:100000}")
+    private long partitionsCacheSize;
 
     @Value("${cassandra.query.ts_key_value_ttl}")
     private long systemTtl;
@@ -101,9 +109,10 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     private PreparedStatement[] fetchStmtsDesc;
     private PreparedStatement deleteStmt;
     private PreparedStatement deletePartitionStmt;
+    private final Lock stmtCreationLock = new ReentrantLock();
 
     private boolean isInstall() {
-        return environment.acceptsProfiles("install");
+        return environment.acceptsProfiles(Profiles.of("install"));
     }
 
     @PostConstruct
@@ -115,6 +124,9 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         Optional<NoSqlTsPartitionDate> partition = NoSqlTsPartitionDate.parse(partitioning);
         if (partition.isPresent()) {
             tsFormat = partition.get();
+            if (!isFixedPartitioning() && partitionsCacheSize > 0) {
+                cassandraTsPartitionsCache = new CassandraTsPartitionsCache(partitionsCacheSize);
+            }
         } else {
             log.warn("Incorrect configuration of partitioning {}", partitioning);
             throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
@@ -175,17 +187,18 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         }
         ttl = computeTtl(ttl);
         long partition = toPartitionTs(tsKvEntryTs);
-        log.debug("Saving partition {} for the entity [{}-{}] and key {}", partition, entityId.getEntityType(), entityId.getId(), key);
-        BoundStatementBuilder stmtBuilder = new BoundStatementBuilder((ttl == 0 ? getPartitionInsertStmt() : getPartitionInsertTtlStmt()).bind());
-        stmtBuilder.setString(0, entityId.getEntityType().name())
-                .setUuid(1, entityId.getId())
-                .setLong(2, partition)
-                .setString(3, key);
-        if (ttl > 0) {
-            stmtBuilder.setInt(4, (int) ttl);
+        if (cassandraTsPartitionsCache == null) {
+            return doSavePartition(tenantId, entityId, key, ttl, partition);
+        } else {
+            CassandraPartitionCacheKey partitionSearchKey = new CassandraPartitionCacheKey(entityId, key, partition);
+            if (!cassandraTsPartitionsCache.has(partitionSearchKey)) {
+                ListenableFuture<Integer> result = doSavePartition(tenantId, entityId, key, ttl, partition);
+                Futures.addCallback(result, new CacheCallback<>(partitionSearchKey), MoreExecutors.directExecutor());
+                return result;
+            } else {
+                return Futures.immediateFuture(0);
+            }
         }
-        BoundStatement stmt = stmtBuilder.build();
-        return getFuture(executeAsyncWrite(tenantId, stmt), rs -> 0);
     }
 
     @Override
@@ -461,6 +474,38 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         return getFuture(executeAsyncWrite(tenantId, stmt), rs -> null);
     }
 
+    private ListenableFuture<Integer> doSavePartition(TenantId tenantId, EntityId entityId, String key, long ttl, long partition) {
+        log.debug("Saving partition {} for the entity [{}-{}] and key {}", partition, entityId.getEntityType(), entityId.getId(), key);
+        PreparedStatement preparedStatement = ttl == 0 ? getPartitionInsertStmt() : getPartitionInsertTtlStmt();
+        BoundStatement stmt = preparedStatement.bind();
+        stmt = stmt.setString(0, entityId.getEntityType().name())
+                .setUuid(1, entityId.getId())
+                .setLong(2, partition)
+                .setString(3, key);
+        if (ttl > 0) {
+            stmt = stmt.setInt(4, (int) ttl);
+        }
+        return getFuture(executeAsyncWrite(tenantId, stmt), rs -> 0);
+    }
+
+    private class CacheCallback<Void> implements FutureCallback<Void> {
+        private final CassandraPartitionCacheKey key;
+
+        private CacheCallback(CassandraPartitionCacheKey key) {
+            this.key = key;
+        }
+
+        @Override
+        public void onSuccess(Void result) {
+            cassandraTsPartitionsCache.put(key);
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+
+        }
+    }
+
     private long computeTtl(long ttl) {
         if (systemTtl > 0) {
             if (ttl == 0) {
@@ -503,13 +548,20 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
 
     private PreparedStatement getDeleteStmt() {
         if (deleteStmt == null) {
-            deleteStmt = prepare("DELETE FROM " + ModelConstants.TS_KV_CF +
-                    " WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + EQUALS_PARAM
-                    + "AND " + ModelConstants.ENTITY_ID_COLUMN + EQUALS_PARAM
-                    + "AND " + ModelConstants.KEY_COLUMN + EQUALS_PARAM
-                    + "AND " + ModelConstants.PARTITION_COLUMN + EQUALS_PARAM
-                    + "AND " + ModelConstants.TS_COLUMN + " > ? "
-                    + "AND " + ModelConstants.TS_COLUMN + " <= ?");
+            stmtCreationLock.lock();
+            try {
+                if (deleteStmt == null) {
+                    deleteStmt = prepare("DELETE FROM " + ModelConstants.TS_KV_CF +
+                            " WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + EQUALS_PARAM
+                            + "AND " + ModelConstants.ENTITY_ID_COLUMN + EQUALS_PARAM
+                            + "AND " + ModelConstants.KEY_COLUMN + EQUALS_PARAM
+                            + "AND " + ModelConstants.PARTITION_COLUMN + EQUALS_PARAM
+                            + "AND " + ModelConstants.TS_COLUMN + " >= ? "
+                            + "AND " + ModelConstants.TS_COLUMN + " < ?");
+                }
+            } finally {
+                stmtCreationLock.unlock();
+            }
         }
         return deleteStmt;
     }
@@ -543,27 +595,41 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
 
     private PreparedStatement getDeletePartitionStmt() {
         if (deletePartitionStmt == null) {
-            deletePartitionStmt = prepare("DELETE FROM " + ModelConstants.TS_KV_PARTITIONS_CF +
-                    " WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + EQUALS_PARAM
-                    + "AND " + ModelConstants.ENTITY_ID_COLUMN + EQUALS_PARAM
-                    + "AND " + ModelConstants.PARTITION_COLUMN + EQUALS_PARAM
-                    + "AND " + ModelConstants.KEY_COLUMN + EQUALS_PARAM);
+            stmtCreationLock.lock();
+            try {
+                if (deletePartitionStmt == null) {
+                    deletePartitionStmt = prepare("DELETE FROM " + ModelConstants.TS_KV_PARTITIONS_CF +
+                            " WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + EQUALS_PARAM
+                            + "AND " + ModelConstants.ENTITY_ID_COLUMN + EQUALS_PARAM
+                            + "AND " + ModelConstants.PARTITION_COLUMN + EQUALS_PARAM
+                            + "AND " + ModelConstants.KEY_COLUMN + EQUALS_PARAM);
+                }
+            } finally {
+                stmtCreationLock.unlock();
+            }
         }
         return deletePartitionStmt;
     }
 
     private PreparedStatement getSaveStmt(DataType dataType) {
         if (saveStmts == null) {
-            saveStmts = new PreparedStatement[DataType.values().length];
-            for (DataType type : DataType.values()) {
-                saveStmts[type.ordinal()] = prepare(INSERT_INTO + ModelConstants.TS_KV_CF +
-                        "(" + ModelConstants.ENTITY_TYPE_COLUMN +
-                        "," + ModelConstants.ENTITY_ID_COLUMN +
-                        "," + ModelConstants.KEY_COLUMN +
-                        "," + ModelConstants.PARTITION_COLUMN +
-                        "," + ModelConstants.TS_COLUMN +
-                        "," + getColumnName(type) + ")" +
-                        " VALUES(?, ?, ?, ?, ?, ?)");
+            stmtCreationLock.lock();
+            try {
+                if (saveStmts == null) {
+                    saveStmts = new PreparedStatement[DataType.values().length];
+                    for (DataType type : DataType.values()) {
+                        saveStmts[type.ordinal()] = prepare(INSERT_INTO + ModelConstants.TS_KV_CF +
+                                "(" + ModelConstants.ENTITY_TYPE_COLUMN +
+                                "," + ModelConstants.ENTITY_ID_COLUMN +
+                                "," + ModelConstants.KEY_COLUMN +
+                                "," + ModelConstants.PARTITION_COLUMN +
+                                "," + ModelConstants.TS_COLUMN +
+                                "," + getColumnName(type) + ")" +
+                                " VALUES(?, ?, ?, ?, ?, ?)");
+                    }
+                }
+            } finally {
+                stmtCreationLock.unlock();
             }
         }
         return saveStmts[dataType.ordinal()];
@@ -571,16 +637,23 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
 
     private PreparedStatement getSaveTtlStmt(DataType dataType) {
         if (saveTtlStmts == null) {
-            saveTtlStmts = new PreparedStatement[DataType.values().length];
-            for (DataType type : DataType.values()) {
-                saveTtlStmts[type.ordinal()] = prepare(INSERT_INTO + ModelConstants.TS_KV_CF +
-                        "(" + ModelConstants.ENTITY_TYPE_COLUMN +
-                        "," + ModelConstants.ENTITY_ID_COLUMN +
-                        "," + ModelConstants.KEY_COLUMN +
-                        "," + ModelConstants.PARTITION_COLUMN +
-                        "," + ModelConstants.TS_COLUMN +
-                        "," + getColumnName(type) + ")" +
-                        " VALUES(?, ?, ?, ?, ?, ?) USING TTL ?");
+            stmtCreationLock.lock();
+            try {
+                if (saveTtlStmts == null) {
+                    saveTtlStmts = new PreparedStatement[DataType.values().length];
+                    for (DataType type : DataType.values()) {
+                        saveTtlStmts[type.ordinal()] = prepare(INSERT_INTO + ModelConstants.TS_KV_CF +
+                                "(" + ModelConstants.ENTITY_TYPE_COLUMN +
+                                "," + ModelConstants.ENTITY_ID_COLUMN +
+                                "," + ModelConstants.KEY_COLUMN +
+                                "," + ModelConstants.PARTITION_COLUMN +
+                                "," + ModelConstants.TS_COLUMN +
+                                "," + getColumnName(type) + ")" +
+                                " VALUES(?, ?, ?, ?, ?, ?) USING TTL ?");
+                    }
+                }
+            } finally {
+                stmtCreationLock.unlock();
             }
         }
         return saveTtlStmts[dataType.ordinal()];
@@ -588,24 +661,38 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
 
     private PreparedStatement getPartitionInsertStmt() {
         if (partitionInsertStmt == null) {
-            partitionInsertStmt = prepare(INSERT_INTO + ModelConstants.TS_KV_PARTITIONS_CF +
-                    "(" + ModelConstants.ENTITY_TYPE_COLUMN +
-                    "," + ModelConstants.ENTITY_ID_COLUMN +
-                    "," + ModelConstants.PARTITION_COLUMN +
-                    "," + ModelConstants.KEY_COLUMN + ")" +
-                    " VALUES(?, ?, ?, ?)");
+            stmtCreationLock.lock();
+            try {
+                if (partitionInsertStmt == null) {
+                    partitionInsertStmt = prepare(INSERT_INTO + ModelConstants.TS_KV_PARTITIONS_CF +
+                            "(" + ModelConstants.ENTITY_TYPE_COLUMN +
+                            "," + ModelConstants.ENTITY_ID_COLUMN +
+                            "," + ModelConstants.PARTITION_COLUMN +
+                            "," + ModelConstants.KEY_COLUMN + ")" +
+                            " VALUES(?, ?, ?, ?)");
+                }
+            } finally {
+                stmtCreationLock.unlock();
+            }
         }
         return partitionInsertStmt;
     }
 
     private PreparedStatement getPartitionInsertTtlStmt() {
         if (partitionInsertTtlStmt == null) {
-            partitionInsertTtlStmt = prepare(INSERT_INTO + ModelConstants.TS_KV_PARTITIONS_CF +
-                    "(" + ModelConstants.ENTITY_TYPE_COLUMN +
-                    "," + ModelConstants.ENTITY_ID_COLUMN +
-                    "," + ModelConstants.PARTITION_COLUMN +
-                    "," + ModelConstants.KEY_COLUMN + ")" +
-                    " VALUES(?, ?, ?, ?) USING TTL ?");
+            stmtCreationLock.lock();
+            try {
+                if (partitionInsertTtlStmt == null) {
+                    partitionInsertTtlStmt = prepare(INSERT_INTO + ModelConstants.TS_KV_PARTITIONS_CF +
+                            "(" + ModelConstants.ENTITY_TYPE_COLUMN +
+                            "," + ModelConstants.ENTITY_ID_COLUMN +
+                            "," + ModelConstants.PARTITION_COLUMN +
+                            "," + ModelConstants.KEY_COLUMN + ")" +
+                            " VALUES(?, ?, ?, ?) USING TTL ?");
+                }
+            } finally {
+                stmtCreationLock.unlock();
+            }
         }
         return partitionInsertTtlStmt;
     }
@@ -671,12 +758,26 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         switch (orderBy) {
             case ASC_ORDER:
                 if (fetchStmtsAsc == null) {
-                    fetchStmtsAsc = initFetchStmt(orderBy);
+                    stmtCreationLock.lock();
+                    try {
+                        if (fetchStmtsAsc == null) {
+                            fetchStmtsAsc = initFetchStmt(orderBy);
+                        }
+                    } finally {
+                        stmtCreationLock.unlock();
+                    }
                 }
                 return fetchStmtsAsc[aggType.ordinal()];
             case DESC_ORDER:
                 if (fetchStmtsDesc == null) {
-                    fetchStmtsDesc = initFetchStmt(orderBy);
+                    stmtCreationLock.lock();
+                    try {
+                        if (fetchStmtsDesc == null) {
+                            fetchStmtsDesc = initFetchStmt(orderBy);
+                        }
+                    } finally {
+                        stmtCreationLock.unlock();
+                    }
                 }
                 return fetchStmtsDesc[aggType.ordinal()];
             default:
@@ -698,8 +799,8 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
                         + "AND " + ModelConstants.ENTITY_ID_COLUMN + EQUALS_PARAM
                         + "AND " + ModelConstants.KEY_COLUMN + EQUALS_PARAM
                         + "AND " + ModelConstants.PARTITION_COLUMN + EQUALS_PARAM
-                        + "AND " + ModelConstants.TS_COLUMN + " > ? "
-                        + "AND " + ModelConstants.TS_COLUMN + " <= ?"
+                        + "AND " + ModelConstants.TS_COLUMN + " >= ? "
+                        + "AND " + ModelConstants.TS_COLUMN + " < ?"
                         + (type == Aggregation.NONE ? " ORDER BY " + ModelConstants.TS_COLUMN + " " + orderBy + " LIMIT ?" : ""));
             }
         }

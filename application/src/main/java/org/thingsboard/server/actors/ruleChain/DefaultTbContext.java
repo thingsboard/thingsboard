@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.channel.EventLoopGroup;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.MailService;
@@ -34,15 +33,17 @@ import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorRef;
-import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -63,6 +64,8 @@ import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeEventService;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
@@ -90,10 +93,12 @@ class DefaultTbContext implements TbContext {
     public final static ObjectMapper mapper = new ObjectMapper();
 
     private final ActorSystemContext mainCtx;
+    private final String ruleChainName;
     private final RuleNodeCtx nodeCtx;
 
-    public DefaultTbContext(ActorSystemContext mainCtx, RuleNodeCtx nodeCtx) {
+    public DefaultTbContext(ActorSystemContext mainCtx, String ruleChainName, RuleNodeCtx nodeCtx) {
         this.mainCtx = mainCtx;
+        this.ruleChainName = ruleChainName;
         this.nodeCtx = nodeCtx;
     }
 
@@ -117,13 +122,13 @@ class DefaultTbContext implements TbContext {
             relationTypes.forEach(relationType -> mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), msg, relationType, th));
         }
         msg.getCallback().onProcessingEnd(nodeCtx.getSelf().getId());
-        nodeCtx.getChainActor().tell(new RuleNodeToRuleChainTellNextMsg(nodeCtx.getSelf().getId(), relationTypes, msg, th != null ? th.getMessage() : null));
+        nodeCtx.getChainActor().tell(new RuleNodeToRuleChainTellNextMsg(nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId(), relationTypes, msg, th != null ? th.getMessage() : null));
     }
 
     @Override
     public void tellSelf(TbMsg msg, long delayMs) {
         //TODO: add persistence layer
-        scheduleMsgWithDelay(new RuleNodeToSelfMsg(msg), delayMs, nodeCtx.getSelfActor());
+        scheduleMsgWithDelay(new RuleNodeToSelfMsg(this, msg), delayMs, nodeCtx.getSelfActor());
     }
 
     @Override
@@ -254,7 +259,8 @@ class DefaultTbContext implements TbContext {
         } else {
             failureMessage = null;
         }
-        nodeCtx.getChainActor().tell(new RuleNodeToRuleChainTellNextMsg(nodeCtx.getSelf().getId(), Collections.singleton(TbRelationTypes.FAILURE),
+        nodeCtx.getChainActor().tell(new RuleNodeToRuleChainTellNextMsg(nodeCtx.getSelf().getRuleChainId(),
+                nodeCtx.getSelf().getId(), Collections.singleton(TbRelationTypes.FAILURE),
                 msg, failureMessage));
     }
 
@@ -264,7 +270,12 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public TbMsg newMsg(String queueName, String type, EntityId originator, TbMsgMetaData metaData, String data) {
-        return TbMsg.newMsg(queueName, type, originator, metaData, data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId());
+        return newMsg(queueName, type, originator, null, metaData, data);
+    }
+
+    @Override
+    public TbMsg newMsg(String queueName, String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data) {
+        return TbMsg.newMsg(queueName, type, originator, customerId, metaData, data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId());
     }
 
     @Override
@@ -277,7 +288,21 @@ class DefaultTbContext implements TbContext {
     }
 
     public TbMsg deviceCreatedMsg(Device device, RuleNodeId ruleNodeId) {
-        return entityActionMsg(device, device.getId(), ruleNodeId, DataConstants.ENTITY_CREATED);
+        RuleChainId ruleChainId = null;
+        String queueName = ServiceQueue.MAIN;
+        if (device.getDeviceProfileId() != null) {
+            DeviceProfile deviceProfile = mainCtx.getDeviceProfileCache().find(device.getDeviceProfileId());
+            if (deviceProfile == null) {
+                log.warn("[{}] Device profile is null!", device.getDeviceProfileId());
+                ruleChainId = null;
+                queueName = ServiceQueue.MAIN;
+            } else {
+                ruleChainId = deviceProfile.getDefaultRuleChainId();
+                String defaultQueueName = deviceProfile.getDefaultQueueName();
+                queueName = defaultQueueName != null ? defaultQueueName : ServiceQueue.MAIN;
+            }
+        }
+        return entityActionMsg(device, device.getId(), ruleNodeId, DataConstants.ENTITY_CREATED, queueName, ruleChainId);
     }
 
     public TbMsg assetCreatedMsg(Asset asset, RuleNodeId ruleNodeId) {
@@ -285,12 +310,36 @@ class DefaultTbContext implements TbContext {
     }
 
     public TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, String action) {
-        return entityActionMsg(alarm, alarm.getId(), ruleNodeId, action);
+        RuleChainId ruleChainId = null;
+        String queueName = ServiceQueue.MAIN;
+        if (EntityType.DEVICE.equals(alarm.getOriginator().getEntityType())) {
+            DeviceId deviceId = new DeviceId(alarm.getOriginator().getId());
+            DeviceProfile deviceProfile = mainCtx.getDeviceProfileCache().get(getTenantId(), deviceId);
+            if (deviceProfile == null) {
+                log.warn("[{}] Device profile is null!", deviceId);
+                ruleChainId = null;
+                queueName = ServiceQueue.MAIN;
+            } else {
+                ruleChainId = deviceProfile.getDefaultRuleChainId();
+                String defaultQueueName = deviceProfile.getDefaultQueueName();
+                queueName = defaultQueueName != null ? defaultQueueName : ServiceQueue.MAIN;
+            }
+        }
+        return entityActionMsg(alarm, alarm.getId(), ruleNodeId, action, queueName, ruleChainId);
+    }
+
+    @Override
+    public void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId) {
+        mainCtx.getClusterService().onEdgeEventUpdate(tenantId, edgeId);
     }
 
     public <E, I extends EntityId> TbMsg entityActionMsg(E entity, I id, RuleNodeId ruleNodeId, String action) {
+        return entityActionMsg(entity, id, ruleNodeId, action, ServiceQueue.MAIN, null);
+    }
+
+    public <E, I extends EntityId> TbMsg entityActionMsg(E entity, I id, RuleNodeId ruleNodeId, String action, String queueName, RuleChainId ruleChainId) {
         try {
-            return TbMsg.newMsg(action, id, getActionMetaData(ruleNodeId), mapper.writeValueAsString(mapper.valueToTree(entity)));
+            return TbMsg.newMsg(queueName, action, id, getActionMetaData(ruleNodeId), mapper.writeValueAsString(mapper.valueToTree(entity)), ruleChainId, null);
         } catch (JsonProcessingException | IllegalArgumentException e) {
             throw new RuntimeException("Failed to process " + id.getEntityType().name().toLowerCase() + " " + action + " msg: " + e);
         }
@@ -299,6 +348,16 @@ class DefaultTbContext implements TbContext {
     @Override
     public RuleNodeId getSelfId() {
         return nodeCtx.getSelf().getId();
+    }
+
+    @Override
+    public RuleNode getSelf() {
+        return nodeCtx.getSelf();
+    }
+
+    @Override
+    public String getRuleChainName() {
+        return ruleChainName;
     }
 
     @Override
@@ -433,6 +492,16 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public EdgeService getEdgeService() {
+        return mainCtx.getEdgeService();
+    }
+
+    @Override
+    public EdgeEventService getEdgeEventService() {
+        return mainCtx.getEdgeEventService();
+    }
+
+    @Override
     public EventLoopGroup getSharedEventLoop() {
         return mainCtx.getSharedEventLoopGroupService().getSharedEventLoopGroup();
     }
@@ -473,11 +542,6 @@ class DefaultTbContext implements TbContext {
     @Override
     public TbResultSetFuture submitCassandraTask(CassandraStatementTask task) {
         return mainCtx.getCassandraBufferedRateExecutor().submit(task);
-    }
-
-    @Override
-    public RedisTemplate<String, Object> getRedisTemplate() {
-        return mainCtx.getRedisTemplate();
     }
 
     @Override

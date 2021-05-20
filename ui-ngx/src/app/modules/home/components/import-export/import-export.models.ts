@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Widget, WidgetType } from '@app/shared/models/widget.models';
+import { Widget, WidgetType, WidgetTypeDetails } from '@app/shared/models/widget.models';
 import { DashboardLayoutId } from '@shared/models/dashboard.models';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 
@@ -25,7 +25,7 @@ export interface ImportWidgetResult {
 
 export interface WidgetsBundleItem {
   widgetsBundle: WidgetsBundle;
-  widgetTypes: WidgetType[];
+  widgetTypes: WidgetTypeDetails[];
 }
 
 export interface CsvToJsonConfig {
@@ -49,7 +49,11 @@ export enum ImportEntityColumnType {
   entityField = 'ENTITY_FIELD',
   accessToken = 'ACCESS_TOKEN',
   isGateway = 'IS_GATEWAY',
-  description = 'DESCRIPTION'
+  description = 'DESCRIPTION',
+  edgeLicenseKey = 'EDGE_LICENSE_KEY',
+  cloudEndpoint = 'CLOUD_ENDPOINT',
+  routingKey = 'ROUTING_KEY',
+  secret = 'SECRET'
 }
 
 export const importEntityObjectColumns =
@@ -68,6 +72,10 @@ export const importEntityColumnTypeTranslations = new Map<ImportEntityColumnType
     [ImportEntityColumnType.accessToken, 'import.column-type.access-token'],
     [ImportEntityColumnType.isGateway, 'import.column-type.isgateway'],
     [ImportEntityColumnType.description, 'import.column-type.description'],
+    [ImportEntityColumnType.edgeLicenseKey, 'import.column-type.edge-license-key'],
+    [ImportEntityColumnType.cloudEndpoint, 'import.column-type.cloud-endpoint'],
+    [ImportEntityColumnType.routingKey, 'import.column-type.routing-key'],
+    [ImportEntityColumnType.secret, 'import.column-type.secret']
   ]
 );
 
@@ -146,7 +154,7 @@ function splitCSV(str: string, sep: string): string[] {
 
 function isNumeric(str: any): boolean {
   str = str.replace(',', '.');
-  return !isNaN(parseFloat(str)) && isFinite(str);
+  return (str - parseFloat(str) + 1) >= 0 && Number(str).toString() === str;
 }
 
 function convertStringToJSType(str: string): any {

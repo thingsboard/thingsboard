@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import { ActionAuthAuthenticated, ActionAuthLoadUser, ActionAuthUnauthenticated 
 import { getCurrentAuthState, getCurrentAuthUser } from './auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { ActionSettingsChangeLanguage } from '@app/core/settings/settings.actions';
-import { AuthPayload, AuthState } from '@core/auth/auth.models';
+import { AuthPayload, AuthState, SysParamsState } from '@core/auth/auth.models';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthUser } from '@shared/models/user.model';
 import { TimeService } from '@core/services/time.service';
@@ -149,8 +149,11 @@ export class AuthService {
   }
 
   public changePassword(currentPassword: string, newPassword: string) {
-    return this.http.post('/api/auth/changePassword',
-      {currentPassword, newPassword}, defaultHttpOptions());
+    return this.http.post('/api/auth/changePassword', {currentPassword, newPassword}, defaultHttpOptions()).pipe(
+      tap((loginResponse: LoginResponse) => {
+          this.setUserFromJwtToken(loginResponse.token, loginResponse.refreshToken, false);
+        }
+      ));
   }
 
   public activateByEmailCode(emailCode: string): Observable<LoginResponse> {
@@ -291,10 +294,11 @@ export class AuthService {
           })
         );
       } else if (accessToken) {
-        this.utils.updateQueryParam('accessToken', null);
+        const queryParamsToRemove = ['accessToken'];
         if (refreshToken) {
-          this.utils.updateQueryParam('refreshToken', null);
+          queryParamsToRemove.push('refreshToken');
         }
+        this.utils.removeQueryParams(queryParamsToRemove);
         try {
           this.updateAndValidateToken(accessToken, 'jwt_token', false);
           if (refreshToken) {
@@ -425,16 +429,24 @@ export class AuthService {
     }
   }
 
-  private loadSystemParams(authPayload: AuthPayload): Observable<any> {
-    const sources: Array<Observable<any>> = [this.loadIsUserTokenAccessEnabled(authPayload.authUser),
-                                             this.fetchAllowedDashboardIds(authPayload),
-                                             this.timeService.loadMaxDatapointsLimit()];
+  public loadIsEdgesSupportEnabled(): Observable<boolean> {
+    return this.http.get<boolean>('/api/edges/enabled', defaultHttpOptions());
+  }
+
+  private loadSystemParams(authPayload: AuthPayload): Observable<SysParamsState> {
+    const sources = [this.loadIsUserTokenAccessEnabled(authPayload.authUser),
+                     this.fetchAllowedDashboardIds(authPayload),
+                     this.loadIsEdgesSupportEnabled(),
+                     this.timeService.loadMaxDatapointsLimit()];
     return forkJoin(sources)
       .pipe(map((data) => {
-        const userTokenAccessEnabled: boolean = data[0];
-        const allowedDashboardIds: string[] = data[1];
-        return {userTokenAccessEnabled, allowedDashboardIds};
-      }));
+        const userTokenAccessEnabled: boolean = data[0] as boolean;
+        const allowedDashboardIds: string[] = data[1] as string[];
+        const edgesSupportEnabled: boolean = data[2] as boolean;
+        return {userTokenAccessEnabled, allowedDashboardIds, edgesSupportEnabled};
+      }, catchError((err) => {
+        return of({});
+      })));
   }
 
   public refreshJwtToken(loadUserElseStoreJwtToken = true): Observable<LoginResponse> {
@@ -446,8 +458,12 @@ export class AuthService {
         const refreshTokenValid = AuthService.isTokenValid('refresh_token');
         this.setUserFromJwtToken(null, null, false);
         if (!refreshTokenValid) {
-          this.refreshTokenSubject.error(new Error(this.translate.instant('access.refresh-token-expired')));
-          this.refreshTokenSubject = null;
+          this.translate.get('access.refresh-token-expired').subscribe(
+            (translation) => {
+              this.refreshTokenSubject.error(new Error(translation));
+              this.refreshTokenSubject = null;
+            }
+          );
         } else {
           const refreshTokenRequest = {
             refreshToken

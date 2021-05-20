@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,5 +43,14 @@ public interface DashboardInfoRepository extends PagingAndSortingRepository<Dash
                                                           @Param("customerId") UUID customerId,
                                                           @Param("searchText") String searchText,
                                                           Pageable pageable);
+
+    @Query("SELECT di FROM DashboardInfoEntity di, RelationEntity re WHERE di.tenantId = :tenantId " +
+            "AND di.id = re.toId AND re.toType = 'DASHBOARD' AND re.relationTypeGroup = 'EDGE' " +
+            "AND re.relationType = 'Contains' AND re.fromId = :edgeId AND re.fromType = 'EDGE' " +
+            "AND LOWER(di.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+    Page<DashboardInfoEntity> findByTenantIdAndEdgeId(@Param("tenantId") UUID tenantId,
+                                                      @Param("edgeId") UUID edgeId,
+                                                      @Param("searchText") String searchText,
+                                                      Pageable pageable);
 
 }

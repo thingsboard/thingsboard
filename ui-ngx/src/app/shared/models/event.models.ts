@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import { TenantId } from '@shared/models/id/tenant-id';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EventId } from './id/event-id';
 import { ContentType } from '@shared/models/constants';
+import { EntityType } from '@shared/models/entity-type.models';
 
 export enum EventType {
   ERROR = 'ERROR',
@@ -83,3 +84,38 @@ export interface Event extends BaseData<EventId> {
   uid: string;
   body: EventBody;
 }
+
+export interface BaseFilterEventBody {
+  server?: string;
+}
+
+export interface ErrorFilterEventBody extends BaseFilterEventBody {
+  method?: string;
+  error?: string;
+}
+
+export interface LcFilterEventEventBody extends BaseFilterEventBody {
+  event?: string;
+  status?: string;
+  error?: string;
+}
+
+export interface StatsFilterEventBody extends BaseFilterEventBody {
+  messagesProcessed?: number;
+  errorsOccurred?: number;
+}
+
+export interface DebugFilterRuleNodeEventBody extends BaseFilterEventBody {
+  msgDirectionType?: string;
+  entityId?: string;
+  entityName?: EntityType;
+  msgId?: string;
+  msgType?: string;
+  relationType?: string;
+  dataSearch?: string;
+  metadataSearch?: string;
+  isError?: boolean;
+  error?: string;
+}
+
+export type FilterEventBody = ErrorFilterEventBody & LcFilterEventEventBody & StatsFilterEventBody & DebugFilterRuleNodeEventBody;

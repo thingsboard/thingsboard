@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2020 The Thingsboard Authors
+-- Copyright © 2016-2021 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ CREATE OR REPLACE PROCEDURE insert_tb_schema_settings()
 $$
 BEGIN
     IF (SELECT COUNT(*) FROM tb_schema_settings) = 0 THEN
-        INSERT INTO tb_schema_settings (schema_version) VALUES (3002000);
+        INSERT INTO tb_schema_settings (schema_version) VALUES (3003000);
     END IF;
 END;
 $$;
@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS alarm (
     start_ts bigint,
     status varchar(255),
     tenant_id uuid,
+    customer_id uuid,
     propagate_relation_types varchar,
     type varchar(255)
 );
@@ -136,7 +137,8 @@ CREATE TABLE IF NOT EXISTS dashboard (
     assigned_customers varchar(1000000),
     search_text varchar(255),
     tenant_id uuid,
-    title varchar(255)
+    title varchar(255),
+    image varchar(1000000)
 );
 
 CREATE TABLE IF NOT EXISTS rule_chain (
@@ -145,6 +147,7 @@ CREATE TABLE IF NOT EXISTS rule_chain (
     additional_info varchar,
     configuration varchar(10000000),
     name varchar(255),
+    type varchar(255),
     first_rule_node_id uuid,
     root boolean,
     debug_mode boolean,
@@ -175,11 +178,32 @@ CREATE TABLE IF NOT EXISTS rule_node_state (
     CONSTRAINT fk_rule_node_state_node_id FOREIGN KEY (rule_node_id) REFERENCES rule_node(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS firmware (
+    id uuid NOT NULL CONSTRAINT firmware_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    device_profile_id uuid ,
+    type varchar(32) NOT NULL,
+    title varchar(255) NOT NULL,
+    version varchar(255) NOT NULL,
+    file_name varchar(255),
+    content_type varchar(255),
+    checksum_algorithm varchar(32),
+    checksum varchar(1020),
+    data oid,
+    data_size bigint,
+    additional_info varchar,
+    search_text varchar(255),
+    CONSTRAINT firmware_tenant_title_version_unq_key UNIQUE (tenant_id, title, version)
+--     CONSTRAINT fk_device_profile_firmware FOREIGN KEY (device_profile_id) REFERENCES device_profile(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS device_profile (
     id uuid NOT NULL CONSTRAINT device_profile_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     name varchar(255),
     type varchar(255),
+    image varchar(1000000),
     transport_type varchar(255),
     provision_type varchar(255),
     profile_data jsonb,
@@ -187,13 +211,28 @@ CREATE TABLE IF NOT EXISTS device_profile (
     search_text varchar(255),
     is_default boolean,
     tenant_id uuid,
+    firmware_id uuid,
+    software_id uuid,
     default_rule_chain_id uuid,
+    default_dashboard_id uuid,
     default_queue_name varchar(255),
     provision_device_key varchar,
     CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),
     CONSTRAINT device_provision_key_unq_key UNIQUE (provision_device_key),
-    CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id)
+    CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id),
+    CONSTRAINT fk_default_dashboard_device_profile FOREIGN KEY (default_dashboard_id) REFERENCES dashboard(id),
+    CONSTRAINT fk_firmware_device_profile FOREIGN KEY (firmware_id) REFERENCES firmware(id),
+    CONSTRAINT fk_software_device_profile FOREIGN KEY (software_id) REFERENCES firmware(id)
 );
+
+-- We will use one-to-many relation in the first release and extend this feature in case of user requests
+-- CREATE TABLE IF NOT EXISTS device_profile_firmware (
+--     device_profile_id uuid NOT NULL,
+--     firmware_id uuid NOT NULL,
+--     CONSTRAINT device_profile_firmware_unq_key UNIQUE (device_profile_id, firmware_id),
+--     CONSTRAINT fk_device_profile_firmware_device_profile FOREIGN KEY (device_profile_id) REFERENCES device_profile(id) ON DELETE CASCADE,
+--     CONSTRAINT fk_device_profile_firmware_firmware FOREIGN KEY (firmware_id) REFERENCES firmware(id) ON DELETE CASCADE,
+-- );
 
 CREATE TABLE IF NOT EXISTS device (
     id uuid NOT NULL CONSTRAINT device_pkey PRIMARY KEY,
@@ -207,8 +246,12 @@ CREATE TABLE IF NOT EXISTS device (
     label varchar(255),
     search_text varchar(255),
     tenant_id uuid,
+    firmware_id uuid,
+    software_id uuid,
     CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name),
-    CONSTRAINT fk_device_profile FOREIGN KEY (device_profile_id) REFERENCES device_profile(id)
+    CONSTRAINT fk_device_profile FOREIGN KEY (device_profile_id) REFERENCES device_profile(id),
+    CONSTRAINT fk_firmware_device FOREIGN KEY (firmware_id) REFERENCES firmware(id),
+    CONSTRAINT fk_software_device FOREIGN KEY (software_id) REFERENCES firmware(id)
 );
 
 CREATE TABLE IF NOT EXISTS device_credentials (
@@ -315,7 +358,9 @@ CREATE TABLE IF NOT EXISTS widget_type (
     bundle_alias varchar(255),
     descriptor varchar(1000000),
     name varchar(255),
-    tenant_id uuid
+    tenant_id uuid,
+    image varchar(1000000),
+    description varchar(255)
 );
 
 CREATE TABLE IF NOT EXISTS widgets_bundle (
@@ -324,7 +369,9 @@ CREATE TABLE IF NOT EXISTS widgets_bundle (
     alias varchar(255),
     search_text varchar(255),
     tenant_id uuid,
-    title varchar(255)
+    title varchar(255),
+    image varchar(1000000),
+    description varchar(255)
 );
 
 CREATE TABLE IF NOT EXISTS entity_view (
@@ -444,7 +491,53 @@ CREATE TABLE IF NOT EXISTS api_usage_state (
     js_exec varchar(32),
     email_exec varchar(32),
     sms_exec varchar(32),
+    alarm_exec varchar(32),
     CONSTRAINT api_usage_state_unq_key UNIQUE (tenant_id, entity_id)
+);
+
+CREATE TABLE IF NOT EXISTS resource (
+    id uuid NOT NULL CONSTRAINT resource_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    title varchar(255) NOT NULL,
+    resource_type varchar(32) NOT NULL,
+    resource_key varchar(255) NOT NULL,
+    search_text varchar(255),
+    file_name varchar(255) NOT NULL,
+    data varchar,
+    CONSTRAINT resource_unq_key UNIQUE (tenant_id, resource_type, resource_key)
+);
+
+CREATE TABLE IF NOT EXISTS edge (
+    id uuid NOT NULL CONSTRAINT edge_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    additional_info varchar,
+    customer_id uuid,
+    root_rule_chain_id uuid,
+    type varchar(255),
+    name varchar(255),
+    label varchar(255),
+    routing_key varchar(255),
+    secret varchar(255),
+    edge_license_key varchar(30),
+    cloud_endpoint varchar(255),
+    search_text varchar(255),
+    tenant_id uuid,
+    CONSTRAINT edge_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT edge_routing_key_unq_key UNIQUE (routing_key)
+);
+
+CREATE TABLE IF NOT EXISTS edge_event (
+    id uuid NOT NULL CONSTRAINT edge_event_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    edge_id uuid,
+    edge_event_type varchar(255),
+    edge_event_uid varchar(255),
+    entity_id uuid,
+    edge_event_action varchar(255),
+    body varchar(10000000),
+    tenant_id uuid,
+    ts bigint NOT NULL
 );
 
 CREATE OR REPLACE PROCEDURE cleanup_events_by_ttl(IN ttl bigint, IN debug_ttl bigint, INOUT deleted bigint)
@@ -480,3 +573,20 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+
+CREATE OR REPLACE PROCEDURE cleanup_edge_events_by_ttl(IN ttl bigint, INOUT deleted bigint)
+    LANGUAGE plpgsql AS
+$$
+DECLARE
+    ttl_ts bigint;
+    ttl_deleted_count bigint DEFAULT 0;
+BEGIN
+    IF ttl > 0 THEN
+        ttl_ts := (EXTRACT(EPOCH FROM current_timestamp) * 1000 - ttl::bigint * 1000)::bigint;
+        EXECUTE format(
+                'WITH deleted AS (DELETE FROM edge_event WHERE ts < %L::bigint RETURNING *) SELECT count(*) FROM deleted', ttl_ts) into ttl_deleted_count;
+    END IF;
+    RAISE NOTICE 'Edge events removed by ttl: %', ttl_deleted_count;
+    deleted := ttl_deleted_count;
+END
+$$;

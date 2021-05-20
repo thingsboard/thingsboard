@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,9 @@ import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
+import java.util.Collection;
+import java.util.Random;
+
 @Slf4j
 @Component("LwM2MJsonAdaptor")
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' )|| ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
@@ -44,6 +47,24 @@ public class LwM2MJsonAdaptor implements LwM2MTransportAdaptor  {
             return JsonConverter.convertToAttributesProto(jsonElement);
         } catch (IllegalStateException | JsonSyntaxException ex) {
             throw new AdaptorException(ex);
+        }
+    }
+
+    @Override
+    public TransportProtos.GetAttributeRequestMsg convertToGetAttributes(Collection<String> clientKeys, Collection<String> sharedKeys) throws AdaptorException {
+        try {
+            TransportProtos.GetAttributeRequestMsg.Builder result = TransportProtos.GetAttributeRequestMsg.newBuilder();
+            Random random = new Random();
+            result.setRequestId(random.nextInt());
+            if (clientKeys != null) {
+                result.addAllClientAttributeNames(clientKeys);
+            }
+            if (sharedKeys != null) {
+                result.addAllSharedAttributeNames(sharedKeys);
+            }
+            return result.build();
+        } catch (RuntimeException e) {
+            throw new AdaptorException(e);
         }
     }
 }

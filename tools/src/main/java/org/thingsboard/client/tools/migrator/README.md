@@ -21,37 +21,41 @@ It will generate single jar file with all required dependencies inside `target d
 #### Dump data from the source Postgres Database
 *Do not use compression if possible because Tool can only work with uncompressed file
 
-1. Dump table `ts_kv` table:
+1. Dump related tables that need to correct save telemetry
+   
+   `pg_dump -h localhost -U postgres -d thingsboard -T admin_settings -T attribute_kv -T audit_log -T component_discriptor -T device_credentials -T event -T oauth2_client_registration -T oauth2_client_registration_info -T oauth2_client_registration_template -T relation -T rule_node_state tb_schema_settings -T user_credentials > related_entities.dmp`
+   
+2. Dump `ts_kv` and child:
+   
+   `pg_dump -h localhost -U postgres -d thingsboard --load-via-partition-root --data-only -t ts_kv* > ts_kv_all.dmp`
 
-    `pg_dump -h localhost -U postgres -d thingsboard -t ts_kv > ts_kv.dmp`
-
-2. Dump table `ts_kv_latest` table:
-
-    `pg_dump -h localhost -U postgres -d thingsboard -t ts_kv_latest > ts_kv_latest.dmp`
-
-3. [Optional] move table dumps to the instance where cassandra will be hosted
+3. [Optional] Move table dumps to the instance where cassandra will be hosted
 
 #### Prepare directory structure for SSTables
 Tool use 3 different directories for saving SSTables - `ts_kv_cf`, `ts_kv_latest_cf`, `ts_kv_partitions_cf`
 
 Create 3 empty directories. For example:
 
-    /home/ubunut/migration/ts
-    /home/ubunut/migration/ts_latest
-    /home/ubunut/migration/ts_partition
+    /home/user/migration/ts
+    /home/user/migration/ts_latest
+    /home/user/migration/ts_partition
     
 #### Run tool
-*Note: if you run this tool on remote instance - don't forget to execute this command in `screen` to avoid unexpected termination
+
+**If you want to migrate just `ts_kv` without `ts_kv_latest` or vice versa don't use arguments (paths) for output files*
+
+**Note: if you run this tool on remote instance - don't forget to execute this command in `screen` to avoid unexpected termination*
 
 ```
-java -jar ./tools-2.4.1-SNAPSHOT-jar-with-dependencies.jar 
-        -latestFrom ./source/ts_kv_latest.dmp
-        -latestOut /home/ubunut/migration/ts_latest 
-        -tsFrom ./source/ts_kv.dmp
-        -tsOut /home/ubunut/migration/ts  
-        -partitionsOut /home/ubunut/migration/ts_partition
-        -castEnable false
+java -jar ./tools-3.2.2-SNAPSHOT-jar-with-dependencies.jar 
+        -telemetryFrom /home/user/dump/ts_kv_all.dmp 
+        -relatedEntities /home/user/dump/related_entities.dmp 
+        -latestOut /home/user/migration/ts_latest 
+        -tsOut /home/user/migration/ts 
+        -partitionsOut /home/user/migration/ts_partition 
+        -castEnable false 
 ```  
+*Use your paths for program arguments*
 
 Tool execution time depends on DB size, CPU resources and Disk throughput
 
@@ -59,22 +63,23 @@ Tool execution time depends on DB size, CPU resources and Disk throughput
 * Note that this this part works only for single node Cassandra Cluster. If you have more nodes - it is better to use `sstableloader` tool.
 
 1. [Optional] install Cassandra on the instance
-2. [Optional] Using `cqlsh` create `thingsboard` keyspace and requred tables from this file `schema-ts.cql`
+2. [Optional] Using `cqlsh` create `thingsboard` keyspace and requred tables from this files `schema-ts.cql` and `schema-ts-latest.cql` using `source` command
 3. Stop Cassandra
-4. Copy generated SSTable files into cassandra data dir:
+4. Look at `/var/lib/cassandra/data/thingsboard` and check for names of data folders
+5. Copy generated SSTable files into cassandra data dir using next command:
 
 ```
-    sudo find /home/ubunut/migration/ts -name '*.*' -exec mv {} /var/lib/cassandra/data/thingsboard/ts_kv_cf-0e9aaf00ee5511e9a5fa7d6f489ffd13/ \;
-    sudo find /home/ubunut/migration/ts_latest -name '*.*' -exec mv {} /var/lib/cassandra/data/thingsboard/ts_kv_latest_cf-161449d0ee5511e9a5fa7d6f489ffd13/ \;
-    sudo find /home/ubunut/migration/ts_partition -name '*.*' -exec mv {} /var/lib/cassandra/data/thingsboard/ts_kv_partitions_cf-12e8fa80ee5511e9a5fa7d6f489ffd13/ \;
+    sudo find /home/user/migration/ts -name '*.*' -exec mv {} /var/lib/cassandra/data/thingsboard/ts_kv_cf-0e9aaf00ee5511e9a5fa7d6f489ffd13/ \;
+    sudo find /home/user/migration/ts_latest -name '*.*' -exec mv {} /var/lib/cassandra/data/thingsboard/ts_kv_latest_cf-161449d0ee5511e9a5fa7d6f489ffd13/ \;
+    sudo find /home/user/migration/ts_partition -name '*.*' -exec mv {} /var/lib/cassandra/data/thingsboard/ts_kv_partitions_cf-12e8fa80ee5511e9a5fa7d6f489ffd13/ \;
 ```   
-    
-5. Start Cassandra service and trigger compaction
+  *Pay attention! Data folders have similar name  `ts_kv_cf-0e9aaf00ee5511e9a5fa7d6f489ffd13`, but you have to use own*  
+6. Start Cassandra service and trigger compaction
 
-```
-    trigger compactions: nodetool compact thingsboard
-    check compaction status: nodetool compactionstats
-```
+    Trigger compactions: `nodetool compact thingsboard`
+   
+    Check compaction status: `nodetool compactionstats`
+
     
 ## Switch Thignsboard into Hybrid Mode
 

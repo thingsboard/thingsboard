@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 import * as React from 'react';
 import ThingsboardAceEditor from './json-form-ace-editor';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
-import { css_beautify } from 'js-beautify';
+import { Observable } from 'rxjs/internal/Observable';
+import { beautifyCss } from '@shared/models/beautify.models';
 
 class ThingsboardCss extends React.Component<JsonFormFieldProps, JsonFormFieldState> {
 
@@ -25,8 +26,8 @@ class ThingsboardCss extends React.Component<JsonFormFieldProps, JsonFormFieldSt
         this.onTidyCss = this.onTidyCss.bind(this);
     }
 
-    onTidyCss(css: string): string {
-        return css_beautify(css, {indent_size: 4});
+    onTidyCss(css: string): Observable<string> {
+        return beautifyCss(css, {indent_size: 4});
     }
 
     render() {

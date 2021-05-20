@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.sms.SmsSender;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.sms.config.SmsProviderConfiguration;
 import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.common.data.AdminSettings;
@@ -31,7 +32,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
-import org.thingsboard.server.dao.util.mapping.JacksonUtil;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
@@ -94,7 +95,7 @@ public class DefaultSmsService implements SmsService {
     }
 
     @Override
-    public void sendSms(TenantId tenantId, String[] numbersTo, String message) throws ThingsboardException {
+    public void sendSms(TenantId tenantId, CustomerId customerId, String[] numbersTo, String message) throws ThingsboardException {
         if (apiUsageStateService.getApiUsageState(tenantId).isSmsSendEnabled()) {
             int smsCount = 0;
             try {
@@ -103,7 +104,7 @@ public class DefaultSmsService implements SmsService {
                 }
             } finally {
                 if (smsCount > 0) {
-                    apiUsageClient.report(tenantId, ApiUsageRecordKey.SMS_EXEC_COUNT, smsCount);
+                    apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.SMS_EXEC_COUNT, smsCount);
                 }
             }
         } else {

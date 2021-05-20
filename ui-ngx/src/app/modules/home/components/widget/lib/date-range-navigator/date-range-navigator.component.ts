@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,9 +18,11 @@ import {
   Component,
   Inject,
   InjectionToken,
+  Injector,
   Input,
   OnDestroy,
   OnInit,
+  StaticProvider,
   ViewChild,
   ViewContainerRef,
   ViewEncapsulation
@@ -41,7 +43,7 @@ import {
 import { KeyValue } from '@angular/common';
 import * as _moment from 'moment';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
-import { ComponentPortal, PortalInjector } from '@angular/cdk/portal';
+import { ComponentPortal } from '@angular/cdk/portal';
 import { MatSelect } from '@angular/material/select';
 import { Subscription } from 'rxjs';
 import { HistoryWindowType, TimewindowType } from '@shared/models/time/time.models';
@@ -142,18 +144,24 @@ export class DateRangeNavigatorWidgetComponent extends PageComponent implements 
     overlayRef.backdropClick().subscribe(() => {
       overlayRef.dispose();
     });
-    const injectionTokens = new WeakMap<any, any>([
-      [DATE_RANGE_NAVIGATOR_PANEL_DATA, {
-        model: cloneDateRangeNavigatorModel(this.advancedModel),
-        settings: this.settings,
-        onChange: model => {
-          this.advancedModel = model;
-          this.triggerChange();
-        }
-      } as DateRangeNavigatorPanelData],
-      [OverlayRef, overlayRef]
-    ]);
-    const injector = new PortalInjector(this.viewContainerRef.injector, injectionTokens);
+    const providers: StaticProvider[] = [
+      {
+        provide: DATE_RANGE_NAVIGATOR_PANEL_DATA,
+        useValue: {
+          model: cloneDateRangeNavigatorModel(this.advancedModel),
+          settings: this.settings,
+          onChange: model => {
+            this.advancedModel = model;
+            this.triggerChange();
+          }
+        } as DateRangeNavigatorPanelData
+      },
+      {
+        provide: OverlayRef,
+        useValue: overlayRef
+      }
+    ];
+    const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
     overlayRef.attach(new ComponentPortal(DateRangeNavigatorPanelComponent,
       this.viewContainerRef, injector));
     this.ctx.detectChanges();

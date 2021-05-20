@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.objects.TelemetryEntityView;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 /**
  * Created by Victor Basanets on 8/27/2017.
@@ -39,7 +40,9 @@ public class EntityView extends SearchTextBasedWithAdditionalInfo<EntityViewId>
     private EntityId entityId;
     private TenantId tenantId;
     private CustomerId customerId;
+    @NoXss
     private String name;
+    @NoXss
     private String type;
     private TelemetryEntityView keys;
     private long startTimeMs;

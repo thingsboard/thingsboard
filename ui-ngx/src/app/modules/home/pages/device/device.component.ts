@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import { TranslateService } from '@ngx-translate/core';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { Subject } from 'rxjs';
+import { FirmwareType } from '@shared/models/firmware.models';
 
 @Component({
   selector: 'tb-device',
@@ -46,7 +47,9 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
 
   deviceCredentials$: Subject<DeviceCredentials>;
 
-  deviceScope: 'tenant' | 'customer' | 'customer_user';
+  deviceScope: 'tenant' | 'customer' | 'customer_user' | 'edge';
+
+  firmwareTypes = FirmwareType;
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
@@ -79,11 +82,14 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
       {
         name: [entity ? entity.name : '', [Validators.required]],
         deviceProfileId: [entity ? entity.deviceProfileId : null, [Validators.required]],
+        firmwareId: [entity ? entity.firmwareId : null],
+        softwareId: [entity ? entity.softwareId : null],
         label: [entity ? entity.label : ''],
         deviceData: [entity ? entity.deviceData : null, [Validators.required]],
         additionalInfo: this.fb.group(
           {
             gateway: [entity && entity.additionalInfo ? entity.additionalInfo.gateway : false],
+            overwriteActivityTime: [entity && entity.additionalInfo ? entity.additionalInfo.overwriteActivityTime : false],
             description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],
           }
         )
@@ -92,13 +98,19 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
   }
 
   updateForm(entity: DeviceInfo) {
-    this.entityForm.patchValue({name: entity.name});
-    this.entityForm.patchValue({deviceProfileId: entity.deviceProfileId});
-    this.entityForm.patchValue({label: entity.label});
-    this.entityForm.patchValue({deviceData: entity.deviceData});
-    this.entityForm.patchValue({additionalInfo:
-        {gateway: entity.additionalInfo ? entity.additionalInfo.gateway : false}});
-    this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
+    this.entityForm.patchValue({
+      name: entity.name,
+      deviceProfileId: entity.deviceProfileId,
+      firmwareId: entity.firmwareId,
+      softwareId: entity.softwareId,
+      label: entity.label,
+      deviceData: entity.deviceData,
+      additionalInfo: {
+        gateway: entity.additionalInfo ? entity.additionalInfo.gateway : false,
+        overwriteActivityTime: entity.additionalInfo ? entity.additionalInfo.overwriteActivityTime : false,
+        description: entity.additionalInfo ? entity.additionalInfo.description : ''
+      }
+    });
   }
 
 
@@ -144,6 +156,10 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
           this.entityForm.markAsDirty();
         }
       }
+      this.entityForm.patchValue({
+        firmwareId: null,
+        softwareId: null
+      });
     }
   }
 }

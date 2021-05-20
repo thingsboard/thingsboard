@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@ export class HomeDialogsService {
         return this.openImportDialogCSV(entityType, 'device.import', 'device.device-file');
       case EntityType.ASSET:
         return this.openImportDialogCSV(entityType, 'asset.import', 'asset.asset-file');
+      case EntityType.EDGE:
+        return this.openImportDialogCSV(entityType, 'edge.import', 'edge.edge-file');
     }
   }
 

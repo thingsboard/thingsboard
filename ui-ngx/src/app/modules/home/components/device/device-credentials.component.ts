@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Inject, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -33,17 +33,18 @@ import {
   DeviceCredentials,
   DeviceCredentialsType
 } from '@shared/models/device.models';
-import { Subscription } from 'rxjs';
-import { distinctUntilChanged } from 'rxjs/operators';
-import { SecurityConfigComponent } from '@home/pages/device/lwm2m/security-config.component';
+import { Subject } from 'rxjs';
+import { distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { SecurityConfigLwm2mComponent } from '@home/components/device/security-config-lwm2m.component';
 import {
+  ClientSecurityConfig,
   DEFAULT_END_POINT,
   DeviceCredentialsDialogLwm2mData,
   END_POINT,
   getDefaultSecurityConfig,
   JSON_ALL_CONFIG,
-  SecurityConfigModels
-} from '@home/pages/device/lwm2m/security-config.models';
+  validateSecurityConfig
+} from '@shared/models/lwm2m-security-config.models';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { isDefinedAndNotNull } from '@core/utils';
@@ -66,20 +67,16 @@ import { isDefinedAndNotNull } from '@core/utils';
 })
 export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit, Validator, OnDestroy {
 
-  deviceCredentialsFormGroup: FormGroup;
-
-  subscriptions: Subscription[] = [];
-
   @Input()
   disabled: boolean;
 
-  deviceCredentials: DeviceCredentials = null;
+  private destroy$ = new Subject();
 
-  submitted = false;
+  deviceCredentialsFormGroup: FormGroup;
 
   deviceCredentialsType = DeviceCredentialsType;
 
-  credentialsTypes = Object.keys(DeviceCredentialsType);
+  credentialsTypes = Object.values(DeviceCredentialsType);
 
   credentialTypeNamesMap = credentialTypeNames;
 
@@ -101,16 +98,17 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
       }, {validators: this.atLeastOne(Validators.required, ['clientId', 'userName'])})
     });
     this.deviceCredentialsFormGroup.get('credentialsBasic').disable();
-    this.subscriptions.push(
-      this.deviceCredentialsFormGroup.valueChanges.pipe(distinctUntilChanged()).subscribe(() => {
-        this.updateView();
-      })
-    );
-    this.subscriptions.push(
-      this.deviceCredentialsFormGroup.get('credentialsType').valueChanges.subscribe(() => {
-        this.credentialsTypeChanged();
-      })
-    );
+    this.deviceCredentialsFormGroup.valueChanges.pipe(
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.updateView();
+    });
+    this.deviceCredentialsFormGroup.get('credentialsType').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((type) => {
+      this.credentialsTypeChanged(type);
+    });
   }
 
   ngOnInit(): void {
@@ -120,16 +118,18 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
   }
 
   ngOnDestroy() {
-    this.subscriptions.forEach(s => s.unsubscribe());
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   writeValue(value: DeviceCredentials | null): void {
     if (isDefinedAndNotNull(value)) {
-      this.deviceCredentials = value;
       let credentialsBasic = {clientId: null, userName: null, password: null};
       let credentialsValue = null;
       if (value.credentialsType === DeviceCredentialsType.MQTT_BASIC) {
         credentialsBasic = JSON.parse(value.credentialsValue) as DeviceCredentialMQTTBasic;
+      } else if (value.credentialsType === DeviceCredentialsType.LWM2M_CREDENTIALS) {
+        credentialsValue = JSON.parse(JSON.stringify(value.credentialsValue)) as ClientSecurityConfig;
       } else {
         credentialsValue = value.credentialsValue;
       }
@@ -176,10 +176,11 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
     };
   }
 
-  credentialsTypeChanged(): void {
+  credentialsTypeChanged(credentialsType: DeviceCredentialsType): void {
+    const credentialsValue = credentialsType === DeviceCredentialsType.LWM2M_CREDENTIALS ? this.lwm2mDefaultConfig : null;
     this.deviceCredentialsFormGroup.patchValue({
       credentialsId: null,
-      credentialsValue: null,
+      credentialsValue,
       credentialsBasic: {clientId: '', userName: '', password: ''}
     });
     this.updateValidators();
@@ -203,6 +204,13 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
         this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity({emitEvent: false});
         this.deviceCredentialsFormGroup.get('credentialsBasic').disable({emitEvent: false});
         break;
+      case DeviceCredentialsType.LWM2M_CREDENTIALS:
+        this.deviceCredentialsFormGroup.get('credentialsValue').setValidators([Validators.required, this.lwm2mConfigJsonValidator]);
+        this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity({emitEvent: false});
+        this.deviceCredentialsFormGroup.get('credentialsId').setValidators([]);
+        this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity({emitEvent: false});
+        this.deviceCredentialsFormGroup.get('credentialsBasic').disable({emitEvent: false});
+        break;
       case DeviceCredentialsType.MQTT_BASIC:
         this.deviceCredentialsFormGroup.get('credentialsBasic').enable({emitEvent: false});
         this.deviceCredentialsFormGroup.get('credentialsBasic').updateValueAndValidity({emitEvent: false});
@@ -210,13 +218,6 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
         this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity({emitEvent: false});
         this.deviceCredentialsFormGroup.get('credentialsValue').setValidators([]);
         this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity({emitEvent: false});
-        break;
-      case DeviceCredentialsType.LWM2M_CREDENTIALS:
-        this.deviceCredentialsFormGroup.get('credentialsValue').setValidators([Validators.required]);
-        this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity({emitEvent: false});
-        this.deviceCredentialsFormGroup.get('credentialsId').setValidators([]);
-        this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity({emitEvent: false});
-        this.deviceCredentialsFormGroup.get('credentialsBasic').disable({emitEvent: false});
         break;
     }
   }
@@ -245,27 +246,55 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
     });
   }
 
-  openSecurityInfoLwM2mDialog($event: Event, value: string, id: string): void {
+  openSecurityInfoLwM2mDialog($event: Event): void {
     if ($event) {
       $event.stopPropagation();
       $event.preventDefault();
     }
-    this.dialog.open<SecurityConfigComponent, DeviceCredentialsDialogLwm2mData, object>(SecurityConfigComponent, {
+    let credentialsValue = this.deviceCredentialsFormGroup.get('credentialsValue').value;
+    if (credentialsValue === null || credentialsValue.length === 0) {
+      credentialsValue = getDefaultSecurityConfig();
+    } else {
+      try {
+        credentialsValue = JSON.parse(credentialsValue);
+      } catch (e) {
+        credentialsValue = getDefaultSecurityConfig();
+      }
+    }
+    const credentialsId = this.deviceCredentialsFormGroup.get('credentialsId').value || DEFAULT_END_POINT;
+    this.dialog.open<SecurityConfigLwm2mComponent, DeviceCredentialsDialogLwm2mData, object>(SecurityConfigLwm2mComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        jsonAllConfig: (value === null || value.length === 0) ? getDefaultSecurityConfig() as SecurityConfigModels : JSON.parse(value) as SecurityConfigModels,
-        endPoint: (id === null) ? DEFAULT_END_POINT : id,
-        isNew: (id === null || value === null || value.length === 0)
+        jsonAllConfig: credentialsValue,
+        endPoint: credentialsId
       }
     }).afterClosed().subscribe(
       (res) => {
         if (res) {
-          this.deviceCredentialsFormGroup.get('credentialsValue').patchValue((Object.keys(res[JSON_ALL_CONFIG]).length === 0 || JSON.stringify(res[JSON_ALL_CONFIG]) === "[{}]") ? null : JSON.stringify(res[JSON_ALL_CONFIG]));
-          this.deviceCredentialsFormGroup.get('credentialsId').patchValue((Object.keys(res[END_POINT]).length === 0 || JSON.stringify(res[END_POINT]) === "[{}]") ? null : JSON.stringify(res[END_POINT]).split('\"').join(''));
+          this.deviceCredentialsFormGroup.patchValue({
+            credentialsValue: this.isDefaultLw2mResponse(res[JSON_ALL_CONFIG]) ? null : JSON.stringify(res[JSON_ALL_CONFIG]),
+            credentialsId: this.isDefaultLw2mResponse(res[END_POINT]) ? null : JSON.stringify(res[END_POINT]).split('\"').join('')
+          });
           this.deviceCredentialsFormGroup.get('credentialsValue').markAsDirty();
         }
       }
     );
+  }
+
+  private isDefaultLw2mResponse(response: object): boolean {
+    return Object.keys(response).length === 0 || JSON.stringify(response) === '[{}]';
+  }
+
+  private lwm2mConfigJsonValidator(control: FormControl) {
+    return validateSecurityConfig(control.value) ? null : {jsonError: {parsedJson: 'error'}};
+  }
+
+  private get lwm2mDefaultConfig(): string {
+    return JSON.stringify(getDefaultSecurityConfig(), null, 2);
+  }
+
+  lwm2mCredentialsValueTooltip(flag: boolean): string {
+    return !flag ? '' : 'Example (mode=\"NoSec\"):\n\r ' + this.lwm2mDefaultConfig;
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,13 @@ package org.thingsboard.rule.engine.debug;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
+import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.ScriptEngine;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -95,7 +100,7 @@ public class TbMsgGeneratorNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         if (initialized && msg.getType().equals(TB_MSG_GENERATOR_NODE_MSG) && msg.getId().equals(nextTickId)) {
-            withCallback(generate(ctx),
+            withCallback(generate(ctx, msg),
                     m -> {
                         if (initialized && (config.getMsgCount() == TbMsgGeneratorNodeConfiguration.UNLIMITED_MSG_COUNT || currentMsgCount < config.getMsgCount())) {
                             ctx.enqueueForTellNext(m, SUCCESS);
@@ -104,9 +109,10 @@ public class TbMsgGeneratorNode implements TbNode {
                         }
                     },
                     t -> {
-                        if (initialized) {
+                        if (initialized && (config.getMsgCount() == TbMsgGeneratorNodeConfiguration.UNLIMITED_MSG_COUNT || currentMsgCount < config.getMsgCount())) {
                             ctx.tellFailure(msg, t);
                             scheduleTickMsg(ctx);
+                            currentMsgCount++;
                         }
                     });
         }
@@ -124,16 +130,16 @@ public class TbMsgGeneratorNode implements TbNode {
         ctx.tellSelf(tickMsg, curDelay);
     }
 
-    private ListenableFuture<TbMsg> generate(TbContext ctx) {
+    private ListenableFuture<TbMsg> generate(TbContext ctx, TbMsg msg) {
         return ctx.getJsExecutor().executeAsync(() -> {
             if (prevMsg == null) {
-                prevMsg = ctx.newMsg(ServiceQueue.MAIN, "", originatorId, new TbMsgMetaData(), "{}");
+                prevMsg = ctx.newMsg(ServiceQueue.MAIN, "", originatorId, msg.getCustomerId(), new TbMsgMetaData(), "{}");
             }
             if (initialized) {
                 ctx.logJsEvalRequest();
                 TbMsg generated = jsEngine.executeGenerate(prevMsg);
                 ctx.logJsEvalResponse();
-                prevMsg = ctx.newMsg(ServiceQueue.MAIN, generated.getType(), originatorId, generated.getMetaData(), generated.getData());
+                prevMsg = ctx.newMsg(ServiceQueue.MAIN, generated.getType(), originatorId, msg.getCustomerId(), generated.getMetaData(), generated.getData());
             }
             return prevMsg;
         });

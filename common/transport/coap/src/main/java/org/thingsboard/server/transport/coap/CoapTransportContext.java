@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,12 @@ package org.thingsboard.server.transport.coap;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportContext;
-import org.thingsboard.server.transport.coap.adaptors.CoapTransportAdaptor;
+import org.thingsboard.server.transport.coap.adaptors.JsonCoapAdaptor;
+import org.thingsboard.server.transport.coap.adaptors.ProtoCoapAdaptor;
+import org.thingsboard.server.transport.coap.efento.adaptor.EfentoCoapAdaptor;
 
 
 /**
@@ -34,19 +35,15 @@ import org.thingsboard.server.transport.coap.adaptors.CoapTransportAdaptor;
 public class CoapTransportContext extends TransportContext {
 
     @Getter
-    @Value("${transport.coap.bind_address}")
-    private String host;
-
-    @Getter
-    @Value("${transport.coap.bind_port}")
-    private Integer port;
-
-    @Getter
-    @Value("${transport.coap.timeout}")
-    private Long timeout;
+    @Autowired
+    private JsonCoapAdaptor jsonCoapAdaptor;
 
     @Getter
     @Autowired
-    private CoapTransportAdaptor adaptor;
+    private ProtoCoapAdaptor protoCoapAdaptor;
+
+    @Getter
+    @Autowired
+    private EfentoCoapAdaptor efentoCoapAdaptor;
 
 }

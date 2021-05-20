@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,18 +37,20 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
-import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -56,6 +58,7 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -75,7 +78,6 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 public class BaseAssetService extends AbstractEntityService implements AssetService {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
-    public static final String INCORRECT_PAGE_LINK = "Incorrect page link ";
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
     public static final String INCORRECT_ASSET_ID = "Incorrect assetId ";
     public static final String TB_SERVICE_QUEUE = "TbServiceQueue";
@@ -88,9 +90,6 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
 
     @Autowired
     private CustomerDao customerDao;
-
-    @Autowired
-    private EntityViewService entityViewService;
 
     @Autowired
     private CacheManager cacheManager;
@@ -179,13 +178,14 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
             throw new RuntimeException("Exception while finding entity views for assetId [" + assetId + "]", e);
         }
 
-        List<Object> list = new ArrayList<>();
-        list.add(asset.getTenantId());
-        list.add(asset.getName());
-        Cache cache = cacheManager.getCache(ASSET_CACHE);
-        cache.evict(list);
+        removeAssetFromCacheByName(asset.getTenantId(), asset.getName());
 
         assetDao.removeById(tenantId, assetId.getId());
+    }
+
+    private void removeAssetFromCacheByName(TenantId tenantId, String name) {
+        Cache cache = cacheManager.getCache(ASSET_CACHE);
+        cache.evict(Arrays.asList(tenantId, name));
     }
 
     @Override
@@ -324,6 +324,63 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
                 }, MoreExecutors.directExecutor());
     }
 
+    @Override
+    public Asset assignAssetToEdge(TenantId tenantId, AssetId assetId, EdgeId edgeId) {
+        Asset asset = findAssetById(tenantId, assetId);
+        Edge edge = edgeService.findEdgeById(tenantId, edgeId);
+        if (edge == null) {
+            throw new DataValidationException("Can't assign asset to non-existent edge!");
+        }
+        if (!edge.getTenantId().getId().equals(asset.getTenantId().getId())) {
+            throw new DataValidationException("Can't assign asset to edge from different tenant!");
+        }
+        try {
+            createRelation(tenantId, new EntityRelation(edgeId, assetId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+        } catch (Exception e) {
+            log.warn("[{}] Failed to create asset relation. Edge Id: [{}]", assetId, edgeId);
+            throw new RuntimeException(e);
+        }
+        return asset;
+    }
+
+    @Override
+    public Asset unassignAssetFromEdge(TenantId tenantId, AssetId assetId, EdgeId edgeId) {
+        Asset asset = findAssetById(tenantId, assetId);
+        Edge edge = edgeService.findEdgeById(tenantId, edgeId);
+        if (edge == null) {
+            throw new DataValidationException("Can't unassign asset from non-existent edge!");
+        }
+
+        checkAssignedEntityViewsToEdge(tenantId, assetId, edgeId);
+
+        try {
+            deleteRelation(tenantId, new EntityRelation(edgeId, assetId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+        } catch (Exception e) {
+            log.warn("[{}] Failed to delete asset relation. Edge Id: [{}]", assetId, edgeId);
+            throw new RuntimeException(e);
+        }
+        return asset;
+    }
+
+    @Override
+    public PageData<Asset> findAssetsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink) {
+        log.trace("Executing findAssetsByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
+        validatePageLink(pageLink);
+        return assetDao.findAssetsByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
+    }
+
+    @Override
+    public PageData<Asset> findAssetsByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, PageLink pageLink) {
+        log.trace("Executing findAssetsByTenantIdAndEdgeIdAndType, tenantId [{}], edgeId [{}], type [{}] pageLink [{}]", tenantId, edgeId, type, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
+        validateString(type, "Incorrect type " + type);
+        validatePageLink(pageLink);
+        return assetDao.findAssetsByTenantIdAndEdgeIdAndType(tenantId.getId(), edgeId.getId(), type, pageLink);
+    }
+
     private DataValidator<Asset> assetValidator =
             new DataValidator<Asset>() {
 
@@ -339,6 +396,13 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
 
                 @Override
                 protected void validateUpdate(TenantId tenantId, Asset asset) {
+                    Asset old = assetDao.findById(asset.getTenantId(), asset.getId().getId());
+                    if (old == null) {
+                        throw new DataValidationException("Can't update non existing asset!");
+                    }
+                    if (!old.getName().equals(asset.getName())) {
+                        removeAssetFromCacheByName(tenantId, old.getName());
+                    }
                 }
 
                 @Override

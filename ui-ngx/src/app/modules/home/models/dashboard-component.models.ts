@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -79,6 +79,7 @@ export interface IDashboardComponent {
   pauseChangeNotifications();
   resumeChangeNotifications();
   notifyLayoutUpdated();
+  detectChanges();
 }
 
 declare type DashboardWidgetUpdateOperation = 'add' | 'remove' | 'update';
@@ -342,7 +343,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       widget.id = guid();
     }
     this.widgetId = widget.id;
-    this.updateWidgetParams();
+    this.updateWidgetParams(false);
   }
 
   gridsterItemComponent$(): Observable<GridsterItemComponentInterface> {
@@ -353,7 +354,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     }
   }
 
-  updateWidgetParams() {
+  updateWidgetParams(detectChanges = true) {
     this.color = this.widget.config.color || 'rgba(0, 0, 0, 0.87)';
     this.backgroundColor = this.widget.config.backgroundColor || '#fff';
     this.padding = this.widget.config.padding || '8px';
@@ -405,6 +406,9 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
     this.customHeaderActions = this.widgetContext.customHeaderActions ? this.widgetContext.customHeaderActions : [];
     this.widgetActions = this.widgetContext.widgetActions ? this.widgetContext.widgetActions : [];
+    if (detectChanges) {
+      this.dashboard.detectChanges();
+    }
   }
 
   @enumerable(true)

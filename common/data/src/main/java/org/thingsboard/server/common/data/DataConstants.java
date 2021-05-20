@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ public class DataConstants {
     public static final String CUSTOMER = "CUSTOMER";
     public static final String DEVICE = "DEVICE";
 
+    public static final String SCOPE = "scope";
     public static final String CLIENT_SCOPE = "CLIENT_SCOPE";
     public static final String SERVER_SCOPE = "SERVER_SCOPE";
     public static final String SHARED_SCOPE = "SHARED_SCOPE";
@@ -32,6 +33,8 @@ public class DataConstants {
     public static final String IS_EXISTING_ALARM = "isExistingAlarm";
     public static final String IS_SEVERITY_UPDATED_ALARM = "isSeverityUpdated";
     public static final String IS_CLEARED_ALARM = "isClearedAlarm";
+    public static final String ALARM_CONDITION_REPEATS = "alarmConditionRepeats";
+    public static final String ALARM_CONDITION_DURATION = "alarmConditionDuration";
 
     public static final String[] allScopes() {
         return new String[]{CLIENT_SCOPE, SHARED_SCOPE, SERVER_SCOPE};
@@ -59,12 +62,16 @@ public class DataConstants {
     public static final String ENTITY_UNASSIGNED = "ENTITY_UNASSIGNED";
     public static final String ATTRIBUTES_UPDATED = "ATTRIBUTES_UPDATED";
     public static final String ATTRIBUTES_DELETED = "ATTRIBUTES_DELETED";
+    public static final String TIMESERIES_UPDATED = "TIMESERIES_UPDATED";
+    public static final String TIMESERIES_DELETED = "TIMESERIES_DELETED";
     public static final String ALARM_ACK = "ALARM_ACK";
     public static final String ALARM_CLEAR = "ALARM_CLEAR";
     public static final String ENTITY_ASSIGNED_FROM_TENANT = "ENTITY_ASSIGNED_FROM_TENANT";
     public static final String ENTITY_ASSIGNED_TO_TENANT = "ENTITY_ASSIGNED_TO_TENANT";
     public static final String PROVISION_SUCCESS = "PROVISION_SUCCESS";
     public static final String PROVISION_FAILURE = "PROVISION_FAILURE";
+    public static final String ENTITY_ASSIGNED_TO_EDGE = "ENTITY_ASSIGNED_TO_EDGE";
+    public static final String ENTITY_UNASSIGNED_FROM_EDGE = "ENTITY_UNASSIGNED_FROM_EDGE";
 
     public static final String RPC_CALL_FROM_SERVER_TO_DEVICE = "RPC_CALL_FROM_SERVER_TO_DEVICE";
 
@@ -85,5 +92,7 @@ public class DataConstants {
     public static final String CLIENT_ID = "clientId";
     public static final String USERNAME = "username";
     public static final String PASSWORD = "password";
+    public static final String EDGE_MSG_SOURCE = "edge";
+    public static final String MSG_SOURCE_KEY = "source";
 
 }

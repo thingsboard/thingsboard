@@ -56,6 +56,7 @@ public interface SSTableFormat
             return BIG;
         }
 
+        @SuppressWarnings("deprecation")
         private Type(String name, SSTableFormat info)
         {
             //Since format comes right after generation

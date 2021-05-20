@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,11 +14,25 @@
 /// limitations under the License.
 ///
 
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { Injectable, NgModule } from '@angular/core';
+import { Resolve, RouterModule, Routes } from '@angular/router';
 
 import { HomeLinksComponent } from './home-links.component';
 import { Authority } from '@shared/models/authority.enum';
+import { Observable } from 'rxjs';
+import { HomeDashboard } from '@shared/models/dashboard.models';
+import { DashboardService } from '@core/http/dashboard.service';
+
+@Injectable()
+export class HomeDashboardResolver implements Resolve<HomeDashboard> {
+
+  constructor(private dashboardService: DashboardService) {
+  }
+
+  resolve(): Observable<HomeDashboard> {
+    return this.dashboardService.getHomeDashboard();
+  }
+}
 
 const routes: Routes = [
   {
@@ -31,12 +45,18 @@ const routes: Routes = [
         label: 'home.home',
         icon: 'home'
       }
+    },
+    resolve: {
+      homeDashboard: HomeDashboardResolver
     }
   }
 ];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
+  providers: [
+    HomeDashboardResolver
+  ]
 })
 export class HomeLinksRoutingModule { }

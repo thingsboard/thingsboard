@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import java.io.Serializable;
+
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
@@ -28,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = NumericFilterPredicate.class, name = "NUMERIC"),
         @JsonSubTypes.Type(value = BooleanFilterPredicate.class, name = "BOOLEAN"),
         @JsonSubTypes.Type(value = ComplexFilterPredicate.class, name = "COMPLEX")})
-public interface KeyFilterPredicate {
+public interface KeyFilterPredicate extends Serializable {
 
     @JsonIgnore
     FilterPredicateType getType();

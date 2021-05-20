@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import { AuditLogDetailsDialogComponent } from '@home/components/audit-log/audit
 import { AuditLogTableComponent } from '@home/components/audit-log/audit-log-table.component';
 import { EventTableHeaderComponent } from '@home/components/event/event-table-header.component';
 import { EventTableComponent } from '@home/components/event/event-table.component';
+import { EventFilterPanelComponent } from '@home/components/event/event-filter-panel.component';
 import { RelationTableComponent } from '@home/components/relation/relation-table.component';
 import { RelationDialogComponent } from '@home/components/relation/relation-dialog.component';
 import { AlarmTableHeaderComponent } from '@home/components/alarm/alarm-table-header.component';
@@ -54,6 +55,7 @@ import { ManageWidgetActionsComponent } from '@home/components/widget/action/man
 import { WidgetActionDialogComponent } from '@home/components/widget/action/widget-action-dialog.component';
 import { CustomActionPrettyResourcesTabsComponent } from '@home/components/widget/action/custom-action-pretty-resources-tabs.component';
 import { CustomActionPrettyEditorComponent } from '@home/components/widget/action/custom-action-pretty-editor.component';
+import { MobileActionEditorComponent } from '@home/components/widget/action/mobile-action-editor.component';
 import { CustomDialogService } from '@home/components/widget/dialog/custom-dialog.service';
 import { CustomDialogContainerComponent } from '@home/components/widget/dialog/custom-dialog-container.component';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
@@ -96,6 +98,8 @@ import { DeviceProfileTransportConfigurationComponent } from '@home/components/p
 import { DeviceProfileDialogComponent } from '@home/components/profile/device-profile-dialog.component';
 import { DeviceProfileAutocompleteComponent } from '@home/components/profile/device-profile-autocomplete.component';
 import { MqttDeviceProfileTransportConfigurationComponent } from '@home/components/profile/device/mqtt-device-profile-transport-configuration.component';
+import { CoapDeviceProfileTransportConfigurationComponent } from '@home/components/profile/device/coap-device-profile-transport-configuration.component';
+import { SnmpDeviceProfileTransportConfigurationComponent } from '@home/components/profile/device/snmp-device-profile-transport-configuration.component';
 import { DeviceProfileAlarmsComponent } from '@home/components/profile/alarm/device-profile-alarms.component';
 import { DeviceProfileAlarmComponent } from '@home/components/profile/alarm/device-profile-alarm.component';
 import { CreateAlarmRulesComponent } from '@home/components/profile/alarm/create-alarm-rules.component';
@@ -119,6 +123,25 @@ import { AwsSnsProviderConfigurationComponent } from '@home/components/sms/aws-s
 import { TwilioSmsProviderConfigurationComponent } from '@home/components/sms/twilio-sms-provider-configuration.component';
 import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-device-credentials.component';
 import { Lwm2mProfileComponentsModule } from '@home/components/profile/device/lwm2m/lwm2m-profile-components.module';
+import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
+import { DashboardToolbarComponent } from '@home/components/dashboard-page/dashboard-toolbar.component';
+import { StatesControllerModule } from '@home/components/dashboard-page/states/states-controller.module';
+import { DashboardLayoutComponent } from '@home/components/dashboard-page/layout/dashboard-layout.component';
+import { EditWidgetComponent } from '@home/components/dashboard-page/edit-widget.component';
+import { DashboardWidgetSelectComponent } from '@home/components/dashboard-page/dashboard-widget-select.component';
+import { AddWidgetDialogComponent } from '@home/components/dashboard-page/add-widget-dialog.component';
+import { ManageDashboardLayoutsDialogComponent } from '@home/components/dashboard-page/layout/manage-dashboard-layouts-dialog.component';
+import { DashboardSettingsDialogComponent } from '@home/components/dashboard-page/dashboard-settings-dialog.component';
+import { ManageDashboardStatesDialogComponent } from '@home/components/dashboard-page/states/manage-dashboard-states-dialog.component';
+import { DashboardStateDialogComponent } from '@home/components/dashboard-page/states/dashboard-state-dialog.component';
+import { EmbedDashboardDialogComponent } from '@home/components/widget/dialog/embed-dashboard-dialog.component';
+import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
+import { EdgeDownlinkTableComponent } from '@home/components/edge/edge-downlink-table.component';
+import { EdgeDownlinkTableHeaderComponent } from '@home/components/edge/edge-downlink-table-header.component';
+import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-page/widget-types-panel.component';
+import { SecurityConfigLwm2mComponent } from '@home/components/device/security-config-lwm2m.component';
+import { SecurityConfigLwm2mServerComponent } from '@home/components/device/security-config-lwm2m-server.component';
+import { DashboardImageDialogComponent } from '@home/components/dashboard-page/dashboard-image-dialog.component';
 
 @NgModule({
   declarations:
@@ -132,6 +155,9 @@ import { Lwm2mProfileComponentsModule } from '@home/components/profile/device/lw
       EventContentDialogComponent,
       EventTableHeaderComponent,
       EventTableComponent,
+      EventFilterPanelComponent,
+      EdgeDownlinkTableHeaderComponent,
+      EdgeDownlinkTableComponent,
       RelationTableComponent,
       RelationDialogComponent,
       RelationFiltersComponent,
@@ -161,6 +187,7 @@ import { Lwm2mProfileComponentsModule } from '@home/components/profile/device/lw
       WidgetActionDialogComponent,
       CustomActionPrettyResourcesTabsComponent,
       CustomActionPrettyEditorComponent,
+      MobileActionEditorComponent,
       CustomDialogContainerComponent,
       ImportDialogComponent,
       ImportDialogCsvComponent,
@@ -198,6 +225,8 @@ import { Lwm2mProfileComponentsModule } from '@home/components/profile/device/lw
       DeviceProfileConfigurationComponent,
       DefaultDeviceProfileTransportConfigurationComponent,
       MqttDeviceProfileTransportConfigurationComponent,
+      CoapDeviceProfileTransportConfigurationComponent,
+      SnmpDeviceProfileTransportConfigurationComponent,
       DeviceProfileTransportConfigurationComponent,
       CreateAlarmRulesComponent,
       AlarmRuleComponent,
@@ -215,17 +244,33 @@ import { Lwm2mProfileComponentsModule } from '@home/components/profile/device/lw
       DeviceWizardDialogComponent,
       DeviceCredentialsComponent,
       CopyDeviceCredentialsComponent,
+      SecurityConfigLwm2mComponent,
+      SecurityConfigLwm2mServerComponent,
       AlarmScheduleDialogComponent,
       EditAlarmDetailsDialogComponent,
       SmsProviderConfigurationComponent,
       AwsSnsProviderConfigurationComponent,
-      TwilioSmsProviderConfigurationComponent
+      TwilioSmsProviderConfigurationComponent,
+      DashboardToolbarComponent,
+      DashboardPageComponent,
+      DashboardLayoutComponent,
+      EditWidgetComponent,
+      DashboardWidgetSelectComponent,
+      AddWidgetDialogComponent,
+      ManageDashboardLayoutsDialogComponent,
+      DashboardSettingsDialogComponent,
+      ManageDashboardStatesDialogComponent,
+      DashboardStateDialogComponent,
+      DashboardImageDialogComponent,
+      EmbedDashboardDialogComponent,
+      DisplayWidgetTypesPanelComponent
     ],
   imports: [
     CommonModule,
     SharedModule,
     SharedHomeComponentsModule,
-    Lwm2mProfileComponentsModule
+    Lwm2mProfileComponentsModule,
+    StatesControllerModule
   ],
   exports: [
     EntitiesTableComponent,
@@ -234,6 +279,8 @@ import { Lwm2mProfileComponentsModule } from '@home/components/profile/device/lw
     EntityDetailsPanelComponent,
     AuditLogTableComponent,
     EventTableComponent,
+    EdgeDownlinkTableHeaderComponent,
+    EdgeDownlinkTableComponent,
     RelationTableComponent,
     RelationFiltersComponent,
     AlarmTableComponent,
@@ -257,6 +304,7 @@ import { Lwm2mProfileComponentsModule } from '@home/components/profile/device/lw
     WidgetActionDialogComponent,
     CustomActionPrettyResourcesTabsComponent,
     CustomActionPrettyEditorComponent,
+    MobileActionEditorComponent,
     CustomDialogContainerComponent,
     ImportDialogComponent,
     ImportDialogCsvComponent,
@@ -287,6 +335,8 @@ import { Lwm2mProfileComponentsModule } from '@home/components/profile/device/lw
     DeviceProfileConfigurationComponent,
     DefaultDeviceProfileTransportConfigurationComponent,
     MqttDeviceProfileTransportConfigurationComponent,
+    CoapDeviceProfileTransportConfigurationComponent,
+    SnmpDeviceProfileTransportConfigurationComponent,
     DeviceProfileTransportConfigurationComponent,
     CreateAlarmRulesComponent,
     AlarmRuleComponent,
@@ -301,21 +351,36 @@ import { Lwm2mProfileComponentsModule } from '@home/components/profile/device/lw
     DeviceWizardDialogComponent,
     DeviceCredentialsComponent,
     CopyDeviceCredentialsComponent,
+    SecurityConfigLwm2mComponent,
+    SecurityConfigLwm2mServerComponent,
     AlarmScheduleInfoComponent,
     AlarmScheduleComponent,
     AlarmScheduleDialogComponent,
     EditAlarmDetailsDialogComponent,
     DeviceProfileProvisionConfigurationComponent,
     AlarmScheduleComponent,
-    Lwm2mProfileComponentsModule,
     SmsProviderConfigurationComponent,
     AwsSnsProviderConfigurationComponent,
-    TwilioSmsProviderConfigurationComponent
+    TwilioSmsProviderConfigurationComponent,
+    DashboardToolbarComponent,
+    DashboardPageComponent,
+    DashboardLayoutComponent,
+    EditWidgetComponent,
+    DashboardWidgetSelectComponent,
+    AddWidgetDialogComponent,
+    ManageDashboardLayoutsDialogComponent,
+    DashboardSettingsDialogComponent,
+    ManageDashboardStatesDialogComponent,
+    DashboardStateDialogComponent,
+    DashboardImageDialogComponent,
+    EmbedDashboardDialogComponent,
+    DisplayWidgetTypesPanelComponent
   ],
   providers: [
     WidgetComponentService,
     CustomDialogService,
-    ImportExportService
+    ImportExportService,
+    {provide: EMBED_DASHBOARD_DIALOG_TOKEN, useValue: EmbedDashboardDialogComponent}
   ]
 })
 export class HomeComponentsModule { }

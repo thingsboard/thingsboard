@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,6 +128,16 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsg>> createToUsageStatsServiceMsgConsumer() {
         return new InMemoryTbQueueConsumer<>(coreSettings.getUsageStatsTopic());
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToFirmwareStateServiceMsg>> createToFirmwareStateServiceMsgConsumer() {
+        return new InMemoryTbQueueConsumer<>(coreSettings.getFirmwareTopic());
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToFirmwareStateServiceMsg>> createToFirmwareStateServiceMsgProducer() {
+        return new InMemoryTbQueueProducer<>(coreSettings.getFirmwareTopic());
     }
 
     @Override

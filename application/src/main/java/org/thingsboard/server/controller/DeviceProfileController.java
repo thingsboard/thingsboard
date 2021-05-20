@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -43,6 +44,7 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @RestController
@@ -143,6 +145,19 @@ public class DeviceProfileController extends BaseController {
 
             checkEntity(deviceProfile.getId(), deviceProfile, Resource.DEVICE_PROFILE);
 
+            boolean isFirmwareChanged = false;
+            boolean isSoftwareChanged = false;
+
+            if (!created) {
+                DeviceProfile oldDeviceProfile = deviceProfileService.findDeviceProfileById(getTenantId(), deviceProfile.getId());
+                if (!Objects.equals(deviceProfile.getFirmwareId(), oldDeviceProfile.getFirmwareId())) {
+                    isFirmwareChanged = true;
+                }
+                if (!Objects.equals(deviceProfile.getSoftwareId(), oldDeviceProfile.getSoftwareId())) {
+                    isSoftwareChanged = true;
+                }
+            }
+
             DeviceProfile savedDeviceProfile = checkNotNull(deviceProfileService.saveDeviceProfile(deviceProfile));
 
             tbClusterService.onDeviceProfileChange(savedDeviceProfile, null);
@@ -151,8 +166,12 @@ public class DeviceProfileController extends BaseController {
 
             logEntityAction(savedDeviceProfile.getId(), savedDeviceProfile,
                     null,
-                    savedDeviceProfile.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
+                    created ? ActionType.ADDED : ActionType.UPDATED, null);
 
+            firmwareStateService.update(savedDeviceProfile, isFirmwareChanged, isSoftwareChanged);
+
+            sendEntityNotificationMsg(getTenantId(), savedDeviceProfile.getId(),
+                    deviceProfile.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
             return savedDeviceProfile;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE_PROFILE), deviceProfile,
@@ -178,6 +197,7 @@ public class DeviceProfileController extends BaseController {
                     null,
                     ActionType.DELETED, null, strDeviceProfileId);
 
+            sendEntityNotificationMsg(getTenantId(), deviceProfile.getId(), EdgeEventActionType.DELETED);
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE_PROFILE),
                     null,

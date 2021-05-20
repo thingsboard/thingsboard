@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,6 +64,7 @@ public class InMemoryTbQueueConsumer<T extends TbQueueMsg> implements TbQueueCon
     @Override
     public List<T> poll(long durationInMillis) {
         if (subscribed) {
+            @SuppressWarnings("unchecked")
             List<T> messages = partitions
                     .stream()
                     .map(tpi -> {

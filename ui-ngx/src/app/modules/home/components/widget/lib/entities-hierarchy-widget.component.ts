@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -84,7 +84,6 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
   private datasources: Array<HierarchyNodeDatasource>;
-  private data: Array<Array<DatasourceData>>;
 
   private nodesMap: {[nodeId: string]: HierarchyNavTreeNode} = {};
   private pendingUpdateNodeTasks: {[nodeId: string]: () => void} = {};
@@ -121,7 +120,6 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
     this.widgetConfig = this.ctx.widgetConfig;
     this.subscription = this.ctx.defaultSubscription;
     this.datasources = this.subscription.datasources as Array<HierarchyNodeDatasource>;
-    this.data = this.subscription.dataPages[0].data;
     this.initializeConfig();
     this.ctx.updateWidgetParams();
   }
@@ -252,12 +250,16 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
   public loadNodes: LoadNodesCallback = (node, cb) => {
     if (node.id === '#') {
       const childNodes: HierarchyNavTreeNode[] = [];
+      let dataIndex = 0;
       this.datasources.forEach((childDatasource, index) => {
-        childNodes.push(this.datasourceToNode(childDatasource as HierarchyNodeDatasource, this.data[index]));
+        const datasourceData = this.subscription.data.slice(dataIndex);
+        childNodes.push(this.datasourceToNode(childDatasource as HierarchyNodeDatasource, datasourceData));
+        dataIndex += childDatasource.dataKeys.length;
       });
       cb(this.prepareNodes(childNodes));
     } else {
-      if (node.data && node.data.nodeCtx.entity && node.data.nodeCtx.entity.id && node.data.nodeCtx.entity.id.entityType !== 'function') {
+      if (node.data && node.data.nodeCtx.entity && node.data.nodeCtx.entity.id && node.data.datasource.type === DatasourceType.entity
+        && node.data.nodeCtx.entity.id.entityType !== 'function') {
         this.loadChildren(node, node.data.datasource, cb);
         /* (error) => { // TODO:
             let errorText = 'Failed to get relations!';
@@ -369,8 +371,8 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
   }
 
   private datasourceToNode(datasource: HierarchyNodeDatasource,
-                             data: DatasourceData[],
-                             parentNodeCtx?: HierarchyNodeContext): HierarchyNavTreeNode {
+                           data: DatasourceData[],
+                           parentNodeCtx?: HierarchyNodeContext): HierarchyNavTreeNode {
     const node: HierarchyNavTreeNode = {
       id: (++this.nodeIdCounter) + ''
     };

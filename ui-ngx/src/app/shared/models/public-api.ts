@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ export * from './contact-based.model';
 export * from './customer.model';
 export * from './dashboard.models';
 export * from './device.models';
+export * from './edge.models';
 export * from './entity.models';
 export * from './entity-type.models';
 export * from './entity-view.models';
@@ -39,6 +40,7 @@ export * from './material.models';
 export * from './oauth2.models';
 export * from './queue.models';
 export * from './relation.models';
+export * from './resource.models';
 export * from './rule-chain.models';
 export * from './rule-node.models';
 export * from './settings.models';

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,10 +19,14 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
-import * as ace from 'ace-builds';
+import { Ace } from 'ace-builds';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import { ContentType, contentTypesMap } from '@shared/models/constants';
+import { getAce } from '@shared/models/ace/ace.models';
+import { Observable } from 'rxjs/internal/Observable';
+import { beautifyJs } from '@shared/models/beautify.models';
+import { of } from 'rxjs';
 
 export interface EventContentDialogData {
   content: string;
@@ -39,7 +43,6 @@ export class EventContentDialogComponent extends DialogComponent<EventContentDia
 
   @ViewChild('eventContentEditor', {static: true})
   eventContentEditorElmRef: ElementRef;
-  private eventContentEditor: ace.Ace.Editor;
 
   content: string;
   title: string;
@@ -58,41 +61,53 @@ export class EventContentDialogComponent extends DialogComponent<EventContentDia
     this.title = this.data.title;
     this.contentType = this.data.contentType;
 
-    this.eventContentEditor = this.createEditor(this.eventContentEditorElmRef, this.content);
+    this.createEditor(this.eventContentEditorElmRef, this.content);
   }
 
-  createEditor(editorElementRef: ElementRef, content: string): ace.Ace.Editor {
+  createEditor(editorElementRef: ElementRef, content: string) {
     const editorElement = editorElementRef.nativeElement;
     let mode = 'java';
+    let content$: Observable<string> = null;
     if (this.contentType) {
       mode = contentTypesMap.get(this.contentType).code;
       if (this.contentType === ContentType.JSON && content) {
-        content = js_beautify(content, {indent_size: 4});
+        content$ = beautifyJs(content, {indent_size: 4});
       }
     }
-    let editorOptions: Partial<ace.Ace.EditorOptions> = {
-      mode: `ace/mode/${mode}`,
-      theme: 'ace/theme/github',
-      showGutter: false,
-      showPrintMargin: false,
-      readOnly: true
-    };
+    if (!content$) {
+      content$ = of(content);
+    }
 
-    const advancedOptions = {
-      enableSnippets: false,
-      enableBasicAutocompletion: false,
-      enableLiveAutocompletion: false
-    };
+    content$.subscribe(
+      (processedContent) => {
+        let editorOptions: Partial<Ace.EditorOptions> = {
+          mode: `ace/mode/${mode}`,
+          theme: 'ace/theme/github',
+          showGutter: false,
+          showPrintMargin: false,
+          readOnly: true
+        };
 
-    editorOptions = {...editorOptions, ...advancedOptions};
-    const editor = ace.edit(editorElement, editorOptions);
-    editor.session.setUseWrapMode(false);
-    editor.setValue(content, -1);
-    this.updateEditorSize(editorElement, content, editor);
-    return editor;
+        const advancedOptions = {
+          enableSnippets: false,
+          enableBasicAutocompletion: false,
+          enableLiveAutocompletion: false
+        };
+
+        editorOptions = {...editorOptions, ...advancedOptions};
+        getAce().subscribe(
+          (ace) => {
+            const editor = ace.edit(editorElement, editorOptions);
+            editor.session.setUseWrapMode(false);
+            editor.setValue(processedContent, -1);
+            this.updateEditorSize(editorElement, processedContent, editor);
+          }
+        );
+      }
+    );
   }
 
-  updateEditorSize(editorElement: any, content: string, editor: ace.Ace.Editor) {
+  updateEditorSize(editorElement: any, content: string, editor: Ace.Editor) {
     let newHeight = 400;
     let newWidth = 600;
     if (content && content.length > 0) {

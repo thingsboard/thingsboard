@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,19 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -45,10 +49,13 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.firmware.FirmwareService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
 
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 /**
@@ -90,6 +97,12 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
 
     @Autowired
     private EntityQueryDao entityQueryDao;
+
+    @Autowired
+    private ResourceService resourceService;
+
+    @Autowired
+    private FirmwareService firmwareService;
 
     @Override
     public void deleteEntityRelations(TenantId tenantId, EntityId entityId) {
@@ -148,11 +161,64 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             case RULE_CHAIN:
                 hasName = ruleChainService.findRuleChainByIdAsync(tenantId, new RuleChainId(entityId.getId()));
                 break;
+            case EDGE:
+                hasName = edgeService.findEdgeByIdAsync(tenantId, new EdgeId(entityId.getId()));
+                break;
+            case TB_RESOURCE:
+                hasName = resourceService.findResourceInfoByIdAsync(tenantId, new TbResourceId(entityId.getId()));
+                break;
+            case FIRMWARE:
+                hasName = firmwareService.findFirmwareInfoByIdAsync(tenantId, new FirmwareId(entityId.getId()));
+                break;
             default:
                 throw new IllegalStateException("Not Implemented!");
         }
         entityName = Futures.transform(hasName, (Function<HasName, String>) hasName1 -> hasName1 != null ? hasName1.getName() : null, MoreExecutors.directExecutor());
         return entityName;
+    }
+
+    @Override
+    public CustomerId fetchEntityCustomerId(TenantId tenantId, EntityId entityId) {
+        log.trace("Executing fetchEntityCustomerId [{}]", entityId);
+        HasCustomerId hasCustomerId = null;
+        switch (entityId.getEntityType()) {
+            case TENANT:
+            case RULE_CHAIN:
+            case RULE_NODE:
+            case DASHBOARD:
+            case WIDGETS_BUNDLE:
+            case WIDGET_TYPE:
+            case TENANT_PROFILE:
+            case DEVICE_PROFILE:
+            case API_USAGE_STATE:
+            case TB_RESOURCE:
+            case FIRMWARE:
+                break;
+            case CUSTOMER:
+                hasCustomerId = () -> new CustomerId(entityId.getId());
+                break;
+            case USER:
+                hasCustomerId = userService.findUserById(tenantId, new UserId(entityId.getId()));
+                break;
+            case ASSET:
+                hasCustomerId = assetService.findAssetById(tenantId, new AssetId(entityId.getId()));
+                break;
+            case DEVICE:
+                hasCustomerId = deviceService.findDeviceById(tenantId, new DeviceId(entityId.getId()));
+                break;
+            case ALARM:
+                try {
+                    hasCustomerId = alarmService.findAlarmByIdAsync(tenantId, new AlarmId(entityId.getId())).get();
+                } catch (Exception e) {}
+                break;
+            case ENTITY_VIEW:
+                hasCustomerId = entityViewService.findEntityViewById(tenantId, new EntityViewId(entityId.getId()));
+                break;
+            case EDGE:
+                hasCustomerId = edgeService.findEdgeById(tenantId, new EdgeId(entityId.getId()));
+                break;
+        }
+        return hasCustomerId != null ? hasCustomerId.getCustomerId() : new CustomerId(NULL_UUID);
     }
 
     private static void validateEntityCountQuery(EntityCountQuery query) {
@@ -174,9 +240,9 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         if (pageLink == null) {
             throw new IncorrectParameterException("Entity Data Page link must be specified.");
         } else if (pageLink.getPageSize() < 1) {
-            throw new IncorrectParameterException("Incorrect entity data page link page size '"+pageLink.getPageSize()+"'. Page size must be greater than zero.");
+            throw new IncorrectParameterException("Incorrect entity data page link page size '" + pageLink.getPageSize() + "'. Page size must be greater than zero.");
         } else if (pageLink.getPage() < 0) {
-            throw new IncorrectParameterException("Incorrect entity data page link page '"+pageLink.getPage()+"'. Page must be positive integer.");
+            throw new IncorrectParameterException("Incorrect entity data page link page '" + pageLink.getPage() + "'. Page must be positive integer.");
         }
     }
 

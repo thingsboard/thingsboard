@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ import _ from 'lodash';
 import { Observable, Subject } from 'rxjs';
 import { finalize, share } from 'rxjs/operators';
 import { Datasource } from '@app/shared/models/widget.models';
+import { EntityId } from '@shared/models/id/entity-id';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 const varsRegex = /\${([^}]*)}/g;
 
@@ -123,6 +125,10 @@ export function isEmpty(obj: any): boolean {
     }
   }
   return true;
+}
+
+export function isLiteralObject(value: any) {
+  return (!!value) && (value.constructor === Object);
 }
 
 export function formatValue(value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined {
@@ -285,7 +291,7 @@ export function deepClone<T>(target: T, ignoreFields?: string[]): T {
     return cp.map((n: any) => deepClone<any>(n)) as any;
   }
   if (typeof target === 'object' && target !== {}) {
-    const cp = { ...(target as { [key: string]: any }) } as { [key: string]: any };
+    const cp = {...(target as { [key: string]: any })} as { [key: string]: any };
     Object.keys(cp).forEach(k => {
       if (!ignoreFields || ignoreFields.indexOf(k) === -1) {
         cp[k] = deepClone<any>(cp[k]);
@@ -324,6 +330,9 @@ export function snakeCase(name: string, separator: string): string {
 }
 
 export function getDescendantProp(obj: any, path: string): any {
+  if (obj.hasOwnProperty(path)) {
+    return obj[path];
+  }
   return path.split('.').reduce((acc, part) => acc && acc[part], obj);
 }
 
@@ -402,7 +411,7 @@ export function sortObjectKeys<T>(obj: T): T {
 }
 
 export function deepTrim<T>(obj: T): T {
-  if (isNumber(obj) || isUndefined(obj) || isString(obj) || obj === null) {
+  if (isNumber(obj) || isUndefined(obj) || isString(obj) || obj === null || obj instanceof File) {
     return obj;
   }
   return Object.keys(obj).reduce((acc, curr) => {
@@ -427,4 +436,8 @@ export function generateSecret(length?: number): string {
     return str;
   }
   return str.concat(generateSecret(length - str.length));
+}
+
+export function validateEntityId(entityId: EntityId): boolean {
+  return isDefinedAndNotNull(entityId.id) && entityId.id !== NULL_UUID && isDefinedAndNotNull(entityId.entityType);
 }

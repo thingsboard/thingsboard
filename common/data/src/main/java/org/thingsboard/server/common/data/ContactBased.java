@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,28 @@ package org.thingsboard.server.common.data;
 
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 @EqualsAndHashCode(callSuper = true)
 public abstract class ContactBased<I extends UUIDBased> extends SearchTextBasedWithAdditionalInfo<I> implements HasName {
     
     private static final long serialVersionUID = 5047448057830660988L;
-    
+
+    @NoXss
     protected String country;
+    @NoXss
     protected String state;
+    @NoXss
     protected String city;
+    @NoXss
     protected String address;
+    @NoXss
     protected String address2;
+    @NoXss
     protected String zip;
+    @NoXss
     protected String phone;
+    @NoXss
     protected String email;
     
     public ContactBased() {

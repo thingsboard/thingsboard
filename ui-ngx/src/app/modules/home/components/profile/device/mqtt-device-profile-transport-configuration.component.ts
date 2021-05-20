@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -28,11 +28,15 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
+  defaultAttributesSchema,
+  defaultRpcRequestSchema,
+  defaultRpcResponseSchema,
+  defaultTelemetrySchema,
   DeviceProfileTransportConfiguration,
   DeviceTransportType,
   MqttDeviceProfileTransportConfiguration,
-  MqttTransportPayloadType,
-  mqttTransportPayloadTypeTranslationMap
+  TransportPayloadType,
+  transportPayloadTypeTranslationMap
 } from '@shared/models/device.models';
 import { isDefinedAndNotNull } from '@core/utils';
 
@@ -48,39 +52,11 @@ import { isDefinedAndNotNull } from '@core/utils';
 })
 export class MqttDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit {
 
-  mqttTransportPayloadTypes = Object.keys(MqttTransportPayloadType);
+  transportPayloadTypes = Object.keys(TransportPayloadType);
 
-  mqttTransportPayloadTypeTranslations = mqttTransportPayloadTypeTranslationMap;
+  transportPayloadTypeTranslations = transportPayloadTypeTranslationMap;
 
   mqttDeviceProfileTransportConfigurationFormGroup: FormGroup;
-
-  private defaultTelemetrySchema =
-    'syntax ="proto3";\n' +
-    'package telemetry;\n' +
-    '\n' +
-    'message SensorDataReading {\n' +
-    '\n' +
-    '  double temperature = 1;\n' +
-    '  double humidity = 2;\n' +
-    '  InnerObject innerObject = 3;\n' +
-    '\n' +
-    '  message InnerObject {\n' +
-    '    string key1 = 1;\n' +
-    '    bool key2 = 2;\n' +
-    '    double key3 = 3;\n' +
-    '    int32 key4 = 4;\n' +
-    '    string key5 = 5;\n' +
-    '  }\n' +
-    '}\n';
-
-  private defaultAttributesSchema =
-    'syntax ="proto3";\n' +
-    'package attributes;\n' +
-    '\n' +
-    'message SensorConfiguration {\n' +
-    '  string firmwareVersion = 1;\n' +
-    '  string serialNumber = 2;\n' +
-    '}';
 
   private requiredValue: boolean;
 
@@ -114,9 +90,11 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
         deviceAttributesTopic: [null, [Validators.required, this.validationMQTTTopic()]],
         deviceTelemetryTopic: [null, [Validators.required, this.validationMQTTTopic()]],
         transportPayloadTypeConfiguration: this.fb.group({
-          transportPayloadType: [MqttTransportPayloadType.JSON, Validators.required],
-          deviceTelemetryProtoSchema: [this.defaultTelemetrySchema, Validators.required],
-          deviceAttributesProtoSchema: [this.defaultAttributesSchema, Validators.required]
+          transportPayloadType: [TransportPayloadType.JSON, Validators.required],
+          deviceTelemetryProtoSchema: [defaultTelemetrySchema, Validators.required],
+          deviceAttributesProtoSchema: [defaultAttributesSchema, Validators.required],
+          deviceRpcRequestProtoSchema: [defaultRpcRequestSchema, Validators.required],
+          deviceRpcResponseProtoSchema: [defaultRpcResponseSchema, Validators.required]
         })
       }, {validator: this.uniqueDeviceTopicValidator}
     );
@@ -140,7 +118,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
 
   get protoPayloadType(): boolean {
     const transportPayloadType = this.mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.transportPayloadType').value;
-    return transportPayloadType === MqttTransportPayloadType.PROTOBUF;
+    return transportPayloadType === TransportPayloadType.PROTOBUF;
   }
 
   writeValue(value: MqttDeviceProfileTransportConfiguration | null): void {
@@ -159,21 +137,27 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     this.propagateChange(configuration);
   }
 
-  private updateTransportPayloadBasedControls(type: MqttTransportPayloadType, forceUpdated = false) {
+  private updateTransportPayloadBasedControls(type: TransportPayloadType, forceUpdated = false) {
     const transportPayloadTypeForm = this.mqttDeviceProfileTransportConfigurationFormGroup
       .get('transportPayloadTypeConfiguration') as FormGroup;
     if (forceUpdated) {
       transportPayloadTypeForm.patchValue({
-        deviceTelemetryProtoSchema: this.defaultTelemetrySchema,
-        deviceAttributesProtoSchema: this.defaultAttributesSchema
+        deviceTelemetryProtoSchema: defaultTelemetrySchema,
+        deviceAttributesProtoSchema: defaultAttributesSchema,
+        deviceRpcRequestProtoSchema: defaultRpcRequestSchema,
+        deviceRpcResponseProtoSchema: defaultRpcResponseSchema
       }, {emitEvent: false});
     }
-    if (type === MqttTransportPayloadType.PROTOBUF && !this.disabled) {
+    if (type === TransportPayloadType.PROTOBUF && !this.disabled) {
       transportPayloadTypeForm.get('deviceTelemetryProtoSchema').enable({emitEvent: false});
       transportPayloadTypeForm.get('deviceAttributesProtoSchema').enable({emitEvent: false});
+      transportPayloadTypeForm.get('deviceRpcRequestProtoSchema').enable({emitEvent: false});
+      transportPayloadTypeForm.get('deviceRpcResponseProtoSchema').enable({emitEvent: false});
     } else {
       transportPayloadTypeForm.get('deviceTelemetryProtoSchema').disable({emitEvent: false});
       transportPayloadTypeForm.get('deviceAttributesProtoSchema').disable({emitEvent: false});
+      transportPayloadTypeForm.get('deviceRpcRequestProtoSchema').enable({emitEvent: false});
+      transportPayloadTypeForm.get('deviceRpcResponseProtoSchema').disable({emitEvent: false});
     }
   }
 

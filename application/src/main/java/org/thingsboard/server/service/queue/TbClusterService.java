@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,10 @@ import org.thingsboard.rule.engine.api.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -71,6 +73,12 @@ public interface TbClusterService {
     void onDeviceChange(Device device, TbQueueCallback callback);
 
     void onDeviceDeleted(Device device, TbQueueCallback callback);
+
+    void onResourceChange(TbResource resource, TbQueueCallback callback);
+
+    void onResourceDeleted(TbResource resource, TbQueueCallback callback);
+
+    void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId);
 
     void onDeviceDeleted(TenantId tenantId, EntityId entityId, TbQueueCallback callback);
 }

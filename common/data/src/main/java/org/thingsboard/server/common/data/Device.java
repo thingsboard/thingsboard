@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,30 +20,37 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.device.data.DeviceData;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasName, HasTenantId, HasCustomerId {
+public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasName, HasTenantId, HasCustomerId, HasFirmware {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
     private TenantId tenantId;
     private CustomerId customerId;
+    @NoXss
     private String name;
+    @NoXss
     private String type;
+    @NoXss
     private String label;
     private DeviceProfileId deviceProfileId;
     private transient DeviceData deviceData;
     @JsonIgnore
     private byte[] deviceDataBytes;
+
+    private FirmwareId firmwareId;
+    private FirmwareId softwareId;
 
     public Device() {
         super();
@@ -62,6 +69,21 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         this.label = device.getLabel();
         this.deviceProfileId = device.getDeviceProfileId();
         this.setDeviceData(device.getDeviceData());
+        this.firmwareId = device.getFirmwareId();
+        this.softwareId = device.getSoftwareId();
+    }
+
+    public Device updateDevice(Device device) {
+        this.tenantId = device.getTenantId();
+        this.customerId = device.getCustomerId();
+        this.name = device.getName();
+        this.type = device.getType();
+        this.label = device.getLabel();
+        this.deviceProfileId = device.getDeviceProfileId();
+        this.setDeviceData(device.getDeviceData());
+        this.setFirmwareId(device.getFirmwareId());
+        this.setSoftwareId(device.getSoftwareId());
+        return this;
     }
 
     public TenantId getTenantId() {
@@ -145,6 +167,22 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         return getName();
     }
 
+    public FirmwareId getFirmwareId() {
+        return firmwareId;
+    }
+
+    public void setFirmwareId(FirmwareId firmwareId) {
+        this.firmwareId = firmwareId;
+    }
+
+    public FirmwareId getSoftwareId() {
+        return softwareId;
+    }
+
+    public void setSoftwareId(FirmwareId softwareId) {
+        this.softwareId = softwareId;
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -161,6 +199,8 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         builder.append(", deviceProfileId=");
         builder.append(deviceProfileId);
         builder.append(", deviceData=");
+        builder.append(firmwareId);
+        builder.append(", firmwareId=");
         builder.append(deviceData);
         builder.append(", additionalInfo=");
         builder.append(getAdditionalInfo());

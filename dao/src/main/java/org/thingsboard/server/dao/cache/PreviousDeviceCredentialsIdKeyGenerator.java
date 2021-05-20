@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.cache;
 
 import org.springframework.cache.interceptor.KeyGenerator;
+import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
@@ -24,6 +25,7 @@ import java.lang.reflect.Method;
 
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CREDENTIALS_CACHE;
 
+@Component("previousDeviceCredentialsId")
 public class PreviousDeviceCredentialsIdKeyGenerator implements KeyGenerator {
 
     private static final String NOT_VALID_DEVICE = DEVICE_CREDENTIALS_CACHE + "_notValidDeviceCredentialsId";

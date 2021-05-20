@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package org.thingsboard.server.actors.stats;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 
-public final class StatsPersistTick implements TbActorMsg{
+public final class StatsPersistTick implements TbActorMsg {
     @Override
     public MsgType getMsgType() {
         return MsgType.STATS_PERSIST_TICK_MSG;

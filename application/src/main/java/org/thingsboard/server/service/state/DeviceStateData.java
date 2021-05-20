@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.service.state;
 
 import lombok.Builder;
 import lombok.Data;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -29,6 +30,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 class DeviceStateData {
 
     private final TenantId tenantId;
+    private final CustomerId customerId;
     private final DeviceId deviceId;
     private final long deviceCreationTime;
     private TbMsgMetaData metaData;

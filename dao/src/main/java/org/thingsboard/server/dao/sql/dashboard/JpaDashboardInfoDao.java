@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,18 +39,18 @@ import java.util.UUID;
 public class JpaDashboardInfoDao extends JpaAbstractSearchTextDao<DashboardInfoEntity, DashboardInfo> implements DashboardInfoDao {
 
     @Autowired
-    private RelationDao relationDao;
-
-    @Autowired
     private DashboardInfoRepository dashboardInfoRepository;
 
+    @Autowired
+    private RelationDao relationDao;
+
     @Override
-    protected Class getEntityClass() {
+    protected Class<DashboardInfoEntity> getEntityClass() {
         return DashboardInfoEntity.class;
     }
 
     @Override
-    protected CrudRepository getCrudRepository() {
+    protected CrudRepository<DashboardInfoEntity, UUID> getCrudRepository() {
         return dashboardInfoRepository;
     }
 
@@ -69,6 +69,17 @@ public class JpaDashboardInfoDao extends JpaAbstractSearchTextDao<DashboardInfoE
                 .findByTenantIdAndCustomerId(
                         tenantId,
                         customerId,
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<DashboardInfo> findDashboardsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, PageLink pageLink) {
+        log.debug("Try to find dashboards by tenantId [{}], edgeId [{}] and pageLink [{}]", tenantId, edgeId, pageLink);
+        return DaoUtil.toPageData(dashboardInfoRepository
+                .findByTenantIdAndEdgeId(
+                        tenantId,
+                        edgeId,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
     }

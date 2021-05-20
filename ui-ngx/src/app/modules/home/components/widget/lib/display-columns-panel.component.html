@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 -->
 <div fxLayout="column" class="mat-content mat-padding">
   <label class="tb-title" translate>entity.columns-to-display</label>
-  <mat-checkbox style="padding-bottom: 8px;" [(ngModel)]="column.display" *ngFor="let column of columns"
+  <mat-checkbox style="padding-bottom: 8px;" [(ngModel)]="column.display" *ngFor="let column of (columns | selectableColumns)"
                 (ngModelChange)="update()">
     {{ column.title }}
   </mat-checkbox>

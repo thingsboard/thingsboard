@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
-import org.thingsboard.server.dao.util.mapping.JacksonUtil;
+import org.thingsboard.common.util.JacksonUtil;
 
 import java.util.Map;
 import java.util.UUID;
@@ -74,7 +74,7 @@ public class TbDeviceProfileNode implements TbNode {
         this.config = TbNodeUtils.convert(configuration, TbDeviceProfileNodeConfiguration.class);
         this.cache = ctx.getDeviceProfileCache();
         this.ctx = ctx;
-        scheduleAlarmHarvesting(ctx);
+        scheduleAlarmHarvesting(ctx, null);
         ctx.addDeviceProfileListeners(this::onProfileUpdate, this::onDeviceUpdate);
         if (config.isFetchAlarmRulesStateOnStart()) {
             log.info("[{}] Fetching alarm rule state", ctx.getSelfId());
@@ -108,7 +108,7 @@ public class TbDeviceProfileNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
         EntityType originatorType = msg.getOriginator().getEntityType();
         if (msg.getType().equals(PERIODIC_MSG_TYPE)) {
-            scheduleAlarmHarvesting(ctx);
+            scheduleAlarmHarvesting(ctx, msg);
             harvestAlarms(ctx, System.currentTimeMillis());
         } else if (msg.getType().equals(PROFILE_UPDATE_MSG_TYPE)) {
             updateProfile(ctx, new DeviceProfileId(UUID.fromString(msg.getData())));
@@ -125,14 +125,17 @@ public class TbDeviceProfileNode implements TbNode {
                 DeviceId deviceId = new DeviceId(msg.getOriginator().getId());
                 if (msg.getType().equals(DataConstants.ENTITY_UPDATED)) {
                     invalidateDeviceProfileCache(deviceId, msg.getData());
+                    ctx.tellSuccess(msg);
                 } else if (msg.getType().equals(DataConstants.ENTITY_DELETED)) {
                     removeDeviceState(deviceId);
+                    ctx.tellSuccess(msg);
                 } else {
                     DeviceState deviceState = getOrCreateDeviceState(ctx, deviceId, null);
                     if (deviceState != null) {
                         deviceState.process(ctx, msg);
                     } else {
-                        ctx.tellFailure(msg, new IllegalStateException("Device profile for device [" + deviceId + "] not found!"));
+                        log.info("Device was not found! Most probably device [" + deviceId + "] has been removed from the database. Acknowledging msg.");
+                        ctx.ack(msg);
                     }
                 }
             } else {
@@ -165,8 +168,8 @@ public class TbDeviceProfileNode implements TbNode {
         return deviceState;
     }
 
-    protected void scheduleAlarmHarvesting(TbContext ctx) {
-        TbMsg periodicCheck = TbMsg.newMsg(PERIODIC_MSG_TYPE, ctx.getTenantId(), TbMsgMetaData.EMPTY, "{}");
+    protected void scheduleAlarmHarvesting(TbContext ctx, TbMsg msg) {
+        TbMsg periodicCheck = TbMsg.newMsg(PERIODIC_MSG_TYPE, ctx.getTenantId(), msg != null ? msg.getCustomerId() : null, TbMsgMetaData.EMPTY, "{}");
         ctx.tellSelf(periodicCheck, TimeUnit.MINUTES.toMillis(1));
     }
 

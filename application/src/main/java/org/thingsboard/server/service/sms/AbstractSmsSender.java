@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 @Slf4j
 public abstract class AbstractSmsSender implements SmsSender {
 
-    private static final Pattern E_164_PHONE_NUMBER_PATTERN = Pattern.compile("^\\+[1-9]\\d{1,14}$");
+    protected static final Pattern E_164_PHONE_NUMBER_PATTERN = Pattern.compile("^\\+[1-9]\\d{1,14}$");
 
     private static final int MAX_SMS_MESSAGE_LENGTH = 1600;
     private static final int MAX_SMS_SEGMENT_LENGTH = 70;

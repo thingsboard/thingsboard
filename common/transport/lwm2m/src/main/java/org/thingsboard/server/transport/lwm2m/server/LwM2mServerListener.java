@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.thingsboard.server.transport.lwm2m.server;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.response.ObserveResponse;
-import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.observation.ObservationListener;
 import org.eclipse.leshan.server.queue.PresenceListener;
 import org.eclipse.leshan.server.registration.Registration;
@@ -27,13 +26,15 @@ import org.eclipse.leshan.server.registration.RegistrationUpdate;
 
 import java.util.Collection;
 
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
+
 @Slf4j
 public class LwM2mServerListener {
-    private LeshanServer lhServer;
-    private LwM2MTransportService service;
 
-    public LwM2mServerListener(LeshanServer lhServer, LwM2MTransportService service) {
-        this.lhServer = lhServer;
+    private final LwM2mTransportMsgHandler service;
+
+    public LwM2mServerListener(LwM2mTransportMsgHandler service) {
         this.service = service;
     }
 
@@ -43,9 +44,8 @@ public class LwM2mServerListener {
          */
         @Override
         public void registered(Registration registration, Registration previousReg,
-                               Collection<Observation> previousObsersations) {
-
-            service.onRegistered(lhServer, registration, previousObsersations);
+                               Collection<Observation> previousObservations) {
+            service.onRegistered(registration, previousObservations);
         }
 
         /**
@@ -54,7 +54,7 @@ public class LwM2mServerListener {
         @Override
         public void updated(RegistrationUpdate update, Registration updatedRegistration,
                             Registration previousRegistration) {
-            service.updatedReg(lhServer, updatedRegistration);
+            service.updatedReg(updatedRegistration);
         }
 
         /**
@@ -71,11 +71,13 @@ public class LwM2mServerListener {
     public final PresenceListener presenceListener = new PresenceListener() {
         @Override
         public void onSleeping(Registration registration) {
+            log.info("onSleeping");
             service.onSleepingDev(registration);
         }
 
         @Override
         public void onAwake(Registration registration) {
+            log.info("onAwake");
             service.onAwakeDev(registration);
         }
     };
@@ -84,17 +86,22 @@ public class LwM2mServerListener {
 
         @Override
         public void cancelled(Observation observation) {
-            log.info("Received notification cancelled from [{}] ", observation.getPath());
+            String msg = String.format("%s:  Canceled Observation  %s.", LOG_LW2M_INFO, observation.getPath());
+            service.sendLogsToThingsboard(msg, observation.getRegistrationId());
+            log.warn(msg);
         }
 
         @Override
         public void onResponse(Observation observation, Registration registration, ObserveResponse response) {
             if (registration != null) {
-                try {
-                    service.onObservationResponse(registration, observation.getPath().toString(), response);
-                } catch (java.lang.NullPointerException e) {
-                    log.error(e.toString());
-                }
+//                if (observation.getPath().isResource() || observation.getPath().isResourceInstance()) {
+//                    String msg = String.format("%s: Successful Observation  %s.", LOG_LW2M_INFO,
+//                            observation.getPath());
+//                    log.warn(msg);
+//                    service.sendLogsToThingsboard(msg, registration.getId());
+//                }
+                service.onUpdateValueAfterReadResponse(registration, convertPathFromObjectIdToIdVer(observation.getPath().toString(),
+                        registration), response, null);
             }
         }
 
@@ -105,7 +112,10 @@ public class LwM2mServerListener {
 
         @Override
         public void newObservation(Observation observation, Registration registration) {
-            log.info("Received newObservation from [{}] endpoint  [{}] ", observation.getPath(), registration.getEndpoint());
+            String msg = String.format("%s: Successful start newObservation  %s.", LOG_LW2M_INFO,
+                    observation.getPath());
+            log.warn(msg);
+            service.sendLogsToThingsboard(msg, registration.getId());
         }
     };
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import java.util.concurrent.ScheduledFuture;
  * Created by ashvayka on 15.10.18.
  */
 @Data
-class SessionMetaData {
+public class SessionMetaData {
 
     private volatile TransportProtos.SessionInfoProto sessionInfo;
     private final TransportProtos.SessionType sessionType;
@@ -36,6 +36,7 @@ class SessionMetaData {
     private volatile long lastReportedActivityTime;
     private volatile boolean subscribedToAttributes;
     private volatile boolean subscribedToRPC;
+    private volatile boolean overwriteActivityTime;
 
     SessionMetaData(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SessionType sessionType, SessionMsgListener listener) {
         this.sessionInfo = sessionInfo;

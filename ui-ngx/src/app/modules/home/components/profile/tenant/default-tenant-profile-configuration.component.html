@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -194,6 +194,18 @@
     </mat-error>
     <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxSms').hasError('min')">
       {{ 'tenant-profile.max-sms-range' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.max-created-alarms</mat-label>
+    <input matInput required min="0" step="1"
+           formControlName="maxCreatedAlarms"
+           type="number">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCreatedAlarms').hasError('required')">
+      {{ 'tenant-profile.max-created-alarms-required' | translate}}
+    </mat-error>
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCreatedAlarms').hasError('min')">
+      {{ 'tenant-profile.max-created-alarms-range' | translate}}
     </mat-error>
   </mat-form-field>
   <mat-form-field class="mat-block">

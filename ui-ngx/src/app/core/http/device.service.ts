@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -153,6 +153,24 @@ export class DeviceService {
 
   public unclaimDevice(deviceName: string, config?: RequestConfig) {
     return this.http.delete(`/api/customer/device/${deviceName}/claim`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public assignDeviceToEdge(edgeId: string, deviceId: string,
+                            config?: RequestConfig): Observable<Device> {
+    return this.http.post<Device>(`/api/edge/${edgeId}/device/${deviceId}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public unassignDeviceFromEdge(edgeId: string, deviceId: string,
+                                config?: RequestConfig) {
+    return this.http.delete(`/api/edge/${edgeId}/device/${deviceId}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getEdgeDevices(edgeId: string, pageLink: PageLink, type: string = '',
+                        config?: RequestConfig): Observable<PageData<DeviceInfo>> {
+    return this.http.get<PageData<DeviceInfo>>(`/api/edge/${edgeId}/devices${pageLink.toQuery()}&type=${type}`,
+      defaultHttpOptionsFromConfig(config))
   }
 
 }

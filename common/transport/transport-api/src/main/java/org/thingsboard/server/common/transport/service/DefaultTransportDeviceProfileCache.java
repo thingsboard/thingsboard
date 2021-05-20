@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,8 +112,8 @@ public class DefaultTransportDeviceProfileCache implements TransportDeviceProfil
                     profile = profileOpt.get();
                     this.put(profile);
                 } else {
-                    log.warn("[{}] Can't device profile: {}", id, entityProfileMsg.getData());
-                    throw new RuntimeException("Can't device profile!");
+                    log.warn("[{}] Can't find device profile: {}", id, entityProfileMsg.getData());
+                    throw new RuntimeException("Can't find device profile!");
                 }
             } finally {
                 deviceProfileFetchLock.unlock();

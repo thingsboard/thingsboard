@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -145,128 +145,131 @@ export class NavTreeComponent implements OnInit {
       };
     }
 
-    this.treeElement = $('.tb-nav-tree-container', this.elementRef.nativeElement).jstree(config);
+    import('jstree').then(() => {
 
-    this.treeElement.on('changed.jstree', (e: any, data) => {
-      const node: NavTreeNode = data.instance.get_selected(true)[0];
-      if (this.onNodeSelected) {
-        this.ngZone.run(() => this.onNodeSelected(node, e as Event));
-      }
-    });
+      this.treeElement = $('.tb-nav-tree-container', this.elementRef.nativeElement).jstree(config);
 
-    this.treeElement.on('model.jstree', (e: any, data) => {
-      if (this.onNodesInserted) {
-        this.ngZone.run(() => this.onNodesInserted(data.nodes, data.parent));
-      }
-    });
+      this.treeElement.on('changed.jstree', (e: any, data) => {
+        const node: NavTreeNode = data.instance.get_selected(true)[0];
+        if (this.onNodeSelected) {
+          this.ngZone.run(() => this.onNodeSelected(node, e as Event));
+        }
+      });
 
-    if (this.editCallbacks) {
-      this.editCallbacks.selectNode = id => {
-        const node: NavTreeNode = this.treeElement.jstree('get_node', id);
-        if (node) {
-          this.treeElement.jstree('deselect_all', true);
-          this.treeElement.jstree('select_node', node);
+      this.treeElement.on('model.jstree', (e: any, data) => {
+        if (this.onNodesInserted) {
+          this.ngZone.run(() => this.onNodesInserted(data.nodes, data.parent));
         }
-      };
-      this.editCallbacks.deselectAll = () => {
-        this.treeElement.jstree('deselect_all');
-      };
-      this.editCallbacks.getNode = (id) => {
-        const node: NavTreeNode = this.treeElement.jstree('get_node', id);
-        return node;
-      };
-      this.editCallbacks.getParentNodeId = (id) => {
-        const node: NavTreeNode = this.treeElement.jstree('get_node', id);
-        if (node) {
-          return this.treeElement.jstree('get_parent', node);
-        }
-      };
-      this.editCallbacks.openNode = (id, cb) => {
-        const node: NavTreeNode = this.treeElement.jstree('get_node', id);
-        if (node) {
-          this.treeElement.jstree('open_node', node, cb);
-        }
-      };
-      this.editCallbacks.nodeIsOpen = (id) => {
-        const node: NavTreeNode = this.treeElement.jstree('get_node', id);
-        if (node) {
-          return this.treeElement.jstree('is_open', node);
-        } else {
-          return true;
-        }
-      };
-      this.editCallbacks.nodeIsLoaded = (id) => {
-        const node: NavTreeNode = this.treeElement.jstree('get_node', id);
-        if (node) {
-          return this.treeElement.jstree('is_loaded', node);
-        } else {
-          return true;
-        }
-      };
-      this.editCallbacks.refreshNode = (id) => {
-        if (id === '#') {
-          this.treeElement.jstree('refresh');
-          this.treeElement.jstree('redraw');
-        } else {
+      });
+
+      if (this.editCallbacks) {
+        this.editCallbacks.selectNode = id => {
           const node: NavTreeNode = this.treeElement.jstree('get_node', id);
           if (node) {
-            const opened = this.treeElement.jstree('is_open', node);
-            this.treeElement.jstree('refresh_node', node);
+            this.treeElement.jstree('deselect_all', true);
+            this.treeElement.jstree('select_node', node);
+          }
+        };
+        this.editCallbacks.deselectAll = () => {
+          this.treeElement.jstree('deselect_all');
+        };
+        this.editCallbacks.getNode = (id) => {
+          const node: NavTreeNode = this.treeElement.jstree('get_node', id);
+          return node;
+        };
+        this.editCallbacks.getParentNodeId = (id) => {
+          const node: NavTreeNode = this.treeElement.jstree('get_node', id);
+          if (node) {
+            return this.treeElement.jstree('get_parent', node);
+          }
+        };
+        this.editCallbacks.openNode = (id, cb) => {
+          const node: NavTreeNode = this.treeElement.jstree('get_node', id);
+          if (node) {
+            this.treeElement.jstree('open_node', node, cb);
+          }
+        };
+        this.editCallbacks.nodeIsOpen = (id) => {
+          const node: NavTreeNode = this.treeElement.jstree('get_node', id);
+          if (node) {
+            return this.treeElement.jstree('is_open', node);
+          } else {
+            return true;
+          }
+        };
+        this.editCallbacks.nodeIsLoaded = (id) => {
+          const node: NavTreeNode = this.treeElement.jstree('get_node', id);
+          if (node) {
+            return this.treeElement.jstree('is_loaded', node);
+          } else {
+            return true;
+          }
+        };
+        this.editCallbacks.refreshNode = (id) => {
+          if (id === '#') {
+            this.treeElement.jstree('refresh');
             this.treeElement.jstree('redraw');
-            if (node.children && opened/* && !node.children.length*/) {
-              this.treeElement.jstree('open_node', node);
+          } else {
+            const node: NavTreeNode = this.treeElement.jstree('get_node', id);
+            if (node) {
+              const opened = this.treeElement.jstree('is_open', node);
+              this.treeElement.jstree('refresh_node', node);
+              this.treeElement.jstree('redraw');
+              if (node.children && opened/* && !node.children.length*/) {
+                this.treeElement.jstree('open_node', node);
+              }
             }
           }
-        }
-      };
-      this.editCallbacks.updateNode = (id, newName) => {
-        const node: NavTreeNode = this.treeElement.jstree('get_node', id);
-        if (node) {
-          this.treeElement.jstree('rename_node', node, newName);
-        }
-      };
-      this.editCallbacks.createNode = (parentId, node, pos) => {
-        const parentNode: NavTreeNode = this.treeElement.jstree('get_node', parentId);
-        if (parentNode) {
-          this.treeElement.jstree('create_node', parentNode, node, pos);
-        }
-      };
-      this.editCallbacks.deleteNode = (id) => {
-        const node: NavTreeNode = this.treeElement.jstree('get_node', id);
-        if (node) {
-          this.treeElement.jstree('delete_node', node);
-        }
-      };
-      this.editCallbacks.disableNode = (id) => {
-        const node: NavTreeNode = this.treeElement.jstree('get_node', id);
-        if (node) {
-          this.treeElement.jstree('disable_node', node);
-        }
-      };
-      this.editCallbacks.enableNode = (id) => {
-        const node: NavTreeNode = this.treeElement.jstree('get_node', id);
-        if (node) {
-          this.treeElement.jstree('enable_node', node);
-        }
-      };
-      this.editCallbacks.setNodeHasChildren = (id, hasChildren) => {
-        const node: NavTreeNode = this.treeElement.jstree('get_node', id);
-        if (node) {
-          if (!node.children || (Array.isArray(node.children) && !node.children.length)) {
-            node.children = hasChildren;
-            node.state.loaded = !hasChildren;
-            node.state.opened = false;
-            this.treeElement.jstree('_node_changed', node.id);
-            this.treeElement.jstree('redraw');
+        };
+        this.editCallbacks.updateNode = (id, newName) => {
+          const node: NavTreeNode = this.treeElement.jstree('get_node', id);
+          if (node) {
+            this.treeElement.jstree('rename_node', node, newName);
           }
-        }
-      };
-      this.editCallbacks.search = (searchText) => {
-        this.treeElement.jstree('search', searchText);
-      };
-      this.editCallbacks.clearSearch = () => {
-        this.treeElement.jstree('clear_search');
-      };
-    }
+        };
+        this.editCallbacks.createNode = (parentId, node, pos) => {
+          const parentNode: NavTreeNode = this.treeElement.jstree('get_node', parentId);
+          if (parentNode) {
+            this.treeElement.jstree('create_node', parentNode, node, pos);
+          }
+        };
+        this.editCallbacks.deleteNode = (id) => {
+          const node: NavTreeNode = this.treeElement.jstree('get_node', id);
+          if (node) {
+            this.treeElement.jstree('delete_node', node);
+          }
+        };
+        this.editCallbacks.disableNode = (id) => {
+          const node: NavTreeNode = this.treeElement.jstree('get_node', id);
+          if (node) {
+            this.treeElement.jstree('disable_node', node);
+          }
+        };
+        this.editCallbacks.enableNode = (id) => {
+          const node: NavTreeNode = this.treeElement.jstree('get_node', id);
+          if (node) {
+            this.treeElement.jstree('enable_node', node);
+          }
+        };
+        this.editCallbacks.setNodeHasChildren = (id, hasChildren) => {
+          const node: NavTreeNode = this.treeElement.jstree('get_node', id);
+          if (node) {
+            if (!node.children || (Array.isArray(node.children) && !node.children.length)) {
+              node.children = hasChildren;
+              node.state.loaded = !hasChildren;
+              node.state.opened = false;
+              this.treeElement.jstree('_node_changed', node.id);
+              this.treeElement.jstree('redraw');
+            }
+          }
+        };
+        this.editCallbacks.search = (searchText) => {
+          this.treeElement.jstree('search', searchText);
+        };
+        this.editCallbacks.clearSearch = () => {
+          this.treeElement.jstree('clear_search');
+        };
+      }
+    });
   }
 }

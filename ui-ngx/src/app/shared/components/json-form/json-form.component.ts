@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,12 +36,14 @@ import { JsonFormProps } from './react/json-form.models';
 import inspector from 'schema-inspector';
 import * as tinycolor_ from 'tinycolor2';
 import { DialogService } from '@app/core/services/dialog.service';
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
-import ReactSchemaForm from './react/json-form-react';
+// import * as React from 'react';
+// import * as ReactDOM from 'react-dom';
+// import ReactSchemaForm from './react/json-form-react';
 import JsonFormUtils from './react/json-form-utils';
 import { JsonFormComponentData } from './json-form-component.models';
 import { GroupInfo } from '@shared/models/widget.models';
+import { Observable } from 'rxjs/internal/Observable';
+import { forkJoin, from } from 'rxjs';
 
 const tinycolor = tinycolor_;
 
@@ -252,11 +254,35 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
     if (destroy) {
       this.destroyReactSchemaForm();
     }
-    ReactDOM.render(React.createElement(ReactSchemaForm, this.formProps), this.reactRootElmRef.nativeElement);
+
+    // import ReactSchemaForm from './react/json-form-react';
+    const reactSchemaFormObservables: Observable<any>[] = [];
+    reactSchemaFormObservables.push(from(import('react')));
+    reactSchemaFormObservables.push(from(import('react-dom')));
+    reactSchemaFormObservables.push(from(import('./react/json-form-react')));
+    forkJoin(reactSchemaFormObservables).subscribe(
+      (modules) => {
+        const react =  modules[0];
+        const reactDom =  modules[1];
+        const jsonFormReact = modules[2].default;
+        reactDom.render(react.createElement(jsonFormReact, this.formProps), this.reactRootElmRef.nativeElement);
+      }
+    );
+    /* import('./react/json-form-react').then(
+      (mod) => {
+        ReactDOM.render(React.createElement(mod.default, this.formProps), this.reactRootElmRef.nativeElement);
+      }
+    );*/
+    // ReactDOM.render(React.createElement(ReactSchemaForm, this.formProps), this.reactRootElmRef.nativeElement);
   }
 
   private destroyReactSchemaForm() {
-    ReactDOM.unmountComponentAtNode(this.reactRootElmRef.nativeElement);
+    import('react-dom').then(
+      (reactDom) => {
+        reactDom.unmountComponentAtNode(this.reactRootElmRef.nativeElement);
+      }
+    );
+    // ReactDOM.unmountComponentAtNode(this.reactRootElmRef.nativeElement);
   }
 
   private validateModel(): boolean {

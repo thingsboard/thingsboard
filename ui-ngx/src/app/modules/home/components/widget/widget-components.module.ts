@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -35,6 +35,10 @@ import { TripAnimationComponent } from './trip-animation/trip-animation.componen
 import { PhotoCameraInputWidgetComponent } from './lib/photo-camera-input.component';
 import { GatewayFormComponent } from './lib/gateway/gateway-form.component';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { NavigationCardsWidgetComponent } from '@home/components/widget/lib/navigation-cards-widget.component';
+import { NavigationCardWidgetComponent } from '@home/components/widget/lib/navigation-card-widget.component';
+import { EdgesOverviewWidgetComponent } from '@home/components/widget/lib/edges-overview-widget.component';
+import { JsonInputWidgetComponent } from '@home/components/widget/lib/json-input-widget.component';
 
 @NgModule({
   declarations:
@@ -45,12 +49,16 @@ import { ImportExportService } from '@home/components/import-export/import-expor
       AlarmsTableWidgetComponent,
       TimeseriesTableWidgetComponent,
       EntitiesHierarchyWidgetComponent,
+      EdgesOverviewWidgetComponent,
       DateRangeNavigatorWidgetComponent,
       DateRangeNavigatorPanelComponent,
+      JsonInputWidgetComponent,
       MultipleInputWidgetComponent,
       TripAnimationComponent,
       PhotoCameraInputWidgetComponent,
-      GatewayFormComponent
+      GatewayFormComponent,
+      NavigationCardsWidgetComponent,
+      NavigationCardWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -63,16 +71,21 @@ import { ImportExportService } from '@home/components/import-export/import-expor
     AlarmsTableWidgetComponent,
     TimeseriesTableWidgetComponent,
     EntitiesHierarchyWidgetComponent,
+    EdgesOverviewWidgetComponent,
     RpcWidgetsModule,
     DateRangeNavigatorWidgetComponent,
+    JsonInputWidgetComponent,
     MultipleInputWidgetComponent,
     TripAnimationComponent,
     PhotoCameraInputWidgetComponent,
-    GatewayFormComponent
+    GatewayFormComponent,
+    NavigationCardsWidgetComponent,
+    NavigationCardWidgetComponent
   ],
   providers: [
     CustomDialogService,
     ImportExportService
   ]
 })
-export class WidgetComponentsModule { }
+export class WidgetComponentsModule {
+}

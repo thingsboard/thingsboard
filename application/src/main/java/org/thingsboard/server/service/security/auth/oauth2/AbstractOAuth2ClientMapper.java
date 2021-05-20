@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,10 @@ package org.thingsboard.server.service.security.auth.oauth2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -85,6 +87,10 @@ public abstract class AbstractOAuth2ClientMapper {
     @Autowired
     protected TbClusterService tbClusterService;
 
+    @Value("${edges.enabled}")
+    @Getter
+    private boolean edgesEnabled;
+    
     private final Lock userCreationLock = new ReentrantLock();
 
     protected SecurityUser getOrCreateSecurityUserFromOAuth2User(OAuth2User oauth2User, OAuth2ClientRegistrationInfo clientRegistration) {
@@ -171,6 +177,9 @@ public abstract class AbstractOAuth2ClientMapper {
             tenant.setTitle(tenantName);
             tenant = tenantService.saveTenant(tenant);
             installScripts.createDefaultRuleChains(tenant.getId());
+            if (edgesEnabled) {
+                installScripts.createDefaultEdgeRuleChains(tenant.getId());
+            }
             tenantProfileCache.evict(tenant.getId());
             tbClusterService.onTenantChange(tenant, null);
             tbClusterService.onEntityStateChange(tenant.getId(), tenant.getId(),

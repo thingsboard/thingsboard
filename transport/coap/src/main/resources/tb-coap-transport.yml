@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2020 The Thingsboard Authors
+# Copyright © 2016-2021 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,12 +40,77 @@ zk:
   # Name of the directory in zookeeper 'filesystem'
   zk_dir: "${ZOOKEEPER_NODES_DIR:/thingsboard}"
 
+cache:
+  type: "${CACHE_TYPE:redis}"
+
+redis:
+  # standalone or cluster
+  connection:
+    type: "${REDIS_CONNECTION_TYPE:standalone}"
+  standalone:
+    host: "${REDIS_HOST:localhost}"
+    port: "${REDIS_PORT:6379}"
+    useDefaultClientConfig: "${REDIS_USE_DEFAULT_CLIENT_CONFIG:true}"
+    # this value may be used only if you used not default ClientConfig
+    clientName: "${REDIS_CLIENT_NAME:standalone}"
+    # this value may be used only if you used not default ClientConfig
+    connectTimeout: "${REDIS_CLIENT_CONNECT_TIMEOUT:30000}"
+    # this value may be used only if you used not default ClientConfig
+    readTimeout: "${REDIS_CLIENT_READ_TIMEOUT:60000}"
+    # this value may be used only if you used not default ClientConfig
+    usePoolConfig: "${REDIS_CLIENT_USE_POOL_CONFIG:false}"
+  cluster:
+    # Comma-separated list of "host:port" pairs to bootstrap from.
+    nodes: "${REDIS_NODES:}"
+    # Maximum number of redirects to follow when executing commands across the cluster.
+    max-redirects: "${REDIS_MAX_REDIRECTS:12}"
+    useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
+  # db index
+  db: "${REDIS_DB:0}"
+  # db password
+  password: "${REDIS_PASSWORD:}"
+  # pool config
+  pool_config:
+    maxTotal: "${REDIS_POOL_CONFIG_MAX_TOTAL:128}"
+    maxIdle: "${REDIS_POOL_CONFIG_MAX_IDLE:128}"
+    minIdle: "${REDIS_POOL_CONFIG_MIN_IDLE:16}"
+    testOnBorrow: "${REDIS_POOL_CONFIG_TEST_ON_BORROW:true}"
+    testOnReturn: "${REDIS_POOL_CONFIG_TEST_ON_RETURN:true}"
+    testWhileIdle: "${REDIS_POOL_CONFIG_TEST_WHILE_IDLE:true}"
+    minEvictableMs: "${REDIS_POOL_CONFIG_MIN_EVICTABLE_MS:60000}"
+    evictionRunsMs: "${REDIS_POOL_CONFIG_EVICTION_RUNS_MS:30000}"
+    maxWaitMills: "${REDIS_POOL_CONFIG_MAX_WAIT_MS:60000}"
+    numberTestsPerEvictionRun: "${REDIS_POOL_CONFIG_NUMBER_TESTS_PER_EVICTION_RUN:3}"
+    blockWhenExhausted: "${REDIS_POOL_CONFIG_BLOCK_WHEN_EXHAUSTED:true}"
+
 # COAP server parameters
 transport:
   coap:
     bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${COAP_BIND_PORT:5683}"
     timeout: "${COAP_TIMEOUT:10000}"
+    dtls:
+      # Enable/disable DTLS 1.2 support
+      enabled: "${COAP_DTLS_ENABLED:false}"
+      # CoAP DTLS bind address
+      bind_address: "${COAP_DTLS_BIND_ADDRESS:0.0.0.0}"
+      # CoAP DTLS bind port
+      bind_port: "${COAP_DTLS_BIND_PORT:5684}"
+      # Secure mode. Allowed values: NO_AUTH, X509
+      mode: "${COAP_DTLS_SECURE_MODE:NO_AUTH}"
+      # Path to the key store that holds the certificate
+      key_store: "${COAP_DTLS_KEY_STORE:coapserver.jks}"
+      # Password used to access the key store
+      key_store_password: "${COAP_DTLS_KEY_STORE_PASSWORD:server_ks_password}"
+      # Password used to access the key
+      key_password: "${COAP_DTLS_KEY_PASSWORD:server_key_password}"
+      # Key alias
+      key_alias: "${COAP_DTLS_KEY_ALIAS:serveralias}"
+      # Skip certificate validity check for client certificates.
+      skip_validity_check_for_client_cert: "${COAP_DTLS_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
+      x509:
+        dtls_session_inactivity_timeout: "${TB_COAP_X509_DTLS_SESSION_INACTIVITY_TIMEOUT:86400000}"
+        dtls_session_report_timeout: "${TB_COAP_X509_DTLS_SESSION_REPORT_TIMEOUT:1800000}"
   sessions:
     inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
     report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:30000}"
@@ -73,11 +138,11 @@ queue:
       security.protocol: "${TB_QUEUE_KAFKA_CONFLUENT_SECURITY_PROTOCOL:SASL_SSL}"
     other:
     topic-properties:
-      rule-engine: "${TB_QUEUE_KAFKA_RE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"
-      core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"
-      transport-api: "${TB_QUEUE_KAFKA_TA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"
-      notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"
-      js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600;partitions:100}"
+      rule-engine: "${TB_QUEUE_KAFKA_RE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      transport-api: "${TB_QUEUE_KAFKA_TA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600;partitions:100;min.insync.replicas:1}"
   aws_sqs:
     use_default_credential_provider_chain: "${TB_QUEUE_AWS_SQS_USE_DEFAULT_CREDENTIAL_PROVIDER_CHAIN:false}"
     access_key_id: "${TB_QUEUE_AWS_SQS_ACCESS_KEY_ID:YOUR_KEY}"

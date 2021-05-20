@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -753,6 +753,9 @@ mat-label {
     &.tb-mat-20 {
       @include tb-mat-icon-size(20);
     }
+    &.tb-mat-28 {
+      @include tb-mat-icon-size(28);
+    }
     &.tb-mat-32 {
       @include tb-mat-icon-size(32);
     }
@@ -762,6 +765,9 @@ mat-label {
   }
 
   .mat-icon-button {
+    &.tb-mat-28 {
+      @include tb-mat-icon-button-size(28);
+    }
     &.tb-mat-32 {
       @include tb-mat-icon-button-size(32);
     }

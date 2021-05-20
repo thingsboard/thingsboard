@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2020 The Thingsboard Authors
+/// Copyright © 2016-2021 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ export class AlarmService {
 
   public getHighestAlarmSeverity(entityId: EntityId, alarmSearchStatus: AlarmSearchStatus, alarmStatus: AlarmStatus,
                                  config?: RequestConfig): Observable<AlarmSeverity> {
-    let url = `/api/alarm/highestSeverity/${entityId.entityType}/${entityId.entityType}`;
+    let url = `/api/alarm/highestSeverity/${entityId.entityType}/${entityId.id}`;
     if (alarmSearchStatus) {
       url += `?searchStatus=${alarmSearchStatus}`;
     } else if (alarmStatus) {

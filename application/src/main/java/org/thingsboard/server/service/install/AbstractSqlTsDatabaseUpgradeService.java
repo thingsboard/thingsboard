@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public abstract class AbstractSqlTsDatabaseUpgradeService {
     @Autowired
     protected InstallScripts installScripts;
 
-    protected abstract void loadSql(Connection conn, String fileName);
+    protected abstract void loadSql(Connection conn, String fileName, String version);
 
     protected void loadFunctions(Path sqlFile, Connection conn) throws Exception {
         String sql = new String(Files.readAllBytes(sqlFile), StandardCharsets.UTF_8);

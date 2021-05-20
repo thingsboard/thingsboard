@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2020 The Thingsboard Authors
+ * Copyright © 2016-2021 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,14 +31,19 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
+
+import java.util.List;
 
 @RestController
 @TbCoreComponent
@@ -55,7 +60,11 @@ public class CustomerController extends BaseController {
         checkParameter(CUSTOMER_ID, strCustomerId);
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-            return checkCustomerId(customerId, Operation.READ);
+            Customer customer = checkCustomerId(customerId, Operation.READ);
+            if(!customer.getAdditionalInfo().isNull()) {
+                processDashboardIdFromAdditionalInfo((ObjectNode) customer.getAdditionalInfo(), HOME_DASHBOARD);
+            }
+            return customer;
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -108,6 +117,10 @@ public class CustomerController extends BaseController {
                     savedCustomer.getId(),
                     customer.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
+            if (customer.getId() != null) {
+                sendEntityNotificationMsg(savedCustomer.getTenantId(), savedCustomer.getId(), EdgeEventActionType.UPDATED);
+            }
+
             return savedCustomer;
         } catch (Exception e) {
 
@@ -126,12 +139,17 @@ public class CustomerController extends BaseController {
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             Customer customer = checkCustomerId(customerId, Operation.DELETE);
+
+            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(getTenantId(), customerId);
+
             customerService.deleteCustomer(getTenantId(), customerId);
 
             logEntityAction(customerId, customer,
                     customer.getId(),
                     ActionType.DELETED, null, strCustomerId);
 
+            sendDeleteNotificationMsg(getTenantId(), customerId, relatedEdgeIds);
+            tbClusterService.onEntityStateChange(getTenantId(), customerId, ComponentLifecycleEvent.DELETED);
         } catch (Exception e) {
 
             logEntityAction(emptyId(EntityType.CUSTOMER),

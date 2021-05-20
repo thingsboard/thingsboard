@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2020 The Thingsboard Authors
+    Copyright © 2016-2021 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -90,6 +90,10 @@
             <artifactId>lwm2m</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.thingsboard.common.transport</groupId>
+            <artifactId>snmp</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.thingsboard</groupId>
             <artifactId>dao</artifactId>
         </dependency>
@@ -100,6 +104,10 @@
         <dependency>
             <groupId>org.thingsboard.common</groupId>
             <artifactId>stats</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common</groupId>
+            <artifactId>edge-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.thingsboard</groupId>
@@ -279,7 +287,7 @@
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
+            <artifactId>mockito-core</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
