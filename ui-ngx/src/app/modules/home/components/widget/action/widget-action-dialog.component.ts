@@ -28,9 +28,6 @@ import {
   ValidatorFn,
   Validators
 } from '@angular/forms';
-import {
-  WidgetConfigComponentData
-} from '@home/models/widget-component.models';
 import { Observable, of } from 'rxjs';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
@@ -56,7 +53,7 @@ export interface WidgetActionDialogData {
   callbacks: WidgetActionCallbacks;
   actionsData: WidgetActionsData;
   action?: WidgetActionDescriptorInfo;
-  modelValue: WidgetConfigComponentData;
+  widgetType: widgetType;
 }
 
 @Component({
@@ -147,7 +144,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
           );
           this.actionTypeFormGroup.addControl(
             'setEntityId',
-            this.fb.control(action ? action.setEntityId : this.data.modelValue.widgetType === widgetType.static ? false : true , [])
+            this.fb.control(this.data.widgetType === widgetType.static ? false : action ? action.setEntityId : true, [])
           );
           this.actionTypeFormGroup.addControl(
             'stateEntityParamName',

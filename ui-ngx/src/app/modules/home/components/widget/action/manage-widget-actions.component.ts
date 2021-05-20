@@ -42,7 +42,7 @@ import {
   WidgetActionDialogData
 } from '@home/components/widget/action/widget-action-dialog.component';
 import { deepClone } from '@core/utils';
-import { WidgetConfigComponentData } from '@home/models/widget-component.models';
+import { widgetType } from '@shared/models/widget.models';
 
 @Component({
   selector: 'tb-manage-widget-actions',
@@ -60,7 +60,7 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
 
   @Input() disabled: boolean;
 
-  @Input() modelValue: WidgetConfigComponentData;
+  @Input() widgetType: widgetType;
 
   @Input() callbacks: WidgetActionCallbacks;
 
@@ -184,7 +184,7 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
         callbacks: this.callbacks,
         actionsData,
         action: deepClone(action),
-        modelValue: this.modelValue
+        widgetType: this.widgetType
       }
     }).afterClosed().subscribe(
       (res) => {
