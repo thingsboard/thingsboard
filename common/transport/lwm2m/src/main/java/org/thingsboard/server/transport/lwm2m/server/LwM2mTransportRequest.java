@@ -147,11 +147,15 @@ public class LwM2mTransportRequest {
                         }
                     }
                     else if (WRITE_UPDATE.name().equals(typeOper.name())) {
-                        Lwm2mClientRpcRequest rpcRequestClone = (Lwm2mClientRpcRequest) rpcRequest.clone();
-                        if (rpcRequestClone != null) {
+                        if (rpcRequest != null) {
                             String errorMsg = String.format("Path %s params is not valid", targetIdVer);
-                            serviceImpl.sentRpcRequest(rpcRequestClone, BAD_REQUEST.getName(), errorMsg, LOG_LW2M_ERROR);
-                            rpcRequest = null;
+                            serviceImpl.sentRpcRequest(rpcRequest, BAD_REQUEST.getName(), errorMsg, LOG_LW2M_ERROR);
+                        }
+                    }
+                    else if (WRITE_REPLACE.name().equals(typeOper.name()) || EXECUTE.name().equals(typeOper.name()) ) {
+                        if (rpcRequest != null) {
+                            String errorMsg = String.format("Path %s object model  is absent", targetIdVer);
+                            serviceImpl.sentRpcRequest(rpcRequest, BAD_REQUEST.getName(), errorMsg, LOG_LW2M_ERROR);
                         }
                     }
                     else if (!OBSERVE_CANCEL.name().equals(typeOper.name())) {
@@ -240,11 +244,13 @@ public class LwM2mTransportRequest {
                 this.afterObserveCancel(registration, observeCancelCnt, observeCancelMsg, rpcRequest);
                 break;
             case EXECUTE:
-                ResourceModel resourceModelExe = lwM2MClient.getResourceModel(targetIdVer, this.config.getModelProvider());
-                if (params != null && !resourceModelExe.multiple) {
-                    request = new ExecuteRequest(target, (String) this.converter.convertValue(params, resourceModelExe.type, ResourceModel.Type.STRING, resultIds));
-                } else {
-                    request = new ExecuteRequest(target);
+                ResourceModel resourceModelExecute = lwM2MClient.getResourceModel(targetIdVer, this.config.getModelProvider());
+                if (resourceModelExecute != null) {
+                    if (params != null && !resourceModelExecute.multiple) {
+                        request = new ExecuteRequest(target, (String) this.converter.convertValue(params, resourceModelExecute.type, ResourceModel.Type.STRING, resultIds));
+                    } else {
+                        request = new ExecuteRequest(target);
+                    }
                 }
                 break;
             case WRITE_REPLACE:
@@ -255,10 +261,12 @@ public class LwM2mTransportRequest {
                  * JSON, TEXT;
                  **/
                 ResourceModel resourceModelWrite = lwM2MClient.getResourceModel(targetIdVer, this.config.getModelProvider());
-                contentFormat = getContentFormatByResourceModelType(resourceModelWrite, contentFormat);
-                request = this.getWriteRequestSingleResource(contentFormat, resultIds.getObjectId(),
-                        resultIds.getObjectInstanceId(), resultIds.getResourceId(), params, resourceModelWrite.type,
-                        registration, rpcRequest);
+                if (resourceModelWrite != null) {
+                    contentFormat = getContentFormatByResourceModelType(resourceModelWrite, contentFormat);
+                    request = this.getWriteRequestSingleResource(contentFormat, resultIds.getObjectId(),
+                            resultIds.getObjectInstanceId(), resultIds.getResourceId(), params, resourceModelWrite.type,
+                            registration, rpcRequest);
+                }
                 break;
             case WRITE_UPDATE:
                 if (resultIds.isResource()) {

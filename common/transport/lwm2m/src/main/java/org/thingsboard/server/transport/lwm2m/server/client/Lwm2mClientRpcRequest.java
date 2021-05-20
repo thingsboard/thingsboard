@@ -109,14 +109,4 @@ public class Lwm2mClientRpcRequest {
                 .setRequestId(this.requestId)
                 .build();
     }
-
-    @Override
-    public Object clone() {
-        try {
-            return super.clone();
-        } catch (CloneNotSupportedException e) {
-            log.error("", e);
-        }
-        return null;
-    }
 }
