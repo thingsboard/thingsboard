@@ -482,7 +482,7 @@ public class JsonConverter {
         return result;
     }
 
-    public static JsonElement toGatewayJson(String deviceName, TransportProtos.EntityDeleteMsg entityDeleteMsg) {
+    public static JsonElement toGatewayJson(String deviceName) {
         JsonObject result = new JsonObject();
         result.addProperty(DEVICE_PROPERTY, deviceName);
         result.addProperty(ACTION_PROPERTY, "DELETED");

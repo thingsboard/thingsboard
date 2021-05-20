@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.mqtt.session;
 
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -101,9 +102,9 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
     }
 
     @Override
-    public void onDeviceDeleted(TransportProtos.EntityDeleteMsg entityDeleteMsg) {
+    public void onDeviceDeleted(DeviceId deviceId) {
         try {
-            parent.getPayloadAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), entityDeleteMsg).ifPresent(parent::writeAndFlush);
+            parent.getPayloadAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName()).ifPresent(parent::writeAndFlush);
             parent.deregisterSession(getDeviceInfo().getDeviceName());
         } catch (Exception e) {
             log.trace("[{}] Failed to convert entity deleted to MQTT msg", sessionId, e);

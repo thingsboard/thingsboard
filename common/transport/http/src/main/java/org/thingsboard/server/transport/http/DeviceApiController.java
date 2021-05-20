@@ -407,11 +407,6 @@ public class DeviceApiController implements TbTransportService {
             responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg).toString(), HttpStatus.OK));
         }
 
-        @Override
-        public void onDeviceDeleted(EntityDeleteMsg entityDeleteMsg) {
-            responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(entityDeleteMsg).toString(), HttpStatus.OK));
-        }
-
     }
 
     private void reportActivity(SessionInfoProto sessionInfo) {

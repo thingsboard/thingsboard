@@ -859,12 +859,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     @Override
-    public void onDeviceDeleted(TransportProtos.EntityDeleteMsg entityDeleteMsg) {
-        log.trace("[{}] Received device deleted notification to device", sessionId);
-        processDisconnect(deviceSessionCtx.getChannel());
-    }
-
-    @Override
     public void onDeviceProfileUpdate(TransportProtos.SessionInfoProto sessionInfo, DeviceProfile deviceProfile) {
         deviceSessionCtx.onDeviceProfileUpdate(sessionInfo, deviceProfile);
     }

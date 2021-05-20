@@ -121,9 +121,5 @@ public interface TransportService {
 
     SessionMetaData reportActivity(SessionInfoProto sessionInfo);
 
-    void onDeviceDelete(EntityDeleteMsg entityDeleteMsg);
-
-    void reportActivity(SessionInfoProto sessionInfo);
-
     void deregisterSession(SessionInfoProto sessionInfo);
 }

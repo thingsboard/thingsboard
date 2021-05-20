@@ -54,8 +54,6 @@ import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.adaptors.CoapTransportAdaptor;
-import org.thingsboard.server.gen.transport.TransportProtos.EntityDeleteMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 
 import java.util.List;
 import java.util.Optional;
@@ -560,11 +558,6 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
 
         @Override
         public void removedChild(Resource child) {
-        }
-
-        @Override
-        public void onDeviceDeleted(EntityDeleteMsg entityDeleteMsg) {
-            exchange.respond(ResponseCode.SERVICE_UNAVAILABLE);
         }
 
         @Override

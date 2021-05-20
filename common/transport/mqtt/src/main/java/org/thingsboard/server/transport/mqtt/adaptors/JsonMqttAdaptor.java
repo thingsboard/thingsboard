@@ -21,6 +21,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.handler.codec.mqtt.MqttFixedHeader;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttMessageType;
@@ -35,8 +37,6 @@ import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.common.data.device.profile.MqttTopics;
-import org.thingsboard.server.gen.transport.TransportProtos.EntityDeleteMsg;
 import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionContext;
 
 import java.nio.charset.Charset;
@@ -150,8 +150,8 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     }
 
     @Override
-    public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.EntityDeleteMsg entityDeleteMsg) {
-        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_DEVICE_ACTION_TOPIC, JsonConverter.toGatewayJson(deviceName, entityDeleteMsg)));
+    public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName) {
+        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_DEVICE_ACTION_TOPIC, JsonConverter.toGatewayJson(deviceName)));
     }
 
     @Override

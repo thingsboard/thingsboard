@@ -237,7 +237,7 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
     }
 
     @Override
-    public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.EntityDeleteMsg entityDeleteMsg) {
+    public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName) {
         TransportApiProtos.GatewayActionMsg.Builder builder = TransportApiProtos.GatewayActionMsg.newBuilder();
         builder.setMsg(TransportApiProtos.ActionMsg.newBuilder()
                 .setDeviceName(deviceName)
