@@ -256,6 +256,7 @@ import {
   animate,
 } from '@angular/animations';
 import { onParentScrollOrWindowResize } from '@core/utils';
+import ClickEvent = JQuery.ClickEvent;
 
 export const toastAnimations: {
   readonly showHideToast: AnimationTriggerMetadata;
@@ -356,7 +357,7 @@ export class TbSnackBarComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  action(event): void {
+  action(event: MouseEvent): void {
     event.stopPropagation();
     if (this.snackBarRef) {
       this.snackBarRef.dismissWithAction();
