@@ -25,11 +25,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.AdminSettingsId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -52,23 +52,23 @@ public class AdminSettingsEdgeEventFetcher extends BasePageableEdgeEventFetcher 
     private final AdminSettingsService adminSettingsService;
 
     @Override
-    public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, EdgeId edgeId, PageLink pageLink) throws Exception {
+    public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, Edge edge, PageLink pageLink) throws Exception {
         List<EdgeEvent> result = new ArrayList<>();
 
         AdminSettings systemMailSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
-        result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edgeId, EdgeEventType.ADMIN_SETTINGS,
+        result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
                 EdgeEventActionType.UPDATED, null, mapper.valueToTree(systemMailSettings)));
 
         AdminSettings tenantMailSettings = convertToTenantAdminSettings(systemMailSettings.getKey(), (ObjectNode) systemMailSettings.getJsonValue());
-        result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edgeId, EdgeEventType.ADMIN_SETTINGS,
+        result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
                 EdgeEventActionType.UPDATED, null, mapper.valueToTree(tenantMailSettings)));
 
         AdminSettings systemMailTemplates = loadMailTemplates();
-        result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edgeId, EdgeEventType.ADMIN_SETTINGS,
+        result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
                 EdgeEventActionType.UPDATED, null, mapper.valueToTree(systemMailTemplates)));
 
         AdminSettings tenantMailTemplates = convertToTenantAdminSettings(systemMailTemplates.getKey(), (ObjectNode) systemMailTemplates.getJsonValue());
-        result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edgeId, EdgeEventType.ADMIN_SETTINGS,
+        result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS,
                 EdgeEventActionType.UPDATED, null, mapper.valueToTree(tenantMailTemplates)));
 
         // @voba - returns PageData object to be in sync with other fetchers

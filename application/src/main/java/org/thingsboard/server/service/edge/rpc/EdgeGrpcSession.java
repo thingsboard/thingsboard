@@ -87,7 +87,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -307,7 +306,7 @@ public final class EdgeGrpcSession implements Closeable {
         UUID ifOffset = null;
         boolean success;
         do {
-            pageData = fetcher.fetchEdgeEvents(edge.getTenantId(), edge.getId(), pageLink);
+            pageData = fetcher.fetchEdgeEvents(edge.getTenantId(), edge, pageLink);
             if (isConnected() && !pageData.getData().isEmpty()) {
                 log.trace("[{}] [{}] event(s) are going to be processed.", this.sessionId, pageData.getData().size());
                 List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(pageData.getData());
@@ -478,7 +477,6 @@ public final class EdgeGrpcSession implements Closeable {
                 throw new RuntimeException("Unsupported actionType [" + actionType + "]");
         }
     }
-
 
     private ListenableFuture<List<Void>> processUplinkMsg(UplinkMsg uplinkMsg) {
         List<ListenableFuture<Void>> result = new ArrayList<>();

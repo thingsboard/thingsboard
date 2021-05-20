@@ -17,10 +17,10 @@ package org.thingsboard.server.service.edge.rpc.fetch;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -38,13 +38,13 @@ public abstract class BaseWidgetsBundlesEdgeEventFetcher extends BasePageableEdg
     protected final WidgetsBundleService widgetsBundleService;
 
     @Override
-    public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, EdgeId edgeId, PageLink pageLink) {
-        log.trace("[{}] start fetching edge events [{}]", tenantId, edgeId);
+    public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, Edge edge, PageLink pageLink) {
+        log.trace("[{}] start fetching edge events [{}]", tenantId, edge.getId());
         PageData<WidgetsBundle> pageData = findWidgetsBundles(tenantId, pageLink);
         List<EdgeEvent> result = new ArrayList<>();
         if (!pageData.getData().isEmpty()) {
             for (WidgetsBundle widgetsBundle : pageData.getData()) {
-                result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edgeId, EdgeEventType.WIDGETS_BUNDLE,
+                result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.WIDGETS_BUNDLE,
                         EdgeEventActionType.ADDED, widgetsBundle.getId(), null));
             }
         }
