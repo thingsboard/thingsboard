@@ -171,8 +171,6 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         installation();
 
         edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
-        // TODO: voba - should be less, but events from SyncEdgeService stack with events from controller. will be fixed in next releases
-        // so ideally sync process should check current edge queue and add only missing entities to the edge queue
         edgeImitator.expectMessageAmount(9);
         edgeImitator.connect();
     }

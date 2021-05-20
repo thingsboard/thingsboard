@@ -27,6 +27,7 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -61,6 +62,10 @@ public class EdgeContextComponent {
     @Lazy
     @Autowired
     private EdgeEventService edgeEventService;
+
+    @Lazy
+    @Autowired
+    private AdminSettingsService adminSettingsService;
 
     @Lazy
     @Autowired

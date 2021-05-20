@@ -635,7 +635,7 @@ public class RuleChainController extends BaseController {
         }
     }
 
-    // TODO: refactor this - add new config to edge rule chain to set it as auto-assign
+    // TODO: @voba refactor this - add new config to edge rule chain to set it as auto-assign
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain/autoAssignToEdgeRuleChains", method = RequestMethod.GET)
     @ResponseBody

@@ -77,7 +77,7 @@ public abstract class AbstractEntityService {
             List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId).get();
             if (entityViews != null && !entityViews.isEmpty()) {
                 EntityView entityView = entityViews.get(0);
-                // TODO: voba - refactor this blocking operation in 3.3+
+                // TODO: @voba - refactor this blocking operation in 3.3+
                 Boolean relationExists = relationService.checkRelation(tenantId,edgeId, entityView.getId(),
                         EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE).get();
                 if (relationExists) {

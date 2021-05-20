@@ -15,90 +15,115 @@
  */
 package org.thingsboard.server.service.edge.rpc.fetch;
 
+import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.WordUtils;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.AdminSettingsId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.settings.AdminSettingsService;
+import org.thingsboard.server.service.edge.rpc.EdgeEventUtils;
+
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @AllArgsConstructor
 @Slf4j
 public class AdminSettingsEdgeEventFetcher extends BasePageableEdgeEventFetcher {
 
+    private final AdminSettingsService adminSettingsService;
+
     @Override
-    public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, EdgeId edgeId, PageLink pageLink) {
-        return null;
+    public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, EdgeId edgeId, PageLink pageLink) throws Exception {
+        List<EdgeEvent> result = new ArrayList<>();
+
+        AdminSettings systemMailSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
+        result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edgeId, EdgeEventType.ADMIN_SETTINGS,
+                EdgeEventActionType.UPDATED, null, mapper.valueToTree(systemMailSettings)));
+
+        AdminSettings tenantMailSettings = convertToTenantAdminSettings(systemMailSettings.getKey(), (ObjectNode) systemMailSettings.getJsonValue());
+        result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edgeId, EdgeEventType.ADMIN_SETTINGS,
+                EdgeEventActionType.UPDATED, null, mapper.valueToTree(tenantMailSettings)));
+
+        AdminSettings systemMailTemplates = loadMailTemplates();
+        result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edgeId, EdgeEventType.ADMIN_SETTINGS,
+                EdgeEventActionType.UPDATED, null, mapper.valueToTree(systemMailTemplates)));
+
+        AdminSettings tenantMailTemplates = convertToTenantAdminSettings(systemMailTemplates.getKey(), (ObjectNode) systemMailTemplates.getJsonValue());
+        result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edgeId, EdgeEventType.ADMIN_SETTINGS,
+                EdgeEventActionType.UPDATED, null, mapper.valueToTree(tenantMailTemplates)));
+
+        // @voba - returns PageData object to be in sync with other fetchers
+        return new PageData<>(result, 1, result.size(), false);
     }
 
+    private AdminSettings loadMailTemplates() throws Exception {
+        Map<String, Object> mailTemplates = new HashMap<>();
+        Pattern startPattern = Pattern.compile("<div class=\"content\".*?>");
+        Pattern endPattern = Pattern.compile("<div class=\"footer\".*?>");
+        File[] files = new DefaultResourceLoader().getResource("classpath:/templates/").getFile().listFiles();
+        for (File file : files) {
+            Map<String, String> mailTemplate = new HashMap<>();
+            String name = validateName(file.getName());
+            String stringTemplate = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+            Matcher start = startPattern.matcher(stringTemplate);
+            Matcher end = endPattern.matcher(stringTemplate);
+            if (start.find() && end.find()) {
+                String body = StringUtils.substringBetween(stringTemplate, start.group(), end.group()).replaceAll("\t", "");
+                String subject = StringUtils.substringBetween(body, "<h2>", "</h2>");
+                mailTemplate.put("subject", subject);
+                mailTemplate.put("body", body);
+                mailTemplates.put(name, mailTemplate);
+            } else {
+                log.error("Can't load mail template from file {}", file.getName());
+            }
+        }
+        AdminSettings adminSettings = new AdminSettings();
+        adminSettings.setId(new AdminSettingsId(Uuids.timeBased()));
+        adminSettings.setKey("mailTemplates");
+        adminSettings.setJsonValue(mapper.convertValue(mailTemplates, JsonNode.class));
+        return adminSettings;
+    }
 
-//
-//    private void syncAdminSettings(TenantId tenantId, Edge edge) {
-//        log.trace("[{}] syncAdminSettings [{}]", tenantId, edge.getName());
-//        try {
-//            AdminSettings systemMailSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
-//            saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS, EdgeEventActionType.UPDATED, null, mapper.valueToTree(systemMailSettings));
-//            AdminSettings tenantMailSettings = convertToTenantAdminSettings(systemMailSettings.getKey(), (ObjectNode) systemMailSettings.getJsonValue());
-//            saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS, EdgeEventActionType.UPDATED, null, mapper.valueToTree(tenantMailSettings));
-//            AdminSettings systemMailTemplates = loadMailTemplates();
-//            saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS, EdgeEventActionType.UPDATED, null, mapper.valueToTree(systemMailTemplates));
-//            AdminSettings tenantMailTemplates = convertToTenantAdminSettings(systemMailTemplates.getKey(), (ObjectNode) systemMailTemplates.getJsonValue());
-//            saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.ADMIN_SETTINGS, EdgeEventActionType.UPDATED, null, mapper.valueToTree(tenantMailTemplates));
-//        } catch (Exception e) {
-//            log.error("Can't load admin settings", e);
-//        }
-//    }
-//
-//    private AdminSettings loadMailTemplates() throws Exception {
-//        Map<String, Object> mailTemplates = new HashMap<>();
-//        Pattern startPattern = Pattern.compile("<div class=\"content\".*?>");
-//        Pattern endPattern = Pattern.compile("<div class=\"footer\".*?>");
-//        File[] files = new DefaultResourceLoader().getResource("classpath:/templates/").getFile().listFiles();
-//        for (File file : files) {
-//            Map<String, String> mailTemplate = new HashMap<>();
-//            String name = validateName(file.getName());
-//            String stringTemplate = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
-//            Matcher start = startPattern.matcher(stringTemplate);
-//            Matcher end = endPattern.matcher(stringTemplate);
-//            if (start.find() && end.find()) {
-//                String body = StringUtils.substringBetween(stringTemplate, start.group(), end.group()).replaceAll("\t", "");
-//                String subject = StringUtils.substringBetween(body, "<h2>", "</h2>");
-//                mailTemplate.put("subject", subject);
-//                mailTemplate.put("body", body);
-//                mailTemplates.put(name, mailTemplate);
-//            } else {
-//                log.error("Can't load mail template from file {}", file.getName());
-//            }
-//        }
-//        AdminSettings adminSettings = new AdminSettings();
-//        adminSettings.setId(new AdminSettingsId(Uuids.timeBased()));
-//        adminSettings.setKey("mailTemplates");
-//        adminSettings.setJsonValue(mapper.convertValue(mailTemplates, JsonNode.class));
-//        return adminSettings;
-//    }
-//
-//    private String validateName(String name) throws Exception {
-//        StringBuilder nameBuilder = new StringBuilder();
-//        name = name.replace(".vm", "");
-//        String[] nameParts = name.split("\\.");
-//        if (nameParts.length >= 1) {
-//            nameBuilder.append(nameParts[0]);
-//            for (int i = 1; i < nameParts.length; i++) {
-//                String word = WordUtils.capitalize(nameParts[i]);
-//                nameBuilder.append(word);
-//            }
-//            return nameBuilder.toString();
-//        } else {
-//            throw new Exception("Error during filename validation");
-//        }
-//    }
-//
-//    private AdminSettings convertToTenantAdminSettings(String key, ObjectNode jsonValue) {
-//        AdminSettings tenantMailSettings = new AdminSettings();
-//        jsonValue.put("useSystemMailSettings", true);
-//        tenantMailSettings.setJsonValue(jsonValue);
-//        tenantMailSettings.setKey(key);
-//        return tenantMailSettings;
-//    }
+    private String validateName(String name) throws Exception {
+        StringBuilder nameBuilder = new StringBuilder();
+        name = name.replace(".vm", "");
+        String[] nameParts = name.split("\\.");
+        if (nameParts.length >= 1) {
+            nameBuilder.append(nameParts[0]);
+            for (int i = 1; i < nameParts.length; i++) {
+                String word = WordUtils.capitalize(nameParts[i]);
+                nameBuilder.append(word);
+            }
+            return nameBuilder.toString();
+        } else {
+            throw new Exception("Error during filename validation");
+        }
+    }
+
+    private AdminSettings convertToTenantAdminSettings(String key, ObjectNode jsonValue) {
+        AdminSettings tenantMailSettings = new AdminSettings();
+        jsonValue.put("useSystemMailSettings", true);
+        tenantMailSettings.setJsonValue(jsonValue);
+        tenantMailSettings.setKey(key);
+        return tenantMailSettings;
+    }
 }

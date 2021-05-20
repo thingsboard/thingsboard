@@ -25,5 +25,5 @@ public interface EdgeEventFetcher {
 
     PageLink getPageLink(int pageSize);
 
-    PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, EdgeId edgeId, PageLink pageLink);
+    PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, EdgeId edgeId, PageLink pageLink) throws Exception;
 }

@@ -15,9 +15,12 @@
  */
 package org.thingsboard.server.service.edge.rpc.fetch;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.thingsboard.server.common.data.page.PageLink;
 
 public abstract class BasePageableEdgeEventFetcher implements EdgeEventFetcher {
+
+    protected static final ObjectMapper mapper = new ObjectMapper();
 
     @Override
     public PageLink getPageLink(int pageSize) {

@@ -497,7 +497,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
 
     @Override
     public ListenableFuture<List<EdgeId>> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId) {
-        // TODO: voba - rewrite 'find' to use native SQL queries instead of fetching relations
+        // TODO: @voba - rewrite 'find' to use native SQL queries instead of fetching relations
 
         log.trace("[{}] Executing findRelatedEdgeIdsByEntityId [{}]", tenantId, entityId);
         if (EntityType.TENANT.equals(entityId.getEntityType()) ||

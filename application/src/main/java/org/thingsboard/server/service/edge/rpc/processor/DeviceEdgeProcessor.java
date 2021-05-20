@@ -72,8 +72,6 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
 
     private static final ReentrantLock deviceCreationLock = new ReentrantLock();
 
-    // TODO onDeviceUpdateFromEdge onDeviceUpdateToEdge
-
     public ListenableFuture<Void> processDeviceFromEdge(TenantId tenantId, Edge edge, DeviceUpdateMsg deviceUpdateMsg) {
         log.trace("[{}] onDeviceUpdate [{}] from edge [{}]", tenantId, deviceUpdateMsg, edge.getName());
         switch (deviceUpdateMsg.getMsgType()) {

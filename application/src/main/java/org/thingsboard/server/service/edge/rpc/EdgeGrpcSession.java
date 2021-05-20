@@ -68,6 +68,7 @@ import org.thingsboard.server.gen.edge.UplinkResponseMsg;
 import org.thingsboard.server.gen.edge.UserCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.WidgetBundleTypesRequestMsg;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
+import org.thingsboard.server.service.edge.rpc.fetch.AdminSettingsEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.AssetsEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.CustomerUsersEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.DashboardsEdgeEventFetcher;
@@ -207,8 +208,7 @@ public final class EdgeGrpcSession implements Closeable {
                     startProcessingEdgeEvents(new CustomerUsersEdgeEventFetcher(ctx.getUserService(), edge.getCustomerId()));
                 }
 
-                // TODO: voba - implement this functionality
-                // syncAdminSettings(edge);
+                startProcessingEdgeEvents(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService()));
 
                 startProcessingEdgeEvents(new AssetsEdgeEventFetcher(ctx.getAssetService()));
                 startProcessingEdgeEvents(new DashboardsEdgeEventFetcher(ctx.getDashboardService()));
@@ -285,7 +285,7 @@ public final class EdgeGrpcSession implements Closeable {
         sendDownlinkMsg(edgeConfigMsg);
     }
 
-    void processEdgeEvents() throws ExecutionException, InterruptedException {
+    void processEdgeEvents() throws Exception {
         log.trace("[{}] processHandleMessages started", this.sessionId);
         if (isConnected() && isSyncCompleted()) {
             Long queueStartTs = getQueueStartTs().get();
@@ -301,7 +301,7 @@ public final class EdgeGrpcSession implements Closeable {
         log.trace("[{}] processHandleMessages finished", this.sessionId);
     }
 
-    private UUID startProcessingEdgeEvents(EdgeEventFetcher fetcher) throws InterruptedException {
+    private UUID startProcessingEdgeEvents(EdgeEventFetcher fetcher) throws Exception {
         PageLink pageLink = fetcher.getPageLink(ctx.getEdgeEventStorageSettings().getMaxReadRecordsCount());
         PageData<EdgeEvent> pageData;
         UUID ifOffset = null;
