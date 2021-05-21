@@ -1015,7 +1015,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     const type = descriptor.type;
     const targetEntityParamName = descriptor.stateEntityParamName;
     let targetEntityId: EntityId;
-    if (this.widgetInfo.type !== 'static' && descriptor.setEntityId && validateEntityId(entityId)) {
+    if (descriptor.setEntityId && validateEntityId(entityId)) {
       targetEntityId = entityId;
     }
     switch (type) {
