@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.event.EventFilter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -30,7 +31,6 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
@@ -109,6 +109,11 @@ public class BaseEventService implements EventService {
     @Override
     public List<Event> findLatestEvents(TenantId tenantId, EntityId entityId, String eventType, int limit) {
         return eventDao.findLatestEvents(tenantId.getId(), entityId, eventType, limit);
+    }
+
+    @Override
+    public PageData<Event> findEventsByFilter(TenantId tenantId, EntityId entityId, EventFilter eventFilter, TimePageLink pageLink) {
+        return eventDao.findEventByFilter(tenantId.getId(), entityId, eventFilter, pageLink);
     }
 
     @Override

@@ -28,6 +28,7 @@ import java.util.Arrays;
 @ClasspathSuite.ClassnameFilters({
 //        "org.thingsboard.server.controller.sql.WebsocketApiSqlTest",
 //        "org.thingsboard.server.controller.sql.EntityQueryControllerSqlTest",
+//        "org.thingsboard.server.controller.sql.TbResourceControllerSqlTest",
         "org.thingsboard.server.controller.sql.*Test",
         })
 public class ControllerSqlTestSuite {

@@ -945,7 +945,6 @@
         "body": "Corp",
         "method": "Metodă",
         "type": "Tip",
-        "entity": "Entitate",
         "message-id": "ID Mesaj",
         "message-type": "Tip Mesaj",
         "data-type": "Tip Date",
@@ -957,7 +956,9 @@
         "success": "Succes",
         "failed": "Eşuat",
         "messages-processed": "Mesaje procesate",
-        "errors-occurred": "Au apărut erori"
+        "errors-occurred": "Au apărut erori",
+        "all-events": "Toate",
+        "entity-type": "Tip Entitate"
     },
     "extension": {
         "extensions": "Extensii",
@@ -1174,7 +1175,7 @@
             "entity-field": "Câmp Entitate",
             "access-token": "Token De Acces"
         },
-        "stepper-text":{
+        "stepper-text": {
             "select-file": "Selectează un fişier",
             "configuration": "Importă configurație",
             "column-type": "Selectează tipul de coloane",

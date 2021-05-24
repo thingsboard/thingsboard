@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.service;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -29,8 +30,10 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -44,6 +47,8 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AssetSearchQueryFilter;
 import org.thingsboard.server.common.data.query.DeviceSearchQueryFilter;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
+import org.thingsboard.server.common.data.query.EdgeSearchQueryFilter;
+import org.thingsboard.server.common.data.query.EdgeTypeFilter;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
@@ -214,7 +219,89 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         Assert.assertEquals(0, count);
     }
 
-    
+    @Test
+    public void testCountEdgeEntitiesByQuery() throws InterruptedException {
+        List<Edge> edges = new ArrayList<>();
+        for (int i = 0; i < 97; i++) {
+            Edge edge = createEdge(i, "default");
+            edges.add(edgeService.saveEdge(edge));
+        }
+
+        EdgeTypeFilter filter = new EdgeTypeFilter();
+        filter.setEdgeType("default");
+        filter.setEdgeNameFilter("");
+
+        EntityCountQuery countQuery = new EntityCountQuery(filter);
+
+        long count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
+        Assert.assertEquals(97, count);
+
+        filter.setEdgeType("unknown");
+        count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
+        Assert.assertEquals(0, count);
+
+        filter.setEdgeType("default");
+        filter.setEdgeNameFilter("Edge1");
+        count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
+        Assert.assertEquals(11, count);
+
+        EntityListFilter entityListFilter = new EntityListFilter();
+        entityListFilter.setEntityType(EntityType.EDGE);
+        entityListFilter.setEntityList(edges.stream().map(Edge::getId).map(EdgeId::toString).collect(Collectors.toList()));
+
+        countQuery = new EntityCountQuery(entityListFilter);
+        count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
+        Assert.assertEquals(97, count);
+
+        edgeService.deleteEdgesByTenantId(tenantId);
+        count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
+        Assert.assertEquals(0, count);
+    }
+
+    @Test
+    public void testCountHierarchicalEntitiesByEdgeSearchQuery() throws InterruptedException {
+        for (int i = 0; i < 5; i++) {
+            Edge edge = createEdge(i, "type" + i);
+            edge = edgeService.saveEdge(edge);
+            //TO make sure devices have different created time
+            Thread.sleep(1);
+
+            EntityRelation er = new EntityRelation();
+            er.setFrom(tenantId);
+            er.setTo(edge.getId());
+            er.setType("Manages");
+            er.setTypeGroup(RelationTypeGroup.COMMON);
+            relationService.saveRelation(tenantId, er);
+        }
+
+        EdgeSearchQueryFilter filter = new EdgeSearchQueryFilter();
+        filter.setRootEntity(tenantId);
+        filter.setDirection(EntitySearchDirection.FROM);
+        filter.setRelationType("Manages");
+
+        EntityCountQuery countQuery = new EntityCountQuery(filter);
+
+        long count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
+        Assert.assertEquals(5, count);
+
+        filter.setEdgeTypes(Arrays.asList("type0", "type1"));
+        count = entityService.countEntitiesByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), countQuery);
+        Assert.assertEquals(2, count);
+    }
+
+    private Edge createEdge(int i, String type) {
+        Edge edge = new Edge();
+        edge.setTenantId(tenantId);
+        edge.setName("Edge" + i);
+        edge.setType(type);
+        edge.setLabel("EdgeLabel" + i);
+        edge.setSecret(RandomStringUtils.randomAlphanumeric(20));
+        edge.setRoutingKey(RandomStringUtils.randomAlphanumeric(20));
+        edge.setEdgeLicenseKey(RandomStringUtils.randomAlphanumeric(20));
+        edge.setCloudEndpoint("http://localhost:8080");
+        return edge;
+    }
+
     @Test
     public void testHierarchicalFindEntityDataWithAttributesByQuery() throws ExecutionException, InterruptedException {
         List<Asset> assets = new ArrayList<>();

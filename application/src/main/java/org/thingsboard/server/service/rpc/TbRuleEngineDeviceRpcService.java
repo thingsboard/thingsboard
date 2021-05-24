@@ -28,5 +28,4 @@ public interface TbRuleEngineDeviceRpcService extends RuleEngineRpcService {
      * @param response the RPC response
      */
     void processRpcResponseFromDevice(FromDeviceRpcResponse response);
-
 }

@@ -17,13 +17,12 @@
 FROM thingsboard/openjdk11
 
 RUN apt-get update
-RUN apt-get install -y curl
-RUN echo 'deb http://ftp.us.debian.org/debian sid main' | tee --append /etc/apt/sources.list.d/debian.list > /dev/null
-RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ sid-pgdg main' | tee --append /etc/apt/sources.list.d/pgdg.list > /dev/null
+RUN apt-get install -y curl gnupg2
+RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ buster-pgdg main' | tee --append /etc/apt/sources.list.d/pgdg.list > /dev/null
 RUN curl -L https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
-ENV PG_MAJOR 11
+ENV PG_MAJOR 12
 RUN apt-get update
-RUN apt-get install -y postgresql-11
+RUN apt-get install -y postgresql-12
 RUN update-rc.d postgresql disable
 
 COPY logback.xml ${pkg.name}.conf start-db.sh stop-db.sh start-tb.sh upgrade-tb.sh install-tb.sh ${pkg.name}.deb /tmp/

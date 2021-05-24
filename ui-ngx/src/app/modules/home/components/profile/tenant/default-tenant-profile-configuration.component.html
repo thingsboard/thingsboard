@@ -197,6 +197,18 @@
     </mat-error>
   </mat-form-field>
   <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.max-created-alarms</mat-label>
+    <input matInput required min="0" step="1"
+           formControlName="maxCreatedAlarms"
+           type="number">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCreatedAlarms').hasError('required')">
+      {{ 'tenant-profile.max-created-alarms-required' | translate}}
+    </mat-error>
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCreatedAlarms').hasError('min')">
+      {{ 'tenant-profile.max-created-alarms-range' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
     <mat-label translate>tenant-profile.transport-tenant-msg-rate-limit</mat-label>
     <input matInput formControlName="transportTenantMsgRateLimit">
   </mat-form-field>

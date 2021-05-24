@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.HashSet;
@@ -51,10 +53,11 @@ public class ComponentDescriptorController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN')")
     @RequestMapping(value = "/components/{componentType}", method = RequestMethod.GET)
     @ResponseBody
-    public List<ComponentDescriptor> getComponentDescriptorsByType(@PathVariable("componentType") String strComponentType) throws ThingsboardException {
+    public List<ComponentDescriptor> getComponentDescriptorsByType(@PathVariable("componentType") String strComponentType,
+                                                                   @RequestParam(value = "ruleChainType", required = false) String strRuleChainType) throws ThingsboardException {
         checkParameter("componentType", strComponentType);
         try {
-            return checkComponentDescriptorsByType(ComponentType.valueOf(strComponentType));
+            return checkComponentDescriptorsByType(ComponentType.valueOf(strComponentType), getRuleChainType(strRuleChainType));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -63,17 +66,28 @@ public class ComponentDescriptorController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN')")
     @RequestMapping(value = "/components", params = {"componentTypes"}, method = RequestMethod.GET)
     @ResponseBody
-    public List<ComponentDescriptor> getComponentDescriptorsByTypes(@RequestParam("componentTypes") String[] strComponentTypes) throws ThingsboardException {
+    public List<ComponentDescriptor> getComponentDescriptorsByTypes(@RequestParam("componentTypes") String[] strComponentTypes,
+                                                                    @RequestParam(value = "ruleChainType", required = false) String strRuleChainType) throws ThingsboardException {
         checkArrayParameter("componentTypes", strComponentTypes);
         try {
             Set<ComponentType> componentTypes = new HashSet<>();
             for (String strComponentType : strComponentTypes) {
                 componentTypes.add(ComponentType.valueOf(strComponentType));
             }
-            return checkComponentDescriptorsByTypes(componentTypes);
+            return checkComponentDescriptorsByTypes(componentTypes, getRuleChainType(strRuleChainType));
         } catch (Exception e) {
             throw handleException(e);
         }
+    }
+
+    private RuleChainType getRuleChainType(String strRuleChainType) {
+        RuleChainType ruleChainType;
+        if (StringUtils.isEmpty(strRuleChainType)) {
+            ruleChainType = RuleChainType.CORE;
+        } else {
+            ruleChainType = RuleChainType.valueOf(strRuleChainType);
+        }
+        return ruleChainType;
     }
 
 }

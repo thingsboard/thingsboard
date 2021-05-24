@@ -21,14 +21,15 @@ import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-uti
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { RuleNodeType } from '@shared/models/rule-node.models';
+import { RuleChainType } from '@shared/models/rule-chain.models';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ComponentDescriptorService {
 
-  private componentsByType: Map<ComponentType | RuleNodeType, Array<ComponentDescriptor>> =
-    new Map<ComponentType, Array<ComponentDescriptor>>();
+  private componentsByTypeByRuleChainType: Map<RuleChainType, Map<ComponentType | RuleNodeType, Array<ComponentDescriptor>>> =
+    new Map<RuleChainType, Map<ComponentType | RuleNodeType, Array<ComponentDescriptor>>>();
   private componentsByClazz: Map<string, ComponentDescriptor> = new Map<string, ComponentDescriptor>();
 
   constructor(
@@ -36,14 +37,17 @@ export class ComponentDescriptorService {
   ) {
   }
 
-  public getComponentDescriptorsByType(componentType: ComponentType, config?: RequestConfig): Observable<Array<ComponentDescriptor>> {
-    const existing = this.componentsByType.get(componentType);
+  public getComponentDescriptorsByType(componentType: ComponentType, ruleChainType: RuleChainType, config?: RequestConfig): Observable<Array<ComponentDescriptor>> {
+    if (!this.componentsByTypeByRuleChainType.get(ruleChainType)) {
+      this.componentsByTypeByRuleChainType.set(ruleChainType, new Map<ComponentType | RuleNodeType, Array<ComponentDescriptor>>());
+    }
+    const existing = this.componentsByTypeByRuleChainType.get(ruleChainType).get(componentType);
     if (existing) {
       return of(existing);
     } else {
-      return this.http.get<Array<ComponentDescriptor>>(`/api/components/${componentType}`, defaultHttpOptionsFromConfig(config)).pipe(
+      return this.http.get<Array<ComponentDescriptor>>(`/api/components/${componentType}&ruleChainType=${ruleChainType}`, defaultHttpOptionsFromConfig(config)).pipe(
         map((componentDescriptors) => {
-          this.componentsByType.set(componentType, componentDescriptors);
+          this.componentsByTypeByRuleChainType.get(ruleChainType).set(componentType, componentDescriptors);
           componentDescriptors.forEach((componentDescriptor) => {
             this.componentsByClazz.set(componentDescriptor.clazz, componentDescriptor);
           });
@@ -53,12 +57,14 @@ export class ComponentDescriptorService {
     }
   }
 
-  public getComponentDescriptorsByTypes(componentTypes: Array<ComponentType>,
-                                        config?: RequestConfig): Observable<Array<ComponentDescriptor>> {
+  public getComponentDescriptorsByTypes(componentTypes: Array<ComponentType>, ruleChainType: RuleChainType, config?: RequestConfig): Observable<Array<ComponentDescriptor>> {
+    if (!this.componentsByTypeByRuleChainType.get(ruleChainType)) {
+      this.componentsByTypeByRuleChainType.set(ruleChainType, new Map<ComponentType | RuleNodeType, Array<ComponentDescriptor>>());
+    }
     let result: ComponentDescriptor[] = [];
     for (let i = componentTypes.length - 1; i >= 0; i--) {
       const componentType = componentTypes[i];
-      const componentDescriptors = this.componentsByType.get(componentType);
+      const componentDescriptors = this.componentsByTypeByRuleChainType.get(ruleChainType).get(componentType);
       if (componentDescriptors) {
         result = result.concat(componentDescriptors);
         componentTypes.splice(i, 1);
@@ -67,14 +73,14 @@ export class ComponentDescriptorService {
     if (!componentTypes.length) {
       return of(result);
     } else {
-      return this.http.get<Array<ComponentDescriptor>>(`/api/components?componentTypes=${componentTypes.join(',')}`,
+      return this.http.get<Array<ComponentDescriptor>>(`/api/components?componentTypes=${componentTypes.join(',')}&ruleChainType=${ruleChainType}`,
         defaultHttpOptionsFromConfig(config)).pipe(
         map((componentDescriptors) => {
           componentDescriptors.forEach((componentDescriptor) => {
-            let componentsList = this.componentsByType.get(componentDescriptor.type);
+            let componentsList = this.componentsByTypeByRuleChainType.get(ruleChainType).get(componentDescriptor.type);
             if (!componentsList) {
               componentsList = new Array<ComponentDescriptor>();
-              this.componentsByType.set(componentDescriptor.type, componentsList);
+              this.componentsByTypeByRuleChainType.get(ruleChainType).set(componentDescriptor.type, componentsList);
             }
             componentsList.push(componentDescriptor);
             this.componentsByClazz.set(componentDescriptor.clazz, componentDescriptor);

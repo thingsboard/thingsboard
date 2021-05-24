@@ -894,7 +894,6 @@
         "body": "Galvenā daļa",
         "method": "Metode",
         "type": "Tips",
-        "entity": "Vienība",
         "message-id": "Ziņojuma Id",
         "message-type": "Ziņojuma tips",
         "data-type": "Datu tips",
@@ -906,7 +905,9 @@
         "success": "Sekmīgi",
         "failed": "Kļūda",
         "messages-processed": "Ziņojumi apstrādāti",
-        "errors-occurred": "Kļūdas konstatētas"
+        "errors-occurred": "Kļūdas konstatētas",
+        "all-events": "Visi",
+        "entity-type": "Vienības tips"
     },
     "extension": {
         "extensions": "Paplašinājumi",

@@ -180,6 +180,11 @@
             formControlName="customAction">
           </tb-custom-action-pretty-editor>
         </ng-template>
+        <ng-template [ngSwitchCase]="widgetActionType.mobileAction">
+          <tb-mobile-action-editor #mobileActionEditor
+            formControlName="mobileAction">
+          </tb-mobile-action-editor>
+        </ng-template>
       </section>
     </fieldset>
   </div>

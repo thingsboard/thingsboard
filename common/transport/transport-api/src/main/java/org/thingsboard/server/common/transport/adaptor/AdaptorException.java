@@ -31,4 +31,8 @@ public class AdaptorException extends Exception {
         super(cause);
     }
 
+    public AdaptorException(String message, Exception cause) {
+        super(message, cause);
+    }
+
 }

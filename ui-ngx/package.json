@@ -47,6 +47,7 @@
     "flot": "git://github.com/thingsboard/flot.git#0.9-work",
     "flot.curvedlines": "git://github.com/MichaelZinsmaier/CurvedLines.git#master",
     "font-awesome": "^4.7.0",
+    "html2canvas": "^1.0.0-rc.7",
     "jquery": "^3.5.1",
     "jquery.terminal": "^2.18.3",
     "js-beautify": "^1.13.0",

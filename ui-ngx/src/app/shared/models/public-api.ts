@@ -29,6 +29,7 @@ export * from './contact-based.model';
 export * from './customer.model';
 export * from './dashboard.models';
 export * from './device.models';
+export * from './edge.models';
 export * from './entity.models';
 export * from './entity-type.models';
 export * from './entity-view.models';

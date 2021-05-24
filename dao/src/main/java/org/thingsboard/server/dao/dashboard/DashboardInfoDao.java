@@ -46,4 +46,14 @@ public interface DashboardInfoDao extends Dao<DashboardInfo> {
      */
     PageData<DashboardInfo> findDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, PageLink pageLink);
 
+    /**
+     * Find dashboards by tenantId, edgeId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param edgeId the edgeId
+     * @param pageLink the page link
+     * @return the list of dashboard objects
+     */
+    PageData<DashboardInfo> findDashboardsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, PageLink pageLink);
+
 }

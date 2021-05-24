@@ -30,6 +30,11 @@ public class MqttTopics {
     private static final String CLAIM = "/claim";
     private static final String SUB_TOPIC = "+";
     private static final String PROVISION = "/provision";
+    private static final String ACTION = "/action";
+    private static final String FIRMWARE = "/fw";
+    private static final String SOFTWARE = "/sw";
+    private static final String CHUNK = "/chunk/";
+    private static final String ERROR = "/error";
 
     private static final String ATTRIBUTES_RESPONSE = ATTRIBUTES + RESPONSE;
     private static final String ATTRIBUTES_REQUEST = ATTRIBUTES + REQUEST;
@@ -40,6 +45,8 @@ public class MqttTopics {
     private static final String DEVICE_ATTRIBUTES_RESPONSE = ATTRIBUTES_RESPONSE + "/";
     private static final String DEVICE_ATTRIBUTES_REQUEST = ATTRIBUTES_REQUEST + "/";
 
+    public static final String PAYLOAD_TYPE_TOPIC = "/payload";
+    public static final String PAYLOAD_TYPE_RESPONSE_TOPIC = PAYLOAD_TYPE_TOPIC + RESPONSE;
     // V1_JSON topics
 
     public static final String BASE_DEVICE_API_TOPIC = "v1/devices/me";
@@ -66,8 +73,50 @@ public class MqttTopics {
     public static final String GATEWAY_TELEMETRY_TOPIC = BASE_GATEWAY_API_TOPIC + TELEMETRY;
     public static final String GATEWAY_CLAIM_TOPIC = BASE_GATEWAY_API_TOPIC + CLAIM;
     public static final String GATEWAY_RPC_TOPIC = BASE_GATEWAY_API_TOPIC + RPC;
+    public static final String GATEWAY_DEVICE_ACTION_TOPIC = BASE_GATEWAY_API_TOPIC + ACTION;
     public static final String GATEWAY_ATTRIBUTES_REQUEST_TOPIC = BASE_GATEWAY_API_TOPIC + ATTRIBUTES_REQUEST;
     public static final String GATEWAY_ATTRIBUTES_RESPONSE_TOPIC = BASE_GATEWAY_API_TOPIC + ATTRIBUTES_RESPONSE;
+
+    // v2 topics
+    public static final String BASE_DEVICE_API_TOPIC_V2 = "v2";
+
+    public static final String REQUEST_ID_PATTERN = "(?<requestId>\\d+)";
+    public static final String CHUNK_PATTERN = "(?<chunk>\\d+)";
+
+    public static final String DEVICE_FIRMWARE_REQUEST_TOPIC_PATTERN = BASE_DEVICE_API_TOPIC_V2 + FIRMWARE + REQUEST + "/" + REQUEST_ID_PATTERN + CHUNK + CHUNK_PATTERN;
+    public static final String DEVICE_FIRMWARE_RESPONSES_TOPIC = BASE_DEVICE_API_TOPIC_V2 + FIRMWARE + RESPONSE + "/" + SUB_TOPIC + CHUNK + SUB_TOPIC;
+    public static final String DEVICE_FIRMWARE_ERROR_TOPIC = BASE_DEVICE_API_TOPIC_V2 + FIRMWARE + ERROR;
+    public static final String DEVICE_FIRMWARE_RESPONSES_TOPIC_FORMAT = BASE_DEVICE_API_TOPIC_V2 + "%s" + RESPONSE + "/"+ "%s" + CHUNK + "%d";
+
+    public static final String DEVICE_SOFTWARE_REQUEST_TOPIC_PATTERN = BASE_DEVICE_API_TOPIC_V2 + SOFTWARE + REQUEST + "/" + REQUEST_ID_PATTERN + CHUNK + CHUNK_PATTERN;
+    public static final String DEVICE_SOFTWARE_RESPONSES_TOPIC = BASE_DEVICE_API_TOPIC_V2 + SOFTWARE + RESPONSE + "/" + SUB_TOPIC + CHUNK + SUB_TOPIC;
+    public static final String DEVICE_SOFTWARE_ERROR_TOPIC = BASE_DEVICE_API_TOPIC_V2 + SOFTWARE + ERROR;
+
+    //V2_PROTO gateway topics
+
+    private static final String MINIMIZED_REQUEST = "/req";
+    private static final String MINIMIZED_RESPONSE = "/rsp";
+    private static final String MINIMIZED_RPC = "/rpc";
+    private static final String MINIMIZED_CONNECT = "/con";
+    private static final String MINIMIZED_DISCONNECT = "/dis";
+    private static final String MINIMIZED_TELEMETRY = "/tel";
+    private static final String MINIMIZED_ATTRIBUTES = "/atr";
+    private static final String MINIMIZED_CLAIM = "/clm";
+    private static final String MINIMIZED_ACTION = "/act";
+
+    private static final String MINIMIZED_ATTRIBUTES_RESPONSE = MINIMIZED_ATTRIBUTES + MINIMIZED_RESPONSE;
+    private static final String MINIMIZED_ATTRIBUTES_REQUEST = MINIMIZED_ATTRIBUTES + MINIMIZED_REQUEST;
+
+    public static final String MINIMIZED_BASE_GATEWAY_API_TOPIC = "v2/g";
+    public static final String MINIMIZED_GATEWAY_CONNECT_TOPIC = MINIMIZED_BASE_GATEWAY_API_TOPIC + MINIMIZED_CONNECT;
+    public static final String MINIMIZED_GATEWAY_DISCONNECT_TOPIC = MINIMIZED_BASE_GATEWAY_API_TOPIC + MINIMIZED_DISCONNECT;
+    public static final String MINIMIZED_GATEWAY_ATTRIBUTES_TOPIC = MINIMIZED_BASE_GATEWAY_API_TOPIC + MINIMIZED_ATTRIBUTES;
+    public static final String MINIMIZED_GATEWAY_TELEMETRY_TOPIC = MINIMIZED_BASE_GATEWAY_API_TOPIC + MINIMIZED_TELEMETRY;
+    public static final String MINIMIZED_GATEWAY_CLAIM_TOPIC = MINIMIZED_BASE_GATEWAY_API_TOPIC + MINIMIZED_CLAIM;
+    public static final String MINIMIZED_GATEWAY_RPC_TOPIC = MINIMIZED_BASE_GATEWAY_API_TOPIC + MINIMIZED_RPC;
+    public static final String MINIMIZED_GATEWAY_DEVICE_ACTION_TOPIC = MINIMIZED_BASE_GATEWAY_API_TOPIC + MINIMIZED_ACTION;
+    public static final String MINIMIZED_GATEWAY_ATTRIBUTES_REQUEST_TOPIC = MINIMIZED_BASE_GATEWAY_API_TOPIC + MINIMIZED_ATTRIBUTES_REQUEST;
+    public static final String MINIMIZED_GATEWAY_ATTRIBUTES_RESPONSE_TOPIC = MINIMIZED_BASE_GATEWAY_API_TOPIC + MINIMIZED_ATTRIBUTES_RESPONSE;
 
     private MqttTopics() {
     }

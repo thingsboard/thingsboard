@@ -54,6 +54,9 @@ public class DashboardInfoEntity extends BaseSqlEntity<DashboardInfo> implements
     @Column(name = ModelConstants.DASHBOARD_TITLE_PROPERTY)
     private String title;
 
+    @Column(name = ModelConstants.DASHBOARD_IMAGE_PROPERTY)
+    private String image;
+
     @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
     private String searchText;
 
@@ -73,6 +76,7 @@ public class DashboardInfoEntity extends BaseSqlEntity<DashboardInfo> implements
             this.tenantId = dashboardInfo.getTenantId().getId();
         }
         this.title = dashboardInfo.getTitle();
+        this.image = dashboardInfo.getImage();
         if (dashboardInfo.getAssignedCustomers() != null) {
             try {
                 this.assignedCustomers = objectMapper.writeValueAsString(dashboardInfo.getAssignedCustomers());
@@ -104,6 +108,7 @@ public class DashboardInfoEntity extends BaseSqlEntity<DashboardInfo> implements
             dashboardInfo.setTenantId(new TenantId(tenantId));
         }
         dashboardInfo.setTitle(title);
+        dashboardInfo.setImage(image);
         if (!StringUtils.isEmpty(assignedCustomers)) {
             try {
                 dashboardInfo.setAssignedCustomers(objectMapper.readValue(assignedCustomers, assignedCustomersType));

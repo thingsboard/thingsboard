@@ -22,12 +22,14 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.EnumUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -56,6 +58,19 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
 
     private static ObjectMapper mapper = new ObjectMapper();
     private List<String> relationTypes;
+    private AlarmSeverity notDynamicAlarmSeverity;
+
+    @Override
+    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
+        super.init(ctx, configuration);
+        if(!this.config.isDynamicSeverity()) {
+            this.notDynamicAlarmSeverity = EnumUtils.getEnum(AlarmSeverity.class, this.config.getSeverity());
+            if(this.notDynamicAlarmSeverity == null) {
+                throw new TbNodeException("Incorrect Alarm Severity value: " + this.config.getSeverity());
+            }
+        }
+    }
+
 
     @Override
     protected TbCreateAlarmNodeConfiguration loadAlarmNodeConfig(TbNodeConfiguration configuration) throws TbNodeException {
@@ -132,7 +147,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
                 existingAlarm.setPropagate(msgAlarm.isPropagate());
                 existingAlarm.setPropagateRelationTypes(msgAlarm.getPropagateRelationTypes());
             } else {
-                existingAlarm.setSeverity(config.getSeverity());
+                existingAlarm.setSeverity(processAlarmSeverity(msg));
                 existingAlarm.setPropagate(config.isPropagate());
                 existingAlarm.setPropagateRelationTypes(relationTypes);
             }
@@ -149,7 +164,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
                 .tenantId(tenantId)
                 .originator(msg.getOriginator())
                 .status(AlarmStatus.ACTIVE_UNACK)
-                .severity(config.getSeverity())
+                .severity(this.config.isDynamicSeverity() ? processAlarmSeverity(msg) : notDynamicAlarmSeverity)
                 .propagate(config.isPropagate())
                 .type(TbNodeUtils.processPattern(this.config.getAlarmType(), msg))
                 .propagateRelationTypes(relationTypes)
@@ -158,6 +173,14 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
 //                .endTs(System.currentTimeMillis())
                 .details(details)
                 .build();
+    }
+
+    private AlarmSeverity processAlarmSeverity(TbMsg msg) {
+        AlarmSeverity severity = EnumUtils.getEnum(AlarmSeverity.class, TbNodeUtils.processPattern(this.config.getSeverity(), msg));
+        if(severity == null) {
+            throw new RuntimeException("Used incorrect pattern or Alarm Severity not included in message");
+        }
+        return severity;
     }
 
 }

@@ -21,6 +21,7 @@ import org.eclipse.leshan.server.bootstrap.InMemoryBootstrapConfigStore;
 import org.eclipse.leshan.server.bootstrap.InvalidConfigurationException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
+
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -58,8 +59,7 @@ public class LwM2MInMemoryBootstrapConfigStore extends InMemoryBootstrapConfigSt
     public BootstrapConfig remove(String enpoint) {
         writeLock.lock();
         try {
-            BootstrapConfig res = super.remove(enpoint);
-            return res;
+            return super.remove(enpoint);
         } finally {
             writeLock.unlock();
         }

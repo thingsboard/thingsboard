@@ -15,14 +15,15 @@
  */
 package org.thingsboard.server.common.data.widget;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
 public class WidgetTypeDetails extends WidgetType {
 
     private String image;
+    @NoXss
     private String description;
 
     public WidgetTypeDetails() {

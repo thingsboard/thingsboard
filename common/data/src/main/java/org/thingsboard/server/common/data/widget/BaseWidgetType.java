@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
 public class BaseWidgetType extends BaseData<WidgetTypeId> implements HasTenantId {
@@ -27,8 +28,11 @@ public class BaseWidgetType extends BaseData<WidgetTypeId> implements HasTenantI
     private static final long serialVersionUID = 8388684344603660756L;
 
     private TenantId tenantId;
+    @NoXss
     private String bundleAlias;
+    @NoXss
     private String alias;
+    @NoXss
     private String name;
 
     public BaseWidgetType() {

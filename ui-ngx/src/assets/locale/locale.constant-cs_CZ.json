@@ -1332,7 +1332,6 @@
         "body": "Tělo",
         "method": "Metoda",
         "type": "Typ",
-        "entity": "Entita",
         "message-id": "Id zprávy",
         "message-type": "Typ zprávy",
         "data-type": "Typ dat",
@@ -1344,7 +1343,9 @@
         "success": "Úspěch",
         "failed": "Neúspěch",
         "messages-processed": "Zpracované zprávy",
-        "errors-occurred": "Vyskytly se chyby"
+        "errors-occurred": "Vyskytly se chyby",
+        "all-events": "Vše",
+        "entity-type": "Typ entity"
     },
     "extension": {
         "extensions": "Rozšíření",

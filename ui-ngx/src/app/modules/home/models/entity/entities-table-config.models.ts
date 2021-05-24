@@ -172,7 +172,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   deleteEntityContent: EntityStringFunction<L> = () => '';
   deleteEntitiesTitle: EntityCountStringFunction = () => '';
   deleteEntitiesContent: EntityCountStringFunction = () => '';
-  loadEntity: EntityByIdOperation<T> = () => of();
+  loadEntity: EntityByIdOperation<T | L> = () => of();
   saveEntity: EntityTwoWayOperation<T> = (entity) => of(entity);
   deleteEntity: EntityIdOneWayOperation = () => of();
   entitiesFetchFunction: EntitiesFetchFunction<L, P> = () => of(emptyPageData<L>());

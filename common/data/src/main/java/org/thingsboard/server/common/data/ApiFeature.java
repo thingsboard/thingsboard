@@ -23,7 +23,8 @@ public enum ApiFeature {
     RE("ruleEngineApiState", "Rule Engine execution"),
     JS("jsExecutionApiState", "JavaScript functions execution"),
     EMAIL("emailApiState", "Email messages"),
-    SMS("smsApiState", "SMS messages");
+    SMS("smsApiState", "SMS messages"),
+    ALARM("alarmApiState", "Created alarms");
 
     @Getter
     private final String apiStateKey;

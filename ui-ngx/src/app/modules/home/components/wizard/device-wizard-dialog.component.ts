@@ -70,7 +70,7 @@ export class DeviceWizardDialogComponent extends
 
   entityType = EntityType;
 
-  deviceTransportTypes = Object.keys(DeviceTransportType);
+  deviceTransportTypes = Object.values(DeviceTransportType);
 
   deviceTransportTypeTranslations = deviceTransportTypeTranslationMap;
 

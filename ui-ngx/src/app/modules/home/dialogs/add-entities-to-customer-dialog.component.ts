@@ -28,6 +28,7 @@ import { EntityViewService } from '@core/http/entity-view.service';
 import { DashboardService } from '@core/http/dashboard.service';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
+import { EdgeService } from '@core/http/edge.service';
 
 export interface AddEntitiesToCustomerDialogData {
   customerId: string;
@@ -57,6 +58,7 @@ export class AddEntitiesToCustomerDialogComponent extends
               @Inject(MAT_DIALOG_DATA) public data: AddEntitiesToCustomerDialogData,
               private deviceService: DeviceService,
               private assetService: AssetService,
+              private edgeService: EdgeService,
               private entityViewService: EntityViewService,
               private dashboardService: DashboardService,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
@@ -78,6 +80,10 @@ export class AddEntitiesToCustomerDialogComponent extends
       case EntityType.ASSET:
         this.assignToCustomerTitle = 'asset.assign-asset-to-customer';
         this.assignToCustomerText = 'asset.assign-asset-to-customer-text';
+        break;
+      case EntityType.EDGE:
+        this.assignToCustomerTitle = 'edge.assign-edge-to-customer';
+        this.assignToCustomerText = 'edge.assign-edge-to-customer-text';
         break;
       case EntityType.ENTITY_VIEW:
         this.assignToCustomerTitle = 'entity-view.assign-entity-view-to-customer';
@@ -122,6 +128,8 @@ export class AddEntitiesToCustomerDialogComponent extends
         return this.deviceService.assignDeviceToCustomer(customerId, entityId);
       case EntityType.ASSET:
         return this.assetService.assignAssetToCustomer(customerId, entityId);
+      case EntityType.EDGE:
+        return this.edgeService.assignEdgeToCustomer(customerId, entityId);
       case EntityType.ENTITY_VIEW:
         return this.entityViewService.assignEntityViewToCustomer(customerId, entityId);
       case EntityType.DASHBOARD:

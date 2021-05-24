@@ -292,6 +292,7 @@ export class ItemBufferService {
         y: origNode.y,
         name: origNode.name,
         componentClazz: origNode.component.clazz,
+        ruleChainType: origNode.ruleChainType
       };
       if (origNode.targetRuleChainId) {
         node.targetRuleChainId = origNode.targetRuleChainId;
@@ -330,7 +331,7 @@ export class ItemBufferService {
       const deltaX = x - ruleNodes.originX;
       const deltaY = y - ruleNodes.originY;
       for (const node of ruleNodes.nodes) {
-        const component = this.ruleChainService.getRuleNodeComponentByClazz(node.componentClazz);
+        const component = this.ruleChainService.getRuleNodeComponentByClazz(node.ruleChainType, node.componentClazz);
         if (component) {
           let icon = ruleNodeTypeDescriptors.get(component.type).icon;
           let iconUrl: string = null;

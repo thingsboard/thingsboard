@@ -80,7 +80,7 @@
              (mousedown)="widgetMouseDown($event, widget)"
              (click)="widgetClicked($event, widget)"
              (contextmenu)="openWidgetContextMenu($event, widget)">
-          <div *ngIf="widgetComponent.widgetContext?.inited" fxLayout="row" fxLayoutAlign="space-between start">
+          <div *ngIf="!!widgetComponent.widgetContext?.inited" fxLayout="row" fxLayoutAlign="space-between start">
             <div class="tb-widget-title" fxLayout="column" fxLayoutAlign="center start" *ngIf="widget.showWidgetTitlePanel">
               <span *ngIf="widget.showTitle"
                     [ngClass]="{'single-row': widget.hasTimewindow}"

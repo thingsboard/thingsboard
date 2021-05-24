@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,8 @@ import io.netty.handler.codec.mqtt.MqttPublishVariableHeader;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.TransportPayloadType;
+import org.thingsboard.server.common.data.firmware.FirmwareType;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -45,6 +47,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_FIRMWARE_RESPONSES_TOPIC_FORMAT;
+
 /**
  * @author Andrew Shvayka
  */
@@ -56,6 +60,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
 
     private static final Gson GSON = new Gson();
     private static final ByteBufAllocator ALLOCATOR = new UnpooledByteBufAllocator(false);
+    private static final String PAYLOAD_TYPE_PROPERTY = "type";
 
     @Override
     public TransportProtos.PostTelemetryMsg convertToPostTelemetry(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
@@ -144,6 +149,11 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     }
 
     @Override
+    public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName) {
+        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_DEVICE_ACTION_TOPIC, JsonConverter.toGatewayJson(deviceName)));
+    }
+
+    @Override
     public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.ToServerRpcResponseMsg rpcResponse) {
         return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_RPC_RESPONSE_TOPIC + rpcResponse.getRequestId(), JsonConverter.toJson(rpcResponse)));
     }
@@ -151,6 +161,31 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     @Override
     public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.ProvisionDeviceResponseMsg provisionResponse) {
         return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC, JsonConverter.toJson(provisionResponse)));
+    }
+
+    @Override
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, byte[] firmwareChunk, String requestId, int chunk, FirmwareType firmwareType) {
+        return Optional.of(createMqttPublishMsg(ctx, String.format(DEVICE_FIRMWARE_RESPONSES_TOPIC_FORMAT, firmwareType.getKeyPrefix(), requestId, chunk), firmwareChunk));
+    }
+
+    @Override
+    public TransportPayloadType convertToPayloadType(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
+        ByteBuf payload = inbound.payload();
+        JsonElement json = validateJsonPayload(ctx.getSessionId(), payload);
+        if (json.isJsonObject()) {
+            JsonObject jsonObj = json.getAsJsonObject();
+            JsonElement payloadTypeStr = jsonObj.get(PAYLOAD_TYPE_PROPERTY);
+            if (payloadTypeStr != null) {
+                try {
+                    return TransportPayloadType.valueOf(payloadTypeStr.getAsString());
+                } catch (IllegalArgumentException e) {
+                    log.warn("Unknown payload type!");
+                    throw new AdaptorException(e);
+                }
+            }
+        }
+        log.warn("Payload type not found!");
+        return TransportPayloadType.JSON;
     }
 
     public static JsonElement validateJsonPayload(UUID sessionId, ByteBuf payloadData) throws AdaptorException {

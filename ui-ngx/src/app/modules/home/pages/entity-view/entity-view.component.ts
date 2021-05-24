@@ -40,7 +40,7 @@ export class EntityViewComponent extends EntityComponent<EntityViewInfo> {
 
   dataKeyType = DataKeyType;
 
-  entityViewScope: 'tenant' | 'customer' | 'customer_user';
+  entityViewScope: 'tenant' | 'customer' | 'customer_user' | 'edge';
 
   allowedEntityTypes = [EntityType.DEVICE, EntityType.ASSET];
 

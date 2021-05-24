@@ -25,6 +25,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
@@ -93,7 +94,7 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
         super.init(maxRequestsTimeout);
         if (useJsSandbox()) {
             sandbox = NashornSandboxes.create();
-            monitorExecutorService = Executors.newWorkStealingPool(getMonitorThreadPoolSize());
+            monitorExecutorService = ThingsBoardExecutors.newWorkStealingPool(getMonitorThreadPoolSize(), "nashorn-js-monitor");
             sandbox.setExecutor(monitorExecutorService);
             sandbox.setMaxCPUTime(getMaxCpuTime());
             sandbox.allowNoBraces(false);

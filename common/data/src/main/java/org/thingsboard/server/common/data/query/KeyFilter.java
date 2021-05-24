@@ -17,8 +17,10 @@ package org.thingsboard.server.common.data.query;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class KeyFilter {
+public class KeyFilter implements Serializable {
 
     private EntityKey key;
     private EntityKeyValueType valueType;

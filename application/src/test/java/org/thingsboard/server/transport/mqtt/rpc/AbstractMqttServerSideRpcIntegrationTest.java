@@ -180,7 +180,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         return message;
     }
 
-    private class TestMqttCallback implements MqttCallback {
+    protected class TestMqttCallback implements MqttCallback {
 
         private final MqttAsyncClient client;
         private final CountDownLatch latch;

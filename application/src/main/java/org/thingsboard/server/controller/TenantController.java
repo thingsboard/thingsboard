@@ -95,6 +95,9 @@ public class TenantController extends BaseController {
             tenant = checkNotNull(tenantService.saveTenant(tenant));
             if (newTenant) {
                 installScripts.createDefaultRuleChains(tenant.getId());
+                if (edgesEnabled) {
+                    installScripts.createDefaultEdgeRuleChains(tenant.getId());
+                }
             }
             tenantProfileCache.evict(tenant.getId());
             tbClusterService.onTenantChange(tenant, null);

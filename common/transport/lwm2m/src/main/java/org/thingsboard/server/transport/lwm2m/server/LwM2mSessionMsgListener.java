@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.lwm2m.server;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.ResourceType;
@@ -34,22 +35,22 @@ import java.util.Optional;
 
 @Slf4j
 public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? super Void>>, SessionMsgListener {
-    private LwM2mTransportServiceImpl service;
+    private DefaultLwM2MTransportMsgHandler handler;
     private TransportProtos.SessionInfoProto sessionInfo;
 
-    public LwM2mSessionMsgListener(LwM2mTransportServiceImpl service, TransportProtos.SessionInfoProto sessionInfo) {
-        this.service = service;
+    public LwM2mSessionMsgListener(DefaultLwM2MTransportMsgHandler handler, TransportProtos.SessionInfoProto sessionInfo) {
+        this.handler = handler;
         this.sessionInfo = sessionInfo;
     }
 
     @Override
     public void onGetAttributesResponse(GetAttributeResponseMsg getAttributesResponse) {
-        this.service.onGetAttributesResponse(getAttributesResponse, this.sessionInfo);
+        this.handler.onGetAttributesResponse(getAttributesResponse, this.sessionInfo);
     }
 
     @Override
     public void onAttributeUpdate(AttributeUpdateNotificationMsg attributeUpdateNotification) {
-        this.service.onAttributeUpdate(attributeUpdateNotification, this.sessionInfo);
+        this.handler.onAttributeUpdate(attributeUpdateNotification, this.sessionInfo);
      }
 
     @Override
@@ -59,27 +60,27 @@ public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? s
 
     @Override
     public void onToTransportUpdateCredentials(ToTransportUpdateCredentialsProto updateCredentials) {
-        this.service.onToTransportUpdateCredentials(updateCredentials);
+        this.handler.onToTransportUpdateCredentials(updateCredentials);
     }
 
     @Override
     public void onDeviceProfileUpdate(TransportProtos.SessionInfoProto sessionInfo, DeviceProfile deviceProfile) {
-        this.service.onDeviceProfileUpdate(sessionInfo, deviceProfile);
+        this.handler.onDeviceProfileUpdate(sessionInfo, deviceProfile);
     }
 
     @Override
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
-        this.service.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
+        this.handler.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
     }
 
     @Override
     public void onToDeviceRpcRequest(ToDeviceRpcRequestMsg toDeviceRequest) {
-        log.info("[{}] toDeviceRpcRequest", toDeviceRequest);
+        this.handler.onToDeviceRpcRequest(toDeviceRequest,this.sessionInfo);
     }
 
     @Override
     public void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse) {
-        log.info("[{}] toServerRpcResponse", toServerResponse);
+        this.handler.onToServerRpcResponse(toServerResponse);
     }
 
     @Override
@@ -87,15 +88,17 @@ public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? s
         log.info("[{}]  operationComplete", future);
     }
 
-    public void onResourceUpdate(Optional<TransportProtos.ResourceUpdateMsg> resourceUpdateMsgOpt) {
+    @Override
+    public void onResourceUpdate(@NotNull Optional<TransportProtos.ResourceUpdateMsg> resourceUpdateMsgOpt) {
         if (ResourceType.LWM2M_MODEL.name().equals(resourceUpdateMsgOpt.get().getResourceType())) {
-            this.service.onResourceUpdate(resourceUpdateMsgOpt);
+            this.handler.onResourceUpdate(resourceUpdateMsgOpt);
         }
     }
 
-    public void onResourceDelete(Optional<TransportProtos.ResourceDeleteMsg> resourceDeleteMsgOpt) {
+    @Override
+    public void onResourceDelete(@NotNull Optional<TransportProtos.ResourceDeleteMsg> resourceDeleteMsgOpt) {
         if (ResourceType.LWM2M_MODEL.name().equals(resourceDeleteMsgOpt.get().getResourceType())) {
-            this.service.onResourceDelete(resourceDeleteMsgOpt);
+            this.handler.onResourceDelete(resourceDeleteMsgOpt);
         }
     }
 }

@@ -14,8 +14,7 @@
 /// limitations under the License.
 ///
 
-
-import {Component, forwardRef, Input} from '@angular/core';
+import { Component, forwardRef, Input } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -25,22 +24,33 @@ import {
   NG_VALUE_ACCESSOR,
   Validators
 } from '@angular/forms';
-import {Store} from '@ngrx/store';
-import {AppState} from '@core/core.state';
-import {coerceBooleanProperty} from '@angular/cdk/coercion';
-import {CLIENT_LWM2M, Instance, INSTANCES, ObjectLwM2M, ResourceLwM2M, RESOURCES} from './profile-config.models';
-import {deepClone, isDefinedAndNotNull, isEqual, isUndefined} from '@core/utils';
-import {MatDialog} from '@angular/material/dialog';
-import {TranslateService} from '@ngx-translate/core';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
-  Lwm2mObjectAddInstancesComponent,
-  Lwm2mObjectAddInstancesData
-} from '@home/components/profile/device/lwm2m/lwm2m-object-add-instances.component';
+  ATTRIBUTE,
+  ATTRIBUTE_LWM2M,
+  CLIENT_LWM2M,
+  Instance,
+  INSTANCES,
+  ObjectLwM2M,
+  ResourceLwM2M,
+  RESOURCES,
+  TELEMETRY
+} from './lwm2m-profile-config.models';
+import { deepClone, isDefinedAndNotNull, isEqual, isUndefined } from '@core/utils';
+import { MatDialog } from '@angular/material/dialog';
+import { TranslateService } from '@ngx-translate/core';
+import {
+  Lwm2mObjectAddInstancesData,
+  Lwm2mObjectAddInstancesDialogComponent
+} from '@home/components/profile/device/lwm2m/lwm2m-object-add-instances-dialog.component';
+import _ from 'lodash';
 
 @Component({
   selector: 'tb-profile-lwm2m-observe-attr-telemetry',
   templateUrl: './lwm2m-observe-attr-telemetry.component.html',
-  styleUrls: ['./lwm2m-observe-attr-telemetry.component.css'],
+  styleUrls: [ './lwm2m-observe-attr-telemetry.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -56,6 +66,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
 
   valuePrev = null as any;
   observeAttrTelemetryFormGroup: FormGroup;
+  resources = RESOURCES;
 
   get required(): boolean {
     return this.requiredValue;
@@ -143,6 +154,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
         name: objectLwM2M.name,
         multiple: objectLwM2M.multiple,
         mandatory: objectLwM2M.mandatory,
+        attributeLwm2m: objectLwM2M.attributeLwm2m,
         instances: this.createInstanceLwM2M(objectLwM2M.instances)
       });
     }));
@@ -152,6 +164,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
     return this.fb.array(instancesLwM2M.map((instanceLwM2M) => {
       return this.fb.group({
         id: instanceLwM2M.id,
+        attributeLwm2m: {value: instanceLwM2M.attributeLwm2m, disabled: this.disabled},
         resources: {value: instanceLwM2M.resources, disabled: this.disabled}
       });
     }));
@@ -222,7 +235,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
       $event.stopPropagation();
       $event.preventDefault();
     }
-    this.dialog.open<Lwm2mObjectAddInstancesComponent, Lwm2mObjectAddInstancesData, object>(Lwm2mObjectAddInstancesComponent, {
+    this.dialog.open<Lwm2mObjectAddInstancesDialogComponent, Lwm2mObjectAddInstancesData, object>(Lwm2mObjectAddInstancesDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
@@ -249,6 +262,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
       r.attribute = false;
       r.telemetry = false;
       r.observe = false;
+      r.attributeLwm2m = {};
     });
     const valueOld = this.instancesToSetId(instancesArray);
     if (!isEqual(valueOld, data.instancesIds)) {
@@ -266,7 +280,8 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
   private addInstancesNew = (idsAdd: Set<number>, objectLwM2MFormGroup: FormGroup, instancesFormArray: FormArray,
                              instanceNew: Instance): void => {
     idsAdd.forEach(x => {
-      this.pushInstance(instancesFormArray, x, instanceNew);
+      instanceNew.resources.forEach(resource => {resource.keyName = _.camelCase(resource.name + x);});
+      this.pushInstance(instancesFormArray, x, deepClone(instanceNew as Instance));
     });
     (instancesFormArray.controls as FormGroup[]).sort((a, b) => a.value.id - b.value.id);
   }
@@ -286,6 +301,7 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
   private pushInstance = (instancesFormArray: FormArray, x: number, instanceNew: Instance): void => {
     instancesFormArray.push(this.fb.group({
       id: x,
+      attributeLwm2m: instanceNew.attributeLwm2m,
       resources: {value: instanceNew.resources, disabled: this.disabled}
     }));
   }
@@ -296,5 +312,55 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor 
 
   private instancesToSetId = (instances: Instance[]): Set<number> => {
     return new Set(instances.map(x => x.id));
+  }
+
+  getNameObjectLwm2m = (objectName: string, idVerObj: string): string => {
+    return  objectName + ' <' + idVerObj + '>';
+  }
+  getNameInstanceLwm2m = (instance: Instance, idVerObj: string): string => {
+    return  ' instance <' + idVerObj + '/' + instance.id +'>';
+  }
+
+  updateAttributeLwm2mObject = (event: Event, objectKeyId: number): void => {
+    const objectLwM2MFormGroup = (this.observeAttrTelemetryFormGroup.get(CLIENT_LWM2M) as FormArray).controls
+      .find(e => e.value.keyId === objectKeyId) as FormGroup;
+    objectLwM2MFormGroup.patchValue({attributeLwm2m: event});
+  }
+
+  updateAttributeLwm2mInstance = (event: Event, indexInstance: number, objectKeyId: number): void => {
+
+    const objectLwM2MFormGroup = (this.observeAttrTelemetryFormGroup.get(CLIENT_LWM2M) as FormArray).controls
+      .find(e => e.value.keyId === objectKeyId) as FormGroup;
+    const instancesFormArray = objectLwM2MFormGroup.get(INSTANCES) as FormArray;
+    instancesFormArray.at(indexInstance).patchValue({attributeLwm2m: event});
+  }
+
+  disableObserveInstance = (instance: AbstractControl): boolean => {
+    const checkedAttrTelemetry = this.observeInstance(instance);
+    if (checkedAttrTelemetry) {
+      instance.get(ATTRIBUTE_LWM2M).patchValue(null);
+    }
+    return checkedAttrTelemetry;
+  }
+
+  disableObserveObject = (index: number): boolean => {
+    const object = (this.observeAttrTelemetryFormGroup.get(CLIENT_LWM2M) as FormArray).at(index) as FormGroup;
+    const instances = object.controls.instances as FormArray;
+    const checkedAttrTelemetry = instances.controls.filter(instance => !this.disableObserveInstance(instance));
+    if (checkedAttrTelemetry.length === 0) {
+      object.controls.attributeLwm2m.patchValue(null);
+    }
+    return checkedAttrTelemetry.length === 0;
+  }
+
+
+  observeInstance = (instance: AbstractControl): boolean => {
+    const resources = instance.get(RESOURCES).value as ResourceLwM2M[];
+    if (isDefinedAndNotNull(resources)) {
+      const checkedAttribute = resources.filter(resource => resource[ATTRIBUTE]);
+      const checkedTelemetry = resources.filter(resource => resource[TELEMETRY]);
+      return checkedAttribute.length === 0 && checkedTelemetry.length === 0;
+    }
+    return false;
   }
 }

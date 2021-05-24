@@ -20,23 +20,34 @@
     <mat-expansion-panel
       *ngFor="let objectLwM2M of clientLwM2MFormArray.controls; let i = index;"
       [formGroupName]="i">
-      <mat-expansion-panel-header>
-        <mat-panel-title fxLayoutAlign="start center">
-          <b><i>{{ objectLwM2M.get('name').value}}</i></b>&nbsp;&lt;id: {{ objectLwM2M.get('keyId').value}}>
+      <mat-expansion-panel-header >
+        <mat-panel-title fxLayoutAlign="start center" >
+          <b><i>{{ objectLwM2M.get('name').value}}</i></b>&nbsp;&lt;{{ objectLwM2M.get('keyId').value}}>
+          <div fxFlex class="resource-name-lw-end">
+            <tb-profile-lwm2m-attributes
+              formControlName="attributeLwm2m"
+              [attributeLwm2m]="objectLwM2M.get('attributeLwm2m').value"
+              [isAttributeTelemetry]="disableObserveObject(i)"
+              [destName]="getNameObjectLwm2m( objectLwM2M.get('name').value, objectLwM2M.get('keyId').value)"
+              [disabled]="this.disabled"
+              (updateAttributeLwm2m)="updateAttributeLwm2mObject($event, objectLwM2M.get('keyId').value)">
+            </tb-profile-lwm2m-attributes>
+          </div>
         </mat-panel-title>
-        <mat-panel-description fxLayoutAlign="end center" *ngIf="!disabled">
+        <mat-panel-description fxFlex="5" fxLayoutAlign="end center" *ngIf="!disabled">
           <button type="button"
                   [fxShow]="objectLwM2M.get('multiple').value"
                   mat-button mat-icon-button (click)="addInstances($event, objectLwM2M.value)"
                   matTooltip="{{'device-profile.lwm2m.add-instances-tip' | translate}}"
                   matTooltipPosition="above">
-            <mat-icon class="material-icons">{{'add'}}</mat-icon>
+            <mat-icon class="material-icons">{{'note_add'}}</mat-icon>
           </button>
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <div fxLayout="column" fxLayoutGap="8px" formArrayName="instances">
           <mat-expansion-panel
+            class="instance-list"
             *ngFor="let instances of instancesLwm2mFormArray(objectLwM2M).controls; let y = index;"
             [formGroupName]="y"
             [expanded]="getExpended(objectLwM2M)"
@@ -45,22 +56,10 @@
               <mat-panel-title>
                 <div class="tb-panel-title-height" fxFlex="100">
                   <div fxLayout="row" fxFill>
-                    <div fxFlex="44">
-                      Instance [<b>{{instances.get('id').value}}</b>]
+                    <div fxFlex="22">
+                      {{'device-profile.lwm2m.instance-label' | translate}} <<b>{{instances.get('id').value}}</b>>
                     </div>
-                    <div class="checkbox-padding" fxFlex="10">
-                      <mat-checkbox color="primary"
-                                    [disabled]="this.disabled"
-                                    [checked]="getChecked(instances, 'observe')"
-                                    (click)="$event.stopPropagation()"
-                                    (change)="changeInstanceResourcesCheckBox($event.checked, instances, 'observe')"
-                                    (keydown)="$event.stopPropagation()"
-                                    [indeterminate]="getIndeterminate(instances, 'observe')"
-                                    matTooltip="{{'device-profile.lwm2m.is-observe-tip' | translate}}"
-                                    matTooltipPosition="above">
-                      </mat-checkbox>
-                    </div>
-                    <div class="checkbox-padding" fxFlex="10">
+                     <div class="checkbox-padding" fxFlex="10">
                       <mat-checkbox color="warn"
                                     [disabled]="this.disabled"
                                     [checked]="getChecked(instances, 'attribute')"
@@ -84,7 +83,29 @@
                                     matTooltipPosition="above">
                       </mat-checkbox>
                     </div>
-                    <div class="checkbox-padding" fxFlex="25">
+                    <div class="checkbox-padding" fxFlex="10">
+                      <mat-checkbox color="primary"
+                                    [disabled]="this.disabled"
+                                    [checked]="getChecked(instances, 'observe')"
+                                    (click)="$event.stopPropagation()"
+                                    (change)="changeInstanceResourcesCheckBox($event.checked, instances, 'observe')"
+                                    (keydown)="$event.stopPropagation()"
+                                    [indeterminate]="getIndeterminate(instances, 'observe')"
+                                    matTooltip="{{'device-profile.lwm2m.is-observe-tip' | translate}}"
+                                    matTooltipPosition="above">
+                      </mat-checkbox>
+                    </div>
+                    <div fxFlex="10">
+                    </div>
+                    <div fxFlex="37" class="resource-name-lw-end" fxFlexOffset="5">
+                      <tb-profile-lwm2m-attributes
+                        formControlName="attributeLwm2m"
+                        [attributeLwm2m]="instances.get('attributeLwm2m').value"
+                        [isAttributeTelemetry]="disableObserveInstance(instances)"
+                        [destName]="getNameInstanceLwm2m(instances.value, objectLwM2M.get('keyId').value)"
+                        [disabled]="this.disabled"
+                        (updateAttributeLwm2m)="updateAttributeLwm2mInstance($event, y, objectLwM2M.get('keyId').value)">
+                      </tb-profile-lwm2m-attributes>
                     </div>
                   </div>
                 </div>

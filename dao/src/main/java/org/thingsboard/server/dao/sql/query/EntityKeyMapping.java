@@ -243,23 +243,21 @@ public class EntityKeyMapping {
         } else {
             entityTypeStr = "'" + entityType.name() + "'";
         }
-        ctx.addStringParameter(alias + "_key_id", entityKey.getKey());
+        ctx.addStringParameter(getKeyId(), entityKey.getKey());
         String filterQuery = toQueries(ctx, entityFilter.getType())
                 .filter(StringUtils::isNotEmpty)
                 .collect(Collectors.joining(" and "));
-        if (StringUtils.isEmpty(filterQuery)) {
-            filterQuery = "";
-        } else {
+        if (StringUtils.isNotEmpty(filterQuery)) {
             filterQuery = " AND (" + filterQuery + ")";
         }
         if (entityKey.getType().equals(EntityKeyType.TIME_SERIES)) {
-            String join = hasFilter() ? "inner join" : "left join";
+            String join = (hasFilter() && hasFilterValues(ctx)) ? "inner join" : "left join";
             return String.format("%s ts_kv_latest %s ON %s.entity_id=entities.id AND %s.key = (select key_id from ts_kv_dictionary where key = :%s_key_id) %s",
                     join, alias, alias, alias, alias, filterQuery);
         } else {
             String query;
             if (!entityKey.getType().equals(EntityKeyType.ATTRIBUTE)) {
-                String join = hasFilter() ? "inner join" : "left join";
+                String join = (hasFilter() && hasFilterValues(ctx)) ? "inner join" : "left join";
                 query = String.format("%s attribute_kv %s ON %s.entity_id=entities.id AND %s.entity_type=%s AND %s.attribute_key=:%s_key_id ",
                         join, alias, alias, alias, entityTypeStr, alias, alias);
                 String scope;
@@ -272,7 +270,7 @@ public class EntityKeyMapping {
                 }
                 query = String.format("%s AND %s.attribute_type='%s' %s", query, alias, scope, filterQuery);
             } else {
-                String join = hasFilter() ? "join LATERAL" : "left join LATERAL";
+                String join = (hasFilter() && hasFilterValues(ctx)) ? "join LATERAL" : "left join LATERAL";
                 query = String.format("%s (select * from attribute_kv %s WHERE %s.entity_id=entities.id AND %s.entity_type=%s AND %s.attribute_key=:%s_key_id %s " +
                                 "ORDER BY %s.last_update_ts DESC limit 1) as %s ON true",
                         join, alias, alias, alias, entityTypeStr, alias, alias, filterQuery, alias, alias);
@@ -281,15 +279,26 @@ public class EntityKeyMapping {
         }
     }
 
+    private boolean hasFilterValues(QueryContext ctx) {
+        return Arrays.stream(ctx.getParameterNames()).anyMatch(parameterName -> {
+            return !parameterName.equals(getKeyId()) && parameterName.startsWith(alias);
+        });
+    }
+
+    private String getKeyId() {
+        return alias + "_key_id";
+    }
+
     public static String buildSelections(List<EntityKeyMapping> mappings, EntityFilterType filterType, EntityType entityType) {
         return mappings.stream().map(mapping -> mapping.toSelection(filterType, entityType)).collect(
                 Collectors.joining(", "));
     }
 
     public static String buildLatestJoins(QueryContext ctx, EntityFilter entityFilter, EntityType entityType, List<EntityKeyMapping> latestMappings, boolean countQuery) {
-        return latestMappings.stream().filter(mapping -> !countQuery || mapping.hasFilter())
-                .map(mapping -> mapping.toLatestJoin(ctx, entityFilter, entityType)).collect(
-                        Collectors.joining(" "));
+        return latestMappings.stream()
+                .filter(mapping -> !countQuery || mapping.hasFilter())
+                .map(mapping -> mapping.toLatestJoin(ctx, entityFilter, entityType))
+                .collect(Collectors.joining(" "));
     }
 
     public static String buildQuery(QueryContext ctx, List<EntityKeyMapping> mappings, EntityFilterType filterType) {

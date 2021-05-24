@@ -47,9 +47,9 @@ public class Lwm2mController extends BaseController {
     @RequestMapping(value = "/lwm2m/deviceProfile/bootstrap/{securityMode}/{bootstrapServerIs}", method = RequestMethod.GET)
     @ResponseBody
     public ServerSecurityConfig getLwm2mBootstrapSecurityInfo(@PathVariable("securityMode") String securityMode,
-                                                              @PathVariable("bootstrapServerIs") boolean bootstrapServerIs) throws ThingsboardException {
+                                                              @PathVariable("bootstrapServerIs") boolean bootstrapServer) throws ThingsboardException {
         try {
-            return lwM2MModelsRepository.getBootstrapSecurityInfo(securityMode, bootstrapServerIs);
+            return lwM2MServerSecurityInfoRepository.getServerSecurityInfo(securityMode, bootstrapServer);
         } catch (Exception e) {
             throw handleException(e);
         }

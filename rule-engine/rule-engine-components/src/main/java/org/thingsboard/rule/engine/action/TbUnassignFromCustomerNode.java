@@ -21,7 +21,12 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -60,6 +65,9 @@ public class TbUnassignFromCustomerNode extends TbAbstractCustomerActionNode<TbU
             case ENTITY_VIEW:
                 processUnassignEntityView(ctx, msg);
                 break;
+            case EDGE:
+                processUnassignEdge(ctx, msg);
+                break;
             case DASHBOARD:
                 processUnnasignDashboard(ctx, msg, customerId);
                 break;
@@ -84,5 +92,9 @@ public class TbUnassignFromCustomerNode extends TbAbstractCustomerActionNode<TbU
 
     private void processUnassignEntityView(TbContext ctx, TbMsg msg) {
         ctx.getEntityViewService().unassignEntityViewFromCustomer(ctx.getTenantId(), new EntityViewId(msg.getOriginator().getId()));
+    }
+
+    private void processUnassignEdge(TbContext ctx, TbMsg msg) {
+        ctx.getEdgeService().unassignEdgeFromCustomer(ctx.getTenantId(), new EdgeId(msg.getOriginator().getId()));
     }
 }

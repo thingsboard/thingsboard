@@ -40,9 +40,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmData;
-import org.thingsboard.server.common.data.query.AlarmDataPageLink;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
-import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
@@ -103,6 +101,11 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     @Override
     public AlarmOperationResult createOrUpdateAlarm(Alarm alarm) {
+        return createOrUpdateAlarm(alarm, true);
+    }
+
+    @Override
+    public AlarmOperationResult createOrUpdateAlarm(Alarm alarm, boolean alarmCreationEnabled) {
         alarmDataValidator.validate(alarm, Alarm::getTenantId);
         try {
             if (alarm.getStartTs() == 0L) {
@@ -111,9 +114,13 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             if (alarm.getEndTs() == 0L) {
                 alarm.setEndTs(alarm.getStartTs());
             }
+            alarm.setCustomerId(entityService.fetchEntityCustomerId(alarm.getTenantId(), alarm.getOriginator()));
             if (alarm.getId() == null) {
                 Alarm existing = alarmDao.findLatestByOriginatorAndType(alarm.getTenantId(), alarm.getOriginator(), alarm.getType()).get();
                 if (existing == null || existing.getStatus().isCleared()) {
+                    if (!alarmCreationEnabled) {
+                        throw new IllegalStateException("Alarm creation is disabled");
+                    }
                     return createAlarm(alarm);
                 } else {
                     return updateAlarm(existing, alarm);
@@ -159,7 +166,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         log.debug("New Alarm : {}", alarm);
         Alarm saved = alarmDao.save(alarm.getTenantId(), alarm);
         List<EntityId> propagatedEntitiesList = createAlarmRelations(saved);
-        return new AlarmOperationResult(saved, true, propagatedEntitiesList);
+        return new AlarmOperationResult(saved, true, true, propagatedEntitiesList);
     }
 
     private List<EntityId> createAlarmRelations(Alarm alarm) throws InterruptedException, ExecutionException {
@@ -293,23 +300,36 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     public ListenableFuture<PageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query) {
         PageData<AlarmInfo> alarms = alarmDao.findAlarms(tenantId, query);
         if (query.getFetchOriginator() != null && query.getFetchOriginator().booleanValue()) {
-            List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(alarms.getData().size());
-            for (AlarmInfo alarmInfo : alarms.getData()) {
-                alarmFutures.add(Futures.transform(
-                        entityService.fetchEntityNameAsync(tenantId, alarmInfo.getOriginator()), originatorName -> {
-                            if (originatorName == null) {
-                                originatorName = "Deleted";
-                            }
-                            alarmInfo.setOriginatorName(originatorName);
-                            return alarmInfo;
-                        }, MoreExecutors.directExecutor()
-                ));
-            }
-            return Futures.transform(Futures.successfulAsList(alarmFutures),
-                    alarmInfos -> new PageData<>(alarmInfos, alarms.getTotalPages(), alarms.getTotalElements(),
-                            alarms.hasNext()), MoreExecutors.directExecutor());
+            return fetchAlarmsOriginators(tenantId, alarms);
         }
         return Futures.immediateFuture(alarms);
+    }
+
+    @Override
+    public ListenableFuture<PageData<AlarmInfo>> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query) {
+        PageData<AlarmInfo> alarms = alarmDao.findCustomerAlarms(tenantId, customerId, query);
+        if (query.getFetchOriginator() != null && query.getFetchOriginator().booleanValue()) {
+            return fetchAlarmsOriginators(tenantId, alarms);
+        }
+        return Futures.immediateFuture(alarms);
+    }
+
+    private ListenableFuture<PageData<AlarmInfo>> fetchAlarmsOriginators(TenantId tenantId, PageData<AlarmInfo> alarms) {
+        List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(alarms.getData().size());
+        for (AlarmInfo alarmInfo : alarms.getData()) {
+            alarmFutures.add(Futures.transform(
+                    entityService.fetchEntityNameAsync(tenantId, alarmInfo.getOriginator()), originatorName -> {
+                        if (originatorName == null) {
+                            originatorName = "Deleted";
+                        }
+                        alarmInfo.setOriginatorName(originatorName);
+                        return alarmInfo;
+                    }, MoreExecutors.directExecutor()
+            ));
+        }
+        return Futures.transform(Futures.successfulAsList(alarmFutures),
+                alarmInfos -> new PageData<>(alarmInfos, alarms.getTotalPages(), alarms.getTotalElements(),
+                        alarms.hasNext()), MoreExecutors.directExecutor());
     }
 
     @Override
@@ -325,16 +345,6 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         Set<AlarmSeverity> alarmSeverities = alarmDao.findAlarmSeverities(tenantId, entityId, statusList);
 
         return alarmSeverities.stream().min(AlarmSeverity::compareTo).orElse(null);
-    }
-
-    private void deleteRelation(TenantId tenantId, EntityRelation alarmRelation) {
-        log.debug("Deleting Alarm relation: {}", alarmRelation);
-        relationService.deleteRelation(tenantId, alarmRelation);
-    }
-
-    private void createRelation(TenantId tenantId, EntityRelation alarmRelation) {
-        log.debug("Creating Alarm relation: {}", alarmRelation);
-        relationService.saveRelation(tenantId, alarmRelation);
     }
 
     private Alarm merge(Alarm existing, Alarm alarm) {
@@ -353,6 +363,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         existing.setStatus(alarm.getStatus());
         existing.setSeverity(alarm.getSeverity());
         existing.setDetails(alarm.getDetails());
+        existing.setCustomerId(alarm.getCustomerId());
         existing.setPropagate(existing.isPropagate() || alarm.isPropagate());
         List<String> existingPropagateRelationTypes = existing.getPropagateRelationTypes();
         List<String> newRelationTypes = alarm.getPropagateRelationTypes();

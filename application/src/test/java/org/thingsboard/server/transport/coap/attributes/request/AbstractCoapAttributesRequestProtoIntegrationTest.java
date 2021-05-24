@@ -79,7 +79,7 @@ public abstract class AbstractCoapAttributesRequestProtoIntegrationTest extends 
     @Test
     public void testRequestAttributesValuesFromTheServer() throws Exception {
         super.processBeforeTest("Test Request attribute values from the server proto", CoapDeviceType.DEFAULT,
-                TransportPayloadType.PROTOBUF, null, ATTRIBUTES_SCHEMA_STR, DeviceProfileProvisionType.DISABLED, null, null);
+                TransportPayloadType.PROTOBUF, null, ATTRIBUTES_SCHEMA_STR, null, null, null, null, DeviceProfileProvisionType.DISABLED);
         processTestRequestAttributesValuesFromTheServer();
     }
 

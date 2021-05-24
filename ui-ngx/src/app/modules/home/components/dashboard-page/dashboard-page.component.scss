@@ -18,6 +18,7 @@
 $toolbar-height: 50px !default;
 $fullscreen-toolbar-height: 64px !default;
 $mobile-toolbar-height: 84px !default;
+$mobile-app-toolbar-height: 40px !default;
 
 tb-dashboard-page {
   display: flex;
@@ -53,6 +54,11 @@ div.tb-dashboard-page {
     left: 0;
     z-index: 13;
     pointer-events: none;
+
+    .dashboard_logo{
+      height: 75%;
+      margin-right: 16px;
+    }
 
     &.tb-dashboard-toolbar-opened {
       right: 0;
@@ -92,6 +98,14 @@ div.tb-dashboard-page {
 
       &.tb-dashboard-toolbar-animated {
         transition: margin-top .3s cubic-bezier(.55, 0, .55, .2) .2s;
+      }
+    }
+  }
+
+  &.mobile-app {
+    .tb-dashboard-container {
+      &.tb-dashboard-toolbar-opened {
+        margin-top: $mobile-app-toolbar-height;
       }
     }
   }

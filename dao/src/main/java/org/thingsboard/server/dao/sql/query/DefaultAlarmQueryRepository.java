@@ -17,12 +17,8 @@ package org.thingsboard.server.dao.sql.query;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
@@ -40,8 +36,6 @@ import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.dao.model.ModelConstants;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -107,6 +101,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " a.start_ts as start_ts," +
             " a.status as status, " +
             " a.tenant_id as tenant_id, " +
+            " a.customer_id as customer_id, " +
             " a.propagate_relation_types as propagate_relation_types, " +
             " a.type as type," + SELECT_ORIGINATOR_NAME + ", ";
 
@@ -134,6 +129,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             StringBuilder fromPart = new StringBuilder(" from alarm a ");
             StringBuilder wherePart = new StringBuilder(" where ");
             StringBuilder sortPart = new StringBuilder(" order by ");
+            StringBuilder joinPart = new StringBuilder();
             boolean addAnd = false;
             if (pageLink.isSearchPropagatedAlarms()) {
                 selectPart.append(" CASE WHEN r.from_id IS NULL THEN a.originator_id ELSE r.from_id END as entity_id ");
@@ -156,23 +152,23 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                     wherePart.append(" a.originator_id in (:entity_ids)");
                 }
             } else {
-                fromPart.append(" inner join (select * from (VALUES");
+                joinPart.append(" inner join (select * from (VALUES");
                 int entityIdIdx = 0;
                 int lastEntityIdIdx = orderedEntityIds.size() - 1;
                 for (EntityId entityId : orderedEntityIds) {
-                    fromPart.append("(uuid('").append(entityId.getId().toString()).append("'), ").append(entityIdIdx).append(")");
+                    joinPart.append("(uuid('").append(entityId.getId().toString()).append("'), ").append(entityIdIdx).append(")");
                     if (entityIdIdx != lastEntityIdIdx) {
-                        fromPart.append(",");
+                        joinPart.append(",");
                     } else {
-                        fromPart.append(")");
+                        joinPart.append(")");
                     }
                     entityIdIdx++;
                 }
-                fromPart.append(" as e(id, priority)) e ");
+                joinPart.append(" as e(id, priority)) e ");
                 if (pageLink.isSearchPropagatedAlarms()) {
-                    fromPart.append("on (r.from_id IS NULL and a.originator_id = e.id) or (r.from_id IS NOT NULL and r.from_id = e.id)");
+                    joinPart.append("on (r.from_id IS NULL and a.originator_id = e.id) or (r.from_id IS NOT NULL and r.from_id = e.id)");
                 } else {
-                    fromPart.append("on a.originator_id = e.id");
+                    joinPart.append("on a.originator_id = e.id");
                 }
                 sortPart.append("e.priority");
             }
@@ -226,9 +222,12 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             }
 
             String textSearchQuery = buildTextSearchQuery(ctx, query.getAlarmFields(), pageLink.getTextSearch());
-            String mainQuery = selectPart.toString() + fromPart.toString() + wherePart.toString();
+            String mainQuery;
             if (!textSearchQuery.isEmpty()) {
-                mainQuery = String.format("select * from (%s) a WHERE %s", mainQuery, textSearchQuery);
+                mainQuery = selectPart.toString() + fromPart.toString() + wherePart.toString();
+                mainQuery = String.format("select * from (%s) a %s WHERE %s", mainQuery, joinPart, textSearchQuery);
+            } else {
+                mainQuery = selectPart.toString() + fromPart.toString() + joinPart.toString() + wherePart.toString();
             }
             String countQuery = String.format("select count(*) from (%s) result", mainQuery);
             long queryTs = System.currentTimeMillis();

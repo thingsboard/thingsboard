@@ -53,6 +53,7 @@
       <tb-entity-autocomplete required
                               [excludeEntityIds]="[ruleChainId]"
                               [entityType]="entityType.RULE_CHAIN"
+                              [entitySubtype]="ruleChainType"
                               formControlName="targetRuleChainId">
       </tb-entity-autocomplete>
       <div formGroupName="additionalInfo" fxLayout="column">

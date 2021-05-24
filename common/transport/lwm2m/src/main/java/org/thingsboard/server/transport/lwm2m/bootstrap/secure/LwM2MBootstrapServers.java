@@ -23,5 +23,5 @@ public class LwM2MBootstrapServers {
     private Integer lifetime = 300;
     private Integer defaultMinPeriod = 1;
     private boolean notifIfDisabled = true;
-    private String binding = "U";
+    private String binding = "UQ";
 }

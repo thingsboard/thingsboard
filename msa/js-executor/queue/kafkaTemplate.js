@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const {logLevel, Kafka} = require('kafkajs');
+const {logLevel, Kafka, CompressionTypes} = require('kafkajs');
 
 const config = require('config'),
     JsInvokeMessageProcessor = require('../api/jsInvokeMessageProcessor'),
     logger = require('../config/logger')._logger('kafkaTemplate'),
     KafkaJsWinstonLogCreator = require('../config/logger').KafkaJsWinstonLogCreator;
-const replicationFactor = config.get('kafka.replication_factor');
+const replicationFactor = Number(config.get('kafka.replication_factor'));
 const topicProperties = config.get('kafka.topic_properties');
+const kafkaClientId = config.get('kafka.client_id');
+const acks = Number(config.get('kafka.acks'));
+const requestTimeout = Number(config.get('kafka.requestTimeout'));
+const compressionType = (config.get('kafka.requestTimeout') === "gzip") ? CompressionTypes.GZIP : CompressionTypes.None;
 
 let kafkaClient;
 let kafkaAdmin;
@@ -34,6 +38,8 @@ function KafkaProducer() {
         return producer.send(
             {
                 topic: responseTopic,
+                acks: acks,
+                compression: compressionType,
                 messages: [
                     {
                         key: scriptId,
@@ -61,6 +67,14 @@ function KafkaProducer() {
                 logLevel: logLevel.INFO,
                 logCreator: KafkaJsWinstonLogCreator
         };
+
+        if (kafkaClientId) {
+            kafkaConfig['clientId'] = kafkaClientId;
+        } else {
+            logger.warn('KAFKA_CLIENT_ID is undefined. Consider to define the env variable KAFKA_CLIENT_ID');
+        }
+
+        kafkaConfig['requestTimeout'] = requestTimeout;
 
         if (useConfluent) {
             kafkaConfig['sasl'] = {
@@ -107,6 +121,7 @@ function KafkaProducer() {
 
         logger.info('Started ThingsBoard JavaScript Executor Microservice.');
         await consumer.run({
+            //partitionsConsumedConcurrently: 1, // Default: 1
             eachMessage: async ({topic, partition, message}) => {
                 let headers = message.headers;
                 let key = message.key;

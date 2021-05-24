@@ -50,6 +50,9 @@ services:
   tb-mqtt-transport2:
     volumes:
       - tb-mqtt-transport-log-volume:/var/log/tb-mqtt-transport
+  tb-snmp-transport:
+    volumes:
+      - tb-snmp-transport-log-volume:/var/log/tb-snmp-transport
 
 volumes:
   postgres-db-volume:
@@ -70,3 +73,6 @@ volumes:
   tb-mqtt-transport-log-volume:
     external: true
     name: ${TB_MQTT_TRANSPORT_LOG_VOLUME}
+  tb-snmp-transport-log-volume:
+    external: true
+    name: ${TB_SNMP_TRANSPORT_LOG_VOLUME}

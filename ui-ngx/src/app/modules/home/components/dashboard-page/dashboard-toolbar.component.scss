@@ -21,6 +21,42 @@ $mobile-toolbar-height: 80px !default;
 $half-mobile-toolbar-height: 40px !default;
 $mobile-toolbar-height-total: 84px !default;
 
+$mobile-app-toolbar-height: 40px !default;
+
+div.tb-dashboard-page.mobile-app {
+  tb-dashboard-toolbar {
+    mat-fab-toolbar {
+      .mat-fab-toolbar-wrapper {
+        height: $mobile-app-toolbar-height;
+        mat-toolbar {
+          height: $mobile-app-toolbar-height;
+          min-height: $mobile-app-toolbar-height;
+          .mat-toolbar-tools {
+            height: $mobile-app-toolbar-height;
+            min-height: $mobile-app-toolbar-height;
+          }
+          mat-fab-actions {
+            height: $mobile-app-toolbar-height;
+            max-height: $mobile-app-toolbar-height;
+            .mat-fab-action-item {
+              height: $mobile-app-toolbar-height;
+              .tb-dashboard-action-panels {
+                height: $mobile-app-toolbar-height;
+                .tb-dashboard-action-panel {
+                  height: $mobile-app-toolbar-height;
+                  > div {
+                    height: $mobile-app-toolbar-height;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 tb-dashboard-toolbar {
   mat-fab-toolbar {
     mat-fab-trigger {

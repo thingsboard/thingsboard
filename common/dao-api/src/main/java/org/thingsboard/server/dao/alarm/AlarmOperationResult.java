@@ -26,17 +26,21 @@ import java.util.List;
 public class AlarmOperationResult {
     private final Alarm alarm;
     private final boolean successful;
+    private final boolean created;
     private final List<EntityId> propagatedEntitiesList;
 
     public AlarmOperationResult(Alarm alarm, boolean successful) {
-        this.alarm = alarm;
-        this.successful = successful;
-        this.propagatedEntitiesList = Collections.emptyList();
+        this(alarm, successful, Collections.emptyList());
     }
 
     public AlarmOperationResult(Alarm alarm, boolean successful, List<EntityId> propagatedEntitiesList) {
+        this(alarm, successful, false, propagatedEntitiesList);
+    }
+
+    public AlarmOperationResult(Alarm alarm, boolean successful, boolean created, List<EntityId> propagatedEntitiesList) {
         this.alarm = alarm;
         this.successful = successful;
+        this.created = created;
         this.propagatedEntitiesList = propagatedEntitiesList;
     }
 }

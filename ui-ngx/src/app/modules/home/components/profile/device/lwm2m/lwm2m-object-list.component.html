@@ -22,7 +22,7 @@
       [selectable]="!disabled"
       [removable]="!disabled"
       (removed)="remove(objectLwm2m)">
-      {{objectLwm2m.name}}
+      {{objectLwm2m.name}} <{{objectLwm2m.keyId}}>
       <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
     </mat-chip>
     <input matInput type="text" placeholder="{{ !disabled ? ('device-profile.lwm2m.object-list' | translate) : '' }}"

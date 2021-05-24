@@ -24,8 +24,10 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.Valid;
 
+import java.io.Serializable;
+
 @Data
-public class FilterPredicateValue<T> {
+public class FilterPredicateValue<T> implements Serializable {
 
     @Getter
     @NoXss

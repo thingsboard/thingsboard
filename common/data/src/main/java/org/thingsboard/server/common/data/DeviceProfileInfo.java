@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 
@@ -30,21 +31,29 @@ import java.util.UUID;
 @ToString(callSuper = true)
 public class DeviceProfileInfo extends EntityInfo {
 
+    private final String image;
+    private final DashboardId defaultDashboardId;
     private final DeviceProfileType type;
     private final DeviceTransportType transportType;
 
     @JsonCreator
     public DeviceProfileInfo(@JsonProperty("id") EntityId id,
                              @JsonProperty("name") String name,
+                             @JsonProperty("image") String image,
+                             @JsonProperty("defaultDashboardId") DashboardId defaultDashboardId,
                              @JsonProperty("type") DeviceProfileType type,
                              @JsonProperty("transportType") DeviceTransportType transportType) {
         super(id, name);
+        this.image = image;
+        this.defaultDashboardId = defaultDashboardId;
         this.type = type;
         this.transportType = transportType;
     }
 
-    public DeviceProfileInfo(UUID uuid, String name, DeviceProfileType type, DeviceTransportType transportType) {
+    public DeviceProfileInfo(UUID uuid, String name, String image, UUID defaultDashboardId, DeviceProfileType type, DeviceTransportType transportType) {
         super(EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE_PROFILE, uuid), name);
+        this.image = image;
+        this.defaultDashboardId = defaultDashboardId != null ? new DashboardId(defaultDashboardId) : null;
         this.type = type;
         this.transportType = transportType;
     }

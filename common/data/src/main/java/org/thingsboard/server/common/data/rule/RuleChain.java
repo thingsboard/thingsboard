@@ -38,10 +38,12 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
     private TenantId tenantId;
     @NoXss
     private String name;
+    private RuleChainType type;
     private RuleNodeId firstRuleNodeId;
     private boolean root;
     private boolean debugMode;
     private transient JsonNode configuration;
+
     @JsonIgnore
     private byte[] configurationBytes;
 
@@ -57,6 +59,7 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
         super(ruleChain);
         this.tenantId = ruleChain.getTenantId();
         this.name = ruleChain.getName();
+        this.type = ruleChain.getType();
         this.firstRuleNodeId = ruleChain.getFirstRuleNodeId();
         this.root = ruleChain.isRoot();
         this.setConfiguration(ruleChain.getConfiguration());
@@ -79,5 +82,4 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
     public void setConfiguration(JsonNode data) {
         setJson(data, json -> this.configuration = json, bytes -> this.configurationBytes = bytes);
     }
-
 }

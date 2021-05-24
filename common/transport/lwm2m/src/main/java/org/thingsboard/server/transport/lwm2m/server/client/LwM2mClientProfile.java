@@ -56,6 +56,13 @@ public class LwM2mClientProfile {
      */
     private JsonArray postObserveProfile;
 
+    /**
+     * "attributeLwm2m": {"/3_1.0": {"ver": "currentTimeTest11"},
+     *                    "/3_1.0/0": {"gt": 17},
+     *                    "/3_1.0/0/9": {"pmax": 45}, "/3_1.2": {ver": "3_1.2"}}
+     */
+    private JsonObject postAttributeLwm2mProfile;
+
     public LwM2mClientProfile clone() {
         LwM2mClientProfile lwM2mClientProfile = new LwM2mClientProfile();
         lwM2mClientProfile.postClientLwM2mSettings = this.deepCopy(this.postClientLwM2mSettings, JsonObject.class);
@@ -63,6 +70,7 @@ public class LwM2mClientProfile {
         lwM2mClientProfile.postAttributeProfile = this.deepCopy(this.postAttributeProfile, JsonArray.class);
         lwM2mClientProfile.postTelemetryProfile = this.deepCopy(this.postTelemetryProfile, JsonArray.class);
         lwM2mClientProfile.postObserveProfile = this.deepCopy(this.postObserveProfile, JsonArray.class);
+        lwM2mClientProfile.postAttributeLwm2mProfile = this.deepCopy(this.postAttributeLwm2mProfile, JsonObject.class);
         return lwM2mClientProfile;
     }
 

@@ -74,3 +74,8 @@ services:
       - queue-rabbitmq.env
     depends_on:
       - zookeeper
+  tb-snmp-transport:
+    env_file:
+      - queue-rabbitmq.env
+    depends_on:
+      - zookeeper

@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.ContactBased;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -113,6 +114,18 @@ public class TbGetCustomerDetailsNode extends TbAbstractGetEntityDetailsNode<TbG
                             return ctx.getCustomerService().findCustomerByIdAsync(ctx.getTenantId(), user.getCustomerId());
                         } else {
                             throw new RuntimeException("User with name '" + user.getName() + "' is not assigned to Customer.");
+                        }
+                    } else {
+                        return Futures.immediateFuture(null);
+                    }
+                }, MoreExecutors.directExecutor());
+            case EDGE:
+                return Futures.transformAsync(ctx.getEdgeService().findEdgeByIdAsync(ctx.getTenantId(), new EdgeId(msg.getOriginator().getId())), edge -> {
+                    if (edge != null) {
+                        if (!edge.getCustomerId().isNullUid()) {
+                            return ctx.getCustomerService().findCustomerByIdAsync(ctx.getTenantId(), edge.getCustomerId());
+                        } else {
+                            throw new RuntimeException("Edge with name '" + edge.getName() + "' is not assigned to Customer.");
                         }
                     } else {
                         return Futures.immediateFuture(null);

@@ -61,6 +61,18 @@ function additionalComposeQueueArgs() {
     echo $ADDITIONAL_COMPOSE_QUEUE_ARGS
 }
 
+function additionalComposeMonitoringArgs() {
+    source .env
+
+    if [ "$MONITORING_ENABLED" = true ]
+    then
+      ADDITIONAL_COMPOSE_MONITORING_ARGS="-f docker-compose.prometheus-grafana.yml"
+      echo $ADDITIONAL_COMPOSE_MONITORING_ARGS
+    else
+      echo ""
+    fi
+}
+
 function additionalStartupServices() {
     source .env
     ADDITIONAL_STARTUP_SERVICES=""

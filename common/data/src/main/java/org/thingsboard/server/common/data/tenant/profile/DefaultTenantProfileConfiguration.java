@@ -15,10 +15,16 @@
  */
 package org.thingsboard.server.common.data.tenant.profile;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.TenantProfileType;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Data
 public class DefaultTenantProfileConfiguration implements TenantProfileConfiguration {
 
@@ -44,6 +50,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private int maxRuleNodeExecutionsPerMessage;
     private long maxEmails;
     private long maxSms;
+    private long maxCreatedAlarms;
 
     private int defaultStorageTtlDays;
 
@@ -66,6 +73,8 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
                 return maxEmails;
             case SMS_EXEC_COUNT:
                 return maxSms;
+            case CREATED_ALARMS_COUNT:
+                return maxCreatedAlarms;
         }
         return 0L;
     }

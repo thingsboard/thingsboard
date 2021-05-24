@@ -139,6 +139,11 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    if (this.disabled) {
+      this.selectDashboardFormGroup.disable({emitEvent: false});
+    } else {
+      this.selectDashboardFormGroup.enable({emitEvent: false});
+    }
   }
 
   writeValue(value: DashboardInfo | string | null): void {

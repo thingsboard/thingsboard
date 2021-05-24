@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -23,16 +24,22 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
+import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
 public class QueueController extends BaseController {
+
+    @Autowired(required = false)
+    private TbQueueRuleEngineSettings ruleEngineSettings;
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/queues", params = {"serviceType"}, method = RequestMethod.GET)
@@ -43,7 +50,12 @@ public class QueueController extends BaseController {
             ServiceType type = ServiceType.valueOf(serviceType);
             switch (type) {
                 case TB_RULE_ENGINE:
-                    return Arrays.asList("Main", "HighPriority", "SequentialByOriginator");
+                    if (ruleEngineSettings == null) {
+                        return Arrays.asList("Main", "HighPriority", "SequentialByOriginator");
+                    }
+                    return ruleEngineSettings.getQueues().stream()
+                            .map(TbRuleEngineQueueConfiguration::getName)
+                            .collect(Collectors.toList());
                 default:
                     return Collections.emptyList();
             }

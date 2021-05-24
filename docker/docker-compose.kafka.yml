@@ -85,3 +85,8 @@ services:
       - queue-kafka.env
     depends_on:
       - kafka
+  tb-snmp-transport:
+    env_file:
+      - queue-kafka.env
+    depends_on:
+      - kafka

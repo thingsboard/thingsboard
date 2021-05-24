@@ -28,6 +28,7 @@ import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { map, tap } from 'rxjs/operators';
+import { MobileService } from '@core/services/mobile.service';
 
 @Component({
   selector: 'tb-entity-state-controller',
@@ -44,6 +45,7 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
               protected statesControllerService: StatesControllerService,
               private utils: UtilsService,
               private entityService: EntityService,
+              private mobileService: MobileService,
               private dashboardUtils: DashboardUtilsService) {
     super(router, route, ngZone, statesControllerService);
   }
@@ -270,6 +272,7 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
 
   private gotoState(stateId: string, update: boolean, openRightLayout?: boolean) {
     this.dashboardCtrl.openDashboardState(stateId, openRightLayout);
+    this.mobileService.handleDashboardStateName(this.getStateName(this.stateObject.length - 1));
     if (update) {
       this.updateLocation();
     }

@@ -16,21 +16,20 @@
 
 import { AuthUser, User } from '@shared/models/user.model';
 
-export interface AuthPayload {
-  authUser: AuthUser;
-  userDetails: User;
+export interface SysParamsState {
   userTokenAccessEnabled: boolean;
   allowedDashboardIds: string[];
+  edgesSupportEnabled: boolean;
+}
+
+export interface AuthPayload extends SysParamsState {
+  authUser: AuthUser;
+  userDetails: User;
   forceFullscreen: boolean;
 }
 
-export interface AuthState {
+export interface AuthState extends AuthPayload {
   isAuthenticated: boolean;
   isUserLoaded: boolean;
-  authUser: AuthUser;
-  userDetails: User;
-  userTokenAccessEnabled: boolean;
-  allowedDashboardIds: string[];
-  forceFullscreen: boolean;
   lastPublicDashboardId: string;
 }

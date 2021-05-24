@@ -1329,7 +1329,6 @@
     "body": "Vsebina",
     "method": "Metoda",
     "type": "Vrsta",
-    "entity": "Entiteta",
     "message-id": "ID sporočila",
     "message-type": "Vrsta sporočila",
     "data-type": "Vrsta podatkov",
@@ -1341,7 +1340,9 @@
     "success": "Uspeh",
     "failed": "Ni uspelo",
     "messages-processed": "Obdelana sporočila",
-    "errors-occurred": "Prišlo je do napak"
+    "errors-occurred": "Prišlo je do napak",
+    "all-events": "Vse",
+    "entity-type": "Vrsta entitete"
   },
   "extension": {
     "extensions": "Razširitve",

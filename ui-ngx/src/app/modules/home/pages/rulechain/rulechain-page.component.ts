@@ -48,7 +48,7 @@ import {
   RuleChainConnectionInfo,
   RuleChainImport,
   RuleChainMetaData,
-  ruleChainNodeComponent
+  ruleChainNodeComponent, RuleChainType
 } from '@shared/models/rule-chain.models';
 import { FcItemInfo, FlowchartConstants, NgxFlowchartComponent, UserCallbacks } from 'ngx-flowchart/dist/ngx-flowchart';
 import {
@@ -118,6 +118,8 @@ export class RuleChainPageComponent extends PageComponent
   isImport: boolean;
   isDirtyValue: boolean;
   isInvalid = false;
+
+  ruleChainType: RuleChainType;
 
   errorTooltips: {[nodeId: string]: JQueryTooltipster.ITooltipsterInstance} = {};
   isFullscreen = false;
@@ -288,6 +290,7 @@ export class RuleChainPageComponent extends PageComponent
   private init() {
     this.initHotKeys();
     this.isImport = this.route.snapshot.data.import;
+    this.ruleChainType = this.route.snapshot.data.ruleChainType;
     if (this.isImport) {
       const ruleChainImport: RuleChainImport = this.itembuffer.getRuleChainImport();
       this.ruleChain = ruleChainImport.ruleChain;
@@ -510,7 +513,7 @@ export class RuleChainPageComponent extends PageComponent
     );
     const nodes: FcRuleNode[] = [];
     this.ruleChainMetaData.nodes.forEach((ruleNode) => {
-      const component = this.ruleChainService.getRuleNodeComponentByClazz(ruleNode.type);
+      const component = this.ruleChainService.getRuleNodeComponentByClazz(this.ruleChainType, ruleNode.type);
       const descriptor = ruleNodeTypeDescriptors.get(component.type);
       let icon = descriptor.icon;
       let iconUrl = null;
@@ -533,7 +536,8 @@ export class RuleChainPageComponent extends PageComponent
         nodeClass: descriptor.nodeClass,
         icon,
         iconUrl,
-        connectors: []
+        connectors: [],
+        ruleChainType: this.ruleChainType
       };
       if (component.configurationDescriptor.nodeDefinition.inEnabled) {
         node.connectors.push(
@@ -622,7 +626,8 @@ export class RuleChainPageComponent extends PageComponent
                   type: FlowchartConstants.leftConnectorType,
                   id: (this.nextConnectorID++) + ''
                 }
-              ]
+              ],
+              ruleChainType: this.ruleChainType
             };
             ruleChainNodesMap[ruleChainConnection.additionalInfo.ruleChainNodeId] = ruleChainNode;
             this.ruleChainModel.nodes.push(ruleChainNode);
@@ -1281,7 +1286,11 @@ export class RuleChainPageComponent extends PageComponent
         if (this.isImport) {
           this.isDirtyValue = false;
           this.isImport = false;
-          this.router.navigateByUrl(`ruleChains/${this.ruleChain.id.id}`);
+          if (this.ruleChainType !== RuleChainType.EDGE) {
+            this.router.navigateByUrl(`ruleChains/${this.ruleChain.id.id}`);
+          } else {
+            this.router.navigateByUrl(`edges/ruleChains/${this.ruleChain.id.id}`);
+          }
         } else {
           this.createRuleChainModel();
         }
@@ -1297,13 +1306,15 @@ export class RuleChainPageComponent extends PageComponent
     ruleNode.configuration = deepClone(ruleNode.component.configurationDescriptor.nodeDefinition.defaultConfiguration);
     const ruleChainId = this.ruleChain.id ? this.ruleChain.id.id : null;
     this.enableHotKeys = false;
+    const ruleChainType = this.ruleChainType;
     this.dialog.open<AddRuleNodeDialogComponent, AddRuleNodeDialogData,
       FcRuleNode>(AddRuleNodeDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         ruleNode,
-        ruleChainId
+        ruleChainId,
+        ruleChainType
       }
     }).afterClosed().subscribe(
       (addedRuleNode) => {
@@ -1502,6 +1513,7 @@ export class AddRuleNodeLinkDialogComponent extends DialogComponent<AddRuleNodeL
 export interface AddRuleNodeDialogData {
   ruleNode: FcRuleNode;
   ruleChainId: string;
+  ruleChainType: RuleChainType;
 }
 
 @Component({
@@ -1517,6 +1529,7 @@ export class AddRuleNodeDialogComponent extends DialogComponent<AddRuleNodeDialo
 
   ruleNode: FcRuleNode;
   ruleChainId: string;
+  ruleChainType: RuleChainType;
 
   submitted = false;
 
@@ -1529,6 +1542,7 @@ export class AddRuleNodeDialogComponent extends DialogComponent<AddRuleNodeDialo
 
     this.ruleNode = this.data.ruleNode;
     this.ruleChainId = this.data.ruleChainId;
+    this.ruleChainType = this.data.ruleChainType;
   }
 
   ngOnInit(): void {

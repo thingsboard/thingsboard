@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
 
+import java.io.Serializable;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -29,11 +31,14 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = DefaultDeviceTransportConfiguration.class, name = "DEFAULT"),
         @JsonSubTypes.Type(value = MqttDeviceTransportConfiguration.class, name = "MQTT"),
+        @JsonSubTypes.Type(value = CoapDeviceTransportConfiguration.class, name = "COAP"),
         @JsonSubTypes.Type(value = Lwm2mDeviceTransportConfiguration.class, name = "LWM2M"),
-        @JsonSubTypes.Type(value = CoapDeviceTransportConfiguration.class, name = "COAP")})
-public interface DeviceTransportConfiguration {
-
+        @JsonSubTypes.Type(value = SnmpDeviceTransportConfiguration.class, name = "SNMP")})
+public interface DeviceTransportConfiguration extends Serializable {
     @JsonIgnore
     DeviceTransportType getType();
+
+    default void validate() {
+    }
 
 }

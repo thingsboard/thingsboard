@@ -46,7 +46,7 @@ export interface EntityAliasesDialogData {
   widgets: Array<Widget>;
   isSingleEntityAlias?: boolean;
   isSingleWidget?: boolean;
-  allowedEntityTypes?: Array<AliasEntityType>;
+  allowedEntityTypes?: Array<EntityType | AliasEntityType>;
   disableAdd?: boolean;
   singleEntityAlias?: EntityAlias;
   customTitle?: string;

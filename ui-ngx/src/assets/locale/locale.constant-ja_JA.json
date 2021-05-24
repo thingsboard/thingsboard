@@ -768,7 +768,6 @@
 		"body": "体",
 		"method": "方法",
 		"type": "タイプ",
-		"entity": "エンティティ",
 		"message-id": "メッセージID",
 		"message-type": "メッセージタイプ",
 		"data-type": "データ・タイプ",
@@ -780,7 +779,9 @@
 		"success": "成功",
 		"failed": "失敗",
 		"messages-processed": "処理されたメッセージ",
-		"errors-occurred": "エラーが発生しました"
+		"errors-occurred": "エラーが発生しました",
+    "all-events": "すべて",
+    "entity-type": "エンティティタイプ"
 	},
 	"extension": {
 		"extensions": "拡張機能",

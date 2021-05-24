@@ -22,7 +22,12 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -67,6 +72,9 @@ public class TbAssignToCustomerNode extends TbAbstractCustomerActionNode<TbAssig
             case ENTITY_VIEW:
                 processAssignEntityView(ctx, msg, customerId);
                 break;
+            case EDGE:
+                processAssignEdge(ctx, msg, customerId);
+                break;
             case DASHBOARD:
                 processAssignDashboard(ctx, msg, customerId);
                 break;
@@ -87,6 +95,10 @@ public class TbAssignToCustomerNode extends TbAbstractCustomerActionNode<TbAssig
 
     private void processAssignEntityView(TbContext ctx, TbMsg msg, CustomerId customerId) {
         ctx.getEntityViewService().assignEntityViewToCustomer(ctx.getTenantId(), new EntityViewId(msg.getOriginator().getId()), customerId);
+    }
+
+    private void processAssignEdge(TbContext ctx, TbMsg msg, CustomerId customerId) {
+        ctx.getEdgeService().assignEdgeToCustomer(ctx.getTenantId(), new EdgeId(msg.getOriginator().getId()), customerId);
     }
 
     private void processAssignDashboard(TbContext ctx, TbMsg msg, CustomerId customerId) {

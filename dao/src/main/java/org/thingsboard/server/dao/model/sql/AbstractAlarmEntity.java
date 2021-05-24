@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseEntity;
@@ -44,6 +45,7 @@ import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ACK_TS_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_CLEAR_TS_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_END_TS_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_TYPE_PROPERTY;
@@ -63,6 +65,9 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
 
     @Column(name = ALARM_TENANT_ID_PROPERTY)
     private UUID tenantId;
+
+    @Column(name = ALARM_CUSTOMER_ID_PROPERTY)
+    private UUID customerId;
 
     @Column(name = ALARM_ORIGINATOR_ID_PROPERTY)
     private UUID originatorId;
@@ -115,6 +120,9 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
         if (alarm.getTenantId() != null) {
             this.tenantId = alarm.getTenantId().getId();
         }
+        if (alarm.getCustomerId() != null) {
+            this.customerId = alarm.getCustomerId().getId();
+        }
         this.type = alarm.getType();
         this.originatorId = alarm.getOriginator().getId();
         this.originatorType = alarm.getOriginator().getEntityType();
@@ -138,6 +146,7 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
         this.setId(alarmEntity.getId());
         this.setCreatedTime(alarmEntity.getCreatedTime());
         this.tenantId = alarmEntity.getTenantId();
+        this.customerId = alarmEntity.getCustomerId();
         this.type = alarmEntity.getType();
         this.originatorId = alarmEntity.getOriginatorId();
         this.originatorType = alarmEntity.getOriginatorType();
@@ -158,6 +167,9 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
         alarm.setCreatedTime(createdTime);
         if (tenantId != null) {
             alarm.setTenantId(new TenantId(tenantId));
+        }
+        if (customerId != null) {
+            alarm.setCustomerId(new CustomerId(customerId));
         }
         alarm.setOriginator(EntityIdFactory.getByTypeAndUuid(originatorType, originatorId));
         alarm.setType(type);

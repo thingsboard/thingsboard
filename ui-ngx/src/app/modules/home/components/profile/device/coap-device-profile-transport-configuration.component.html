@@ -61,6 +61,21 @@
                 {{ 'device-profile.attributes-proto-schema-required' | translate}}
               </mat-error>
             </mat-form-field>
+            <mat-form-field style="padding-bottom: 20px" fxFlex>
+              <mat-label translate>device-profile.rpc-request-proto-schema</mat-label>
+              <textarea matInput required formControlName="deviceRpcRequestProtoSchema" rows="5"></textarea>
+              <mat-error *ngIf="coapDeviceProfileTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceRpcRequestProtoSchema').hasError('required')">
+                {{ 'device-profile.rpc-request-proto-schema-required' | translate}}
+              </mat-error>
+              <mat-hint class="tb-hint" translate>device-profile.rpc-request-proto-schema-hint</mat-hint>
+            </mat-form-field>
+            <mat-form-field fxFlex>
+              <mat-label translate>device-profile.rpc-response-proto-schema</mat-label>
+              <textarea matInput required formControlName="deviceRpcResponseProtoSchema" rows="5"></textarea>
+              <mat-error *ngIf="coapDeviceProfileTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceRpcResponseProtoSchema').hasError('required')">
+                {{ 'device-profile.rpc-response-proto-schema-required' | translate}}
+              </mat-error>
+            </mat-form-field>
           </div>
         </div>
       </fieldset>

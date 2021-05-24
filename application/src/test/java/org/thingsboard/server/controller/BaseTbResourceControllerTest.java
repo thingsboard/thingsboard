@@ -32,7 +32,6 @@ import org.thingsboard.server.common.data.security.Authority;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -110,7 +109,7 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
         TbResource savedResource = save(resource);
 
         loginDifferentTenant();
-        doPostWithTypedResponse("/api/resource", Collections.singletonList(savedResource), new TypeReference<>(){}, status().isBadRequest());
+        doPostWithTypedResponse("/api/resource", savedResource, new TypeReference<>(){}, status().isForbidden());
         deleteDifferentTenant();
     }
 
@@ -148,18 +147,15 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
 
     @Test
     public void testFindTenantTbResources() throws Exception {
-        List<TbResource> resourcesToSave = new ArrayList<>();
+        List<TbResourceInfo> resources = new ArrayList<>();
         for (int i = 0; i < 173; i++) {
             TbResource resource = new TbResource();
             resource.setTitle("Resource" + i);
             resource.setResourceType(ResourceType.JKS);
             resource.setFileName(i + DEFAULT_FILE_NAME);
             resource.setData("Test Data");
-            resourcesToSave.add(resource);
+            resources.add(new TbResourceInfo(save(resource)));
         }
-
-        List<TbResourceInfo> resources =save(resourcesToSave).stream().map(TbResourceInfo::new).collect(Collectors.toList());
-
         List<TbResourceInfo> loadedResources = new ArrayList<>();
         PageLink pageLink = new PageLink(24);
         PageData<TbResourceInfo> pageData;
@@ -287,10 +283,6 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
     }
 
     private TbResource save(TbResource tbResource) throws Exception {
-        return save(Collections.singletonList(tbResource)).get(0);
-    }
-
-    private List<TbResource> save(List<TbResource> tbResources) throws Exception {
-        return doPostWithTypedResponse("/api/resource", tbResources, new TypeReference<>(){});
+        return doPostWithTypedResponse("/api/resource", tbResource, new TypeReference<>(){});
     }
 }

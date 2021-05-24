@@ -39,3 +39,11 @@ export function defaultHttpOptions(ignoreLoading: boolean = false,
     params: new InterceptorHttpParams(new InterceptorConfig(ignoreLoading, ignoreErrors, resendRequest))
   };
 }
+
+export function defaultHttpUploadOptions(ignoreLoading: boolean = false,
+                                         ignoreErrors: boolean = false,
+                                         resendRequest: boolean = false) {
+  return {
+    params: new InterceptorHttpParams(new InterceptorConfig(ignoreLoading, ignoreErrors, resendRequest))
+  };
+}

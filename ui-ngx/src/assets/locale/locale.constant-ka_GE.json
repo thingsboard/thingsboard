@@ -959,7 +959,6 @@
     "body": "სხეული",
     "method": "მეთოდი",
     "type": "ტიპი",
-    "entity": "ობიექტი",
     "message-id": "მესიჯის-ID",
     "message-type": "მესიჯის ტიპი",
     "data-type": "მონაცემთა ტიპი",
@@ -971,7 +970,9 @@
     "success": "წარმატება",
     "failed": "ვერ მოხერხდა",
     "messages-processed": "შეტყობინებების დამუშავება",
-    "errors-occurred": "შეცდომები მოხდა"
+    "errors-occurred": "შეცდომები მოხდა",
+    "all-events": "ყველა",
+    "entity-type": "ობიექტის ტიპი"
   },
   "extension": {
     "extensions": "დამატებითი აპი",

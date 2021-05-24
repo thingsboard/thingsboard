@@ -21,7 +21,6 @@ import { QuickTimeInterval, QuickTimeIntervalTranslationMap } from '@shared/mode
 @Component({
   selector: 'tb-quick-time-interval',
   templateUrl: './quick-time-interval.component.html',
-  styleUrls: ['./quick-time-interval.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

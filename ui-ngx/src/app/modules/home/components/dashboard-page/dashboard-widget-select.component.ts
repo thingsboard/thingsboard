@@ -77,6 +77,10 @@ export class DashboardWidgetSelectComponent implements OnInit {
     this.filterWidgetTypes$.next(widgetTypes);
   }
 
+  get filterWidgetTypes(): Array<widgetType> {
+    return this.filterWidgetTypes$.value;
+  }
+
   @Output()
   widgetSelected: EventEmitter<WidgetInfo> = new EventEmitter<WidgetInfo>();
 

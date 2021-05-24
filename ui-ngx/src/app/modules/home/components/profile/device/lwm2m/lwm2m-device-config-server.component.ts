@@ -27,14 +27,13 @@ import {
   SECURITY_CONFIG_MODE,
   SECURITY_CONFIG_MODE_NAMES,
   ServerSecurityConfig
-} from './profile-config.models';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
+} from './lwm2m-profile-config.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { WINDOW } from '@core/services/window.service';
 import { pairwise, startWith } from 'rxjs/operators';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 
+// @dynamic
 @Component({
   selector: 'tb-profile-lwm2m-device-config-server',
   templateUrl: './lwm2m-device-config-server.component.html',
@@ -73,8 +72,7 @@ export class Lwm2mDeviceConfigServerComponent implements ControlValueAccessor {
     this.requiredValue = coerceBooleanProperty(value);
   }
 
-  constructor(protected store: Store<AppState>,
-              public fb: FormBuilder,
+  constructor(public fb: FormBuilder,
               private deviceProfileService: DeviceProfileService,
               @Inject(WINDOW) private window: Window) {
     this.serverFormGroup = this.initServerGroup();

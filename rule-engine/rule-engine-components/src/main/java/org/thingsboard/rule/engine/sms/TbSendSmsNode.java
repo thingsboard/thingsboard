@@ -76,7 +76,7 @@ public class TbSendSmsNode implements TbNode {
         String message = TbNodeUtils.processPattern(this.config.getSmsMessageTemplate(), msg);
         String[] numbersToList = numbersTo.split(",");
         if (this.config.isUseSystemSmsSettings()) {
-            ctx.getSmsService().sendSms(ctx.getTenantId(), numbersToList, message);
+            ctx.getSmsService().sendSms(ctx.getTenantId(), msg.getCustomerId(), numbersToList, message);
         } else {
             for (String numberTo : numbersToList) {
                 this.smsSender.sendSms(numberTo, message);

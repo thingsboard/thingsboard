@@ -39,7 +39,7 @@
         <tb-postgres.docker.name>tb-postgres</tb-postgres.docker.name>
         <tb-cassandra.docker.name>tb-cassandra</tb-cassandra.docker.name>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
-        <pkg.upgradeVersion>2.4.2</pkg.upgradeVersion>
+        <pkg.upgradeVersion>3.3.0</pkg.upgradeVersion>
     </properties>
 
     <dependencies>

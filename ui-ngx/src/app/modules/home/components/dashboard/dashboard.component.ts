@@ -15,7 +15,7 @@
 ///
 
 import {
-  AfterViewInit,
+  AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef,
   Component,
   DoCheck,
   Input,
@@ -59,7 +59,8 @@ import { UtilsService } from '@core/services/utils.service';
 @Component({
   selector: 'tb-dashboard',
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss']
+  styleUrls: ['./dashboard.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardComponent extends PageComponent implements IDashboardComponent, DoCheck, OnInit, OnDestroy, AfterViewInit, OnChanges {
 
@@ -178,6 +179,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
               private breakpointObserver: BreakpointObserver,
               private differs: IterableDiffers,
               private kvDiffers: KeyValueDiffers,
+              private cd: ChangeDetectorRef,
               private ngZone: NgZone) {
     super(store);
     this.authUser = getCurrentAuthUser(store);
@@ -249,6 +251,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     let updateLayoutOpts = false;
     let updateEditingOpts = false;
     let updateWidgets = false;
+    let updateDashboardTimewindow = false;
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
@@ -261,13 +264,16 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
         } else if (['widgets', 'widgetLayouts'].includes(propName)) {
           updateWidgets = true;
         } else if (propName === 'dashboardTimewindow') {
-          this.dashboardTimewindowChangedSubject.next(this.dashboardTimewindow);
+          updateDashboardTimewindow = true;
         }
       }
     }
     if (updateWidgets) {
       this.updateWidgets();
+    } else if (updateDashboardTimewindow) {
+      this.dashboardTimewindowChangedSubject.next(this.dashboardTimewindow);
     }
+
     if (updateMobileOpts) {
       this.updateMobileOpts();
     }
@@ -526,6 +532,10 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   public notifyLayoutUpdated() {
     this.updateWidgetLayouts();
+  }
+
+  public detectChanges() {
+    this.cd.detectChanges();
   }
 
   private detectRowSize(isMobile: boolean, autofillHeight: boolean, parentHeight?: number): number | null {
