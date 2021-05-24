@@ -151,6 +151,10 @@ message AttributeUpdateNotificationMsg {
   repeated string sharedDeleted = 2;
 }
 
+message CurrentAttributeStateMsg {
+  repeated TsKvProto shared = 1;
+}
+
 message ValidateDeviceTokenRequestMsg {
   string token = 1;
 }
@@ -304,6 +308,8 @@ message ResourceDeleteMsg {
 
 message SessionCloseNotificationProto {
   string message = 1;
+  int64 sessionIdMSB = 2;
+  int64 sessionIdLSB = 3;
 }
 
 message SubscribeToAttributeUpdatesMsg {
@@ -688,6 +694,7 @@ message ToTransportMsg {
   ToTransportUpdateCredentialsProto toTransportUpdateCredentialsNotification = 11;
   ResourceUpdateMsg resourceUpdateMsg = 12;
   ResourceDeleteMsg resourceDeleteMsg = 13;
+  CurrentAttributeStateMsg currentAttributeStateMsg = 14;
 }
 
 message UsageStatsKVProto{

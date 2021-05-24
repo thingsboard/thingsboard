@@ -43,6 +43,8 @@ public interface CoapTransportAdaptor {
 
     Response convertToPublish(boolean isConfirmable, TransportProtos.AttributeUpdateNotificationMsg notificationMsg) throws AdaptorException;
 
+    Response convertToPublish(boolean isConfirmable, TransportProtos.CurrentAttributeStateMsg attributeStateMsg) throws AdaptorException;
+
     Response convertToPublish(boolean isConfirmable, TransportProtos.ToDeviceRpcRequestMsg rpcRequest, DynamicMessage.Builder rpcRequestDynamicMessageBuilder) throws AdaptorException;
 
     Response convertToPublish(TransportProtos.ToServerRpcResponseMsg msg) throws AdaptorException;

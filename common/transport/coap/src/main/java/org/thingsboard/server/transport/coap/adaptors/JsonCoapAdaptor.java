@@ -96,6 +96,11 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     }
 
     @Override
+    public Response convertToPublish(boolean isConfirmable, TransportProtos.CurrentAttributeStateMsg msg) throws AdaptorException {
+        return getObserveNotification(isConfirmable, JsonConverter.toJson(msg));
+    }
+
+    @Override
     public Response convertToPublish(boolean isConfirmable, TransportProtos.ToDeviceRpcRequestMsg msg, DynamicMessage.Builder rpcRequestDynamicMessageBuilder) throws AdaptorException {
         return getObserveNotification(isConfirmable, JsonConverter.toJson(msg, true));
     }

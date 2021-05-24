@@ -113,6 +113,11 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
     }
 
     @Override
+    public Response convertToPublish(boolean isConfirmable, TransportProtos.CurrentAttributeStateMsg msg) throws AdaptorException {
+        return getObserveNotification(isConfirmable, msg.toByteArray());
+    }
+
+    @Override
     public Response convertToPublish(boolean isConfirmable, TransportProtos.ToDeviceRpcRequestMsg rpcRequest, DynamicMessage.Builder rpcRequestDynamicMessageBuilder) throws AdaptorException {
         return getObserveNotification(isConfirmable, ProtoConverter.convertToRpcRequest(rpcRequest, rpcRequestDynamicMessageBuilder));
     }

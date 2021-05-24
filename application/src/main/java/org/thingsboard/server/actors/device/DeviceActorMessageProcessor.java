@@ -54,6 +54,7 @@ import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.common.msg.timeout.DeviceActorServerSideRpcTimeoutMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.CurrentAttributeStateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceSessionsCacheEntry;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
@@ -427,6 +428,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             sessionMD.setSubscribedToAttributes(true);
             log.debug("[{}] Registering attributes subscription for session [{}]", deviceId, sessionId);
             attributeSubscriptions.put(sessionId, sessionMD.getSessionInfo());
+            processCurrentAttributeStateMsg(sessionInfo);
             dumpSessions();
         }
     }
@@ -451,6 +453,30 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             sendPendingRequests(context, sessionId, sessionInfo);
             dumpSessions();
         }
+    }
+
+    private void processCurrentAttributeStateMsg(SessionInfoProto sessionInfo) {
+        Futures.addCallback(findAllAttributesByScope(DataConstants.SHARED_SCOPE), new FutureCallback<>() {
+
+            @Override
+            public void onSuccess(@Nullable List<AttributeKvEntry> result) {
+                if (!CollectionUtils.isEmpty(result)) {
+                    List<TsKvProto> shared = result
+                            .stream()
+                            .map(attributeKvEntry -> toTsKvProto(attributeKvEntry))
+                            .collect(Collectors.toList());
+                    CurrentAttributeStateMsg currentAttributeStateMsg = CurrentAttributeStateMsg.newBuilder()
+                            .addAllShared(shared).build();
+                    sendToTransport(currentAttributeStateMsg, sessionInfo);
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("Failed to get current attributes state: ", t);
+                sendToTransport(CurrentAttributeStateMsg.getDefaultInstance(), sessionInfo);
+            }
+        }, MoreExecutors.directExecutor());
     }
 
     private void processSessionStateMsgs(SessionInfoProto sessionInfo, SessionEventMsg msg) {
@@ -519,10 +545,16 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     private void notifyTransportAboutClosedSession(UUID sessionId, SessionInfoMetaData sessionMd) {
+        SessionCloseNotificationProto sessionCloseNotificationProto = SessionCloseNotificationProto
+                .newBuilder()
+                .setMessage("Session closed!")
+                .setSessionIdMSB(sessionId.getMostSignificantBits())
+                .setSessionIdLSB(sessionId.getLeastSignificantBits()).build();
         ToTransportMsg msg = ToTransportMsg.newBuilder()
                 .setSessionIdMSB(sessionId.getMostSignificantBits())
                 .setSessionIdLSB(sessionId.getLeastSignificantBits())
-                .setSessionCloseNotification(SessionCloseNotificationProto.getDefaultInstance()).build();
+                .setSessionCloseNotification(sessionCloseNotificationProto)
+                .build();
         systemContext.getTbCoreToTransportService().process(sessionMd.getSessionInfo().getNodeId(), msg);
     }
 
@@ -565,6 +597,14 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 .setSessionIdLSB(sessionId.getLeastSignificantBits())
                 .setAttributeUpdateNotification(notificationMsg).build();
         systemContext.getTbCoreToTransportService().process(nodeId, msg);
+    }
+
+    private void sendToTransport(CurrentAttributeStateMsg currentAttributeStateMsg, SessionInfoProto sessionInfo) {
+        ToTransportMsg msg = ToTransportMsg.newBuilder()
+                .setSessionIdMSB(sessionInfo.getSessionIdMSB())
+                .setSessionIdLSB(sessionInfo.getSessionIdLSB())
+                .setCurrentAttributeStateMsg(currentAttributeStateMsg).build();
+        systemContext.getTbCoreToTransportService().process(sessionInfo.getNodeId(), msg);
     }
 
     private void sendToTransport(ToDeviceRpcRequestMsg rpcMsg, UUID sessionId, String nodeId) {

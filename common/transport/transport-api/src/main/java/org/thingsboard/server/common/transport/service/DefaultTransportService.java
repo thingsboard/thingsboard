@@ -634,7 +634,12 @@ public class DefaultTransportService implements TransportService {
                 }
                 process(sessionInfo, getSessionEventMsg(TransportProtos.SessionEvent.CLOSED), null);
                 sessions.remove(uuid);
-                sessionMD.getListener().onRemoteSessionCloseCommand(TransportProtos.SessionCloseNotificationProto.getDefaultInstance());
+                TransportProtos.SessionCloseNotificationProto sessionCloseNotificationProto = TransportProtos.SessionCloseNotificationProto
+                        .newBuilder()
+                        .setMessage("Session closed!")
+                        .setSessionIdMSB(uuid.getMostSignificantBits())
+                        .setSessionIdLSB(uuid.getLeastSignificantBits()).build();
+                sessionMD.getListener().onRemoteSessionCloseCommand(sessionCloseNotificationProto);
             } else {
                 if (lastActivityTime > sessionMD.getLastReportedActivityTime()) {
                     final long lastActivityTimeFinal = lastActivityTime;
@@ -714,6 +719,9 @@ public class DefaultTransportService implements TransportService {
                 }
                 if (toSessionMsg.hasAttributeUpdateNotification()) {
                     listener.onAttributeUpdate(toSessionMsg.getAttributeUpdateNotification());
+                }
+                if (toSessionMsg.hasCurrentAttributeStateMsg()) {
+                    listener.onCurrentAttributeStateRequest(toSessionMsg.getCurrentAttributeStateMsg());
                 }
                 if (toSessionMsg.hasSessionCloseNotification()) {
                     listener.onRemoteSessionCloseCommand(toSessionMsg.getSessionCloseNotification());

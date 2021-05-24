@@ -56,12 +56,16 @@ public abstract class AbstractCoapTransportResource extends CoapResource {
 
     protected abstract void processHandlePost(CoapExchange exchange);
 
-    protected void reportActivity(TransportProtos.SessionInfoProto sessionInfo, boolean hasAttributeSubscription, boolean hasRpcSubscription) {
+    protected void reportSubscriptionInfo(TransportProtos.SessionInfoProto sessionInfo, boolean hasAttributeSubscription, boolean hasRpcSubscription) {
         transportContext.getTransportService().process(sessionInfo, TransportProtos.SubscriptionInfoProto.newBuilder()
                 .setAttributeSubscription(hasAttributeSubscription)
                 .setRpcSubscription(hasRpcSubscription)
                 .setLastActivityTime(System.currentTimeMillis())
                 .build(), TransportServiceCallback.EMPTY);
+    }
+
+    protected void reportActivity(TransportProtos.SessionInfoProto sessionInfo) {
+        transportService.reportActivity(sessionInfo);
     }
 
     protected static TransportProtos.SessionEventMsg getSessionEventMsg(TransportProtos.SessionEvent event) {
