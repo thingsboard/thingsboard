@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2020 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +31,12 @@ import io.netty.handler.codec.mqtt.MqttPublishVariableHeader;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.device.profile.MqttTopics;
-import org.thingsboard.server.common.data.firmware.FirmwareType;
 import org.thingsboard.server.common.data.TransportPayloadType;
+import org.thingsboard.server.common.data.firmware.FirmwareType;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionContext;
 
 import java.nio.charset.Charset;
@@ -48,7 +48,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_FIRMWARE_RESPONSES_TOPIC_FORMAT;
-
 
 /**
  * @author Andrew Shvayka

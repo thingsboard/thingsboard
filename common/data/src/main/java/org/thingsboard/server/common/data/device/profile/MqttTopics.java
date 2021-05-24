@@ -46,6 +46,7 @@ public class MqttTopics {
     private static final String DEVICE_ATTRIBUTES_REQUEST = ATTRIBUTES_REQUEST + "/";
 
     public static final String PAYLOAD_TYPE_TOPIC = "/payload";
+    public static final String PAYLOAD_TYPE_RESPONSE_TOPIC = PAYLOAD_TYPE_TOPIC + RESPONSE;
     // V1_JSON topics
 
     public static final String BASE_DEVICE_API_TOPIC = "v1/devices/me";

@@ -338,10 +338,14 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 getFirmwareCallback(ctx, mqttMsg, msgId, fwMatcher, FirmwareType.SOFTWARE);
             } else if (topicName.equals(MqttTopics.PAYLOAD_TYPE_TOPIC)) {
                 TransportPayloadType transportPayloadType = payloadAdaptor.convertToPayloadType(deviceSessionCtx, mqttMsg);
-                if (!deviceSessionCtx.getPayloadType().name().equals(transportPayloadType.name())) {
-                    deviceSessionCtx.setPayloadType(transportPayloadType);
-                    deviceSessionCtx.setProvisionPayloadType(transportPayloadType);
-                    log.info("[{}] Payload type was changed to [{}]", sessionId, transportPayloadType.name());
+                try {
+                    if (!deviceSessionCtx.getPayloadType().name().equals(transportPayloadType.name())) {
+                        deviceSessionCtx.setPayloadType(transportPayloadType);
+                        deviceSessionCtx.setProvisionPayloadType(transportPayloadType);
+                        log.info("[{}] Payload type was changed to [{}]", sessionId, transportPayloadType.name());
+                    }
+                } catch (Exception e) {
+                    log.warn("[{}]Failed to change payload type to [{}]", sessionId, transportPayloadType.name(), e);
                 }
                 ctx.writeAndFlush(createMqttPubAckMsg(msgId));
             } else {
