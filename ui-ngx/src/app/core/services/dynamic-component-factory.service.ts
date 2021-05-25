@@ -28,6 +28,7 @@ import {
 import { Observable, ReplaySubject } from 'rxjs';
 import { CommonModule } from '@angular/common';
 
+@Injectable()
 @NgModule()
 export abstract class DynamicComponentModule implements OnDestroy {
 
@@ -41,11 +42,9 @@ interface DynamicComponentModuleData {
   moduleType: Type<DynamicComponentModule>;
 }
 
-@Injectable(
-  {
+@Injectable({
     providedIn: 'root'
-  }
-)
+})
 export class DynamicComponentFactoryService {
 
   private dynamicComponentModulesMap = new Map<ComponentFactory<any>, DynamicComponentModuleData>();
