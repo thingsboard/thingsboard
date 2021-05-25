@@ -24,7 +24,6 @@ import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.californium.LeshanServerBuilder;
 import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
-import org.eclipse.leshan.server.californium.registration.InMemoryRegistrationStore;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.security.DefaultAuthorizer;
 import org.eclipse.leshan.server.security.EditableSecurityStore;
@@ -127,8 +126,8 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         builder.setEncoder(new DefaultLwM2mNodeEncoder(LwM2mValueConverterImpl.getInstance()));
 
         /* InMemoryRegistrationStore(ScheduledExecutorService schedExecutor, long cleanPeriodInSec) */
-        InMemoryRegistrationStore registrationStore = new InMemoryRegistrationStore(this.registrationStoreExecutor, this.config.getCleanPeriodInSec());
-        builder.setRegistrationStore(registrationStore);
+////        InMemoryRegistrationStore registrationStore = new InMemoryRegistrationStore(this.registrationStoreExecutor, this.config.getCleanPeriodInSec());
+//        builder.setRegistrationStore(registrationStore);
 
         /* Create CoAP Config */
         builder.setCoapConfig(getCoapConfig(config.getPort(), config.getSecurePort()));
