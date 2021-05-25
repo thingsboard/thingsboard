@@ -147,6 +147,7 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -1085,6 +1086,9 @@ public abstract class BaseController {
     protected List<EdgeId> findRelatedEdgeIds(TenantId tenantId, EntityId entityId) {
         if (!edgesEnabled) {
             return null;
+        }
+        if (EntityType.EDGE.equals(entityId.getEntityType())) {
+            return Collections.singletonList(new EdgeId(entityId.getId()));
         }
         List<EdgeId> result = new ArrayList<>();
         PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
