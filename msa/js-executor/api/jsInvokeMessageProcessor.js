@@ -34,10 +34,9 @@ const slowQueryLogBody = config.get('script.slow_query_log_body') === 'true';
 const {performance} = require('perf_hooks');
 
 function JsInvokeMessageProcessor(producer) {
-    console.log("Producer:", producer);
     this.producer = producer;
     this.executor = new JsExecutor(useSandbox);
-    this.scriptMap = {};
+    this.scriptMap = new Map();
     this.scriptIds = [];
     this.executedScriptsCounter = 0;
 }
@@ -157,12 +156,12 @@ JsInvokeMessageProcessor.prototype.processInvokeRequest = function(requestId, re
 JsInvokeMessageProcessor.prototype.processReleaseRequest = function(requestId, responseTopic, headers, releaseRequest) {
     var scriptId = getScriptId(releaseRequest);
     logger.debug('[%s] Processing release request, scriptId: [%s]', requestId, scriptId);
-    if (this.scriptMap[scriptId]) {
+    if (this.scriptMap.has(scriptId)) {
         var index = this.scriptIds.indexOf(scriptId);
         if (index > -1) {
             this.scriptIds.splice(index, 1);
         }
-        delete this.scriptMap[scriptId];
+        this.scriptMap.delete(scriptId);
     }
     var releaseResponse = createReleaseResponse(scriptId, true);
     logger.debug('[%s] Sending success release response, scriptId: [%s]', requestId, scriptId);
@@ -189,8 +188,8 @@ JsInvokeMessageProcessor.prototype.sendResponse = function (requestId, responseT
 JsInvokeMessageProcessor.prototype.getOrCompileScript = function(scriptId, scriptBody) {
     var self = this;
     return new Promise(function(resolve, reject) {
-        if (self.scriptMap[scriptId]) {
-            resolve(self.scriptMap[scriptId]);
+        if (self.scriptMap.has(scriptId)) {
+            resolve(self.scriptMap.get(scriptId));
         } else {
             self.executor.compileScript(scriptBody).then(
                 (script) => {
@@ -206,16 +205,17 @@ JsInvokeMessageProcessor.prototype.getOrCompileScript = function(scriptId, scrip
 }
 
 JsInvokeMessageProcessor.prototype.cacheScript = function(scriptId, script) {
-    if (!this.scriptMap[scriptId]) {
+    if (!this.scriptMap.has(scriptId)) {
         this.scriptIds.push(scriptId);
         while (this.scriptIds.length > maxActiveScripts) {
             logger.info('Active scripts count [%s] exceeds maximum limit [%s]', this.scriptIds.length, maxActiveScripts);
             const prevScriptId = this.scriptIds.shift();
             logger.info('Removing active script with id [%s]', prevScriptId);
-            delete this.scriptMap[prevScriptId];
+            this.scriptMap.delete(prevScriptId);
         }
     }
-    this.scriptMap[scriptId] = script;
+    this.scriptMap.set(scriptId, script);
+    logger.info("scriptMap size is [%s]", this.scriptMap.size);
 }
 
 function createRemoteResponse(requestId, compileResponse, invokeResponse, releaseResponse) {
