@@ -93,63 +93,56 @@ public class EntityEdgeProcessor extends BaseEdgeProcessor {
         EntityId entityId = EntityIdFactory.getByEdgeEventTypeAndUuid(type,
                 new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
         EdgeId edgeId = new EdgeId(new UUID(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB()));
-        ListenableFuture<List<EdgeId>> edgeIdsFuture;
+        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
+        PageData<EdgeId> pageData;
         switch (actionType) {
             case ADDED: // used only for USER entity
             case UPDATED:
             case CREDENTIALS_UPDATED:
-                edgeIdsFuture = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId);
-                Futures.addCallback(edgeIdsFuture, new FutureCallback<List<EdgeId>>() {
-                    @Override
-                    public void onSuccess(@Nullable List<EdgeId> edgeIds) {
-                        if (edgeIds != null && !edgeIds.isEmpty()) {
-                            for (EdgeId edgeId : edgeIds) {
-                                saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, null);
-                            }
+                do {
+                    pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId, pageLink);
+                    if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                        for (EdgeId relatedEdgeId : pageData.getData()) {
+                            saveEdgeEvent(tenantId, relatedEdgeId, type, actionType, entityId, null);
+                        }
+                        if (pageData.hasNext()) {
+                            pageLink = pageLink.nextPageLink();
                         }
                     }
-                    @Override
-                    public void onFailure(Throwable throwable) {
-                        log.error("Failed to find related edge ids [{}]", edgeNotificationMsg, throwable);
-                    }
-                }, dbCallbackExecutorService);
+                } while (pageData != null && pageData.hasNext());
                 break;
             case ASSIGNED_TO_CUSTOMER:
             case UNASSIGNED_FROM_CUSTOMER:
-                edgeIdsFuture = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId);
-                Futures.addCallback(edgeIdsFuture, new FutureCallback<>() {
-                    @Override
-                    public void onSuccess(@Nullable List<EdgeId> edgeIds) {
-                        if (edgeIds != null && !edgeIds.isEmpty()) {
-                            for (EdgeId edgeId : edgeIds) {
-                                try {
-                                    CustomerId customerId = mapper.readValue(edgeNotificationMsg.getBody(), CustomerId.class);
-                                    ListenableFuture<Edge> future = edgeService.findEdgeByIdAsync(tenantId, edgeId);
-                                    Futures.addCallback(future, new FutureCallback<Edge>() {
-                                        @Override
-                                        public void onSuccess(@Nullable Edge edge) {
-                                            if (edge != null && edge.getCustomerId() != null &&
-                                                    !edge.getCustomerId().isNullUid() && edge.getCustomerId().equals(customerId)) {
-                                                saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, null);
-                                            }
+                do {
+                    pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId, pageLink);
+                    if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                        for (EdgeId relatedEdgeId : pageData.getData()) {
+                            try {
+                                CustomerId customerId = mapper.readValue(edgeNotificationMsg.getBody(), CustomerId.class);
+                                ListenableFuture<Edge> future = edgeService.findEdgeByIdAsync(tenantId, relatedEdgeId);
+                                Futures.addCallback(future, new FutureCallback<>() {
+                                    @Override
+                                    public void onSuccess(@Nullable Edge edge) {
+                                        if (edge != null && edge.getCustomerId() != null &&
+                                                !edge.getCustomerId().isNullUid() && edge.getCustomerId().equals(customerId)) {
+                                            saveEdgeEvent(tenantId, relatedEdgeId, type, actionType, entityId, null);
                                         }
-                                        @Override
-                                        public void onFailure(Throwable throwable) {
-                                            log.error("Failed to find edge by id [{}]", edgeNotificationMsg, throwable);
-                                        }
-                                    }, dbCallbackExecutorService);
-                                } catch (Exception e) {
-                                    log.error("Can't parse customer id from entity body [{}]", edgeNotificationMsg, e);
-                                }
+                                    }
+
+                                    @Override
+                                    public void onFailure(Throwable t) {
+                                        log.error("Failed to find edge by id [{}] {}", edgeNotificationMsg, t);
+                                    }
+                                }, dbCallbackExecutorService);
+                            } catch (Exception e) {
+                                log.error("Can't parse customer id from entity body [{}]", edgeNotificationMsg, e);
                             }
                         }
+                        if (pageData.hasNext()) {
+                            pageLink = pageLink.nextPageLink();
+                        }
                     }
-
-                    @Override
-                    public void onFailure(Throwable throwable) {
-                        log.error("Failed to find related edge ids [{}]", edgeNotificationMsg, throwable);
-                    }
-                }, dbCallbackExecutorService);
+                } while (pageData != null && pageData.hasNext());
                 break;
             case DELETED:
                 saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, null);
@@ -165,7 +158,7 @@ public class EntityEdgeProcessor extends BaseEdgeProcessor {
     }
 
     private void updateDependentRuleChains(TenantId tenantId, RuleChainId processingRuleChainId, EdgeId edgeId) {
-        PageLink pageLink = new PageLink(DEFAULT_LIMIT);
+        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
         PageData<RuleChain> pageData;
         do {
             pageData = ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, edgeId, pageLink);

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.edge;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.FutureCallback;
@@ -39,6 +38,8 @@ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -90,6 +91,8 @@ public class TbMsgPushToEdgeNode implements TbNode {
 
     private static final String SCOPE = "scope";
 
+    private static final int DEFAULT_PAGE_SIZE = 1000;
+
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, EmptyNodeConfiguration.class);
@@ -117,77 +120,53 @@ public class TbMsgPushToEdgeNode implements TbNode {
 
     private void processMsg(TbContext ctx, TbMsg msg) {
         if (EntityType.EDGE.equals(msg.getOriginator().getEntityType())) {
-            try {
-                EdgeEvent edgeEvent = buildEdgeEvent(msg, ctx);
-                if (edgeEvent != null) {
-                    EdgeId edgeId = new EdgeId(msg.getOriginator().getId());
-                    edgeEvent.setEdgeId(edgeId);
-                    ListenableFuture<EdgeEvent> saveFuture = ctx.getEdgeEventService().saveAsync(edgeEvent);
-                    Futures.addCallback(saveFuture, new FutureCallback<EdgeEvent>() {
-                        @Override
-                        public void onSuccess(@Nullable EdgeEvent event) {
-                            ctx.tellNext(msg, SUCCESS);
-                            ctx.onEdgeEventUpdate(ctx.getTenantId(), edgeId);
-                        }
-
-                        @Override
-                        public void onFailure(Throwable th) {
-                            log.warn("[{}] Can't save edge event [{}] for edge [{}]", ctx.getTenantId().getId(), edgeEvent, edgeId.getId(), th);
-                            ctx.tellFailure(msg, th);
-                        }
-                    }, ctx.getDbCallbackExecutor());
-                }
-            } catch (JsonProcessingException e) {
-                log.error("Failed to build edge event", e);
-                ctx.tellFailure(msg, e);
+            EdgeEvent edgeEvent = buildEdgeEvent(msg, ctx);
+            if (edgeEvent != null) {
+                EdgeId edgeId = new EdgeId(msg.getOriginator().getId());
+                notifyEdge(ctx, msg, edgeEvent, edgeId);
             }
         } else {
-            ListenableFuture<List<EdgeId>> getEdgeIdsFuture = ctx.getEdgeService().findRelatedEdgeIdsByEntityId(ctx.getTenantId(), msg.getOriginator());
-            Futures.addCallback(getEdgeIdsFuture, new FutureCallback<List<EdgeId>>() {
-                @Override
-                public void onSuccess(@Nullable List<EdgeId> edgeIds) {
-                    if (edgeIds != null && !edgeIds.isEmpty()) {
-                        for (EdgeId edgeId : edgeIds) {
-                            try {
-                                EdgeEvent edgeEvent = buildEdgeEvent(msg, ctx);
-                                if (edgeEvent == null) {
-                                    log.debug("Edge event type is null. Entity Type {}", msg.getOriginator().getEntityType());
-                                    ctx.tellFailure(msg, new RuntimeException("Edge event type is null. Entity Type '" + msg.getOriginator().getEntityType() + "'"));
-                                } else {
-                                    edgeEvent.setEdgeId(edgeId);
-                                    ListenableFuture<EdgeEvent> saveFuture = ctx.getEdgeEventService().saveAsync(edgeEvent);
-                                    Futures.addCallback(saveFuture, new FutureCallback<EdgeEvent>() {
-                                        @Override
-                                        public void onSuccess(@Nullable EdgeEvent event) {
-                                            ctx.tellNext(msg, SUCCESS);
-                                            ctx.onEdgeEventUpdate(ctx.getTenantId(), edgeId);
-                                        }
-
-                                        @Override
-                                        public void onFailure(Throwable th) {
-                                            log.warn("[{}] Can't save edge event [{}] for edge [{}]", ctx.getTenantId().getId(), edgeEvent, edgeId.getId(), th);
-                                            ctx.tellFailure(msg, th);
-                                        }
-                                    }, ctx.getDbCallbackExecutor());
-                                }
-                            } catch (JsonProcessingException e) {
-                                log.error("Failed to build edge event", e);
-                                ctx.tellFailure(msg, e);
-                            }
+            PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
+            PageData<EdgeId> pageData;
+            do {
+                pageData = ctx.getEdgeService().findRelatedEdgeIdsByEntityId(ctx.getTenantId(), msg.getOriginator(), pageLink);
+                if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                    for (EdgeId edgeId : pageData.getData()) {
+                        EdgeEvent edgeEvent = buildEdgeEvent(msg, ctx);
+                        if (edgeEvent == null) {
+                            log.debug("Edge event type is null. Entity Type {}", msg.getOriginator().getEntityType());
+                            ctx.tellFailure(msg, new RuntimeException("Edge event type is null. Entity Type '" + msg.getOriginator().getEntityType() + "'"));
+                        } else {
+                            notifyEdge(ctx, msg, edgeEvent, edgeId);
                         }
                     }
+                    if (pageData.hasNext()) {
+                        pageLink = pageLink.nextPageLink();
+                    }
                 }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    ctx.tellFailure(msg, t);
-                }
-
-            }, ctx.getDbCallbackExecutor());
+            } while (pageData != null && pageData.hasNext());
         }
     }
 
-    private EdgeEvent buildEdgeEvent(TbMsg msg, TbContext ctx) throws JsonProcessingException {
+    private void notifyEdge(TbContext ctx, TbMsg msg, EdgeEvent edgeEvent, EdgeId edgeId) {
+        edgeEvent.setEdgeId(edgeId);
+        ListenableFuture<EdgeEvent> saveFuture = ctx.getEdgeEventService().saveAsync(edgeEvent);
+        Futures.addCallback(saveFuture, new FutureCallback<EdgeEvent>() {
+            @Override
+            public void onSuccess(@Nullable EdgeEvent event) {
+                ctx.tellNext(msg, SUCCESS);
+                ctx.onEdgeEventUpdate(ctx.getTenantId(), edgeId);
+            }
+
+            @Override
+            public void onFailure(Throwable th) {
+                log.warn("[{}] Can't save edge event [{}] for edge [{}]", ctx.getTenantId().getId(), edgeEvent, edgeId.getId(), th);
+                ctx.tellFailure(msg, th);
+            }
+        }, ctx.getDbCallbackExecutor());
+    }
+
+    private EdgeEvent buildEdgeEvent(TbMsg msg, TbContext ctx) {
         String msgType = msg.getType();
         if (DataConstants.ALARM.equals(msgType)) {
             return buildEdgeEvent(ctx.getTenantId(), EdgeEventActionType.ADDED, getUUIDFromMsgData(msg), EdgeEventType.ALARM, null);

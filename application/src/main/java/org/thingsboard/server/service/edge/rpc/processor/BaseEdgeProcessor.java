@@ -74,7 +74,7 @@ public abstract class BaseEdgeProcessor {
 
     protected static final ObjectMapper mapper = new ObjectMapper();
 
-    protected static final int DEFAULT_LIMIT = 100;
+    protected static final int DEFAULT_PAGE_SIZE = 1000;
 
     @Autowired
     protected RuleChainService ruleChainService;
@@ -221,7 +221,7 @@ public abstract class BaseEdgeProcessor {
     }
 
     protected void processActionForAllEdges(TenantId tenantId, EdgeEventType type, EdgeEventActionType actionType, EntityId entityId) {
-        PageLink pageLink = new PageLink(DEFAULT_LIMIT);
+        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
         PageData<Edge> pageData;
         do {
             pageData = edgeService.findEdgesByTenantId(tenantId, pageLink);

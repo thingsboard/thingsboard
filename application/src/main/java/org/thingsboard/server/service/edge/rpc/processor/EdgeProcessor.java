@@ -54,7 +54,7 @@ public class EdgeProcessor extends BaseEdgeProcessor {
                         public void onSuccess(@Nullable Edge edge) {
                             if (edge != null && !customerId.isNullUid()) {
                                 saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.CUSTOMER, EdgeEventActionType.ADDED, customerId, null);
-                                PageLink pageLink = new PageLink(DEFAULT_LIMIT);
+                                PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
                                 PageData<User> pageData;
                                 do {
                                     pageData = userService.findCustomerUsers(tenantId, customerId, pageLink);

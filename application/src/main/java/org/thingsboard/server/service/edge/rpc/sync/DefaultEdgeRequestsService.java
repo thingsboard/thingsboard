@@ -87,7 +87,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    private static final int DEFAULT_LIMIT = 100;
+    private static final int DEFAULT_PAGE_SIZE = 1000;
 
     @Autowired
     private EdgeEventService edgeEventService;
@@ -351,7 +351,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
         List<ListenableFuture<EdgeEvent>> futures = new ArrayList<>();
         log.trace("[{}] syncDevices [{}][{}]", tenantId, edge.getName(), deviceType);
         try {
-            PageLink pageLink = new PageLink(DEFAULT_LIMIT);
+            PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
             PageData<Device> pageData;
             do {
                 pageData = deviceService.findDevicesByTenantIdAndEdgeIdAndType(tenantId, edge.getId(), deviceType, pageLink);

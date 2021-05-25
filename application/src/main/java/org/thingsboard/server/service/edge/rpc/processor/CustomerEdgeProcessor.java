@@ -75,7 +75,7 @@ public class CustomerEdgeProcessor extends BaseEdgeProcessor {
         CustomerId customerId = new CustomerId(EntityIdFactory.getByEdgeEventTypeAndUuid(type, uuid).getId());
         switch (actionType) {
             case UPDATED:
-                PageLink pageLink = new PageLink(DEFAULT_LIMIT);
+                PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
                 PageData<Edge> pageData;
                 do {
                     pageData = edgeService.findEdgesByTenantIdAndCustomerId(tenantId, customerId, pageLink);

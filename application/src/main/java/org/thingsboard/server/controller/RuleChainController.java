@@ -86,7 +86,7 @@ public class RuleChainController extends BaseController {
     public static final String RULE_CHAIN_ID = "ruleChainId";
     public static final String RULE_NODE_ID = "ruleNodeId";
 
-    private static final int DEFAULT_LIMIT = 100;
+    private static final int DEFAULT_PAGE_SIZE = 1000;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -643,7 +643,7 @@ public class RuleChainController extends BaseController {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
             List<RuleChain> result = new ArrayList<>();
-            PageLink pageLink = new PageLink(DEFAULT_LIMIT);
+            PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
             PageData<RuleChain> pageData;
             do {
                 pageData = ruleChainService.findAutoAssignToEdgeRuleChainsByTenantId(tenantId, pageLink);

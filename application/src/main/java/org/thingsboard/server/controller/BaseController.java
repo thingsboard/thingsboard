@@ -83,6 +83,7 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -145,6 +146,7 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -163,6 +165,8 @@ public abstract class BaseController {
 
     protected static final String DEFAULT_DASHBOARD = "defaultDashboardId";
     protected static final String HOME_DASHBOARD = "homeDashboardId";
+
+    private static final int DEFAULT_PAGE_SIZE = 1000;
 
     private static final ObjectMapper json = new ObjectMapper();
 
@@ -1082,12 +1086,18 @@ public abstract class BaseController {
         if (!edgesEnabled) {
             return null;
         }
-        List<EdgeId> result = null;
-        try {
-            result = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId).get();
-        } catch (Exception e) {
-            log.error("[{}] can't find related edge ids for entity [{}]", tenantId, entityId, e);
-        }
+        List<EdgeId> result = new ArrayList<>();
+        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
+        PageData<EdgeId> pageData;
+        do {
+            pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId, pageLink);
+            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                result.addAll(pageData.getData());
+                if (pageData.hasNext()) {
+                    pageLink = pageLink.nextPageLink();
+                }
+            }
+        } while (pageData != null && pageData.hasNext());
         return result;
     }
 

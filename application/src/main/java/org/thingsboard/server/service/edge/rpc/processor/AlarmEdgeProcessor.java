@@ -34,6 +34,8 @@ import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.gen.edge.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.DownlinkMsg;
 import org.thingsboard.server.gen.edge.UpdateMsgType;
@@ -41,7 +43,6 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -138,34 +139,31 @@ public class AlarmEdgeProcessor extends BaseEdgeProcessor {
                 if (alarm != null) {
                     EdgeEventType type = EdgeUtils.getEdgeEventTypeByEntityType(alarm.getOriginator().getEntityType());
                     if (type != null) {
-                        ListenableFuture<List<EdgeId>> relatedEdgeIdsByEntityIdFuture = edgeService.findRelatedEdgeIdsByEntityId(tenantId, alarm.getOriginator());
-                        Futures.addCallback(relatedEdgeIdsByEntityIdFuture, new FutureCallback<List<EdgeId>>() {
-                            @Override
-                            public void onSuccess(@Nullable List<EdgeId> relatedEdgeIdsByEntityId) {
-                                if (relatedEdgeIdsByEntityId != null) {
-                                    for (EdgeId edgeId : relatedEdgeIdsByEntityId) {
-                                        saveEdgeEvent(tenantId,
-                                                edgeId,
-                                                EdgeEventType.ALARM,
-                                                EdgeEventActionType.valueOf(edgeNotificationMsg.getAction()),
-                                                alarmId,
-                                                null);
-                                    }
+                        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
+                        PageData<EdgeId> pageData;
+                        do {
+                            pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, alarm.getOriginator(), pageLink);
+                            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                                for (EdgeId edgeId : pageData.getData()) {
+                                    saveEdgeEvent(tenantId,
+                                            edgeId,
+                                            EdgeEventType.ALARM,
+                                            EdgeEventActionType.valueOf(edgeNotificationMsg.getAction()),
+                                            alarmId,
+                                            null);
+                                }
+                                if (pageData.hasNext()) {
+                                    pageLink = pageLink.nextPageLink();
                                 }
                             }
-
-                            @Override
-                            public void onFailure(Throwable t) {
-                                log.warn("[{}] can't find related edge ids by entity id [{}]", tenantId.getId(), alarm.getOriginator(), t);
-                            }
-                        }, dbCallbackExecutorService);
+                        } while (pageData != null && pageData.hasNext());
                     }
                 }
             }
 
             @Override
             public void onFailure(Throwable t) {
-                log.warn("[{}] can't find alarm by id [{}]", tenantId.getId(), alarmId.getId(), t);
+                log.warn("[{}] can't find alarm by id [{}] {}", tenantId.getId(), alarmId.getId(), t);
             }
         }, dbCallbackExecutorService);
     }

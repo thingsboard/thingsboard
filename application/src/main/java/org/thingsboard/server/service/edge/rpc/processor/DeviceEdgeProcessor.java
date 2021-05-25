@@ -17,14 +17,12 @@ package org.thingsboard.server.service.edge.rpc.processor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.server.common.data.Customer;
@@ -40,6 +38,8 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -61,7 +61,6 @@ import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponseActorMsg;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -79,41 +78,34 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                 String deviceName = deviceUpdateMsg.getName();
                 Device device = deviceService.findDeviceByTenantIdAndName(tenantId, deviceName);
                 if (device != null) {
-                    ListenableFuture<List<EdgeId>> future = edgeService.findRelatedEdgeIdsByEntityId(tenantId, device.getId());
-                    SettableFuture<Void> futureToSet = SettableFuture.create();
-                    Futures.addCallback(future, new FutureCallback<List<EdgeId>>() {
-                        @Override
-                        public void onSuccess(@Nullable List<EdgeId> edgeIds) {
-                            boolean update = false;
-                            if (edgeIds != null && !edgeIds.isEmpty()) {
-                                if (edgeIds.contains(edge.getId())) {
-                                    update = true;
-                                }
+                    PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
+                    PageData<EdgeId> pageData;
+                    do {
+                        pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, device.getId(), pageLink);
+                        boolean update = false;
+                        if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                            if (pageData.getData().contains(edge.getId())) {
+                                update = true;
                             }
-                            Device device;
-                            if (update) {
-                                log.info("[{}] Device with name '{}' already exists on the cloud, and related to this edge [{}]. " +
-                                        "deviceUpdateMsg [{}], Updating device", tenantId, deviceName, edge.getId(), deviceUpdateMsg);
-                                updateDevice(tenantId, edge, deviceUpdateMsg);
-                            } else {
-                                log.info("[{}] Device with name '{}' already exists on the cloud, but not related to this edge [{}]. deviceUpdateMsg [{}]." +
-                                        "Creating a new device with random prefix and relate to this edge", tenantId, deviceName, edge.getId(), deviceUpdateMsg);
-                                String newDeviceName = deviceUpdateMsg.getName() + "_" + RandomStringUtils.randomAlphabetic(15);
-                                device = createDevice(tenantId, edge, deviceUpdateMsg, newDeviceName);
-                                ObjectNode body = mapper.createObjectNode();
-                                body.put("conflictName", deviceName);
-                                saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.ENTITY_MERGE_REQUEST, device.getId(), body);
+                            if (pageData.hasNext()) {
+                                pageLink = pageLink.nextPageLink();
                             }
-                            futureToSet.set(null);
                         }
-
-                        @Override
-                        public void onFailure(Throwable t) {
-                            log.error("[{}] Failed to get related edge ids by device id [{}], edge [{}]", tenantId, deviceUpdateMsg, edge.getId(), t);
-                            futureToSet.setException(t);
+                        Device newDevice;
+                        if (update) {
+                            log.info("[{}] Device with name '{}' already exists on the cloud, and related to this edge [{}]. " +
+                                    "deviceUpdateMsg [{}], Updating device", tenantId, deviceName, edge.getId(), deviceUpdateMsg);
+                            updateDevice(tenantId, edge, deviceUpdateMsg);
+                        } else {
+                            log.info("[{}] Device with name '{}' already exists on the cloud, but not related to this edge [{}]. deviceUpdateMsg [{}]." +
+                                    "Creating a new device with random prefix and relate to this edge", tenantId, deviceName, edge.getId(), deviceUpdateMsg);
+                            String newDeviceName = deviceUpdateMsg.getName() + "_" + RandomStringUtils.randomAlphabetic(15);
+                            newDevice = createDevice(tenantId, edge, deviceUpdateMsg, newDeviceName);
+                            ObjectNode body = mapper.createObjectNode();
+                            body.put("conflictName", deviceName);
+                            saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.ENTITY_MERGE_REQUEST, newDevice.getId(), body);
                         }
-                    }, dbCallbackExecutorService);
-                    return futureToSet;
+                    } while (pageData != null && pageData.hasNext());
                 } else {
                     log.info("[{}] Creating new device and replacing device entity on the edge [{}]", tenantId, deviceUpdateMsg);
                     device = createDevice(tenantId, edge, deviceUpdateMsg, deviceUpdateMsg.getName());

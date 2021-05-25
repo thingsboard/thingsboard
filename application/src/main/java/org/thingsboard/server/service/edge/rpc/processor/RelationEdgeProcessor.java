@@ -16,11 +16,9 @@
 package org.thingsboard.server.service.edge.rpc.processor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -38,6 +36,8 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.gen.edge.DownlinkMsg;
@@ -127,39 +127,35 @@ public class RelationEdgeProcessor extends BaseEdgeProcessor {
         EntityRelation relation = mapper.readValue(edgeNotificationMsg.getBody(), EntityRelation.class);
         if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
                 !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
-            List<ListenableFuture<List<EdgeId>>> futures = new ArrayList<>();
-            futures.add(edgeService.findRelatedEdgeIdsByEntityId(tenantId, relation.getTo()));
-            futures.add(edgeService.findRelatedEdgeIdsByEntityId(tenantId, relation.getFrom()));
-            ListenableFuture<List<List<EdgeId>>> combinedFuture = Futures.allAsList(futures);
-            Futures.addCallback(combinedFuture, new FutureCallback<List<List<EdgeId>>>() {
-                @Override
-                public void onSuccess(@Nullable List<List<EdgeId>> listOfListsEdgeIds) {
-                    Set<EdgeId> uniqueEdgeIds = new HashSet<>();
-                    if (listOfListsEdgeIds != null && !listOfListsEdgeIds.isEmpty()) {
-                        for (List<EdgeId> listOfListsEdgeId : listOfListsEdgeIds) {
-                            if (listOfListsEdgeId != null) {
-                                uniqueEdgeIds.addAll(listOfListsEdgeId);
-                            }
-                        }
-                    }
-                    if (!uniqueEdgeIds.isEmpty()) {
-                        for (EdgeId edgeId : uniqueEdgeIds) {
-                            saveEdgeEvent(tenantId,
-                                    edgeId,
-                                    EdgeEventType.RELATION,
-                                    EdgeEventActionType.valueOf(edgeNotificationMsg.getAction()),
-                                    null,
-                                    mapper.valueToTree(relation));
-                        }
-                    }
+            Set<EdgeId> uniqueEdgeIds = new HashSet<>();
+            uniqueEdgeIds.addAll(findRelatedEdgeIds(tenantId, relation.getTo()));
+            uniqueEdgeIds.addAll(findRelatedEdgeIds(tenantId, relation.getFrom()));
+            if (!uniqueEdgeIds.isEmpty()) {
+                for (EdgeId edgeId : uniqueEdgeIds) {
+                    saveEdgeEvent(tenantId,
+                            edgeId,
+                            EdgeEventType.RELATION,
+                            EdgeEventActionType.valueOf(edgeNotificationMsg.getAction()),
+                            null,
+                            mapper.valueToTree(relation));
                 }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    log.warn("[{}] can't find related edge ids by relation to id [{}] and relation from id [{}]" ,
-                            tenantId.getId(), relation.getTo().getId(), relation.getFrom().getId(), t);
-                }
-            }, dbCallbackExecutorService);
+            }
         }
+    }
+
+    private List<EdgeId> findRelatedEdgeIds(TenantId tenantId, EntityId entityId) {
+        List<EdgeId> result = new ArrayList<>();
+        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
+        PageData<EdgeId> pageData;
+        do {
+            pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId, pageLink);
+            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                result.addAll(pageData.getData());
+                if (pageData.hasNext()) {
+                    pageLink = pageLink.nextPageLink();
+                }
+            }
+        } while (pageData != null && pageData.hasNext());
+        return result;
     }
 }
