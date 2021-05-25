@@ -499,6 +499,9 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
             }
         } else {
             switch (entityId.getEntityType()) {
+                case EDGE:
+                    List<EdgeId> edgeIds = Collections.singletonList(new EdgeId(entityId.getId()));
+                    return new PageData<>(edgeIds, 1, 1, false);
                 case DEVICE:
                 case ASSET:
                 case ENTITY_VIEW:
