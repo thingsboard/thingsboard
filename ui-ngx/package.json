@@ -2,7 +2,6 @@
   "name": "thingsboard",
   "version": "3.3.0",
   "scripts": {
-    "postinstall": "ngcc --properties es2015 browser module main --first-only --create-ivy-entry-points",
     "ng": "ng",
     "start": "node --max_old_space_size=8048 ./node_modules/@angular/cli/bin/ng serve --host 0.0.0.0 --open",
     "build": "ng build",
