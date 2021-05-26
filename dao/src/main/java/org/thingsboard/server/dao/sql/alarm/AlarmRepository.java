@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.sql.alarm;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -159,4 +160,8 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
                                            @Param("affectedEntityId") UUID affectedEntityId,
                                            @Param("affectedEntityType") String affectedEntityType,
                                            @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses);
+
+    @Query("SELECT a.id FROM AlarmEntity a WHERE a.createdTime < :time AND a.endTs < :time")
+    Page<UUID> findAlarmsIdsByEndTsBefore(@Param("time") Long time, Pageable pageable);
+
 }

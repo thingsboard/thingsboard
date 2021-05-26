@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Optional;
 
 import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo.mapper;
 
@@ -90,6 +91,12 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
                 return createDefaultTenantProfileData();
             }
         }
+    }
+
+    public Optional<DefaultTenantProfileConfiguration> getProfileConfiguration() {
+        return Optional.ofNullable(getProfileData().getConfiguration())
+                .filter(profileConfiguration -> profileConfiguration instanceof DefaultTenantProfileConfiguration)
+                .map(profileConfiguration -> (DefaultTenantProfileConfiguration) profileConfiguration);
     }
 
     public TenantProfileData createDefaultTenantProfileData() {
