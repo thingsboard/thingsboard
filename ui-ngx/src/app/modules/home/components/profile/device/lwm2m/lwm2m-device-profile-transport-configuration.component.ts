@@ -23,6 +23,7 @@ import {
   BINDING_MODE,
   BINDING_MODE_NAMES,
   getDefaultProfileConfig,
+  Instance,
   INSTANCES,
   KEY_NAME,
   Lwm2mProfileConfigModels,
@@ -37,6 +38,7 @@ import { DeviceProfileService } from '@core/http/device-profile.service';
 import { deepClone, isDefinedAndNotNull, isEmpty, isUndefined } from '@core/utils';
 import { JsonArray, JsonObject } from '@angular/compiler-cli/ngcc/src/packages/entry_point';
 import { Direction } from '@shared/models/page/sort-order';
+import _ from 'lodash';
 
 @Component({
   selector: 'tb-profile-lwm2m-device-transport-configuration',
@@ -230,22 +232,28 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     const isNotZeroInstanceId = (instance) => !instance.includes('/0/');
     return attribute.some(isNotZeroInstanceId) || telemetry.some(isNotZeroInstanceId);
   }
-
   private addInstances = (attribute: string[], telemetry: string[], clientObserveAttrTelemetry: ObjectLwM2M[]): void => {
     const instancesPath = attribute.concat(telemetry)
       .filter(instance => !instance.includes('/0/'))
       .map(instance => instance.slice(1, instance.lastIndexOf('/')))
       .sort(this.sortPath);
-
     new Set(instancesPath).forEach(path => {
       const pathParameter = Array.from(path.split('/'), String);
       const objectLwM2M = clientObserveAttrTelemetry.find(x => x.keyId === pathParameter[0]);
       if (objectLwM2M) {
-        const instance = deepClone(objectLwM2M.instances[0]);
-        instance.id = +pathParameter[1];
+        const instance = this.updateInInstanceKeyName (objectLwM2M.instances[0], +pathParameter[1]);
         objectLwM2M.instances.push(instance);
       }
     });
+  }
+
+  private updateInInstanceKeyName = (instance: Instance, instanceId: number): Instance => {
+    const instanceUpdate = deepClone(instance);
+    instanceUpdate.id = instanceId;
+    instanceUpdate.resources.forEach(resource => {
+      resource.keyName = _.camelCase(resource.name + instanceUpdate.id);
+    })
+    return instanceUpdate;
   }
 
   private updateObserveAttrTelemetryObjects = (parameters: string[], objectLwM2MS: ObjectLwM2M[],

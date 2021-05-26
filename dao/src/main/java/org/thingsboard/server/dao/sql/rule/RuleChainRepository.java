@@ -50,5 +50,8 @@ public interface RuleChainRepository extends PagingAndSortingRepository<RuleChai
                                                   @Param("edgeId") UUID edgeId,
                                                   @Param("searchText") String searchText,
                                                   Pageable pageable);
+
+    RuleChainEntity findByTenantIdAndTypeAndRootIsTrue(UUID tenantId, RuleChainType ruleChainType);
+
     Long countByTenantId(UUID tenantId);
 }

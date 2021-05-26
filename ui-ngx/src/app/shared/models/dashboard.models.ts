@@ -26,6 +26,7 @@ import { Filters } from '@shared/models/query/query.models';
 export interface DashboardInfo extends BaseData<DashboardId> {
   tenantId?: TenantId;
   title?: string;
+  image?: string;
   assignedCustomers?: Array<ShortCustomerInfo>;
 }
 
@@ -90,6 +91,7 @@ export interface DashboardSettings {
   dashboardLogoUrl?: string;
   showDashboardTimewindow?: boolean;
   showDashboardExport?: boolean;
+  showUpdateDashboardImage?: boolean;
   toolbarAlwaysOpen?: boolean;
   titleColor?: string;
 }

@@ -28,6 +28,7 @@ import org.eclipse.leshan.server.californium.registration.CaliforniumRegistratio
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
@@ -57,6 +58,8 @@ import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
@@ -121,7 +124,6 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         builder.setDecoder(new DefaultLwM2mNodeDecoder());
         /* Use a magic converter to support bad type send by the UI. */
         builder.setEncoder(new DefaultLwM2mNodeEncoder(LwM2mValueConverterImpl.getInstance()));
-
 
         /* Create CoAP Config */
         builder.setCoapConfig(getCoapConfig(config.getPort(), config.getSecurePort()));

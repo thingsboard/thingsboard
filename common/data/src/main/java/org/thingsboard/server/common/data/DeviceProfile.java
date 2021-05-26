@@ -21,6 +21,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -43,11 +44,13 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
     private String name;
     @NoXss
     private String description;
+    private String image;
     private boolean isDefault;
     private DeviceProfileType type;
     private DeviceTransportType transportType;
     private DeviceProfileProvisionType provisionType;
     private RuleChainId defaultRuleChainId;
+    private DashboardId defaultDashboardId;
     @NoXss
     private String defaultQueueName;
     @Valid
@@ -74,8 +77,10 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
         this.tenantId = deviceProfile.getTenantId();
         this.name = deviceProfile.getName();
         this.description = deviceProfile.getDescription();
+        this.image = deviceProfile.getImage();
         this.isDefault = deviceProfile.isDefault();
         this.defaultRuleChainId = deviceProfile.getDefaultRuleChainId();
+        this.defaultDashboardId = deviceProfile.getDefaultDashboardId();
         this.defaultQueueName = deviceProfile.getDefaultQueueName();
         this.setProfileData(deviceProfile.getProfileData());
         this.provisionDeviceKey = deviceProfile.getProvisionDeviceKey();

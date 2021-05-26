@@ -78,13 +78,23 @@ CREATE TABLE IF NOT EXISTS firmware (
     CONSTRAINT firmware_tenant_title_version_unq_key UNIQUE (tenant_id, title, version)
 );
 
+ALTER TABLE dashboard
+    ADD COLUMN IF NOT EXISTS image varchar(1000000);
+
 ALTER TABLE device_profile
+    ADD COLUMN IF NOT EXISTS image varchar(1000000),
     ADD COLUMN IF NOT EXISTS firmware_id uuid,
-    ADD COLUMN IF NOT EXISTS software_id uuid;
+    ADD COLUMN IF NOT EXISTS software_id uuid,
+    ADD COLUMN IF NOT EXISTS default_dashboard_id uuid;
 
 ALTER TABLE device
     ADD COLUMN IF NOT EXISTS firmware_id uuid,
     ADD COLUMN IF NOT EXISTS software_id uuid;
+
+ALTER TABLE alarm
+    ADD COLUMN IF NOT EXISTS customer_id uuid;
+
+DELETE FROM relation WHERE from_type = 'TENANT' AND relation_type_group = 'RULE_CHAIN';
 
 DO $$
     BEGIN
@@ -98,6 +108,12 @@ DO $$
             ALTER TABLE device_profile
                 ADD CONSTRAINT fk_software_device_profile
                     FOREIGN KEY (firmware_id) REFERENCES firmware(id);
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_default_dashboard_device_profile') THEN
+            ALTER TABLE device_profile
+                ADD CONSTRAINT fk_default_dashboard_device_profile
+                    FOREIGN KEY (default_dashboard_id) REFERENCES dashboard(id);
         END IF;
 
         IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_firmware_device') THEN
@@ -114,3 +130,7 @@ DO $$
     END;
 $$;
 
+
+ALTER TABLE api_usage_state
+    ADD COLUMN IF NOT EXISTS alarm_exec VARCHAR(32);
+UPDATE api_usage_state SET alarm_exec = 'ENABLED' WHERE alarm_exec IS NULL;

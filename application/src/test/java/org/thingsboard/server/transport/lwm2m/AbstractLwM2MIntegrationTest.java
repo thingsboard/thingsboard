@@ -177,7 +177,7 @@ public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
         executor = Executors.newScheduledThreadPool(10);
         loginTenantAdmin();
 
-        String[] resources = new String[]{"0.xml", "1.xml", "2.xml", "3.xml"};
+        String[] resources = new String[]{"1.xml", "2.xml", "3.xml"};
         for (String resourceName : resources) {
             TbResource lwModel = new TbResource();
             lwModel.setResourceType(ResourceType.LWM2M_MODEL);
