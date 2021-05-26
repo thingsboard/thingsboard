@@ -79,7 +79,6 @@ export interface IDashboardComponent {
   pauseChangeNotifications();
   resumeChangeNotifications();
   notifyLayoutUpdated();
-  detectChanges();
 }
 
 declare type DashboardWidgetUpdateOperation = 'add' | 'remove' | 'update';
@@ -287,8 +286,8 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
 
 export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
-  highlighted = false;
-  selected = false;
+  private highlightedValue = false;
+  private selectedValue = false;
 
   isFullscreen = false;
 
@@ -333,6 +332,28 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     this.gridsterItemComponentValue = item;
     this.gridsterItemComponentSubject.next(this.gridsterItemComponentValue);
     this.gridsterItemComponentSubject.complete();
+  }
+
+  get highlighted() {
+    return this.highlightedValue;
+  }
+
+  set highlighted(highlighted: boolean) {
+    if (this.highlightedValue !== highlighted) {
+      this.highlightedValue = highlighted;
+      this.widgetContext.detectContainerChanges();
+    }
+  }
+
+  get selected() {
+    return this.selectedValue;
+  }
+
+  set selected(selected: boolean) {
+    if (this.selectedValue !== selected) {
+      this.selectedValue = selected;
+      this.widgetContext.detectContainerChanges();
+    }
   }
 
   constructor(
@@ -407,7 +428,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     this.customHeaderActions = this.widgetContext.customHeaderActions ? this.widgetContext.customHeaderActions : [];
     this.widgetActions = this.widgetContext.widgetActions ? this.widgetContext.widgetActions : [];
     if (detectChanges) {
-      this.dashboard.detectChanges();
+      this.widgetContext.detectContainerChanges();
     }
   }
 
