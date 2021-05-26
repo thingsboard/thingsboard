@@ -18,6 +18,7 @@ package org.thingsboard.server.service.lwm2m;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.util.Hex;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
@@ -25,7 +26,6 @@ import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MSecureServerConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
-import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 
 import java.math.BigInteger;
 import java.security.AlgorithmParameters;
@@ -55,17 +55,16 @@ public class LwM2MServerSecurityInfoRepository {
      * @param bootstrapServer
      * @return ServerSecurityConfig more value is default: Important - port, host, publicKey
      */
-    public ServerSecurityConfig getServerSecurityInfo(String securityMode, boolean bootstrapServer) {
-        LwM2MSecurityMode lwM2MSecurityMode = LwM2MSecurityMode.fromSecurityMode(securityMode.toLowerCase());
-        ServerSecurityConfig result = getServerSecurityConfig(bootstrapServer ? bootstrapConfig : serverConfig, lwM2MSecurityMode);
+    public ServerSecurityConfig getServerSecurityInfo(SecurityMode securityMode, boolean bootstrapServer) {
+        ServerSecurityConfig result = getServerSecurityConfig(bootstrapServer ? bootstrapConfig : serverConfig, securityMode);
         result.setBootstrapServerIs(bootstrapServer);
         return result;
     }
 
-    private ServerSecurityConfig getServerSecurityConfig(LwM2MSecureServerConfig serverConfig, LwM2MSecurityMode mode) {
+    private ServerSecurityConfig getServerSecurityConfig(LwM2MSecureServerConfig serverConfig, SecurityMode securityMode) {
         ServerSecurityConfig bsServ = new ServerSecurityConfig();
         bsServ.setServerId(serverConfig.getId());
-        switch (mode) {
+        switch (securityMode) {
             case NO_SEC:
                 bsServ.setHost(serverConfig.getHost());
                 bsServ.setPort(serverConfig.getPort());

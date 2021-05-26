@@ -60,4 +60,10 @@ public class TbLwM2mStoreFactory {
                 new TbLwM2mRedisSecurityStore(redisConfiguration.get().redisConnectionFactory()) : new InMemorySecurityStore());
     }
 
+    @Bean
+    private TbLwM2MDtlsSessionStore sessionStore() {
+        return redisConfiguration.isPresent() && useRedis ?
+                new TbLwM2MDtlsSessionRedisStore(redisConfiguration.get().redisConnectionFactory()) : new TbL2M2MDtlsSessionInMemoryStore();
+    }
+
 }

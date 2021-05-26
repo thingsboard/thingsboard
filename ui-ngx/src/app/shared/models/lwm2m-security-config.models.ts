@@ -14,20 +14,11 @@
 /// limitations under the License.
 ///
 
-export const JSON_ALL_CONFIG = 'jsonAllConfig';
-export const END_POINT = 'endPoint';
-export const DEFAULT_END_POINT = 'default_client_lwm2m_end_point_no_sec';
 export const LEN_MAX_PSK = 64;
 export const LEN_MAX_PRIVATE_KEY = 134;
 export const LEN_MAX_PUBLIC_KEY_RPK = 182;
 export const LEN_MAX_PUBLIC_KEY_X509 = 3000;
 export const KEY_REGEXP_HEX_DEC = /^[-+]?[0-9A-Fa-f]+\.?[0-9A-Fa-f]*?$/;
-
-
-export interface DeviceCredentialsDialogLwm2mData {
-  jsonAllConfig?: Lwm2mSecurityConfigModels;
-  endPoint?: string;
-}
 
 export enum Lwm2mSecurityType {
   PSK = 'PSK',
@@ -48,9 +39,9 @@ export const Lwm2mSecurityTypeTranslationMap = new Map<Lwm2mSecurityType, string
 export interface ClientSecurityConfig {
   securityConfigClientMode: Lwm2mSecurityType;
   endpoint: string;
-  identity: string;
-  key: string;
-  x509: boolean;
+  identity?: string;
+  key?: string;
+  cert?: string;
 }
 
 export interface ServerSecurityConfig {
@@ -69,85 +60,29 @@ export interface Lwm2mSecurityConfigModels {
   bootstrap: BootstrapSecurityConfig;
 }
 
-export function getClientSecurityConfig(securityConfigMode: Lwm2mSecurityType, endPoint = ''): ClientSecurityConfig {
-  const security = getDefaultClientSecurityConfig(securityConfigMode);
-  switch (securityConfigMode) {
-    case Lwm2mSecurityType.PSK:
-      security.endpoint =  endPoint;
-      security.identity =  endPoint;
-      break;
-    case Lwm2mSecurityType.X509:
-      security.x509 = true;
-      break;
-  }
-
-  return security;
-}
-
-export function getDefaultClientSecurityConfig(securityConfigMode: Lwm2mSecurityType): ClientSecurityConfig {
-  return {
+export function getDefaultClientSecurityConfig(securityConfigMode: Lwm2mSecurityType, endPoint = ''): ClientSecurityConfig {
+  let security =  {
     securityConfigClientMode: securityConfigMode,
-    endpoint: '',
+    endpoint: endPoint,
     identity: '',
     key: '',
-    x509: false
   };
+  switch (securityConfigMode) {
+    case Lwm2mSecurityType.X509:
+      security = { ...security, ...{cert: ''}};
+      break;
+    case Lwm2mSecurityType.PSK:
+      security = { ...security, ...{identity: endPoint, key: ''}};
+      break;
+    case Lwm2mSecurityType.RPK:
+      security = { ...security, ...{key: ''}};
+      break;
+  }
+  return security;
 }
 
 export function getDefaultServerSecurityConfig(): ServerSecurityConfig {
   return {
-    securityMode: Lwm2mSecurityType.NO_SEC,
-    clientPublicKeyOrId: '',
-    clientSecretKey: ''
+    securityMode: Lwm2mSecurityType.NO_SEC
   };
 }
-
-function getDefaultBootstrapSecurityConfig(): BootstrapSecurityConfig {
-  return {
-    bootstrapServer: getDefaultServerSecurityConfig(),
-    lwm2mServer:  getDefaultServerSecurityConfig()
-  };
-}
-
-export function getDefaultSecurityConfig(): Lwm2mSecurityConfigModels {
-  const securityConfigModels = {
-    client: getClientSecurityConfig(Lwm2mSecurityType.NO_SEC),
-    bootstrap: getDefaultBootstrapSecurityConfig()
-  };
-  return securityConfigModels;
-}
-
-const isSecurityConfigModels = (p: any): boolean =>
-  p.hasOwnProperty('client') &&
-    isClientSecurityConfigType(p.client) &&
-  p.hasOwnProperty('bootstrap') &&
-    isBootstrapSecurityConfig(p.bootstrap);
-
-const isClientSecurityConfigType = (p: any): boolean =>
-  p.hasOwnProperty('securityConfigClientMode') &&
-  p.hasOwnProperty('endpoint') &&
-  p.hasOwnProperty('identity') &&
-  p.hasOwnProperty('key') &&
-  p.hasOwnProperty('x509');
-
-const isBootstrapSecurityConfig = (p: any): boolean =>
-  p.hasOwnProperty('bootstrapServer') &&
-    isServerSecurityConfig(p.bootstrapServer) &&
-  p.hasOwnProperty('lwm2mServer') &&
-    isServerSecurityConfig(p.lwm2mServer);
-
-const isServerSecurityConfig = (p: any): boolean =>
-  p.hasOwnProperty('securityMode') &&
-  p.hasOwnProperty('clientPublicKeyOrId') &&
-  p.hasOwnProperty('clientSecretKey');
-
-export function validateSecurityConfig(config: string): boolean {
-  try {
-    const securityConfig = JSON.parse(config);
-    return isSecurityConfigModels(securityConfig);
-  } catch (e) {
-    return false;
-  }
-}
-
-
