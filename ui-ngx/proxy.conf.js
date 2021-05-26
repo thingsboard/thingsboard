@@ -13,35 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const forwardUrl = "http://localhost:8080";
-const wsForwardUrl = "ws://localhost:8080";
+const forwardUrl = "https://thingsboard.dev.meeraspace.com/";
+const wsForwardUrl = "ws://thingsboard.dev.meeraspace.com/";
 const ruleNodeUiforwardUrl = forwardUrl;
 
 const PROXY_CONFIG = {
   "/api": {
     "target": forwardUrl,
-    "secure": false,
+    "secure": true,
+    "changeOrigin":true,
   },
   "/static/rulenode": {
     "target": ruleNodeUiforwardUrl,
-    "secure": false,
+    "secure": true,
+    "changeOrigin":true,
   },
   "/static/widgets": {
     "target": forwardUrl,
-    "secure": false,
+    "secure": true,
+    "changeOrigin":true,
   },
   "/oauth2": {
     "target": forwardUrl,
-    "secure": false,
+    "secure": true,
+    "changeOrigin":true,
   },
   "/login/oauth2": {
     "target": forwardUrl,
-    "secure": false,
+    "secure": true,
+    "changeOrigin":true,
   },
   "/api/ws": {
     "target": wsForwardUrl,
     "ws": true,
-    "secure": false
+    "secure": true,
+    "changeOrigin":true,
   },
 };
 
