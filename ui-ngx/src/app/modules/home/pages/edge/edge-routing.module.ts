@@ -39,10 +39,11 @@ import {
   RuleNodeComponentsResolver,
   TooltipsterResolver
 } from '@home/pages/rulechain/rulechain-routing.module';
+import { CustomersTableConfigResolver } from '@home/pages/customer/customers-table-config.resolver';
 
 const routes: Routes = [
   {
-    path: 'edges',
+    path: 'edgeInstances',
     data: {
       breadcrumb: {
         label: 'edge.edge-instances',
@@ -55,7 +56,7 @@ const routes: Routes = [
         component: EntitiesTableComponent,
         data: {
           auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          edgesType: 'tenant'
+          edgesType: 'tenant',
         },
         resolve: {
           entitiesTableConfig: EdgesTableConfigResolver
@@ -187,6 +188,24 @@ const routes: Routes = [
             }
           }
         ]
+      }
+    ]
+  },
+  {
+    path: 'edgeManagement',
+    data: {
+      breadcrumb: {
+        label: 'edge.management',
+        icon: 'settings_input_antenna'
+      }
+    },
+    children: [
+      {
+        path: '',
+        data: {
+          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          redirectTo: '/edgeManagement/ruleChains'
+        }
       },
       {
         path: 'ruleChains',
@@ -253,7 +272,8 @@ const routes: Routes = [
         ]
       }
     ]
-  }];
+  }
+  ];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
