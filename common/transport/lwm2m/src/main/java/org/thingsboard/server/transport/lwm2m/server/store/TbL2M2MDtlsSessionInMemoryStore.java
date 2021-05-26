@@ -15,14 +15,10 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.store;
 
-import org.springframework.stereotype.Component;
-import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.secure.TbX509DtlsSessionInfo;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
-@TbLwM2mTransportComponent
 public class TbL2M2MDtlsSessionInMemoryStore implements TbLwM2MDtlsSessionStore {
 
     private final ConcurrentHashMap<String, TbX509DtlsSessionInfo> store = new ConcurrentHashMap<>();
