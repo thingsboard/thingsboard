@@ -182,9 +182,13 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                     SessionInfoProto sessionInfo = this.getSessionInfoOrCloseSession(lwM2MClient);
                     if (sessionInfo != null) {
                         transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(this, sessionInfo));
-                        transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN), null);
-                        transportService.process(sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build(), null);
-                        transportService.process(sessionInfo, TransportProtos.SubscribeToRPCMsg.newBuilder().build(), null);
+                        TransportProtos.TransportToDeviceActorMsg msg = TransportProtos.TransportToDeviceActorMsg.newBuilder()
+                                .setSessionInfo(sessionInfo)
+                                .setSessionEvent(DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN))
+                                .setSubscribeToAttributes(TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build())
+                                .setSubscribeToRPC(TransportProtos.SubscribeToRPCMsg.newBuilder().build())
+                                .build();
+                        transportService.process(msg, null);
                         this.getInfoFirmwareUpdate(lwM2MClient);
                         this.getInfoSoftwareUpdate(lwM2MClient);
                         this.initLwM2mFromClientValue(registration, lwM2MClient);
