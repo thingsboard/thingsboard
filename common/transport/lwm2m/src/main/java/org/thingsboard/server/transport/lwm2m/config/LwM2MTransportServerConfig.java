@@ -156,7 +156,7 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
             keyStoreValue = KeyStore.getInstance(keyStoreType);
             keyStoreValue.load(inKeyStore, keyStorePassword == null ? null : keyStorePassword.toCharArray());
         } catch (Exception e) {
-            log.trace("Unable to lookup LwM2M keystore. Reason: {}, {}" , uri, e.getMessage());
+            log.info("Unable to lookup LwM2M keystore. Reason: {}, {}" , uri, e.getMessage());
         }
     }
 }

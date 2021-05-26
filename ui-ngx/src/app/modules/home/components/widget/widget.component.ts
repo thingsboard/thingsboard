@@ -468,12 +468,12 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     );
   }
 
-  private detectChanges(detectDashboardChanges = false) {
+  private detectChanges(detectContainerChanges = false) {
     if (!this.destroyed) {
       try {
         this.cd.detectChanges();
-        if (detectDashboardChanges) {
-          this.widgetContext.dashboard.detectChanges();
+        if (detectContainerChanges) {
+          this.widgetContext.detectContainerChanges();
         }
       } catch (e) {
         // console.log(e);
@@ -494,7 +494,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     }
     if (!this.widgetContext.inited && this.isReady()) {
       this.widgetContext.inited = true;
-      this.widgetContext.dashboard.detectChanges();
+      this.widgetContext.detectContainerChanges();
       if (this.cafs.init) {
         this.cafs.init();
         this.cafs.init = null;

@@ -226,19 +226,29 @@ public class JsonConverter {
     }
 
     private static KeyValueProto buildNumericKeyValueProto(JsonPrimitive value, String key) {
-        if (value.getAsString().contains(".")) {
-            return KeyValueProto.newBuilder()
-                    .setKey(key)
-                    .setType(KeyValueType.DOUBLE_V)
-                    .setDoubleV(value.getAsDouble())
-                    .build();
+        String valueAsString = value.getAsString();
+        KeyValueProto.Builder builder = KeyValueProto.newBuilder().setKey(key);
+        if (valueAsString.contains("e") || valueAsString.contains("E")) {
+            //TODO: correct value conversion. We should make sure that if the value can't fit into Long or Double, we should send String
+            var bd = new BigDecimal(valueAsString);
+            if (bd.stripTrailingZeros().scale() <= 0) {
+                try {
+                    return builder.setType(KeyValueType.LONG_V).setLongV(bd.longValueExact()).build();
+                } catch (ArithmeticException e) {
+                    return builder.setType(KeyValueType.DOUBLE_V).setDoubleV(bd.doubleValue()).build();
+                }
+            } else {
+                return builder.setType(KeyValueType.DOUBLE_V).setDoubleV(bd.doubleValue()).build();
+            }
+        } else if (valueAsString.contains(".")) {
+            return builder.setType(KeyValueType.DOUBLE_V).setDoubleV(value.getAsDouble()).build();
         } else {
             try {
                 long longValue = Long.parseLong(value.getAsString());
-                return KeyValueProto.newBuilder().setKey(key).setType(KeyValueType.LONG_V)
-                        .setLongV(longValue).build();
+                return builder.setType(KeyValueType.LONG_V).setLongV(longValue).build();
             } catch (NumberFormatException e) {
-                throw new JsonSyntaxException("Big integer values are not supported!");
+                //TODO: correct value conversion. We should make sure that if the value can't fit into Long or Double, we should send String
+                return builder.setType(KeyValueType.DOUBLE_V).setDoubleV(new BigDecimal(valueAsString).doubleValue()).build();
             }
         }
     }
@@ -252,6 +262,7 @@ public class JsonConverter {
         String valueAsString = value.getAsString();
         String key = valueEntry.getKey();
         if (valueAsString.contains("e") || valueAsString.contains("E")) {
+            //TODO: correct value conversion. We should make sure that if the value can't fit into Long or Double, we should send String
             var bd = new BigDecimal(valueAsString);
             if (bd.stripTrailingZeros().scale() <= 0) {
                 try {
@@ -269,7 +280,8 @@ public class JsonConverter {
                 long longValue = Long.parseLong(value.getAsString());
                 result.add(new LongDataEntry(key, longValue));
             } catch (NumberFormatException e) {
-                throw new JsonSyntaxException("Big integer values are not supported!");
+                //TODO: correct value conversion. We should make sure that if the value can't fit into Long or Double, we should send String
+                result.add(new DoubleDataEntry(key, new BigDecimal(valueAsString).doubleValue()));
             }
         }
     }

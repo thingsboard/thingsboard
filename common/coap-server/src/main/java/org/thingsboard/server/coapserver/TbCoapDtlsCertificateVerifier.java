@@ -145,7 +145,6 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
 
     @Override
     public void setResultHandler(HandshakeResultHandler resultHandler) {
-        // empty implementation
     }
 
     public ConcurrentMap<String, TbCoapDtlsSessionInfo> getTbCoapDtlsSessionIdsMap() {

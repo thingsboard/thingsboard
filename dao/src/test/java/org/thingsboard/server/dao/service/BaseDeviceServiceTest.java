@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Firmware;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.firmware.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -196,7 +197,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         firmware.setVersion("v1.0");
         firmware.setFileName("test.txt");
         firmware.setContentType("text/plain");
-        firmware.setChecksumAlgorithm("sha256");
+        firmware.setChecksumAlgorithm(ChecksumAlgorithm.SHA256);
         firmware.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
         firmware.setData(ByteBuffer.wrap(new byte[]{1}));
         Firmware savedFirmware = firmwareService.saveFirmware(firmware);
@@ -230,7 +231,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         firmware.setVersion("v1.0");
         firmware.setFileName("test.txt");
         firmware.setContentType("text/plain");
-        firmware.setChecksumAlgorithm("sha256");
+        firmware.setChecksumAlgorithm(ChecksumAlgorithm.SHA256);
         firmware.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
         firmware.setData(ByteBuffer.wrap(new byte[]{1}));
         Firmware savedFirmware = firmwareService.saveFirmware(firmware);

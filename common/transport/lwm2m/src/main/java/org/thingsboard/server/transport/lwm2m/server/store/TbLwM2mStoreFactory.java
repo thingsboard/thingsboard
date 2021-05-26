@@ -26,6 +26,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.cache.TBRedisCacheConfiguration;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
+import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 
 import java.util.Optional;
@@ -38,6 +39,9 @@ public class TbLwM2mStoreFactory {
     private Optional<TBRedisCacheConfiguration> redisConfiguration;
 
     @Autowired
+    private LwM2MTransportServerConfig config;
+
+    @Autowired
     @Lazy
     private LwM2mClientContext clientContext;
 
@@ -47,13 +51,19 @@ public class TbLwM2mStoreFactory {
     @Bean
     private CaliforniumRegistrationStore registrationStore() {
         return redisConfiguration.isPresent() && useRedis ?
-                new TbLwM2mRedisRegistrationStore(redisConfiguration.get().redisConnectionFactory()) : new InMemoryRegistrationStore();
+                new TbLwM2mRedisRegistrationStore(redisConfiguration.get().redisConnectionFactory()) : new InMemoryRegistrationStore(config.getCleanPeriodInSec());
     }
 
     @Bean
     private EditableSecurityStore securityStore() {
         return new TbLwM2mSecurityStore(clientContext, redisConfiguration.isPresent() && useRedis ?
                 new TbLwM2mRedisSecurityStore(redisConfiguration.get().redisConnectionFactory()) : new InMemorySecurityStore());
+    }
+
+    @Bean
+    private TbLwM2MDtlsSessionStore sessionStore() {
+        return redisConfiguration.isPresent() && useRedis ?
+                new TbLwM2MDtlsSessionRedisStore(redisConfiguration.get().redisConnectionFactory()) : new TbL2M2MDtlsSessionInMemoryStore();
     }
 
 }
