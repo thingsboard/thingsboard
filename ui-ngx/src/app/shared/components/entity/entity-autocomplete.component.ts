@@ -270,47 +270,27 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     }
   }
 
-  writeValue(value: string | EntityId | null): void {
+  async writeValue(value: string | EntityId | null): Promise<void> {
     this.searchText = '';
-    if (value != null) {
+    if (value !== null && (typeof value === 'string' ||  (value.entityType && value.id))) {
+      let targetEntityType: EntityType;
+      let id: string;
       if (typeof value === 'string') {
-        const targetEntityType = this.checkEntityType(this.entityTypeValue);
-        this.entityService.getEntity(targetEntityType, value, {ignoreLoading: true, ignoreErrors: true}).subscribe(
-          (entity) => {
-            this.modelValue = entity.id.id;
-            this.selectEntityFormGroup.get('entity').patchValue(entity, {emitEvent: false});
-            this.entityChanged.emit(entity);
-          },
-          () => {
-            this.modelValue = null;
-            this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
-            this.entityChanged.emit(null);
-            if (value !== null) {
-              this.propagateChange(this.modelValue);
-            }
-          }
-        );
-      } else if (value.entityType && value.id) {
-        const targetEntityType = this.checkEntityType(value.entityType);
-        this.entityService.getEntity(targetEntityType, value.id, {ignoreLoading: true, ignoreErrors: true}).subscribe(
-          (entity) => {
-            this.modelValue = entity.id.id;
-            this.selectEntityFormGroup.get('entity').patchValue(entity, {emitEvent: false});
-            this.entityChanged.emit(entity);
-          },
-          () => {
-            this.modelValue = null;
-            this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
-            this.entityChanged.emit(null);
-            if (value !== null) {
-              this.propagateChange(this.modelValue);
-            }
-          }
-        );
+        targetEntityType = this.checkEntityType(this.entityTypeValue);
+        id = value;
       } else {
-        this.modelValue = null;
-        this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
+        targetEntityType = this.checkEntityType(value.entityType);
+        id = value.id;
       }
+      let entity: BaseData<EntityId> = null;
+      try {
+        entity = await this.entityService.getEntity(targetEntityType, id, {ignoreLoading: true, ignoreErrors: true}).toPromise();
+      } catch (e) {
+        this.propagateChange(null);
+      }
+      this.modelValue = entity !== null ? entity.id.id : null;
+      this.selectEntityFormGroup.get('entity').patchValue(entity !== null ? entity : '', {emitEvent: false});
+      this.entityChanged.emit(entity);
     } else {
       this.modelValue = null;
       this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
