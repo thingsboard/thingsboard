@@ -309,7 +309,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
   }
 
-  updateView(value: string | EntityId | null, entity: BaseData<EntityId> | null) {
+  updateView(value: string | null, entity: BaseData<EntityId> | null) {
     if (!isEqual(this.modelValue, value)) {
       this.modelValue = value;
       this.propagateChange(this.modelValue);
