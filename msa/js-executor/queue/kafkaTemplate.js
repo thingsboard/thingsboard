@@ -114,6 +114,30 @@ function KafkaProducer() {
 
         consumer = kafkaClient.consumer({groupId: 'js-executor-group'});
         producer = kafkaClient.producer();
+
+        const { CONNECT } = producer.events;
+        const removeListenerC = producer.on(CONNECT, e => logger.info(`producer CONNECT`));
+        const { DISCONNECT } = producer.events;
+        const removeListenerD = producer.on(DISCONNECT, e => logger.info(`producer DISCONNECT`));
+        const { REQUEST } = producer.events;
+        const removeListenerR = producer.on(REQUEST, e => logger.info(`producer REQUEST ${e.payload.broker}`));
+        const { REQUEST_TIMEOUT } = producer.events;
+        const removeListenerRT = producer.on(REQUEST_TIMEOUT, e => logger.info(`producer REQUEST_TIMEOUT ${e.payload.broker}`));
+        const { REQUEST_QUEUE_SIZE } = producer.events;
+        const removeListenerRQS = producer.on(REQUEST_QUEUE_SIZE, e => logger.info(`producer REQUEST_QUEUE_SIZE ${e.payload.broker} size ${e.queueSize}`));
+
+        const removeListeners = {}
+        const { FETCH_START } = consumer.events;
+        removeListeners[FETCH_START] = consumer.on(FETCH_START, e => logger.info(`consumer FETCH_START`));
+        const { FETCH } = consumer.events;
+        removeListeners[FETCH] = consumer.on(FETCH, e => logger.info(`consumer FETCH numberOfBatches ${e.payload.numberOfBatches} duration ${e.payload.duration}`));
+        const { START_BATCH_PROCESS } = consumer.events;
+        removeListeners[START_BATCH_PROCESS] = consumer.on(START_BATCH_PROCESS, e => logger.info(`consumer START_BATCH_PROCESS topic ${e.payload.topic} batchSize ${e.payload.batchSize}`));
+        const { END_BATCH_PROCESS } = consumer.events;
+        removeListeners[END_BATCH_PROCESS] = consumer.on(END_BATCH_PROCESS, e => logger.info(`consumer END_BATCH_PROCESS topic ${e.payload.topic} batchSize ${e.payload.batchSize}`));
+        const { COMMIT_OFFSETS } = consumer.events;
+        removeListeners[COMMIT_OFFSETS] = consumer.on(COMMIT_OFFSETS, e => logger.info(`consumer COMMIT_OFFSETS topics ${e.payload.topics}`));
+
         const messageProcessor = new JsInvokeMessageProcessor(new KafkaProducer());
         await consumer.connect();
         await producer.connect();
