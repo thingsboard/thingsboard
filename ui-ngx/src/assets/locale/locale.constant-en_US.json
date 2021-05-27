@@ -412,6 +412,7 @@
         "import": "Import assets",
         "asset-file": "Asset file",
         "label": "Label",
+        "search": "Search assets",
         "assign-asset-to-edge": "Assign Asset(s) To Edge",
         "unassign-asset-from-edge": "Unassign asset",
         "unassign-asset-from-edge-title": "Are you sure you want to unassign the asset '{{assetName}}'?",
