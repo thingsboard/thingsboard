@@ -184,6 +184,8 @@ public class TimescaleTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgr
                     loadSql(conn, LOAD_TTL_FUNCTIONS_SQL, "3.2.1");
                 }
                 break;
+            case "3.2.2":
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
         }
