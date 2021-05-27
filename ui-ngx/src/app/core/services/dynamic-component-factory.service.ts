@@ -28,7 +28,6 @@ import {
 import { Observable, ReplaySubject } from 'rxjs';
 import { CommonModule } from '@angular/common';
 
-@Injectable()
 @NgModule()
 export abstract class DynamicComponentModule implements OnDestroy {
 
