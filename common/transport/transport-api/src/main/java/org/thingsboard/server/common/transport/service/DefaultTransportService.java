@@ -636,10 +636,9 @@ public class DefaultTransportService implements TransportService {
                 sessions.remove(uuid);
                 TransportProtos.SessionCloseNotificationProto sessionCloseNotificationProto = TransportProtos.SessionCloseNotificationProto
                         .newBuilder()
-                        .setMessage("Session closed!")
-                        .setSessionIdMSB(uuid.getMostSignificantBits())
-                        .setSessionIdLSB(uuid.getLeastSignificantBits()).build();
-                sessionMD.getListener().onRemoteSessionCloseCommand(sessionCloseNotificationProto);
+                        .setMessage("session has expired due to last activity time!")
+                        .build();
+                sessionMD.getListener().onRemoteSessionCloseCommand(uuid, sessionCloseNotificationProto);
             } else {
                 if (lastActivityTime > sessionMD.getLastReportedActivityTime()) {
                     final long lastActivityTimeFinal = lastActivityTime;
@@ -665,10 +664,13 @@ public class DefaultTransportService implements TransportService {
     @Override
     public SessionMetaData registerSyncSession(TransportProtos.SessionInfoProto sessionInfo, SessionMsgListener listener, long timeout) {
         SessionMetaData currentSession = new SessionMetaData(sessionInfo, TransportProtos.SessionType.SYNC, listener);
-        sessions.putIfAbsent(toSessionId(sessionInfo), currentSession);
+        UUID sessionId = toSessionId(sessionInfo);
+        sessions.putIfAbsent(sessionId, currentSession);
+
+        TransportProtos.SessionCloseNotificationProto notification = TransportProtos.SessionCloseNotificationProto.newBuilder().setMessage("session timeout!").build();
 
         ScheduledFuture executorFuture = scheduler.schedule(() -> {
-            listener.onRemoteSessionCloseCommand(TransportProtos.SessionCloseNotificationProto.getDefaultInstance());
+            listener.onRemoteSessionCloseCommand(sessionId, notification);
             deregisterSession(sessionInfo);
         }, timeout, TimeUnit.MILLISECONDS);
 
@@ -720,11 +722,8 @@ public class DefaultTransportService implements TransportService {
                 if (toSessionMsg.hasAttributeUpdateNotification()) {
                     listener.onAttributeUpdate(toSessionMsg.getAttributeUpdateNotification());
                 }
-                if (toSessionMsg.hasCurrentAttributeStateMsg()) {
-                    listener.onCurrentAttributeStateRequest(toSessionMsg.getCurrentAttributeStateMsg());
-                }
                 if (toSessionMsg.hasSessionCloseNotification()) {
-                    listener.onRemoteSessionCloseCommand(toSessionMsg.getSessionCloseNotification());
+                    listener.onRemoteSessionCloseCommand(sessionId, toSessionMsg.getSessionCloseNotification());
                 }
                 if (toSessionMsg.hasToTransportUpdateCredentialsNotification()) {
                     listener.onToTransportUpdateCredentials(toSessionMsg.getToTransportUpdateCredentialsNotification());

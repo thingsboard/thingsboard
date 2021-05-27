@@ -137,6 +137,7 @@ message GetAttributeRequestMsg {
   int32 requestId = 1;
   repeated string clientAttributeNames = 2;
   repeated string sharedAttributeNames = 3;
+  bool onlyShared = 4;
 }
 
 message GetAttributeResponseMsg {
@@ -144,6 +145,7 @@ message GetAttributeResponseMsg {
   repeated TsKvProto clientAttributeList = 2;
   repeated TsKvProto sharedAttributeList = 3;
   string error = 5;
+  bool sharedStateMsg = 6;
 }
 
 message AttributeUpdateNotificationMsg {
@@ -308,8 +310,6 @@ message ResourceDeleteMsg {
 
 message SessionCloseNotificationProto {
   string message = 1;
-  int64 sessionIdMSB = 2;
-  int64 sessionIdLSB = 3;
 }
 
 message SubscribeToAttributeUpdatesMsg {
@@ -694,7 +694,6 @@ message ToTransportMsg {
   ToTransportUpdateCredentialsProto toTransportUpdateCredentialsNotification = 11;
   ResourceUpdateMsg resourceUpdateMsg = 12;
   ResourceDeleteMsg resourceDeleteMsg = 13;
-  CurrentAttributeStateMsg currentAttributeStateMsg = 14;
 }
 
 message UsageStatsKVProto{

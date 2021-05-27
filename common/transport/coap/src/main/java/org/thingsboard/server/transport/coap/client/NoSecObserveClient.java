@@ -51,7 +51,7 @@ public class NoSecObserveClient {
             try {
                 Request request = Request.newGet();
                 request.setObserve();
-                observeRelation = coapClient.observeAndWait(request, new CoapHandler() {
+                observeRelation = coapClient.observe(request, new CoapHandler() {
                     @Override
                     public void onLoad(CoapResponse response) {
                         String responseText = response.getResponseText();
@@ -61,7 +61,6 @@ public class NoSecObserveClient {
                                         "responseText: {}, " +
                                         "code: {}, " +
                                         "observe seq number: {}",
-
                                 responseText,
                                 code,
                                 observe);
@@ -81,12 +80,9 @@ public class NoSecObserveClient {
         try {
             latch.await();
             observeRelation.proactiveCancel();
-//            Thread.sleep(1000);
         } catch (InterruptedException e) {
             log.error("Error occurred: ", e);
         }
-//        coapClient.shutdown();
-//        executor.shutdown();
     }
 
     private String getFutureUrl(String host, Integer port, String accessToken) {

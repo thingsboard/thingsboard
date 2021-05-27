@@ -28,6 +28,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseM
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
 
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Created by ashvayka on 04.10.18.
@@ -38,13 +39,11 @@ public interface SessionMsgListener {
 
     void onAttributeUpdate(AttributeUpdateNotificationMsg attributeUpdateNotification);
 
-    void onRemoteSessionCloseCommand(SessionCloseNotificationProto sessionCloseNotification);
+    void onRemoteSessionCloseCommand(UUID sessionId, SessionCloseNotificationProto sessionCloseNotification);
 
     void onToDeviceRpcRequest(ToDeviceRpcRequestMsg toDeviceRequest);
 
     void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse);
-
-    default void onCurrentAttributeStateRequest(CurrentAttributeStateMsg attributeStateMsg) {}
 
     default void onToTransportUpdateCredentials(ToTransportUpdateCredentialsProto toTransportUpdateCredentials){}
 

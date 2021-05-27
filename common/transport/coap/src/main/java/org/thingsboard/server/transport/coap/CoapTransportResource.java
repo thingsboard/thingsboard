@@ -289,6 +289,9 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                                 transportConfigurationContainer.getRpcRequestDynamicMessageBuilder(), getTokenFromRequest(request));
                         transportService.process(sessionInfo,
                                 TransportProtos.SubscribeToAttributeUpdatesMsg.getDefaultInstance(), new CoapNoOpCallback(exchange));
+                        transportService.process(sessionInfo,
+                                TransportProtos.GetAttributeRequestMsg.newBuilder().setOnlyShared(true).build(),
+                                new CoapNoOpCallback(exchange));
                     }
                     break;
                 case UNSUBSCRIBE_ATTRIBUTES_REQUEST:
@@ -310,7 +313,9 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                         registerAsyncCoapSession(exchange, sessionInfo, coapTransportAdaptor,
                                 transportConfigurationContainer.getRpcRequestDynamicMessageBuilder(), getTokenFromRequest(request));
                         transportService.process(sessionInfo,
-                                TransportProtos.SubscribeToRPCMsg.getDefaultInstance(), new CoapNoOpCallback(exchange));
+                                TransportProtos.SubscribeToRPCMsg.getDefaultInstance(),
+                                new CoapOkCallback(exchange, CoAP.ResponseCode.VALID, CoAP.ResponseCode.INTERNAL_SERVER_ERROR)
+                        );
                     }
                     break;
                 case UNSUBSCRIBE_RPC_COMMANDS_REQUEST:
@@ -516,7 +521,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         @Override
         public void onGetAttributesResponse(TransportProtos.GetAttributeResponseMsg msg) {
             try {
-                exchange.respond(coapTransportAdaptor.convertToPublish(msg));
+                exchange.respond(coapTransportAdaptor.convertToPublish(isConRequest(), msg));
             } catch (AdaptorException e) {
                 log.trace("Failed to reply due to error", e);
                 exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
@@ -534,20 +539,8 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         }
 
         @Override
-        public void onCurrentAttributeStateRequest(TransportProtos.CurrentAttributeStateMsg msg) {
-            try {
-                exchange.respond(coapTransportAdaptor.convertToPublish(isConRequest(), msg));
-            } catch (AdaptorException e) {
-                log.trace("Failed to reply due to error", e);
-                exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
-            }
-        }
-
-        @Override
-        public void onRemoteSessionCloseCommand(TransportProtos.SessionCloseNotificationProto sessionCloseNotification) {
-            UUID sessionId = new UUID(sessionCloseNotification.getSessionIdMSB(), sessionCloseNotification.getSessionIdLSB());
-            String message = sessionCloseNotification.getMessage();
-            log.trace("[{}] SessionCloseNotification: {}", sessionId, message);
+        public void onRemoteSessionCloseCommand(UUID sessionId, TransportProtos.SessionCloseNotificationProto sessionCloseNotification) {
+            log.trace("[{}] Received the remote command to close the session: {}", sessionId, sessionCloseNotification.getMessage());
             Map<TransportProtos.SessionInfoProto, ObserveRelation> sessionToObserveRelationMap = coapTransportResource.getSessionInfoToObserveRelationMap();
             if (coapTransportResource.getObserverCount() > 0 && !CollectionUtils.isEmpty(sessionToObserveRelationMap)) {
                 Set<TransportProtos.SessionInfoProto> observeSessions = sessionToObserveRelationMap.keySet();
@@ -576,7 +569,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         @Override
         public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg msg) {
             try {
-                exchange.respond(coapTransportAdaptor.convertToPublish(msg));
+                exchange.respond(coapTransportAdaptor.convertToPublish(isConRequest(), msg));
             } catch (AdaptorException e) {
                 log.trace("Failed to reply due to error", e);
                 exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);

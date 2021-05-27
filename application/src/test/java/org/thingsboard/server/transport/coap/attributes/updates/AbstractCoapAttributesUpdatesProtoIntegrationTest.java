@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.coap.attributes.updates;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.core.coap.CoAP;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,11 +25,14 @@ import org.thingsboard.server.common.data.CoapDeviceType;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 @Slf4j
@@ -49,8 +53,18 @@ public abstract class AbstractCoapAttributesUpdatesProtoIntegrationTest extends 
         processTestSubscribeToAttributesUpdates();
     }
 
+    protected void validateCurrentStateAttributesResponse(TestCoapCallback callback) throws InvalidProtocolBufferException {
+        assertNull(callback.getPayloadBytes());
+        assertNotNull(callback.getObserve());
+        assertEquals(callback.getResponseCode(), CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
+        assertEquals(0, callback.getObserve().intValue());
+    }
+
     protected void validateUpdateAttributesResponse(TestCoapCallback callback) throws InvalidProtocolBufferException {
         assertNotNull(callback.getPayloadBytes());
+        assertNotNull(callback.getObserve());
+        assertEquals(callback.getResponseCode(), CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
+        assertEquals(1, callback.getObserve().intValue());
         TransportProtos.AttributeUpdateNotificationMsg.Builder attributeUpdateNotificationMsgBuilder = TransportProtos.AttributeUpdateNotificationMsg.newBuilder();
         List<TransportProtos.TsKvProto> tsKvProtoList = getTsKvProtoList();
         attributeUpdateNotificationMsgBuilder.addAllSharedUpdated(tsKvProtoList);
@@ -68,6 +82,9 @@ public abstract class AbstractCoapAttributesUpdatesProtoIntegrationTest extends 
 
     protected void validateDeleteAttributesResponse(TestCoapCallback callback) throws InvalidProtocolBufferException {
         assertNotNull(callback.getPayloadBytes());
+        assertNotNull(callback.getObserve());
+        assertEquals(callback.getResponseCode(), CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
+        assertEquals(2, callback.getObserve().intValue());
         TransportProtos.AttributeUpdateNotificationMsg.Builder attributeUpdateNotificationMsgBuilder = TransportProtos.AttributeUpdateNotificationMsg.newBuilder();
         attributeUpdateNotificationMsgBuilder.addSharedDeleted("attribute5");
 
