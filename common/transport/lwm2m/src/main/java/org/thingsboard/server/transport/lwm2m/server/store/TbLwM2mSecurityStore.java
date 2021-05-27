@@ -20,12 +20,16 @@ import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.eclipse.leshan.server.security.SecurityStoreListener;
+import org.springframework.stereotype.Component;
+import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 
 import java.util.Collection;
 
 @Slf4j
+@Component
+@TbLwM2mTransportComponent
 public class TbLwM2mSecurityStore implements EditableSecurityStore {
 
     private final LwM2mClientContext clientContext;

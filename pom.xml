@@ -48,6 +48,7 @@
         <json-path.version>2.2.0</json-path.version>
         <junit.version>4.12</junit.version>
         <jupiter.version>5.7.1</jupiter.version>
+        <hamcrest.version>2.2</hamcrest.version>
         <slf4j.version>1.7.7</slf4j.version>
         <logback.version>1.2.3</logback.version>
         <mockito.version>3.3.3</mockito.version>
@@ -94,7 +95,7 @@
         <hsqldb.version>2.5.0</hsqldb.version>
         <dbunit.version>2.5.3</dbunit.version>
         <spring-test-dbunit.version>1.2.1</spring-test-dbunit.version>
-        <postgresql.driver.version>42.2.16</postgresql.driver.version>
+        <postgresql.driver.version>42.2.20</postgresql.driver.version>
         <sonar.exclusions>org/thingsboard/server/gen/**/*,
             org/thingsboard/server/extensions/core/plugin/telemetry/gen/**/*
         </sonar.exclusions>
@@ -1372,6 +1373,12 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>hamcrest</artifactId>
+                <version>${hamcrest.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter-params</artifactId>
                 <version>${jupiter.version}</version>
@@ -1429,6 +1436,11 @@
                 <groupId>org.springframework.data</groupId>
                 <artifactId>spring-data-redis</artifactId>
                 <version>${spring-data-redis.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.integration</groupId>
+                <artifactId>spring-integration-redis</artifactId>
+                <version>${spring.version}</version>
             </dependency>
             <dependency>
                 <groupId>redis.clients</groupId>

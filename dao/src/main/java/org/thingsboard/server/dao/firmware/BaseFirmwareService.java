@@ -31,6 +31,9 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.Firmware;
 import org.thingsboard.server.common.data.FirmwareInfo;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.firmware.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.firmware.FirmwareType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.FirmwareId;
@@ -43,7 +46,11 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -107,6 +114,36 @@ public class BaseFirmwareService implements FirmwareService {
             } else {
                 throw t;
             }
+        }
+    }
+
+    @Override
+    public String generateChecksum(ChecksumAlgorithm checksumAlgorithm, ByteBuffer data) {
+        if (data == null || !data.hasArray() || data.array().length == 0) {
+            throw new DataValidationException("Firmware data should be specified!");
+        }
+
+        return getHashFunction(checksumAlgorithm).hashBytes(data.array()).toString();
+    }
+
+    private HashFunction getHashFunction(ChecksumAlgorithm checksumAlgorithm) {
+        switch (checksumAlgorithm) {
+            case MD5:
+                return Hashing.md5();
+            case SHA256:
+                return Hashing.sha256();
+            case SHA384:
+                return Hashing.sha384();
+            case SHA512:
+                return Hashing.sha512();
+            case CRC32:
+                return Hashing.crc32();
+            case MURMUR3_32:
+                return Hashing.murmur3_32();
+            case MURMUR3_128:
+                return Hashing.murmur3_128();
+            default:
+                throw new DataValidationException("Unknown checksum algorithm!");
         }
     }
 
@@ -210,34 +247,16 @@ public class BaseFirmwareService implements FirmwareService {
                 throw new DataValidationException("Firmware content type should be specified!");
             }
 
-            ByteBuffer data = firmware.getData();
-            if (data == null || !data.hasArray() || data.array().length == 0) {
-                throw new DataValidationException("Firmware data should be specified!");
-            }
-
-            if (StringUtils.isEmpty(firmware.getChecksumAlgorithm())) {
+            if (firmware.getChecksumAlgorithm() == null) {
                 throw new DataValidationException("Firmware checksum algorithm should be specified!");
             }
             if (StringUtils.isEmpty(firmware.getChecksum())) {
                 throw new DataValidationException("Firmware checksum should be specified!");
             }
 
-            HashFunction hashFunction;
-            switch (firmware.getChecksumAlgorithm()) {
-                case "sha256":
-                    hashFunction = Hashing.sha256();
-                    break;
-                case "md5":
-                    hashFunction = Hashing.md5();
-                    break;
-                case "crc32":
-                    hashFunction = Hashing.crc32();
-                    break;
-                default:
-                    throw new DataValidationException("Unknown checksum algorithm!");
-            }
+            String currentChecksum;
 
-            String currentChecksum = hashFunction.hashBytes(data.array()).toString();
+            currentChecksum = generateChecksum(firmware.getChecksumAlgorithm(), firmware.getData());
 
             if (!currentChecksum.equals(firmware.getChecksum())) {
                 throw new DataValidationException("Wrong firmware file!");

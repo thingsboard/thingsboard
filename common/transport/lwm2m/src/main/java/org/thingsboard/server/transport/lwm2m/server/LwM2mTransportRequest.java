@@ -104,7 +104,7 @@ public class LwM2mTransportRequest {
     private final LwM2mTransportContext context;
     private final LwM2MTransportServerConfig config;
     private final LwM2mClientContext lwM2mClientContext;
-    private final DefaultLwM2MTransportMsgHandler serviceImpl;
+    private final DefaultLwM2MTransportMsgHandler handler;
 
     @PostConstruct
     public void init() {
@@ -149,13 +149,13 @@ public class LwM2mTransportRequest {
                     else if (WRITE_UPDATE.name().equals(typeOper.name())) {
                         if (rpcRequest != null) {
                             String errorMsg = String.format("Path %s params is not valid", targetIdVer);
-                            serviceImpl.sentRpcRequest(rpcRequest, BAD_REQUEST.getName(), errorMsg, LOG_LW2M_ERROR);
+                            handler.sentRpcRequest(rpcRequest, BAD_REQUEST.getName(), errorMsg, LOG_LW2M_ERROR);
                         }
                     }
                     else if (WRITE_REPLACE.name().equals(typeOper.name()) || EXECUTE.name().equals(typeOper.name()) ) {
                         if (rpcRequest != null) {
                             String errorMsg = String.format("Path %s object model  is absent", targetIdVer);
-                            serviceImpl.sentRpcRequest(rpcRequest, BAD_REQUEST.getName(), errorMsg, LOG_LW2M_ERROR);
+                            handler.sentRpcRequest(rpcRequest, BAD_REQUEST.getName(), errorMsg, LOG_LW2M_ERROR);
                         }
                     }
                     else if (!OBSERVE_CANCEL.name().equals(typeOper.name())) {
@@ -163,12 +163,12 @@ public class LwM2mTransportRequest {
                         if (rpcRequest != null) {
                             ResourceModel resourceModel = lwM2MClient.getResourceModel(targetIdVer, this.config.getModelProvider());
                             String errorMsg = resourceModel == null ? String.format("Path %s not found in object version", targetIdVer) : "SendRequest - null";
-                            serviceImpl.sentRpcRequest(rpcRequest, NOT_FOUND.getName(), errorMsg, LOG_LW2M_ERROR);
+                            handler.sentRpcRequest(rpcRequest, NOT_FOUND.getName(), errorMsg, LOG_LW2M_ERROR);
                         }
                     }
                 } else if (rpcRequest != null) {
                     String errorMsg = String.format("Path %s not found in object version", targetIdVer);
-                    serviceImpl.sentRpcRequest(rpcRequest, NOT_FOUND.getName(), errorMsg, LOG_LW2M_ERROR);
+                    handler.sentRpcRequest(rpcRequest, NOT_FOUND.getName(), errorMsg, LOG_LW2M_ERROR);
                 }
             } else if (OBSERVE_READ_ALL.name().equals(typeOper.name()) || DISCOVER_All.name().equals(typeOper.name())) {
                 Set<String> paths;
@@ -181,11 +181,11 @@ public class LwM2mTransportRequest {
                     paths = Arrays.stream(objectLinks).map(Link::toString).collect(Collectors.toUnmodifiableSet());
                     String msg = String.format("%s: type operation %s paths - %s", LOG_LW2M_INFO,
                             typeOper.name(), paths);
-                    serviceImpl.sendLogsToThingsboard(msg, registration.getId());
+                    handler.sendLogsToThingsboard(msg, registration.getId());
                 }
                 if (rpcRequest != null) {
                     String valueMsg = String.format("Paths - %s", paths);
-                    serviceImpl.sentRpcRequest(rpcRequest, CONTENT.name(), valueMsg, LOG_LW2M_VALUE);
+                    handler.sentRpcRequest(rpcRequest, CONTENT.name(), valueMsg, LOG_LW2M_VALUE);
                 }
             } else if (OBSERVE_CANCEL.name().equals(typeOper.name())) {
                 int observeCancelCnt = context.getServer().getObservationService().cancelObservations(registration);
@@ -196,10 +196,10 @@ public class LwM2mTransportRequest {
         } catch (Exception e) {
             String msg = String.format("%s: type operation %s  %s", LOG_LW2M_ERROR,
                     typeOper.name(), e.getMessage());
-            serviceImpl.sendLogsToThingsboard(msg, registration.getId());
+            handler.sendLogsToThingsboard(msg, registration.getId());
             if (rpcRequest != null) {
                 String errorMsg = String.format("Path %s type operation %s  %s", targetIdVer, typeOper.name(), e.getMessage());
-                serviceImpl.sentRpcRequest(rpcRequest, NOT_FOUND.getName(), errorMsg, LOG_LW2M_ERROR);
+                handler.sentRpcRequest(rpcRequest, NOT_FOUND.getName(), errorMsg, LOG_LW2M_ERROR);
             }
         }
     }
@@ -326,31 +326,31 @@ public class LwM2mTransportRequest {
         context.getServer().send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
 
             if (!lwM2MClient.isInit()) {
-                lwM2MClient.initReadValue(this.serviceImpl, convertPathFromObjectIdToIdVer(request.getPath().toString(), registration));
+                lwM2MClient.initReadValue(this.handler, convertPathFromObjectIdToIdVer(request.getPath().toString(), registration));
             }
             if (CoAP.ResponseCode.isSuccess(((Response) response.getCoapResponse()).getCode())) {
                 this.handleResponse(registration, request.getPath().toString(), response, request, rpcRequest);
             } else {
                 String msg = String.format("%s: SendRequest %s: CoapCode - %s Lwm2m code - %d name - %s Resource path - %s", LOG_LW2M_ERROR, request.getClass().getName().toString(),
                         ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString());
-                serviceImpl.sendLogsToThingsboard(msg, registration.getId());
+                handler.sendLogsToThingsboard(msg, registration.getId());
                 log.error("[{}] [{}], [{}] - [{}] [{}] error SendRequest", request.getClass().getName().toString(), registration.getEndpoint(),
                         ((Response) response.getCoapResponse()).getCode(), response.getCode(), request.getPath().toString());
                 if (!lwM2MClient.isInit()) {
-                    lwM2MClient.initReadValue(this.serviceImpl, convertPathFromObjectIdToIdVer(request.getPath().toString(), registration));
+                    lwM2MClient.initReadValue(this.handler, convertPathFromObjectIdToIdVer(request.getPath().toString(), registration));
                 }
                 /** Not Found */
                 if (rpcRequest != null) {
-                    serviceImpl.sentRpcRequest(rpcRequest, response.getCode().getName(), response.getErrorMessage(), LOG_LW2M_ERROR);
+                    handler.sentRpcRequest(rpcRequest, response.getCode().getName(), response.getErrorMessage(), LOG_LW2M_ERROR);
                 }
                 /** Not Found
                  set setClient_fw_info... = empty
                  **/
                 if (lwM2MClient.getFwUpdate().isInfoFwSwUpdate()) {
-                    lwM2MClient.getFwUpdate().initReadValue(serviceImpl, request.getPath().toString());
+                    lwM2MClient.getFwUpdate().initReadValue(handler, request.getPath().toString());
                 }
                 if (lwM2MClient.getSwUpdate().isInfoFwSwUpdate()) {
-                    lwM2MClient.getSwUpdate().initReadValue(serviceImpl, request.getPath().toString());
+                    lwM2MClient.getSwUpdate().initReadValue(handler, request.getPath().toString());
                 }
                 if (request.getPath().toString().equals(FW_PACKAGE_ID) || request.getPath().toString().equals(SW_PACKAGE_ID)) {
                     this.afterWriteFwSWUpdateError(registration, request, response.getErrorMessage());
@@ -364,10 +364,10 @@ public class LwM2mTransportRequest {
              set setClient_fw_info... = empty
              **/
             if (lwM2MClient.getFwUpdate().isInfoFwSwUpdate()) {
-                lwM2MClient.getFwUpdate().initReadValue(serviceImpl, request.getPath().toString());
+                lwM2MClient.getFwUpdate().initReadValue(handler, request.getPath().toString());
             }
             if (lwM2MClient.getSwUpdate().isInfoFwSwUpdate()) {
-                lwM2MClient.getSwUpdate().initReadValue(serviceImpl, request.getPath().toString());
+                lwM2MClient.getSwUpdate().initReadValue(handler, request.getPath().toString());
             }
             if (request.getPath().toString().equals(FW_PACKAGE_ID) || request.getPath().toString().equals(SW_PACKAGE_ID)) {
                 this.afterWriteFwSWUpdateError(registration, request, e.getMessage());
@@ -376,14 +376,14 @@ public class LwM2mTransportRequest {
                 this.afterExecuteFwSwUpdateError(registration, request, e.getMessage());
             }
             if (!lwM2MClient.isInit()) {
-                lwM2MClient.initReadValue(this.serviceImpl, convertPathFromObjectIdToIdVer(request.getPath().toString(), registration));
+                lwM2MClient.initReadValue(this.handler, convertPathFromObjectIdToIdVer(request.getPath().toString(), registration));
             }
             String msg = String.format("%s: SendRequest %s: Resource path - %s msg error - %s",
                     LOG_LW2M_ERROR, request.getClass().getName().toString(), request.getPath().toString(), e.getMessage());
-            serviceImpl.sendLogsToThingsboard(msg, registration.getId());
+            handler.sendLogsToThingsboard(msg, registration.getId());
             log.error("[{}] [{}] - [{}] error SendRequest", request.getClass().getName().toString(), request.getPath().toString(), e.toString());
             if (rpcRequest != null) {
-                serviceImpl.sentRpcRequest(rpcRequest, CoAP.CodeClass.ERROR_RESPONSE.name(), e.getMessage(), LOG_LW2M_ERROR);
+                handler.sentRpcRequest(rpcRequest, CoAP.CodeClass.ERROR_RESPONSE.name(), e.getMessage(), LOG_LW2M_ERROR);
             }
         });
     }
@@ -425,11 +425,11 @@ public class LwM2mTransportRequest {
             String patn = "/" + objectId + "/" + instanceId + "/" + resourceId;
             String msg = String.format(LOG_LW2M_ERROR + ": NumberFormatException: Resource path - %s type - %s value - %s msg error - %s  SendRequest to Client",
                     patn, type, value, e.toString());
-            serviceImpl.sendLogsToThingsboard(msg, registration.getId());
+            handler.sendLogsToThingsboard(msg, registration.getId());
             log.error("Path: [{}] type: [{}] value: [{}] errorMsg: [{}]]", patn, type, value, e.toString());
             if (rpcRequest != null) {
                 String errorMsg = String.format("NumberFormatException: Resource path - %s type - %s value - %s", patn, type, value);
-                serviceImpl.sentRpcRequest(rpcRequest, BAD_REQUEST.getName(), errorMsg, LOG_LW2M_ERROR);
+                handler.sentRpcRequest(rpcRequest, BAD_REQUEST.getName(), errorMsg, LOG_LW2M_ERROR);
             }
             return null;
         }
@@ -458,17 +458,17 @@ public class LwM2mTransportRequest {
         String pathIdVer = convertPathFromObjectIdToIdVer(path, registration);
         String msgLog = "";
         if (response instanceof ReadResponse) {
-            serviceImpl.onUpdateValueAfterReadResponse(registration, pathIdVer, (ReadResponse) response, rpcRequest);
+            handler.onUpdateValueAfterReadResponse(registration, pathIdVer, (ReadResponse) response, rpcRequest);
         } else if (response instanceof DeleteResponse) {
             log.warn("[{}] Path [{}] DeleteResponse 5_Send", pathIdVer, response);
         } else if (response instanceof DiscoverResponse) {
             String discoverValue = Link.serialize(((DiscoverResponse)response).getObjectLinks());
             msgLog = String.format("%s: type operation: %s path: %s value: %s",
                     LOG_LW2M_INFO, DISCOVER.name(), request.getPath().toString(), discoverValue);
-            serviceImpl.sendLogsToThingsboard(msgLog, registration.getId());
+            handler.sendLogsToThingsboard(msgLog, registration.getId());
             log.warn("DiscoverResponse: [{}]", (DiscoverResponse) response);
             if (rpcRequest != null) {
-                serviceImpl.sentRpcRequest(rpcRequest, response.getCode().getName(), discoverValue, LOG_LW2M_VALUE);
+                handler.sentRpcRequest(rpcRequest, response.getCode().getName(), discoverValue, LOG_LW2M_VALUE);
             }
         } else if (response instanceof ExecuteResponse) {
             log.warn("[{}] Path [{}] ExecuteResponse 7_Send", pathIdVer, response);
@@ -477,16 +477,16 @@ public class LwM2mTransportRequest {
         } else if (response instanceof WriteResponse) {
             log.warn("[{}] Path [{}] WriteResponse 9_Send", pathIdVer, response);
             this.infoWriteResponse(registration, response, request);
-            serviceImpl.onWriteResponseOk(registration, pathIdVer, (WriteRequest) request);
+            handler.onWriteResponseOk(registration, pathIdVer, (WriteRequest) request);
         }
         if (rpcRequest != null) {
             if (response instanceof ExecuteResponse
                     || response instanceof WriteAttributesResponse
                     || response instanceof DeleteResponse) {
                 rpcRequest.setInfoMsg(null);
-                serviceImpl.sentRpcRequest(rpcRequest, response.getCode().getName(), null, null);
+                handler.sentRpcRequest(rpcRequest, response.getCode().getName(), null, null);
             } else if (response instanceof WriteResponse) {
-                serviceImpl.sentRpcRequest(rpcRequest, response.getCode().getName(), null, LOG_LW2M_INFO);
+                handler.sentRpcRequest(rpcRequest, response.getCode().getName(), null, LOG_LW2M_INFO);
             }
         }
     }
@@ -519,7 +519,7 @@ public class LwM2mTransportRequest {
                         LOG_LW2M_INFO, response.getCode().getCode(), request.getPath().toString(), value);
             }
             if (msg != null) {
-                serviceImpl.sendLogsToThingsboard(msg, registration.getId());
+                handler.sendLogsToThingsboard(msg, registration.getId());
                 if (request.getPath().toString().equals(FW_PACKAGE_ID) || request.getPath().toString().equals(SW_PACKAGE_ID)) {
                     this.afterWriteSuccessFwSwUpdate(registration, request);
                 }
@@ -572,11 +572,11 @@ public class LwM2mTransportRequest {
     }
 
     private void afterObserveCancel(Registration registration, int observeCancelCnt, String observeCancelMsg, Lwm2mClientRpcRequest rpcRequest) {
-        serviceImpl.sendLogsToThingsboard(observeCancelMsg, registration.getId());
+        handler.sendLogsToThingsboard(observeCancelMsg, registration.getId());
         log.warn("[{}]", observeCancelMsg);
         if (rpcRequest != null) {
             rpcRequest.setInfoMsg(String.format("Count: %d", observeCancelCnt));
-            serviceImpl.sentRpcRequest(rpcRequest, CONTENT.name(), null, LOG_LW2M_INFO);
+            handler.sentRpcRequest(rpcRequest, CONTENT.name(), null, LOG_LW2M_INFO);
         }
     }
 }
