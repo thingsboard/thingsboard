@@ -153,10 +153,6 @@ message AttributeUpdateNotificationMsg {
   repeated string sharedDeleted = 2;
 }
 
-message CurrentAttributeStateMsg {
-  repeated TsKvProto shared = 1;
-}
-
 message ValidateDeviceTokenRequestMsg {
   string token = 1;
 }

@@ -25,8 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
-import org.thingsboard.rule.engine.api.msg.DeviceEdgeUpdateMsg;
 import org.thingsboard.rule.engine.api.msg.DeviceCredentialsUpdateNotificationMsg;
+import org.thingsboard.rule.engine.api.msg.DeviceEdgeUpdateMsg;
 import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
@@ -54,7 +54,6 @@ import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.common.msg.timeout.DeviceActorServerSideRpcTimeoutMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.CurrentAttributeStateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceSessionsCacheEntry;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
@@ -74,7 +73,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcResponseM
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponseActorMsg;
@@ -349,13 +347,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 }
             }, MoreExecutors.directExecutor());
         }
-    }
-
-    private void processGetAttributeErrorResponse(Throwable t, SessionInfoProto sessionInfo) {
-        GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
-                .setError(t.getMessage())
-                .build();
-        sendToTransport(responseMsg, sessionInfo);
     }
 
     private ListenableFuture<List<List<AttributeKvEntry>>> getAttributesKvEntries(GetAttributeRequestMsg request) {

@@ -36,7 +36,6 @@ import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.CurrentAttributeStateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.CredentialsType;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
@@ -311,14 +310,6 @@ public class JsonConverter {
             JsonArray attrObject = new JsonArray();
             payload.getSharedDeletedList().forEach(attrObject::add);
             result.add("deleted", attrObject);
-        }
-        return result;
-    }
-
-    public static JsonObject toJson(CurrentAttributeStateMsg payload) {
-        JsonObject result = new JsonObject();
-        if (payload.getSharedCount() > 0) {
-            payload.getSharedList().forEach(addToObjectFromProto(result));
         }
         return result;
     }
