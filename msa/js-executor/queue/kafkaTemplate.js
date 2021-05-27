@@ -33,22 +33,52 @@ let producer;
 
 const configEntries = [];
 
+let topicMessages = [];
+let loopSend;
+
 function KafkaProducer() {
-    this.send = async (responseTopic, scriptId, rawResponse, headers) => {
-        return producer.send(
-            {
-                topic: responseTopic,
-                acks: acks,
-                compression: compressionType,
-                messages: [
-                    {
-                        key: scriptId,
-                        value: rawResponse,
-                        headers: headers.data
-                    }
-                ]
-            });
+    this.send = (responseTopic, scriptId, rawResponse, headers) => {
+    logger.debug('Pending queue response, scriptId: [%s]', scriptId);
+        const message = {
+            topic: responseTopic,
+            messages: [{
+                 key: scriptId,
+                 value: rawResponse,
+                 headers: headers.data
+            }]
+        };
+
+        topicMessages.push(message);
+        return {};
     }
+}
+
+function sendLoopFunction() {
+     loopSend = setInterval(sendProducerMsg, 200);
+}
+
+function sendProducerMsg() {
+     if (topicMessages.length > 0) {
+        logger.info('sendProducerMsg from queue response, lenght: [%s]', topicMessages.length );
+         const messagesToSend = topicMessages;
+         topicMessages = [];
+         producer.sendBatch({
+             topicMessages: messagesToSend,
+             acks: acks,
+             compression: compressionType
+         }).then(
+               () => {
+                   logger.info('Response sent to kafka, length: [%s]', messagesToSend.length );
+               },
+               (err) => {
+                   if (err) {
+                       logger.error('Failed to send kafka, length: [%s], pending to reprocess msgs', messagesToSend.length );
+                       topicMessages = messagesToSend.concat(topicMessages);
+                       logger.error(err.stack);
+                   }
+               }
+           );
+     }
 }
 
 (async () => {
@@ -141,6 +171,7 @@ function KafkaProducer() {
         const messageProcessor = new JsInvokeMessageProcessor(new KafkaProducer());
         await consumer.connect();
         await producer.connect();
+        sendLoopFunction();
         await consumer.subscribe({topic: requestTopic});
 
         logger.info('Started ThingsBoard JavaScript Executor Microservice.');
@@ -221,6 +252,10 @@ async function disconnectProducer() {
         var _producer = producer;
         producer = null;
         try {
+            logger.info('Stopping loop...');
+            //TODO: send handle msg
+            clearInterval(loopSend);
+            sendProducerMsg();
             await _producer.disconnect();
             logger.info('Kafka Producer stopped.');
         } catch (e) {
