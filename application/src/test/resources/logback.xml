@@ -9,7 +9,7 @@
 
 <!--    <logger name="org.thingsboard.server.service.subscription" level="TRACE"/>-->
     <logger name="org.thingsboard.server.controller.TbTestWebSocketClient" level="INFO"/>
-    <logger name="org.thingsboard.server" level="DEBUG"/>
+    <logger name="org.thingsboard.server" level="WARN"/>
     <logger name="org.springframework" level="WARN"/>
     <logger name="org.springframework.boot.test" level="WARN"/>
     <logger name="org.apache.cassandra" level="WARN"/>
@@ -17,7 +17,7 @@
     <logger name="org.eclipse.leshan" level="TRACE"/>
 
 
-    <root level="INFO">
+    <root level="WARN">
         <appender-ref ref="console"/>
     </root>
 
