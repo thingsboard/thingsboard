@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -50,10 +51,43 @@ public abstract class AbstractCoapAttributesUpdatesProtoIntegrationTest extends 
 
     @Test
     public void testSubscribeToAttributesUpdatesFromTheServer() throws Exception {
-        processTestSubscribeToAttributesUpdates();
+        processTestSubscribeToAttributesUpdates(false);
+    }
+
+    @Test
+    public void testSubscribeToAttributesUpdatesFromTheServerWithEmptyCurrentStateNotification() throws Exception {
+        processTestSubscribeToAttributesUpdates(true);
     }
 
     protected void validateCurrentStateAttributesResponse(TestCoapCallback callback) throws InvalidProtocolBufferException {
+        assertNotNull(callback.getPayloadBytes());
+        assertNotNull(callback.getObserve());
+        assertEquals(callback.getResponseCode(), CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
+        assertEquals(0, callback.getObserve().intValue());
+        TransportProtos.AttributeUpdateNotificationMsg.Builder expectedCurrentStateNotificationMsgBuilder = TransportProtos.AttributeUpdateNotificationMsg.newBuilder();
+        TransportProtos.TsKvProto tsKvProtoAttribute1 = getTsKvProto("attribute1", "value", TransportProtos.KeyValueType.STRING_V);
+        TransportProtos.TsKvProto tsKvProtoAttribute2 = getTsKvProto("attribute2", "false", TransportProtos.KeyValueType.BOOLEAN_V);
+        TransportProtos.TsKvProto tsKvProtoAttribute3 = getTsKvProto("attribute3", "41.0", TransportProtos.KeyValueType.DOUBLE_V);
+        TransportProtos.TsKvProto tsKvProtoAttribute4 = getTsKvProto("attribute4", "72", TransportProtos.KeyValueType.LONG_V);
+        TransportProtos.TsKvProto tsKvProtoAttribute5 = getTsKvProto("attribute5", "{\"someNumber\":41,\"someArray\":[],\"someNestedObject\":{\"key\":\"value\"}}", TransportProtos.KeyValueType.JSON_V);
+        List<TransportProtos.TsKvProto> tsKvProtoList = new ArrayList<>();
+        tsKvProtoList.add(tsKvProtoAttribute1);
+        tsKvProtoList.add(tsKvProtoAttribute2);
+        tsKvProtoList.add(tsKvProtoAttribute3);
+        tsKvProtoList.add(tsKvProtoAttribute4);
+        tsKvProtoList.add(tsKvProtoAttribute5);
+        TransportProtos.AttributeUpdateNotificationMsg expectedCurrentStateNotificationMsg = expectedCurrentStateNotificationMsgBuilder.addAllSharedUpdated(tsKvProtoList).build();
+        TransportProtos.AttributeUpdateNotificationMsg actualCurrentStateNotificationMsg = TransportProtos.AttributeUpdateNotificationMsg.parseFrom(callback.getPayloadBytes());
+
+        List<TransportProtos.KeyValueProto> expectedSharedUpdatedList = expectedCurrentStateNotificationMsg.getSharedUpdatedList().stream().map(TransportProtos.TsKvProto::getKv).collect(Collectors.toList());
+        List<TransportProtos.KeyValueProto> actualSharedUpdatedList = actualCurrentStateNotificationMsg.getSharedUpdatedList().stream().map(TransportProtos.TsKvProto::getKv).collect(Collectors.toList());
+
+        assertEquals(expectedSharedUpdatedList.size(), actualSharedUpdatedList.size());
+        assertTrue(actualSharedUpdatedList.containsAll(expectedSharedUpdatedList));
+
+    }
+
+    protected void validateEmptyCurrentStateAttributesResponse(TestCoapCallback callback) throws InvalidProtocolBufferException {
         assertNull(callback.getPayloadBytes());
         assertNotNull(callback.getObserve());
         assertEquals(callback.getResponseCode(), CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);

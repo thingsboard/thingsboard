@@ -44,6 +44,9 @@ public abstract class AbstractCoapAttributesUpdatesIntegrationTest extends Abstr
 
     private static final String RESPONSE_ATTRIBUTES_PAYLOAD_DELETED = "{\"deleted\":[\"attribute5\"]}";
 
+    protected static final String POST_ATTRIBUTES_PAYLOAD_ON_CURRENT_STATE_NOTIFICATION = "{\"attribute1\":\"value\",\"attribute2\":false,\"attribute3\":41.0,\"attribute4\":72," +
+            "\"attribute5\":{\"someNumber\":41,\"someArray\":[],\"someNestedObject\":{\"key\":\"value\"}}}";
+
     @Before
     public void beforeTest() throws Exception {
         processBeforeTest("Test Subscribe to attribute updates", null, null);
@@ -56,43 +59,63 @@ public abstract class AbstractCoapAttributesUpdatesIntegrationTest extends Abstr
 
     @Test
     public void testSubscribeToAttributesUpdatesFromTheServer() throws Exception {
-        processTestSubscribeToAttributesUpdates();
+        processTestSubscribeToAttributesUpdates(false);
     }
 
-    protected void processTestSubscribeToAttributesUpdates() throws Exception {
+    @Test
+    public void testSubscribeToAttributesUpdatesFromTheServerWithEmptyCurrentStateNotification() throws Exception {
+        processTestSubscribeToAttributesUpdates(true);
+    }
 
+    protected void processTestSubscribeToAttributesUpdates(boolean emptyCurrentStateNotification) throws Exception {
+        if (!emptyCurrentStateNotification) {
+            doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD_ON_CURRENT_STATE_NOTIFICATION, String.class, status().isOk());
+        }
         CoapClient client = getCoapClient(FeatureType.ATTRIBUTES);
 
         CountDownLatch latch = new CountDownLatch(1);
-        TestCoapCallback testCoapCallback = new TestCoapCallback(latch);
+        TestCoapCallback callback = new TestCoapCallback(latch);
 
         Request request = Request.newGet().setObserve();
         request.setType(CoAP.Type.CON);
-        CoapObserveRelation observeRelation = client.observe(request, testCoapCallback);
+        CoapObserveRelation observeRelation = client.observe(request, callback);
 
         latch.await(3, TimeUnit.SECONDS);
 
-        validateCurrentStateAttributesResponse(testCoapCallback);
+        if (emptyCurrentStateNotification) {
+            validateEmptyCurrentStateAttributesResponse(callback);
+        } else {
+            validateCurrentStateAttributesResponse(callback);
+        }
 
         latch = new CountDownLatch(1);
 
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
         latch.await(3, TimeUnit.SECONDS);
 
-        validateUpdateAttributesResponse(testCoapCallback);
+        validateUpdateAttributesResponse(callback);
 
         latch = new CountDownLatch(1);
 
         doDelete("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/SHARED_SCOPE?keys=attribute5", String.class);
         latch.await(3, TimeUnit.SECONDS);
 
-        validateDeleteAttributesResponse(testCoapCallback);
+        validateDeleteAttributesResponse(callback);
 
         observeRelation.proactiveCancel();
         assertTrue(observeRelation.isCanceled());
     }
 
     protected void validateCurrentStateAttributesResponse(TestCoapCallback callback) throws InvalidProtocolBufferException {
+        assertNotNull(callback.getPayloadBytes());
+        assertNotNull(callback.getObserve());
+        assertEquals(callback.getResponseCode(), CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
+        assertEquals(0, callback.getObserve().intValue());
+        String response = new String(callback.getPayloadBytes(), StandardCharsets.UTF_8);
+        assertEquals(JacksonUtil.toJsonNode(POST_ATTRIBUTES_PAYLOAD_ON_CURRENT_STATE_NOTIFICATION), JacksonUtil.toJsonNode(response));
+    }
+
+    protected void validateEmptyCurrentStateAttributesResponse(TestCoapCallback callback) throws InvalidProtocolBufferException {
         assertNotNull(callback.getPayloadBytes());
         assertNotNull(callback.getObserve());
         assertEquals(callback.getResponseCode(), CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);

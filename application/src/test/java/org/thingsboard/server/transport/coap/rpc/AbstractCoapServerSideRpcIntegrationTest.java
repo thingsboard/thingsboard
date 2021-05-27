@@ -103,8 +103,6 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
 
         validateTwoWayStateChangedNotification(callback, 1, expectedResponseResult, actualResult);
 
-        Thread.sleep(1000);
-
         latch = new CountDownLatch(1);
 
         actualResult = doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isOk());

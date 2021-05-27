@@ -39,4 +39,9 @@ public abstract class AbstractCoapAttributesUpdatesJsonIntegrationTest extends A
     public void testSubscribeToAttributesUpdatesFromTheServer() throws Exception {
         super.testSubscribeToAttributesUpdatesFromTheServer();
     }
+
+    @Test
+    public void testSubscribeToAttributesUpdatesFromTheServerWithEmptyCurrentStateNotification() throws Exception {
+        super.testSubscribeToAttributesUpdatesFromTheServerWithEmptyCurrentStateNotification();
+    }
 }
