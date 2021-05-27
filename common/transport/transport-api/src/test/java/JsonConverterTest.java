@@ -54,6 +54,12 @@ public class JsonConverterTest {
     }
 
     @Test
+    public void testParseAsDoubleWithZero() {
+        var result = JsonConverter.convertToTelemetry(JSON_PARSER.parse("{\"meterReadingDelta\": 42.0}"), 0L);
+        Assert.assertEquals(42.0, result.get(0L).get(0).getDoubleValue().get(), 0.0);
+    }
+
+    @Test
     public void testParseAsDouble() {
         var result = JsonConverter.convertToTelemetry(JSON_PARSER.parse("{\"meterReadingDelta\": 1.1}"), 0L);
         Assert.assertEquals(1.1, result.get(0L).get(0).getDoubleValue().get(), 0.0);
