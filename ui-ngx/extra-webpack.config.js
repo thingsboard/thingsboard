@@ -17,7 +17,7 @@ const CompressionPlugin = require("compression-webpack-plugin");
 const TerserPlugin = require("terser-webpack-plugin");
 const webpack = require("webpack");
 const dirTree = require("directory-tree");
-const AngularCompilerPlugin = require('@ngtools/webpack');
+const ngWebpack = require('@ngtools/webpack');
 
 var langs = [];
 
@@ -56,12 +56,12 @@ module.exports = (config, options) => {
   );
 
   if (config.mode === 'production') {
-    const index = config.plugins.findIndex(p => p instanceof AngularCompilerPlugin.AngularCompilerPlugin);
-    const angularCompilerOptions = config.plugins[index]._options;
+    const index = config.plugins.findIndex(p => p instanceof ngWebpack.ivy.AngularWebpackPlugin);
+    const angularCompilerOptions = config.plugins[index].pluginOptions;
     angularCompilerOptions.emitClassMetadata = true;
     angularCompilerOptions.emitNgModuleScope = true;
     config.plugins.splice(index, 1);
-    config.plugins.push(new AngularCompilerPlugin.AngularCompilerPlugin(angularCompilerOptions));
+    config.plugins.push(new ngWebpack.ivy.AngularWebpackPlugin(angularCompilerOptions));
     const terserPluginOptions = config.optimization.minimizer[1].options;
     delete terserPluginOptions.terserOptions.compress.global_defs.ngJitMode;
     terserPluginOptions.terserOptions.compress.side_effects = false;

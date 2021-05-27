@@ -46,12 +46,14 @@ import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { CustomActionEditorCompleter } from '@home/components/widget/action/custom-action.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import { MobileActionEditorComponent } from '@home/components/widget/action/mobile-action-editor.component';
+import { widgetType } from '@shared/models/widget.models';
 
 export interface WidgetActionDialogData {
   isAdd: boolean;
   callbacks: WidgetActionCallbacks;
   actionsData: WidgetActionsData;
   action?: WidgetActionDescriptorInfo;
+  widgetType: widgetType;
 }
 
 @Component({
@@ -84,6 +86,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
   customActionEditorCompleter = CustomActionEditorCompleter;
 
   submitted = false;
+  widgetType = widgetType;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -141,7 +144,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
           );
           this.actionTypeFormGroup.addControl(
             'setEntityId',
-            this.fb.control(action ? action.setEntityId : true, [])
+            this.fb.control(this.data.widgetType === widgetType.static ? false : action ? action.setEntityId : true, [])
           );
           this.actionTypeFormGroup.addControl(
             'stateEntityParamName',
