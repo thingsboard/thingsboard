@@ -30,7 +30,6 @@ package org.thingsboard.server.transport.lwm2m.server;
  * limitations under the License.
  */
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.DDFFileParser;
@@ -39,9 +38,10 @@ import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.codec.CodecException;
+import org.eclipse.leshan.core.request.ContentFormat;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
@@ -55,7 +55,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.BOOLEAN_V;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LOG_LW2M_TELEMETRY;
 
 @Slf4j
 @Component
@@ -64,17 +63,13 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandle
 public class LwM2mTransportServerHelper {
 
     private final LwM2mTransportContext context;
-
-    private final TransportService transportService;
-
-    @Getter
     private final LwM2MJsonAdaptor adaptor;
 
     /**
      * send to Thingsboard Attribute || Telemetry
      *
      * @param msg - JsonObject: [{name: value}]
-     * @return - dummy
+     * @return - dummyWriteReplace {\"targetIdVer\":\"/19_1.0/0/0\",\"value\":0082}
      */
     private <T> TransportServiceCallback<Void> getPubAckCallbackSendAttrTelemetry(final T msg) {
         return new TransportServiceCallback<>() {
@@ -95,7 +90,7 @@ public class LwM2mTransportServerHelper {
         request.addAllKv(result);
         PostAttributeMsg postAttributeMsg = request.build();
         TransportServiceCallback call = this.getPubAckCallbackSendAttrTelemetry(postAttributeMsg);
-        transportService.process(sessionInfo, postAttributeMsg, this.getPubAckCallbackSendAttrTelemetry(call));
+        context.getTransportService().process(sessionInfo, postAttributeMsg, this.getPubAckCallbackSendAttrTelemetry(call));
     }
 
     public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> result, SessionInfoProto sessionInfo) {
@@ -106,27 +101,27 @@ public class LwM2mTransportServerHelper {
         request.addTsKvList(builder.build());
         PostTelemetryMsg postTelemetryMsg = request.build();
         TransportServiceCallback call = this.getPubAckCallbackSendAttrTelemetry(postTelemetryMsg);
-        transportService.process(sessionInfo, postTelemetryMsg, this.getPubAckCallbackSendAttrTelemetry(call));
+        context.getTransportService().process(sessionInfo, postTelemetryMsg, this.getPubAckCallbackSendAttrTelemetry(call));
     }
 
     /**
      * @return - sessionInfo after access connect client
      */
-    public SessionInfoProto getValidateSessionInfo(TransportProtos.ValidateDeviceCredentialsResponseMsg msg, long mostSignificantBits, long leastSignificantBits) {
+    public SessionInfoProto getValidateSessionInfo(ValidateDeviceCredentialsResponse msg, long mostSignificantBits, long leastSignificantBits) {
         return SessionInfoProto.newBuilder()
                 .setNodeId(context.getNodeId())
                 .setSessionIdMSB(mostSignificantBits)
                 .setSessionIdLSB(leastSignificantBits)
-                .setDeviceIdMSB(msg.getDeviceInfo().getDeviceIdMSB())
-                .setDeviceIdLSB(msg.getDeviceInfo().getDeviceIdLSB())
-                .setTenantIdMSB(msg.getDeviceInfo().getTenantIdMSB())
-                .setTenantIdLSB(msg.getDeviceInfo().getTenantIdLSB())
-                .setCustomerIdMSB(msg.getDeviceInfo().getCustomerIdMSB())
-                .setCustomerIdLSB(msg.getDeviceInfo().getCustomerIdLSB())
+                .setDeviceIdMSB(msg.getDeviceInfo().getDeviceId().getId().getMostSignificantBits())
+                .setDeviceIdLSB(msg.getDeviceInfo().getDeviceId().getId().getLeastSignificantBits())
+                .setTenantIdMSB(msg.getDeviceInfo().getTenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(msg.getDeviceInfo().getTenantId().getId().getLeastSignificantBits())
+                .setCustomerIdMSB(msg.getDeviceInfo().getCustomerId().getId().getMostSignificantBits())
+                .setCustomerIdLSB(msg.getDeviceInfo().getCustomerId().getId().getLeastSignificantBits())
                 .setDeviceName(msg.getDeviceInfo().getDeviceName())
                 .setDeviceType(msg.getDeviceInfo().getDeviceType())
-                .setDeviceProfileIdLSB(msg.getDeviceInfo().getDeviceProfileIdLSB())
-                .setDeviceProfileIdMSB(msg.getDeviceInfo().getDeviceProfileIdMSB())
+                .setDeviceProfileIdMSB(msg.getDeviceInfo().getDeviceProfileId().getId().getMostSignificantBits())
+                .setDeviceProfileIdLSB(msg.getDeviceInfo().getDeviceProfileId().getId().getLeastSignificantBits())
                 .build();
     }
 
@@ -141,16 +136,16 @@ public class LwM2mTransportServerHelper {
     }
 
     /**
-     *
-     * @param logMsg - info about Logs
+     * @param value - info about Logs
      * @return- KeyValueProto for telemetry (Logs)
      */
-    public List<TransportProtos.KeyValueProto> getKvLogyToThingsboard(String logMsg) {
+    public List<TransportProtos.KeyValueProto> getKvStringtoThingsboard(String key, String value) {
         List<TransportProtos.KeyValueProto> result = new ArrayList<>();
+        value = value.replaceAll("<", "").replaceAll(">", "");
         result.add(TransportProtos.KeyValueProto.newBuilder()
-                .setKey(LOG_LW2M_TELEMETRY)
+                .setKey(key)
                 .setType(TransportProtos.KeyValueType.STRING_V)
-                .setStringV(logMsg).build());
+                .setStringV(value).build());
         return result;
     }
 
@@ -186,12 +181,11 @@ public class LwM2mTransportServerHelper {
     }
 
     /**
-     *
-     * @param currentType -
+     * @param currentType  -
      * @param resourcePath -
      * @return
      */
-    public ResourceModel.Type getResourceModelTypeEqualsKvProtoValueType(ResourceModel.Type currentType, String resourcePath) {
+    public static ResourceModel.Type getResourceModelTypeEqualsKvProtoValueType(ResourceModel.Type currentType, String resourcePath) {
         switch (currentType) {
             case BOOLEAN:
                 return ResourceModel.Type.BOOLEAN;
@@ -209,7 +203,29 @@ public class LwM2mTransportServerHelper {
         throw new CodecException("Invalid ResourceModel_Type for resource %s, got %s", resourcePath, currentType);
     }
 
-    public Object getValueFromKvProto(TransportProtos.KeyValueProto kv) {
+    public static ContentFormat convertResourceModelTypeToContentFormat(ResourceModel.Type type) {
+        switch (type) {
+            case BOOLEAN:
+            case STRING:
+            case TIME:
+            case INTEGER:
+            case FLOAT:
+                return ContentFormat.TLV;
+            case OPAQUE:
+                return ContentFormat.OPAQUE;
+            case OBJLNK:
+                return ContentFormat.LINK;
+            default:
+        }
+        throw new CodecException("Invalid ResourceModel_Type for %s ContentFormat.", type);
+    }
+
+    public static ContentFormat getContentFormatByResourceModelType(ResourceModel resourceModel, ContentFormat contentFormat) {
+        return contentFormat.equals(ContentFormat.TLV) ? convertResourceModelTypeToContentFormat(resourceModel.type) :
+                contentFormat;
+    }
+
+    public static Object getValueFromKvProto(TransportProtos.KeyValueProto kv) {
         switch (kv.getType()) {
             case BOOLEAN_V:
                 return kv.getBoolV();

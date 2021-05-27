@@ -170,12 +170,14 @@ public class ModelConstants {
     public static final String DEVICE_PROFILE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String DEVICE_PROFILE_NAME_PROPERTY = "name";
     public static final String DEVICE_PROFILE_TYPE_PROPERTY = "type";
+    public static final String DEVICE_PROFILE_IMAGE_PROPERTY = "image";
     public static final String DEVICE_PROFILE_TRANSPORT_TYPE_PROPERTY = "transport_type";
     public static final String DEVICE_PROFILE_PROVISION_TYPE_PROPERTY = "provision_type";
     public static final String DEVICE_PROFILE_PROFILE_DATA_PROPERTY = "profile_data";
     public static final String DEVICE_PROFILE_DESCRIPTION_PROPERTY = "description";
     public static final String DEVICE_PROFILE_IS_DEFAULT_PROPERTY = "is_default";
     public static final String DEVICE_PROFILE_DEFAULT_RULE_CHAIN_ID_PROPERTY = "default_rule_chain_id";
+    public static final String DEVICE_PROFILE_DEFAULT_DASHBOARD_ID_PROPERTY = "default_dashboard_id";
     public static final String DEVICE_PROFILE_DEFAULT_QUEUE_NAME_PROPERTY = "default_queue_name";
     public static final String DEVICE_PROFILE_PROVISION_DEVICE_KEY = "provision_device_key";
     public static final String DEVICE_PROFILE_FIRMWARE_ID_PROPERTY = "firmware_id";
@@ -257,6 +259,7 @@ public class ModelConstants {
      */
     public static final String ALARM_COLUMN_FAMILY_NAME = "alarm";
     public static final String ALARM_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String ALARM_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String ALARM_TYPE_PROPERTY = "type";
     public static final String ALARM_DETAILS_PROPERTY = "details";
     public static final String ALARM_ORIGINATOR_ID_PROPERTY = "originator_id";
@@ -333,6 +336,7 @@ public class ModelConstants {
     public static final String DASHBOARD_COLUMN_FAMILY_NAME = "dashboard";
     public static final String DASHBOARD_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String DASHBOARD_TITLE_PROPERTY = TITLE_PROPERTY;
+    public static final String DASHBOARD_IMAGE_PROPERTY = "image";
     public static final String DASHBOARD_CONFIGURATION_PROPERTY = "configuration";
     public static final String DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY = "assigned_customers";
 
@@ -461,6 +465,7 @@ public class ModelConstants {
     public static final String API_USAGE_STATE_JS_EXEC_COLUMN = "js_exec";
     public static final String API_USAGE_STATE_EMAIL_EXEC_COLUMN = "email_exec";
     public static final String API_USAGE_STATE_SMS_EXEC_COLUMN = "sms_exec";
+    public static final String API_USAGE_STATE_ALARM_EXEC_COLUMN = "alarm_exec";
 
     /**
      * Resource constants.

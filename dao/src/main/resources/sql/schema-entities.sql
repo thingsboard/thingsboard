@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS alarm (
     start_ts bigint,
     status varchar(255),
     tenant_id uuid,
+    customer_id uuid,
     propagate_relation_types varchar,
     type varchar(255)
 );
@@ -136,7 +137,8 @@ CREATE TABLE IF NOT EXISTS dashboard (
     assigned_customers varchar(1000000),
     search_text varchar(255),
     tenant_id uuid,
-    title varchar(255)
+    title varchar(255),
+    image varchar(1000000)
 );
 
 CREATE TABLE IF NOT EXISTS rule_chain (
@@ -201,6 +203,7 @@ CREATE TABLE IF NOT EXISTS device_profile (
     created_time bigint NOT NULL,
     name varchar(255),
     type varchar(255),
+    image varchar(1000000),
     transport_type varchar(255),
     provision_type varchar(255),
     profile_data jsonb,
@@ -211,11 +214,13 @@ CREATE TABLE IF NOT EXISTS device_profile (
     firmware_id uuid,
     software_id uuid,
     default_rule_chain_id uuid,
+    default_dashboard_id uuid,
     default_queue_name varchar(255),
     provision_device_key varchar,
     CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),
     CONSTRAINT device_provision_key_unq_key UNIQUE (provision_device_key),
     CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id),
+    CONSTRAINT fk_default_dashboard_device_profile FOREIGN KEY (default_dashboard_id) REFERENCES dashboard(id),
     CONSTRAINT fk_firmware_device_profile FOREIGN KEY (firmware_id) REFERENCES firmware(id),
     CONSTRAINT fk_software_device_profile FOREIGN KEY (software_id) REFERENCES firmware(id)
 );
@@ -486,6 +491,7 @@ CREATE TABLE IF NOT EXISTS api_usage_state (
     js_exec varchar(32),
     email_exec varchar(32),
     sms_exec varchar(32),
+    alarm_exec varchar(32),
     CONSTRAINT api_usage_state_unq_key UNIQUE (tenant_id, entity_id)
 );
 

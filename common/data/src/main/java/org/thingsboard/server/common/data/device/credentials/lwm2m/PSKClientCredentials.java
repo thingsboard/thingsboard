@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.client;
+package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.util.UUID;
+@Getter
+@Setter
+public class PSKClientCredentials extends HasKey {
+    private String identity;
 
-@Data
-public class LwM2mFirmwareUpdate {
-    private volatile String clientFwVersion;
-    private volatile String currentFwVersion;
-    private volatile UUID currentFwId;
+    @Override
+    public LwM2MSecurityMode getSecurityConfigClientMode() {
+        return LwM2MSecurityMode.PSK;
+    }
 }

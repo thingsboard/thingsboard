@@ -26,8 +26,8 @@ import org.eclipse.leshan.server.registration.RegistrationUpdate;
 
 import java.util.Collection;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LOG_LW2M_INFO;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.convertPathFromObjectIdToIdVer;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
 
 @Slf4j
 public class LwM2mServerListener {
@@ -86,21 +86,22 @@ public class LwM2mServerListener {
 
         @Override
         public void cancelled(Observation observation) {
-            String msg = String.format("%s:  Cancel Observation  %s.", LOG_LW2M_INFO, observation.getPath());
+            String msg = String.format("%s:  Canceled Observation  %s.", LOG_LW2M_INFO, observation.getPath());
             service.sendLogsToThingsboard(msg, observation.getRegistrationId());
-            log.trace(msg);
+            log.warn(msg);
         }
 
         @Override
         public void onResponse(Observation observation, Registration registration, ObserveResponse response) {
             if (registration != null) {
-                try {
-                    service.onUpdateValueAfterReadResponse(registration, convertPathFromObjectIdToIdVer(observation.getPath().toString(),
-                            registration), response, null);
-                } catch (Exception e) {
-                    log.error("Observation/Read onResponse", e);
-
-                }
+//                if (observation.getPath().isResource() || observation.getPath().isResourceInstance()) {
+//                    String msg = String.format("%s: Successful Observation  %s.", LOG_LW2M_INFO,
+//                            observation.getPath());
+//                    log.warn(msg);
+//                    service.sendLogsToThingsboard(msg, registration.getId());
+//                }
+                service.onUpdateValueAfterReadResponse(registration, convertPathFromObjectIdToIdVer(observation.getPath().toString(),
+                        registration), response, null);
             }
         }
 
@@ -113,9 +114,8 @@ public class LwM2mServerListener {
         public void newObservation(Observation observation, Registration registration) {
             String msg = String.format("%s: Successful start newObservation  %s.", LOG_LW2M_INFO,
                     observation.getPath());
+            log.warn(msg);
             service.sendLogsToThingsboard(msg, registration.getId());
-            log.trace(msg);
         }
     };
-
 }

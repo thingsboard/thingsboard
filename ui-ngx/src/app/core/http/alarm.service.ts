@@ -72,7 +72,7 @@ export class AlarmService {
 
   public getHighestAlarmSeverity(entityId: EntityId, alarmSearchStatus: AlarmSearchStatus, alarmStatus: AlarmStatus,
                                  config?: RequestConfig): Observable<AlarmSeverity> {
-    let url = `/api/alarm/highestSeverity/${entityId.entityType}/${entityId.entityType}`;
+    let url = `/api/alarm/highestSeverity/${entityId.entityType}/${entityId.id}`;
     if (alarmSearchStatus) {
       url += `?searchStatus=${alarmSearchStatus}`;
     } else if (alarmStatus) {

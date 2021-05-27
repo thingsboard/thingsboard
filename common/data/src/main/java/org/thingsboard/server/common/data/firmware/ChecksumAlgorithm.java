@@ -13,8 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.firmware;
+package org.thingsboard.server.common.data.firmware;
 
-public enum FirmwareUpdateStatus {
-    QUEUED, INITIATED, DOWNLOADING, DOWNLOADED, VERIFIED, UPDATING, UPDATED, FAILED
+public enum ChecksumAlgorithm {
+    MD5,
+    SHA256,
+    SHA384,
+    SHA512,
+    CRC32,
+    MURMUR3_32,
+    MURMUR3_128
 }

@@ -27,15 +27,9 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
 
 @Slf4j
 @Component
@@ -69,6 +63,14 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     @Getter
     @Value("${transport.lwm2m.registered_pool_size:}")
     private int registeredPoolSize;
+
+    @Getter
+    @Value("${transport.lwm2m.registration_store_pool_size:}")
+    private int registrationStorePoolSize;
+
+    @Getter
+    @Value("${transport.lwm2m.clean_period_in_sec:}")
+    private int cleanPeriodInSec;
 
     @Getter
     @Value("${transport.lwm2m.update_registered_pool_size:}")
@@ -154,9 +156,7 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
             keyStoreValue = KeyStore.getInstance(keyStoreType);
             keyStoreValue.load(inKeyStore, keyStorePassword == null ? null : keyStorePassword.toCharArray());
         } catch (Exception e) {
-            log.warn("Unable to lookup LwM2M keystore. Reason: {}, {}" , uri, e.getMessage());
-//            Absence of the key store should not block user from using plain LwM2M
-//            throw new RuntimeException("Failed to lookup LwM2M keystore: " + (uri != null ? uri.toString() : ""), e);
+            log.info("Unable to lookup LwM2M keystore. Reason: {}, {}" , uri, e.getMessage());
         }
     }
 }

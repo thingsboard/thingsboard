@@ -332,7 +332,19 @@ export enum WidgetActionType {
   updateDashboardState = 'updateDashboardState',
   openDashboard = 'openDashboard',
   custom = 'custom',
-  customPretty = 'customPretty'
+  customPretty = 'customPretty',
+  mobileAction = 'mobileAction'
+}
+
+export enum WidgetMobileActionType {
+  takePictureFromGallery = 'takePictureFromGallery',
+  takePhoto = 'takePhoto',
+  mapDirection = 'mapDirection',
+  mapLocation = 'mapLocation',
+  scanQrCode = 'scanQrCode',
+  makePhoneCall = 'makePhoneCall',
+  getLocation = 'getLocation',
+  takeScreenshot = 'takeScreenshot'
 }
 
 export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
@@ -341,9 +353,89 @@ export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
     [ WidgetActionType.updateDashboardState, 'widget-action.update-dashboard-state' ],
     [ WidgetActionType.openDashboard, 'widget-action.open-dashboard' ],
     [ WidgetActionType.custom, 'widget-action.custom' ],
-    [ WidgetActionType.customPretty, 'widget-action.custom-pretty' ]
+    [ WidgetActionType.customPretty, 'widget-action.custom-pretty' ],
+    [ WidgetActionType.mobileAction, 'widget-action.mobile-action' ]
   ]
 );
+
+export const widgetMobileActionTypeTranslationMap = new Map<WidgetMobileActionType, string>(
+  [
+    [ WidgetMobileActionType.takePictureFromGallery, 'widget-action.mobile.take-picture-from-gallery' ],
+    [ WidgetMobileActionType.takePhoto, 'widget-action.mobile.take-photo' ],
+    [ WidgetMobileActionType.mapDirection, 'widget-action.mobile.map-direction' ],
+    [ WidgetMobileActionType.mapLocation, 'widget-action.mobile.map-location' ],
+    [ WidgetMobileActionType.scanQrCode, 'widget-action.mobile.scan-qr-code' ],
+    [ WidgetMobileActionType.makePhoneCall, 'widget-action.mobile.make-phone-call' ],
+    [ WidgetMobileActionType.getLocation, 'widget-action.mobile.get-location' ],
+    [ WidgetMobileActionType.takeScreenshot, 'widget-action.mobile.take-screenshot' ]
+  ]
+);
+
+export interface MobileLaunchResult {
+  launched: boolean;
+}
+
+export interface MobileImageResult {
+  imageUrl: string;
+}
+
+export interface MobileQrCodeResult {
+  code: string;
+  format: string;
+}
+
+export interface MobileLocationResult {
+  latitude: number;
+  longitude: number;
+}
+
+export type MobileActionResult = MobileLaunchResult &
+                                 MobileImageResult &
+                                 MobileQrCodeResult &
+                                 MobileLocationResult;
+
+export interface WidgetMobileActionResult<T extends MobileActionResult> {
+  result?: T;
+  hasResult: boolean;
+  error?: string;
+  hasError: boolean;
+}
+
+export interface ProcessImageDescriptor {
+  processImageFunction: string;
+}
+
+export interface ProcessLaunchResultDescriptor {
+  processLaunchResultFunction?: string;
+}
+
+export interface LaunchMapDescriptor extends ProcessLaunchResultDescriptor {
+  getLocationFunction: string;
+}
+
+export interface ScanQrCodeDescriptor {
+  processQrCodeFunction: string;
+}
+
+export interface MakePhoneCallDescriptor extends ProcessLaunchResultDescriptor {
+  getPhoneNumberFunction: string;
+}
+
+export interface GetLocationDescriptor {
+  processLocationFunction: string;
+}
+
+export type WidgetMobileActionDescriptors = ProcessImageDescriptor &
+                                            LaunchMapDescriptor &
+                                            ScanQrCodeDescriptor &
+                                            MakePhoneCallDescriptor &
+                                            GetLocationDescriptor;
+
+export interface WidgetMobileActionDescriptor extends WidgetMobileActionDescriptors {
+  type: WidgetMobileActionType;
+  handleErrorFunction?: string;
+  handleEmptyResultFunction?: string;
+}
 
 export interface CustomActionDescriptor {
   customFunction?: string;
@@ -369,6 +461,7 @@ export interface WidgetActionDescriptor extends CustomActionDescriptor {
   dialogHeight?: number;
   setEntityId?: boolean;
   stateEntityParamName?: string;
+  mobileAction?: WidgetMobileActionDescriptor;
 }
 
 export interface WidgetComparisonSettings {

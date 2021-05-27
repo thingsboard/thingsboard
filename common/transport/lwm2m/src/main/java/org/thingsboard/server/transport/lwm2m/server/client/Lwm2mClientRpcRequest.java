@@ -17,16 +17,18 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 
 import com.google.gson.JsonObject;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.LwM2mTypeOper;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandlerUtil.validPathIdVer;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.validPathIdVer;
 
+@Slf4j
 @Data
 public class Lwm2mClientRpcRequest {
     public final String targetIdVerKey = "targetIdVer";
@@ -43,7 +45,7 @@ public class Lwm2mClientRpcRequest {
 
     private LwM2mTypeOper typeOper;
     private String targetIdVer;
-     private String contentFormatName;
+    private String contentFormatName;
     private long timeoutInMs;
     private Object value;
     private ConcurrentHashMap<String, Object> params;
@@ -54,19 +56,19 @@ public class Lwm2mClientRpcRequest {
     private String infoMsg;
     private String responseCode;
 
-    public void setValidTypeOper (String typeOper){
+    public void setValidTypeOper(String typeOper) {
         try {
             this.typeOper = LwM2mTypeOper.fromLwLwM2mTypeOper(typeOper);
         } catch (Exception e) {
             this.errorMsg = this.methodKey + " - " + typeOper + " is not valid.";
         }
     }
-    public void setValidContentFormatName (JsonObject rpcRequest){
+
+    public void setValidContentFormatName(JsonObject rpcRequest) {
         try {
             if (ContentFormat.fromName(rpcRequest.get(this.contentFormatNameKey).getAsString()) != null) {
                 this.contentFormatName = rpcRequest.get(this.contentFormatNameKey).getAsString();
-            }
-            else {
+            } else {
                 this.errorMsg = this.contentFormatNameKey + " -  " + rpcRequest.get(this.contentFormatNameKey).getAsString() + " is not valid.";
             }
         } catch (Exception e) {
@@ -74,14 +76,14 @@ public class Lwm2mClientRpcRequest {
         }
     }
 
-    public void setValidTargetIdVerKey (JsonObject rpcRequest, Registration registration){
+    public void setValidTargetIdVerKey(JsonObject rpcRequest, Registration registration) {
         if (rpcRequest.has(this.targetIdVerKey)) {
             String targetIdVerStr = rpcRequest.get(targetIdVerKey).getAsString();
             // targetIdVer without ver - ok
             try {
                 // targetIdVer with/without ver - ok
                 this.targetIdVer = validPathIdVer(targetIdVerStr, registration);
-                if (this.targetIdVer != null){
+                if (this.targetIdVer != null) {
                     this.infoMsg = String.format("Changed by: pathIdVer - %s", this.targetIdVer);
                 }
             } catch (Exception e) {
@@ -97,16 +99,24 @@ public class Lwm2mClientRpcRequest {
         payloadResp.addProperty(this.resultKey, this.responseCode);
         if (this.errorMsg != null) {
             payloadResp.addProperty(this.errorKey, this.errorMsg);
-        }
-        else if (this.valueMsg != null) {
+        } else if (this.valueMsg != null) {
             payloadResp.addProperty(this.valueKey, this.valueMsg);
-        }
-        else if (this.infoMsg != null) {
+        } else if (this.infoMsg != null) {
             payloadResp.addProperty(this.infoKey, this.infoMsg);
         }
         return TransportProtos.ToDeviceRpcResponseMsg.newBuilder()
                 .setPayload(payloadResp.getAsJsonObject().toString())
                 .setRequestId(this.requestId)
                 .build();
+    }
+
+    @Override
+    public Object clone() {
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException e) {
+            log.error("", e);
+        }
+        return null;
     }
 }

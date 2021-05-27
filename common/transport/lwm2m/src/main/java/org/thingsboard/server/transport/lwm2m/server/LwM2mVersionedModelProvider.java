@@ -30,7 +30,6 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 
@@ -51,7 +50,7 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
     private final LwM2mTransportServerHelper helper;
     private final LwM2mTransportContext context;
 
-     private String getKeyIdVer(Integer objectId, String version) {
+    private String getKeyIdVer(Integer objectId, String version) {
         return objectId != null ? objectId + LWM2M_SEPARATOR_KEY + ((version == null || version.isEmpty()) ? ObjectModel.DEFAULT_VERSION : version) : null;
     }
 
@@ -83,8 +82,8 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
                 if (objectModel != null)
                     return objectModel.resources.get(resourceId);
                 else
-                    log.warn("TbResources (Object model) with id [{}/0/{}] not found on the server", objectId, resourceId);
-                    return null;
+                    log.trace("TbResources (Object model) with id [{}/0/{}] not found on the server", objectId, resourceId);
+                return null;
             } catch (Exception e) {
                 log.error("", e);
                 return null;
@@ -104,9 +103,7 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
         public Collection<ObjectModel> getObjectModels() {
             Map<Integer, String> supportedObjects = this.registration.getSupportedObject();
             Collection<ObjectModel> result = new ArrayList<>(supportedObjects.size());
-            Iterator<Map.Entry<Integer, String>> i$ = supportedObjects.entrySet().iterator();
-            while (i$.hasNext()) {
-                Map.Entry<Integer, String> supportedObject = i$.next();
+            for (Map.Entry<Integer, String> supportedObject : supportedObjects.entrySet()) {
                 ObjectModel objectModel = this.getObjectModelDynamic(supportedObject.getKey(), supportedObject.getValue());
                 if (objectModel != null) {
                     result.add(objectModel);
@@ -117,9 +114,7 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
 
         private ObjectModel getObjectModelDynamic(Integer objectId, String version) {
             String key = getKeyIdVer(objectId, version);
-
             Optional<TbResource> tbResource = context.getTransportResourceCache().get(this.tenantId, LWM2M_MODEL, key);
-
             return tbResource.map(resource -> helper.parseFromXmlToObjectModel(
                     Base64.getDecoder().decode(resource.getData()),
                     key + ".xml",

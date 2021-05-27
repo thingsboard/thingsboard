@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import java.util.Map;
 
+import org.eclipse.leshan.core.SecurityMode;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -47,9 +48,11 @@ public class Lwm2mController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/lwm2m/deviceProfile/bootstrap/{securityMode}/{bootstrapServerIs}")
-    public ServerSecurityConfig getLwm2mBootstrapSecurityInfo(@PathVariable("securityMode") String securityMode,
+    public ServerSecurityConfig getLwm2mBootstrapSecurityInfo(@PathVariable("securityMode") String strSecurityMode,
                                                               @PathVariable("bootstrapServerIs") boolean bootstrapServer) throws ThingsboardException {
+        checkNotNull(strSecurityMode);
         try {
+            SecurityMode securityMode = SecurityMode.valueOf(strSecurityMode);
             return lwM2MServerSecurityInfoRepository.getServerSecurityInfo(securityMode, bootstrapServer);
         } catch (Exception e) {
             throw handleException(e);

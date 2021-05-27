@@ -86,6 +86,7 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
                     if (!skipValidityCheckForClientCert) {
                         cert.checkValidity();
                     }
+
                     String strCert = SslUtil.getCertificateString(cert);
                     String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
                     final ValidateDeviceCredentialsResponse[] deviceCredentialsResponse = new ValidateDeviceCredentialsResponse[1];
@@ -144,7 +145,6 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
 
     @Override
     public void setResultHandler(HandshakeResultHandler resultHandler) {
-        // empty implementation
     }
 
     public ConcurrentMap<String, TbCoapDtlsSessionInfo> getTbCoapDtlsSessionIdsMap() {

@@ -15,15 +15,14 @@
  */
 package org.thingsboard.server.transport.lwm2m.bootstrap;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.bootstrap.BootstrapSessionManager;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServer;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServerBuilder;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapSecurityStore;
@@ -31,8 +30,10 @@ import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MInMemoryBoot
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2mDefaultBootstrapSessionManager;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
+import org.thingsboard.server.transport.lwm2m.secure.LWM2MGenerationPSkRPkECC;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.math.BigInteger;
 import java.security.AlgorithmParameters;
 import java.security.KeyFactory;
@@ -62,38 +63,46 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mNetworkConfig.g
 
 @Slf4j
 @Component
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true'&& '${transport.lwm2m.bootstrap.enable:false}'=='true') || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled:false}'=='true'&& '${transport.lwm2m.bootstrap.enable:false}'=='true')")
-public class LwM2MTransportBootstrapServerConfiguration {
+@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' && '${transport.lwm2m.bootstrap.enable:false}'=='true') || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled:false}'=='true'&& '${transport.lwm2m.bootstrap.enable:false}'=='true')")
+@RequiredArgsConstructor
+//TODO: @ybondarenko please refactor this to be similar to DefaultLwM2mTransportService
+public class LwM2MTransportBootstrapService {
     private PublicKey publicKey;
     private PrivateKey privateKey;
     private boolean pskMode = false;
 
-    @Autowired
-    private LwM2MTransportServerConfig serverConfig;
+    private final LwM2MTransportServerConfig serverConfig;
+    private final LwM2MTransportBootstrapConfig bootstrapConfig;
+    private final LwM2MBootstrapSecurityStore lwM2MBootstrapSecurityStore;
+    private final LwM2MInMemoryBootstrapConfigStore lwM2MInMemoryBootstrapConfigStore;
 
-    @Autowired
-    private LwM2MTransportContextBootstrap contextBs;
+    private LeshanBootstrapServer server;
 
-    @Autowired
-    private LwM2MBootstrapSecurityStore lwM2MBootstrapSecurityStore;
-
-    @Autowired
-    private LwM2MInMemoryBootstrapConfigStore lwM2MInMemoryBootstrapConfigStore;
-
-
-    @Bean
-    public LeshanBootstrapServer getLeshanBootstrapServer() {
-        log.info("Prepare and start BootstrapServer... PostConstruct");
-        return this.getLhBootstrapServer(this.contextBs.getCtxBootStrap().getPort(), this.contextBs.getCtxBootStrap().getSecurePort());
+    @PostConstruct
+    public void init() {
+        if (serverConfig.getEnableGenNewKeyPskRpk()) {
+            new LWM2MGenerationPSkRPkECC();
+        }
+        log.info("Starting LwM2M transport bootstrap server...");
+        this.server = getLhBootstrapServer();
+        this.server.start();
+        log.info("Started LwM2M transport bootstrap server.");
     }
 
-    public LeshanBootstrapServer getLhBootstrapServer(Integer bootstrapPortNoSec, Integer bootstrapSecurePort) {
+    @PreDestroy
+    public void shutdown() {
+        log.info("Stopping LwM2M transport bootstrap server!");
+        server.destroy();
+        log.info("LwM2M transport bootstrap server stopped!");
+    }
+
+    public LeshanBootstrapServer getLhBootstrapServer() {
         LeshanBootstrapServerBuilder builder = new LeshanBootstrapServerBuilder();
-        builder.setLocalAddress(this.contextBs.getCtxBootStrap().getHost(), bootstrapPortNoSec);
-        builder.setLocalSecureAddress(this.contextBs.getCtxBootStrap().getSecureHost(), bootstrapSecurePort);
+        builder.setLocalAddress(bootstrapConfig.getHost(), bootstrapConfig.getPort());
+        builder.setLocalSecureAddress(bootstrapConfig.getSecureHost(), bootstrapConfig.getSecurePort());
 
         /** Create CoAP Config */
-        builder.setCoapConfig(getCoapConfig(bootstrapPortNoSec, bootstrapSecurePort));
+        builder.setCoapConfig(getCoapConfig(bootstrapConfig.getPort(), bootstrapConfig.getSecurePort()));
 
         /** Define model provider (Create Models )*/
 
@@ -169,8 +178,8 @@ public class LwM2MTransportBootstrapServerConfiguration {
          * For idea => KeyStorePathResource == common/transport/lwm2m/src/main/resources/credentials: in LwM2MTransportContextServer: credentials/serverKeyStore.jks
          */
         try {
-            X509Certificate serverCertificate = (X509Certificate) serverConfig.getKeyStoreValue().getCertificate(this.contextBs.getCtxBootStrap().getCertificateAlias());
-            PrivateKey privateKey = (PrivateKey) serverConfig.getKeyStoreValue().getKey(this.contextBs.getCtxBootStrap().getCertificateAlias(), serverConfig.getKeyStorePassword() == null ? null : serverConfig.getKeyStorePassword().toCharArray());
+            X509Certificate serverCertificate = (X509Certificate) serverConfig.getKeyStoreValue().getCertificate(this.bootstrapConfig.getCertificateAlias());
+            PrivateKey privateKey = (PrivateKey) serverConfig.getKeyStoreValue().getKey(this.bootstrapConfig.getCertificateAlias(), serverConfig.getKeyStorePassword() == null ? null : serverConfig.getKeyStorePassword().toCharArray());
             PublicKey publicKey = serverCertificate.getPublicKey();
             if (privateKey != null && privateKey.getEncoded().length > 0 && publicKey != null && publicKey.getEncoded().length > 0) {
                 builder.setPublicKey(serverCertificate.getPublicKey());
@@ -201,10 +210,10 @@ public class LwM2MTransportBootstrapServerConfiguration {
     private void infoPramsUri(String mode) {
         log.info("Bootstrap Server uses [{}]: serverNoSecureURI : [{}:{}], serverSecureURI : [{}:{}]",
                 mode,
-                this.contextBs.getCtxBootStrap().getHost(),
-                this.contextBs.getCtxBootStrap().getPort(),
-                this.contextBs.getCtxBootStrap().getSecureHost(),
-                this.contextBs.getCtxBootStrap().getSecurePort());
+                this.bootstrapConfig.getHost(),
+                this.bootstrapConfig.getPort(),
+                this.bootstrapConfig.getSecureHost(),
+                this.bootstrapConfig.getSecurePort());
     }
 
 
@@ -238,7 +247,7 @@ public class LwM2MTransportBootstrapServerConfiguration {
         AlgorithmParameters algoParameters = AlgorithmParameters.getInstance("EC");
         algoParameters.init(new ECGenParameterSpec("secp256r1"));
         ECParameterSpec parameterSpec = algoParameters.getParameterSpec(ECParameterSpec.class);
-        LwM2MTransportBootstrapConfig serverConfig = this.contextBs.getCtxBootStrap();
+        LwM2MTransportBootstrapConfig serverConfig = this.bootstrapConfig;
         if (StringUtils.isNotEmpty(serverConfig.getPublicX()) && StringUtils.isNotEmpty(serverConfig.getPublicY())) {
             /** Get point values */
             byte[] publicX = Hex.decodeHex(serverConfig.getPublicX().toCharArray());

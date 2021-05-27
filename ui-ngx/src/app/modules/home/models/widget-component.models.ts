@@ -77,6 +77,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { SortOrder } from '@shared/models/page/sort-order';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
+import { map, mergeMap } from 'rxjs/operators';
 
 export interface IWidgetAction {
   name: string;
@@ -135,6 +136,10 @@ export class WidgetContext {
     this.changeDetectorValue = cd;
   }
 
+  set containerChangeDetector(cd: ChangeDetectorRef) {
+    this.containerChangeDetectorValue = cd;
+  }
+
   get currentUser(): AuthUser {
     if (this.store) {
       return getCurrentAuthUser(this.store);
@@ -161,6 +166,7 @@ export class WidgetContext {
   router: Router;
 
   private changeDetectorValue: ChangeDetectorRef;
+  private containerChangeDetectorValue: ChangeDetectorRef;
 
   inited = false;
   destroyed = false;
@@ -238,7 +244,9 @@ export class WidgetContext {
 
   rxjs = {
     forkJoin,
-    of
+    of,
+    map,
+    mergeMap
   };
 
   showSuccessToast(message: string, duration: number = 1000,
@@ -300,6 +308,16 @@ export class WidgetContext {
       }
       try {
         this.changeDetectorValue.detectChanges();
+      } catch (e) {
+        // console.log(e);
+      }
+    }
+  }
+
+  detectContainerChanges() {
+    if (!this.destroyed) {
+      try {
+        this.containerChangeDetectorValue.detectChanges();
       } catch (e) {
         // console.log(e);
       }

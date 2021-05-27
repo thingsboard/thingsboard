@@ -14,14 +14,15 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 import { MenuSection } from '@core/services/menu.models';
 import { Router } from '@angular/router';
 
 @Component({
   selector: 'tb-menu-toggle',
   templateUrl: './menu-toggle.component.html',
-  styleUrls: ['./menu-toggle.component.scss']
+  styleUrls: ['./menu-toggle.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MenuToggleComponent implements OnInit {
 

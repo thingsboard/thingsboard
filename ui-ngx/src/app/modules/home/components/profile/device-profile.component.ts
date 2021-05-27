@@ -41,6 +41,7 @@ import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { ServiceType } from '@shared/models/queue.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { FirmwareType } from '@shared/models/firmware.models';
+import { DashboardId } from '@shared/models/id/dashboard-id';
 
 @Component({
   selector: 'tb-device-profile',
@@ -103,6 +104,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
       {
         name: [entity ? entity.name : '', [Validators.required]],
         type: [entity ? entity.type : null, [Validators.required]],
+        image: [entity ? entity.image : null],
         transportType: [entity ? entity.transportType : null, [Validators.required]],
         profileData: this.fb.group({
           configuration: [entity && !this.isAdd ? entity.profileData?.configuration : {}, Validators.required],
@@ -111,6 +113,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
           provisionConfiguration: [deviceProvisionConfiguration, Validators.required]
         }),
         defaultRuleChainId: [entity && entity.defaultRuleChainId ? entity.defaultRuleChainId.id : null, []],
+        defaultDashboardId: [entity && entity.defaultDashboardId ? entity.defaultDashboardId.id : null, []],
         defaultQueueName: [entity ? entity.defaultQueueName : '', []],
         firmwareId: [entity ? entity.firmwareId : null],
         softwareId: [entity ? entity.softwareId : null],
@@ -178,6 +181,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     };
     this.entityForm.patchValue({name: entity.name});
     this.entityForm.patchValue({type: entity.type}, {emitEvent: false});
+    this.entityForm.patchValue({image: entity.image}, {emitEvent: false});
     this.entityForm.patchValue({transportType: entity.transportType}, {emitEvent: false});
     this.entityForm.patchValue({provisionType: entity.provisionType}, {emitEvent: false});
     this.entityForm.patchValue({provisionDeviceKey: entity.provisionDeviceKey}, {emitEvent: false});
@@ -188,6 +192,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
       provisionConfiguration: deviceProvisionConfiguration
     }}, {emitEvent: false});
     this.entityForm.patchValue({defaultRuleChainId: entity.defaultRuleChainId ? entity.defaultRuleChainId.id : null}, {emitEvent: false});
+    this.entityForm.patchValue({defaultDashboardId: entity.defaultDashboardId ? entity.defaultDashboardId.id : null}, {emitEvent: false});
     this.entityForm.patchValue({defaultQueueName: entity.defaultQueueName}, {emitEvent: false});
     this.entityForm.patchValue({firmwareId: entity.firmwareId}, {emitEvent: false});
     this.entityForm.patchValue({softwareId: entity.softwareId}, {emitEvent: false});
@@ -197,6 +202,9 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
   prepareFormValue(formValue: any): any {
     if (formValue.defaultRuleChainId) {
       formValue.defaultRuleChainId = new RuleChainId(formValue.defaultRuleChainId);
+    }
+    if (formValue.defaultDashboardId) {
+      formValue.defaultDashboardId = new DashboardId(formValue.defaultDashboardId);
     }
     const deviceProvisionConfiguration: DeviceProvisionConfiguration = formValue.profileData.provisionConfiguration;
     formValue.provisionType = deviceProvisionConfiguration.type;

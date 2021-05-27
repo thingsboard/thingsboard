@@ -24,8 +24,9 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.FirmwareInfo;
-import org.thingsboard.server.common.data.firmware.FirmwareUtil;
 import org.thingsboard.server.common.data.firmware.FirmwareType;
+import org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus;
+import org.thingsboard.server.common.data.firmware.FirmwareUtil;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -66,11 +67,11 @@ import static org.thingsboard.server.common.data.firmware.FirmwareKey.STATE;
 import static org.thingsboard.server.common.data.firmware.FirmwareKey.TITLE;
 import static org.thingsboard.server.common.data.firmware.FirmwareKey.TS;
 import static org.thingsboard.server.common.data.firmware.FirmwareKey.VERSION;
+import static org.thingsboard.server.common.data.firmware.FirmwareType.FIRMWARE;
+import static org.thingsboard.server.common.data.firmware.FirmwareType.SOFTWARE;
 import static org.thingsboard.server.common.data.firmware.FirmwareUtil.getAttributeKey;
 import static org.thingsboard.server.common.data.firmware.FirmwareUtil.getTargetTelemetryKey;
 import static org.thingsboard.server.common.data.firmware.FirmwareUtil.getTelemetryKey;
-import static org.thingsboard.server.common.data.firmware.FirmwareType.FIRMWARE;
-import static org.thingsboard.server.common.data.firmware.FirmwareType.SOFTWARE;
 
 @Slf4j
 @Service
@@ -296,7 +297,7 @@ public class DefaultFirmwareStateService implements FirmwareStateService {
         attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(firmware.getType(), TITLE), firmware.getTitle())));
         attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(firmware.getType(), VERSION), firmware.getVersion())));
         attributes.add(new BaseAttributeKvEntry(ts, new LongDataEntry(getAttributeKey(firmware.getType(), SIZE), firmware.getDataSize())));
-        attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(firmware.getType(), CHECKSUM_ALGORITHM), firmware.getChecksumAlgorithm())));
+        attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(firmware.getType(), CHECKSUM_ALGORITHM), firmware.getChecksumAlgorithm().name())));
         attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(firmware.getType(), CHECKSUM), firmware.getChecksum())));
 
         telemetryService.saveAndNotify(tenantId, deviceId, DataConstants.SHARED_SCOPE, attributes, new FutureCallback<>() {

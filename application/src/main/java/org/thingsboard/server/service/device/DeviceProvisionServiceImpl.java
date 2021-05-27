@@ -65,7 +65,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.locks.ReentrantLock;
 
 
 @Service
@@ -77,8 +76,6 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
 
     private static final String DEVICE_PROVISION_STATE = "provisionState";
     private static final String PROVISIONED_STATE = "provisioned";
-
-    private final ReentrantLock deviceCreationLock = new ReentrantLock();
 
     @Autowired
     DeviceDao deviceDao;
@@ -177,12 +174,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     }
 
     private ProvisionResponse createDevice(ProvisionRequest provisionRequest, DeviceProfile profile) {
-        deviceCreationLock.lock();
-        try {
-            return processCreateDevice(provisionRequest, profile);
-        } finally {
-            deviceCreationLock.unlock();
-        }
+        return processCreateDevice(provisionRequest, profile);
     }
 
     private void notify(Device device, ProvisionRequest provisionRequest, String type, boolean success) {
@@ -191,28 +183,26 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     }
 
     private ProvisionResponse processCreateDevice(ProvisionRequest provisionRequest, DeviceProfile profile) {
-        Device device = deviceService.findDeviceByTenantIdAndName(profile.getTenantId(), provisionRequest.getDeviceName());
         try {
-            if (device == null) {
-                if (StringUtils.isEmpty(provisionRequest.getDeviceName())) {
-                    String newDeviceName = RandomStringUtils.randomAlphanumeric(20);
-                    log.info("Device name not found in provision request. Generated name is: {}", newDeviceName);
-                    provisionRequest.setDeviceName(newDeviceName);
-                }
-                Device savedDevice = deviceService.saveDevice(provisionRequest, profile);
-
-                deviceStateService.onDeviceAdded(savedDevice);
-                saveProvisionStateAttribute(savedDevice).get();
-                pushDeviceCreatedEventToRuleEngine(savedDevice);
-                notify(savedDevice, provisionRequest, DataConstants.PROVISION_SUCCESS, true);
-
-                return new ProvisionResponse(getDeviceCredentials(savedDevice), ProvisionResponseStatus.SUCCESS);
-            } else {
-                log.warn("[{}] The device is already provisioned!", device.getName());
-                notify(device, provisionRequest, DataConstants.PROVISION_FAILURE, false);
-                throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+            if (StringUtils.isEmpty(provisionRequest.getDeviceName())) {
+                String newDeviceName = RandomStringUtils.randomAlphanumeric(20);
+                log.info("Device name not found in provision request. Generated name is: {}", newDeviceName);
+                provisionRequest.setDeviceName(newDeviceName);
             }
-        } catch (InterruptedException | ExecutionException e) {
+            Device savedDevice = deviceService.saveDevice(provisionRequest, profile);
+
+            deviceStateService.onDeviceAdded(savedDevice);
+            saveProvisionStateAttribute(savedDevice).get();
+            pushDeviceCreatedEventToRuleEngine(savedDevice);
+            notify(savedDevice, provisionRequest, DataConstants.PROVISION_SUCCESS, true);
+
+            return new ProvisionResponse(getDeviceCredentials(savedDevice), ProvisionResponseStatus.SUCCESS);
+        } catch (Exception e) {
+            log.warn("[{}] Error during device creation from provision request: [{}]", provisionRequest.getDeviceName(), provisionRequest, e);
+            Device device = deviceService.findDeviceByTenantIdAndName(profile.getTenantId(), provisionRequest.getDeviceName());
+            if (device != null) {
+                notify(device, provisionRequest, DataConstants.PROVISION_FAILURE, false);
+            }
             throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
         }
     }

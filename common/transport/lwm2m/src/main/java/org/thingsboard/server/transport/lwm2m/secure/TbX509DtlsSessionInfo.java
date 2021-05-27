@@ -13,21 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server;
+package org.thingsboard.server.transport.lwm2m.secure;
 
-import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.server.californium.LeshanServer;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
-import org.thingsboard.server.transport.lwm2m.secure.LWM2MGenerationPSkRPkECC;
+import lombok.Data;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+@Data
+public class TbX509DtlsSessionInfo {
 
-@Slf4j
-@Component("LwM2MTransportServerInitializer")
-@TbLwM2mTransportComponent
-public class LwM2mTransportServerInitializer {
+    private final String x509CommonName;
+    private final ValidateDeviceCredentialsResponse credentials;
 
 }

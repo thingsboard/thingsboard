@@ -24,7 +24,6 @@ import org.eclipse.leshan.server.security.BootstrapSecurityStore;
 import org.eclipse.leshan.server.security.SecurityChecker;
 import org.eclipse.leshan.server.security.SecurityInfo;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 

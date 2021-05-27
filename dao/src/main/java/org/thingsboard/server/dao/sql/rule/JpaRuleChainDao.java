@@ -83,6 +83,12 @@ public class JpaRuleChainDao extends JpaAbstractSearchTextDao<RuleChainEntity, R
     }
 
     @Override
+    public RuleChain findRootRuleChainByTenantIdAndType(UUID tenantId, RuleChainType type) {
+        log.debug("Try to find root rule chain by tenantId [{}] and type [{}]", tenantId, type);
+        return DaoUtil.getData(ruleChainRepository.findByTenantIdAndTypeAndRootIsTrue(tenantId, type));
+    }
+
+    @Override
     public PageData<RuleChain> findRuleChainsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, PageLink pageLink) {
         log.debug("Try to find rule chains by tenantId [{}], edgeId [{}] and pageLink [{}]", tenantId, edgeId, pageLink);
 
