@@ -17,6 +17,8 @@ package org.thingsboard.server.common.data.rpc;
 
 import lombok.Data;
 
+import java.util.UUID;
+
 /**
  * @author Andrew Shvayka
  */
@@ -25,4 +27,5 @@ public class RpcRequest {
     private final String methodName;
     private final String requestData;
     private Long timeout;
+    private UUID requestUUID;
 }

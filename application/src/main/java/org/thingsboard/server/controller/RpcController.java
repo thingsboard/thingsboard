@@ -103,16 +103,21 @@ public class RpcController extends BaseController {
             if (rpcRequestBody.has("timeout")) {
                 cmd.setTimeout(rpcRequestBody.get("timeout").asLong());
             }
+            if (rpcRequestBody.has("requestUUID")) {
+                UUID requestUUID = UUID.fromString(rpcRequestBody.get("requestUUID").asText());
+                cmd.setRequestUUID(requestUUID);
+            }
             SecurityUser currentUser = getCurrentUser();
             TenantId tenantId = currentUser.getTenantId();
             final DeferredResult<ResponseEntity> response = new DeferredResult<>();
             long timeout = cmd.getTimeout() != null ? cmd.getTimeout() : defaultTimeout;
             long expTime = System.currentTimeMillis() + Math.max(minTimeout, timeout);
+            UUID rpcRequestUUID = cmd.getRequestUUID() != null ? cmd.getRequestUUID() : UUID.randomUUID();
             ToDeviceRpcRequestBody body = new ToDeviceRpcRequestBody(cmd.getMethodName(), cmd.getRequestData());
             accessValidator.validate(currentUser, Operation.RPC_CALL, deviceId, new HttpValidationCallback(response, new FutureCallback<DeferredResult<ResponseEntity>>() {
                 @Override
                 public void onSuccess(@Nullable DeferredResult<ResponseEntity> result) {
-                    ToDeviceRpcRequest rpcRequest = new ToDeviceRpcRequest(UUID.randomUUID(),
+                    ToDeviceRpcRequest rpcRequest = new ToDeviceRpcRequest(rpcRequestUUID,
                             tenantId,
                             deviceId,
                             oneWay,

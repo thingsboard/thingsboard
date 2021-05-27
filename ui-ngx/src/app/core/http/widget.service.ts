@@ -32,12 +32,7 @@ import {
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ResourcesService } from '../services/resources.service';
-import {
-  toWidgetInfo,
-  toWidgetType,
-  toWidgetTypeDetails,
-  WidgetInfo
-} from '@app/modules/home/models/widget-component.models';
+import { toWidgetInfo, toWidgetTypeDetails, WidgetInfo } from '@app/modules/home/models/widget-component.models';
 import { filter, map, mergeMap, tap } from 'rxjs/operators';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';

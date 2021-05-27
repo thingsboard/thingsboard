@@ -27,7 +27,8 @@ import {
   WidgetControllerDescriptor,
   WidgetType,
   widgetType,
-  WidgetTypeDescriptor, WidgetTypeDetails,
+  WidgetTypeDescriptor,
+  WidgetTypeDetails,
   WidgetTypeParameters
 } from '@shared/models/widget.models';
 import { Timewindow, WidgetTimewindow } from '@shared/models/time/time.models';
@@ -188,16 +189,16 @@ export class WidgetContext {
   };
 
   controlApi: RpcApi = {
-    sendOneWayCommand: (method, params, timeout) => {
+    sendOneWayCommand: (method, params, timeout, requestUUID) => {
       if (this.defaultSubscription) {
-        return this.defaultSubscription.sendOneWayCommand(method, params, timeout);
+        return this.defaultSubscription.sendOneWayCommand(method, params, timeout, requestUUID);
       } else {
         return of(null);
       }
     },
-    sendTwoWayCommand: (method, params, timeout) => {
+    sendTwoWayCommand: (method, params, timeout, requestUUID) => {
       if (this.defaultSubscription) {
-        return this.defaultSubscription.sendTwoWayCommand(method, params, timeout);
+        return this.defaultSubscription.sendTwoWayCommand(method, params, timeout, requestUUID);
       } else {
         return of(null);
       }
