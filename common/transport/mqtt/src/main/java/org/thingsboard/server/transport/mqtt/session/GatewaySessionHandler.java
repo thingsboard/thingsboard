@@ -256,9 +256,12 @@ public class GatewaySessionHandler {
                                     log.trace("[{}] First got or created device [{}], type [{}] for the gateway session", sessionId, deviceName, deviceType);
                                     SessionInfoProto deviceSessionInfo = deviceSessionCtx.getSessionInfo();
                                     transportService.registerAsyncSession(deviceSessionInfo, deviceSessionCtx);
-                                    transportService.process(deviceSessionInfo, DefaultTransportService.getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
-                                    transportService.process(deviceSessionInfo, TransportProtos.SubscribeToRPCMsg.getDefaultInstance(), null);
-                                    transportService.process(deviceSessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.getDefaultInstance(), null);
+                                    transportService.process(TransportProtos.TransportToDeviceActorMsg.newBuilder()
+                                            .setSessionInfo(deviceSessionInfo)
+                                            .setSessionEvent(DefaultTransportService.getSessionEventMsg(TransportProtos.SessionEvent.OPEN))
+                                            .setSubscribeToAttributes(TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build())
+                                            .setSubscribeToRPC(TransportProtos.SubscribeToRPCMsg.newBuilder().build())
+                                            .build(), null);
                                 }
                                 futureToSet.set(devices.get(deviceName));
                                 deviceFutures.remove(deviceName);

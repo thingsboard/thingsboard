@@ -468,9 +468,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             deviceSessionCtx.getPayloadAdaptor()
                     .convertToPublish(deviceSessionCtx, firmwareChunk, requestId, chunk, type)
                     .ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
-            if (firmwareChunk != null && chunkSize != firmwareChunk.length) {
-                scheduler.schedule(() -> processDisconnect(ctx), 60, TimeUnit.SECONDS);
-            }
         } catch (Exception e) {
             log.trace("[{}] Failed to send firmware response!", sessionId, e);
         }

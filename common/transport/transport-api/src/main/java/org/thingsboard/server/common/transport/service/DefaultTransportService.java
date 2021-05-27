@@ -348,11 +348,25 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
-    public void process(TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg msg, TransportServiceCallback<TransportProtos.ValidateDeviceCredentialsResponseMsg> callback) {
-        log.trace("Processing msg: {}", msg);
-        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateDeviceLwM2MCredentialsRequestMsg(msg).build());
-        AsyncCallbackTemplate.withCallback(transportApiRequestTemplate.send(protoMsg),
-                response -> callback.onSuccess(response.getValue().getValidateCredResponseMsg()), callback::onError, transportCallbackExecutor);
+    public void process(TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg requestMsg, TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
+        log.trace("Processing msg: {}", requestMsg);
+        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateDeviceLwM2MCredentialsRequestMsg(requestMsg).build());
+        ListenableFuture<ValidateDeviceCredentialsResponse> response = Futures.transform(transportApiRequestTemplate.send(protoMsg), tmp -> {
+            TransportProtos.ValidateDeviceCredentialsResponseMsg msg = tmp.getValue().getValidateCredResponseMsg();
+            ValidateDeviceCredentialsResponse.ValidateDeviceCredentialsResponseBuilder result = ValidateDeviceCredentialsResponse.builder();
+            if (msg.hasDeviceInfo()) {
+                result.credentials(msg.getCredentialsBody());
+                TransportDeviceInfo tdi = getTransportDeviceInfo(msg.getDeviceInfo());
+                result.deviceInfo(tdi);
+                ByteString profileBody = msg.getProfileBody();
+                if (!profileBody.isEmpty()) {
+                    DeviceProfile profile = deviceProfileCache.getOrCreate(tdi.getDeviceProfileId(), profileBody);
+                    result.deviceProfile(profile);
+                }
+            }
+            return result.build();
+        }, MoreExecutors.directExecutor());
+        AsyncCallbackTemplate.withCallback(response, callback::onSuccess, callback::onError, transportCallbackExecutor);
     }
 
     @Override
@@ -372,7 +386,7 @@ public class DefaultTransportService implements TransportService {
                 TransportDeviceInfo tdi = getTransportDeviceInfo(msg.getDeviceInfo());
                 result.deviceInfo(tdi);
                 ByteString profileBody = msg.getProfileBody();
-                if (profileBody != null && !profileBody.isEmpty()) {
+                if (!profileBody.isEmpty()) {
                     DeviceProfile profile = deviceProfileCache.getOrCreate(tdi.getDeviceProfileId(), profileBody);
                     if (transportType != DeviceTransportType.DEFAULT
                             && profile != null && profile.getTransportType() != DeviceTransportType.DEFAULT && profile.getTransportType() != transportType) {
@@ -453,6 +467,15 @@ public class DefaultTransportService implements TransportService {
             reportActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
                     .setSessionEvent(msg).build(), callback);
+        }
+    }
+
+    @Override
+    public void process(TransportToDeviceActorMsg msg, TransportServiceCallback<Void> callback) {
+        TransportProtos.SessionInfoProto sessionInfo = msg.getSessionInfo();
+        if (checkLimits(sessionInfo, msg, callback)) {
+            reportActivityInternal(sessionInfo);
+            sendToDeviceActor(sessionInfo, msg, callback);
         }
     }
 

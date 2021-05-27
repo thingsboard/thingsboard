@@ -136,6 +136,10 @@ export class WidgetContext {
     this.changeDetectorValue = cd;
   }
 
+  set containerChangeDetector(cd: ChangeDetectorRef) {
+    this.containerChangeDetectorValue = cd;
+  }
+
   get currentUser(): AuthUser {
     if (this.store) {
       return getCurrentAuthUser(this.store);
@@ -162,6 +166,7 @@ export class WidgetContext {
   router: Router;
 
   private changeDetectorValue: ChangeDetectorRef;
+  private containerChangeDetectorValue: ChangeDetectorRef;
 
   inited = false;
   destroyed = false;
@@ -303,6 +308,16 @@ export class WidgetContext {
       }
       try {
         this.changeDetectorValue.detectChanges();
+      } catch (e) {
+        // console.log(e);
+      }
+    }
+  }
+
+  detectContainerChanges() {
+    if (!this.destroyed) {
+      try {
+        this.containerChangeDetectorValue.detectChanges();
       } catch (e) {
         // console.log(e);
       }

@@ -117,7 +117,6 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         this.setCreatedTime(deviceProfile.getCreatedTime());
         this.name = deviceProfile.getName();
         this.type = deviceProfile.getType();
-        this.image = deviceProfile.getImage();
         this.transportType = deviceProfile.getTransportType();
         this.provisionType = deviceProfile.getProvisionType();
         this.description = deviceProfile.getDescription();
@@ -126,16 +125,13 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         if (deviceProfile.getDefaultRuleChainId() != null) {
             this.defaultRuleChainId = deviceProfile.getDefaultRuleChainId().getId();
         }
-        if (deviceProfile.getDefaultDashboardId() != null) {
-            this.defaultDashboardId = deviceProfile.getDefaultDashboardId().getId();
-        }
         this.defaultQueueName = deviceProfile.getDefaultQueueName();
         this.provisionDeviceKey = deviceProfile.getProvisionDeviceKey();
         if (deviceProfile.getFirmwareId() != null) {
             this.firmwareId = deviceProfile.getFirmwareId().getId();
         }
         if (deviceProfile.getSoftwareId() != null) {
-            this.firmwareId = deviceProfile.getSoftwareId().getId();
+            this.softwareId = deviceProfile.getSoftwareId().getId();
         }
     }
 

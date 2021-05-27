@@ -23,13 +23,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
-import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mObject;
 import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
-import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.request.WriteRequest;
@@ -44,7 +43,6 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.firmware.FirmwareKey;
 import org.thingsboard.server.common.data.firmware.FirmwareType;
-import org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus;
 import org.thingsboard.server.common.data.firmware.FirmwareUtil;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.transport.TransportService;
@@ -57,6 +55,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.SessionEvent;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
@@ -64,6 +63,7 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientProfile;
 import org.thingsboard.server.transport.lwm2m.server.client.Lwm2mClientRpcRequest;
 import org.thingsboard.server.transport.lwm2m.server.client.ResultsAddKeyValueProto;
 import org.thingsboard.server.transport.lwm2m.server.client.ResultsAnalyzerParameters;
+import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
@@ -85,19 +85,19 @@ import java.util.stream.Collectors;
 
 import static org.eclipse.californium.core.coap.CoAP.ResponseCode.BAD_REQUEST;
 import static org.eclipse.leshan.core.attributes.Attribute.OBJECT_VERSION;
+import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.DOWNLOADED;
+import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.UPDATING;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper.getValueFromKvProto;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.CLIENT_NOT_AUTHORIZED;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.DEVICE_ATTRIBUTES_REQUEST;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.EqualsFwSateToFirmwareUpdateStatus;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_RESULT_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_STATE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_TELEMETRY;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_VALUE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LWM2M_STRATEGY_2;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.DISCOVER;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.DISCOVER_All;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.EXECUTE;
@@ -109,6 +109,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.L
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_REPLACE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_UPDATE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_RESULT_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertJsonArrayToSet;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromIdVerToObjectId;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
@@ -123,7 +124,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
 
     private ExecutorService registrationExecutor;
     private ExecutorService updateRegistrationExecutor;
-    private ExecutorService unregistrationExecutor;
+    private ExecutorService unRegistrationExecutor;
     private LwM2mValueConverterImpl converter;
 
     private final TransportService transportService;
@@ -133,13 +134,15 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     public final LwM2mTransportServerHelper helper;
     private final LwM2MJsonAdaptor adaptor;
     private final LwM2mClientContext clientContext;
-    public final LwM2mTransportRequest lwM2mTransportRequest;
+    private final LwM2mTransportRequest lwM2mTransportRequest;
+    private final TbLwM2MDtlsSessionStore sessionStore;
+
 
     public DefaultLwM2MTransportMsgHandler(TransportService transportService, LwM2MTransportServerConfig config, LwM2mTransportServerHelper helper,
                                            LwM2mClientContext clientContext,
                                            @Lazy LwM2mTransportRequest lwM2mTransportRequest,
                                            FirmwareDataCache firmwareDataCache,
-                                           LwM2mTransportContext context, LwM2MJsonAdaptor adaptor) {
+                                           LwM2mTransportContext context, LwM2MJsonAdaptor adaptor, TbLwM2MDtlsSessionStore sessionStore) {
         this.transportService = transportService;
         this.config = config;
         this.helper = helper;
@@ -148,6 +151,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         this.firmwareDataCache = firmwareDataCache;
         this.context = context;
         this.adaptor = adaptor;
+        this.sessionStore = sessionStore;
     }
 
     @PostConstruct
@@ -155,7 +159,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         this.context.getScheduler().scheduleAtFixedRate(this::reportActivity, new Random().nextInt((int) config.getSessionReportTimeout()), config.getSessionReportTimeout(), TimeUnit.MILLISECONDS);
         this.registrationExecutor = ThingsBoardExecutors.newWorkStealingPool(this.config.getRegisteredPoolSize(), "LwM2M registration");
         this.updateRegistrationExecutor = ThingsBoardExecutors.newWorkStealingPool(this.config.getUpdateRegisteredPoolSize(), "LwM2M update registration");
-        this.unregistrationExecutor = ThingsBoardExecutors.newWorkStealingPool(this.config.getUnRegisteredPoolSize(), "LwM2M unregistration");
+        this.unRegistrationExecutor = ThingsBoardExecutors.newWorkStealingPool(this.config.getUnRegisteredPoolSize(), "LwM2M unRegistration");
         this.converter = LwM2mValueConverterImpl.getInstance();
     }
 
@@ -182,9 +186,13 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                     SessionInfoProto sessionInfo = this.getSessionInfoOrCloseSession(lwM2MClient);
                     if (sessionInfo != null) {
                         transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(this, sessionInfo));
-                        transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN), null);
-                        transportService.process(sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build(), null);
-                        transportService.process(sessionInfo, TransportProtos.SubscribeToRPCMsg.newBuilder().build(), null);
+                        TransportProtos.TransportToDeviceActorMsg msg = TransportProtos.TransportToDeviceActorMsg.newBuilder()
+                                .setSessionInfo(sessionInfo)
+                                .setSessionEvent(DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN))
+                                .setSubscribeToAttributes(TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build())
+                                .setSubscribeToRPC(TransportProtos.SubscribeToRPCMsg.newBuilder().build())
+                                .build();
+                        transportService.process(msg, null);
                         this.getInfoFirmwareUpdate(lwM2MClient);
                         this.getInfoSoftwareUpdate(lwM2MClient);
                         this.initLwM2mFromClientValue(registration, lwM2MClient);
@@ -219,11 +227,14 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                             request.send();
                         }
                     }
+                    this.sendLogsToThingsboard(LOG_LW2M_INFO + ": Client update Registration", registration.getId());
                 } else {
                     log.error("Client: [{}] updatedReg [{}] name  [{}] sessionInfo ", registration.getId(), registration.getEndpoint(), null);
+                    this.sendLogsToThingsboard(LOG_LW2M_ERROR + ": Client update Registration", registration.getId());
                 }
             } catch (Throwable t) {
                 log.error("[{}] endpoint [{}] error Unable update registration.", registration.getEndpoint(), t);
+                this.sendLogsToThingsboard(LOG_LW2M_ERROR + String.format(": Client update Registration, %s", t.getMessage()), registration.getId());
             }
         });
     }
@@ -234,13 +245,15 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      *                     !!! Warn: if have not finishing unReg, then this operation will be finished on next Client`s connect
      */
     public void unReg(Registration registration, Collection<Observation> observations) {
-        unregistrationExecutor.submit(() -> {
+        unRegistrationExecutor.submit(() -> {
             try {
-                this.setCancelObservations(registration);
+                this.setCancelObservationsAll(registration);
                 this.sendLogsToThingsboard(LOG_LW2M_INFO + ": Client unRegistration", registration.getId());
                 this.closeClientSession(registration);
+                ;
             } catch (Throwable t) {
                 log.error("[{}] endpoint [{}] error Unable un registration.", registration.getEndpoint(), t);
+                this.sendLogsToThingsboard(LOG_LW2M_ERROR + String.format(": Client Unable un Registration, %s", t.getMessage()), registration.getId());
             }
         });
     }
@@ -249,6 +262,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         SessionInfoProto sessionInfo = this.getSessionInfoOrCloseSession(registration);
         if (sessionInfo != null) {
             transportService.deregisterSession(sessionInfo);
+            sessionStore.remove(registration.getEndpoint());
             this.doCloseSession(sessionInfo);
             clientContext.removeClientByRegistrationId(registration.getId());
             log.info("Client close session: [{}] unReg [{}] name  [{}] profile ", registration.getId(), registration.getEndpoint(), sessionInfo.getDeviceType());
@@ -265,13 +279,18 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         //TODO: associate endpointId with device information.
     }
 
+    /**
+     * Cancel observation for All objects for this registration
+     */
     @Override
-    public void setCancelObservations(Registration registration) {
+    public void setCancelObservationsAll(Registration registration) {
         if (registration != null) {
-            Set<Observation> observations = context.getServer().getObservationService().getObservations(registration);
-            observations.forEach(observation -> lwM2mTransportRequest.sendAllRequest(registration,
-                    convertPathFromObjectIdToIdVer(observation.getPath().toString(), registration), OBSERVE_CANCEL,
-                    null, null, this.config.getTimeout(), null));
+            lwM2mTransportRequest.sendAllRequest(registration, null, OBSERVE_CANCEL,
+                    null, null, this.config.getTimeout(), null);
+//            Set<Observation> observations = context.getServer().getObservationService().getObservations(registration);
+//            observations.forEach(observation -> lwM2mTransportRequest.sendAllRequest(registration,
+//                    convertPathFromObjectIdToIdVer(observation.getPath().toString(), registration), OBSERVE_CANCEL,
+//                    null, null, this.config.getTimeout(), null));
         }
     }
 
@@ -285,32 +304,41 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     @Override
     public void onUpdateValueAfterReadResponse(Registration registration, String path, ReadResponse response, Lwm2mClientRpcRequest rpcRequest) {
         if (response.getContent() != null) {
-            Object value = null;
-            if (response.getContent() instanceof LwM2mObject) {
-                LwM2mObject lwM2mObject = (LwM2mObject) response.getContent();
-                if (rpcRequest != null) {
-                    value = lwM2mObject.toString();
+            LwM2mClient lwM2MClient = clientContext.getOrRegister(registration);
+            ObjectModel objectModelVersion = lwM2MClient.getObjectModel(path, this.config.getModelProvider());
+            if (objectModelVersion != null) {
+                if (response.getContent() instanceof LwM2mObject) {
+                    LwM2mObject lwM2mObject = (LwM2mObject) response.getContent();
+                    this.updateObjectResourceValue(registration, lwM2mObject, path);
+                } else if (response.getContent() instanceof LwM2mObjectInstance) {
+                    LwM2mObjectInstance lwM2mObjectInstance = (LwM2mObjectInstance) response.getContent();
+                    this.updateObjectInstanceResourceValue(registration, lwM2mObjectInstance, path);
+                } else if (response.getContent() instanceof LwM2mResource) {
+                    LwM2mResource lwM2mResource = (LwM2mResource) response.getContent();
+                    this.updateResourcesValue(registration, lwM2mResource, path);
                 }
-                this.updateObjectResourceValue(registration, lwM2mObject, path);
-            } else if (response.getContent() instanceof LwM2mObjectInstance) {
-                LwM2mObjectInstance lwM2mObjectInstance = (LwM2mObjectInstance) response.getContent();
-                if (rpcRequest != null) {
-                    value = lwM2mObjectInstance.toString();
-                }
-                this.updateObjectInstanceResourceValue(registration, lwM2mObjectInstance, path);
-            } else if (response.getContent() instanceof LwM2mResource) {
-                LwM2mResource lwM2mResource = (LwM2mResource) response.getContent();
-                if (rpcRequest != null) {
-                    value = lwM2mResource.isMultiInstances() ? ((LwM2mMultipleResource) lwM2mResource).toString() :
-                            ((LwM2mSingleResource) lwM2mResource).toString();
-                }
-                this.updateResourcesValue(registration, lwM2mResource, path);
             }
             if (rpcRequest != null) {
-                rpcRequest.setValueMsg(String.format("%s", value));
-                this.sentRpcRequest(rpcRequest, response.getCode().getName(), (String) value, LOG_LW2M_VALUE);
+                this.sendRpcRequestAfterReadResponse(registration, lwM2MClient, path, response, rpcRequest);
             }
         }
+    }
+
+    private void sendRpcRequestAfterReadResponse(Registration registration, LwM2mClient lwM2MClient, String pathIdVer, ReadResponse response,
+                                                 Lwm2mClientRpcRequest rpcRequest) {
+        Object value = null;
+        if (response.getContent() instanceof LwM2mObject) {
+            value = lwM2MClient.objectToString((LwM2mObject) response.getContent(), this.converter, pathIdVer);
+        } else if (response.getContent() instanceof LwM2mObjectInstance) {
+            value = lwM2MClient.instanceToString((LwM2mObjectInstance) response.getContent(), this.converter, pathIdVer);
+        } else if (response.getContent() instanceof LwM2mResource) {
+            value = lwM2MClient.resourceToString((LwM2mResource) response.getContent(), this.converter, pathIdVer);
+        }
+        String msg = String.format("%s: type operation %s path - %s value - %s", LOG_LW2M_INFO,
+                READ, pathIdVer, value);
+        this.sendLogsToThingsboard(msg, registration.getId());
+        rpcRequest.setValueMsg(String.format("%s", value));
+        this.sentRpcRequest(rpcRequest, response.getCode().getName(), (String) value, LOG_LW2M_VALUE);
     }
 
     /**
@@ -411,12 +439,12 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     }
 
     @Override
-    public void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg toDeviceRequest, SessionInfoProto sessionInfo) {
+    public void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg toDeviceRpcRequestMsg, SessionInfoProto sessionInfo) {
+        log.warn("4) RPC-OK finish to [{}]", toDeviceRpcRequestMsg);
         Lwm2mClientRpcRequest lwm2mClientRpcRequest = null;
         try {
-            log.info("[{}] toDeviceRpcRequest", toDeviceRequest);
             Registration registration = clientContext.getClient(new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB())).getRegistration();
-            lwm2mClientRpcRequest = this.getDeviceRpcRequest(toDeviceRequest, sessionInfo, registration);
+            lwm2mClientRpcRequest = this.getDeviceRpcRequest(toDeviceRpcRequestMsg, sessionInfo, registration);
             if (lwm2mClientRpcRequest.getErrorMsg() != null) {
                 lwm2mClientRpcRequest.setResponseCode(BAD_REQUEST.name());
                 this.onToDeviceRpcResponse(lwm2mClientRpcRequest.getDeviceRpcResponseResultMsg(), sessionInfo);
@@ -486,7 +514,8 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                 }
                 lwm2mClientRpcRequest.setSessionInfo(sessionInfo);
                 if (!(OBSERVE_READ_ALL == lwm2mClientRpcRequest.getTypeOper()
-                        || DISCOVER_All == lwm2mClientRpcRequest.getTypeOper())
+                        || DISCOVER_All == lwm2mClientRpcRequest.getTypeOper()
+                        || OBSERVE_CANCEL == lwm2mClientRpcRequest.getTypeOper())
                         && lwm2mClientRpcRequest.getTargetIdVer() == null) {
                     lwm2mClientRpcRequest.setErrorMsg(lwm2mClientRpcRequest.targetIdVerKey + " and " +
                             lwm2mClientRpcRequest.keyNameKey + " is null or bad format");
@@ -599,7 +628,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      */
     @Override
     public void onAwakeDev(Registration registration) {
-        log.info("[{}] [{}] Received endpoint Awake version event", registration.getId(), registration.getEndpoint());
+        log.trace("[{}] [{}] Received endpoint Awake version event", registration.getId(), registration.getEndpoint());
         this.sendLogsToThingsboard(LOG_LW2M_INFO + ": Client is awake!", registration.getId());
         //TODO: associate endpointId with device information.
     }
@@ -615,7 +644,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
             if (logMsg.length() > 1024) {
                 logMsg = logMsg.substring(0, 1024);
             }
-            this.helper.sendParametersOnThingsboardTelemetry(this.helper.getKvLogyToThingsboard(logMsg), sessionInfo);
+            this.helper.sendParametersOnThingsboardTelemetry(this.helper.getKvStringtoThingsboard(LOG_LW2M_TELEMETRY, logMsg), sessionInfo);
         }
     }
 
@@ -688,33 +717,64 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      */
     private void updateResourcesValue(Registration registration, LwM2mResource lwM2mResource, String path) {
         LwM2mClient lwM2MClient = clientContext.getOrRegister(registration);
-        if (lwM2MClient.saveResourceValue(path, lwM2mResource, this.config
-                .getModelProvider())) {
+        if (lwM2MClient.saveResourceValue(path, lwM2mResource, this.config.getModelProvider())) {
             /** version != null
              * set setClient_fw_info... = value
              **/
             if (lwM2MClient.getFwUpdate().isInfoFwSwUpdate()) {
-                lwM2MClient.getFwUpdate().initReadValue(this, path);
+                lwM2MClient.getFwUpdate().initReadValue(this, lwM2mTransportRequest, path);
             }
             if (lwM2MClient.getSwUpdate().isInfoFwSwUpdate()) {
-                lwM2MClient.getSwUpdate().initReadValue(this, path);
+                lwM2MClient.getSwUpdate().initReadValue(this, lwM2mTransportRequest, path);
             }
-            if (lwM2MClient.getFwUpdate().getStateUpdate() != null
-                    && !FirmwareUpdateStatus.DOWNLOADING.name().equals(lwM2MClient.getFwUpdate().getStateUpdate())
-                    && (convertPathFromObjectIdToIdVer(FW_STATE_ID, registration).equals(path)
-                        || convertPathFromObjectIdToIdVer(FW_RESULT_ID, registration).equals(path))) {
-                Long stateFw = (Long) lwM2MClient.getResourceValue(null, FW_STATE_ID);
-                Long updateResultFw = (Long) lwM2MClient.getResourceValue(null, FW_RESULT_ID);
-                FirmwareUpdateStatus state = EqualsFwSateToFirmwareUpdateStatus(LwM2mTransportUtil.StateFw.fromStateFwByCode(stateFw.intValue()),
-                        LwM2mTransportUtil.UpdateResultFw.fromUpdateResultFwByCode(updateResultFw.intValue()));
-                if (state != FirmwareUpdateStatus.DOWNLOADING && state != FirmwareUpdateStatus.DOWNLOADED) {
-                    lwM2MClient.getFwUpdate().setStateUpdate(state.name());
-                    lwM2MClient.getFwUpdate().sendLogs(OBSERVE.name());
-                }
-                log.warn ("update Resource [{}]", lwM2mResource);
-            }
-            if (FirmwareUpdateStatus.DOWNLOADED.name().equals(lwM2MClient.getSwUpdate().getStateUpdate())) {
 
+            /**
+             * Before operation Execute (FwUpdate) inspection Update Result :
+             *  - after finished operation Write result: success (FwUpdate): fw_state = DOWNLOADED
+             *  - before start operation Execute (FwUpdate) Update Result = 0 - Initial value
+             *  - start Execute (FwUpdate)
+             *  After finished operation Execute (FwUpdate) inspection Update Result :
+             *  - after start operation Execute (FwUpdate):  fw_state = UPDATING
+             *  - after success finished operation Execute (FwUpdate) Update Result == 1 ("Firmware updated successfully")
+             *  - finished operation Execute (FwUpdate)
+             */
+            if (lwM2MClient.getFwUpdate() != null
+                    && (convertPathFromObjectIdToIdVer(FW_RESULT_ID, registration).equals(path))) {
+                if (DOWNLOADED.name().equals(lwM2MClient.getFwUpdate().getStateUpdate())
+                        && lwM2MClient.getFwUpdate().conditionalFwExecuteStart()) {
+                    lwM2MClient.getFwUpdate().executeFwSwWare(this, lwM2mTransportRequest);
+                } else if (UPDATING.name().equals(lwM2MClient.getFwUpdate().getStateUpdate())
+                        && lwM2MClient.getFwUpdate().conditionalFwExecuteAfterSuccess()) {
+                    lwM2MClient.getFwUpdate().finishFwSwUpdate(this, true);
+                } else if (UPDATING.name().equals(lwM2MClient.getFwUpdate().getStateUpdate())
+                        && lwM2MClient.getFwUpdate().conditionalFwExecuteAfterError()) {
+                    lwM2MClient.getFwUpdate().finishFwSwUpdate(this, false);
+                }
+            }
+
+            /**
+             * Before operation Execute (SwUpdate) inspection Update Result :
+             *  - after finished operation Write result: success (SwUpdate): fw_state = DOWNLOADED
+             *  - before operation Execute (SwUpdate) Update Result = 3 - Successfully Downloaded and package integrity verified
+             *  - start Execute (SwUpdate)
+             *  After finished operation Execute (SwUpdate) inspection Update Result :
+             *  - after start operation Execute (SwUpdate):  fw_state = UPDATING
+             *  - after success finished operation Execute (SwUpdate) Update Result == 2 "Software successfully installed.""
+             *  - after success finished operation Execute (SwUpdate) Update Result == 2 "Software successfully installed.""
+             *  - finished operation Execute (SwUpdate)
+             */
+            if (lwM2MClient.getSwUpdate() != null
+                    && (convertPathFromObjectIdToIdVer(SW_RESULT_ID, registration).equals(path))) {
+                if (DOWNLOADED.name().equals(lwM2MClient.getSwUpdate().getStateUpdate())
+                        && lwM2MClient.getSwUpdate().conditionalSwUpdateExecute()) {
+                    lwM2MClient.getSwUpdate().executeFwSwWare(this, lwM2mTransportRequest);
+                } else if (UPDATING.name().equals(lwM2MClient.getSwUpdate().getStateUpdate())
+                        && lwM2MClient.getSwUpdate().conditionalSwExecuteAfterSuccess()) {
+                    lwM2MClient.getSwUpdate().finishFwSwUpdate(this, true);
+                } else if (UPDATING.name().equals(lwM2MClient.getSwUpdate().getStateUpdate())
+                        && lwM2MClient.getSwUpdate().conditionalSwExecuteAfterError()) {
+                    lwM2MClient.getSwUpdate().finishFwSwUpdate(this, false);
+                }
             }
             Set<String> paths = new HashSet<>();
             paths.add(path);
@@ -736,7 +796,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      */
     private void updateAttrTelemetry(Registration registration, Set<String> paths) {
         try {
-            ResultsAddKeyValueProto results = getParametersFromProfile(registration, paths);
+            ResultsAddKeyValueProto results = this.getParametersFromProfile(registration, paths);
             SessionInfoProto sessionInfo = this.getSessionInfoOrCloseSession(registration);
             if (results != null && sessionInfo != null) {
                 if (results.getResultAttributes().size() > 0) {
@@ -1020,8 +1080,6 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                 registrationIds.forEach(registrationId -> {
                     Registration registration = clientContext.getRegistration(registrationId);
                     this.readObserveFromProfile(registration, sendAttrToThingsboard.getPathPostParametersAdd(), READ);
-                    // send attr/telemetry to tingsboard for new path
-//                    this.updateAttrTelemetry(registration, sendAttrToThingsboard.getPathPostParametersAdd());
                 });
             }
             // #4.2 del
@@ -1348,7 +1406,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                     TransportProtos.GetAttributeRequestMsg getAttributeMsg = adaptor.convertToGetAttributes(null, keyNamesMap.values());
                     transportService.process(sessionInfo, getAttributeMsg, getAckCallback(lwM2MClient, getAttributeMsg.getRequestId(), DEVICE_ATTRIBUTES_REQUEST));
                 } catch (AdaptorException e) {
-                    log.warn("Failed to decode get attributes request", e);
+                    log.trace("Failed to decode get attributes request", e);
                 }
             }
 
@@ -1369,7 +1427,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                                     lwM2MClient.getFwUpdate().setCurrentVersion(response.getVersion());
                                     lwM2MClient.getFwUpdate().setCurrentTitle(response.getTitle());
                                     lwM2MClient.getFwUpdate().setCurrentId(new FirmwareId(new UUID(response.getFirmwareIdMSB(), response.getFirmwareIdLSB())).getId());
-                                    lwM2MClient.getFwUpdate().sendReadInfo(serviceImpl);
+                                    lwM2MClient.getFwUpdate().sendReadObserveInfo(lwM2mTransportRequest);
                                 } else {
                                     log.trace("Firmware [{}] [{}]", lwM2MClient.getDeviceName(), response.getResponseStatus().toString());
                                 }
@@ -1377,7 +1435,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
 
                             @Override
                             public void onError(Throwable e) {
-                                log.warn("Failed to process firmwareUpdate ", e);
+                                log.trace("Failed to process firmwareUpdate ", e);
                             }
                         });
             }
@@ -1398,7 +1456,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                                     lwM2MClient.getSwUpdate().setCurrentVersion(response.getVersion());
                                     lwM2MClient.getSwUpdate().setCurrentTitle(response.getTitle());
                                     lwM2MClient.getSwUpdate().setCurrentId(new FirmwareId(new UUID(response.getFirmwareIdMSB(), response.getFirmwareIdLSB())).getId());
-                                    lwM2MClient.getSwUpdate().sendReadInfo(serviceImpl);
+                                    lwM2MClient.getSwUpdate().sendReadObserveInfo(lwM2mTransportRequest);
                                 } else {
                                     log.trace("Software [{}] [{}]", lwM2MClient.getDeviceName(), response.getResponseStatus().toString());
                                 }
@@ -1446,6 +1504,10 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         return resourceModel != null && (isWritableNotOptional ?
                 objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)) && resourceModel.operations.isWritable() :
                 objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)));
+    }
+
+    public LwM2MTransportServerConfig getConfig() {
+        return this.config;
     }
 
 }

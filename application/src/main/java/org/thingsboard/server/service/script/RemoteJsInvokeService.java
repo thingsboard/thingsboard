@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
@@ -39,6 +40,8 @@ import javax.annotation.PreDestroy;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -69,6 +72,8 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     private final AtomicInteger queueEvalMsgs = new AtomicInteger(0);
     private final AtomicInteger queueFailedMsgs = new AtomicInteger(0);
     private final AtomicInteger queueTimeoutMsgs = new AtomicInteger(0);
+    private final ExecutorService callbackExecutor = Executors.newFixedThreadPool(
+            Runtime.getRuntime().availableProcessors(), ThingsBoardThreadFactory.forName("js-executor-remote-callback"));
 
     public RemoteJsInvokeService(TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient) {
         super(apiUsageStateService, apiUsageClient);
@@ -139,7 +144,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 }
                 queueFailedMsgs.incrementAndGet();
             }
-        }, MoreExecutors.directExecutor());
+        }, callbackExecutor);
         return Futures.transform(future, response -> {
             JsInvokeProtos.JsCompileResponse compilationResult = response.getValue().getCompileResponse();
             UUID compiledScriptId = new UUID(compilationResult.getScriptIdMSB(), compilationResult.getScriptIdLSB());
@@ -151,7 +156,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 log.debug("[{}] Failed to compile script due to [{}]: {}", compiledScriptId, compilationResult.getErrorCode().name(), compilationResult.getErrorDetails());
                 throw new RuntimeException(compilationResult.getErrorDetails());
             }
-        }, MoreExecutors.directExecutor());
+        }, callbackExecutor);
     }
 
     @Override
@@ -194,7 +199,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 }
                 queueFailedMsgs.incrementAndGet();
             }
-        }, MoreExecutors.directExecutor());
+        }, callbackExecutor);
         return Futures.transform(future, response -> {
             JsInvokeProtos.JsInvokeResponse invokeResult = response.getValue().getInvokeResponse();
             if (invokeResult.getSuccess()) {
@@ -204,7 +209,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 log.debug("[{}] Failed to compile script due to [{}]: {}", scriptId, invokeResult.getErrorCode().name(), invokeResult.getErrorDetails());
                 throw new RuntimeException(invokeResult.getErrorDetails());
             }
-        }, MoreExecutors.directExecutor());
+        }, callbackExecutor);
     }
 
     @Override

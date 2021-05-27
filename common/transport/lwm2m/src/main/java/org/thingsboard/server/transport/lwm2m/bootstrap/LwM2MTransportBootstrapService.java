@@ -65,7 +65,8 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mNetworkConfig.g
 @Component
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' && '${transport.lwm2m.bootstrap.enable:false}'=='true') || ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled:false}'=='true'&& '${transport.lwm2m.bootstrap.enable:false}'=='true')")
 @RequiredArgsConstructor
-public class LwM2MTransportBootstrapServerConfiguration {
+//TODO: @ybondarenko please refactor this to be similar to DefaultLwM2mTransportService
+public class LwM2MTransportBootstrapService {
     private PublicKey publicKey;
     private PrivateKey privateKey;
     private boolean pskMode = false;
