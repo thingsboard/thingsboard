@@ -39,7 +39,7 @@
     </mat-toolbar>
     <mat-tab-group [ngClass]="{'tb-headless': sources.length === 1}" fxFlex
                    [(selectedIndex)]="sourceIndex" (selectedIndexChange)="onSourceIndexChanged()">
-      <mat-tab *ngFor="let source of sources; trackBy: trackBySourcesIndex; let index = index;" label="{{ source.datasource.name }}">
+      <mat-tab *ngFor="let source of sources; trackBy: trackBySourcesIndex; let index = index;" label="{{getTabLabel(source)}}">
         <ng-template [ngIf]="isActiveTab(index)">
           <div fxFlex class="table-container">
             <table mat-table [dataSource]="source.timeseriesDatasource" [trackBy]="trackByRowTimestamp"
