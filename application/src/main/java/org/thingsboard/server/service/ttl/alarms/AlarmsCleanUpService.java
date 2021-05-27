@@ -50,10 +50,6 @@ public class AlarmsCleanUpService {
 
     @Scheduled(initialDelayString = "${sql.ttl.alarms.checking_interval}", fixedDelayString = "${sql.ttl.alarms.checking_interval}")
     public void cleanUp() {
-        if (!partitionService.resolve(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID).isMyPartition()) {
-            return;
-        }
-
         PageLink tenantsBatchRequest = new PageLink(65536, 0);
         PageLink alarmsRemovalBatchRequest = new PageLink(removalBatchSize, 0);
         long currentTime = System.currentTimeMillis();
@@ -61,20 +57,22 @@ public class AlarmsCleanUpService {
         PageData<TenantId> tenantsIds;
         do {
             tenantsIds = tenantDao.findTenantsIds(tenantsBatchRequest);
-            tenantsIds.getData().forEach(tenantId -> {
-                Optional<DefaultTenantProfileConfiguration> tenantProfileConfiguration = tenantProfileCache.get(tenantId).getProfileConfiguration();
-                if (tenantProfileConfiguration.isEmpty() || tenantProfileConfiguration.get().getAlarmsTtlDays() == 0) {
-                    return;
-                }
+            tenantsIds.getData().stream()
+                    .filter(tenantId -> partitionService.resolve(ServiceType.TB_CORE, tenantId, tenantId).isMyPartition())
+                    .forEach(tenantId -> {
+                        Optional<DefaultTenantProfileConfiguration> tenantProfileConfiguration = tenantProfileCache.get(tenantId).getProfileConfiguration();
+                        if (tenantProfileConfiguration.isEmpty() || tenantProfileConfiguration.get().getAlarmsTtlDays() == 0) {
+                            return;
+                        }
 
-                PageData<UUID> toRemove;
-                long outdatageTime = currentTime - TimeUnit.DAYS.toMillis(tenantProfileConfiguration.get().getAlarmsTtlDays());
-                log.info("Cleaning up outdated alarms for tenant {}", tenantId);
-                do {
-                    toRemove = alarmDao.findAlarmsIdsByEndTsBeforeAndTenantId(outdatageTime, tenantId, alarmsRemovalBatchRequest);
-                    alarmDao.removeAllByIds(toRemove.getData());
-                } while (toRemove.hasNext());
-            });
+                        PageData<UUID> toRemove;
+                        long outdatageTime = currentTime - TimeUnit.DAYS.toMillis(tenantProfileConfiguration.get().getAlarmsTtlDays());
+                        log.info("Cleaning up outdated alarms for tenant {}", tenantId);
+                        do {
+                            toRemove = alarmDao.findAlarmsIdsByEndTsBeforeAndTenantId(outdatageTime, tenantId, alarmsRemovalBatchRequest);
+                            alarmDao.removeAllByIds(toRemove.getData());
+                        } while (toRemove.hasNext());
+                    });
 
             tenantsBatchRequest = tenantsBatchRequest.nextPageLink();
         } while (tenantsIds.hasNext());
