@@ -93,6 +93,7 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
         }
     }
 
+    @JsonIgnore
     public Optional<DefaultTenantProfileConfiguration> getProfileConfiguration() {
         return Optional.ofNullable(getProfileData().getConfiguration())
                 .filter(profileConfiguration -> profileConfiguration instanceof DefaultTenantProfileConfiguration)

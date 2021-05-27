@@ -275,7 +275,7 @@ sql:
         edge_events_ttl: "${SQL_TTL_EDGE_EVENTS_TTL:2628000}" # Number of seconds. The current value corresponds to one month
       alarms:
         checking_interval: "${SQL_ALARMS_TTL_CHECKING_INTERVAL:7200000}" # Number of milliseconds. The current value corresponds to two hours
-        removal_batch_size: "${SQL_ALARMS_TTL_REMOVAL_BATCH_SIZE:200}" # To delete outdated alarms not all at once but in batches
+        removal_batch_size: "${SQL_ALARMS_TTL_REMOVAL_BATCH_SIZE:3000}" # To delete outdated alarms not all at once but in batches
 
 # Actor system parameters
 actors:

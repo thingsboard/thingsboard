@@ -150,6 +150,8 @@ class DeviceState {
             stateChanged = processAlarmClearNotification(ctx, msg);
         } else if (msg.getType().equals(DataConstants.ALARM_ACK)) {
             processAlarmAckNotification(ctx, msg);
+        } else if (msg.getType().equals(DataConstants.ALARM_DELETE)) {
+            processAlarmDeleteNotification(ctx, msg);
         } else {
             if (msg.getType().equals(DataConstants.ENTITY_ASSIGNED) || msg.getType().equals(DataConstants.ENTITY_UNASSIGNED)) {
                 dynamicPredicateValueCtx.resetCustomer();
@@ -190,6 +192,12 @@ class DeviceState {
                     a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
             alarmState.processAckAlarm(alarmNf);
         }
+        ctx.tellSuccess(msg);
+    }
+
+    private void processAlarmDeleteNotification(TbContext ctx, TbMsg msg) {
+        Alarm alarm = JacksonUtil.fromString(msg.getData(), Alarm.class);
+        alarmStates.values().removeIf(alarmState -> alarmState.getCurrentAlarm().getId().equals(alarm.getId()));
         ctx.tellSuccess(msg);
     }
 
