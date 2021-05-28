@@ -23,11 +23,10 @@ const replicationFactor = Number(config.get('kafka.replication_factor'));
 const topicProperties = config.get('kafka.topic_properties');
 const kafkaClientId = config.get('kafka.client_id');
 const acks = Number(config.get('kafka.acks'));
+const maxBatchSize = Number(config.get('kafka.batch_size'));
+const linger = Number(config.get('kafka.linger_ms'));
 const requestTimeout = Number(config.get('kafka.requestTimeout'));
 const compressionType = (config.get('kafka.requestTimeout') === "gzip") ? CompressionTypes.GZIP : CompressionTypes.None;
-
-const linger = 5; //milliseconds //TODO move to the config
-const maxBatchSize = 10; //max messages in batch //TODO move to the config
 
 let kafkaClient;
 let kafkaAdmin;
@@ -76,7 +75,9 @@ function sendLoopWithLinger() {
 
 function sendMessagesAsBatch() {
      if (batchMessages.length > 0) {
-        logger.info('sendMessagesAsBatch, lenght: [%s]', batchMessages.length );
+         if (batchMessages.length > 1) {
+            logger.info('sendMessagesAsBatch, length: [%s]', batchMessages.length);
+         }
          const messagesToSend = batchMessages;
          batchMessages = [];
          producer.sendBatch({
@@ -85,17 +86,15 @@ function sendMessagesAsBatch() {
              compression: compressionType
          }).then(
                 () => {
-                    logger.info('Response sent to kafka, length: [%s]', messagesToSend.length );
+                    logger.debug('Response sent to kafka, length: [%s]', messagesToSend.length);
                 },
                 (err) => {
-                    logger.error('Failed to send kafka, length: [%s], pending to reprocess msgs', messagesToSend.length );
+                    logger.error('Failed to send kafka, length: [%s], pending to reprocess msgs', messagesToSend.length);
                     batchMessages = messagesToSend.concat(batchMessages);
                     logger.error(err.stack);
                 }
          );
 
-     } else {
-        //logger.debug("nothing to send");
      }
 }
 
@@ -163,6 +162,8 @@ function sendMessagesAsBatch() {
         consumer = kafkaClient.consumer({groupId: 'js-executor-group'});
         producer = kafkaClient.producer();
 
+/*
+        //producer event instrumentation to debug
         const { CONNECT } = producer.events;
         const removeListenerC = producer.on(CONNECT, e => logger.info(`producer CONNECT`));
         const { DISCONNECT } = producer.events;
@@ -173,18 +174,22 @@ function sendMessagesAsBatch() {
         const removeListenerRT = producer.on(REQUEST_TIMEOUT, e => logger.info(`producer REQUEST_TIMEOUT ${e.payload.broker}`));
         const { REQUEST_QUEUE_SIZE } = producer.events;
         const removeListenerRQS = producer.on(REQUEST_QUEUE_SIZE, e => logger.info(`producer REQUEST_QUEUE_SIZE ${e.payload.broker} size ${e.queueSize}`));
+*/
 
-//        const removeListeners = {}
-//        const { FETCH_START } = consumer.events;
-//        removeListeners[FETCH_START] = consumer.on(FETCH_START, e => logger.info(`consumer FETCH_START`));
-//        const { FETCH } = consumer.events;
-//        removeListeners[FETCH] = consumer.on(FETCH, e => logger.info(`consumer FETCH numberOfBatches ${e.payload.numberOfBatches} duration ${e.payload.duration}`));
-//        const { START_BATCH_PROCESS } = consumer.events;
-//        removeListeners[START_BATCH_PROCESS] = consumer.on(START_BATCH_PROCESS, e => logger.info(`consumer START_BATCH_PROCESS topic ${e.payload.topic} batchSize ${e.payload.batchSize}`));
-//        const { END_BATCH_PROCESS } = consumer.events;
-//        removeListeners[END_BATCH_PROCESS] = consumer.on(END_BATCH_PROCESS, e => logger.info(`consumer END_BATCH_PROCESS topic ${e.payload.topic} batchSize ${e.payload.batchSize}`));
-//        const { COMMIT_OFFSETS } = consumer.events;
-//        removeListeners[COMMIT_OFFSETS] = consumer.on(COMMIT_OFFSETS, e => logger.info(`consumer COMMIT_OFFSETS topics ${e.payload.topics}`));
+/*
+        //consumer event instrumentation to debug
+        const removeListeners = {}
+        const { FETCH_START } = consumer.events;
+        removeListeners[FETCH_START] = consumer.on(FETCH_START, e => logger.info(`consumer FETCH_START`));
+        const { FETCH } = consumer.events;
+        removeListeners[FETCH] = consumer.on(FETCH, e => logger.info(`consumer FETCH numberOfBatches ${e.payload.numberOfBatches} duration ${e.payload.duration}`));
+        const { START_BATCH_PROCESS } = consumer.events;
+        removeListeners[START_BATCH_PROCESS] = consumer.on(START_BATCH_PROCESS, e => logger.info(`consumer START_BATCH_PROCESS topic ${e.payload.topic} batchSize ${e.payload.batchSize}`));
+        const { END_BATCH_PROCESS } = consumer.events;
+        removeListeners[END_BATCH_PROCESS] = consumer.on(END_BATCH_PROCESS, e => logger.info(`consumer END_BATCH_PROCESS topic ${e.payload.topic} batchSize ${e.payload.batchSize}`));
+        const { COMMIT_OFFSETS } = consumer.events;
+        removeListeners[COMMIT_OFFSETS] = consumer.on(COMMIT_OFFSETS, e => logger.info(`consumer COMMIT_OFFSETS topics ${e.payload.topics}`));
+*/
 
         const messageProcessor = new JsInvokeMessageProcessor(new KafkaProducer());
         await consumer.connect();

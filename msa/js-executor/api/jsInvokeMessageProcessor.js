@@ -25,6 +25,7 @@ const config = require('config'),
       Utils = require('./utils'),
       JsExecutor = require('./jsExecutor');
 
+const statFrequency = Number(config.get('script.stat_print_frequency'));
 const scriptBodyTraceFrequency = Number(config.get('script.script_body_trace_frequency'));
 const useSandbox = config.get('script.use_sandbox') === 'true';
 const maxActiveScripts = Number(config.get('script.max_active_scripts'));
@@ -39,6 +40,7 @@ function JsInvokeMessageProcessor(producer) {
     this.scriptMap = new Map();
     this.scriptIds = [];
     this.executedScriptsCounter = 0;
+    this.lastStatTime = performance.now();
 }
 
 JsInvokeMessageProcessor.prototype.onJsInvokeMessage = function(message) {
@@ -118,11 +120,16 @@ JsInvokeMessageProcessor.prototype.processInvokeRequest = function(requestId, re
     var scriptId = getScriptId(invokeRequest);
     logger.debug('[%s] Processing invoke request, scriptId: [%s]', requestId, scriptId);
     this.executedScriptsCounter++;
-    if ( this.executedScriptsCounter >= scriptBodyTraceFrequency ) {
-        this.executedScriptsCounter = 0;
-        if (logger.levels[logger.level] >= logger.levels['debug']) {
-            logger.debug('[%s] Executing script body: [%s]', scriptId, invokeRequest.scriptBody);
-        }
+    if (this.executedScriptsCounter % statFrequency == 0) {
+        var nowMs = performance.now();
+        var msSinceLastStat = nowMs - this.lastStatTime;
+        var requestsPerSec = statFrequency / msSinceLastStat * 1000; //msSinceLastStat can't be zero in the real world
+        this.lastStatTime = nowMs;
+        logger.info('STAT[%s]: requests [%s], took [%s]ms, request/s [%s]', this.executedScriptsCounter, statFrequency, msSinceLastStat, requestsPerSec);
+    }
+
+    if (this.executedScriptsCounter % scriptBodyTraceFrequency == 0) {
+        logger.info('[%s] Executing script body: [%s]', scriptId, invokeRequest.scriptBody);
     }
     this.getOrCompileScript(scriptId, invokeRequest.scriptBody).then(
         (script) => {
