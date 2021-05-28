@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -57,7 +56,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 @RuleNode(
         type = ComponentType.ACTION,
         name = "push to edge",
-        configClazz = EmptyNodeConfiguration.class,
+        configClazz = TbMsgPushToEdgeNodeConfiguration.class,
         nodeDescription = "Push messages from cloud to edge",
         nodeDetails = "Push messages from cloud to edge. " +
                 "Message originator must be assigned to particular edge or message originator is <b>EDGE</b> entity itself. " +
@@ -87,7 +86,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 )
 public class TbMsgPushToEdgeNode implements TbNode {
 
-    private EmptyNodeConfiguration config;
+    private TbMsgPushToEdgeNodeConfiguration config;
 
     private static final String SCOPE = "scope";
 
@@ -95,7 +94,7 @@ public class TbMsgPushToEdgeNode implements TbNode {
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, EmptyNodeConfiguration.class);
+        this.config = TbNodeUtils.convert(configuration, TbMsgPushToEdgeNodeConfiguration.class);
     }
 
     @Override
@@ -186,7 +185,8 @@ public class TbMsgPushToEdgeNode implements TbNode {
                     entityBody.put(SCOPE, getScope(metadata));
                     break;
                 case ATTRIBUTES_DELETED:
-                    List<String> keys = JacksonUtil.convertValue(dataJson.get("attributes"), new TypeReference<>() {});
+                    List<String> keys = JacksonUtil.convertValue(dataJson.get("attributes"), new TypeReference<>() {
+                    });
                     entityBody.put("keys", keys);
                     entityBody.put(SCOPE, getScope(metadata));
                     break;
@@ -202,8 +202,7 @@ public class TbMsgPushToEdgeNode implements TbNode {
     private String getScope(Map<String, String> metadata) {
         String scope = metadata.get(SCOPE);
         if (StringUtils.isEmpty(scope)) {
-            // TODO: @voba - move this to configuration of the node UI or some other place
-            scope = DataConstants.SERVER_SCOPE;
+            scope = config.getScope();
         }
         return scope;
     }
