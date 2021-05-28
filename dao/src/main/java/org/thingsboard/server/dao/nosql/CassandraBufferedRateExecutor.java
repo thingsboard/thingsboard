@@ -22,14 +22,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.entity.EntityService;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.util.AbstractBufferedRateExecutor;
 import org.thingsboard.server.dao.util.AsyncTaskContext;
 import org.thingsboard.server.dao.util.NoSqlAnyDao;
+import org.thingsboard.server.dao.util.TenantRateLimitException;
 
 import javax.annotation.PreDestroy;
 import java.util.HashMap;
@@ -45,6 +49,9 @@ public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<
 
     @Autowired
     private EntityService entityService;
+    @Autowired
+    private TbTenantProfileCache tenantProfileCache;
+
     private Map<TenantId, String> tenantNamesCache = new HashMap<>();
 
     private boolean printTenantNames;
@@ -56,12 +63,10 @@ public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<
             @Value("${cassandra.query.dispatcher_threads:2}") int dispatcherThreads,
             @Value("${cassandra.query.callback_threads:4}") int callbackThreads,
             @Value("${cassandra.query.poll_ms:50}") long pollMs,
-            @Value("${cassandra.query.tenant_rate_limits.enabled}") boolean tenantRateLimitsEnabled,
-            @Value("${cassandra.query.tenant_rate_limits.configuration}") String tenantRateLimitsConfiguration,
             @Value("${cassandra.query.tenant_rate_limits.print_tenant_names}") boolean printTenantNames,
             @Value("${cassandra.query.print_queries_freq:0}") int printQueriesFreq,
             @Autowired StatsFactory statsFactory) {
-        super(queueLimit, concurrencyLimit, maxWaitTime, dispatcherThreads, callbackThreads, pollMs, tenantRateLimitsEnabled, tenantRateLimitsConfiguration, printQueriesFreq, statsFactory);
+        super(queueLimit, concurrencyLimit, maxWaitTime, dispatcherThreads, callbackThreads, pollMs, printQueriesFreq, statsFactory);
         this.printTenantNames = printTenantNames;
     }
 
@@ -97,7 +102,8 @@ public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<
                     DefaultCounter counter = entry.getValue();
                     int rateLimitedRequests = counter.get();
                     counter.clear();
-                    if (printTenantNames) {
+                    var profile = tenantProfileCache.get(tenantId).getDefaultTenantConfiguration();
+                    if (profile != null && profile.isPrintTenantNames()) {
                         String name = tenantNamesCache.computeIfAbsent(tenantId, tId -> {
                             try {
                                 return entityService.fetchEntityNameAsync(TenantId.SYS_TENANT_ID, tenantId).get();
@@ -137,4 +143,24 @@ public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<
         );
     }
 
+    @Override
+    protected boolean checkRateLimits(CassandraStatementTask task, SettableFuture<TbResultSet> future) {
+        var tenantProfileConfiguration = tenantProfileCache.get(task.getTenantId()).getDefaultTenantConfiguration();
+        if (StringUtils.isNotEmpty(tenantProfileConfiguration.getCassandraTenantLimitsConfiguration())) {
+            if (task.getTenantId() == null) {
+                log.info("Invalid task received: {}", task);
+            } else if (!task.getTenantId().isNullUid()) {
+                TbRateLimits rateLimits = perTenantLimits.computeIfAbsent(
+                        task.getTenantId(), id -> new TbRateLimits(tenantProfileConfiguration.getCassandraTenantLimitsConfiguration())
+                );
+                if (!rateLimits.tryConsume()) {
+                    stats.incrementRateLimitedTenant(task.getTenantId());
+                    stats.getTotalRateLimited().increment();
+                    future.setException(new TenantRateLimitException());
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }

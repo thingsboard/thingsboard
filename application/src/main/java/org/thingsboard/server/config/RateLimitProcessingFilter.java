@@ -16,16 +16,17 @@
 package org.thingsboard.server.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.GenericFilterBean;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -41,17 +42,20 @@ import java.util.concurrent.ConcurrentMap;
 @Component
 public class RateLimitProcessingFilter extends GenericFilterBean {
 
-    @Value("${server.rest.limits.tenant.enabled:false}")
-    private boolean perTenantLimitsEnabled;
-    @Value("${server.rest.limits.tenant.configuration:}")
-    private String perTenantLimitsConfiguration;
-    @Value("${server.rest.limits.customer.enabled:false}")
-    private boolean perCustomerLimitsEnabled;
-    @Value("${server.rest.limits.customer.configuration:}")
-    private String perCustomerLimitsConfiguration;
+//    @Value("${server.rest.limits.tenant.enabled:false}")
+//    private boolean perTenantLimitsEnabled;
+//    @Value("${server.rest.limits.tenant.configuration:}")
+//    private String perTenantLimitsConfiguration;
+//    @Value("${server.rest.limits.customer.enabled:false}")
+//    private boolean perCustomerLimitsEnabled;
+//    @Value("${server.rest.limits.customer.configuration:}")
+//    private String perCustomerLimitsConfiguration;
 
     @Autowired
     private ThingsboardErrorResponseHandler errorResponseHandler;
+
+    @Autowired
+    private TbTenantProfileCache tenantProfileCache;
 
     private ConcurrentMap<TenantId, TbRateLimits> perTenantLimits = new ConcurrentHashMap<>();
     private ConcurrentMap<CustomerId, TbRateLimits> perCustomerLimits = new ConcurrentHashMap<>();
@@ -60,18 +64,29 @@ public class RateLimitProcessingFilter extends GenericFilterBean {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         SecurityUser user = getCurrentUser();
         if (user != null && !user.isSystemAdmin()) {
-            if (perTenantLimitsEnabled) {
-                TbRateLimits rateLimits = perTenantLimits.computeIfAbsent(user.getTenantId(), id -> new TbRateLimits(perTenantLimitsConfiguration));
-                if (!rateLimits.tryConsume()) {
-                    errorResponseHandler.handle(new TbRateLimitsException(EntityType.TENANT), (HttpServletResponse) response);
-                    return;
+
+            var profile= tenantProfileCache.get(user.getTenantId()).getDefaultTenantConfiguration();
+
+            if(profile != null) {
+                if (StringUtils.isNotEmpty(profile.getRateLimitsTenantConfiguration())) {
+
+                    TbRateLimits rateLimits = perTenantLimits.computeIfAbsent(
+                            user.getTenantId(), id -> new TbRateLimits(profile.getRateLimitsTenantConfiguration())
+                    );
+                    if (!rateLimits.tryConsume()) {
+                        errorResponseHandler.handle(new TbRateLimitsException(EntityType.TENANT), (HttpServletResponse) response);
+                        return;
+                    }
                 }
-            }
-            if (perCustomerLimitsEnabled && user.isCustomerUser()) {
-                TbRateLimits rateLimits = perCustomerLimits.computeIfAbsent(user.getCustomerId(), id -> new TbRateLimits(perCustomerLimitsConfiguration));
-                if (!rateLimits.tryConsume()) {
-                    errorResponseHandler.handle(new TbRateLimitsException(EntityType.CUSTOMER), (HttpServletResponse) response);
-                    return;
+                if (StringUtils.isNotEmpty(profile.getRateLimitsCustomerConfiguration())) {
+
+                    TbRateLimits rateLimits = perCustomerLimits.computeIfAbsent(
+                            user.getCustomerId(), id -> new TbRateLimits(profile.getRateLimitsCustomerConfiguration())
+                    );
+                    if (!rateLimits.tryConsume()) {
+                        errorResponseHandler.handle(new TbRateLimitsException(EntityType.CUSTOMER), (HttpServletResponse) response);
+                        return;
+                    }
                 }
             }
         }
