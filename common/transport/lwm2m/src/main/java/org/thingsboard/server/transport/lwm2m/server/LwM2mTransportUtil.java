@@ -43,7 +43,10 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.nustaq.serialization.FSTConfiguration;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.firmware.FirmwareKey;
+import org.thingsboard.server.common.data.firmware.FirmwareType;
 import org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus;
+import org.thingsboard.server.common.data.firmware.FirmwareUtil;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
@@ -926,5 +929,18 @@ public class LwM2mTransportUtil {
             log.error("CreateAttribute, not valid parameter key: [{}], attrValue: [{}], error: [{}]", key, attrValue, e.getMessage());
             return  null;
         }
+    }
+
+    public static boolean isFwSwWords (String pathName) {
+        return FirmwareUtil.getAttributeKey(FirmwareType.FIRMWARE, FirmwareKey.VERSION).equals(pathName)
+                || FirmwareUtil.getAttributeKey(FirmwareType.FIRMWARE, FirmwareKey.TITLE).equals(pathName)
+                || FirmwareUtil.getAttributeKey(FirmwareType.FIRMWARE, FirmwareKey.CHECKSUM).equals(pathName)
+                || FirmwareUtil.getAttributeKey(FirmwareType.FIRMWARE, FirmwareKey.CHECKSUM_ALGORITHM).equals(pathName)
+                || FirmwareUtil.getAttributeKey(FirmwareType.FIRMWARE, FirmwareKey.SIZE).equals(pathName)
+                || FirmwareUtil.getAttributeKey(FirmwareType.SOFTWARE, FirmwareKey.VERSION).equals(pathName)
+                || FirmwareUtil.getAttributeKey(FirmwareType.SOFTWARE, FirmwareKey.TITLE).equals(pathName)
+                || FirmwareUtil.getAttributeKey(FirmwareType.SOFTWARE, FirmwareKey.CHECKSUM).equals(pathName)
+                || FirmwareUtil.getAttributeKey(FirmwareType.SOFTWARE, FirmwareKey.CHECKSUM_ALGORITHM).equals(pathName)
+                || FirmwareUtil.getAttributeKey(FirmwareType.SOFTWARE, FirmwareKey.SIZE).equals(pathName);
     }
 }

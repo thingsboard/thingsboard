@@ -188,14 +188,13 @@ public class LwM2mFwSwUpdate {
                 null, 0, null);
     }
 
-
     /**
      * Firmware start:
-     * -- Если Update Result -errors (более 1)  - Это означает что пред. апдейт не прошел.
-     *  - Запускаем апдейт в независимости от состяния прошивки и ее версии.
-     * -- Если Update Result - не errors (менее или равно 1) и ver не пустой  - Это означает что пред. апдейт прошел.
-     * -- Если Update Result - не errors и ver  пустой  - Это означает что апдейта еще не было.
-     * - Проверяем поменялась ли версия и запускаем новый апдейт.
+     * -- If the result of the update - errors (more than 1) - This means that the previous. the update failed.
+     * - We launch the update regardless of the state of the firmware and its version.
+     * -- If the result of the update is not errors (equal to 1 or 0) and ver is not empty - This means that before the update has passed.
+     * -- If the result of the update is not errors and is empty - This means that there has not been an update yet.
+     * - Check if the version has changed and launch a new update.
      */
     private boolean conditionalFwUpdateStart() {
         Long updateResultFw = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
@@ -241,12 +240,12 @@ public class LwM2mFwSwUpdate {
 
     /**
      * Software start
-     * -- Если Update Result -errors (равно и более 50)  - Это означает что пред. апдейт не прошел.
-     * * - Запускаем апдейт в независимости от состяния прошивки и ее версии.
-     * -- Если Update Result - не errors (менее  50) и ver не пустой  - Это означает что пред. апдейт прошел.
-     * -- Если Update Result - не errors и ver  пустой  - Это означает что апдейта еще не было или пред. апдейт UnInstall
-     * -- Если Update Result - не errors и ver  не пустой  - Это означает что  пред. апдейт UnInstall
-     * - Проверяем поменялась ли версия и запускаем новый апдейт.
+     * - If Update Result -errors (equal or more than 50) - This means that the previous. the update failed.
+     * * - We launch the update regardless of the state of the firmware and its version.
+     * - If Update Result is not errors (less than 50) and ver is not empty - This means that before. the update has passed.
+     * - If Update Result is not errors and ver is empty - This means that there was no update yet or before. UnInstall update
+     * - If Update Result is not errors and ver is not empty - This means that before unInstall update
+     * * - Check if the version has changed and launch a new update.
      */
     private boolean conditionalSwUpdateStart() {
         Long updateResultSw = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
