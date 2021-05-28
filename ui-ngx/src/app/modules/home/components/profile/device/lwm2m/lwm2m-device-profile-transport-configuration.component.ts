@@ -15,7 +15,7 @@
 ///
 
 import { DeviceProfileTransportConfiguration } from '@shared/models/device.models';
-import { Component, forwardRef, Input } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
@@ -39,6 +39,8 @@ import { deepClone, isDefinedAndNotNull, isEmpty, isUndefined } from '@core/util
 import { JsonArray, JsonObject } from '@angular/compiler-cli/ngcc/src/packages/entry_point';
 import { Direction } from '@shared/models/page/sort-order';
 import _ from 'lodash';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-profile-lwm2m-device-transport-configuration',
@@ -49,11 +51,12 @@ import _ from 'lodash';
     multi: true
   }]
 })
-export class Lwm2mDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, Validators {
+export class Lwm2mDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, Validators, OnDestroy {
 
   private configurationValue: Lwm2mProfileConfigModels;
   private requiredValue: boolean;
   private disabled = false;
+  private destroy$ = new Subject();
 
   bindingModeType = BINDING_MODE;
   bindingModeTypes = Object.keys(BINDING_MODE);
@@ -87,17 +90,21 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       lifetime: [null, Validators.required],
       defaultMinPeriod: [null, Validators.required],
       notifIfDisabled: [true, []],
-      binding:[],
+      binding: [],
       bootstrapServer: [null, Validators.required],
       lwm2mServer: [null, Validators.required],
     });
     this.lwm2mDeviceConfigFormGroup = this.fb.group({
       configurationJson: [null, Validators.required]
     });
-    this.lwm2mDeviceProfileFormGroup.valueChanges.subscribe((value) => {
+    this.lwm2mDeviceProfileFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value) => {
       this.updateDeviceProfileValue(value);
     });
-    this.lwm2mDeviceConfigFormGroup.valueChanges.subscribe(() => {
+    this.lwm2mDeviceConfigFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
       this.updateModel();
     });
     this.sortFunction = this.sortObjectKeyPathJson;
@@ -108,6 +115,11 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   registerOnTouched(fn: any): void {
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -122,11 +134,17 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   writeValue(value: Lwm2mProfileConfigModels | null): void {
-    this.configurationValue = (Object.keys(value).length === 0) ? getDefaultProfileConfig() : value;
-    this.lwm2mDeviceConfigFormGroup.patchValue({
-      configurationJson: this.configurationValue
-    }, {emitEvent: false});
-    this.initWriteValue();
+    if (isDefinedAndNotNull(value)) {
+      if (Object.keys(value).length !== 0 && (value?.clientLwM2mSettings || value?.observeAttr || value?.bootstrap)) {
+        this.configurationValue = value;
+      } else {
+        this.configurationValue = getDefaultProfileConfig();
+      }
+      this.lwm2mDeviceConfigFormGroup.patchValue({
+        configurationJson: this.configurationValue
+      }, {emitEvent: false});
+      this.initWriteValue();
+    }
   }
 
   private initWriteValue = (): void => {
@@ -252,7 +270,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     instanceUpdate.id = instanceId;
     instanceUpdate.resources.forEach(resource => {
       resource.keyName = _.camelCase(resource.name + instanceUpdate.id);
-    })
+    });
     return instanceUpdate;
   }
 
