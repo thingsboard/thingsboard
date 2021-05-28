@@ -137,6 +137,7 @@ message GetAttributeRequestMsg {
   int32 requestId = 1;
   repeated string clientAttributeNames = 2;
   repeated string sharedAttributeNames = 3;
+  bool onlyShared = 4;
 }
 
 message GetAttributeResponseMsg {
@@ -144,6 +145,7 @@ message GetAttributeResponseMsg {
   repeated TsKvProto clientAttributeList = 2;
   repeated TsKvProto sharedAttributeList = 3;
   string error = 5;
+  bool sharedStateMsg = 6;
 }
 
 message AttributeUpdateNotificationMsg {
@@ -318,6 +320,9 @@ message ToDeviceRpcRequestMsg {
   int32 requestId = 1;
   string methodName = 2;
   string params = 3;
+  int64 expirationTime = 4;
+  int64 requestIdMSB = 5;
+  int64 requestIdLSB = 6;
 }
 
 message ToDeviceRpcResponseMsg {

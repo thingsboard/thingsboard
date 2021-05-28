@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.coap;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.coap.CoAP;
+import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.transport.TransportContext;
@@ -56,12 +57,16 @@ public abstract class AbstractCoapTransportResource extends CoapResource {
 
     protected abstract void processHandlePost(CoapExchange exchange);
 
-    protected void reportActivity(TransportProtos.SessionInfoProto sessionInfo, boolean hasAttributeSubscription, boolean hasRpcSubscription) {
+    protected void reportSubscriptionInfo(TransportProtos.SessionInfoProto sessionInfo, boolean hasAttributeSubscription, boolean hasRpcSubscription) {
         transportContext.getTransportService().process(sessionInfo, TransportProtos.SubscriptionInfoProto.newBuilder()
                 .setAttributeSubscription(hasAttributeSubscription)
                 .setRpcSubscription(hasRpcSubscription)
                 .setLastActivityTime(System.currentTimeMillis())
                 .build(), TransportServiceCallback.EMPTY);
+    }
+
+    protected void reportActivity(TransportProtos.SessionInfoProto sessionInfo) {
+        transportService.reportActivity(sessionInfo);
     }
 
     protected static TransportProtos.SessionEventMsg getSessionEventMsg(TransportProtos.SessionEvent event) {
@@ -112,12 +117,18 @@ public abstract class AbstractCoapTransportResource extends CoapResource {
 
         @Override
         public void onSuccess(Void msg) {
-            exchange.respond(onSuccessResponse);
+            Response response = new Response(onSuccessResponse);
+            response.setAcknowledged(isConRequest());
+            exchange.respond(response);
         }
 
         @Override
         public void onError(Throwable e) {
             exchange.respond(onFailureResponse);
+        }
+
+        private boolean isConRequest() {
+            return exchange.advanced().getRequest().isConfirmable();
         }
     }
 

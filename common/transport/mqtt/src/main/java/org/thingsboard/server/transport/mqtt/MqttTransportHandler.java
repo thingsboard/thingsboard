@@ -468,9 +468,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             deviceSessionCtx.getPayloadAdaptor()
                     .convertToPublish(deviceSessionCtx, firmwareChunk, requestId, chunk, type)
                     .ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
-            if (firmwareChunk != null && chunkSize != firmwareChunk.length) {
-                scheduler.schedule(() -> processDisconnect(ctx), 60, TimeUnit.SECONDS);
-            }
         } catch (Exception e) {
             log.trace("[{}] Failed to send firmware response!", sessionId, e);
         }
@@ -807,8 +804,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     @Override
-    public void onRemoteSessionCloseCommand(TransportProtos.SessionCloseNotificationProto sessionCloseNotification) {
-        log.trace("[{}] Received the remote command to close the session", sessionId);
+    public void onRemoteSessionCloseCommand(UUID sessionId, TransportProtos.SessionCloseNotificationProto sessionCloseNotification) {
+        log.trace("[{}] Received the remote command to close the session: {}", sessionId, sessionCloseNotification.getMessage());
         processDisconnect(deviceSessionCtx.getChannel());
     }
 

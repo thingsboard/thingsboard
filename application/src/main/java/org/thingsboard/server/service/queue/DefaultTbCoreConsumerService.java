@@ -63,6 +63,7 @@ import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.firmware.FirmwareStateService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
+import org.thingsboard.server.service.queue.processing.IdMsgPair;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
@@ -74,6 +75,7 @@ import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWra
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -198,14 +200,17 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                     if (msgs.isEmpty()) {
                         continue;
                     }
-                    ConcurrentMap<UUID, TbProtoQueueMsg<ToCoreMsg>> pendingMap = msgs.stream().collect(
-                            Collectors.toConcurrentMap(s -> UUID.randomUUID(), Function.identity()));
+                    List<IdMsgPair<ToCoreMsg>> orderedMsgList = msgs.stream().map(msg -> new IdMsgPair<>(UUID.randomUUID(), msg)).collect(Collectors.toList());
+                    ConcurrentMap<UUID, TbProtoQueueMsg<ToCoreMsg>> pendingMap = orderedMsgList.stream().collect(
+                            Collectors.toConcurrentMap(IdMsgPair::getUuid, IdMsgPair::getMsg));
                     CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
                     TbPackProcessingContext<TbProtoQueueMsg<ToCoreMsg>> ctx = new TbPackProcessingContext<>(
                             processingTimeoutLatch, pendingMap, new ConcurrentHashMap<>());
                     PendingMsgHolder pendingMsgHolder = new PendingMsgHolder();
                     Future<?> packSubmitFuture = consumersExecutor.submit(() -> {
-                        pendingMap.forEach((id, msg) -> {
+                        orderedMsgList.forEach((element) -> {
+                            UUID id = element.getUuid();
+                            TbProtoQueueMsg<ToCoreMsg> msg = element.getMsg();
                             log.trace("[{}] Creating main callback for message: {}", id, msg.getValue());
                             TbCallback callback = new TbPackCallback<>(id, ctx);
                             try {
@@ -223,7 +228,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                 } else if (toCoreMsg.hasEdgeNotificationMsg()) {
                                     log.trace("[{}] Forwarding message to edge service {}", id, toCoreMsg.getEdgeNotificationMsg());
                                     forwardToEdgeNotificationService(toCoreMsg.getEdgeNotificationMsg(), callback);
-                                } else if (toCoreMsg.getToDeviceActorNotificationMsg() != null && !toCoreMsg.getToDeviceActorNotificationMsg().isEmpty()) {
+                                } else if (!toCoreMsg.getToDeviceActorNotificationMsg().isEmpty()) {
                                     Optional<TbActorMsg> actorMsg = encodingService.decode(toCoreMsg.getToDeviceActorNotificationMsg().toByteArray());
                                     if (actorMsg.isPresent()) {
                                         TbActorMsg tbActorMsg = actorMsg.get();

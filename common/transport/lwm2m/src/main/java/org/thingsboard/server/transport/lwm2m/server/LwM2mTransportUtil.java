@@ -61,9 +61,12 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.eclipse.leshan.core.attributes.Attribute.DIMENSION;
+import static org.eclipse.leshan.core.attributes.Attribute.GREATER_THAN;
+import static org.eclipse.leshan.core.attributes.Attribute.LESSER_THAN;
 import static org.eclipse.leshan.core.attributes.Attribute.MAXIMUM_PERIOD;
 import static org.eclipse.leshan.core.attributes.Attribute.MINIMUM_PERIOD;
 import static org.eclipse.leshan.core.attributes.Attribute.OBJECT_VERSION;
+import static org.eclipse.leshan.core.attributes.Attribute.STEP;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.BOOLEAN;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.FLOAT;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.INTEGER;
@@ -104,8 +107,7 @@ public class LwM2mTransportUtil {
 
     public static final long DEFAULT_TIMEOUT = 2 * 60 * 1000L; // 2min in ms
 
-    public static final String
-            LOG_LW2M_TELEMETRY = "logLwm2m";
+    public static final String LOG_LW2M_TELEMETRY = "logLwm2m";
     public static final String LOG_LW2M_INFO = "info";
     public static final String LOG_LW2M_ERROR = "error";
     public static final String LOG_LW2M_WARN = "warn";
@@ -116,6 +118,23 @@ public class LwM2mTransportUtil {
 
     public static final String CLIENT_NOT_AUTHORIZED = "Client not authorized";
     public static final String LWM2M_VERSION_DEFAULT = "1.0";
+
+    // RPC
+    public static final String TYPE_OPER_KEY = "typeOper";
+    public static final String TARGET_ID_VER_KEY = "targetIdVer";
+    public static final String KEY_NAME_KEY = "key";
+    public static final String VALUE_KEY = "value";
+    public static final String PARAMS_KEY = "params";
+    public static final String SEPARATOR_KEY = ":";
+    public static final String FINISH_VALUE_KEY = ",";
+    public static final String START_JSON_KEY = "{";
+    public static final String FINISH_JSON_KEY = "}";
+    //    public static final String contentFormatNameKey = "contentFormatName";
+    public static final String INFO_KEY = "info";
+    //    public static final String TIME_OUT_IN_MS = "timeOutInMs";
+    public static final String RESULT_KEY = "result";
+    public static final String ERROR_KEY = "error";
+    public static final String METHOD_KEY = "methodName";
 
     // FirmWare
     public static final String FW_UPDATE = "Firmware update";
@@ -182,20 +201,21 @@ public class LwM2mTransportUtil {
          */
         READ(0, "Read"),
         DISCOVER(1, "Discover"),
-        DISCOVER_All(2, "DiscoverAll"),
+        DISCOVER_ALL(2, "DiscoverAll"),
         OBSERVE_READ_ALL(3, "ObserveReadAll"),
         /**
          * POST
          */
         OBSERVE(4, "Observe"),
         OBSERVE_CANCEL(5, "ObserveCancel"),
-        EXECUTE(6, "Execute"),
+        OBSERVE_CANCEL_ALL(6, "ObserveCancelAll"),
+        EXECUTE(7, "Execute"),
         /**
          * Replaces the Object Instance or the Resource(s) with the new value provided in the “Write” operation. (see
          * section 5.3.3 of the LW M2M spec).
          * if all resources are to be replaced
          */
-        WRITE_REPLACE(7, "WriteReplace"),
+        WRITE_REPLACE(8, "WriteReplace"),
         /*
           PUT
          */
@@ -204,18 +224,16 @@ public class LwM2mTransportUtil {
          * 5.3.3 of the LW M2M spec).
          * if this is a partial update request
          */
-        WRITE_UPDATE(8, "WriteUpdate"),
-        WRITE_ATTRIBUTES(9, "WriteAttributes"),
-        DELETE(10, "Delete"),
+        WRITE_UPDATE(9, "WriteUpdate"),
+        WRITE_ATTRIBUTES(10, "WriteAttributes"),
+        DELETE(11, "Delete");
 
         // only for RPC
-        FW_READ_INFO(11, "FirmwareReadInfo"),
-        FW_UPDATE(12, "FirmwareUpdate"),
-        FW_UPDATE_URL(14, "FirmwareUpdateUrl"),
-        SW_READ_INFO(15, "SoftwareReadInfo"),
-        SW_UPDATE(16, "SoftwareUpdate"),
-        SW_UPDATE_URL(17, "SoftwareUpdateUrl"),
-        SW_UNINSTALL(18, "SoftwareUninstall");
+//        FW_READ_INFO(12, "FirmwareReadInfo"),
+//        FW_UPDATE(13, "FirmwareUpdate"),
+//        SW_READ_INFO(15, "SoftwareReadInfo"),
+//        SW_UPDATE(16, "SoftwareUpdate"),
+//        SW_UNINSTALL(18, "SoftwareUninstall");
 
         public int code;
         public String type;
@@ -817,25 +835,28 @@ public class LwM2mTransportUtil {
      * Attribute pmax = new Attribute(MAXIMUM_PERIOD, "60");
      * Attribute [] attrs = {gt, st};
      */
-    public static DownlinkRequest createWriteAttributeRequest(String target, Object params) {
-        AttributeSet attrSet = new AttributeSet(createWriteAttributes(params));
+    public static DownlinkRequest createWriteAttributeRequest(String target, Object params, DefaultLwM2MTransportMsgHandler serviceImpl) {
+        AttributeSet attrSet = new AttributeSet(createWriteAttributes(params, serviceImpl, target));
         return attrSet.getAttributes().size() > 0 ? new WriteAttributesRequest(target, attrSet) : null;
     }
 
-    private static Attribute[] createWriteAttributes(Object params) {
+    private static Attribute[] createWriteAttributes(Object params, DefaultLwM2MTransportMsgHandler serviceImpl, String target) {
         List<Attribute> attributeLists = new ArrayList<>();
         ObjectMapper oMapper = new ObjectMapper();
         Map<String, Object> map = oMapper.convertValue(params, ConcurrentHashMap.class);
         map.forEach((k, v) -> {
-            if (!v.toString().isEmpty() || (v.toString().isEmpty() && OBJECT_VERSION.equals(k))) {
-                attributeLists.add(new Attribute(k,
-                        (DIMENSION.equals(k) || MINIMUM_PERIOD.equals(k) || MAXIMUM_PERIOD.equals(k)) ?
-                                ((Double) v).longValue() : v));
+            if (StringUtils.trimToNull(v.toString()) != null) {
+                Object attrValue = convertWriteAttributes(k, v, serviceImpl, target);
+                if (attrValue != null) {
+                    Attribute attribute = createAttribute(k, attrValue);
+                    if (attribute != null) {
+                        attributeLists.add(new Attribute(k, attrValue));
+                    }
+                }
             }
         });
         return attributeLists.toArray(Attribute[]::new);
     }
-
 
     public static Set<String> convertJsonArrayToSet(JsonArray jsonArray) {
         List<String> attributeListOld = new Gson().fromJson(jsonArray, new TypeToken<List<String>>() {
@@ -861,6 +882,49 @@ public class LwM2mTransportUtil {
                 return OBJLNK;
             default:
                 return null;
+        }
+    }
+
+    public static LwM2mTypeOper setValidTypeOper(String typeOper) {
+        try {
+            return LwM2mTransportUtil.LwM2mTypeOper.fromLwLwM2mTypeOper(typeOper);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static Object convertWriteAttributes(String type, Object value, DefaultLwM2MTransportMsgHandler serviceImpl, String target) {
+        switch (type) {
+            /** Integer [0:255]; */
+            case DIMENSION:
+                Long dim = (Long) serviceImpl.converter.convertValue(value, equalsResourceTypeGetSimpleName(value), INTEGER, new LwM2mPath(target));
+                return dim >= 0 && dim <= 255 ? dim : null;
+            /**String;*/
+            case OBJECT_VERSION:
+                return serviceImpl.converter.convertValue(value, equalsResourceTypeGetSimpleName(value), STRING, new LwM2mPath(target));
+            /**INTEGER */
+            case MINIMUM_PERIOD:
+            case MAXIMUM_PERIOD:
+                return serviceImpl.converter.convertValue(value, equalsResourceTypeGetSimpleName(value), INTEGER, new LwM2mPath(target));
+            /**Float; */
+            case GREATER_THAN:
+            case LESSER_THAN:
+            case STEP:
+                if (value.getClass().getSimpleName().equals("String") ) {
+                    value = Double.valueOf((String) value);
+                }
+                return serviceImpl.converter.convertValue(value, equalsResourceTypeGetSimpleName(value), FLOAT, new LwM2mPath(target));
+            default:
+                return null;
+        }
+    }
+
+    private static Attribute createAttribute(String key, Object attrValue) {
+        try {
+            return new Attribute(key, attrValue);
+        } catch (Exception e) {
+            log.error("CreateAttribute, not valid parameter key: [{}], attrValue: [{}], error: [{}]", key, attrValue, e.getMessage());
+            return  null;
         }
     }
 }

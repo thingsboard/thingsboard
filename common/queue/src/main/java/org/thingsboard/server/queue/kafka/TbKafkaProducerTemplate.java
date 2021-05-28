@@ -61,6 +61,10 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
             props.put(ProducerConfig.CLIENT_ID_CONFIG, clientId);
         }
         this.settings = settings;
+
+        // Ugly workaround to fix org.apache.kafka.common.KafkaException: javax.security.auth.login.LoginException: unable to find LoginModule class
+        // details: https://stackoverflow.com/questions/57574901/kafka-java-client-classloader-doesnt-find-sasl-scram-login-class
+        Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
         this.producer = new KafkaProducer<>(props);
         this.defaultTopic = defaultTopic;
         this.admin = admin;

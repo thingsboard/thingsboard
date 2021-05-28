@@ -443,6 +443,7 @@
   <mat-tab label="{{ 'widget-config.actions' | translate }}" [formGroup]="actionsSettings">
     <tb-manage-widget-actions
       [callbacks]="widgetConfigCallbacks"
+      [widgetType] = "modelValue.widgetType"
       formControlName="actionsData">
     </tb-manage-widget-actions>
   </mat-tab>

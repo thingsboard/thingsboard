@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 
 import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.Collection;
@@ -33,8 +34,6 @@ public interface LwM2mClientContext {
     LwM2mClient getClientByRegistrationId(String registrationId);
 
     LwM2mClient getClient(TransportProtos.SessionInfoProto sessionInfo);
-
-    LwM2mClient getClient(UUID sessionId);
 
     LwM2mClient getOrRegister(Registration registration);
 
@@ -59,4 +58,6 @@ public interface LwM2mClientContext {
     Set<String> getSupportedIdVerInClient(Registration registration);
 
     LwM2mClient getClientByDeviceId(UUID deviceId);
+
+    void registerClient(Registration registration, ValidateDeviceCredentialsResponse credentials);
 }

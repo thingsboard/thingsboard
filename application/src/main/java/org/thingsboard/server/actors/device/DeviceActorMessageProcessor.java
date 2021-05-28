@@ -25,8 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
-import org.thingsboard.rule.engine.api.msg.DeviceEdgeUpdateMsg;
 import org.thingsboard.rule.engine.api.msg.DeviceCredentialsUpdateNotificationMsg;
+import org.thingsboard.rule.engine.api.msg.DeviceEdgeUpdateMsg;
 import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
@@ -73,7 +73,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcResponseM
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponseActorMsg;
@@ -164,8 +163,14 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     void processRpcRequest(TbActorCtx context, ToDeviceRpcRequestActorMsg msg) {
         ToDeviceRpcRequest request = msg.getMsg();
         ToDeviceRpcRequestBody body = request.getBody();
-        ToDeviceRpcRequestMsg rpcRequest = ToDeviceRpcRequestMsg.newBuilder().setRequestId(
-                rpcSeq++).setMethodName(body.getMethod()).setParams(body.getParams()).build();
+        ToDeviceRpcRequestMsg rpcRequest = ToDeviceRpcRequestMsg.newBuilder()
+                .setRequestId(rpcSeq++)
+                .setMethodName(body.getMethod())
+                .setParams(body.getParams())
+                .setExpirationTime(request.getExpirationTime())
+                .setRequestIdMSB(request.getId().getMostSignificantBits())
+                .setRequestIdLSB(request.getId().getLeastSignificantBits())
+                .build();
 
         long timeout = request.getExpirationTime() - System.currentTimeMillis();
         if (timeout <= 0) {
@@ -258,8 +263,14 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 sentOneWayIds.add(entry.getKey());
                 systemContext.getTbCoreDeviceRpcService().processRpcResponseFromDeviceActor(new FromDeviceRpcResponse(request.getId(), null, null));
             }
-            ToDeviceRpcRequestMsg rpcRequest = ToDeviceRpcRequestMsg.newBuilder().setRequestId(
-                    entry.getKey()).setMethodName(body.getMethod()).setParams(body.getParams()).build();
+            ToDeviceRpcRequestMsg rpcRequest = ToDeviceRpcRequestMsg.newBuilder()
+                    .setRequestId(entry.getKey())
+                    .setMethodName(body.getMethod())
+                    .setParams(body.getParams())
+                    .setExpirationTime(request.getExpirationTime())
+                    .setRequestIdMSB(request.getId().getMostSignificantBits())
+                    .setRequestIdLSB(request.getId().getLeastSignificantBits())
+                    .build();
             sendToTransport(rpcRequest, sessionId, nodeId);
         };
     }
@@ -306,25 +317,48 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     private void handleGetAttributesRequest(TbActorCtx context, SessionInfoProto sessionInfo, GetAttributeRequestMsg request) {
         int requestId = request.getRequestId();
-        Futures.addCallback(getAttributesKvEntries(request), new FutureCallback<List<List<AttributeKvEntry>>>() {
-            @Override
-            public void onSuccess(@Nullable List<List<AttributeKvEntry>> result) {
-                GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
-                        .setRequestId(requestId)
-                        .addAllClientAttributeList(toTsKvProtos(result.get(0)))
-                        .addAllSharedAttributeList(toTsKvProtos(result.get(1)))
-                        .build();
-                sendToTransport(responseMsg, sessionInfo);
-            }
+        if (request.getOnlyShared()) {
+            Futures.addCallback(findAllAttributesByScope(DataConstants.SHARED_SCOPE), new FutureCallback<>() {
+                @Override
+                public void onSuccess(@Nullable List<AttributeKvEntry> result) {
+                    GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
+                            .setRequestId(requestId)
+                            .setSharedStateMsg(true)
+                            .addAllSharedAttributeList(toTsKvProtos(result))
+                            .build();
+                    sendToTransport(responseMsg, sessionInfo);
+                }
 
-            @Override
-            public void onFailure(Throwable t) {
-                GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
-                        .setError(t.getMessage())
-                        .build();
-                sendToTransport(responseMsg, sessionInfo);
-            }
-        }, MoreExecutors.directExecutor());
+                @Override
+                public void onFailure(Throwable t) {
+                    GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
+                            .setError(t.getMessage())
+                            .setSharedStateMsg(true)
+                            .build();
+                    sendToTransport(responseMsg, sessionInfo);
+                }
+            }, MoreExecutors.directExecutor());
+        } else {
+            Futures.addCallback(getAttributesKvEntries(request), new FutureCallback<>() {
+                @Override
+                public void onSuccess(@Nullable List<List<AttributeKvEntry>> result) {
+                    GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
+                            .setRequestId(requestId)
+                            .addAllClientAttributeList(toTsKvProtos(result.get(0)))
+                            .addAllSharedAttributeList(toTsKvProtos(result.get(1)))
+                            .build();
+                    sendToTransport(responseMsg, sessionInfo);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
+                            .setError(t.getMessage())
+                            .build();
+                    sendToTransport(responseMsg, sessionInfo);
+                }
+            }, MoreExecutors.directExecutor());
+        }
     }
 
     private ListenableFuture<List<List<AttributeKvEntry>>> getAttributesKvEntries(GetAttributeRequestMsg request) {
@@ -392,9 +426,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             }
             if (hasNotificationData) {
                 AttributeUpdateNotificationMsg finalNotification = notification.build();
-                attributeSubscriptions.entrySet().forEach(sub -> {
-                    sendToTransport(finalNotification, sub.getKey(), sub.getValue().getNodeId());
-                });
+                attributeSubscriptions.forEach((key, value) -> sendToTransport(finalNotification, key, value.getNodeId()));
             }
         } else {
             log.debug("[{}] No registered attributes subscriptions to process!", deviceId);
@@ -464,7 +496,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             if (sessions.size() >= systemContext.getMaxConcurrentSessionsPerDevice()) {
                 UUID sessionIdToRemove = sessions.keySet().stream().findFirst().orElse(null);
                 if (sessionIdToRemove != null) {
-                    notifyTransportAboutClosedSession(sessionIdToRemove, sessions.remove(sessionIdToRemove));
+                    notifyTransportAboutClosedSession(sessionIdToRemove, sessions.remove(sessionIdToRemove), "max concurrent sessions limit reached per device!");
                 }
             }
             sessions.put(sessionId, new SessionInfoMetaData(new SessionInfo(SessionType.ASYNC, sessionInfo.getNodeId())));
@@ -510,7 +542,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 notifyTransportAboutProfileUpdate(k, v, ((DeviceCredentialsUpdateNotificationMsg) msg).getDeviceCredentials());
             });
         } else {
-            sessions.forEach(this::notifyTransportAboutClosedSession);
+            sessions.forEach((sessionId, sessionMd) -> notifyTransportAboutClosedSession(sessionId, sessionMd, "device credentials updated!"));
             attributeSubscriptions.clear();
             rpcSubscriptions.clear();
             dumpSessions();
@@ -518,11 +550,15 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         }
     }
 
-    private void notifyTransportAboutClosedSession(UUID sessionId, SessionInfoMetaData sessionMd) {
+    private void notifyTransportAboutClosedSession(UUID sessionId, SessionInfoMetaData sessionMd, String message) {
+        SessionCloseNotificationProto sessionCloseNotificationProto = SessionCloseNotificationProto
+                .newBuilder()
+                .setMessage(message).build();
         ToTransportMsg msg = ToTransportMsg.newBuilder()
                 .setSessionIdMSB(sessionId.getMostSignificantBits())
                 .setSessionIdLSB(sessionId.getLeastSignificantBits())
-                .setSessionCloseNotification(SessionCloseNotificationProto.getDefaultInstance()).build();
+                .setSessionCloseNotification(sessionCloseNotificationProto)
+                .build();
         systemContext.getTbCoreToTransportService().process(sessionMd.getSessionInfo().getNodeId(), msg);
     }
 
@@ -730,7 +766,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             sessions.remove(sessionId);
             rpcSubscriptions.remove(sessionId);
             attributeSubscriptions.remove(sessionId);
-            notifyTransportAboutClosedSession(sessionId, sessionMD);
+            notifyTransportAboutClosedSession(sessionId, sessionMD, "session timeout!");
         });
         if (!sessionsToRemove.isEmpty()) {
             dumpSessions();

@@ -14,6 +14,8 @@
     <logger name="org.springframework.boot.test" level="WARN"/>
     <logger name="org.apache.cassandra" level="WARN"/>
     <logger name="org.cassandraunit" level="INFO"/>
+    <logger name="org.eclipse.leshan" level="TRACE"/>
+
 
     <root level="WARN">
         <appender-ref ref="console"/>

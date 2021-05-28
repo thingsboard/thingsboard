@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.rpc;
+package org.thingsboard.server.transport.lwm2m.secure;
 
 import lombok.Data;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 
-/**
- * @author Andrew Shvayka
- */
 @Data
-public class RpcRequest {
-    private final String methodName;
-    private final String requestData;
-    private Long timeout;
+public class TbX509DtlsSessionInfo {
+
+    private final String x509CommonName;
+    private final ValidateDeviceCredentialsResponse credentials;
+
 }

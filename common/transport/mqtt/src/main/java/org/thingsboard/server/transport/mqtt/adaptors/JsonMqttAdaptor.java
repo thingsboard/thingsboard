@@ -44,7 +44,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_FIRMWARE_RESPONSES_TOPIC_FORMAT;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_SOFTWARE_FIRMWARE_RESPONSES_TOPIC_FORMAT;
 
 
 /**
@@ -156,7 +156,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
 
     @Override
     public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, byte[] firmwareChunk, String requestId, int chunk, FirmwareType firmwareType) {
-        return Optional.of(createMqttPublishMsg(ctx, String.format(DEVICE_FIRMWARE_RESPONSES_TOPIC_FORMAT, firmwareType.getKeyPrefix(), requestId, chunk), firmwareChunk));
+        return Optional.of(createMqttPublishMsg(ctx, String.format(DEVICE_SOFTWARE_FIRMWARE_RESPONSES_TOPIC_FORMAT, firmwareType.getKeyPrefix(), requestId, chunk), firmwareChunk));
     }
 
     public static JsonElement validateJsonPayload(UUID sessionId, ByteBuf payloadData) throws AdaptorException {
