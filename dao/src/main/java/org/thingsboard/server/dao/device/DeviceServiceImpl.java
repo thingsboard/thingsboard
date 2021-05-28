@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
@@ -80,7 +81,6 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
-import org.thingsboard.common.util.JacksonUtil;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -200,11 +200,16 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         Device savedDevice = this.saveDeviceWithoutCredentials(device);
         deviceCredentials.setDeviceId(savedDevice.getId());
         if (device.getId() == null) {
-            deviceCredentials = deviceCredentialsService.createDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
+            deviceCredentialsService.createDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
         }
         else {
-            deviceCredentials.setId(deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), savedDevice.getId()).getId());
-            deviceCredentials = deviceCredentialsService.updateDeviceCredentials(device.getTenantId(), deviceCredentials);
+            DeviceCredentials foundDeviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), savedDevice.getId());
+            if (foundDeviceCredentials == null) {
+                deviceCredentialsService.createDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
+            }
+            else {
+               deviceCredentialsService.updateDeviceCredentials(device.getTenantId(), deviceCredentials);
+            }
         }
         return savedDevice;
     }

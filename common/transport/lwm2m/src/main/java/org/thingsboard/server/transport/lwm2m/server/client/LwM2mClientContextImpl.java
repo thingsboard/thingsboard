@@ -116,7 +116,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
                         securityInfo.getDeviceProfile().getUuidId() : null;
                 //        TODO: for tests bug.
                 if (profileUuid== null) {
-                    log.warn("input parameters toClientProfile if the result is null: [{}]", securityInfo.getDeviceProfile());
+                    log.trace("input parameters toClientProfile if the result is null: [{}]", securityInfo.getDeviceProfile());
                 }
                 LwM2mClient client;
                 if (securityInfo.getSecurityInfo() != null) {

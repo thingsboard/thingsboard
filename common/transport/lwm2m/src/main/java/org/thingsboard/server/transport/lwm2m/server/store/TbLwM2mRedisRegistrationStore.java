@@ -214,9 +214,9 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
                 // Add or update expiration
                 addOrUpdateExpiration(connection, updatedRegistration);
 
-                // Update secondary index :
-                // If registration is already associated to this address we don't care as we only want to keep the most
-                // recent binding.
+                /** Update secondary index :
+                 * If registration is already associated to this address we don't care as we only want to keep the most
+                 * recent binding. */
                 byte[] addr_idx = toRegAddrKey(updatedRegistration.getSocketAddress());
                 connection.set(addr_idx, updatedRegistration.getEndpoint().getBytes(UTF_8));
                 if (!r.getSocketAddress().equals(updatedRegistration.getSocketAddress())) {
