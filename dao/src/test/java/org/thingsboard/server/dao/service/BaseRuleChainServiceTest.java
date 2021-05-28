@@ -23,6 +23,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -489,5 +490,100 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         ruleChainMetaData.addConnectionInfo(2,0,"success");
 
         return ruleChainMetaData;
+    }
+
+    @Test
+    public void testFindEdgeRuleChainsByTenantIdAndName() {
+        Edge edge = constructEdge("My edge", "default");
+        Edge savedEdge = edgeService.saveEdge(edge);
+
+        String name1 = "Edge RuleChain name 1";
+        List<RuleChain> ruleChainsName1 = new ArrayList<>();
+        for (int i = 0; i < 123; i++) {
+            RuleChain ruleChain = new RuleChain();
+            ruleChain.setTenantId(tenantId);
+            String suffix = RandomStringUtils.randomAlphanumeric((int) (Math.random() * 17));
+            String name = name1 + suffix;
+            name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
+            ruleChain.setName(name);
+            ruleChain.setType(RuleChainType.EDGE);
+            ruleChainsName1.add(ruleChainService.saveRuleChain(ruleChain));
+        }
+        ruleChainsName1.forEach(ruleChain -> ruleChainService.assignRuleChainToEdge(tenantId, ruleChain.getId(), savedEdge.getId()));
+
+        String name2 = "Edge RuleChain name 2";
+        List<RuleChain> ruleChainsName2 = new ArrayList<>();
+        for (int i = 0; i < 193; i++) {
+            RuleChain ruleChain = new RuleChain();
+            ruleChain.setTenantId(tenantId);
+            String suffix = RandomStringUtils.randomAlphanumeric((int) (Math.random() * 15));
+            String name = name2 + suffix;
+            name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
+            ruleChain.setName(name);
+            ruleChain.setType(RuleChainType.EDGE);
+            ruleChainsName2.add(ruleChainService.saveRuleChain(ruleChain));
+        }
+        ruleChainsName2.forEach(ruleChain -> ruleChainService.assignRuleChainToEdge(tenantId, ruleChain.getId(), savedEdge.getId()));
+
+        List<RuleChain> loadedRuleChainsName1 = new ArrayList<>();
+        PageLink pageLink = new PageLink(19, 0, name1);
+        PageData<RuleChain> pageData = null;
+        do {
+            pageData = ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, savedEdge.getId(), pageLink);
+            loadedRuleChainsName1.addAll(pageData.getData());
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        Collections.sort(ruleChainsName1, idComparator);
+        Collections.sort(loadedRuleChainsName1, idComparator);
+
+        Assert.assertEquals(ruleChainsName1, loadedRuleChainsName1);
+
+        List<RuleChain> loadedRuleChainsName2 = new ArrayList<>();
+        pageLink = new PageLink(4, 0, name2);
+        do {
+            pageData = ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, savedEdge.getId(), pageLink);
+            loadedRuleChainsName2.addAll(pageData.getData());
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        Collections.sort(ruleChainsName2, idComparator);
+        Collections.sort(loadedRuleChainsName2, idComparator);
+
+        Assert.assertEquals(ruleChainsName2, loadedRuleChainsName2);
+
+        for (RuleChain ruleChain : loadedRuleChainsName1) {
+            ruleChainService.deleteRuleChainById(tenantId, ruleChain.getId());
+        }
+
+        pageLink = new PageLink(4, 0, name1);
+        pageData = ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, savedEdge.getId(), pageLink);
+        Assert.assertFalse(pageData.hasNext());
+        Assert.assertEquals(0, pageData.getData().size());
+
+        for (RuleChain ruleChain : loadedRuleChainsName2) {
+            ruleChainService.deleteRuleChainById(tenantId, ruleChain.getId());
+        }
+
+        pageLink = new PageLink(4, 0, name2);
+        pageData = ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, savedEdge.getId(), pageLink);
+        Assert.assertFalse(pageData.hasNext());
+        Assert.assertEquals(0, pageData.getData().size());
+    }
+
+    private Edge constructEdge(String name, String type) {
+        Edge edge = new Edge();
+        edge.setTenantId(tenantId);
+        edge.setName(name);
+        edge.setType(type);
+        edge.setSecret(RandomStringUtils.randomAlphanumeric(20));
+        edge.setRoutingKey(RandomStringUtils.randomAlphanumeric(20));
+        edge.setEdgeLicenseKey(RandomStringUtils.randomAlphanumeric(20));
+        edge.setCloudEndpoint("http://localhost:8080");
+        return edge;
     }
 }
