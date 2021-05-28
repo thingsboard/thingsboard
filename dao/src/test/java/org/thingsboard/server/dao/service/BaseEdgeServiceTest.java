@@ -583,18 +583,6 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
         return constructEdge(tenantId, name, type);
     }
 
-    private Edge constructEdge(TenantId tenantId, String name, String type) {
-        Edge edge = new Edge();
-        edge.setTenantId(tenantId);
-        edge.setName(name);
-        edge.setType(type);
-        edge.setSecret(RandomStringUtils.randomAlphanumeric(20));
-        edge.setRoutingKey(RandomStringUtils.randomAlphanumeric(20));
-        edge.setEdgeLicenseKey(RandomStringUtils.randomAlphanumeric(20));
-        edge.setCloudEndpoint("http://localhost:8080");
-        return edge;
-    }
-
     @Test
     public void testCleanCacheIfEdgeRenamed() {
         String edgeNameBeforeRename = RandomStringUtils.randomAlphanumeric(15);
