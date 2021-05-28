@@ -27,6 +27,7 @@ import { OAuth2SettingsComponent } from '@modules/home/pages/admin/oauth2-settin
 import { SmsProviderComponent } from '@home/pages/admin/sms-provider.component';
 import { SendTestSmsDialogComponent } from '@home/pages/admin/send-test-sms-dialog.component';
 import { HomeSettingsComponent } from '@home/pages/admin/home-settings.component';
+import { ResourcesLibraryComponent } from '@home/pages/admin/resource/resources-library.component';
 
 @NgModule({
   declarations:
@@ -37,7 +38,8 @@ import { HomeSettingsComponent } from '@home/pages/admin/home-settings.component
       SendTestSmsDialogComponent,
       SecuritySettingsComponent,
       OAuth2SettingsComponent,
-      HomeSettingsComponent
+      HomeSettingsComponent,
+      ResourcesLibraryComponent
     ],
   imports: [
     CommonModule,

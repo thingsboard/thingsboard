@@ -20,9 +20,9 @@ import { PageLink } from '@shared/models/page/page-link';
 import { defaultHttpOptionsFromConfig, defaultHttpUploadOptions, RequestConfig } from '@core/http/http-utils';
 import { Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
-import { Firmware, FirmwareInfo } from '@shared/models/firmware.models';
+import { ChecksumAlgorithm, Firmware, FirmwareInfo, FirmwareType } from '@shared/models/firmware.models';
 import { catchError, map, mergeMap } from 'rxjs/operators';
-import { deepClone, isDefinedAndNotNull } from '@core/utils';
+import { deepClone } from '@core/utils';
 
 @Injectable({
   providedIn: 'root'
@@ -34,12 +34,13 @@ export class FirmwareService {
 
   }
 
-  public getFirmwares(pageLink: PageLink, hasData?: boolean, config?: RequestConfig): Observable<PageData<FirmwareInfo>> {
-    let url = `/api/firmwares`;
-    if (isDefinedAndNotNull(hasData)) {
-      url += `/${hasData}`;
-    }
-    url += `${pageLink.toQuery()}`;
+  public getFirmwares(pageLink: PageLink, config?: RequestConfig): Observable<PageData<FirmwareInfo>> {
+    return this.http.get<PageData<FirmwareInfo>>(`/api/firmwares${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getFirmwaresInfoByDeviceProfileId(pageLink: PageLink, deviceProfileId: string, type: FirmwareType,
+                                           hasData = true, config?: RequestConfig): Observable<PageData<FirmwareInfo>> {
+    const url = `/api/firmwares/${deviceProfileId}/${type}/${hasData}${pageLink.toQuery()}`;
     return this.http.get<PageData<FirmwareInfo>>(url, defaultHttpOptionsFromConfig(config));
   }
 
@@ -100,16 +101,16 @@ export class FirmwareService {
     return this.http.post<Firmware>('/api/firmware', firmware, defaultHttpOptionsFromConfig(config));
   }
 
-  public uploadFirmwareFile(firmwareId: string, file: File, checksumAlgorithm?: string,
+  public uploadFirmwareFile(firmwareId: string, file: File, checksumAlgorithm: ChecksumAlgorithm,
                             checksum?: string, config?: RequestConfig): Observable<any> {
     if (!config) {
       config = {};
     }
     const formData = new FormData();
     formData.append('file', file);
-    let url = `/api/firmware/${firmwareId}`;
-    if (checksumAlgorithm && checksum) {
-      url += `?checksumAlgorithm=${checksumAlgorithm}&checksum=${checksum}`;
+    let url = `/api/firmware/${firmwareId}?checksumAlgorithm=${checksumAlgorithm}`;
+    if (checksum) {
+      url += `&checksum=${checksum}`;
     }
     return this.http.post(url, formData,
       defaultHttpUploadOptions(config.ignoreLoading, config.ignoreErrors, config.resendRequest));

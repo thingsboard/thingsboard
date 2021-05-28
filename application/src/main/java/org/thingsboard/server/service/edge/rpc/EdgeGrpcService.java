@@ -172,7 +172,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     @Override
     public void onEdgeEvent(EdgeId edgeId) {
         log.trace("[{}] onEdgeEvent", edgeId.getId());
-        if (!sessionNewEvents.get(edgeId)) {
+        if (Boolean.FALSE.equals(sessionNewEvents.get(edgeId))) {
             log.trace("[{}] set session new events flag to true", edgeId.getId());
             sessionNewEvents.put(edgeId, true);
         }
@@ -204,7 +204,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         if (sessions.containsKey(edgeId)) {
             ScheduledFuture<?> schedule = scheduler.schedule(() -> {
                 try {
-                    if (sessionNewEvents.get(edgeId)) {
+                    if (Boolean.TRUE.equals(sessionNewEvents.get(edgeId))) {
                         log.trace("[{}] Set session new events flag to false", edgeId.getId());
                         sessionNewEvents.put(edgeId, false);
                         session.processEdgeEvents();

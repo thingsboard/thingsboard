@@ -28,7 +28,7 @@ import { BaseData } from '@shared/models/base-data';
 import { EntityService } from '@core/http/entity.service';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
-import { FirmwareInfo } from '@shared/models/firmware.models';
+import { FirmwareInfo, FirmwareType } from '@shared/models/firmware.models';
 import { FirmwareService } from '@core/http/firmware.service';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
@@ -47,7 +47,13 @@ export class FirmwareAutocompleteComponent implements ControlValueAccessor, OnIn
 
   firmwareFormGroup: FormGroup;
 
-  modelValue: string | null;
+  modelValue: string | EntityId | null;
+
+  @Input()
+  type = FirmwareType.FIRMWARE;
+
+  @Input()
+  deviceProfileId: string;
 
   @Input()
   labelText: string;
@@ -80,6 +86,23 @@ export class FirmwareAutocompleteComponent implements ControlValueAccessor, OnIn
   searchText = '';
 
   private dirty = false;
+
+  private firmwareTypeTranslation = new Map<FirmwareType, any>(
+    [
+      [FirmwareType.FIRMWARE, {
+        label: 'firmware.firmware',
+        required: 'firmware.firmware-required',
+        noFound: 'firmware.no-firmware-text',
+        noMatching: 'firmware.no-firmware-matching'
+      }],
+      [FirmwareType.SOFTWARE, {
+        label: 'firmware.software',
+        required: 'firmware.software-required',
+        noFound: 'firmware.no-software-text',
+        noMatching: 'firmware.no-software-matching'
+      }]
+    ]
+  );
 
   private propagateChange = (v: any) => { };
 
@@ -159,7 +182,7 @@ export class FirmwareAutocompleteComponent implements ControlValueAccessor, OnIn
       if (firmwareId !== '') {
         this.entityService.getEntity(EntityType.FIRMWARE, firmwareId, {ignoreLoading: true, ignoreErrors: true}).subscribe(
           (entity) => {
-            this.modelValue = entity.id.id;
+            this.modelValue = this.useFullEntityId ? entity.id : entity.id.id;
             this.firmwareFormGroup.get('firmwareId').patchValue(entity, {emitEvent: false});
           },
           () => {
@@ -173,6 +196,7 @@ export class FirmwareAutocompleteComponent implements ControlValueAccessor, OnIn
       } else {
         this.modelValue = null;
         this.firmwareFormGroup.get('firmwareId').patchValue('', {emitEvent: false});
+        this.propagateChange(null);
       }
     } else {
       this.modelValue = null;
@@ -209,7 +233,8 @@ export class FirmwareAutocompleteComponent implements ControlValueAccessor, OnIn
       property: 'title',
       direction: Direction.ASC
     });
-    return this.firmwareService.getFirmwares(pageLink, true, {ignoreLoading: true}).pipe(
+    return this.firmwareService.getFirmwaresInfoByDeviceProfileId(pageLink, this.deviceProfileId, this.type,
+                                                          true, {ignoreLoading: true}).pipe(
       map((data) => data && data.data.length ? data.data : null)
     );
   }
@@ -223,11 +248,19 @@ export class FirmwareAutocompleteComponent implements ControlValueAccessor, OnIn
   }
 
   get placeholderText(): string {
-    return this.labelText || 'firmware.firmware';
+    return this.labelText || this.firmwareTypeTranslation.get(this.type).label;
   }
 
   get requiredErrorText(): string {
-    return this.requiredText || 'firmware.firmware-required';
+    return this.requiredText || this.firmwareTypeTranslation.get(this.type).required;
+  }
+
+  get notFoundFirmware(): string {
+    return this.firmwareTypeTranslation.get(this.type).noFound;
+  }
+
+  get notMatchingFirmware(): string {
+    return this.firmwareTypeTranslation.get(this.type).noMatching;
   }
 
   firmwareTitleText(firmware: FirmwareInfo): string {

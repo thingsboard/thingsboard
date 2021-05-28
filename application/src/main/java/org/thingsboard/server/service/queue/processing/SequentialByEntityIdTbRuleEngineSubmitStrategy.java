@@ -33,7 +33,7 @@ public abstract class SequentialByEntityIdTbRuleEngineSubmitStrategy extends Abs
 
     private volatile BiConsumer<UUID, TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> msgConsumer;
     private volatile ConcurrentMap<UUID, EntityId> msgToEntityIdMap = new ConcurrentHashMap<>();
-    private volatile ConcurrentMap<EntityId, Queue<IdMsgPair>> entityIdToListMap = new ConcurrentHashMap<>();
+    private volatile ConcurrentMap<EntityId, Queue<IdMsgPair<TransportProtos.ToRuleEngineMsg>>> entityIdToListMap = new ConcurrentHashMap<>();
 
     public SequentialByEntityIdTbRuleEngineSubmitStrategy(String queueName) {
         super(queueName);
@@ -66,7 +66,7 @@ public abstract class SequentialByEntityIdTbRuleEngineSubmitStrategy extends Abs
     protected void doOnSuccess(UUID id) {
         EntityId entityId = msgToEntityIdMap.get(id);
         if (entityId != null) {
-            Queue<IdMsgPair> queue = entityIdToListMap.get(entityId);
+            Queue<IdMsgPair<TransportProtos.ToRuleEngineMsg>> queue = entityIdToListMap.get(entityId);
             if (queue != null) {
                 IdMsgPair next = null;
                 synchronized (queue) {
@@ -86,7 +86,7 @@ public abstract class SequentialByEntityIdTbRuleEngineSubmitStrategy extends Abs
     private void initMaps() {
         msgToEntityIdMap.clear();
         entityIdToListMap.clear();
-        for (IdMsgPair pair : orderedMsgList) {
+        for (IdMsgPair<TransportProtos.ToRuleEngineMsg> pair : orderedMsgList) {
             EntityId entityId = getEntityId(pair.msg.getValue());
             if (entityId != null) {
                 msgToEntityIdMap.put(pair.uuid, entityId);

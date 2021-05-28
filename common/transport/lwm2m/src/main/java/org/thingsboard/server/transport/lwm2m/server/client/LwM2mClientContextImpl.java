@@ -15,132 +15,142 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.client;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
-import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
+import org.thingsboard.server.transport.lwm2m.secure.EndpointSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
-import org.thingsboard.server.transport.lwm2m.secure.ReadResultSecurityStore;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.NO_SEC;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertPathFromObjectIdToIdVer;
+import static org.eclipse.leshan.core.SecurityMode.NO_SEC;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
 
+@Slf4j
 @Service
 @TbLwM2mTransportComponent
+@RequiredArgsConstructor
 public class LwM2mClientContextImpl implements LwM2mClientContext {
 
-    private static final boolean INFOS_ARE_COMPROMISED = false;
-
-    private final Map<String /** registrationId */, LwM2mClient> lwM2mClients = new ConcurrentHashMap<>();
-    private Map<UUID /** profileUUid */, LwM2mClientProfile> profiles = new ConcurrentHashMap<>();
+    private final LwM2mTransportContext context;
+    private final Map<String, LwM2mClient> lwM2mClientsByEndpoint = new ConcurrentHashMap<>();
+    private final Map<String, LwM2mClient> lwM2mClientsByRegistrationId = new ConcurrentHashMap<>();
+    private Map<UUID, LwM2mClientProfile> profiles = new ConcurrentHashMap<>();
 
     private final LwM2mCredentialsSecurityInfoValidator lwM2MCredentialsSecurityInfoValidator;
 
     private final EditableSecurityStore securityStore;
 
-    public LwM2mClientContextImpl(LwM2mCredentialsSecurityInfoValidator lwM2MCredentialsSecurityInfoValidator, EditableSecurityStore securityStore) {
-        this.lwM2MCredentialsSecurityInfoValidator = lwM2MCredentialsSecurityInfoValidator;
-        this.securityStore = securityStore;
+    @Override
+    public LwM2mClient getClientByEndpoint(String endpoint) {
+        return lwM2mClientsByEndpoint.get(endpoint);
     }
 
-    public void delRemoveSessionAndListener(String registrationId) {
-        LwM2mClient lwM2MClient = this.lwM2mClients.get(registrationId);
-        if (lwM2MClient != null) {
-            this.securityStore.remove(lwM2MClient.getEndpoint(), INFOS_ARE_COMPROMISED);
-            this.lwM2mClients.remove(registrationId);
+    @Override
+    public LwM2mClient getClientByRegistrationId(String registrationId) {
+        return lwM2mClientsByRegistrationId.get(registrationId);
+    }
+
+    @Override
+    public LwM2mClient getOrRegister(Registration registration) {
+        if (registration == null) {
+            return null;
         }
-    }
-
-    @Override
-    public LwM2mClient getLwM2MClient(String endPoint, String identity) {
-        Map.Entry<String, LwM2mClient> modelClients = endPoint != null ?
-                this.lwM2mClients.entrySet().stream().filter(model -> endPoint.equals(model.getValue().getEndpoint())).findAny().orElse(null) :
-                this.lwM2mClients.entrySet().stream().filter(model -> identity.equals(model.getValue().getIdentity())).findAny().orElse(null);
-        return modelClients != null ? modelClients.getValue() : null;
-    }
-
-    @Override
-    public LwM2mClient getLwM2MClient(TransportProtos.SessionInfoProto sessionInfo) {
-        return getLwM2mClient(new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
-    }
-
-    @Override
-    public LwM2mClient getLwM2mClient(UUID sessionId) {
-        return lwM2mClients.values().stream().filter(c -> c.getSessionId().equals(sessionId)).findAny().get();
-    }
-
-    @Override
-    public LwM2mClient getLwM2mClientWithReg(Registration registration, String registrationId) {
-        LwM2mClient client = registrationId != null ?
-                this.lwM2mClients.get(registrationId) :
-                this.lwM2mClients.containsKey(registration.getId()) ?
-                        this.lwM2mClients.get(registration.getId()) :
-                        this.lwM2mClients.get(registration.getEndpoint());
-        return client != null ? client : updateInSessionsLwM2MClient(registration);
-    }
-
-    @Override
-    public LwM2mClient updateInSessionsLwM2MClient(Registration registration) {
-        if (this.lwM2mClients.get(registration.getEndpoint()) == null) {
-            this.addLwM2mClientToSession(registration.getEndpoint());
+        LwM2mClient client = lwM2mClientsByRegistrationId.get(registration.getId());
+        if (client == null) {
+            client = lwM2mClientsByEndpoint.get(registration.getEndpoint());
+            if (client == null) {
+                client = registerOrUpdate(registration);
+            }
         }
-        LwM2mClient lwM2MClient = lwM2mClients.get(registration.getEndpoint());
+        return client;
+    }
+
+    @Override
+    public LwM2mClient getClient(TransportProtos.SessionInfoProto sessionInfo) {
+        return lwM2mClientsByEndpoint.values().stream().filter(c ->
+                (new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()))
+                        .equals((new UUID(c.getSession().getSessionIdMSB(), c.getSession().getSessionIdLSB())))
+
+        ).findAny().get();
+    }
+
+    @Override
+    public LwM2mClient registerOrUpdate(Registration registration) {
+        LwM2mClient lwM2MClient = lwM2mClientsByEndpoint.get(registration.getEndpoint());
+        if (lwM2MClient == null) {
+            lwM2MClient = this.fetchClientByEndpoint(registration.getEndpoint());
+        }
         lwM2MClient.setRegistration(registration);
-        this.lwM2mClients.remove(registration.getEndpoint());
-        this.lwM2mClients.put(registration.getId(), lwM2MClient);
+//        TODO: this remove is probably redundant. We should remove it.
+//        this.lwM2mClientsByEndpoint.remove(registration.getEndpoint());
+        this.lwM2mClientsByRegistrationId.put(registration.getId(), lwM2MClient);
         return lwM2MClient;
     }
 
     public Registration getRegistration(String registrationId) {
-        return this.lwM2mClients.get(registrationId).getRegistration();
+        return this.lwM2mClientsByRegistrationId.get(registrationId).getRegistration();
     }
 
-    /**
-     * Add new LwM2MClient to session
-     *
-     * @param identity-
-     * @return SecurityInfo. If error - SecurityInfoError
-     * and log:
-     * - FORBIDDEN - if there is no authorization
-     * - profileUuid - if the device does not have a profile
-     * - device - if the thingsboard does not have a device with a name equal to the identity
-     */
     @Override
-    public LwM2mClient addLwM2mClientToSession(String identity) {
-        ReadResultSecurityStore store = lwM2MCredentialsSecurityInfoValidator.createAndValidateCredentialsSecurityInfo(identity, LwM2mTransportHandler.LwM2mTypeServer.CLIENT);
-        if (store.getSecurityMode() < LwM2MSecurityMode.DEFAULT_MODE.code) {
-            UUID profileUuid = (store.getDeviceProfile() != null && addUpdateProfileParameters(store.getDeviceProfile())) ? store.getDeviceProfile().getUuidId() : null;
-            LwM2mClient client;
-            if (store.getSecurityInfo() != null && profileUuid != null) {
-                String endpoint = store.getSecurityInfo().getEndpoint();
-                client = new LwM2mClient(endpoint, store.getSecurityInfo().getIdentity(), store.getSecurityInfo(), store.getMsg(), profileUuid, UUID.randomUUID());
-                lwM2mClients.put(endpoint, client);
-            } else if (store.getSecurityMode() == NO_SEC.code && profileUuid != null) {
-                client = new LwM2mClient(identity, null, null, store.getMsg(), profileUuid, UUID.randomUUID());
-                lwM2mClients.put(identity, client);
+    public LwM2mClient fetchClientByEndpoint(String endpoint) {
+        EndpointSecurityInfo securityInfo = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfo(endpoint, LwM2mTransportUtil.LwM2mTypeServer.CLIENT);
+        if (securityInfo.getSecurityMode() != null) {
+            if (securityInfo.getDeviceProfile() != null) {
+                UUID profileUuid = profileUpdate(securityInfo.getDeviceProfile())!= null ?
+                        securityInfo.getDeviceProfile().getUuidId() : null;
+                //        TODO: for tests bug.
+                if (profileUuid== null) {
+                    log.warn("input parameters toClientProfile if the result is null: [{}]", securityInfo.getDeviceProfile());
+                }
+                LwM2mClient client;
+                if (securityInfo.getSecurityInfo() != null) {
+                    client = new LwM2mClient(context.getNodeId(), securityInfo.getSecurityInfo().getEndpoint(),
+                            securityInfo.getSecurityInfo().getIdentity(), securityInfo.getSecurityInfo(),
+                            securityInfo.getMsg(), profileUuid, UUID.randomUUID());
+                } else if (NO_SEC.equals(securityInfo.getSecurityMode())) {
+                    client = new LwM2mClient(context.getNodeId(), endpoint,
+                            null, null,
+                            securityInfo.getMsg(), profileUuid, UUID.randomUUID());
+                } else {
+                    throw new RuntimeException(String.format("Registration failed: device %s not found.", endpoint));
+                }
+                lwM2mClientsByEndpoint.put(client.getEndpoint(), client);
+                return client;
             } else {
-                throw new RuntimeException(String.format("Registration failed: FORBIDDEN/profileUuid/device %s , endpointId: %s  [PSK]", profileUuid, identity));
+                throw new RuntimeException(String.format("Registration failed: device %s not found.", endpoint));
             }
-            return client;
         } else {
-            throw new RuntimeException(String.format("Registration failed: FORBIDDEN, endpointId: %s", identity));
+            throw new RuntimeException(String.format("Registration failed: FORBIDDEN, endpointId: %s", endpoint));
         }
     }
 
     @Override
-    public Map<String, LwM2mClient> getLwM2mClients() {
-        return lwM2mClients;
+    public void registerClient(Registration registration, ValidateDeviceCredentialsResponse credentials) {
+        LwM2mClient client = new LwM2mClient(context.getNodeId(), registration.getEndpoint(), null, null, credentials, credentials.getDeviceProfile().getUuidId(), UUID.randomUUID());
+        lwM2mClientsByEndpoint.put(registration.getEndpoint(), client);
+        lwM2mClientsByRegistrationId.put(registration.getId(), client);
+        profileUpdate(credentials.getDeviceProfile());
+    }
+
+    @Override
+    public Collection<LwM2mClient> getLwM2mClients() {
+        return lwM2mClientsByEndpoint.values();
     }
 
     @Override
@@ -155,7 +165,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public LwM2mClientProfile getProfile(Registration registration) {
-        return this.getProfiles().get(getLwM2mClientWithReg(registration, null).getProfileId());
+        return this.getProfiles().get(getOrRegister(registration).getProfileId());
     }
 
     @Override
@@ -164,17 +174,21 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     @Override
-    public boolean addUpdateProfileParameters(DeviceProfile deviceProfile) {
-        LwM2mClientProfile lwM2MClientProfile = LwM2mTransportHandler.getLwM2MClientProfileFromThingsboard(deviceProfile);
+    public LwM2mClientProfile profileUpdate(DeviceProfile deviceProfile) {
+        LwM2mClientProfile lwM2MClientProfile = deviceProfile != null ?
+                LwM2mTransportUtil.toLwM2MClientProfile(deviceProfile) : null;
         if (lwM2MClientProfile != null) {
             profiles.put(deviceProfile.getUuidId(), lwM2MClientProfile);
-            return true;
+            return lwM2MClientProfile;
         }
-        return false;
+        else {
+            return null;
+        }
     }
 
     /**
      * if isVer - ok or default ver=DEFAULT_LWM2M_VERSION
+     *
      * @param registration -
      * @return - all objectIdVer in client
      */
@@ -184,9 +198,31 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         Arrays.stream(registration.getObjectLinks()).forEach(url -> {
             LwM2mPath pathIds = new LwM2mPath(url.getUrl());
             if (!pathIds.isRoot()) {
-                clientObjects.add(convertPathFromObjectIdToIdVer(url.getUrl(),  registration));
+                clientObjects.add(convertPathFromObjectIdToIdVer(url.getUrl(), registration));
             }
         });
         return (clientObjects.size() > 0) ? clientObjects : null;
+    }
+
+    @Override
+    public LwM2mClient getClientByDeviceId(UUID deviceId) {
+        return lwM2mClientsByRegistrationId.values().stream().filter(e -> deviceId.equals(e.getDeviceId())).findFirst().orElse(null);
+    }
+
+    @Override
+    public void removeClientByRegistrationId(String registrationId) {
+        LwM2mClient lwM2MClient = this.lwM2mClientsByRegistrationId.get(registrationId);
+        if (lwM2MClient != null) {
+            this.securityStore.remove(lwM2MClient.getEndpoint(), false);
+            this.lwM2mClientsByEndpoint.remove(lwM2MClient.getEndpoint());
+            this.lwM2mClientsByRegistrationId.remove(registrationId);
+            UUID profileId = lwM2MClient.getProfileId();
+            if (profileId != null) {
+                Optional<LwM2mClient> otherClients = lwM2mClientsByRegistrationId.values().stream().filter(e -> e.getProfileId().equals(profileId)).findFirst();
+                if (otherClients.isEmpty()) {
+                    profiles.remove(profileId);
+                }
+            }
+        }
     }
 }

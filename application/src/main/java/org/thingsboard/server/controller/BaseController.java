@@ -132,7 +132,7 @@ import org.thingsboard.server.service.firmware.FirmwareStateService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.edge.rpc.EdgeGrpcService;
 import org.thingsboard.server.service.edge.rpc.init.SyncEdgeService;
-import org.thingsboard.server.service.lwm2m.LwM2MModelsRepository;
+import org.thingsboard.server.service.lwm2m.LwM2MServerSecurityInfoRepository;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.resource.TbResourceService;
@@ -160,8 +160,6 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 public abstract class BaseController {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
-    public static final String YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION = "You don't have permission to perform this operation!";
-
     protected static final String DEFAULT_DASHBOARD = "defaultDashboardId";
     protected static final String HOME_DASHBOARD = "homeDashboardId";
 
@@ -267,7 +265,7 @@ public abstract class BaseController {
     protected TbDeviceProfileCache deviceProfileCache;
 
     @Autowired
-    protected LwM2MModelsRepository lwM2MModelsRepository;
+    protected LwM2MServerSecurityInfoRepository lwM2MServerSecurityInfoRepository;
 
     @Autowired(required = false)
     protected EdgeService edgeService;

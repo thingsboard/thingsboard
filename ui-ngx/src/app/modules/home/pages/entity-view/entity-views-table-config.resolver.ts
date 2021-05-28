@@ -104,7 +104,8 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
         ));
     };
     this.config.onEntityAction = action => this.onEntityViewAction(action);
-    this.config.detailsReadonly = () => (this.config.componentsData.entityViewScope === 'customer_user' || this.config.componentsData.entityViewScope === 'edge_customer_user');
+    this.config.detailsReadonly = () => (this.config.componentsData.entityViewScope === 'customer_user' ||
+      this.config.componentsData.entityViewScope === 'edge_customer_user');
 
     this.config.headerComponent = EntityViewTableHeaderComponent;
 
@@ -151,7 +152,8 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
         this.config.cellActionDescriptors = this.configureCellActions(this.config.componentsData.entityViewScope);
         this.config.groupActionDescriptors = this.configureGroupActions(this.config.componentsData.entityViewScope);
         this.config.addActionDescriptors = this.configureAddActions(this.config.componentsData.entityViewScope);
-        this.config.addEnabled = !(this.config.componentsData.entityViewScope === 'customer_user' || this.config.componentsData.entityViewScope !== 'edge_customer_user');
+        this.config.addEnabled = !(this.config.componentsData.entityViewScope === 'customer_user' ||
+          this.config.componentsData.entityViewScope === 'edge_customer_user');
         this.config.entitiesDeleteEnabled = this.config.componentsData.entityViewScope === 'tenant';
         this.config.deleteEnabled = () => this.config.componentsData.entityViewScope === 'tenant';
         return this.config;
@@ -243,7 +245,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
         {
           name: this.translate.instant('edge.unassign-from-edge'),
           icon: 'assignment_return',
-          isEnabled: (entity) => true,
+          isEnabled: () => true,
           onAction: ($event, entity) => this.unassignFromEdge($event, entity)
         }
       );

@@ -39,12 +39,12 @@ import {
   defaultLegendConfig,
   LegendConfig,
   LegendData,
-  LegendPosition,
+  LegendPosition, MobileActionResult,
   Widget,
   WidgetActionDescriptor,
   widgetActionSources,
   WidgetActionType,
-  WidgetComparisonSettings,
+  WidgetComparisonSettings, WidgetMobileActionDescriptor, WidgetMobileActionType,
   WidgetResource,
   widgetType,
   WidgetTypeParameters
@@ -77,7 +77,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { ActivatedRoute, Router } from '@angular/router';
 import cssjs from '@core/css/css';
 import { ResourcesService } from '@core/services/resources.service';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TimeService } from '@core/services/time.service';
 import { DeviceService } from '@app/core/http/device.service';
@@ -97,6 +97,8 @@ import { AlarmDataService } from '@core/api/alarm-data.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ComponentType } from '@angular/cdk/portal';
 import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
+import { MobileService } from '@core/services/mobile.service';
+import { DialogService } from '@core/services/dialog.service';
 
 @Component({
   selector: 'tb-widget',
@@ -177,6 +179,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private alarmDataService: AlarmDataService,
               private translate: TranslateService,
               private utils: UtilsService,
+              private mobileService: MobileService,
+              private dialogs: DialogService,
               private raf: RafService,
               private ngZone: NgZone,
               private cd: ChangeDetectorRef) {
@@ -464,10 +468,13 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     );
   }
 
-  private detectChanges() {
+  private detectChanges(detectContainerChanges = false) {
     if (!this.destroyed) {
       try {
         this.cd.detectChanges();
+        if (detectContainerChanges) {
+          this.widgetContext.detectContainerChanges();
+        }
       } catch (e) {
         // console.log(e);
       }
@@ -487,6 +494,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     }
     if (!this.widgetContext.inited && this.isReady()) {
       this.widgetContext.inited = true;
+      this.widgetContext.detectContainerChanges();
       if (this.cafs.init) {
         this.cafs.init();
         this.cafs.init = null;
@@ -874,7 +882,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       timeWindowUpdated: (subscription, timeWindowConfig) => {
         this.ngZone.run(() => {
           this.widget.config.timewindow = timeWindowConfig;
-          this.detectChanges();
+          this.detectChanges(true);
         });
       }
     };
@@ -1094,6 +1102,178 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           }
         );
         break;
+      case WidgetActionType.mobileAction:
+        const mobileAction = descriptor.mobileAction;
+        this.handleMobileAction($event, mobileAction, entityId, entityName, additionalParams, entityLabel);
+        break;
+    }
+  }
+
+  private handleMobileAction($event: Event, mobileAction: WidgetMobileActionDescriptor,
+                             entityId?: EntityId, entityName?: string, additionalParams?: any, entityLabel?: string) {
+    const type = mobileAction.type;
+    let argsObservable: Observable<any[]>;
+    switch (type) {
+      case WidgetMobileActionType.takePictureFromGallery:
+      case WidgetMobileActionType.takePhoto:
+      case WidgetMobileActionType.scanQrCode:
+      case WidgetMobileActionType.getLocation:
+      case WidgetMobileActionType.takeScreenshot:
+        argsObservable = of([]);
+        break;
+      case WidgetMobileActionType.mapDirection:
+      case WidgetMobileActionType.mapLocation:
+        const getLocationFunctionString = mobileAction.getLocationFunction;
+        const getLocationFunction = new Function('$event', 'widgetContext', 'entityId',
+          'entityName', 'additionalParams', 'entityLabel', getLocationFunctionString);
+        const locationArgs = getLocationFunction($event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
+        if (locationArgs && locationArgs instanceof Observable) {
+          argsObservable = locationArgs;
+        } else {
+          argsObservable = of(locationArgs);
+        }
+        argsObservable = argsObservable.pipe(map(latLng => {
+          let valid = false;
+          if (Array.isArray(latLng) && latLng.length === 2) {
+            if (typeof latLng[0] === 'number' && typeof latLng[1] === 'number') {
+              valid = true;
+            }
+          }
+          if (valid) {
+            return latLng;
+          } else {
+            throw new Error('Location function did not return valid array of latitude/longitude!');
+          }
+        }));
+        break;
+      case WidgetMobileActionType.makePhoneCall:
+        const getPhoneNumberFunctionString = mobileAction.getPhoneNumberFunction;
+        const getPhoneNumberFunction = new Function('$event', 'widgetContext', 'entityId',
+          'entityName', 'additionalParams', 'entityLabel', getPhoneNumberFunctionString);
+        const phoneNumberArg = getPhoneNumberFunction($event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
+        if (phoneNumberArg && phoneNumberArg instanceof Observable) {
+          argsObservable = phoneNumberArg.pipe(map(phoneNumber => [phoneNumber]));
+        } else {
+          argsObservable = of([phoneNumberArg]);
+        }
+        argsObservable = argsObservable.pipe(map(phoneNumberArr => {
+          let valid = false;
+          if (Array.isArray(phoneNumberArr) && phoneNumberArr.length === 1) {
+            if (phoneNumberArr[0] !== null) {
+              valid = true;
+            }
+          }
+          if (valid) {
+            return phoneNumberArr;
+          } else {
+            throw new Error('Phone number function did not return valid number!');
+          }
+        }));
+        break;
+    }
+    argsObservable.subscribe((args) => {
+      this.mobileService.handleWidgetMobileAction(type, ...args).subscribe(
+        (result) => {
+          if (result) {
+            if (result.hasError) {
+              this.handleWidgetMobileActionError(result.error, $event, mobileAction, entityId, entityName, additionalParams, entityLabel);
+            } else if (result.hasResult) {
+              const actionResult = result.result;
+              switch (type) {
+                case WidgetMobileActionType.takePictureFromGallery:
+                case WidgetMobileActionType.takePhoto:
+                case WidgetMobileActionType.takeScreenshot:
+                  const imageUrl = actionResult.imageUrl;
+                  if (mobileAction.processImageFunction && mobileAction.processImageFunction.length) {
+                    try {
+                      const processImageFunction = new Function('imageUrl', '$event', 'widgetContext', 'entityId',
+                        'entityName', 'additionalParams', 'entityLabel', mobileAction.processImageFunction);
+                      processImageFunction(imageUrl, $event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  }
+                  break;
+                case WidgetMobileActionType.scanQrCode:
+                  const code = actionResult.code;
+                  const format = actionResult.format;
+                  if (mobileAction.processQrCodeFunction && mobileAction.processQrCodeFunction.length) {
+                    try {
+                      const processQrCodeFunction = new Function('code', 'format', '$event', 'widgetContext', 'entityId',
+                        'entityName', 'additionalParams', 'entityLabel', mobileAction.processQrCodeFunction);
+                      processQrCodeFunction(code, format, $event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  }
+                  break;
+                case WidgetMobileActionType.getLocation:
+                  const latitude = actionResult.latitude;
+                  const longitude = actionResult.longitude;
+                  if (mobileAction.processLocationFunction && mobileAction.processLocationFunction.length) {
+                    try {
+                      const processLocationFunction = new Function('latitude', 'longitude', '$event', 'widgetContext', 'entityId',
+                        'entityName', 'additionalParams', 'entityLabel', mobileAction.processLocationFunction);
+                      processLocationFunction(latitude, longitude, $event, this.widgetContext,
+                        entityId, entityName, additionalParams, entityLabel);
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  }
+                  break;
+                case WidgetMobileActionType.mapDirection:
+                case WidgetMobileActionType.mapLocation:
+                case WidgetMobileActionType.makePhoneCall:
+                  const launched = actionResult.launched;
+                  if (mobileAction.processLaunchResultFunction && mobileAction.processLaunchResultFunction.length) {
+                    try {
+                      const processLaunchResultFunction = new Function('launched', '$event', 'widgetContext', 'entityId',
+                        'entityName', 'additionalParams', 'entityLabel', mobileAction.processLaunchResultFunction);
+                      processLaunchResultFunction(launched, $event, this.widgetContext,
+                        entityId, entityName, additionalParams, entityLabel);
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  }
+                  break;
+              }
+            } else {
+              if (mobileAction.handleEmptyResultFunction && mobileAction.handleEmptyResultFunction.length) {
+                try {
+                  const handleEmptyResultFunction = new Function('$event', 'widgetContext', 'entityId',
+                    'entityName', 'additionalParams', 'entityLabel', mobileAction.handleEmptyResultFunction);
+                  handleEmptyResultFunction($event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
+                } catch (e) {
+                  console.error(e);
+                }
+              }
+            }
+          }
+        }
+      );
+    },
+    (err) => {
+      let errorMessage;
+      if (err && typeof err === 'string') {
+        errorMessage = err;
+      } else if (err && err.message) {
+        errorMessage = err.message;
+      }
+      errorMessage = `Failed to get mobile action arguments${errorMessage ? `: ${errorMessage}` : '!'}`;
+      this.handleWidgetMobileActionError(errorMessage, $event, mobileAction, entityId, entityName, additionalParams, entityLabel);
+    });
+  }
+
+  private handleWidgetMobileActionError(error: string, $event: Event, mobileAction: WidgetMobileActionDescriptor,
+                                        entityId?: EntityId, entityName?: string, additionalParams?: any, entityLabel?: string) {
+    if (mobileAction.handleErrorFunction && mobileAction.handleErrorFunction.length) {
+      try {
+        const handleErrorFunction = new Function('error', '$event', 'widgetContext', 'entityId',
+          'entityName', 'additionalParams', 'entityLabel', mobileAction.handleErrorFunction);
+        handleErrorFunction(error, $event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
+      } catch (e) {
+        console.error(e);
+      }
     }
   }
 

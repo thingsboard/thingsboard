@@ -49,6 +49,7 @@ import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { deepTrim } from '@core/utils';
 import { ServiceType } from '@shared/models/queue.models';
+import { DashboardId } from '@shared/models/id/dashboard-id';
 
 export interface AddDeviceProfileDialogData {
   deviceProfileName: string;
@@ -106,9 +107,10 @@ export class AddDeviceProfileDialogComponent extends
       {
         name: [data.deviceProfileName, [Validators.required]],
         type: [DeviceProfileType.DEFAULT, [Validators.required]],
+        image: [null, []],
         defaultRuleChainId: [null, []],
+        defaultDashboardId: [null, []],
         defaultQueueName: ['', []],
-        firmwareId: [null],
         description: ['', []]
       }
     );
@@ -184,10 +186,10 @@ export class AddDeviceProfileDialogComponent extends
       const deviceProfile: DeviceProfile = {
         name: this.deviceProfileDetailsFormGroup.get('name').value,
         type: this.deviceProfileDetailsFormGroup.get('type').value,
+        image: this.deviceProfileDetailsFormGroup.get('image').value,
         transportType: this.transportConfigFormGroup.get('transportType').value,
         provisionType: deviceProvisionConfiguration.type,
         provisionDeviceKey,
-        firmwareId: this.deviceProfileDetailsFormGroup.get('firmwareId').value,
         description: this.deviceProfileDetailsFormGroup.get('description').value,
         profileData: {
           configuration: createDeviceProfileConfiguration(DeviceProfileType.DEFAULT),
@@ -198,6 +200,9 @@ export class AddDeviceProfileDialogComponent extends
       };
       if (this.deviceProfileDetailsFormGroup.get('defaultRuleChainId').value) {
         deviceProfile.defaultRuleChainId = new RuleChainId(this.deviceProfileDetailsFormGroup.get('defaultRuleChainId').value);
+      }
+      if (this.deviceProfileDetailsFormGroup.get('defaultDashboardId').value) {
+        deviceProfile.defaultDashboardId = new DashboardId(this.deviceProfileDetailsFormGroup.get('defaultDashboardId').value);
       }
       this.deviceProfileService.saveDeviceProfile(deepTrim(deviceProfile)).subscribe(
         (savedDeviceProfile) => {

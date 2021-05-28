@@ -30,6 +30,8 @@ import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.Firmware;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.firmware.FirmwareType;
+import org.thingsboard.server.common.data.firmware.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -42,6 +44,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.common.data.firmware.FirmwareType.FIRMWARE;
 
 public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
 
@@ -97,11 +101,13 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
 
         Firmware firmware = new Firmware();
         firmware.setTenantId(tenantId);
+        firmware.setDeviceProfileId(savedDeviceProfile.getId());
+        firmware.setType(FIRMWARE);
         firmware.setTitle("my firmware");
         firmware.setVersion("v1.0");
         firmware.setFileName("test.txt");
         firmware.setContentType("text/plain");
-        firmware.setChecksumAlgorithm("sha256");
+        firmware.setChecksumAlgorithm(ChecksumAlgorithm.SHA256);
         firmware.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
         firmware.setData(ByteBuffer.wrap(new byte[]{1}));
         Firmware savedFirmware = firmwareService.saveFirmware(firmware);
@@ -328,7 +334,8 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
 
         List<DeviceProfileInfo> deviceProfileInfos = deviceProfiles.stream()
                 .map(deviceProfile -> new DeviceProfileInfo(deviceProfile.getId(),
-                        deviceProfile.getName(), deviceProfile.getType(), deviceProfile.getTransportType())).collect(Collectors.toList());
+                        deviceProfile.getName(), deviceProfile.getImage(), deviceProfile.getDefaultDashboardId(),
+                        deviceProfile.getType(), deviceProfile.getTransportType())).collect(Collectors.toList());
 
         Assert.assertEquals(deviceProfileInfos, loadedDeviceProfileInfos);
 

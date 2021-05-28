@@ -28,6 +28,8 @@ public interface EntityService {
 
     ListenableFuture<String> fetchEntityNameAsync(TenantId tenantId, EntityId entityId);
 
+    CustomerId fetchEntityCustomerId(TenantId tenantId, EntityId entityId);
+
     void deleteEntityRelations(TenantId tenantId, EntityId entityId);
 
     long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query);

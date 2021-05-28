@@ -94,6 +94,58 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
                                      @Param("searchText") String searchText,
                                      Pageable pageable);
 
+    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a) FROM AlarmEntity a " +
+            "WHERE a.tenantId = :tenantId " +
+            "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
+            "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
+            "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+            "AND (LOWER(a.type) LIKE LOWER(CONCAT(:searchText, '%')) " +
+            "  OR LOWER(a.severity) LIKE LOWER(CONCAT(:searchText, '%')) " +
+            "  OR LOWER(a.status) LIKE LOWER(CONCAT(:searchText, '%'))) ",
+            countQuery = "" +
+                    "SELECT count(a) " +
+                    "FROM AlarmEntity a " +
+                    "WHERE a.tenantId = :tenantId " +
+                    "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
+                    "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
+                    "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+                    "AND (LOWER(a.type) LIKE LOWER(CONCAT(:searchText, '%')) " +
+                    "  OR LOWER(a.severity) LIKE LOWER(CONCAT(:searchText, '%')) " +
+                    "  OR LOWER(a.status) LIKE LOWER(CONCAT(:searchText, '%'))) ")
+    Page<AlarmInfoEntity> findAllAlarms(@Param("tenantId") UUID tenantId,
+                                        @Param("startTime") Long startTime,
+                                        @Param("endTime") Long endTime,
+                                        @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses,
+                                        @Param("searchText") String searchText,
+                                        Pageable pageable);
+
+    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a) FROM AlarmEntity a " +
+            "WHERE a.tenantId = :tenantId AND a.customerId = :customerId " +
+            "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
+            "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
+            "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+            "AND (LOWER(a.type) LIKE LOWER(CONCAT(:searchText, '%')) " +
+            "  OR LOWER(a.severity) LIKE LOWER(CONCAT(:searchText, '%')) " +
+            "  OR LOWER(a.status) LIKE LOWER(CONCAT(:searchText, '%'))) "
+            ,
+            countQuery = "" +
+                    "SELECT count(a) " +
+                    "FROM AlarmEntity a " +
+                    "WHERE a.tenantId = :tenantId AND a.customerId = :customerId " +
+                    "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
+                    "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
+                    "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+                    "AND (LOWER(a.type) LIKE LOWER(CONCAT(:searchText, '%')) " +
+                    "  OR LOWER(a.severity) LIKE LOWER(CONCAT(:searchText, '%')) " +
+                    "  OR LOWER(a.status) LIKE LOWER(CONCAT(:searchText, '%'))) ")
+    Page<AlarmInfoEntity> findCustomerAlarms(@Param("tenantId") UUID tenantId,
+                                             @Param("customerId") UUID customerId,
+                                             @Param("startTime") Long startTime,
+                                             @Param("endTime") Long endTime,
+                                             @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses,
+                                             @Param("searchText") String searchText,
+                                             Pageable pageable);
+
     @Query(value = "SELECT a.severity FROM AlarmEntity a " +
             "LEFT JOIN RelationEntity re ON a.id = re.toId " +
             "AND re.relationTypeGroup = 'ALARM' " +

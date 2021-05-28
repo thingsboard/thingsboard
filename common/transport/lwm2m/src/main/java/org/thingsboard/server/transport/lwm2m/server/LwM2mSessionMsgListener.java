@@ -32,55 +32,56 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseM
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? super Void>>, SessionMsgListener {
-    private LwM2mTransportServiceImpl service;
+    private DefaultLwM2MTransportMsgHandler handler;
     private TransportProtos.SessionInfoProto sessionInfo;
 
-    public LwM2mSessionMsgListener(LwM2mTransportServiceImpl service, TransportProtos.SessionInfoProto sessionInfo) {
-        this.service = service;
+    public LwM2mSessionMsgListener(DefaultLwM2MTransportMsgHandler handler, TransportProtos.SessionInfoProto sessionInfo) {
+        this.handler = handler;
         this.sessionInfo = sessionInfo;
     }
 
     @Override
     public void onGetAttributesResponse(GetAttributeResponseMsg getAttributesResponse) {
-        this.service.onGetAttributesResponse(getAttributesResponse, this.sessionInfo);
+        this.handler.onGetAttributesResponse(getAttributesResponse, this.sessionInfo);
     }
 
     @Override
     public void onAttributeUpdate(AttributeUpdateNotificationMsg attributeUpdateNotification) {
-        this.service.onAttributeUpdate(attributeUpdateNotification, this.sessionInfo);
+        this.handler.onAttributeUpdate(attributeUpdateNotification, this.sessionInfo);
      }
 
     @Override
-    public void onRemoteSessionCloseCommand(SessionCloseNotificationProto sessionCloseNotification) {
-        log.info("[{}] sessionCloseNotification", sessionCloseNotification);
+    public void onRemoteSessionCloseCommand(UUID sessionId, SessionCloseNotificationProto sessionCloseNotification) {
+        log.trace("[{}] Received the remote command to close the session: {}", sessionId, sessionCloseNotification.getMessage());
     }
 
     @Override
     public void onToTransportUpdateCredentials(ToTransportUpdateCredentialsProto updateCredentials) {
-        this.service.onToTransportUpdateCredentials(updateCredentials);
+        this.handler.onToTransportUpdateCredentials(updateCredentials);
     }
 
     @Override
     public void onDeviceProfileUpdate(TransportProtos.SessionInfoProto sessionInfo, DeviceProfile deviceProfile) {
-        this.service.onDeviceProfileUpdate(sessionInfo, deviceProfile);
+        this.handler.onDeviceProfileUpdate(sessionInfo, deviceProfile);
     }
 
     @Override
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
-        this.service.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
+        this.handler.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
     }
 
     @Override
     public void onToDeviceRpcRequest(ToDeviceRpcRequestMsg toDeviceRequest) {
-        this.service.onToDeviceRpcRequest(toDeviceRequest,this.sessionInfo);
+        this.handler.onToDeviceRpcRequest(toDeviceRequest,this.sessionInfo);
     }
 
     @Override
     public void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse) {
-        this.service.onToServerRpcResponse(toServerResponse);
+        this.handler.onToServerRpcResponse(toServerResponse);
     }
 
     @Override
@@ -91,14 +92,14 @@ public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? s
     @Override
     public void onResourceUpdate(@NotNull Optional<TransportProtos.ResourceUpdateMsg> resourceUpdateMsgOpt) {
         if (ResourceType.LWM2M_MODEL.name().equals(resourceUpdateMsgOpt.get().getResourceType())) {
-            this.service.onResourceUpdate(resourceUpdateMsgOpt);
+            this.handler.onResourceUpdate(resourceUpdateMsgOpt);
         }
     }
 
     @Override
     public void onResourceDelete(@NotNull Optional<TransportProtos.ResourceDeleteMsg> resourceDeleteMsgOpt) {
         if (ResourceType.LWM2M_MODEL.name().equals(resourceDeleteMsgOpt.get().getResourceType())) {
-            this.service.onResourceDelete(resourceDeleteMsgOpt);
+            this.handler.onResourceDelete(resourceDeleteMsgOpt);
         }
     }
 }

@@ -53,6 +53,7 @@ import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfig
 import org.thingsboard.server.common.data.device.data.MqttDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.firmware.FirmwareType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -83,6 +84,7 @@ import org.thingsboard.common.util.JacksonUtil;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -244,7 +246,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_name_unq_key")) {
                 // remove device from cache in case null value cached in the distributed redis.
-                removeDeviceFromCache(device.getTenantId(), device.getName());
+                removeDeviceFromCacheByName(device.getTenantId(), device.getName());
                 throw new DataValidationException("Device with such name already exists!");
             } else {
                 throw t;
@@ -321,17 +323,14 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         }
         deleteEntityRelations(tenantId, deviceId);
 
-        removeDeviceFromCache(tenantId, device.getName());
+        removeDeviceFromCacheByName(tenantId, device.getName());
 
         deviceDao.removeById(tenantId, deviceId.getId());
     }
 
-    private void removeDeviceFromCache(TenantId tenantId, String name) {
-        List<Object> list = new ArrayList<>();
-        list.add(tenantId);
-        list.add(name);
+    private void removeDeviceFromCacheByName(TenantId tenantId, String name) {
         Cache cache = cacheManager.getCache(DEVICE_CACHE);
-        cache.evict(list);
+        cache.evict(Arrays.asList(tenantId, name));
     }
 
     @Override
@@ -361,11 +360,20 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
     @Override
     public PageData<Device> findDevicesByTenantIdAndTypeAndEmptyFirmware(TenantId tenantId, String type, PageLink pageLink) {
-        log.trace("Executing findDevicesByTenantIdAndType, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
+        log.trace("Executing findDevicesByTenantIdAndTypeAndEmptyFirmware, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateString(type, "Incorrect type " + type);
         validatePageLink(pageLink);
         return deviceDao.findDevicesByTenantIdAndTypeAndEmptyFirmware(tenantId.getId(), type, pageLink);
+    }
+
+    @Override
+    public PageData<Device> findDevicesByTenantIdAndTypeAndEmptySoftware(TenantId tenantId, String type, PageLink pageLink) {
+        log.trace("Executing findDevicesByTenantIdAndTypeAndEmptySoftware, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateString(type, "Incorrect type " + type);
+        validatePageLink(pageLink);
+        return deviceDao.findDevicesByTenantIdAndTypeAndEmptySoftware(tenantId.getId(), type, pageLink);
     }
 
     @Override
@@ -661,6 +669,9 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                     if (old == null) {
                         throw new DataValidationException("Can't update non existing device!");
                     }
+                    if (!old.getName().equals(device.getName())) {
+                        removeDeviceFromCacheByName(tenantId, old.getName());
+                    }
                 }
 
                 @Override
@@ -696,8 +707,30 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                         if (firmware == null) {
                             throw new DataValidationException("Can't assign non-existent firmware!");
                         }
+                        if (!firmware.getType().equals(FirmwareType.FIRMWARE)) {
+                            throw new DataValidationException("Can't assign firmware with type: " + firmware.getType());
+                        }
                         if (firmware.getData() == null) {
                             throw new DataValidationException("Can't assign firmware with empty data!");
+                        }
+                        if (!firmware.getDeviceProfileId().equals(device.getDeviceProfileId())) {
+                            throw new DataValidationException("Can't assign firmware with different deviceProfile!");
+                        }
+                    }
+
+                    if (device.getSoftwareId() != null) {
+                        Firmware software = firmwareService.findFirmwareById(tenantId, device.getSoftwareId());
+                        if (software == null) {
+                            throw new DataValidationException("Can't assign non-existent software!");
+                        }
+                        if (!software.getType().equals(FirmwareType.SOFTWARE)) {
+                            throw new DataValidationException("Can't assign software with type: " + software.getType());
+                        }
+                        if (software.getData() == null) {
+                            throw new DataValidationException("Can't assign software with empty data!");
+                        }
+                        if (!software.getDeviceProfileId().equals(device.getDeviceProfileId())) {
+                            throw new DataValidationException("Can't assign firmware with different deviceProfile!");
                         }
                     }
                 }

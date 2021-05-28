@@ -23,7 +23,7 @@ public interface FirmwareStateService {
 
     void update(Device device, Device oldDevice);
 
-    void update(DeviceProfile deviceProfile);
+    void update(DeviceProfile deviceProfile, boolean isFirmwareChanged, boolean isSoftwareChanged);
 
     boolean process(ToFirmwareStateServiceMsg msg);
 

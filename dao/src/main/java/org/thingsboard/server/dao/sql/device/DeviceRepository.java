@@ -104,6 +104,15 @@ public interface DeviceRepository extends PagingAndSortingRepository<DeviceEntit
                                              @Param("textSearch") String textSearch,
                                              Pageable pageable);
 
+    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
+            "AND d.type = :type " +
+            "AND d.softwareId = null " +
+            "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<DeviceEntity> findByTenantIdAndTypeAndSoftwareIdIsNull(@Param("tenantId") UUID tenantId,
+                                                                @Param("type") String type,
+                                                                @Param("textSearch") String textSearch,
+                                                                Pageable pageable);
+
     @Query("SELECT new org.thingsboard.server.dao.model.sql.DeviceInfoEntity(d, c.title, c.additionalInfo, p.name) " +
             "FROM DeviceEntity d " +
             "LEFT JOIN CustomerEntity c on c.id = d.customerId " +

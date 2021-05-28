@@ -17,31 +17,33 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 
 import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 public interface LwM2mClientContext {
 
-    void delRemoveSessionAndListener(String registrationId);
+    void removeClientByRegistrationId(String registrationId);
 
-    LwM2mClient getLwM2MClient(String endPoint, String identity);
+    LwM2mClient getClientByEndpoint(String endpoint);
 
-    LwM2mClient getLwM2MClient(TransportProtos.SessionInfoProto sessionInfo);
+    LwM2mClient getClientByRegistrationId(String registrationId);
 
-    LwM2mClient getLwM2mClient(UUID sessionId);
+    LwM2mClient getClient(TransportProtos.SessionInfoProto sessionInfo);
 
-    LwM2mClient getLwM2mClientWithReg(Registration registration, String registrationId);
+    LwM2mClient getOrRegister(Registration registration);
 
-    LwM2mClient updateInSessionsLwM2MClient(Registration registration);
+    LwM2mClient registerOrUpdate(Registration registration);
 
-    LwM2mClient addLwM2mClientToSession(String identity);
+    LwM2mClient fetchClientByEndpoint(String endpoint);
 
     Registration getRegistration(String registrationId);
 
-    Map<String, LwM2mClient> getLwM2mClients();
+    Collection<LwM2mClient> getLwM2mClients();
 
     Map<UUID, LwM2mClientProfile> getProfiles();
 
@@ -51,7 +53,11 @@ public interface LwM2mClientContext {
 
     Map<UUID, LwM2mClientProfile> setProfiles(Map<UUID, LwM2mClientProfile> profiles);
 
-    boolean addUpdateProfileParameters(DeviceProfile deviceProfile);
+    LwM2mClientProfile profileUpdate(DeviceProfile deviceProfile);
 
     Set<String> getSupportedIdVerInClient(Registration registration);
+
+    LwM2mClient getClientByDeviceId(UUID deviceId);
+
+    void registerClient(Registration registration, ValidateDeviceCredentialsResponse credentials);
 }

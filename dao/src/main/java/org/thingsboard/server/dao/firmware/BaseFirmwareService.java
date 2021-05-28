@@ -27,19 +27,30 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.firmware.FirmwareDataCache;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.Firmware;
 import org.thingsboard.server.common.data.FirmwareInfo;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.firmware.ChecksumAlgorithm;
+import org.thingsboard.server.common.data.firmware.FirmwareType;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.device.DeviceProfileDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -56,6 +67,7 @@ public class BaseFirmwareService implements FirmwareService {
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 
     private final TenantDao tenantDao;
+    private final DeviceProfileDao deviceProfileDao;
     private final FirmwareDao firmwareDao;
     private final FirmwareInfoDao firmwareInfoDao;
     private final CacheManager cacheManager;
@@ -106,6 +118,36 @@ public class BaseFirmwareService implements FirmwareService {
     }
 
     @Override
+    public String generateChecksum(ChecksumAlgorithm checksumAlgorithm, ByteBuffer data) {
+        if (data == null || !data.hasArray() || data.array().length == 0) {
+            throw new DataValidationException("Firmware data should be specified!");
+        }
+
+        return getHashFunction(checksumAlgorithm).hashBytes(data.array()).toString();
+    }
+
+    private HashFunction getHashFunction(ChecksumAlgorithm checksumAlgorithm) {
+        switch (checksumAlgorithm) {
+            case MD5:
+                return Hashing.md5();
+            case SHA256:
+                return Hashing.sha256();
+            case SHA384:
+                return Hashing.sha384();
+            case SHA512:
+                return Hashing.sha512();
+            case CRC32:
+                return Hashing.crc32();
+            case MURMUR3_32:
+                return Hashing.murmur3_32();
+            case MURMUR3_128:
+                return Hashing.murmur3_128();
+            default:
+                throw new DataValidationException("Unknown checksum algorithm!");
+        }
+    }
+
+    @Override
     public Firmware findFirmwareById(TenantId tenantId, FirmwareId firmwareId) {
         log.trace("Executing findFirmwareById [{}]", firmwareId);
         validateId(firmwareId, INCORRECT_FIRMWARE_ID + firmwareId);
@@ -124,7 +166,8 @@ public class BaseFirmwareService implements FirmwareService {
     public ListenableFuture<FirmwareInfo> findFirmwareInfoByIdAsync(TenantId tenantId, FirmwareId firmwareId) {
         log.trace("Executing findFirmwareInfoByIdAsync [{}]", firmwareId);
         validateId(firmwareId, INCORRECT_FIRMWARE_ID + firmwareId);
-        return firmwareInfoDao.findByIdAsync(tenantId, firmwareId.getId());    }
+        return firmwareInfoDao.findByIdAsync(tenantId, firmwareId.getId());
+    }
 
     @Override
     public PageData<FirmwareInfo> findTenantFirmwaresByTenantId(TenantId tenantId, PageLink pageLink) {
@@ -135,11 +178,11 @@ public class BaseFirmwareService implements FirmwareService {
     }
 
     @Override
-    public PageData<FirmwareInfo> findTenantFirmwaresByTenantIdAndHasData(TenantId tenantId, boolean hasData, PageLink pageLink) {
+    public PageData<FirmwareInfo> findTenantFirmwaresByTenantIdAndDeviceProfileIdAndTypeAndHasData(TenantId tenantId, DeviceProfileId deviceProfileId, FirmwareType firmwareType, boolean hasData, PageLink pageLink) {
         log.trace("Executing findTenantFirmwaresByTenantIdAndHasData, tenantId [{}], hasData [{}] pageLink [{}]", tenantId, hasData, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validatePageLink(pageLink);
-        return firmwareInfoDao.findFirmwareInfoByTenantIdAndHasData(tenantId, hasData, pageLink);
+        return firmwareInfoDao.findFirmwareInfoByTenantIdAndDeviceProfileIdAndTypeAndHasData(tenantId, deviceProfileId, firmwareType, hasData, pageLink);
     }
 
     @Override
@@ -157,6 +200,10 @@ public class BaseFirmwareService implements FirmwareService {
                 throw new DataValidationException("The firmware referenced by the devices cannot be deleted!");
             } else if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_firmware_device_profile")) {
                 throw new DataValidationException("The firmware referenced by the device profile cannot be deleted!");
+            } else if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_software_device")) {
+                throw new DataValidationException("The software referenced by the devices cannot be deleted!");
+            } else if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_software_device_profile")) {
+                throw new DataValidationException("The software referenced by the device profile cannot be deleted!");
             } else {
                 throw t;
             }
@@ -173,29 +220,15 @@ public class BaseFirmwareService implements FirmwareService {
     private DataValidator<FirmwareInfo> firmwareInfoValidator = new DataValidator<>() {
 
         @Override
-        protected void validateDataImpl(TenantId tenantId, FirmwareInfo firmware) {
-            if (firmware.getTenantId() == null) {
-                throw new DataValidationException("Firmware should be assigned to tenant!");
-            } else {
-                Tenant tenant = tenantDao.findById(firmware.getTenantId(), firmware.getTenantId().getId());
-                if (tenant == null) {
-                    throw new DataValidationException("Firmware is referencing to non-existent tenant!");
-                }
-            }
-
-            if (StringUtils.isEmpty(firmware.getTitle())) {
-                throw new DataValidationException("Firmware title should be specified!");
-            }
-
-            if (StringUtils.isEmpty(firmware.getVersion())) {
-                throw new DataValidationException("Firmware version should be specified!");
-            }
+        protected void validateDataImpl(TenantId tenantId, FirmwareInfo firmwareInfo) {
+            validateImpl(firmwareInfo);
         }
 
         @Override
         protected void validateUpdate(TenantId tenantId, FirmwareInfo firmware) {
             FirmwareInfo firmwareOld = firmwareInfoDao.findById(tenantId, firmware.getUuidId());
 
+            validateUpdateDeviceProfile(firmware, firmwareOld);
             BaseFirmwareService.validateUpdate(firmware, firmwareOld);
         }
     };
@@ -204,22 +237,7 @@ public class BaseFirmwareService implements FirmwareService {
 
         @Override
         protected void validateDataImpl(TenantId tenantId, Firmware firmware) {
-            if (firmware.getTenantId() == null) {
-                throw new DataValidationException("Firmware should be assigned to tenant!");
-            } else {
-                Tenant tenant = tenantDao.findById(firmware.getTenantId(), firmware.getTenantId().getId());
-                if (tenant == null) {
-                    throw new DataValidationException("Firmware is referencing to non-existent tenant!");
-                }
-            }
-
-            if (StringUtils.isEmpty(firmware.getTitle())) {
-                throw new DataValidationException("Firmware title should be specified!");
-            }
-
-            if (StringUtils.isEmpty(firmware.getVersion())) {
-                throw new DataValidationException("Firmware version should be specified!");
-            }
+            validateImpl(firmware);
 
             if (StringUtils.isEmpty(firmware.getFileName())) {
                 throw new DataValidationException("Firmware file name should be specified!");
@@ -229,34 +247,16 @@ public class BaseFirmwareService implements FirmwareService {
                 throw new DataValidationException("Firmware content type should be specified!");
             }
 
-            ByteBuffer data = firmware.getData();
-            if (data == null || !data.hasArray() || data.array().length == 0) {
-                throw new DataValidationException("Firmware data should be specified!");
-            }
-
-            if (StringUtils.isEmpty(firmware.getChecksumAlgorithm())) {
+            if (firmware.getChecksumAlgorithm() == null) {
                 throw new DataValidationException("Firmware checksum algorithm should be specified!");
             }
             if (StringUtils.isEmpty(firmware.getChecksum())) {
                 throw new DataValidationException("Firmware checksum should be specified!");
             }
 
-            HashFunction hashFunction;
-            switch (firmware.getChecksumAlgorithm()) {
-                case "sha256":
-                    hashFunction = Hashing.sha256();
-                    break;
-                case "md5":
-                    hashFunction = Hashing.md5();
-                    break;
-                case "crc32":
-                    hashFunction = Hashing.crc32();
-                    break;
-                default:
-                    throw new DataValidationException("Unknown checksum algorithm!");
-            }
+            String currentChecksum;
 
-            String currentChecksum = hashFunction.hashBytes(data.array()).toString();
+            currentChecksum = generateChecksum(firmware.getChecksumAlgorithm(), firmware.getData());
 
             if (!currentChecksum.equals(firmware.getChecksum())) {
                 throw new DataValidationException("Wrong firmware file!");
@@ -267,6 +267,7 @@ public class BaseFirmwareService implements FirmwareService {
         protected void validateUpdate(TenantId tenantId, Firmware firmware) {
             Firmware firmwareOld = firmwareDao.findById(tenantId, firmware.getUuidId());
 
+            validateUpdateDeviceProfile(firmware, firmwareOld);
             BaseFirmwareService.validateUpdate(firmware, firmwareOld);
 
             if (firmwareOld.getData() != null && !firmwareOld.getData().equals(firmware.getData())) {
@@ -275,7 +276,19 @@ public class BaseFirmwareService implements FirmwareService {
         }
     };
 
+    private void validateUpdateDeviceProfile(FirmwareInfo firmware, FirmwareInfo firmwareOld) {
+        if (firmwareOld.getDeviceProfileId() != null && !firmwareOld.getDeviceProfileId().equals(firmware.getDeviceProfileId())) {
+            if (firmwareInfoDao.isFirmwareUsed(firmwareOld.getId(), firmware.getType(), firmwareOld.getDeviceProfileId())) {
+                throw new DataValidationException("Can`t update deviceProfileId because firmware is already in use!");
+            }
+        }
+    }
+
     private static void validateUpdate(FirmwareInfo firmware, FirmwareInfo firmwareOld) {
+        if (!firmwareOld.getType().equals(firmware.getType())) {
+            throw new DataValidationException("Updating type is prohibited!");
+        }
+
         if (!firmwareOld.getTitle().equals(firmware.getTitle())) {
             throw new DataValidationException("Updating firmware title is prohibited!");
         }
@@ -302,6 +315,36 @@ public class BaseFirmwareService implements FirmwareService {
 
         if (firmwareOld.getDataSize() != null && !firmwareOld.getDataSize().equals(firmware.getDataSize())) {
             throw new DataValidationException("Updating firmware data size is prohibited!");
+        }
+    }
+
+    private void validateImpl(FirmwareInfo firmwareInfo) {
+        if (firmwareInfo.getTenantId() == null) {
+            throw new DataValidationException("Firmware should be assigned to tenant!");
+        } else {
+            Tenant tenant = tenantDao.findById(firmwareInfo.getTenantId(), firmwareInfo.getTenantId().getId());
+            if (tenant == null) {
+                throw new DataValidationException("Firmware is referencing to non-existent tenant!");
+            }
+        }
+
+        if (firmwareInfo.getDeviceProfileId() != null) {
+            DeviceProfile deviceProfile = deviceProfileDao.findById(firmwareInfo.getTenantId(), firmwareInfo.getDeviceProfileId().getId());
+            if (deviceProfile == null) {
+                throw new DataValidationException("Firmware is referencing to non-existent device profile!");
+            }
+        }
+
+        if (firmwareInfo.getType() == null) {
+            throw new DataValidationException("Type should be specified!");
+        }
+
+        if (StringUtils.isEmpty(firmwareInfo.getTitle())) {
+            throw new DataValidationException("Firmware title should be specified!");
+        }
+
+        if (StringUtils.isEmpty(firmwareInfo.getVersion())) {
+            throw new DataValidationException("Firmware version should be specified!");
         }
     }
 
