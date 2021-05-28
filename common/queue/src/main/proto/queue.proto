@@ -320,6 +320,9 @@ message ToDeviceRpcRequestMsg {
   int32 requestId = 1;
   string methodName = 2;
   string params = 3;
+  int64 expirationTime = 4;
+  int64 requestIdMSB = 5;
+  int64 requestIdLSB = 6;
 }
 
 message ToDeviceRpcResponseMsg {

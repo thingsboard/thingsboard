@@ -228,29 +228,31 @@ public class JsonConverter {
     private static KeyValueProto buildNumericKeyValueProto(JsonPrimitive value, String key) {
         String valueAsString = value.getAsString();
         KeyValueProto.Builder builder = KeyValueProto.newBuilder().setKey(key);
-        if (valueAsString.contains("e") || valueAsString.contains("E")) {
-            //TODO: correct value conversion. We should make sure that if the value can't fit into Long or Double, we should send String
-            var bd = new BigDecimal(valueAsString);
-            if (bd.stripTrailingZeros().scale() <= 0) {
-                try {
-                    return builder.setType(KeyValueType.LONG_V).setLongV(bd.longValueExact()).build();
-                } catch (ArithmeticException e) {
-                    return builder.setType(KeyValueType.DOUBLE_V).setDoubleV(bd.doubleValue()).build();
-                }
-            } else {
-                return builder.setType(KeyValueType.DOUBLE_V).setDoubleV(bd.doubleValue()).build();
-            }
-        } else if (valueAsString.contains(".")) {
-            return builder.setType(KeyValueType.DOUBLE_V).setDoubleV(value.getAsDouble()).build();
-        } else {
+        var bd = new BigDecimal(valueAsString);
+        if (bd.stripTrailingZeros().scale() <= 0 && !isSimpleDouble(valueAsString)) {
             try {
-                long longValue = Long.parseLong(value.getAsString());
-                return builder.setType(KeyValueType.LONG_V).setLongV(longValue).build();
-            } catch (NumberFormatException e) {
-                //TODO: correct value conversion. We should make sure that if the value can't fit into Long or Double, we should send String
-                return builder.setType(KeyValueType.DOUBLE_V).setDoubleV(new BigDecimal(valueAsString).doubleValue()).build();
+                return builder.setType(KeyValueType.LONG_V).setLongV(bd.longValueExact()).build();
+            } catch (ArithmeticException e) {
+                if (isTypeCastEnabled) {
+                    return builder.setType(KeyValueType.STRING_V).setStringV(bd.toPlainString()).build();
+                } else {
+                    throw new JsonSyntaxException("Big integer values are not supported!");
+                }
+            }
+        } else {
+            if (bd.scale() <= 16) {
+                return builder.setType(KeyValueType.DOUBLE_V).setDoubleV(bd.doubleValue()).build();
+            } else if (isTypeCastEnabled) {
+                return builder.setType(KeyValueType.STRING_V).setStringV(bd.toPlainString()).build();
+            } else {
+                throw new JsonSyntaxException("Big integer values are not supported!");
             }
         }
+
+    }
+
+    private static boolean isSimpleDouble(String valueAsString) {
+        return valueAsString.contains(".") && !valueAsString.contains("E") && !valueAsString.contains("e");
     }
 
     public static TransportProtos.ToServerRpcRequestMsg convertToServerRpcRequest(JsonElement json, int requestId) throws JsonSyntaxException {
@@ -261,27 +263,24 @@ public class JsonConverter {
     private static void parseNumericValue(List<KvEntry> result, Entry<String, JsonElement> valueEntry, JsonPrimitive value) {
         String valueAsString = value.getAsString();
         String key = valueEntry.getKey();
-        if (valueAsString.contains("e") || valueAsString.contains("E")) {
-            //TODO: correct value conversion. We should make sure that if the value can't fit into Long or Double, we should send String
-            var bd = new BigDecimal(valueAsString);
-            if (bd.stripTrailingZeros().scale() <= 0) {
-                try {
-                    result.add(new LongDataEntry(key, bd.longValueExact()));
-                } catch (ArithmeticException e) {
-                    result.add(new DoubleDataEntry(key, bd.doubleValue()));
-                }
-            } else {
-                result.add(new DoubleDataEntry(key, bd.doubleValue()));
-            }
-        } else if (valueAsString.contains(".")) {
-            result.add(new DoubleDataEntry(key, value.getAsDouble()));
-        } else {
+        var bd = new BigDecimal(valueAsString);
+        if (bd.stripTrailingZeros().scale() <= 0 && !isSimpleDouble(valueAsString)) {
             try {
-                long longValue = Long.parseLong(value.getAsString());
-                result.add(new LongDataEntry(key, longValue));
-            } catch (NumberFormatException e) {
-                //TODO: correct value conversion. We should make sure that if the value can't fit into Long or Double, we should send String
-                result.add(new DoubleDataEntry(key, new BigDecimal(valueAsString).doubleValue()));
+                result.add(new LongDataEntry(key, bd.longValueExact()));
+            } catch (ArithmeticException e) {
+                if (isTypeCastEnabled) {
+                    result.add(new StringDataEntry(key, bd.toPlainString()));
+                } else {
+                    throw new JsonSyntaxException("Big integer values are not supported!");
+                }
+            }
+        } else {
+            if (bd.scale() <= 16) {
+                result.add(new DoubleDataEntry(key, bd.doubleValue()));
+            } else if (isTypeCastEnabled) {
+                result.add(new StringDataEntry(key, bd.toPlainString()));
+            } else {
+                throw new JsonSyntaxException("Big integer values are not supported!");
             }
         }
     }

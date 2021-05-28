@@ -41,6 +41,7 @@ import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredentials;
@@ -61,6 +62,7 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
+@TbLwM2mTransportComponent
 @RequiredArgsConstructor
 public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVerifier {
 

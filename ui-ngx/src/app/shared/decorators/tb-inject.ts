@@ -14,23 +14,10 @@
 /// limitations under the License.
 ///
 
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { Inject, Type } from '@angular/core';
 
-const routes: Routes = [
-  { path: '',
-    redirectTo: 'home',
-    pathMatch: 'full',
-    data: {
-      breadcrumb: {
-        skip: true
-      }
-    }
-  }
-];
-
-@NgModule({
-  imports: [RouterModule.forRoot(routes, { relativeLinkResolution: 'legacy' })],
-  exports: [RouterModule]
-})
-export class AppRoutingModule { }
+export function TbInject<T>(token: any): (target: Type<T>, key: any, paramIndex: number) => void {
+  return (target: Type<T>, key: any, paramIndex: number) => {
+    Inject(token)(target, key, paramIndex);
+  };
+}

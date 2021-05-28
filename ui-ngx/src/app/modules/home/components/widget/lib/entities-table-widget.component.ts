@@ -654,7 +654,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         entityName = entity.entityName;
         entityLabel = entity.entityLabel;
       }
-      this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, null, entityLabel);
+      this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, {entity}, entityLabel);
     }
   }
 
@@ -670,7 +670,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       entityName = entity.entityName;
       entityLabel = entity.entityLabel;
     }
-    this.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, null, entityLabel);
+    this.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, {entity}, entityLabel);
   }
 }
 

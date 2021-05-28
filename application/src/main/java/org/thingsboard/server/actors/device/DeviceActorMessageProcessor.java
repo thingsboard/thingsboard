@@ -163,8 +163,14 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     void processRpcRequest(TbActorCtx context, ToDeviceRpcRequestActorMsg msg) {
         ToDeviceRpcRequest request = msg.getMsg();
         ToDeviceRpcRequestBody body = request.getBody();
-        ToDeviceRpcRequestMsg rpcRequest = ToDeviceRpcRequestMsg.newBuilder().setRequestId(
-                rpcSeq++).setMethodName(body.getMethod()).setParams(body.getParams()).build();
+        ToDeviceRpcRequestMsg rpcRequest = ToDeviceRpcRequestMsg.newBuilder()
+                .setRequestId(rpcSeq++)
+                .setMethodName(body.getMethod())
+                .setParams(body.getParams())
+                .setExpirationTime(request.getExpirationTime())
+                .setRequestIdMSB(request.getId().getMostSignificantBits())
+                .setRequestIdLSB(request.getId().getLeastSignificantBits())
+                .build();
 
         long timeout = request.getExpirationTime() - System.currentTimeMillis();
         if (timeout <= 0) {
@@ -257,8 +263,14 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 sentOneWayIds.add(entry.getKey());
                 systemContext.getTbCoreDeviceRpcService().processRpcResponseFromDeviceActor(new FromDeviceRpcResponse(request.getId(), null, null));
             }
-            ToDeviceRpcRequestMsg rpcRequest = ToDeviceRpcRequestMsg.newBuilder().setRequestId(
-                    entry.getKey()).setMethodName(body.getMethod()).setParams(body.getParams()).build();
+            ToDeviceRpcRequestMsg rpcRequest = ToDeviceRpcRequestMsg.newBuilder()
+                    .setRequestId(entry.getKey())
+                    .setMethodName(body.getMethod())
+                    .setParams(body.getParams())
+                    .setExpirationTime(request.getExpirationTime())
+                    .setRequestIdMSB(request.getId().getMostSignificantBits())
+                    .setRequestIdLSB(request.getId().getLeastSignificantBits())
+                    .build();
             sendToTransport(rpcRequest, sessionId, nodeId);
         };
     }
