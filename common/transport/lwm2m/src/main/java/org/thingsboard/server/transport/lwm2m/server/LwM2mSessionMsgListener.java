@@ -32,6 +32,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseM
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? super Void>>, SessionMsgListener {
@@ -54,8 +55,8 @@ public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? s
      }
 
     @Override
-    public void onRemoteSessionCloseCommand(SessionCloseNotificationProto sessionCloseNotification) {
-        log.info("[{}] sessionCloseNotification", sessionCloseNotification);
+    public void onRemoteSessionCloseCommand(UUID sessionId, SessionCloseNotificationProto sessionCloseNotification) {
+        log.trace("[{}] Received the remote command to close the session: {}", sessionId, sessionCloseNotification.getMessage());
     }
 
     @Override
