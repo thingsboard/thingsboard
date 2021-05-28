@@ -494,7 +494,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindEdgeRuleChainsByTenantIdAndName() {
-        Edge edge = constructEdge("My edge", "default");
+        Edge edge = constructEdge(tenantId, "My edge", "default");
         Edge savedEdge = edgeService.saveEdge(edge);
 
         String name1 = "Edge RuleChain name 1";
@@ -573,17 +573,5 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         pageData = ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, savedEdge.getId(), pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
-    }
-
-    private Edge constructEdge(String name, String type) {
-        Edge edge = new Edge();
-        edge.setTenantId(tenantId);
-        edge.setName(name);
-        edge.setType(type);
-        edge.setSecret(RandomStringUtils.randomAlphanumeric(20));
-        edge.setRoutingKey(RandomStringUtils.randomAlphanumeric(20));
-        edge.setEdgeLicenseKey(RandomStringUtils.randomAlphanumeric(20));
-        edge.setCloudEndpoint("http://localhost:8080");
-        return edge;
     }
 }
