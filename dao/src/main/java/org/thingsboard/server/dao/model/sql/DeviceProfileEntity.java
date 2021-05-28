@@ -135,7 +135,7 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
             this.firmwareId = deviceProfile.getFirmwareId().getId();
         }
         if (deviceProfile.getSoftwareId() != null) {
-            this.firmwareId = deviceProfile.getSoftwareId().getId();
+            this.softwareId = deviceProfile.getSoftwareId().getId();
         }
     }
 

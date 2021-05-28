@@ -286,8 +286,8 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
 
 export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
-  highlighted = false;
-  selected = false;
+  private highlightedValue = false;
+  private selectedValue = false;
 
   isFullscreen = false;
 
@@ -334,6 +334,28 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     this.gridsterItemComponentSubject.complete();
   }
 
+  get highlighted() {
+    return this.highlightedValue;
+  }
+
+  set highlighted(highlighted: boolean) {
+    if (this.highlightedValue !== highlighted) {
+      this.highlightedValue = highlighted;
+      this.widgetContext.detectContainerChanges();
+    }
+  }
+
+  get selected() {
+    return this.selectedValue;
+  }
+
+  set selected(selected: boolean) {
+    if (this.selectedValue !== selected) {
+      this.selectedValue = selected;
+      this.widgetContext.detectContainerChanges();
+    }
+  }
+
   constructor(
     private dashboard: IDashboardComponent,
     public widget: Widget,
@@ -342,7 +364,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       widget.id = guid();
     }
     this.widgetId = widget.id;
-    this.updateWidgetParams();
+    this.updateWidgetParams(false);
   }
 
   gridsterItemComponent$(): Observable<GridsterItemComponentInterface> {
@@ -353,7 +375,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     }
   }
 
-  updateWidgetParams() {
+  updateWidgetParams(detectChanges = true) {
     this.color = this.widget.config.color || 'rgba(0, 0, 0, 0.87)';
     this.backgroundColor = this.widget.config.backgroundColor || '#fff';
     this.padding = this.widget.config.padding || '8px';
@@ -405,6 +427,9 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
     this.customHeaderActions = this.widgetContext.customHeaderActions ? this.widgetContext.customHeaderActions : [];
     this.widgetActions = this.widgetContext.widgetActions ? this.widgetContext.widgetActions : [];
+    if (detectChanges) {
+      this.widgetContext.detectContainerChanges();
+    }
   }
 
   @enumerable(true)

@@ -38,8 +38,10 @@ import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.codec.CodecException;
+import org.eclipse.leshan.core.request.ContentFormat;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
@@ -53,7 +55,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.BOOLEAN_V;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_TELEMETRY;
 
 @Slf4j
 @Component
@@ -68,7 +69,7 @@ public class LwM2mTransportServerHelper {
      * send to Thingsboard Attribute || Telemetry
      *
      * @param msg - JsonObject: [{name: value}]
-     * @return - dummy
+     * @return - dummyWriteReplace {\"targetIdVer\":\"/19_1.0/0/0\",\"value\":0082}
      */
     private <T> TransportServiceCallback<Void> getPubAckCallbackSendAttrTelemetry(final T msg) {
         return new TransportServiceCallback<>() {
@@ -106,21 +107,21 @@ public class LwM2mTransportServerHelper {
     /**
      * @return - sessionInfo after access connect client
      */
-    public SessionInfoProto getValidateSessionInfo(TransportProtos.ValidateDeviceCredentialsResponseMsg msg, long mostSignificantBits, long leastSignificantBits) {
+    public SessionInfoProto getValidateSessionInfo(ValidateDeviceCredentialsResponse msg, long mostSignificantBits, long leastSignificantBits) {
         return SessionInfoProto.newBuilder()
                 .setNodeId(context.getNodeId())
                 .setSessionIdMSB(mostSignificantBits)
                 .setSessionIdLSB(leastSignificantBits)
-                .setDeviceIdMSB(msg.getDeviceInfo().getDeviceIdMSB())
-                .setDeviceIdLSB(msg.getDeviceInfo().getDeviceIdLSB())
-                .setTenantIdMSB(msg.getDeviceInfo().getTenantIdMSB())
-                .setTenantIdLSB(msg.getDeviceInfo().getTenantIdLSB())
-                .setCustomerIdMSB(msg.getDeviceInfo().getCustomerIdMSB())
-                .setCustomerIdLSB(msg.getDeviceInfo().getCustomerIdLSB())
+                .setDeviceIdMSB(msg.getDeviceInfo().getDeviceId().getId().getMostSignificantBits())
+                .setDeviceIdLSB(msg.getDeviceInfo().getDeviceId().getId().getLeastSignificantBits())
+                .setTenantIdMSB(msg.getDeviceInfo().getTenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(msg.getDeviceInfo().getTenantId().getId().getLeastSignificantBits())
+                .setCustomerIdMSB(msg.getDeviceInfo().getCustomerId().getId().getMostSignificantBits())
+                .setCustomerIdLSB(msg.getDeviceInfo().getCustomerId().getId().getLeastSignificantBits())
                 .setDeviceName(msg.getDeviceInfo().getDeviceName())
                 .setDeviceType(msg.getDeviceInfo().getDeviceType())
-                .setDeviceProfileIdLSB(msg.getDeviceInfo().getDeviceProfileIdLSB())
-                .setDeviceProfileIdMSB(msg.getDeviceInfo().getDeviceProfileIdMSB())
+                .setDeviceProfileIdMSB(msg.getDeviceInfo().getDeviceProfileId().getId().getMostSignificantBits())
+                .setDeviceProfileIdLSB(msg.getDeviceInfo().getDeviceProfileId().getId().getLeastSignificantBits())
                 .build();
     }
 
@@ -135,16 +136,16 @@ public class LwM2mTransportServerHelper {
     }
 
     /**
-     *
-     * @param logMsg - info about Logs
+     * @param value - info about Logs
      * @return- KeyValueProto for telemetry (Logs)
      */
-    public List<TransportProtos.KeyValueProto> getKvLogyToThingsboard(String logMsg) {
+    public List<TransportProtos.KeyValueProto> getKvStringtoThingsboard(String key, String value) {
         List<TransportProtos.KeyValueProto> result = new ArrayList<>();
+        value = value.replaceAll("<", "").replaceAll(">", "");
         result.add(TransportProtos.KeyValueProto.newBuilder()
-                .setKey(LOG_LW2M_TELEMETRY)
+                .setKey(key)
                 .setType(TransportProtos.KeyValueType.STRING_V)
-                .setStringV(logMsg).build());
+                .setStringV(value).build());
         return result;
     }
 
@@ -180,8 +181,7 @@ public class LwM2mTransportServerHelper {
     }
 
     /**
-     *
-     * @param currentType -
+     * @param currentType  -
      * @param resourcePath -
      * @return
      */
@@ -201,6 +201,28 @@ public class LwM2mTransportServerHelper {
             default:
         }
         throw new CodecException("Invalid ResourceModel_Type for resource %s, got %s", resourcePath, currentType);
+    }
+
+    public static ContentFormat convertResourceModelTypeToContentFormat(ResourceModel.Type type) {
+        switch (type) {
+            case BOOLEAN:
+            case STRING:
+            case TIME:
+            case INTEGER:
+            case FLOAT:
+                return ContentFormat.TLV;
+            case OPAQUE:
+                return ContentFormat.OPAQUE;
+            case OBJLNK:
+                return ContentFormat.LINK;
+            default:
+        }
+        throw new CodecException("Invalid ResourceModel_Type for %s ContentFormat.", type);
+    }
+
+    public static ContentFormat getContentFormatByResourceModelType(ResourceModel resourceModel, ContentFormat contentFormat) {
+        return contentFormat.equals(ContentFormat.TLV) ? convertResourceModelTypeToContentFormat(resourceModel.type) :
+                contentFormat;
     }
 
     public static Object getValueFromKvProto(TransportProtos.KeyValueProto kv) {

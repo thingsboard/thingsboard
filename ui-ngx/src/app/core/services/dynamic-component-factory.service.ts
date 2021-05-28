@@ -41,11 +41,9 @@ interface DynamicComponentModuleData {
   moduleType: Type<DynamicComponentModule>;
 }
 
-@Injectable(
-  {
+@Injectable({
     providedIn: 'root'
-  }
-)
+})
 export class DynamicComponentFactoryService {
 
   private dynamicComponentModulesMap = new Map<ComponentFactory<any>, DynamicComponentModuleData>();
