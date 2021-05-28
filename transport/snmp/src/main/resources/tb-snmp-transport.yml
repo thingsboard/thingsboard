@@ -14,6 +14,17 @@
 # limitations under the License.
 #
 
+# If you enabled process metrics you should also enable 'web-environment'.
+spring.main.web-environment: "${WEB_APPLICATION_ENABLE:false}"
+# If you enabled process metrics you should set 'web-application-type' to 'servlet' value.
+spring.main.web-application-type: "${WEB_APPLICATION_TYPE:none}"
+
+server:
+  # Server bind address (has no effect if web-environment is disabled).
+  address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
+  # Server bind port (has no effect if web-environment is disabled).
+  port: "${HTTP_BIND_PORT:8083}"
+
 # Zookeeper connection parameters. Used for service discovery.
 zk:
   # Enable/disable zookeeper discovery service.
