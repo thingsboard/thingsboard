@@ -75,9 +75,7 @@ function sendLoopWithLinger() {
 
 function sendMessagesAsBatch() {
      if (batchMessages.length > 0) {
-         if (batchMessages.length > 1) {
-            logger.info('sendMessagesAsBatch, length: [%s]', batchMessages.length);
-         }
+         logger.debug('sendMessagesAsBatch, length: [%s]', batchMessages.length);
          const messagesToSend = batchMessages;
          batchMessages = [];
          producer.sendBatch({
