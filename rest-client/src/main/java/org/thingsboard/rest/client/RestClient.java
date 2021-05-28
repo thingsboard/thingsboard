@@ -79,6 +79,7 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
+import org.thingsboard.server.common.data.firmware.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -2931,7 +2932,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         return restTemplate.postForEntity(baseURL + "/api/firmware", firmwareInfo, FirmwareInfo.class).getBody();
     }
 
-    public Firmware saveFirmwareData(FirmwareId firmwareId, String checkSum, String checksumAlgorithm, MultipartFile file) throws Exception {
+    public Firmware saveFirmwareData(FirmwareId firmwareId, String checkSum, ChecksumAlgorithm checksumAlgorithm, MultipartFile file) throws Exception {
         HttpHeaders header = new HttpHeaders();
         header.setContentType(MediaType.MULTIPART_FORM_DATA);
 
@@ -2945,10 +2946,11 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
         Map<String, String> params = new HashMap<>();
         params.put("firmwareId", firmwareId.getId().toString());
-        String url = "/api/firmware/{firmwareId}";
+        params.put("checksumAlgorithm", checksumAlgorithm.name());
+        String url = "/api/firmware/{firmwareId}?checksumAlgorithm={checksumAlgorithm}";
 
-        if(checkSum != null && checksumAlgorithm != null) {
-            url += "?checkSum={checkSum}&checkSumAlgorithm={checkSumAlgorithm}";
+        if(checkSum != null) {
+            url += "&checkSum={checkSum}";
         }
 
         return restTemplate.postForEntity(
