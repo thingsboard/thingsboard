@@ -286,7 +286,7 @@ public class LwM2mFwSwUpdate {
         Long updateResult = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
         String value = FIRMWARE.equals(this.type) ? LwM2mTransportUtil.UpdateResultFw.fromUpdateResultFwByCode(updateResult.intValue()).type :
                 LwM2mTransportUtil.UpdateResultSw.fromUpdateResultSwByCode(updateResult.intValue()).type;
-        String key = splitCamelCaseString((String) this.lwM2MClient.getResourceName(null, this.pathResultId));
+        String key = splitCamelCaseString((String) this.lwM2MClient.getResourceNameByRezId(null, this.pathResultId));
         if (success) {
             this.stateUpdate = FirmwareUpdateStatus.UPDATED.name();
             this.sendLogs(handler, EXECUTE.name(), LOG_LW2M_INFO, null);
