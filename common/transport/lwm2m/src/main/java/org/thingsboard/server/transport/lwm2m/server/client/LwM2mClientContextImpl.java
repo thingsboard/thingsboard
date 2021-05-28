@@ -83,13 +83,11 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public LwM2mClient getClient(TransportProtos.SessionInfoProto sessionInfo) {
-        return getClient(new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
-    }
+        return lwM2mClientsByEndpoint.values().stream().filter(c ->
+                (new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()))
+                        .equals((new UUID(c.getSession().getSessionIdMSB(), c.getSession().getSessionIdLSB())))
 
-    @Override
-    public LwM2mClient getClient(UUID sessionId) {
-        //TODO: refactor this to search by sessionId efficiently.
-        return lwM2mClientsByEndpoint.values().stream().filter(c -> c.getSessionId().equals(sessionId)).findAny().get();
+        ).findAny().get();
     }
 
     @Override
