@@ -102,7 +102,7 @@ public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<
                     DefaultCounter counter = entry.getValue();
                     int rateLimitedRequests = counter.get();
                     counter.clear();
-                    var profile = tenantProfileCache.get(tenantId).getDefaultTenantConfiguration();
+                    var profile = tenantProfileCache.get(tenantId).getDefaultTenantProfileConfiguration();
                     if (profile != null && profile.isPrintTenantNames()) {
                         String name = tenantNamesCache.computeIfAbsent(tenantId, tId -> {
                             try {
@@ -145,7 +145,7 @@ public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<
 
     @Override
     protected boolean checkRateLimits(CassandraStatementTask task, SettableFuture<TbResultSet> future) {
-        var tenantProfileConfiguration = tenantProfileCache.get(task.getTenantId()).getDefaultTenantConfiguration();
+        var tenantProfileConfiguration = tenantProfileCache.get(task.getTenantId()).getDefaultTenantProfileConfiguration();
         if (StringUtils.isNotEmpty(tenantProfileConfiguration.getCassandraTenantLimitsConfiguration())) {
             if (task.getTenantId() == null) {
                 log.info("Invalid task received: {}", task);

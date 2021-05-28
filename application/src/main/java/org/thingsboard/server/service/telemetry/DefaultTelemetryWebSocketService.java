@@ -298,7 +298,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     }
 
     private void processSessionClose(TelemetryWebSocketSessionRef sessionRef) {
-        var tenantProfileConfiguration = (DefaultTenantProfileConfiguration) tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultTenantConfiguration();
+        var tenantProfileConfiguration = (DefaultTenantProfileConfiguration) tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultTenantProfileConfiguration();
         if(tenantProfileConfiguration != null) {
             String sessionId = "[" + sessionRef.getSessionId() + "]";
 
@@ -332,7 +332,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     }
 
     private boolean processSubscription(TelemetryWebSocketSessionRef sessionRef, SubscriptionCmd cmd) {
-        var tenantProfileConfiguration = (DefaultTenantProfileConfiguration) tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultTenantConfiguration();
+        var tenantProfileConfiguration = (DefaultTenantProfileConfiguration) tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultTenantProfileConfiguration();
 
         String subId = "[" + sessionRef.getSessionId() + "]:[" + cmd.getCmdId() + "]";
         try {

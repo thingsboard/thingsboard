@@ -42,15 +42,6 @@ import java.util.concurrent.ConcurrentMap;
 @Component
 public class RateLimitProcessingFilter extends GenericFilterBean {
 
-//    @Value("${server.rest.limits.tenant.enabled:false}")
-//    private boolean perTenantLimitsEnabled;
-//    @Value("${server.rest.limits.tenant.configuration:}")
-//    private String perTenantLimitsConfiguration;
-//    @Value("${server.rest.limits.customer.enabled:false}")
-//    private boolean perCustomerLimitsEnabled;
-//    @Value("${server.rest.limits.customer.configuration:}")
-//    private String perCustomerLimitsConfiguration;
-
     @Autowired
     private ThingsboardErrorResponseHandler errorResponseHandler;
 
@@ -65,7 +56,7 @@ public class RateLimitProcessingFilter extends GenericFilterBean {
         SecurityUser user = getCurrentUser();
         if (user != null && !user.isSystemAdmin()) {
 
-            var profile= tenantProfileCache.get(user.getTenantId()).getDefaultTenantConfiguration();
+            var profile= tenantProfileCache.get(user.getTenantId()).getDefaultTenantProfileConfiguration();
 
             if(profile != null) {
                 if (StringUtils.isNotEmpty(profile.getRateLimitsTenantConfiguration())) {

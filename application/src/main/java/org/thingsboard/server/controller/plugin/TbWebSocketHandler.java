@@ -118,7 +118,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
             if (!checkLimits(session, sessionRef)) {
                 return;
             }
-            var tenantProfileConfiguration = tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultTenantConfiguration();
+            var tenantProfileConfiguration = tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultTenantProfileConfiguration();
             if(tenantProfileConfiguration.getWsLimitQueuePerWsSession() <= 0) {
                 tenantProfileConfiguration.setWsLimitQueuePerWsSession(500);
             }
@@ -283,7 +283,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         log.debug("[{}] Processing {}", externalId, msg);
         String internalId = externalSessionMap.get(externalId);
 
-        var tenantProfileConfiguration = tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultTenantConfiguration();
+        var tenantProfileConfiguration = tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultTenantProfileConfiguration();
 
         if (internalId != null) {
             SessionMetaData sessionMd = internalSessionMap.get(internalId);
@@ -346,7 +346,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
 
     private boolean checkLimits(WebSocketSession session, TelemetryWebSocketSessionRef sessionRef) throws Exception {
         var tenantProfileConfiguration =
-                tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultTenantConfiguration();
+                tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultTenantProfileConfiguration();
 
         if(tenantProfileConfiguration == null) {
             return true;
@@ -414,7 +414,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
     }
 
     private void cleanupLimits(WebSocketSession session, TelemetryWebSocketSessionRef sessionRef) {
-        var tenantProfileConfiguration = tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultTenantConfiguration();
+        var tenantProfileConfiguration = tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultTenantProfileConfiguration();
 
         String sessionId = session.getId();
         perSessionUpdateLimits.remove(sessionRef.getSessionId());
