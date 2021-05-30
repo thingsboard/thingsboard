@@ -155,12 +155,13 @@ public class LwM2mFwSwUpdate {
      */
     private void writeFwSwWare(DefaultLwM2MTransportMsgHandler handler, LwM2mTransportRequest request) {
         this.stateUpdate = FirmwareUpdateStatus.DOWNLOADING.name();
-//        this.observeStateUpdate();
+
         this.sendLogs(handler, WRITE_REPLACE.name(), LOG_LW2M_INFO, null);
         int chunkSize = 0;
         int chunk = 0;
         byte[] firmwareChunk = handler.firmwareDataCache.get(this.currentId.toString(), chunkSize, chunk);
         String targetIdVer = convertPathFromObjectIdToIdVer(this.pathPackageId, this.lwM2MClient.getRegistration());
+        log.warn ("8) firmware send save to : [{}]", targetIdVer);
         request.sendAllRequest(lwM2MClient.getRegistration(), targetIdVer, WRITE_REPLACE, ContentFormat.OPAQUE.getName(),
                 firmwareChunk, handler.config.getTimeout(), null);
     }

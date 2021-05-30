@@ -352,7 +352,8 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     @Override
     public void onAttributeUpdate(AttributeUpdateNotificationMsg msg, TransportProtos.SessionInfoProto sessionInfo) {
         LwM2mClient lwM2MClient = clientContext.getClient(sessionInfo);
-        if (msg.getSharedUpdatedCount() > 0) {
+        if (msg.getSharedUpdatedCount() > 0 && lwM2MClient != null) {
+            log.warn ("2) OnAttributeUpdate, SharedUpdatedList() [{}]", msg.getSharedUpdatedList());
             msg.getSharedUpdatedList().forEach(tsKvProto -> {
                 String pathName = tsKvProto.getKv().getKey();
                 String pathIdVer = this.getPresentPathIntoProfile(sessionInfo, pathName);
@@ -387,7 +388,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                 }
 
             });
-        } else if (msg.getSharedDeletedCount() > 0) {
+        } else if (msg.getSharedDeletedCount() > 0 && lwM2MClient != null) {
             msg.getSharedUpdatedList().forEach(tsKvProto -> {
                 String pathName = tsKvProto.getKv().getKey();
                 Object valueNew = getValueFromKvProto(tsKvProto.getKv());
@@ -396,6 +397,9 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                 }
             });
             log.info("[{}] delete [{}]  onAttributeUpdate", msg.getSharedDeletedList(), sessionInfo);
+        }
+        else if (lwM2MClient == null) {
+            log.error ("OnAttributeUpdate, lwM2MClient is null");
         }
     }
 
@@ -443,6 +447,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     public void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg toDeviceRpcRequestMsg, SessionInfoProto sessionInfo) {
         // #1
         this.checkRpcRequestTimeout();
+        log.warn ("4) toDeviceRpcRequestMsg: [{}], sessionUUID: [{}]", toDeviceRpcRequestMsg,  new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
         String bodyParams = StringUtils.trimToNull(toDeviceRpcRequestMsg.getParams()) != null ? toDeviceRpcRequestMsg.getParams() : "null";
         LwM2mTypeOper lwM2mTypeOper = setValidTypeOper(toDeviceRpcRequestMsg.getMethodName());
         UUID requestUUID = new UUID(toDeviceRpcRequestMsg.getRequestIdMSB(), toDeviceRpcRequestMsg.getRequestIdLSB());
@@ -502,6 +507,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
 
     @Override
     public void onToDeviceRpcResponse(TransportProtos.ToDeviceRpcResponseMsg toDeviceResponse, SessionInfoProto sessionInfo) {
+        log.warn ("5) nToDeviceRpcResponse: [{}], sessionUUID: [{}]", toDeviceResponse,  new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
         transportService.process(sessionInfo, toDeviceResponse, null);
     }
 
@@ -882,10 +888,16 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      */
     private Object getResourceValueFormatKv(LwM2mClient lwM2MClient, String pathIdVer) {
         LwM2mResource resourceValue = this.getResourceValueFromLwM2MClient(lwM2MClient, pathIdVer);
-        ResourceModel.Type currentType = resourceValue.getType();
-        ResourceModel.Type expectedType = this.helper.getResourceModelTypeEqualsKvProtoValueType(currentType, pathIdVer);
-        return this.converter.convertValue(resourceValue.getValue(), currentType, expectedType,
-                new LwM2mPath(convertPathFromIdVerToObjectId(pathIdVer)));
+        if (resourceValue != null) {
+            ResourceModel.Type currentType = resourceValue.getType();
+            ResourceModel.Type expectedType = this.helper.getResourceModelTypeEqualsKvProtoValueType(currentType, pathIdVer);
+            return this.converter.convertValue(resourceValue.getValue(), currentType, expectedType,
+                    new LwM2mPath(convertPathFromIdVerToObjectId(pathIdVer)));
+        }
+
+        else {
+            return null;
+        }
     }
 
     /**
@@ -1246,22 +1258,28 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      */
     public void updateAttributeFromThingsboard(List<TransportProtos.TsKvProto> tsKvProtos, TransportProtos.SessionInfoProto sessionInfo) {
         LwM2mClient lwM2MClient = clientContext.getClient(sessionInfo);
-        tsKvProtos.forEach(tsKvProto -> {
-            String pathIdVer = this.getPresentPathIntoProfile(sessionInfo, tsKvProto.getKv().getKey());
-            if (pathIdVer != null) {
-                // #1.1
-                if (lwM2MClient.getDelayedRequests().containsKey(pathIdVer) && tsKvProto.getTs() > lwM2MClient.getDelayedRequests().get(pathIdVer).getTs()) {
-                    lwM2MClient.getDelayedRequests().put(pathIdVer, tsKvProto);
-                } else if (!lwM2MClient.getDelayedRequests().containsKey(pathIdVer)) {
-                    lwM2MClient.getDelayedRequests().put(pathIdVer, tsKvProto);
+        if (lwM2MClient != null) {
+            log.warn("1) UpdateAttributeFromThingsboard, tsKvProtos [{}]", tsKvProtos);
+            tsKvProtos.forEach(tsKvProto -> {
+                String pathIdVer = this.getPresentPathIntoProfile(sessionInfo, tsKvProto.getKv().getKey());
+                if (pathIdVer != null) {
+                    // #1.1
+                    if (lwM2MClient.getDelayedRequests().containsKey(pathIdVer) && tsKvProto.getTs() > lwM2MClient.getDelayedRequests().get(pathIdVer).getTs()) {
+                        lwM2MClient.getDelayedRequests().put(pathIdVer, tsKvProto);
+                    } else if (!lwM2MClient.getDelayedRequests().containsKey(pathIdVer)) {
+                        lwM2MClient.getDelayedRequests().put(pathIdVer, tsKvProto);
+                    }
                 }
-            }
-        });
-        // #2.1
-        lwM2MClient.getDelayedRequests().forEach((pathIdVer, tsKvProto) -> {
-            this.updateResourcesValueToClient(lwM2MClient, this.getResourceValueFormatKv(lwM2MClient, pathIdVer),
-                    getValueFromKvProto(tsKvProto.getKv()), pathIdVer);
-        });
+            });
+            // #2.1
+            lwM2MClient.getDelayedRequests().forEach((pathIdVer, tsKvProto) -> {
+                this.updateResourcesValueToClient(lwM2MClient, this.getResourceValueFormatKv(lwM2MClient, pathIdVer),
+                        getValueFromKvProto(tsKvProto.getKv()), pathIdVer);
+            });
+        }
+        else {
+            log.error("UpdateAttributeFromThingsboard, lwM2MClient is null");
+        }
     }
 
     /**
@@ -1350,6 +1368,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                             public void onSuccess(TransportProtos.GetFirmwareResponseMsg response) {
                                 if (TransportProtos.ResponseStatus.SUCCESS.equals(response.getResponseStatus())
                                         && response.getType().equals(FirmwareType.FIRMWARE.name())) {
+                                    log.warn ("7) firmware start with ver: [{}]",response.getVersion());
                                     lwM2MClient.getFwUpdate().setCurrentVersion(response.getVersion());
                                     lwM2MClient.getFwUpdate().setCurrentTitle(response.getTitle());
                                     lwM2MClient.getFwUpdate().setCurrentId(new FirmwareId(new UUID(response.getFirmwareIdMSB(), response.getFirmwareIdLSB())).getId());
