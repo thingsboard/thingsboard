@@ -20,8 +20,8 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.leshan.core.request.ContentFormat;
-import org.thingsboard.server.common.data.firmware.FirmwareType;
-import org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.server.DefaultLwM2MTransportMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportRequest;
@@ -32,11 +32,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static org.thingsboard.server.common.data.firmware.FirmwareKey.STATE;
-import static org.thingsboard.server.common.data.firmware.FirmwareType.FIRMWARE;
-import static org.thingsboard.server.common.data.firmware.FirmwareType.SOFTWARE;
-import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.UPDATING;
-import static org.thingsboard.server.common.data.firmware.FirmwareUtil.getAttributeKey;
+import static org.thingsboard.server.common.data.ota.OtaPackageKey.STATE;
+import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
+import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
+import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATING;
+import static org.thingsboard.server.common.data.ota.OtaPackageUtil.getAttributeKey;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_NAME_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PACKAGE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_RESULT_ID;
@@ -97,14 +97,14 @@ public class LwM2mFwSwUpdate {
     @Getter
     @Setter
     private volatile boolean infoFwSwUpdate = false;
-    private final FirmwareType type;
+    private final OtaPackageType type;
     @Getter
     LwM2mClient lwM2MClient;
     @Getter
     @Setter
     private final List<String> pendingInfoRequestsStart;
 
-    public LwM2mFwSwUpdate(LwM2mClient lwM2MClient, FirmwareType type) {
+    public LwM2mFwSwUpdate(LwM2mClient lwM2MClient, OtaPackageType type) {
         this.lwM2MClient = lwM2MClient;
         this.pendingInfoRequestsStart = new CopyOnWriteArrayList<>();
         this.type = type;
@@ -139,7 +139,7 @@ public class LwM2mFwSwUpdate {
         }
         if (this.pendingInfoRequestsStart.size() == 0) {
             this.infoFwSwUpdate = false;
-            if (!FirmwareUpdateStatus.DOWNLOADING.name().equals(this.stateUpdate)) {
+            if (!OtaPackageUpdateStatus.DOWNLOADING.name().equals(this.stateUpdate)) {
                 boolean conditionalStart = this.type.equals(FIRMWARE) ? this.conditionalFwUpdateStart() :
                         this.conditionalSwUpdateStart();
                 if (conditionalStart) {
@@ -154,12 +154,12 @@ public class LwM2mFwSwUpdate {
      * before operation Write: fw_state = DOWNLOADING
      */
     private void writeFwSwWare(DefaultLwM2MTransportMsgHandler handler, LwM2mTransportRequest request) {
-        this.stateUpdate = FirmwareUpdateStatus.DOWNLOADING.name();
+        this.stateUpdate = OtaPackageUpdateStatus.DOWNLOADING.name();
 //        this.observeStateUpdate();
         this.sendLogs(handler, WRITE_REPLACE.name(), LOG_LW2M_INFO, null);
         int chunkSize = 0;
         int chunk = 0;
-        byte[] firmwareChunk = handler.firmwareDataCache.get(this.currentId.toString(), chunkSize, chunk);
+        byte[] firmwareChunk = handler.otaPackageDataCache.get(this.currentId.toString(), chunkSize, chunk);
         String targetIdVer = convertPathFromObjectIdToIdVer(this.pathPackageId, this.lwM2MClient.getRegistration());
         request.sendAllRequest(lwM2MClient.getRegistration(), targetIdVer, WRITE_REPLACE, ContentFormat.OPAQUE.getName(),
                 firmwareChunk, handler.config.getTimeout(), null);
@@ -287,10 +287,10 @@ public class LwM2mFwSwUpdate {
                 LwM2mTransportUtil.UpdateResultSw.fromUpdateResultSwByCode(updateResult.intValue()).type;
         String key = splitCamelCaseString((String) this.lwM2MClient.getResourceNameByRezId(null, this.pathResultId));
         if (success) {
-            this.stateUpdate = FirmwareUpdateStatus.UPDATED.name();
+            this.stateUpdate = OtaPackageUpdateStatus.UPDATED.name();
             this.sendLogs(handler, EXECUTE.name(), LOG_LW2M_INFO, null);
         } else {
-            this.stateUpdate = FirmwareUpdateStatus.FAILED.name();
+            this.stateUpdate = OtaPackageUpdateStatus.FAILED.name();
             this.sendLogs(handler, EXECUTE.name(), LOG_LW2M_ERROR, value);
         }
         handler.helper.sendParametersOnThingsboardTelemetry(
