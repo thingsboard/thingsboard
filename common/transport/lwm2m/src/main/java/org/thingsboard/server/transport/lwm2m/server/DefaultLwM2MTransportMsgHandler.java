@@ -196,8 +196,8 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                                 .setSubscribeToRPC(TransportProtos.SubscribeToRPCMsg.newBuilder().build())
                                 .build();
                         transportService.process(msg, null);
-                        this.getInfoFirmwareUpdate(lwM2MClient);
-                        this.getInfoSoftwareUpdate(lwM2MClient);
+                        this.getInfoFirmwareUpdate(lwM2MClient, null);
+                        this.getInfoSoftwareUpdate(lwM2MClient, null);
                         this.initLwM2mFromClientValue(registration, lwM2MClient);
                         this.sendLogsToThingsboard(LOG_LW2M_INFO + ": Client create after Registration", registration.getId());
                     } else {
@@ -286,7 +286,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     @Override
     public void setCancelObservationsAll(Registration registration) {
         if (registration != null) {
-            lwM2mTransportRequest.sendAllRequest(registration, null, OBSERVE_CANCEL_ALL,
+            this.lwM2mTransportRequest.sendAllRequest(registration, null, OBSERVE_CANCEL_ALL,
                     null, null, this.config.getTimeout(), null);
         }
     }
@@ -335,7 +335,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                 READ, pathIdVer, value);
         this.sendLogsToThingsboard(msg, registration.getId());
         rpcRequest.setValueMsg(String.format("%s", value));
-        this.sentRpcRequest(rpcRequest, response.getCode().getName(), (String) value, LOG_LW2M_VALUE);
+        this.sentRpcResponse(rpcRequest, response.getCode().getName(), (String) value, LOG_LW2M_VALUE);
     }
 
     /**
@@ -362,12 +362,12 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                         && (!valueNew.equals(lwM2MClient.getFwUpdate().getCurrentVersion())))
                         || (FirmwareUtil.getAttributeKey(FirmwareType.FIRMWARE, FirmwareKey.TITLE).equals(pathName)
                         && (!valueNew.equals(lwM2MClient.getFwUpdate().getCurrentTitle())))) {
-                    this.getInfoFirmwareUpdate(lwM2MClient);
+                    this.getInfoFirmwareUpdate(lwM2MClient, null);
                 } else if ((FirmwareUtil.getAttributeKey(FirmwareType.SOFTWARE, FirmwareKey.VERSION).equals(pathName)
                         && (!valueNew.equals(lwM2MClient.getSwUpdate().getCurrentVersion())))
                         || (FirmwareUtil.getAttributeKey(FirmwareType.SOFTWARE, FirmwareKey.TITLE).equals(pathName)
                         && (!valueNew.equals(lwM2MClient.getSwUpdate().getCurrentTitle())))) {
-                    this.getInfoSoftwareUpdate(lwM2MClient);
+                    this.getInfoSoftwareUpdate(lwM2MClient, null);
                 }
                 if (pathIdVer != null) {
                     ResourceModel resourceModel = lwM2MClient.getResourceModel(pathIdVer, this.config
@@ -484,7 +484,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         rpcSubscriptionsToRemove.forEach(rpcSubscriptions::remove);
     }
 
-    public void sentRpcRequest(Lwm2mClientRpcRequest rpcRequest, String requestCode, String msg, String typeMsg) {
+    public void sentRpcResponse(Lwm2mClientRpcRequest rpcRequest, String requestCode, String msg, String typeMsg) {
         rpcRequest.setResponseCode(requestCode);
         if (LOG_LW2M_ERROR.equals(typeMsg)) {
             rpcRequest.setInfoMsg(null);
@@ -507,7 +507,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
 
     @Override
     public void onToDeviceRpcResponse(TransportProtos.ToDeviceRpcResponseMsg toDeviceResponse, SessionInfoProto sessionInfo) {
-        log.warn ("5) nToDeviceRpcResponse: [{}], sessionUUID: [{}]", toDeviceResponse,  new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
+        log.warn ("5) onToDeviceRpcResponse: [{}], sessionUUID: [{}]", toDeviceResponse,  new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
         transportService.process(sessionInfo, toDeviceResponse, null);
     }
 
@@ -1358,21 +1358,28 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         }
     }
 
-    public void getInfoFirmwareUpdate(LwM2mClient lwM2MClient) {
+    public void getInfoFirmwareUpdate(LwM2mClient lwM2MClient, Lwm2mClientRpcRequest rpcRequest) {
         if (lwM2MClient.getRegistration().getSupportedVersion(FW_ID) != null) {
             SessionInfoProto sessionInfo = this.getSessionInfoOrCloseSession(lwM2MClient);
             if (sessionInfo != null) {
-                transportService.process(sessionInfo, createFirmwareRequestMsg(sessionInfo, FirmwareType.FIRMWARE.name()),
+                DefaultLwM2MTransportMsgHandler handler = this;
+                this.transportService.process(sessionInfo, createFirmwareRequestMsg(sessionInfo, FirmwareType.FIRMWARE.name()),
                         new TransportServiceCallback<>() {
                             @Override
                             public void onSuccess(TransportProtos.GetFirmwareResponseMsg response) {
                                 if (TransportProtos.ResponseStatus.SUCCESS.equals(response.getResponseStatus())
                                         && response.getType().equals(FirmwareType.FIRMWARE.name())) {
-                                    log.warn ("7) firmware start with ver: [{}]",response.getVersion());
+                                    log.warn ("7) firmware start with ver: [{}]", response.getVersion());
+                                    lwM2MClient.getFwUpdate().setRpcRequest(rpcRequest);
                                     lwM2MClient.getFwUpdate().setCurrentVersion(response.getVersion());
                                     lwM2MClient.getFwUpdate().setCurrentTitle(response.getTitle());
                                     lwM2MClient.getFwUpdate().setCurrentId(new FirmwareId(new UUID(response.getFirmwareIdMSB(), response.getFirmwareIdLSB())).getId());
-                                    lwM2MClient.getFwUpdate().sendReadObserveInfo(lwM2mTransportRequest);
+                                    if (rpcRequest == null) {
+                                        lwM2MClient.getFwUpdate().sendReadObserveInfo(lwM2mTransportRequest);
+                                    }
+                                    else {
+                                        lwM2MClient.getFwUpdate().writeFwSwWare(handler,  lwM2mTransportRequest);
+                                    }
                                 } else {
                                     log.trace("Firmware [{}] [{}]", lwM2MClient.getDeviceName(), response.getResponseStatus().toString());
                                 }
@@ -1387,21 +1394,28 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         }
     }
 
-    public void getInfoSoftwareUpdate(LwM2mClient lwM2MClient) {
+    public void getInfoSoftwareUpdate(LwM2mClient lwM2MClient, Lwm2mClientRpcRequest rpcRequest) {
         if (lwM2MClient.getRegistration().getSupportedVersion(SW_ID) != null) {
             SessionInfoProto sessionInfo = this.getSessionInfoOrCloseSession(lwM2MClient);
             if (sessionInfo != null) {
-                DefaultLwM2MTransportMsgHandler serviceImpl = this;
+                DefaultLwM2MTransportMsgHandler handler = this;
                 transportService.process(sessionInfo, createFirmwareRequestMsg(sessionInfo, FirmwareType.SOFTWARE.name()),
                         new TransportServiceCallback<>() {
                             @Override
                             public void onSuccess(TransportProtos.GetFirmwareResponseMsg response) {
                                 if (TransportProtos.ResponseStatus.SUCCESS.equals(response.getResponseStatus())
                                         && response.getType().equals(FirmwareType.SOFTWARE.name())) {
+                                    lwM2MClient.getSwUpdate().setRpcRequest(rpcRequest);
                                     lwM2MClient.getSwUpdate().setCurrentVersion(response.getVersion());
                                     lwM2MClient.getSwUpdate().setCurrentTitle(response.getTitle());
                                     lwM2MClient.getSwUpdate().setCurrentId(new FirmwareId(new UUID(response.getFirmwareIdMSB(), response.getFirmwareIdLSB())).getId());
                                     lwM2MClient.getSwUpdate().sendReadObserveInfo(lwM2mTransportRequest);
+                                    if (rpcRequest == null) {
+                                        lwM2MClient.getSwUpdate().sendReadObserveInfo(lwM2mTransportRequest);
+                                    }
+                                    else {
+                                        lwM2MClient.getSwUpdate().writeFwSwWare(handler,  lwM2mTransportRequest);
+                                    }
                                 } else {
                                     log.trace("Software [{}] [{}]", lwM2MClient.getDeviceName(), response.getResponseStatus().toString());
                                 }
