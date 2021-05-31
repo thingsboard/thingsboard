@@ -28,29 +28,29 @@ import { BaseData } from '@shared/models/base-data';
 import { EntityService } from '@core/http/entity.service';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
-import { FirmwareInfo, FirmwareType } from '@shared/models/firmware.models';
-import { FirmwareService } from '@core/http/firmware.service';
+import { OtaPackageInfo, OtaUpdateTranslation, OtaUpdateType } from '@shared/models/ota-package.models';
+import { OtaPackageService } from '@core/http/ota-package.service';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 
 @Component({
-  selector: 'tb-firmware-autocomplete',
-  templateUrl: './firmware-autocomplete.component.html',
+  selector: 'tb-ota-package-autocomplete',
+  templateUrl: './ota-package-autocomplete.component.html',
   styleUrls: [],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => FirmwareAutocompleteComponent),
+    useExisting: forwardRef(() => OtaPackageAutocompleteComponent),
     multi: true
   }]
 })
-export class FirmwareAutocompleteComponent implements ControlValueAccessor, OnInit {
+export class OtaPackageAutocompleteComponent implements ControlValueAccessor, OnInit {
 
-  firmwareFormGroup: FormGroup;
+  otaPackageFormGroup: FormGroup;
 
   modelValue: string | EntityId | null;
 
   @Input()
-  type = FirmwareType.FIRMWARE;
+  type = OtaUpdateType.FIRMWARE;
 
   @Input()
   deviceProfileId: string;
@@ -78,31 +78,13 @@ export class FirmwareAutocompleteComponent implements ControlValueAccessor, OnIn
   @Input()
   disabled: boolean;
 
-  @ViewChild('firmwareInput', {static: true}) firmwareInput: ElementRef;
-  @ViewChild('firmwareInput', {read: MatAutocompleteTrigger}) firmwareAutocomplete: MatAutocompleteTrigger;
+  @ViewChild('packageInput', {static: true}) packageInput: ElementRef;
 
-  filteredFirmwares: Observable<Array<FirmwareInfo>>;
+  filteredPackages: Observable<Array<OtaPackageInfo>>;
 
   searchText = '';
 
   private dirty = false;
-
-  private firmwareTypeTranslation = new Map<FirmwareType, any>(
-    [
-      [FirmwareType.FIRMWARE, {
-        label: 'firmware.firmware',
-        required: 'firmware.firmware-required',
-        noFound: 'firmware.no-firmware-text',
-        noMatching: 'firmware.no-firmware-matching'
-      }],
-      [FirmwareType.SOFTWARE, {
-        label: 'firmware.software',
-        required: 'firmware.software-required',
-        noFound: 'firmware.no-software-text',
-        noMatching: 'firmware.no-software-matching'
-      }]
-    ]
-  );
 
   private propagateChange = (v: any) => { };
 
@@ -110,10 +92,10 @@ export class FirmwareAutocompleteComponent implements ControlValueAccessor, OnIn
               public translate: TranslateService,
               public truncate: TruncatePipe,
               private entityService: EntityService,
-              private firmwareService: FirmwareService,
+              private otaPackageService: OtaPackageService,
               private fb: FormBuilder) {
-    this.firmwareFormGroup = this.fb.group({
-      firmwareId: [null]
+    this.otaPackageFormGroup = this.fb.group({
+      packageId: [null]
     });
   }
 
@@ -125,7 +107,7 @@ export class FirmwareAutocompleteComponent implements ControlValueAccessor, OnIn
   }
 
   ngOnInit() {
-    this.filteredFirmwares = this.firmwareFormGroup.get('firmwareId').valueChanges
+    this.filteredPackages = this.otaPackageFormGroup.get('packageId').valueChanges
       .pipe(
         tap(value => {
           let modelValue;
@@ -140,7 +122,7 @@ export class FirmwareAutocompleteComponent implements ControlValueAccessor, OnIn
           }
         }),
         map(value => value ? (typeof value === 'string' ? value : value.title) : ''),
-        mergeMap(name => this.fetchFirmware(name)),
+        mergeMap(name => this.fetchPackages(name)),
         share()
       );
   }
@@ -149,7 +131,7 @@ export class FirmwareAutocompleteComponent implements ControlValueAccessor, OnIn
   }
 
   getCurrentEntity(): BaseData<EntityId> | null {
-    const currentRuleChain = this.firmwareFormGroup.get('firmwareId').value;
+    const currentRuleChain = this.otaPackageFormGroup.get('packageId').value;
     if (currentRuleChain && typeof currentRuleChain !== 'string') {
       return currentRuleChain as BaseData<EntityId>;
     } else {
@@ -160,9 +142,9 @@ export class FirmwareAutocompleteComponent implements ControlValueAccessor, OnIn
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.firmwareFormGroup.disable({emitEvent: false});
+      this.otaPackageFormGroup.disable({emitEvent: false});
     } else {
-      this.firmwareFormGroup.enable({emitEvent: false});
+      this.otaPackageFormGroup.enable({emitEvent: false});
     }
   }
 
@@ -173,21 +155,21 @@ export class FirmwareAutocompleteComponent implements ControlValueAccessor, OnIn
   writeValue(value: string | EntityId | null): void {
     this.searchText = '';
     if (value != null && value !== '') {
-      let firmwareId = '';
+      let packageId = '';
       if (typeof value === 'string') {
-        firmwareId = value;
+        packageId = value;
       } else if (value.entityType && value.id) {
-        firmwareId = value.id;
+        packageId = value.id;
       }
-      if (firmwareId !== '') {
-        this.entityService.getEntity(EntityType.FIRMWARE, firmwareId, {ignoreLoading: true, ignoreErrors: true}).subscribe(
+      if (packageId !== '') {
+        this.entityService.getEntity(EntityType.OTA_PACKAGE, packageId, {ignoreLoading: true, ignoreErrors: true}).subscribe(
           (entity) => {
             this.modelValue = this.useFullEntityId ? entity.id : entity.id.id;
-            this.firmwareFormGroup.get('firmwareId').patchValue(entity, {emitEvent: false});
+            this.otaPackageFormGroup.get('packageId').patchValue(entity, {emitEvent: false});
           },
           () => {
             this.modelValue = null;
-            this.firmwareFormGroup.get('firmwareId').patchValue('', {emitEvent: false});
+            this.otaPackageFormGroup.get('packageId').patchValue('', {emitEvent: false});
             if (value !== null) {
               this.propagateChange(this.modelValue);
             }
@@ -195,25 +177,25 @@ export class FirmwareAutocompleteComponent implements ControlValueAccessor, OnIn
         );
       } else {
         this.modelValue = null;
-        this.firmwareFormGroup.get('firmwareId').patchValue('', {emitEvent: false});
+        this.otaPackageFormGroup.get('packageId').patchValue('', {emitEvent: false});
         this.propagateChange(null);
       }
     } else {
       this.modelValue = null;
-      this.firmwareFormGroup.get('firmwareId').patchValue('', {emitEvent: false});
+      this.otaPackageFormGroup.get('packageId').patchValue('', {emitEvent: false});
     }
     this.dirty = true;
   }
 
   onFocus() {
     if (this.dirty) {
-      this.firmwareFormGroup.get('firmwareId').updateValueAndValidity({onlySelf: true, emitEvent: true});
+      this.otaPackageFormGroup.get('packageId').updateValueAndValidity({onlySelf: true, emitEvent: true});
       this.dirty = false;
     }
   }
 
   reset() {
-    this.firmwareFormGroup.get('firmwareId').patchValue('', {emitEvent: false});
+    this.otaPackageFormGroup.get('packageId').patchValue('', {emitEvent: false});
   }
 
   updateView(value: string | null) {
@@ -223,47 +205,51 @@ export class FirmwareAutocompleteComponent implements ControlValueAccessor, OnIn
     }
   }
 
-  displayFirmwareFn(firmware?: FirmwareInfo): string | undefined {
-    return firmware ? `${firmware.title} (${firmware.version})` : undefined;
+  displayPackageFn(packageInfo?: OtaPackageInfo): string | undefined {
+    return packageInfo ? `${packageInfo.title} (${packageInfo.version})` : undefined;
   }
 
-  fetchFirmware(searchText?: string): Observable<Array<FirmwareInfo>> {
+  fetchPackages(searchText?: string): Observable<Array<OtaPackageInfo>> {
     this.searchText = searchText;
     const pageLink = new PageLink(50, 0, searchText, {
       property: 'title',
       direction: Direction.ASC
     });
-    return this.firmwareService.getFirmwaresInfoByDeviceProfileId(pageLink, this.deviceProfileId, this.type,
+    return this.otaPackageService.getOtaPackagesInfoByDeviceProfileId(pageLink, this.deviceProfileId, this.type,
                                                           true, {ignoreLoading: true}).pipe(
       map((data) => data && data.data.length ? data.data : null)
     );
   }
 
   clear() {
-    this.firmwareFormGroup.get('firmwareId').patchValue('', {emitEvent: true});
+    this.otaPackageFormGroup.get('packageId').patchValue('', {emitEvent: true});
     setTimeout(() => {
-      this.firmwareInput.nativeElement.blur();
-      this.firmwareInput.nativeElement.focus();
+      this.packageInput.nativeElement.blur();
+      this.packageInput.nativeElement.focus();
     }, 0);
   }
 
   get placeholderText(): string {
-    return this.labelText || this.firmwareTypeTranslation.get(this.type).label;
+    return this.labelText || OtaUpdateTranslation.get(this.type).label;
   }
 
   get requiredErrorText(): string {
-    return this.requiredText || this.firmwareTypeTranslation.get(this.type).required;
+    return this.requiredText || OtaUpdateTranslation.get(this.type).required;
   }
 
-  get notFoundFirmware(): string {
-    return this.firmwareTypeTranslation.get(this.type).noFound;
+  get notFoundPackage(): string {
+    return OtaUpdateTranslation.get(this.type).noFound;
   }
 
-  get notMatchingFirmware(): string {
-    return this.firmwareTypeTranslation.get(this.type).noMatching;
+  get notMatchingPackage(): string {
+    return OtaUpdateTranslation.get(this.type).noMatching;
   }
 
-  firmwareTitleText(firmware: FirmwareInfo): string {
-    return `${firmware.title} (${firmware.version})`;
+  get hintText(): string {
+    return OtaUpdateTranslation.get(this.type).hint;
+  }
+
+  packageTitleText(firpackageInfomware: OtaPackageInfo): string {
+    return `${firpackageInfomware.title} (${firpackageInfomware.version})`;
   }
 }

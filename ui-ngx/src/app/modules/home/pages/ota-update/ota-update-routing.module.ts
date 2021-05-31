@@ -18,22 +18,22 @@ import { RouterModule, Routes } from '@angular/router';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
 import { Authority } from '@shared/models/authority.enum';
 import { NgModule } from '@angular/core';
-import { FirmwareTableConfigResolve } from '@home/pages/firmware/firmware-table-config.resolve';
+import { OtaUpdateTableConfigResolve } from '@home/pages/ota-update/ota-update-table-config.resolve';
 
 const routes: Routes = [
   {
-    path: 'firmwares',
+    path: 'otaUpdates',
     component: EntitiesTableComponent,
     data: {
       auth: [Authority.TENANT_ADMIN],
-      title: 'firmware.firmware',
+      title: 'ota-update.ota-updates',
       breadcrumb: {
-        label: 'firmware.firmware',
+        label: 'ota-update.ota-updates',
         icon: 'memory'
       }
     },
     resolve: {
-      entitiesTableConfig: FirmwareTableConfigResolve
+      entitiesTableConfig: OtaUpdateTableConfigResolve
     }
   }
 ];
@@ -42,7 +42,7 @@ const routes: Routes = [
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule],
   providers: [
-    FirmwareTableConfigResolve
+    OtaUpdateTableConfigResolve
   ]
 })
-export class FirmwareRoutingModule{ }
+export class OtaUpdateRoutingModule { }

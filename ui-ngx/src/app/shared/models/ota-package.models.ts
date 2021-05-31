@@ -16,7 +16,7 @@
 
 import { BaseData } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
-import { FirmwareId } from '@shared/models/id/firmware-id';
+import { OtaPackageId } from '@shared/models/id/ota-package-id';
 import { DeviceProfileId } from '@shared/models/id/device-profile-id';
 
 export enum ChecksumAlgorithm {
@@ -41,21 +41,48 @@ export const ChecksumAlgorithmTranslationMap = new Map<ChecksumAlgorithm, string
   ]
 );
 
-export enum FirmwareType {
+export enum OtaUpdateType {
   FIRMWARE = 'FIRMWARE',
   SOFTWARE = 'SOFTWARE'
 }
 
-export const FirmwareTypeTranslationMap = new Map<FirmwareType, string>(
+export const OtaUpdateTypeTranslationMap = new Map<OtaUpdateType, string>(
   [
-    [FirmwareType.FIRMWARE, 'firmware.types.firmware'],
-    [FirmwareType.SOFTWARE, 'firmware.types.software']
+    [OtaUpdateType.FIRMWARE, 'ota-update.types.firmware'],
+    [OtaUpdateType.SOFTWARE, 'ota-update.types.software']
   ]
 );
 
-export interface FirmwareInfo extends BaseData<FirmwareId> {
+export interface OtaUpdateTranslation {
+  label: string;
+  required: string;
+  noFound: string;
+  noMatching: string;
+  hint: string;
+}
+
+export const OtaUpdateTranslation = new Map<OtaUpdateType, OtaUpdateTranslation>(
+  [
+    [OtaUpdateType.FIRMWARE, {
+      label: 'ota-update.assign-firmware',
+      required: 'ota-update.assign-firmware-required',
+      noFound: 'ota-update.no-firmware-text',
+      noMatching: 'ota-update.no-firmware-matching',
+      hint: 'ota-update.chose-firmware-distributed-device'
+    }],
+    [OtaUpdateType.SOFTWARE, {
+      label: 'ota-update.assign-software',
+      required: 'ota-update.assign-software-required',
+      noFound: 'ota-update.no-software-text',
+      noMatching: 'ota-update.no-software-matching',
+      hint: 'ota-update.chose-software-distributed-device'
+    }]
+  ]
+);
+
+export interface OtaPackageInfo extends BaseData<OtaPackageId> {
   tenantId?: TenantId;
-  type: FirmwareType;
+  type: OtaUpdateType;
   deviceProfileId?: DeviceProfileId;
   title?: string;
   version?: string;
@@ -68,7 +95,7 @@ export interface FirmwareInfo extends BaseData<FirmwareId> {
   additionalInfo?: any;
 }
 
-export interface Firmware extends FirmwareInfo {
+export interface OtaPackage extends OtaPackageInfo {
   file?: File;
   data: string;
 }

@@ -25,29 +25,29 @@ import { EntityComponent } from '@home/components/entity/entity.component';
 import {
   ChecksumAlgorithm,
   ChecksumAlgorithmTranslationMap,
-  Firmware,
-  FirmwareType,
-  FirmwareTypeTranslationMap
-} from '@shared/models/firmware.models';
+  OtaPackage,
+  OtaUpdateType,
+  OtaUpdateTypeTranslationMap
+} from '@shared/models/ota-package.models';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 
 @Component({
-  selector: 'tb-firmware',
-  templateUrl: './firmwares.component.html'
+  selector: 'tb-ota-update',
+  templateUrl: './ota-update.component.html'
 })
-export class FirmwaresComponent extends EntityComponent<Firmware> implements OnInit, OnDestroy {
+export class OtaUpdateComponent extends EntityComponent<OtaPackage> implements OnInit, OnDestroy {
 
   private destroy$ = new Subject();
 
   checksumAlgorithms = Object.values(ChecksumAlgorithm);
   checksumAlgorithmTranslationMap = ChecksumAlgorithmTranslationMap;
-  firmwareTypes = Object.values(FirmwareType);
-  firmwareTypeTranslationMap = FirmwareTypeTranslationMap;
+  packageTypes = Object.values(OtaUpdateType);
+  otaUpdateTypeTranslationMap = OtaUpdateTypeTranslationMap;
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
-              @Inject('entity') protected entityValue: Firmware,
-              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<Firmware>,
+              @Inject('entity') protected entityValue: OtaPackage,
+              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<OtaPackage>,
               public fb: FormBuilder) {
     super(store, fb, entityValue, entitiesTableConfigValue);
   }
@@ -66,12 +66,12 @@ export class FirmwaresComponent extends EntityComponent<Firmware> implements OnI
     }
   }
 
-  buildForm(entity: Firmware): FormGroup {
+  buildForm(entity: OtaPackage): FormGroup {
     const form = this.fb.group({
       title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
       version: [entity ? entity.version : '', [Validators.required, Validators.maxLength(255)]],
-      type: [entity?.type ? entity.type : FirmwareType.FIRMWARE, [Validators.required]],
-      deviceProfileId: [entity ? entity.deviceProfileId : null],
+      type: [entity?.type ? entity.type : OtaUpdateType.FIRMWARE, Validators.required],
+      deviceProfileId: [entity ? entity.deviceProfileId : null, Validators.required],
       checksumAlgorithm: [entity && entity.checksumAlgorithm ? entity.checksumAlgorithm : ChecksumAlgorithm.SHA256],
       checksum: [entity ? entity.checksum : '', Validators.maxLength(1020)],
       additionalInfo: this.fb.group(
@@ -90,7 +90,7 @@ export class FirmwaresComponent extends EntityComponent<Firmware> implements OnI
     return form;
   }
 
-  updateForm(entity: Firmware) {
+  updateForm(entity: OtaPackage) {
     this.entityForm.patchValue({
       title: entity.title,
       version: entity.version,
@@ -105,12 +105,18 @@ export class FirmwaresComponent extends EntityComponent<Firmware> implements OnI
         description: entity.additionalInfo ? entity.additionalInfo.description : ''
       }
     });
+    if (!this.isAdd && this.entityForm.enabled) {
+      this.entityForm.disable({emitEvent: false});
+      this.entityForm.get('additionalInfo').enable({emitEvent: false});
+      // this.entityForm.get('dataSize').disable({emitEvent: false});
+      // this.entityForm.get('contentType').disable({emitEvent: false});
+    }
   }
 
-  onFirmwareIdCopied() {
+  onPackageIdCopied() {
     this.store.dispatch(new ActionNotificationShow(
       {
-        message: this.translate.instant('firmware.idCopiedMessage'),
+        message: this.translate.instant('ota-update.idCopiedMessage'),
         type: 'success',
         duration: 750,
         verticalPosition: 'bottom',
@@ -118,10 +124,10 @@ export class FirmwaresComponent extends EntityComponent<Firmware> implements OnI
       }));
   }
 
-  onFirmwareChecksumCopied() {
+  onPackageChecksumCopied() {
     this.store.dispatch(new ActionNotificationShow(
       {
-        message: this.translate.instant('firmware.checksum-copied-message'),
+        message: this.translate.instant('ota-update.checksum-copied-message'),
         type: 'success',
         duration: 750,
         verticalPosition: 'bottom',
