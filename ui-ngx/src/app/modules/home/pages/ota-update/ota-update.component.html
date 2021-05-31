@@ -18,114 +18,112 @@
 <div class="tb-details-buttons" fxLayout.xs="column">
   <button mat-raised-button color="primary" fxFlex.xs
           [disabled]="(isLoading$ | async) || !entity?.hasData"
-          (click)="onEntityAction($event, 'uploadFirmware')"
+          (click)="onEntityAction($event, 'uploadPackage')"
           [fxShow]="!isEdit">
-    {{ 'firmware.download' | translate }}
+    {{ 'ota-update.download' | translate }}
   </button>
   <button mat-raised-button color="primary" fxFlex.xs
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
           [fxShow]="!hideDelete() && !isEdit">
-    {{ 'firmware.delete' | translate }}
+    {{ 'ota-update.delete' | translate }}
   </button>
   <div fxLayout="row" fxLayout.xs="column">
     <button mat-raised-button
             ngxClipboard
-            (cbOnSuccess)="onFirmwareIdCopied()"
+            (cbOnSuccess)="onPackageIdCopied()"
             [cbContent]="entity?.id?.id"
             [fxShow]="!isEdit">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-      <span translate>firmware.copyId</span>
+      <span translate>ota-update.copyId</span>
     </button>
     <button mat-raised-button
             ngxClipboard
-            (cbOnSuccess)="onFirmwareChecksumCopied()"
+            (cbOnSuccess)="onPackageChecksumCopied()"
             [cbContent]="entity?.checksum"
             [fxShow]="!isEdit">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-      <span translate>firmware.copy-checksum</span>
+      <span translate>ota-update.copy-checksum</span>
     </button>
   </div>
 </div>
-<div class="mat-padding" fxLayout="column">
+<div class="mat-padding" fxLayout="column" fxLayoutGap="8px">
   <form [formGroup]="entityForm">
-    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
-      <mat-hint class="tb-hint" translate *ngIf="isAdd">firmware.warning-after-save-no-edit</mat-hint>
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit" fxLayout="column" fxLayoutGap="8px">
       <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
         <mat-form-field class="mat-block" fxFlex="45">
-          <mat-label translate>firmware.title</mat-label>
+          <mat-label translate>ota-update.title</mat-label>
           <input matInput formControlName="title" type="text" required [readonly]="!isAdd">
           <mat-error *ngIf="entityForm.get('title').hasError('required')">
-            {{ 'firmware.title-required' | translate }}
+            {{ 'ota-update.title-required' | translate }}
           </mat-error>
         </mat-form-field>
         <mat-form-field class="mat-block" fxFlex>
-          <mat-label translate>firmware.version</mat-label>
+          <mat-label translate>ota-update.version</mat-label>
           <input matInput formControlName="version" type="text" required [readonly]="!isAdd">
           <mat-error *ngIf="entityForm.get('version').hasError('required')">
-            {{ 'firmware.version-required' | translate }}
+            {{ 'ota-update.version-required' | translate }}
           </mat-error>
         </mat-form-field>
       </div>
-      <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
-        <mat-form-field fxFlex="45">
-          <mat-label translate>firmware.type</mat-label>
-          <input *ngIf="!isAdd" matInput type="text" [readonly]="isEdit" [disabled]="!isEdit"
-                 value="{{ firmwareTypeTranslationMap.get(entityForm.get('type').value) | translate }}">
-          <mat-select formControlName="type" required *ngIf="isAdd">
-            <mat-option *ngFor="let firmwareType of firmwareTypes" [value]="firmwareType">
-              {{ firmwareTypeTranslationMap.get(firmwareType) | translate }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <tb-device-profile-autocomplete
-          formControlName="deviceProfileId" fxFlex
-          [editProfileEnabled]="false">
-        </tb-device-profile-autocomplete>
-      </div>
+      <tb-device-profile-autocomplete
+        formControlName="deviceProfileId"
+        required
+        [hint]="'ota-update.chose-compatible-device-profile'"
+        [editProfileEnabled]="false"
+        [addNewProfile]="false"
+        [selectDefaultProfile]="true">
+      </tb-device-profile-autocomplete>
+      <mat-form-field class="mat-block">
+        <mat-label translate>ota-update.package-type</mat-label>
+        <mat-select formControlName="type" required>
+          <mat-option *ngFor="let packageType of packageTypes" [value]="packageType">
+            {{ otaUpdateTypeTranslationMap.get(packageType) | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <div class="mat-caption" translate *ngIf="isAdd">ota-update.warning-after-save-no-edit</div>
       <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayoutGap.sm="8px" fxLayout.xs="column" fxLayout.md="column">
         <mat-form-field class="mat-block" fxFlex="33">
-          <mat-label translate>firmware.checksum-algorithm</mat-label>
-          <input *ngIf="!isAdd" matInput type="text" [readonly]="isEdit" [disabled]="!isEdit"
-                 value="{{ checksumAlgorithmTranslationMap.get(entityForm.get('checksumAlgorithm').value) | translate }}">
-          <mat-select formControlName="checksumAlgorithm" *ngIf="isAdd">
+          <mat-label translate>ota-update.checksum-algorithm</mat-label>
+          <mat-select formControlName="checksumAlgorithm">
             <mat-option *ngFor="let checksumAlgorithm of checksumAlgorithms" [value]="checksumAlgorithm">
               {{ checksumAlgorithmTranslationMap.get(checksumAlgorithm) }}
             </mat-option>
           </mat-select>
         </mat-form-field>
         <mat-form-field class="mat-block" fxFlex>
-          <mat-label translate>firmware.checksum</mat-label>
+          <mat-label translate>ota-update.checksum</mat-label>
           <input matInput formControlName="checksum" type="text" [readonly]="!isAdd">
         </mat-form-field>
       </div>
-      <section *ngIf="isAdd" style="padding-top: 8px">
+      <section *ngIf="isAdd">
         <tb-file-input
           formControlName="file"
           workFromFileObj="true"
           required
-          dropLabel="{{'resource.drop-file' | translate}}">
+          dropLabel="{{'ota-update.drop-file' | translate}}">
         </tb-file-input>
       </section>
       <section *ngIf="!isAdd">
         <div fxLayout="row" fxLayoutGap.gt-md="8px" fxLayoutGap.sm="8px" fxLayout.xs="column" fxLayout.md="column">
           <mat-form-field class="mat-block" fxFlex="33">
-            <mat-label translate>firmware.file-name</mat-label>
+            <mat-label translate>ota-update.file-name</mat-label>
             <input matInput formControlName="fileName" type="text" readonly>
           </mat-form-field>
           <mat-form-field class="mat-block" fxFlex>
-            <mat-label translate>firmware.file-size-bytes</mat-label>
+            <mat-label translate>ota-update.file-size-bytes</mat-label>
             <input matInput formControlName="dataSize" type="text" readonly>
           </mat-form-field>
           <mat-form-field class="mat-block" fxFlex>
-            <mat-label translate>firmware.content-type</mat-label>
+            <mat-label translate>ota-update.content-type</mat-label>
             <input matInput formControlName="contentType" type="text" readonly>
           </mat-form-field>
         </div>
       </section>
       <div formGroupName="additionalInfo">
         <mat-form-field class="mat-block">
-          <mat-label translate>firmware.description</mat-label>
+          <mat-label translate>ota-update.description</mat-label>
           <textarea matInput formControlName="description" rows="2"></textarea>
         </mat-form-field>
       </div>

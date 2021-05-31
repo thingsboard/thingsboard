@@ -14,22 +14,13 @@
 /// limitations under the License.
 ///
 
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { SharedModule } from '@shared/shared.module';
-import { HomeComponentsModule } from '@home/components/home-components.module';
-import { FirmwareRoutingModule } from '@home/pages/firmware/firmware-routing.module';
-import { FirmwaresComponent } from '@home/pages/firmware/firmwares.component';
+import { EntityId } from '@shared/models/id/entity-id';
+import { EntityType } from '@shared/models/entity-type.models';
 
-@NgModule({
-  declarations: [
-    FirmwaresComponent
-  ],
-  imports: [
-    CommonModule,
-    SharedModule,
-    HomeComponentsModule,
-    FirmwareRoutingModule
-  ]
-})
-export class FirmwareModule { }
+export class OtaPackageId implements EntityId {
+  entityType = EntityType.OTA_PACKAGE;
+  id: string;
+  constructor(id: string) {
+    this.id = id;
+  }
+}
