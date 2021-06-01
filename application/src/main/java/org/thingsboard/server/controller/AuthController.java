@@ -25,6 +25,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -166,15 +167,14 @@ public class AuthController extends BaseController {
             mailService.testConnection();
             String email = resetPasswordByEmailRequest.get("email").asText();
             UserCredentials userCredentials = userService.requestPasswordReset(TenantId.SYS_TENANT_ID, email);
-            if(userCredentials == null) {
-                return;
-            }
             User user = userService.findUserById(TenantId.SYS_TENANT_ID, userCredentials.getUserId());
             String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
             String resetUrl = String.format("%s/api/noauth/resetPassword?resetToken=%s", baseUrl,
                     userCredentials.getResetToken());
 
             mailService.sendResetPasswordEmail(resetUrl, email);
+        } catch (UsernameNotFoundException use) {
+            log.error(use.getMessage());
         } catch (Exception e) {
             throw handleException(e);
         }

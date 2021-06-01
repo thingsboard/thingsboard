@@ -25,7 +25,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
@@ -49,7 +51,6 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
-import org.thingsboard.common.util.JacksonUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -194,13 +195,11 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         DataValidator.validateEmail(email);
         User user = userDao.findByEmail(tenantId, email);
         if (user == null) {
-            log.error(String.format("Unable to find user by email [%s]", email));
-            return null;
+            throw new UsernameNotFoundException(String.format("Unable to find user by email [%s]", email));
         }
         UserCredentials userCredentials = userCredentialsDao.findByUserId(tenantId, user.getUuidId());
         if (!userCredentials.isEnabled()) {
-            log.error("Unable to reset password for inactive user");
-            return null;
+            throw new UsernameNotFoundException(String.format("Unable to find user by email [%s]", email));
         }
         userCredentials.setResetToken(RandomStringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
         return saveUserCredentials(tenantId, userCredentials);
