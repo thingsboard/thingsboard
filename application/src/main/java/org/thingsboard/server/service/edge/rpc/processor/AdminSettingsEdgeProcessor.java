@@ -18,6 +18,7 @@ package org.thingsboard.server.service.edge.rpc.processor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.gen.edge.AdminSettingsUpdateMsg;
 import org.thingsboard.server.gen.edge.DownlinkMsg;
@@ -34,6 +35,7 @@ public class AdminSettingsEdgeProcessor extends BaseEdgeProcessor {
         AdminSettings adminSettings = mapper.convertValue(edgeEvent.getBody(), AdminSettings.class);
         AdminSettingsUpdateMsg t = adminSettingsMsgConstructor.constructAdminSettingsUpdateMsg(adminSettings);
         return DownlinkMsg.newBuilder()
+                .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                 .addAllAdminSettingsUpdateMsg(Collections.singletonList(t))
                 .build();
     }

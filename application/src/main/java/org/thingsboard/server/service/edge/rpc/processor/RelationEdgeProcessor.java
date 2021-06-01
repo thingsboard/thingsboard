@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -119,6 +120,7 @@ public class RelationEdgeProcessor extends BaseEdgeProcessor {
         EntityRelation entityRelation = mapper.convertValue(edgeEvent.getBody(), EntityRelation.class);
         RelationUpdateMsg r = relationMsgConstructor.constructRelationUpdatedMsg(msgType, entityRelation);
         return DownlinkMsg.newBuilder()
+                .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                 .addAllRelationUpdateMsg(Collections.singletonList(r))
                 .build();
     }

@@ -17,6 +17,7 @@ package org.thingsboard.server.service.edge.rpc.processor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -50,6 +51,7 @@ public class EntityViewEdgeProcessor extends BaseEdgeProcessor {
                     EntityViewUpdateMsg entityViewUpdateMsg =
                             entityViewMsgConstructor.constructEntityViewUpdatedMsg(msgType, entityView, customerId);
                     downlinkMsg = DownlinkMsg.newBuilder()
+                            .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addAllEntityViewUpdateMsg(Collections.singletonList(entityViewUpdateMsg))
                             .build();
                 }
@@ -59,6 +61,7 @@ public class EntityViewEdgeProcessor extends BaseEdgeProcessor {
                 EntityViewUpdateMsg entityViewUpdateMsg =
                         entityViewMsgConstructor.constructEntityViewDeleteMsg(entityViewId);
                 downlinkMsg = DownlinkMsg.newBuilder()
+                        .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addAllEntityViewUpdateMsg(Collections.singletonList(entityViewUpdateMsg))
                         .build();
                 break;

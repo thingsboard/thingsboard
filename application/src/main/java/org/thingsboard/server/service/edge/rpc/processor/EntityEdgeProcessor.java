@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -66,6 +67,7 @@ public class EntityEdgeProcessor extends BaseEdgeProcessor {
             DeviceUpdateMsg d = deviceMsgConstructor
                     .constructDeviceUpdatedMsg(UpdateMsgType.ENTITY_MERGE_RPC_MESSAGE, device, customerId, conflictName);
             downlinkMsg = DownlinkMsg.newBuilder()
+                    .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                     .addAllDeviceUpdateMsg(Collections.singletonList(d))
                     .build();
         }
@@ -81,6 +83,7 @@ public class EntityEdgeProcessor extends BaseEdgeProcessor {
                     .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
                     .build();
             DownlinkMsg.Builder builder = DownlinkMsg.newBuilder()
+                    .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                     .addAllDeviceCredentialsRequestMsg(Collections.singletonList(deviceCredentialsRequestMsg));
             downlinkMsg = builder.build();
         }

@@ -18,6 +18,7 @@ package org.thingsboard.server.service.edge.rpc.processor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -53,6 +54,7 @@ public class DashboardEdgeProcessor extends BaseEdgeProcessor {
                     DashboardUpdateMsg dashboardUpdateMsg =
                             dashboardMsgConstructor.constructDashboardUpdatedMsg(msgType, dashboard, customerId);
                     downlinkMsg = DownlinkMsg.newBuilder()
+                            .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addAllDashboardUpdateMsg(Collections.singletonList(dashboardUpdateMsg))
                             .build();
                 }
@@ -62,6 +64,7 @@ public class DashboardEdgeProcessor extends BaseEdgeProcessor {
                 DashboardUpdateMsg dashboardUpdateMsg =
                         dashboardMsgConstructor.constructDashboardDeleteMsg(dashboardId);
                 downlinkMsg = DownlinkMsg.newBuilder()
+                        .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addAllDashboardUpdateMsg(Collections.singletonList(dashboardUpdateMsg))
                         .build();
                 break;

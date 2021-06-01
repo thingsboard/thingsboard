@@ -121,6 +121,7 @@ public class AlarmEdgeProcessor extends BaseEdgeProcessor {
             Alarm alarm = alarmService.findAlarmByIdAsync(edgeEvent.getTenantId(), alarmId).get();
             if (alarm != null) {
                 downlinkMsg = DownlinkMsg.newBuilder()
+                        .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addAllAlarmUpdateMsg(Collections.singletonList(alarmMsgConstructor.constructAlarmUpdatedMsg(edge.getTenantId(), msgType, alarm)))
                         .build();
             }

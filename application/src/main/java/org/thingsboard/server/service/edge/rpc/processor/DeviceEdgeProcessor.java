@@ -24,10 +24,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -48,7 +50,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.gen.edge.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
@@ -308,6 +309,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                     DeviceUpdateMsg deviceUpdateMsg =
                             deviceMsgConstructor.constructDeviceUpdatedMsg(msgType, device, customerId, null);
                     downlinkMsg = DownlinkMsg.newBuilder()
+                            .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addAllDeviceUpdateMsg(Collections.singletonList(deviceUpdateMsg))
                             .build();
                 }
@@ -317,6 +319,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                 DeviceUpdateMsg deviceUpdateMsg =
                         deviceMsgConstructor.constructDeviceDeleteMsg(deviceId);
                 downlinkMsg = DownlinkMsg.newBuilder()
+                        .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addAllDeviceUpdateMsg(Collections.singletonList(deviceUpdateMsg))
                         .build();
                 break;
@@ -326,6 +329,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                     DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg =
                             deviceMsgConstructor.constructDeviceCredentialsUpdatedMsg(deviceCredentials);
                     downlinkMsg = DownlinkMsg.newBuilder()
+                            .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addAllDeviceCredentialsUpdateMsg(Collections.singletonList(deviceCredentialsUpdateMsg))
                             .build();
                 }
@@ -339,6 +343,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
         DeviceRpcCallMsg deviceRpcCallMsg =
                 deviceMsgConstructor.constructDeviceRpcCallMsg(edgeEvent.getEntityId(), edgeEvent.getBody());
         return DownlinkMsg.newBuilder()
+                .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                 .addAllDeviceRpcCallMsg(Collections.singletonList(deviceRpcCallMsg))
                 .build();
     }

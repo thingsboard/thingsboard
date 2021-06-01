@@ -17,6 +17,7 @@ package org.thingsboard.server.service.edge.rpc.processor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -46,12 +47,14 @@ public class UserEdgeProcessor extends BaseEdgeProcessor {
                 if (user != null) {
                     CustomerId customerId = getCustomerIdIfEdgeAssignedToCustomer(user, edge);
                     downlinkMsg = DownlinkMsg.newBuilder()
+                            .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addAllUserUpdateMsg(Collections.singletonList(userMsgConstructor.constructUserUpdatedMsg(msgType, user, customerId)))
                             .build();
                 }
                 break;
             case DELETED:
                 downlinkMsg = DownlinkMsg.newBuilder()
+                        .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addAllUserUpdateMsg(Collections.singletonList(userMsgConstructor.constructUserDeleteMsg(userId)))
                         .build();
                 break;
@@ -61,6 +64,7 @@ public class UserEdgeProcessor extends BaseEdgeProcessor {
                     UserCredentialsUpdateMsg userCredentialsUpdateMsg =
                             userMsgConstructor.constructUserCredentialsUpdatedMsg(userCredentialsByUserId);
                     downlinkMsg = DownlinkMsg.newBuilder()
+                            .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addAllUserCredentialsUpdateMsg(Collections.singletonList(userCredentialsUpdateMsg))
                             .build();
                 }

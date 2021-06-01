@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -83,7 +84,9 @@ import org.thingsboard.server.service.edge.rpc.fetch.TenantWidgetsBundlesEdgeEve
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -108,6 +111,8 @@ public final class EdgeGrpcSession implements Closeable {
     private final Consumer<EdgeId> sessionCloseListener;
     private final ObjectMapper mapper;
 
+    private final Map<Integer, DownlinkMsg> pendingMsgsMap;
+
     private EdgeContextComponent ctx;
     private Edge edge;
     private StreamObserver<RequestMsg> inputStream;
@@ -128,6 +133,7 @@ public final class EdgeGrpcSession implements Closeable {
         this.sessionCloseListener = sessionCloseListener;
         this.mapper = mapper;
         this.syncExecutorService = syncExecutorService;
+        this.pendingMsgsMap = new HashMap<>();
         initInputStream();
     }
 
@@ -214,6 +220,7 @@ public final class EdgeGrpcSession implements Closeable {
                 startProcessingEdgeEvents(new DashboardsEdgeEventFetcher(ctx.getDashboardService()));
 
                 DownlinkMsg syncCompleteDownlinkMsg = DownlinkMsg.newBuilder()
+                        .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .setSyncCompletedMsg(SyncCompletedMsg.newBuilder().build())
                         .build();
                 sendDownlinkMsgsPack(Collections.singletonList(syncCompleteDownlinkMsg));
@@ -228,7 +235,9 @@ public final class EdgeGrpcSession implements Closeable {
         Futures.addCallback(future, new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable List<Void> result) {
-                UplinkResponseMsg uplinkResponseMsg = UplinkResponseMsg.newBuilder().setSuccess(true).build();
+                UplinkResponseMsg uplinkResponseMsg = UplinkResponseMsg.newBuilder()
+                        .setUplinkMsgId(uplinkMsg.getUplinkMsgId())
+                        .setSuccess(true).build();
                 sendDownlinkMsg(ResponseMsg.newBuilder()
                         .setUplinkResponseMsg(uplinkResponseMsg)
                         .build());
@@ -236,7 +245,9 @@ public final class EdgeGrpcSession implements Closeable {
 
             @Override
             public void onFailure(Throwable t) {
-                UplinkResponseMsg uplinkResponseMsg = UplinkResponseMsg.newBuilder().setSuccess(false).setErrorMsg(t.getMessage()).build();
+                UplinkResponseMsg uplinkResponseMsg = UplinkResponseMsg.newBuilder()
+                        .setUplinkMsgId(uplinkMsg.getUplinkMsgId())
+                        .setSuccess(false).setErrorMsg(t.getMessage()).build();
                 sendDownlinkMsg(ResponseMsg.newBuilder()
                         .setUplinkResponseMsg(uplinkResponseMsg)
                         .build());
@@ -247,6 +258,7 @@ public final class EdgeGrpcSession implements Closeable {
     private void onDownlinkResponse(DownlinkResponseMsg msg) {
         try {
             if (msg.getSuccess()) {
+                pendingMsgsMap.remove(msg.getDownlinkMsgId());
                 log.debug("[{}] Msg has been processed successfully! {}", edge.getRoutingKey(), msg);
             } else {
                 log.error("[{}] Msg processing failed! Error msg: {}", edge.getRoutingKey(), msg.getErrorMsg());
@@ -325,17 +337,19 @@ public final class EdgeGrpcSession implements Closeable {
 
     private boolean sendDownlinkMsgsPack(List<DownlinkMsg> downlinkMsgsPack) throws InterruptedException {
         boolean success;
+        pendingMsgsMap.clear();
+        downlinkMsgsPack.forEach(msg -> pendingMsgsMap.put(msg.getDownlinkMsgId(), msg));
         do {
-            log.trace("[{}] [{}] downlink msg(s) are going to be send.", this.sessionId, downlinkMsgsPack.size());
-            latch = new CountDownLatch(downlinkMsgsPack.size());
-            for (DownlinkMsg downlinkMsg : downlinkMsgsPack) {
+            log.trace("[{}] [{}] downlink msg(s) are going to be send.", this.sessionId, pendingMsgsMap.values().size());
+            latch = new CountDownLatch(pendingMsgsMap.values().size());
+            for (DownlinkMsg downlinkMsg : pendingMsgsMap.values()) {
                 sendDownlinkMsg(ResponseMsg.newBuilder()
                         .setDownlinkMsg(downlinkMsg)
                         .build());
             }
             success = latch.await(10, TimeUnit.SECONDS);
             if (!success) {
-                log.warn("[{}] Failed to deliver the batch: {}", this.sessionId, downlinkMsgsPack);
+                log.warn("[{}] Failed to deliver the batch: {}", this.sessionId, pendingMsgsMap.values());
             }
             if (isConnected() && !success) {
                 try {
@@ -383,6 +397,8 @@ public final class EdgeGrpcSession implements Closeable {
                 case RPC_CALL:
                     downlinkMsg = ctx.getDeviceProcessor().processRpcCallMsgToEdge(edgeEvent);
                     break;
+                default:
+                    log.warn("[{}][{}] Unsupported action type [{}]", edge.getTenantId(), this.sessionId, edgeEvent.getAction());
             }
         } catch (Exception e) {
             log.error("[{}][{}] Exception during converting edge event to downlink msg", edge.getTenantId(), this.sessionId, e);

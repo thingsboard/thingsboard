@@ -434,11 +434,13 @@ message UplinkMsg {
 message UplinkResponseMsg {
   bool success = 1;
   string errorMsg = 2;
+  int32 uplinkMsgId = 3;
 }
 
 message DownlinkResponseMsg {
   bool success = 1;
   string errorMsg = 2;
+  int32 downlinkMsgId = 3;
 }
 
 message DownlinkMsg {
