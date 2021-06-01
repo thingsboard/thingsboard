@@ -36,11 +36,12 @@ let producer;
 const configEntries = [];
 
 let batchMessages = [];
+let batchResolvers = [];
 let sendLoopInstance;
 
 function KafkaProducer() {
     this.send = (responseTopic, scriptId, rawResponse, headers) => {
-    logger.debug('Pending queue response, scriptId: [%s]', scriptId);
+        logger.debug('Pending queue response, scriptId: [%s]', scriptId);
         const message = {
             topic: responseTopic,
             messages: [{
@@ -50,17 +51,22 @@ function KafkaProducer() {
             }]
         };
 
-        pushMessageToSendLater(message);
-        return {};
+        return pushMessageToSendLater(message);
     }
 }
 
 function pushMessageToSendLater(message) {
+    let resolver;
+    const promise = new Promise((resolve, reject) => {
+        resolver = resolve;
+    });
     batchMessages.push(message);
+    batchResolvers.push(resolver);
     if (batchMessages.length >= maxBatchSize) {
         sendMessagesAsBatch();
         sendLoopWithLinger(); //reset loop function and reschedule new linger
     }
+    return promise;
 }
 
 function sendLoopWithLinger() {
@@ -77,22 +83,27 @@ function sendMessagesAsBatch() {
      if (batchMessages.length > 0) {
          logger.debug('sendMessagesAsBatch, length: [%s]', batchMessages.length);
          const messagesToSend = batchMessages;
+         const resolvers = batchResolvers;
          batchMessages = [];
+         batchResolvers = [];
          producer.sendBatch({
              topicMessages: messagesToSend,
              acks: acks,
              compression: compressionType
          }).then(
-                () => {
-                    logger.debug('Response sent to kafka, length: [%s]', messagesToSend.length);
-                },
-                (err) => {
-                    logger.error('Failed to send kafka, length: [%s], pending to reprocess msgs', messagesToSend.length);
-                    batchMessages = messagesToSend.concat(batchMessages);
-                    logger.error(err.stack);
+             () => {
+                logger.debug('Response batch sent to kafka, length: [%s]', messagesToSend.length);
+                for (let i = 0; i < promisesToSend.length; i++) {
+                    resolvers[i]();
                 }
+            },
+            (err) => {
+                logger.error('Failed batch send to kafka, length: [%s], pending to reprocess msgs', messagesToSend.length);
+                logger.error(err.stack);
+                batchMessages = messagesToSend.concat(batchMessages);
+                batchResolvers = resolvers.concat(batchResolvers); //promises will never be rejected. Will retry forever
+            }
          );
-
      }
 }
 

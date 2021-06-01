@@ -180,19 +180,17 @@ JsInvokeMessageProcessor.prototype.sendResponse = function (requestId, responseT
     var remoteResponse = createRemoteResponse(requestId, compileResponse, invokeResponse, releaseResponse);
     var rawResponse = Buffer.from(JSON.stringify(remoteResponse), 'utf8');
     logger.debug('[%s] Sending response to queue, scriptId: [%s]', requestId, scriptId);
-    this.producer.send(responseTopic, scriptId, rawResponse, headers);
-//TODO put error msg for other queues implementation except Kafka
-//    .then(
-//        () => {
-//            logger.info('[%s] Response sent to queue, took [%s]ms, scriptId: [%s]', requestId, (performance.now() - tStartSending), scriptId);
-//        },
-//        (err) => {
-//            if (err) {
-//                logger.error('[%s] Failed to send response to queue: %s', requestId, err.message);
-//                logger.error(err.stack);
-//            }
-//        }
-//    );
+    this.producer.send(responseTopic, scriptId, rawResponse, headers).then(
+        () => {
+            logger.debug('[%s] Response sent to queue, took [%s]ms, scriptId: [%s]', requestId, (performance.now() - tStartSending), scriptId);
+        },
+        (err) => {
+            if (err) {
+                logger.error('[%s] Failed to send response to queue: %s', requestId, err.message);
+                logger.error(err.stack);
+            }
+        }
+    );
 }
 
 JsInvokeMessageProcessor.prototype.getOrCompileScript = function(scriptId, scriptBody) {
