@@ -31,7 +31,6 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
@@ -206,11 +205,7 @@ public abstract class AbstractOAuth2ClientMapper {
     }
 
     private Optional<DashboardId> getDashboardId(TenantId tenantId, String dashboardName) {
-        PageLink searchTextLink = new PageLink(1, 0, dashboardName);
-        PageData<DashboardInfo> dashboardsPage = dashboardService.findDashboardsByTenantId(tenantId, searchTextLink);
-        return dashboardsPage.getData().stream()
-                .findAny()
-                .map(IdBased::getId);
+        return Optional.of(dashboardService.findFirstDashboardInfoByTenantIdAndName(tenantId, dashboardName).getId());
     }
 
     private Optional<DashboardId> getDashboardId(TenantId tenantId, CustomerId customerId, String dashboardName) {
