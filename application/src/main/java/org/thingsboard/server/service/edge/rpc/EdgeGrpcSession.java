@@ -83,8 +83,10 @@ import org.thingsboard.server.service.edge.rpc.fetch.TenantWidgetsBundlesEdgeEve
 
 import java.io.Closeable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -103,6 +105,7 @@ import java.util.stream.Collectors;
 public final class EdgeGrpcSession implements Closeable {
 
     private static final ReentrantLock downlinkMsgLock = new ReentrantLock();
+    private static final ReentrantLock downlinkMsgsPackLock = new ReentrantLock();
 
     private static final String QUEUE_START_TS_ATTR_KEY = "queueStartTs";
 
@@ -111,7 +114,7 @@ public final class EdgeGrpcSession implements Closeable {
     private final Consumer<EdgeId> sessionCloseListener;
     private final ObjectMapper mapper;
 
-    private final Map<Integer, DownlinkMsg> pendingMsgsMap;
+    private final Map<Integer, DownlinkMsg> pendingMsgsMap = new HashMap<>();
 
     private EdgeContextComponent ctx;
     private Edge edge;
@@ -133,7 +136,6 @@ public final class EdgeGrpcSession implements Closeable {
         this.sessionCloseListener = sessionCloseListener;
         this.mapper = mapper;
         this.syncExecutorService = syncExecutorService;
-        this.pendingMsgsMap = new HashMap<>();
         initInputStream();
     }
 
@@ -197,6 +199,7 @@ public final class EdgeGrpcSession implements Closeable {
 
     public void startSyncProcess(TenantId tenantId, EdgeId edgeId) {
         log.trace("[{}][{}] Staring edge sync process", tenantId, edgeId);
+        syncCompleted = false;
         syncExecutorService.submit(() -> {
             try {
                 startProcessingEdgeEvents(new SystemWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
@@ -336,30 +339,36 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     private boolean sendDownlinkMsgsPack(List<DownlinkMsg> downlinkMsgsPack) throws InterruptedException {
-        boolean success;
-        pendingMsgsMap.clear();
-        downlinkMsgsPack.forEach(msg -> pendingMsgsMap.put(msg.getDownlinkMsgId(), msg));
-        do {
-            log.trace("[{}] [{}] downlink msg(s) are going to be send.", this.sessionId, pendingMsgsMap.values().size());
-            latch = new CountDownLatch(pendingMsgsMap.values().size());
-            for (DownlinkMsg downlinkMsg : pendingMsgsMap.values()) {
-                sendDownlinkMsg(ResponseMsg.newBuilder()
-                        .setDownlinkMsg(downlinkMsg)
-                        .build());
-            }
-            success = latch.await(10, TimeUnit.SECONDS);
-            if (!success) {
-                log.warn("[{}] Failed to deliver the batch: {}", this.sessionId, pendingMsgsMap.values());
-            }
-            if (isConnected() && !success) {
-                try {
-                    Thread.sleep(ctx.getEdgeEventStorageSettings().getSleepIntervalBetweenBatches());
-                } catch (InterruptedException e) {
-                    log.error("[{}] Error during sleep between next send of single downlink msg", this.sessionId, e);
+        try {
+            downlinkMsgsPackLock.lock();
+            boolean success;
+            pendingMsgsMap.clear();
+            downlinkMsgsPack.forEach(msg -> pendingMsgsMap.put(msg.getDownlinkMsgId(), msg));
+            do {
+                log.trace("[{}] [{}] downlink msg(s) are going to be send.", this.sessionId, pendingMsgsMap.values().size());
+                latch = new CountDownLatch(pendingMsgsMap.values().size());
+                Collection<DownlinkMsg> copy = new ArrayList<>(pendingMsgsMap.values());
+                for (DownlinkMsg downlinkMsg : copy) {
+                    sendDownlinkMsg(ResponseMsg.newBuilder()
+                            .setDownlinkMsg(downlinkMsg)
+                            .build());
                 }
-            }
-        } while (isConnected() && !success);
-        return success;
+                success = latch.await(10, TimeUnit.SECONDS);
+                if (!success || pendingMsgsMap.values().size() > 0) {
+                    log.warn("[{}] Failed to deliver the batch: {}", this.sessionId, pendingMsgsMap.values());
+                }
+                if (isConnected() && (!success || pendingMsgsMap.values().size() > 0)) {
+                    try {
+                        Thread.sleep(ctx.getEdgeEventStorageSettings().getSleepIntervalBetweenBatches());
+                    } catch (InterruptedException e) {
+                        log.error("[{}] Error during sleep between batches", this.sessionId, e);
+                    }
+                }
+            } while (isConnected() && (!success || pendingMsgsMap.values().size() > 0));
+            return success;
+        } finally {
+            downlinkMsgsPackLock.unlock();
+        }
     }
 
     private DownlinkMsg convertToDownlinkMsg(EdgeEvent edgeEvent) {
