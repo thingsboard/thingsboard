@@ -93,7 +93,7 @@ function sendMessagesAsBatch() {
          }).then(
              () => {
                 logger.debug('Response batch sent to kafka, length: [%s]', messagesToSend.length);
-                for (let i = 0; i < promisesToSend.length; i++) {
+                for (let i = 0; i < resolvers.length; i++) {
                     resolvers[i]();
                 }
             },
