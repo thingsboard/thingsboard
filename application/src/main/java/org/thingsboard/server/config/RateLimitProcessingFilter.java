@@ -56,24 +56,30 @@ public class RateLimitProcessingFilter extends GenericFilterBean {
         SecurityUser user = getCurrentUser();
         if (user != null && !user.isSystemAdmin()) {
 
-            var profile= tenantProfileCache.get(user.getTenantId()).getDefaultTenantProfileConfiguration();
+            var profileConfiguration = tenantProfileCache.get(user.getTenantId()).getDefaultTenantProfileConfiguration();
 
-            if(profile != null) {
-                if (StringUtils.isNotEmpty(profile.getRateLimitsTenantConfiguration())) {
+            if(profileConfiguration != null) {
+                if (user.isTenantAdmin() && StringUtils.isNotEmpty(profileConfiguration.getRateLimitsTenantConfiguration())) {
 
-                    TbRateLimits rateLimits = perTenantLimits.computeIfAbsent(
-                            user.getTenantId(), id -> new TbRateLimits(profile.getRateLimitsTenantConfiguration())
-                    );
+                    TbRateLimits rateLimits = perTenantLimits.get(user.getTenantId());
+                    if(rateLimits == null || !rateLimits.getCurrentConfig().equals(profileConfiguration.getRateLimitsTenantConfiguration())) {
+                        rateLimits = new TbRateLimits(profileConfiguration.getRateLimitsTenantConfiguration());
+                        perTenantLimits.put(user.getTenantId(), rateLimits);
+                    }
+
                     if (!rateLimits.tryConsume()) {
                         errorResponseHandler.handle(new TbRateLimitsException(EntityType.TENANT), (HttpServletResponse) response);
                         return;
                     }
                 }
-                if (StringUtils.isNotEmpty(profile.getRateLimitsCustomerConfiguration())) {
+                if (user.isCustomerUser() && StringUtils.isNotEmpty(profileConfiguration.getRateLimitsCustomerConfiguration())) {
 
-                    TbRateLimits rateLimits = perCustomerLimits.computeIfAbsent(
-                            user.getCustomerId(), id -> new TbRateLimits(profile.getRateLimitsCustomerConfiguration())
-                    );
+                    TbRateLimits rateLimits = perCustomerLimits.get(user.getCustomerId());
+                    if(rateLimits == null || !rateLimits.getCurrentConfig().equals(profileConfiguration.getRateLimitsCustomerConfiguration())) {
+                        rateLimits = new TbRateLimits(profileConfiguration.getRateLimitsCustomerConfiguration());
+                        perCustomerLimits.put(user.getCustomerId(), rateLimits);
+                    }
+
                     if (!rateLimits.tryConsume()) {
                         errorResponseHandler.handle(new TbRateLimitsException(EntityType.CUSTOMER), (HttpServletResponse) response);
                         return;

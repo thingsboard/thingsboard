@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNodeConfiguration;
 import org.thingsboard.server.common.data.EntityView;
@@ -48,7 +49,6 @@ import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.service.install.InstallScripts;
 
 import java.util.ArrayList;
@@ -88,6 +88,9 @@ public class DefaultDataUpdateService implements DataUpdateService {
     @Autowired
     private AlarmDao alarmDao;
 
+    @Autowired
+    private RateLimitsUpdater rateLimitsUpdater;
+
     @Override
     public void updateData(String fromVersion) throws Exception {
         switch (fromVersion) {
@@ -108,6 +111,8 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 tenantsDefaultEdgeRuleChainUpdater.updateEntities(null);
                 tenantsAlarmsCustomerUpdater.updateEntities(null);
                 break;
+            case "3.3.0":
+                rateLimitsUpdater.updateEntities(null);
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
         }
