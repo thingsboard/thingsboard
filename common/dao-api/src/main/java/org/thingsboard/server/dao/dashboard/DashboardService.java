@@ -58,4 +58,6 @@ public interface DashboardService {
     Dashboard unassignDashboardFromEdge(TenantId tenantId, DashboardId dashboardId, EdgeId edgeId);
 
     PageData<DashboardInfo> findDashboardsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink);
+
+    DashboardInfo findFirstDashboardInfoByTenantIdAndName(TenantId tenantId, String name);
 }
