@@ -45,9 +45,9 @@ function KafkaProducer() {
         const message = {
             topic: responseTopic,
             messages: [{
-                 key: scriptId,
-                 value: rawResponse,
-                 headers: headers.data
+                key: scriptId,
+                value: rawResponse,
+                headers: headers.data
             }]
         };
 
@@ -70,28 +70,28 @@ function pushMessageToSendLater(message) {
 }
 
 function sendLoopWithLinger() {
-     if (sendLoopInstance) {
+    if (sendLoopInstance) {
         logger.debug("Clear sendLoop scheduler. Starting new send loop with linger [%s]", linger);
         clearInterval(sendLoopInstance);
-     } else {
+    } else {
         logger.debug("Starting new send loop with linger [%s]", linger)
-     }
-     sendLoopInstance = setInterval(sendMessagesAsBatch, linger);
+    }
+    sendLoopInstance = setInterval(sendMessagesAsBatch, linger);
 }
 
 function sendMessagesAsBatch() {
-     if (batchMessages.length > 0) {
-         logger.debug('sendMessagesAsBatch, length: [%s]', batchMessages.length);
-         const messagesToSend = batchMessages;
-         const resolvers = batchResolvers;
-         batchMessages = [];
-         batchResolvers = [];
-         producer.sendBatch({
-             topicMessages: messagesToSend,
-             acks: acks,
-             compression: compressionType
-         }).then(
-             () => {
+    if (batchMessages.length > 0) {
+        logger.debug('sendMessagesAsBatch, length: [%s]', batchMessages.length);
+        const messagesToSend = batchMessages;
+        const resolvers = batchResolvers;
+        batchMessages = [];
+        batchResolvers = [];
+        producer.sendBatch({
+            topicMessages: messagesToSend,
+            acks: acks,
+            compression: compressionType
+        }).then(
+            () => {
                 logger.debug('Response batch sent to kafka, length: [%s]', messagesToSend.length);
                 for (let i = 0; i < resolvers.length; i++) {
                     resolvers[i]();
@@ -103,8 +103,8 @@ function sendMessagesAsBatch() {
                 batchMessages = messagesToSend.concat(batchMessages);
                 batchResolvers = resolvers.concat(batchResolvers); //promises will never be rejected. Will retry forever
             }
-         );
-     }
+        );
+    }
 }
 
 (async () => {
@@ -120,8 +120,8 @@ function sendMessagesAsBatch() {
 
         let kafkaConfig = {
             brokers: kafkaBootstrapServers.split(','),
-                logLevel: logLevel.INFO,
-                logCreator: KafkaJsWinstonLogCreator
+            logLevel: logLevel.INFO,
+            logCreator: KafkaJsWinstonLogCreator
         };
 
         if (kafkaClientId) {

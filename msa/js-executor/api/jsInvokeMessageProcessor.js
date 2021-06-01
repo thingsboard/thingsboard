@@ -43,7 +43,7 @@ function JsInvokeMessageProcessor(producer) {
     this.lastStatTime = performance.now();
 }
 
-JsInvokeMessageProcessor.prototype.onJsInvokeMessage = function(message) {
+JsInvokeMessageProcessor.prototype.onJsInvokeMessage = function (message) {
     var tStart = performance.now();
     let requestId;
     let responseTopic;
@@ -78,13 +78,13 @@ JsInvokeMessageProcessor.prototype.onJsInvokeMessage = function(message) {
     var tFinish = performance.now();
     var tTook = tFinish - tStart;
 
-    if ( tTook > slowQueryLogMs ) {
+    if (tTook > slowQueryLogMs) {
         let functionName;
         if (request.invokeRequest) {
             try {
                 buf = Buffer.from(request.invokeRequest['functionName']);
                 functionName = buf.toString('utf8');
-            } catch (err){
+            } catch (err) {
                 logger.error('[%s] Failed to read functionName from message header: %s', requestId, err.message);
                 logger.error(err.stack);
             }
@@ -97,7 +97,7 @@ JsInvokeMessageProcessor.prototype.onJsInvokeMessage = function(message) {
 
 }
 
-JsInvokeMessageProcessor.prototype.processCompileRequest = function(requestId, responseTopic, headers, compileRequest) {
+JsInvokeMessageProcessor.prototype.processCompileRequest = function (requestId, responseTopic, headers, compileRequest) {
     var scriptId = getScriptId(compileRequest);
     logger.debug('[%s] Processing compile request, scriptId: [%s]', requestId, scriptId);
 
@@ -116,7 +116,7 @@ JsInvokeMessageProcessor.prototype.processCompileRequest = function(requestId, r
     );
 }
 
-JsInvokeMessageProcessor.prototype.processInvokeRequest = function(requestId, responseTopic, headers, invokeRequest) {
+JsInvokeMessageProcessor.prototype.processInvokeRequest = function (requestId, responseTopic, headers, invokeRequest) {
     var scriptId = getScriptId(invokeRequest);
     logger.debug('[%s] Processing invoke request, scriptId: [%s]', requestId, scriptId);
     this.executedScriptsCounter++;
@@ -160,7 +160,7 @@ JsInvokeMessageProcessor.prototype.processInvokeRequest = function(requestId, re
     );
 }
 
-JsInvokeMessageProcessor.prototype.processReleaseRequest = function(requestId, responseTopic, headers, releaseRequest) {
+JsInvokeMessageProcessor.prototype.processReleaseRequest = function (requestId, responseTopic, headers, releaseRequest) {
     var scriptId = getScriptId(releaseRequest);
     logger.debug('[%s] Processing release request, scriptId: [%s]', requestId, scriptId);
     if (this.scriptMap.has(scriptId)) {
@@ -193,9 +193,9 @@ JsInvokeMessageProcessor.prototype.sendResponse = function (requestId, responseT
     );
 }
 
-JsInvokeMessageProcessor.prototype.getOrCompileScript = function(scriptId, scriptBody) {
+JsInvokeMessageProcessor.prototype.getOrCompileScript = function (scriptId, scriptBody) {
     var self = this;
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
         if (self.scriptMap.has(scriptId)) {
             resolve(self.scriptMap.get(scriptId));
         } else {
@@ -212,7 +212,7 @@ JsInvokeMessageProcessor.prototype.getOrCompileScript = function(scriptId, scrip
     });
 }
 
-JsInvokeMessageProcessor.prototype.cacheScript = function(scriptId, script) {
+JsInvokeMessageProcessor.prototype.cacheScript = function (scriptId, script) {
     if (!this.scriptMap.has(scriptId)) {
         this.scriptIds.push(scriptId);
         while (this.scriptIds.length > maxActiveScripts) {
@@ -229,40 +229,40 @@ JsInvokeMessageProcessor.prototype.cacheScript = function(scriptId, script) {
 function createRemoteResponse(requestId, compileResponse, invokeResponse, releaseResponse) {
     const requestIdBits = Utils.UUIDToBits(requestId);
     return {
-            requestIdMSB: requestIdBits[0],
-            requestIdLSB: requestIdBits[1],
-            compileResponse: compileResponse,
-            invokeResponse: invokeResponse,
-            releaseResponse: releaseResponse
+        requestIdMSB: requestIdBits[0],
+        requestIdLSB: requestIdBits[1],
+        compileResponse: compileResponse,
+        invokeResponse: invokeResponse,
+        releaseResponse: releaseResponse
     };
 }
 
 function createCompileResponse(scriptId, success, errorCode, err) {
     const scriptIdBits = Utils.UUIDToBits(scriptId);
-    return  {
-            errorCode: errorCode,
-            success: success,
-            errorDetails: parseJsErrorDetails(err),
-            scriptIdMSB: scriptIdBits[0],
-            scriptIdLSB: scriptIdBits[1]
+    return {
+        errorCode: errorCode,
+        success: success,
+        errorDetails: parseJsErrorDetails(err),
+        scriptIdMSB: scriptIdBits[0],
+        scriptIdLSB: scriptIdBits[1]
     };
 }
 
 function createInvokeResponse(result, success, errorCode, err) {
-    return  {
-            errorCode: errorCode,
-            success: success,
-            errorDetails: parseJsErrorDetails(err),
-            result: result
+    return {
+        errorCode: errorCode,
+        success: success,
+        errorDetails: parseJsErrorDetails(err),
+        result: result
     };
 }
 
 function createReleaseResponse(scriptId, success) {
     const scriptIdBits = Utils.UUIDToBits(scriptId);
     return {
-            success: success,
-            scriptIdMSB: scriptIdBits[0],
-            scriptIdLSB: scriptIdBits[1]
+        success: success,
+        scriptIdMSB: scriptIdBits[0],
+        scriptIdLSB: scriptIdBits[1]
     };
 }
 
