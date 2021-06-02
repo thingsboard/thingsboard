@@ -920,7 +920,7 @@
             "existing-device-profile": "기존 장치 프로파일 선택",
             "specific-configuration": "특수 설정",
             "customer-to-assign-device": "장치에 할당할 커스터머",
-            "add-credential": "크리덴셜 추가"
+            "add-credentials": "크리덴셜 추가"
         }
     },
     "device-profile": {
