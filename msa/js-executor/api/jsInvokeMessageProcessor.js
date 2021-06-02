@@ -196,8 +196,9 @@ JsInvokeMessageProcessor.prototype.sendResponse = function (requestId, responseT
 JsInvokeMessageProcessor.prototype.getOrCompileScript = function (scriptId, scriptBody) {
     var self = this;
     return new Promise(function (resolve, reject) {
-        if (self.scriptMap.has(scriptId)) {
-            resolve(self.scriptMap.get(scriptId));
+        const script = self.scriptMap.get(scriptId);
+        if (script !== undefined) {
+            resolve(script);
         } else {
             self.executor.compileScript(scriptBody).then(
                 (script) => {
