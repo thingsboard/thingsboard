@@ -55,8 +55,8 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.Event;
-import org.thingsboard.server.common.data.Firmware;
-import org.thingsboard.server.common.data.FirmwareInfo;
+import org.thingsboard.server.common.data.OtaPackage;
+import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
@@ -79,7 +79,6 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
-import org.thingsboard.server.common.data.firmware.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -89,8 +88,8 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
-import org.thingsboard.server.common.data.id.FirmwareId;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationTemplateId;
+import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TbResourceId;
@@ -105,6 +104,8 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientsParams;
+import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
@@ -141,6 +142,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -159,7 +161,6 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     private String refreshToken;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private ExecutorService service = ThingsBoardExecutors.newWorkStealingPool(10, getClass());
-
 
     protected static final String ACTIVATE_TOKEN_REGEX = "/api/noauth/activate?activateToken=";
 
@@ -1249,6 +1250,21 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         return restTemplate.postForEntity(
                 baseURL + "/api/tenant/{tenantId}/device/{deviceId}",
                 HttpEntity.EMPTY, Device.class, tenantId, deviceId).getBody();
+    }
+
+    public Long countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(OtaPackageType otaPackageType, DeviceProfileId deviceProfileId) {
+        Map<String, String> params = new HashMap<>();
+        params.put("otaPackageType", otaPackageType.name());
+        params.put("deviceProfileId", deviceProfileId.getId().toString());
+
+        return restTemplate.exchange(
+                baseURL + "/api/devices/count/{otaPackageType}?deviceProfileId={deviceProfileId}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<Long>() {
+                },
+                params
+        ).getBody();
     }
 
     @Deprecated
@@ -2902,12 +2918,16 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         ).getBody();
     }
 
-    public ResponseEntity<Resource> downloadFirmware(FirmwareId firmwareId) {
+    public void deleteResource(TbResourceId resourceId) {
+        restTemplate.delete("/api/resource/{resourceId}", resourceId.getId().toString());
+    }
+
+    public ResponseEntity<Resource> downloadOtaPackage(OtaPackageId otaPackageId) {
         Map<String, String> params = new HashMap<>();
-        params.put("firmwareId", firmwareId.getId().toString());
+        params.put("otaPackageId", otaPackageId.getId().toString());
 
         return restTemplate.exchange(
-                baseURL + "/api/firmware/{firmwareId}/download",
+                baseURL + "/api/otaPackage/{otaPackageId}/download",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<>() {},
@@ -2915,24 +2935,37 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         );
     }
 
-    public FirmwareInfo getFirmwareById(FirmwareId firmwareId) {
+    public OtaPackageInfo getOtaPackageInfoById(OtaPackageId otaPackageId) {
         Map<String, String> params = new HashMap<>();
-        params.put("firmwareId", firmwareId.getId().toString());
+        params.put("otaPackageId", otaPackageId.getId().toString());
 
         return restTemplate.exchange(
-                baseURL + "/api/firmware/info/{firmwareId}",
+                baseURL + "/api/otaPackage/info/{otaPackageId}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<FirmwareInfo>() {},
+                new ParameterizedTypeReference<OtaPackageInfo>() {},
                 params
         ).getBody();
     }
 
-    public FirmwareInfo saveFirmwareInfo(FirmwareInfo firmwareInfo) {
-        return restTemplate.postForEntity(baseURL + "/api/firmware", firmwareInfo, FirmwareInfo.class).getBody();
+    public OtaPackage getOtaPackageById(OtaPackageId otaPackageId) {
+        Map<String, String> params = new HashMap<>();
+        params.put("otaPackageId", otaPackageId.getId().toString());
+
+        return restTemplate.exchange(
+                baseURL + "/api/otaPackage/{otaPackageId}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<OtaPackage>() {},
+                params
+        ).getBody();
     }
 
-    public Firmware saveFirmwareData(FirmwareId firmwareId, String checkSum, ChecksumAlgorithm checksumAlgorithm, MultipartFile file) throws Exception {
+    public OtaPackageInfo saveOtaPackageInfo(OtaPackageInfo otaPackageInfo) {
+        return restTemplate.postForEntity(baseURL + "/api/otaPackage", otaPackageInfo, OtaPackageInfo.class).getBody();
+    }
+
+    public OtaPackage saveOtaPackageData(OtaPackageId otaPackageId, String checkSum, ChecksumAlgorithm checksumAlgorithm, MultipartFile file) throws Exception {
         HttpHeaders header = new HttpHeaders();
         header.setContentType(MediaType.MULTIPART_FORM_DATA);
 
@@ -2945,50 +2978,55 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, header);
 
         Map<String, String> params = new HashMap<>();
-        params.put("firmwareId", firmwareId.getId().toString());
+        params.put("otaPackageId", otaPackageId.getId().toString());
         params.put("checksumAlgorithm", checksumAlgorithm.name());
-        String url = "/api/firmware/{firmwareId}?checksumAlgorithm={checksumAlgorithm}";
+        String url = "/api/otaPackage/{otaPackageId}?checksumAlgorithm={checksumAlgorithm}";
 
         if(checkSum != null) {
             url += "&checkSum={checkSum}";
         }
 
         return restTemplate.postForEntity(
-                baseURL + url, requestEntity, Firmware.class, params
+                baseURL + url, requestEntity, OtaPackage.class, params
         ).getBody();
     }
 
-    public PageData<FirmwareInfo> getFirmwares(PageLink pageLink) {
+    public PageData<OtaPackageInfo> getOtaPackages(PageLink pageLink) {
         Map<String, String> params = new HashMap<>();
         addPageLinkToParam(params, pageLink);
 
         return restTemplate.exchange(
-                baseURL + "/api/firmwares?" + getUrlParams(pageLink),
+                baseURL + "/api/otaPackages?" + getUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<PageData<FirmwareInfo>>() {
+                new ParameterizedTypeReference<PageData<OtaPackageInfo>>() {
                 },
                 params
         ).getBody();
     }
 
-    public PageData<FirmwareInfo> getFirmwares(boolean hasData, PageLink pageLink) {
+    public PageData<OtaPackageInfo> getOtaPackages(DeviceProfileId deviceProfileId,
+                                                   OtaPackageType otaPackageType,
+                                                   boolean hasData,
+                                                   PageLink pageLink) {
         Map<String, String> params = new HashMap<>();
         params.put("hasData", String.valueOf(hasData));
+        params.put("deviceProfileId", deviceProfileId.getId().toString());
+        params.put("type", otaPackageType.name());
         addPageLinkToParam(params, pageLink);
 
         return restTemplate.exchange(
-                baseURL + "/api/firmwares/{hasData}?" + getUrlParams(pageLink),
+                baseURL + "/api/otaPackages/{deviceProfileId}/{type}/{hasData}?" + getUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<PageData<FirmwareInfo>>() {
+                new ParameterizedTypeReference<PageData<OtaPackageInfo>>() {
                 },
                 params
         ).getBody();
     }
 
-    public void deleteResource(FirmwareId firmwareId) {
-        restTemplate.delete(baseURL + "/api/firmware/{firmwareId}", firmwareId.getId().toString());
+    public void deleteOtaPackage(OtaPackageId otaPackageId) {
+        restTemplate.delete(baseURL + "/api/otaPackage/{otaPackageId}", otaPackageId.getId().toString());
     }
 
     @Deprecated
