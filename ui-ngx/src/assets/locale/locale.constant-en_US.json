@@ -1000,7 +1000,7 @@
             "existing-device-profile": "Select existing device profile",
             "specific-configuration": "Specific configuration",
             "customer-to-assign-device": "Customer to assign the device",
-            "add-credential": "Add credential"
+            "add-credentials": "Add credentials"
         },
         "unassign-devices-from-edge-title": "Are you sure you want to unassign { count, plural, 1 {1 device} other {# devices} }?",
         "unassign-devices-from-edge-text": "After the confirmation all selected devices will be unassigned and won't be accessible by the edge."
