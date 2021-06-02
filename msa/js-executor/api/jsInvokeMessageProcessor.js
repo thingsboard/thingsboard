@@ -121,9 +121,9 @@ JsInvokeMessageProcessor.prototype.processInvokeRequest = function (requestId, r
     logger.debug('[%s] Processing invoke request, scriptId: [%s]', requestId, scriptId);
     this.executedScriptsCounter++;
     if (this.executedScriptsCounter % statFrequency == 0) {
-        var nowMs = performance.now();
-        var msSinceLastStat = nowMs - this.lastStatTime;
-        var requestsPerSec = statFrequency / msSinceLastStat * 1000; //msSinceLastStat can't be zero in the real world
+        const nowMs = performance.now();
+        const msSinceLastStat = nowMs - this.lastStatTime;
+        const requestsPerSec = msSinceLastStat == 0 ? statFrequency : statFrequency / msSinceLastStat * 1000;
         this.lastStatTime = nowMs;
         logger.info('STAT[%s]: requests [%s], took [%s]ms, request/s [%s]', this.executedScriptsCounter, statFrequency, msSinceLastStat, requestsPerSec);
     }
@@ -197,13 +197,13 @@ JsInvokeMessageProcessor.prototype.getOrCompileScript = function (scriptId, scri
     var self = this;
     return new Promise(function (resolve, reject) {
         const script = self.scriptMap.get(scriptId);
-        if (script !== undefined) {
+        if (script) {
             resolve(script);
         } else {
             self.executor.compileScript(scriptBody).then(
-                (script) => {
-                    self.cacheScript(scriptId, script);
-                    resolve(script);
+                (compiledScript) => {
+                    self.cacheScript(scriptId, compiledScript);
+                    resolve(compiledScript);
                 },
                 (err) => {
                     reject(err);
