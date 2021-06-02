@@ -21,6 +21,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 
 import static org.thingsboard.server.common.data.CacheConstants.OTA_PACKAGE_CACHE;
+import static org.thingsboard.server.common.data.CacheConstants.OTA_PACKAGE_DATA_CACHE;
 
 @Service
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)
@@ -36,7 +37,7 @@ public class CaffeineOtaPackageCache implements OtaPackageDataCache {
 
     @Override
     public byte[] get(String key, int chunkSize, int chunk) {
-        byte[] data = cacheManager.getCache(OTA_PACKAGE_CACHE).get(key, byte[].class);
+        byte[] data = cacheManager.getCache(OTA_PACKAGE_DATA_CACHE).get(key, byte[].class);
 
         if (chunkSize < 1) {
             return data;
@@ -58,11 +59,11 @@ public class CaffeineOtaPackageCache implements OtaPackageDataCache {
 
     @Override
     public void put(String key, byte[] value) {
-        cacheManager.getCache(OTA_PACKAGE_CACHE).putIfAbsent(key, value);
+        cacheManager.getCache(OTA_PACKAGE_DATA_CACHE).putIfAbsent(key, value);
     }
 
     @Override
     public void evict(String key) {
-        cacheManager.getCache(OTA_PACKAGE_CACHE).evict(key);
+        cacheManager.getCache(OTA_PACKAGE_DATA_CACHE).evict(key);
     }
 }

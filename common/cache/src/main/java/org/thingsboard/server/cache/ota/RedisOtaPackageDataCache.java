@@ -22,6 +22,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Service;
 
 import static org.thingsboard.server.common.data.CacheConstants.OTA_PACKAGE_CACHE;
+import static org.thingsboard.server.common.data.CacheConstants.OTA_PACKAGE_DATA_CACHE;
 
 @Service
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
@@ -63,6 +64,6 @@ public class RedisOtaPackageDataCache implements OtaPackageDataCache {
     }
 
     private byte[] toOtaPackageCacheKey(String key) {
-        return String.format("%s::%s", OTA_PACKAGE_CACHE, key).getBytes();
+        return String.format("%s::%s", OTA_PACKAGE_DATA_CACHE, key).getBytes();
     }
 }

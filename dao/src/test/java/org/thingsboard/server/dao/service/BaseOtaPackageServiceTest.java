@@ -408,7 +408,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testUpdateDeviceProfileIdWithReferenceByDevice() {
+    public void testUpdateDeviceProfileId() {
         OtaPackage firmware = new OtaPackage();
         firmware.setTenantId(tenantId);
         firmware.setDeviceProfileId(deviceProfileId);
@@ -422,20 +422,12 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setData(DATA);
         OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware);
 
-        Device device = new Device();
-        device.setTenantId(tenantId);
-        device.setName("My device");
-        device.setDeviceProfileId(deviceProfileId);
-        device.setFirmwareId(savedFirmware.getId());
-        Device savedDevice = deviceService.saveDevice(device);
-
         try {
             thrown.expect(DataValidationException.class);
-            thrown.expectMessage("Can`t update deviceProfileId because otaPackage is already in use!");
+            thrown.expectMessage("Updating otaPackage deviceProfile is prohibited!");
             savedFirmware.setDeviceProfileId(null);
             otaPackageService.saveOtaPackage(savedFirmware);
         } finally {
-            deviceService.deleteDevice(tenantId, savedDevice.getId());
             otaPackageService.deleteOtaPackage(tenantId, savedFirmware.getId());
         }
     }
@@ -465,38 +457,6 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
             thrown.expect(DataValidationException.class);
             thrown.expectMessage("The otaPackage referenced by the device profile cannot be deleted!");
             otaPackageService.deleteOtaPackage(tenantId, savedFirmware.getId());
-        } finally {
-            deviceProfileService.deleteDeviceProfile(tenantId, savedDeviceProfile.getId());
-            otaPackageService.deleteOtaPackage(tenantId, savedFirmware.getId());
-        }
-    }
-
-    @Test
-    public void testUpdateDeviceProfileIdWithReferenceByDeviceProfile() {
-        DeviceProfile deviceProfile = this.createDeviceProfile(tenantId, "Test Device Profile");
-        DeviceProfile savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
-
-        OtaPackage firmware = new OtaPackage();
-        firmware.setTenantId(tenantId);
-        firmware.setDeviceProfileId(savedDeviceProfile.getId());
-        firmware.setType(FIRMWARE);
-        firmware.setTitle(TITLE);
-        firmware.setVersion(VERSION);
-        firmware.setFileName(FILE_NAME);
-        firmware.setContentType(CONTENT_TYPE);
-        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
-        firmware.setChecksum(CHECKSUM);
-        firmware.setData(DATA);
-        OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware);
-
-        savedDeviceProfile.setFirmwareId(savedFirmware.getId());
-        deviceProfileService.saveDeviceProfile(savedDeviceProfile);
-
-        try {
-            thrown.expect(DataValidationException.class);
-            thrown.expectMessage("Can`t update deviceProfileId because otaPackage is already in use!");
-            savedFirmware.setDeviceProfileId(null);
-            otaPackageService.saveOtaPackage(savedFirmware);
         } finally {
             deviceProfileService.deleteDeviceProfile(tenantId, savedDeviceProfile.getId());
             otaPackageService.deleteOtaPackage(tenantId, savedFirmware.getId());

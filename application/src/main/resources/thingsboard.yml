@@ -374,6 +374,9 @@ caffeine:
     otaPackages:
       timeToLiveInMinutes: 60
       maxSize: 10
+    otaPackagesData:
+      timeToLiveInMinutes: 60
+      maxSize: 10
     edges:
       timeToLiveInMinutes: 1440
       maxSize: 0
