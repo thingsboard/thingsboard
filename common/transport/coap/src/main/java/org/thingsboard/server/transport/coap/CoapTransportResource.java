@@ -44,7 +44,7 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportC
 import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
-import org.thingsboard.server.common.data.firmware.FirmwareType;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
@@ -350,10 +350,10 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                             new CoapNoOpCallback(exchange));
                     break;
                 case GET_FIRMWARE_REQUEST:
-                    getFirmwareCallback(sessionInfo, exchange, FirmwareType.FIRMWARE);
+                    getOtaPackageCallback(sessionInfo, exchange, OtaPackageType.FIRMWARE);
                     break;
                 case GET_SOFTWARE_REQUEST:
-                    getFirmwareCallback(sessionInfo, exchange, FirmwareType.SOFTWARE);
+                    getOtaPackageCallback(sessionInfo, exchange, OtaPackageType.SOFTWARE);
                     break;
             }
         } catch (AdaptorException e) {
@@ -366,14 +366,14 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         return new UUID(sessionInfoProto.getSessionIdMSB(), sessionInfoProto.getSessionIdLSB());
     }
 
-    private void getFirmwareCallback(TransportProtos.SessionInfoProto sessionInfo, CoapExchange exchange, FirmwareType firmwareType) {
-        TransportProtos.GetFirmwareRequestMsg requestMsg = TransportProtos.GetFirmwareRequestMsg.newBuilder()
+    private void getOtaPackageCallback(TransportProtos.SessionInfoProto sessionInfo, CoapExchange exchange, OtaPackageType firmwareType) {
+        TransportProtos.GetOtaPackageRequestMsg requestMsg = TransportProtos.GetOtaPackageRequestMsg.newBuilder()
                 .setTenantIdMSB(sessionInfo.getTenantIdMSB())
                 .setTenantIdLSB(sessionInfo.getTenantIdLSB())
                 .setDeviceIdMSB(sessionInfo.getDeviceIdMSB())
                 .setDeviceIdLSB(sessionInfo.getDeviceIdLSB())
                 .setType(firmwareType.name()).build();
-        transportContext.getTransportService().process(sessionInfo, requestMsg, new FirmwareCallback(exchange));
+        transportContext.getTransportService().process(sessionInfo, requestMsg, new OtaPackageCallback(exchange));
     }
 
     private TransportProtos.SessionInfoProto lookupAsyncSessionInfo(String token) {
@@ -470,25 +470,25 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         }
     }
 
-    private class FirmwareCallback implements TransportServiceCallback<TransportProtos.GetFirmwareResponseMsg> {
+    private class OtaPackageCallback implements TransportServiceCallback<TransportProtos.GetOtaPackageResponseMsg> {
         private final CoapExchange exchange;
 
-        FirmwareCallback(CoapExchange exchange) {
+        OtaPackageCallback(CoapExchange exchange) {
             this.exchange = exchange;
         }
 
         @Override
-        public void onSuccess(TransportProtos.GetFirmwareResponseMsg msg) {
+        public void onSuccess(TransportProtos.GetOtaPackageResponseMsg msg) {
             String title = exchange.getQueryParameter("title");
             String version = exchange.getQueryParameter("version");
             if (msg.getResponseStatus().equals(TransportProtos.ResponseStatus.SUCCESS)) {
                 if (msg.getTitle().equals(title) && msg.getVersion().equals(version)) {
-                    String firmwareId = new UUID(msg.getFirmwareIdMSB(), msg.getFirmwareIdLSB()).toString();
+                    String firmwareId = new UUID(msg.getOtaPackageIdMSB(), msg.getOtaPackageIdLSB()).toString();
                     String strChunkSize = exchange.getQueryParameter("size");
                     String strChunk = exchange.getQueryParameter("chunk");
                     int chunkSize = StringUtils.isEmpty(strChunkSize) ? 0 : Integer.parseInt(strChunkSize);
                     int chunk = StringUtils.isEmpty(strChunk) ? 0 : Integer.parseInt(strChunk);
-                    exchange.respond(CoAP.ResponseCode.CONTENT, transportContext.getFirmwareDataCache().get(firmwareId, chunkSize, chunk));
+                    exchange.respond(CoAP.ResponseCode.CONTENT, transportContext.getOtaPackageDataCache().get(firmwareId, chunkSize, chunk));
                 } else {
                     exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
                 }

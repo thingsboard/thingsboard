@@ -28,7 +28,7 @@ import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.id.FirmwareId;
+import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -154,10 +154,10 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
             device.setDeviceProfileId(new DeviceProfileId(deviceProfileId));
         }
         if (firmwareId != null) {
-            device.setFirmwareId(new FirmwareId(firmwareId));
+            device.setFirmwareId(new OtaPackageId(firmwareId));
         }
         if (softwareId != null) {
-            device.setSoftwareId(new FirmwareId(softwareId));
+            device.setSoftwareId(new OtaPackageId(softwareId));
         }
         device.setDeviceData(JacksonUtil.convertValue(deviceData, DeviceData.class));
         device.setName(name);

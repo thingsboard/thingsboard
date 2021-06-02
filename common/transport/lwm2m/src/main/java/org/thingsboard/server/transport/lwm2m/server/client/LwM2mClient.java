@@ -31,7 +31,7 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.firmware.FirmwareType;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
@@ -120,8 +120,8 @@ public class LwM2mClient implements Cloneable {
         this.init = false;
         this.queuedRequests = new ConcurrentLinkedQueue<>();
 
-        this.fwUpdate = new LwM2mFwSwUpdate(this, FirmwareType.FIRMWARE);
-        this.swUpdate = new LwM2mFwSwUpdate(this, FirmwareType.SOFTWARE);
+        this.fwUpdate = new LwM2mFwSwUpdate(this, OtaPackageType.FIRMWARE);
+        this.swUpdate = new LwM2mFwSwUpdate(this, OtaPackageType.SOFTWARE);
         if (this.credentials != null && this.credentials.hasDeviceInfo()) {
             this.session = createSession(nodeId, sessionId, credentials);
             this.deviceId = new UUID(session.getDeviceIdMSB(), session.getDeviceIdLSB());

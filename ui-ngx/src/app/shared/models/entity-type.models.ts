@@ -35,7 +35,7 @@ export enum EntityType {
   WIDGET_TYPE = 'WIDGET_TYPE',
   API_USAGE_STATE = 'API_USAGE_STATE',
   TB_RESOURCE = 'TB_RESOURCE',
-  FIRMWARE = 'FIRMWARE'
+  OTA_PACKAGE = 'OTA_PACKAGE'
 }
 
 export enum AliasEntityType {
@@ -296,14 +296,14 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       }
     ],
     [
-      EntityType.FIRMWARE,
+      EntityType.OTA_PACKAGE,
       {
-        type: 'entity.type-firmware',
-        details: 'firmware.firmware-details',
-        add: 'firmware.add',
-        noEntities: 'firmware.no-firmware-text',
-        search: 'firmware.search',
-        selectedEntities: 'firmware.selected-firmware'
+        type: 'entity.type-ota-package',
+        details: 'ota-update.ota-update-details',
+        add: 'ota-update.add',
+        noEntities: 'ota-update.no-packages-text',
+        search: 'ota-update.search',
+        selectedEntities: 'ota-update.selected-package'
       }
     ]
   ]
@@ -390,9 +390,9 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       }
     ],
     [
-      EntityType.FIRMWARE,
+      EntityType.OTA_PACKAGE,
       {
-        helpLinkId: 'firmware'
+        helpLinkId: 'otaUpdates'
       }
     ]
   ]

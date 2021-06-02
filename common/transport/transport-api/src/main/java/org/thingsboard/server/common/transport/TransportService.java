@@ -29,8 +29,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileResponseMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.GetFirmwareRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.GetFirmwareResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetOtaPackageRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetOtaPackageResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetResourceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetResourceResponseMsg;
@@ -115,7 +115,7 @@ public interface TransportService {
 
     void process(TransportToDeviceActorMsg msg, TransportServiceCallback<Void> callback);
 
-    void process(SessionInfoProto sessionInfoProto, GetFirmwareRequestMsg msg, TransportServiceCallback<GetFirmwareResponseMsg> callback);
+    void process(SessionInfoProto sessionInfoProto, GetOtaPackageRequestMsg msg, TransportServiceCallback<GetOtaPackageResponseMsg> callback);
 
     SessionMetaData registerAsyncSession(SessionInfoProto sessionInfo, SessionMsgListener listener);
 

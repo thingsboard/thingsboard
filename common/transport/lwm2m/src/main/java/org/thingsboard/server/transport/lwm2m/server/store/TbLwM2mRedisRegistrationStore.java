@@ -214,9 +214,9 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
                 // Add or update expiration
                 addOrUpdateExpiration(connection, updatedRegistration);
 
-                // Update secondary index :
-                // If registration is already associated to this address we don't care as we only want to keep the most
-                // recent binding.
+                /** Update secondary index :
+                 * If registration is already associated to this address we don't care as we only want to keep the most
+                 * recent binding. */
                 byte[] addr_idx = toRegAddrKey(updatedRegistration.getSocketAddress());
                 connection.set(addr_idx, updatedRegistration.getEndpoint().getBytes(UTF_8));
                 if (!r.getSocketAddress().equals(updatedRegistration.getSocketAddress())) {
@@ -337,23 +337,24 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
         }
     }
 
+    //TODO: JedisCluster didn't implement Transaction, maybe should use some advanced key creation strategies
     private void removeAddrIndex(RedisConnection connection, Registration registration) {
         // Watch the key to remove.
         byte[] regAddrKey = toRegAddrKey(registration.getSocketAddress());
-        connection.watch(regAddrKey);
+//        connection.watch(regAddrKey);
 
         byte[] epFromAddr = connection.get(regAddrKey);
         // Delete the key if needed.
         if (Arrays.equals(epFromAddr, registration.getEndpoint().getBytes(UTF_8))) {
             // Try to delete the key
-            connection.multi();
+//            connection.multi();
             connection.del(regAddrKey);
-            connection.exec();
+//            connection.exec();
             // if transaction failed this is not an issue as the socket address is probably reused and we don't neeed to
             // delete it anymore.
         } else {
             // the key must not be deleted.
-            connection.unwatch();
+//            connection.unwatch();
         }
     }
 

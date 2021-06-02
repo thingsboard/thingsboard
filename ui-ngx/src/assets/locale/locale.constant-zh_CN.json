@@ -1079,7 +1079,7 @@
     "view-credentials": "查看凭据",
     "view-devices": "查看设备",
     "wizard": {
-      "add-credential": "添加凭据",
+      "add-credentials": "添加凭据",
       "customer-to-assign-device": "客户分配设备",
       "device-details": "设备详细信息",
       "device-wizard": "设备向导",

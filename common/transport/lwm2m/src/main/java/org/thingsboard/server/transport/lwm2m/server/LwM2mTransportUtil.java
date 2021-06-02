@@ -43,7 +43,10 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.nustaq.serialization.FSTConfiguration;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
-import org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus;
+import org.thingsboard.server.common.data.ota.OtaPackageKey;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
+import org.thingsboard.server.common.data.ota.OtaPackageUtil;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
@@ -74,12 +77,12 @@ import static org.eclipse.leshan.core.model.ResourceModel.Type.OBJLNK;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.STRING;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.TIME;
-import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.DOWNLOADED;
-import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.DOWNLOADING;
-import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.FAILED;
-import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.UPDATED;
-import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.UPDATING;
-import static org.thingsboard.server.common.data.firmware.FirmwareUpdateStatus.VERIFIED;
+import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADED;
+import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADING;
+import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.FAILED;
+import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATED;
+import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATING;
+import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.VERIFIED;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 
@@ -136,7 +139,7 @@ public class LwM2mTransportUtil {
     public static final String ERROR_KEY = "error";
     public static final String METHOD_KEY = "methodName";
 
-    // FirmWare
+    // Firmware
     public static final String FW_UPDATE = "Firmware update";
     public static final Integer FW_ID = 5;
     // Package W
@@ -152,7 +155,7 @@ public class LwM2mTransportUtil {
     // Update E
     public static final String FW_UPDATE_ID = "/5/0/2";
 
-    // SoftWare
+    // Software
     public static final String SW_UPDATE = "Software update";
     public static final Integer SW_ID = 9;
     // Package W
@@ -226,11 +229,12 @@ public class LwM2mTransportUtil {
          */
         WRITE_UPDATE(9, "WriteUpdate"),
         WRITE_ATTRIBUTES(10, "WriteAttributes"),
-        DELETE(11, "Delete");
+        DELETE(11, "Delete"),
 
         // only for RPC
+        FW_UPDATE(12,"FirmwareUpdate");
 //        FW_READ_INFO(12, "FirmwareReadInfo"),
-//        FW_UPDATE(13, "FirmwareUpdate"),
+
 //        SW_READ_INFO(15, "SoftwareReadInfo"),
 //        SW_UPDATE(16, "SoftwareUpdate"),
 //        SW_UNINSTALL(18, "SoftwareUninstall");
@@ -351,7 +355,7 @@ public class LwM2mTransportUtil {
      * FirmwareUpdateStatus {
      * DOWNLOADING, DOWNLOADED, VERIFIED, UPDATING, UPDATED, FAILED
      */
-    public static FirmwareUpdateStatus EqualsFwSateToFirmwareUpdateStatus(StateFw stateFw, UpdateResultFw updateResultFw) {
+    public static OtaPackageUpdateStatus EqualsFwSateToFirmwareUpdateStatus(StateFw stateFw, UpdateResultFw updateResultFw) {
         switch (updateResultFw) {
             case INITIAL:
                 switch (stateFw) {
@@ -497,7 +501,7 @@ public class LwM2mTransportUtil {
      * FirmwareUpdateStatus {
      * DOWNLOADING, DOWNLOADED, VERIFIED, UPDATING, UPDATED, FAILED
      */
-    public static FirmwareUpdateStatus EqualsSwSateToFirmwareUpdateStatus(UpdateStateSw updateStateSw, UpdateResultSw updateResultSw) {
+    public static OtaPackageUpdateStatus EqualsSwSateToFirmwareUpdateStatus(UpdateStateSw updateStateSw, UpdateResultSw updateResultSw) {
         switch (updateResultSw) {
             case INITIAL:
                 switch (updateStateSw) {
@@ -926,5 +930,18 @@ public class LwM2mTransportUtil {
             log.error("CreateAttribute, not valid parameter key: [{}], attrValue: [{}], error: [{}]", key, attrValue, e.getMessage());
             return  null;
         }
+    }
+
+    public static boolean isFwSwWords (String pathName) {
+        return OtaPackageUtil.getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.VERSION).equals(pathName)
+                || OtaPackageUtil.getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.TITLE).equals(pathName)
+                || OtaPackageUtil.getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.CHECKSUM).equals(pathName)
+                || OtaPackageUtil.getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.CHECKSUM_ALGORITHM).equals(pathName)
+                || OtaPackageUtil.getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.SIZE).equals(pathName)
+                || OtaPackageUtil.getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.VERSION).equals(pathName)
+                || OtaPackageUtil.getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.TITLE).equals(pathName)
+                || OtaPackageUtil.getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.CHECKSUM).equals(pathName)
+                || OtaPackageUtil.getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.CHECKSUM_ALGORITHM).equals(pathName)
+                || OtaPackageUtil.getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.SIZE).equals(pathName);
     }
 }
