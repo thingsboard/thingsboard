@@ -199,7 +199,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         }
         UserCredentials userCredentials = userCredentialsDao.findByUserId(tenantId, user.getUuidId());
         if (!userCredentials.isEnabled()) {
-            throw new UsernameNotFoundException(String.format("Unable to find user by email [%s]", email));
+            throw new UsernameNotFoundException(String.format("User credentials already enabled [%s]", email));
         }
         userCredentials.setResetToken(RandomStringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
         return saveUserCredentials(tenantId, userCredentials);
