@@ -132,7 +132,8 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     }
 
     @Override
-    public void onRemoteSessionCloseCommand(SessionCloseNotificationProto sessionCloseNotification) {
+    public void onRemoteSessionCloseCommand(UUID sessionId, SessionCloseNotificationProto sessionCloseNotification) {
+        log.trace("[{}] Received the remote command to close the session: {}", sessionId, sessionCloseNotification.getMessage());
     }
 
     @Override

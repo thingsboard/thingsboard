@@ -101,18 +101,18 @@
         <mat-label translate>device.label</mat-label>
         <input matInput formControlName="label">
       </mat-form-field>
-      <tb-firmware-autocomplete
+      <tb-ota-package-autocomplete
         [useFullEntityId]="true"
-        [type]="firmwareTypes.FIRMWARE"
+        [type]="otaUpdateType.FIRMWARE"
         [deviceProfileId]="entityForm.get('deviceProfileId').value?.id"
         formControlName="firmwareId">
-      </tb-firmware-autocomplete>
-      <tb-firmware-autocomplete
+      </tb-ota-package-autocomplete>
+      <tb-ota-package-autocomplete
         [useFullEntityId]="true"
-        [type]="firmwareTypes.SOFTWARE"
+        [type]="otaUpdateType.SOFTWARE"
         [deviceProfileId]="entityForm.get('deviceProfileId').value?.id"
         formControlName="softwareId">
-      </tb-firmware-autocomplete>
+      </tb-ota-package-autocomplete>
       <tb-device-data
         formControlName="deviceData"
         required>

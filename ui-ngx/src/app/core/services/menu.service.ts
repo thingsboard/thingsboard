@@ -276,9 +276,9 @@ export class MenuService {
       },
       {
         id: guid(),
-        name: 'firmware.firmware',
+        name: 'ota-update.ota-updates',
         type: 'link',
-        path: '/firmwares',
+        path: '/otaUpdates',
         icon: 'memory'
       },
       {
@@ -423,9 +423,9 @@ export class MenuService {
             path: '/deviceProfiles'
           },
           {
-            name: 'firmware.firmware',
+            name: 'ota-update.ota-updates',
             icon: 'memory',
-            path: '/firmwares'
+            path: '/otaUpdates'
           }
         ]
       },

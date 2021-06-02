@@ -22,10 +22,10 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.secure.EndpointSecurityInfo;
-import org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
@@ -38,7 +38,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.thingsboard.server.transport.lwm2m.secure.LwM2MSecurityMode.NO_SEC;
+import static org.eclipse.leshan.core.SecurityMode.NO_SEC;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
 
 @Slf4j
@@ -83,13 +83,17 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public LwM2mClient getClient(TransportProtos.SessionInfoProto sessionInfo) {
-        return getClient(new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
-    }
+        LwM2mClient lwM2mClient =  lwM2mClientsByEndpoint.values().stream().filter(c ->
+                (new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()))
+                        .equals((new UUID(c.getSession().getSessionIdMSB(), c.getSession().getSessionIdLSB())))
 
-    @Override
-    public LwM2mClient getClient(UUID sessionId) {
-        //TODO: refactor this to search by sessionId efficiently.
-        return lwM2mClientsByEndpoint.values().stream().filter(c -> c.getSessionId().equals(sessionId)).findAny().get();
+        ).findAny().get();
+        if (lwM2mClient == null) {
+            log.warn("Device TimeOut? lwM2mClient is null.");
+            log.warn("SessionInfo input [{}], lwM2mClientsByEndpoint size: [{}]", sessionInfo, lwM2mClientsByEndpoint.values().size());
+            log.error("", new RuntimeException());
+        }
+        return lwM2mClient;
     }
 
     @Override
@@ -112,20 +116,20 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     @Override
     public LwM2mClient fetchClientByEndpoint(String endpoint) {
         EndpointSecurityInfo securityInfo = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfo(endpoint, LwM2mTransportUtil.LwM2mTypeServer.CLIENT);
-        if (securityInfo.getSecurityMode() < LwM2MSecurityMode.DEFAULT_MODE.code) {
+        if (securityInfo.getSecurityMode() != null) {
             if (securityInfo.getDeviceProfile() != null) {
                 UUID profileUuid = profileUpdate(securityInfo.getDeviceProfile())!= null ?
                         securityInfo.getDeviceProfile().getUuidId() : null;
                 //        TODO: for tests bug.
                 if (profileUuid== null) {
-                    log.warn("input parameters toClientProfile if the result is null: [{}]", securityInfo.getDeviceProfile());
+                    log.trace("input parameters toClientProfile if the result is null: [{}]", securityInfo.getDeviceProfile());
                 }
                 LwM2mClient client;
                 if (securityInfo.getSecurityInfo() != null) {
                     client = new LwM2mClient(context.getNodeId(), securityInfo.getSecurityInfo().getEndpoint(),
                             securityInfo.getSecurityInfo().getIdentity(), securityInfo.getSecurityInfo(),
                             securityInfo.getMsg(), profileUuid, UUID.randomUUID());
-                } else if (securityInfo.getSecurityMode() == NO_SEC.code) {
+                } else if (NO_SEC.equals(securityInfo.getSecurityMode())) {
                     client = new LwM2mClient(context.getNodeId(), endpoint,
                             null, null,
                             securityInfo.getMsg(), profileUuid, UUID.randomUUID());
@@ -140,6 +144,14 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         } else {
             throw new RuntimeException(String.format("Registration failed: FORBIDDEN, endpointId: %s", endpoint));
         }
+    }
+
+    @Override
+    public void registerClient(Registration registration, ValidateDeviceCredentialsResponse credentials) {
+        LwM2mClient client = new LwM2mClient(context.getNodeId(), registration.getEndpoint(), null, null, credentials, credentials.getDeviceProfile().getUuidId(), UUID.randomUUID());
+        lwM2mClientsByEndpoint.put(registration.getEndpoint(), client);
+        lwM2mClientsByRegistrationId.put(registration.getId(), client);
+        profileUpdate(credentials.getDeviceProfile());
     }
 
     @Override

@@ -59,8 +59,8 @@ CREATE TABLE IF NOT EXISTS resource (
     CONSTRAINT resource_unq_key UNIQUE (tenant_id, resource_type, resource_key)
 );
 
-CREATE TABLE IF NOT EXISTS firmware (
-    id uuid NOT NULL CONSTRAINT firmware_pkey PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS ota_package (
+    id uuid NOT NULL CONSTRAINT ota_package_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     tenant_id uuid NOT NULL,
     device_profile_id uuid,
@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS firmware (
     data_size bigint,
     additional_info varchar,
     search_text varchar(255),
-    CONSTRAINT firmware_tenant_title_version_unq_key UNIQUE (tenant_id, title, version)
+    CONSTRAINT ota_package_tenant_title_version_unq_key UNIQUE (tenant_id, title, version)
 );
 
 ALTER TABLE dashboard
@@ -101,13 +101,13 @@ DO $$
         IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_firmware_device_profile') THEN
             ALTER TABLE device_profile
                 ADD CONSTRAINT fk_firmware_device_profile
-                    FOREIGN KEY (firmware_id) REFERENCES firmware(id);
+                    FOREIGN KEY (firmware_id) REFERENCES ota_package(id);
         END IF;
 
         IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_software_device_profile') THEN
             ALTER TABLE device_profile
                 ADD CONSTRAINT fk_software_device_profile
-                    FOREIGN KEY (firmware_id) REFERENCES firmware(id);
+                    FOREIGN KEY (firmware_id) REFERENCES ota_package(id);
         END IF;
 
         IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_default_dashboard_device_profile') THEN
@@ -119,13 +119,13 @@ DO $$
         IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_firmware_device') THEN
             ALTER TABLE device
                 ADD CONSTRAINT fk_firmware_device
-                    FOREIGN KEY (firmware_id) REFERENCES firmware(id);
+                    FOREIGN KEY (firmware_id) REFERENCES ota_package(id);
         END IF;
 
         IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_software_device') THEN
             ALTER TABLE device
                 ADD CONSTRAINT fk_software_device
-                    FOREIGN KEY (firmware_id) REFERENCES firmware(id);
+                    FOREIGN KEY (firmware_id) REFERENCES ota_package(id);
         END IF;
     END;
 $$;

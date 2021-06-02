@@ -947,7 +947,7 @@
             "existing-device-profile": "Seleccionar un perfil existente",
             "specific-configuration": "Configuración específica",
             "customer-to-assign-device": "Cliente al que asignar el dispositivo",
-            "add-credential": "Añadir credencial"
+            "add-credentials": "Añadir credencial"
         },
         "assign-device-to-edge-text": "Seleccione los dispositivos para asignar al borde",
         "unassign-device-from-edge-title": "¿Está seguro de que desea desasignar el dispositivo '{{deviceName}}'?",

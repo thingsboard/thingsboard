@@ -160,8 +160,8 @@ CREATE TABLE IF NOT EXISTS rule_node_state (
     CONSTRAINT fk_rule_node_state_node_id FOREIGN KEY (rule_node_id) REFERENCES rule_node(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS firmware (
-    id uuid NOT NULL CONSTRAINT firmware_pkey PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS ota_package (
+    id uuid NOT NULL CONSTRAINT ota_package_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     tenant_id uuid NOT NULL,
     device_profile_id uuid ,
@@ -176,7 +176,7 @@ CREATE TABLE IF NOT EXISTS firmware (
     data_size bigint,
     additional_info varchar,
     search_text varchar(255),
-    CONSTRAINT firmware_tenant_title_version_unq_key UNIQUE (tenant_id, title, version)
+    CONSTRAINT ota_package_tenant_title_version_unq_key UNIQUE (tenant_id, title, version)
 );
 
 CREATE TABLE IF NOT EXISTS device_profile (
@@ -202,8 +202,8 @@ CREATE TABLE IF NOT EXISTS device_profile (
     CONSTRAINT device_provision_key_unq_key UNIQUE (provision_device_key),
     CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id),
     CONSTRAINT fk_default_dashboard_device_profile FOREIGN KEY (default_dashboard_id) REFERENCES dashboard(id),
-    CONSTRAINT fk_firmware_device_profile FOREIGN KEY (firmware_id) REFERENCES firmware(id),
-    CONSTRAINT fk_software_device_profile FOREIGN KEY (software_id) REFERENCES firmware(id)
+    CONSTRAINT fk_firmware_device_profile FOREIGN KEY (firmware_id) REFERENCES ota_package(id),
+    CONSTRAINT fk_software_device_profile FOREIGN KEY (software_id) REFERENCES ota_package(id)
 );
 
 CREATE TABLE IF NOT EXISTS device (
@@ -222,8 +222,8 @@ CREATE TABLE IF NOT EXISTS device (
     software_id uuid,
     CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name),
     CONSTRAINT fk_device_profile FOREIGN KEY (device_profile_id) REFERENCES device_profile(id),
-    CONSTRAINT fk_firmware_device FOREIGN KEY (firmware_id) REFERENCES firmware(id),
-    CONSTRAINT fk_software_device FOREIGN KEY (software_id) REFERENCES firmware(id)
+    CONSTRAINT fk_firmware_device FOREIGN KEY (firmware_id) REFERENCES ota_package(id),
+    CONSTRAINT fk_software_device FOREIGN KEY (software_id) REFERENCES ota_package(id)
 );
 
 CREATE TABLE IF NOT EXISTS device_credentials (

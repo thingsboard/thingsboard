@@ -438,6 +438,6 @@ export function generateSecret(length?: number): string {
   return str.concat(generateSecret(length - str.length));
 }
 
-export function validateEntityId(entityId: EntityId): boolean {
-  return isDefinedAndNotNull(entityId.id) && entityId.id !== NULL_UUID && isDefinedAndNotNull(entityId.entityType);
+export function validateEntityId(entityId: EntityId | null): boolean {
+    return isDefinedAndNotNull(entityId?.id) && entityId.id !== NULL_UUID && isDefinedAndNotNull(entityId?.entityType);
 }

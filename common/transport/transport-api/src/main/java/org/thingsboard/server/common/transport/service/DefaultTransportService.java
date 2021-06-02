@@ -348,11 +348,25 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
-    public void process(TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg msg, TransportServiceCallback<TransportProtos.ValidateDeviceCredentialsResponseMsg> callback) {
-        log.trace("Processing msg: {}", msg);
-        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateDeviceLwM2MCredentialsRequestMsg(msg).build());
-        AsyncCallbackTemplate.withCallback(transportApiRequestTemplate.send(protoMsg),
-                response -> callback.onSuccess(response.getValue().getValidateCredResponseMsg()), callback::onError, transportCallbackExecutor);
+    public void process(TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg requestMsg, TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
+        log.trace("Processing msg: {}", requestMsg);
+        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateDeviceLwM2MCredentialsRequestMsg(requestMsg).build());
+        ListenableFuture<ValidateDeviceCredentialsResponse> response = Futures.transform(transportApiRequestTemplate.send(protoMsg), tmp -> {
+            TransportProtos.ValidateDeviceCredentialsResponseMsg msg = tmp.getValue().getValidateCredResponseMsg();
+            ValidateDeviceCredentialsResponse.ValidateDeviceCredentialsResponseBuilder result = ValidateDeviceCredentialsResponse.builder();
+            if (msg.hasDeviceInfo()) {
+                result.credentials(msg.getCredentialsBody());
+                TransportDeviceInfo tdi = getTransportDeviceInfo(msg.getDeviceInfo());
+                result.deviceInfo(tdi);
+                ByteString profileBody = msg.getProfileBody();
+                if (!profileBody.isEmpty()) {
+                    DeviceProfile profile = deviceProfileCache.getOrCreate(tdi.getDeviceProfileId(), profileBody);
+                    result.deviceProfile(profile);
+                }
+            }
+            return result.build();
+        }, MoreExecutors.directExecutor());
+        AsyncCallbackTemplate.withCallback(response, callback::onSuccess, callback::onError, transportCallbackExecutor);
     }
 
     @Override
@@ -372,7 +386,7 @@ public class DefaultTransportService implements TransportService {
                 TransportDeviceInfo tdi = getTransportDeviceInfo(msg.getDeviceInfo());
                 result.deviceInfo(tdi);
                 ByteString profileBody = msg.getProfileBody();
-                if (profileBody != null && !profileBody.isEmpty()) {
+                if (!profileBody.isEmpty()) {
                     DeviceProfile profile = deviceProfileCache.getOrCreate(tdi.getDeviceProfileId(), profileBody);
                     if (transportType != DeviceTransportType.DEFAULT
                             && profile != null && profile.getTransportType() != DeviceTransportType.DEFAULT && profile.getTransportType() != transportType) {
@@ -453,6 +467,15 @@ public class DefaultTransportService implements TransportService {
             reportActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
                     .setSessionEvent(msg).build(), callback);
+        }
+    }
+
+    @Override
+    public void process(TransportToDeviceActorMsg msg, TransportServiceCallback<Void> callback) {
+        TransportProtos.SessionInfoProto sessionInfo = msg.getSessionInfo();
+        if (checkLimits(sessionInfo, msg, callback)) {
+            reportActivityInternal(sessionInfo);
+            sendToDeviceActor(sessionInfo, msg, callback);
         }
     }
 
@@ -591,13 +614,13 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
-    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.GetFirmwareRequestMsg msg, TransportServiceCallback<TransportProtos.GetFirmwareResponseMsg> callback) {
+    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.GetOtaPackageRequestMsg msg, TransportServiceCallback<TransportProtos.GetOtaPackageResponseMsg> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
             TbProtoQueueMsg<TransportProtos.TransportApiRequestMsg> protoMsg =
-                    new TbProtoQueueMsg<>(UUID.randomUUID(), TransportProtos.TransportApiRequestMsg.newBuilder().setFirmwareRequestMsg(msg).build());
+                    new TbProtoQueueMsg<>(UUID.randomUUID(), TransportProtos.TransportApiRequestMsg.newBuilder().setOtaPackageRequestMsg(msg).build());
 
             AsyncCallbackTemplate.withCallback(transportApiRequestTemplate.send(protoMsg), response -> {
-                callback.onSuccess(response.getValue().getFirmwareResponseMsg());
+                callback.onSuccess(response.getValue().getOtaPackageResponseMsg());
             }, callback::onError, transportCallbackExecutor);
         }
     }
@@ -634,7 +657,11 @@ public class DefaultTransportService implements TransportService {
                 }
                 process(sessionInfo, getSessionEventMsg(TransportProtos.SessionEvent.CLOSED), null);
                 sessions.remove(uuid);
-                sessionMD.getListener().onRemoteSessionCloseCommand(TransportProtos.SessionCloseNotificationProto.getDefaultInstance());
+                TransportProtos.SessionCloseNotificationProto sessionCloseNotificationProto = TransportProtos.SessionCloseNotificationProto
+                        .newBuilder()
+                        .setMessage("session has expired due to last activity time!")
+                        .build();
+                sessionMD.getListener().onRemoteSessionCloseCommand(uuid, sessionCloseNotificationProto);
             } else {
                 if (lastActivityTime > sessionMD.getLastReportedActivityTime()) {
                     final long lastActivityTimeFinal = lastActivityTime;
@@ -660,10 +687,13 @@ public class DefaultTransportService implements TransportService {
     @Override
     public SessionMetaData registerSyncSession(TransportProtos.SessionInfoProto sessionInfo, SessionMsgListener listener, long timeout) {
         SessionMetaData currentSession = new SessionMetaData(sessionInfo, TransportProtos.SessionType.SYNC, listener);
-        sessions.putIfAbsent(toSessionId(sessionInfo), currentSession);
+        UUID sessionId = toSessionId(sessionInfo);
+        sessions.putIfAbsent(sessionId, currentSession);
+
+        TransportProtos.SessionCloseNotificationProto notification = TransportProtos.SessionCloseNotificationProto.newBuilder().setMessage("session timeout!").build();
 
         ScheduledFuture executorFuture = scheduler.schedule(() -> {
-            listener.onRemoteSessionCloseCommand(TransportProtos.SessionCloseNotificationProto.getDefaultInstance());
+            listener.onRemoteSessionCloseCommand(sessionId, notification);
             deregisterSession(sessionInfo);
         }, timeout, TimeUnit.MILLISECONDS);
 
@@ -716,7 +746,7 @@ public class DefaultTransportService implements TransportService {
                     listener.onAttributeUpdate(toSessionMsg.getAttributeUpdateNotification());
                 }
                 if (toSessionMsg.hasSessionCloseNotification()) {
-                    listener.onRemoteSessionCloseCommand(toSessionMsg.getSessionCloseNotification());
+                    listener.onRemoteSessionCloseCommand(sessionId, toSessionMsg.getSessionCloseNotification());
                 }
                 if (toSessionMsg.hasToTransportUpdateCredentialsNotification()) {
                     listener.onToTransportUpdateCredentials(toSessionMsg.getToTransportUpdateCredentialsNotification());

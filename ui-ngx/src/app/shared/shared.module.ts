@@ -141,7 +141,7 @@ import { FileSizePipe } from '@shared/pipe/file-size.pipe';
 import { WidgetsBundleSearchComponent } from '@shared/components/widgets-bundle-search.component';
 import { SelectableColumnsPipe } from '@shared/pipe/selectable-columns.pipe';
 import { QuickTimeIntervalComponent } from '@shared/components/time/quick-time-interval.component';
-import { FirmwareAutocompleteComponent } from '@shared/components/firmware/firmware-autocomplete.component';
+import { OtaPackageAutocompleteComponent } from '@shared/components/ota-package/ota-package-autocomplete.component';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 
 @NgModule({
@@ -239,7 +239,7 @@ import { MAT_DATE_LOCALE } from '@angular/material/core';
     HistorySelectorComponent,
     EntityGatewaySelectComponent,
     ContactComponent,
-    FirmwareAutocompleteComponent,
+    OtaPackageAutocompleteComponent,
     WidgetsBundleSearchComponent
   ],
   imports: [
@@ -411,7 +411,7 @@ import { MAT_DATE_LOCALE } from '@angular/material/core';
     HistorySelectorComponent,
     EntityGatewaySelectComponent,
     ContactComponent,
-    FirmwareAutocompleteComponent,
+    OtaPackageAutocompleteComponent,
     WidgetsBundleSearchComponent
   ]
 })

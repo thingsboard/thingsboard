@@ -26,8 +26,8 @@ public class TbQueueCoreSettings {
     @Value("${queue.core.topic}")
     private String topic;
 
-    @Value("${queue.core.firmware.topic:tb_firmware}")
-    private String firmwareTopic;
+    @Value("${queue.core.ota.topic:tb_ota_package}")
+    private String otaPackageTopic;
 
     @Value("${queue.core.usage-stats-topic:tb_usage_stats}")
     private String usageStatsTopic;

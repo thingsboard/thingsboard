@@ -63,7 +63,7 @@ BEGIN
     into max_customer_ttl;
     max_ttl := GREATEST(system_ttl, max_customer_ttl, max_tenant_ttl);
     if max_ttl IS NOT NULL AND max_ttl > 0 THEN
-        date := to_timestamp(EXTRACT(EPOCH FROM current_timestamp) - (max_ttl / 1000));
+        date := to_timestamp(EXTRACT(EPOCH FROM current_timestamp) - max_ttl);
         partition_by_max_ttl_date := get_partition_by_max_ttl_date(partition_type, date);
         RAISE NOTICE 'Partition by max ttl: %', partition_by_max_ttl_date;
         IF partition_by_max_ttl_date IS NOT NULL THEN
@@ -104,11 +104,12 @@ BEGIN
                                 END IF;
                             END IF;
                         END IF;
-                    END IF;
-                    IF partition_to_delete IS NOT NULL THEN
-                        RAISE NOTICE 'Partition to delete by max ttl: %', partition_to_delete;
-                        EXECUTE format('DROP TABLE %I', partition_to_delete);
-                        deleted := deleted + 1;
+                        IF partition_to_delete IS NOT NULL THEN
+                            RAISE NOTICE 'Partition to delete by max ttl: %', partition_to_delete;
+                            EXECUTE format('DROP TABLE IF EXISTS %I', partition_to_delete);
+                            partition_to_delete := NULL;
+                            deleted := deleted + 1;
+                        END IF;
                     END IF;
                 END LOOP;
         END IF;

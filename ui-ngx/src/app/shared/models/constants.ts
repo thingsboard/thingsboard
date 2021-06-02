@@ -121,6 +121,7 @@ export const HelpLinks = {
     entitiesImport: helpBaseUrl + '/docs/user-guide/bulk-provisioning',
     rulechains: helpBaseUrl + '/docs/user-guide/ui/rule-chains',
     dashboards: helpBaseUrl + '/docs/user-guide/ui/dashboards',
+    otaUpdates: helpBaseUrl + '/docs/user-guide/ui/ota-updates',
     widgetsBundles: helpBaseUrl + '/docs/user-guide/ui/widget-library#bundles',
     widgetsConfig:  helpBaseUrl + '/docs/user-guide/ui/dashboards#widget-configuration',
     widgetsConfigTimeseries:  helpBaseUrl + '/docs/user-guide/ui/dashboards#timeseries',

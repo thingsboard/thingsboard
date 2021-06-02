@@ -85,37 +85,11 @@ public abstract class AbstractCoapServerSideRpcProtoIntegrationTest extends Abst
 
     @Test
     public void testServerCoapTwoWayRpc() throws Exception {
-        processTwoWayRpcTest();
-    }
-
-    protected void processTwoWayRpcTest() throws Exception {
-        CoapClient client = getCoapClient(FeatureType.RPC);
-        client.useCONs();
-
-        CountDownLatch latch = new CountDownLatch(1);
-        TestCoapCallback testCoapCallback = new TestCoapCallback(client, latch, false);
-
-        Request request = Request.newGet().setObserve();
-        request.setType(CoAP.Type.CON);
-        CoapObserveRelation observeRelation = client.observe(request, testCoapCallback);
-
-        String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"26\",\"value\": 1}}";
-        String deviceId = savedDevice.getId().getId().toString();
-
-        String expected = "{\"payload\":\"{\\\"value1\\\":\\\"A\\\",\\\"value2\\\":\\\"B\\\"}\"}";
-
-        String result = doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isOk());
-        latch.await(3, TimeUnit.SECONDS);
-
-        assertEquals(expected, result);
-        assertEquals(0, testCoapCallback.getObserve().intValue());
-        observeRelation.proactiveCancel();
-        assertTrue(observeRelation.isCanceled());
+        processTwoWayRpcTest("{\"payload\":\"{\\\"value1\\\":\\\"A\\\",\\\"value2\\\":\\\"B\\\"}\"}");
     }
 
     @Override
     protected void processOnLoadResponse(CoapResponse response, CoapClient client, Integer observe, CountDownLatch latch) {
-        client.setURI(getRpcResponseFeatureTokenUrl(accessToken, observe));
         ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = getProtoTransportPayloadConfiguration();
         ProtoFileElement rpcRequestProtoSchemaFile = protoTransportPayloadConfiguration.getTransportProtoSchema(RPC_REQUEST_PROTO_SCHEMA);
         DynamicSchema rpcRequestProtoSchema = protoTransportPayloadConfiguration.getDynamicSchema(rpcRequestProtoSchemaFile, ProtoTransportPayloadConfiguration.RPC_REQUEST_PROTO_SCHEMA);
@@ -123,25 +97,22 @@ public abstract class AbstractCoapServerSideRpcProtoIntegrationTest extends Abst
         byte[] requestPayload = response.getPayload();
         DynamicMessage.Builder rpcRequestMsg = rpcRequestProtoSchema.newMessageBuilder("RpcRequestMsg");
         Descriptors.Descriptor rpcRequestMsgDescriptor = rpcRequestMsg.getDescriptorForType();
-        assertNotNull(rpcRequestMsgDescriptor);
         try {
             DynamicMessage dynamicMessage = DynamicMessage.parseFrom(rpcRequestMsgDescriptor, requestPayload);
-            List<Descriptors.FieldDescriptor> fields = rpcRequestMsgDescriptor.getFields();
-            for (Descriptors.FieldDescriptor fieldDescriptor: fields) {
-                assertTrue(dynamicMessage.hasField(fieldDescriptor));
-            }
+            Descriptors.FieldDescriptor requestIdDescriptor = rpcRequestMsgDescriptor.findFieldByName("requestId");
+            int requestId = (int) dynamicMessage.getField(requestIdDescriptor);
             ProtoFileElement rpcResponseProtoSchemaFile = protoTransportPayloadConfiguration.getTransportProtoSchema(DEVICE_RPC_RESPONSE_PROTO_SCHEMA);
             DynamicSchema rpcResponseProtoSchema = protoTransportPayloadConfiguration.getDynamicSchema(rpcResponseProtoSchemaFile, ProtoTransportPayloadConfiguration.RPC_RESPONSE_PROTO_SCHEMA);
             DynamicMessage.Builder rpcResponseBuilder = rpcResponseProtoSchema.newMessageBuilder("RpcResponseMsg");
             Descriptors.Descriptor rpcResponseMsgDescriptor = rpcResponseBuilder.getDescriptorForType();
-            assertNotNull(rpcResponseMsgDescriptor);
             DynamicMessage rpcResponseMsg = rpcResponseBuilder
                     .setField(rpcResponseMsgDescriptor.findFieldByName("payload"), DEVICE_RESPONSE)
                     .build();
+            client.setURI(getRpcResponseFeatureTokenUrl(accessToken, requestId));
             client.post(new CoapHandler() {
                 @Override
                 public void onLoad(CoapResponse response) {
-                    log.warn("Command Response Ack: {}, {}", response.getCode(), response.getResponseText());
+                    log.warn("Command Response Ack: {}", response.getCode());
                     latch.countDown();
                 }
 

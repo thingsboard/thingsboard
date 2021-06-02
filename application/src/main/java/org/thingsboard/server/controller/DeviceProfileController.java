@@ -168,7 +168,7 @@ public class DeviceProfileController extends BaseController {
                     null,
                     created ? ActionType.ADDED : ActionType.UPDATED, null);
 
-            firmwareStateService.update(savedDeviceProfile, isFirmwareChanged, isSoftwareChanged);
+            otaPackageStateService.update(savedDeviceProfile, isFirmwareChanged, isSoftwareChanged);
 
             sendEntityNotificationMsg(getTenantId(), savedDeviceProfile.getId(),
                     deviceProfile.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);

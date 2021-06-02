@@ -479,22 +479,21 @@ public class ModelConstants {
     public static final String RESOURCE_DATA_COLUMN = "data";
 
     /**
-     * Firmware constants.
+     * Ota Package constants.
      */
-    public static final String FIRMWARE_TABLE_NAME = "firmware";
-    public static final String FIRMWARE_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
-    public static final String FIRMWARE_DEVICE_PROFILE_ID_COLUMN = "device_profile_id";
-    public static final String FIRMWARE_TYPE_COLUMN = "type";
-    public static final String FIRMWARE_TITLE_COLUMN = TITLE_PROPERTY;
-    public static final String FIRMWARE_VERSION_COLUMN = "version";
-    public static final String FIRMWARE_FILE_NAME_COLUMN = "file_name";
-    public static final String FIRMWARE_CONTENT_TYPE_COLUMN = "content_type";
-    public static final String FIRMWARE_CHECKSUM_ALGORITHM_COLUMN = "checksum_algorithm";
-    public static final String FIRMWARE_CHECKSUM_COLUMN = "checksum";
-    public static final String FIRMWARE_DATA_COLUMN = "data";
-    public static final String FIRMWARE_DATA_SIZE_COLUMN = "data_size";
-    public static final String FIRMWARE_ADDITIONAL_INFO_COLUMN = ADDITIONAL_INFO_PROPERTY;
-    public static final String FIRMWARE_HAS_DATA_PROPERTY = "has_data";
+    public static final String OTA_PACKAGE_TABLE_NAME = "ota_package";
+    public static final String OTA_PACKAGE_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
+    public static final String OTA_PACKAGE_DEVICE_PROFILE_ID_COLUMN = "device_profile_id";
+    public static final String OTA_PACKAGE_TYPE_COLUMN = "type";
+    public static final String OTA_PACKAGE_TILE_COLUMN = TITLE_PROPERTY;
+    public static final String OTA_PACKAGE_VERSION_COLUMN = "version";
+    public static final String OTA_PACKAGE_FILE_NAME_COLUMN = "file_name";
+    public static final String OTA_PACKAGE_CONTENT_TYPE_COLUMN = "content_type";
+    public static final String OTA_PACKAGE_CHECKSUM_ALGORITHM_COLUMN = "checksum_algorithm";
+    public static final String OTA_PACKAGE_CHECKSUM_COLUMN = "checksum";
+    public static final String OTA_PACKAGE_DATA_COLUMN = "data";
+    public static final String OTA_PACKAGE_DATA_SIZE_COLUMN = "data_size";
+    public static final String OTA_PACKAGE_ADDITIONAL_INFO_COLUMN = ADDITIONAL_INFO_PROPERTY;
 
     /**
      * Edge constants.
