@@ -920,7 +920,7 @@
       "existing-device-profile": "Select existing device profile",
       "specific-configuration": "Specific configuration",
       "customer-to-assign-device": "Customer to assign the device",
-      "add-credential": "Add credential"
+      "add-credentials": "Add credentials"
     }
   },
   "device-profile": {
