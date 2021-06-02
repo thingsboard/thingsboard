@@ -39,6 +39,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.K
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.DISCOVER_ALL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.EXECUTE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.FW_UPDATE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE_CANCEL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE_READ_ALL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_ATTRIBUTES;
@@ -140,7 +141,8 @@ public class Lwm2mClientRpcRequest {
             if (this.getTargetIdVer() == null
                     && !(OBSERVE_READ_ALL == this.getTypeOper()
                     || DISCOVER_ALL == this.getTypeOper()
-                    || OBSERVE_CANCEL == this.getTypeOper())) {
+                    || OBSERVE_CANCEL == this.getTypeOper()
+                    || FW_UPDATE == this.getTypeOper())) {
                 this.setErrorMsg(TARGET_ID_VER_KEY + " and " +
                         KEY_NAME_KEY + " is null or bad format");
             }
