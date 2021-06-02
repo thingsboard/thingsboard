@@ -110,6 +110,8 @@ class RateLimitsUpdater extends PaginatedUpdater<String, TenantProfile> {
                 profileConfiguration.setCassandraTenantLimitsConfiguration(cassandraTenantLimitsConfiguration);
                 profileConfiguration.setPrintTenantNames(printTenantNames);
             }
+
+            tenantProfileService.saveTenantProfile(null, entity);
         }
     }
 }
