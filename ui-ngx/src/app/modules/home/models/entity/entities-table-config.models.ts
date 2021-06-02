@@ -37,7 +37,7 @@ export type EntityStringFunction<T extends BaseData<HasId>> = (entity: T) => str
 export type EntityVoidFunction<T extends BaseData<HasId>> = (entity: T) => void;
 export type EntityIdsVoidFunction<T extends BaseData<HasId>> = (ids: HasUUID[]) => void;
 export type EntityCountStringFunction = (count: number) => string;
-export type EntityTwoWayOperation<T extends BaseData<HasId>> = (entity: T) => Observable<T>;
+export type EntityTwoWayOperation<T extends BaseData<HasId>> = (entity: T, originalEntity?: T) => Observable<T>;
 export type EntityByIdOperation<T extends BaseData<HasId>> = (id: HasUUID) => Observable<T>;
 export type EntityIdOneWayOperation = (id: HasUUID) => Observable<any>;
 export type EntityActionFunction<T extends BaseData<HasId>> = (action: EntityAction<T>) => boolean;
@@ -173,7 +173,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   deleteEntitiesTitle: EntityCountStringFunction = () => '';
   deleteEntitiesContent: EntityCountStringFunction = () => '';
   loadEntity: EntityByIdOperation<T | L> = () => of();
-  saveEntity: EntityTwoWayOperation<T> = (entity) => of(entity);
+  saveEntity: EntityTwoWayOperation<T> = (entity, originalEntity) => of(entity);
   deleteEntity: EntityIdOneWayOperation = () => of();
   entitiesFetchFunction: EntitiesFetchFunction<L, P> = () => of(emptyPageData<L>());
   onEntityAction: EntityActionFunction<T> = () => false;

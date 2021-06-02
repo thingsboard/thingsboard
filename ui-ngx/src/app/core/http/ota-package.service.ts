@@ -120,4 +120,8 @@ export class OtaPackageService {
     return this.http.delete(`/api/otaPackage/${otaPackageId}`, defaultHttpOptionsFromConfig(config));
   }
 
+  public countUpdateDeviceAfterChangePackage(type: OtaUpdateType, deviceProfileId: string, config?: RequestConfig): Observable<number> {
+    return this.http.get<number>(`/api/devices/count/${type}?deviceProfileId=${deviceProfileId}`, defaultHttpOptionsFromConfig(config));
+  }
+
 }

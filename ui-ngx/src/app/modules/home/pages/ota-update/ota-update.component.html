@@ -69,6 +69,7 @@
       <tb-device-profile-autocomplete
         formControlName="deviceProfileId"
         required
+        [ngStyle]="{'padding-bottom': isAdd ? '16px': 0}"
         [hint]="'ota-update.chose-compatible-device-profile'"
         [editProfileEnabled]="false"
         [addNewProfile]="false"
