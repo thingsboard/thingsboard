@@ -136,7 +136,9 @@ public class EdgeImitator {
             @Override
             public void onSuccess(@Nullable List<Void> result) {
                 if (connected) {
-                    DownlinkResponseMsg downlinkResponseMsg = DownlinkResponseMsg.newBuilder().setSuccess(true).build();
+                    DownlinkResponseMsg downlinkResponseMsg = DownlinkResponseMsg.newBuilder()
+                            .setDownlinkMsgId(downlinkMsg.getDownlinkMsgId())
+                            .setSuccess(true).build();
                     edgeRpcClient.sendDownlinkResponseMsg(downlinkResponseMsg);
                 }
             }
@@ -144,7 +146,9 @@ public class EdgeImitator {
             @Override
             public void onFailure(Throwable t) {
                 if (connected) {
-                    DownlinkResponseMsg downlinkResponseMsg = DownlinkResponseMsg.newBuilder().setSuccess(false).setErrorMsg(t.getMessage()).build();
+                    DownlinkResponseMsg downlinkResponseMsg = DownlinkResponseMsg.newBuilder()
+                            .setDownlinkMsgId(downlinkMsg.getDownlinkMsgId())
+                            .setSuccess(false).setErrorMsg(t.getMessage()).build();
                     edgeRpcClient.sendDownlinkResponseMsg(downlinkResponseMsg);
                 }
             }
