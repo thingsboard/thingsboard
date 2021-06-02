@@ -18,6 +18,8 @@ package org.thingsboard.server.dao.sql.device;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -27,6 +29,8 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.common.data.ota.OtaPackageUtil;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
@@ -155,23 +159,27 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
     }
 
     @Override
-    public PageData<Device> findDevicesByTenantIdAndTypeAndEmptyFirmware(UUID tenantId, String type, PageLink pageLink) {
-        return DaoUtil.toPageData(
-                deviceRepository.findByTenantIdAndTypeAndFirmwareIdIsNull(
-                        tenantId,
-                        type,
-                        Objects.toString(pageLink.getTextSearch(), ""),
-                        DaoUtil.toPageable(pageLink)));
+    public PageData<Device> findDevicesByTenantIdAndTypeAndEmptyOtaPackage(UUID tenantId,
+                                                                           UUID deviceProfileId,
+                                                                           OtaPackageType type,
+                                                                           PageLink pageLink) {
+        Pageable pageable = DaoUtil.toPageable(pageLink);
+        String searchText = Objects.toString(pageLink.getTextSearch(), "");
+        Page<DeviceEntity> page = OtaPackageUtil.getByOtaPackageType(
+                () -> deviceRepository.findByTenantIdAndTypeAndFirmwareIdIsNull(tenantId, deviceProfileId, searchText, pageable),
+                () -> deviceRepository.findByTenantIdAndTypeAndSoftwareIdIsNull(tenantId, deviceProfileId, searchText, pageable),
+                type
+        );
+        return DaoUtil.toPageData(page);
     }
 
     @Override
-    public PageData<Device> findDevicesByTenantIdAndTypeAndEmptySoftware(UUID tenantId, String type, PageLink pageLink) {
-        return DaoUtil.toPageData(
-                deviceRepository.findByTenantIdAndTypeAndSoftwareIdIsNull(
-                        tenantId,
-                        type,
-                        Objects.toString(pageLink.getTextSearch(), ""),
-                        DaoUtil.toPageable(pageLink)));
+    public Long countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(UUID tenantId, UUID deviceProfileId, OtaPackageType type) {
+        return OtaPackageUtil.getByOtaPackageType(
+                () -> deviceRepository.countByTenantIdAndDeviceProfileIdAndFirmwareIdIsNull(tenantId, deviceProfileId),
+                () -> deviceRepository.countByTenantIdAndDeviceProfileIdAndSoftwareIdIsNull(tenantId, deviceProfileId),
+                type
+        );
     }
 
     @Override

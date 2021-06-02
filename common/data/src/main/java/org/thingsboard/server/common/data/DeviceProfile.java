@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.id.FirmwareId;
+import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.NoXss;
@@ -37,7 +37,7 @@ import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalIn
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements HasName, HasTenantId, HasFirmware {
+public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements HasName, HasTenantId, HasOtaPackage {
 
     private TenantId tenantId;
     @NoXss
@@ -60,9 +60,9 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
     @NoXss
     private String provisionDeviceKey;
 
-    private FirmwareId firmwareId;
+    private OtaPackageId firmwareId;
 
-    private FirmwareId softwareId;
+    private OtaPackageId softwareId;
 
     public DeviceProfile() {
         super();

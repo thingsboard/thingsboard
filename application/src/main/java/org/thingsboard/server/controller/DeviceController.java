@@ -53,6 +53,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -75,6 +76,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
@@ -153,7 +155,7 @@ public class DeviceController extends BaseController {
                 deviceStateService.onDeviceUpdated(savedDevice);
             }
 
-            firmwareStateService.update(savedDevice, oldDevice);
+            otaPackageStateService.update(savedDevice, oldDevice);
 
             return savedDevice;
         } catch (Exception e) {
@@ -774,6 +776,21 @@ public class DeviceController extends BaseController {
                     nonFilteredResult.getTotalElements(),
                     nonFilteredResult.hasNext());
             return checkNotNull(filteredResult);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/devices/count/{otaPackageType}", method = RequestMethod.GET)
+    @ResponseBody
+    public Long countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(@PathVariable("otaPackageType") String otaPackageType,
+                                                                           @RequestParam String deviceProfileId) throws ThingsboardException {
+        checkParameter("OtaPackageType", otaPackageType);
+        checkParameter("DeviceProfileId", deviceProfileId);
+        try {
+            return deviceService.countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(
+                    getCurrentUser().getTenantId(), new DeviceProfileId(UUID.fromString(deviceProfileId)), OtaPackageType.valueOf(otaPackageType));
         } catch (Exception e) {
             throw handleException(e);
         }

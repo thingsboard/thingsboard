@@ -23,7 +23,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToFirmwareStateServiceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToOtaPackageStateServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
@@ -245,24 +245,24 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToFirmwareStateServiceMsg>> createToFirmwareStateServiceMsgConsumer() {
-        TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToFirmwareStateServiceMsg>> consumerBuilder = TbKafkaConsumerTemplate.builder();
+    public TbQueueConsumer<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> createToOtaPackageStateServiceMsgConsumer() {
+        TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> consumerBuilder = TbKafkaConsumerTemplate.builder();
         consumerBuilder.settings(kafkaSettings);
-        consumerBuilder.topic(coreSettings.getFirmwareTopic());
-        consumerBuilder.clientId("tb-core-fw-consumer-" + serviceInfoProvider.getServiceId());
-        consumerBuilder.groupId("tb-core-fw-consumer");
-        consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToFirmwareStateServiceMsg.parseFrom(msg.getData()), msg.getHeaders()));
+        consumerBuilder.topic(coreSettings.getOtaPackageTopic());
+        consumerBuilder.clientId("tb-core-ota-consumer-" + serviceInfoProvider.getServiceId());
+        consumerBuilder.groupId("tb-core-ota-consumer");
+        consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToOtaPackageStateServiceMsg.parseFrom(msg.getData()), msg.getHeaders()));
         consumerBuilder.admin(fwUpdatesAdmin);
         consumerBuilder.statsService(consumerStatsService);
         return consumerBuilder.build();
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToFirmwareStateServiceMsg>> createToFirmwareStateServiceMsgProducer() {
-        TbKafkaProducerTemplate.TbKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToFirmwareStateServiceMsg>> requestBuilder = TbKafkaProducerTemplate.builder();
+    public TbQueueProducer<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> createToOtaPackageStateServiceMsgProducer() {
+        TbKafkaProducerTemplate.TbKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> requestBuilder = TbKafkaProducerTemplate.builder();
         requestBuilder.settings(kafkaSettings);
-        requestBuilder.clientId("tb-core-fw-producer-" + serviceInfoProvider.getServiceId());
-        requestBuilder.defaultTopic(coreSettings.getFirmwareTopic());
+        requestBuilder.clientId("tb-core-ota-producer-" + serviceInfoProvider.getServiceId());
+        requestBuilder.defaultTopic(coreSettings.getOtaPackageTopic());
         requestBuilder.admin(fwUpdatesAdmin);
         return requestBuilder.build();
     }

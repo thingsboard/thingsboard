@@ -39,8 +39,8 @@ import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
-import org.thingsboard.server.common.data.Firmware;
-import org.thingsboard.server.common.data.FirmwareInfo;
+import org.thingsboard.server.common.data.OtaPackage;
+import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -70,7 +70,7 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
-import org.thingsboard.server.common.data.id.FirmwareId;
+import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -110,7 +110,7 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
-import org.thingsboard.server.dao.firmware.FirmwareService;
+import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
@@ -128,7 +128,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
-import org.thingsboard.server.service.firmware.FirmwareStateService;
+import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.edge.rpc.EdgeGrpcService;
 import org.thingsboard.server.service.edge.rpc.init.SyncEdgeService;
@@ -250,10 +250,10 @@ public abstract class BaseController {
     protected TbResourceService resourceService;
 
     @Autowired
-    protected FirmwareService firmwareService;
+    protected OtaPackageService otaPackageService;
 
     @Autowired
-    protected FirmwareStateService firmwareStateService;
+    protected OtaPackageStateService otaPackageStateService;
 
     @Autowired
     protected TbQueueProducerProvider producerProvider;
@@ -511,8 +511,8 @@ public abstract class BaseController {
                 case TB_RESOURCE:
                     checkResourceId(new TbResourceId(entityId.getId()), operation);
                     return;
-                case FIRMWARE:
-                    checkFirmwareId(new FirmwareId(entityId.getId()), operation);
+                case OTA_PACKAGE:
+                    checkOtaPackageId(new OtaPackageId(entityId.getId()), operation);
                     return;
                 default:
                     throw new IllegalArgumentException("Unsupported entity type: " + entityId.getEntityType());
@@ -769,25 +769,25 @@ public abstract class BaseController {
         }
     }
 
-    Firmware checkFirmwareId(FirmwareId firmwareId, Operation operation) throws ThingsboardException {
+    OtaPackage checkOtaPackageId(OtaPackageId otaPackageId, Operation operation) throws ThingsboardException {
         try {
-            validateId(firmwareId, "Incorrect firmwareId " + firmwareId);
-            Firmware firmware = firmwareService.findFirmwareById(getCurrentUser().getTenantId(), firmwareId);
-            checkNotNull(firmware);
-            accessControlService.checkPermission(getCurrentUser(), Resource.FIRMWARE, operation, firmwareId, firmware);
-            return firmware;
+            validateId(otaPackageId, "Incorrect otaPackageId " + otaPackageId);
+            OtaPackage otaPackage = otaPackageService.findOtaPackageById(getCurrentUser().getTenantId(), otaPackageId);
+            checkNotNull(otaPackage);
+            accessControlService.checkPermission(getCurrentUser(), Resource.OTA_PACKAGE, operation, otaPackageId, otaPackage);
+            return otaPackage;
         } catch (Exception e) {
             throw handleException(e, false);
         }
     }
 
-    FirmwareInfo checkFirmwareInfoId(FirmwareId firmwareId, Operation operation) throws ThingsboardException {
+    OtaPackageInfo checkOtaPackageInfoId(OtaPackageId otaPackageId, Operation operation) throws ThingsboardException {
         try {
-            validateId(firmwareId, "Incorrect firmwareId " + firmwareId);
-            FirmwareInfo firmwareInfo = firmwareService.findFirmwareInfoById(getCurrentUser().getTenantId(), firmwareId);
-            checkNotNull(firmwareInfo);
-            accessControlService.checkPermission(getCurrentUser(), Resource.FIRMWARE, operation, firmwareId, firmwareInfo);
-            return firmwareInfo;
+            validateId(otaPackageId, "Incorrect otaPackageId " + otaPackageId);
+            OtaPackageInfo otaPackageIn = otaPackageService.findOtaPackageInfoById(getCurrentUser().getTenantId(), otaPackageId);
+            checkNotNull(otaPackageIn);
+            accessControlService.checkPermission(getCurrentUser(), Resource.OTA_PACKAGE, operation, otaPackageId, otaPackageIn);
+            return otaPackageIn;
         } catch (Exception e) {
             throw handleException(e, false);
         }
