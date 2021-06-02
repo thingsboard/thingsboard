@@ -83,11 +83,17 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public LwM2mClient getClient(TransportProtos.SessionInfoProto sessionInfo) {
-        return lwM2mClientsByEndpoint.values().stream().filter(c ->
+        LwM2mClient lwM2mClient =  lwM2mClientsByEndpoint.values().stream().filter(c ->
                 (new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()))
                         .equals((new UUID(c.getSession().getSessionIdMSB(), c.getSession().getSessionIdLSB())))
 
         ).findAny().get();
+        if (lwM2mClient == null) {
+            log.warn("Device TimeOut? lwM2mClient is null.");
+            log.warn("SessionInfo input [{}], lwM2mClientsByEndpoint size: [{}]", sessionInfo, lwM2mClientsByEndpoint.values().size());
+            log.error("", new RuntimeException());
+        }
+        return lwM2mClient;
     }
 
     @Override

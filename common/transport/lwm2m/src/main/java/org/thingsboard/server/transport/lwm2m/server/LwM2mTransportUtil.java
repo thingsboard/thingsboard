@@ -229,11 +229,12 @@ public class LwM2mTransportUtil {
          */
         WRITE_UPDATE(9, "WriteUpdate"),
         WRITE_ATTRIBUTES(10, "WriteAttributes"),
-        DELETE(11, "Delete");
+        DELETE(11, "Delete"),
 
         // only for RPC
+        FW_UPDATE(12,"FirmwareUpdate");
 //        FW_READ_INFO(12, "FirmwareReadInfo"),
-//        FW_UPDATE(13, "FirmwareUpdate"),
+
 //        SW_READ_INFO(15, "SoftwareReadInfo"),
 //        SW_UPDATE(16, "SoftwareUpdate"),
 //        SW_UNINSTALL(18, "SoftwareUninstall");

@@ -53,6 +53,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.BOOLEAN_V;
 
@@ -63,7 +65,12 @@ import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.
 public class LwM2mTransportServerHelper {
 
     private final LwM2mTransportContext context;
-    private final LwM2MJsonAdaptor adaptor;
+    private final AtomicInteger atomicTs = new AtomicInteger(0);
+
+
+    public long getTS() {
+        return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) * 1000L + (atomicTs.getAndIncrement() % 1000);
+    }
 
     /**
      * send to Thingsboard Attribute || Telemetry
@@ -96,7 +103,7 @@ public class LwM2mTransportServerHelper {
     public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> result, SessionInfoProto sessionInfo) {
         PostTelemetryMsg.Builder request = PostTelemetryMsg.newBuilder();
         TransportProtos.TsKvListProto.Builder builder = TransportProtos.TsKvListProto.newBuilder();
-        builder.setTs(System.currentTimeMillis());
+        builder.setTs(this.getTS());
         builder.addAllKv(result);
         request.addTsKvList(builder.build());
         PostTelemetryMsg postTelemetryMsg = request.build();
