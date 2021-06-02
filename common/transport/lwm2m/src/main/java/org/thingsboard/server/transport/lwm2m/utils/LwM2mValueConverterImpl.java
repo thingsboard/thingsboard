@@ -43,6 +43,9 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
     @Override
     public Object convertValue(Object value, Type currentType, Type expectedType, LwM2mPath resourcePath)
             throws CodecException {
+        if (value == null) {
+           return null;
+        }
         if (expectedType == null) {
             /** unknown resource, trusted value */
             return value;

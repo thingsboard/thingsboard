@@ -37,6 +37,7 @@ import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATING;
 import static org.thingsboard.server.common.data.ota.OtaPackageUtil.getAttributeKey;
+import static org.eclipse.californium.core.coap.CoAP.ResponseCode.CONTENT;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_NAME_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PACKAGE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_RESULT_ID;
@@ -103,6 +104,9 @@ public class LwM2mFwSwUpdate {
     @Getter
     @Setter
     private final List<String> pendingInfoRequestsStart;
+    @Getter
+    @Setter
+    private volatile Lwm2mClientRpcRequest rpcRequest;
 
     public LwM2mFwSwUpdate(LwM2mClient lwM2MClient, OtaPackageType type) {
         this.lwM2MClient = lwM2MClient;
@@ -153,16 +157,30 @@ public class LwM2mFwSwUpdate {
      * Send FsSw to Lwm2mClient:
      * before operation Write: fw_state = DOWNLOADING
      */
-    private void writeFwSwWare(DefaultLwM2MTransportMsgHandler handler, LwM2mTransportRequest request) {
-        this.stateUpdate = OtaPackageUpdateStatus.DOWNLOADING.name();
-//        this.observeStateUpdate();
-        this.sendLogs(handler, WRITE_REPLACE.name(), LOG_LW2M_INFO, null);
-        int chunkSize = 0;
-        int chunk = 0;
-        byte[] firmwareChunk = handler.otaPackageDataCache.get(this.currentId.toString(), chunkSize, chunk);
-        String targetIdVer = convertPathFromObjectIdToIdVer(this.pathPackageId, this.lwM2MClient.getRegistration());
-        request.sendAllRequest(lwM2MClient.getRegistration(), targetIdVer, WRITE_REPLACE, ContentFormat.OPAQUE.getName(),
-                firmwareChunk, handler.config.getTimeout(), null);
+    public void writeFwSwWare(DefaultLwM2MTransportMsgHandler handler, LwM2mTransportRequest request) {
+        if (this.currentId != null) {
+            this.stateUpdate = OtaPackageUpdateStatus.DOWNLOADING.name();
+            this.sendLogs(handler, WRITE_REPLACE.name(), LOG_LW2M_INFO, null);
+            int chunkSize = 0;
+            int chunk = 0;
+            byte[] firmwareChunk = handler.otaPackageDataCache.get(this.currentId.toString(), chunkSize, chunk);
+            String targetIdVer = convertPathFromObjectIdToIdVer(this.pathPackageId, this.lwM2MClient.getRegistration());
+            String fwMsg = String.format("%s: Start type operation %s paths:  %s", LOG_LW2M_INFO,
+                    LwM2mTransportUtil.LwM2mTypeOper.FW_UPDATE.name(),  FW_PACKAGE_ID);
+            handler.sendLogsToThingsboard(fwMsg, lwM2MClient.getRegistration().getId());
+            log.warn("8) Start firmware Update. Send save to: [{}] ver: [{}] path: [{}]", this.lwM2MClient.getDeviceName(), this.currentVersion, targetIdVer);
+            request.sendAllRequest(this.lwM2MClient.getRegistration(), targetIdVer, WRITE_REPLACE, ContentFormat.OPAQUE.getName(),
+                    firmwareChunk, handler.config.getTimeout(), this.rpcRequest);
+        }
+        else {
+            String msgError = "FirmWareId is null.";
+            log.warn("6) [{}]", msgError);
+            if (this.rpcRequest != null) {
+                handler.sentRpcResponse(this.rpcRequest, CONTENT.name(), msgError, LOG_LW2M_ERROR);
+            }
+            log.error (msgError);
+            this.sendLogs(handler, WRITE_REPLACE.name(), LOG_LW2M_ERROR, msgError);
+        }
     }
 
     public void sendLogs(DefaultLwM2MTransportMsgHandler handler, String typeOper, String typeInfo, String msgError) {
@@ -185,7 +203,7 @@ public class LwM2mFwSwUpdate {
         this.setStateUpdate(UPDATING.name());
         this.sendLogs(handler, EXECUTE.name(), LOG_LW2M_INFO, null);
         request.sendAllRequest(this.lwM2MClient.getRegistration(), this.pathInstallId, EXECUTE, ContentFormat.TLV.getName(),
-                null, 0, null);
+                null, 0, this.rpcRequest);
     }
 
     /**
@@ -347,7 +365,7 @@ public class LwM2mFwSwUpdate {
                 this.pathResultId, this.lwM2MClient.getRegistration()));
         this.pendingInfoRequestsStart.forEach(pathIdVer -> {
             request.sendAllRequest(this.lwM2MClient.getRegistration(), pathIdVer, OBSERVE, ContentFormat.TLV.getName(),
-                    null, 0, null);
+                    null, 0, this.rpcRequest);
         });
 
     }
