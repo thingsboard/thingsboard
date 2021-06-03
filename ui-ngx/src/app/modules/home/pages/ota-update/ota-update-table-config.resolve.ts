@@ -35,6 +35,10 @@ import { PageLink } from '@shared/models/page/page-link';
 import { OtaUpdateComponent } from '@home/pages/ota-update/ota-update.component';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { FileSizePipe } from '@shared/pipe/file-size.pipe';
+import { ClipboardService } from 'ngx-clipboard';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
 
 @Injectable()
 export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<OtaPackage, PageLink, OtaPackageInfo>> {
@@ -44,8 +48,10 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
 
   constructor(private translate: TranslateService,
               private datePipe: DatePipe,
+              private store: Store<AppState>,
               private otaPackageService: OtaPackageService,
-              private fileSize: FileSizePipe) {
+              private fileSize: FileSizePipe,
+              private clipboardService: ClipboardService) {
     this.config.entityType = EntityType.OTA_PACKAGE;
     this.config.entityComponent = OtaUpdateComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.OTA_PACKAGE);
@@ -62,14 +68,20 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
       }),
       new EntityTableColumn<OtaPackageInfo>('fileName', 'ota-update.file-name', '25%'),
       new EntityTableColumn<OtaPackageInfo>('dataSize', 'ota-update.file-size', '70px', entity => {
-        return this.fileSize.transform(entity.dataSize || 0);
+        return entity.dataSize ? this.fileSize.transform(entity.dataSize) : '';
       }),
       new EntityTableColumn<OtaPackageInfo>('checksum', 'ota-update.checksum', '540px', entity => {
-        return `${ChecksumAlgorithmTranslationMap.get(entity.checksumAlgorithm)}: ${entity.checksum}`;
+        return entity.checksum ? `${ChecksumAlgorithmTranslationMap.get(entity.checksumAlgorithm)}: ${entity.checksum}` : '';
       }, () => ({}), false)
     );
 
     this.config.cellActionDescriptors.push(
+      {
+        name: this.translate.instant('ota-update.copy-checksum'),
+        icon: 'content_copy',
+        isEnabled: (otaPackage) => !!otaPackage.checksum,
+        onAction: ($event, entity) => this.copyPackageChecksum($event, entity)
+      },
       {
         name: this.translate.instant('ota-update.download'),
         icon: 'file_download',
@@ -101,13 +113,35 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
     if ($event) {
       $event.stopPropagation();
     }
-    this.otaPackageService.downloadOtaPackage(otaPackageInfo.id.id).subscribe();
+    if (otaPackageInfo.url) {
+      window.open(otaPackageInfo.url, '_blank');
+    } else {
+      this.otaPackageService.downloadOtaPackage(otaPackageInfo.id.id).subscribe();
+    }
+  }
+
+  copyPackageChecksum($event: Event, otaPackageInfo: OtaPackageInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.clipboardService.copy(otaPackageInfo?.checksum);
+    this.store.dispatch(new ActionNotificationShow(
+      {
+        message: this.translate.instant('ota-update.checksum-copied-message'),
+        type: 'success',
+        duration: 750,
+        verticalPosition: 'bottom',
+        horizontalPosition: 'right'
+      }));
   }
 
   onPackageAction(action: EntityAction<OtaPackageInfo>): boolean {
     switch (action.action) {
       case 'uploadPackage':
         this.exportPackage(action.event, action.entity);
+        return true;
+      case 'copyChecksum':
+        this.copyPackageChecksum(action.event, action.entity);
         return true;
     }
     return false;

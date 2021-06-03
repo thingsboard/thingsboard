@@ -575,7 +575,8 @@
         "enter-password": "Enter password",
         "enter-search": "Enter search",
         "created-time": "Created time",
-        "loading": "Loading..."
+        "loading": "Loading...",
+        "proceed": "Proceed"
     },
     "content-type": {
         "json": "Json",
@@ -2152,12 +2153,14 @@
       "assign-firmware-required": "Assigned firmware is required",
       "assign-software": "Assigned software",
       "assign-software-required": "Assigned software is required",
+      "auto-generate-checksum": "Auto-generate checksum",
       "checksum": "Checksum",
+      "checksum-hint": "If checksum is empty, it will be generated automatically",
       "checksum-algorithm": "Checksum algorithm",
       "checksum-copied-message": "Package checksum has been copied to clipboard",
-      "change-firmware": "You have changed the firmware. This may cause update of the { count, plural, 1 {1 device} other {# devices} }.",
-      "change-software": "You have changed the software. This may cause update of the { count, plural, 1 {1 device} other {# devices} }.",
-      "chose-compatible-device-profile": "Choose compatible device profile. The uploaded package will be available only for devices with the chosen profile.",
+      "change-firmware": "Change of the firmware may cause update of { count, plural, 1 {1 device} other {# devices} }.",
+      "change-software": "Change of the software may cause update of { count, plural, 1 {1 device} other {# devices} }.",
+      "chose-compatible-device-profile": "The uploaded package will be available only for devices with the chosen profile.",
       "chose-firmware-distributed-device": "Choose firmware that will be distributed to the devices",
       "chose-software-distributed-device": "Choose software that will be distributed to the devices",
       "content-type": "Content type",
@@ -2193,6 +2196,8 @@
         "firmware": "Firmware",
         "software": "Software"
       },
+      "url": "Direct URL",
+      "url-required": "Direct URL is required",
       "version": "Version",
       "version-required": "Version is required.",
       "warning-after-save-no-edit": "Once the package is uploaded, you will not be able to modify title, version, device profile and package type."

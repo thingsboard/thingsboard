@@ -98,10 +98,10 @@ export class DeviceProfileService {
           text += this.translate.instant('ota-update.change-firmware', {count: deviceFirmwareUpdate});
         }
         if (deviceSoftwareUpdate > 0) {
-          text += text.length ? '<br/>' : '';
+          text += text.length ? ' ' : '';
           text += this.translate.instant('ota-update.change-software', {count: deviceSoftwareUpdate});
         }
-        return text !== '' ? this.dialogService.confirm('', text) : of(true);
+        return text !== '' ? this.dialogService.confirm('', text, null, this.translate.instant('common.proceed')) : of(true);
       }),
       mergeMap((update) => update ? this.saveDeviceProfile(deviceProfile, config) : throwError('Canceled saving device profiles')));
   }
