@@ -79,6 +79,7 @@ public class LwM2mTransportCoapResource extends AbstractLwm2mTransportResource {
         }
         String resource = exchange.getRequestOptions().getUriPath().get(0);
         String token = exchange.getRequestOptions().getUriPath().get(1);
+
         exchange.respond(CoAP.ResponseCode.CONTENT, this.getFwData(currentId));
 
     }
