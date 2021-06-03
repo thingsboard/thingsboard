@@ -161,6 +161,18 @@
     </mat-error>
   </mat-form-field>
   <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.alarms-ttl-days</mat-label>
+    <input matInput required min="0" step="1"
+           formControlName="alarmsTtlDays"
+           type="number">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('alarmsTtlDays').hasError('required')">
+      {{ 'tenant-profile.alarms-ttl-days-required' | translate}}
+    </mat-error>
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('alarmsTtlDays').hasError('min')">
+      {{ 'tenant-profile.alarms-ttl-days-days-range' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
     <mat-label translate>tenant-profile.max-rule-node-executions-per-message</mat-label>
     <input matInput required min="0" step="1"
            formControlName="maxRuleNodeExecutionsPerMessage"

@@ -13,27 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao;
+package org.thingsboard.server.common.data.exception;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.id.TenantId;
+public class ApiUsageLimitsExceededException extends RuntimeException {
+    public ApiUsageLimitsExceededException(String message) {
+        super(message);
+    }
 
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
-
-public interface Dao<T> {
-
-    List<T> find(TenantId tenantId);
-
-    T findById(TenantId tenantId, UUID id);
-
-    ListenableFuture<T> findByIdAsync(TenantId tenantId, UUID id);
-
-    T save(TenantId tenantId, T t);
-
-    boolean removeById(TenantId tenantId, UUID id);
-
-    void removeAllByIds(Collection<UUID> ids);
-
+    public ApiUsageLimitsExceededException() {
+    }
 }
