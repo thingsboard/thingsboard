@@ -192,6 +192,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                     syncSessionSet.add(key);
                 }
             });
+            log.warn("46) Rpc syncSessionSet [{}] subscription after sent [{}]",syncSessionSet, rpcSubscriptions);
             syncSessionSet.forEach(rpcSubscriptions::remove);
         }
 
@@ -240,6 +241,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             log.debug("[{}] Pushing {} pending RPC messages to new async session [{}]", deviceId, toDeviceRpcPendingMap.size(), sessionId);
             if (sessionType == SessionType.SYNC) {
                 log.debug("[{}] Cleanup sync rpc session [{}]", deviceId, sessionId);
+                log.warn("47) Rpc sessionId [{}] Cleanup sync rpc session subscription before [{}]",sessionId,  rpcSubscriptions);
                 rpcSubscriptions.remove(sessionId);
             }
         } else {
@@ -454,7 +456,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         } else {
             SessionInfoMetaData sessionMD = sessions.get(sessionId);
             if (sessionMD == null) {
-                sessionMD = new SessionInfoMetaData(new SessionInfo(SessionType.SYNC, sessionInfo.getNodeId()));
+                sessionMD = new SessionInfoMetaData(new SessionInfo(subscribeCmd.getSessionType(), sessionInfo.getNodeId()));
             }
             sessionMD.setSubscribedToAttributes(true);
             log.debug("[{}] Registering attributes subscription for session [{}]", deviceId, sessionId);
@@ -471,15 +473,17 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         UUID sessionId = getSessionId(sessionInfo);
         if (subscribeCmd.getUnsubscribe()) {
             log.debug("[{}] Canceling rpc subscription for session [{}]", deviceId, sessionId);
+            log.warn("48) Rpc sessionId [{}] Canceling rpc subscription for session subscription before [{}]",sessionId,  rpcSubscriptions);
             rpcSubscriptions.remove(sessionId);
         } else {
             SessionInfoMetaData sessionMD = sessions.get(sessionId);
             if (sessionMD == null) {
-                sessionMD = new SessionInfoMetaData(new SessionInfo(SessionType.SYNC, sessionInfo.getNodeId()));
+                sessionMD = new SessionInfoMetaData(new SessionInfo(subscribeCmd.getSessionType(), sessionInfo.getNodeId()));
             }
             sessionMD.setSubscribedToRPC(true);
             log.debug("[{}] Registering rpc subscription for session [{}]", deviceId, sessionId);
             rpcSubscriptions.put(sessionId, sessionMD.getSessionInfo());
+            log.warn("45) sessionId [{}] Registering rpc subscription for session [{}]",sessionId, rpcSubscriptions);
             sendPendingRequests(context, sessionId, sessionInfo);
             dumpSessions();
         }
@@ -509,6 +513,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             log.debug("[{}] Canceling subscriptions for closed session [{}]", deviceId, sessionId);
             sessions.remove(sessionId);
             attributeSubscriptions.remove(sessionId);
+            log.warn("49) Rpc sessionId [{}] Canceling subscriptions for closed session subscription before [{}]",sessionId,  rpcSubscriptions);
             rpcSubscriptions.remove(sessionId);
             if (sessions.isEmpty()) {
                 reportSessionClose();
@@ -764,6 +769,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         Map<UUID, SessionInfoMetaData> sessionsToRemove = sessions.entrySet().stream().filter(kv -> kv.getValue().getLastActivityTime() < expTime).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         sessionsToRemove.forEach((sessionId, sessionMD) -> {
             sessions.remove(sessionId);
+            log.warn("50) Rpc sessionId [{}] checkSessionsTimeout subscription before [{}]",sessionId,  rpcSubscriptions);
             rpcSubscriptions.remove(sessionId);
             attributeSubscriptions.remove(sessionId);
             notifyTransportAboutClosedSession(sessionId, sessionMD, "session timeout!");

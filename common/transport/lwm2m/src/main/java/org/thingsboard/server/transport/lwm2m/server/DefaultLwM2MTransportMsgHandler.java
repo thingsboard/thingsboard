@@ -42,10 +42,10 @@ import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.ota.OtaPackageKey;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.ota.OtaPackageUtil;
-import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
@@ -87,9 +87,9 @@ import java.util.stream.Collectors;
 
 import static org.eclipse.californium.core.coap.CoAP.ResponseCode.BAD_REQUEST;
 import static org.eclipse.leshan.core.attributes.Attribute.OBJECT_VERSION;
+import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATING;
-import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper.getValueFromKvProto;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.CLIENT_NOT_AUTHORIZED;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.DEVICE_ATTRIBUTES_REQUEST;
@@ -189,13 +189,15 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                     SessionInfoProto sessionInfo = this.getSessionInfoOrCloseSession(lwM2MClient);
                     if (sessionInfo != null) {
                         transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(this, sessionInfo));
-                        TransportProtos.TransportToDeviceActorMsg msg = TransportProtos.TransportToDeviceActorMsg.newBuilder()
+                        log.warn("40) sessionId [{}] Registering rpc subscription after Registration client",new UUID (sessionInfo.getSessionIdMSB(),sessionInfo.getSessionIdLSB()));
+                        transportService.process(TransportProtos.TransportToDeviceActorMsg.newBuilder()
                                 .setSessionInfo(sessionInfo)
                                 .setSessionEvent(DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN))
-                                .setSubscribeToAttributes(TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build())
-                                .setSubscribeToRPC(TransportProtos.SubscribeToRPCMsg.newBuilder().build())
-                                .build();
-                        transportService.process(msg, null);
+                                .setSubscribeToAttributes(TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder()
+                                        .setSessionType(TransportProtos.SessionType.ASYNC).build())
+                                .setSubscribeToRPC(TransportProtos.SubscribeToRPCMsg.newBuilder()
+                                        .setSessionType(TransportProtos.SessionType.ASYNC).build())
+                                .build(), null);
                         this.getInfoFirmwareUpdate(lwM2MClient, null);
                         this.getInfoSoftwareUpdate(lwM2MClient, null);
                         this.initLwM2mFromClientValue(registration, lwM2MClient);
@@ -250,7 +252,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         unRegistrationExecutor.submit(() -> {
             try {
                 this.sendLogsToThingsboard(LOG_LW2M_INFO + ": Client unRegistration", registration.getId());
-                this.closeClientSession(registration);
+//                this.closeClientSession(registration);
             } catch (Throwable t) {
                 log.error("[{}] endpoint [{}] error Unable un registration.", registration.getEndpoint(), t);
                 this.sendLogsToThingsboard(LOG_LW2M_ERROR + String.format(": Client Unable un Registration, %s", t.getMessage()), registration.getId());
@@ -262,10 +264,11 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         SessionInfoProto sessionInfo = this.getSessionInfoOrCloseSession(registration);
         if (sessionInfo != null) {
             transportService.deregisterSession(sessionInfo);
+            // TO DO may problem, better by registrationId
             sessionStore.remove(registration.getEndpoint());
             this.doCloseSession(sessionInfo);
             clientContext.removeClientByRegistrationId(registration.getId());
-            log.info("Client close session: [{}] unReg [{}] name  [{}] profile ", registration.getId(), registration.getEndpoint(), sessionInfo.getDeviceType());
+            log.warn("52) Client close session [{}]: [{}] unReg [{}] name  [{}] profile ", new UUID (sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()), registration.getId(), registration.getEndpoint(), sessionInfo.getDeviceType());
         } else {
             log.error("Client close session: [{}] unReg [{}] name  [{}] sessionInfo ", registration.getId(), registration.getEndpoint(), null);
         }
@@ -446,10 +449,10 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     public void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg toDeviceRpcRequestMsg, SessionInfoProto sessionInfo) {
         // #1
         this.checkRpcRequestTimeout();
-        log.warn ("4) toDeviceRpcRequestMsg: [{}], sessionUUID: [{}]", toDeviceRpcRequestMsg,  new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
+        UUID requestUUID = new UUID(toDeviceRpcRequestMsg.getRequestIdMSB(), toDeviceRpcRequestMsg.getRequestIdLSB());
+        log.warn ("4) toDeviceRpcRequestMsg: [{}], sessionUUID: [{}]", toDeviceRpcRequestMsg,  requestUUID);
         String bodyParams = StringUtils.trimToNull(toDeviceRpcRequestMsg.getParams()) != null ? toDeviceRpcRequestMsg.getParams() : "null";
         LwM2mTypeOper lwM2mTypeOper = setValidTypeOper(toDeviceRpcRequestMsg.getMethodName());
-        UUID requestUUID = new UUID(toDeviceRpcRequestMsg.getRequestIdMSB(), toDeviceRpcRequestMsg.getRequestIdLSB());
         if (!this.rpcSubscriptions.containsKey(requestUUID)) {
             this.rpcSubscriptions.put(requestUUID, toDeviceRpcRequestMsg.getExpirationTime());
             Lwm2mClientRpcRequest lwm2mClientRpcRequest = null;
@@ -479,8 +482,14 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     }
 
     private void checkRpcRequestTimeout() {
-        Set<UUID> rpcSubscriptionsToRemove = rpcSubscriptions.entrySet().stream().filter(kv -> System.currentTimeMillis() > kv.getValue()).map(Map.Entry::getKey).collect(Collectors.toSet());
-        rpcSubscriptionsToRemove.forEach(rpcSubscriptions::remove);
+        log.warn ("4.1) before rpcSubscriptions.size(): [{}]", rpcSubscriptions.size());
+        if (rpcSubscriptions.size() > 0) {
+            Set<UUID> rpcSubscriptionsToRemove = rpcSubscriptions.entrySet().stream().filter(kv -> System.currentTimeMillis() > kv.getValue()).map(Map.Entry::getKey).collect(Collectors.toSet());
+            log.warn ("4.2) System.currentTimeMillis(): [{}]", System.currentTimeMillis());
+            log.warn ("4.3) rpcSubscriptionsToRemove: [{}]", rpcSubscriptionsToRemove);
+            rpcSubscriptionsToRemove.forEach(rpcSubscriptions::remove);
+        }
+        log.warn ("4.4) after rpcSubscriptions.size(): [{}]", rpcSubscriptions.size());
     }
 
     public void sentRpcResponse(Lwm2mClientRpcRequest rpcRequest, String requestCode, String msg, String typeMsg) {
@@ -1372,7 +1381,8 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                                     lwM2MClient.getFwUpdate().setRpcRequest(rpcRequest);
                                     lwM2MClient.getFwUpdate().setCurrentVersion(response.getVersion());
                                     lwM2MClient.getFwUpdate().setCurrentTitle(response.getTitle());
-                                    lwM2MClient.getFwUpdate().setCurrentId(new OtaPackageId(new UUID(response.getOtaPackageIdMSB(), response.getOtaPackageIdLSB())).getId());
+                                    log.warn("11) OtaPackageIdMSB: [{}] OtaPackageIdLSB: [{}]", response.getOtaPackageIdMSB(), response.getOtaPackageIdLSB());
+                                    lwM2MClient.getFwUpdate().setCurrentId(new UUID(response.getOtaPackageIdMSB(), response.getOtaPackageIdLSB()));
                                     if (rpcRequest == null) {
                                         lwM2MClient.getFwUpdate().sendReadObserveInfo(lwM2mTransportRequest);
                                     }

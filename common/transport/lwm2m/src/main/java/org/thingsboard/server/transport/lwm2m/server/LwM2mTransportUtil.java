@@ -43,11 +43,11 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.nustaq.serialization.FSTConfiguration;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageKey;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
 import org.thingsboard.server.common.data.ota.OtaPackageUtil;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientProfile;
@@ -77,14 +77,14 @@ import static org.eclipse.leshan.core.model.ResourceModel.Type.OBJLNK;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.STRING;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.TIME;
+import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
+import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADING;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.FAILED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATING;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.VERIFIED;
-import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
-import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 
 @Slf4j
 public class LwM2mTransportUtil {
@@ -140,6 +140,7 @@ public class LwM2mTransportUtil {
     public static final String METHOD_KEY = "methodName";
 
     // Firmware
+    public static final String FW_COAP_RESOURCE = "fw";
     public static final String FW_UPDATE = "Firmware update";
     public static final Integer FW_ID = 5;
     // Package W
@@ -156,6 +157,7 @@ public class LwM2mTransportUtil {
     public static final String FW_UPDATE_ID = "/5/0/2";
 
     // Software
+    public static final String SW_COAP_RESOURCE = "sw";
     public static final String SW_UPDATE = "Software update";
     public static final Integer SW_ID = 9;
     // Package W

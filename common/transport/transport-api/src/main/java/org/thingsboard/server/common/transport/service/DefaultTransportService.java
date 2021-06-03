@@ -708,6 +708,7 @@ public class DefaultTransportService implements TransportService {
             log.debug("Stopping scheduler to avoid resending response if request has been ack.");
             currentSession.getScheduledFuture().cancel(false);
         }
+        log.warn("54) session [{}] deregisterSession Stopping scheduler to avoid resending response if request has been ack.", toSessionId(sessionInfo));
         sessions.remove(toSessionId(sessionInfo));
     }
 
