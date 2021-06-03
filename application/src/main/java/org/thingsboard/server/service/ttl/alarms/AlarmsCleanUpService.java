@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.alarm.AlarmDao;
@@ -35,6 +36,7 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.action.RuleEngineEntityActionService;
 import org.thingsboard.server.service.ttl.AbstractCleanUpService;
 
@@ -45,7 +47,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-@PsqlDao
+@TbCoreComponent
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -64,7 +66,7 @@ public class AlarmsCleanUpService {
     @Scheduled(initialDelayString = "#{T(org.apache.commons.lang3.RandomUtils).nextLong(0, ${sql.ttl.alarms.checking_interval})}", fixedDelayString = "${sql.ttl.alarms.checking_interval}")
     public void cleanUp() {
         PageLink tenantsBatchRequest = new PageLink(10_000, 0);
-        PageLink removalBatchRequest = new PageLink(removalBatchSize, 0);
+        PageLink removalBatchRequest = new PageLink(removalBatchSize, 0 );
         PageData<TenantId> tenantsIds;
         do {
             tenantsIds = tenantDao.findTenantsIds(tenantsBatchRequest);
@@ -79,11 +81,11 @@ public class AlarmsCleanUpService {
                 }
 
                 long ttl = TimeUnit.DAYS.toMillis(tenantProfileConfiguration.get().getAlarmsTtlDays());
-                long outdatageTime = System.currentTimeMillis() - ttl;
+                long expirationTime = System.currentTimeMillis() - ttl;
 
                 long totalRemoved = 0;
                 while (true) {
-                    PageData<AlarmId> toRemove = alarmDao.findAlarmsIdsByEndTsBeforeAndTenantId(outdatageTime, tenantId, removalBatchRequest);
+                    PageData<AlarmId> toRemove = alarmDao.findAlarmsIdsByEndTsBeforeAndTenantId(expirationTime, tenantId, removalBatchRequest);
                     toRemove.getData().forEach(alarmId -> {
                         relationService.deleteEntityRelations(tenantId, alarmId);
                         Alarm alarm = alarmService.deleteAlarm(tenantId, alarmId).getAlarm();
@@ -97,7 +99,7 @@ public class AlarmsCleanUpService {
                 }
 
                 if (totalRemoved > 0) {
-                    log.info("Removed {} outdated alarm(s) for tenant {} older than {}", totalRemoved, tenantId, new Date(outdatageTime));
+                    log.info("Removed {} outdated alarm(s) for tenant {} older than {}", totalRemoved, tenantId, new Date(expirationTime));
                 }
             }
 
