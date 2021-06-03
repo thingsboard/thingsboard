@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.ttl.alarms;
+package org.thingsboard.server.service.ttl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +52,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @RequiredArgsConstructor
 public class AlarmsCleanUpService {
+
     @Value("${sql.ttl.alarms.removal_batch_size}")
     private Integer removalBatchSize;
 

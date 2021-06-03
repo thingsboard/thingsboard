@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.event.DebugEvent;
 import org.thingsboard.server.common.data.event.ErrorEventFilter;
 import org.thingsboard.server.common.data.event.EventFilter;
-import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.event.LifeCycleEventFilter;
 import org.thingsboard.server.common.data.event.StatisticsEventFilter;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -40,6 +39,12 @@ import org.thingsboard.server.dao.event.EventDao;
 import org.thingsboard.server.dao.model.sql.EventEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 
+import javax.sql.DataSource;
+import java.sql.CallableStatement;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.Statement;
+import java.sql.Types;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -254,6 +259,22 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
                 eventType,
                 PageRequest.of(0, limit));
         return DaoUtil.convertDataList(latest);
+    }
+
+    @Override
+    public long cleanupEvents(long otherEventsTtl, long debugEventsTtl) {
+        try {
+            CallableStatement stmt = dataSource.getConnection().prepareCall("{call cleanup_events_by_ttl(?,?,?)}");
+            stmt.setLong(1, otherEventsTtl);
+            stmt.setLong(2, debugEventsTtl);
+            stmt.registerOutParameter(3, Types.BIGINT);
+            stmt.executeUpdate();
+            printWarnings(stmt);
+            return stmt.getLong(3);
+        } catch (SQLException e) {
+            log.error("SQLException occurred during TTL task execution ", e);
+            return 0;
+        }
     }
 
     public Optional<Event> save(EventEntity entity, boolean ifNotExists) {

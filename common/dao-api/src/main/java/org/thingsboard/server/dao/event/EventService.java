@@ -46,4 +46,6 @@ public interface EventService {
 
     void removeEvents(TenantId tenantId, EntityId entityId);
 
+    long cleanupEvents(long ttl, long debugTtl);
+
 }

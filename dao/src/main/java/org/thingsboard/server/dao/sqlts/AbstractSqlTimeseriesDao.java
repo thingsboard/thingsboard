@@ -25,9 +25,13 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 
 import javax.annotation.Nullable;
+import java.sql.CallableStatement;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -61,6 +65,21 @@ public abstract class AbstractSqlTimeseriesDao extends BaseAbstractSqlTimeseries
 
     @Value("${sql.ttl.ts.ts_key_value_ttl:0}")
     private long systemTtl;
+
+    public void cleanup(long systemTtl) {
+        try {
+            log.info("Going to cleanup old timeseries data using ttl: {}s", systemTtl);
+            CallableStatement stmt = dataSource.getConnection().prepareCall("{call cleanup_timeseries_by_ttl(?,?,?)}");
+            stmt.setObject(1, ModelConstants.NULL_UUID);
+            stmt.setLong(2, systemTtl);
+            stmt.registerOutParameter(3, Types.BIGINT);
+            stmt.executeUpdate();
+            printWarnings(stmt);
+            log.info("Total telemetry removed stats by TTL for entities: [{}]", stmt.getLong(3));
+        } catch (SQLException e) {
+            log.error("SQLException occurred during TTL task execution ", e);
+        }
+    }
 
     protected ListenableFuture<List<TsKvEntry>> processFindAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
         List<ListenableFuture<List<TsKvEntry>>> futures = queries

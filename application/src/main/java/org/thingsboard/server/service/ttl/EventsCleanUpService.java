@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.ttl.events;
+package org.thingsboard.server.service.ttl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.dao.util.PsqlDao;
+import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ttl.AbstractCleanUpService;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-
-@PsqlDao
+@TbCoreComponent
 @Slf4j
 @Service
 public class EventsCleanUpService extends AbstractCleanUpService {
@@ -40,20 +38,20 @@ public class EventsCleanUpService extends AbstractCleanUpService {
     @Value("${sql.ttl.events.enabled}")
     private boolean ttlTaskExecutionEnabled;
 
+    private final EventService eventService;
+
+    public EventsCleanUpService(PartitionService partitionService, EventService eventService) {
+        super(partitionService);
+        this.eventService = eventService;
+    }
+
     @Scheduled(initialDelayString = "${sql.ttl.events.execution_interval_ms}", fixedDelayString = "${sql.ttl.events.execution_interval_ms}")
     public void cleanUp() {
-        if (ttlTaskExecutionEnabled) {
-            try (Connection conn = getConnection()) {
-                doCleanUp(conn);
-            } catch (SQLException e) {
-                log.error("SQLException occurred during TTL task execution ", e);
-            }
+        if (ttlTaskExecutionEnabled && isSystemTenantPartitionMine()) {
+            log.info("Going to cleanup old events using debug events ttl: {}s and other events ttl: {}s", debugTtl, ttl);
+            long totalEventsRemoved = eventService.cleanupEvents(ttl, debugTtl);
+            log.info("Total events removed by TTL: [{}]", totalEventsRemoved);
         }
     }
 
-    @Override
-    protected void doCleanUp(Connection connection) throws SQLException {
-        long totalEventsRemoved = executeQuery(connection, "call cleanup_events_by_ttl(" + ttl + ", " + debugTtl + ", 0);");
-        log.info("Total events removed by TTL: [{}]", totalEventsRemoved);
-    }
 }

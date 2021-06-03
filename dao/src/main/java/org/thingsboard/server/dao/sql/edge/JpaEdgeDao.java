@@ -40,6 +40,9 @@ import org.thingsboard.server.dao.model.sql.EdgeInfoEntity;
 import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
+import java.sql.CallableStatement;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -192,6 +195,21 @@ public class JpaEdgeDao extends JpaAbstractSearchTextDao<EdgeEntity, Edge> imple
         log.debug("Try to find edges by tenantId [{}], dashboardId [{}]", tenantId, dashboardId);
         ListenableFuture<List<EntityRelation>> relations = relationDao.findAllByToAndType(new TenantId(tenantId), new DashboardId(dashboardId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
         return transformFromRelationToEdge(tenantId, relations);
+    }
+
+    @Override
+    public long cleanupEvents(long ttl) {
+        try {
+            CallableStatement stmt = dataSource.getConnection().prepareCall("{call cleanup_edge_events_by_ttl(?,?,?)}");
+            stmt.setLong(1, ttl);
+            stmt.registerOutParameter(3, Types.BIGINT);
+            stmt.executeUpdate();
+            printWarnings(stmt);
+            return stmt.getLong(3);
+        } catch (SQLException e) {
+            log.error("SQLException occurred during TTL task execution ", e);
+            return 0;
+        }
     }
 
     private ListenableFuture<List<Edge>> transformFromRelationToEdge(UUID tenantId, ListenableFuture<List<EntityRelation>> relations) {

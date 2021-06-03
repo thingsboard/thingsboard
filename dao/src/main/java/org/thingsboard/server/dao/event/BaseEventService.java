@@ -131,6 +131,11 @@ public class BaseEventService implements EventService {
         } while (eventPageData.hasNext());
     }
 
+    @Override
+    public long cleanupEvents(long ttl, long debugTtl) {
+        return eventDao.cleanupEvents(ttl, debugTtl);
+    }
+
     private DataValidator<Event> eventValidator =
             new DataValidator<Event>() {
                 @Override

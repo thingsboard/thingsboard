@@ -27,6 +27,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
 import org.thingsboard.server.dao.sqlts.AbstractChunkedAggregationTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.insert.psql.PsqlPartitioningRepository;
@@ -35,6 +36,9 @@ import org.thingsboard.server.dao.timeseries.SqlTsPartitionDate;
 import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
 
+import java.sql.CallableStatement;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -61,6 +65,7 @@ public class JpaPsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDa
 
     @Value("${sql.postgres.ts_key_value_partitioning:MONTHS}")
     private String partitioning;
+
 
     @Override
     protected void init() {
@@ -91,6 +96,27 @@ public class JpaPsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDa
         entity.setJsonValue(tsKvEntry.getJsonValue().orElse(null));
         log.trace("Saving entity: {}", entity);
         return Futures.transform(tsQueue.add(entity), v -> dataPointDays, MoreExecutors.directExecutor());
+    }
+
+    @Override
+    public void cleanup(long systemTtl) {
+        cleanupPartitions(systemTtl);
+        super.cleanup(systemTtl);
+    }
+
+    private void cleanupPartitions(long systemTtl) {
+        try {
+            log.info("Going to cleanup old timeseries data partitions using partition type: {} and ttl: {}s", partitioning, systemTtl);
+            CallableStatement stmt = dataSource.getConnection().prepareCall("{call drop_partitions_by_max_ttl(?,?,?)}");
+            stmt.setObject(1, partitioning);
+            stmt.setLong(2, systemTtl);
+            stmt.registerOutParameter(3, Types.BIGINT);
+            stmt.executeUpdate();
+            printWarnings(stmt);
+            log.info("Total partitions removed by TTL: [{}]", stmt.getLong(3));
+        } catch (SQLException e) {
+            log.error("SQLException occurred during TTL task execution ", e);
+        }
     }
 
     private void savePartitionIfNotExist(long ts) {

@@ -627,6 +627,11 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
         return result.toString();
     }
 
+    @Override
+    public long cleanupEvents(long ttl) {
+        return edgeDao.cleanupEvents(ttl);
+    }
+
     private List<RuleChain> findEdgeRuleChains(TenantId tenantId, EdgeId edgeId) {
         List<RuleChain> result = new ArrayList<>();
         PageLink pageLink = new PageLink(DEFAULT_LIMIT);
