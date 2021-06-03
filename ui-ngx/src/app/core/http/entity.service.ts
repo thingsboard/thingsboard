@@ -1342,7 +1342,7 @@ export class EntityService {
     return entitiesObservable;
   }
 
-  public getEdgeEventContentByEntityType(entity: any): Observable<any> {
+  public getEdgeEventContent(entity: any): Observable<any> {
     let entityObservable: Observable<any>;
     const entityId: string = entity.entityId;
     const entityType: any = entity.type;

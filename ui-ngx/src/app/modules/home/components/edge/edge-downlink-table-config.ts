@@ -47,8 +47,8 @@ import { AttributeService } from '@core/http/attribute.service';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EdgeDownlinkTableHeaderComponent } from '@home/components/edge/edge-downlink-table-header.component';
 import { EdgeService } from '@core/http/edge.service';
-import { map } from 'rxjs/operators';
-import { EntityService } from "@core/http/entity.service";
+import { map, mergeMap } from 'rxjs/operators';
+import { EntityService } from '@core/http/entity.service';
 
 export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePageLink> {
 
@@ -85,26 +85,13 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
   }
 
   fetchEvents(pageLink: TimePageLink): Observable<PageData<EdgeEvent>> {
-    this.loadEdgeInfo();
-    return this.edgeService.getEdgeEvents(this.entityId, pageLink);
-  }
-
-  loadEdgeInfo(): void {
-    this.attributeService.getEntityAttributes(this.entityId, AttributeScope.SERVER_SCOPE, ['queueStartTs'])
-      .subscribe(
-        attributes => this.onUpdate(attributes)
-      );
-  }
-
-  onUpdate(attributes) {
-    this.queueStartTs = 0;
-    let edge = attributes.reduce(function (map, attribute) {
-      map[attribute.key] = attribute;
-      return map;
-    }, {});
-    if (edge.queueStartTs) {
-      this.queueStartTs = edge.queueStartTs.lastUpdateTs;
-    }
+    return this.attributeService.getEntityAttributes(this.entityId, AttributeScope.SERVER_SCOPE, ['queueStartTs']).pipe(
+      map((attributes) => {
+          const queueStartTs = attributes[0];
+          this.queueStartTs = queueStartTs ? queueStartTs.lastUpdateTs : 0;
+      }),
+      mergeMap(() => this.edgeService.getEdgeEvents(this.entityId, pageLink))
+    );
   }
 
   updateColumns(updateTableColumns: boolean = false): void {
@@ -129,7 +116,8 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
           isEnabled: (entity) => this.isEdgeEventHasData(entity.type),
           onAction: ($event, entity) =>
             {
-              this.prepareEdgeEventContent(entity).subscribe((content) => {
+              this.prepareEdgeEventContent(entity).subscribe(
+                (content) => {
                 this.showEdgeEventContent($event, content,'event.data');
               });
             }
@@ -142,7 +130,7 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
   }
 
   updateEdgeEventStatus(createdTime): string {
-    if (this.queueStartTs && createdTime < this.queueStartTs) {
+    if (createdTime < this.queueStartTs) {
       return this.translate.instant('edge.deployed');
     } else {
       return this.translate.instant('edge.pending');
@@ -163,7 +151,7 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
   }
 
   prepareEdgeEventContent(entity: any): Observable<string> {
-    return this.entityService.getEdgeEventContentByEntityType(entity).pipe(
+    return this.entityService.getEdgeEventContent(entity).pipe(
       map((result) => JSON.stringify(result))
     );
   }
