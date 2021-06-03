@@ -657,7 +657,7 @@ public class DashboardController extends BaseController {
             Edge edge = checkEdgeId(edgeId, Operation.READ);
 
             DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-            checkDashboardId(dashboardId, Operation.ASSIGN_TO_EDGE);
+            checkDashboardId(dashboardId, Operation.READ);
 
             Dashboard savedDashboard = checkNotNull(dashboardService.assignDashboardToEdge(getCurrentUser().getTenantId(), dashboardId, edgeId));
 
@@ -689,7 +689,7 @@ public class DashboardController extends BaseController {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
             Edge edge = checkEdgeId(edgeId, Operation.READ);
             DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-            Dashboard dashboard = checkDashboardId(dashboardId, Operation.UNASSIGN_FROM_EDGE);
+            Dashboard dashboard = checkDashboardId(dashboardId, Operation.READ);
 
             Dashboard savedDashboard = checkNotNull(dashboardService.unassignDashboardFromEdge(getCurrentUser().getTenantId(), dashboardId, edgeId));
 
