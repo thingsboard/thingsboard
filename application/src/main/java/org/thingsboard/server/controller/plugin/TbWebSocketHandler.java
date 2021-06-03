@@ -119,9 +119,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
                 return;
             }
             var tenantProfileConfiguration = tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultTenantProfileConfiguration();
-            if(tenantProfileConfiguration.getWsLimitQueuePerWsSession() <= 0) {
-                tenantProfileConfiguration.setWsLimitQueuePerWsSession(500);
-            }
+
             internalSessionMap.put(internalSessionId, new SessionMetaData(session, sessionRef, tenantProfileConfiguration.getWsLimitQueuePerWsSession()));
 
             externalSessionMap.put(externalSessionId, internalSessionId);
