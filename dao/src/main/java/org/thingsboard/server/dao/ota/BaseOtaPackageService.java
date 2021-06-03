@@ -253,7 +253,7 @@ public class BaseOtaPackageService implements OtaPackageService {
         protected void validateDataImpl(TenantId tenantId, OtaPackage otaPackage) {
             validateImpl(otaPackage);
 
-            if (StringUtils.isEmpty(otaPackage.getUrl())) {
+            if (!otaPackage.hasUrl()) {
                 if (StringUtils.isEmpty(otaPackage.getFileName())) {
                     throw new DataValidationException("OtaPackage file name should be specified!");
                 }

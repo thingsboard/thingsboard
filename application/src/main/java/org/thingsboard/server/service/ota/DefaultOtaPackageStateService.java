@@ -285,18 +285,34 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
         List<AttributeKvEntry> attributes = new ArrayList<>();
         attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, TITLE), otaPackage.getTitle())));
         attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, VERSION), otaPackage.getVersion())));
-        if (StringUtils.isEmpty(otaPackage.getUrl())) {
+        if (otaPackage.hasUrl()) {
+            attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, URL), otaPackage.getUrl())));
+            List<String> attrToRemove = new ArrayList<>();
+
+            if (otaPackage.getDataSize() == null) {
+                attrToRemove.add(getAttributeKey(otaPackageType, SIZE));
+            } else {
+                attributes.add(new BaseAttributeKvEntry(ts, new LongDataEntry(getAttributeKey(otaPackageType, SIZE), otaPackage.getDataSize())));
+            }
+
+            if (otaPackage.getChecksumAlgorithm() != null) {
+                attrToRemove.add(getAttributeKey(otaPackageType, CHECKSUM_ALGORITHM));
+            } else {
+                attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, CHECKSUM_ALGORITHM), otaPackage.getChecksumAlgorithm().name())));
+            }
+
+            if (StringUtils.isEmpty(otaPackage.getChecksum())) {
+                attrToRemove.add(getAttributeKey(otaPackageType, CHECKSUM));
+            } else {
+                attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, CHECKSUM), otaPackage.getChecksum())));
+            }
+
+            remove(device, otaPackageType, attrToRemove);
+        } else {
             attributes.add(new BaseAttributeKvEntry(ts, new LongDataEntry(getAttributeKey(otaPackageType, SIZE), otaPackage.getDataSize())));
             attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, CHECKSUM_ALGORITHM), otaPackage.getChecksumAlgorithm().name())));
             attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, CHECKSUM), otaPackage.getChecksum())));
             remove(device, otaPackageType, Collections.singletonList(getAttributeKey(otaPackageType, URL)));
-        } else {
-            List<String> attrToRemove = new ArrayList<>();
-            attrToRemove.add(getAttributeKey(otaPackageType, SIZE));
-            attrToRemove.add(getAttributeKey(otaPackageType, CHECKSUM_ALGORITHM));
-            attrToRemove.add(getAttributeKey(otaPackageType, CHECKSUM));
-            remove(device, otaPackageType, attrToRemove);
-            attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, URL), otaPackage.getUrl())));
         }
 
         telemetryService.saveAndNotify(tenantId, deviceId, DataConstants.SHARED_SCOPE, attributes, new FutureCallback<>() {
