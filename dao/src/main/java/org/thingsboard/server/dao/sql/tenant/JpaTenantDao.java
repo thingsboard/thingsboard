@@ -74,4 +74,10 @@ public class JpaTenantDao extends JpaAbstractSearchTextDao<TenantEntity, Tenant>
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink, TenantInfoEntity.tenantInfoColumnMap)));
     }
+
+    @Override
+    public PageData<TenantId> findTenantsIds(PageLink pageLink) {
+        return DaoUtil.pageToPageData(tenantRepository.findTenantsIds(DaoUtil.toPageable(pageLink))).mapData(TenantId::new);
+    }
+
 }

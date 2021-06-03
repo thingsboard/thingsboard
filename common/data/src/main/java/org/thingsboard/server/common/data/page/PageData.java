@@ -17,10 +17,11 @@ package org.thingsboard.server.common.data.page;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.thingsboard.server.common.data.BaseData;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class PageData<T> {
 
@@ -59,6 +60,10 @@ public class PageData<T> {
     @JsonProperty("hasNext")
     public boolean hasNext() {
         return hasNext;
+    }
+
+    public <D> PageData<D> mapData(Function<T, D> mapper) {
+        return new PageData<>(getData().stream().map(mapper).collect(Collectors.toList()), getTotalPages(), getTotalElements(), hasNext());
     }
 
 }
