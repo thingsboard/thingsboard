@@ -235,6 +235,10 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
     return result;
   }
 
+  public getCurrentStateName(): string {
+    return this.getStateName(this.stateObject.length - 1);
+  }
+
   public selectedStateIndexChanged() {
     this.navigatePrevState(this.selectedStateIndex);
   }

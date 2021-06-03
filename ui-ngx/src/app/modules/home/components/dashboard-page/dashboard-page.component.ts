@@ -323,6 +323,17 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         this.runChangeDetection();
       }
     ));
+    this.rxSubscriptions.push(this.route.queryParamMap.subscribe(
+      (paramMap) => {
+        if (paramMap.has('reload')) {
+          this.dashboardCtx.aliasController.updateAliases();
+          setTimeout(() => {
+            this.mobileService.handleDashboardStateName(this.dashboardCtx.stateController.getCurrentStateName());
+            this.mobileService.onDashboardLoaded();
+          });
+        }
+      }
+    ));
     this.rxSubscriptions.push(this.breakpointObserver
       .observe(MediaBreakpoints['gt-sm'])
       .subscribe((state: BreakpointState) => {
@@ -770,6 +781,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       this.isRightLayoutOpened = openRightLayout ? true : false;
       this.updateLayouts(layoutsData);
     }
+    setTimeout(() => {
+      this.mobileService.onDashboardLoaded();
+    });
   }
 
   private updateLayouts(layoutsData?: DashboardLayoutsInfo) {

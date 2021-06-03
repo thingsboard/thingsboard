@@ -441,3 +441,7 @@ export function generateSecret(length?: number): string {
 export function validateEntityId(entityId: EntityId | null): boolean {
     return isDefinedAndNotNull(entityId?.id) && entityId.id !== NULL_UUID && isDefinedAndNotNull(entityId?.entityType);
 }
+
+export function isMobileApp(): boolean {
+  return isDefined((window as any).flutter_inappwebview);
+}
