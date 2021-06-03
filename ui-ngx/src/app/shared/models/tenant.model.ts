@@ -46,6 +46,24 @@ export interface DefaultTenantProfileConfiguration {
   maxRuleNodeExecutionsPerMessage: number;
   maxEmails: number;
   maxSms: number;
+  maxCreatedAlarms: number;
+
+  rateLimitsTenantConfiguration: string;
+  rateLimitsCustomerConfiguration: string;
+
+  wsLimitMaxSessionsPerTenant: number;
+  wsLimitMaxSessionsPerCustomer: number;
+  wsLimitMaxSessionsPerRegularUser: number;
+  wsLimitMaxSessionsPerPublicUser: number;
+  wsLimitQueuePerWsSession: number;
+  wsLimitMaxSubscriptionsPerTenant: number;
+  wsLimitMaxSubscriptionsPerCustomer: number;
+  wsLimitMaxSubscriptionsPerRegularUser: number;
+  wsLimitMaxSubscriptionsPerPublicUser: number;
+  wsLimitUpdatesPerSession: string;
+
+  cassandraTenantLimitsConfiguration: string;
+  printTenantNames: boolean;
 
   defaultStorageTtlDays: number;
 }
@@ -76,7 +94,25 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           maxRuleNodeExecutionsPerMessage: 0,
           maxEmails: 0,
           maxSms: 0,
-          defaultStorageTtlDays: 0
+          defaultStorageTtlDays: 0,
+          maxCreatedAlarms: 0,
+
+          rateLimitsTenantConfiguration: '',
+          rateLimitsCustomerConfiguration: '',
+
+          wsLimitMaxSessionsPerTenant: 0,
+          wsLimitMaxSessionsPerCustomer: 0,
+          wsLimitMaxSessionsPerRegularUser: 0,
+          wsLimitMaxSessionsPerPublicUser: 0,
+          wsLimitQueuePerWsSession: 500,
+          wsLimitMaxSubscriptionsPerTenant: 0,
+          wsLimitMaxSubscriptionsPerCustomer: 0,
+          wsLimitMaxSubscriptionsPerRegularUser: 0,
+          wsLimitMaxSubscriptionsPerPublicUser: 0,
+          wsLimitUpdatesPerSession: '' ,
+
+          cassandraTenantLimitsConfiguration: '',
+          printTenantNames: false
         };
         configuration = {...defaultConfiguration, type: TenantProfileType.DEFAULT};
         break;

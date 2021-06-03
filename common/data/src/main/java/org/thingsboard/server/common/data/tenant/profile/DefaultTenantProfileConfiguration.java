@@ -42,6 +42,23 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private String transportDeviceTelemetryMsgRateLimit;
     private String transportDeviceTelemetryDataPointsRateLimit;
 
+    private String rateLimitsTenantConfiguration;
+    private String rateLimitsCustomerConfiguration;
+
+    private int wsLimitMaxSessionsPerTenant;
+    private int wsLimitMaxSessionsPerCustomer;
+    private int wsLimitMaxSessionsPerRegularUser;
+    private int wsLimitMaxSessionsPerPublicUser;
+    private int wsLimitQueuePerWsSession;
+    private long wsLimitMaxSubscriptionsPerTenant;
+    private long wsLimitMaxSubscriptionsPerCustomer;
+    private long wsLimitMaxSubscriptionsPerRegularUser;
+    private long wsLimitMaxSubscriptionsPerPublicUser;
+    private String wsLimitUpdatesPerSession;
+
+    private String cassandraTenantLimitsConfiguration;
+    private boolean printTenantNames;
+
     private long maxTransportMessages;
     private long maxTransportDataPoints;
     private long maxREExecutions;

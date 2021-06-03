@@ -107,4 +107,13 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
         }
     }
 
+    @JsonIgnore
+    public DefaultTenantProfileConfiguration getDefaultTenantProfileConfiguration() {
+        if(getProfileData().getConfiguration() != null &&
+                getProfileData().getConfiguration().getType().equals(TenantProfileType.DEFAULT)) {
+            return (DefaultTenantProfileConfiguration) this.profileData.getConfiguration();
+        }
+        return null;
+    }
+
 }

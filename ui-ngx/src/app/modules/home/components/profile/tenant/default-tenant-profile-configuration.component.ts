@@ -35,6 +35,7 @@ import { isDefinedAndNotNull } from '@core/utils';
 export class DefaultTenantProfileConfigurationComponent implements ControlValueAccessor, OnInit {
 
   defaultTenantProfileConfigurationFormGroup: FormGroup;
+  rateLimitsPattern = '^(((\\d+):(\\d+)),)*((\\d+):(\\d+))$';
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -59,12 +60,12 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxUsers: [null, [Validators.required, Validators.min(0)]],
       maxDashboards: [null, [Validators.required, Validators.min(0)]],
       maxRuleChains: [null, [Validators.required, Validators.min(0)]],
-      transportTenantMsgRateLimit: [null, []],
-      transportTenantTelemetryMsgRateLimit: [null, []],
-      transportTenantTelemetryDataPointsRateLimit: [null, []],
-      transportDeviceMsgRateLimit: [null, []],
-      transportDeviceTelemetryMsgRateLimit: [null, []],
-      transportDeviceTelemetryDataPointsRateLimit: [null, []],
+      transportTenantMsgRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
+      transportTenantTelemetryMsgRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
+      transportTenantTelemetryDataPointsRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
+      transportDeviceMsgRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
+      transportDeviceTelemetryMsgRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
+      transportDeviceTelemetryDataPointsRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
       maxTransportMessages: [null, [Validators.required, Validators.min(0)]],
       maxTransportDataPoints: [null, [Validators.required, Validators.min(0)]],
       maxREExecutions: [null, [Validators.required, Validators.min(0)]],
@@ -74,7 +75,23 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxEmails: [null, [Validators.required, Validators.min(0)]],
       maxSms: [null, [Validators.required, Validators.min(0)]],
       maxCreatedAlarms: [null, [Validators.required, Validators.min(0)]],
-      defaultStorageTtlDays: [null, [Validators.required, Validators.min(0)]]
+      defaultStorageTtlDays: [null, [Validators.required, Validators.min(0)]],
+
+      rateLimitsTenantConfiguration: [null, [Validators.pattern(this.rateLimitsPattern)]],
+      rateLimitsCustomerConfiguration: [null, [Validators.pattern(this.rateLimitsPattern)]],
+
+      wsLimitMaxSessionsPerTenant: [null, [Validators.min(0)]],
+      wsLimitMaxSessionsPerCustomer: [null, [Validators.min(0)]],
+      wsLimitMaxSessionsPerPublicUser: [null, [Validators.min(0)]],
+      wsLimitQueuePerWsSession: [null, [Validators.min(0)]],
+      wsLimitMaxSubscriptionsPerTenant: [null, [Validators.min(0)]],
+      wsLimitMaxSubscriptionsPerCustomer: [null, [Validators.min(0)]],
+      wsLimitMaxSubscriptionsPerRegularUser: [null, [Validators.min(0)]],
+      wsLimitMaxSubscriptionsPerPublicUser: [null, [Validators.min(0)]],
+      wsLimitUpdatesPerSession: [null, [Validators.pattern(this.rateLimitsPattern)]],
+
+      cassandraTenantLimitsConfiguration: [null, [Validators.pattern(this.rateLimitsPattern)]],
+      printTenantNames: [null, []]
     });
     this.defaultTenantProfileConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();

@@ -66,9 +66,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     private final ScheduledExecutorService timeoutExecutor;
     private final int concurrencyLimit;
     private final int printQueriesFreq;
-    private final boolean perTenantLimitsEnabled;
-    private final String perTenantLimitsConfiguration;
-    private final ConcurrentMap<TenantId, TbRateLimits> perTenantLimits = new ConcurrentHashMap<>();
+    protected final ConcurrentMap<TenantId, TbRateLimits> perTenantLimits = new ConcurrentHashMap<>();
 
     private final AtomicInteger printQueriesIdx = new AtomicInteger(0);
 
@@ -76,7 +74,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     protected final BufferedRateExecutorStats stats;
 
     public AbstractBufferedRateExecutor(int queueLimit, int concurrencyLimit, long maxWaitTime, int dispatcherThreads, int callbackThreads, long pollMs,
-                                        boolean perTenantLimitsEnabled, String perTenantLimitsConfiguration, int printQueriesFreq, StatsFactory statsFactory) {
+                                       int printQueriesFreq, StatsFactory statsFactory) {
         this.maxWaitTime = maxWaitTime;
         this.pollMs = pollMs;
         this.concurrencyLimit = concurrencyLimit;
@@ -85,8 +83,6 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         this.dispatcherExecutor = Executors.newFixedThreadPool(dispatcherThreads, ThingsBoardThreadFactory.forName("nosql-dispatcher"));
         this.callbackExecutor = ThingsBoardExecutors.newWorkStealingPool(callbackThreads, getClass());
         this.timeoutExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("nosql-timeout"));
-        this.perTenantLimitsEnabled = perTenantLimitsEnabled;
-        this.perTenantLimitsConfiguration = perTenantLimitsConfiguration;
         this.stats = new BufferedRateExecutorStats(statsFactory);
         String concurrencyLevelKey = StatsType.RATE_EXECUTOR.getName() + "." + CONCURRENCY_LEVEL;
         this.concurrencyLevel = statsFactory.createGauge(concurrencyLevelKey, new AtomicInteger(0));
@@ -96,24 +92,14 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         }
     }
 
+    protected abstract boolean checkRateLimits(T task, SettableFuture<V> future);
+
     @Override
     public F submit(T task) {
         SettableFuture<V> settableFuture = create();
         F result = wrap(task, settableFuture);
-        boolean perTenantLimitReached = false;
-        if (perTenantLimitsEnabled) {
-            if (task.getTenantId() == null) {
-                log.info("Invalid task received: {}", task);
-            } else if (!task.getTenantId().isNullUid()) {
-                TbRateLimits rateLimits = perTenantLimits.computeIfAbsent(task.getTenantId(), id -> new TbRateLimits(perTenantLimitsConfiguration));
-                if (!rateLimits.tryConsume()) {
-                    stats.incrementRateLimitedTenant(task.getTenantId());
-                    stats.getTotalRateLimited().increment();
-                    settableFuture.setException(new TenantRateLimitException());
-                    perTenantLimitReached = true;
-                }
-            }
-        }
+        boolean perTenantLimitReached = checkRateLimits(task, settableFuture);
+
         if (!perTenantLimitReached) {
             try {
                 stats.getTotalAdded().increment();
