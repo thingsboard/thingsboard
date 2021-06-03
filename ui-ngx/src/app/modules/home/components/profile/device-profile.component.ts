@@ -40,7 +40,7 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { ServiceType } from '@shared/models/queue.models';
 import { EntityId } from '@shared/models/id/entity-id';
-import { FirmwareType } from '@shared/models/firmware.models';
+import { OtaUpdateType } from '@shared/models/ota-package.models';
 import { DashboardId } from '@shared/models/id/dashboard-id';
 
 @Component({
@@ -71,7 +71,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
 
   deviceProfileId: EntityId;
 
-  firmwareTypes = FirmwareType;
+  otaUpdateType = OtaUpdateType;
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,

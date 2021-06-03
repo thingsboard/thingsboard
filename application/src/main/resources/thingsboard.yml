@@ -273,6 +273,9 @@ sql:
         enabled: "${SQL_TTL_EDGE_EVENTS_ENABLED:true}"
         execution_interval_ms: "${SQL_TTL_EDGE_EVENTS_EXECUTION_INTERVAL:86400000}" # Number of milliseconds. The current value corresponds to one day
         edge_events_ttl: "${SQL_TTL_EDGE_EVENTS_TTL:2628000}" # Number of seconds. The current value corresponds to one month
+      alarms:
+        checking_interval: "${SQL_ALARMS_TTL_CHECKING_INTERVAL:7200000}" # Number of milliseconds. The current value corresponds to two hours
+        removal_batch_size: "${SQL_ALARMS_TTL_REMOVAL_BATCH_SIZE:3000}" # To delete outdated alarms not all at once but in batches
 
 # Actor system parameters
 actors:
@@ -371,7 +374,10 @@ caffeine:
     tokensOutdatageTime:
       timeToLiveInMinutes: 20000
       maxSize: 10000
-    firmwares:
+    otaPackages:
+      timeToLiveInMinutes: 60
+      maxSize: 10
+    otaPackagesData:
       timeToLiveInMinutes: 60
       maxSize: 10
     edges:
@@ -497,7 +503,7 @@ audit-log:
       "device_profile": "${AUDIT_LOG_MASK_DEVICE_PROFILE:W}"
       "edge": "${AUDIT_LOG_MASK_EDGE:W}"
       "tb_resource": "${AUDIT_LOG_MASK_RESOURCE:W}"
-      "firmware": "${AUDIT_LOG_MASK_FIRMWARE:W}"
+      "ota_package": "${AUDIT_LOG_MASK_OTA_PACKAGE:W}"
   sink:
     # Type of external sink. possible options: none, elasticsearch
     type: "${AUDIT_LOG_SINK_TYPE:none}"
@@ -749,7 +755,7 @@ queue:
       sasl.config: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_JAAS_CONFIG:org.apache.kafka.common.security.plain.PlainLoginModule required username=\"CLUSTER_API_KEY\" password=\"CLUSTER_API_SECRET\";}"
       security.protocol: "${TB_QUEUE_KAFKA_CONFLUENT_SECURITY_PROTOCOL:SASL_SSL}"
     consumer-properties-per-topic:
-      tb_firmware:
+      tb_ota_package:
         - key: max.poll.records
           value: 10
     other:
@@ -759,7 +765,7 @@ queue:
       transport-api: "${TB_QUEUE_KAFKA_TA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600;partitions:100;min.insync.replicas:1}"
-      fw-updates: "${TB_QUEUE_KAFKA_FW_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
+      ota-updates: "${TB_QUEUE_KAFKA_OTA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
     consumer-stats:
       enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
       print-interval-ms: "${TB_QUEUE_KAFKA_CONSUMER_STATS_MIN_PRINT_INTERVAL_MS:60000}"
@@ -830,10 +836,10 @@ queue:
     poll-interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
     partitions: "${TB_QUEUE_CORE_PARTITIONS:10}"
     pack-processing-timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:2000}"
-    firmware:
-      topic: "${TB_QUEUE_CORE_FW_TOPIC:tb_firmware}"
-      pack-interval-ms: "${TB_QUEUE_CORE_FW_PACK_INTERVAL_MS:60000}"
-      pack-size: "${TB_QUEUE_CORE_FW_PACK_SIZE:100}"
+    ota:
+      topic: "${TB_QUEUE_CORE_OTA_TOPIC:tb_ota_package}"
+      pack-interval-ms: "${TB_QUEUE_CORE_OTA_PACK_INTERVAL_MS:60000}"
+      pack-size: "${TB_QUEUE_CORE_OTA_PACK_SIZE:100}"
     usage-stats-topic: "${TB_QUEUE_US_TOPIC:tb_usage_stats}"
     stats:
       enabled: "${TB_QUEUE_CORE_STATS_ENABLED:true}"

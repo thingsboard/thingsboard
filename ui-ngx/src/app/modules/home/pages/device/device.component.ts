@@ -34,7 +34,7 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import { TranslateService } from '@ngx-translate/core';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { Subject } from 'rxjs';
-import { FirmwareType } from '@shared/models/firmware.models';
+import { OtaUpdateType } from '@shared/models/ota-package.models';
 
 @Component({
   selector: 'tb-device',
@@ -49,7 +49,7 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
 
   deviceScope: 'tenant' | 'customer' | 'customer_user' | 'edge';
 
-  firmwareTypes = FirmwareType;
+  otaUpdateType = OtaUpdateType;
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,

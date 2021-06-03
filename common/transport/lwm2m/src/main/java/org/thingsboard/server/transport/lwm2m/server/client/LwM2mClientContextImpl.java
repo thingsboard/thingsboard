@@ -83,13 +83,17 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public LwM2mClient getClient(TransportProtos.SessionInfoProto sessionInfo) {
-        return getClient(new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
-    }
+        LwM2mClient lwM2mClient =  lwM2mClientsByEndpoint.values().stream().filter(c ->
+                (new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()))
+                        .equals((new UUID(c.getSession().getSessionIdMSB(), c.getSession().getSessionIdLSB())))
 
-    @Override
-    public LwM2mClient getClient(UUID sessionId) {
-        //TODO: refactor this to search by sessionId efficiently.
-        return lwM2mClientsByEndpoint.values().stream().filter(c -> c.getSessionId().equals(sessionId)).findAny().get();
+        ).findAny().get();
+        if (lwM2mClient == null) {
+            log.warn("Device TimeOut? lwM2mClient is null.");
+            log.warn("SessionInfo input [{}], lwM2mClientsByEndpoint size: [{}]", sessionInfo, lwM2mClientsByEndpoint.values().size());
+            log.error("", new RuntimeException());
+        }
+        return lwM2mClient;
     }
 
     @Override
@@ -118,7 +122,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
                         securityInfo.getDeviceProfile().getUuidId() : null;
                 //        TODO: for tests bug.
                 if (profileUuid== null) {
-                    log.warn("input parameters toClientProfile if the result is null: [{}]", securityInfo.getDeviceProfile());
+                    log.trace("input parameters toClientProfile if the result is null: [{}]", securityInfo.getDeviceProfile());
                 }
                 LwM2mClient client;
                 if (securityInfo.getSecurityInfo() != null) {

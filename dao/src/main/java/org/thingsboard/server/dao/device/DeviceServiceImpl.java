@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
@@ -40,7 +41,7 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.Firmware;
+import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
@@ -53,13 +54,13 @@ import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfig
 import org.thingsboard.server.common.data.device.data.MqttDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.firmware.FirmwareType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -75,12 +76,11 @@ import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.firmware.FirmwareService;
+import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
-import org.thingsboard.common.util.JacksonUtil;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -138,7 +138,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     private TbTenantProfileCache tenantProfileCache;
 
     @Autowired
-    private FirmwareService firmwareService;
+    private OtaPackageService otaPackageService;
 
     @Override
     public DeviceInfo findDeviceInfoById(TenantId tenantId, DeviceId deviceId) {
@@ -200,11 +200,14 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         Device savedDevice = this.saveDeviceWithoutCredentials(device);
         deviceCredentials.setDeviceId(savedDevice.getId());
         if (device.getId() == null) {
-            deviceCredentials = deviceCredentialsService.createDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
-        }
-        else {
-            deviceCredentials.setId(deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), savedDevice.getId()).getId());
-            deviceCredentials = deviceCredentialsService.updateDeviceCredentials(device.getTenantId(), deviceCredentials);
+            deviceCredentialsService.createDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
+        } else {
+            DeviceCredentials foundDeviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), savedDevice.getId());
+            if (foundDeviceCredentials == null) {
+                deviceCredentialsService.createDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
+            } else {
+                deviceCredentialsService.updateDeviceCredentials(device.getTenantId(), deviceCredentials);
+            }
         }
         return savedDevice;
     }
@@ -359,21 +362,24 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     }
 
     @Override
-    public PageData<Device> findDevicesByTenantIdAndTypeAndEmptyFirmware(TenantId tenantId, String type, PageLink pageLink) {
-        log.trace("Executing findDevicesByTenantIdAndTypeAndEmptyFirmware, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
+    public PageData<Device> findDevicesByTenantIdAndTypeAndEmptyOtaPackage(TenantId tenantId,
+                                                                           DeviceProfileId deviceProfileId,
+                                                                           OtaPackageType type,
+                                                                           PageLink pageLink) {
+        log.trace("Executing findDevicesByTenantIdAndTypeAndEmptyOtaPackage, tenantId [{}], deviceProfileId [{}], type [{}], pageLink [{}]",
+                tenantId, deviceProfileId, type, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateString(type, "Incorrect type " + type);
+        validateId(tenantId, INCORRECT_DEVICE_PROFILE_ID + deviceProfileId);
         validatePageLink(pageLink);
-        return deviceDao.findDevicesByTenantIdAndTypeAndEmptyFirmware(tenantId.getId(), type, pageLink);
+        return deviceDao.findDevicesByTenantIdAndTypeAndEmptyOtaPackage(tenantId.getId(), deviceProfileId.getId(), type, pageLink);
     }
 
     @Override
-    public PageData<Device> findDevicesByTenantIdAndTypeAndEmptySoftware(TenantId tenantId, String type, PageLink pageLink) {
-        log.trace("Executing findDevicesByTenantIdAndTypeAndEmptySoftware, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
+    public Long countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(TenantId tenantId, DeviceProfileId deviceProfileId, OtaPackageType type) {
+        log.trace("Executing countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage, tenantId [{}], deviceProfileId [{}], type [{}]", tenantId, deviceProfileId, type);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateString(type, "Incorrect type " + type);
-        validatePageLink(pageLink);
-        return deviceDao.findDevicesByTenantIdAndTypeAndEmptySoftware(tenantId.getId(), type, pageLink);
+        validateId(tenantId, INCORRECT_DEVICE_PROFILE_ID + deviceProfileId);
+        return deviceDao.countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(tenantId.getId(), deviceProfileId.getId(), type);
     }
 
     @Override
@@ -703,11 +709,11 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                             .ifPresent(DeviceTransportConfiguration::validate);
 
                     if (device.getFirmwareId() != null) {
-                        Firmware firmware = firmwareService.findFirmwareById(tenantId, device.getFirmwareId());
+                        OtaPackage firmware = otaPackageService.findOtaPackageById(tenantId, device.getFirmwareId());
                         if (firmware == null) {
                             throw new DataValidationException("Can't assign non-existent firmware!");
                         }
-                        if (!firmware.getType().equals(FirmwareType.FIRMWARE)) {
+                        if (!firmware.getType().equals(OtaPackageType.FIRMWARE)) {
                             throw new DataValidationException("Can't assign firmware with type: " + firmware.getType());
                         }
                         if (firmware.getData() == null) {
@@ -719,11 +725,11 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                     }
 
                     if (device.getSoftwareId() != null) {
-                        Firmware software = firmwareService.findFirmwareById(tenantId, device.getSoftwareId());
+                        OtaPackage software = otaPackageService.findOtaPackageById(tenantId, device.getSoftwareId());
                         if (software == null) {
                             throw new DataValidationException("Can't assign non-existent software!");
                         }
-                        if (!software.getType().equals(FirmwareType.SOFTWARE)) {
+                        if (!software.getType().equals(OtaPackageType.SOFTWARE)) {
                             throw new DataValidationException("Can't assign software with type: " + software.getType());
                         }
                         if (software.getData() == null) {

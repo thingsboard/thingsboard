@@ -53,6 +53,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxCreatedAlarms;
 
     private int defaultStorageTtlDays;
+    private int alarmsTtlDays;
 
     private double warnThreshold;
 
