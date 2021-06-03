@@ -30,6 +30,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_COAP_RESOURCE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_COAP_RESOURCE;
+
 @Slf4j
 public class LwM2mTransportCoapResource extends AbstractLwm2mTransportResource {
     private final ConcurrentMap<String, ObserveRelation> tokenToObserveRelationMap = new ConcurrentHashMap<>();
@@ -64,9 +67,9 @@ public class LwM2mTransportCoapResource extends AbstractLwm2mTransportResource {
     @Override
     protected void processHandleGet(CoapExchange exchange) {
         log.warn("1) processHandleGet [{}]", exchange);
-//        exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
-//        int ver = 10;
-        int ver = 9;
+        //        exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
+        int ver = 10;
+//        int ver = 9;
         UUID currentId;
         if (ver == 10) {
             long mSB = 4951557297924280811L;
@@ -77,10 +80,37 @@ public class LwM2mTransportCoapResource extends AbstractLwm2mTransportResource {
             long lSb = -9086716326447629319L;
             currentId = new UUID(mSB, lSb);
         }
-        String resource = exchange.getRequestOptions().getUriPath().get(0);
-        String token = exchange.getRequestOptions().getUriPath().get(1);
 
-        exchange.respond(CoAP.ResponseCode.CONTENT, this.getFwData(currentId));
+        String coapResource = exchange.getRequestOptions().getUriPath().get(0);
+        String token = exchange.getRequestOptions().getUriPath().get(1);
+        if (exchange.getRequestOptions().getBlock2() != null) {
+            int chunkSize = exchange.getRequestOptions().getBlock2().getSzx();
+            int chunk = 0;
+            Response response = new Response(CoAP.ResponseCode.CONTENT);
+            byte[] fwData = this.getFwData(currentId);
+            if (fwData != null && fwData.length > 0) {
+                response.setPayload(fwData);
+                boolean moreFlag = fwData.length > chunkSize;
+                response.getOptions().setBlock2(chunkSize, moreFlag, chunk);
+                exchange.respond(response);
+            }
+
+        }
+//        List<String> options = exchange.advanced().getRequest().getOptions().getUriPath();
+//        options.stream()
+//                .filter(o -> FW_COAP_RESOURCE.equals(o))
+//                .findFirst()
+//                .ifPresent(o -> System.err.println(o.getNumber() + " " + o.getStringValue()));
+
+        if (FW_COAP_RESOURCE.equals(coapResource)) {
+
+        }
+        else if (SW_COAP_RESOURCE.equals(coapResource)) {
+
+        }
+
+
+
 
     }
 
@@ -138,9 +168,7 @@ public class LwM2mTransportCoapResource extends AbstractLwm2mTransportResource {
     }
 
     private byte[] getFwData(UUID currentId) {
-        int chunkSize = 0;
-        int chunk = 0;
-        return ((DefaultLwM2MTransportMsgHandler) handler).otaPackageDataCache.get(currentId.toString(), chunkSize, chunk);
+        return ((DefaultLwM2MTransportMsgHandler) handler).otaPackageDataCache.get(currentId.toString());
     }
 
 }

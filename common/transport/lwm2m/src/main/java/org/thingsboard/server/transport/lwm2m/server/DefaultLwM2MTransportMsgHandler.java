@@ -139,6 +139,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     public final LwM2mClientContext clientContext;
     public final LwM2mTransportRequest lwM2mTransportRequest;
     private final Map<UUID, Long> rpcSubscriptions;
+    private final Map<Integer, String> getCoapResource;
 
     public DefaultLwM2MTransportMsgHandler(TransportService transportService, LwM2MTransportServerConfig config, LwM2mTransportServerHelper helper,
                                            LwM2mClientContext clientContext,
@@ -154,6 +155,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         this.context = context;
         this.adaptor = adaptor;
         this.rpcSubscriptions = new ConcurrentHashMap<>();
+        this.getCoapResource = new ConcurrentHashMap<>();
         this.sessionStore = sessionStore;
     }
 
@@ -199,7 +201,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                                         .setSessionType(TransportProtos.SessionType.ASYNC).build())
                                 .build(), null);
                         this.getInfoFirmwareUpdate(lwM2MClient, null);
-                        this.getInfoSoftwareUpdate(lwM2MClient, null);
+//                        this.getInfoSoftwareUpdate(lwM2MClient, null);
                         this.initLwM2mFromClientValue(registration, lwM2MClient);
                         this.sendLogsToThingsboard(LOG_LW2M_INFO + ": Client create after Registration", registration.getId());
                     } else {

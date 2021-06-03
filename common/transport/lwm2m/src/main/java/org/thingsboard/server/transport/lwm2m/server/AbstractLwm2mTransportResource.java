@@ -89,4 +89,6 @@ public abstract class AbstractLwm2mTransportResource extends LwM2mCoapResource {
             exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
         }
     }
+
+
 }
