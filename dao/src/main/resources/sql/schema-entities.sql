@@ -186,6 +186,7 @@ CREATE TABLE IF NOT EXISTS ota_package (
     type varchar(32) NOT NULL,
     title varchar(255) NOT NULL,
     version varchar(255) NOT NULL,
+    url varchar(255),
     file_name varchar(255),
     content_type varchar(255),
     checksum_algorithm varchar(32),

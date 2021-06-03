@@ -157,6 +157,11 @@ public class DefaultTbResourceService implements TbResourceService {
         resourceService.deleteResourcesByTenantId(tenantId);
     }
 
+    @Override
+    public long sumDataSizeByTenantId(TenantId tenantId) {
+        return resourceService.sumDataSizeByTenantId(tenantId);
+    }
+
     private Comparator<? super LwM2mObject> getComparator(String sortProperty, String sortOrder) {
         Comparator<LwM2mObject> comparator;
         if ("name".equals(sortProperty)) {

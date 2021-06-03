@@ -23,8 +23,10 @@ import org.hibernate.validator.cfg.ConstraintMapping;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.validation.NoXss;
 import org.thingsboard.server.dao.TenantEntityDao;
+import org.thingsboard.server.dao.TenantEntityWithDataDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import javax.validation.ConstraintViolation;
@@ -119,6 +121,19 @@ public abstract class DataValidator<D extends BaseData<?>> {
             if (currentEntitiesCount >= maxEntities) {
                 throw new DataValidationException(String.format("Can't create more then %d %ss!",
                         maxEntities, entityType.name().toLowerCase().replaceAll("_", " ")));
+            }
+        }
+    }
+
+    protected void validateMaxSumDataSizePerTenant(TenantId tenantId,
+                                                     TenantEntityWithDataDao dataDao,
+                                                     long maxSumDataSize,
+                                                     long currentDataSize,
+                                                     EntityType entityType) {
+        if (maxSumDataSize > 0) {
+            if (dataDao.sumDataSizeByTenantId(tenantId) + currentDataSize > maxSumDataSize) {
+                throw new DataValidationException(String.format("Failed to create the %s, files size limit is exhausted %d bytes!",
+                        entityType.name().toLowerCase().replaceAll("_", " "), maxSumDataSize));
             }
         }
     }

@@ -22,6 +22,7 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -50,6 +51,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_TABLE_
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_TENANT_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_TILE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_TYPE_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_URL_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_VERSION_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
 
@@ -75,6 +77,9 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> implemen
 
     @Column(name = OTA_PACKAGE_VERSION_COLUMN)
     private String version;
+
+    @Column(name = OTA_PACKAGE_URL_COLUMN)
+    private String url;
 
     @Column(name = OTA_PACKAGE_FILE_NAME_COLUMN)
     private String fileName;
@@ -116,6 +121,7 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> implemen
         }
         this.title = firmware.getTitle();
         this.version = firmware.getVersion();
+        this.url = firmware.getUrl();
         this.fileName = firmware.getFileName();
         this.contentType = firmware.getContentType();
         this.checksumAlgorithm = firmware.getChecksumAlgorithm();
@@ -125,7 +131,7 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> implemen
     }
 
     public OtaPackageInfoEntity(UUID id, long createdTime, UUID tenantId, UUID deviceProfileId, OtaPackageType type, String title, String version,
-                                String fileName, String contentType, ChecksumAlgorithm checksumAlgorithm, String checksum, Long dataSize,
+                                String url, String fileName, String contentType, ChecksumAlgorithm checksumAlgorithm, String checksum, Long dataSize,
                                 Object additionalInfo, boolean hasData) {
         this.id = id;
         this.createdTime = createdTime;
@@ -134,6 +140,7 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> implemen
         this.type = type;
         this.title = title;
         this.version = version;
+        this.url = url;
         this.fileName = fileName;
         this.contentType = contentType;
         this.checksumAlgorithm = checksumAlgorithm;
@@ -164,6 +171,7 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> implemen
         firmware.setType(type);
         firmware.setTitle(title);
         firmware.setVersion(version);
+        firmware.setUrl(url);
         firmware.setFileName(fileName);
         firmware.setContentType(contentType);
         firmware.setChecksumAlgorithm(checksumAlgorithm);
