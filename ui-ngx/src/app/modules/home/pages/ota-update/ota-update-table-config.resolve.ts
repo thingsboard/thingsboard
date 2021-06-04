@@ -17,6 +17,7 @@
 import { Injectable } from '@angular/core';
 import { Resolve } from '@angular/router';
 import {
+  CellActionDescriptorType,
   DateEntityTableColumn,
   EntityTableColumn,
   EntityTableConfig
@@ -61,27 +62,46 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
 
     this.config.columns.push(
       new DateEntityTableColumn<OtaPackageInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<OtaPackageInfo>('title', 'ota-update.title', '25%'),
-      new EntityTableColumn<OtaPackageInfo>('version', 'ota-update.version', '25%'),
-      new EntityTableColumn<OtaPackageInfo>('type', 'ota-update.package-type', '25%', entity => {
+      new EntityTableColumn<OtaPackageInfo>('title', 'ota-update.title', '20%'),
+      new EntityTableColumn<OtaPackageInfo>('version', 'ota-update.version', '20%'),
+      new EntityTableColumn<OtaPackageInfo>('type', 'ota-update.package-type', '20%', entity => {
         return this.translate.instant(OtaUpdateTypeTranslationMap.get(entity.type));
       }),
-      new EntityTableColumn<OtaPackageInfo>('fileName', 'ota-update.file-name', '25%'),
+      new EntityTableColumn<OtaPackageInfo>('url', 'ota-update.url', '20%', entity => {
+          return entity.url && entity.url.length > 20 ? `${entity.url.slice(0, 20)}…` : '';
+        }, () => ({}), true, () => ({}), () => undefined, false,
+        {
+          name: this.translate.instant('ota-update.copy-checksum'),
+          icon: 'content_paste',
+          style: {
+            'font-size': '16px',
+            color: 'rgba(0,0,0,.87)'
+          },
+          isEnabled: (otaPackage) => !!otaPackage.url,
+          onAction: ($event, entity) => entity.url,
+          type: CellActionDescriptorType.COPY_BUTTON
+        }),
+      new EntityTableColumn<OtaPackageInfo>('fileName', 'ota-update.file-name', '20%'),
       new EntityTableColumn<OtaPackageInfo>('dataSize', 'ota-update.file-size', '70px', entity => {
         return entity.dataSize ? this.fileSize.transform(entity.dataSize) : '';
       }),
-      new EntityTableColumn<OtaPackageInfo>('checksum', 'ota-update.checksum', '540px', entity => {
-        return entity.checksum ? `${ChecksumAlgorithmTranslationMap.get(entity.checksumAlgorithm)}: ${entity.checksum}` : '';
-      }, () => ({}), false)
+      new EntityTableColumn<OtaPackageInfo>('checksum', 'ota-update.checksum', '220px', entity => {
+        return entity.checksum ? this.checksumText(entity) : '';
+      }, () => ({}), true, () => ({}), () => undefined, false,
+      {
+        name: this.translate.instant('ota-update.copy-checksum'),
+        icon: 'content_paste',
+        style: {
+          'font-size': '16px',
+          color: 'rgba(0,0,0,.87)'
+        },
+        isEnabled: (otaPackage) => !!otaPackage.checksum,
+        onAction: ($event, entity) => entity.checksum,
+        type: CellActionDescriptorType.COPY_BUTTON
+      })
     );
 
     this.config.cellActionDescriptors.push(
-      {
-        name: this.translate.instant('ota-update.copy-checksum'),
-        icon: 'content_copy',
-        isEnabled: (otaPackage) => !!otaPackage.checksum,
-        onAction: ($event, entity) => this.copyPackageChecksum($event, entity)
-      },
       {
         name: this.translate.instant('ota-update.download'),
         icon: 'file_download',
@@ -120,28 +140,18 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
     }
   }
 
-  copyPackageChecksum($event: Event, otaPackageInfo: OtaPackageInfo) {
-    if ($event) {
-      $event.stopPropagation();
+  checksumText(entity): string {
+    let text = `${ChecksumAlgorithmTranslationMap.get(entity.checksumAlgorithm)}: ${entity.checksum}`;
+    if (text.length > 20) {
+      text = `${text.slice(0, 20)}…`;
     }
-    this.clipboardService.copy(otaPackageInfo?.checksum);
-    this.store.dispatch(new ActionNotificationShow(
-      {
-        message: this.translate.instant('ota-update.checksum-copied-message'),
-        type: 'success',
-        duration: 750,
-        verticalPosition: 'bottom',
-        horizontalPosition: 'right'
-      }));
+    return text;
   }
 
   onPackageAction(action: EntityAction<OtaPackageInfo>): boolean {
     switch (action.action) {
       case 'uploadPackage':
         this.exportPackage(action.event, action.entity);
-        return true;
-      case 'copyChecksum':
-        this.copyPackageChecksum(action.event, action.entity);
         return true;
     }
     return false;

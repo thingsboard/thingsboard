@@ -48,6 +48,9 @@ export type CellContentFunction<T extends BaseData<HasId>> = (entity: T, key: st
 export type CellTooltipFunction<T extends BaseData<HasId>> = (entity: T, key: string) => string | undefined;
 export type HeaderCellStyleFunction<T extends BaseData<HasId>> = (key: string) => object;
 export type CellStyleFunction<T extends BaseData<HasId>> = (entity: T, key: string) => object;
+export type CopyCellContent<T extends BaseData<HasId>> = (entity: T, key: string, length: number) => object;
+
+export enum CellActionDescriptorType { 'DEFAULT', 'COPY_BUTTON'}
 
 export interface CellActionDescriptor<T extends BaseData<HasId>> {
   name: string;
@@ -56,7 +59,8 @@ export interface CellActionDescriptor<T extends BaseData<HasId>> {
   mdiIcon?: string;
   style?: any;
   isEnabled: (entity: T) => boolean;
-  onAction: ($event: MouseEvent, entity: T) => void;
+  onAction: ($event: MouseEvent, entity: T) => any;
+  type?: CellActionDescriptorType;
 }
 
 export interface GroupActionDescriptor<T extends BaseData<HasId>> {
@@ -95,7 +99,8 @@ export class EntityTableColumn<T extends BaseData<HasId>> extends BaseEntityTabl
               public sortable: boolean = true,
               public headerCellStyleFunction: HeaderCellStyleFunction<T> = () => ({}),
               public cellTooltipFunction: CellTooltipFunction<T> = () => undefined,
-              public isNumberColumn: boolean = false) {
+              public isNumberColumn: boolean = false,
+              public actionCell: CellActionDescriptor<T> = {isEnabled: () => false, name: null, onAction: () => ({})}) {
     super('content', key, title, width, sortable);
   }
 }
@@ -185,5 +190,9 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
 }
 
 export function checkBoxCell(value: boolean): string {
+  return `<mat-icon class="material-icons mat-icon">${value ? 'check_box' : 'check_box_outline_blank'}</mat-icon>`;
+}
+
+export function copyCellContent(value: string): string {
   return `<mat-icon class="material-icons mat-icon">${value ? 'check_box' : 'check_box_outline_blank'}</mat-icon>`;
 }

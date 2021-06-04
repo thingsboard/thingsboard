@@ -31,7 +31,6 @@
   <div fxLayout="row" fxLayout.xs="column">
     <button mat-raised-button
             ngxClipboard
-            [disabled]="(isLoading$ | async)"
             (cbOnSuccess)="onPackageIdCopied()"
             [cbContent]="entity?.id?.id"
             [fxShow]="!isEdit">
@@ -39,9 +38,10 @@
       <span translate>ota-update.copyId</span>
     </button>
     <button mat-raised-button
-            [disabled]="(isLoading$ | async)"
-            (click)="onEntityAction($event, 'copyChecksum')"
-            [fxShow]="!isEdit && entity?.checksum">
+            ngxClipboard
+            (cbOnSuccess)="onPackageChecksumCopied()"
+            [cbContent]="entity?.checksum"
+            [fxShow]="!isEdit">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>ota-update.copy-checksum</span>
     </button>

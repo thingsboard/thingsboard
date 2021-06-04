@@ -2166,6 +2166,7 @@
       "content-type": "Content type",
       "copy-checksum": "Copy checksum",
       "copyId": "Copy package Id",
+      "copied": "Copied!",
       "delete": "Delete package",
       "delete-ota-update-text": "Be careful, after the confirmation the OTA update will become unrecoverable.",
       "delete-ota-update-title": "Are you sure you want to delete the OTA update '{{title}}'?",

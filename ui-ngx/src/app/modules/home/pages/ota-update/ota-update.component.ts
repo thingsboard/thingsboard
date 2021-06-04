@@ -149,6 +149,17 @@ export class OtaUpdateComponent extends EntityComponent<OtaPackage> implements O
       }));
   }
 
+  onPackageChecksumCopied() {
+    this.store.dispatch(new ActionNotificationShow(
+      {
+        message: this.translate.instant('ota-update.checksum-copied-message'),
+        type: 'success',
+        duration: 750,
+        verticalPosition: 'bottom',
+        horizontalPosition: 'right'
+      }));
+  }
+
   prepareFormValue(formValue: any): any {
     delete formValue.resource;
     delete formValue.generateChecksum;

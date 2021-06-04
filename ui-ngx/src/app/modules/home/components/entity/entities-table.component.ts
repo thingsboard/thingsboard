@@ -43,7 +43,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { BaseData, HasId } from '@shared/models/base-data';
 import { ActivatedRoute } from '@angular/router';
 import {
-  CellActionDescriptor,
+  CellActionDescriptor, CellActionDescriptorType,
   EntityActionTableColumn,
   EntityColumn,
   EntityTableColumn,
@@ -103,6 +103,8 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
   textSearchMode = false;
   timewindow: Timewindow;
   dataSource: EntitiesDataSource<BaseData<HasId>>;
+
+  cellActionType = CellActionDescriptorType;
 
   isDetailsOpen = false;
   detailsPanelOpened = new EventEmitter<boolean>();
