@@ -20,20 +20,6 @@
     <mat-tab label="{{ 'device-profile.lwm2m.model-tab' | translate }}">
       <ng-template matTabContent>
         <section [formGroup]="lwm2mDeviceProfileFormGroup">
-          <div *ngIf="false" class="mat-padding" style="padding-bottom: 0px">
-            <mat-form-field class="mat-block">
-              <mat-label>{{ 'device-profile.lwm2m.client-only-observe-after-connect-label' | translate }}</mat-label>
-              <mat-select formControlName="clientOnlyObserveAfterConnect"
-                          matTooltip="{{ 'device-profile.lwm2m.client-only-observe-after-connect-tip' | translate:
-                          { count: +lwm2mDeviceProfileFormGroup.get('clientOnlyObserveAfterConnect').value } }}"
-                          matTooltipPosition="above">
-                <mat-option value=1>{{ 'device-profile.lwm2m.client-only-observe-after-connect' | translate:
-                  {count: 1} }}</mat-option>
-                <mat-option value=2>{{ 'device-profile.lwm2m.client-only-observe-after-connect' | translate:
-                  {count: 2} }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-          </div>
           <div class="mat-padding" style="padding-top: 0">
             <tb-profile-lwm2m-object-list
               (addList)="addObjectsList($event)"
@@ -51,7 +37,7 @@
         </section>
       </ng-template>
     </mat-tab>
-    <mat-tab label="{{ 'device-profile.lwm2m.servers' | translate }}">
+    <mat-tab label="{{ 'device-profile.lwm2m.bootstrap-tab' | translate }}">
       <ng-template matTabContent>
         <section [formGroup]="lwm2mDeviceProfileFormGroup">
           <div class="mat-padding">
@@ -149,6 +135,48 @@
                 </ng-template>
               </mat-expansion-panel>
             </mat-accordion>
+          </div>
+        </section>
+      </ng-template>
+    </mat-tab>
+    <mat-tab label="{{ 'device-profile.lwm2m.others-tab' | translate }}">
+      <ng-template matTabContent>
+        <section [formGroup]="lwm2mDeviceProfileFormGroup">
+          <div *ngIf="false" class="mat-padding" style="padding-bottom: 0px">
+            <mat-form-field class="mat-block">
+              <mat-label>{{ 'device-profile.lwm2m.client-only-observe-after-connect-label' | translate }}</mat-label>
+              <mat-select formControlName="clientOnlyObserveAfterConnect"
+                          matTooltip="{{ 'device-profile.lwm2m.client-only-observe-after-connect-tip' | translate:
+                          { count: +lwm2mDeviceProfileFormGroup.get('clientOnlyObserveAfterConnect').value } }}"
+                          matTooltipPosition="above">
+                <mat-option value=1>{{ 'device-profile.lwm2m.client-only-observe-after-connect' | translate:
+                  {count: 1} }}</mat-option>
+                <mat-option value=2>{{ 'device-profile.lwm2m.client-only-observe-after-connect' | translate:
+                  {count: 2} }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="mat-padding" style="padding-bottom: 0px">
+            <mat-form-field class="mat-block">
+              <mat-label>{{ 'device-profile.lwm2m.fw-update-url-label' | translate }}</mat-label>
+              <mat-select formControlName="fwUpdateUrl">
+                <mat-option value=1>{{ 'device-profile.lwm2m.fw-update-url' | translate:
+                  {count: 1} }}</mat-option>
+                <mat-option value=2>{{ 'device-profile.lwm2m.fw-update-url' | translate:
+                  {count: 2} }}</mat-option>
+                <mat-option value=2>{{ 'device-profile.lwm2m.fw-update-url' | translate:
+                  {count: 3} }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field class="mat-block">
+              <mat-label>{{ 'device-profile.lwm2m.sw-update-url-label' | translate }}</mat-label>
+              <mat-select formControlName="swUpdateUrl">
+                <mat-option value=1>{{ 'device-profile.lwm2m.sw-update-url' | translate:
+                  {count: 1} }}</mat-option>
+                <mat-option value=2>{{ 'device-profile.lwm2m.sw-update-url' | translate:
+                  {count: 2} }}</mat-option>
+              </mat-select>
+            </mat-form-field>
           </div>
         </section>
       </ng-template>

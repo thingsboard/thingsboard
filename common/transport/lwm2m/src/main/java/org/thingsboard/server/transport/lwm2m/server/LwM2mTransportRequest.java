@@ -163,12 +163,12 @@ public class LwM2mTransportRequest {
                         if (lwm2mClientRpcRequest != null) {
                             ResourceModel resourceModel = lwM2MClient.getResourceModel(targetIdVer, this.config.getModelProvider());
                             String errorMsg = resourceModel == null ? String.format("Path %s not found in object version", targetIdVer) : "SendRequest - null";
-                            this.handler.sentRpcResponse(lwm2mClientRpcRequest, NOT_FOUND.getName(), errorMsg, LOG_LW2M_ERROR);
+                            handler.sentRpcResponse(lwm2mClientRpcRequest, NOT_FOUND.getName(), errorMsg, LOG_LW2M_ERROR);
                         }
                     }
                 } else if (lwm2mClientRpcRequest != null) {
                     String errorMsg = String.format("Path %s not found in object version", targetIdVer);
-                    this.handler.sentRpcResponse(lwm2mClientRpcRequest, NOT_FOUND.getName(), errorMsg, LOG_LW2M_ERROR);
+                    handler.sentRpcResponse(lwm2mClientRpcRequest, NOT_FOUND.getName(), errorMsg, LOG_LW2M_ERROR);
                 }
             } else {
                 switch (typeOper) {
@@ -185,10 +185,10 @@ public class LwM2mTransportRequest {
                         }
                         String msg = String.format("%s: type operation %s paths - %s", LOG_LW2M_INFO,
                                 typeOper.name(), paths);
-                        this.handler.sendLogsToThingsboard(msg, registration.getId());
+                        handler.sendLogsToThingsboard(msg, registration.getId());
                         if (lwm2mClientRpcRequest != null) {
                             String valueMsg = String.format("Paths - %s", paths);
-                            this.handler.sentRpcResponse(lwm2mClientRpcRequest, CONTENT.name(), valueMsg, LOG_LW2M_VALUE);
+                           handler.sentRpcResponse(lwm2mClientRpcRequest, CONTENT.name(), valueMsg, LOG_LW2M_VALUE);
                         }
                         break;
                     case OBSERVE_CANCEL:
@@ -208,7 +208,7 @@ public class LwM2mTransportRequest {
                         break;
                     // lwm2mClientRpcRequest != null
                     case FW_UPDATE:
-                        this.handler.getInfoFirmwareUpdate(lwM2MClient, lwm2mClientRpcRequest);
+                        handler.getInfoFirmwareUpdate(lwM2MClient, lwm2mClientRpcRequest);
                         break;
                 }
             }

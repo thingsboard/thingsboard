@@ -37,9 +37,11 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.S
 public class LwM2mTransportCoapResource extends AbstractLwm2mTransportResource {
     private final ConcurrentMap<String, ObserveRelation> tokenToObserveRelationMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, AtomicInteger> tokenToObserveNotificationSeqMap = new ConcurrentHashMap<>();
+    private final LwM2mTransportMsgHandler handler;
 
     public LwM2mTransportCoapResource(LwM2mTransportMsgHandler handler, String name) {
-        super(handler, name);
+        super(name);
+        this.handler = handler;
         this.setObservable(true); // enable observing
         this.addObserver(new CoapResourceObserver());
     }

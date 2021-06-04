@@ -24,11 +24,9 @@ import org.thingsboard.server.common.transport.TransportServiceCallback;
 
 @Slf4j
 public abstract class AbstractLwm2mTransportResource extends LwM2mCoapResource {
-    protected final LwM2mTransportMsgHandler handler;
 
-    public AbstractLwm2mTransportResource(LwM2mTransportMsgHandler handler, String name) {
+    public AbstractLwm2mTransportResource(String name) {
         super(name);
-        this.handler = handler;
     }
 
     @Override

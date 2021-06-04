@@ -32,12 +32,12 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static org.eclipse.californium.core.coap.CoAP.ResponseCode.CONTENT;
 import static org.thingsboard.server.common.data.ota.OtaPackageKey.STATE;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATING;
 import static org.thingsboard.server.common.data.ota.OtaPackageUtil.getAttributeKey;
-import static org.eclipse.californium.core.coap.CoAP.ResponseCode.CONTENT;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_NAME_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PACKAGE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_RESULT_ID;
@@ -107,12 +107,16 @@ public class LwM2mFwSwUpdate {
     @Getter
     @Setter
     private volatile Lwm2mClientRpcRequest rpcRequest;
+    @Getter
+    @Setter
+    private volatile boolean typeUpdateByURL;
 
     public LwM2mFwSwUpdate(LwM2mClient lwM2MClient, OtaPackageType type) {
         this.lwM2MClient = lwM2MClient;
         this.pendingInfoRequestsStart = new CopyOnWriteArrayList<>();
         this.type = type;
         this.stateUpdate = null;
+        this.typeUpdateByURL = false;
         this.initPathId();
     }
 

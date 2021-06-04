@@ -192,7 +192,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public LwM2mClientProfile getProfile(Registration registration) {
-        return this.getProfiles().get(getOrRegister(registration).getProfileId());
+        return this.getProfiles().get(this.getOrRegister(registration).getProfileId());
     }
 
     @Override
