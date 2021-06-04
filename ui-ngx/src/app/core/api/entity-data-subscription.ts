@@ -667,8 +667,7 @@ export class EntityDataSubscription {
         if (prevDataCb) {
           dataAggregator.updateOnDataCb(prevDataCb);
         }
-      }
-      if (!this.history && !isUpdate) {
+      } else if (!this.history && !isUpdate) {
         this.onData(subscriptionData, DataKeyType.timeseries, dataIndex, true, dataUpdatedCb);
       }
     }
