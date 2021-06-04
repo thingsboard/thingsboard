@@ -76,13 +76,12 @@ public class JpaOtaPackageInfoDao extends JpaAbstractSearchTextDao<OtaPackageInf
     }
 
     @Override
-    public PageData<OtaPackageInfo> findOtaPackageInfoByTenantIdAndDeviceProfileIdAndTypeAndHasData(TenantId tenantId, DeviceProfileId deviceProfileId, OtaPackageType otaPackageType, boolean hasData, PageLink pageLink) {
+    public PageData<OtaPackageInfo> findOtaPackageInfoByTenantIdAndDeviceProfileIdAndTypeAndHasData(TenantId tenantId, DeviceProfileId deviceProfileId, OtaPackageType otaPackageType, PageLink pageLink) {
         return DaoUtil.toPageData(otaPackageInfoRepository
                 .findAllByTenantIdAndTypeAndDeviceProfileIdAndHasData(
                         tenantId.getId(),
                         deviceProfileId.getId(),
                         otaPackageType,
-                        hasData,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
     }

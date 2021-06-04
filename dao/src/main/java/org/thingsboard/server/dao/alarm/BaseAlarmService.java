@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.exception.ApiUsageLimitsExceededException;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -119,7 +120,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                 Alarm existing = alarmDao.findLatestByOriginatorAndType(alarm.getTenantId(), alarm.getOriginator(), alarm.getType()).get();
                 if (existing == null || existing.getStatus().isCleared()) {
                     if (!alarmCreationEnabled) {
-                        throw new IllegalStateException("Alarm creation is disabled");
+                        throw new ApiUsageLimitsExceededException("Alarms creation is disabled");
                     }
                     return createAlarm(alarm);
                 } else {

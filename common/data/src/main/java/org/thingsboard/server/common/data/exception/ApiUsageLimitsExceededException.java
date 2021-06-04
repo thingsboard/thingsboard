@@ -13,32 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.common.data.exception;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.id.OtaPackageId;
-
-import java.nio.ByteBuffer;
-
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class OtaPackage extends OtaPackageInfo {
-
-    private static final long serialVersionUID = 3091601761339422546L;
-
-    private transient ByteBuffer data;
-
-    public OtaPackage() {
-        super();
+public class ApiUsageLimitsExceededException extends RuntimeException {
+    public ApiUsageLimitsExceededException(String message) {
+        super(message);
     }
 
-    public OtaPackage(OtaPackageId id) {
-        super(id);
-    }
-
-    public OtaPackage(OtaPackage otaPackage) {
-        super(otaPackage);
-        this.data = otaPackage.getData();
+    public ApiUsageLimitsExceededException() {
     }
 }

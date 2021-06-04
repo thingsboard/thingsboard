@@ -185,6 +185,10 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
     return this.utils.customTranslation(state.name, id);
   }
 
+  public getCurrentStateName(): string {
+    return this.getStateName(this.stateObject[0].id, this.statesValue[this.stateObject[0].id]);
+  }
+
   public displayStateSelection(): boolean {
     return this.states && Object.keys(this.states).length > 1;
   }

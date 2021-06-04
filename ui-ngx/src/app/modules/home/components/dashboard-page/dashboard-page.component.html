@@ -87,7 +87,7 @@
                   (click)="updateDashboardImage($event)">
             <mat-icon>wallpaper</mat-icon>
           </button>
-          <button [fxShow]="currentDashboardId && (isEdit || displayExport())" mat-icon-button
+          <button [fxShow]="currentDashboardId && !isMobileApp && (isEdit || displayExport())" mat-icon-button
                   matTooltip="{{'dashboard.export' | translate}}"
                   matTooltipPosition="below"
                   (click)="exportDashboard($event)">
