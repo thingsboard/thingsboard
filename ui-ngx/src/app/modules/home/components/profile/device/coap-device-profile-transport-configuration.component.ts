@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
@@ -33,6 +33,8 @@ import {
   transportPayloadTypeTranslationMap,
 } from '@shared/models/device.models';
 import { isDefinedAndNotNull } from '@core/utils';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-coap-device-profile-transport-configuration',
@@ -44,7 +46,7 @@ import { isDefinedAndNotNull } from '@core/utils';
     multi: true
   }]
 })
-export class CoapDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit {
+export class CoapDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit, OnDestroy {
 
   coapTransportDeviceTypes = Object.keys(CoapTransportDeviceType);
 
@@ -56,6 +58,7 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
 
   coapDeviceProfileTransportConfigurationFormGroup: FormGroup;
 
+  private destroy$ = new Subject();
   private requiredValue: boolean;
 
   private transportPayloadTypeConfiguration = this.fb.group({
@@ -99,13 +102,21 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
         })
       }
     );
-    this.coapDeviceProfileTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.coapDeviceType')
-      .valueChanges.subscribe(coapDeviceType => {
+    this.coapDeviceProfileTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.coapDeviceType').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(coapDeviceType => {
       this.updateCoapDeviceTypeBasedControls(coapDeviceType, true);
     });
-    this.coapDeviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
+    this.coapDeviceProfileTransportConfigurationFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
       this.updateModel();
     });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   get coapDeviceTypeDefault(): boolean {
