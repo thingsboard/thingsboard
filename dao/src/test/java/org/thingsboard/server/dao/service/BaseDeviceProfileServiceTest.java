@@ -109,6 +109,7 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         firmware.setChecksumAlgorithm(ChecksumAlgorithm.SHA256);
         firmware.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
         firmware.setData(ByteBuffer.wrap(new byte[]{1}));
+        firmware.setDataSize(1L);
         OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware);
 
         deviceProfile.setFirmwareId(savedFirmware.getId());
