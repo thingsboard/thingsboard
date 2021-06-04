@@ -13,18 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.ota;
+package org.thingsboard.server.dao;
 
-import lombok.Getter;
+import org.thingsboard.server.common.data.id.TenantId;
 
-public enum OtaPackageKey {
+public interface TenantEntityWithDataDao {
 
-    TITLE("title"), VERSION("version"), TS("ts"), STATE("state"), SIZE("size"), CHECKSUM("checksum"), CHECKSUM_ALGORITHM("checksum_algorithm"), URL("url");
-
-    @Getter
-    private final String value;
-
-    OtaPackageKey(String value) {
-        this.value = value;
-    }
+    Long sumDataSizeByTenantId(TenantId tenantId);
 }

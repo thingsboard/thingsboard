@@ -28,11 +28,13 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.nio.ByteBuffer;
@@ -50,7 +52,9 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     private static final String CONTENT_TYPE = "text/plain";
     private static final ChecksumAlgorithm CHECKSUM_ALGORITHM = ChecksumAlgorithm.SHA256;
     private static final String CHECKSUM = "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a";
-    private static final ByteBuffer DATA = ByteBuffer.wrap(new byte[]{1});
+    private static final long DATA_SIZE = 1L;
+    private static final ByteBuffer DATA = ByteBuffer.wrap(new byte[]{(int) DATA_SIZE});
+    private static final String URL = "http://firmware.test.org";
 
     private IdComparator<OtaPackageInfo> idComparator = new IdComparator<>();
 
@@ -78,6 +82,41 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     @After
     public void after() {
         tenantService.deleteTenant(tenantId);
+        tenantProfileService.deleteTenantProfiles(tenantId);
+    }
+
+    @Test
+    public void testSaveOtaPackageWithMaxSumDataSizeOutOfLimit() {
+        TenantProfile defaultTenantProfile = tenantProfileService.findDefaultTenantProfile(tenantId);
+        defaultTenantProfile.getProfileData().setConfiguration(DefaultTenantProfileConfiguration.builder().maxOtaPackagesInBytes(DATA_SIZE).build());
+        tenantProfileService.saveTenantProfile(tenantId, defaultTenantProfile);
+
+        Assert.assertEquals(0, otaPackageService.sumDataSizeByTenantId(tenantId));
+
+        createFirmware(tenantId, "1");
+        Assert.assertEquals(1, otaPackageService.sumDataSizeByTenantId(tenantId));
+
+        thrown.expect(DataValidationException.class);
+        thrown.expectMessage(String.format("Failed to create the ota package, files size limit is exhausted %d bytes!", DATA_SIZE));
+        createFirmware(tenantId, "2");
+    }
+
+    @Test
+    public void sumDataSizeByTenantId() {
+        Assert.assertEquals(0, otaPackageService.sumDataSizeByTenantId(tenantId));
+
+        createFirmware(tenantId, "0.1");
+        Assert.assertEquals(1, otaPackageService.sumDataSizeByTenantId(tenantId));
+
+        int maxSumDataSize = 8;
+        List<OtaPackage> packages = new ArrayList<>(maxSumDataSize);
+
+        for (int i = 2; i <= maxSumDataSize; i++) {
+            packages.add(createFirmware(tenantId, "0." + i));
+            Assert.assertEquals(i, otaPackageService.sumDataSizeByTenantId(tenantId));
+        }
+
+        Assert.assertEquals(maxSumDataSize, otaPackageService.sumDataSizeByTenantId(tenantId));
     }
 
     @Test
@@ -93,6 +132,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
         firmware.setChecksum(CHECKSUM);
         firmware.setData(DATA);
+        firmware.setDataSize(DATA_SIZE);
         OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware);
 
         Assert.assertNotNull(savedFirmware);
@@ -106,6 +146,35 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
         savedFirmware.setAdditionalInfo(JacksonUtil.newObjectNode());
         otaPackageService.saveOtaPackage(savedFirmware);
+
+        OtaPackage foundFirmware = otaPackageService.findOtaPackageById(tenantId, savedFirmware.getId());
+        Assert.assertEquals(foundFirmware.getTitle(), savedFirmware.getTitle());
+
+        otaPackageService.deleteOtaPackage(tenantId, savedFirmware.getId());
+    }
+
+    @Test
+    public void testSaveFirmwareWithUrl() {
+        OtaPackageInfo firmware = new OtaPackageInfo();
+        firmware.setTenantId(tenantId);
+        firmware.setDeviceProfileId(deviceProfileId);
+        firmware.setType(FIRMWARE);
+        firmware.setTitle(TITLE);
+        firmware.setVersion(VERSION);
+        firmware.setUrl(URL);
+        firmware.setDataSize(0L);
+        OtaPackageInfo savedFirmware = otaPackageService.saveOtaPackageInfo(firmware);
+
+        Assert.assertNotNull(savedFirmware);
+        Assert.assertNotNull(savedFirmware.getId());
+        Assert.assertTrue(savedFirmware.getCreatedTime() > 0);
+        Assert.assertEquals(firmware.getTenantId(), savedFirmware.getTenantId());
+        Assert.assertEquals(firmware.getTitle(), savedFirmware.getTitle());
+        Assert.assertEquals(firmware.getFileName(), savedFirmware.getFileName());
+        Assert.assertEquals(firmware.getContentType(), savedFirmware.getContentType());
+
+        savedFirmware.setAdditionalInfo(JacksonUtil.newObjectNode());
+        otaPackageService.saveOtaPackageInfo(savedFirmware);
 
         OtaPackage foundFirmware = otaPackageService.findOtaPackageById(tenantId, savedFirmware.getId());
         Assert.assertEquals(foundFirmware.getTitle(), savedFirmware.getTitle());
@@ -141,6 +210,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
         firmware.setChecksum(CHECKSUM);
         firmware.setData(DATA);
+        firmware.setDataSize(DATA_SIZE);
 
         otaPackageService.saveOtaPackage(firmware);
 
@@ -345,50 +415,15 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
     @Test
     public void testSaveFirmwareWithExistingTitleAndVersion() {
-        OtaPackage firmware = new OtaPackage();
-        firmware.setTenantId(tenantId);
-        firmware.setDeviceProfileId(deviceProfileId);
-        firmware.setType(FIRMWARE);
-        firmware.setTitle(TITLE);
-        firmware.setVersion(VERSION);
-        firmware.setFileName(FILE_NAME);
-        firmware.setContentType(CONTENT_TYPE);
-        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
-        firmware.setChecksum(CHECKSUM);
-        firmware.setData(DATA);
-        otaPackageService.saveOtaPackage(firmware);
-
-        OtaPackage newFirmware = new OtaPackage();
-        newFirmware.setTenantId(tenantId);
-        newFirmware.setDeviceProfileId(deviceProfileId);
-        newFirmware.setType(FIRMWARE);
-        newFirmware.setTitle(TITLE);
-        newFirmware.setVersion(VERSION);
-        newFirmware.setFileName(FILE_NAME);
-        newFirmware.setContentType(CONTENT_TYPE);
-        newFirmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
-        newFirmware.setChecksum(CHECKSUM);
-        newFirmware.setData(DATA);
-
+        createFirmware(tenantId, VERSION);
         thrown.expect(DataValidationException.class);
         thrown.expectMessage("OtaPackage with such title and version already exists!");
-        otaPackageService.saveOtaPackage(newFirmware);
+        createFirmware(tenantId, VERSION);
     }
 
     @Test
     public void testDeleteFirmwareWithReferenceByDevice() {
-        OtaPackage firmware = new OtaPackage();
-        firmware.setTenantId(tenantId);
-        firmware.setDeviceProfileId(deviceProfileId);
-        firmware.setType(FIRMWARE);
-        firmware.setTitle(TITLE);
-        firmware.setVersion(VERSION);
-        firmware.setFileName(FILE_NAME);
-        firmware.setContentType(CONTENT_TYPE);
-        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
-        firmware.setChecksum(CHECKSUM);
-        firmware.setData(DATA);
-        OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware);
+        OtaPackage savedFirmware = createFirmware(tenantId, VERSION);
 
         Device device = new Device();
         device.setTenantId(tenantId);
@@ -409,18 +444,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
     @Test
     public void testUpdateDeviceProfileId() {
-        OtaPackage firmware = new OtaPackage();
-        firmware.setTenantId(tenantId);
-        firmware.setDeviceProfileId(deviceProfileId);
-        firmware.setType(FIRMWARE);
-        firmware.setTitle(TITLE);
-        firmware.setVersion(VERSION);
-        firmware.setFileName(FILE_NAME);
-        firmware.setContentType(CONTENT_TYPE);
-        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
-        firmware.setChecksum(CHECKSUM);
-        firmware.setData(DATA);
-        OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware);
+        OtaPackage savedFirmware = createFirmware(tenantId, VERSION);
 
         try {
             thrown.expect(DataValidationException.class);
@@ -448,6 +472,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
         firmware.setChecksum(CHECKSUM);
         firmware.setData(DATA);
+        firmware.setDataSize(DATA_SIZE);
         OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware);
 
         savedDeviceProfile.setFirmwareId(savedFirmware.getId());
@@ -465,18 +490,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindFirmwareById() {
-        OtaPackage firmware = new OtaPackage();
-        firmware.setTenantId(tenantId);
-        firmware.setDeviceProfileId(deviceProfileId);
-        firmware.setType(FIRMWARE);
-        firmware.setTitle(TITLE);
-        firmware.setVersion(VERSION);
-        firmware.setFileName(FILE_NAME);
-        firmware.setContentType(CONTENT_TYPE);
-        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
-        firmware.setChecksum(CHECKSUM);
-        firmware.setData(DATA);
-        OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware);
+        OtaPackage savedFirmware = createFirmware(tenantId, VERSION);
 
         OtaPackage foundFirmware = otaPackageService.findOtaPackageById(tenantId, savedFirmware.getId());
         Assert.assertNotNull(foundFirmware);
@@ -502,18 +516,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
     @Test
     public void testDeleteFirmware() {
-        OtaPackage firmware = new OtaPackage();
-        firmware.setTenantId(tenantId);
-        firmware.setDeviceProfileId(deviceProfileId);
-        firmware.setType(FIRMWARE);
-        firmware.setTitle(TITLE);
-        firmware.setVersion(VERSION);
-        firmware.setFileName(FILE_NAME);
-        firmware.setContentType(CONTENT_TYPE);
-        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
-        firmware.setChecksum(CHECKSUM);
-        firmware.setData(DATA);
-        OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware);
+        OtaPackage savedFirmware = createFirmware(tenantId, VERSION);
 
         OtaPackage foundFirmware = otaPackageService.findOtaPackageById(tenantId, savedFirmware.getId());
         Assert.assertNotNull(foundFirmware);
@@ -526,22 +529,24 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     public void testFindTenantFirmwaresByTenantId() {
         List<OtaPackageInfo> firmwares = new ArrayList<>();
         for (int i = 0; i < 165; i++) {
-            OtaPackage firmware = new OtaPackage();
-            firmware.setTenantId(tenantId);
-            firmware.setDeviceProfileId(deviceProfileId);
-            firmware.setType(FIRMWARE);
-            firmware.setTitle(TITLE);
-            firmware.setVersion(VERSION + i);
-            firmware.setFileName(FILE_NAME);
-            firmware.setContentType(CONTENT_TYPE);
-            firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
-            firmware.setChecksum(CHECKSUM);
-            firmware.setData(DATA);
-
-            OtaPackageInfo info = new OtaPackageInfo(otaPackageService.saveOtaPackage(firmware));
+            OtaPackageInfo info = new OtaPackageInfo(createFirmware(tenantId, VERSION + i));
             info.setHasData(true);
             firmwares.add(info);
         }
+
+        OtaPackageInfo firmwareWithUrl = new OtaPackageInfo();
+        firmwareWithUrl.setTenantId(tenantId);
+        firmwareWithUrl.setDeviceProfileId(deviceProfileId);
+        firmwareWithUrl.setType(FIRMWARE);
+        firmwareWithUrl.setTitle(TITLE);
+        firmwareWithUrl.setVersion(VERSION);
+        firmwareWithUrl.setUrl(URL);
+        firmwareWithUrl.setDataSize(0L);
+
+        OtaPackageInfo savedFwWithUrl = otaPackageService.saveOtaPackageInfo(firmwareWithUrl);
+        savedFwWithUrl.setHasData(true);
+
+        firmwares.add(savedFwWithUrl);
 
         List<OtaPackageInfo> loadedFirmwares = new ArrayList<>();
         PageLink pageLink = new PageLink(16);
@@ -571,58 +576,38 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     public void testFindTenantFirmwaresByTenantIdAndHasData() {
         List<OtaPackageInfo> firmwares = new ArrayList<>();
         for (int i = 0; i < 165; i++) {
-            OtaPackageInfo firmwareInfo = new OtaPackageInfo();
-            firmwareInfo.setTenantId(tenantId);
-            firmwareInfo.setDeviceProfileId(deviceProfileId);
-            firmwareInfo.setType(FIRMWARE);
-            firmwareInfo.setTitle(TITLE);
-            firmwareInfo.setVersion(VERSION + i);
-            firmwareInfo.setFileName(FILE_NAME);
-            firmwareInfo.setContentType(CONTENT_TYPE);
-            firmwareInfo.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
-            firmwareInfo.setChecksum(CHECKSUM);
-            firmwareInfo.setDataSize((long) DATA.array().length);
-            firmwares.add(otaPackageService.saveOtaPackageInfo(firmwareInfo));
+            firmwares.add(new OtaPackageInfo(otaPackageService.saveOtaPackage(createFirmware(tenantId, VERSION + i))));
         }
+
+        OtaPackageInfo firmwareWithUrl = new OtaPackageInfo();
+        firmwareWithUrl.setTenantId(tenantId);
+        firmwareWithUrl.setDeviceProfileId(deviceProfileId);
+        firmwareWithUrl.setType(FIRMWARE);
+        firmwareWithUrl.setTitle(TITLE);
+        firmwareWithUrl.setVersion(VERSION);
+        firmwareWithUrl.setUrl(URL);
+        firmwareWithUrl.setDataSize(0L);
+
+        OtaPackageInfo savedFwWithUrl = otaPackageService.saveOtaPackageInfo(firmwareWithUrl);
+        savedFwWithUrl.setHasData(true);
+
+        firmwares.add(savedFwWithUrl);
 
         List<OtaPackageInfo> loadedFirmwares = new ArrayList<>();
         PageLink pageLink = new PageLink(16);
         PageData<OtaPackageInfo> pageData;
         do {
-            pageData = otaPackageService.findTenantOtaPackagesByTenantIdAndDeviceProfileIdAndTypeAndHasData(tenantId, deviceProfileId, FIRMWARE, false, pageLink);
+            pageData = otaPackageService.findTenantOtaPackagesByTenantIdAndDeviceProfileIdAndTypeAndHasData(tenantId, deviceProfileId, FIRMWARE, pageLink);
             loadedFirmwares.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
-        Collections.sort(firmwares, idComparator);
-        Collections.sort(loadedFirmwares, idComparator);
-
-        Assert.assertEquals(firmwares, loadedFirmwares);
-
-        firmwares.forEach(f -> {
-            OtaPackage firmware = new OtaPackage(f.getId());
-            firmware.setCreatedTime(f.getCreatedTime());
-            firmware.setTenantId(f.getTenantId());
-            firmware.setDeviceProfileId(deviceProfileId);
-            firmware.setType(FIRMWARE);
-            firmware.setTitle(f.getTitle());
-            firmware.setVersion(f.getVersion());
-            firmware.setFileName(FILE_NAME);
-            firmware.setContentType(CONTENT_TYPE);
-            firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
-            firmware.setChecksum(CHECKSUM);
-            firmware.setData(DATA);
-            firmware.setDataSize((long) DATA.array().length);
-            otaPackageService.saveOtaPackage(firmware);
-            f.setHasData(true);
-        });
-
         loadedFirmwares = new ArrayList<>();
         pageLink = new PageLink(16);
         do {
-            pageData = otaPackageService.findTenantOtaPackagesByTenantIdAndDeviceProfileIdAndTypeAndHasData(tenantId, deviceProfileId, FIRMWARE, true, pageLink);
+            pageData = otaPackageService.findTenantOtaPackagesByTenantIdAndDeviceProfileIdAndTypeAndHasData(tenantId, deviceProfileId, FIRMWARE, pageLink);
             loadedFirmwares.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -640,6 +625,22 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         pageData = otaPackageService.findTenantOtaPackagesByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
+    }
+
+    private OtaPackage createFirmware(TenantId tenantId, String version) {
+        OtaPackage firmware = new OtaPackage();
+        firmware.setTenantId(tenantId);
+        firmware.setDeviceProfileId(deviceProfileId);
+        firmware.setType(FIRMWARE);
+        firmware.setTitle(TITLE);
+        firmware.setVersion(version);
+        firmware.setFileName(FILE_NAME);
+        firmware.setContentType(CONTENT_TYPE);
+        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
+        firmware.setChecksum(CHECKSUM);
+        firmware.setData(DATA);
+        firmware.setDataSize(DATA_SIZE);
+        return otaPackageService.saveOtaPackage(firmware);
     }
 
 }

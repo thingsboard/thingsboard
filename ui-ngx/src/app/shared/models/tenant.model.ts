@@ -18,6 +18,7 @@ import { ContactBased } from '@shared/models/contact-based.model';
 import { TenantId } from './id/tenant-id';
 import { TenantProfileId } from '@shared/models/id/tenant-profile-id';
 import { BaseData } from '@shared/models/base-data';
+import {Validators} from "@angular/forms";
 
 export enum TenantProfileType {
   DEFAULT = 'DEFAULT'
@@ -30,6 +31,8 @@ export interface DefaultTenantProfileConfiguration {
   maxUsers: number;
   maxDashboards: number;
   maxRuleChains: number;
+  maxResourcesInBytes: number;
+  maxOtaPackagesInBytes: number;
 
   transportTenantMsgRateLimit?: string;
   transportTenantTelemetryMsgRateLimit?: string;
@@ -68,6 +71,8 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           maxUsers: 0,
           maxDashboards: 0,
           maxRuleChains: 0,
+          maxResourcesInBytes: 0,
+          maxOtaPackagesInBytes: 0,
           maxTransportMessages: 0,
           maxTransportDataPoints: 0,
           maxREExecutions: 0,

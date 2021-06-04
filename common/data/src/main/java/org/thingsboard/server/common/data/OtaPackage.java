@@ -37,8 +37,8 @@ public class OtaPackage extends OtaPackageInfo {
         super(id);
     }
 
-    public OtaPackage(OtaPackage firmware) {
-        super(firmware);
-        this.data = firmware.getData();
+    public OtaPackage(OtaPackage otaPackage) {
+        super(otaPackage);
+        this.data = otaPackage.getData();
     }
 }
