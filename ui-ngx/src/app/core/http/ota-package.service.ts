@@ -40,7 +40,7 @@ export class OtaPackageService {
 
   public getOtaPackagesInfoByDeviceProfileId(pageLink: PageLink, deviceProfileId: string, type: OtaUpdateType,
                                              hasData = true, config?: RequestConfig): Observable<PageData<OtaPackageInfo>> {
-    const url = `/api/otaPackages/${deviceProfileId}/${type}/${hasData}${pageLink.toQuery()}`;
+    const url = `/api/otaPackages/${deviceProfileId}/${type}${pageLink.toQuery()}`;
     return this.http.get<PageData<OtaPackageInfo>>(url, defaultHttpOptionsFromConfig(config));
   }
 
