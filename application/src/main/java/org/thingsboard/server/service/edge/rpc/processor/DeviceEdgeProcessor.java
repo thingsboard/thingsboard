@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor;
 
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -92,7 +94,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                                 pageLink = pageLink.nextPageLink();
                             }
                         }
-                        Device newDevice;
+
                         if (update) {
                             log.info("[{}] Device with name '{}' already exists on the cloud, and related to this edge [{}]. " +
                                     "deviceUpdateMsg [{}], Updating device", tenantId, deviceName, edge.getId(), deviceUpdateMsg);
@@ -101,16 +103,28 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                             log.info("[{}] Device with name '{}' already exists on the cloud, but not related to this edge [{}]. deviceUpdateMsg [{}]." +
                                     "Creating a new device with random prefix and relate to this edge", tenantId, deviceName, edge.getId(), deviceUpdateMsg);
                             String newDeviceName = deviceUpdateMsg.getName() + "_" + RandomStringUtils.randomAlphabetic(15);
-                            newDevice = createDevice(tenantId, edge, deviceUpdateMsg, newDeviceName);
+                            Device newDevice = createDevice(tenantId, edge, deviceUpdateMsg, newDeviceName);
                             ObjectNode body = mapper.createObjectNode();
                             body.put("conflictName", deviceName);
-                            saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.ENTITY_MERGE_REQUEST, newDevice.getId(), body);
+                            ListenableFuture<EdgeEvent> future =
+                                    saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.ENTITY_MERGE_REQUEST, newDevice.getId(), body);
+                            Futures.addCallback(future, new FutureCallback<>() {
+                                @Override
+                                public void onSuccess(EdgeEvent edgeEvent) {
+                                    saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, newDevice.getId(), null);
+                                }
+
+                                @Override
+                                public void onFailure(Throwable t) {
+                                    log.error("[{}] Failed to save ENTITY_MERGE_REQUEST edge event [{}][{}]", tenantId, deviceUpdateMsg, edge.getId(), t);
+                                }
+                            }, dbCallbackExecutorService);
                         }
                     } while (pageData != null && pageData.hasNext());
                 } else {
                     log.info("[{}] Creating new device and replacing device entity on the edge [{}]", tenantId, deviceUpdateMsg);
                     device = createDevice(tenantId, edge, deviceUpdateMsg, deviceUpdateMsg.getName());
-                    saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.ENTITY_MERGE_REQUEST, device.getId(), null);
+                    saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, device.getId(), null);
                 }
                 break;
             case ENTITY_UPDATED_RPC_MESSAGE:
@@ -179,8 +193,16 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
         try {
             deviceCreationLock.lock();
             log.debug("[{}] Creating device entity [{}] from edge [{}]", tenantId, deviceUpdateMsg, edge.getName());
-            device = new Device();
-            device.setTenantId(edge.getTenantId());
+            DeviceId deviceId = new DeviceId(new UUID(deviceUpdateMsg.getIdMSB(), deviceUpdateMsg.getIdLSB()));
+            device = deviceService.findDeviceById(tenantId, deviceId);
+            boolean created = false;
+            if (device == null) {
+                device = new Device();
+                device.setTenantId(tenantId);
+                device.setId(deviceId);
+                device.setCreatedTime(Uuids.unixTimestamp(deviceId.getId()));
+                created = true;
+            }
             // make device private, if edge is public
             device.setCustomerId(getCustomerId(edge));
             device.setName(deviceName);
@@ -192,9 +214,17 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                         new UUID(deviceUpdateMsg.getDeviceProfileIdMSB(), deviceUpdateMsg.getDeviceProfileIdLSB()));
                 device.setDeviceProfileId(deviceProfileId);
             }
-            device = deviceService.saveDevice(device);
+            Device savedDevice = deviceService.saveDevice(device, false);
+            if (created) {
+                DeviceCredentials deviceCredentials = new DeviceCredentials();
+                deviceCredentials.setDeviceId(new DeviceId(savedDevice.getUuidId()));
+                deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+                deviceCredentials.setCredentialsId(org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric(20));
+                deviceCredentialsService.createDeviceCredentials(device.getTenantId(), deviceCredentials);
+
+                deviceStateService.onDeviceAdded(savedDevice);
+            }
             createRelationFromEdge(tenantId, edge.getId(), device.getId());
-            deviceStateService.onDeviceAdded(device);
             pushDeviceCreatedEventToRuleEngine(tenantId, edge, device);
             deviceService.assignDeviceToEdge(edge.getTenantId(), device.getId(), edge.getId());
         } finally {
