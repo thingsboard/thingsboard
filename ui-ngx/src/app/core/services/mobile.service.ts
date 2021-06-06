@@ -27,6 +27,7 @@ import { AuthService } from '@core/auth/auth.service';
 
 const dashboardStateNameHandler = 'tbMobileDashboardStateNameHandler';
 const dashboardLoadedHandler = 'tbMobileDashboardLoadedHandler';
+const dashboardLayoutHandler = 'tbMobileDashboardLayoutHandler';
 const navigationHandler = 'tbMobileNavigationHandler';
 const mobileHandler = 'tbMobileHandler';
 
@@ -43,6 +44,7 @@ export class MobileService {
 
   private reloadUserObservable: Observable<boolean>;
   private lastDashboardId: string;
+  private toggleLayoutFunction: () => void;
 
   constructor(@Inject(WINDOW) private window: Window,
               private router: Router,
@@ -65,10 +67,24 @@ export class MobileService {
     }
   }
 
-  public onDashboardLoaded() {
+  public onDashboardLoaded(hasRightLayout: boolean, rightLayoutOpened: boolean) {
     if (this.mobileApp) {
-      this.mobileChannel.callHandler(dashboardLoadedHandler);
+      this.mobileChannel.callHandler(dashboardLoadedHandler, hasRightLayout, rightLayoutOpened);
     }
+  }
+
+  public onDashboardRightLayoutChanged(opened: boolean) {
+    if (this.mobileApp) {
+      this.mobileChannel.callHandler(dashboardLayoutHandler, opened);
+    }
+  }
+
+  public registerToggleLayoutFunction(toggleLayoutFunction: () => void) {
+    this.toggleLayoutFunction = toggleLayoutFunction;
+  }
+
+  public unregisterToggleLayoutFunction() {
+    this.toggleLayoutFunction = null;
   }
 
   public handleWidgetMobileAction<T extends MobileActionResult>(type: WidgetMobileActionType, ...args: any[]):
@@ -109,6 +125,11 @@ export class MobileService {
           case 'reloadUserMessage':
             const reloadUserMessage: ReloadUserMessage = message.data;
             this.reloadUser(reloadUserMessage);
+            break;
+          case 'toggleDashboardLayout':
+            if (this.toggleLayoutFunction) {
+              this.toggleLayoutFunction();
+            }
             break;
         }
       }

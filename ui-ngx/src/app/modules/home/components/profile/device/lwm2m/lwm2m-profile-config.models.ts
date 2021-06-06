@@ -64,7 +64,7 @@ export const BINDING_MODE_NAMES = new Map<BINDING_MODE, string>(
     [BINDING_MODE.UQ, 'UQ: UDP connection in queue mode'],
     [BINDING_MODE.US, 'US: both UDP and SMS connections active, both in standard mode'],
     [BINDING_MODE.UQS, 'UQS: both UDP and SMS connections active; UDP in queue mode, SMS in standard mode'],
-    [BINDING_MODE.T,'T: TCP connection in standard mode'],
+    [BINDING_MODE.T, 'T: TCP connection in standard mode'],
     [BINDING_MODE.TQ, 'TQ: TCP connection in queue mode'],
     [BINDING_MODE.TS, 'TS: both TCP and SMS connections active, both in standard mode'],
     [BINDING_MODE.TQS, 'TQS: both TCP and SMS connections active; TCP in queue mode, SMS in standard mode'],
@@ -162,7 +162,6 @@ export interface Lwm2mProfileConfigModels {
   clientLwM2mSettings: ClientLwM2mSettings;
   observeAttr: ObservableAttributes;
   bootstrap: BootstrapSecurityConfig;
-
 }
 
 export interface ClientLwM2mSettings {
