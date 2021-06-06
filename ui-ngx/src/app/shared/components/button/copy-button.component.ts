@@ -14,9 +14,9 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { ClipboardService } from 'ngx-clipboard';
-import { MatTooltip, TooltipPosition } from '@angular/material/tooltip/tooltip';
+import { MatTooltip, TooltipPosition } from '@angular/material/tooltip';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
@@ -52,6 +52,9 @@ export class CopyButtonComponent {
   @Input()
   style: {[key: string]: any} = {};
 
+  @Output()
+  successCopied: EventEmitter<string>;
+
   constructor(private clipboardService: ClipboardService,
               private translate: TranslateService,
               private cd: ChangeDetectorRef) {
@@ -61,11 +64,11 @@ export class CopyButtonComponent {
 
   copy($event: Event): void {
     $event.stopPropagation();
-    $event.preventDefault();
     if (this.timer) {
       clearTimeout(this.timer);
     }
     this.clipboardService.copy(this.copyText);
+    this.successCopied.emit(this.copyText);
     this.copedIcon = 'done';
     this.copied = true;
     this.tooltip.show();
@@ -91,5 +94,9 @@ export class CopyButtonComponent {
 
   get matTooltipPosition(): TooltipPosition {
     return this.copied ? 'below' : this.tooltipPosition;
+  }
+
+  immediatePropagation($event: Event): void {
+    this.copied ? $event.stopImmediatePropagation(): '';
   }
 }
