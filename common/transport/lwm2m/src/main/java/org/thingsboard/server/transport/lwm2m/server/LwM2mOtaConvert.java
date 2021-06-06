@@ -13,30 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.config;
+package org.thingsboard.server.transport.lwm2m.server;
 
-public interface LwM2MSecureServerConfig {
+import lombok.Data;
+import org.eclipse.leshan.core.model.ResourceModel;
 
-    Integer getId();
-
-    String getHost();
-
-    String getHostRequests();
-
-    Integer getPort();
-
-    String getSecureHost();
-
-    String getSecureHostRequests();
-
-    Integer getSecurePort();
-
-    String getPublicX();
-
-    String getPublicY();
-
-    String getPrivateEncoded();
-
-    String getCertificateAlias();
-
+@Data
+public class LwM2mOtaConvert {
+    private ResourceModel.Type currentType;
+    private Object value;
 }

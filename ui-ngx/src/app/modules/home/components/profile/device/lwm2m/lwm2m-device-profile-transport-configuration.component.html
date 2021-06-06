@@ -144,36 +144,36 @@
         <section [formGroup]="lwm2mDeviceProfileFormGroup">
           <div *ngIf="false" class="mat-padding" style="padding-bottom: 0px">
             <mat-form-field class="mat-block">
-              <mat-label>{{ 'device-profile.lwm2m.client-only-observe-after-connect-label' | translate }}</mat-label>
-              <mat-select formControlName="clientOnlyObserveAfterConnect"
-                          matTooltip="{{ 'device-profile.lwm2m.client-only-observe-after-connect-tip' | translate:
-                          { count: +lwm2mDeviceProfileFormGroup.get('clientOnlyObserveAfterConnect').value } }}"
+              <mat-label>{{ 'device-profile.lwm2m.client-strategy-label' | translate }}</mat-label>
+              <mat-select formControlName="clientStrategy"
+                          matTooltip="{{ 'device-profile.lwm2m.client-strategy-tip' | translate:
+                          { count: +lwm2mDeviceProfileFormGroup.get('clientStrategy').value } }}"
                           matTooltipPosition="above">
-                <mat-option value=1>{{ 'device-profile.lwm2m.client-only-observe-after-connect' | translate:
+                <mat-option value=1>{{ 'device-profile.lwm2m.client-strategy' | translate:
                   {count: 1} }}</mat-option>
-                <mat-option value=2>{{ 'device-profile.lwm2m.client-only-observe-after-connect' | translate:
+                <mat-option value=2>{{ 'device-profile.lwm2m.client-strategy' | translate:
                   {count: 2} }}</mat-option>
               </mat-select>
             </mat-form-field>
           </div>
           <div class="mat-padding" style="padding-bottom: 0px">
             <mat-form-field class="mat-block">
-              <mat-label>{{ 'device-profile.lwm2m.fw-update-url-label' | translate }}</mat-label>
-              <mat-select formControlName="fwUpdateUrl">
-                <mat-option value=1>{{ 'device-profile.lwm2m.fw-update-url' | translate:
+              <mat-label>{{ 'device-profile.lwm2m.fw-update-strategy-label' | translate }}</mat-label>
+              <mat-select formControlName="fwUpdateStrategy">
+                <mat-option value=1>{{ 'device-profile.lwm2m.fw-update-strategy' | translate:
                   {count: 1} }}</mat-option>
-                <mat-option value=2>{{ 'device-profile.lwm2m.fw-update-url' | translate:
+                <mat-option value=2>{{ 'device-profile.lwm2m.fw-update-strategy' | translate:
                   {count: 2} }}</mat-option>
-                <mat-option value=2>{{ 'device-profile.lwm2m.fw-update-url' | translate:
+                <mat-option value=2>{{ 'device-profile.lwm2m.fw-update-strategy' | translate:
                   {count: 3} }}</mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field class="mat-block">
-              <mat-label>{{ 'device-profile.lwm2m.sw-update-url-label' | translate }}</mat-label>
-              <mat-select formControlName="swUpdateUrl">
-                <mat-option value=1>{{ 'device-profile.lwm2m.sw-update-url' | translate:
+              <mat-label>{{ 'device-profile.lwm2m.sw-update-strategy-label' | translate }}</mat-label>
+              <mat-select formControlName="swUpdateStrategy">
+                <mat-option value=1>{{ 'device-profile.lwm2m.sw-update-strategy' | translate:
                   {count: 1} }}</mat-option>
-                <mat-option value=2>{{ 'device-profile.lwm2m.sw-update-url' | translate:
+                <mat-option value=2>{{ 'device-profile.lwm2m.sw-update-strategy' | translate:
                   {count: 2} }}</mat-option>
               </mat-select>
             </mat-form-field>

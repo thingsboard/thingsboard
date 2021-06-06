@@ -63,8 +63,7 @@ import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CBC_SHA256;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CCM_8;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mNetworkConfig.getCoapConfig;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_COAP_RESOURCE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_COAP_RESOURCE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.OTA_COAP_RESOURCE;
 
 @Slf4j
 @Component
@@ -104,10 +103,8 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
          */
 
 
-        LwM2mTransportCoapResource fwCoapResource = new LwM2mTransportCoapResource(handler, FW_COAP_RESOURCE);
-        LwM2mTransportCoapResource swCoapResource = new LwM2mTransportCoapResource(handler, SW_COAP_RESOURCE);
-        this.server.coap().getServer().add(fwCoapResource);
-        this.server.coap().getServer().add(swCoapResource);
+        LwM2mTransportCoapResource otaCoapResource = new LwM2mTransportCoapResource(handler, OTA_COAP_RESOURCE);
+        this.server.coap().getServer().add(otaCoapResource);
         this.startLhServer();
         this.context.setServer(server);
     }
@@ -138,7 +135,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         builder.setEncoder(new DefaultLwM2mNodeEncoder(LwM2mValueConverterImpl.getInstance()));
 
         /* Create CoAP Config */
-        builder.setCoapConfig(getCoapConfig(config.getPort(), config.getSecurePort()));
+        builder.setCoapConfig(getCoapConfig(config.getPort(), config.getSecurePort(), config));
 
         /* Define model provider (Create Models )*/
         LwM2mModelProvider modelProvider = new LwM2mVersionedModelProvider(this.lwM2mClientContext, this.helper, this.context);

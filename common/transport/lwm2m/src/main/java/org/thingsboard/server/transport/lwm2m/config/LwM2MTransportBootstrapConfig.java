@@ -35,6 +35,10 @@ public class LwM2MTransportBootstrapConfig implements LwM2MSecureServerConfig {
     private String host;
 
     @Getter
+    @Value("${transport.lwm2m.bootstrap.bind_address_requests:}")
+    private String hostRequests;
+
+    @Getter
     @Value("${transport.lwm2m.bootstrap.bind_port:}")
     private Integer port;
 
@@ -42,6 +46,9 @@ public class LwM2MTransportBootstrapConfig implements LwM2MSecureServerConfig {
     @Value("${transport.lwm2m.bootstrap.security.bind_address:}")
     private String secureHost;
 
+    @Getter
+    @Value("${transport.lwm2m.bootstrap.security.bind_address_requests:}")
+    private String secureHostRequests;
     @Getter
     @Value("${transport.lwm2m.bootstrap.security.bind_port:}")
     private Integer securePort;

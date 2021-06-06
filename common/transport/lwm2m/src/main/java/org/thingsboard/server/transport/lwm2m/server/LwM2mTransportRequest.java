@@ -55,7 +55,7 @@ import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
-import org.thingsboard.server.transport.lwm2m.server.client.Lwm2mClientRpcRequest;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientRpcRequest;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
@@ -75,7 +75,7 @@ import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWN
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.FAILED;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper.getContentFormatByResourceModelType;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.DEFAULT_TIMEOUT;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PACKAGE_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PACKAGE_5_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_UPDATE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
@@ -126,7 +126,7 @@ public class LwM2mTransportRequest {
      */
 
     public void sendAllRequest(Registration registration, String targetIdVer, LwM2mTypeOper typeOper,
-                               String contentFormatName, Object params, long timeoutInMs, Lwm2mClientRpcRequest lwm2mClientRpcRequest) {
+                               String contentFormatName, Object params, long timeoutInMs, LwM2mClientRpcRequest lwm2mClientRpcRequest) {
         try {
             String target = convertPathFromIdVerToObjectId(targetIdVer);
             ContentFormat contentFormat = contentFormatName != null ? ContentFormat.fromName(contentFormatName.toUpperCase()) : ContentFormat.DEFAULT;
@@ -143,7 +143,7 @@ public class LwM2mTransportRequest {
                         } catch (ClientSleepingException e) {
                             DownlinkRequest finalRequest = request;
                             long finalTimeoutInMs = timeoutInMs;
-                            Lwm2mClientRpcRequest finalRpcRequest = lwm2mClientRpcRequest;
+                            LwM2mClientRpcRequest finalRpcRequest = lwm2mClientRpcRequest;
                             lwM2MClient.getQueuedRequests().add(() -> sendRequest(registration, lwM2MClient, finalRequest, finalTimeoutInMs, finalRpcRequest));
                         } catch (Exception e) {
                             log.error("[{}] [{}] [{}] Failed to send downlink.", registration.getEndpoint(), targetIdVer, typeOper.name(), e);
@@ -225,7 +225,7 @@ public class LwM2mTransportRequest {
 
     private DownlinkRequest createRequest(Registration registration, LwM2mClient lwM2MClient, LwM2mTypeOper typeOper,
                                           ContentFormat contentFormat, String target, String targetIdVer,
-                                          LwM2mPath resultIds, Object params, Lwm2mClientRpcRequest rpcRequest) {
+                                          LwM2mPath resultIds, Object params, LwM2mClientRpcRequest rpcRequest) {
         DownlinkRequest request = null;
         switch (typeOper) {
             case READ:
@@ -330,7 +330,7 @@ public class LwM2mTransportRequest {
 
     @SuppressWarnings({"error sendRequest"})
     private void sendRequest(Registration registration, LwM2mClient lwM2MClient, DownlinkRequest request,
-                             long timeoutInMs, Lwm2mClientRpcRequest rpcRequest) {
+                             long timeoutInMs, LwM2mClientRpcRequest rpcRequest) {
         context.getServer().send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
 
             if (!lwM2MClient.isInit()) {
@@ -354,13 +354,13 @@ public class LwM2mTransportRequest {
                 /** Not Found
                  set setClient_fw_info... = empty
                  **/
-                if (lwM2MClient.getFwUpdate().isInfoFwSwUpdate()) {
+                if (lwM2MClient.getFwUpdate() != null && lwM2MClient.getFwUpdate().isInfoFwSwUpdate()) {
                     lwM2MClient.getFwUpdate().initReadValue(handler, this, request.getPath().toString());
                 }
-                if (lwM2MClient.getSwUpdate().isInfoFwSwUpdate()) {
+                if (lwM2MClient.getSwUpdate() != null && lwM2MClient.getSwUpdate().isInfoFwSwUpdate()) {
                     lwM2MClient.getSwUpdate().initReadValue(handler, this, request.getPath().toString());
                 }
-                if (request.getPath().toString().equals(FW_PACKAGE_ID) || request.getPath().toString().equals(SW_PACKAGE_ID)) {
+                if (request.getPath().toString().equals(FW_PACKAGE_5_ID) || request.getPath().toString().equals(SW_PACKAGE_ID)) {
                     this.afterWriteFwSWUpdateError(registration, request, response.getErrorMessage());
                 }
                 if (request.getPath().toString().equals(FW_UPDATE_ID) || request.getPath().toString().equals(SW_INSTALL_ID)) {
@@ -371,13 +371,13 @@ public class LwM2mTransportRequest {
             /** version == null
              set setClient_fw_info... = empty
              **/
-            if (lwM2MClient.getFwUpdate().isInfoFwSwUpdate()) {
+            if (lwM2MClient.getFwUpdate() != null && lwM2MClient.getFwUpdate().isInfoFwSwUpdate()) {
                 lwM2MClient.getFwUpdate().initReadValue(handler, this, request.getPath().toString());
             }
-            if (lwM2MClient.getSwUpdate().isInfoFwSwUpdate()) {
+            if (lwM2MClient.getSwUpdate() != null && lwM2MClient.getSwUpdate().isInfoFwSwUpdate()) {
                 lwM2MClient.getSwUpdate().initReadValue(handler, this, request.getPath().toString());
             }
-            if (request.getPath().toString().equals(FW_PACKAGE_ID) || request.getPath().toString().equals(SW_PACKAGE_ID)) {
+            if (request.getPath().toString().equals(FW_PACKAGE_5_ID) || request.getPath().toString().equals(SW_PACKAGE_ID)) {
                 this.afterWriteFwSWUpdateError(registration, request, e.getMessage());
             }
             if (request.getPath().toString().equals(FW_UPDATE_ID) || request.getPath().toString().equals(SW_INSTALL_ID)) {
@@ -389,7 +389,7 @@ public class LwM2mTransportRequest {
             String msg = String.format("%s: SendRequest %s: Resource path - %s msg error - %s",
                     LOG_LW2M_ERROR, request.getClass().getName().toString(), request.getPath().toString(), e.getMessage());
             handler.sendLogsToThingsboard(msg, registration.getId());
-            log.error("[{}] [{}] - [{}] error SendRequest", request.getClass().getName().toString(), request.getPath().toString(), e.toString());
+            log.error(" [{}] [{}] - [{}] error SendRequest", request.getClass().getName().toString(), request.getPath().toString(), e.toString());
             if (rpcRequest != null) {
                 handler.sentRpcResponse(rpcRequest, CoAP.CodeClass.ERROR_RESPONSE.name(), e.getMessage(), LOG_LW2M_ERROR);
             }
@@ -398,7 +398,7 @@ public class LwM2mTransportRequest {
 
     private WriteRequest getWriteRequestSingleResource(ContentFormat contentFormat, Integer objectId, Integer instanceId,
                                                        Integer resourceId, Object value, ResourceModel.Type type,
-                                                       Registration registration, Lwm2mClientRpcRequest rpcRequest) {
+                                                       Registration registration, LwM2mClientRpcRequest rpcRequest) {
         try {
             if (type != null) {
                 switch (type) {
@@ -444,7 +444,7 @@ public class LwM2mTransportRequest {
     }
 
     private void handleResponse(Registration registration, final String path, LwM2mResponse response,
-                                DownlinkRequest request, Lwm2mClientRpcRequest rpcRequest) {
+                                DownlinkRequest request, LwM2mClientRpcRequest rpcRequest) {
         responseRequestExecutor.submit(() -> {
             try {
                 this.sendResponse(registration, path, response, request, rpcRequest);
@@ -462,7 +462,7 @@ public class LwM2mTransportRequest {
      * @param response     -
      */
     private void sendResponse(Registration registration, String path, LwM2mResponse response,
-                              DownlinkRequest request, Lwm2mClientRpcRequest rpcRequest) {
+                              DownlinkRequest request, LwM2mClientRpcRequest rpcRequest) {
         String pathIdVer = convertPathFromObjectIdToIdVer(path, registration);
         String msgLog = "";
         if (response instanceof ReadResponse) {
@@ -509,7 +509,7 @@ public class LwM2mTransportRequest {
         }
     }
 
-    private void infoWriteResponse(Registration registration, LwM2mResponse response, DownlinkRequest request, Lwm2mClientRpcRequest rpcRequest) {
+    private void infoWriteResponse(Registration registration, LwM2mResponse response, DownlinkRequest request, LwM2mClientRpcRequest rpcRequest) {
         try {
             LwM2mNode node = ((WriteRequest) request).getNode();
             String msg = null;
@@ -546,7 +546,7 @@ public class LwM2mTransportRequest {
             }
             if (msg != null) {
                 handler.sendLogsToThingsboard(msg, registration.getId());
-                if (request.getPath().toString().equals(FW_PACKAGE_ID) || request.getPath().toString().equals(SW_PACKAGE_ID)) {
+                if (request.getPath().toString().equals(FW_PACKAGE_5_ID) || request.getPath().toString().equals(SW_PACKAGE_ID)) {
                     this.afterWriteSuccessFwSwUpdate(registration, request);
                     if (rpcRequest != null) {
                         rpcRequest.setInfoMsg(msg);
@@ -568,7 +568,7 @@ public class LwM2mTransportRequest {
      */
     private void afterWriteSuccessFwSwUpdate(Registration registration, DownlinkRequest request) {
         LwM2mClient lwM2MClient = this.lwM2mClientContext.getClientByRegistrationId(registration.getId());
-        if (request.getPath().toString().equals(FW_PACKAGE_ID) && lwM2MClient.getFwUpdate() != null) {
+        if (request.getPath().toString().equals(FW_PACKAGE_5_ID) && lwM2MClient.getFwUpdate() != null) {
             lwM2MClient.getFwUpdate().setStateUpdate(DOWNLOADED.name());
             lwM2MClient.getFwUpdate().sendLogs(this.handler, WRITE_REPLACE.name(), LOG_LW2M_INFO, null);
         }
@@ -583,7 +583,7 @@ public class LwM2mTransportRequest {
      */
     private void afterWriteFwSWUpdateError(Registration registration, DownlinkRequest request, String msgError) {
         LwM2mClient lwM2MClient = this.lwM2mClientContext.getClientByRegistrationId(registration.getId());
-        if (request.getPath().toString().equals(FW_PACKAGE_ID) && lwM2MClient.getFwUpdate() != null) {
+        if (request.getPath().toString().equals(FW_PACKAGE_5_ID) && lwM2MClient.getFwUpdate() != null) {
             lwM2MClient.getFwUpdate().setStateUpdate(FAILED.name());
             lwM2MClient.getFwUpdate().sendLogs(this.handler, WRITE_REPLACE.name(), LOG_LW2M_ERROR, msgError);
         }
@@ -603,7 +603,7 @@ public class LwM2mTransportRequest {
         }
     }
 
-    private void afterObserveCancel(Registration registration, int observeCancelCnt, String observeCancelMsg, Lwm2mClientRpcRequest rpcRequest) {
+    private void afterObserveCancel(Registration registration, int observeCancelCnt, String observeCancelMsg, LwM2mClientRpcRequest rpcRequest) {
         handler.sendLogsToThingsboard(observeCancelMsg, registration.getId());
         log.warn("[{}]", observeCancelMsg);
         if (rpcRequest != null) {

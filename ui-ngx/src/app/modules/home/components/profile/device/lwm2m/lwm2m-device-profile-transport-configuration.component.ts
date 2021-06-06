@@ -89,9 +89,9 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       binding:[],
       bootstrapServer: [null, Validators.required],
       lwm2mServer: [null, Validators.required],
-      clientOnlyObserveAfterConnect: [1, []],
-      fwUpdateUrl: [1, []],
-      swUpdateUrl: [1, []],
+      clientStrategy: [1, []],
+      fwUpdateStrategy: [1, []],
+      swUpdateStrategy: [1, []],
     });
     this.lwm2mDeviceConfigFormGroup = this.fb.group({
       configurationJson: [null, Validators.required]
@@ -161,9 +161,9 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         binding: this.configurationValue.bootstrap.servers.binding,
         bootstrapServer: this.configurationValue.bootstrap.bootstrapServer,
         lwm2mServer: this.configurationValue.bootstrap.lwm2mServer,
-        clientOnlyObserveAfterConnect: this.configurationValue.clientLwM2mSettings.clientOnlyObserveAfterConnect,
-        fwUpdateUrl: this.configurationValue.clientLwM2mSettings.fwUpdateUrl,
-        swUpdateUrl: this.configurationValue.clientLwM2mSettings.swUpdateUrl
+        clientStrategy: this.configurationValue.clientLwM2mSettings.clientStrategy,
+        fwUpdateStrategy: this.configurationValue.clientLwM2mSettings.fwUpdateStrategy,
+        swUpdateStrategy: this.configurationValue.clientLwM2mSettings.swUpdateStrategy
       },
       {emitEvent: false});
   }
@@ -194,9 +194,9 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       bootstrapServers.defaultMinPeriod = config.defaultMinPeriod;
       bootstrapServers.notifIfDisabled = config.notifIfDisabled;
       bootstrapServers.binding = config.binding;
-      this.configurationValue.clientLwM2mSettings.clientOnlyObserveAfterConnect = config.clientOnlyObserveAfterConnect;
-      this.configurationValue.clientLwM2mSettings.fwUpdateUrl = config.fwUpdateUrl;
-      this.configurationValue.clientLwM2mSettings.swUpdateUrl = config.swUpdateUrl;
+      this.configurationValue.clientLwM2mSettings.clientStrategy = config.clientStrategy;
+      this.configurationValue.clientLwM2mSettings.fwUpdateStrategy = config.fwUpdateStrategy;
+      this.configurationValue.clientLwM2mSettings.swUpdateStrategy = config.swUpdateStrategy;
       this.upDateJsonAllConfig();
       this.updateModel();
     }

@@ -31,6 +31,7 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
@@ -359,6 +360,22 @@ public class LwM2mClient implements Cloneable {
             this.init = true;
             serviceImpl.putDelayedUpdateResourcesThingsboard(this);
         }
+    }
+
+    public LwM2mFwSwUpdate  getFwUpdate (LwM2mClientContext clientContext) {
+        if (this.fwUpdate == null) {
+            LwM2mClientProfile lwM2mClientProfile = clientContext.getProfile(this.getProfileId());
+            this.fwUpdate = new LwM2mFwSwUpdate(this, OtaPackageType.FIRMWARE, lwM2mClientProfile.getFwUpdateStrategy());
+        }
+        return this.fwUpdate;
+    }
+
+    public LwM2mFwSwUpdate  getSwUpdate (LwM2mClientContext clientContext) {
+        if (this.swUpdate == null) {
+            LwM2mClientProfile lwM2mClientProfile = clientContext.getProfile(this.getProfileId());
+            this.swUpdate = new LwM2mFwSwUpdate(this, OtaPackageType.SOFTWARE, lwM2mClientProfile.getSwUpdateStrategy());
+        }
+        return this.fwUpdate;
     }
 
 }

@@ -166,9 +166,9 @@ export interface Lwm2mProfileConfigModels {
 }
 
 export interface ClientLwM2mSettings {
-  clientOnlyObserveAfterConnect: string;
-  fwUpdateUrl: string;
-  swUpdateUrl: string;
+  clientStrategy: string;
+  fwUpdateStrategy: string;
+  swUpdateStrategy: string;
 }
 
 export interface ObservableAttributes {
@@ -238,9 +238,9 @@ export function getDefaultProfileConfig(hostname?: any): Lwm2mProfileConfigModel
 
 function getDefaultProfileClientLwM2mSettingsConfig(): ClientLwM2mSettings {
   return {
-    clientOnlyObserveAfterConnect: "1",
-    fwUpdateUrl: "1",
-    swUpdateUrl: "1"
+    clientStrategy: "1",
+    fwUpdateStrategy: "1",
+    swUpdateStrategy: "1"
   };
 }
 

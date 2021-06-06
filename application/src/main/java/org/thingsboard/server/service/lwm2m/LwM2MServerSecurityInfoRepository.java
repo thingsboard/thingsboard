@@ -66,18 +66,18 @@ public class LwM2MServerSecurityInfoRepository {
         bsServ.setServerId(serverConfig.getId());
         switch (securityMode) {
             case NO_SEC:
-                bsServ.setHost(serverConfig.getHost());
+                bsServ.setHost(serverConfig.getHostRequests());
                 bsServ.setPort(serverConfig.getPort());
                 bsServ.setServerPublicKey("");
                 break;
             case PSK:
-                bsServ.setHost(serverConfig.getSecureHost());
+                bsServ.setHost(serverConfig.getSecureHostRequests());
                 bsServ.setPort(serverConfig.getSecurePort());
                 bsServ.setServerPublicKey("");
                 break;
             case RPK:
             case X509:
-                bsServ.setHost(serverConfig.getSecureHost());
+                bsServ.setHost(serverConfig.getSecureHostRequests());
                 bsServ.setPort(serverConfig.getSecurePort());
                 bsServ.setServerPublicKey(getPublicKey(serverConfig.getCertificateAlias(), this.serverConfig.getPublicX(), this.serverConfig.getPublicY()));
                 break;

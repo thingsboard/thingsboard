@@ -23,9 +23,9 @@ import org.eclipse.leshan.core.californium.LwM2mCoapResource;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 
 @Slf4j
-public abstract class AbstractLwm2mTransportResource extends LwM2mCoapResource {
+public abstract class AbstractLwM2mTransportResource extends LwM2mCoapResource {
 
-    public AbstractLwm2mTransportResource(String name) {
+    public AbstractLwM2mTransportResource(String name) {
         super(name);
     }
 
