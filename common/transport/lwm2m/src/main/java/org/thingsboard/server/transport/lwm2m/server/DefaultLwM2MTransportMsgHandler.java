@@ -461,7 +461,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         log.warn("4) toDeviceRpcRequestMsg: [{}], sessionUUID: [{}]", toDeviceRpcRequestMsg, requestUUID);
         String bodyParams = StringUtils.trimToNull(toDeviceRpcRequestMsg.getParams()) != null ? toDeviceRpcRequestMsg.getParams() : "null";
         LwM2mTypeOper lwM2mTypeOper = setValidTypeOper(toDeviceRpcRequestMsg.getMethodName());
-        if (!this.rpcSubscriptions.containsKey(requestUUID)) {
+//        if (!this.rpcSubscriptions.containsKey(requestUUID)) {
             this.rpcSubscriptions.put(requestUUID, toDeviceRpcRequestMsg.getExpirationTime());
             LwM2mClientRpcRequest lwm2mClientRpcRequest = null;
             try {
@@ -486,7 +486,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                 }
                 this.onToDeviceRpcResponse(lwm2mClientRpcRequest.getDeviceRpcResponseResultMsg(), sessionInfo);
             }
-        }
+//        }
     }
 
     private void checkRpcRequestTimeout() {
