@@ -115,6 +115,7 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
                 // scope
                 // 		REQUIRED. OpenID Connect requests MUST contain the "openid" scope value.
                 addNonceParameters(attributes, additionalParameters);
+                addPromptLogin(additionalParameters);
             }
             if (ClientAuthenticationMethod.NONE.equals(clientRegistration.getClientAuthenticationMethod())) {
                 addPkceParameters(attributes, additionalParameters);
@@ -265,4 +266,9 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
         byte[] digest = md.digest(value.getBytes(StandardCharsets.US_ASCII));
         return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
     }
+
+    private void addPromptLogin(Map<String, Object> additionalParameters) {
+        additionalParameters.put("prompt", "login");
+    }
+
 }
