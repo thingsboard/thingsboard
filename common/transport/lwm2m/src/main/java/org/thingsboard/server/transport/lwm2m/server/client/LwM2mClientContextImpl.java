@@ -27,6 +27,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.secure.EndpointSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mQueuedRequest;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 
@@ -39,6 +40,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.eclipse.leshan.core.SecurityMode.NO_SEC;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_ERROR;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
 
 @Slf4j
@@ -58,7 +61,92 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public LwM2mClient getClientByEndpoint(String endpoint) {
-        return lwM2mClientsByEndpoint.get(endpoint);
+        return lwM2mClientsByEndpoint.computeIfAbsent(endpoint, ep -> new LwM2mClient(context.getNodeId(), ep));
+    }
+
+    @Override
+    public void register(LwM2mClient lwM2MClient, Registration registration) throws LwM2MClientStateException {
+        lwM2MClient.lock();
+        try {
+            if (LwM2MClientState.UNREGISTERED.equals(lwM2MClient.getState())) {
+                throw new LwM2MClientStateException(lwM2MClient.getState(), "Client is in invalid state.");
+            }
+            //TODO: Move this security info lookup to the TbLwM2mSecurityStore.
+            EndpointSecurityInfo securityInfo = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfo(lwM2MClient.getEndpoint(), LwM2mTransportUtil.LwM2mTypeServer.CLIENT);
+            if (securityInfo.getSecurityMode() != null) {
+                if (securityInfo.getDeviceProfile() != null) {
+                    UUID profileUuid = profileUpdate(securityInfo.getDeviceProfile()) != null ? securityInfo.getDeviceProfile().getUuidId() : null;
+                    if (securityInfo.getSecurityInfo() != null) {
+                        lwM2MClient.init(securityInfo.getSecurityInfo().getIdentity(), securityInfo.getSecurityInfo(), securityInfo.getMsg(), profileUuid, UUID.randomUUID());
+                    } else if (NO_SEC.equals(securityInfo.getSecurityMode())) {
+                        lwM2MClient.init(null, null, securityInfo.getMsg(), profileUuid, UUID.randomUUID());
+                    } else {
+                        throw new RuntimeException(String.format("Registration failed: device %s not found.", lwM2MClient.getEndpoint()));
+                    }
+                } else {
+                    throw new RuntimeException(String.format("Registration failed: device %s not found.", lwM2MClient.getEndpoint()));
+                }
+            } else {
+                throw new RuntimeException(String.format("Registration failed: FORBIDDEN, endpointId: %s", lwM2MClient.getEndpoint()));
+            }
+            lwM2MClient.setRegistration(registration);
+            this.lwM2mClientsByRegistrationId.put(registration.getId(), lwM2MClient);
+            lwM2MClient.setState(LwM2MClientState.REGISTERED);
+        } finally {
+            lwM2MClient.unlock();
+        }
+    }
+
+    @Override
+    public void updateRegistration(LwM2mClient lwM2MClient, Registration registration) throws LwM2MClientStateException {
+        lwM2MClient.lock();
+        try {
+            if (!LwM2MClientState.REGISTERED.equals(lwM2MClient.getState())) {
+                throw new LwM2MClientStateException(lwM2MClient.getState(), "Client is in invalid state.");
+            }
+            Registration currentRegistration = lwM2MClient.getRegistration();
+            if (currentRegistration.getId().equals(registration.getId())) {
+                lwM2MClient.setRegistration(registration);
+            } else {
+                throw new LwM2MClientStateException(lwM2MClient.getState(), "Client has different registration.");
+            }
+        } finally {
+            lwM2MClient.unlock();
+        }
+    }
+
+    @Override
+    public void unregister(LwM2mClient lwM2MClient, Registration registration) throws LwM2MClientStateException {
+        lwM2MClient.lock();
+        try {
+            if (!LwM2MClientState.REGISTERED.equals(lwM2MClient.getState())) {
+                throw new LwM2MClientStateException(lwM2MClient.getState(), "Client is in invalid state.");
+            }
+            lwM2mClientsByRegistrationId.remove(registration.getId());
+            Registration currentRegistration = lwM2MClient.getRegistration();
+            if (currentRegistration.getId().equals(registration.getId())) {
+                lwM2MClient.setState(LwM2MClientState.UNREGISTERED);
+                lwM2mClientsByEndpoint.remove(lwM2MClient.getEndpoint());
+                this.securityStore.remove(lwM2MClient.getEndpoint(), false);
+                this.lwM2mClientsByRegistrationId.remove(registration.getId());
+                UUID profileId = lwM2MClient.getProfileId();
+                if (profileId != null) {
+                    Optional<LwM2mClient> otherClients = lwM2mClientsByRegistrationId.values().stream().filter(e -> e.getProfileId().equals(profileId)).findFirst();
+                    if (otherClients.isEmpty()) {
+                        profiles.remove(profileId);
+                    }
+                }
+            } else {
+                throw new LwM2MClientStateException(lwM2MClient.getState(), "Client has different registration.");
+            }
+        } finally {
+            lwM2MClient.unlock();
+        }
+    }
+
+    @Override
+    public LwM2mClient fetchSecurityInfoByCredentials(String credentialsId) {
+        return null;
     }
 
     @Override
@@ -67,27 +155,12 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     @Override
-    public LwM2mClient getOrRegister(Registration registration) {
-        if (registration == null) {
-            return null;
-        }
-        LwM2mClient client = lwM2mClientsByRegistrationId.get(registration.getId());
-        if (client == null) {
-            client = lwM2mClientsByEndpoint.get(registration.getEndpoint());
-            if (client == null) {
-                client = registerOrUpdate(registration);
-            }
-        }
-        return client;
-    }
-
-    @Override
     public LwM2mClient getClient(TransportProtos.SessionInfoProto sessionInfo) {
-        LwM2mClient lwM2mClient =  lwM2mClientsByEndpoint.values().stream().filter(c ->
+        LwM2mClient lwM2mClient = lwM2mClientsByEndpoint.values().stream().filter(c ->
                 (new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()))
                         .equals((new UUID(c.getSession().getSessionIdMSB(), c.getSession().getSessionIdLSB())))
 
-        ).findAny().get();
+        ).findAny().orElse(null);
         if (lwM2mClient == null) {
             log.warn("Device TimeOut? lwM2mClient is null.");
             log.warn("SessionInfo input [{}], lwM2mClientsByEndpoint size: [{}]", sessionInfo, lwM2mClientsByEndpoint.values().size());
@@ -96,60 +169,14 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         return lwM2mClient;
     }
 
-    @Override
-    public LwM2mClient registerOrUpdate(Registration registration) {
-        LwM2mClient lwM2MClient = lwM2mClientsByEndpoint.get(registration.getEndpoint());
-        if (lwM2MClient == null) {
-            lwM2MClient = this.fetchClientByEndpoint(registration.getEndpoint());
-        }
-        lwM2MClient.setRegistration(registration);
-//        TODO: this remove is probably redundant. We should remove it.
-//        this.lwM2mClientsByEndpoint.remove(registration.getEndpoint());
-        this.lwM2mClientsByRegistrationId.put(registration.getId(), lwM2MClient);
-        return lwM2MClient;
-    }
-
     public Registration getRegistration(String registrationId) {
         return this.lwM2mClientsByRegistrationId.get(registrationId).getRegistration();
     }
 
     @Override
-    public LwM2mClient fetchClientByEndpoint(String endpoint) {
-        EndpointSecurityInfo securityInfo = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfo(endpoint, LwM2mTransportUtil.LwM2mTypeServer.CLIENT);
-        if (securityInfo.getSecurityMode() != null) {
-            if (securityInfo.getDeviceProfile() != null) {
-                UUID profileUuid = profileUpdate(securityInfo.getDeviceProfile())!= null ?
-                        securityInfo.getDeviceProfile().getUuidId() : null;
-                //        TODO: for tests bug.
-                if (profileUuid== null) {
-                    log.trace("input parameters toClientProfile if the result is null: [{}]", securityInfo.getDeviceProfile());
-                }
-                LwM2mClient client;
-                if (securityInfo.getSecurityInfo() != null) {
-                    client = new LwM2mClient(context.getNodeId(), securityInfo.getSecurityInfo().getEndpoint(),
-                            securityInfo.getSecurityInfo().getIdentity(), securityInfo.getSecurityInfo(),
-                            securityInfo.getMsg(), profileUuid, UUID.randomUUID());
-                } else if (NO_SEC.equals(securityInfo.getSecurityMode())) {
-                    client = new LwM2mClient(context.getNodeId(), endpoint,
-                            null, null,
-                            securityInfo.getMsg(), profileUuid, UUID.randomUUID());
-                } else {
-                    throw new RuntimeException(String.format("Registration failed: device %s not found.", endpoint));
-                }
-                lwM2mClientsByEndpoint.put(client.getEndpoint(), client);
-                return client;
-            } else {
-                throw new RuntimeException(String.format("Registration failed: device %s not found.", endpoint));
-            }
-        } else {
-            throw new RuntimeException(String.format("Registration failed: FORBIDDEN, endpointId: %s", endpoint));
-        }
-    }
-
-    @Override
     public void registerClient(Registration registration, ValidateDeviceCredentialsResponse credentials) {
-        LwM2mClient client = new LwM2mClient(context.getNodeId(), registration.getEndpoint(), null, null, credentials, credentials.getDeviceProfile().getUuidId(), UUID.randomUUID());
-        lwM2mClientsByEndpoint.put(registration.getEndpoint(), client);
+        LwM2mClient client = getClientByEndpoint(registration.getEndpoint());
+        client.init(null, null, credentials, credentials.getDeviceProfile().getUuidId(), UUID.randomUUID());
         lwM2mClientsByRegistrationId.put(registration.getId(), client);
         profileUpdate(credentials.getDeviceProfile());
     }
@@ -171,7 +198,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public LwM2mClientProfile getProfile(Registration registration) {
-        return this.getProfiles().get(getOrRegister(registration).getProfileId());
+        return this.getProfiles().get(getClientByEndpoint(registration.getEndpoint()).getProfileId());
     }
 
     @Override
@@ -186,8 +213,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         if (lwM2MClientProfile != null) {
             profiles.put(deviceProfile.getUuidId(), lwM2MClientProfile);
             return lwM2MClientProfile;
-        }
-        else {
+        } else {
             return null;
         }
     }
@@ -215,20 +241,4 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         return lwM2mClientsByRegistrationId.values().stream().filter(e -> deviceId.equals(e.getDeviceId())).findFirst().orElse(null);
     }
 
-    @Override
-    public void removeClientByRegistrationId(String registrationId) {
-        LwM2mClient lwM2MClient = this.lwM2mClientsByRegistrationId.get(registrationId);
-        if (lwM2MClient != null) {
-            this.securityStore.remove(lwM2MClient.getEndpoint(), false);
-            this.lwM2mClientsByEndpoint.remove(lwM2MClient.getEndpoint());
-            this.lwM2mClientsByRegistrationId.remove(registrationId);
-            UUID profileId = lwM2MClient.getProfileId();
-            if (profileId != null) {
-                Optional<LwM2mClient> otherClients = lwM2mClientsByRegistrationId.values().stream().filter(e -> e.getProfileId().equals(profileId)).findFirst();
-                if (otherClients.isEmpty()) {
-                    profiles.remove(profileId);
-                }
-            }
-        }
-    }
 }

@@ -68,7 +68,7 @@ public class TbLwM2mSecurityStore implements EditableSecurityStore {
             if (lwM2mClient != null && lwM2mClient.getRegistration() != null && !lwM2mClient.getRegistration().getIdentity().isSecure()) {
                 return null;
             }
-            securityInfo = clientContext.fetchClientByEndpoint(endpoint).getSecurityInfo();
+            securityInfo = clientContext.fetchSecurityInfoByCredentials(endpoint);
             try {
                 if (securityInfo != null) {
                     add(securityInfo);
@@ -84,7 +84,7 @@ public class TbLwM2mSecurityStore implements EditableSecurityStore {
     public SecurityInfo getByIdentity(String pskIdentity) {
         SecurityInfo securityInfo = securityStore.getByIdentity(pskIdentity);
         if (securityInfo == null) {
-            securityInfo = clientContext.fetchClientByEndpoint(pskIdentity).getSecurityInfo();
+            securityInfo = clientContext.fetchSecurityInfoByCredentials(pskIdentity);
             try {
                 if (securityInfo != null) {
                     add(securityInfo);

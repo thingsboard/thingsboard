@@ -167,7 +167,7 @@ public class LwM2mFwSwUpdate {
             String targetIdVer = convertPathFromObjectIdToIdVer(this.pathPackageId, this.lwM2MClient.getRegistration());
             String fwMsg = String.format("%s: Start type operation %s paths:  %s", LOG_LW2M_INFO,
                     LwM2mTransportUtil.LwM2mTypeOper.FW_UPDATE.name(),  FW_PACKAGE_ID);
-            handler.sendLogsToThingsboard(fwMsg, lwM2MClient.getRegistration().getId());
+            handler.sendLogsToThingsboard(lwM2MClient, fwMsg);
             log.warn("8) Start firmware Update. Send save to: [{}] ver: [{}] path: [{}]", this.lwM2MClient.getDeviceName(), this.currentVersion, targetIdVer);
             request.sendAllRequest(this.lwM2MClient.getRegistration(), targetIdVer, WRITE_REPLACE, ContentFormat.OPAQUE.getName(),
                     firmwareChunk, handler.config.getTimeout(), this.rpcRequest);
@@ -190,7 +190,7 @@ public class LwM2mFwSwUpdate {
         if (LOG_LW2M_ERROR.equals(typeInfo)) {
             msg = String.format("%s Error: %s", msg, msgError);
         }
-        handler.sendLogsToThingsboard(msg, lwM2MClient.getRegistration().getId());
+        handler.sendLogsToThingsboard(lwM2MClient, msg);
     }
 
 

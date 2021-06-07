@@ -49,6 +49,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
@@ -62,12 +64,28 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.g
 
 @Slf4j
 public class LwM2mClient implements Cloneable {
+
+    private final String nodeId;
+    @Getter
+    private final String endpoint;
+    private final Lock lock;
+    @Getter @Setter
+    private LwM2MClientState state;
+    @Getter
+    private final Map<String, ResourceValue> resources;
+    @Getter
+    private final Map<String, TsKvProto> delayedRequests;
+    @Getter
+    @Setter
+    private final List<String> pendingReadRequests;
+    @Getter
+    private final Queue<LwM2mQueuedRequest> queuedRequests;
+
     @Getter
     private String deviceName;
     @Getter
     private String deviceProfileName;
-    @Getter
-    private String endpoint;
+
     @Getter
     private String identity;
     @Getter
@@ -93,33 +111,29 @@ public class LwM2mClient implements Cloneable {
     private ValidateDeviceCredentialsResponse credentials;
 
     @Getter
-    private final Map<String, ResourceValue> resources;
-    @Getter
-    private final Map<String, TsKvProto> delayedRequests;
-    @Getter
-    @Setter
-    private final List<String> pendingReadRequests;
-    @Getter
-    private final Queue<LwM2mQueuedRequest> queuedRequests;
-    @Getter
     private boolean init;
 
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
     }
 
-    public LwM2mClient(String nodeId, String endpoint, String identity, SecurityInfo securityInfo, ValidateDeviceCredentialsResponse credentials, UUID profileId, UUID sessionId) {
+    public LwM2mClient(String nodeId, String endpoint) {
+        this.nodeId = nodeId;
         this.endpoint = endpoint;
-        this.identity = identity;
-        this.securityInfo = securityInfo;
-        this.credentials = credentials;
+        this.lock = new ReentrantLock();
         this.delayedRequests = new ConcurrentHashMap<>();
         this.pendingReadRequests = new CopyOnWriteArrayList<>();
         this.resources = new ConcurrentHashMap<>();
+        this.queuedRequests = new ConcurrentLinkedQueue<>();
+        this.state = LwM2MClientState.CREATED;
+    }
+
+    public void init(String identity, SecurityInfo securityInfo, ValidateDeviceCredentialsResponse credentials, UUID profileId, UUID sessionId) {
+        this.identity = identity;
+        this.securityInfo = securityInfo;
+        this.credentials = credentials;
         this.profileId = profileId;
         this.init = false;
-        this.queuedRequests = new ConcurrentLinkedQueue<>();
-
         this.fwUpdate = new LwM2mFwSwUpdate(this, OtaPackageType.FIRMWARE);
         this.swUpdate = new LwM2mFwSwUpdate(this, OtaPackageType.SOFTWARE);
         if (this.credentials != null && this.credentials.hasDeviceInfo()) {
@@ -129,6 +143,14 @@ public class LwM2mClient implements Cloneable {
             this.deviceName = session.getDeviceName();
             this.deviceProfileName = session.getDeviceType();
         }
+    }
+
+    public void lock() {
+        lock.lock();
+    }
+
+    public void unlock() {
+        lock.unlock();
     }
 
     public void onDeviceUpdate(Device device, Optional<DeviceProfile> deviceProfileOpt) {
