@@ -36,8 +36,6 @@ import { PageLink } from '@shared/models/page/page-link';
 import { OtaUpdateComponent } from '@home/pages/ota-update/ota-update.component';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { FileSizePipe } from '@shared/pipe/file-size.pipe';
-import { ClipboardService } from 'ngx-clipboard';
-import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
@@ -51,8 +49,7 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
               private datePipe: DatePipe,
               private store: Store<AppState>,
               private otaPackageService: OtaPackageService,
-              private fileSize: FileSizePipe,
-              private clipboardService: ClipboardService) {
+              private fileSize: FileSizePipe) {
     this.config.entityType = EntityType.OTA_PACKAGE;
     this.config.entityComponent = OtaUpdateComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.OTA_PACKAGE);
@@ -67,11 +64,11 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
       new EntityTableColumn<OtaPackageInfo>('type', 'ota-update.package-type', '20%', entity => {
         return this.translate.instant(OtaUpdateTypeTranslationMap.get(entity.type));
       }),
-      new EntityTableColumn<OtaPackageInfo>('url', 'ota-update.url', '20%', entity => {
+      new EntityTableColumn<OtaPackageInfo>('url', 'ota-update.direct-url', '20%', entity => {
           return entity.url && entity.url.length > 20 ? `${entity.url.slice(0, 20)}…` : '';
         }, () => ({}), true, () => ({}), () => undefined, false,
         {
-          name: this.translate.instant('ota-update.copy-checksum'),
+          name: this.translate.instant('ota-update.copy-direct-url'),
           icon: 'content_paste',
           style: {
             'font-size': '16px',

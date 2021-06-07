@@ -2165,6 +2165,7 @@
       "chose-software-distributed-device": "Choose software that will be distributed to the devices",
       "content-type": "Content type",
       "copy-checksum": "Copy checksum",
+      "copy-direct-url": "Copy direct URL",
       "copyId": "Copy package Id",
       "copied": "Copied!",
       "delete": "Delete package",
@@ -2173,6 +2174,9 @@
       "delete-ota-updates-text": "Be careful, after the confirmation all selected OTA updates will be removed.",
       "delete-ota-updates-title": "Are you sure you want to delete { count, plural, 1 {1 OTA update} other {# OTA updates} }?",
       "description": "Description",
+      "direct-url": "Direct URL",
+      "direct-url-copied-message": "Package direct URL has been copied to clipboard",
+      "direct-url-required": "Direct URL is required",
       "download": "Download package",
       "drop-file": "Drop a package file or click to select a file to upload.",
       "file-name": "File name",
@@ -2197,8 +2201,6 @@
         "firmware": "Firmware",
         "software": "Software"
       },
-      "url": "Direct URL",
-      "url-required": "Direct URL is required",
       "version": "Version",
       "version-required": "Version is required.",
       "warning-after-save-no-edit": "Once the package is uploaded, you will not be able to modify title, version, device profile and package type."

@@ -16,12 +16,9 @@
 
 -->
 <button mat-icon-button
-        #tooltip
         [disabled]="disabled"
         [matTooltip]="matTooltipText"
         [matTooltipPosition]="matTooltipPosition"
-        (mouseenter)="immediatePropagation($event)"
-        (mouseleave)="immediatePropagation($event)"
         (click)="copy($event)">
   <mat-icon [svgIcon]="mdiIconSymbol" [ngStyle]="style" [ngClass]="{'copied': copied}">
     {{ iconSymbol }}

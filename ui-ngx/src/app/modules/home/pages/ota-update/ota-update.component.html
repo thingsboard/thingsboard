@@ -41,9 +41,17 @@
             ngxClipboard
             (cbOnSuccess)="onPackageChecksumCopied()"
             [cbContent]="entity?.checksum"
-            [fxShow]="!isEdit">
+            [fxShow]="!isEdit && entity?.checksum">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>ota-update.copy-checksum</span>
+    </button>
+    <button mat-raised-button
+            ngxClipboard
+            (cbOnSuccess)="onPackageDirectUrlCopied()"
+            [cbContent]="entity?.url"
+            [fxShow]="!isEdit && entity?.url">
+      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      <span translate>ota-update.copy-direct-url</span>
     </button>
   </div>
 </div>
@@ -137,12 +145,12 @@
       </section>
       <section *ngIf="entityForm.get('resource').value === 'url'" style="margin-top: 8px">
         <mat-form-field class="mat-block">
-          <mat-label translate>ota-update.url</mat-label>
+          <mat-label translate>ota-update.direct-url</mat-label>
           <input matInput formControlName="url"
                  type="text"
                  [required]="entityForm.get('resource').value === 'url'">
           <mat-error *ngIf="entityForm.get('url').hasError('required')" translate>
-            ota-update.url-required
+            ota-update.direct-url-required
           </mat-error>
         </mat-form-field>
       </section>
