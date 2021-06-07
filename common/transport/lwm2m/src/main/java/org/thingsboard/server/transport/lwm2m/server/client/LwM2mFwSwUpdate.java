@@ -458,6 +458,7 @@ public class LwM2mFwSwUpdate {
                 if (value == LwM2mTransportUtil.StateFw.DOWNLOADED.code) {
                     this.executeFwSwWare(handler, request);
                 }
+                handler.firmwareUpdateState.put(lwM2MClient.getEndpoint(), value);
             }
             if ((convertPathFromObjectIdToIdVer(FW_RESULT_ID, registration).equals(path))) {
                 if (this.currentId != null && value == LwM2mTransportUtil.UpdateResultFw.INITIAL.code) {

@@ -73,7 +73,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         if (registration == null) {
             return client;
         }
-        if (lwM2mClientsByRegistrationId.size()>0) {
+        if (lwM2mClientsByRegistrationId.size() > 0) {
             client = this.lwM2mClientsByRegistrationId.get(registration.getId());
         }
         if (client == null) {
@@ -91,30 +91,29 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         Predicate<LwM2mClient> isClientFilter = c ->
                 (new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()))
                         .equals((new UUID(c.getSession().getSessionIdMSB(), c.getSession().getSessionIdLSB())));
-//        if (this.lwM2mClientsByEndpoint.size()>0) {
-//            lwM2mClient = this.lwM2mClientsByEndpoint.values().stream().filter(c ->
-//                    (new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()))
-//                            .equals((new UUID(c.getSession().getSessionIdMSB(), c.getSession().getSessionIdLSB())))
-//            ).findAny().get();
-//        }
-        if (this.lwM2mClientsByEndpoint.size()>0) {
-            lwM2mClient = this.lwM2mClientsByEndpoint.values().stream().filter(isClientFilter).findAny().get();
+        if (this.lwM2mClientsByEndpoint.size() > 0) {
+            lwM2mClient = this.lwM2mClientsByEndpoint.values().stream().filter(isClientFilter).findAny().orElse(null);
         }
-//        if (lwM2mClient == null && this.lwM2mClientsByRegistrationId.size() > 0) {
-//            lwM2mClient = this.lwM2mClientsByRegistrationId.values().stream().filter(c ->
-//                    (new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()))
-//                            .equals((new UUID(c.getSession().getSessionIdMSB(), c.getSession().getSessionIdLSB())))
-//            ).findAny().get();
-//        }
         if (lwM2mClient == null && this.lwM2mClientsByRegistrationId.size() > 0) {
-            lwM2mClient = this.lwM2mClientsByRegistrationId.values().stream().filter(isClientFilter).findAny().get();
+            lwM2mClient = this.lwM2mClientsByRegistrationId.values().stream().filter(isClientFilter).findAny().orElse(null);
         }
-        if (lwM2mClient == null){
+        if (lwM2mClient == null) {
             log.warn("Device TimeOut? lwM2mClient is null.");
-            log.warn("SessionInfo input [{}], lwM2mClientsByEndpoint size: [{}]", sessionInfo, lwM2mClientsByEndpoint.values().size());
+            log.warn("SessionInfo input [{}], lwM2mClientsByEndpoint size: [{}] lwM2mClientsByRegistrationId: [{}]", sessionInfo, lwM2mClientsByEndpoint.values(), lwM2mClientsByRegistrationId.values());
             log.error("", new RuntimeException());
         }
         return lwM2mClient;
+    }
+
+    @Override
+    public Registration getRegistration(TransportProtos.SessionInfoProto sessionInfo) {
+        Registration registration = this.getClient(sessionInfo).getRegistration();
+        if (registration == null) {
+            log.warn("Device TimeOut? registration is null.");
+            log.warn("SessionInfo input [{}], lwM2mClientsByEndpoint size: [{}]", sessionInfo, lwM2mClientsByEndpoint.values().size());
+            log.error("", new RuntimeException());
+        }
+        return registration;
     }
 
     @Override
@@ -139,10 +138,10 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         EndpointSecurityInfo securityInfo = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfo(endpoint, LwM2mTransportUtil.LwM2mTypeServer.CLIENT);
         if (securityInfo.getSecurityMode() != null) {
             if (securityInfo.getDeviceProfile() != null) {
-                UUID profileUuid = profileUpdate(securityInfo.getDeviceProfile())!= null ?
+                UUID profileUuid = profileUpdate(securityInfo.getDeviceProfile()) != null ?
                         securityInfo.getDeviceProfile().getUuidId() : null;
                 //        TODO: for tests bug.
-                if (profileUuid== null) {
+                if (profileUuid == null) {
                     log.trace("input parameters toClientProfile if the result is null: [{}]", securityInfo.getDeviceProfile());
                 }
                 LwM2mClient client;
@@ -207,8 +206,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         if (lwM2MClientProfile != null) {
             profiles.put(deviceProfile.getUuidId(), lwM2MClientProfile);
             return lwM2MClientProfile;
-        }
-        else {
+        } else {
             return null;
         }
     }

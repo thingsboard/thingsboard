@@ -35,6 +35,8 @@ public interface LwM2mClientContext {
 
     LwM2mClient getClient(TransportProtos.SessionInfoProto sessionInfo);
 
+    Registration getRegistration(TransportProtos.SessionInfoProto sessionInfo);
+
     LwM2mClient getOrRegister(Registration registration);
 
     LwM2mClient registerOrUpdate(Registration registration);
