@@ -449,9 +449,9 @@ public class LwM2mFwSwUpdate {
                 }
             }
         } else if (OBJ_5_TEMP_URL.code == this.getUpdateStrategy()) {
-            if ((convertPathFromObjectIdToIdVer(FW_STATE_ID, registration).equals(path))) {
+            if (this.currentId != null && (convertPathFromObjectIdToIdVer(FW_STATE_ID, registration).equals(path))) {
                 String state = equalsFwSateToFirmwareUpdateStatus(LwM2mTransportUtil.StateFw.fromStateFwByCode(value)).name();
-                if (!FAILED.name().equals(this.stateUpdate) && StringUtils.isNotEmpty(state) && !state.equals(this.stateUpdate)) {
+                if (StringUtils.isNotEmpty(state) && !FAILED.name().equals(this.stateUpdate) &&  !state.equals(this.stateUpdate)) {
                     this.stateUpdate = state;
                     this.sendSateOnThingsBoard(handler);
                 }
@@ -460,9 +460,9 @@ public class LwM2mFwSwUpdate {
                 }
             }
             if ((convertPathFromObjectIdToIdVer(FW_RESULT_ID, registration).equals(path))) {
-                if (value == LwM2mTransportUtil.UpdateResultFw.INITIAL.code) {
+                if (this.currentId != null && value == LwM2mTransportUtil.UpdateResultFw.INITIAL.code) {
                     this.setStateUpdate(INITIATED.name());
-                } else if (value == LwM2mTransportUtil.UpdateResultFw.UPDATE_SUCCESSFULLY.code) {
+                } else if (this.currentId != null && value == LwM2mTransportUtil.UpdateResultFw.UPDATE_SUCCESSFULLY.code) {
                     this.setStateUpdate(UPDATED.name());
                 } else if (value > LwM2mTransportUtil.UpdateResultFw.UPDATE_SUCCESSFULLY.code) {
                     this.setStateUpdate(FAILED.name());
