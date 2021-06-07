@@ -74,12 +74,10 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
     this.entitiesDeleteEnabled = false;
 
     this.headerComponent = EdgeDownlinkTableHeaderComponent;
-    this.entityTranslations = {
-      noEntities: 'edge.no-downlinks-prompt'
-    };
+    this.entityTranslations = { noEntities: 'edge.no-downlinks-prompt' };
     this.entityResources = {} as EntityTypeResource<EdgeEvent>;
     this.entitiesFetchFunction = pageLink => this.fetchEvents(pageLink);
-    this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
+    this.defaultSortOrder = { property: 'createdTime', direction: Direction.DESC };
 
     this.updateColumns();
   }
