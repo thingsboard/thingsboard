@@ -65,7 +65,7 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
         return this.translate.instant(OtaUpdateTypeTranslationMap.get(entity.type));
       }),
       new EntityTableColumn<OtaPackageInfo>('url', 'ota-update.direct-url', '20%', entity => {
-          return entity.url && entity.url.length > 20 ? `${entity.url.slice(0, 20)}…` : '';
+          return entity.url ? (entity.url.length > 20 ? `${entity.url.slice(0, 20)}…` : entity.url) : '';
         }, () => ({}), true, () => ({}), () => undefined, false,
         {
           name: this.translate.instant('ota-update.copy-direct-url'),
