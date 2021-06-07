@@ -100,7 +100,7 @@ export class EntityTableColumn<T extends BaseData<HasId>> extends BaseEntityTabl
               public headerCellStyleFunction: HeaderCellStyleFunction<T> = () => ({}),
               public cellTooltipFunction: CellTooltipFunction<T> = () => undefined,
               public isNumberColumn: boolean = false,
-              public actionCell: CellActionDescriptor<T> = {isEnabled: () => false, name: null, onAction: () => ({})}) {
+              public actionCell: CellActionDescriptor<T> = null) {
     super('content', key, title, width, sortable);
   }
 }
@@ -190,9 +190,5 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
 }
 
 export function checkBoxCell(value: boolean): string {
-  return `<mat-icon class="material-icons mat-icon">${value ? 'check_box' : 'check_box_outline_blank'}</mat-icon>`;
-}
-
-export function copyCellContent(value: string): string {
   return `<mat-icon class="material-icons mat-icon">${value ? 'check_box' : 'check_box_outline_blank'}</mat-icon>`;
 }

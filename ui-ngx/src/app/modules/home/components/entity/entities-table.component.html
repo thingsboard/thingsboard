@@ -165,7 +165,7 @@
                         matTooltipPosition="above"
                         [ngStyle]="cellStyle(entity, column, row)">
                 <span [innerHTML]="cellContent(entity, column, row)"></span>
-                <ng-template [ngIf]="column.actionCell.name">
+                <ng-template [ngIf]="column.actionCell">
                   <ng-container [ngSwitch]="column.actionCell.type">
                     <ng-template [ngSwitchCase]="cellActionType.COPY_BUTTON">
                       <tb-copy-button
