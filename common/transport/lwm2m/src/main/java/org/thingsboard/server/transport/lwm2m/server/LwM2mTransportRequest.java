@@ -32,10 +32,10 @@ import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.request.DeleteRequest;
 import org.eclipse.leshan.core.request.DiscoverRequest;
-import org.eclipse.leshan.core.request.DownlinkRequest;
 import org.eclipse.leshan.core.request.ExecuteRequest;
 import org.eclipse.leshan.core.request.ObserveRequest;
 import org.eclipse.leshan.core.request.ReadRequest;
+import org.eclipse.leshan.core.request.SimpleDownlinkRequest;
 import org.eclipse.leshan.core.request.WriteAttributesRequest;
 import org.eclipse.leshan.core.request.WriteRequest;
 import org.eclipse.leshan.core.request.exception.ClientSleepingException;
@@ -135,13 +135,13 @@ public class LwM2mTransportRequest {
             if (!OBSERVE_CANCEL.name().equals(typeOper.name()) && resultIds != null && registration != null && resultIds.getObjectId() >= 0 && lwM2MClient != null) {
                 if (lwM2MClient.isValidObjectVersion(targetIdVer)) {
                     timeoutInMs = timeoutInMs > 0 ? timeoutInMs : DEFAULT_TIMEOUT;
-                    DownlinkRequest request = createRequest(registration, lwM2MClient, typeOper, contentFormat, target,
+                    SimpleDownlinkRequest request = createRequest(registration, lwM2MClient, typeOper, contentFormat, target,
                             targetIdVer, resultIds, params, lwm2mClientRpcRequest);
                     if (request != null) {
                         try {
                             this.sendRequest(registration, lwM2MClient, request, timeoutInMs, lwm2mClientRpcRequest);
                         } catch (ClientSleepingException e) {
-                            DownlinkRequest finalRequest = request;
+                            SimpleDownlinkRequest finalRequest = request;
                             long finalTimeoutInMs = timeoutInMs;
                             Lwm2mClientRpcRequest finalRpcRequest = lwm2mClientRpcRequest;
                             lwM2MClient.getQueuedRequests().add(() -> sendRequest(registration, lwM2MClient, finalRequest, finalTimeoutInMs, finalRpcRequest));
@@ -223,10 +223,10 @@ public class LwM2mTransportRequest {
         }
     }
 
-    private DownlinkRequest createRequest(Registration registration, LwM2mClient lwM2MClient, LwM2mTypeOper typeOper,
+    private SimpleDownlinkRequest createRequest(Registration registration, LwM2mClient lwM2MClient, LwM2mTypeOper typeOper,
                                           ContentFormat contentFormat, String target, String targetIdVer,
                                           LwM2mPath resultIds, Object params, Lwm2mClientRpcRequest rpcRequest) {
-        DownlinkRequest request = null;
+        SimpleDownlinkRequest request = null;
         switch (typeOper) {
             case READ:
                 request = new ReadRequest(contentFormat, target);
@@ -329,7 +329,7 @@ public class LwM2mTransportRequest {
      */
 
     @SuppressWarnings({"error sendRequest"})
-    private void sendRequest(Registration registration, LwM2mClient lwM2MClient, DownlinkRequest request,
+    private void sendRequest(Registration registration, LwM2mClient lwM2MClient, SimpleDownlinkRequest request,
                              long timeoutInMs, Lwm2mClientRpcRequest rpcRequest) {
         context.getServer().send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
 
@@ -444,7 +444,7 @@ public class LwM2mTransportRequest {
     }
 
     private void handleResponse(Registration registration, final String path, LwM2mResponse response,
-                                DownlinkRequest request, Lwm2mClientRpcRequest rpcRequest) {
+                                SimpleDownlinkRequest request, Lwm2mClientRpcRequest rpcRequest) {
         responseRequestExecutor.submit(() -> {
             try {
                 this.sendResponse(registration, path, response, request, rpcRequest);
@@ -462,7 +462,7 @@ public class LwM2mTransportRequest {
      * @param response     -
      */
     private void sendResponse(Registration registration, String path, LwM2mResponse response,
-                              DownlinkRequest request, Lwm2mClientRpcRequest rpcRequest) {
+                              SimpleDownlinkRequest request, Lwm2mClientRpcRequest rpcRequest) {
         String pathIdVer = convertPathFromObjectIdToIdVer(path, registration);
         String msgLog = "";
         if (response instanceof ReadResponse) {
@@ -509,7 +509,7 @@ public class LwM2mTransportRequest {
         }
     }
 
-    private void infoWriteResponse(Registration registration, LwM2mResponse response, DownlinkRequest request, Lwm2mClientRpcRequest rpcRequest) {
+    private void infoWriteResponse(Registration registration, LwM2mResponse response, SimpleDownlinkRequest request, Lwm2mClientRpcRequest rpcRequest) {
         try {
             LwM2mNode node = ((WriteRequest) request).getNode();
             String msg = null;
@@ -566,7 +566,7 @@ public class LwM2mTransportRequest {
      * fw_state/sw_state = DOWNLOADED
      * send operation Execute
      */
-    private void afterWriteSuccessFwSwUpdate(Registration registration, DownlinkRequest request) {
+    private void afterWriteSuccessFwSwUpdate(Registration registration, SimpleDownlinkRequest request) {
         LwM2mClient lwM2MClient = this.lwM2mClientContext.getClientByRegistrationId(registration.getId());
         if (request.getPath().toString().equals(FW_PACKAGE_ID) && lwM2MClient.getFwUpdate() != null) {
             lwM2MClient.getFwUpdate().setStateUpdate(DOWNLOADED.name());
@@ -581,7 +581,7 @@ public class LwM2mTransportRequest {
     /**
      * After finish operation FwSwUpdate Write (error):  fw_state = FAILED
      */
-    private void afterWriteFwSWUpdateError(Registration registration, DownlinkRequest request, String msgError) {
+    private void afterWriteFwSWUpdateError(Registration registration, SimpleDownlinkRequest request, String msgError) {
         LwM2mClient lwM2MClient = this.lwM2mClientContext.getClientByRegistrationId(registration.getId());
         if (request.getPath().toString().equals(FW_PACKAGE_ID) && lwM2MClient.getFwUpdate() != null) {
             lwM2MClient.getFwUpdate().setStateUpdate(FAILED.name());
@@ -593,7 +593,7 @@ public class LwM2mTransportRequest {
         }
     }
 
-    private void afterExecuteFwSwUpdateError(Registration registration, DownlinkRequest request, String msgError) {
+    private void afterExecuteFwSwUpdateError(Registration registration, SimpleDownlinkRequest request, String msgError) {
         LwM2mClient lwM2MClient = this.lwM2mClientContext.getClientByRegistrationId(registration.getId());
         if (request.getPath().toString().equals(FW_UPDATE_ID) && lwM2MClient.getFwUpdate() != null) {
             lwM2MClient.getFwUpdate().sendLogs(this.handler, EXECUTE.name(), LOG_LW2M_ERROR, msgError);

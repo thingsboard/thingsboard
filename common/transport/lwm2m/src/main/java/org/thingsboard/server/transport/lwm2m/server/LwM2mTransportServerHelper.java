@@ -137,7 +137,7 @@ public class LwM2mTransportServerHelper {
     public ObjectModel parseFromXmlToObjectModel(byte[] xmlByte, String streamName, DefaultDDFFileValidator ddfValidator) {
         try {
             DDFFileParser ddfFileParser = new DDFFileParser(ddfValidator);
-            return ddfFileParser.parseEx(new ByteArrayInputStream(xmlByte), streamName).get(0);
+            return ddfFileParser.parse(new ByteArrayInputStream(xmlByte), streamName).get(0);
         } catch (IOException | InvalidDDFFileException e) {
             log.error("Could not parse the XML file [{}]", streamName, e);
             return null;

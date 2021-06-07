@@ -193,9 +193,7 @@ public class LwM2mClient implements Cloneable {
     public Object getResourceValue(String pathRezIdVer, String pathRezId) {
         String pathRez = pathRezIdVer == null ? convertPathFromObjectIdToIdVer(pathRezId, this.registration) : pathRezIdVer;
         if (this.resources.get(pathRez) != null) {
-            return this.resources.get(pathRez).getLwM2mResource().isMultiInstances() ?
-                    this.resources.get(pathRez).getLwM2mResource().getValues() :
-                    this.resources.get(pathRez).getLwM2mResource().getValue();
+            return this.resources.get(pathRez).getLwM2mResource().getValue();
         }
         return null;
     }

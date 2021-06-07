@@ -109,8 +109,8 @@ public class LwM2MTransportBootstrapService {
         /**  Create credentials */
         this.setServerWithCredentials(builder);
 
-        /** Set securityStore with new ConfigStore */
-        builder.setConfigStore(lwM2MInMemoryBootstrapConfigStore);
+//        /** Set securityStore with new ConfigStore */
+//        builder.setConfigStore(lwM2MInMemoryBootstrapConfigStore);
 
         /** SecurityStore */
         builder.setSecurityStore(lwM2MBootstrapSecurityStore);

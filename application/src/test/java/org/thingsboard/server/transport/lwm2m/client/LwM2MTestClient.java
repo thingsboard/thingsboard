@@ -35,22 +35,25 @@ import org.eclipse.leshan.client.engine.DefaultRegistrationEngineFactory;
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.client.object.Server;
 import org.eclipse.leshan.client.observer.LwM2mClientObserver;
+import org.eclipse.leshan.client.resource.DummyInstanceEnabler;
 import org.eclipse.leshan.client.resource.ObjectsInitializer;
 import org.eclipse.leshan.client.servers.ServerIdentity;
+import org.eclipse.leshan.core.LwM2mId;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.californium.DefaultEndpointFactory;
+import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.ObjectLoader;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.StaticModel;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeDecoder;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeEncoder;
-import org.eclipse.leshan.core.request.BindingMode;
 import org.eclipse.leshan.core.request.BootstrapRequest;
 import org.eclipse.leshan.core.request.DeregisterRequest;
 import org.eclipse.leshan.core.request.RegisterRequest;
 import org.eclipse.leshan.core.request.UpdateRequest;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -67,7 +70,7 @@ public class LwM2MTestClient {
     private final String endpoint;
     private LeshanClient client;
 
-    public void init(Security security, NetworkConfig coapConfig) {
+    public void init(Security security, NetworkConfig coapConfig) throws InvalidDDFFileException, IOException {
         String[] resources = new String[]{"0.xml", "1.xml", "2.xml", "3.xml"};
         List<ObjectModel> models = new ArrayList<>();
         for (String resourceName : resources) {
@@ -76,7 +79,7 @@ public class LwM2MTestClient {
         LwM2mModel model = new StaticModel(models);
         ObjectsInitializer initializer = new ObjectsInitializer(model);
         initializer.setInstancesForObject(SECURITY, security);
-        initializer.setInstancesForObject(SERVER, new Server(123, 300, BindingMode.U, false));
+        initializer.setInstancesForObject(SERVER, new Server(123, 300));
         initializer.setInstancesForObject(DEVICE, new SimpleLwM2MDevice());
 
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
@@ -245,6 +248,11 @@ public class LwM2MTestClient {
             @Override
             public void onDeregistrationTimeout(ServerIdentity server, DeregisterRequest request) {
                 log.info("ClientObserver ->onDeregistrationTimeout...  DeregisterRequest [{}] [{}]", request.getRegistrationId(), request.getRegistrationId());
+            }
+
+            @Override
+            public void onUnexpectedError(Throwable unexpectedError) {
+
             }
         };
         this.client.addObserver(observer);

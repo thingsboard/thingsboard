@@ -40,7 +40,7 @@ import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
-import java.util.List;
+import java.util.Iterator;
 import java.util.UUID;
 
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.BOOTSTRAP_SERVER;
@@ -71,7 +71,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
     }
 
     @Override
-    public List<SecurityInfo> getAllByEndpoint(String endPoint) {
+    public Iterator<SecurityInfo> getAllByEndpoint(String endPoint) {
         EndpointSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfo(endPoint, LwM2mTransportUtil.LwM2mTypeServer.BOOTSTRAP);
         if (store.getBootstrapCredentialConfig() != null && store.getSecurityMode() != null) {
             /* add value to store  from BootstrapJson */
@@ -88,7 +88,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                 } catch (InvalidConfigurationException e) {
                     log.error("", e);
                 }
-                return store.getSecurityInfo() == null ? null : Collections.singletonList(store.getSecurityInfo());
+                return store.getSecurityInfo() == null ? null : Collections.singletonList(store.getSecurityInfo()).iterator();
             }
         }
         return null;

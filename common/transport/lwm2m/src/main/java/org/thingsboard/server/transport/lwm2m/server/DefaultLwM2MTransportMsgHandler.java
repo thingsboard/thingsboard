@@ -224,7 +224,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                 if (client != null && client.getSession() != null) {
                     SessionInfoProto sessionInfo = client.getSession();
                     this.reportActivityAndRegister(sessionInfo);
-                    if (registration.getBindingMode().useQueueMode()) {
+                    if (registration.getQueueMode()) {
                         LwM2mQueuedRequest request;
                         while ((request = client.getQueuedRequests().poll()) != null) {
                             request.send();
@@ -858,7 +858,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                             valueKvProto = new JsonObject();
                             Object finalvalueKvProto = valueKvProto;
                             Gson gson = new GsonBuilder().create();
-                            resourceValue.getValues().forEach((k, v) -> {
+                            resourceValue.getInstances().forEach((k, v) -> {
                                 Object val = this.converter.convertValue(v, currentType, expectedType,
                                         new LwM2mPath(convertPathFromIdVerToObjectId(pathIdVer)));
                                 JsonElement element = gson.toJsonTree(val, val.getClass());
