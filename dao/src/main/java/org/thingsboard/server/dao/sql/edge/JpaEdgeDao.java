@@ -40,9 +40,9 @@ import org.thingsboard.server.dao.model.sql.EdgeInfoEntity;
 import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
-import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -198,17 +198,19 @@ public class JpaEdgeDao extends JpaAbstractSearchTextDao<EdgeEntity, Edge> imple
     }
 
     @Override
-    public long cleanupEvents(long ttl) {
+    public void cleanupEvents(long ttl) {
         try {
-            CallableStatement stmt = dataSource.getConnection().prepareCall("{call cleanup_edge_events_by_ttl(?,?,?)}");
+            log.info("Going to cleanup old edge events using ttl: {}s", ttl);
+            PreparedStatement stmt = dataSource.getConnection().prepareStatement("call cleanup_edge_events_by_ttl(?,?)");
             stmt.setLong(1, ttl);
-            stmt.registerOutParameter(3, Types.BIGINT);
-            stmt.executeUpdate();
+            stmt.setLong(2, 0);
+            stmt.execute();
             printWarnings(stmt);
-            return stmt.getLong(3);
+            ResultSet resultSet = stmt.getResultSet();
+            resultSet.next();
+            log.info("Total edge events removed by TTL: [{}]", resultSet.getLong(1));
         } catch (SQLException e) {
-            log.error("SQLException occurred during TTL task execution ", e);
-            return 0;
+            log.error("SQLException occurred during edge events TTL task execution ", e);
         }
     }
 

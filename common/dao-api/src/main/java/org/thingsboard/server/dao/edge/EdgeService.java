@@ -94,5 +94,5 @@ public interface EdgeService {
 
     String findMissingToRelatedRuleChains(TenantId tenantId, EdgeId edgeId);
 
-    long cleanupEvents(long ttl);
+    void cleanupEvents(long ttl);
 }

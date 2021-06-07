@@ -132,8 +132,8 @@ public class BaseEventService implements EventService {
     }
 
     @Override
-    public long cleanupEvents(long ttl, long debugTtl) {
-        return eventDao.cleanupEvents(ttl, debugTtl);
+    public void cleanupEvents(long ttl, long debugTtl) {
+        eventDao.cleanupEvents(ttl, debugTtl);
     }
 
     private DataValidator<Event> eventValidator =

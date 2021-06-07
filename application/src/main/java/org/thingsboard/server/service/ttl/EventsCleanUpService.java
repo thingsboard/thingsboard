@@ -48,9 +48,7 @@ public class EventsCleanUpService extends AbstractCleanUpService {
     @Scheduled(initialDelayString = "${sql.ttl.events.execution_interval_ms}", fixedDelayString = "${sql.ttl.events.execution_interval_ms}")
     public void cleanUp() {
         if (ttlTaskExecutionEnabled && isSystemTenantPartitionMine()) {
-            log.info("Going to cleanup old events using debug events ttl: {}s and other events ttl: {}s", debugTtl, ttl);
-            long totalEventsRemoved = eventService.cleanupEvents(ttl, debugTtl);
-            log.info("Total events removed by TTL: [{}]", totalEventsRemoved);
+            eventService.cleanupEvents(ttl, debugTtl);
         }
     }
 

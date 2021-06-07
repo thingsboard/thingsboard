@@ -27,7 +27,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
 import org.thingsboard.server.dao.sqlts.AbstractChunkedAggregationTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.insert.psql.PsqlPartitioningRepository;
@@ -36,9 +35,9 @@ import org.thingsboard.server.dao.timeseries.SqlTsPartitionDate;
 import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
 
-import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -107,13 +106,15 @@ public class JpaPsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDa
     private void cleanupPartitions(long systemTtl) {
         try {
             log.info("Going to cleanup old timeseries data partitions using partition type: {} and ttl: {}s", partitioning, systemTtl);
-            CallableStatement stmt = dataSource.getConnection().prepareCall("{call drop_partitions_by_max_ttl(?,?,?)}");
-            stmt.setObject(1, partitioning);
+            PreparedStatement stmt = dataSource.getConnection().prepareStatement("call drop_partitions_by_max_ttl(?,?,?)");
+            stmt.setString(1, partitioning);
             stmt.setLong(2, systemTtl);
-            stmt.registerOutParameter(3, Types.BIGINT);
-            stmt.executeUpdate();
+            stmt.setLong(3, 0);
+            stmt.execute();
             printWarnings(stmt);
-            log.info("Total partitions removed by TTL: [{}]", stmt.getLong(3));
+            ResultSet resultSet = stmt.getResultSet();
+            resultSet.next();
+            log.info("Total partitions removed by TTL: [{}]", resultSet.getLong(1));
         } catch (SQLException e) {
             log.error("SQLException occurred during TTL task execution ", e);
         }

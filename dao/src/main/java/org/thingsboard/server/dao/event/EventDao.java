@@ -106,7 +106,6 @@ public interface EventDao extends Dao<Event> {
      * Executes stored procedure to cleanup old events. Uses separate ttl for debug and other events.
      * @param otherEventsTtl the ttl for events in seconds
      * @param debugEventsTtl the ttl for debug events in seconds
-     * @return the number of deleted events
      */
-    long cleanupEvents(long otherEventsTtl, long debugEventsTtl);
+    void cleanupEvents(long otherEventsTtl, long debugEventsTtl);
 }

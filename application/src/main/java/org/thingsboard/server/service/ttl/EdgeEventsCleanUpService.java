@@ -45,9 +45,7 @@ public class EdgeEventsCleanUpService extends AbstractCleanUpService {
     @Scheduled(initialDelayString = "${sql.ttl.edge_events.execution_interval_ms}", fixedDelayString = "${sql.ttl.edge_events.execution_interval_ms}")
     public void cleanUp() {
         if (ttlTaskExecutionEnabled && isSystemTenantPartitionMine()) {
-            log.info("Going to cleanup old edge events using ttl: {}s", ttl);
-            long totalEdgeEventsRemoved = edgeService.cleanupEvents(ttl);
-            log.info("Total edge events removed by TTL: [{}]", totalEdgeEventsRemoved);
+            edgeService.cleanupEvents(ttl);
         }
     }
 
