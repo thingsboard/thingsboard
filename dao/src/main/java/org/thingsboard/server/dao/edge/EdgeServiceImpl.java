@@ -628,8 +628,8 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     }
 
     @Override
-    public long cleanupEvents(long ttl) {
-        return edgeDao.cleanupEvents(ttl);
+    public void cleanupEvents(long ttl) {
+        edgeDao.cleanupEvents(ttl);
     }
 
     private List<RuleChain> findEdgeRuleChains(TenantId tenantId, EdgeId edgeId) {

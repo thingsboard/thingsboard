@@ -18,11 +18,15 @@ package org.thingsboard.server.service.ttl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ttl.AbstractCleanUpService;
 
+@TbCoreComponent
 @Slf4j
+@Service
 public class TimeseriesCleanUpService extends AbstractCleanUpService {
 
     @Value("${sql.ttl.ts.ts_key_value_ttl}")
