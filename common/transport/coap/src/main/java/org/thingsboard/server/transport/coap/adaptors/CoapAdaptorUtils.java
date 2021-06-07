@@ -40,7 +40,6 @@ public class CoapAdaptorUtils {
                 result.addAllSharedAttributeNames(sharedKeys);
             }
         }
-        result.setOnlyShared(false);
         return result.build();
     }
 

@@ -290,7 +290,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                         transportService.process(sessionInfo,
                                 TransportProtos.SubscribeToAttributeUpdatesMsg.getDefaultInstance(), new CoapNoOpCallback(exchange));
                         transportService.process(sessionInfo,
-                                TransportProtos.GetAttributeRequestMsg.newBuilder().setOnlyShared(true).build(),
+                                TransportProtos.GetAttributeRequestMsg.newBuilder().setAllShared(true).build(),
                                 new CoapNoOpCallback(exchange));
                     }
                     break;

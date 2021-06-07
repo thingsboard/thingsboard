@@ -317,27 +317,10 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     private void handleGetAttributesRequest(TbActorCtx context, SessionInfoProto sessionInfo, GetAttributeRequestMsg request) {
         int requestId = request.getRequestId();
-        if (request.getOnlyShared()) {
-            Futures.addCallback(findAllAttributesByScope(DataConstants.SHARED_SCOPE), new FutureCallback<>() {
-                @Override
-                public void onSuccess(@Nullable List<AttributeKvEntry> result) {
-                    GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
-                            .setRequestId(requestId)
-                            .setSharedStateMsg(true)
-                            .addAllSharedAttributeList(toTsKvProtos(result))
-                            .build();
-                    sendToTransport(responseMsg, sessionInfo);
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
-                            .setError(t.getMessage())
-                            .setSharedStateMsg(true)
-                            .build();
-                    sendToTransport(responseMsg, sessionInfo);
-                }
-            }, MoreExecutors.directExecutor());
+        if (request.getAllShared()) {
+            getAllAttributesByScope(sessionInfo, requestId, DataConstants.SHARED_SCOPE);
+        } else if (request.getAllClient()) {
+            getAllAttributesByScope(sessionInfo, requestId, DataConstants.CLIENT_SCOPE);
         } else {
             Futures.addCallback(getAttributesKvEntries(request), new FutureCallback<>() {
                 @Override
@@ -359,6 +342,33 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 }
             }, MoreExecutors.directExecutor());
         }
+    }
+
+    private void getAllAttributesByScope(SessionInfoProto sessionInfo, int requestId, String scope) {
+        Futures.addCallback(findAllAttributesByScope(scope), new FutureCallback<>() {
+            @Override
+            public void onSuccess(@Nullable List<AttributeKvEntry> result) {
+                GetAttributeResponseMsg.Builder responseMsgBuilder = GetAttributeResponseMsg.newBuilder();
+                responseMsgBuilder.setRequestId(requestId);
+                if (DataConstants.SHARED_SCOPE.equals(scope)) {
+                    responseMsgBuilder
+                            .setSharedStateMsg(true)
+                            .addAllSharedAttributeList(toTsKvProtos(result));
+                } else {
+                    responseMsgBuilder.addAllClientAttributeList(toTsKvProtos(result));
+                }
+                sendToTransport(responseMsgBuilder.build(), sessionInfo);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
+                        .setError(t.getMessage())
+                        .setSharedStateMsg(DataConstants.SHARED_SCOPE.equals(scope))
+                        .build();
+                sendToTransport(responseMsg, sessionInfo);
+            }
+        }, MoreExecutors.directExecutor());
     }
 
     private ListenableFuture<List<List<AttributeKvEntry>>> getAttributesKvEntries(GetAttributeRequestMsg request) {
