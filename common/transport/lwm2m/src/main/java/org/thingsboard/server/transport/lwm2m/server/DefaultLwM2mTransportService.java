@@ -36,6 +36,8 @@ import org.thingsboard.server.transport.lwm2m.secure.LWM2MGenerationPSkRPkECC;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MAuthorizer;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MDtlsCertificateVerifier;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
+import org.thingsboard.server.transport.lwm2m.server.store.TbEditableSecurityStore;
+import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
@@ -83,7 +85,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
     private final LwM2mTransportServerHelper helper;
     private final LwM2mTransportMsgHandler handler;
     private final CaliforniumRegistrationStore registrationStore;
-    private final EditableSecurityStore securityStore;
+    private final TbSecurityStore securityStore;
     private final LwM2mClientContext lwM2mClientContext;
     private final TbLwM2MDtlsCertificateVerifier certificateVerifier;
     private final TbLwM2MAuthorizer authorizer;

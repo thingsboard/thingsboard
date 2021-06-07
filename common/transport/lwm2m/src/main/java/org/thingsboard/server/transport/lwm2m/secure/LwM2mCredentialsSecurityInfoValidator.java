@@ -55,15 +55,15 @@ public class LwM2mCredentialsSecurityInfoValidator {
     private final LwM2mTransportContext context;
     private final LwM2MTransportServerConfig config;
 
-    public EndpointSecurityInfo getEndpointSecurityInfo(String endpoint, LwM2mTransportUtil.LwM2mTypeServer keyValue) {
+    public TbLwM2MSecurityInfo getEndpointSecurityInfoByCredentialsId(String credentialsId, LwM2mTransportUtil.LwM2mTypeServer keyValue) {
         CountDownLatch latch = new CountDownLatch(1);
-        final EndpointSecurityInfo[] resultSecurityStore = new EndpointSecurityInfo[1];
-        context.getTransportService().process(ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder().setCredentialsId(endpoint).build(),
+        final TbLwM2MSecurityInfo[] resultSecurityStore = new TbLwM2MSecurityInfo[1];
+        context.getTransportService().process(ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder().setCredentialsId(credentialsId).build(),
                 new TransportServiceCallback<>() {
                     @Override
                     public void onSuccess(ValidateDeviceCredentialsResponse msg) {
                         String credentialsBody = msg.getCredentials();
-                        resultSecurityStore[0] = createSecurityInfo(endpoint, credentialsBody, keyValue);
+                        resultSecurityStore[0] = createSecurityInfo(credentialsId, credentialsBody, keyValue);
                         resultSecurityStore[0].setMsg(msg);
                         resultSecurityStore[0].setDeviceProfile(msg.getDeviceProfile());
                         latch.countDown();
@@ -71,8 +71,8 @@ public class LwM2mCredentialsSecurityInfoValidator {
 
                     @Override
                     public void onError(Throwable e) {
-                        log.trace("[{}] [{}] Failed to process credentials ", endpoint, e);
-                        resultSecurityStore[0] = createSecurityInfo(endpoint, null, null);
+                        log.trace("[{}] [{}] Failed to process credentials ", credentialsId, e);
+                        resultSecurityStore[0] = createSecurityInfo(credentialsId, null, null);
                         latch.countDown();
                     }
                 });
@@ -91,8 +91,8 @@ public class LwM2mCredentialsSecurityInfoValidator {
      * @param keyValue -
      * @return SecurityInfo
      */
-    private EndpointSecurityInfo createSecurityInfo(String endpoint, String jsonStr, LwM2mTransportUtil.LwM2mTypeServer keyValue) {
-        EndpointSecurityInfo result = new EndpointSecurityInfo();
+    private TbLwM2MSecurityInfo createSecurityInfo(String endpoint, String jsonStr, LwM2mTransportUtil.LwM2mTypeServer keyValue) {
+        TbLwM2MSecurityInfo result = new TbLwM2MSecurityInfo();
         LwM2MCredentials credentials = JacksonUtil.fromString(jsonStr, LwM2MCredentials.class);
         if (credentials != null) {
             if (keyValue.equals(LwM2mTransportUtil.LwM2mTypeServer.BOOTSTRAP)) {
@@ -106,7 +106,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
             } else {
                 switch (credentials.getClient().getSecurityConfigClientMode()) {
                     case NO_SEC:
-                        createClientSecurityInfoNoSec(result);
+                        createClientSecurityInfoNoSec(result, endpoint);
                         break;
                     case PSK:
                         createClientSecurityInfoPSK(result, endpoint, credentials.getClient());
@@ -125,12 +125,13 @@ public class LwM2mCredentialsSecurityInfoValidator {
         return result;
     }
 
-    private void createClientSecurityInfoNoSec(EndpointSecurityInfo result) {
+    private void createClientSecurityInfoNoSec(TbLwM2MSecurityInfo result, String endpoint) {
+        result.setEndpoint(endpoint);
         result.setSecurityInfo(null);
         result.setSecurityMode(NO_SEC);
     }
 
-    private void createClientSecurityInfoPSK(EndpointSecurityInfo result, String endpoint, LwM2MClientCredentials clientCredentialsConfig) {
+    private void createClientSecurityInfoPSK(TbLwM2MSecurityInfo result, String endpoint, LwM2MClientCredentials clientCredentialsConfig) {
         PSKClientCredentials pskConfig = (PSKClientCredentials) clientCredentialsConfig;
         if (StringUtils.isNotEmpty(pskConfig.getIdentity())) {
             try {
@@ -149,7 +150,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
         }
     }
 
-    private void createClientSecurityInfoRPK(EndpointSecurityInfo result, String endpoint, LwM2MClientCredentials clientCredentialsConfig) {
+    private void createClientSecurityInfoRPK(TbLwM2MSecurityInfo result, String endpoint, LwM2MClientCredentials clientCredentialsConfig) {
         RPKClientCredentials rpkConfig = (RPKClientCredentials) clientCredentialsConfig;
         try {
             if (rpkConfig.getKey() != null) {
@@ -164,7 +165,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
         }
     }
 
-    private void createClientSecurityInfoX509(EndpointSecurityInfo result, String endpoint, LwM2MClientCredentials clientCredentialsConfig) {
+    private void createClientSecurityInfoX509(TbLwM2MSecurityInfo result, String endpoint, LwM2MClientCredentials clientCredentialsConfig) {
         result.setSecurityInfo(SecurityInfo.newX509CertInfo(endpoint));
         result.setSecurityMode(X509);
     }

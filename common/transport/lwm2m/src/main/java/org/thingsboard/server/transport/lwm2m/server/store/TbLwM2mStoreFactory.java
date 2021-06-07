@@ -19,6 +19,7 @@ import org.eclipse.leshan.server.californium.registration.CaliforniumRegistratio
 import org.eclipse.leshan.server.californium.registration.InMemoryRegistrationStore;
 import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.eclipse.leshan.server.security.InMemorySecurityStore;
+import org.eclipse.leshan.server.security.SecurityStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.cache.TBRedisCacheConfiguration;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
+import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 
 import java.util.Optional;
@@ -42,8 +44,7 @@ public class TbLwM2mStoreFactory {
     private LwM2MTransportServerConfig config;
 
     @Autowired
-    @Lazy
-    private LwM2mClientContext clientContext;
+    private LwM2mCredentialsSecurityInfoValidator validator;
 
     @Value("${transport.lwm2m.redis.enabled:false}")
     private boolean useRedis;
@@ -55,9 +56,9 @@ public class TbLwM2mStoreFactory {
     }
 
     @Bean
-    private EditableSecurityStore securityStore() {
-        return new TbLwM2mSecurityStore(clientContext, redisConfiguration.isPresent() && useRedis ?
-                new TbLwM2mRedisSecurityStore(redisConfiguration.get().redisConnectionFactory()) : new InMemorySecurityStore());
+    private TbSecurityStore securityStore() {
+        return new TbLwM2mSecurityStore(redisConfiguration.isPresent() && useRedis ?
+                new TbLwM2mRedisSecurityStore(redisConfiguration.get().redisConnectionFactory()) : new TbInMemorySecurityStore(), validator);
     }
 
     @Bean

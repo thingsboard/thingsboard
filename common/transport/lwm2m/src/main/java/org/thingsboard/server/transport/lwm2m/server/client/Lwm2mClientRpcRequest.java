@@ -273,7 +273,7 @@ public class Lwm2mClientRpcRequest {
     }
 
     private String getRezIdByResourceNameAndObjectInstanceId(String resourceName, DefaultLwM2MTransportMsgHandler handler) {
-        LwM2mClient lwM2mClient = handler.clientContext.getClient(this.sessionInfo);
+        LwM2mClient lwM2mClient = handler.clientContext.getClientBySessionInfo(this.sessionInfo);
         return lwM2mClient != null ?
                 lwM2mClient.getRezIdByResourceNameAndObjectInstanceId(resourceName, this.targetIdVer, handler.config.getModelProvider()) :
                 null;
