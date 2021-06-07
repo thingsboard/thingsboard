@@ -39,7 +39,7 @@ export class OtaPackageService {
   }
 
   public getOtaPackagesInfoByDeviceProfileId(pageLink: PageLink, deviceProfileId: string, type: OtaUpdateType,
-                                             hasData = true, config?: RequestConfig): Observable<PageData<OtaPackageInfo>> {
+                                             config?: RequestConfig): Observable<PageData<OtaPackageInfo>> {
     const url = `/api/otaPackages/${deviceProfileId}/${type}${pageLink.toQuery()}`;
     return this.http.get<PageData<OtaPackageInfo>>(url, defaultHttpOptionsFromConfig(config));
   }
@@ -118,6 +118,10 @@ export class OtaPackageService {
 
   public deleteOtaPackage(otaPackageId: string, config?: RequestConfig) {
     return this.http.delete(`/api/otaPackage/${otaPackageId}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public countUpdateDeviceAfterChangePackage(type: OtaUpdateType, deviceProfileId: string, config?: RequestConfig): Observable<number> {
+    return this.http.get<number>(`/api/devices/count/${type}?deviceProfileId=${deviceProfileId}`, defaultHttpOptionsFromConfig(config));
   }
 
 }

@@ -14,16 +14,21 @@
 /// limitations under the License.
 ///
 
-import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-import {PageLink} from '@shared/models/page/page-link';
-import {defaultHttpOptionsFromConfig, RequestConfig} from './http-utils';
-import {Observable} from 'rxjs';
-import {PageData} from '@shared/models/page/page-data';
-import {DeviceProfile, DeviceProfileInfo, DeviceTransportType} from '@shared/models/device.models';
-import {isDefinedAndNotNull, isEmptyStr} from '@core/utils';
-import {ObjectLwM2M, ServerSecurityConfig} from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
-import {SortOrder} from '@shared/models/page/sort-order';
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { PageLink } from '@shared/models/page/page-link';
+import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import { forkJoin, Observable, of, throwError } from 'rxjs';
+import { PageData } from '@shared/models/page/page-data';
+import { DeviceProfile, DeviceProfileInfo, DeviceTransportType } from '@shared/models/device.models';
+import { isDefinedAndNotNull, isEmptyStr } from '@core/utils';
+import { ObjectLwM2M, ServerSecurityConfig } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
+import { SortOrder } from '@shared/models/page/sort-order';
+import { OtaPackageService } from '@core/http/ota-package.service';
+import { OtaUpdateType } from '@shared/models/ota-package.models';
+import { mergeMap } from 'rxjs/operators';
+import { DialogService } from '@core/services/dialog.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({
   providedIn: 'root'
@@ -31,7 +36,10 @@ import {SortOrder} from '@shared/models/page/sort-order';
 export class DeviceProfileService {
 
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    private otaPackageService: OtaPackageService,
+    private dialogService: DialogService,
+    private translate: TranslateService
   ) {
   }
 
@@ -68,6 +76,34 @@ export class DeviceProfileService {
       `/api/resource/lwm2m/page${pageLink.toQuery()}`,
       defaultHttpOptionsFromConfig(config)
     );
+  }
+
+  public saveDeviceProfileAndConfirmOtaChange(originDeviceProfile: DeviceProfile, deviceProfile: DeviceProfile,
+                                              config?: RequestConfig): Observable<DeviceProfile> {
+    const tasks: Observable<number>[] = [];
+    if (originDeviceProfile?.id?.id && originDeviceProfile.firmwareId?.id !== deviceProfile.firmwareId?.id) {
+      tasks.push(this.otaPackageService.countUpdateDeviceAfterChangePackage(OtaUpdateType.FIRMWARE, deviceProfile.id.id));
+    } else {
+      tasks.push(of(0));
+    }
+    if (originDeviceProfile?.id?.id && originDeviceProfile.softwareId?.id !== deviceProfile.softwareId?.id) {
+      tasks.push(this.otaPackageService.countUpdateDeviceAfterChangePackage(OtaUpdateType.SOFTWARE, deviceProfile.id.id));
+    } else {
+      tasks.push(of(0));
+    }
+    return forkJoin(tasks).pipe(
+      mergeMap(([deviceFirmwareUpdate, deviceSoftwareUpdate]) => {
+        let text = '';
+        if (deviceFirmwareUpdate > 0) {
+          text += this.translate.instant('ota-update.change-firmware', {count: deviceFirmwareUpdate});
+        }
+        if (deviceSoftwareUpdate > 0) {
+          text += text.length ? ' ' : '';
+          text += this.translate.instant('ota-update.change-software', {count: deviceSoftwareUpdate});
+        }
+        return text !== '' ? this.dialogService.confirm('', text, null, this.translate.instant('common.proceed')) : of(true);
+      }),
+      mergeMap((update) => update ? this.saveDeviceProfile(deviceProfile, config) : throwError('Canceled saving device profiles')));
   }
 
   public saveDeviceProfile(deviceProfile: DeviceProfile, config?: RequestConfig): Observable<DeviceProfile> {

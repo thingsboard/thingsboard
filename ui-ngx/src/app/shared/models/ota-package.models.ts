@@ -87,6 +87,7 @@ export interface OtaPackageInfo extends BaseData<OtaPackageId> {
   title?: string;
   version?: string;
   hasData?: boolean;
+  url?: string;
   fileName: string;
   checksum?: string;
   checksumAlgorithm?: ChecksumAlgorithm;
