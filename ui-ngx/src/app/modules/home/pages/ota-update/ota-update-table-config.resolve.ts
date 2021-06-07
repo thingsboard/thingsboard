@@ -102,7 +102,7 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
       {
         name: this.translate.instant('ota-update.download'),
         icon: 'file_download',
-        isEnabled: (otaPackage) => otaPackage.hasData,
+        isEnabled: (otaPackage) => otaPackage.hasData && !otaPackage.url,
         onAction: ($event, entity) => this.exportPackage($event, entity)
       }
     );

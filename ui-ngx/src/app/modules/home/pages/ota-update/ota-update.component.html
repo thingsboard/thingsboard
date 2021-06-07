@@ -17,7 +17,7 @@
 -->
 <div class="tb-details-buttons" fxLayout.xs="column">
   <button mat-raised-button color="primary" fxFlex.xs
-          [disabled]="(isLoading$ | async) || !entity?.hasData"
+          [disabled]="(isLoading$ | async) || !(entity?.hasData && !entity?.url)"
           (click)="onEntityAction($event, 'uploadPackage')"
           [fxShow]="!isEdit">
     {{ 'ota-update.download' | translate }}
