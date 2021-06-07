@@ -27,6 +27,7 @@ import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2mSecurityStore;
+import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
 
 @Component
 @RequiredArgsConstructor
@@ -34,7 +35,7 @@ import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2mSecurityStore;
 public class TbLwM2MAuthorizer implements Authorizer {
 
     private final TbLwM2MDtlsSessionStore sessionStorage;
-    private final TbLwM2mSecurityStore securityStore;
+    private final TbSecurityStore securityStore;
     private final SecurityChecker securityChecker = new SecurityChecker();
     private final LwM2mClientContext clientContext;
 

@@ -25,11 +25,11 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
-import org.thingsboard.server.transport.lwm2m.secure.EndpointSecurityInfo;
-import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mQueuedRequest;
+import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
+import org.thingsboard.server.transport.lwm2m.server.store.TbEditableSecurityStore;
+import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -40,8 +40,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.eclipse.leshan.core.SecurityMode.NO_SEC;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_ERROR;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
 
 @Slf4j
@@ -51,13 +49,10 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.c
 public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     private final LwM2mTransportContext context;
+    private final TbEditableSecurityStore securityStore;
     private final Map<String, LwM2mClient> lwM2mClientsByEndpoint = new ConcurrentHashMap<>();
     private final Map<String, LwM2mClient> lwM2mClientsByRegistrationId = new ConcurrentHashMap<>();
     private Map<UUID, LwM2mClientProfile> profiles = new ConcurrentHashMap<>();
-
-    private final LwM2mCredentialsSecurityInfoValidator lwM2MCredentialsSecurityInfoValidator;
-
-    private final EditableSecurityStore securityStore;
 
     @Override
     public LwM2mClient getClientByEndpoint(String endpoint) {
@@ -71,8 +66,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
             if (LwM2MClientState.UNREGISTERED.equals(lwM2MClient.getState())) {
                 throw new LwM2MClientStateException(lwM2MClient.getState(), "Client is in invalid state.");
             }
-            //TODO: Move this security info lookup to the TbLwM2mSecurityStore.
-            EndpointSecurityInfo securityInfo = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfo(lwM2MClient.getEndpoint(), LwM2mTransportUtil.LwM2mTypeServer.CLIENT);
+            TbLwM2MSecurityInfo securityInfo = securityStore.getTbLwM2MSecurityInfoByEndpoint(lwM2MClient.getEndpoint());
             if (securityInfo.getSecurityMode() != null) {
                 if (securityInfo.getDeviceProfile() != null) {
                     UUID profileUuid = profileUpdate(securityInfo.getDeviceProfile()) != null ? securityInfo.getDeviceProfile().getUuidId() : null;
@@ -127,7 +121,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
             if (currentRegistration.getId().equals(registration.getId())) {
                 lwM2MClient.setState(LwM2MClientState.UNREGISTERED);
                 lwM2mClientsByEndpoint.remove(lwM2MClient.getEndpoint());
-                this.securityStore.remove(lwM2MClient.getEndpoint(), false);
+                this.securityStore.remove(lwM2MClient.getEndpoint());
                 this.lwM2mClientsByRegistrationId.remove(registration.getId());
                 UUID profileId = lwM2MClient.getProfileId();
                 if (profileId != null) {
@@ -145,17 +139,12 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     @Override
-    public LwM2mClient fetchSecurityInfoByCredentials(String credentialsId) {
-        return null;
-    }
-
-    @Override
     public LwM2mClient getClientByRegistrationId(String registrationId) {
         return lwM2mClientsByRegistrationId.get(registrationId);
     }
 
     @Override
-    public LwM2mClient getClient(TransportProtos.SessionInfoProto sessionInfo) {
+    public LwM2mClient getClientBySessionInfo(TransportProtos.SessionInfoProto sessionInfo) {
         LwM2mClient lwM2mClient = lwM2mClientsByEndpoint.values().stream().filter(c ->
                 (new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()))
                         .equals((new UUID(c.getSession().getSessionIdMSB(), c.getSession().getSessionIdLSB())))

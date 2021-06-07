@@ -32,15 +32,14 @@ public interface LwM2mClientContext {
 
     LwM2mClient getClientByEndpoint(String endpoint);
 
+    LwM2mClient getClientBySessionInfo(TransportProtos.SessionInfoProto sessionInfo);
+
     void register(LwM2mClient lwM2MClient, Registration registration) throws LwM2MClientStateException;
 
     void updateRegistration(LwM2mClient client, Registration registration) throws LwM2MClientStateException;
 
     void unregister(LwM2mClient client, Registration registration) throws LwM2MClientStateException;
 
-    SecurityInfo fetchSecurityInfoByCredentials(String credentialsId);
-
-    LwM2mClient getClient(TransportProtos.SessionInfoProto sessionInfo);
 
 //    LwM2mClient getOrRegister(Registration registration);
 

@@ -24,7 +24,7 @@ import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsRes
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapConfig;
 
 @Data
-public class EndpointSecurityInfo {
+public class TbLwM2MSecurityInfo {
     private ValidateDeviceCredentialsResponse msg;
     private SecurityInfo securityInfo;
     private SecurityMode securityMode;

@@ -76,7 +76,6 @@ public class LwM2mClient implements Cloneable {
     @Getter
     private final Map<String, TsKvProto> delayedRequests;
     @Getter
-    @Setter
     private final List<String> pendingReadRequests;
     @Getter
     private final Queue<LwM2mQueuedRequest> queuedRequests;
