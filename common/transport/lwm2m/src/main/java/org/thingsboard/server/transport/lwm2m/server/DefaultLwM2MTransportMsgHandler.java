@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -740,8 +740,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         }
     }
 
-    private void initReadAttrTelemetryObserveToClient(LwM2mClient lwM2MClient,
-                                                      LwM2mTypeOper typeOper, Set<String> clientObjects) {
+    private void initReadAttrTelemetryObserveToClient(LwM2mClient lwM2MClient, LwM2mTypeOper typeOper, Set<String> clientObjects) {
         LwM2mClientProfile lwM2MClientProfile = clientContext.getProfile(lwM2MClient.getProfileId());
         Set<String> result = null;
         ConcurrentHashMap<String, Object> params = null;
@@ -762,26 +761,40 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
             params = this.getPathForWriteAttributes(lwM2MClientProfile.getPostAttributeLwm2mProfile());
             result = params.keySet();
         }
-        if (result != null && !result.isEmpty()) {
-            // #1
-            Set<String> pathSend = result.stream().filter(target -> {
-                        return target.split(LWM2M_SEPARATOR_PATH).length < 3 ?
-                                clientObjects.contains("/" + target.split(LWM2M_SEPARATOR_PATH)[1]) :
-                                clientObjects.contains("/" + target.split(LWM2M_SEPARATOR_PATH)[1] + "/" + target.split(LWM2M_SEPARATOR_PATH)[2]);
-                    }
+        sendRequestsToClient(lwM2MClient, typeOper, clientObjects, result, params);
+    }
+
+    private void sendRequestsToClient(LwM2mClient lwM2MClient, LwM2mTypeOper operationType, Set<String> supportedObjectIds, Set<String> desiredObjectIds, ConcurrentHashMap<String, Object> params) {
+        if (desiredObjectIds != null && !desiredObjectIds.isEmpty()) {
+            Set<String> targetObjectIds = desiredObjectIds.stream().filter(target -> isSupportedTargetId(supportedObjectIds, target)
             ).collect(Collectors.toUnmodifiableSet());
-            if (!pathSend.isEmpty()) {
-                lwM2MClient.getPendingReadRequests().addAll(pathSend);
-                ConcurrentHashMap<String, Object> finalParams = params;
-                pathSend.forEach(target -> {
-                    lwM2mTransportRequest.sendAllRequest(lwM2MClient, target, typeOper,
-                            finalParams != null ? finalParams.get(target) : null, this.config.getTimeout(), null);
+            if (!targetObjectIds.isEmpty()) {
+                //TODO: remove this side effect?
+                lwM2MClient.getPendingReadRequests().addAll(targetObjectIds);
+                targetObjectIds.forEach(target -> {
+                    Object additionalParams = params != null ? params.get(target) : null;
+                    lwM2mTransportRequest.sendAllRequest(lwM2MClient, target, operationType, additionalParams, this.config.getTimeout(), null);
                 });
-                if (OBSERVE.equals(typeOper)) {
+                if (OBSERVE.equals(operationType)) {
                     lwM2MClient.initReadValue(this, null);
                 }
             }
         }
+    }
+
+    private boolean isSupportedTargetId(Set<String> supportedIds, String targetId) {
+        String[] targetIdParts = targetId.split(LWM2M_SEPARATOR_PATH);
+        if (targetIdParts.length <= 1) {
+            return false;
+        }
+        String targetIdSearch = targetIdParts[0];
+        for (int i = 1; i < targetIdParts.length; i++) {
+            targetIdSearch += "/" + targetIdParts[i];
+            if (supportedIds.contains(targetIdSearch)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private ConcurrentHashMap<String, Object> getPathForWriteAttributes(JsonObject objectJson) {
