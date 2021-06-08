@@ -639,13 +639,9 @@ transport:
     server:
       id: "${LWM2M_SERVER_ID:123}"
       bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
-      # the host to receive requests to the server
-      bind_address_requests: "${LWM2M_BIND_ADDRESS_REQUESTS:0.0.0.0}"
       bind_port: "${LWM2M_BIND_PORT:5685}"
       security:
         bind_address: "${LWM2M_BIND_ADDRESS_SECURITY:0.0.0.0}"
-        # the security host to receive requests to the server
-        bind_address_requests: "${LWM2M_BIND_ADDRESS_SECURITY_REQUESTS:0.0.0.0}"
         bind_port: "${LWM2M_BIND_PORT_SECURITY:5686}"
         # Only for RPK: Public & Private Key. If the keystore file is missing or not working
         public_x: "${LWM2M_SERVER_PUBLIC_X:05064b9e6762dd8d8b8a52355d7b4d8b9a3d64e6d2ee277d76c248861353f358}"
@@ -658,13 +654,9 @@ transport:
       enable: "${LWM2M_ENABLED_BS:true}"
       id: "${LWM2M_SERVER_ID_BS:111}"
       bind_address: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
-      # the host to receive requests to the server
-      bind_address_requests: "${LWM2M_BIND_ADDRESS_REQUESTS_BS:0.0.0.0}"
       bind_port: "${LWM2M_BIND_PORT_BS:5687}"
       security:
         bind_address: "${LWM2M_BIND_ADDRESS_SECURITY_BS:0.0.0.0}"
-        # the security host to receive requests to the server
-        bind_address_requests: "${LWM2M_BIND_ADDRESS_SECURITY_REQUESTS_BS:0.0.0.0}"
         bind_port: "${LWM2M_BIND_PORT_SECURITY_BS:5688}"
         #  Only for RPK: Public & Private Key. If the keystore file is missing or not working
         public_x: "${LWM2M_SERVER_PUBLIC_X_BS:5017c87a1c1768264656b3b355434b0def6edb8b9bf166a4762d9930cd730f91}"
@@ -683,8 +675,6 @@ transport:
       root_alias: "${LWM2M_SERVER_ROOT_CA:rootca}"
       enable_gen_new_key_psk_rpk: "${ENABLE_GEN_NEW_KEY_PSK_RPK:false}"
     timeout: "${LWM2M_TIMEOUT:120000}"
-    blockwise_lifetime: "${BLOCKWISE_LIFETIME:300000}"
-    block2_option_enable: "${BLOCK2_OPTION_ENABLED:true}"
     recommended_ciphers: "${LWM2M_RECOMMENDED_CIPHERS:false}"
     recommended_supported_groups: "${LWM2M_RECOMMENDED_SUPPORTED_GROUPS:true}"
     response_pool_size: "${LWM2M_RESPONSE_POOL_SIZE:100}"

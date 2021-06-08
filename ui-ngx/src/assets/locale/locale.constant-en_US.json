@@ -1255,10 +1255,16 @@
             "client-strategy-label": "Strategy",
             "client-strategy-connect": "{ count, plural, 1 {1: Only Observe Request to the client after the initial connection} other {2: Read All Resources & Observe Request to the client after registration} }",
             "client-strategy-tip": "{ count, plural, 1 {Strategy 1: After the initial connection of the LWM2M Client, the server sends Observe resources Request to the client, those resources that are marked as observation in the Device profile and which exist on the LWM2M client.} other {Strategy  2: After the registration, request the client to read all the resource values for all objects that the LWM2M client has,\n then execute:  the server sends Observe resources Request to the client, those resources that are marked as observation in the Device profile and which exist on the LWM2M client.} }",
+            "ota-update-strategy": "Ota update strategy",
             "fw-update-strategy-label": "Firmware update strategy",
             "fw-update-strategy": "{ count, plural, 1 {Push firmware update as binary file using Object 5 and Resource 0 (Package).} 2 {Auto-generate unique CoAP URL to download the package and push firmware update as Object 5 and Resource 1 (Package URI).} other {Push firmware update as binary file using Object 19 and Resource 0 (Data).} }",
             "sw-update-strategy-label": "Software update strategy",
             "sw-update-strategy": "{ count, plural, 1 {Push binary file using Object 9 and Resource 2 (Package).} other {Auto-generate unique CoAP URL to download the package and push software update using Object 9 and Resource 3 (Package URI).} }",
+            "blockwise-settings": "Blockwise settings",
+            "blockwise-enabled": "Enable blockwise",
+            "blockwise-status-lifetime": "Blockwise Status Lifetime",
+            "fw-update-recourse": "Firmware update Coap recourse",
+            "sw-update-recourse": "Software update Coap recourse",
             "config-json-tab": "Json Config Profile Device"
         }
     },

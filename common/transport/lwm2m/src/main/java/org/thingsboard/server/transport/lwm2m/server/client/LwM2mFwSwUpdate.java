@@ -43,6 +43,7 @@ import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.INIT
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATING;
 import static org.thingsboard.server.common.data.ota.OtaPackageUtil.getAttributeKey;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FIRMWARE_UPDATE_COAP_RECOURSE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_3_VER_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_5_VER_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_NAME_ID;
@@ -61,7 +62,6 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.L
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.EXECUTE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_REPLACE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.OTA_COAP_RESOURCE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_INSTALL_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_NAME_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_PACKAGE_ID;
@@ -193,9 +193,10 @@ public class LwM2mFwSwUpdate {
                         firmwareChunk, handler.config.getTimeout(), this.rpcRequest);
             } else if (LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL.code == this.updateStrategy) {
                 Registration registration = this.getLwM2MClient().getRegistration();
-                String api = handler.config.getHostRequests();
+//                String api = handler.config.getHostRequests();
+                String api = "0.0.0.0";
                 int port = registration.getIdentity().isSecure() ? handler.config.getSecurePort() : handler.config.getPort();
-                String uri = "coap://" + api + ":" + Integer.valueOf(port) + "/" + OTA_COAP_RESOURCE + "/" + this.currentId.toString();
+                String uri = "coap://" + api + ":" + Integer.valueOf(port) + "/" + FIRMWARE_UPDATE_COAP_RECOURSE + "/" + this.currentId.toString();
                 log.warn("89) coapUri: [{}]", uri);
                 request.sendAllRequest(this.lwM2MClient.getRegistration(), targetIdVer, WRITE_REPLACE, null,
                         uri, handler.config.getTimeout(), this.rpcRequest);

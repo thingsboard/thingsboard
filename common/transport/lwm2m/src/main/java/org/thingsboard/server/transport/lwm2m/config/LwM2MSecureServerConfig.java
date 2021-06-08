@@ -21,13 +21,9 @@ public interface LwM2MSecureServerConfig {
 
     String getHost();
 
-    String getHostRequests();
-
     Integer getPort();
 
     String getSecureHost();
-
-    String getSecureHostRequests();
 
     Integer getSecurePort();
 

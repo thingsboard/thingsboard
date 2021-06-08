@@ -45,14 +45,6 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     private Long timeout;
 
     @Getter
-    @Value("${transport.lwm2m.blockwise_lifetime:}")
-    private Long blockwiseLifetime;
-
-    @Getter
-    @Value("${transport.lwm2m.block2_option_enable:}")
-    private boolean block2OptionEnable;
-
-    @Getter
     @Value("${transport.sessions.report_timeout}")
     private long sessionReportTimeout;
 
@@ -121,20 +113,12 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     private String host;
 
     @Getter
-    @Value("${transport.lwm2m.server.bind_address_requests:}")
-    private String hostRequests;
-
-    @Getter
     @Value("${transport.lwm2m.server.bind_port:}")
     private Integer port;
 
     @Getter
     @Value("${transport.lwm2m.server.security.bind_address:}")
     private String secureHost;
-
-    @Getter
-    @Value("${transport.lwm2m.server.security.bind_address_requests:}")
-    private String secureHostRequests;
 
     @Getter
     @Value("${transport.lwm2m.server.security.bind_port:}")

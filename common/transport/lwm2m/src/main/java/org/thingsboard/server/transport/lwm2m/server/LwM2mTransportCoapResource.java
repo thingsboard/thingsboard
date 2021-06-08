@@ -30,7 +30,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.OTA_COAP_RESOURCE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FIRMWARE_UPDATE_COAP_RECOURSE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SOFTWARE_UPDATE_COAP_RECOURSE;
 
 @Slf4j
 public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
@@ -69,7 +70,8 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
     protected void processHandleGet(CoapExchange exchange) {
         log.warn("90) processHandleGet [{}]", exchange);
         if (exchange.getRequestOptions().getUriPath().size() == 2 &&
-                OTA_COAP_RESOURCE.equals(exchange.getRequestOptions().getUriPath().get(0))) {
+                (FIRMWARE_UPDATE_COAP_RECOURSE.equals(exchange.getRequestOptions().getUriPath().get(0)) ||
+                 SOFTWARE_UPDATE_COAP_RECOURSE.equals(exchange.getRequestOptions().getUriPath().get(0)))) {
             this.sentOtaData(exchange);
         }
     }
@@ -127,7 +129,7 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
         }
     }
 
-    private void sentOtaData (CoapExchange exchange) {
+    private void sentOtaData(CoapExchange exchange) {
         String idStr = exchange.getRequestOptions().getUriPath().get(1);
         UUID currentId = UUID.fromString(idStr);
         if (exchange.getRequestOptions().getBlock2() != null) {
