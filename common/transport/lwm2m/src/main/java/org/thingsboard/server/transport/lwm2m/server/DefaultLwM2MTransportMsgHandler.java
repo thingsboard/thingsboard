@@ -274,8 +274,8 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     private void removeClientCash(Registration registration) {
         SessionInfoProto sessionInfo = this.getSessionInfoOrCloseSession(registration);
         if (sessionInfo != null) {
-//            transportService.deregisterSession(sessionInfo);
-//            this.doCloseSession(sessionInfo);
+            transportService.deregisterSession(sessionInfo);
+            this.doCloseSession(sessionInfo);
             sessionStore.remove(registration.getEndpoint());
 
             clientContext.removeClientByRegistrationId(registration.getId());
@@ -1283,7 +1283,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         if (lwM2MClient != null) {
             SessionInfoProto sessionInfoProto = lwM2MClient.getSession();
             if (sessionInfoProto == null) {
-                log.info("[{}] [{}]", lwM2MClient.getEndpoint(), CLIENT_NOT_AUTHORIZED);
+                log.trace("[{}] [{}]", lwM2MClient.getEndpoint(), CLIENT_NOT_AUTHORIZED);
                 this.removeClientCash(lwM2MClient.getRegistration());
             }
             return sessionInfoProto;
@@ -1322,7 +1322,11 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     }
 
     private void reportActivity() {
-        clientContext.getLwM2mClients().forEach(client -> reportActivityAndRegister(client.getSession()));
+        clientContext.getLwM2mClients().forEach(client -> {
+                    log.warn("0_01) reportActivity clientEndpoint: [{}] session: [{}]", client.getEndpoint(), client.getSession());
+                    reportActivityAndRegister(client.getSession());
+                }
+        );
     }
 
     /**

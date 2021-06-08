@@ -196,6 +196,7 @@ public class LwM2mFwSwUpdate {
                 String api = handler.config.getHostRequests();
                 int port = registration.getIdentity().isSecure() ? handler.config.getSecurePort() : handler.config.getPort();
                 String uri = "coap://" + api + ":" + Integer.valueOf(port) + "/" + OTA_COAP_RESOURCE + "/" + this.currentId.toString();
+                log.warn("89) coapUri: [{}]", uri);
                 request.sendAllRequest(this.lwM2MClient.getRegistration(), targetIdVer, WRITE_REPLACE, null,
                         uri, handler.config.getTimeout(), this.rpcRequest);
             } else if (LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_19_BINARY.code == this.updateStrategy) {

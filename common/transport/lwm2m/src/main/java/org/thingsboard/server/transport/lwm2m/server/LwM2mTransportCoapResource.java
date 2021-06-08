@@ -135,11 +135,12 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
             int chunk = 0;
             Response response = new Response(CoAP.ResponseCode.CONTENT);
             byte[] fwData = this.getOtaData(currentId);
+            log.warn("91) read softWare data (length): [{}]", fwData.length);
             if (fwData != null && fwData.length > 0) {
                 response.setPayload(fwData);
                 boolean moreFlag = fwData.length > chunkSize;
                 response.getOptions().setBlock2(chunkSize, moreFlag, chunk);
-                log.warn("91) Send currentId: [{}], length: [{}], chunkSize [{}], moreFlag [{}]", currentId.toString(), fwData.length, chunkSize, moreFlag);
+                log.warn("92) Send currentId: [{}], length: [{}], chunkSize [{}], moreFlag [{}]", currentId.toString(), fwData.length, chunkSize, moreFlag);
                 exchange.respond(response);
             }
 
