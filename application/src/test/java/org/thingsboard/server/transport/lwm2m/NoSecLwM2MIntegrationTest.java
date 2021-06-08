@@ -22,6 +22,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredentials;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -36,7 +37,6 @@ import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
 import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredentials;
 
 import java.util.Collections;
 import java.util.List;
@@ -46,60 +46,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
-    protected final String TRANSPORT_CONFIGURATION = "{\n" +
-            "  \"type\": \"LWM2M\",\n" +
-            "  \"observeAttr\": {\n" +
-            "    \"keyName\": {\n" +
-            "      \"/3_1.0/0/9\": \"batteryLevel\"\n" +
-            "    },\n" +
-            "    \"observe\": [],\n" +
-            "    \"attribute\": [\n" +
-            "    ],\n" +
-            "    \"telemetry\": [\n" +
-            "      \"/3_1.0/0/9\"\n" +
-            "    ],\n" +
-            "    \"attributeLwm2m\": {}\n" +
-            "  },\n" +
-            "  \"bootstrap\": {\n" +
-            "    \"servers\": {\n" +
-            "      \"binding\": \"UQ\",\n" +
-            "      \"shortId\": 123,\n" +
-            "      \"lifetime\": 300,\n" +
-            "      \"notifIfDisabled\": true,\n" +
-            "      \"defaultMinPeriod\": 1\n" +
-            "    },\n" +
-            "    \"lwm2mServer\": {\n" +
-            "      \"host\": \"localhost\",\n" +
-            "      \"port\": 5685,\n" +
-            "      \"serverId\": 123,\n" +
-            "      \"securityMode\": \"NO_SEC\",\n" +
-            "      \"serverPublicKey\": \"\",\n" +
-            "      \"bootstrapServerIs\": false,\n" +
-            "      \"clientHoldOffTime\": 1,\n" +
-            "      \"bootstrapServerAccountTimeout\": 0\n" +
-            "    },\n" +
-            "    \"bootstrapServer\": {\n" +
-            "      \"host\": \"localhost\",\n" +
-            "      \"port\": 5687,\n" +
-            "      \"serverId\": 111,\n" +
-            "      \"securityMode\": \"NO_SEC\",\n" +
-            "      \"serverPublicKey\": \"\",\n" +
-            "      \"bootstrapServerIs\": true,\n" +
-            "      \"clientHoldOffTime\": 1,\n" +
-            "      \"bootstrapServerAccountTimeout\": 0\n" +
-            "    }\n" +
-            "  },\n" +
-            "  \"clientLwM2mSettings\": {\n" +
-            "    \"clientOnlyObserveAfterConnect\": 1\n" +
-            "  }\n" +
-            "}";
-
-    private final int port = 5685;
-    private final Security security = noSec("coap://localhost:" + port, 123);
-    private final NetworkConfig coapConfig = new NetworkConfig().setString("COAP_PORT", Integer.toString(port));
+    private final int PORT = 5685;
+    private final Security SECURITY = noSec("coap://localhost:" + PORT, 123);
+    private final NetworkConfig COAP_CONFIG = new NetworkConfig().setString("COAP_PORT", Integer.toString(PORT));
+    private final String ENDPOINT = "deviceAEndpoint";
 
     @NotNull
-    private Device createDevice(String deviceAEndpoint) throws Exception {
+    private Device createDevice() throws Exception {
         Device device = new Device();
         device.setName("Device A");
         device.setDeviceProfileId(deviceProfile.getId());
@@ -114,7 +67,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
         LwM2MCredentials noSecCredentials = new LwM2MCredentials();
         NoSecClientCredentials clientCredentials = new NoSecClientCredentials();
-        clientCredentials.setEndpoint(deviceAEndpoint);
+        clientCredentials.setEndpoint(ENDPOINT);
         noSecCredentials.setClient(clientCredentials);
         deviceCredentials.setCredentialsValue(JacksonUtil.toString(noSecCredentials));
         doPost("/api/device/credentials", deviceCredentials).andExpect(status().isOk());
@@ -125,9 +78,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
     public void testConnectAndObserveTelemetry() throws Exception {
         createDeviceProfile(TRANSPORT_CONFIGURATION);
 
-        String deviceAEndpoint = "deviceAEndpoint";
-
-        Device device = createDevice(deviceAEndpoint);
+        Device device = createDevice();
 
         SingleEntityFilter sef = new SingleEntityFilter();
         sef.setSingleEntity(device.getId());
@@ -144,8 +95,8 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
         wsClient.waitForReply();
 
         wsClient.registerWaitForUpdate();
-        LwM2MTestClient client = new LwM2MTestClient(executor, deviceAEndpoint);
-        client.init(security, coapConfig);
+        LwM2MTestClient client = new LwM2MTestClient(executor, ENDPOINT);
+        client.init(SECURITY, COAP_CONFIG);
         String msg = wsClient.waitForUpdate();
 
         EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
