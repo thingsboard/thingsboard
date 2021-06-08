@@ -116,21 +116,19 @@ public class LwM2mTransportRequest {
                 new NamedThreadFactory(String.format("LwM2M %s channel response after request", RESPONSE_REQUEST_CHANNEL)));
     }
 
-    /**
-     * Device management and service enablement, including Read, Write, Execute, Discover, Create, Delete and Write-Attributes
-     *
-     * @param registration      -
-     * @param targetIdVer       -
-     * @param typeOper          -
-     * @param contentFormatName -
-     */
+    public void sendAllRequest(LwM2mClient lwM2MClient, String targetIdVer, LwM2mTypeOper typeOper, Object params, long timeoutInMs, Lwm2mClientRpcRequest lwm2mClientRpcRequest) {
+        sendAllRequest(lwM2MClient, targetIdVer, typeOper, lwM2MClient.getDefaultContentFormat(), params, timeoutInMs, lwm2mClientRpcRequest);
+    }
 
-    public void sendAllRequest(Registration registration, String targetIdVer, LwM2mTypeOper typeOper,
-                               String contentFormatName, Object params, long timeoutInMs, Lwm2mClientRpcRequest lwm2mClientRpcRequest) {
-        LwM2mClient lwM2MClient = this.lwM2mClientContext.getClientByEndpoint(registration.getEndpoint());
+
+    public void sendAllRequest(LwM2mClient lwM2MClient, String targetIdVer, LwM2mTypeOper typeOper,
+                               ContentFormat contentFormat, Object params, long timeoutInMs, Lwm2mClientRpcRequest lwm2mClientRpcRequest) {
+        Registration registration = lwM2MClient.getRegistration();
         try {
             String target = convertPathFromIdVerToObjectId(targetIdVer);
-            ContentFormat contentFormat = contentFormatName != null ? ContentFormat.fromName(contentFormatName.toUpperCase()) : ContentFormat.DEFAULT;
+            if(contentFormat == null){
+                contentFormat = ContentFormat.DEFAULT;
+            }
             LwM2mPath resultIds = target != null ? new LwM2mPath(target) : null;
             if (!OBSERVE_CANCEL.name().equals(typeOper.name()) && resultIds != null && registration != null && resultIds.getObjectId() >= 0 && lwM2MClient != null) {
                 if (lwM2MClient.isValidObjectVersion(targetIdVer)) {

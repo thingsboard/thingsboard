@@ -169,7 +169,7 @@ public class LwM2mFwSwUpdate {
                     LwM2mTransportUtil.LwM2mTypeOper.FW_UPDATE.name(),  FW_PACKAGE_ID);
             handler.sendLogsToThingsboard(lwM2MClient, fwMsg);
             log.warn("8) Start firmware Update. Send save to: [{}] ver: [{}] path: [{}]", this.lwM2MClient.getDeviceName(), this.currentVersion, targetIdVer);
-            request.sendAllRequest(this.lwM2MClient.getRegistration(), targetIdVer, WRITE_REPLACE, ContentFormat.OPAQUE.getName(),
+            request.sendAllRequest(this.lwM2MClient, targetIdVer, WRITE_REPLACE, ContentFormat.OPAQUE,
                     firmwareChunk, handler.config.getTimeout(), this.rpcRequest);
         }
         else {
@@ -202,8 +202,7 @@ public class LwM2mFwSwUpdate {
     public void executeFwSwWare(DefaultLwM2MTransportMsgHandler handler, LwM2mTransportRequest request) {
         this.setStateUpdate(UPDATING.name());
         this.sendLogs(handler, EXECUTE.name(), LOG_LW2M_INFO, null);
-        request.sendAllRequest(this.lwM2MClient.getRegistration(), this.pathInstallId, EXECUTE, ContentFormat.TLV.getName(),
-                null, 0, this.rpcRequest);
+        request.sendAllRequest(this.lwM2MClient, this.pathInstallId, EXECUTE, null, 0, this.rpcRequest);
     }
 
     /**
@@ -334,10 +333,10 @@ public class LwM2mFwSwUpdate {
     }
 
     private void observeStateUpdate(DefaultLwM2MTransportMsgHandler handler, LwM2mTransportRequest request) {
-        request.sendAllRequest(lwM2MClient.getRegistration(),
+        request.sendAllRequest(lwM2MClient,
                 convertPathFromObjectIdToIdVer(this.pathStateId, this.lwM2MClient.getRegistration()), OBSERVE,
                 null, null, 0, null);
-        request.sendAllRequest(lwM2MClient.getRegistration(),
+        request.sendAllRequest(lwM2MClient,
                 convertPathFromObjectIdToIdVer(this.pathResultId, this.lwM2MClient.getRegistration()), OBSERVE,
                 null, null, 0, null);
     }
@@ -364,8 +363,7 @@ public class LwM2mFwSwUpdate {
         this.pendingInfoRequestsStart.add(convertPathFromObjectIdToIdVer(
                 this.pathResultId, this.lwM2MClient.getRegistration()));
         this.pendingInfoRequestsStart.forEach(pathIdVer -> {
-            request.sendAllRequest(this.lwM2MClient.getRegistration(), pathIdVer, OBSERVE, ContentFormat.TLV.getName(),
-                    null, 0, this.rpcRequest);
+            request.sendAllRequest(this.lwM2MClient, pathIdVer, OBSERVE, null, 0, this.rpcRequest);
         });
 
     }

@@ -58,15 +58,13 @@ public interface LwM2mTransportMsgHandler {
 
     void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse);
 
-    void doTrigger(Registration registration, String path);
-
     void doDisconnect(TransportProtos.SessionInfoProto sessionInfo);
 
     void onAwakeDev(Registration registration);
 
     void sendLogsToThingsboard(LwM2mClient client, String msg);
 
-    void sendLogsToThingsboard2(String registrationId, String msg);
+    void sendLogsToThingsboard(String registrationId, String msg);
 
     LwM2MTransportServerConfig getConfig();
 }

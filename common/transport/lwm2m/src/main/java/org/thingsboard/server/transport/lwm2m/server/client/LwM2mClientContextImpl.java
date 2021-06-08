@@ -205,19 +205,13 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         }
     }
 
-    /**
-     * if isVer - ok or default ver=DEFAULT_LWM2M_VERSION
-     *
-     * @param registration -
-     * @return - all objectIdVer in client
-     */
     @Override
-    public Set<String> getSupportedIdVerInClient(Registration registration) {
+    public Set<String> getSupportedIdVerInClient(LwM2mClient client) {
         Set<String> clientObjects = ConcurrentHashMap.newKeySet();
-        Arrays.stream(registration.getObjectLinks()).forEach(url -> {
-            LwM2mPath pathIds = new LwM2mPath(url.getUrl());
+        Arrays.stream(client.getRegistration().getObjectLinks()).forEach(link -> {
+            LwM2mPath pathIds = new LwM2mPath(link.getUrl());
             if (!pathIds.isRoot()) {
-                clientObjects.add(convertPathFromObjectIdToIdVer(url.getUrl(), registration));
+                clientObjects.add(convertPathFromObjectIdToIdVer(link.getUrl(), client.getRegistration()));
             }
         });
         return (clientObjects.size() > 0) ? clientObjects : null;

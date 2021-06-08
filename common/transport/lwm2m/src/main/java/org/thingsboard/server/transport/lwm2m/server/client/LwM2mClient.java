@@ -26,6 +26,7 @@ import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
+import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.SecurityInfo;
@@ -69,7 +70,8 @@ public class LwM2mClient implements Cloneable {
     @Getter
     private final String endpoint;
     private final Lock lock;
-    @Getter @Setter
+    @Getter
+    @Setter
     private LwM2MClientState state;
     @Getter
     private final Map<String, ResourceValue> resources;
@@ -385,5 +387,14 @@ public class LwM2mClient implements Cloneable {
         }
     }
 
+    public ContentFormat getDefaultContentFormat() {
+        if (registration == null) {
+            return ContentFormat.DEFAULT;
+        } else if (registration.getLwM2mVersion().equals("1.0")) {
+            return ContentFormat.TLV;
+        } else {
+            return ContentFormat.TEXT;
+        }
+    }
 }
 
