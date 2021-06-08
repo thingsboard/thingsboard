@@ -477,7 +477,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                         lwM2mTransportRequest.sendAllRequest(registration, lwm2mClientRpcRequest.getTargetIdVer(), lwm2mClientRpcRequest.getTypeOper(),
                                 null,
                                 lwm2mClientRpcRequest.getValue() == null ? lwm2mClientRpcRequest.getParams() : lwm2mClientRpcRequest.getValue(),
-                                this.config.getBlockwiseLifetime(), lwm2mClientRpcRequest);
+                                0, lwm2mClientRpcRequest);
                     }
                 } else {
                     this.sentErrorRpcResponse(lwm2mClientRpcRequest, "registration == null", sessionInfo);
