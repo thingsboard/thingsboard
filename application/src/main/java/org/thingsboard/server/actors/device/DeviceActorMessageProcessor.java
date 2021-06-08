@@ -341,10 +341,10 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<List<List<AttributeKvEntry>>> getAttributesKvEntries(GetAttributeRequestMsg request, boolean sharedStateMsg) {
+    private ListenableFuture<List<List<AttributeKvEntry>>> getAttributesKvEntries(GetAttributeRequestMsg request, boolean getAllShared) {
         ListenableFuture<List<AttributeKvEntry>> clientAttributesFuture;
         ListenableFuture<List<AttributeKvEntry>> sharedAttributesFuture;
-        if (sharedStateMsg) {
+        if (getAllShared) {
             clientAttributesFuture = Futures.immediateFuture(Collections.emptyList());
             sharedAttributesFuture = findAllAttributesByScope(DataConstants.SHARED_SCOPE);
         } else {
@@ -353,7 +353,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 clientAttributesFuture = findAllAttributesByScope(DataConstants.CLIENT_SCOPE);
                 sharedAttributesFuture = findAllAttributesByScope(DataConstants.SHARED_SCOPE);
             } else {
-                boolean getAllClient = request.getAllClient() && !request.getAllShared();
+                boolean getAllClient = request.getAllClient();
                 if (getAllClient) {
                     clientAttributesFuture = findAllAttributesByScope(DataConstants.CLIENT_SCOPE);
                     sharedAttributesFuture = Futures.immediateFuture(Collections.emptyList());
