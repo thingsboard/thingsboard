@@ -80,6 +80,11 @@ export const OtaUpdateTranslation = new Map<OtaUpdateType, OtaUpdateTranslation>
   ]
 );
 
+export interface OtaPagesIds {
+  firmwareId?: OtaPackageId;
+  softwareId?: OtaPackageId;
+}
+
 export interface OtaPackageInfo extends BaseData<OtaPackageId> {
   tenantId?: TenantId;
   type: OtaUpdateType;
