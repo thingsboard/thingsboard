@@ -1,5 +1,5 @@
 {
-  "title": "Firmware",
+  "title": "Software",
   "image": null,
   "configuration": {
     "description": "",
@@ -61,9 +61,9 @@
               "filterId": "8fdb88d0-50ac-2232-fdb7-69c30c16544e",
               "dataKeys": [
                 {
-                  "name": "current_fw_title",
+                  "name": "current_sw_title",
                   "type": "timeseries",
-                  "label": "Current FW title",
+                  "label": "Current SW title",
                   "color": "#2196f3",
                   "settings": {
                     "columnWidth": "0px",
@@ -81,9 +81,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "current_fw_version",
+                  "name": "current_sw_version",
                   "type": "timeseries",
-                  "label": "Current FW version",
+                  "label": "Current SW version",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -101,9 +101,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "target_fw_title",
+                  "name": "target_sw_title",
                   "type": "timeseries",
-                  "label": "Target FW title",
+                  "label": "Target SW title",
                   "color": "#ffc107",
                   "settings": {
                     "columnWidth": "0px",
@@ -121,9 +121,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "target_fw_version",
+                  "name": "target_sw_version",
                   "type": "timeseries",
-                  "label": "Target FW version",
+                  "label": "Target SW version",
                   "color": "#607d8b",
                   "settings": {
                     "columnWidth": "0px",
@@ -142,9 +142,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "target_fw_ts",
+                  "name": "target_sw_ts",
                   "type": "timeseries",
-                  "label": "Target FW set time",
+                  "label": "Target SW set time",
                   "color": "#e91e63",
                   "settings": {
                     "columnWidth": "0px",
@@ -163,7 +163,7 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "fw_state",
+                  "name": "sw_state",
                   "type": "timeseries",
                   "label": "Progress",
                   "color": "#9c27b0",
@@ -184,7 +184,7 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "fw_state",
+                  "name": "sw_state",
                   "type": "timeseries",
                   "label": "Status",
                   "color": "#f44336",
@@ -205,9 +205,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "fw_checksum",
+                  "name": "sw_checksum",
                   "type": "attribute",
-                  "label": "fw_checksum",
+                  "label": "sw_checksum",
                   "color": "#3f51b5",
                   "settings": {
                     "columnWidth": "0px",
@@ -225,9 +225,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "fw_url",
+                  "name": "sw_url",
                   "type": "attribute",
-                  "label": "fw_url",
+                  "label": "sw_url",
                   "color": "#e91e63",
                   "settings": {
                     "columnWidth": "0px",
@@ -238,7 +238,7 @@
                     "defaultColumnVisibility": "hidden",
                     "columnSelectionToDisplay": "disabled"
                   },
-                  "_hash": 0.4204673738685043,
+                  "_hash": 0.3355829384124256,
                   "units": null,
                   "decimals": null,
                   "funcBody": null,
@@ -251,10 +251,10 @@
           "actions": {
             "actionCellButton": [
               {
-                "name": "History firmware update",
+                "name": "History software update",
                 "icon": "history",
                 "type": "openDashboardState",
-                "targetDashboardStateId": "device_firmware_history",
+                "targetDashboardStateId": "device_software_history",
                 "setEntityId": true,
                 "stateEntityParamName": null,
                 "openInSeparateDialog": false,
@@ -266,27 +266,27 @@
                 "id": "98a1406c-3301-bc2f-2c5d-d637ce3b663b"
               },
               {
-                "name": "Edit firmware",
+                "name": "Edit software",
                 "icon": "edit",
                 "type": "customPretty",
-                "customHtml": "<form #editEntityForm=\"ngForm\" [formGroup]=\"editEntityFormGroup\"\n      (ngSubmit)=\"save()\"  class=\"edit-entity-form\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Edit firmware {{entityName}}</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div *ngIf=\"entity.deviceProfileId\" mat-dialog-content fxLayout=\"column\">\n        <tb-ota-package-autocomplete\n            [useFullEntityId]=\"true\"\n            [deviceProfileId]=\"entity.deviceProfileId.id\"\n            formControlName=\"firmwareId\">\n        </tb-ota-package-autocomplete>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n        <button mat-button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty\">\n            Save\n        </button>\n    </div>\n</form>",
+                "customHtml": "<form #editEntityForm=\"ngForm\" [formGroup]=\"editEntityFormGroup\"\n      (ngSubmit)=\"save()\"  class=\"edit-entity-form\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Edit software {{entityName}}</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div *ngIf=\"entity.deviceProfileId\" mat-dialog-content fxLayout=\"column\">\n        <tb-ota-package-autocomplete\n            [useFullEntityId]=\"true\"\n            type=\"SOFTWARE\"\n            [deviceProfileId]=\"entity.deviceProfileId.id\"\n            formControlName=\"softwareId\">\n        </tb-ota-package-autocomplete>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n        <button mat-button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty\">\n            Save\n        </button>\n    </div>\n</form>",
                 "customCss": "form {\n    min-width: 300px !important;\n}",
-                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\n}\n\nfunction EditEntityDialogController(instance) {\n    let vm = instance;\n\n    vm.entityName = entityName;\n    vm.entity = {};\n\n    vm.editEntityFormGroup = vm.fb.group({\n        firmwareId: [null]\n    });\n\n    getEntityInfo();\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n\n    vm.save = function() {\n        vm.editEntityFormGroup.markAsPristine();\n        saveEntity().subscribe(\n            function () {\n                // widgetContext.updateAliases();\n                vm.dialogRef.close(null);\n            }\n        );\n    };\n\n\n    function getEntityInfo() {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                vm.entity = data;\n                vm.editEntityFormGroup.patchValue({\n                    firmwareId: vm.entity.firmwareId\n                }, {emitEvent: false});\n            }\n        );\n    }\n\n    function saveEntity() {\n        const formValues = vm.editEntityFormGroup.value;\n        vm.entity.firmwareId = formValues.firmwareId;\n        return deviceService.saveDevice(vm.entity);\n    }\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\n}\n\nfunction EditEntityDialogController(instance) {\n    let vm = instance;\n\n    vm.entityName = entityName;\n    vm.entity = {};\n\n    vm.editEntityFormGroup = vm.fb.group({\n        softwareId: [null]\n    });\n\n    getEntityInfo();\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n\n    vm.save = function() {\n        vm.editEntityFormGroup.markAsPristine();\n        saveEntity().subscribe(\n            function () {\n                // widgetContext.updateAliases();\n                vm.dialogRef.close(null);\n            }\n        );\n    };\n\n\n    function getEntityInfo() {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                vm.entity = data;\n                vm.editEntityFormGroup.patchValue({\n                    softwareId: vm.entity.softwareId\n                }, {emitEvent: false});\n            }\n        );\n    }\n\n    function saveEntity() {\n        const formValues = vm.editEntityFormGroup.value;\n        vm.entity.softwareId = formValues.softwareId;\n        return deviceService.saveDevice(vm.entity);\n    }\n}",
                 "customResources": [],
                 "id": "23099c1d-454b-25dc-8bc0-7cf33c21c5d5"
               },
               {
-                "name": "Download firmware",
+                "name": "Download software",
                 "icon": "file_download",
                 "type": "custom",
-                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceFirmware();\n\nfunction getDeviceFirmware() {\n    var entityIdValue = entityId.id;\n    var data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url === '') {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                if (data.firmwareId !== null) {\n                    otaPackageService.downloadOtaPackage(data.firmwareId.id).subscribe();    \n                } else {\n                    deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                        function (deviceProfile) {\n                            if (deviceProfile.firmwareId !== null) {\n                                otaPackageService.downloadOtaPackage(deviceProfile.firmwareId.id).subscribe();\n                            } else {\n                                widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n                            }\n                    });\n                }\n            }\n        );\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceSoftware();\n\nfunction getDeviceSoftware() {\n    var entityIdValue = entityId.id;\n    var data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'sw_url');\n    var url = data.data[0][1];\n    if (url === '') {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                if (data.softwareId !== null) {\n                    otaPackageService.downloadOtaPackage(data.softwareId.id).subscribe();    \n                } else {\n                    deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                        function (deviceProfile) {\n                            if (deviceProfile.softwareId !== null) {\n                                otaPackageService.downloadOtaPackage(deviceProfile.softwareId.id).subscribe();\n                            } else {\n                                widgetContext.showToast('warn', 'Device ' + entityName +' has not software set.', 2000, 'top');\n                            }\n                    });\n                }\n            }\n        );\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not software set.', 2000, 'top');\n    }\n}",
                 "id": "12533058-42f6-e75f-620c-219c48d01ec0"
               },
               {
                 "name": "Copy checksum/URL",
                 "icon": "content_copy",
                 "type": "custom",
-                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_checksum');\nvar checksum = data.data[0][1];\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Firmware checksum has been copied to clipboard', 2000, 'top');\n} else {\n    data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url !== '') {\n        copyToClipboard(url);\n        widgetContext.showSuccessToast('Firmware direct URL has been copied to clipboard', 2000, 'top');\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
+                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'sw_checksum');\nvar checksum = data.data[0][1];\nconsole.log(checksum);\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Software checksum has been copied to clipboard', 2000, 'top');\n} else {\n    data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'sw_url');\n    var url = data.data[0][1];\n    if (url !== '') {\n        copyToClipboard(url);\n        widgetContext.showSuccessToast('Software direct URL has been copied to clipboard', 2000, 'top');\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not software set.', 2000, 'top');\n    }\n}",
                 "id": "09323079-7111-87f7-90d1-c62cd7d85dc7"
               }
             ]
@@ -320,9 +320,9 @@
               "filterId": null,
               "dataKeys": [
                 {
-                  "name": "current_fw_title",
+                  "name": "current_sw_title",
                   "type": "timeseries",
-                  "label": "Current firmware title",
+                  "label": "Current software title",
                   "color": "#2196f3",
                   "settings": {
                     "useCellStyleFunction": false,
@@ -338,9 +338,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "current_fw_version",
+                  "name": "current_sw_version",
                   "type": "timeseries",
-                  "label": "Current firmware version",
+                  "label": "Current software version",
                   "color": "#4caf50",
                   "settings": {
                     "useCellStyleFunction": false,
@@ -356,9 +356,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "target_fw_title",
+                  "name": "target_sw_title",
                   "type": "timeseries",
-                  "label": "Target firmware title",
+                  "label": "Target software title",
                   "color": "#f44336",
                   "settings": {
                     "useCellStyleFunction": false,
@@ -374,9 +374,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "target_fw_version",
+                  "name": "target_sw_version",
                   "type": "timeseries",
-                  "label": "Target firmware version",
+                  "label": "Target software version",
                   "color": "#ffc107",
                   "settings": {
                     "useCellStyleFunction": false,
@@ -392,7 +392,7 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "fw_state",
+                  "name": "sw_state",
                   "type": "timeseries",
                   "label": "Status",
                   "color": "#607d8b",
@@ -441,7 +441,7 @@
             "enableStickyHeader": true,
             "enableStickyAction": true
           },
-          "title": "Firmware history",
+          "title": "Software history",
           "dropShadow": false,
           "enableFullscreen": false,
           "titleStyle": {
@@ -757,7 +757,7 @@
           "color": "rgba(0, 0, 0, 0.87)",
           "padding": "0px",
           "settings": {
-            "cardHtml": "<div class='card' id=\"activeDevices\">\n    <div class='content' id=\"activeDevices\">\n        <div class=\"container-svg\" id=\"activeDevices\">\n            <svg viewBox=\"0 0 24 24\" id=\"activeDevices\">\n                <path id=\"activeDevices\" fill=\"currentColor\" d=\"M13 14H11V9H13M13 18H11V16H13M1 21H23L12 2L1 21Z\" />\n            </svg>\n        </div>\n        <div class='value error_firmware_failed_count' id=\"activeDevices\">\n            ${updatingDevicesNumber:0}\n        </div> \n        <script type=\"text/javascript\">\n            function init() {\n                var counter = $('.error_firmware_failed_count');\n                var value = +counter.text();\n                if(value) {\n                    counter.css('color', '#D93025');\n                }\n            };\n            init();\n        </script>\n        <div class='description' id=\"activeDevices\">\n            Device Failed\n        </div>\n    </div>\n</div>",
+            "cardHtml": "<div class='card' id=\"activeDevices\">\n    <div class='content' id=\"activeDevices\">\n        <div class=\"container-svg\" id=\"activeDevices\">\n            <svg viewBox=\"0 0 24 24\" id=\"activeDevices\">\n                <path id=\"activeDevices\" fill=\"currentColor\" d=\"M13 14H11V9H13M13 18H11V16H13M1 21H23L12 2L1 21Z\" />\n            </svg>\n        </div>\n        <div class='value error_software_failed_count' id=\"activeDevices\">\n            ${updatingDevicesNumber:0}\n        </div> \n        <script type=\"text/javascript\">\n            function init() {\n                var counter = $('.error_software_failed_count');\n                var value = +counter.text();\n                if(value) {\n                    counter.css('color', '#D93025');\n                }\n            };\n            init();\n        </script>\n        <div class='description' id=\"activeDevices\">\n            Device Failed\n        </div>\n    </div>\n</div>",
             "cardCss": ".card {\n   width: 100%;\n   height: 100%;\n   border: 1px solid #E0E0E0;\n   box-sizing: border-box;\n}\n\n.card .content {\n   padding: 20px 10px;\n   display: flex;\n   flex-direction: column;\n   align-items: center;\n   justify-content: center;\n   height: 100%;\n   box-sizing: border-box;\n}\n\n.card .container-svg {\n    height: 40px;\n    width: 40px;\n}\n\n.card .value {\n    margin: 18px 0 5px;\n    font-weight: 500;\n    font-size: 3em;\n    line-height: 1.1em;\n    text-align: center;\n    letter-spacing: -0.02em;\n    color: #333333;\n}\n\n.card .description {\n    font-size: 1em;\n    line-height: 1.1em;\n    color: #000000;\n    opacity: 0.6;\n    text-align: center;\n    letter-spacing: -0.02em;\n}\n\n@media (min-width: 960px) and (max-width: 1200px) {\n    .card .container-svg {\n        height: 28px;\n        width: 28px;\n    }\n    \n    .card .value {\n        margin: 12px 0 5px;\n        font-size: 2em;\n        line-height: 1;\n    }\n    \n    .card .description {\n        font-size: 0.8em;\n        line-height: 1;\n    }\n}"
           },
           "title": "New HTML Value Card",
@@ -856,9 +856,9 @@
               "filterId": "19a0ad1c-b31d-4a29-9d7b-5d87e2a8ea6e",
               "dataKeys": [
                 {
-                  "name": "current_fw_title",
+                  "name": "current_sw_title",
                   "type": "timeseries",
-                  "label": "Current FW title",
+                  "label": "Current SW title",
                   "color": "#2196f3",
                   "settings": {
                     "columnWidth": "0px",
@@ -876,9 +876,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "current_fw_version",
+                  "name": "current_sw_version",
                   "type": "timeseries",
-                  "label": "Current FW version",
+                  "label": "Current SW version",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -896,9 +896,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "target_fw_title",
+                  "name": "target_sw_title",
                   "type": "timeseries",
-                  "label": "Target FW title",
+                  "label": "Target SW title",
                   "color": "#ffc107",
                   "settings": {
                     "columnWidth": "0px",
@@ -916,9 +916,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "target_fw_version",
+                  "name": "target_sw_version",
                   "type": "timeseries",
-                  "label": "Target FW version",
+                  "label": "Target SW version",
                   "color": "#607d8b",
                   "settings": {
                     "columnWidth": "0px",
@@ -937,9 +937,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "target_fw_ts",
+                  "name": "target_sw_ts",
                   "type": "timeseries",
-                  "label": "Target FW set time",
+                  "label": "Target SW set time",
                   "color": "#e91e63",
                   "settings": {
                     "columnWidth": "0px",
@@ -958,7 +958,7 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "fw_state",
+                  "name": "sw_state",
                   "type": "timeseries",
                   "label": "Progress",
                   "color": "#9c27b0",
@@ -979,7 +979,7 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "fw_state",
+                  "name": "sw_state",
                   "type": "timeseries",
                   "label": "Status",
                   "color": "#f44336",
@@ -1000,9 +1000,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "fw_checksum",
+                  "name": "sw_checksum",
                   "type": "attribute",
-                  "label": "fw_checksum",
+                  "label": "sw_checksum",
                   "color": "#3f51b5",
                   "settings": {
                     "columnWidth": "0px",
@@ -1020,9 +1020,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "fw_url",
+                  "name": "sw_url",
                   "type": "attribute",
-                  "label": "fw_url",
+                  "label": "sw_url",
                   "color": "#e91e63",
                   "settings": {
                     "columnWidth": "0px",
@@ -1033,7 +1033,7 @@
                     "defaultColumnVisibility": "hidden",
                     "columnSelectionToDisplay": "disabled"
                   },
-                  "_hash": 0.4204673738685043,
+                  "_hash": 0.3355829384124256,
                   "units": null,
                   "decimals": null,
                   "funcBody": null,
@@ -1046,10 +1046,10 @@
           "actions": {
             "actionCellButton": [
               {
-                "name": "History firmware update",
+                "name": "History software update",
                 "icon": "history",
                 "type": "openDashboardState",
-                "targetDashboardStateId": "device_firmware_history",
+                "targetDashboardStateId": "device_software_history",
                 "setEntityId": true,
                 "stateEntityParamName": null,
                 "openInSeparateDialog": false,
@@ -1061,27 +1061,27 @@
                 "id": "98a1406c-3301-bc2f-2c5d-d637ce3b663b"
               },
               {
-                "name": "Edit firmware",
+                "name": "Edit software",
                 "icon": "edit",
                 "type": "customPretty",
-                "customHtml": "<form #editEntityForm=\"ngForm\" [formGroup]=\"editEntityFormGroup\"\n      (ngSubmit)=\"save()\"  class=\"edit-entity-form\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Edit firmware {{entityName}}</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div *ngIf=\"entity.deviceProfileId\" mat-dialog-content fxLayout=\"column\">\n        <tb-ota-package-autocomplete\n            [useFullEntityId]=\"true\"\n            [deviceProfileId]=\"entity.deviceProfileId.id\"\n            formControlName=\"firmwareId\">\n        </tb-ota-package-autocomplete>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n        <button mat-button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty\">\n            Save\n        </button>\n    </div>\n</form>",
+                "customHtml": "<form #editEntityForm=\"ngForm\" [formGroup]=\"editEntityFormGroup\"\n      (ngSubmit)=\"save()\"  class=\"edit-entity-form\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Edit software {{entityName}}</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div *ngIf=\"entity.deviceProfileId\" mat-dialog-content fxLayout=\"column\">\n        <tb-ota-package-autocomplete\n            [useFullEntityId]=\"true\"\n            type=\"SOFTWARE\"\n            [deviceProfileId]=\"entity.deviceProfileId.id\"\n            formControlName=\"softwareId\">\n        </tb-ota-package-autocomplete>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n        <button mat-button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty\">\n            Save\n        </button>\n    </div>\n</form>",
                 "customCss": "form {\n    min-width: 300px !important;\n}",
-                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\n}\n\nfunction EditEntityDialogController(instance) {\n    let vm = instance;\n\n    vm.entityName = entityName;\n    vm.entity = {};\n\n    vm.editEntityFormGroup = vm.fb.group({\n        firmwareId: [null]\n    });\n\n    getEntityInfo();\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n\n    vm.save = function() {\n        vm.editEntityFormGroup.markAsPristine();\n        saveEntity().subscribe(\n            function () {\n                // widgetContext.updateAliases();\n                vm.dialogRef.close(null);\n            }\n        );\n    };\n\n\n    function getEntityInfo() {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                vm.entity = data;\n                vm.editEntityFormGroup.patchValue({\n                    firmwareId: vm.entity.firmwareId\n                }, {emitEvent: false});\n            }\n        );\n    }\n\n    function saveEntity() {\n        const formValues = vm.editEntityFormGroup.value;\n        vm.entity.firmwareId = formValues.firmwareId;\n        return deviceService.saveDevice(vm.entity);\n    }\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\n}\n\nfunction EditEntityDialogController(instance) {\n    let vm = instance;\n\n    vm.entityName = entityName;\n    vm.entity = {};\n\n    vm.editEntityFormGroup = vm.fb.group({\n        softwareId: [null]\n    });\n\n    getEntityInfo();\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n\n    vm.save = function() {\n        vm.editEntityFormGroup.markAsPristine();\n        saveEntity().subscribe(\n            function () {\n                // widgetContext.updateAliases();\n                vm.dialogRef.close(null);\n            }\n        );\n    };\n\n\n    function getEntityInfo() {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                vm.entity = data;\n                vm.editEntityFormGroup.patchValue({\n                    softwareId: vm.entity.softwareId\n                }, {emitEvent: false});\n            }\n        );\n    }\n\n    function saveEntity() {\n        const formValues = vm.editEntityFormGroup.value;\n        vm.entity.softwareId = formValues.softwareId;\n        return deviceService.saveDevice(vm.entity);\n    }\n}",
                 "customResources": [],
                 "id": "23099c1d-454b-25dc-8bc0-7cf33c21c5d5"
               },
               {
-                "name": "Download firmware",
+                "name": "Download software",
                 "icon": "file_download",
                 "type": "custom",
-                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceFirmware();\n\nfunction getDeviceFirmware() {\n    var entityIdValue = entityId.id;\n    var data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url === '') {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                if (data.firmwareId !== null) {\n                    otaPackageService.downloadOtaPackage(data.firmwareId.id).subscribe();    \n                } else {\n                    deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                        function (deviceProfile) {\n                            if (deviceProfile.firmwareId !== null) {\n                                otaPackageService.downloadOtaPackage(deviceProfile.firmwareId.id).subscribe();\n                            } else {\n                                widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n                            }\n                    });\n                }\n            }\n        );\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceSoftware();\n\nfunction getDeviceSoftware() {\n    var entityIdValue = entityId.id;\n    var data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'sw_url');\n    var url = data.data[0][1];\n    if (url === '') {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                if (data.softwareId !== null) {\n                    otaPackageService.downloadOtaPackage(data.softwareId.id).subscribe();    \n                } else {\n                    deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                        function (deviceProfile) {\n                            if (deviceProfile.softwareId !== null) {\n                                otaPackageService.downloadOtaPackage(deviceProfile.softwareId.id).subscribe();\n                            } else {\n                                widgetContext.showToast('warn', 'Device ' + entityName +' has not software set.', 2000, 'top');\n                            }\n                    });\n                }\n            }\n        );\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not software set.', 2000, 'top');\n    }\n}",
                 "id": "12533058-42f6-e75f-620c-219c48d01ec0"
               },
               {
                 "name": "Copy checksum/URL",
                 "icon": "content_copy",
                 "type": "custom",
-                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_checksum');\nvar checksum = data.data[0][1];\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Firmware checksum has been copied to clipboard', 2000, 'top');\n} else {\n    data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url !== '') {\n        copyToClipboard(url);\n        widgetContext.showSuccessToast('Firmware direct URL has been copied to clipboard', 2000, 'top');\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
+                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'sw_checksum');\nvar checksum = data.data[0][1];\nconsole.log(checksum);\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Software checksum has been copied to clipboard', 2000, 'top');\n} else {\n    data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'sw_url');\n    var url = data.data[0][1];\n    if (url !== '') {\n        copyToClipboard(url);\n        widgetContext.showSuccessToast('Software direct URL has been copied to clipboard', 2000, 'top');\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not software set.', 2000, 'top');\n    }\n}",
                 "id": "09323079-7111-87f7-90d1-c62cd7d85dc7"
               }
             ]
@@ -1153,9 +1153,9 @@
               "filterId": "579f0468-9ce9-7e3e-b34c-88dd3de59897",
               "dataKeys": [
                 {
-                  "name": "current_fw_title",
+                  "name": "current_sw_title",
                   "type": "timeseries",
-                  "label": "Current FW title",
+                  "label": "Current SW title",
                   "color": "#2196f3",
                   "settings": {
                     "columnWidth": "0px",
@@ -1173,9 +1173,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "current_fw_version",
+                  "name": "current_sw_version",
                   "type": "timeseries",
-                  "label": "Current FW version",
+                  "label": "Current SW version",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -1193,9 +1193,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "target_fw_title",
+                  "name": "target_sw_title",
                   "type": "timeseries",
-                  "label": "Target FW title",
+                  "label": "Target SW title",
                   "color": "#ffc107",
                   "settings": {
                     "columnWidth": "0px",
@@ -1213,9 +1213,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "target_fw_version",
+                  "name": "target_sw_version",
                   "type": "timeseries",
-                  "label": "Target FW version",
+                  "label": "Target SW version",
                   "color": "#607d8b",
                   "settings": {
                     "columnWidth": "0px",
@@ -1234,9 +1234,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "target_fw_ts",
+                  "name": "target_sw_ts",
                   "type": "timeseries",
-                  "label": "Target FW set time",
+                  "label": "Target SW set time",
                   "color": "#e91e63",
                   "settings": {
                     "columnWidth": "0px",
@@ -1255,7 +1255,7 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "fw_state",
+                  "name": "sw_state",
                   "type": "timeseries",
                   "label": "Progress",
                   "color": "#9c27b0",
@@ -1276,7 +1276,7 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "fw_state",
+                  "name": "sw_state",
                   "type": "timeseries",
                   "label": "Status",
                   "color": "#f44336",
@@ -1297,9 +1297,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "fw_checksum",
+                  "name": "sw_checksum",
                   "type": "attribute",
-                  "label": "fw_checksum",
+                  "label": "sw_checksum",
                   "color": "#3f51b5",
                   "settings": {
                     "columnWidth": "0px",
@@ -1317,9 +1317,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "fw_url",
+                  "name": "sw_url",
                   "type": "attribute",
-                  "label": "fw_url",
+                  "label": "sw_url",
                   "color": "#e91e63",
                   "settings": {
                     "columnWidth": "0px",
@@ -1330,7 +1330,7 @@
                     "defaultColumnVisibility": "hidden",
                     "columnSelectionToDisplay": "disabled"
                   },
-                  "_hash": 0.4204673738685043,
+                  "_hash": 0.3355829384124256,
                   "units": null,
                   "decimals": null,
                   "funcBody": null,
@@ -1343,10 +1343,10 @@
           "actions": {
             "actionCellButton": [
               {
-                "name": "History firmware update",
+                "name": "History software update",
                 "icon": "history",
                 "type": "openDashboardState",
-                "targetDashboardStateId": "device_firmware_history",
+                "targetDashboardStateId": "device_software_history",
                 "setEntityId": true,
                 "stateEntityParamName": null,
                 "openInSeparateDialog": false,
@@ -1358,27 +1358,27 @@
                 "id": "98a1406c-3301-bc2f-2c5d-d637ce3b663b"
               },
               {
-                "name": "Edit firmware",
+                "name": "Edit software",
                 "icon": "edit",
                 "type": "customPretty",
-                "customHtml": "<form #editEntityForm=\"ngForm\" [formGroup]=\"editEntityFormGroup\"\n      (ngSubmit)=\"save()\"  class=\"edit-entity-form\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Edit firmware {{entityName}}</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div *ngIf=\"entity.deviceProfileId\" mat-dialog-content fxLayout=\"column\">\n        <tb-ota-package-autocomplete\n            [useFullEntityId]=\"true\"\n            [deviceProfileId]=\"entity.deviceProfileId.id\"\n            formControlName=\"firmwareId\">\n        </tb-ota-package-autocomplete>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n        <button mat-button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty\">\n            Save\n        </button>\n    </div>\n</form>",
+                "customHtml": "<form #editEntityForm=\"ngForm\" [formGroup]=\"editEntityFormGroup\"\n      (ngSubmit)=\"save()\"  class=\"edit-entity-form\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Edit software {{entityName}}</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div *ngIf=\"entity.deviceProfileId\" mat-dialog-content fxLayout=\"column\">\n        <tb-ota-package-autocomplete\n            [useFullEntityId]=\"true\"\n            type=\"SOFTWARE\"\n            [deviceProfileId]=\"entity.deviceProfileId.id\"\n            formControlName=\"softwareId\">\n        </tb-ota-package-autocomplete>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n        <button mat-button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty\">\n            Save\n        </button>\n    </div>\n</form>",
                 "customCss": "form {\n    min-width: 300px !important;\n}",
-                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\n}\n\nfunction EditEntityDialogController(instance) {\n    let vm = instance;\n\n    vm.entityName = entityName;\n    vm.entity = {};\n\n    vm.editEntityFormGroup = vm.fb.group({\n        firmwareId: [null]\n    });\n\n    getEntityInfo();\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n\n    vm.save = function() {\n        vm.editEntityFormGroup.markAsPristine();\n        saveEntity().subscribe(\n            function () {\n                // widgetContext.updateAliases();\n                vm.dialogRef.close(null);\n            }\n        );\n    };\n\n\n    function getEntityInfo() {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                vm.entity = data;\n                vm.editEntityFormGroup.patchValue({\n                    firmwareId: vm.entity.firmwareId\n                }, {emitEvent: false});\n            }\n        );\n    }\n\n    function saveEntity() {\n        const formValues = vm.editEntityFormGroup.value;\n        vm.entity.firmwareId = formValues.firmwareId;\n        return deviceService.saveDevice(vm.entity);\n    }\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\n}\n\nfunction EditEntityDialogController(instance) {\n    let vm = instance;\n\n    vm.entityName = entityName;\n    vm.entity = {};\n\n    vm.editEntityFormGroup = vm.fb.group({\n        softwareId: [null]\n    });\n\n    getEntityInfo();\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n\n    vm.save = function() {\n        vm.editEntityFormGroup.markAsPristine();\n        saveEntity().subscribe(\n            function () {\n                // widgetContext.updateAliases();\n                vm.dialogRef.close(null);\n            }\n        );\n    };\n\n\n    function getEntityInfo() {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                vm.entity = data;\n                vm.editEntityFormGroup.patchValue({\n                    softwareId: vm.entity.softwareId\n                }, {emitEvent: false});\n            }\n        );\n    }\n\n    function saveEntity() {\n        const formValues = vm.editEntityFormGroup.value;\n        vm.entity.softwareId = formValues.softwareId;\n        return deviceService.saveDevice(vm.entity);\n    }\n}",
                 "customResources": [],
                 "id": "23099c1d-454b-25dc-8bc0-7cf33c21c5d5"
               },
               {
-                "name": "Download firmware",
+                "name": "Download software",
                 "icon": "file_download",
                 "type": "custom",
-                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceFirmware();\n\nfunction getDeviceFirmware() {\n    var entityIdValue = entityId.id;\n    var data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url === '') {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                if (data.firmwareId !== null) {\n                    otaPackageService.downloadOtaPackage(data.firmwareId.id).subscribe();    \n                } else {\n                    deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                        function (deviceProfile) {\n                            if (deviceProfile.firmwareId !== null) {\n                                otaPackageService.downloadOtaPackage(deviceProfile.firmwareId.id).subscribe();\n                            } else {\n                                widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n                            }\n                    });\n                }\n            }\n        );\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceSoftware();\n\nfunction getDeviceSoftware() {\n    var entityIdValue = entityId.id;\n    var data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'sw_url');\n    var url = data.data[0][1];\n    if (url === '') {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                if (data.softwareId !== null) {\n                    otaPackageService.downloadOtaPackage(data.softwareId.id).subscribe();    \n                } else {\n                    deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                        function (deviceProfile) {\n                            if (deviceProfile.softwareId !== null) {\n                                otaPackageService.downloadOtaPackage(deviceProfile.softwareId.id).subscribe();\n                            } else {\n                                widgetContext.showToast('warn', 'Device ' + entityName +' has not software set.', 2000, 'top');\n                            }\n                    });\n                }\n            }\n        );\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not software set.', 2000, 'top');\n    }\n}",
                 "id": "12533058-42f6-e75f-620c-219c48d01ec0"
               },
               {
                 "name": "Copy checksum/URL",
                 "icon": "content_copy",
                 "type": "custom",
-                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_checksum');\nvar checksum = data.data[0][1];\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Firmware checksum has been copied to clipboard', 2000, 'top');\n} else {\n    data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url !== '') {\n        copyToClipboard(url);\n        widgetContext.showSuccessToast('Firmware direct URL has been copied to clipboard', 2000, 'top');\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
+                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'sw_checksum');\nvar checksum = data.data[0][1];\nconsole.log(checksum);\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Software checksum has been copied to clipboard', 2000, 'top');\n} else {\n    data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'sw_url');\n    var url = data.data[0][1];\n    if (url !== '') {\n        copyToClipboard(url);\n        widgetContext.showSuccessToast('Software direct URL has been copied to clipboard', 2000, 'top');\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not software set.', 2000, 'top');\n    }\n}",
                 "id": "09323079-7111-87f7-90d1-c62cd7d85dc7"
               }
             ]
@@ -1450,9 +1450,9 @@
               "filterId": "bdbc6ea1-95a7-3912-341a-58dc7704a00f",
               "dataKeys": [
                 {
-                  "name": "current_fw_title",
+                  "name": "current_sw_title",
                   "type": "timeseries",
-                  "label": "Current FW title",
+                  "label": "Current SW title",
                   "color": "#2196f3",
                   "settings": {
                     "columnWidth": "0px",
@@ -1470,9 +1470,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "current_fw_version",
+                  "name": "current_sw_version",
                   "type": "timeseries",
-                  "label": "Current FW version",
+                  "label": "Current SW version",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -1490,9 +1490,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "target_fw_title",
+                  "name": "target_sw_title",
                   "type": "timeseries",
-                  "label": "Target FW title",
+                  "label": "Target SW title",
                   "color": "#ffc107",
                   "settings": {
                     "columnWidth": "0px",
@@ -1510,9 +1510,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "target_fw_version",
+                  "name": "target_sw_version",
                   "type": "timeseries",
-                  "label": "Target FW version",
+                  "label": "Target SW version",
                   "color": "#607d8b",
                   "settings": {
                     "columnWidth": "0px",
@@ -1531,9 +1531,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "target_fw_ts",
+                  "name": "target_sw_ts",
                   "type": "timeseries",
-                  "label": "Target FW set time",
+                  "label": "Target SW set time",
                   "color": "#e91e63",
                   "settings": {
                     "columnWidth": "0px",
@@ -1552,7 +1552,7 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "fw_state",
+                  "name": "sw_state",
                   "type": "timeseries",
                   "label": "Progress",
                   "color": "#9c27b0",
@@ -1573,7 +1573,7 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "fw_state",
+                  "name": "sw_state",
                   "type": "timeseries",
                   "label": "Status",
                   "color": "#f44336",
@@ -1594,9 +1594,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "fw_checksum",
+                  "name": "sw_checksum",
                   "type": "attribute",
-                  "label": "fw_checksum",
+                  "label": "sw_checksum",
                   "color": "#3f51b5",
                   "settings": {
                     "columnWidth": "0px",
@@ -1614,9 +1614,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "fw_url",
+                  "name": "sw_url",
                   "type": "attribute",
-                  "label": "fw_url",
+                  "label": "sw_url",
                   "color": "#e91e63",
                   "settings": {
                     "columnWidth": "0px",
@@ -1627,7 +1627,7 @@
                     "defaultColumnVisibility": "hidden",
                     "columnSelectionToDisplay": "disabled"
                   },
-                  "_hash": 0.4204673738685043,
+                  "_hash": 0.3355829384124256,
                   "units": null,
                   "decimals": null,
                   "funcBody": null,
@@ -1640,10 +1640,10 @@
           "actions": {
             "actionCellButton": [
               {
-                "name": "History firmware update",
+                "name": "History software update",
                 "icon": "history",
                 "type": "openDashboardState",
-                "targetDashboardStateId": "device_firmware_history",
+                "targetDashboardStateId": "device_software_history",
                 "setEntityId": true,
                 "stateEntityParamName": null,
                 "openInSeparateDialog": false,
@@ -1655,27 +1655,27 @@
                 "id": "98a1406c-3301-bc2f-2c5d-d637ce3b663b"
               },
               {
-                "name": "Edit firmware",
+                "name": "Edit software",
                 "icon": "edit",
                 "type": "customPretty",
-                "customHtml": "<form #editEntityForm=\"ngForm\" [formGroup]=\"editEntityFormGroup\"\n      (ngSubmit)=\"save()\"  class=\"edit-entity-form\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Edit firmware {{entityName}}</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div *ngIf=\"entity.deviceProfileId\" mat-dialog-content fxLayout=\"column\">\n        <tb-ota-package-autocomplete\n            [useFullEntityId]=\"true\"\n            [deviceProfileId]=\"entity.deviceProfileId.id\"\n            formControlName=\"firmwareId\">\n        </tb-ota-package-autocomplete>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n        <button mat-button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty\">\n            Save\n        </button>\n    </div>\n</form>",
+                "customHtml": "<form #editEntityForm=\"ngForm\" [formGroup]=\"editEntityFormGroup\"\n      (ngSubmit)=\"save()\"  class=\"edit-entity-form\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Edit software {{entityName}}</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div *ngIf=\"entity.deviceProfileId\" mat-dialog-content fxLayout=\"column\">\n        <tb-ota-package-autocomplete\n            [useFullEntityId]=\"true\"\n            type=\"SOFTWARE\"\n            [deviceProfileId]=\"entity.deviceProfileId.id\"\n            formControlName=\"softwareId\">\n        </tb-ota-package-autocomplete>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n        <button mat-button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty\">\n            Save\n        </button>\n    </div>\n</form>",
                 "customCss": "form {\n    min-width: 300px !important;\n}",
-                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\n}\n\nfunction EditEntityDialogController(instance) {\n    let vm = instance;\n\n    vm.entityName = entityName;\n    vm.entity = {};\n\n    vm.editEntityFormGroup = vm.fb.group({\n        firmwareId: [null]\n    });\n\n    getEntityInfo();\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n\n    vm.save = function() {\n        vm.editEntityFormGroup.markAsPristine();\n        saveEntity().subscribe(\n            function () {\n                // widgetContext.updateAliases();\n                vm.dialogRef.close(null);\n            }\n        );\n    };\n\n\n    function getEntityInfo() {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                vm.entity = data;\n                vm.editEntityFormGroup.patchValue({\n                    firmwareId: vm.entity.firmwareId\n                }, {emitEvent: false});\n            }\n        );\n    }\n\n    function saveEntity() {\n        const formValues = vm.editEntityFormGroup.value;\n        vm.entity.firmwareId = formValues.firmwareId;\n        return deviceService.saveDevice(vm.entity);\n    }\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\n}\n\nfunction EditEntityDialogController(instance) {\n    let vm = instance;\n\n    vm.entityName = entityName;\n    vm.entity = {};\n\n    vm.editEntityFormGroup = vm.fb.group({\n        softwareId: [null]\n    });\n\n    getEntityInfo();\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n\n    vm.save = function() {\n        vm.editEntityFormGroup.markAsPristine();\n        saveEntity().subscribe(\n            function () {\n                // widgetContext.updateAliases();\n                vm.dialogRef.close(null);\n            }\n        );\n    };\n\n\n    function getEntityInfo() {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                vm.entity = data;\n                vm.editEntityFormGroup.patchValue({\n                    softwareId: vm.entity.softwareId\n                }, {emitEvent: false});\n            }\n        );\n    }\n\n    function saveEntity() {\n        const formValues = vm.editEntityFormGroup.value;\n        vm.entity.softwareId = formValues.softwareId;\n        return deviceService.saveDevice(vm.entity);\n    }\n}",
                 "customResources": [],
                 "id": "23099c1d-454b-25dc-8bc0-7cf33c21c5d5"
               },
               {
-                "name": "Download firmware",
+                "name": "Download software",
                 "icon": "file_download",
                 "type": "custom",
-                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceFirmware();\n\nfunction getDeviceFirmware() {\n    var entityIdValue = entityId.id;\n    var data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url === '') {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                if (data.firmwareId !== null) {\n                    otaPackageService.downloadOtaPackage(data.firmwareId.id).subscribe();    \n                } else {\n                    deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                        function (deviceProfile) {\n                            if (deviceProfile.firmwareId !== null) {\n                                otaPackageService.downloadOtaPackage(deviceProfile.firmwareId.id).subscribe();\n                            } else {\n                                widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n                            }\n                    });\n                }\n            }\n        );\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceSoftware();\n\nfunction getDeviceSoftware() {\n    var entityIdValue = entityId.id;\n    var data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'sw_url');\n    var url = data.data[0][1];\n    if (url === '') {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                if (data.softwareId !== null) {\n                    otaPackageService.downloadOtaPackage(data.softwareId.id).subscribe();    \n                } else {\n                    deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                        function (deviceProfile) {\n                            if (deviceProfile.softwareId !== null) {\n                                otaPackageService.downloadOtaPackage(deviceProfile.softwareId.id).subscribe();\n                            } else {\n                                widgetContext.showToast('warn', 'Device ' + entityName +' has not software set.', 2000, 'top');\n                            }\n                    });\n                }\n            }\n        );\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not software set.', 2000, 'top');\n    }\n}",
                 "id": "12533058-42f6-e75f-620c-219c48d01ec0"
               },
               {
                 "name": "Copy checksum/URL",
                 "icon": "content_copy",
                 "type": "custom",
-                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_checksum');\nvar checksum = data.data[0][1];\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Firmware checksum has been copied to clipboard', 2000, 'top');\n} else {\n    data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url !== '') {\n        copyToClipboard(url);\n        widgetContext.showSuccessToast('Firmware direct URL has been copied to clipboard', 2000, 'top');\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
+                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'sw_checksum');\nvar checksum = data.data[0][1];\nconsole.log(checksum);\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Software checksum has been copied to clipboard', 2000, 'top');\n} else {\n    data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'sw_url');\n    var url = data.data[0][1];\n    if (url !== '') {\n        copyToClipboard(url);\n        widgetContext.showSuccessToast('Software direct URL has been copied to clipboard', 2000, 'top');\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not software set.', 2000, 'top');\n    }\n}",
                 "id": "09323079-7111-87f7-90d1-c62cd7d85dc7"
               }
             ]
@@ -1747,9 +1747,9 @@
               "filterId": "6044e198-df64-cd76-f339-696f220c4943",
               "dataKeys": [
                 {
-                  "name": "current_fw_title",
+                  "name": "current_sw_title",
                   "type": "timeseries",
-                  "label": "Current FW title",
+                  "label": "Current SW title",
                   "color": "#2196f3",
                   "settings": {
                     "columnWidth": "0px",
@@ -1767,9 +1767,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "current_fw_version",
+                  "name": "current_sw_version",
                   "type": "timeseries",
-                  "label": "Current FW version",
+                  "label": "Current SW version",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -1787,9 +1787,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "target_fw_title",
+                  "name": "target_sw_title",
                   "type": "timeseries",
-                  "label": "Target FW title",
+                  "label": "Target SW title",
                   "color": "#ffc107",
                   "settings": {
                     "columnWidth": "0px",
@@ -1807,9 +1807,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "target_fw_version",
+                  "name": "target_sw_version",
                   "type": "timeseries",
-                  "label": "Target FW version",
+                  "label": "Target SW version",
                   "color": "#607d8b",
                   "settings": {
                     "columnWidth": "0px",
@@ -1828,9 +1828,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "target_fw_ts",
+                  "name": "target_sw_ts",
                   "type": "timeseries",
-                  "label": "Target FW set time",
+                  "label": "Target SW set time",
                   "color": "#e91e63",
                   "settings": {
                     "columnWidth": "0px",
@@ -1849,7 +1849,7 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "fw_state",
+                  "name": "sw_state",
                   "type": "timeseries",
                   "label": "Progress",
                   "color": "#9c27b0",
@@ -1870,7 +1870,7 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "fw_state",
+                  "name": "sw_state",
                   "type": "timeseries",
                   "label": "Status",
                   "color": "#f44336",
@@ -1891,9 +1891,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "fw_checksum",
+                  "name": "sw_checksum",
                   "type": "attribute",
-                  "label": "fw_checksum",
+                  "label": "sw_checksum",
                   "color": "#3f51b5",
                   "settings": {
                     "columnWidth": "0px",
@@ -1911,9 +1911,9 @@
                   "postFuncBody": null
                 },
                 {
-                  "name": "fw_url",
+                  "name": "sw_url",
                   "type": "attribute",
-                  "label": "fw_url",
+                  "label": "sw_url",
                   "color": "#e91e63",
                   "settings": {
                     "columnWidth": "0px",
@@ -1924,7 +1924,7 @@
                     "defaultColumnVisibility": "hidden",
                     "columnSelectionToDisplay": "disabled"
                   },
-                  "_hash": 0.4204673738685043,
+                  "_hash": 0.3355829384124256,
                   "units": null,
                   "decimals": null,
                   "funcBody": null,
@@ -1937,10 +1937,10 @@
           "actions": {
             "actionCellButton": [
               {
-                "name": "History firmware update",
+                "name": "History software update",
                 "icon": "history",
                 "type": "openDashboardState",
-                "targetDashboardStateId": "device_firmware_history",
+                "targetDashboardStateId": "device_software_history",
                 "setEntityId": true,
                 "stateEntityParamName": null,
                 "openInSeparateDialog": false,
@@ -1952,27 +1952,27 @@
                 "id": "98a1406c-3301-bc2f-2c5d-d637ce3b663b"
               },
               {
-                "name": "Edit firmware",
+                "name": "Edit software",
                 "icon": "edit",
                 "type": "customPretty",
-                "customHtml": "<form #editEntityForm=\"ngForm\" [formGroup]=\"editEntityFormGroup\"\n      (ngSubmit)=\"save()\"  class=\"edit-entity-form\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Edit firmware {{entityName}}</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div *ngIf=\"entity.deviceProfileId\" mat-dialog-content fxLayout=\"column\">\n        <tb-ota-package-autocomplete\n            [useFullEntityId]=\"true\"\n            [deviceProfileId]=\"entity.deviceProfileId.id\"\n            formControlName=\"firmwareId\">\n        </tb-ota-package-autocomplete>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n        <button mat-button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty\">\n            Save\n        </button>\n    </div>\n</form>",
+                "customHtml": "<form #editEntityForm=\"ngForm\" [formGroup]=\"editEntityFormGroup\"\n      (ngSubmit)=\"save()\"  class=\"edit-entity-form\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Edit software {{entityName}}</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div *ngIf=\"entity.deviceProfileId\" mat-dialog-content fxLayout=\"column\">\n        <tb-ota-package-autocomplete\n            [useFullEntityId]=\"true\"\n            type=\"SOFTWARE\"\n            [deviceProfileId]=\"entity.deviceProfileId.id\"\n            formControlName=\"softwareId\">\n        </tb-ota-package-autocomplete>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n        <button mat-button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty\">\n            Save\n        </button>\n    </div>\n</form>",
                 "customCss": "form {\n    min-width: 300px !important;\n}",
-                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\n}\n\nfunction EditEntityDialogController(instance) {\n    let vm = instance;\n\n    vm.entityName = entityName;\n    vm.entity = {};\n\n    vm.editEntityFormGroup = vm.fb.group({\n        firmwareId: [null]\n    });\n\n    getEntityInfo();\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n\n    vm.save = function() {\n        vm.editEntityFormGroup.markAsPristine();\n        saveEntity().subscribe(\n            function () {\n                // widgetContext.updateAliases();\n                vm.dialogRef.close(null);\n            }\n        );\n    };\n\n\n    function getEntityInfo() {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                vm.entity = data;\n                vm.editEntityFormGroup.patchValue({\n                    firmwareId: vm.entity.firmwareId\n                }, {emitEvent: false});\n            }\n        );\n    }\n\n    function saveEntity() {\n        const formValues = vm.editEntityFormGroup.value;\n        vm.entity.firmwareId = formValues.firmwareId;\n        return deviceService.saveDevice(vm.entity);\n    }\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\n}\n\nfunction EditEntityDialogController(instance) {\n    let vm = instance;\n\n    vm.entityName = entityName;\n    vm.entity = {};\n\n    vm.editEntityFormGroup = vm.fb.group({\n        softwareId: [null]\n    });\n\n    getEntityInfo();\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n\n    vm.save = function() {\n        vm.editEntityFormGroup.markAsPristine();\n        saveEntity().subscribe(\n            function () {\n                // widgetContext.updateAliases();\n                vm.dialogRef.close(null);\n            }\n        );\n    };\n\n\n    function getEntityInfo() {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                vm.entity = data;\n                vm.editEntityFormGroup.patchValue({\n                    softwareId: vm.entity.softwareId\n                }, {emitEvent: false});\n            }\n        );\n    }\n\n    function saveEntity() {\n        const formValues = vm.editEntityFormGroup.value;\n        vm.entity.softwareId = formValues.softwareId;\n        return deviceService.saveDevice(vm.entity);\n    }\n}",
                 "customResources": [],
                 "id": "23099c1d-454b-25dc-8bc0-7cf33c21c5d5"
               },
               {
-                "name": "Download firmware",
+                "name": "Download software",
                 "icon": "file_download",
                 "type": "custom",
-                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceFirmware();\n\nfunction getDeviceFirmware() {\n    var entityIdValue = entityId.id;\n    var data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url === '') {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                if (data.firmwareId !== null) {\n                    otaPackageService.downloadOtaPackage(data.firmwareId.id).subscribe();    \n                } else {\n                    deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                        function (deviceProfile) {\n                            if (deviceProfile.firmwareId !== null) {\n                                otaPackageService.downloadOtaPackage(deviceProfile.firmwareId.id).subscribe();\n                            } else {\n                                widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n                            }\n                    });\n                }\n            }\n        );\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceSoftware();\n\nfunction getDeviceSoftware() {\n    var entityIdValue = entityId.id;\n    var data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'sw_url');\n    var url = data.data[0][1];\n    if (url === '') {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                if (data.softwareId !== null) {\n                    otaPackageService.downloadOtaPackage(data.softwareId.id).subscribe();    \n                } else {\n                    deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                        function (deviceProfile) {\n                            if (deviceProfile.softwareId !== null) {\n                                otaPackageService.downloadOtaPackage(deviceProfile.softwareId.id).subscribe();\n                            } else {\n                                widgetContext.showToast('warn', 'Device ' + entityName +' has not software set.', 2000, 'top');\n                            }\n                    });\n                }\n            }\n        );\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not software set.', 2000, 'top');\n    }\n}",
                 "id": "12533058-42f6-e75f-620c-219c48d01ec0"
               },
               {
                 "name": "Copy checksum/URL",
                 "icon": "content_copy",
                 "type": "custom",
-                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_checksum');\nvar checksum = data.data[0][1];\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Firmware checksum has been copied to clipboard', 2000, 'top');\n} else {\n    data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url !== '') {\n        copyToClipboard(url);\n        widgetContext.showSuccessToast('Firmware direct URL has been copied to clipboard', 2000, 'top');\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
+                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'sw_checksum');\nvar checksum = data.data[0][1];\nconsole.log(checksum);\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Software checksum has been copied to clipboard', 2000, 'top');\n} else {\n    data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'sw_url');\n    var url = data.data[0][1];\n    if (url !== '') {\n        copyToClipboard(url);\n        widgetContext.showSuccessToast('Software direct URL has been copied to clipboard', 2000, 'top');\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not software set.', 2000, 'top');\n    }\n}",
                 "id": "09323079-7111-87f7-90d1-c62cd7d85dc7"
               }
             ]
@@ -2040,8 +2040,8 @@
           }
         }
       },
-      "device_firmware_history": {
-        "name": "Firmware history: ${entityName}",
+      "device_software_history": {
+        "name": "Software history: ${entityName}",
         "root": false,
         "layouts": {
           "main": {
@@ -2205,7 +2205,7 @@
           {
             "key": {
               "type": "TIME_SERIES",
-              "key": "fw_state"
+              "key": "sw_state"
             },
             "valueType": "STRING",
             "predicates": [
@@ -2238,7 +2238,7 @@
           {
             "key": {
               "type": "TIME_SERIES",
-              "key": "fw_state"
+              "key": "sw_state"
             },
             "valueType": "STRING",
             "predicates": [
@@ -2258,7 +2258,7 @@
                       },
                       "userInfo": {
                         "editable": false,
-                        "label": "fw_state equel",
+                        "label": "sw_state equel",
                         "autogeneratedLabel": true,
                         "order": 0
                       }
@@ -2275,7 +2275,7 @@
                       },
                       "userInfo": {
                         "editable": false,
-                        "label": "fw_state equal",
+                        "label": "sw_state equal",
                         "autogeneratedLabel": true,
                         "order": 0
                       }
@@ -2292,7 +2292,7 @@
                       },
                       "userInfo": {
                         "editable": false,
-                        "label": "fw_state equal",
+                        "label": "sw_state equal",
                         "autogeneratedLabel": true,
                         "order": 0
                       }
@@ -2309,7 +2309,7 @@
                       },
                       "userInfo": {
                         "editable": false,
-                        "label": "fw_state equal",
+                        "label": "sw_state equal",
                         "autogeneratedLabel": true,
                         "order": 0
                       }
@@ -2326,7 +2326,7 @@
                       },
                       "userInfo": {
                         "editable": false,
-                        "label": "fw_state equal",
+                        "label": "sw_state equal",
                         "autogeneratedLabel": true,
                         "order": 0
                       }
@@ -2353,7 +2353,7 @@
           {
             "key": {
               "type": "TIME_SERIES",
-              "key": "fw_state"
+              "key": "sw_state"
             },
             "valueType": "STRING",
             "predicates": [
@@ -2386,7 +2386,7 @@
           {
             "key": {
               "type": "TIME_SERIES",
-              "key": "fw_state"
+              "key": "sw_state"
             },
             "valueType": "STRING",
             "predicates": [
@@ -2488,5 +2488,5 @@
       "showUpdateDashboardImage": false
     }
   },
-  "name": "Firmware"
+  "name": "Software"
 }
