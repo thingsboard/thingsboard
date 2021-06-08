@@ -347,6 +347,9 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     }
 
     private void removeDeviceFromCacheById(TenantId tenantId, DeviceId deviceId) {
+        if (deviceId == null) {
+            return;
+        }
         Cache cache = cacheManager.getCache(DEVICE_CACHE);
         cache.evict(Arrays.asList(tenantId, deviceId));
     }
@@ -696,7 +699,6 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                     }
                     if (!old.getName().equals(device.getName())) {
                         removeDeviceFromCacheByName(tenantId, old.getName());
-                        removeDeviceFromCacheById(tenantId, old.getId());
                     }
                 }
 
