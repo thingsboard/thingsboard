@@ -32,7 +32,6 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import java.util.Collection;
 
 @Slf4j
-@TbLwM2mTransportComponent
 public class TbLwM2mSecurityStore implements TbEditableSecurityStore {
 
     private final TbEditableSecurityStore securityStore;
