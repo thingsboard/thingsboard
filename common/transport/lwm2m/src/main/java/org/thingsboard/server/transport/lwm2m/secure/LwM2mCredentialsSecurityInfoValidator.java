@@ -22,16 +22,16 @@ import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCredentials;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredentials;
 import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCredentials;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 
@@ -104,9 +104,10 @@ public class LwM2mCredentialsSecurityInfoValidator {
                 result.setEndpoint(endpoint);
                 result.setSecurityMode(credentials.getBootstrap().getBootstrapServer().getSecurityMode());
             } else {
+                result.setEndpoint(credentials.getClient().getEndpoint());
                 switch (credentials.getClient().getSecurityConfigClientMode()) {
                     case NO_SEC:
-                        createClientSecurityInfoNoSec(result, endpoint);
+                        createClientSecurityInfoNoSec(result);
                         break;
                     case PSK:
                         createClientSecurityInfoPSK(result, endpoint, credentials.getClient());
@@ -125,8 +126,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
         return result;
     }
 
-    private void createClientSecurityInfoNoSec(TbLwM2MSecurityInfo result, String endpoint) {
-        result.setEndpoint(endpoint);
+    private void createClientSecurityInfoNoSec(TbLwM2MSecurityInfo result) {
         result.setSecurityInfo(null);
         result.setSecurityMode(NO_SEC);
     }

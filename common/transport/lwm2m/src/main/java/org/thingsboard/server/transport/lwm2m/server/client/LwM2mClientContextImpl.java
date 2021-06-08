@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.server.registration.Registration;
-import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
@@ -29,7 +28,6 @@ import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 import org.thingsboard.server.transport.lwm2m.server.store.TbEditableSecurityStore;
-import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
 
 import java.util.Arrays;
 import java.util.Collection;
