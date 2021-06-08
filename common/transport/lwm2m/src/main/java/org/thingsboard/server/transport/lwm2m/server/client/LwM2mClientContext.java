@@ -16,7 +16,6 @@
 package org.thingsboard.server.transport.lwm2m.server.client;
 
 import org.eclipse.leshan.server.registration.Registration;
-import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;

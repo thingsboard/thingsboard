@@ -656,7 +656,7 @@ transport:
       bind_address: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
       bind_port: "${LWM2M_BIND_PORT_BS:5687}"
       security:
-        bind_address: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
+        bind_address: "${LWM2M_BIND_ADDRESS_SECURITY_BS:0.0.0.0}"
         bind_port: "${LWM2M_BIND_PORT_SECURITY_BS:5688}"
         #  Only for RPK: Public & Private Key. If the keystore file is missing or not working
         public_x: "${LWM2M_SERVER_PUBLIC_X_BS:5017c87a1c1768264656b3b355434b0def6edb8b9bf166a4762d9930cd730f91}"

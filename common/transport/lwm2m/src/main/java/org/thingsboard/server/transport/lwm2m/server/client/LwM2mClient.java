@@ -94,8 +94,6 @@ public class LwM2mClient implements Cloneable {
     @Getter
     private UUID deviceId;
     @Getter
-    private UUID sessionId;
-    @Getter
     private SessionInfoProto session;
     @Getter
     private UUID profileId;
@@ -135,8 +133,6 @@ public class LwM2mClient implements Cloneable {
         this.credentials = credentials;
         this.profileId = profileId;
         this.init = false;
-        this.fwUpdate = new LwM2mFwSwUpdate(this, OtaPackageType.FIRMWARE);
-        this.swUpdate = new LwM2mFwSwUpdate(this, OtaPackageType.SOFTWARE);
         if (this.credentials != null && this.credentials.hasDeviceInfo()) {
             this.session = createSession(nodeId, sessionId, credentials);
             this.deviceId = new UUID(session.getDeviceIdMSB(), session.getDeviceIdLSB());
@@ -396,5 +392,22 @@ public class LwM2mClient implements Cloneable {
             return ContentFormat.TEXT;
         }
     }
+
+    public LwM2mFwSwUpdate  getFwUpdate (LwM2mClientContext clientContext) {
+        if (this.fwUpdate == null) {
+            LwM2mClientProfile lwM2mClientProfile = clientContext.getProfile(this.getProfileId());
+            this.fwUpdate = new LwM2mFwSwUpdate(this, OtaPackageType.FIRMWARE, lwM2mClientProfile.getFwUpdateStrategy());
+        }
+        return this.fwUpdate;
+    }
+
+    public LwM2mFwSwUpdate  getSwUpdate (LwM2mClientContext clientContext) {
+        if (this.swUpdate == null) {
+            LwM2mClientProfile lwM2mClientProfile = clientContext.getProfile(this.getProfileId());
+            this.swUpdate = new LwM2mFwSwUpdate(this, OtaPackageType.SOFTWARE, lwM2mClientProfile.getSwUpdateStrategy());
+        }
+        return this.fwUpdate;
+    }
+
 }
 

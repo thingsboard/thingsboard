@@ -96,12 +96,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
             if (!LwM2MClientState.REGISTERED.equals(lwM2MClient.getState())) {
                 throw new LwM2MClientStateException(lwM2MClient.getState(), "Client is in invalid state.");
             }
-            Registration currentRegistration = lwM2MClient.getRegistration();
-            if (currentRegistration.getId().equals(registration.getId())) {
-                lwM2MClient.setRegistration(registration);
-            } else {
-                throw new LwM2MClientStateException(lwM2MClient.getState(), "Client has different registration.");
-            }
+            lwM2MClient.setRegistration(registration);
         } finally {
             lwM2MClient.unlock();
         }
@@ -120,7 +115,6 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
                 lwM2MClient.setState(LwM2MClientState.UNREGISTERED);
                 lwM2mClientsByEndpoint.remove(lwM2MClient.getEndpoint());
                 this.securityStore.remove(lwM2MClient.getEndpoint());
-                this.lwM2mClientsByRegistrationId.remove(registration.getId());
                 UUID profileId = lwM2MClient.getProfileId();
                 if (profileId != null) {
                     Optional<LwM2mClient> otherClients = lwM2mClientsByRegistrationId.values().stream().filter(e -> e.getProfileId().equals(profileId)).findFirst();

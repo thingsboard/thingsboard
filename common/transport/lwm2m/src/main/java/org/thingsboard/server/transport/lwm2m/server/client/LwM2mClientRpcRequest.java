@@ -57,7 +57,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.v
 
 @Slf4j
 @Data
-public class Lwm2mClientRpcRequest {
+public class LwM2mClientRpcRequest {
 
     private Registration registration;
     private TransportProtos.SessionInfoProto sessionInfo;
@@ -75,10 +75,10 @@ public class Lwm2mClientRpcRequest {
     private String infoMsg;
     private String responseCode;
 
-    public Lwm2mClientRpcRequest() {
+    public LwM2mClientRpcRequest() {
     }
 
-    public Lwm2mClientRpcRequest(LwM2mTypeOper lwM2mTypeOper, String bodyParams, int requestId,
+    public LwM2mClientRpcRequest(LwM2mTypeOper lwM2mTypeOper, String bodyParams, int requestId,
                                  TransportProtos.SessionInfoProto sessionInfo, Registration registration, DefaultLwM2MTransportMsgHandler handler) {
         this.registration = registration;
         this.sessionInfo = sessionInfo;

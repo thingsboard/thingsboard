@@ -16,10 +16,14 @@
 package org.thingsboard.server.transport.lwm2m.server;
 
 import org.eclipse.californium.core.network.config.NetworkConfig;
+import org.eclipse.californium.core.network.config.NetworkConfigDefaults;
+import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
+
+import static org.eclipse.californium.core.network.config.NetworkConfigDefaults.DEFAULT_BLOCKWISE_STATUS_LIFETIME;
 
 public class LwM2mNetworkConfig {
 
-    public static NetworkConfig getCoapConfig(Integer serverPortNoSec, Integer serverSecurePort) {
+    public static NetworkConfig getCoapConfig(Integer serverPortNoSec, Integer serverSecurePort, LwM2MTransportServerConfig config) {
         NetworkConfig coapConfig = new NetworkConfig();
         coapConfig.setInt(NetworkConfig.Keys.COAP_PORT,serverPortNoSec);
         coapConfig.setInt(NetworkConfig.Keys.COAP_SECURE_PORT,serverSecurePort);
@@ -49,8 +53,15 @@ public class LwM2mNetworkConfig {
          - value of true indicate that the server will response with block2 option event if no further blocks are required.
          */
         coapConfig.setBoolean(NetworkConfig.Keys.BLOCKWISE_ENTITY_TOO_LARGE_AUTO_FAILOVER, true);
-
-        coapConfig.setInt(NetworkConfig.Keys.BLOCKWISE_STATUS_LIFETIME, 300000);
+        /**
+         * The maximum amount of time (in milliseconds) allowed between
+         * transfers of individual blocks in a blockwise transfer before the
+         * blockwise transfer state is discarded.
+         * <p>
+         * The default value of this property is
+         * {@link NetworkConfigDefaults#DEFAULT_BLOCKWISE_STATUS_LIFETIME} = 5 * 60 * 1000; // 5 mins [ms].
+         */
+        coapConfig.setLong(NetworkConfig.Keys.BLOCKWISE_STATUS_LIFETIME, DEFAULT_BLOCKWISE_STATUS_LIFETIME);
         /**
          !!! REQUEST_ENTITY_TOO_LARGE CODE=4.13
          The maximum size of a resource body (in bytes) that will be accepted

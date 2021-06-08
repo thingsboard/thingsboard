@@ -83,7 +83,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   constructor(private fb: FormBuilder,
               private deviceProfileService: DeviceProfileService) {
     this.lwm2mDeviceProfileFormGroup = this.fb.group({
-      clientOnlyObserveAfterConnect: [1, []],
       objectIds: [null, Validators.required],
       observeAttrTelemetry: [null, Validators.required],
       shortId: [null, Validators.required],
@@ -93,6 +92,9 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       binding: [],
       bootstrapServer: [null, Validators.required],
       lwm2mServer: [null, Validators.required],
+      clientStrategy: [1, []],
+      fwUpdateStrategy: [1, []],
+      swUpdateStrategy: [1, []],
     });
     this.lwm2mDeviceConfigFormGroup = this.fb.group({
       configurationJson: [null, Validators.required]
@@ -168,7 +170,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
 
   private updateWriteValue = (value: ModelValue): void => {
     this.lwm2mDeviceProfileFormGroup.patchValue({
-        clientOnlyObserveAfterConnect: this.configurationValue.clientLwM2mSettings.clientOnlyObserveAfterConnect,
         objectIds: value,
         observeAttrTelemetry: this.getObserveAttrTelemetryObjects(value.objectsList),
         shortId: this.configurationValue.bootstrap.servers.shortId,
@@ -177,7 +178,10 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         notifIfDisabled: this.configurationValue.bootstrap.servers.notifIfDisabled,
         binding: this.configurationValue.bootstrap.servers.binding,
         bootstrapServer: this.configurationValue.bootstrap.bootstrapServer,
-        lwm2mServer: this.configurationValue.bootstrap.lwm2mServer
+        lwm2mServer: this.configurationValue.bootstrap.lwm2mServer,
+        clientStrategy: this.configurationValue.clientLwM2mSettings.clientStrategy,
+        fwUpdateStrategy: this.configurationValue.clientLwM2mSettings.fwUpdateStrategy,
+        swUpdateStrategy: this.configurationValue.clientLwM2mSettings.swUpdateStrategy
       },
       {emitEvent: false});
   }
@@ -199,8 +203,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
 
   private updateDeviceProfileValue(config): void {
     if (this.lwm2mDeviceProfileFormGroup.valid) {
-      this.configurationValue.clientLwM2mSettings.clientOnlyObserveAfterConnect =
-        config.clientOnlyObserveAfterConnect;
       this.updateObserveAttrTelemetryFromGroupToJson(config.observeAttrTelemetry.clientLwM2M);
       this.configurationValue.bootstrap.bootstrapServer = config.bootstrapServer;
       this.configurationValue.bootstrap.lwm2mServer = config.lwm2mServer;
@@ -210,6 +212,9 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       bootstrapServers.defaultMinPeriod = config.defaultMinPeriod;
       bootstrapServers.notifIfDisabled = config.notifIfDisabled;
       bootstrapServers.binding = config.binding;
+      this.configurationValue.clientLwM2mSettings.clientStrategy = config.clientStrategy;
+      this.configurationValue.clientLwM2mSettings.fwUpdateStrategy = config.fwUpdateStrategy;
+      this.configurationValue.clientLwM2mSettings.swUpdateStrategy = config.swUpdateStrategy;
       this.upDateJsonAllConfig();
       this.updateModel();
     }
