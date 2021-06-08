@@ -258,6 +258,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_name_unq_key")) {
                 // remove device from cache in case null value cached in the distributed redis.
                 removeDeviceFromCacheByName(device.getTenantId(), device.getName());
+                removeDeviceFromCacheById(device.getTenantId(), device.getId());
                 throw new DataValidationException("Device with such name already exists!");
             } else {
                 throw t;
@@ -335,6 +336,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         deleteEntityRelations(tenantId, deviceId);
 
         removeDeviceFromCacheByName(tenantId, device.getName());
+        removeDeviceFromCacheById(tenantId, device.getId());
 
         deviceDao.removeById(tenantId, deviceId.getId());
     }
@@ -342,6 +344,11 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     private void removeDeviceFromCacheByName(TenantId tenantId, String name) {
         Cache cache = cacheManager.getCache(DEVICE_CACHE);
         cache.evict(Arrays.asList(tenantId, name));
+    }
+
+    private void removeDeviceFromCacheById(TenantId tenantId, DeviceId deviceId) {
+        Cache cache = cacheManager.getCache(DEVICE_CACHE);
+        cache.evict(Arrays.asList(tenantId, deviceId));
     }
 
     @Override
@@ -557,7 +564,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     }
 
     @Override
-    @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#profile.tenantId, #provisionRequest.deviceName}") //id is not available yet
+    @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#profile.tenantId, #provisionRequest.deviceName}")
     @Transactional
     public Device saveDevice(ProvisionRequest provisionRequest, DeviceProfile profile) {
         Device device = new Device();
@@ -599,6 +606,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                 throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
             }
         }
+        removeDeviceFromCacheById(savedDevice.getTenantId(), savedDevice.getId());
         return savedDevice;
     }
 
@@ -688,6 +696,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                     }
                     if (!old.getName().equals(device.getName())) {
                         removeDeviceFromCacheByName(tenantId, old.getName());
+                        removeDeviceFromCacheById(tenantId, old.getId());
                     }
                 }
 
