@@ -16,6 +16,7 @@
 
 queue_type: "kafka"
 request_topic: "js_eval.requests"
+http_port: "8888" # /livenessProbe
 
 js:
   response_poll_interval: "25"
