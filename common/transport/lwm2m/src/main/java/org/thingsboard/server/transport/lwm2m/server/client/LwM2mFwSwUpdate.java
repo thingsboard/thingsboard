@@ -61,6 +61,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.L
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.EXECUTE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.READ;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_REPLACE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_INSTALL_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_NAME_ID;
@@ -194,11 +195,17 @@ public class LwM2mFwSwUpdate {
             } else if (LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL.code == this.updateStrategy) {
                 Registration registration = this.getLwM2MClient().getRegistration();
 //                String api = handler.config.getHostRequests();
-                String api = "0.0.0.0";
+                String api = "176.36.143.9";
                 int port = registration.getIdentity().isSecure() ? handler.config.getSecurePort() : handler.config.getPort();
+//                String uri = "coap://" + api + ":" + Integer.valueOf(port) + "/" + "api/v1/test_url" + "/" + this.currentId.toString();
                 String uri = "coap://" + api + ":" + Integer.valueOf(port) + "/" + FIRMWARE_UPDATE_COAP_RECOURSE + "/" + this.currentId.toString();
+//                    home
+//                String uri = "coap://176.100.5.79:5683/api/v1/test_url/firmware";
+//                     office
+//                String uri = "coap://176.36.143.9:5683/api/v1/test_url/firmware";
                 log.warn("89) coapUri: [{}]", uri);
-                request.sendAllRequest(this.lwM2MClient, targetIdVer, WRITE_REPLACE, null,
+//                request.sendAllRequest(this.lwM2MClient, targetIdVer, WRITE_REPLACE, null,
+                request.sendAllRequest(this.lwM2MClient, targetIdVer, READ, null,
                         uri, handler.config.getTimeout(), this.rpcRequest);
             } else if (LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_19_BINARY.code == this.updateStrategy) {
 
