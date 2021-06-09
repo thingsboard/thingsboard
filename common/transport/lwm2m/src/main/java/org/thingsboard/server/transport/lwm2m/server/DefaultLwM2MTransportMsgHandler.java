@@ -41,10 +41,10 @@ import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.ota.OtaPackageKey;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.ota.OtaPackageUtil;
-import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
@@ -89,11 +89,9 @@ import java.util.stream.Collectors;
 
 import static org.eclipse.californium.core.coap.CoAP.ResponseCode.BAD_REQUEST;
 import static org.eclipse.leshan.core.attributes.Attribute.OBJECT_VERSION;
-import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADED;
+import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.FAILED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.INITIATED;
-import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATING;
-import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper.getValueFromKvProto;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.DEVICE_ATTRIBUTES_REQUEST;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_5_ID;
@@ -267,8 +265,8 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                 clientContext.unregister(client, registration);
                 SessionInfoProto sessionInfo = client.getSession();
                 if (sessionInfo != null) {
-                    transportService.deregisterSession(sessionInfo);
                     this.doCloseSession(sessionInfo);
+                    transportService.deregisterSession(sessionInfo);
                     sessionStore.remove(registration.getEndpoint());
                     log.info("Client close session: [{}] unReg [{}] name  [{}] profile ", registration.getId(), registration.getEndpoint(), sessionInfo.getDeviceType());
                 } else {
