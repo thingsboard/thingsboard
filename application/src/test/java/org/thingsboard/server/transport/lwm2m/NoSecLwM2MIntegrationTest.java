@@ -15,19 +15,10 @@
  */
 package org.thingsboard.server.transport.lwm2m;
 
-import org.eclipse.californium.core.network.config.NetworkConfig;
-import org.eclipse.leshan.client.object.Security;
 import org.junit.Test;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredentials;
 
-import static org.eclipse.leshan.client.object.Security.noSec;
-
 public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
-
-    private final int PORT = 5685;
-    private final Security SECURITY = noSec("coap://localhost:" + PORT, 123);
-    private final NetworkConfig COAP_CONFIG = new NetworkConfig().setString("COAP_PORT", Integer.toString(PORT));
-    private final String ENDPOINT = "deviceAEndpoint";
 
     @Test
     public void testConnectAndObserveTelemetry() throws Exception {

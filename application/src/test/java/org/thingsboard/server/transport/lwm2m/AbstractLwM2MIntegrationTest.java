@@ -78,6 +78,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import static org.eclipse.leshan.client.object.Security.noSec;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
@@ -160,15 +161,15 @@ public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
     // certificates trustedby the server (should contain rootCA)
     protected final Certificate[] trustedCertificates = new Certificate[1];
 
-    protected final int SECURE_PORT = 5686;
-    protected final NetworkConfig SECURE_COAP_CONFIG = new NetworkConfig().setString("COAP_SECURE_PORT", Integer.toString(SECURE_PORT));
-    protected final String SECURE_ENDPOINT = "deviceAEndpoint";
-    protected final String SECURE_URI = "coaps://localhost:" + SECURE_PORT;
+    protected static final int SECURE_PORT = 5686;
+    protected static final NetworkConfig SECURE_COAP_CONFIG = new NetworkConfig().setString("COAP_SECURE_PORT", Integer.toString(SECURE_PORT));
+    protected static final String SECURE_ENDPOINT = "deviceAEndpoint";
+    protected static final String SECURE_URI = "coaps://localhost:" + SECURE_PORT;
 
-    private final int PORT = 5686;
-    private final NetworkConfig COAP_CONFIG = new NetworkConfig().setString("COAP_SECURE_PORT", Integer.toString(PORT));
-    private final String ENDPOINT = "deviceAEndpoint";
-    private final String SERVER_URI = "coaps://localhost:" + PORT;
+    protected static final int PORT = 5685;
+    protected static final Security SECURITY = noSec("coap://localhost:" + PORT, 123);
+    protected static final NetworkConfig COAP_CONFIG = new NetworkConfig().setString("COAP_PORT", Integer.toString(PORT));
+    protected static final String ENDPOINT = "deviceAEndpoint";
 
     public AbstractLwM2MIntegrationTest() {
 // create client credentials
