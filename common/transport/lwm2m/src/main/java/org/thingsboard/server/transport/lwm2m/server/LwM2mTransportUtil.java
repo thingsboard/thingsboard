@@ -770,33 +770,34 @@ public class LwM2mTransportUtil {
      * "/3_1.0/0": {"gt": 17},
      * "/3_1.0/0/9": {"pmax": 45}, "/3_1.2": {ver": "3_1.2"}}
      */
+    //TODO: refactor this to valid jackson code instead of parsing manually.
     public static LwM2mClientProfile toLwM2MClientProfile(DeviceProfile deviceProfile) {
-        if (((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties().size() > 0) {
-            Object profile = ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties();
-            try {
-                ObjectMapper mapper = new ObjectMapper();
-                String profileStr = mapper.writeValueAsString(profile);
-                JsonObject profileJson = (profileStr != null) ? validateJson(profileStr) : null;
-                return getValidateCredentialsBodyFromThingsboard(profileJson) ? LwM2mTransportUtil.getNewProfileParameters(profileJson, deviceProfile.getTenantId()) : null;
-            } catch (IOException e) {
-                log.error("", e);
-            }
-        }
+//        if (((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties().size() > 0) {
+//            Object profile = ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties();
+//            try {
+//                ObjectMapper mapper = new ObjectMapper();
+//                String profileStr = mapper.writeValueAsString(profile);
+//                JsonObject profileJson = (profileStr != null) ? validateJson(profileStr) : null;
+//                return getValidateCredentialsBodyFromThingsboard(profileJson) ? LwM2mTransportUtil.getNewProfileParameters(profileJson, deviceProfile.getTenantId()) : null;
+//            } catch (IOException e) {
+//                log.error("", e);
+//            }
+//        }
         return null;
     }
 
     public static JsonObject getBootstrapParametersFromThingsboard(DeviceProfile deviceProfile) {
-        if (deviceProfile != null && ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties().size() > 0) {
-            Object bootstrap = ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties();
-            try {
-                ObjectMapper mapper = new ObjectMapper();
-                String bootstrapStr = mapper.writeValueAsString(bootstrap);
-                JsonObject objectMsg = (bootstrapStr != null) ? validateJson(bootstrapStr) : null;
-                return (getValidateBootstrapProfileFromThingsboard(objectMsg)) ? objectMsg.get(BOOTSTRAP).getAsJsonObject() : null;
-            } catch (IOException e) {
-                log.error("", e);
-            }
-        }
+//        if (deviceProfile != null && ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties().size() > 0) {
+//            Object bootstrap = ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties();
+//            try {
+//                ObjectMapper mapper = new ObjectMapper();
+//                String bootstrapStr = mapper.writeValueAsString(bootstrap);
+//                JsonObject objectMsg = (bootstrapStr != null) ? validateJson(bootstrapStr) : null;
+//                return (getValidateBootstrapProfileFromThingsboard(objectMsg)) ? objectMsg.get(BOOTSTRAP).getAsJsonObject() : null;
+//            } catch (IOException e) {
+//                log.error("", e);
+//            }
+//        }
         return null;
     }
 
@@ -1001,12 +1002,12 @@ public class LwM2mTransportUtil {
      * Attribute pmax = new Attribute(MAXIMUM_PERIOD, "60");
      * Attribute [] attrs = {gt, st};
      */
-    public static SimpleDownlinkRequest createWriteAttributeRequest(String target, Object params, DefaultLwM2MTransportMsgHandler serviceImpl) {
+    public static SimpleDownlinkRequest createWriteAttributeRequest(String target, Object params, DefaultLwM2MUplinkMsgHandler serviceImpl) {
         AttributeSet attrSet = new AttributeSet(createWriteAttributes(params, serviceImpl, target));
         return attrSet.getAttributes().size() > 0 ? new WriteAttributesRequest(target, attrSet) : null;
     }
 
-    private static Attribute[] createWriteAttributes(Object params, DefaultLwM2MTransportMsgHandler serviceImpl, String target) {
+    private static Attribute[] createWriteAttributes(Object params, DefaultLwM2MUplinkMsgHandler serviceImpl, String target) {
         List<Attribute> attributeLists = new ArrayList<>();
         ObjectMapper oMapper = new ObjectMapper();
         Map<String, Object> map = oMapper.convertValue(params, ConcurrentHashMap.class);
@@ -1059,7 +1060,7 @@ public class LwM2mTransportUtil {
         }
     }
 
-    public static Object convertWriteAttributes(String type, Object value, DefaultLwM2MTransportMsgHandler serviceImpl, String target) {
+    public static Object convertWriteAttributes(String type, Object value, DefaultLwM2MUplinkMsgHandler serviceImpl, String target) {
         switch (type) {
             /** Integer [0:255]; */
             case DIMENSION:

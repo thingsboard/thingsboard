@@ -24,7 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.transport.lwm2m.server.DefaultLwM2MTransportMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.DefaultLwM2MUplinkMsgHandler;
 
 import java.util.Map;
 import java.util.Objects;
@@ -79,7 +79,7 @@ public class LwM2mClientRpcRequest {
     }
 
     public LwM2mClientRpcRequest(LwM2mTypeOper lwM2mTypeOper, String bodyParams, int requestId,
-                                 TransportProtos.SessionInfoProto sessionInfo, Registration registration, DefaultLwM2MTransportMsgHandler handler) {
+                                 TransportProtos.SessionInfoProto sessionInfo, Registration registration, DefaultLwM2MUplinkMsgHandler handler) {
         this.registration = registration;
         this.sessionInfo = sessionInfo;
         this.requestId = requestId;
@@ -110,7 +110,7 @@ public class LwM2mClientRpcRequest {
                 .build();
     }
 
-    private void init(DefaultLwM2MTransportMsgHandler handler) {
+    private void init(DefaultLwM2MUplinkMsgHandler handler) {
         try {
             // #1
             if (this.bodyParams.contains(KEY_NAME_KEY)) {
@@ -179,7 +179,7 @@ public class LwM2mClientRpcRequest {
         }
     }
 
-    private void setValidParamsKey(DefaultLwM2MTransportMsgHandler handler) {
+    private void setValidParamsKey(DefaultLwM2MUplinkMsgHandler handler) {
         String paramsStr = this.getValueKeyFromBody(PARAMS_KEY);
         if (paramsStr != null) {
             String params2Json =
@@ -245,7 +245,7 @@ public class LwM2mClientRpcRequest {
     }
 
     private ConcurrentHashMap<String, Object> convertParamsToResourceId(ConcurrentHashMap<String, Object> params,
-                                                                        DefaultLwM2MTransportMsgHandler serviceImpl) {
+                                                                        DefaultLwM2MUplinkMsgHandler serviceImpl) {
         Map<String, Object> paramsIdVer = new ConcurrentHashMap<>();
         LwM2mPath targetId = new LwM2mPath(Objects.requireNonNull(convertPathFromIdVerToObjectId(this.targetIdVer)));
         if (targetId.isObjectInstance()) {
@@ -272,7 +272,7 @@ public class LwM2mClientRpcRequest {
         return (ConcurrentHashMap<String, Object>) paramsIdVer;
     }
 
-    private String getRezIdByResourceNameAndObjectInstanceId(String resourceName, DefaultLwM2MTransportMsgHandler handler) {
+    private String getRezIdByResourceNameAndObjectInstanceId(String resourceName, DefaultLwM2MUplinkMsgHandler handler) {
         LwM2mClient lwM2mClient = handler.clientContext.getClientBySessionInfo(this.sessionInfo);
         return lwM2mClient != null ?
                 lwM2mClient.getRezIdByResourceNameAndObjectInstanceId(resourceName, this.targetIdVer, handler.config.getModelProvider()) :

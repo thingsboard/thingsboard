@@ -37,9 +37,9 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.S
 public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
     private final ConcurrentMap<String, ObserveRelation> tokenToObserveRelationMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, AtomicInteger> tokenToObserveNotificationSeqMap = new ConcurrentHashMap<>();
-    private final LwM2mTransportMsgHandler handler;
+    private final LwM2mUplinkMsgHandler handler;
 
-    public LwM2mTransportCoapResource(LwM2mTransportMsgHandler handler, String name) {
+    public LwM2mTransportCoapResource(LwM2mUplinkMsgHandler handler, String name) {
         super(name);
         this.handler = handler;
         this.setObservable(true); // enable observing
@@ -150,7 +150,7 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
     }
 
     private byte[] getOtaData(UUID currentId) {
-        return ((DefaultLwM2MTransportMsgHandler) handler).otaPackageDataCache.get(currentId.toString());
+        return ((DefaultLwM2MUplinkMsgHandler) handler).otaPackageDataCache.get(currentId.toString());
     }
 
 }

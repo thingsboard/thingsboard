@@ -32,9 +32,9 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.c
 @Slf4j
 public class LwM2mServerListener {
 
-    private final LwM2mTransportMsgHandler service;
+    private final LwM2mUplinkMsgHandler service;
 
-    public LwM2mServerListener(LwM2mTransportMsgHandler service) {
+    public LwM2mServerListener(LwM2mUplinkMsgHandler service) {
         this.service = service;
     }
 

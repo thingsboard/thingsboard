@@ -107,7 +107,7 @@ public class LwM2mTransportRequest {
     private final LwM2mTransportContext context;
     private final LwM2MTransportServerConfig config;
     private final LwM2mClientContext lwM2mClientContext;
-    private final DefaultLwM2MTransportMsgHandler handler;
+    private final DefaultLwM2MUplinkMsgHandler handler;
 
     @PostConstruct
     public void init() {

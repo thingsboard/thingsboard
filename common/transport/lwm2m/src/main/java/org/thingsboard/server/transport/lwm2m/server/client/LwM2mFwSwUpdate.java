@@ -24,7 +24,7 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.transport.lwm2m.server.DefaultLwM2MTransportMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.DefaultLwM2MUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportRequest;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 
@@ -156,7 +156,7 @@ public class LwM2mFwSwUpdate {
         }
     }
 
-    public void initReadValue(DefaultLwM2MTransportMsgHandler handler, LwM2mTransportRequest request, String pathIdVer) {
+    public void initReadValue(DefaultLwM2MUplinkMsgHandler handler, LwM2mTransportRequest request, String pathIdVer) {
         if (pathIdVer != null) {
             this.pendingInfoRequestsStart.remove(pathIdVer);
         }
@@ -176,7 +176,7 @@ public class LwM2mFwSwUpdate {
      * Send FsSw to Lwm2mClient:
      * before operation Write: fw_state = DOWNLOADING
      */
-    public void writeFwSwWare(DefaultLwM2MTransportMsgHandler handler, LwM2mTransportRequest request) {
+    public void writeFwSwWare(DefaultLwM2MUplinkMsgHandler handler, LwM2mTransportRequest request) {
         if (this.currentId != null) {
             this.stateUpdate = OtaPackageUpdateStatus.INITIATED.name();
             this.sendLogs(handler, WRITE_REPLACE.name(), LOG_LW2M_INFO, null);
@@ -214,7 +214,7 @@ public class LwM2mFwSwUpdate {
         }
     }
 
-    public void sendLogs(DefaultLwM2MTransportMsgHandler handler, String typeOper, String typeInfo, String msgError) {
+    public void sendLogs(DefaultLwM2MUplinkMsgHandler handler, String typeOper, String typeInfo, String msgError) {
 //        this.sendSateOnThingsBoard(handler);
         String msg = String.format("%s: %s, %s, pkgVer: %s: pkgName - %s state - %s.",
                 typeInfo, this.wUpdate, typeOper, this.currentVersion, this.currentTitle, this.stateUpdate);
@@ -230,7 +230,7 @@ public class LwM2mFwSwUpdate {
      * fw_state/sw_state = UPDATING
      * send execute
      */
-    public void executeFwSwWare(DefaultLwM2MTransportMsgHandler handler, LwM2mTransportRequest request) {
+    public void executeFwSwWare(DefaultLwM2MUplinkMsgHandler handler, LwM2mTransportRequest request) {
         this.sendLogs(handler, EXECUTE.name(), LOG_LW2M_INFO, null);
         request.sendAllRequest(this.lwM2MClient, this.pathInstallId, EXECUTE, null, 0, this.rpcRequest);
     }
@@ -248,7 +248,7 @@ public class LwM2mFwSwUpdate {
      * -- If the result of the update is not errors (equal to 1 or 0) and ver in Object 5 is not empty - it means that the previous update has passed.
      * Compare current versions  by contains.
      */
-    private boolean conditionalFwUpdateStart(DefaultLwM2MTransportMsgHandler handler) {
+    private boolean conditionalFwUpdateStart(DefaultLwM2MUplinkMsgHandler handler) {
         Long updateResultFw = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
         String ver5 = (String) this.lwM2MClient.getResourceValue(null, this.pathVerId);
         String pathName = (String) this.lwM2MClient.getResourceValue(null, this.pathNameId);
@@ -313,7 +313,7 @@ public class LwM2mFwSwUpdate {
      * - If Update Result is not errors and ver is not empty - This means that before unInstall update
      * * - Check if the version has changed and launch a new update.
      */
-    private boolean conditionalSwUpdateStart(DefaultLwM2MTransportMsgHandler handler) {
+    private boolean conditionalSwUpdateStart(DefaultLwM2MUplinkMsgHandler handler) {
         Long updateResultSw = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
         // #1/#2
         return updateResultSw >= LwM2mTransportUtil.UpdateResultSw.NOT_ENOUGH_STORAGE.code ||
@@ -347,7 +347,7 @@ public class LwM2mFwSwUpdate {
      * --- send to telemetry ( key - this is name Update Result in model) (
      * --  fw_state/sw_state = FAILED
      */
-    public void finishFwSwUpdate(DefaultLwM2MTransportMsgHandler handler, boolean success) {
+    public void finishFwSwUpdate(DefaultLwM2MUplinkMsgHandler handler, boolean success) {
         Long updateResult = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
         String value = FIRMWARE.equals(this.type) ? LwM2mTransportUtil.UpdateResultFw.fromUpdateResultFwByCode(updateResult.intValue()).type :
                 LwM2mTransportUtil.UpdateResultSw.fromUpdateResultSwByCode(updateResult.intValue()).type;
@@ -381,7 +381,7 @@ public class LwM2mFwSwUpdate {
         return LwM2mTransportUtil.UpdateResultSw.NOT_ENOUGH_STORAGE.code <= updateResult;
     }
 
-    private void observeStateUpdate(DefaultLwM2MTransportMsgHandler handler, LwM2mTransportRequest request) {
+    private void observeStateUpdate(DefaultLwM2MUplinkMsgHandler handler, LwM2mTransportRequest request) {
         request.sendAllRequest(lwM2MClient,
                 convertPathFromObjectIdToIdVer(this.pathStateId, this.lwM2MClient.getRegistration()), OBSERVE,
                 null, null, 0, null);
@@ -390,7 +390,7 @@ public class LwM2mFwSwUpdate {
                 null, null, 0, null);
     }
 
-    public void sendSateOnThingsBoard(DefaultLwM2MTransportMsgHandler handler) {
+    public void sendSateOnThingsBoard(DefaultLwM2MUplinkMsgHandler handler) {
         if (StringUtils.trimToNull(this.stateUpdate) != null) {
             List<TransportProtos.KeyValueProto> result = new ArrayList<>();
             TransportProtos.KeyValueProto.Builder kvProto = TransportProtos.KeyValueProto.newBuilder().setKey(getAttributeKey(this.type, STATE));
@@ -433,7 +433,7 @@ public class LwM2mFwSwUpdate {
      * - after success finished operation Execute (FwUpdate) Update Result == 1 ("Firmware updated successfully")
      * - finished operation Execute (FwUpdate)
      */
-    public void updateStateOta(DefaultLwM2MTransportMsgHandler handler, LwM2mTransportRequest request,
+    public void updateStateOta(DefaultLwM2MUplinkMsgHandler handler, LwM2mTransportRequest request,
                                Registration registration, String path, int value) {
         if (OBJ_5_BINARY.code == this.getUpdateStrategy()) {
             if ((convertPathFromObjectIdToIdVer(FW_RESULT_ID, registration).equals(path))) {

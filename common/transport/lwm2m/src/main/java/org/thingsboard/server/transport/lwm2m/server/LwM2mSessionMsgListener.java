@@ -36,10 +36,10 @@ import java.util.UUID;
 
 @Slf4j
 public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? super Void>>, SessionMsgListener {
-    private DefaultLwM2MTransportMsgHandler handler;
+    private DefaultLwM2MUplinkMsgHandler handler;
     private TransportProtos.SessionInfoProto sessionInfo;
 
-    public LwM2mSessionMsgListener(DefaultLwM2MTransportMsgHandler handler, TransportProtos.SessionInfoProto sessionInfo) {
+    public LwM2mSessionMsgListener(DefaultLwM2MUplinkMsgHandler handler, TransportProtos.SessionInfoProto sessionInfo) {
         this.handler = handler;
         this.sessionInfo = sessionInfo;
     }

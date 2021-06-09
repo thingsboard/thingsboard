@@ -26,7 +26,6 @@ import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.californium.LeshanServerBuilder;
 import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
-import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
@@ -35,7 +34,6 @@ import org.thingsboard.server.transport.lwm2m.secure.LWM2MGenerationPSkRPkECC;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MAuthorizer;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MDtlsCertificateVerifier;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
-import org.thingsboard.server.transport.lwm2m.server.store.TbEditableSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
@@ -81,7 +79,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
     private final LwM2mTransportContext context;
     private final LwM2MTransportServerConfig config;
     private final LwM2mTransportServerHelper helper;
-    private final DefaultLwM2MTransportMsgHandler handler;
+    private final DefaultLwM2MUplinkMsgHandler handler;
     private final CaliforniumRegistrationStore registrationStore;
     private final TbSecurityStore securityStore;
     private final LwM2mClientContext lwM2mClientContext;

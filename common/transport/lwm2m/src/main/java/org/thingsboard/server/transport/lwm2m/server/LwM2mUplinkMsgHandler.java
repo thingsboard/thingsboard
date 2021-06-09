@@ -28,7 +28,7 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientRpcReques
 import java.util.Collection;
 import java.util.Optional;
 
-public interface LwM2mTransportMsgHandler {
+public interface LwM2mUplinkMsgHandler {
 
     void onRegistered(Registration registration, Collection<Observation> previousObsersations);
 
