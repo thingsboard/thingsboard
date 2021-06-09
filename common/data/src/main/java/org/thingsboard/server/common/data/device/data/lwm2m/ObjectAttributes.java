@@ -15,17 +15,19 @@
  */
 package org.thingsboard.server.common.data.device.data.lwm2m;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ObjectAttributes {
 
-    private Integer dim;
+    private Long dim;
     private String ver;
-    private Integer pmin;
-    private Integer pmax;
-    private Integer gt;
-    private Integer lt;
-    private Integer st;
+    private Long pmin;
+    private Long pmax;
+    private Double gt;
+    private Double lt;
+    private Double st;
 
 }

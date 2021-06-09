@@ -21,11 +21,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Data
-public class ResultsAnalyzerParameters {
+public class ParametersAnalyzeResult {
     Set<String> pathPostParametersAdd;
     Set<String> pathPostParametersDel;
 
-    public ResultsAnalyzerParameters() {
+    public ParametersAnalyzeResult() {
         this.pathPostParametersAdd = ConcurrentHashMap.newKeySet();
         this.pathPostParametersDel = ConcurrentHashMap.newKeySet();
     }

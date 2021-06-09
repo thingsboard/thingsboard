@@ -29,6 +29,8 @@ import org.eclipse.leshan.server.security.BootstrapSecurityStore;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.device.data.lwm2m.BootstrapConfiguration;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
@@ -151,35 +153,30 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
     }
 
     private LwM2MBootstrapConfig getParametersBootstrap(TbLwM2MSecurityInfo store) {
-        try {
-            LwM2MBootstrapConfig lwM2MBootstrapConfig = store.getBootstrapCredentialConfig();
-            if (lwM2MBootstrapConfig != null) {
-                ObjectMapper mapper = new ObjectMapper();
-                JsonObject bootstrapObject = getBootstrapParametersFromThingsboard(store.getDeviceProfile());
-                lwM2MBootstrapConfig.servers = mapper.readValue(bootstrapObject.get(SERVERS).toString(), LwM2MBootstrapServers.class);
-                LwM2MServerBootstrap profileServerBootstrap = mapper.readValue(bootstrapObject.get(BOOTSTRAP_SERVER).toString(), LwM2MServerBootstrap.class);
-                LwM2MServerBootstrap profileLwm2mServer = mapper.readValue(bootstrapObject.get(LWM2M_SERVER).toString(), LwM2MServerBootstrap.class);
-                UUID sessionUUiD = UUID.randomUUID();
-                TransportProtos.SessionInfoProto sessionInfo = helper.getValidateSessionInfo(store.getMsg(), sessionUUiD.getMostSignificantBits(), sessionUUiD.getLeastSignificantBits());
-                context.getTransportService().registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(null, sessionInfo));
-                if (this.getValidatedSecurityMode(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap, lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer)) {
-                    lwM2MBootstrapConfig.bootstrapServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap);
-                    lwM2MBootstrapConfig.lwm2mServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer);
-                    String logMsg = String.format("%s: getParametersBootstrap: %s Access connect client with bootstrap server.", LOG_LW2M_INFO, store.getEndpoint());
-                    helper.sendParametersOnThingsboardTelemetry(helper.getKvStringtoThingsboard(LOG_LW2M_TELEMETRY, logMsg), sessionInfo);
-                    return lwM2MBootstrapConfig;
-                } else {
-                    log.error(" [{}] Different values SecurityMode between of client and profile.", store.getEndpoint());
-                    log.error("{} getParametersBootstrap: [{}] Different values SecurityMode between of client and profile.", LOG_LW2M_ERROR, store.getEndpoint());
-                    String logMsg = String.format("%s: getParametersBootstrap: %s Different values SecurityMode between of client and profile.", LOG_LW2M_ERROR, store.getEndpoint());
-                    helper.sendParametersOnThingsboardTelemetry(helper.getKvStringtoThingsboard(LOG_LW2M_TELEMETRY, logMsg), sessionInfo);
-                    return null;
-                }
+        LwM2MBootstrapConfig lwM2MBootstrapConfig = store.getBootstrapCredentialConfig();
+        if (lwM2MBootstrapConfig != null) {
+            BootstrapConfiguration bootstrapObject = getBootstrapParametersFromThingsboard(store.getDeviceProfile());
+            lwM2MBootstrapConfig.servers = JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getServers()), LwM2MBootstrapServers.class);
+            LwM2MServerBootstrap profileServerBootstrap = JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getBootstrapServer()), LwM2MServerBootstrap.class);
+            LwM2MServerBootstrap profileLwm2mServer = JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getLwm2mServer()), LwM2MServerBootstrap.class);
+            UUID sessionUUiD = UUID.randomUUID();
+            TransportProtos.SessionInfoProto sessionInfo = helper.getValidateSessionInfo(store.getMsg(), sessionUUiD.getMostSignificantBits(), sessionUUiD.getLeastSignificantBits());
+            context.getTransportService().registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(null, sessionInfo));
+            if (this.getValidatedSecurityMode(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap, lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer)) {
+                lwM2MBootstrapConfig.bootstrapServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap);
+                lwM2MBootstrapConfig.lwm2mServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer);
+                String logMsg = String.format("%s: getParametersBootstrap: %s Access connect client with bootstrap server.", LOG_LW2M_INFO, store.getEndpoint());
+                helper.sendParametersOnThingsboardTelemetry(helper.getKvStringtoThingsboard(LOG_LW2M_TELEMETRY, logMsg), sessionInfo);
+                return lwM2MBootstrapConfig;
+            } else {
+                log.error(" [{}] Different values SecurityMode between of client and profile.", store.getEndpoint());
+                log.error("{} getParametersBootstrap: [{}] Different values SecurityMode between of client and profile.", LOG_LW2M_ERROR, store.getEndpoint());
+                String logMsg = String.format("%s: getParametersBootstrap: %s Different values SecurityMode between of client and profile.", LOG_LW2M_ERROR, store.getEndpoint());
+                helper.sendParametersOnThingsboardTelemetry(helper.getKvStringtoThingsboard(LOG_LW2M_TELEMETRY, logMsg), sessionInfo);
+                return null;
             }
-        } catch (JsonProcessingException e) {
-            log.error("Unable to decode Json or Certificate for [{}]  [{}]", store.getEndpoint(), e.getMessage());
-            return null;
         }
+
         log.error("Unable to decode Json or Certificate for [{}]", store.getEndpoint());
         return null;
     }

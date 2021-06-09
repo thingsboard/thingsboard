@@ -52,7 +52,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.S
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.START_JSON_KEY;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.TARGET_ID_VER_KEY;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.VALUE_KEY;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromIdVerToObjectId;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.validPathIdVer;
 
 @Slf4j
@@ -152,8 +152,8 @@ public class LwM2mClientRpcRequest {
             else if (this.getTargetIdVer() != null
                     && (EXECUTE == this.getTypeOper()
                     || WRITE_REPLACE == this.getTypeOper())
-                    && !(new LwM2mPath(Objects.requireNonNull(convertPathFromIdVerToObjectId(this.getTargetIdVer()))).isResource()
-                    || new LwM2mPath(Objects.requireNonNull(convertPathFromIdVerToObjectId(this.getTargetIdVer()))).isResourceInstance())) {
+                    && !(new LwM2mPath(Objects.requireNonNull(fromVersionedIdToObjectId(this.getTargetIdVer()))).isResource()
+                    || new LwM2mPath(Objects.requireNonNull(fromVersionedIdToObjectId(this.getTargetIdVer()))).isResourceInstance())) {
                 this.setErrorMsg("Invalid parameter " + TARGET_ID_VER_KEY
                         + ". Only Resource or ResourceInstance can be this operation");
             }
@@ -247,7 +247,7 @@ public class LwM2mClientRpcRequest {
     private ConcurrentHashMap<String, Object> convertParamsToResourceId(ConcurrentHashMap<String, Object> params,
                                                                         DefaultLwM2MUplinkMsgHandler serviceImpl) {
         Map<String, Object> paramsIdVer = new ConcurrentHashMap<>();
-        LwM2mPath targetId = new LwM2mPath(Objects.requireNonNull(convertPathFromIdVerToObjectId(this.targetIdVer)));
+        LwM2mPath targetId = new LwM2mPath(Objects.requireNonNull(fromVersionedIdToObjectId(this.targetIdVer)));
         if (targetId.isObjectInstance()) {
             params.forEach((k, v) -> {
                 try {
@@ -256,7 +256,7 @@ public class LwM2mClientRpcRequest {
                 } catch (NumberFormatException e) {
                     String targetIdVer = serviceImpl.getPresentPathIntoProfile(sessionInfo, k);
                     if (targetIdVer != null) {
-                        LwM2mPath lwM2mPath = new LwM2mPath(Objects.requireNonNull(convertPathFromIdVerToObjectId(targetIdVer)));
+                        LwM2mPath lwM2mPath = new LwM2mPath(Objects.requireNonNull(fromVersionedIdToObjectId(targetIdVer)));
                             paramsIdVer.put(String.valueOf(lwM2mPath.getResourceId()), v);
                     }
                     /** WRITE_UPDATE*/

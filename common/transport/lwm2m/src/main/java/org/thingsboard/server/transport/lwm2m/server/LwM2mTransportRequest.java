@@ -20,6 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.Response;
 import org.eclipse.leshan.core.Link;
+import org.eclipse.leshan.core.attributes.Attribute;
+import org.eclipse.leshan.core.attributes.AttributeSet;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mNode;
 import org.eclipse.leshan.core.node.LwM2mObject;
@@ -51,6 +53,8 @@ import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.device.data.lwm2m.ObjectAttributes;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
@@ -62,15 +66,26 @@ import javax.annotation.PostConstruct;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.eclipse.californium.core.coap.CoAP.ResponseCode.CONTENT;
 import static org.eclipse.leshan.core.ResponseCode.BAD_REQUEST;
 import static org.eclipse.leshan.core.ResponseCode.NOT_FOUND;
+import static org.eclipse.leshan.core.attributes.Attribute.DIMENSION;
+import static org.eclipse.leshan.core.attributes.Attribute.GREATER_THAN;
+import static org.eclipse.leshan.core.attributes.Attribute.LESSER_THAN;
+import static org.eclipse.leshan.core.attributes.Attribute.MAXIMUM_PERIOD;
+import static org.eclipse.leshan.core.attributes.Attribute.MINIMUM_PERIOD;
+import static org.eclipse.leshan.core.attributes.Attribute.OBJECT_VERSION;
+import static org.eclipse.leshan.core.attributes.Attribute.STEP;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.FAILED;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper.getContentFormatByResourceModelType;
@@ -91,7 +106,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.L
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.RESPONSE_REQUEST_CHANNEL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_INSTALL_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_PACKAGE_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromIdVerToObjectId;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.createWriteAttributeRequest;
 
@@ -116,33 +131,105 @@ public class LwM2mTransportRequest {
                 new NamedThreadFactory(String.format("LwM2M %s channel response after request", RESPONSE_REQUEST_CHANNEL)));
     }
 
+    public void sendReadRequest(LwM2mClient lwM2MClient, String targetId, Long timeout) {
+        sendReadRequest(lwM2MClient, targetId, lwM2MClient.getDefaultContentFormat(), timeout);
+    }
+
+    public void sendReadRequest(LwM2mClient lwM2MClient, String targetId, ContentFormat contentFormat, Long timeout) {
+        String objectId = fromVersionedIdToObjectId(targetId);
+        if (objectId != null && lwM2MClient.isValidObjectVersion(targetId)) {
+            sendRequest(lwM2MClient, new ReadRequest(contentFormat, objectId), timeout);
+        }
+    }
+
+    public void sendObserveRequest(LwM2mClient lwM2MClient, String targetId, Long timeout) {
+        sendObserveRequest(lwM2MClient, targetId, lwM2MClient.getDefaultContentFormat(), timeout);
+    }
+
+    public void sendObserveRequest(LwM2mClient lwM2MClient, String targetId, ContentFormat contentFormat, Long timeout) {
+        String objectId = fromVersionedIdToObjectId(targetId);
+        if (objectId != null && lwM2MClient.isValidObjectVersion(targetId)) {
+            LwM2mPath resultIds = new LwM2mPath(objectId);
+            Set<Observation> observations = context.getServer().getObservationService().getObservations(lwM2MClient.getRegistration());
+            if (observations.stream().noneMatch(observation -> observation.getPath().equals(resultIds))) {
+                ObserveRequest request;
+                if (resultIds.isResource()) {
+                    request = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId());
+                } else if (resultIds.isObjectInstance()) {
+                    request = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId());
+                } else {
+                    request = new ObserveRequest(contentFormat, resultIds.getObjectId());
+                }
+                log.info("[{}] Send observation: {}.", lwM2MClient.getEndpoint(), targetId);
+                sendRequest(lwM2MClient, request, timeout);
+            }
+        }
+    }
+
+    public void sendDiscoverRequest(LwM2mClient lwM2MClient, String targetId, Long timeout) {
+        String objectId = fromVersionedIdToObjectId(targetId);
+        if (objectId != null && lwM2MClient.isValidObjectVersion(targetId)) {
+            sendRequest(lwM2MClient, new DiscoverRequest(objectId), timeout);
+        }
+    }
+
+    public void sendWriteAttributesRequest(LwM2mClient lwM2MClient, String targetId, ObjectAttributes params, Long timeout) {
+        String objectId = fromVersionedIdToObjectId(targetId);
+        if (objectId != null && lwM2MClient.isValidObjectVersion(targetId) && params != null) {
+            List<Attribute> attributes = new LinkedList<>();
+//            Dimension and Object version are read only attributes.
+//            addAttribute(attributes, DIMENSION, params.getDim(), dim -> dim >= 0 && dim <= 255);
+//            addAttribute(attributes, OBJECT_VERSION, params.getVer(), StringUtils::isNotEmpty, Function.identity());
+            addAttribute(attributes, MAXIMUM_PERIOD, params.getPmax());
+            addAttribute(attributes, MINIMUM_PERIOD, params.getPmin());
+            addAttribute(attributes, GREATER_THAN, params.getGt());
+            addAttribute(attributes, LESSER_THAN, params.getLt());
+            addAttribute(attributes, STEP, params.getSt());
+            AttributeSet attributeSet = new AttributeSet(attributes);
+            sendRequest(lwM2MClient, new WriteAttributesRequest(objectId, attributeSet), timeout);
+        }
+    }
+
+    private <T> void addAttribute(List<Attribute> attributes, String attributeName, T value) {
+        addAttribute(attributes, attributeName, value, null, null);
+    }
+
+    private <T> void addAttribute(List<Attribute> attributes, String attributeName, T value, Function<T, ?> converter) {
+        addAttribute(attributes, attributeName, value, null, converter);
+    }
+
+    private <T> void addAttribute(List<Attribute> attributes, String attributeName, T value, Predicate<T> filter, Function<T, ?> converter) {
+        if (value != null && ((filter == null) || filter.test(value))) {
+            attributes.add(new Attribute(attributeName, converter != null ? converter.apply(value) : value));
+        }
+    }
+
     public void sendAllRequest(LwM2mClient lwM2MClient, String targetIdVer, LwM2mTypeOper typeOper, Object params, long timeoutInMs, LwM2mClientRpcRequest lwm2mClientRpcRequest) {
         sendAllRequest(lwM2MClient, targetIdVer, typeOper, lwM2MClient.getDefaultContentFormat(), params, timeoutInMs, lwm2mClientRpcRequest);
     }
-
 
     public void sendAllRequest(LwM2mClient lwM2MClient, String targetIdVer, LwM2mTypeOper typeOper,
                                ContentFormat contentFormat, Object params, long timeoutInMs, LwM2mClientRpcRequest lwm2mClientRpcRequest) {
         Registration registration = lwM2MClient.getRegistration();
         try {
-            String target = convertPathFromIdVerToObjectId(targetIdVer);
-            if(contentFormat == null){
+            String target = fromVersionedIdToObjectId(targetIdVer);
+            if (contentFormat == null) {
                 contentFormat = ContentFormat.DEFAULT;
             }
             LwM2mPath resultIds = target != null ? new LwM2mPath(target) : null;
-            if (!OBSERVE_CANCEL.name().equals(typeOper.name()) && resultIds != null && registration != null && resultIds.getObjectId() >= 0 && lwM2MClient != null) {
+            if (!OBSERVE_CANCEL.name().equals(typeOper.name()) && resultIds != null && registration != null && resultIds.getObjectId() >= 0) {
                 if (lwM2MClient.isValidObjectVersion(targetIdVer)) {
                     timeoutInMs = timeoutInMs > 0 ? timeoutInMs : DEFAULT_TIMEOUT;
                     SimpleDownlinkRequest request = createRequest(registration, lwM2MClient, typeOper, contentFormat, target,
                             targetIdVer, resultIds, params, lwm2mClientRpcRequest);
                     if (request != null) {
                         try {
-                            this.sendRequest(registration, lwM2MClient, request, timeoutInMs, lwm2mClientRpcRequest);
+                            this.sendRequest(lwM2MClient, request, timeoutInMs, lwm2mClientRpcRequest);
                         } catch (ClientSleepingException e) {
                             SimpleDownlinkRequest finalRequest = request;
                             long finalTimeoutInMs = timeoutInMs;
                             LwM2mClientRpcRequest finalRpcRequest = lwm2mClientRpcRequest;
-                            lwM2MClient.getQueuedRequests().add(() -> sendRequest(registration, lwM2MClient, finalRequest, finalTimeoutInMs, finalRpcRequest));
+                            lwM2MClient.getQueuedRequests().add(() -> sendRequest(lwM2MClient, finalRequest, finalTimeoutInMs, finalRpcRequest));
                         } catch (Exception e) {
                             log.error("[{}] [{}] [{}] Failed to send downlink.", registration.getEndpoint(), targetIdVer, typeOper.name(), e);
                         }
@@ -222,8 +309,8 @@ public class LwM2mTransportRequest {
     }
 
     private SimpleDownlinkRequest createRequest(Registration registration, LwM2mClient lwM2MClient, LwM2mTypeOper typeOper,
-                                          ContentFormat contentFormat, String target, String targetIdVer,
-                                          LwM2mPath resultIds, Object params, LwM2mClientRpcRequest rpcRequest) {
+                                                ContentFormat contentFormat, String target, String targetIdVer,
+                                                LwM2mPath resultIds, Object params, LwM2mClientRpcRequest rpcRequest) {
         SimpleDownlinkRequest request = null;
         switch (typeOper) {
             case READ:
@@ -320,15 +407,18 @@ public class LwM2mTransportRequest {
         return request;
     }
 
-    /**
-     * @param registration -
-     * @param request      -
-     * @param timeoutInMs  -
-     */
+    private void sendRequest(LwM2mClient lwM2MClient, SimpleDownlinkRequest request, long timeoutInMs) {
+        try {
+            sendRequest(lwM2MClient, request, timeoutInMs, null);
+        } catch (ClientSleepingException e) {
+            //TODO: this may cause infinite loop / memory leak.
+            lwM2MClient.getQueuedRequests().add(() -> sendRequest(lwM2MClient, request, timeoutInMs, null));
+        }
+    }
 
     @SuppressWarnings({"error sendRequest"})
-    private void sendRequest(Registration registration, LwM2mClient lwM2MClient, SimpleDownlinkRequest request,
-                             long timeoutInMs, LwM2mClientRpcRequest rpcRequest) {
+    private void sendRequest(LwM2mClient lwM2MClient, SimpleDownlinkRequest request, long timeoutInMs, LwM2mClientRpcRequest rpcRequest) {
+        Registration registration = lwM2MClient.getRegistration();
         context.getServer().send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
 
             if (!lwM2MClient.isInit()) {
@@ -455,8 +545,8 @@ public class LwM2mTransportRequest {
     /**
      * processing a response from a client
      *
-     * @param path         -
-     * @param response     -
+     * @param path     -
+     * @param response -
      */
     private void sendResponse(LwM2mClient lwM2mClient, String path, LwM2mResponse response,
                               SimpleDownlinkRequest request, LwM2mClientRpcRequest rpcRequest) {
@@ -550,8 +640,7 @@ public class LwM2mTransportRequest {
                     if (rpcRequest != null) {
                         rpcRequest.setInfoMsg(msg);
                     }
-                }
-                else if (rpcRequest != null) {
+                } else if (rpcRequest != null) {
                     handler.sentRpcResponse(rpcRequest, response.getCode().getName(), msg, LOG_LW2M_INFO);
                 }
             }
@@ -610,4 +699,5 @@ public class LwM2mTransportRequest {
             handler.sentRpcResponse(rpcRequest, CONTENT.name(), null, LOG_LW2M_INFO);
         }
     }
+
 }

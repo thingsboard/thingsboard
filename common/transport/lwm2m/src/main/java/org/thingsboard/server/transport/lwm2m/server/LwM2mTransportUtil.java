@@ -16,13 +16,9 @@
 package org.thingsboard.server.transport.lwm2m.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Sets;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.leshan.core.attributes.Attribute;
@@ -42,17 +38,17 @@ import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.registration.Registration;
 import org.nustaq.serialization.FSTConfiguration;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.device.data.lwm2m.BootstrapConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageKey;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
 import org.thingsboard.server.common.data.ota.OtaPackageUtil;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientProfile;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -60,7 +56,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.eclipse.leshan.core.attributes.Attribute.DIMENSION;
@@ -379,7 +374,7 @@ public class LwM2mTransportUtil {
         switch (updateResultFw) {
             case INITIAL:
                 return equalsFwSateToFirmwareUpdateStatus(stateFw);
-             case UPDATE_SUCCESSFULLY:
+            case UPDATE_SUCCESSFULLY:
                 return UPDATED;
             case NOT_ENOUGH:
             case OUT_OFF_MEMORY:
@@ -399,7 +394,7 @@ public class LwM2mTransportUtil {
         switch (updateResultFw) {
             case INITIAL:
                 return VERIFIED;
-             case UPDATE_SUCCESSFULLY:
+            case UPDATE_SUCCESSFULLY:
                 return UPDATED;
             case NOT_ENOUGH:
             case OUT_OFF_MEMORY:
@@ -695,26 +690,23 @@ public class LwM2mTransportUtil {
         }
     }
 
-    public static LwM2mOtaConvert convertOtaUpdateValueToString (String pathIdVer, Object value, ResourceModel.Type currentType) {
-        String path = convertPathFromIdVerToObjectId(pathIdVer);
+    public static LwM2mOtaConvert convertOtaUpdateValueToString(String pathIdVer, Object value, ResourceModel.Type currentType) {
+        String path = fromVersionedIdToObjectId(pathIdVer);
         LwM2mOtaConvert lwM2mOtaConvert = new LwM2mOtaConvert();
         if (path != null) {
             if (FW_STATE_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
                 lwM2mOtaConvert.setValue(StateFw.fromStateFwByCode(((Long) value).intValue()).type);
                 return lwM2mOtaConvert;
-            }
-            else if (FW_RESULT_ID.equals(path)) {
+            } else if (FW_RESULT_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
                 lwM2mOtaConvert.setValue(UpdateResultFw.fromUpdateResultFwByCode(((Long) value).intValue()).type);
                 return lwM2mOtaConvert;
-            }
-            else if (SW_UPDATE_STATE_ID.equals(path)) {
+            } else if (SW_UPDATE_STATE_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
                 lwM2mOtaConvert.setValue(UpdateStateSw.fromUpdateStateSwByCode(((Long) value).intValue()).type);
                 return lwM2mOtaConvert;
-            }
-            else if (SW_RESULT_ID.equals(path)) {
+            } else if (SW_RESULT_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
                 lwM2mOtaConvert.setValue(UpdateResultSw.fromUpdateResultSwByCode(((Long) value).intValue()).type);
                 return lwM2mOtaConvert;
@@ -738,112 +730,31 @@ public class LwM2mTransportUtil {
         return null;
     }
 
+//    public static LwM2mClientProfile getNewProfileParameters(JsonObject profilesConfigData, TenantId tenantId) {
+//        LwM2mClientProfile lwM2MClientProfile = new LwM2mClientProfile();
+//        lwM2MClientProfile.setTenantId(tenantId);
+//        lwM2MClientProfile.setPostClientLwM2mSettings(profilesConfigData.get(CLIENT_LWM2M_SETTINGS).getAsJsonObject());
+//        lwM2MClientProfile.setPostKeyNameProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(KEY_NAME).getAsJsonObject());
+//        lwM2MClientProfile.setPostAttributeProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE).getAsJsonArray());
+//        lwM2MClientProfile.setPostTelemetryProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(TELEMETRY).getAsJsonArray());
+//        lwM2MClientProfile.setPostObserveProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(OBSERVE_LWM2M).getAsJsonArray());
+//        lwM2MClientProfile.setPostAttributeLwm2mProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE_LWM2M).getAsJsonObject());
+//        return lwM2MClientProfile;
+//    }
 
-    public static LwM2mClientProfile getNewProfileParameters(JsonObject profilesConfigData, TenantId tenantId) {
-        LwM2mClientProfile lwM2MClientProfile = new LwM2mClientProfile();
-        lwM2MClientProfile.setTenantId(tenantId);
-        lwM2MClientProfile.setPostClientLwM2mSettings(profilesConfigData.get(CLIENT_LWM2M_SETTINGS).getAsJsonObject());
-        lwM2MClientProfile.setPostKeyNameProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(KEY_NAME).getAsJsonObject());
-        lwM2MClientProfile.setPostAttributeProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE).getAsJsonArray());
-        lwM2MClientProfile.setPostTelemetryProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(TELEMETRY).getAsJsonArray());
-        lwM2MClientProfile.setPostObserveProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(OBSERVE_LWM2M).getAsJsonArray());
-        lwM2MClientProfile.setPostAttributeLwm2mProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE_LWM2M).getAsJsonObject());
-        return lwM2MClientProfile;
+    public static Lwm2mDeviceProfileTransportConfiguration toLwM2MClientProfile(DeviceProfile deviceProfile) {
+        DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
+        if (transportConfiguration.getType().equals(DeviceTransportType.LWM2M)) {
+            return (Lwm2mDeviceProfileTransportConfiguration) transportConfiguration;
+        } else {
+            log.warn("[{}] Received profile with invalid transport configuration: {}", deviceProfile.getId(), deviceProfile.getProfileData().getTransportConfiguration());
+            throw new IllegalArgumentException("Received profile with invalid transport configuration: " + transportConfiguration.getType());
+        }
     }
 
-    /**
-     * @return deviceProfileBody with Observe&Attribute&Telemetry From Thingsboard
-     * Example:
-     * property: {"clientLwM2mSettings": {
-     * clientUpdateValueAfterConnect: false;
-     * }
-     * property: "observeAttr"
-     * {"keyName": {
-     * "/3/0/1": "modelNumber",
-     * "/3/0/0": "manufacturer",
-     * "/3/0/2": "serialNumber"
-     * },
-     * "attribute":["/2/0/1","/3/0/9"],
-     * "telemetry":["/1/0/1","/2/0/1","/6/0/1"],
-     * "observe":["/2/0","/2/0/0","/4/0/2"]}
-     * "attributeLwm2m": {"/3_1.0": {"ver": "currentTimeTest11"},
-     * "/3_1.0/0": {"gt": 17},
-     * "/3_1.0/0/9": {"pmax": 45}, "/3_1.2": {ver": "3_1.2"}}
-     */
-    //TODO: refactor this to valid jackson code instead of parsing manually.
-    public static LwM2mClientProfile toLwM2MClientProfile(DeviceProfile deviceProfile) {
-//        if (((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties().size() > 0) {
-//            Object profile = ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties();
-//            try {
-//                ObjectMapper mapper = new ObjectMapper();
-//                String profileStr = mapper.writeValueAsString(profile);
-//                JsonObject profileJson = (profileStr != null) ? validateJson(profileStr) : null;
-//                return getValidateCredentialsBodyFromThingsboard(profileJson) ? LwM2mTransportUtil.getNewProfileParameters(profileJson, deviceProfile.getTenantId()) : null;
-//            } catch (IOException e) {
-//                log.error("", e);
-//            }
-//        }
-        return null;
+    public static BootstrapConfiguration getBootstrapParametersFromThingsboard(DeviceProfile deviceProfile) {
+        return toLwM2MClientProfile(deviceProfile).getBootstrap();
     }
-
-    public static JsonObject getBootstrapParametersFromThingsboard(DeviceProfile deviceProfile) {
-//        if (deviceProfile != null && ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties().size() > 0) {
-//            Object bootstrap = ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties();
-//            try {
-//                ObjectMapper mapper = new ObjectMapper();
-//                String bootstrapStr = mapper.writeValueAsString(bootstrap);
-//                JsonObject objectMsg = (bootstrapStr != null) ? validateJson(bootstrapStr) : null;
-//                return (getValidateBootstrapProfileFromThingsboard(objectMsg)) ? objectMsg.get(BOOTSTRAP).getAsJsonObject() : null;
-//            } catch (IOException e) {
-//                log.error("", e);
-//            }
-//        }
-        return null;
-    }
-
-    private static boolean getValidateCredentialsBodyFromThingsboard(JsonObject objectMsg) {
-        return (objectMsg != null &&
-                !objectMsg.isJsonNull() &&
-                objectMsg.has(CLIENT_LWM2M_SETTINGS) &&
-                !objectMsg.get(CLIENT_LWM2M_SETTINGS).isJsonNull() &&
-                objectMsg.get(CLIENT_LWM2M_SETTINGS).isJsonObject() &&
-                objectMsg.has(OBSERVE_ATTRIBUTE_TELEMETRY) &&
-                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).isJsonNull() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).isJsonObject() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(KEY_NAME) &&
-                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(KEY_NAME).isJsonNull() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(KEY_NAME).isJsonObject() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(ATTRIBUTE) &&
-                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE).isJsonNull() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE).isJsonArray() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(TELEMETRY) &&
-                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(TELEMETRY).isJsonNull() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(TELEMETRY).isJsonArray() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(OBSERVE_LWM2M) &&
-                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(OBSERVE_LWM2M).isJsonNull() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(OBSERVE_LWM2M).isJsonArray() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(ATTRIBUTE_LWM2M) &&
-                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE_LWM2M).isJsonNull() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE_LWM2M).isJsonObject());
-    }
-
-    private static boolean getValidateBootstrapProfileFromThingsboard(JsonObject objectMsg) {
-        return (objectMsg != null &&
-                !objectMsg.isJsonNull() &&
-                objectMsg.has(BOOTSTRAP) &&
-                objectMsg.get(BOOTSTRAP).isJsonObject() &&
-                !objectMsg.get(BOOTSTRAP).isJsonNull() &&
-                objectMsg.get(BOOTSTRAP).getAsJsonObject().has(SERVERS) &&
-                !objectMsg.get(BOOTSTRAP).getAsJsonObject().get(SERVERS).isJsonNull() &&
-                objectMsg.get(BOOTSTRAP).getAsJsonObject().get(SERVERS).isJsonObject() &&
-                objectMsg.get(BOOTSTRAP).getAsJsonObject().has(BOOTSTRAP_SERVER) &&
-                !objectMsg.get(BOOTSTRAP).getAsJsonObject().get(BOOTSTRAP_SERVER).isJsonNull() &&
-                objectMsg.get(BOOTSTRAP).getAsJsonObject().get(BOOTSTRAP_SERVER).isJsonObject() &&
-                objectMsg.get(BOOTSTRAP).getAsJsonObject().has(LWM2M_SERVER) &&
-                !objectMsg.get(BOOTSTRAP).getAsJsonObject().get(LWM2M_SERVER).isJsonNull() &&
-                objectMsg.get(BOOTSTRAP).getAsJsonObject().get(LWM2M_SERVER).isJsonObject());
-    }
-
 
     public static JsonObject validateJson(String jsonStr) {
         JsonObject object = null;
@@ -901,8 +812,11 @@ public class LwM2mTransportUtil {
         };
     }
 
-    public static String convertPathFromIdVerToObjectId(String pathIdVer) {
+    public static String fromVersionedIdToObjectId(String pathIdVer) {
         try {
+            if(pathIdVer == null) {
+                return null;
+            }
             String[] keyArray = pathIdVer.split(LWM2M_SEPARATOR_PATH);
             if (keyArray.length > 1 && keyArray[1].split(LWM2M_SEPARATOR_KEY).length == 2) {
                 keyArray[1] = keyArray[1].split(LWM2M_SEPARATOR_KEY)[0];
@@ -911,7 +825,8 @@ public class LwM2mTransportUtil {
                 return pathIdVer;
             }
         } catch (Exception e) {
-            return null;
+            log.warn("Issue converting path with version [{}] to path without version: ", pathIdVer, e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -1023,12 +938,6 @@ public class LwM2mTransportUtil {
             }
         });
         return attributeLists.toArray(Attribute[]::new);
-    }
-
-    public static Set<String> convertJsonArrayToSet(JsonArray jsonArray) {
-        List<String> attributeListOld = new Gson().fromJson(jsonArray, new TypeToken<List<String>>() {
-        }.getType());
-        return Sets.newConcurrentHashSet(attributeListOld);
     }
 
     public static ResourceModel.Type equalsResourceTypeGetSimpleName(Object value) {
