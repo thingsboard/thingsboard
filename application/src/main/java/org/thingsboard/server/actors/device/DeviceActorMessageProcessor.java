@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.ProtocolStringList;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.thingsboard.rule.engine.api.RpcError;
@@ -347,30 +348,30 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         if (getAllShared) {
             clientAttributesFuture = Futures.immediateFuture(Collections.emptyList());
             sharedAttributesFuture = findAllAttributesByScope(DataConstants.SHARED_SCOPE);
+            return Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture));
+        }
+        boolean getAllClientAndShared = request.getAllClient() && request.getAllShared();
+        if (getAllClientAndShared) {
+            clientAttributesFuture = findAllAttributesByScope(DataConstants.CLIENT_SCOPE);
+            sharedAttributesFuture = findAllAttributesByScope(DataConstants.SHARED_SCOPE);
+            return Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture));
+        }
+        if (request.getAllClient()) {
+            clientAttributesFuture = findAllAttributesByScope(DataConstants.CLIENT_SCOPE);
+            sharedAttributesFuture = Futures.immediateFuture(Collections.emptyList());
+            return Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture));
+        }
+        ProtocolStringList clientAttributeNamesList = request.getClientAttributeNamesList();
+        if (!CollectionUtils.isEmpty(clientAttributeNamesList)) {
+            clientAttributesFuture = findAttributesByScope(toSet(clientAttributeNamesList), DataConstants.CLIENT_SCOPE);
         } else {
-            boolean getAllClientAndShared = request.getAllClient() && request.getAllShared();
-            if (getAllClientAndShared || (CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && CollectionUtils.isEmpty(request.getSharedAttributeNamesList()))) {
-                clientAttributesFuture = findAllAttributesByScope(DataConstants.CLIENT_SCOPE);
-                sharedAttributesFuture = findAllAttributesByScope(DataConstants.SHARED_SCOPE);
-            } else {
-                boolean getAllClient = request.getAllClient();
-                if (getAllClient) {
-                    clientAttributesFuture = findAllAttributesByScope(DataConstants.CLIENT_SCOPE);
-                    sharedAttributesFuture = Futures.immediateFuture(Collections.emptyList());
-                } else if (!CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && !CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
-                    clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), DataConstants.CLIENT_SCOPE);
-                    sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), DataConstants.SHARED_SCOPE);
-                } else if (CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && !CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
-                    clientAttributesFuture = Futures.immediateFuture(Collections.emptyList());
-                    sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), DataConstants.SHARED_SCOPE);
-                } else if (!CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && CollectionUtils.isEmpty(request.getSharedAttributeNamesList())){
-                    clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), DataConstants.CLIENT_SCOPE);
-                    sharedAttributesFuture = Futures.immediateFuture(Collections.emptyList());
-                } else {
-                    clientAttributesFuture = Futures.immediateFuture(Collections.emptyList());
-                    sharedAttributesFuture = Futures.immediateFuture(Collections.emptyList());
-                }
-            }
+            clientAttributesFuture = Futures.immediateFuture(Collections.emptyList());
+        }
+        ProtocolStringList sharedAttributeNamesList = request.getSharedAttributeNamesList();
+        if (!CollectionUtils.isEmpty(sharedAttributeNamesList)) {
+            sharedAttributesFuture = findAttributesByScope(toSet(sharedAttributeNamesList), DataConstants.SHARED_SCOPE);
+        } else {
+            sharedAttributesFuture = Futures.immediateFuture(Collections.emptyList());
         }
         return Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture));
     }

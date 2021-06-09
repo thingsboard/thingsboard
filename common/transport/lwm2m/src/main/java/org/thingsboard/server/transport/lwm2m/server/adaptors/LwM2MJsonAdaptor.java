@@ -56,10 +56,14 @@ public class LwM2MJsonAdaptor implements LwM2MTransportAdaptor  {
             TransportProtos.GetAttributeRequestMsg.Builder result = TransportProtos.GetAttributeRequestMsg.newBuilder();
             Random random = new Random();
             result.setRequestId(random.nextInt());
-            if (clientKeys != null) {
+            if (clientKeys == null) {
+                result.setAllClient(true);
+            } else {
                 result.addAllClientAttributeNames(clientKeys);
             }
-            if (sharedKeys != null) {
+            if (sharedKeys == null) {
+                result.setAllShared(true);
+            } else {
                 result.addAllSharedAttributeNames(sharedKeys);
             }
             return result.build();

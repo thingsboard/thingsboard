@@ -33,17 +33,21 @@ public class CoapAdaptorUtils {
         if (queryElements != null && queryElements.size() > 0) {
             Set<String> clientKeys = toKeys(queryElements, "clientKeys");
             Set<String> sharedKeys = toKeys(queryElements, "sharedKeys");
-            if (clientKeys != null) {
+            if (clientKeys == null) {
+                result.setAllClient(true);
+            } else {
                 result.addAllClientAttributeNames(clientKeys);
             }
-            if (sharedKeys != null) {
+            if (sharedKeys == null) {
+                result.setAllShared(true);
+            } else {
                 result.addAllSharedAttributeNames(sharedKeys);
             }
         }
         return result.build();
     }
 
-    private static Set<String> toKeys(List<String> queryElements, String attributeName) throws AdaptorException {
+    private static Set<String> toKeys(List<String> queryElements, String attributeName) {
         String keys = null;
         for (String queryElement : queryElements) {
             String[] queryItem = queryElement.split("=");
