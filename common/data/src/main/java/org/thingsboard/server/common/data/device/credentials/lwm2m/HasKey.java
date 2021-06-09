@@ -15,20 +15,25 @@
  */
 package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.commons.codec.binary.Hex;
 
 public abstract class HasKey extends AbstractLwM2MClientCredentials {
-    private byte[] key;
+    @Getter
+    @Setter
+    private String key;
+
+    private byte[] keyInBytes;
 
     @SneakyThrows
-    public void setKey(String key) {
-        if (key != null) {
-            this.key = Hex.decodeHex(key.toLowerCase().toCharArray());
+    @JsonIgnore
+    public byte[] getDecodedKey() {
+        if (keyInBytes == null) {
+            keyInBytes = Hex.decodeHex(key.toLowerCase().toCharArray());
         }
-    }
-
-    public byte[] getKey() {
-        return key;
+        return keyInBytes;
     }
 }
