@@ -163,13 +163,12 @@ public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
 
     protected static final int SECURE_PORT = 5686;
     protected static final NetworkConfig SECURE_COAP_CONFIG = new NetworkConfig().setString("COAP_SECURE_PORT", Integer.toString(SECURE_PORT));
-    protected static final String SECURE_ENDPOINT = "deviceAEndpoint";
+    protected static final String ENDPOINT = "deviceAEndpoint";
     protected static final String SECURE_URI = "coaps://localhost:" + SECURE_PORT;
 
     protected static final int PORT = 5685;
     protected static final Security SECURITY = noSec("coap://localhost:" + PORT, 123);
     protected static final NetworkConfig COAP_CONFIG = new NetworkConfig().setString("COAP_PORT", Integer.toString(PORT));
-    protected static final String ENDPOINT = "deviceAEndpoint";
 
     public AbstractLwM2MIntegrationTest() {
 // create client credentials

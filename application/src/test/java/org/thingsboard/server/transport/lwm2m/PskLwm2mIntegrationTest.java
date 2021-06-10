@@ -19,39 +19,25 @@ import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.util.Hex;
 import org.junit.Test;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCredentials;
 
 import java.nio.charset.StandardCharsets;
 
 import static org.eclipse.leshan.client.object.Security.psk;
-import static org.eclipse.leshan.client.object.Security.rpk;
 
-public class PskRpkLwm2mIntegrationTest extends AbstractLwM2MIntegrationTest {
-    @Test
-    public void testConnectWithRPKAndObserveTelemetry() throws Exception {
-        RPKClientCredentials rpkClientCredentials = new RPKClientCredentials();
-        rpkClientCredentials.setEndpoint(SECURE_ENDPOINT);
-        rpkClientCredentials.setKey(Hex.encodeHexString(clientPublicKey.getEncoded()));
-        Security security = rpk(SECURE_URI,
-                123,
-                clientPublicKey.getEncoded(),
-                clientPrivateKey.getEncoded(),
-                serverX509Cert.getPublicKey().getEncoded());
-        super.basicTestConnectionObserveTelemetry(security, rpkClientCredentials, SECURE_COAP_CONFIG, SECURE_ENDPOINT);
-    }
+public class PskLwm2mIntegrationTest extends AbstractLwM2MIntegrationTest {
 
     @Test
     public void testConnectWithPSKAndObserveTelemetry() throws Exception {
         String pskIdentity = "SOME_PSK_ID";
         String pskKey = "73656372657450534b";
         PSKClientCredentials clientCredentials = new PSKClientCredentials();
-        clientCredentials.setEndpoint(SECURE_ENDPOINT);
+        clientCredentials.setEndpoint(ENDPOINT);
         clientCredentials.setKey(pskKey);
         clientCredentials.setIdentity(pskIdentity);
         Security security = psk(SECURE_URI,
                 123,
                 pskIdentity.getBytes(StandardCharsets.UTF_8),
                 Hex.decodeHex(pskKey.toCharArray()));
-        super.basicTestConnectionObserveTelemetry(security, clientCredentials, SECURE_COAP_CONFIG, SECURE_ENDPOINT);
+        super.basicTestConnectionObserveTelemetry(security, clientCredentials, SECURE_COAP_CONFIG, ENDPOINT);
     }
 }

@@ -26,25 +26,25 @@ public class X509LwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
     @Test
     public void testConnectAndObserveTelemetry() throws Exception {
         X509ClientCredentials credentials = new X509ClientCredentials();
-        credentials.setEndpoint(SECURE_ENDPOINT);
+        credentials.setEndpoint(ENDPOINT);
         Security security = x509(SECURE_URI,
                 123,
                 clientX509Cert.getEncoded(),
                 clientPrivateKeyFromCert.getEncoded(),
                 serverX509Cert.getEncoded());
-        super.basicTestConnectionObserveTelemetry(security, credentials, SECURE_COAP_CONFIG, SECURE_ENDPOINT);
+        super.basicTestConnectionObserveTelemetry(security, credentials, SECURE_COAP_CONFIG, ENDPOINT);
     }
 
     @Test
     public void testConnectWithCertAndObserveTelemetry() throws Exception {
         X509ClientCredentials credentials = new X509ClientCredentials();
-        credentials.setEndpoint(SECURE_ENDPOINT);
+        credentials.setEndpoint(ENDPOINT);
         credentials.setCert(SslUtil.getCertificateString(clientX509CertNotTrusted));
         Security security = x509(SECURE_URI,
                 123,
                 clientX509CertNotTrusted.getEncoded(),
                 clientPrivateKeyFromCert.getEncoded(),
                 serverX509Cert.getEncoded());
-        super.basicTestConnectionObserveTelemetry(security, credentials, SECURE_COAP_CONFIG, SECURE_ENDPOINT);
+        super.basicTestConnectionObserveTelemetry(security, credentials, SECURE_COAP_CONFIG, ENDPOINT);
     }
 }
