@@ -193,6 +193,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                     syncSessionSet.add(key);
                 }
             });
+            log.trace("46) Rpc syncSessionSet [{}] subscription after sent [{}]",syncSessionSet, rpcSubscriptions);
             syncSessionSet.forEach(rpcSubscriptions::remove);
         }
 
@@ -446,7 +447,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         } else {
             SessionInfoMetaData sessionMD = sessions.get(sessionId);
             if (sessionMD == null) {
-                sessionMD = new SessionInfoMetaData(new SessionInfo(SessionType.SYNC, sessionInfo.getNodeId()));
+                sessionMD = new SessionInfoMetaData(new SessionInfo(subscribeCmd.getSessionType(), sessionInfo.getNodeId()));
             }
             sessionMD.setSubscribedToAttributes(true);
             log.debug("[{}] Registering attributes subscription for session [{}]", deviceId, sessionId);
@@ -467,7 +468,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         } else {
             SessionInfoMetaData sessionMD = sessions.get(sessionId);
             if (sessionMD == null) {
-                sessionMD = new SessionInfoMetaData(new SessionInfo(SessionType.SYNC, sessionInfo.getNodeId()));
+                sessionMD = new SessionInfoMetaData(new SessionInfo(subscribeCmd.getSessionType(), sessionInfo.getNodeId()));
             }
             sessionMD.setSubscribedToRPC(true);
             log.debug("[{}] Registering rpc subscription for session [{}]", deviceId, sessionId);
