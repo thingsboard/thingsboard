@@ -37,6 +37,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
+import org.thingsboard.server.dao.oauth2.OAuth2Service;
+import org.thingsboard.server.service.security.auth.oauth2.TbOAuth2ParameterNames;
 import org.thingsboard.server.utils.MiscUtils;
 
 import javax.servlet.http.HttpServletRequest;
@@ -46,12 +48,13 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @Slf4j
 public class CustomOAuth2AuthorizationRequestResolver implements OAuth2AuthorizationRequestResolver {
-    public static final String DEFAULT_AUTHORIZATION_REQUEST_BASE_URI = "/oauth2/authorization";
-    public static final String DEFAULT_LOGIN_PROCESSING_URI = "/login/oauth2/code/";
+    private static final String DEFAULT_AUTHORIZATION_REQUEST_BASE_URI = "/oauth2/authorization";
+    private static final String DEFAULT_LOGIN_PROCESSING_URI = "/login/oauth2/code/";
     private static final String REGISTRATION_ID_URI_VARIABLE_NAME = "registrationId";
     private static final char PATH_DELIMITER = '/';
 
@@ -63,6 +66,9 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
     @Autowired
     private ClientRegistrationRepository clientRegistrationRepository;
 
+    @Autowired
+    private OAuth2Service oAuth2Service;
+
     @Autowired(required = false)
     private OAuth2Configuration oauth2Configuration;
 
@@ -71,7 +77,8 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
     public OAuth2AuthorizationRequest resolve(HttpServletRequest request) {
         String registrationId = this.resolveRegistrationId(request);
         String redirectUriAction = getAction(request, "login");
-        return resolve(request, registrationId, redirectUriAction);
+        String appPackage = getAppPackage(request);
+        return resolve(request, registrationId, redirectUriAction, appPackage);
     }
 
     @Override
@@ -80,7 +87,8 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
             return null;
         }
         String redirectUriAction = getAction(request, "authorize");
-        return resolve(request, registrationId, redirectUriAction);
+        String appPackage = getAppPackage(request);
+        return resolve(request, registrationId, redirectUriAction, appPackage);
     }
 
     private String getAction(HttpServletRequest request, String defaultAction) {
@@ -91,8 +99,12 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
         return action;
     }
 
+    private String getAppPackage(HttpServletRequest request) {
+        return request.getParameter("pkg");
+    }
+
     @SuppressWarnings("deprecation")
-    private OAuth2AuthorizationRequest resolve(HttpServletRequest request, String registrationId, String redirectUriAction) {
+    private OAuth2AuthorizationRequest resolve(HttpServletRequest request, String registrationId, String redirectUriAction, String appPackage) {
         if (registrationId == null) {
             return null;
         }
@@ -104,6 +116,14 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
 
         Map<String, Object> attributes = new HashMap<>();
         attributes.put(OAuth2ParameterNames.REGISTRATION_ID, clientRegistration.getRegistrationId());
+        if (!StringUtils.isEmpty(appPackage)) {
+            String callbackUrlScheme = this.oAuth2Service.findCallbackUrlScheme(UUID.fromString(registrationId), appPackage);
+            if (StringUtils.isEmpty(callbackUrlScheme)) {
+                throw new IllegalArgumentException("Invalid package: " + appPackage + ". No package info found for Client Registration.");
+            } else {
+                attributes.put(TbOAuth2ParameterNames.CALLBACK_URL_SCHEME, callbackUrlScheme);
+            }
+        }
 
         OAuth2AuthorizationRequest.Builder builder;
         if (AuthorizationGrantType.AUTHORIZATION_CODE.equals(clientRegistration.getAuthorizationGrantType())) {

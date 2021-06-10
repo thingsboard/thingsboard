@@ -219,7 +219,16 @@
           "domain-schema-http": "HTTP",
           "domain-schema-https": "HTTPS",
           "domain-schema-mixed": "HTTP+HTTPS",
-          "enable": "Enable OAuth2 settings"
+          "enable": "Enable OAuth2 settings",
+          "domains": "Domains",
+          "mobile-apps": "Mobile applications",
+          "no-mobile-apps": "No applications configured",
+          "mobile-package": "Application package",
+          "mobile-package-unique": "Application package must be unique.",
+          "mobile-callback-url-scheme": "Callback URL scheme",
+          "add-mobile-app": "Add application",
+          "delete-mobile-app": "Delete application info",
+          "providers": "Providers"
         }
       },
     "alarm": {
