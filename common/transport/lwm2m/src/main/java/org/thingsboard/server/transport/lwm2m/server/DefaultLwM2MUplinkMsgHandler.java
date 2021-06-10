@@ -39,6 +39,7 @@ import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.data.lwm2m.ObjectAttributes;
+import org.thingsboard.server.common.data.device.data.lwm2m.TelemetryMappingConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.ota.OtaPackageKey;
@@ -936,18 +937,20 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
         var oldProfile = clientContext.getProfile(deviceProfile.getUuidId());
         if (clientContext.profileUpdate(deviceProfile) != null) {
             // #1
-            Set<String> attributeSetOld = oldProfile.getObserveAttr().getAttribute();
-            Set<String> telemetrySetOld = oldProfile.getObserveAttr().getTelemetry();
-            Set<String> observeOld = oldProfile.getObserveAttr().getObserve();
-            Map<String, String> keyNameOld = oldProfile.getObserveAttr().getKeyName();
-            Map<String, ObjectAttributes> attributeLwm2mOld = oldProfile.getObserveAttr().getAttributeLwm2m();
+            TelemetryMappingConfiguration oldTelemetryParams = oldProfile.getObserveAttr();
+            Set<String> attributeSetOld = oldTelemetryParams.getAttribute();
+            Set<String> telemetrySetOld = oldTelemetryParams.getTelemetry();
+            Set<String> observeOld = oldTelemetryParams.getObserve();
+            Map<String, String> keyNameOld = oldTelemetryParams.getKeyName();
+            Map<String, ObjectAttributes> attributeLwm2mOld = oldTelemetryParams.getAttributeLwm2m();
 
             var newProfile = clientContext.getProfile(deviceProfile.getUuidId());
-            Set<String> attributeSetNew = newProfile.getObserveAttr().getAttribute();
-            Set<String> telemetrySetNew = newProfile.getObserveAttr().getTelemetry();
-            Set<String> observeNew = newProfile.getObserveAttr().getObserve();
-            Map<String, String> keyNameNew = newProfile.getObserveAttr().getKeyName();
-            Map<String, ObjectAttributes> attributeLwm2mNew = newProfile.getObserveAttr().getAttributeLwm2m();
+            TelemetryMappingConfiguration newTelemetryParams = newProfile.getObserveAttr();
+            Set<String> attributeSetNew = newTelemetryParams.getAttribute();
+            Set<String> telemetrySetNew = newTelemetryParams.getTelemetry();
+            Set<String> observeNew = newTelemetryParams.getObserve();
+            Map<String, String> keyNameNew = newTelemetryParams.getKeyName();
+            Map<String, ObjectAttributes> attributeLwm2mNew = newTelemetryParams.getAttributeLwm2m();
 
             // #3
             ParametersAnalyzeResult diff = new ParametersAnalyzeResult();
@@ -980,11 +983,6 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
                 clients.forEach(client -> {
                     this.readObserveFromProfile(client, diff.getPathPostParametersAdd(), READ);
                 });
-            }
-            // #4.2 del
-            if (diff.getPathPostParametersDel().size() > 0) {
-                ParametersAnalyzeResult sendAttrToThingsboardDel = this.getAnalyzerParameters(diff.getPathPostParametersAdd(), diff.getPathPostParametersDel());
-                diff.setPathPostParametersDel(sendAttrToThingsboardDel.getPathPostParametersDel());
             }
 
             // #5.1
