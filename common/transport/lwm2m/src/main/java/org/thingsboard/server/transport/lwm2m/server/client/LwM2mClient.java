@@ -302,7 +302,7 @@ public class LwM2mClient implements Cloneable {
         Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
                 .getObjectModel(pathIds.getObjectId()).resources;
         resourceModels.forEach((resId, resourceModel) -> {
-            if (resId == pathIds.getResourceId()) {
+            if (resId.equals(pathIds.getResourceId())) {
                 resources.add(LwM2mSingleResource.newResource(resId, converter.convertValue(params,
                         equalsResourceTypeGetSimpleName(params), resourceModel.type, pathIds), resourceModel.type));
 
@@ -318,8 +318,8 @@ public class LwM2mClient implements Cloneable {
         Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
                 .getObjectModel(pathIds.getObjectId()).resources;
         resourceModels.forEach((resId, resourceModel) -> {
-            if (((ConcurrentHashMap) params).containsKey(String.valueOf(resId))) {
-                Object value = ((ConcurrentHashMap) params).get((String.valueOf(resId)));
+            if (((Map) params).containsKey(String.valueOf(resId))) {
+                Object value = ((Map) params).get((String.valueOf(resId)));
                 resources.add(LwM2mSingleResource.newResource(resId,
                         converter.convertValue(value, equalsResourceTypeGetSimpleName(value), resourceModel.type, pathIds), resourceModel.type));
 

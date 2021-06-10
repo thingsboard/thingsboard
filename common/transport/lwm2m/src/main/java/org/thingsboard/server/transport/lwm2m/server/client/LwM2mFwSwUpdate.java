@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.server.DefaultLwM2MUplinkMsgHandler;
-import org.thingsboard.server.transport.lwm2m.server.DefaultLwM2mDownlinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mDownlinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 
 import java.util.ArrayList;
@@ -156,7 +156,7 @@ public class LwM2mFwSwUpdate {
         }
     }
 
-    public void initReadValue(DefaultLwM2MUplinkMsgHandler handler, DefaultLwM2mDownlinkMsgHandler request, String pathIdVer) {
+    public void initReadValue(DefaultLwM2MUplinkMsgHandler handler, LwM2mDownlinkMsgHandler request, String pathIdVer) {
         if (pathIdVer != null) {
             this.pendingInfoRequestsStart.remove(pathIdVer);
         }
@@ -176,7 +176,7 @@ public class LwM2mFwSwUpdate {
      * Send FsSw to Lwm2mClient:
      * before operation Write: fw_state = DOWNLOADING
      */
-    public void writeFwSwWare(DefaultLwM2MUplinkMsgHandler handler, DefaultLwM2mDownlinkMsgHandler request) {
+    public void writeFwSwWare(DefaultLwM2MUplinkMsgHandler handler, LwM2mDownlinkMsgHandler request) {
         if (this.currentId != null) {
             this.stateUpdate = OtaPackageUpdateStatus.INITIATED.name();
             this.sendLogs(handler, WRITE_REPLACE.name(), LOG_LW2M_INFO, null);
@@ -189,8 +189,7 @@ public class LwM2mFwSwUpdate {
                 int chunkSize = 0;
                 int chunk = 0;
                 byte[] firmwareChunk = handler.otaPackageDataCache.get(this.currentId.toString(), chunkSize, chunk);
-                request.sendAllRequest(this.lwM2MClient, targetIdVer, WRITE_REPLACE, ContentFormat.OPAQUE,
-                        firmwareChunk, handler.config.getTimeout(), this.rpcRequest);
+                request.sendWriteReplaceRequest(this.lwM2MClient, targetIdVer, firmwareChunk, handler.config.getTimeout(), this.rpcRequest);
             } else if (LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL.code == this.updateStrategy) {
                 Registration registration = this.getLwM2MClient().getRegistration();
 //                String api = handler.config.getHostRequests();
@@ -198,8 +197,7 @@ public class LwM2mFwSwUpdate {
                 int port = registration.getIdentity().isSecure() ? handler.config.getSecurePort() : handler.config.getPort();
                 String uri = "coap://" + api + ":" + Integer.valueOf(port) + "/" + FIRMWARE_UPDATE_COAP_RECOURSE + "/" + this.currentId.toString();
                 log.warn("89) coapUri: [{}]", uri);
-                request.sendAllRequest(this.lwM2MClient, targetIdVer, WRITE_REPLACE, null,
-                        uri, handler.config.getTimeout(), this.rpcRequest);
+                request.sendWriteReplaceRequest(this.lwM2MClient, targetIdVer, uri, handler.config.getTimeout(), this.rpcRequest);
             } else if (LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_19_BINARY.code == this.updateStrategy) {
 
             }
@@ -230,9 +228,9 @@ public class LwM2mFwSwUpdate {
      * fw_state/sw_state = UPDATING
      * send execute
      */
-    public void executeFwSwWare(DefaultLwM2MUplinkMsgHandler handler, DefaultLwM2mDownlinkMsgHandler request) {
+    public void executeFwSwWare(DefaultLwM2MUplinkMsgHandler handler, LwM2mDownlinkMsgHandler request) {
         this.sendLogs(handler, EXECUTE.name(), LOG_LW2M_INFO, null);
-        request.sendAllRequest(this.lwM2MClient, this.pathInstallId, EXECUTE, null, 0, this.rpcRequest);
+        request.sendExecuteRequest(this.lwM2MClient, this.pathInstallId,  handler.config.getTimeout(), this.rpcRequest);
     }
 
     /**
@@ -381,14 +379,14 @@ public class LwM2mFwSwUpdate {
         return LwM2mTransportUtil.UpdateResultSw.NOT_ENOUGH_STORAGE.code <= updateResult;
     }
 
-    private void observeStateUpdate(DefaultLwM2MUplinkMsgHandler handler, DefaultLwM2mDownlinkMsgHandler request) {
-        request.sendAllRequest(lwM2MClient,
-                convertPathFromObjectIdToIdVer(this.pathStateId, this.lwM2MClient.getRegistration()), OBSERVE,
-                null, null, 0, null);
-        request.sendAllRequest(lwM2MClient,
-                convertPathFromObjectIdToIdVer(this.pathResultId, this.lwM2MClient.getRegistration()), OBSERVE,
-                null, null, 0, null);
-    }
+//    private void observeStateUpdate(DefaultLwM2MUplinkMsgHandler handler, LwM2mDownlinkMsgHandler request) {
+//        request.sendAllRequest(lwM2MClient,
+//                convertPathFromObjectIdToIdVer(this.pathStateId, this.lwM2MClient.getRegistration()), OBSERVE,
+//                null, null, 0, null);
+//        request.sendAllRequest(lwM2MClient,
+//                convertPathFromObjectIdToIdVer(this.pathResultId, this.lwM2MClient.getRegistration()), OBSERVE,
+//                null, null, 0, null);
+//    }
 
     public void sendSateOnThingsBoard(DefaultLwM2MUplinkMsgHandler handler) {
         if (StringUtils.trimToNull(this.stateUpdate) != null) {
@@ -401,7 +399,7 @@ public class LwM2mFwSwUpdate {
         }
     }
 
-    public void sendReadObserveInfo(DefaultLwM2mDownlinkMsgHandler request) {
+    public void sendReadObserveInfo(LwM2mDownlinkMsgHandler request) {
         this.infoFwSwUpdate = true;
         this.pendingInfoRequestsStart.add(convertPathFromObjectIdToIdVer(
                 this.pathStateId, this.lwM2MClient.getRegistration()));
@@ -418,7 +416,7 @@ public class LwM2mFwSwUpdate {
                     this.pathNameId, this.lwM2MClient.getRegistration()));
         }
         this.pendingInfoRequestsStart.forEach(pathIdVer -> {
-            request.sendAllRequest(this.lwM2MClient, pathIdVer, OBSERVE, null, 0, this.rpcRequest);
+            request.sendObserveRequest(this.lwM2MClient, pathIdVer, 0, this.rpcRequest);
         });
 
     }
@@ -433,7 +431,7 @@ public class LwM2mFwSwUpdate {
      * - after success finished operation Execute (FwUpdate) Update Result == 1 ("Firmware updated successfully")
      * - finished operation Execute (FwUpdate)
      */
-    public void updateStateOta(DefaultLwM2MUplinkMsgHandler handler, DefaultLwM2mDownlinkMsgHandler request,
+    public void updateStateOta(DefaultLwM2MUplinkMsgHandler handler, LwM2mDownlinkMsgHandler request,
                                Registration registration, String path, int value) {
         if (OBJ_5_BINARY.code == this.getUpdateStrategy()) {
             if ((convertPathFromObjectIdToIdVer(FW_RESULT_ID, registration).equals(path))) {

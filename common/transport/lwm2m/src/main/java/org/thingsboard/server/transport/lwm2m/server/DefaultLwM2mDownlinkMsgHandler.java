@@ -30,6 +30,7 @@ import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.node.ObjectLink;
+import org.eclipse.leshan.core.node.codec.CodecException;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.request.DeleteRequest;
@@ -53,13 +54,13 @@ import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.data.lwm2m.ObjectAttributes;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientRpcRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCallback;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
@@ -79,16 +80,13 @@ import java.util.stream.Collectors;
 import static org.eclipse.californium.core.coap.CoAP.ResponseCode.CONTENT;
 import static org.eclipse.leshan.core.ResponseCode.BAD_REQUEST;
 import static org.eclipse.leshan.core.ResponseCode.NOT_FOUND;
-import static org.eclipse.leshan.core.attributes.Attribute.DIMENSION;
 import static org.eclipse.leshan.core.attributes.Attribute.GREATER_THAN;
 import static org.eclipse.leshan.core.attributes.Attribute.LESSER_THAN;
 import static org.eclipse.leshan.core.attributes.Attribute.MAXIMUM_PERIOD;
 import static org.eclipse.leshan.core.attributes.Attribute.MINIMUM_PERIOD;
-import static org.eclipse.leshan.core.attributes.Attribute.OBJECT_VERSION;
 import static org.eclipse.leshan.core.attributes.Attribute.STEP;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.FAILED;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper.getContentFormatByResourceModelType;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.DEFAULT_TIMEOUT;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PACKAGE_5_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_UPDATE_ID;
@@ -106,9 +104,9 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.L
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.RESPONSE_REQUEST_CHANNEL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_INSTALL_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_PACKAGE_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.createWriteAttributeRequest;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
 
 @Slf4j
 @Service
@@ -131,26 +129,30 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
                 new NamedThreadFactory(String.format("LwM2M %s channel response after request", RESPONSE_REQUEST_CHANNEL)));
     }
 
-    public void sendReadRequest(LwM2mClient lwM2MClient, String targetId, Long timeout) {
-        sendReadRequest(lwM2MClient, targetId, lwM2MClient.getDefaultContentFormat(), timeout);
+    @Override
+    public void sendReadRequest(LwM2mClient client, String targetId, Long timeout) {
+        sendReadRequest(client, targetId, client.getDefaultContentFormat(), timeout);
     }
 
-    public void sendReadRequest(LwM2mClient lwM2MClient, String targetId, ContentFormat contentFormat, Long timeout) {
+    @Override
+    public void sendReadRequest(LwM2mClient client, String targetId, ContentFormat contentFormat, Long timeout) {
         String objectId = fromVersionedIdToObjectId(targetId);
-        if (objectId != null && lwM2MClient.isValidObjectVersion(targetId)) {
-            sendRequest(lwM2MClient, new ReadRequest(contentFormat, objectId), timeout);
+        if (objectId != null && client.isValidObjectVersion(targetId)) {
+            sendRequest(client, new ReadRequest(contentFormat, objectId), timeout);
         }
     }
 
-    public void sendObserveRequest(LwM2mClient lwM2MClient, String targetId, Long timeout) {
-        sendObserveRequest(lwM2MClient, targetId, lwM2MClient.getDefaultContentFormat(), timeout);
+    @Override
+    public void sendObserveRequest(LwM2mClient client, String targetId, Long timeout) {
+        sendObserveRequest(client, targetId, client.getDefaultContentFormat(), timeout);
     }
 
-    public void sendObserveRequest(LwM2mClient lwM2MClient, String targetId, ContentFormat contentFormat, Long timeout) {
+    @Override
+    public void sendObserveRequest(LwM2mClient client, String targetId, ContentFormat contentFormat, Long timeout) {
         String objectId = fromVersionedIdToObjectId(targetId);
-        if (objectId != null && lwM2MClient.isValidObjectVersion(targetId)) {
+        if (objectId != null && client.isValidObjectVersion(targetId)) {
             LwM2mPath resultIds = new LwM2mPath(objectId);
-            Set<Observation> observations = context.getServer().getObservationService().getObservations(lwM2MClient.getRegistration());
+            Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
             if (observations.stream().noneMatch(observation -> observation.getPath().equals(resultIds))) {
                 ObserveRequest request;
                 if (resultIds.isResource()) {
@@ -160,22 +162,68 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
                 } else {
                     request = new ObserveRequest(contentFormat, resultIds.getObjectId());
                 }
-                log.info("[{}] Send observation: {}.", lwM2MClient.getEndpoint(), targetId);
-                sendRequest(lwM2MClient, request, timeout);
+                log.info("[{}] Send observation: {}.", client.getEndpoint(), targetId);
+                sendRequest(client, request, timeout);
             }
         }
     }
 
-    public void sendDiscoverRequest(LwM2mClient lwM2MClient, String targetId, Long timeout) {
-        String objectId = fromVersionedIdToObjectId(targetId);
-        if (objectId != null && lwM2MClient.isValidObjectVersion(targetId)) {
-            sendRequest(lwM2MClient, new DiscoverRequest(objectId), timeout);
+    @Override
+    public void sendExecuteRequest(LwM2mClient client, String targetId, Long timeout, DownlinkRequestCallback callback) {
+        sendExecuteRequest(client, targetId, null, timeout, callback);
+    }
+
+    @Override
+    public void sendExecuteRequest(LwM2mClient client, String targetId, Object params, Long timeout, DownlinkRequestCallback callback) {
+        String target = fromVersionedIdToObjectId(targetId);
+        LwM2mPath resultIds = new LwM2mPath(target);
+        ResourceModel resourceModelExecute = client.getResourceModel(targetId, this.config.getModelProvider());
+        if (resourceModelExecute != null) {
+            ExecuteRequest request;
+            if (params != null && !resourceModelExecute.multiple) {
+                request = new ExecuteRequest(target, (String) this.converter.convertValue(params, resourceModelExecute.type, ResourceModel.Type.STRING, resultIds));
+            } else {
+                request = new ExecuteRequest(target);
+            }
+            sendRequest(client, request, timeout);
         }
     }
 
-    public void sendWriteAttributesRequest(LwM2mClient lwM2MClient, String targetId, ObjectAttributes params, Long timeout) {
+    public void sendDeleteRequest(LwM2mClient client, String targetId, Long timeout, DownlinkRequestCallback callback) {
+        String target = fromVersionedIdToObjectId(targetId);
+        sendRequest(client, new DeleteRequest(target), timeout);
+    }
+
+    @Override
+    public void sendCancelObserveRequest(LwM2mClient client, String targetId, Long timeout, DownlinkRequestCallback callback) {
+        int observeCancelCnt = context.getServer().getObservationService().cancelObservations(client.getRegistration(), fromVersionedIdToObjectId(targetId));
+        String observeCancelMsg = String.format("%s: type operation %s paths: %s count: %d", LOG_LW2M_INFO, OBSERVE_CANCEL.name(), targetId, observeCancelCnt);
+        if (callback != null) {
+            callback.onSuccess(client, observeCancelMsg);
+        }
+    }
+
+    @Override
+    public void sendCancelAllRequest(LwM2mClient client, Long timeout, DownlinkRequestCallback callback) {
+        int observeCancelCnt = context.getServer().getObservationService().cancelObservations(client.getRegistration());
+        String observeCancelMsg = String.format("%s: type operation %s paths: All  count: %d", LOG_LW2M_INFO, OBSERVE_CANCEL.name(), observeCancelCnt);
+        if (callback != null) {
+            callback.onSuccess(client, observeCancelMsg);
+        }
+    }
+
+    @Override
+    public void sendDiscoverRequest(LwM2mClient client, String targetId, Long timeout) {
         String objectId = fromVersionedIdToObjectId(targetId);
-        if (objectId != null && lwM2MClient.isValidObjectVersion(targetId) && params != null) {
+        if (objectId != null && client.isValidObjectVersion(targetId)) {
+            sendRequest(client, new DiscoverRequest(objectId), timeout);
+        }
+    }
+
+    @Override
+    public void sendWriteAttributesRequest(LwM2mClient client, String targetId, ObjectAttributes params, Long timeout) {
+        String objectId = fromVersionedIdToObjectId(targetId);
+        if (objectId != null && client.isValidObjectVersion(targetId) && params != null) {
             List<Attribute> attributes = new LinkedList<>();
 //            Dimension and Object version are read only attributes.
 //            addAttribute(attributes, DIMENSION, params.getDim(), dim -> dim >= 0 && dim <= 255);
@@ -186,7 +234,55 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
             addAttribute(attributes, LESSER_THAN, params.getLt());
             addAttribute(attributes, STEP, params.getSt());
             AttributeSet attributeSet = new AttributeSet(attributes);
-            sendRequest(lwM2MClient, new WriteAttributesRequest(objectId, attributeSet), timeout);
+            sendRequest(client, new WriteAttributesRequest(objectId, attributeSet), timeout);
+        }
+    }
+
+    @Override
+    public void sendWriteReplaceRequest(LwM2mClient client, String targetIdVer, Object newValue, Long timeout, DownlinkRequestCallback callback) {
+        ResourceModel resourceModelWrite = client.getResourceModel(targetIdVer, this.config.getModelProvider());
+        if (resourceModelWrite != null) {
+            ContentFormat contentFormat = convertResourceModelTypeToContentFormat(client, resourceModelWrite.type);
+            try {
+                LwM2mPath path = new LwM2mPath(fromVersionedIdToObjectId(targetIdVer));
+                WriteRequest request = this.getWriteRequestSingleResource(resourceModelWrite.type, contentFormat,
+                        path.getObjectId(), path.getObjectInstanceId(), path.getResourceId(), newValue);
+                sendRequest(client, request, timeout);
+            } catch (Exception e) {
+                callback.onError(client, e.getMessage(), e);
+            }
+        }
+    }
+
+    @Override
+    public void sendWriteUpdateRequest(LwM2mClient client, String targetIdVer, Object newValue, ContentFormat contentFormat, Long timeout, DownlinkRequestCallback callback) {
+        LwM2mPath resultIds = new LwM2mPath(fromVersionedIdToObjectId(targetIdVer));
+        if (resultIds.isResource()) {
+            /*
+             * send request: path = '/3/0' node == wM2mObjectInstance
+             * with params == "\"resources\": {15: resource:{id:15. value:'+01'...}}
+             **/
+            Collection<LwM2mResource> resources = client.getNewResourceForInstance(targetIdVer, newValue, this.config.getModelProvider(), this.converter);
+            ResourceModel resourceModelWrite = client.getResourceModel(targetIdVer, this.config.getModelProvider());
+            WriteRequest request = new WriteRequest(WriteRequest.Mode.UPDATE, convertResourceModelTypeToContentFormat(client, resourceModelWrite.type), resultIds.getObjectId(),
+                    resultIds.getObjectInstanceId(), resources);
+            sendRequest(client, request, timeout);
+        } else if (resultIds.isObjectInstance()) {
+            /*
+             *  params = "{\"id\":0,\"resources\":[{\"id\":14,\"value\":\"+5\"},{\"id\":15,\"value\":\"+9\"}]}"
+             *  int rscId = resultIds.getObjectInstanceId();
+             *  contentFormat – Format of the payload (TLV or JSON).
+             */
+            Collection<LwM2mResource> resources = client.getNewResourcesForInstance(targetIdVer, newValue, this.config.getModelProvider(), this.converter);
+            if (resources.size() > 0) {
+                contentFormat = contentFormat.equals(ContentFormat.JSON) ? contentFormat : client.getDefaultContentFormat();
+                WriteRequest request = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resources);
+                sendRequest(client, request, timeout);
+            } else {
+                callback.onError(client, "No resources to update!", new IllegalArgumentException());
+            }
+        } else {
+            callback.onError(client, "Update of the root level object is not supported yet", new IllegalArgumentException());
         }
     }
 
@@ -204,32 +300,49 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
         }
     }
 
-    public void sendAllRequest(LwM2mClient lwM2MClient, String targetIdVer, LwM2mTypeOper typeOper, Object params, long timeoutInMs, LwM2mClientRpcRequest lwm2mClientRpcRequest) {
-        sendAllRequest(lwM2MClient, targetIdVer, typeOper, lwM2MClient.getDefaultContentFormat(), params, timeoutInMs, lwm2mClientRpcRequest);
+    private static ContentFormat convertResourceModelTypeToContentFormat(LwM2mClient client, ResourceModel.Type type) {
+        switch (type) {
+            case BOOLEAN:
+            case STRING:
+            case TIME:
+            case INTEGER:
+            case FLOAT:
+                return client.getDefaultContentFormat();
+            case OPAQUE:
+                return ContentFormat.OPAQUE;
+            case OBJLNK:
+                return ContentFormat.LINK;
+            default:
+        }
+        throw new CodecException("Invalid ResourceModel_Type for %s ContentFormat.", type);
     }
 
-    public void sendAllRequest(LwM2mClient lwM2MClient, String targetIdVer, LwM2mTypeOper typeOper,
+    public void sendAllRequest(LwM2mClient client, String targetIdVer, LwM2mTypeOper typeOper, Object params, long timeoutInMs, LwM2mClientRpcRequest lwm2mClientRpcRequest) {
+        sendAllRequest(client, targetIdVer, typeOper, client.getDefaultContentFormat(), params, timeoutInMs, lwm2mClientRpcRequest);
+    }
+
+    public void sendAllRequest(LwM2mClient client, String targetIdVer, LwM2mTypeOper typeOper,
                                ContentFormat contentFormat, Object params, long timeoutInMs, LwM2mClientRpcRequest lwm2mClientRpcRequest) {
-        Registration registration = lwM2MClient.getRegistration();
+        Registration registration = client.getRegistration();
         try {
             String target = fromVersionedIdToObjectId(targetIdVer);
             if (contentFormat == null) {
-                contentFormat = ContentFormat.DEFAULT;
+                contentFormat = client.getDefaultContentFormat();
             }
             LwM2mPath resultIds = target != null ? new LwM2mPath(target) : null;
             if (!OBSERVE_CANCEL.name().equals(typeOper.name()) && resultIds != null && registration != null && resultIds.getObjectId() >= 0) {
-                if (lwM2MClient.isValidObjectVersion(targetIdVer)) {
+                if (client.isValidObjectVersion(targetIdVer)) {
                     timeoutInMs = timeoutInMs > 0 ? timeoutInMs : DEFAULT_TIMEOUT;
-                    SimpleDownlinkRequest request = createRequest(registration, lwM2MClient, typeOper, contentFormat, target,
+                    SimpleDownlinkRequest request = createRequest(registration, client, typeOper, contentFormat, target,
                             targetIdVer, resultIds, params, lwm2mClientRpcRequest);
                     if (request != null) {
                         try {
-                            this.sendRequest(lwM2MClient, request, timeoutInMs, lwm2mClientRpcRequest);
+                            this.sendRequest(client, request, timeoutInMs, lwm2mClientRpcRequest);
                         } catch (ClientSleepingException e) {
                             SimpleDownlinkRequest finalRequest = request;
                             long finalTimeoutInMs = timeoutInMs;
                             LwM2mClientRpcRequest finalRpcRequest = lwm2mClientRpcRequest;
-                            lwM2MClient.getQueuedRequests().add(() -> sendRequest(lwM2MClient, finalRequest, finalTimeoutInMs, finalRpcRequest));
+                            client.getQueuedRequests().add(() -> sendRequest(client, finalRequest, finalTimeoutInMs, finalRpcRequest));
                         } catch (Exception e) {
                             log.error("[{}] [{}] [{}] Failed to send downlink.", registration.getEndpoint(), targetIdVer, typeOper.name(), e);
                         }
@@ -246,7 +359,7 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
                     } else if (!OBSERVE_CANCEL.name().equals(typeOper.name())) {
                         log.error("[{}], [{}] - [{}] error SendRequest", registration.getEndpoint(), typeOper.name(), targetIdVer);
                         if (lwm2mClientRpcRequest != null) {
-                            ResourceModel resourceModel = lwM2MClient.getResourceModel(targetIdVer, this.config.getModelProvider());
+                            ResourceModel resourceModel = client.getResourceModel(targetIdVer, this.config.getModelProvider());
                             String errorMsg = resourceModel == null ? String.format("Path %s not found in object version", targetIdVer) : "SendRequest - null";
                             handler.sentRpcResponse(lwm2mClientRpcRequest, NOT_FOUND.getName(), errorMsg, LOG_LW2M_ERROR);
                         }
@@ -270,7 +383,7 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
                         }
                         String msg = String.format("%s: type operation %s paths - %s", LOG_LW2M_INFO,
                                 typeOper.name(), paths);
-                        this.handler.sendLogsToThingsboard(lwM2MClient, msg);
+                        this.handler.sendLogsToThingsboard(client, msg);
                         if (lwm2mClientRpcRequest != null) {
                             String valueMsg = String.format("Paths - %s", paths);
                             handler.sentRpcResponse(lwm2mClientRpcRequest, CONTENT.name(), valueMsg, LOG_LW2M_VALUE);
@@ -289,18 +402,18 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
                             observeCancelMsg = String.format("%s: type operation %s paths: All  count: %d", LOG_LW2M_INFO,
                                     OBSERVE_CANCEL.name(), observeCancelCnt);
                         }
-                        this.afterObserveCancel(lwM2MClient, observeCancelCnt, observeCancelMsg, lwm2mClientRpcRequest);
+                        this.afterObserveCancel(client, observeCancelCnt, observeCancelMsg, lwm2mClientRpcRequest);
                         break;
                     // lwm2mClientRpcRequest != null
                     case FW_UPDATE:
-                        handler.getInfoFirmwareUpdate(lwM2MClient, lwm2mClientRpcRequest);
+                        handler.getInfoFirmwareUpdate(client, lwm2mClientRpcRequest);
                         break;
                 }
             }
         } catch (Exception e) {
             String msg = String.format("%s: type operation %s  %s", LOG_LW2M_ERROR,
                     typeOper.name(), e.getMessage());
-            handler.sendLogsToThingsboard(lwM2MClient, msg);
+            handler.sendLogsToThingsboard(client, msg);
             if (lwm2mClientRpcRequest != null) {
                 String errorMsg = String.format("Path %s type operation %s  %s", targetIdVer, typeOper.name(), e.getMessage());
                 handler.sentRpcResponse(lwm2mClientRpcRequest, NOT_FOUND.getName(), errorMsg, LOG_LW2M_ERROR);
@@ -308,7 +421,7 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
         }
     }
 
-    private SimpleDownlinkRequest createRequest(Registration registration, LwM2mClient lwM2MClient, LwM2mTypeOper typeOper,
+    private SimpleDownlinkRequest createRequest(Registration registration, LwM2mClient client, LwM2mTypeOper typeOper,
                                                 ContentFormat contentFormat, String target, String targetIdVer,
                                                 LwM2mPath resultIds, Object params, LwM2mClientRpcRequest rpcRequest) {
         SimpleDownlinkRequest request = null;
@@ -337,7 +450,7 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
                 }
                 break;
             case EXECUTE:
-                ResourceModel resourceModelExecute = lwM2MClient.getResourceModel(targetIdVer, this.config.getModelProvider());
+                ResourceModel resourceModelExecute = client.getResourceModel(targetIdVer, this.config.getModelProvider());
                 if (resourceModelExecute != null) {
                     if (params != null && !resourceModelExecute.multiple) {
                         request = new ExecuteRequest(target, (String) this.converter.convertValue(params, resourceModelExecute.type, ResourceModel.Type.STRING, resultIds));
@@ -353,12 +466,12 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
                  * contentFormat ->           TLV,     TLV,    TLV,   TLV,     OPAQUE, TLV,  LINK
                  * JSON, TEXT;
                  **/
-                ResourceModel resourceModelWrite = lwM2MClient.getResourceModel(targetIdVer, this.config.getModelProvider());
+                ResourceModel resourceModelWrite = client.getResourceModel(targetIdVer, this.config.getModelProvider());
                 if (resourceModelWrite != null) {
-                    contentFormat = getContentFormatByResourceModelType(resourceModelWrite, contentFormat);
-                    request = this.getWriteRequestSingleResource(contentFormat, resultIds.getObjectId(),
-                            resultIds.getObjectInstanceId(), resultIds.getResourceId(), params, resourceModelWrite.type,
-                            lwM2MClient, rpcRequest);
+//                    contentFormat = getContentFormatByResourceModelType(resourceModelWrite, contentFormat);
+//                    request = this.getWriteRequestSingleResource(contentFormat, resultIds.getObjectId(),
+//                            resultIds.getObjectInstanceId(), resultIds.getResourceId(), params, resourceModelWrite.type,
+//                            client, rpcRequest);
                 }
                 break;
             case WRITE_UPDATE:
@@ -367,14 +480,14 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
                      * send request: path = '/3/0' node == wM2mObjectInstance
                      * with params == "\"resources\": {15: resource:{id:15. value:'+01'...}}
                      **/
-                    Collection<LwM2mResource> resources = lwM2MClient.getNewResourceForInstance(
+                    Collection<LwM2mResource> resources = client.getNewResourceForInstance(
                             targetIdVer, params,
                             this.config.getModelProvider(),
                             this.converter);
-                    contentFormat = getContentFormatByResourceModelType(lwM2MClient.getResourceModel(targetIdVer, this.config.getModelProvider()),
-                            contentFormat);
-                    request = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(),
-                            resultIds.getObjectInstanceId(), resources);
+//                    contentFormat = getContentFormatByResourceModelType(client.getResourceModel(targetIdVer, this.config.getModelProvider()),
+//                            contentFormat);
+//                    request = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(),
+//                            resultIds.getObjectInstanceId(), resources);
                 }
                 /**
                  *  params = "{\"id\":0,\"resources\":[{\"id\":14,\"value\":\"+5\"},{\"id\":15,\"value\":\"+9\"}]}"
@@ -383,7 +496,7 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
                  */
                 else if (resultIds.isObjectInstance()) {
                     if (((ConcurrentHashMap) params).size() > 0) {
-                        Collection<LwM2mResource> resources = lwM2MClient.getNewResourcesForInstance(
+                        Collection<LwM2mResource> resources = client.getNewResourcesForInstance(
                                 targetIdVer, params,
                                 this.config.getModelProvider(),
                                 this.converter);
@@ -407,33 +520,33 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
         return request;
     }
 
-    private void sendRequest(LwM2mClient lwM2MClient, SimpleDownlinkRequest request, long timeoutInMs) {
+    private void sendRequest(LwM2mClient client, SimpleDownlinkRequest request, long timeoutInMs) {
         try {
-            sendRequest(lwM2MClient, request, timeoutInMs, null);
+            sendRequest(client, request, timeoutInMs, null);
         } catch (ClientSleepingException e) {
             //TODO: this may cause infinite loop / memory leak.
-            lwM2MClient.getQueuedRequests().add(() -> sendRequest(lwM2MClient, request, timeoutInMs, null));
+            client.getQueuedRequests().add(() -> sendRequest(client, request, timeoutInMs, null));
         }
     }
 
     @SuppressWarnings({"error sendRequest"})
-    private void sendRequest(LwM2mClient lwM2MClient, SimpleDownlinkRequest request, long timeoutInMs, LwM2mClientRpcRequest rpcRequest) {
-        Registration registration = lwM2MClient.getRegistration();
+    private void sendRequest(LwM2mClient client, SimpleDownlinkRequest request, long timeoutInMs, LwM2mClientRpcRequest rpcRequest) {
+        Registration registration = client.getRegistration();
         context.getServer().send(registration, request, timeoutInMs, (ResponseCallback<?>) response -> {
 
-            if (!lwM2MClient.isInit()) {
-                lwM2MClient.initReadValue(this.handler, convertPathFromObjectIdToIdVer(request.getPath().toString(), registration));
+            if (!client.isInit()) {
+                client.initReadValue(this.handler, convertPathFromObjectIdToIdVer(request.getPath().toString(), registration));
             }
             if (CoAP.ResponseCode.isSuccess(((Response) response.getCoapResponse()).getCode())) {
-                this.handleResponse(lwM2MClient, request.getPath().toString(), response, request, rpcRequest);
+                this.handleResponse(client, request.getPath().toString(), response, request, rpcRequest);
             } else {
                 String msg = String.format("%s: SendRequest %s: CoapCode - %s Lwm2m code - %d name - %s Resource path - %s", LOG_LW2M_ERROR, request.getClass().getName().toString(),
                         ((Response) response.getCoapResponse()).getCode(), response.getCode().getCode(), response.getCode().getName(), request.getPath().toString());
-                handler.sendLogsToThingsboard(lwM2MClient, msg);
+                handler.sendLogsToThingsboard(client, msg);
                 log.error("[{}] [{}], [{}] - [{}] [{}] error SendRequest", request.getClass().getName().toString(), registration.getEndpoint(),
                         ((Response) response.getCoapResponse()).getCode(), response.getCode(), request.getPath().toString());
-                if (!lwM2MClient.isInit()) {
-                    lwM2MClient.initReadValue(this.handler, convertPathFromObjectIdToIdVer(request.getPath().toString(), registration));
+                if (!client.isInit()) {
+                    client.initReadValue(this.handler, convertPathFromObjectIdToIdVer(request.getPath().toString(), registration));
                 }
                 /** Not Found */
                 if (rpcRequest != null) {
@@ -442,11 +555,11 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
                 /** Not Found
                  set setClient_fw_info... = empty
                  **/
-                if (lwM2MClient.getFwUpdate() != null && lwM2MClient.getFwUpdate().isInfoFwSwUpdate()) {
-                    lwM2MClient.getFwUpdate().initReadValue(handler, this, request.getPath().toString());
+                if (client.getFwUpdate() != null && client.getFwUpdate().isInfoFwSwUpdate()) {
+                    client.getFwUpdate().initReadValue(handler, this, request.getPath().toString());
                 }
-                if (lwM2MClient.getSwUpdate() != null && lwM2MClient.getSwUpdate().isInfoFwSwUpdate()) {
-                    lwM2MClient.getSwUpdate().initReadValue(handler, this, request.getPath().toString());
+                if (client.getSwUpdate() != null && client.getSwUpdate().isInfoFwSwUpdate()) {
+                    client.getSwUpdate().initReadValue(handler, this, request.getPath().toString());
                 }
                 if (request.getPath().toString().equals(FW_PACKAGE_5_ID) || request.getPath().toString().equals(SW_PACKAGE_ID)) {
                     this.afterWriteFwSWUpdateError(registration, request, response.getErrorMessage());
@@ -459,11 +572,11 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
             /** version == null
              set setClient_fw_info... = empty
              **/
-            if (lwM2MClient.getFwUpdate() != null && lwM2MClient.getFwUpdate().isInfoFwSwUpdate()) {
-                lwM2MClient.getFwUpdate().initReadValue(handler, this, request.getPath().toString());
+            if (client.getFwUpdate() != null && client.getFwUpdate().isInfoFwSwUpdate()) {
+                client.getFwUpdate().initReadValue(handler, this, request.getPath().toString());
             }
-            if (lwM2MClient.getSwUpdate() != null && lwM2MClient.getSwUpdate().isInfoFwSwUpdate()) {
-                lwM2MClient.getSwUpdate().initReadValue(handler, this, request.getPath().toString());
+            if (client.getSwUpdate() != null && client.getSwUpdate().isInfoFwSwUpdate()) {
+                client.getSwUpdate().initReadValue(handler, this, request.getPath().toString());
             }
             if (request.getPath().toString().equals(FW_PACKAGE_5_ID) || request.getPath().toString().equals(SW_PACKAGE_ID)) {
                 this.afterWriteFwSWUpdateError(registration, request, e.getMessage());
@@ -471,12 +584,12 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
             if (request.getPath().toString().equals(FW_UPDATE_ID) || request.getPath().toString().equals(SW_INSTALL_ID)) {
                 this.afterExecuteFwSwUpdateError(registration, request, e.getMessage());
             }
-            if (!lwM2MClient.isInit()) {
-                lwM2MClient.initReadValue(this.handler, convertPathFromObjectIdToIdVer(request.getPath().toString(), registration));
+            if (!client.isInit()) {
+                client.initReadValue(this.handler, convertPathFromObjectIdToIdVer(request.getPath().toString(), registration));
             }
             String msg = String.format("%s: SendRequest %s: Resource path - %s msg error - %s",
                     LOG_LW2M_ERROR, request.getClass().getName().toString(), request.getPath().toString(), e.getMessage());
-            handler.sendLogsToThingsboard(lwM2MClient, msg);
+            handler.sendLogsToThingsboard(client, msg);
             log.error("[{}] [{}] - [{}] error SendRequest", request.getClass().getName().toString(), request.getPath().toString(), e.toString());
             if (rpcRequest != null) {
                 handler.sentRpcResponse(rpcRequest, CoAP.CodeClass.ERROR_RESPONSE.name(), e.getMessage(), LOG_LW2M_ERROR);
@@ -484,51 +597,51 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
         });
     }
 
-    private WriteRequest getWriteRequestSingleResource(ContentFormat contentFormat, Integer objectId, Integer instanceId,
-                                                       Integer resourceId, Object value, ResourceModel.Type type,
-                                                       LwM2mClient client, LwM2mClientRpcRequest rpcRequest) {
-        try {
-            if (type != null) {
-                switch (type) {
-                    case STRING:    // String
-                        return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, value.toString()) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, value.toString());
-                    case INTEGER:   // Long
-                        final long valueInt = Integer.toUnsignedLong(Integer.parseInt(value.toString()));
-                        return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, valueInt) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, valueInt);
-                    case OBJLNK:    // ObjectLink
-                        return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, ObjectLink.fromPath(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, ObjectLink.fromPath(value.toString()));
-                    case BOOLEAN:   // Boolean
-                        return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Boolean.parseBoolean(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Boolean.parseBoolean(value.toString()));
-                    case FLOAT:     // Double
-                        return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, Double.parseDouble(value.toString())) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, Double.parseDouble(value.toString()));
-                    case TIME:      // Date
-                        Date date = new Date(Long.decode(value.toString()));
-                        return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, date) : new WriteRequest(contentFormat, objectId, instanceId, resourceId, date);
-                    case OPAQUE:    // byte[] value, base64
-                        byte[] valueRequest = value instanceof byte[] ? (byte[]) value : Hex.decodeHex(value.toString().toCharArray());
-                        return (contentFormat == null) ? new WriteRequest(objectId, instanceId, resourceId, valueRequest) :
-                                new WriteRequest(contentFormat, objectId, instanceId, resourceId, valueRequest);
-                    default:
+    private WriteRequest getWriteRequestSingleResource(ResourceModel.Type type, ContentFormat contentFormat, int objectId, int instanceId, int resourceId, Object value) {
+        switch (type) {
+            case STRING:    // String
+                return new WriteRequest(contentFormat, objectId, instanceId, resourceId, value.toString());
+            case INTEGER:   // Long
+                final long valueInt = Integer.toUnsignedLong(Integer.parseInt(value.toString()));
+                return new WriteRequest(contentFormat, objectId, instanceId, resourceId, valueInt);
+            case OBJLNK:    // ObjectLink
+                return new WriteRequest(contentFormat, objectId, instanceId, resourceId, ObjectLink.fromPath(value.toString()));
+            case BOOLEAN:   // Boolean
+                return new WriteRequest(contentFormat, objectId, instanceId, resourceId, Boolean.parseBoolean(value.toString()));
+            case FLOAT:     // Double
+                return new WriteRequest(contentFormat, objectId, instanceId, resourceId, Double.parseDouble(value.toString()));
+            case TIME:      // Date
+                Date date = new Date(Long.decode(value.toString()));
+                return new WriteRequest(contentFormat, objectId, instanceId, resourceId, date);
+            case OPAQUE:    // byte[] value, base64
+                byte[] valueRequest;
+                if (value instanceof byte[]) {
+                    valueRequest = (byte[]) value;
+                } else {
+                    valueRequest = Hex.decodeHex(value.toString().toCharArray());
                 }
-            }
-            if (rpcRequest != null) {
-                String patn = "/" + objectId + "/" + instanceId + "/" + resourceId;
-                String errorMsg = String.format("Bad ResourceModel Operations (E): Resource path - %s ResourceModel type - %s", patn, type);
-                rpcRequest.setErrorMsg(errorMsg);
-            }
-            return null;
-        } catch (NumberFormatException e) {
-            String patn = "/" + objectId + "/" + instanceId + "/" + resourceId;
-            String msg = String.format(LOG_LW2M_ERROR + ": NumberFormatException: Resource path - %s type - %s value - %s msg error - %s  SendRequest to Client",
-                    patn, type, value, e.toString());
-            handler.sendLogsToThingsboard(client, msg);
-            log.error("Path: [{}] type: [{}] value: [{}] errorMsg: [{}]]", patn, type, value, e.toString());
-            if (rpcRequest != null) {
-                String errorMsg = String.format("NumberFormatException: Resource path - %s type - %s value - %s", patn, type, value);
-                handler.sentRpcResponse(rpcRequest, BAD_REQUEST.getName(), errorMsg, LOG_LW2M_ERROR);
-            }
-            return null;
+                return new WriteRequest(contentFormat, objectId, instanceId, resourceId, valueRequest);
+            default:
         }
+//            TODO: throw exception and execute callback.
+////            if (rpcRequest != null) {
+////                String patn = "/" + objectId + "/" + instanceId + "/" + resourceId;
+////                String errorMsg = String.format("Bad ResourceModel Operations (E): Resource path - %s ResourceModel type - %s", patn, type);
+////                rpcRequest.setErrorMsg(errorMsg);
+////            }
+//            return null;
+//        } catch (NumberFormatException e) {
+//            String patn = "/" + objectId + "/" + instanceId + "/" + resourceId;
+//            String msg = String.format(LOG_LW2M_ERROR + ": NumberFormatException: Resource path - %s type - %s value - %s msg error - %s  SendRequest to Client",
+//                    patn, type, value, e.toString());
+//            handler.sendLogsToThingsboard(client, msg);
+//            log.error("Path: [{}] type: [{}] value: [{}] errorMsg: [{}]]", patn, type, value, e.toString());
+//            if (rpcRequest != null) {
+//                String errorMsg = String.format("NumberFormatException: Resource path - %s type - %s value - %s", patn, type, value);
+//                handler.sentRpcResponse(rpcRequest, BAD_REQUEST.getName(), errorMsg, LOG_LW2M_ERROR);
+//            }
+//            return null;
+//        }
     }
 
     private void handleResponse(LwM2mClient lwM2mClient, final String path, LwM2mResponse response,
@@ -597,7 +710,8 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
         }
     }
 
-    private void infoWriteResponse(LwM2mClient lwM2mClient, LwM2mResponse response, SimpleDownlinkRequest request, LwM2mClientRpcRequest rpcRequest) {
+    private void infoWriteResponse(LwM2mClient lwM2mClient, LwM2mResponse response, SimpleDownlinkRequest
+            request, LwM2mClientRpcRequest rpcRequest) {
         try {
             Registration registration = lwM2mClient.getRegistration();
             LwM2mNode node = ((WriteRequest) request).getNode();
@@ -655,43 +769,46 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
      * send operation Execute
      */
     private void afterWriteSuccessFwSwUpdate(Registration registration, SimpleDownlinkRequest request) {
-        LwM2mClient lwM2MClient = this.lwM2mClientContext.getClientByRegistrationId(registration.getId());
-        if (request.getPath().toString().equals(FW_PACKAGE_5_ID) && lwM2MClient.getFwUpdate() != null) {
-            lwM2MClient.getFwUpdate().setStateUpdate(DOWNLOADED.name());
-            lwM2MClient.getFwUpdate().sendLogs(this.handler, WRITE_REPLACE.name(), LOG_LW2M_INFO, null);
+        LwM2mClient client = this.lwM2mClientContext.getClientByRegistrationId(registration.getId());
+        if (request.getPath().toString().equals(FW_PACKAGE_5_ID) && client.getFwUpdate() != null) {
+            client.getFwUpdate().setStateUpdate(DOWNLOADED.name());
+            client.getFwUpdate().sendLogs(this.handler, WRITE_REPLACE.name(), LOG_LW2M_INFO, null);
         }
-        if (request.getPath().toString().equals(SW_PACKAGE_ID) && lwM2MClient.getSwUpdate() != null) {
-            lwM2MClient.getSwUpdate().setStateUpdate(DOWNLOADED.name());
-            lwM2MClient.getSwUpdate().sendLogs(this.handler, WRITE_REPLACE.name(), LOG_LW2M_INFO, null);
+        if (request.getPath().toString().equals(SW_PACKAGE_ID) && client.getSwUpdate() != null) {
+            client.getSwUpdate().setStateUpdate(DOWNLOADED.name());
+            client.getSwUpdate().sendLogs(this.handler, WRITE_REPLACE.name(), LOG_LW2M_INFO, null);
         }
     }
 
     /**
      * After finish operation FwSwUpdate Write (error):  fw_state = FAILED
      */
-    private void afterWriteFwSWUpdateError(Registration registration, SimpleDownlinkRequest request, String msgError) {
-        LwM2mClient lwM2MClient = this.lwM2mClientContext.getClientByRegistrationId(registration.getId());
-        if (request.getPath().toString().equals(FW_PACKAGE_5_ID) && lwM2MClient.getFwUpdate() != null) {
-            lwM2MClient.getFwUpdate().setStateUpdate(FAILED.name());
-            lwM2MClient.getFwUpdate().sendLogs(this.handler, WRITE_REPLACE.name(), LOG_LW2M_ERROR, msgError);
+    private void afterWriteFwSWUpdateError(Registration registration, SimpleDownlinkRequest request, String
+            msgError) {
+        LwM2mClient client = this.lwM2mClientContext.getClientByRegistrationId(registration.getId());
+        if (request.getPath().toString().equals(FW_PACKAGE_5_ID) && client.getFwUpdate() != null) {
+            client.getFwUpdate().setStateUpdate(FAILED.name());
+            client.getFwUpdate().sendLogs(this.handler, WRITE_REPLACE.name(), LOG_LW2M_ERROR, msgError);
         }
-        if (request.getPath().toString().equals(SW_PACKAGE_ID) && lwM2MClient.getSwUpdate() != null) {
-            lwM2MClient.getSwUpdate().setStateUpdate(FAILED.name());
-            lwM2MClient.getSwUpdate().sendLogs(this.handler, WRITE_REPLACE.name(), LOG_LW2M_ERROR, msgError);
-        }
-    }
-
-    private void afterExecuteFwSwUpdateError(Registration registration, SimpleDownlinkRequest request, String msgError) {
-        LwM2mClient lwM2MClient = this.lwM2mClientContext.getClientByRegistrationId(registration.getId());
-        if (request.getPath().toString().equals(FW_UPDATE_ID) && lwM2MClient.getFwUpdate() != null) {
-            lwM2MClient.getFwUpdate().sendLogs(this.handler, EXECUTE.name(), LOG_LW2M_ERROR, msgError);
-        }
-        if (request.getPath().toString().equals(SW_INSTALL_ID) && lwM2MClient.getSwUpdate() != null) {
-            lwM2MClient.getSwUpdate().sendLogs(this.handler, EXECUTE.name(), LOG_LW2M_ERROR, msgError);
+        if (request.getPath().toString().equals(SW_PACKAGE_ID) && client.getSwUpdate() != null) {
+            client.getSwUpdate().setStateUpdate(FAILED.name());
+            client.getSwUpdate().sendLogs(this.handler, WRITE_REPLACE.name(), LOG_LW2M_ERROR, msgError);
         }
     }
 
-    private void afterObserveCancel(LwM2mClient lwM2mClient, int observeCancelCnt, String observeCancelMsg, LwM2mClientRpcRequest rpcRequest) {
+    private void afterExecuteFwSwUpdateError(Registration registration, SimpleDownlinkRequest request, String
+            msgError) {
+        LwM2mClient client = this.lwM2mClientContext.getClientByRegistrationId(registration.getId());
+        if (request.getPath().toString().equals(FW_UPDATE_ID) && client.getFwUpdate() != null) {
+            client.getFwUpdate().sendLogs(this.handler, EXECUTE.name(), LOG_LW2M_ERROR, msgError);
+        }
+        if (request.getPath().toString().equals(SW_INSTALL_ID) && client.getSwUpdate() != null) {
+            client.getSwUpdate().sendLogs(this.handler, EXECUTE.name(), LOG_LW2M_ERROR, msgError);
+        }
+    }
+
+    private void afterObserveCancel(LwM2mClient lwM2mClient, int observeCancelCnt, String
+            observeCancelMsg, LwM2mClientRpcRequest rpcRequest) {
         handler.sendLogsToThingsboard(lwM2mClient, observeCancelMsg);
         log.warn("[{}]", observeCancelMsg);
         if (rpcRequest != null) {

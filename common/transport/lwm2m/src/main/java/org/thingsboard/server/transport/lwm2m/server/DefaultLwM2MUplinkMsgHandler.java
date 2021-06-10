@@ -132,13 +132,13 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
     private final LwM2MJsonAdaptor adaptor;
     private final TbLwM2MDtlsSessionStore sessionStore;
     public final LwM2mClientContext clientContext;
-    public final DefaultLwM2mDownlinkMsgHandler defaultLwM2MDownlinkMsgHandler;
+    public final LwM2mDownlinkMsgHandler defaultLwM2MDownlinkMsgHandler;
     private final Map<UUID, Long> rpcSubscriptions;
     public final Map<String, Integer> firmwareUpdateState;
 
     public DefaultLwM2MUplinkMsgHandler(TransportService transportService, LwM2MTransportServerConfig config, LwM2mTransportServerHelper helper,
                                         LwM2mClientContext clientContext,
-                                        @Lazy DefaultLwM2mDownlinkMsgHandler defaultLwM2MDownlinkMsgHandler,
+                                        @Lazy LwM2mDownlinkMsgHandler defaultLwM2MDownlinkMsgHandler,
                                         OtaPackageDataCache otaPackageDataCache,
                                         LwM2mTransportContext context, LwM2MJsonAdaptor adaptor, TbLwM2MDtlsSessionStore sessionStore) {
         this.transportService = transportService;
@@ -291,8 +291,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
         if (registration != null) {
             LwM2mClient client = clientContext.getClientByEndpoint(registration.getEndpoint());
             if (client != null && client.getRegistration() != null && client.getRegistration().getId().equals(registration.getId())) {
-                this.defaultLwM2MDownlinkMsgHandler.sendAllRequest(client, null, OBSERVE_CANCEL_ALL,
-                        null, null, this.config.getTimeout(), null);
+                defaultLwM2MDownlinkMsgHandler.sendCancelAllRequest(client, this.config.getTimeout(), null);
             }
         }
     }
@@ -595,8 +594,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
             if (LwM2mTransportUtil.LwM2MClientStrategy.CLIENT_STRATEGY_2.code == profile.getClientLwM2mSettings().getClientOnlyObserveAfterConnect()) {
                 // #2
                 lwM2MClient.getPendingReadRequests().addAll(supportedObjects);
-                supportedObjects.forEach(path -> defaultLwM2MDownlinkMsgHandler.sendAllRequest(lwM2MClient, path, READ,
-                        null, this.config.getTimeout(), null));
+                supportedObjects.forEach(path -> defaultLwM2MDownlinkMsgHandler.sendReadRequest(lwM2MClient, path, this.config.getTimeout()));
             }
             // #1
             this.sendReadRequests(lwM2MClient, profile, supportedObjects);
@@ -638,24 +636,6 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
 //        TODO: why do we need to put observe into pending read requests?
 //        lwM2MClient.getPendingReadRequests().addAll(targetIds);
         targetIds.forEach(targetId -> defaultLwM2MDownlinkMsgHandler.sendDiscoverRequest(lwM2MClient, targetId, this.config.getTimeout()));
-    }
-
-    private void sendRequestsToClient(LwM2mClient lwM2MClient, LwM2mTypeOper operationType, Set<String> supportedObjectIds, Set<String> desiredObjectIds, ConcurrentHashMap<String, ObjectAttributes> params) {
-        if (desiredObjectIds != null && !desiredObjectIds.isEmpty()) {
-            Set<String> targetObjectIds = desiredObjectIds.stream().filter(target -> isSupportedTargetId(supportedObjectIds, target)
-            ).collect(Collectors.toUnmodifiableSet());
-            if (!targetObjectIds.isEmpty()) {
-                //TODO: remove this side effect?
-                lwM2MClient.getPendingReadRequests().addAll(targetObjectIds);
-                targetObjectIds.forEach(target -> {
-                    Object additionalParams = params != null ? params.get(target) : null;
-                    defaultLwM2MDownlinkMsgHandler.sendAllRequest(lwM2MClient, target, operationType, additionalParams, this.config.getTimeout(), null);
-                });
-                if (OBSERVE.equals(operationType)) {
-                    lwM2MClient.initReadValue(this, null);
-                }
-            }
-        }
     }
 
     /**
@@ -955,54 +935,30 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
             if (!newObjectsToRead.isEmpty()) {
                 Set<String> newObjectsToReadButNotNewInObserve = diffSets(observeToAdd, newObjectsToRead);
                 // update value in Resources
-                if(!newObjectsToReadButNotNewInObserve.isEmpty()) {
-                    clients.forEach(client -> this.readObserveFromProfile(client, newObjectsToReadButNotNewInObserve, READ));
+                for (String targetId : newObjectsToReadButNotNewInObserve) {
+                    clients.forEach(client -> defaultLwM2MDownlinkMsgHandler.sendReadRequest(client, targetId, this.config.getTimeout()));
                 }
             }
 
             // Calculating difference between old and new flags.
-            if(!observeToAdd.isEmpty()){
-                clients.forEach(client -> this.readObserveFromProfile(client, observeToAdd, OBSERVE));
+            if (!observeToAdd.isEmpty()) {
+                for (String targetId : observeToAdd) {
+                    clients.forEach(client -> defaultLwM2MDownlinkMsgHandler.sendObserveRequest(client, targetId, this.config.getTimeout()));
+                }
             }
-            if(!observeToRemove.isEmpty()){
-                clients.forEach(client -> this.cancelObserveFromProfile(client, observeToRemove));
+            if (!observeToRemove.isEmpty()) {
+                for (String targetId : observeToRemove) {
+                    clients.forEach(client -> defaultLwM2MDownlinkMsgHandler.sendCancelObserveRequest(client, targetId, this.config.getTimeout(), null));
+                }
             }
         }
     }
 
     /**
-       Returns new set with elements that are present in set B(new) but absent in set A(old).
+     Returns new set with elements that are present in set B(new) but absent in set A(old).
      */
-    private static <T> Set<T> diffSets(Set<T> a, Set<T> b){
+    private static <T> Set<T> diffSets(Set<T> a, Set<T> b) {
         return b.stream().filter(p -> !a.contains(p)).collect(Collectors.toSet());
-    }
-
-    private ParametersAnalyzeResult getAnalyzerParametersIn(Set<String> parametersObserve, Set<String> parameters) {
-        ParametersAnalyzeResult analyzerParameters = new ParametersAnalyzeResult();
-        analyzerParameters.setPathPostParametersAdd(parametersObserve
-                .stream().filter(parameters::contains).collect(Collectors.toSet()));
-        return analyzerParameters;
-    }
-
-    /**
-     * Update Resource value after change RezAttrTelemetry in config Profile
-     * send response Read to Client and add path to pathResAttrTelemetry in LwM2MClient.getAttrTelemetryObserveValue()
-     *
-     * @param targets - path Resources == [ "/2/0/0", "/2/0/1"]
-     */
-    private void readObserveFromProfile(LwM2mClient client, Set<String> targets, LwM2mTypeOper typeOper) {
-        targets.forEach(target -> {
-            LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(target));
-            if (pathIds.isResource()) {
-                if (READ.equals(typeOper)) {
-                    defaultLwM2MDownlinkMsgHandler.sendAllRequest(client, target, typeOper,
-                            null, this.config.getTimeout(), null);
-                } else if (OBSERVE.equals(typeOper)) {
-                    defaultLwM2MDownlinkMsgHandler.sendAllRequest(client, target, typeOper,
-                            null, this.config.getTimeout(), null);
-                }
-            }
-        });
     }
 
     private ParametersAnalyzeResult getAnalyzerKeyName(Map<String, String> keyNameOld, Map<String, String> keyNameNew) {
@@ -1058,24 +1014,15 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
         }
     }
 
-    private void cancelObserveFromProfile(LwM2mClient lwM2mClient, Set<String> paramAnallyzer) {
-        paramAnallyzer.forEach(pathIdVer -> {
-                    if (this.getResourceValueFromLwM2MClient(lwM2mClient, pathIdVer) != null) {
-                        defaultLwM2MDownlinkMsgHandler.sendAllRequest(lwM2mClient, pathIdVer, OBSERVE_CANCEL, null, this.config.getTimeout(), null);
-                    }
-                }
-        );
-    }
-
-    private void updateResourcesValueToClient(LwM2mClient lwM2MClient, Object valueOld, Object valueNew, String path) {
-        if (valueNew != null && (valueOld == null || !valueNew.toString().equals(valueOld.toString()))) {
-            defaultLwM2MDownlinkMsgHandler.sendAllRequest(lwM2MClient, path, WRITE_REPLACE, valueNew, this.config.getTimeout(), null);
+    private void updateResourcesValueToClient(LwM2mClient lwM2MClient, Object valueOld, Object newValue, String path) {
+        if (newValue != null && (valueOld == null || !newValue.toString().equals(valueOld.toString()))) {
+            defaultLwM2MDownlinkMsgHandler.sendWriteReplaceRequest(lwM2MClient, path, newValue, this.config.getTimeout(), null);
         } else {
-            log.error("Failed update resource [{}] [{}]", path, valueNew);
+            log.error("Failed update resource [{}] [{}]", path, newValue);
             String logMsg = String.format("%s: Failed update resource path - %s value - %s. Value is not changed or bad",
-                    LOG_LW2M_ERROR, path, valueNew);
+                    LOG_LW2M_ERROR, path, newValue);
             this.sendLogsToThingsboard(lwM2MClient, logMsg);
-            log.info("Failed update resource [{}] [{}]", path, valueNew);
+            log.info("Failed update resource [{}] [{}]", path, newValue);
         }
     }
 

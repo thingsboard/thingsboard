@@ -48,6 +48,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -208,28 +209,6 @@ public class LwM2mTransportServerHelper {
             default:
         }
         throw new CodecException("Invalid ResourceModel_Type for resource %s, got %s", resourcePath, currentType);
-    }
-
-    public static ContentFormat convertResourceModelTypeToContentFormat(ResourceModel.Type type) {
-        switch (type) {
-            case BOOLEAN:
-            case STRING:
-            case TIME:
-            case INTEGER:
-            case FLOAT:
-                return ContentFormat.TLV;
-            case OPAQUE:
-                return ContentFormat.OPAQUE;
-            case OBJLNK:
-                return ContentFormat.LINK;
-            default:
-        }
-        throw new CodecException("Invalid ResourceModel_Type for %s ContentFormat.", type);
-    }
-
-    public static ContentFormat getContentFormatByResourceModelType(ResourceModel resourceModel, ContentFormat contentFormat) {
-        return contentFormat.equals(ContentFormat.TLV) ? convertResourceModelTypeToContentFormat(resourceModel.type) :
-                contentFormat;
     }
 
     public static Object getValueFromKvProto(TransportProtos.KeyValueProto kv) {
