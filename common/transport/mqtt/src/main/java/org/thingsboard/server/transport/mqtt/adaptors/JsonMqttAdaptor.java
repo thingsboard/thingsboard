@@ -178,15 +178,15 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
             JsonElement requestBody = new JsonParser().parse(payload);
             Set<String> clientKeys = toStringSet(requestBody, "clientKeys");
             Set<String> sharedKeys = toStringSet(requestBody, "sharedKeys");
-            if (clientKeys == null) {
-                result.setAllClient(true);
-            } else {
+            if (clientKeys != null) {
                 result.addAllClientAttributeNames(clientKeys);
-            }
-            if (sharedKeys == null) {
-                result.setAllShared(true);
             } else {
+                result.setAllClient(true);
+            }
+            if (sharedKeys != null) {
                 result.addAllSharedAttributeNames(sharedKeys);
+            } else {
+                result.setAllShared(true);
             }
             return result.build();
         } catch (RuntimeException e) {
