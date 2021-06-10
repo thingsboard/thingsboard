@@ -398,7 +398,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
 
     private Optional<DeviceTokenCredentials> decodeCredentials(Request request) {
         List<String> uriPath = request.getOptions().getUriPath();
-        if (uriPath.size() >= ACCESS_TOKEN_POSITION) {
+        if (uriPath.size() > ACCESS_TOKEN_POSITION) {
             return Optional.of(new DeviceTokenCredentials(uriPath.get(ACCESS_TOKEN_POSITION - 1)));
         } else {
             return Optional.empty();

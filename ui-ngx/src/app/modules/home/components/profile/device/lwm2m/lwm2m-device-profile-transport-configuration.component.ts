@@ -176,7 +176,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   private updateWriteValue = (value: ModelValue): void => {
-    debugger
     let fwResource = this.configurationValue.clientLwM2mSettings.fwUpdateStrategy === '2' &&
     isDefinedAndNotNull(this.configurationValue.clientLwM2mSettings.fwUpdateRecourse) ?
       this.configurationValue.clientLwM2mSettings.fwUpdateRecourse : '';
@@ -515,7 +514,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   changeFwUpdateStrategy($event: MatSelectChange) {
-    debugger
     if ($event.value === '2') {
       this.isFwUpdateStrategy = true;
       if (isEmpty(this.lwm2mDeviceProfileFormGroup.get('fwUpdateRecourse').value)) {
@@ -531,7 +529,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   changeSwUpdateStrategy($event: MatSelectChange) {
-    debugger
     if ($event.value === '2') {
       this.isSwUpdateStrategy = true;
       if (isEmpty(this.lwm2mDeviceProfileFormGroup.get('swUpdateRecourse').value)) {
