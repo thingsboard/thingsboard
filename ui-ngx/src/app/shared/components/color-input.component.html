@@ -20,7 +20,7 @@
     <mat-icon *ngIf="icon">{{icon}}</mat-icon>
     <span *ngIf="label">{{label}}</span>
   </mat-label>
-  <div matPrefix class="tb-color-preview" (click)="showColorPicker()" style="margin-right: 5px;">
+  <div matPrefix class="tb-color-preview" (click)="!disabled && showColorPicker()" style="margin-right: 5px;">
     <div class="tb-color-result" [ngStyle]="{background: colorFormGroup.get('color').value}"></div>
   </div>
   <input matInput formControlName="color" (mousedown)="openOnInput && showColorPicker()" [required]="required">

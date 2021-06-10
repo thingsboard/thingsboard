@@ -110,8 +110,11 @@ public class AlarmController extends BaseController {
         checkParameter(ALARM_ID, strAlarmId);
         try {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-            checkAlarmId(alarmId, Operation.WRITE);
+            Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
 
+            logEntityAction(alarm.getOriginator(), alarm,
+                    getCurrentUser().getCustomerId(),
+                    ActionType.ALARM_DELETE, null);
             sendEntityNotificationMsg(getTenantId(), alarmId, EdgeEventActionType.DELETED);
 
             return alarmService.deleteAlarm(getTenantId(), alarmId);

@@ -148,6 +148,7 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
     } else {
       this.deviceCredentialsFormGroup.enable({emitEvent: false});
       this.updateValidators();
+      this.deviceCredentialsFormGroup.updateValueAndValidity();
     }
   }
 

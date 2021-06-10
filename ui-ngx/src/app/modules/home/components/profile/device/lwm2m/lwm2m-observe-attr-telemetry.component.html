@@ -16,7 +16,7 @@
 
 -->
 <section [formGroup]="observeAttrTelemetryFormGroup">
-  <mat-accordion multi="true" class="mat-body-1" formArrayName="clientLwM2M">
+  <mat-accordion multi="true" formArrayName="clientLwM2M">
     <mat-expansion-panel
       *ngFor="let objectLwM2M of clientLwM2MFormArray.controls; let i = index;"
       [formGroupName]="i">

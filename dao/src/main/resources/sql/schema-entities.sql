@@ -178,14 +178,15 @@ CREATE TABLE IF NOT EXISTS rule_node_state (
     CONSTRAINT fk_rule_node_state_node_id FOREIGN KEY (rule_node_id) REFERENCES rule_node(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS firmware (
-    id uuid NOT NULL CONSTRAINT firmware_pkey PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS ota_package (
+    id uuid NOT NULL CONSTRAINT ota_package_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     tenant_id uuid NOT NULL,
     device_profile_id uuid ,
     type varchar(32) NOT NULL,
     title varchar(255) NOT NULL,
     version varchar(255) NOT NULL,
+    url varchar(255),
     file_name varchar(255),
     content_type varchar(255),
     checksum_algorithm varchar(32),
@@ -194,7 +195,7 @@ CREATE TABLE IF NOT EXISTS firmware (
     data_size bigint,
     additional_info varchar,
     search_text varchar(255),
-    CONSTRAINT firmware_tenant_title_version_unq_key UNIQUE (tenant_id, title, version)
+    CONSTRAINT ota_package_tenant_title_version_unq_key UNIQUE (tenant_id, title, version)
 --     CONSTRAINT fk_device_profile_firmware FOREIGN KEY (device_profile_id) REFERENCES device_profile(id) ON DELETE CASCADE
 );
 
@@ -221,8 +222,8 @@ CREATE TABLE IF NOT EXISTS device_profile (
     CONSTRAINT device_provision_key_unq_key UNIQUE (provision_device_key),
     CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id),
     CONSTRAINT fk_default_dashboard_device_profile FOREIGN KEY (default_dashboard_id) REFERENCES dashboard(id),
-    CONSTRAINT fk_firmware_device_profile FOREIGN KEY (firmware_id) REFERENCES firmware(id),
-    CONSTRAINT fk_software_device_profile FOREIGN KEY (software_id) REFERENCES firmware(id)
+    CONSTRAINT fk_firmware_device_profile FOREIGN KEY (firmware_id) REFERENCES ota_package(id),
+    CONSTRAINT fk_software_device_profile FOREIGN KEY (software_id) REFERENCES ota_package(id)
 );
 
 -- We will use one-to-many relation in the first release and extend this feature in case of user requests
@@ -250,8 +251,8 @@ CREATE TABLE IF NOT EXISTS device (
     software_id uuid,
     CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name),
     CONSTRAINT fk_device_profile FOREIGN KEY (device_profile_id) REFERENCES device_profile(id),
-    CONSTRAINT fk_firmware_device FOREIGN KEY (firmware_id) REFERENCES firmware(id),
-    CONSTRAINT fk_software_device FOREIGN KEY (software_id) REFERENCES firmware(id)
+    CONSTRAINT fk_firmware_device FOREIGN KEY (firmware_id) REFERENCES ota_package(id),
+    CONSTRAINT fk_software_device FOREIGN KEY (software_id) REFERENCES ota_package(id)
 );
 
 CREATE TABLE IF NOT EXISTS device_credentials (
@@ -410,6 +411,96 @@ CREATE TABLE IF NOT EXISTS ts_kv_dictionary
     CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
 );
 
+CREATE TABLE IF NOT EXISTS oauth2_params (
+    id uuid NOT NULL CONSTRAINT oauth2_params_pkey PRIMARY KEY,
+    enabled boolean,
+    tenant_id uuid,
+    created_time bigint NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS oauth2_registration (
+    id uuid NOT NULL CONSTRAINT oauth2_registration_pkey PRIMARY KEY,
+    oauth2_params_id uuid NOT NULL,
+    created_time bigint NOT NULL,
+    additional_info varchar,
+    client_id varchar(255),
+    client_secret varchar(255),
+    authorization_uri varchar(255),
+    token_uri varchar(255),
+    scope varchar(255),
+    user_info_uri varchar(255),
+    user_name_attribute_name varchar(255),
+    jwk_set_uri varchar(255),
+    client_authentication_method varchar(255),
+    login_button_label varchar(255),
+    login_button_icon varchar(255),
+    allow_user_creation boolean,
+    activate_user boolean,
+    type varchar(31),
+    basic_email_attribute_key varchar(31),
+    basic_first_name_attribute_key varchar(31),
+    basic_last_name_attribute_key varchar(31),
+    basic_tenant_name_strategy varchar(31),
+    basic_tenant_name_pattern varchar(255),
+    basic_customer_name_pattern varchar(255),
+    basic_default_dashboard_name varchar(255),
+    basic_always_full_screen boolean,
+    custom_url varchar(255),
+    custom_username varchar(255),
+    custom_password varchar(255),
+    custom_send_token boolean,
+    CONSTRAINT fk_registration_oauth2_params FOREIGN KEY (oauth2_params_id) REFERENCES oauth2_params(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS oauth2_domain (
+    id uuid NOT NULL CONSTRAINT oauth2_domain_pkey PRIMARY KEY,
+    oauth2_params_id uuid NOT NULL,
+    created_time bigint NOT NULL,
+    domain_name varchar(255),
+    domain_scheme varchar(31),
+    CONSTRAINT fk_domain_oauth2_params FOREIGN KEY (oauth2_params_id) REFERENCES oauth2_params(id) ON DELETE CASCADE,
+    CONSTRAINT oauth2_domain_unq_key UNIQUE (oauth2_params_id, domain_name, domain_scheme)
+);
+
+CREATE TABLE IF NOT EXISTS oauth2_mobile (
+    id uuid NOT NULL CONSTRAINT oauth2_mobile_pkey PRIMARY KEY,
+    oauth2_params_id uuid NOT NULL,
+    created_time bigint NOT NULL,
+    pkg_name varchar(255),
+    callback_url_scheme varchar(255),
+    CONSTRAINT fk_mobile_oauth2_params FOREIGN KEY (oauth2_params_id) REFERENCES oauth2_params(id) ON DELETE CASCADE,
+    CONSTRAINT oauth2_mobile_unq_key UNIQUE (oauth2_params_id, pkg_name)
+);
+
+CREATE TABLE IF NOT EXISTS oauth2_client_registration_template (
+    id uuid NOT NULL CONSTRAINT oauth2_client_registration_template_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    additional_info varchar,
+    provider_id varchar(255),
+    authorization_uri varchar(255),
+    token_uri varchar(255),
+    scope varchar(255),
+    user_info_uri varchar(255),
+    user_name_attribute_name varchar(255),
+    jwk_set_uri varchar(255),
+    client_authentication_method varchar(255),
+    type varchar(31),
+    basic_email_attribute_key varchar(31),
+    basic_first_name_attribute_key varchar(31),
+    basic_last_name_attribute_key varchar(31),
+    basic_tenant_name_strategy varchar(31),
+    basic_tenant_name_pattern varchar(255),
+    basic_customer_name_pattern varchar(255),
+    basic_default_dashboard_name varchar(255),
+    basic_always_full_screen boolean,
+    comment varchar,
+    login_button_icon varchar(255),
+    login_button_label varchar(255),
+    help_link varchar(255),
+    CONSTRAINT oauth2_template_provider_id_unq_key UNIQUE (provider_id)
+);
+
+-- Deprecated
 CREATE TABLE IF NOT EXISTS oauth2_client_registration_info (
     id uuid NOT NULL CONSTRAINT oauth2_client_registration_info_pkey PRIMARY KEY,
     enabled boolean,
@@ -443,40 +534,13 @@ CREATE TABLE IF NOT EXISTS oauth2_client_registration_info (
     custom_send_token boolean
 );
 
+-- Deprecated
 CREATE TABLE IF NOT EXISTS oauth2_client_registration (
     id uuid NOT NULL CONSTRAINT oauth2_client_registration_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     domain_name varchar(255),
     domain_scheme varchar(31),
     client_registration_info_id uuid
-);
-
-CREATE TABLE IF NOT EXISTS oauth2_client_registration_template (
-    id uuid NOT NULL CONSTRAINT oauth2_client_registration_template_pkey PRIMARY KEY,
-    created_time bigint NOT NULL,
-    additional_info varchar,
-    provider_id varchar(255),
-    authorization_uri varchar(255),
-    token_uri varchar(255),
-    scope varchar(255),
-    user_info_uri varchar(255),
-    user_name_attribute_name varchar(255),
-    jwk_set_uri varchar(255),
-    client_authentication_method varchar(255),
-    type varchar(31),
-    basic_email_attribute_key varchar(31),
-    basic_first_name_attribute_key varchar(31),
-    basic_last_name_attribute_key varchar(31),
-    basic_tenant_name_strategy varchar(31),
-    basic_tenant_name_pattern varchar(255),
-    basic_customer_name_pattern varchar(255),
-    basic_default_dashboard_name varchar(255),
-    basic_always_full_screen boolean,
-    comment varchar,
-    login_button_icon varchar(255),
-    login_button_label varchar(255),
-    help_link varchar(255),
-    CONSTRAINT oauth2_template_provider_id_unq_key UNIQUE (provider_id)
 );
 
 CREATE TABLE IF NOT EXISTS api_usage_state (

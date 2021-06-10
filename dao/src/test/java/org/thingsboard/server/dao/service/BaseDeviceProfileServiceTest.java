@@ -28,10 +28,9 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.Firmware;
+import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.firmware.FirmwareType;
-import org.thingsboard.server.common.data.firmware.ChecksumAlgorithm;
+import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -45,7 +44,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.firmware.FirmwareType.FIRMWARE;
+import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
 public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
 
@@ -99,7 +98,7 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         Assert.assertEquals(deviceProfile.isDefault(), savedDeviceProfile.isDefault());
         Assert.assertEquals(deviceProfile.getDefaultRuleChainId(), savedDeviceProfile.getDefaultRuleChainId());
 
-        Firmware firmware = new Firmware();
+        OtaPackage firmware = new OtaPackage();
         firmware.setTenantId(tenantId);
         firmware.setDeviceProfileId(savedDeviceProfile.getId());
         firmware.setType(FIRMWARE);
@@ -110,7 +109,8 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         firmware.setChecksumAlgorithm(ChecksumAlgorithm.SHA256);
         firmware.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
         firmware.setData(ByteBuffer.wrap(new byte[]{1}));
-        Firmware savedFirmware = firmwareService.saveFirmware(firmware);
+        firmware.setDataSize(1L);
+        OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware);
 
         deviceProfile.setFirmwareId(savedFirmware.getId());
 

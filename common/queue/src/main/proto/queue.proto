@@ -310,10 +310,12 @@ message SessionCloseNotificationProto {
 
 message SubscribeToAttributeUpdatesMsg {
   bool unsubscribe = 1;
+  SessionType sessionType = 2;
 }
 
 message SubscribeToRPCMsg {
   bool unsubscribe = 1;
+  SessionType sessionType = 2;
 }
 
 message ToDeviceRpcRequestMsg {
@@ -388,7 +390,7 @@ enum ResponseStatus {
   FAILURE = 3;
 }
 
-message GetFirmwareRequestMsg {
+message GetOtaPackageRequestMsg {
   int64 deviceIdMSB = 1;
   int64 deviceIdLSB = 2;
   int64 tenantIdMSB = 3;
@@ -396,10 +398,10 @@ message GetFirmwareRequestMsg {
   string type = 5;
 }
 
-message GetFirmwareResponseMsg {
+message GetOtaPackageResponseMsg {
   ResponseStatus responseStatus = 1;
-  int64 firmwareIdMSB = 2;
-  int64 firmwareIdLSB = 3;
+  int64 otaPackageIdMSB = 2;
+  int64 otaPackageIdLSB = 3;
   string type = 4;
   string title = 5;
   string version = 6;
@@ -627,7 +629,7 @@ message TransportApiRequestMsg {
   ProvisionDeviceRequestMsg provisionDeviceRequestMsg = 7;
   ValidateDeviceLwM2MCredentialsRequestMsg validateDeviceLwM2MCredentialsRequestMsg = 8;
   GetResourceRequestMsg resourceRequestMsg = 9;
-  GetFirmwareRequestMsg firmwareRequestMsg = 10;
+  GetOtaPackageRequestMsg otaPackageRequestMsg = 10;
   GetSnmpDevicesRequestMsg snmpDevicesRequestMsg = 11;
   GetDeviceRequestMsg deviceRequestMsg = 12;
   GetDeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 13;
@@ -642,7 +644,7 @@ message TransportApiResponseMsg {
   GetSnmpDevicesResponseMsg snmpDevicesResponseMsg = 5;
   LwM2MResponseMsg lwM2MResponseMsg = 6;
   GetResourceResponseMsg resourceResponseMsg = 7;
-  GetFirmwareResponseMsg firmwareResponseMsg = 8;
+  GetOtaPackageResponseMsg otaPackageResponseMsg = 8;
   GetDeviceResponseMsg deviceResponseMsg = 9;
   GetDeviceCredentialsResponseMsg deviceCredentialsResponseMsg = 10;
 }
@@ -710,13 +712,13 @@ message ToUsageStatsServiceMsg {
   int64 customerIdLSB = 7;
 }
 
-message ToFirmwareStateServiceMsg {
+message ToOtaPackageStateServiceMsg {
   int64 ts = 1;
   int64 tenantIdMSB = 2;
   int64 tenantIdLSB = 3;
   int64 deviceIdMSB = 4;
   int64 deviceIdLSB = 5;
-  int64 firmwareIdMSB = 6;
-  int64 firmwareIdLSB = 7;
+  int64 otaPackageIdMSB = 6;
+  int64 otaPackageIdLSB = 7;
   string type = 8;
 }

@@ -408,10 +408,20 @@ public class ModelConstants {
     /**
      * OAuth2 client registration constants.
      */
-    public static final String OAUTH2_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+
+    public static final String OAUTH2_PARAMS_COLUMN_FAMILY_NAME = "oauth2_params";
+    public static final String OAUTH2_PARAMS_ENABLED_PROPERTY = "enabled";
+    public static final String OAUTH2_PARAMS_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+
+    public static final String OAUTH2_REGISTRATION_COLUMN_FAMILY_NAME = "oauth2_registration";
+    public static final String OAUTH2_DOMAIN_COLUMN_FAMILY_NAME = "oauth2_domain";
+    public static final String OAUTH2_MOBILE_COLUMN_FAMILY_NAME = "oauth2_mobile";
+    public static final String OAUTH2_PARAMS_ID_PROPERTY = "oauth2_params_id";
+    public static final String OAUTH2_PKG_NAME_PROPERTY = "pkg_name";
+    public static final String OAUTH2_CALLBACK_URL_SCHEME_PROPERTY = "callback_url_scheme";
+
     public static final String OAUTH2_CLIENT_REGISTRATION_INFO_COLUMN_FAMILY_NAME = "oauth2_client_registration_info";
     public static final String OAUTH2_CLIENT_REGISTRATION_COLUMN_FAMILY_NAME = "oauth2_client_registration";
-    public static final String OAUTH2_CLIENT_REGISTRATION_TO_DOMAIN_COLUMN_FAMILY_NAME = "oauth2_client_registration_to_domain";
     public static final String OAUTH2_CLIENT_REGISTRATION_TEMPLATE_COLUMN_FAMILY_NAME = "oauth2_client_registration_template";
     public static final String OAUTH2_ENABLED_PROPERTY = "enabled";
     public static final String OAUTH2_TEMPLATE_PROVIDER_ID_PROPERTY = "provider_id";
@@ -422,7 +432,6 @@ public class ModelConstants {
     public static final String OAUTH2_CLIENT_SECRET_PROPERTY = "client_secret";
     public static final String OAUTH2_AUTHORIZATION_URI_PROPERTY = "authorization_uri";
     public static final String OAUTH2_TOKEN_URI_PROPERTY = "token_uri";
-    public static final String OAUTH2_REDIRECT_URI_TEMPLATE_PROPERTY = "redirect_uri_template";
     public static final String OAUTH2_SCOPE_PROPERTY = "scope";
     public static final String OAUTH2_USER_INFO_URI_PROPERTY = "user_info_uri";
     public static final String OAUTH2_USER_NAME_ATTRIBUTE_NAME_PROPERTY = "user_name_attribute_name";
@@ -479,22 +488,22 @@ public class ModelConstants {
     public static final String RESOURCE_DATA_COLUMN = "data";
 
     /**
-     * Firmware constants.
+     * Ota Package constants.
      */
-    public static final String FIRMWARE_TABLE_NAME = "firmware";
-    public static final String FIRMWARE_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
-    public static final String FIRMWARE_DEVICE_PROFILE_ID_COLUMN = "device_profile_id";
-    public static final String FIRMWARE_TYPE_COLUMN = "type";
-    public static final String FIRMWARE_TITLE_COLUMN = TITLE_PROPERTY;
-    public static final String FIRMWARE_VERSION_COLUMN = "version";
-    public static final String FIRMWARE_FILE_NAME_COLUMN = "file_name";
-    public static final String FIRMWARE_CONTENT_TYPE_COLUMN = "content_type";
-    public static final String FIRMWARE_CHECKSUM_ALGORITHM_COLUMN = "checksum_algorithm";
-    public static final String FIRMWARE_CHECKSUM_COLUMN = "checksum";
-    public static final String FIRMWARE_DATA_COLUMN = "data";
-    public static final String FIRMWARE_DATA_SIZE_COLUMN = "data_size";
-    public static final String FIRMWARE_ADDITIONAL_INFO_COLUMN = ADDITIONAL_INFO_PROPERTY;
-    public static final String FIRMWARE_HAS_DATA_PROPERTY = "has_data";
+    public static final String OTA_PACKAGE_TABLE_NAME = "ota_package";
+    public static final String OTA_PACKAGE_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
+    public static final String OTA_PACKAGE_DEVICE_PROFILE_ID_COLUMN = "device_profile_id";
+    public static final String OTA_PACKAGE_TYPE_COLUMN = "type";
+    public static final String OTA_PACKAGE_TILE_COLUMN = TITLE_PROPERTY;
+    public static final String OTA_PACKAGE_VERSION_COLUMN = "version";
+    public static final String OTA_PACKAGE_URL_COLUMN = "url";
+    public static final String OTA_PACKAGE_FILE_NAME_COLUMN = "file_name";
+    public static final String OTA_PACKAGE_CONTENT_TYPE_COLUMN = "content_type";
+    public static final String OTA_PACKAGE_CHECKSUM_ALGORITHM_COLUMN = "checksum_algorithm";
+    public static final String OTA_PACKAGE_CHECKSUM_COLUMN = "checksum";
+    public static final String OTA_PACKAGE_DATA_COLUMN = "data";
+    public static final String OTA_PACKAGE_DATA_SIZE_COLUMN = "data_size";
+    public static final String OTA_PACKAGE_ADDITIONAL_INFO_COLUMN = ADDITIONAL_INFO_PROPERTY;
 
     /**
      * Edge constants.

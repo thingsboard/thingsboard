@@ -66,4 +66,5 @@
   <mat-error *ngIf="selectDeviceProfileFormGroup.get('deviceProfile').hasError('required')">
     {{ 'device-profile.device-profile-required' | translate }}
   </mat-error>
+  <mat-hint *ngIf="hint && !disabled">{{ hint | translate }}</mat-hint>
 </mat-form-field>

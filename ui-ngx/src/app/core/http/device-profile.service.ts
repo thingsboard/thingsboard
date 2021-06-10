@@ -14,16 +14,18 @@
 /// limitations under the License.
 ///
 
-import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-import {PageLink} from '@shared/models/page/page-link';
-import {defaultHttpOptionsFromConfig, RequestConfig} from './http-utils';
-import {Observable} from 'rxjs';
-import {PageData} from '@shared/models/page/page-data';
-import {DeviceProfile, DeviceProfileInfo, DeviceTransportType} from '@shared/models/device.models';
-import {isDefinedAndNotNull, isEmptyStr} from '@core/utils';
-import {ObjectLwM2M, ServerSecurityConfig} from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
-import {SortOrder} from '@shared/models/page/sort-order';
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { PageLink } from '@shared/models/page/page-link';
+import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import { Observable, throwError } from 'rxjs';
+import { PageData } from '@shared/models/page/page-data';
+import { DeviceProfile, DeviceProfileInfo, DeviceTransportType } from '@shared/models/device.models';
+import { isDefinedAndNotNull, isEmptyStr } from '@core/utils';
+import { ObjectLwM2M, ServerSecurityConfig } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
+import { SortOrder } from '@shared/models/page/sort-order';
+import { OtaPackageService } from '@core/http/ota-package.service';
+import { mergeMap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -31,7 +33,8 @@ import {SortOrder} from '@shared/models/page/sort-order';
 export class DeviceProfileService {
 
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    private otaPackageService: OtaPackageService
   ) {
   }
 
@@ -67,6 +70,13 @@ export class DeviceProfileService {
     return this.http.get<Array<ObjectLwM2M>>(
       `/api/resource/lwm2m/page${pageLink.toQuery()}`,
       defaultHttpOptionsFromConfig(config)
+    );
+  }
+
+  public saveDeviceProfileAndConfirmOtaChange(originDeviceProfile: DeviceProfile, deviceProfile: DeviceProfile,
+                                              config?: RequestConfig): Observable<DeviceProfile> {
+    return this.otaPackageService.confirmDialogUpdatePackage(deviceProfile, originDeviceProfile).pipe(
+      mergeMap((update) => update ? this.saveDeviceProfile(deviceProfile, config) : throwError('Canceled saving device profiles'))
     );
   }
 

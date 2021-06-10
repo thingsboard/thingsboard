@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
@@ -28,16 +29,19 @@ import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.List;
 import java.util.Optional;
 
+import static org.thingsboard.server.common.data.EntityType.TB_RESOURCE;
 import static org.thingsboard.server.dao.device.DeviceServiceImpl.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -49,12 +53,13 @@ public class BaseResourceService implements ResourceService {
     private final TbResourceDao resourceDao;
     private final TbResourceInfoDao resourceInfoDao;
     private final TenantDao tenantDao;
+    private final TbTenantProfileCache tenantProfileCache;
 
-
-    public BaseResourceService(TbResourceDao resourceDao, TbResourceInfoDao resourceInfoDao, TenantDao tenantDao) {
+    public BaseResourceService(TbResourceDao resourceDao, TbResourceInfoDao resourceInfoDao, TenantDao tenantDao, @Lazy TbTenantProfileCache tenantProfileCache) {
         this.resourceDao = resourceDao;
         this.resourceInfoDao = resourceInfoDao;
         this.tenantDao = tenantDao;
+        this.tenantProfileCache = tenantProfileCache;
     }
 
     @Override
@@ -143,7 +148,22 @@ public class BaseResourceService implements ResourceService {
         tenantResourcesRemover.removeEntities(tenantId, tenantId);
     }
 
+    @Override
+    public long sumDataSizeByTenantId(TenantId tenantId) {
+        return resourceDao.sumDataSizeByTenantId(tenantId);
+    }
+
     private DataValidator<TbResource> resourceValidator = new DataValidator<>() {
+
+        @Override
+        protected void validateCreate(TenantId tenantId, TbResource resource) {
+            if (tenantId != null && !TenantId.SYS_TENANT_ID.equals(tenantId) ) {
+                DefaultTenantProfileConfiguration profileConfiguration =
+                        (DefaultTenantProfileConfiguration) tenantProfileCache.get(tenantId).getProfileData().getConfiguration();
+                long maxSumResourcesDataInBytes = profileConfiguration.getMaxResourcesInBytes();
+                validateMaxSumDataSizePerTenant(tenantId, resourceDao, maxSumResourcesDataInBytes, resource.getData().length(), TB_RESOURCE);
+            }
+        }
 
         @Override
         protected void validateDataImpl(TenantId tenantId, TbResource resource) {

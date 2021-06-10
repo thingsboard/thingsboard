@@ -45,6 +45,7 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
 import { OAuth2ClientInfo } from '@shared/models/oauth2.models';
+import { isDefinedAndNotNull, isMobileApp } from '@core/utils';
 
 @Injectable({
     providedIn: 'root'
@@ -194,15 +195,21 @@ export class AuthService {
   }
 
   public gotoDefaultPlace(isAuthenticated: boolean) {
-    const authState = getCurrentAuthState(this.store);
-    const url = this.defaultUrl(isAuthenticated, authState);
-    this.zone.run(() => {
-      this.router.navigateByUrl(url);
-    });
+    if (!isMobileApp()) {
+      const authState = getCurrentAuthState(this.store);
+      const url = this.defaultUrl(isAuthenticated, authState);
+      this.zone.run(() => {
+        this.router.navigateByUrl(url);
+      });
+    }
   }
 
-  public loadOAuth2Clients(): Observable<Array<OAuth2ClientInfo>> {
-    return this.http.post<Array<OAuth2ClientInfo>>(`/api/noauth/oauth2Clients`,
+  public loadOAuth2Clients(pkgName?: string): Observable<Array<OAuth2ClientInfo>> {
+    let url = '/api/noauth/oauth2Clients';
+    if (isDefinedAndNotNull(pkgName)) {
+      url += `?pkgName=${pkgName}`;
+    }
+    return this.http.post<Array<OAuth2ClientInfo>>(url,
       null, defaultHttpOptions()).pipe(
       catchError(err => of([])),
       tap((OAuth2Clients) => {
@@ -516,12 +523,15 @@ export class AuthService {
     return this.refreshTokenSubject !== null;
   }
 
-  public setUserFromJwtToken(jwtToken, refreshToken, notify) {
+  public setUserFromJwtToken(jwtToken, refreshToken, notify): Observable<boolean> {
+    const authenticatedSubject = new ReplaySubject<boolean>();
     if (!jwtToken) {
       AuthService.clearTokenData();
       if (notify) {
         this.notifyUnauthenticated();
       }
+      authenticatedSubject.next(false);
+      authenticatedSubject.complete();
     } else {
       this.updateAndValidateTokens(jwtToken, refreshToken, true);
       if (notify) {
@@ -530,16 +540,30 @@ export class AuthService {
           (authPayload) => {
             this.notifyUserLoaded(true);
             this.notifyAuthenticated(authPayload);
+            authenticatedSubject.next(true);
+            authenticatedSubject.complete();
           },
           () => {
             this.notifyUserLoaded(true);
             this.notifyUnauthenticated();
+            authenticatedSubject.next(false);
+            authenticatedSubject.complete();
           }
         );
       } else {
-        this.loadUser(false).subscribe();
+        this.loadUser(false).subscribe(
+          () => {
+            authenticatedSubject.next(true);
+            authenticatedSubject.complete();
+          },
+          () => {
+            authenticatedSubject.next(false);
+            authenticatedSubject.complete();
+          }
+        );
       }
     }
+    return authenticatedSubject;
   }
 
   private updateAndValidateTokens(jwtToken, refreshToken, notify: boolean) {

@@ -90,7 +90,7 @@ export class DeviceProfileDialogComponent extends
     this.submitted = true;
     if (this.deviceProfileComponent.entityForm.valid) {
       this.deviceProfile = {...this.deviceProfile, ...this.deviceProfileComponent.entityFormValue()};
-      this.deviceProfileService.saveDeviceProfile(this.deviceProfile).subscribe(
+      this.deviceProfileService.saveDeviceProfileAndConfirmOtaChange(this.deviceProfile, this.deviceProfile).subscribe(
         (deviceProfile) => {
           this.dialogRef.close(deviceProfile);
         }

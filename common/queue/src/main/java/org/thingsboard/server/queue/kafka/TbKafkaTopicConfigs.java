@@ -38,7 +38,7 @@ public class TbKafkaTopicConfigs {
     private String notificationsProperties;
     @Value("${queue.kafka.topic-properties.js-executor}")
     private String jsExecutorProperties;
-    @Value("${queue.kafka.topic-properties.fw-updates:}")
+    @Value("${queue.kafka.topic-properties.ota-updates:}")
     private String fwUpdatesProperties;
 
     @Getter

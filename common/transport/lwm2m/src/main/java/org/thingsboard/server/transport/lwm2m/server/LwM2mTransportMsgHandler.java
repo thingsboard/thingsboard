@@ -22,7 +22,8 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
-import org.thingsboard.server.transport.lwm2m.server.client.Lwm2mClientRpcRequest;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientRpcRequest;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -39,7 +40,7 @@ public interface LwM2mTransportMsgHandler {
 
     void setCancelObservationsAll(Registration registration);
 
-    void onUpdateValueAfterReadResponse(Registration registration, String path, ReadResponse response, Lwm2mClientRpcRequest rpcRequest);
+    void onUpdateValueAfterReadResponse(Registration registration, String path, ReadResponse response, LwM2mClientRpcRequest rpcRequest);
 
     void onAttributeUpdate(TransportProtos.AttributeUpdateNotificationMsg msg, TransportProtos.SessionInfoProto sessionInfo);
 
@@ -57,13 +58,13 @@ public interface LwM2mTransportMsgHandler {
 
     void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse);
 
-    void doTrigger(Registration registration, String path);
-
     void doDisconnect(TransportProtos.SessionInfoProto sessionInfo);
 
     void onAwakeDev(Registration registration);
 
-    void sendLogsToThingsboard(String msg, String registrationId);
+    void sendLogsToThingsboard(LwM2mClient client, String msg);
+
+    void sendLogsToThingsboard(String registrationId, String msg);
 
     LwM2MTransportServerConfig getConfig();
 }

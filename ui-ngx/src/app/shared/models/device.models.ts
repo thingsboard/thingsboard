@@ -27,7 +27,7 @@ import { KeyFilter } from '@shared/models/query/query.models';
 import { TimeUnit } from '@shared/models/time/time.models';
 import * as _moment from 'moment';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
-import { FirmwareId } from '@shared/models/id/firmware-id';
+import { OtaPackageId } from '@shared/models/id/ota-package-id';
 import { DashboardId } from '@shared/models/id/dashboard-id';
 
 export enum DeviceProfileType {
@@ -500,8 +500,8 @@ export interface DeviceProfile extends BaseData<DeviceProfileId> {
   defaultRuleChainId?: RuleChainId;
   defaultDashboardId?: DashboardId;
   defaultQueueName?: string;
-  firmwareId?: FirmwareId;
-  softwareId?: FirmwareId;
+  firmwareId?: OtaPackageId;
+  softwareId?: OtaPackageId;
   profileData: DeviceProfileData;
 }
 
@@ -563,8 +563,8 @@ export interface Device extends BaseData<DeviceId> {
   name: string;
   type: string;
   label: string;
-  firmwareId?: FirmwareId;
-  softwareId?: FirmwareId;
+  firmwareId?: OtaPackageId;
+  softwareId?: OtaPackageId;
   deviceProfileId?: DeviceProfileId;
   deviceData?: DeviceData;
   additionalInfo?: any;

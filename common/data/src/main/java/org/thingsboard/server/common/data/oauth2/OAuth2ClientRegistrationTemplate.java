@@ -20,10 +20,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationTemplateId;
-import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.List;
 

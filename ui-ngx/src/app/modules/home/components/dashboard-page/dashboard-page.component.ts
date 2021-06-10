@@ -149,8 +149,16 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   @Input()
   currentState: string;
 
+  private hideToolbarValue = false;
+
   @Input()
-  hideToolbar: boolean;
+  set hideToolbar(hideToolbar: boolean) {
+    this.hideToolbarValue = hideToolbar;
+  }
+
+  get hideToolbar(): boolean {
+    return (this.hideToolbarValue || this.hideToolbarSetting()) && !this.isEdit;
+  }
 
   @Input()
   syncStateWithQueryParam = true;
@@ -269,6 +277,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     return !this.widgetEditMode && !this.hideToolbar &&
       (this.toolbarAlwaysOpen() || this.isToolbarOpened || this.isEdit || this.showRightLayoutSwitch());
   }
+
   set toolbarOpened(toolbarOpened: boolean) {
   }
 
@@ -323,12 +332,31 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         this.runChangeDetection();
       }
     ));
+    this.rxSubscriptions.push(this.route.queryParamMap.subscribe(
+      (paramMap) => {
+        if (paramMap.has('reload')) {
+          this.dashboardCtx.aliasController.updateAliases();
+          setTimeout(() => {
+            this.mobileService.handleDashboardStateName(this.dashboardCtx.stateController.getCurrentStateName());
+            this.mobileService.onDashboardLoaded(this.layouts.right.show, this.isRightLayoutOpened);
+          });
+        }
+      }
+    ));
     this.rxSubscriptions.push(this.breakpointObserver
       .observe(MediaBreakpoints['gt-sm'])
       .subscribe((state: BreakpointState) => {
           this.isMobile = !state.matches;
         }
     ));
+    if (this.isMobileApp) {
+      this.mobileService.registerToggleLayoutFunction(() => {
+        setTimeout(() => {
+          this.toggleLayouts();
+          this.cd.detectChanges();
+        });
+      });
+    }
   }
 
   private init(data: any) {
@@ -419,6 +447,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   ngOnDestroy(): void {
+    if (this.isMobileApp) {
+      this.mobileService.unregisterToggleLayoutFunction();
+    }
     this.rxSubscriptions.forEach((subscription) => {
       subscription.unsubscribe();
     });
@@ -455,6 +486,15 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       return this.dashboard.configuration.settings.toolbarAlwaysOpen;
     } else {
       return true;
+    }
+  }
+
+  private hideToolbarSetting(): boolean {
+    if (this.dashboard.configuration.settings &&
+      isDefined(this.dashboard.configuration.settings.hideToolbar)) {
+      return this.dashboard.configuration.settings.hideToolbar;
+    } else {
+      return false;
     }
   }
 
@@ -535,15 +575,17 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   public showRightLayoutSwitch(): boolean {
-    return this.isMobile && this.layouts.right.show;
+    return this.isMobile && !this.isMobileApp && this.layouts.right.show;
   }
 
   public toggleLayouts() {
     this.isRightLayoutOpened = !this.isRightLayoutOpened;
+    this.mobileService.onDashboardRightLayoutChanged(this.isRightLayoutOpened);
   }
 
   public openRightLayout() {
     this.isRightLayoutOpened = true;
+    this.mobileService.onDashboardRightLayoutChanged(this.isRightLayoutOpened);
   }
 
   public mainLayoutWidth(): string {
@@ -770,6 +812,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       this.isRightLayoutOpened = openRightLayout ? true : false;
       this.updateLayouts(layoutsData);
     }
+    setTimeout(() => {
+      this.mobileService.onDashboardLoaded(this.layouts.right.show, this.isRightLayoutOpened);
+    });
   }
 
   private updateLayouts(layoutsData?: DashboardLayoutsInfo) {
