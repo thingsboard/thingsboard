@@ -318,7 +318,9 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     private void handleGetAttributesRequest(TbActorCtx context, SessionInfoProto sessionInfo, GetAttributeRequestMsg request) {
         int requestId = request.getRequestId();
-        boolean sharedStateMsg = request.getAllShared() && !request.getAllClient();
+        boolean sharedStateMsg = request.getAllShared()
+                && !request.getAllClient()
+                && CollectionUtils.isEmpty(request.getClientAttributeNamesList());
         Futures.addCallback(getAttributesKvEntries(request, sharedStateMsg), new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable List<List<AttributeKvEntry>> result) {
@@ -342,36 +344,24 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<List<List<AttributeKvEntry>>> getAttributesKvEntries(GetAttributeRequestMsg request, boolean getAllShared) {
+    private ListenableFuture<List<List<AttributeKvEntry>>> getAttributesKvEntries(GetAttributeRequestMsg request, boolean getAllSharedAttributesState) {
+        if (getAllSharedAttributesState) {
+            return Futures.allAsList(Arrays.asList(Futures.immediateFuture(Collections.emptyList()),
+                    findAllAttributesByScope(DataConstants.SHARED_SCOPE)));
+        }
         ListenableFuture<List<AttributeKvEntry>> clientAttributesFuture;
-        ListenableFuture<List<AttributeKvEntry>> sharedAttributesFuture;
-        if (getAllShared) {
-            clientAttributesFuture = Futures.immediateFuture(Collections.emptyList());
-            sharedAttributesFuture = findAllAttributesByScope(DataConstants.SHARED_SCOPE);
-            return Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture));
-        }
-        boolean getAllClientAndShared = request.getAllClient() && request.getAllShared();
-        if (getAllClientAndShared) {
-            clientAttributesFuture = findAllAttributesByScope(DataConstants.CLIENT_SCOPE);
-            sharedAttributesFuture = findAllAttributesByScope(DataConstants.SHARED_SCOPE);
-            return Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture));
-        }
         if (request.getAllClient()) {
             clientAttributesFuture = findAllAttributesByScope(DataConstants.CLIENT_SCOPE);
-            sharedAttributesFuture = Futures.immediateFuture(Collections.emptyList());
-            return Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture));
-        }
-        ProtocolStringList clientAttributeNamesList = request.getClientAttributeNamesList();
-        if (!CollectionUtils.isEmpty(clientAttributeNamesList)) {
+        } else {
+            ProtocolStringList clientAttributeNamesList = request.getClientAttributeNamesList();
             clientAttributesFuture = findAttributesByScope(toSet(clientAttributeNamesList), DataConstants.CLIENT_SCOPE);
-        } else {
-            clientAttributesFuture = Futures.immediateFuture(Collections.emptyList());
         }
-        ProtocolStringList sharedAttributeNamesList = request.getSharedAttributeNamesList();
-        if (!CollectionUtils.isEmpty(sharedAttributeNamesList)) {
-            sharedAttributesFuture = findAttributesByScope(toSet(sharedAttributeNamesList), DataConstants.SHARED_SCOPE);
+        ListenableFuture<List<AttributeKvEntry>> sharedAttributesFuture;
+        if (request.getAllShared()) {
+            sharedAttributesFuture = findAllAttributesByScope(DataConstants.SHARED_SCOPE);
         } else {
-            sharedAttributesFuture = Futures.immediateFuture(Collections.emptyList());
+            ProtocolStringList sharedAttributeNamesList = request.getSharedAttributeNamesList();
+            sharedAttributesFuture = findAttributesByScope(toSet(sharedAttributeNamesList), DataConstants.SHARED_SCOPE);
         }
         return Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture));
     }
