@@ -114,7 +114,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.c
 @Service
 @TbLwM2mTransportComponent
 @RequiredArgsConstructor
-public class LwM2mTransportRequest {
+public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
     private ExecutorService responseRequestExecutor;
 
     public LwM2mValueConverterImpl converter;
