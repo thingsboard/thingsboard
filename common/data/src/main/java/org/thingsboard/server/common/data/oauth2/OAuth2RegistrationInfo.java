@@ -39,5 +39,6 @@ public class OAuth2RegistrationInfo {
     private String clientAuthenticationMethod;
     private String loginButtonLabel;
     private String loginButtonIcon;
+    private List<PlatformType> platforms;
     private JsonNode additionalInfo;
 }

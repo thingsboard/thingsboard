@@ -228,7 +228,12 @@
           "mobile-callback-url-scheme": "Callback URL scheme",
           "add-mobile-app": "Add application",
           "delete-mobile-app": "Delete application info",
-          "providers": "Providers"
+          "providers": "Providers",
+          "platform-web": "Web",
+          "platform-android": "Android",
+          "platform-ios": "iOS",
+          "all-platforms": "All platforms",
+          "allowed-platforms": "Allowed platforms"
         }
       },
     "alarm": {

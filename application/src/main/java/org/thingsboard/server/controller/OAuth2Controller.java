@@ -26,9 +26,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2Info;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -51,7 +53,8 @@ public class OAuth2Controller extends BaseController {
     @RequestMapping(value = "/noauth/oauth2Clients", method = RequestMethod.POST)
     @ResponseBody
     public List<OAuth2ClientInfo> getOAuth2Clients(HttpServletRequest request,
-                                                   @RequestParam(required = false) String pkgName) throws ThingsboardException {
+                                                   @RequestParam(required = false) String pkgName,
+                                                   @RequestParam(required = false) String platform) throws ThingsboardException {
         try {
             if (log.isDebugEnabled()) {
                 log.debug("Executing getOAuth2Clients: [{}][{}][{}]", request.getScheme(), request.getServerName(), request.getServerPort());
@@ -61,7 +64,13 @@ public class OAuth2Controller extends BaseController {
                     log.debug("Header: {} {}", header, request.getHeader(header));
                 }
             }
-            return oAuth2Service.getOAuth2Clients(MiscUtils.getScheme(request), MiscUtils.getDomainNameAndPort(request), pkgName);
+            PlatformType platformType = null;
+            if (StringUtils.isNotEmpty(platform)) {
+                try {
+                    platformType = PlatformType.valueOf(platform);
+                } catch (Exception e) {}
+            }
+            return oAuth2Service.getOAuth2Clients(MiscUtils.getScheme(request), MiscUtils.getDomainNameAndPort(request), pkgName, platformType);
         } catch (Exception e) {
             throw handleException(e);
         }

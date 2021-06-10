@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.oauth2.SchemeType;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.OAuth2RegistrationEntity;
@@ -45,8 +46,9 @@ public class JpaOAuth2RegistrationDao extends JpaAbstractDao<OAuth2RegistrationE
     }
 
     @Override
-    public List<OAuth2Registration> findEnabledByDomainSchemesDomainNameAndPkgName(List<SchemeType> domainSchemes, String domainName, String pkgName) {
-        return DaoUtil.convertDataList(repository.findAllEnabledByDomainSchemesNameAndPkgName(domainSchemes, domainName, pkgName));
+    public List<OAuth2Registration> findEnabledByDomainSchemesDomainNameAndPkgNameAndPlatformType(List<SchemeType> domainSchemes, String domainName, String pkgName, PlatformType platformType) {
+        return DaoUtil.convertDataList(repository.findEnabledByDomainSchemesDomainNameAndPkgNameAndPlatformType(domainSchemes, domainName, pkgName,
+                platformType != null ? "%" + platformType.name() + "%" : null));
     }
 
     @Override

@@ -46,6 +46,7 @@ public class OAuth2Registration extends SearchTextBasedWithAdditionalInfo<OAuth2
     private String clientAuthenticationMethod;
     private String loginButtonLabel;
     private String loginButtonIcon;
+    private List<PlatformType> platforms;
 
     public OAuth2Registration(OAuth2Registration registration) {
         super(registration);
@@ -62,6 +63,7 @@ public class OAuth2Registration extends SearchTextBasedWithAdditionalInfo<OAuth2
         this.clientAuthenticationMethod = registration.clientAuthenticationMethod;
         this.loginButtonLabel = registration.loginButtonLabel;
         this.loginButtonIcon = registration.loginButtonIcon;
+        this.platforms = registration.platforms;
     }
 
     @Override

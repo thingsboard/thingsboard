@@ -428,6 +428,7 @@ CREATE TABLE IF NOT EXISTS oauth2_registration (
     authorization_uri varchar(255),
     token_uri varchar(255),
     scope varchar(255),
+    platforms varchar(255),
     user_info_uri varchar(255),
     user_name_attribute_name varchar(255),
     jwk_set_uri varchar(255),

@@ -63,6 +63,20 @@ export enum TenantNameStrategy{
   CUSTOM = 'CUSTOM'
 }
 
+export enum PlatformType {
+  WEB = 'WEB',
+  ANDROID = 'ANDROID',
+  IOS = 'IOS'
+}
+
+export const platformTypeTranslations = new Map<PlatformType, string>(
+  [
+    [PlatformType.WEB, 'admin.oauth2.platform-web'],
+    [PlatformType.ANDROID, 'admin.oauth2.platform-android'],
+    [PlatformType.IOS, 'admin.oauth2.platform-ios']
+  ]
+);
+
 export interface OAuth2ClientRegistrationTemplate extends OAuth2RegistrationInfo{
   comment: string;
   createdTime: number;
@@ -80,6 +94,7 @@ export interface OAuth2RegistrationInfo {
   accessTokenUri: string;
   authorizationUri: string;
   scope: string[];
+  platforms: PlatformType[];
   jwkSetUri?: string;
   userInfoUri: string;
   clientAuthenticationMethod: ClientAuthenticationMethod;

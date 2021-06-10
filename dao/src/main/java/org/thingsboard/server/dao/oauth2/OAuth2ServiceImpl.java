@@ -65,8 +65,8 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
     private OAuth2MobileDao oauth2MobileDao;
 
     @Override
-    public List<OAuth2ClientInfo> getOAuth2Clients(String domainSchemeStr, String domainName, String pkgName) {
-        log.trace("Executing getOAuth2Clients [{}://{}]", domainSchemeStr, domainName);
+    public List<OAuth2ClientInfo> getOAuth2Clients(String domainSchemeStr, String domainName, String pkgName, PlatformType platformType) {
+        log.trace("Executing getOAuth2Clients [{}://{}] pkgName=[{}] platformType=[{}]", domainSchemeStr, domainName, pkgName, platformType);
         if (domainSchemeStr == null) {
             throw new IncorrectParameterException(INCORRECT_DOMAIN_SCHEME);
         }
@@ -77,7 +77,9 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
             throw new IncorrectParameterException(INCORRECT_DOMAIN_SCHEME);
         }
         validateString(domainName, INCORRECT_DOMAIN_NAME + domainName);
-        return oauth2RegistrationDao.findEnabledByDomainSchemesDomainNameAndPkgName(Arrays.asList(domainScheme, SchemeType.MIXED), domainName, pkgName).stream()
+        return oauth2RegistrationDao.findEnabledByDomainSchemesDomainNameAndPkgNameAndPlatformType(
+                Arrays.asList(domainScheme, SchemeType.MIXED), domainName, pkgName, platformType)
+                .stream()
                 .map(OAuth2Utils::toClientInfo)
                 .collect(Collectors.toList());
     }

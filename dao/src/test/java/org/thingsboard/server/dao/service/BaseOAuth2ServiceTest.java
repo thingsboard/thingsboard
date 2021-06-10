@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.service;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 import org.junit.After;
 import org.junit.Assert;
@@ -31,6 +32,7 @@ import org.thingsboard.server.common.data.oauth2.OAuth2MobileInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ParamsInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
 import org.thingsboard.server.common.data.oauth2.OAuth2RegistrationInfo;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.oauth2.SchemeType;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
@@ -231,10 +233,10 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
                         registrationInfo.getLoginButtonLabel(), registrationInfo.getLoginButtonIcon(), null))
                 .collect(Collectors.toList());
 
-        List<OAuth2ClientInfo> nonExistentDomainClients = oAuth2Service.getOAuth2Clients("http", "non-existent-domain", null);
+        List<OAuth2ClientInfo> nonExistentDomainClients = oAuth2Service.getOAuth2Clients("http", "non-existent-domain", null, null);
         Assert.assertTrue(nonExistentDomainClients.isEmpty());
 
-        List<OAuth2ClientInfo> firstDomainHttpClients = oAuth2Service.getOAuth2Clients("http", "first-domain", null);
+        List<OAuth2ClientInfo> firstDomainHttpClients = oAuth2Service.getOAuth2Clients("http", "first-domain", null, null);
         Assert.assertEquals(firstGroupClientInfos.size(), firstDomainHttpClients.size());
         firstGroupClientInfos.forEach(firstGroupClientInfo -> {
             Assert.assertTrue(
@@ -244,10 +246,10 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
             );
         });
 
-        List<OAuth2ClientInfo> firstDomainHttpsClients = oAuth2Service.getOAuth2Clients("https", "first-domain", null);
+        List<OAuth2ClientInfo> firstDomainHttpsClients = oAuth2Service.getOAuth2Clients("https", "first-domain", null, null);
         Assert.assertTrue(firstDomainHttpsClients.isEmpty());
 
-        List<OAuth2ClientInfo> fourthDomainHttpClients = oAuth2Service.getOAuth2Clients("http", "fourth-domain", null);
+        List<OAuth2ClientInfo> fourthDomainHttpClients = oAuth2Service.getOAuth2Clients("http", "fourth-domain", null, null);
         Assert.assertEquals(secondGroupClientInfos.size(), fourthDomainHttpClients.size());
         secondGroupClientInfos.forEach(secondGroupClientInfo -> {
             Assert.assertTrue(
@@ -256,7 +258,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
                                     && clientInfo.getName().equals(secondGroupClientInfo.getName()))
             );
         });
-        List<OAuth2ClientInfo> fourthDomainHttpsClients = oAuth2Service.getOAuth2Clients("https", "fourth-domain", null);
+        List<OAuth2ClientInfo> fourthDomainHttpsClients = oAuth2Service.getOAuth2Clients("https", "fourth-domain", null, null);
         Assert.assertEquals(secondGroupClientInfos.size(), fourthDomainHttpsClients.size());
         secondGroupClientInfos.forEach(secondGroupClientInfo -> {
             Assert.assertTrue(
@@ -266,7 +268,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
             );
         });
 
-        List<OAuth2ClientInfo> secondDomainHttpClients = oAuth2Service.getOAuth2Clients("http", "second-domain", null);
+        List<OAuth2ClientInfo> secondDomainHttpClients = oAuth2Service.getOAuth2Clients("http", "second-domain", null, null);
         Assert.assertEquals(firstGroupClientInfos.size() + secondGroupClientInfos.size(), secondDomainHttpClients.size());
         firstGroupClientInfos.forEach(firstGroupClientInfo -> {
             Assert.assertTrue(
@@ -283,7 +285,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
             );
         });
 
-        List<OAuth2ClientInfo> secondDomainHttpsClients = oAuth2Service.getOAuth2Clients("https", "second-domain", null);
+        List<OAuth2ClientInfo> secondDomainHttpsClients = oAuth2Service.getOAuth2Clients("https", "second-domain", null, null);
         Assert.assertEquals(firstGroupClientInfos.size() + thirdGroupClientInfos.size(), secondDomainHttpsClients.size());
         firstGroupClientInfos.forEach(firstGroupClientInfo -> {
             Assert.assertTrue(
@@ -331,7 +333,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
                         registrationInfo.getLoginButtonLabel(), registrationInfo.getLoginButtonIcon(), null))
                 .collect(Collectors.toList());
 
-        List<OAuth2ClientInfo> firstDomainHttpClients = oAuth2Service.getOAuth2Clients("http", "first-domain", null);
+        List<OAuth2ClientInfo> firstDomainHttpClients = oAuth2Service.getOAuth2Clients("http", "first-domain", null, null);
         Assert.assertEquals(firstGroupClientInfos.size(), firstDomainHttpClients.size());
         firstGroupClientInfos.forEach(firstGroupClientInfo -> {
             Assert.assertTrue(
@@ -341,7 +343,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
             );
         });
 
-        List<OAuth2ClientInfo> firstDomainHttpsClients = oAuth2Service.getOAuth2Clients("https", "first-domain", null);
+        List<OAuth2ClientInfo> firstDomainHttpsClients = oAuth2Service.getOAuth2Clients("https", "first-domain", null, null);
         Assert.assertEquals(firstGroupClientInfos.size(), firstDomainHttpsClients.size());
         firstGroupClientInfos.forEach(firstGroupClientInfo -> {
             Assert.assertTrue(
@@ -381,13 +383,13 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
 
         oAuth2Service.saveOAuth2Info(oAuth2Info);
 
-        List<OAuth2ClientInfo> secondDomainHttpClients = oAuth2Service.getOAuth2Clients("http", "second-domain", null);
+        List<OAuth2ClientInfo> secondDomainHttpClients = oAuth2Service.getOAuth2Clients("http", "second-domain", null, null);
         Assert.assertEquals(5, secondDomainHttpClients.size());
 
         oAuth2Info.setEnabled(false);
         oAuth2Service.saveOAuth2Info(oAuth2Info);
 
-        List<OAuth2ClientInfo> secondDomainHttpDisabledClients = oAuth2Service.getOAuth2Clients("http", "second-domain", null);
+        List<OAuth2ClientInfo> secondDomainHttpDisabledClients = oAuth2Service.getOAuth2Clients("http", "second-domain", null, null);
         Assert.assertEquals(0, secondDomainHttpDisabledClients.size());
     }
 
@@ -520,7 +522,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
         OAuth2Info foundOAuth2Info = oAuth2Service.findOAuth2Info();
         Assert.assertEquals(oAuth2Info, foundOAuth2Info);
 
-        List<OAuth2ClientInfo> firstDomainHttpClients = oAuth2Service.getOAuth2Clients("http", "first-domain", "com.test.pkg1");
+        List<OAuth2ClientInfo> firstDomainHttpClients = oAuth2Service.getOAuth2Clients("http", "first-domain", "com.test.pkg1", null);
         Assert.assertEquals(3, firstDomainHttpClients.size());
         for (OAuth2ClientInfo clientInfo : firstDomainHttpClients) {
             String[] segments = clientInfo.getUrl().split("/");
@@ -534,6 +536,56 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
             callbackUrlScheme = oAuth2Service.findCallbackUrlScheme(UUID.fromString(registrationId), "com.test.pkg3");
             Assert.assertNull(callbackUrlScheme);
         }
+    }
+
+    @Test
+    public void testFindClientsByPackageAndPlatform() {
+        OAuth2Info oAuth2Info = new OAuth2Info(true, Lists.newArrayList(
+                OAuth2ParamsInfo.builder()
+                        .domainInfos(Lists.newArrayList(
+                                OAuth2DomainInfo.builder().name("first-domain").scheme(SchemeType.HTTP).build(),
+                                OAuth2DomainInfo.builder().name("second-domain").scheme(SchemeType.MIXED).build(),
+                                OAuth2DomainInfo.builder().name("third-domain").scheme(SchemeType.HTTPS).build()
+                        ))
+                        .mobileInfos(Lists.newArrayList(
+                                OAuth2MobileInfo.builder().pkgName("com.test.pkg1").callbackUrlScheme("testPkg1Callback").build(),
+                                OAuth2MobileInfo.builder().pkgName("com.test.pkg2").callbackUrlScheme("testPkg2Callback").build()
+                        ))
+                        .clientRegistrations(Lists.newArrayList(
+                                validRegistrationInfo("Google", Arrays.asList(PlatformType.WEB, PlatformType.ANDROID)),
+                                validRegistrationInfo("Facebook", Arrays.asList(PlatformType.IOS)),
+                                validRegistrationInfo("GitHub", Collections.emptyList())
+                        ))
+                        .build(),
+                OAuth2ParamsInfo.builder()
+                        .domainInfos(Lists.newArrayList(
+                                OAuth2DomainInfo.builder().name("second-domain").scheme(SchemeType.HTTP).build(),
+                                OAuth2DomainInfo.builder().name("fourth-domain").scheme(SchemeType.MIXED).build()
+                        ))
+                        .mobileInfos(Collections.emptyList())
+                        .clientRegistrations(Lists.newArrayList(
+                                validRegistrationInfo(),
+                                validRegistrationInfo()
+                        ))
+                        .build()
+        ));
+        oAuth2Service.saveOAuth2Info(oAuth2Info);
+
+        OAuth2Info foundOAuth2Info = oAuth2Service.findOAuth2Info();
+        Assert.assertEquals(oAuth2Info, foundOAuth2Info);
+
+        List<OAuth2ClientInfo> firstDomainHttpClients = oAuth2Service.getOAuth2Clients("http", "first-domain", null, null);
+        Assert.assertEquals(3, firstDomainHttpClients.size());
+        List<OAuth2ClientInfo> pkg1Clients = oAuth2Service.getOAuth2Clients("http", "first-domain", "com.test.pkg1", null);
+        Assert.assertEquals(3, pkg1Clients.size());
+        List<OAuth2ClientInfo> pkg1AndroidClients = oAuth2Service.getOAuth2Clients("http", "first-domain", "com.test.pkg1", PlatformType.ANDROID);
+        Assert.assertEquals(2, pkg1AndroidClients.size());
+        Assert.assertTrue(pkg1AndroidClients.stream().anyMatch(client -> client.getName().equals("Google")));
+        Assert.assertTrue(pkg1AndroidClients.stream().anyMatch(client -> client.getName().equals("GitHub")));
+        List<OAuth2ClientInfo> pkg1IOSClients = oAuth2Service.getOAuth2Clients("http", "first-domain", "com.test.pkg1", PlatformType.IOS);
+        Assert.assertEquals(2, pkg1IOSClients.size());
+        Assert.assertTrue(pkg1IOSClients.stream().anyMatch(client -> client.getName().equals("Facebook")));
+        Assert.assertTrue(pkg1IOSClients.stream().anyMatch(client -> client.getName().equals("GitHub")));
     }
 
     private OAuth2Info createDefaultOAuth2Info() {
@@ -567,17 +619,22 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
     }
 
     private OAuth2RegistrationInfo validRegistrationInfo() {
+        return validRegistrationInfo(null, Collections.emptyList());
+    }
+
+    private OAuth2RegistrationInfo validRegistrationInfo(String label, List<PlatformType> platforms) {
         return OAuth2RegistrationInfo.builder()
                 .clientId(UUID.randomUUID().toString())
                 .clientSecret(UUID.randomUUID().toString())
                 .authorizationUri(UUID.randomUUID().toString())
                 .accessTokenUri(UUID.randomUUID().toString())
                 .scope(Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString()))
+                .platforms(platforms == null ? Collections.emptyList() : platforms)
                 .userInfoUri(UUID.randomUUID().toString())
                 .userNameAttributeName(UUID.randomUUID().toString())
                 .jwkSetUri(UUID.randomUUID().toString())
                 .clientAuthenticationMethod(UUID.randomUUID().toString())
-                .loginButtonLabel(UUID.randomUUID().toString())
+                .loginButtonLabel(label != null ? label : UUID.randomUUID().toString())
                 .loginButtonIcon(UUID.randomUUID().toString())
                 .additionalInfo(mapper.createObjectNode().put(UUID.randomUUID().toString(), UUID.randomUUID().toString()))
                 .mapperConfig(

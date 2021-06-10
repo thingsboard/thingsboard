@@ -44,7 +44,7 @@ import { AdminService } from '@core/http/admin.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
-import { OAuth2ClientInfo } from '@shared/models/oauth2.models';
+import { OAuth2ClientInfo, PlatformType } from '@shared/models/oauth2.models';
 import { isDefinedAndNotNull, isMobileApp } from '@core/utils';
 
 @Injectable({
@@ -204,11 +204,8 @@ export class AuthService {
     }
   }
 
-  public loadOAuth2Clients(pkgName?: string): Observable<Array<OAuth2ClientInfo>> {
-    let url = '/api/noauth/oauth2Clients';
-    if (isDefinedAndNotNull(pkgName)) {
-      url += `?pkgName=${pkgName}`;
-    }
+  public loadOAuth2Clients(): Observable<Array<OAuth2ClientInfo>> {
+    const url = '/api/noauth/oauth2Clients?platform=' + PlatformType.WEB;
     return this.http.post<Array<OAuth2ClientInfo>>(url,
       null, defaultHttpOptions()).pipe(
       catchError(err => of([])),

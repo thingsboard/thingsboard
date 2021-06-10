@@ -127,6 +127,7 @@ public class OAuth2Utils {
                 .authorizationUri(registration.getAuthorizationUri())
                 .accessTokenUri(registration.getAccessTokenUri())
                 .scope(registration.getScope())
+                .platforms(registration.getPlatforms())
                 .userInfoUri(registration.getUserInfoUri())
                 .userNameAttributeName(registration.getUserNameAttributeName())
                 .jwkSetUri(registration.getJwkSetUri())
@@ -167,6 +168,7 @@ public class OAuth2Utils {
         registration.setAuthorizationUri(registrationInfo.getAuthorizationUri());
         registration.setAccessTokenUri(registrationInfo.getAccessTokenUri());
         registration.setScope(registrationInfo.getScope());
+        registration.setPlatforms(registrationInfo.getPlatforms());
         registration.setUserInfoUri(registrationInfo.getUserInfoUri());
         registration.setUserNameAttributeName(registrationInfo.getUserNameAttributeName());
         registration.setJwkSetUri(registrationInfo.getJwkSetUri());
@@ -224,6 +226,7 @@ public class OAuth2Utils {
                 .loginButtonLabel(clientRegistrationDto.getLoginButtonLabel())
                 .loginButtonIcon(clientRegistrationDto.getLoginButtonIcon())
                 .additionalInfo(clientRegistrationDto.getAdditionalInfo())
+                .platforms(Collections.emptyList())
                 .build();
     }
 

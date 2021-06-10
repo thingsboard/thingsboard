@@ -30,14 +30,15 @@ public interface OAuth2RegistrationRepository extends CrudRepository<OAuth2Regis
             "FROM OAuth2RegistrationEntity reg " +
             "LEFT JOIN OAuth2ParamsEntity params on reg.oauth2ParamsId = params.id " +
             "LEFT JOIN OAuth2DomainEntity domain on reg.oauth2ParamsId = domain.oauth2ParamsId " +
-            "LEFT JOIN OAuth2MobileEntity mobile on reg.oauth2ParamsId = mobile.oauth2ParamsId " +
             "WHERE params.enabled = true " +
             "AND domain.domainName = :domainName " +
             "AND domain.domainScheme IN (:domainSchemes) " +
-            "AND (:pkgName IS NULL OR mobile.pkgName = :pkgName)")
-    List<OAuth2RegistrationEntity> findAllEnabledByDomainSchemesNameAndPkgName(@Param("domainSchemes") List<SchemeType> domainSchemes,
-                                                                               @Param("domainName") String domainName,
-                                                                               @Param("pkgName") String pkgName);
+            "AND (:pkgName IS NULL OR EXISTS (SELECT mobile FROM OAuth2MobileEntity mobile WHERE mobile.oauth2ParamsId = reg.oauth2ParamsId AND mobile.pkgName = :pkgName)) " +
+            "AND (:platformFilter IS NULL OR reg.platforms IS NULL OR reg.platforms = '' OR reg.platforms LIKE :platformFilter)")
+    List<OAuth2RegistrationEntity> findEnabledByDomainSchemesDomainNameAndPkgNameAndPlatformType(@Param("domainSchemes") List<SchemeType> domainSchemes,
+                                                                                                 @Param("domainName") String domainName,
+                                                                                                 @Param("pkgName") String pkgName,
+                                                                                                 @Param("platformFilter") String platformFilter);
 
     List<OAuth2RegistrationEntity> findByOauth2ParamsId(UUID oauth2ParamsId);
 

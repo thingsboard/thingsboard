@@ -201,18 +201,27 @@
 
                               <ng-template matExpansionPanelContent>
                                 <section [formGroupName]="j">
-                                  <section formGroupName="additionalInfo" fxLayout="row">
-                                    <mat-form-field fxFlex class="mat-block">
-                                      <mat-label translate>admin.oauth2.login-provider</mat-label>
-                                      <mat-select formControlName="providerName">
-                                        <mat-option *ngFor="let provider of templateProvider" [value]="provider">
-                                          {{ provider }}
+                                  <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+                                    <section fxFlex formGroupName="additionalInfo" fxLayout="row">
+                                      <mat-form-field fxFlex class="mat-block">
+                                        <mat-label translate>admin.oauth2.login-provider</mat-label>
+                                        <mat-select formControlName="providerName">
+                                          <mat-option *ngFor="let provider of templateProvider" [value]="provider">
+                                            {{ provider }}
+                                          </mat-option>
+                                        </mat-select>
+                                      </mat-form-field>
+                                      <div [tb-help]="getHelpLink(registration)" *ngIf="!isCustomProvider(registration)"></div>
+                                    </section>
+                                    <mat-form-field floatLabel="always" fxFlex class="mat-block">
+                                      <mat-label translate>admin.oauth2.allowed-platforms</mat-label>
+                                      <mat-select formControlName="platforms" multiple placeholder="{{ 'admin.oauth2.all-platforms' | translate }}">
+                                        <mat-option *ngFor="let platform of platformTypes" [value]="platform">
+                                          {{ platformTypeTranslations.get(platform) | translate }}
                                         </mat-option>
                                       </mat-select>
                                     </mat-form-field>
-                                    <div [tb-help]="getHelpLink(registration)" *ngIf="!isCustomProvider(registration)"></div>
-                                  </section>
-
+                                  </div>
                                   <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
                                     <mat-form-field fxFlex class="mat-block">
                                       <mat-label translate>admin.oauth2.client-id</mat-label>

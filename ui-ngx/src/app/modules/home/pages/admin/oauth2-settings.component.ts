@@ -28,7 +28,8 @@ import {
   OAuth2DomainInfo,
   OAuth2Info, OAuth2MobileInfo,
   OAuth2ParamsInfo,
-  OAuth2RegistrationInfo,
+  OAuth2RegistrationInfo, PlatformType,
+  platformTypeTranslations,
   TenantNameStrategy
 } from '@shared/models/oauth2.models';
 import { Store } from '@ngrx/store';
@@ -99,6 +100,8 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   tenantNameStrategies = Object.keys(TenantNameStrategy);
   protocols = Object.keys(DomainSchema);
   domainSchemaTranslations = domainSchemaTranslations;
+  platformTypes = Object.keys(PlatformType);
+  platformTypeTranslations = platformTypeTranslations;
 
   templateProvider = ['Custom'];
 
@@ -293,6 +296,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       additionalInfo: this.fb.group({
         providerName: [additionalInfo?.providerName ? additionalInfo?.providerName : defaultProviderName, Validators.required]
       }),
+      platforms: [registration?.platforms ? registration.platforms : []],
       loginButtonLabel: [registration?.loginButtonLabel ? registration.loginButtonLabel : null, Validators.required],
       loginButtonIcon: [registration?.loginButtonIcon ? registration.loginButtonIcon : null],
       clientId: [registration?.clientId ? registration.clientId : '', Validators.required],

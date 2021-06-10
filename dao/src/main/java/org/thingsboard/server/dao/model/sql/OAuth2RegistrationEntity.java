@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.micrometer.core.instrument.util.StringUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
@@ -27,6 +28,7 @@ import org.thingsboard.server.common.data.oauth2.OAuth2BasicMapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.oauth2.TenantNameStrategyType;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -38,7 +40,9 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -59,6 +63,8 @@ public class OAuth2RegistrationEntity extends BaseSqlEntity<OAuth2Registration> 
     private String tokenUri;
     @Column(name = ModelConstants.OAUTH2_SCOPE_PROPERTY)
     private String scope;
+    @Column(name = ModelConstants.OAUTH2_PLATFORMS_PROPERTY)
+    private String platforms;
     @Column(name = ModelConstants.OAUTH2_USER_INFO_URI_PROPERTY)
     private String userInfoUri;
     @Column(name = ModelConstants.OAUTH2_USER_NAME_ATTRIBUTE_NAME_PROPERTY)
@@ -125,6 +131,7 @@ public class OAuth2RegistrationEntity extends BaseSqlEntity<OAuth2Registration> 
         this.authorizationUri = registration.getAuthorizationUri();
         this.tokenUri = registration.getAccessTokenUri();
         this.scope = registration.getScope().stream().reduce((result, element) -> result + "," + element).orElse("");
+        this.platforms = registration.getPlatforms() != null ? registration.getPlatforms().stream().map(Enum::name).reduce((result, element) -> result + "," + element).orElse("") : "";
         this.userInfoUri = registration.getUserInfoUri();
         this.userNameAttributeName = registration.getUserNameAttributeName();
         this.jwkSetUri = registration.getJwkSetUri();
@@ -201,6 +208,8 @@ public class OAuth2RegistrationEntity extends BaseSqlEntity<OAuth2Registration> 
         registration.setAuthorizationUri(authorizationUri);
         registration.setAccessTokenUri(tokenUri);
         registration.setScope(Arrays.asList(scope.split(",")));
+        registration.setPlatforms(StringUtils.isNotEmpty(platforms) ? Arrays.stream(platforms.split(","))
+                .map(str -> PlatformType.valueOf(str)).collect(Collectors.toList()) : Collections.emptyList());
         registration.setUserInfoUri(userInfoUri);
         registration.setUserNameAttributeName(userNameAttributeName);
         registration.setJwkSetUri(jwkSetUri);
