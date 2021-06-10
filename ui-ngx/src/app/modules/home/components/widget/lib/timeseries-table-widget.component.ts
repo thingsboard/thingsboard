@@ -193,7 +193,9 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   }
 
   public onDataUpdated() {
-    this.updateCurrentSourceData();
+    this.ngZone.run(() => {
+      this.updateCurrentSourceData();
+    });
   }
 
   private initialize() {
@@ -235,7 +237,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   }
 
   public getTabLabel(source: TimeseriesTableSource){
-    if(this.useEntityLabel){
+    if (this.useEntityLabel) {
       return source.datasource.entityLabel || source.datasource.entityName;
     } else {
       return source.datasource.entityName;

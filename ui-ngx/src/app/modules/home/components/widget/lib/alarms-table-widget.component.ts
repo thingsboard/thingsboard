@@ -260,7 +260,9 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
 
   public onDataUpdated() {
     this.updateTitle(true);
-    this.alarmsDatasource.updateAlarms();
+    this.ngZone.run(() => {
+      this.alarmsDatasource.updateAlarms();
+    });
   }
 
   public pageLinkSortDirection(): SortDirection {

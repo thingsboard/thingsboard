@@ -221,7 +221,9 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
   public onDataUpdated() {
     this.updateTitle(true);
-    this.entityDatasource.dataUpdated();
+    this.ngZone.run(() => {
+      this.entityDatasource.dataUpdated();
+    });
   }
 
   public pageLinkSortDirection(): SortDirection {
