@@ -310,10 +310,12 @@ message SessionCloseNotificationProto {
 
 message SubscribeToAttributeUpdatesMsg {
   bool unsubscribe = 1;
+  SessionType sessionType = 2;
 }
 
 message SubscribeToRPCMsg {
   bool unsubscribe = 1;
+  SessionType sessionType = 2;
 }
 
 message ToDeviceRpcRequestMsg {

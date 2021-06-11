@@ -65,13 +65,11 @@ import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.
 public class LwM2mTransportServerHelper {
 
     private final LwM2mTransportContext context;
-    private final LwM2MJsonAdaptor adaptor;
     private final AtomicInteger atomicTs = new AtomicInteger(0);
 
 
     public long getTS() {
-        int addTs =  atomicTs.getAndIncrement() >= 1000 ? atomicTs.getAndSet(0) : atomicTs.get();
-        return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) * 1000L +  addTs;
+        return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) * 1000L + (atomicTs.getAndIncrement() % 1000);
     }
 
     /**
@@ -137,7 +135,7 @@ public class LwM2mTransportServerHelper {
     public ObjectModel parseFromXmlToObjectModel(byte[] xmlByte, String streamName, DefaultDDFFileValidator ddfValidator) {
         try {
             DDFFileParser ddfFileParser = new DDFFileParser(ddfValidator);
-            return ddfFileParser.parseEx(new ByteArrayInputStream(xmlByte), streamName).get(0);
+            return ddfFileParser.parse(new ByteArrayInputStream(xmlByte), streamName).get(0);
         } catch (IOException | InvalidDDFFileException e) {
             log.error("Could not parse the XML file [{}]", streamName, e);
             return null;

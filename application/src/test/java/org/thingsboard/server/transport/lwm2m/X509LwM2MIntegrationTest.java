@@ -47,54 +47,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 public class X509LwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
-    protected final String TRANSPORT_CONFIGURATION = "{\n" +
-            "  \"type\": \"LWM2M\",\n" +
-            "  \"observeAttr\": {\n" +
-            "    \"keyName\": {\n" +
-            "      \"/3_1.0/0/9\": \"batteryLevel\"\n" +
-            "    },\n" +
-            "    \"observe\": [],\n" +
-            "    \"attribute\": [\n" +
-            "    ],\n" +
-            "    \"telemetry\": [\n" +
-            "      \"/3_1.0/0/9\"\n" +
-            "    ],\n" +
-            "    \"attributeLwm2m\": {}\n" +
-            "  },\n" +
-            "  \"bootstrap\": {\n" +
-            "    \"servers\": {\n" +
-            "      \"binding\": \"UQ\",\n" +
-            "      \"shortId\": 123,\n" +
-            "      \"lifetime\": 300,\n" +
-            "      \"notifIfDisabled\": true,\n" +
-            "      \"defaultMinPeriod\": 1\n" +
-            "    },\n" +
-            "    \"lwm2mServer\": {\n" +
-            "      \"host\": \"localhost\",\n" +
-            "      \"port\": 5686,\n" +
-            "      \"serverId\": 123,\n" +
-            "      \"serverPublicKey\": \"\",\n" +
-            "      \"bootstrapServerIs\": false,\n" +
-            "      \"clientHoldOffTime\": 1,\n" +
-            "      \"bootstrapServerAccountTimeout\": 0\n" +
-            "    },\n" +
-            "    \"bootstrapServer\": {\n" +
-            "      \"host\": \"localhost\",\n" +
-            "      \"port\": 5687,\n" +
-            "      \"serverId\": 111,\n" +
-            "      \"securityMode\": \"NO_SEC\",\n" +
-            "      \"serverPublicKey\": \"\",\n" +
-            "      \"bootstrapServerIs\": true,\n" +
-            "      \"clientHoldOffTime\": 1,\n" +
-            "      \"bootstrapServerAccountTimeout\": 0\n" +
-            "    }\n" +
-            "  },\n" +
-            "  \"clientLwM2mSettings\": {\n" +
-            "    \"clientOnlyObserveAfterConnect\": 1\n" +
-            "  }\n" +
-            "}";
-
-
     private final int port = 5686;
     private final NetworkConfig coapConfig = new NetworkConfig().setString("COAP_SECURE_PORT", Integer.toString(port));
     private final String endpoint = "deviceAEndpoint";

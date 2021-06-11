@@ -22,11 +22,13 @@ import org.eclipse.leshan.core.Destroyable;
 import org.eclipse.leshan.core.Startable;
 import org.eclipse.leshan.core.Stoppable;
 import org.eclipse.leshan.core.observation.Observation;
+import org.eclipse.leshan.core.request.Identity;
 import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.core.util.Validate;
 import org.eclipse.leshan.server.californium.observation.ObserveUtil;
 import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
 import org.eclipse.leshan.server.redis.RedisRegistrationStore;
+import org.eclipse.leshan.server.redis.serialization.IdentitySerDes;
 import org.eclipse.leshan.server.redis.serialization.ObservationSerDes;
 import org.eclipse.leshan.server.redis.serialization.RegistrationSerDes;
 import org.eclipse.leshan.server.registration.Deregistration;
@@ -73,6 +75,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
     private static final String REG_EP = "REG:EP:"; // (Endpoint => Registration)
     private static final String REG_EP_REGID_IDX = "EP:REGID:"; // secondary index key (Registration ID => Endpoint)
     private static final String REG_EP_ADDR_IDX = "EP:ADDR:"; // secondary index key (Socket Address => Endpoint)
+    private static final String REG_EP_IDENTITY = "EP:IDENTITY:"; // secondary index key (Identity => Endpoint)
     private static final String LOCK_EP = "LOCK:EP:";
     private static final byte[] OBS_TKN = "OBS:TKN:".getBytes(UTF_8);
     private static final String OBS_TKNS_REGID_IDX = "TKNS:REGID:"; // secondary index (token list by registration)
@@ -155,6 +158,8 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
                 connection.set(regid_idx, registration.getEndpoint().getBytes(UTF_8));
                 byte[] addr_idx = toRegAddrKey(registration.getSocketAddress());
                 connection.set(addr_idx, registration.getEndpoint().getBytes(UTF_8));
+                byte[] identity_idx = toRegIdentityKey(registration.getIdentity());
+                connection.set(identity_idx, registration.getEndpoint().getBytes(UTF_8));
 
                 // Add or update expiration
                 addOrUpdateExpiration(connection, registration);
@@ -166,6 +171,9 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
                         connection.del(toRegIdKey(oldRegistration.getId()));
                     if (!oldRegistration.getSocketAddress().equals(registration.getSocketAddress())) {
                         removeAddrIndex(connection, oldRegistration);
+                    }
+                    if (!oldRegistration.getIdentity().equals(registration.getIdentity())) {
+                        removeIdentityIndex(connection, oldRegistration);
                     }
                     // remove old observation
                     Collection<Observation> obsRemoved = unsafeRemoveAllObservations(connection, oldRegistration.getId());
@@ -222,6 +230,9 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
                 if (!r.getSocketAddress().equals(updatedRegistration.getSocketAddress())) {
                     removeAddrIndex(connection, r);
                 }
+                if (!r.getIdentity().equals(updatedRegistration.getIdentity())) {
+                    removeIdentityIndex(connection, r);
+                }
 
                 return new UpdatedRegistration(r, updatedRegistration);
 
@@ -257,6 +268,22 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
         Validate.notNull(address);
         try (var connection = connectionFactory.getConnection()) {
             byte[] ep = connection.get(toRegAddrKey(address));
+            if (ep == null) {
+                return null;
+            }
+            byte[] data = connection.get(toEndpointKey(ep));
+            if (data == null) {
+                return null;
+            }
+            return deserializeReg(data);
+        }
+    }
+
+    @Override
+    public Registration getRegistrationByIdentity(Identity identity) {
+        Validate.notNull(identity);
+        try (var connection = connectionFactory.getConnection()) {
+            byte[] ep = connection.get(toRegIdentityKey(identity));
             if (ep == null) {
                 return null;
             }
@@ -325,6 +352,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
                     connection.del(toEndpointKey(r.getEndpoint()));
                     Collection<Observation> obsRemoved = unsafeRemoveAllObservations(connection, r.getId());
                     removeAddrIndex(connection, r);
+                    removeIdentityIndex(connection, r);
                     removeExpiration(connection, r);
                     return new Deregistration(r, obsRemoved);
                 }
@@ -337,20 +365,27 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
         }
     }
 
-    //TODO: JedisCluster didn't implement Transaction, maybe should use some advanced key creation strategies
-    private void removeAddrIndex(RedisConnection connection, Registration registration) {
-        // Watch the key to remove.
-        byte[] regAddrKey = toRegAddrKey(registration.getSocketAddress());
-//        connection.watch(regAddrKey);
+    private void removeAddrIndex(RedisConnection connection, Registration r) {
+        removeSecondaryIndex(connection, toRegAddrKey(r.getSocketAddress()), r.getEndpoint());
+    }
 
-        byte[] epFromAddr = connection.get(regAddrKey);
+    private void removeIdentityIndex(RedisConnection connection, Registration r) {
+        removeSecondaryIndex(connection, toRegIdentityKey(r.getIdentity()), r.getEndpoint());
+    }
+
+    //TODO: JedisCluster didn't implement Transaction, maybe should use some advanced key creation strategies
+    private void removeSecondaryIndex(RedisConnection connection, byte[] indexKey, String endpointName) {
+        // Watch the key to remove.
+//        connection.watch(indexKey);
+
+        byte[] epFromAddr = connection.get(indexKey);
         // Delete the key if needed.
-        if (Arrays.equals(epFromAddr, registration.getEndpoint().getBytes(UTF_8))) {
+        if (Arrays.equals(epFromAddr, endpointName.getBytes(UTF_8))) {
             // Try to delete the key
 //            connection.multi();
-            connection.del(regAddrKey);
+            connection.del(indexKey);
 //            connection.exec();
-            // if transaction failed this is not an issue as the socket address is probably reused and we don't neeed to
+            // if transaction failed this is not an issue as the index is probably reused and we don't need to
             // delete it anymore.
         } else {
             // the key must not be deleted.
@@ -372,6 +407,10 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
 
     private byte[] toRegAddrKey(InetSocketAddress addr) {
         return toKey(REG_EP_ADDR_IDX, addr.getAddress().toString() + ":" + addr.getPort());
+    }
+
+    private byte[] toRegIdentityKey(Identity identity) {
+        return toKey(REG_EP_IDENTITY, IdentitySerDes.serialize(identity).toString());
     }
 
     private byte[] toEndpointKey(String endpoint) {
@@ -723,7 +762,6 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
 
         @Override
         public void run() {
-
             try (var connection = connectionFactory.getConnection()) {
                 Set<byte[]> endpointsExpired = connection.zRangeByScore(EXP_EP, Double.NEGATIVE_INFINITY,
                         System.currentTimeMillis(), 0, cleanLimit);

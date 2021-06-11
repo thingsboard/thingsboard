@@ -22,6 +22,8 @@ import {
   ATTRIBUTE,
   BINDING_MODE,
   BINDING_MODE_NAMES,
+  DEFAULT_FW_UPDATE_RESOURCE,
+  DEFAULT_SW_UPDATE_RESOURCE,
   getDefaultProfileConfig,
   Instance,
   INSTANCES,
@@ -41,6 +43,7 @@ import { Direction } from '@shared/models/page/sort-order';
 import _ from 'lodash';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { MatSelectChange } from '@angular/material/select';
 
 @Component({
   selector: 'tb-profile-lwm2m-device-transport-configuration',
@@ -67,6 +70,8 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   bootstrapServer: string;
   lwm2mServer: string;
   sortFunction: (key: string, value: object) => object;
+  isFwUpdateStrategy: boolean;
+  isSwUpdateStrategy: boolean;
 
   get required(): boolean {
     return this.requiredValue;
@@ -83,7 +88,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   constructor(private fb: FormBuilder,
               private deviceProfileService: DeviceProfileService) {
     this.lwm2mDeviceProfileFormGroup = this.fb.group({
-      clientOnlyObserveAfterConnect: [1, []],
       objectIds: [null, Validators.required],
       observeAttrTelemetry: [null, Validators.required],
       shortId: [null, Validators.required],
@@ -93,6 +97,11 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       binding: [],
       bootstrapServer: [null, Validators.required],
       lwm2mServer: [null, Validators.required],
+      clientStrategy: [1, []],
+      fwUpdateStrategy: [1, []],
+      swUpdateStrategy: [1, []],
+      fwUpdateRecourse: ['', []],
+      swUpdateRecourse: ['', []]
     });
     this.lwm2mDeviceConfigFormGroup = this.fb.group({
       configurationJson: [null, Validators.required]
@@ -167,8 +176,13 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   private updateWriteValue = (value: ModelValue): void => {
+    let fwResource = this.configurationValue.clientLwM2mSettings.fwUpdateStrategy === '2' &&
+    isDefinedAndNotNull(this.configurationValue.clientLwM2mSettings.fwUpdateRecourse) ?
+      this.configurationValue.clientLwM2mSettings.fwUpdateRecourse : '';
+    let swResource = this.configurationValue.clientLwM2mSettings.swUpdateStrategy === '2' &&
+    isDefinedAndNotNull(this.configurationValue.clientLwM2mSettings.fwUpdateRecourse) ?
+      this.configurationValue.clientLwM2mSettings.swUpdateRecourse : '';
     this.lwm2mDeviceProfileFormGroup.patchValue({
-        clientOnlyObserveAfterConnect: this.configurationValue.clientLwM2mSettings.clientOnlyObserveAfterConnect,
         objectIds: value,
         observeAttrTelemetry: this.getObserveAttrTelemetryObjects(value.objectsList),
         shortId: this.configurationValue.bootstrap.servers.shortId,
@@ -177,9 +191,20 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         notifIfDisabled: this.configurationValue.bootstrap.servers.notifIfDisabled,
         binding: this.configurationValue.bootstrap.servers.binding,
         bootstrapServer: this.configurationValue.bootstrap.bootstrapServer,
-        lwm2mServer: this.configurationValue.bootstrap.lwm2mServer
+        lwm2mServer: this.configurationValue.bootstrap.lwm2mServer,
+        clientStrategy: this.configurationValue.clientLwM2mSettings.clientStrategy,
+        fwUpdateStrategy: this.configurationValue.clientLwM2mSettings.fwUpdateStrategy,
+        swUpdateStrategy: this.configurationValue.clientLwM2mSettings.swUpdateStrategy,
+        fwUpdateRecourse: fwResource,
+        swUpdateRecourse: swResource
       },
       {emitEvent: false});
+    this.configurationValue.clientLwM2mSettings.fwUpdateRecourse = fwResource;
+    this.configurationValue.clientLwM2mSettings.swUpdateRecourse = swResource;
+    this.isFwUpdateStrategy = this.configurationValue.clientLwM2mSettings.fwUpdateStrategy === '2';
+    this.isSwUpdateStrategy = this.configurationValue.clientLwM2mSettings.swUpdateStrategy === '2';
+    this.otaUpdateSwStrategyValidate();
+    this.otaUpdateFwStrategyValidate();
   }
 
   private updateModel = (): void => {
@@ -199,8 +224,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
 
   private updateDeviceProfileValue(config): void {
     if (this.lwm2mDeviceProfileFormGroup.valid) {
-      this.configurationValue.clientLwM2mSettings.clientOnlyObserveAfterConnect =
-        config.clientOnlyObserveAfterConnect;
       this.updateObserveAttrTelemetryFromGroupToJson(config.observeAttrTelemetry.clientLwM2M);
       this.configurationValue.bootstrap.bootstrapServer = config.bootstrapServer;
       this.configurationValue.bootstrap.lwm2mServer = config.lwm2mServer;
@@ -210,6 +233,11 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       bootstrapServers.defaultMinPeriod = config.defaultMinPeriod;
       bootstrapServers.notifIfDisabled = config.notifIfDisabled;
       bootstrapServers.binding = config.binding;
+      this.configurationValue.clientLwM2mSettings.clientStrategy = config.clientStrategy;
+      this.configurationValue.clientLwM2mSettings.fwUpdateStrategy = config.fwUpdateStrategy;
+      this.configurationValue.clientLwM2mSettings.swUpdateStrategy = config.swUpdateStrategy;
+      this.configurationValue.clientLwM2mSettings.fwUpdateRecourse = config.fwUpdateRecourse;
+      this.configurationValue.clientLwM2mSettings.swUpdateRecourse = config.swUpdateRecourse;
       this.upDateJsonAllConfig();
       this.updateModel();
     }
@@ -259,7 +287,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       const pathParameter = Array.from(path.split('/'), String);
       const objectLwM2M = clientObserveAttrTelemetry.find(x => x.keyId === pathParameter[0]);
       if (objectLwM2M) {
-        const instance = this.updateInInstanceKeyName (objectLwM2M.instances[0], +pathParameter[1]);
+        const instance = this.updateInInstanceKeyName(objectLwM2M.instances[0], +pathParameter[1]);
         objectLwM2M.instances.push(instance);
       }
     });
@@ -484,4 +512,54 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       }
     });
   }
+
+  changeFwUpdateStrategy($event: MatSelectChange) {
+    if ($event.value === '2') {
+      this.isFwUpdateStrategy = true;
+      if (isEmpty(this.lwm2mDeviceProfileFormGroup.get('fwUpdateRecourse').value)) {
+        this.lwm2mDeviceProfileFormGroup.patchValue({
+            fwUpdateRecourse: DEFAULT_FW_UPDATE_RESOURCE
+          },
+          {emitEvent: false});
+      }
+    } else {
+      this.isFwUpdateStrategy = false;
+    }
+    this.otaUpdateFwStrategyValidate();
+  }
+
+  changeSwUpdateStrategy($event: MatSelectChange) {
+    if ($event.value === '2') {
+      this.isSwUpdateStrategy = true;
+      if (isEmpty(this.lwm2mDeviceProfileFormGroup.get('swUpdateRecourse').value)) {
+        this.lwm2mDeviceProfileFormGroup.patchValue({
+            swUpdateRecourse: DEFAULT_SW_UPDATE_RESOURCE
+          },
+          {emitEvent: false});
+
+      }
+    } else {
+      this.isSwUpdateStrategy = false;
+    }
+    this.otaUpdateSwStrategyValidate();
+  }
+
+  private otaUpdateFwStrategyValidate(): void {
+    if (this.isFwUpdateStrategy) {
+      this.lwm2mDeviceProfileFormGroup.get('fwUpdateRecourse').setValidators([Validators.required]);
+    } else {
+      this.lwm2mDeviceProfileFormGroup.get('fwUpdateRecourse').clearValidators();
+    }
+    this.lwm2mDeviceProfileFormGroup.get('fwUpdateRecourse').updateValueAndValidity();
+  }
+
+  private otaUpdateSwStrategyValidate(): void {
+    if (this.isSwUpdateStrategy) {
+      this.lwm2mDeviceProfileFormGroup.get('swUpdateRecourse').setValidators([Validators.required]);
+    } else {
+      this.lwm2mDeviceProfileFormGroup.get('swUpdateRecourse').clearValidators();
+    }
+    this.lwm2mDeviceProfileFormGroup.get('swUpdateRecourse').updateValueAndValidity();
+  }
+
 }

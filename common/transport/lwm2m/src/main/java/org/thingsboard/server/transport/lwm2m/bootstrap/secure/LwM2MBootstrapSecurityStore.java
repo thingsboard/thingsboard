@@ -30,7 +30,7 @@ import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.transport.lwm2m.secure.EndpointSecurityInfo;
+import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mSessionMsgListener;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
@@ -40,7 +40,7 @@ import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
-import java.util.List;
+import java.util.Iterator;
 import java.util.UUID;
 
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.BOOTSTRAP_SERVER;
@@ -71,8 +71,8 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
     }
 
     @Override
-    public List<SecurityInfo> getAllByEndpoint(String endPoint) {
-        EndpointSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfo(endPoint, LwM2mTransportUtil.LwM2mTypeServer.BOOTSTRAP);
+    public Iterator<SecurityInfo> getAllByEndpoint(String endPoint) {
+        TbLwM2MSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfoByCredentialsId(endPoint, LwM2mTransportUtil.LwM2mTypeServer.BOOTSTRAP);
         if (store.getBootstrapCredentialConfig() != null && store.getSecurityMode() != null) {
             /* add value to store  from BootstrapJson */
             this.setBootstrapConfigScurityInfo(store);
@@ -88,7 +88,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                 } catch (InvalidConfigurationException e) {
                     log.error("", e);
                 }
-                return store.getSecurityInfo() == null ? null : Collections.singletonList(store.getSecurityInfo());
+                return store.getSecurityInfo() == null ? null : Collections.singletonList(store.getSecurityInfo()).iterator();
             }
         }
         return null;
@@ -96,7 +96,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     @Override
     public SecurityInfo getByIdentity(String identity) {
-        EndpointSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfo(identity, LwM2mTransportUtil.LwM2mTypeServer.BOOTSTRAP);
+        TbLwM2MSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfoByCredentialsId(identity, LwM2mTransportUtil.LwM2mTypeServer.BOOTSTRAP);
         if (store.getBootstrapCredentialConfig() != null && store.getSecurityMode() != null) {
             /* add value to store  from BootstrapJson */
             this.setBootstrapConfigScurityInfo(store);
@@ -113,7 +113,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
         return null;
     }
 
-    private void setBootstrapConfigScurityInfo(EndpointSecurityInfo store) {
+    private void setBootstrapConfigScurityInfo(TbLwM2MSecurityInfo store) {
         /* BootstrapConfig */
         LwM2MBootstrapConfig lwM2MBootstrapConfig = this.getParametersBootstrap(store);
         if (lwM2MBootstrapConfig != null) {
@@ -150,7 +150,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
         }
     }
 
-    private LwM2MBootstrapConfig getParametersBootstrap(EndpointSecurityInfo store) {
+    private LwM2MBootstrapConfig getParametersBootstrap(TbLwM2MSecurityInfo store) {
         try {
             LwM2MBootstrapConfig lwM2MBootstrapConfig = store.getBootstrapCredentialConfig();
             if (lwM2MBootstrapConfig != null) {

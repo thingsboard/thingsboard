@@ -28,7 +28,6 @@ import org.eclipse.leshan.server.californium.registration.CaliforniumRegistratio
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
@@ -36,6 +35,8 @@ import org.thingsboard.server.transport.lwm2m.secure.LWM2MGenerationPSkRPkECC;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MAuthorizer;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MDtlsCertificateVerifier;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
+import org.thingsboard.server.transport.lwm2m.server.store.TbEditableSecurityStore;
+import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
@@ -58,14 +59,13 @@ import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CBC_SHA256;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CCM_8;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mNetworkConfig.getCoapConfig;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FIRMWARE_UPDATE_COAP_RECOURSE;
 
 @Slf4j
 @Component
@@ -81,9 +81,9 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
     private final LwM2mTransportContext context;
     private final LwM2MTransportServerConfig config;
     private final LwM2mTransportServerHelper helper;
-    private final LwM2mTransportMsgHandler handler;
+    private final DefaultLwM2MTransportMsgHandler handler;
     private final CaliforniumRegistrationStore registrationStore;
-    private final EditableSecurityStore securityStore;
+    private final TbSecurityStore securityStore;
     private final LwM2mClientContext lwM2mClientContext;
     private final TbLwM2MDtlsCertificateVerifier certificateVerifier;
     private final TbLwM2MAuthorizer authorizer;
@@ -96,6 +96,17 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
             new LWM2MGenerationPSkRPkECC();
         }
         this.server = getLhServer();
+        /**
+         * Add a resource to the server.
+         * CoapResource ->
+         * path = FW_PACKAGE or SW_PACKAGE
+         * nameFile = "BC68JAR01A09_TO_BC68JAR01A10.bin"
+         * "coap://host:port/{path}/{token}/{nameFile}"
+         */
+
+
+        LwM2mTransportCoapResource otaCoapResource = new LwM2mTransportCoapResource(handler, FIRMWARE_UPDATE_COAP_RECOURSE);
+        this.server.coap().getServer().add(otaCoapResource);
         this.startLhServer();
         this.context.setServer(server);
     }
@@ -126,7 +137,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         builder.setEncoder(new DefaultLwM2mNodeEncoder(LwM2mValueConverterImpl.getInstance()));
 
         /* Create CoAP Config */
-        builder.setCoapConfig(getCoapConfig(config.getPort(), config.getSecurePort()));
+        builder.setCoapConfig(getCoapConfig(config.getPort(), config.getSecurePort(), config));
 
         /* Define model provider (Create Models )*/
         LwM2mModelProvider modelProvider = new LwM2mVersionedModelProvider(this.lwM2mClientContext, this.helper, this.context);

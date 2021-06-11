@@ -20,6 +20,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.leshan.core.request.ContentFormat;
+import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -32,21 +33,32 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static org.eclipse.californium.core.coap.CoAP.ResponseCode.CONTENT;
 import static org.thingsboard.server.common.data.ota.OtaPackageKey.STATE;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
+import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADED;
+import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.FAILED;
+import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.INITIATED;
+import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATING;
 import static org.thingsboard.server.common.data.ota.OtaPackageUtil.getAttributeKey;
-import static org.eclipse.californium.core.coap.CoAP.ResponseCode.CONTENT;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FIRMWARE_UPDATE_COAP_RECOURSE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_3_VER_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_5_VER_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_NAME_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PACKAGE_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PACKAGE_19_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PACKAGE_5_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_PACKAGE_URI_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_RESULT_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_STATE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_UPDATE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_UPDATE_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_VER_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_19_BINARY;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_5_BINARY;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.EXECUTE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_REPLACE;
@@ -59,6 +71,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.S
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_UPDATE_STATE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_VER_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.equalsFwSateToFirmwareUpdateStatus;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.splitCamelCaseString;
 
 @Slf4j
@@ -106,23 +119,29 @@ public class LwM2mFwSwUpdate {
     private final List<String> pendingInfoRequestsStart;
     @Getter
     @Setter
-    private volatile Lwm2mClientRpcRequest rpcRequest;
+    private volatile LwM2mClientRpcRequest rpcRequest;
+    @Getter
+    @Setter
+    private volatile int updateStrategy;
 
-    public LwM2mFwSwUpdate(LwM2mClient lwM2MClient, OtaPackageType type) {
+    public LwM2mFwSwUpdate(LwM2mClient lwM2MClient, OtaPackageType type, int updateStrategy) {
         this.lwM2MClient = lwM2MClient;
         this.pendingInfoRequestsStart = new CopyOnWriteArrayList<>();
         this.type = type;
         this.stateUpdate = null;
+        this.updateStrategy = updateStrategy;
         this.initPathId();
     }
 
     private void initPathId() {
         if (FIRMWARE.equals(this.type)) {
-            this.pathPackageId = FW_PACKAGE_ID;
+            this.pathPackageId = LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_5_BINARY.code == this.updateStrategy ?
+                    FW_PACKAGE_5_ID : LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL.code == this.updateStrategy ?
+                    FW_PACKAGE_URI_ID : FW_PACKAGE_19_ID;
             this.pathStateId = FW_STATE_ID;
             this.pathResultId = FW_RESULT_ID;
             this.pathNameId = FW_NAME_ID;
-            this.pathVerId = FW_VER_ID;
+            this.pathVerId = FW_5_VER_ID;
             this.pathInstallId = FW_UPDATE_ID;
             this.wUpdate = FW_UPDATE;
         } else if (SOFTWARE.equals(this.type)) {
@@ -143,13 +162,13 @@ public class LwM2mFwSwUpdate {
         }
         if (this.pendingInfoRequestsStart.size() == 0) {
             this.infoFwSwUpdate = false;
-            if (!OtaPackageUpdateStatus.DOWNLOADING.name().equals(this.stateUpdate)) {
-                boolean conditionalStart = this.type.equals(FIRMWARE) ? this.conditionalFwUpdateStart() :
-                        this.conditionalSwUpdateStart();
-                if (conditionalStart) {
-                    this.writeFwSwWare(handler, request);
-                }
+//            if (!FAILED.name().equals(this.stateUpdate)) {
+            boolean conditionalStart = this.type.equals(FIRMWARE) ? this.conditionalFwUpdateStart(handler) :
+                    this.conditionalSwUpdateStart(handler);
+            if (conditionalStart) {
+                this.writeFwSwWare(handler, request);
             }
+//            }
         }
     }
 
@@ -159,38 +178,47 @@ public class LwM2mFwSwUpdate {
      */
     public void writeFwSwWare(DefaultLwM2MTransportMsgHandler handler, LwM2mTransportRequest request) {
         if (this.currentId != null) {
-            this.stateUpdate = OtaPackageUpdateStatus.DOWNLOADING.name();
+            this.stateUpdate = OtaPackageUpdateStatus.INITIATED.name();
             this.sendLogs(handler, WRITE_REPLACE.name(), LOG_LW2M_INFO, null);
-            int chunkSize = 0;
-            int chunk = 0;
-            byte[] firmwareChunk = handler.otaPackageDataCache.get(this.currentId.toString(), chunkSize, chunk);
             String targetIdVer = convertPathFromObjectIdToIdVer(this.pathPackageId, this.lwM2MClient.getRegistration());
             String fwMsg = String.format("%s: Start type operation %s paths:  %s", LOG_LW2M_INFO,
-                    LwM2mTransportUtil.LwM2mTypeOper.FW_UPDATE.name(),  FW_PACKAGE_ID);
+                    LwM2mTransportUtil.LwM2mTypeOper.FW_UPDATE.name(), this.pathPackageId);
             handler.sendLogsToThingsboard(fwMsg, lwM2MClient.getRegistration().getId());
             log.warn("8) Start firmware Update. Send save to: [{}] ver: [{}] path: [{}]", this.lwM2MClient.getDeviceName(), this.currentVersion, targetIdVer);
-            request.sendAllRequest(this.lwM2MClient.getRegistration(), targetIdVer, WRITE_REPLACE, ContentFormat.OPAQUE.getName(),
-                    firmwareChunk, handler.config.getTimeout(), this.rpcRequest);
-        }
-        else {
+            if (LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_5_BINARY.code == this.updateStrategy) {
+                int chunkSize = 0;
+                int chunk = 0;
+                byte[] firmwareChunk = handler.otaPackageDataCache.get(this.currentId.toString(), chunkSize, chunk);
+                request.sendAllRequest(this.lwM2MClient, targetIdVer, WRITE_REPLACE, ContentFormat.OPAQUE,
+                        firmwareChunk, handler.config.getTimeout(), this.rpcRequest);
+            } else if (LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL.code == this.updateStrategy) {
+                String apiFont = "coap://176.36.143.9:5685";
+                String uri =  apiFont  + "/" + FIRMWARE_UPDATE_COAP_RECOURSE + "/" + this.currentId.toString();
+                log.warn("89) coapUri: [{}]", uri);
+                request.sendAllRequest(this.lwM2MClient, targetIdVer, WRITE_REPLACE, null,
+                        uri, handler.config.getTimeout(), this.rpcRequest);
+            } else if (LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_19_BINARY.code == this.updateStrategy) {
+
+            }
+        } else {
             String msgError = "FirmWareId is null.";
             log.warn("6) [{}]", msgError);
             if (this.rpcRequest != null) {
                 handler.sentRpcResponse(this.rpcRequest, CONTENT.name(), msgError, LOG_LW2M_ERROR);
             }
-            log.error (msgError);
+            log.error(msgError);
             this.sendLogs(handler, WRITE_REPLACE.name(), LOG_LW2M_ERROR, msgError);
         }
     }
 
     public void sendLogs(DefaultLwM2MTransportMsgHandler handler, String typeOper, String typeInfo, String msgError) {
-        this.sendSateOnThingsBoard(handler);
+//        this.sendSateOnThingsBoard(handler);
         String msg = String.format("%s: %s, %s, pkgVer: %s: pkgName - %s state - %s.",
                 typeInfo, this.wUpdate, typeOper, this.currentVersion, this.currentTitle, this.stateUpdate);
         if (LOG_LW2M_ERROR.equals(typeInfo)) {
             msg = String.format("%s Error: %s", msg, msgError);
         }
-        handler.sendLogsToThingsboard(msg, lwM2MClient.getRegistration().getId());
+        handler.sendLogsToThingsboard(lwM2MClient, msg);
     }
 
 
@@ -200,32 +228,49 @@ public class LwM2mFwSwUpdate {
      * send execute
      */
     public void executeFwSwWare(DefaultLwM2MTransportMsgHandler handler, LwM2mTransportRequest request) {
-        this.setStateUpdate(UPDATING.name());
         this.sendLogs(handler, EXECUTE.name(), LOG_LW2M_INFO, null);
-        request.sendAllRequest(this.lwM2MClient.getRegistration(), this.pathInstallId, EXECUTE, ContentFormat.TLV.getName(),
-                null, 0, this.rpcRequest);
+        request.sendAllRequest(this.lwM2MClient, this.pathInstallId, EXECUTE, null, 0, this.rpcRequest);
     }
 
     /**
-     * Firmware start:
+     * Firmware start: Check if the version has changed and launch a new update.
+     * -ObjectId 5, Binary or ObjectId 5, URI
      * -- If the result of the update - errors (more than 1) - This means that the previous. the update failed.
      * - We launch the update regardless of the state of the firmware and its version.
-     * -- If the result of the update is not errors (equal to 1 or 0) and ver is not empty - This means that before the update has passed.
-     * -- If the result of the update is not errors and is empty - This means that there has not been an update yet.
-     * - Check if the version has changed and launch a new update.
+     * -- If the result of the update - errors (more than 1) - This means that the previous. the update failed.
+     * * ObjectId 5, Binary
+     * -- If the result of the update is not errors (equal to 1 or 0) and ver in Object 5 is not empty - it means that the previous update has passed.
+     * Compare current versions  by equals.
+     * * ObjectId 5, URI
+     * -- If the result of the update is not errors (equal to 1 or 0) and ver in Object 5 is not empty - it means that the previous update has passed.
+     * Compare current versions  by contains.
      */
-    private boolean conditionalFwUpdateStart() {
+    private boolean conditionalFwUpdateStart(DefaultLwM2MTransportMsgHandler handler) {
         Long updateResultFw = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
+        String ver5 = (String) this.lwM2MClient.getResourceValue(null, this.pathVerId);
+        String pathName = (String) this.lwM2MClient.getResourceValue(null, this.pathNameId);
+        String ver3 = (String) this.lwM2MClient.getResourceValue(null, FW_3_VER_ID);
         // #1/#2
-        return updateResultFw > LwM2mTransportUtil.UpdateResultFw.UPDATE_SUCCESSFULLY.code ||
-                (
-                        (updateResultFw <= LwM2mTransportUtil.UpdateResultFw.UPDATE_SUCCESSFULLY.code
-                        ) &&
-                                (
-                                        (this.currentVersion != null && !this.currentVersion.equals(this.lwM2MClient.getResourceValue(null, this.pathVerId))) ||
-                                                (this.currentTitle != null && !this.currentTitle.equals(this.lwM2MClient.getResourceValue(null, this.pathNameId)))
-                                )
-                );
+        String fwMsg = null;
+        if ((this.currentVersion != null &&  (
+                ver5 != null && ver5.equals(this.currentVersion) ||
+                ver3 != null && ver3.contains(this.currentVersion)
+            )) ||
+            (this.currentTitle != null && pathName != null && this.currentTitle.equals(pathName))) {
+            fwMsg = String.format("%s: The update was interrupted. The device has the same version: %s.", LOG_LW2M_ERROR,
+                    this.currentVersion);
+        }
+        else if (updateResultFw != null && updateResultFw > LwM2mTransportUtil.UpdateResultFw.UPDATE_SUCCESSFULLY.code) {
+            fwMsg = String.format("%s: The update was interrupted. The device has the status UpdateResult: error (%d).", LOG_LW2M_ERROR,
+                    updateResultFw);
+        }
+        if (fwMsg != null) {
+            handler.sendLogsToThingsboard(fwMsg, lwM2MClient.getRegistration().getId());
+            return false;
+        }
+        else {
+            return true;
+        }
     }
 
 
@@ -249,7 +294,7 @@ public class LwM2mFwSwUpdate {
 
     /**
      * After operation Execute success  inspection Update Result :
-     *  > 1 error: "Firmware updated successfully"
+     * > 1 error: "Firmware updated successfully"
      */
     public boolean conditionalFwExecuteAfterError() {
         Long updateResult = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
@@ -265,7 +310,7 @@ public class LwM2mFwSwUpdate {
      * - If Update Result is not errors and ver is not empty - This means that before unInstall update
      * * - Check if the version has changed and launch a new update.
      */
-    private boolean conditionalSwUpdateStart() {
+    private boolean conditionalSwUpdateStart(DefaultLwM2MTransportMsgHandler handler) {
         Long updateResultSw = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
         // #1/#2
         return updateResultSw >= LwM2mTransportUtil.UpdateResultSw.NOT_ENOUGH_STORAGE.code ||
@@ -293,7 +338,7 @@ public class LwM2mFwSwUpdate {
      * -- inspection Update Result:
      * ---- FW если Update Result == 1 ("Firmware updated successfully") или  SW если Update Result == 2 ("Software successfully installed.")
      * -- fw_state/sw_state = UPDATED
-     *
+     * <p>
      * After finish operation Execute (error):
      * -- inspection updateResult and send to thingsboard info about error
      * --- send to telemetry ( key - this is name Update Result in model) (
@@ -326,7 +371,7 @@ public class LwM2mFwSwUpdate {
 
     /**
      * After operation Execute success  inspection Update Result :
-     *  >= 50 - error "NOT_ENOUGH_STORAGE"
+     * >= 50 - error "NOT_ENOUGH_STORAGE"
      */
     public boolean conditionalSwExecuteAfterError() {
         Long updateResult = (Long) this.lwM2MClient.getResourceValue(null, this.pathResultId);
@@ -334,10 +379,10 @@ public class LwM2mFwSwUpdate {
     }
 
     private void observeStateUpdate(DefaultLwM2MTransportMsgHandler handler, LwM2mTransportRequest request) {
-        request.sendAllRequest(lwM2MClient.getRegistration(),
+        request.sendAllRequest(lwM2MClient,
                 convertPathFromObjectIdToIdVer(this.pathStateId, this.lwM2MClient.getRegistration()), OBSERVE,
                 null, null, 0, null);
-        request.sendAllRequest(lwM2MClient.getRegistration(),
+        request.sendAllRequest(lwM2MClient,
                 convertPathFromObjectIdToIdVer(this.pathResultId, this.lwM2MClient.getRegistration()), OBSERVE,
                 null, null, 0, null);
     }
@@ -356,17 +401,74 @@ public class LwM2mFwSwUpdate {
     public void sendReadObserveInfo(LwM2mTransportRequest request) {
         this.infoFwSwUpdate = true;
         this.pendingInfoRequestsStart.add(convertPathFromObjectIdToIdVer(
-                this.pathVerId, this.lwM2MClient.getRegistration()));
-        this.pendingInfoRequestsStart.add(convertPathFromObjectIdToIdVer(
-                this.pathNameId, this.lwM2MClient.getRegistration()));
-        this.pendingInfoRequestsStart.add(convertPathFromObjectIdToIdVer(
                 this.pathStateId, this.lwM2MClient.getRegistration()));
         this.pendingInfoRequestsStart.add(convertPathFromObjectIdToIdVer(
                 this.pathResultId, this.lwM2MClient.getRegistration()));
+        this.pendingInfoRequestsStart.add(convertPathFromObjectIdToIdVer(
+                FW_3_VER_ID, this.lwM2MClient.getRegistration()));
+        if (LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_5_BINARY.code == this.updateStrategy ||
+                LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_19_BINARY.code == this.updateStrategy ||
+                SOFTWARE.equals(this.type)) {
+            this.pendingInfoRequestsStart.add(convertPathFromObjectIdToIdVer(
+                    this.pathVerId, this.lwM2MClient.getRegistration()));
+            this.pendingInfoRequestsStart.add(convertPathFromObjectIdToIdVer(
+                    this.pathNameId, this.lwM2MClient.getRegistration()));
+        }
         this.pendingInfoRequestsStart.forEach(pathIdVer -> {
-            request.sendAllRequest(this.lwM2MClient.getRegistration(), pathIdVer, OBSERVE, ContentFormat.TLV.getName(),
-                    null, 0, this.rpcRequest);
+            request.sendAllRequest(this.lwM2MClient, pathIdVer, OBSERVE, null, 0, this.rpcRequest);
         });
 
+    }
+
+    /**
+     * Before operation Execute (FwUpdate) inspection Update Result :
+     * - after finished operation Write result: success (FwUpdate): fw_state = DOWNLOADED
+     * - before start operation Execute (FwUpdate) Update Result = 0 - Initial value
+     * - start Execute (FwUpdate)
+     * After finished operation Execute (FwUpdate) inspection Update Result :
+     * - after start operation Execute (FwUpdate):  fw_state = UPDATING
+     * - after success finished operation Execute (FwUpdate) Update Result == 1 ("Firmware updated successfully")
+     * - finished operation Execute (FwUpdate)
+     */
+    public void updateStateOta(DefaultLwM2MTransportMsgHandler handler, LwM2mTransportRequest request,
+                               Registration registration, String path, int value) {
+        if (OBJ_5_BINARY.code == this.getUpdateStrategy()) {
+            if ((convertPathFromObjectIdToIdVer(FW_RESULT_ID, registration).equals(path))) {
+                if (DOWNLOADED.name().equals(this.getStateUpdate())
+                        && this.conditionalFwExecuteStart()) {
+                    this.executeFwSwWare(handler, request);
+                } else if (UPDATING.name().equals(this.getStateUpdate())
+                        && this.conditionalFwExecuteAfterSuccess()) {
+                    this.finishFwSwUpdate(handler, true);
+                } else if (UPDATING.name().equals(this.getStateUpdate())
+                        && this.conditionalFwExecuteAfterError()) {
+                    this.finishFwSwUpdate(handler, false);
+                }
+            }
+        } else if (OBJ_5_TEMP_URL.code == this.getUpdateStrategy()) {
+            if (this.currentId != null && (convertPathFromObjectIdToIdVer(FW_STATE_ID, registration).equals(path))) {
+                String state = equalsFwSateToFirmwareUpdateStatus(LwM2mTransportUtil.StateFw.fromStateFwByCode(value)).name();
+                if (StringUtils.isNotEmpty(state) && !FAILED.name().equals(this.stateUpdate) &&  !state.equals(this.stateUpdate)) {
+                    this.stateUpdate = state;
+                    this.sendSateOnThingsBoard(handler);
+                }
+                if (value == LwM2mTransportUtil.StateFw.DOWNLOADED.code) {
+                    this.executeFwSwWare(handler, request);
+                }
+                handler.firmwareUpdateState.put(lwM2MClient.getEndpoint(), value);
+            }
+            if ((convertPathFromObjectIdToIdVer(FW_RESULT_ID, registration).equals(path))) {
+                if (this.currentId != null && value == LwM2mTransportUtil.UpdateResultFw.INITIAL.code) {
+                    this.setStateUpdate(INITIATED.name());
+                } else if (this.currentId != null && value == LwM2mTransportUtil.UpdateResultFw.UPDATE_SUCCESSFULLY.code) {
+                    this.setStateUpdate(UPDATED.name());
+                } else if (value > LwM2mTransportUtil.UpdateResultFw.UPDATE_SUCCESSFULLY.code) {
+                    this.setStateUpdate(FAILED.name());
+                }
+                this.sendSateOnThingsBoard(handler);
+            }
+        } else if (OBJ_19_BINARY.code == this.getUpdateStrategy()) {
+
+        }
     }
 }

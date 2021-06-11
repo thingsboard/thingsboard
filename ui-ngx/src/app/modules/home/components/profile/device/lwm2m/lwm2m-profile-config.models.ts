@@ -28,7 +28,7 @@ export const TELEMETRY = 'telemetry';
 export const KEY_NAME = 'keyName';
 export const DEFAULT_ID_SERVER = 123;
 export const DEFAULT_ID_BOOTSTRAP = 111;
-export const DEFAULT_HOST_NAME = 'localhost';
+export const DEFAULT_LOCAL_HOST_NAME = 'localhost';
 export const DEFAULT_PORT_SERVER_NO_SEC = 5685;
 export const DEFAULT_PORT_BOOTSTRAP_NO_SEC = 5687;
 export const DEFAULT_CLIENT_HOLD_OFF_TIME = 1;
@@ -43,6 +43,9 @@ export const KEY_REGEXP_HEX_DEC = /^[-+]?[0-9A-Fa-f]+\.?[0-9A-Fa-f]*?$/;
 export const KEY_REGEXP_NUMBER = /^(\-?|\+?)\d*$/;
 export const INSTANCES_ID_VALUE_MIN = 0;
 export const INSTANCES_ID_VALUE_MAX = 65535;
+export const DEFAULT_OTA_UPDATE_PROTOCOL = "coap://";
+export const DEFAULT_FW_UPDATE_RESOURCE = DEFAULT_OTA_UPDATE_PROTOCOL + DEFAULT_LOCAL_HOST_NAME + ":"+ DEFAULT_PORT_SERVER_NO_SEC;
+export const DEFAULT_SW_UPDATE_RESOURCE = DEFAULT_OTA_UPDATE_PROTOCOL + DEFAULT_LOCAL_HOST_NAME + ":"+ DEFAULT_PORT_SERVER_NO_SEC;
 
 
 export enum BINDING_MODE {
@@ -165,7 +168,11 @@ export interface Lwm2mProfileConfigModels {
 }
 
 export interface ClientLwM2mSettings {
-  clientOnlyObserveAfterConnect: number;
+  clientStrategy: string;
+  fwUpdateStrategy: string;
+  swUpdateStrategy: string;
+  fwUpdateRecourse: string;
+  swUpdateRecourse: string;
 }
 
 export interface ObservableAttributes {
@@ -229,13 +236,17 @@ export function getDefaultProfileConfig(hostname?: any): Lwm2mProfileConfigModel
   return {
     clientLwM2mSettings: getDefaultProfileClientLwM2mSettingsConfig(),
     observeAttr: getDefaultProfileObserveAttrConfig(),
-    bootstrap: getDefaultProfileBootstrapSecurityConfig((hostname) ? hostname : DEFAULT_HOST_NAME)
+    bootstrap: getDefaultProfileBootstrapSecurityConfig((hostname) ? hostname : DEFAULT_LOCAL_HOST_NAME)
   };
 }
 
 function getDefaultProfileClientLwM2mSettingsConfig(): ClientLwM2mSettings {
   return {
-    clientOnlyObserveAfterConnect: 1
+    clientStrategy: "1",
+    fwUpdateStrategy: "1",
+    swUpdateStrategy: "1",
+    fwUpdateRecourse: DEFAULT_FW_UPDATE_RESOURCE,
+    swUpdateRecourse: DEFAULT_SW_UPDATE_RESOURCE
   };
 }
 
