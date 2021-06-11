@@ -39,6 +39,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.transport.lwm2m.server.DefaultLwM2MUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mQueuedRequest;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import java.util.Collection;
@@ -394,18 +395,18 @@ public class LwM2mClient implements Cloneable {
         }
     }
 
-    public LwM2mFwSwUpdate  getFwUpdate (LwM2mClientContext clientContext) {
+    public LwM2mFwSwUpdate  getFwUpdate(LwM2mUplinkMsgHandler handler, LwM2mClientContext clientContext) {
         if (this.fwUpdate == null) {
             var profile = clientContext.getProfile(this.getProfileId());
-            this.fwUpdate = new LwM2mFwSwUpdate(this, OtaPackageType.FIRMWARE, profile.getClientLwM2mSettings().getFwUpdateStrategy());
+            this.fwUpdate = new LwM2mFwSwUpdate(handler, this, OtaPackageType.FIRMWARE, profile.getClientLwM2mSettings().getFwUpdateStrategy());
         }
         return this.fwUpdate;
     }
 
-    public LwM2mFwSwUpdate  getSwUpdate (LwM2mClientContext clientContext) {
+    public LwM2mFwSwUpdate  getSwUpdate (LwM2mUplinkMsgHandler handler,LwM2mClientContext clientContext) {
         if (this.swUpdate == null) {
             var profile = clientContext.getProfile(this.getProfileId());
-            this.swUpdate = new LwM2mFwSwUpdate(this, OtaPackageType.SOFTWARE, profile.getClientLwM2mSettings().getSwUpdateStrategy());
+            this.swUpdate = new LwM2mFwSwUpdate(handler, this, OtaPackageType.SOFTWARE, profile.getClientLwM2mSettings().getSwUpdateStrategy());
         }
         return this.fwUpdate;
     }

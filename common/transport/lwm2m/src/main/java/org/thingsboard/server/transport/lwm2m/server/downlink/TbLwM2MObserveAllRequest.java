@@ -15,30 +15,27 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
-public interface DownlinkRequestCallback<T> {
+import lombok.Builder;
+import lombok.Getter;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 
-    void onSuccess(T response);
+import java.util.Set;
 
-    void onValidationError(String msg);
+public class TbLwM2MObserveAllRequest implements TbLwM2MDownlinkRequest<Set<String>> {
 
-    void onError(Exception e);
+    @Getter
+    private final long timeout;
 
-    static <T> DownlinkRequestCallback<T> doNothing() {
-        return new DownlinkRequestCallback<T>() {
-            @Override
-            public void onSuccess(T response) {
-
-            }
-
-            @Override
-            public void onValidationError(String msg) {
-
-            }
-
-            @Override
-            public void onError(Exception e) {
-
-            }
-        };
+    @Builder
+    private TbLwM2MObserveAllRequest(long timeout) {
+        this.timeout = timeout;
     }
+
+    @Override
+    public LwM2mTransportUtil.LwM2mTypeOper getType() {
+        return LwM2mTransportUtil.LwM2mTypeOper.OBSERVE_READ_ALL;
+    }
+
+
+
 }

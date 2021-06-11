@@ -38,8 +38,6 @@ public interface LwM2mUplinkMsgHandler {
 
     void onSleepingDev(Registration registration);
 
-    void setCancelObservationsAll(Registration registration);
-
     void onUpdateValueAfterReadResponse(Registration registration, String path, ReadResponse response, LwM2mClientRpcRequest rpcRequest);
 
     void onAttributeUpdate(TransportProtos.AttributeUpdateNotificationMsg msg, TransportProtos.SessionInfoProto sessionInfo);

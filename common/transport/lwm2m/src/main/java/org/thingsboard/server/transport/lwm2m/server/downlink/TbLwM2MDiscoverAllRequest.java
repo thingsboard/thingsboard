@@ -15,30 +15,26 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
-public interface DownlinkRequestCallback<T> {
+import lombok.Builder;
+import lombok.Getter;
+import org.eclipse.leshan.core.response.DiscoverResponse;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 
-    void onSuccess(T response);
+public class TbLwM2MDiscoverAllRequest implements TbLwM2MDownlinkRequest<String> {
 
-    void onValidationError(String msg);
+    @Getter
+    private final long timeout;
 
-    void onError(Exception e);
-
-    static <T> DownlinkRequestCallback<T> doNothing() {
-        return new DownlinkRequestCallback<T>() {
-            @Override
-            public void onSuccess(T response) {
-
-            }
-
-            @Override
-            public void onValidationError(String msg) {
-
-            }
-
-            @Override
-            public void onError(Exception e) {
-
-            }
-        };
+    @Builder
+    private TbLwM2MDiscoverAllRequest(long timeout) {
+        this.timeout = timeout;
     }
+
+    @Override
+    public LwM2mTransportUtil.LwM2mTypeOper getType() {
+        return LwM2mTransportUtil.LwM2mTypeOper.DISCOVER_ALL;
+    }
+
+
+
 }

@@ -15,30 +15,12 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
-public interface DownlinkRequestCallback<T> {
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 
-    void onSuccess(T response);
+public interface TbLwM2MDownlinkRequest<T> {
 
-    void onValidationError(String msg);
+    LwM2mTransportUtil.LwM2mTypeOper getType();
 
-    void onError(Exception e);
+    long getTimeout();
 
-    static <T> DownlinkRequestCallback<T> doNothing() {
-        return new DownlinkRequestCallback<T>() {
-            @Override
-            public void onSuccess(T response) {
-
-            }
-
-            @Override
-            public void onValidationError(String msg) {
-
-            }
-
-            @Override
-            public void onError(Exception e) {
-
-            }
-        };
-    }
 }

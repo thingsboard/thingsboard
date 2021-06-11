@@ -15,30 +15,9 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
-public interface DownlinkRequestCallback<T> {
+import org.eclipse.leshan.core.request.ContentFormat;
 
-    void onSuccess(T response);
+public interface HasContentFormat {
 
-    void onValidationError(String msg);
-
-    void onError(Exception e);
-
-    static <T> DownlinkRequestCallback<T> doNothing() {
-        return new DownlinkRequestCallback<T>() {
-            @Override
-            public void onSuccess(T response) {
-
-            }
-
-            @Override
-            public void onValidationError(String msg) {
-
-            }
-
-            @Override
-            public void onError(Exception e) {
-
-            }
-        };
-    }
+    ContentFormat getContentFormat();
 }

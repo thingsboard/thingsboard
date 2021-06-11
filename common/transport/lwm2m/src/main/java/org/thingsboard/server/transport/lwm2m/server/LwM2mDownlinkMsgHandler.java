@@ -15,34 +15,56 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
-import org.eclipse.leshan.core.request.ContentFormat;
-import org.thingsboard.server.common.data.device.data.lwm2m.ObjectAttributes;
+import org.eclipse.leshan.core.response.CancelObservationResponse;
+import org.eclipse.leshan.core.response.DeleteResponse;
+import org.eclipse.leshan.core.response.DiscoverResponse;
+import org.eclipse.leshan.core.response.ExecuteResponse;
+import org.eclipse.leshan.core.response.ObserveResponse;
+import org.eclipse.leshan.core.response.ReadResponse;
+import org.eclipse.leshan.core.response.WriteAttributesResponse;
+import org.eclipse.leshan.core.response.WriteResponse;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelAllRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDeleteRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDiscoverAllRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDiscoverRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MExecuteRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveAllRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MReadRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttributesRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplaceRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteUpdateRequest;
+
+import java.util.Set;
 
 public interface LwM2mDownlinkMsgHandler {
 
-    void sendReadRequest(LwM2mClient client, String targetId, Long timeout);
+    void sendReadRequest(LwM2mClient client, TbLwM2MReadRequest request, DownlinkRequestCallback<ReadResponse> callback);
 
-    void sendReadRequest(LwM2mClient client, String targetId, ContentFormat contentFormat, Long timeout);
+    void sendObserveRequest(LwM2mClient client, TbLwM2MObserveRequest request, DownlinkRequestCallback<ObserveResponse> callback);
 
-    void sendObserveRequest(LwM2mClient client, String targetId, Long timeout);
+    void sendObserveAllRequest(LwM2mClient client, TbLwM2MObserveAllRequest request, DownlinkRequestCallback<Set<String>> callback);
 
-    void sendObserveRequest(LwM2mClient client, String targetId, ContentFormat contentFormat, Long timeout);
+    void sendExecuteRequest(LwM2mClient client, TbLwM2MExecuteRequest request, DownlinkRequestCallback<ExecuteResponse> callback);
 
-    void sendExecuteRequest(LwM2mClient client, String targetId, Long timeout, DownlinkRequestCallback callback);
+    void sendDeleteRequest(LwM2mClient client, TbLwM2MDeleteRequest request, DownlinkRequestCallback<DeleteResponse> callback);
 
-    void sendExecuteRequest(LwM2mClient client, String targetId, Object params, Long timeout, DownlinkRequestCallback callback);
+    void sendCancelObserveRequest(LwM2mClient client, TbLwM2MCancelObserveRequest request, DownlinkRequestCallback<Integer> callback);
 
-    void sendCancelObserveRequest(LwM2mClient client, String targetId, Long timeout, DownlinkRequestCallback callback);
+    void sendCancelAllRequest(LwM2mClient client, TbLwM2MCancelAllRequest request, DownlinkRequestCallback<Integer> callback);
 
-    void sendCancelAllRequest(LwM2mClient client, Long timeout, DownlinkRequestCallback callback);
+    void sendDiscoverRequest(LwM2mClient client, TbLwM2MDiscoverRequest request, DownlinkRequestCallback<DiscoverResponse> callback);
 
-    void sendDiscoverRequest(LwM2mClient client, String targetId, Long timeout);
+    void sendDiscoverAllRequest(LwM2mClient client, TbLwM2MDiscoverAllRequest request, DownlinkRequestCallback<Set<String>> callback);
 
-    void sendWriteAttributesRequest(LwM2mClient client, String targetId, ObjectAttributes params, Long timeout);
+    void sendWriteAttributesRequest(LwM2mClient client, TbLwM2MWriteAttributesRequest request, DownlinkRequestCallback<WriteAttributesResponse> callback);
 
-    void sendWriteReplaceRequest(LwM2mClient client, String targetIdVer, Object newValue, Long timeout, DownlinkRequestCallback callback);
+    void sendWriteReplaceRequest(LwM2mClient client, TbLwM2MWriteReplaceRequest request, DownlinkRequestCallback<WriteResponse> callback);
 
-    void sendWriteUpdateRequest(LwM2mClient client, String targetIdVer, Object newValue, ContentFormat contentFormat, Long timeout, DownlinkRequestCallback callback);
+    void sendWriteUpdateRequest(LwM2mClient client, TbLwM2MWriteUpdateRequest request, DownlinkRequestCallback<WriteResponse> callback);
+
+
 }

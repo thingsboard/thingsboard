@@ -15,30 +15,18 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
-public interface DownlinkRequestCallback<T> {
+import lombok.Getter;
 
-    void onSuccess(T response);
+public abstract class AbstractTbLwM2MTargetedDownlinkRequest<T> implements TbLwM2MDownlinkRequest<T>, HasVersionedId {
 
-    void onValidationError(String msg);
+    @Getter
+    private final String versionedId;
+    @Getter
+    private final long timeout;
 
-    void onError(Exception e);
-
-    static <T> DownlinkRequestCallback<T> doNothing() {
-        return new DownlinkRequestCallback<T>() {
-            @Override
-            public void onSuccess(T response) {
-
-            }
-
-            @Override
-            public void onValidationError(String msg) {
-
-            }
-
-            @Override
-            public void onError(Exception e) {
-
-            }
-        };
+    public AbstractTbLwM2MTargetedDownlinkRequest(String versionedId, long timeout) {
+        this.versionedId = versionedId;
+        this.timeout = timeout;
     }
+
 }
