@@ -188,7 +188,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                 if (lwM2MClient != null) {
                     SessionInfoProto sessionInfo = this.getSessionInfoOrCloseSession(lwM2MClient);
                     if (sessionInfo != null) {
-                        transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(this, sessionInfo));
+                        transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(this, sessionInfo, transportService));
                         TransportProtos.TransportToDeviceActorMsg msg = TransportProtos.TransportToDeviceActorMsg.newBuilder()
                                 .setSessionInfo(sessionInfo)
                                 .setSessionEvent(DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN))
@@ -1320,7 +1320,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      */
     private void reportActivityAndRegister(SessionInfoProto sessionInfo) {
         if (sessionInfo != null && transportService.reportActivity(sessionInfo) == null) {
-            transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(this, sessionInfo));
+            transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(this, sessionInfo, transportService));
             this.reportActivitySubscription(sessionInfo);
         }
     }

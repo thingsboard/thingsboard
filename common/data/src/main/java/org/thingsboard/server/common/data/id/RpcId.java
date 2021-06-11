@@ -13,11 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.common.data.id;
 
-/**
- * @author Andrew Shvayka
- */
-public enum EntityType {
-    TENANT, CUSTOMER, USER, DASHBOARD, ASSET, DEVICE, ALARM, RULE_CHAIN, RULE_NODE, ENTITY_VIEW, WIDGETS_BUNDLE, WIDGET_TYPE, TENANT_PROFILE, DEVICE_PROFILE, API_USAGE_STATE, TB_RESOURCE, OTA_PACKAGE, EDGE, RPC;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.thingsboard.server.common.data.EntityType;
+
+import java.util.UUID;
+
+public final class RpcId extends UUIDBased implements EntityId {
+
+    private static final long serialVersionUID = 1L;
+
+    @JsonCreator
+    public RpcId(@JsonProperty("id") UUID id) {
+        super(id);
+    }
+
+    @JsonIgnore
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.RPC;
+    }
 }

@@ -54,7 +54,7 @@ public class RuleEngineEntityActionService {
 
     private static final ObjectMapper json = new ObjectMapper();
 
-    public void pushEntityActionToRuleEngine(EntityId entityId, HasName entity, TenantId tenantId, CustomerId customerId,
+    public void pushEntityActionToRuleEngine(EntityId entityId, Object entity, TenantId tenantId, CustomerId customerId,
                                              ActionType actionType, User user, Object... additionalInfo) {
         String msgType = null;
         switch (actionType) {

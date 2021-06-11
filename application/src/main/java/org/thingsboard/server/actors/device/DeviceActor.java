@@ -46,7 +46,7 @@ public class DeviceActor extends ContextAwareActor {
         super.init(ctx);
         log.debug("[{}][{}] Starting device actor.", processor.tenantId, processor.deviceId);
         try {
-            processor.initSessionTimeout(ctx);
+            processor.init(ctx);
             log.debug("[{}][{}] Device actor started.", processor.tenantId, processor.deviceId);
         } catch (Exception e) {
             log.warn("[{}][{}] Unknown failure", processor.tenantId, processor.deviceId, e);

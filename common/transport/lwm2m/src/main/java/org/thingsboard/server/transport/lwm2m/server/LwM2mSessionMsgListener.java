@@ -17,12 +17,16 @@ package org.thingsboard.server.transport.lwm2m.server;
 
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.transport.SessionMsgListener;
+import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
@@ -35,14 +39,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
+@RequiredArgsConstructor
 public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? super Void>>, SessionMsgListener {
-    private DefaultLwM2MTransportMsgHandler handler;
-    private TransportProtos.SessionInfoProto sessionInfo;
-
-    public LwM2mSessionMsgListener(DefaultLwM2MTransportMsgHandler handler, TransportProtos.SessionInfoProto sessionInfo) {
-        this.handler = handler;
-        this.sessionInfo = sessionInfo;
-    }
+    private final DefaultLwM2MTransportMsgHandler handler;
+    private final TransportProtos.SessionInfoProto sessionInfo;
+    private final TransportService transportService;
 
     @Override
     public void onGetAttributesResponse(GetAttributeResponseMsg getAttributesResponse) {
@@ -52,7 +53,7 @@ public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? s
     @Override
     public void onAttributeUpdate(AttributeUpdateNotificationMsg attributeUpdateNotification) {
         this.handler.onAttributeUpdate(attributeUpdateNotification, this.sessionInfo);
-     }
+    }
 
     @Override
     public void onRemoteSessionCloseCommand(UUID sessionId, SessionCloseNotificationProto sessionCloseNotification) {
@@ -76,7 +77,22 @@ public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? s
 
     @Override
     public void onToDeviceRpcRequest(ToDeviceRpcRequestMsg toDeviceRequest) {
-        this.handler.onToDeviceRpcRequest(toDeviceRequest,this.sessionInfo);
+        this.handler.onToDeviceRpcRequest(toDeviceRequest, this.sessionInfo);
+        if (toDeviceRequest.getPersisted()) {
+            RpcStatus status;
+            if (toDeviceRequest.getOneway()) {
+                status = RpcStatus.SUCCESSFUL;
+            } else {
+                status = RpcStatus.DELIVERED;
+            }
+            TransportProtos.ToDevicePersistedRpcResponseMsg responseMsg = TransportProtos.ToDevicePersistedRpcResponseMsg.newBuilder()
+                    .setRequestId(toDeviceRequest.getRequestId())
+                    .setRequestIdLSB(toDeviceRequest.getRequestIdLSB())
+                    .setRequestIdMSB(toDeviceRequest.getRequestIdMSB())
+                    .setStatus(status.name())
+                    .build();
+            transportService.process(sessionInfo, responseMsg, TransportServiceCallback.EMPTY);
+        }
     }
 
     @Override

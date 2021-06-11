@@ -13,32 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.dao.rpc;
 
-import lombok.Builder;
-import lombok.Data;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.rpc.Rpc;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
+import org.thingsboard.server.dao.Dao;
 
-import java.util.UUID;
-
-/**
- * Created by ashvayka on 02.04.18.
- */
-@Data
-@Builder
-public final class RuleEngineDeviceRpcRequest {
-
-    private final TenantId tenantId;
-    private final DeviceId deviceId;
-    private final int requestId;
-    private final UUID requestUUID;
-    private final String originServiceId;
-    private final boolean oneway;
-    private final boolean persisted;
-    private final String method;
-    private final String body;
-    private final long expirationTime;
-    private final boolean restApiCall;
-
+public interface RpcDao extends Dao<Rpc> {
+    PageData<Rpc> findAllByDeviceId(DeviceId deviceId, RpcStatus rpcStatus, PageLink pageLink);
 }

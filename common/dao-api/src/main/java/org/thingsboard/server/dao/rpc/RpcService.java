@@ -13,32 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.dao.rpc;
 
-import lombok.Builder;
-import lombok.Data;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.rpc.Rpc;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 
-import java.util.UUID;
+public interface RpcService {
+    Rpc save(TenantId tenantId, Rpc rpc);
 
-/**
- * Created by ashvayka on 02.04.18.
- */
-@Data
-@Builder
-public final class RuleEngineDeviceRpcRequest {
+    void remove(TenantId tenantId, RpcId id);
 
-    private final TenantId tenantId;
-    private final DeviceId deviceId;
-    private final int requestId;
-    private final UUID requestUUID;
-    private final String originServiceId;
-    private final boolean oneway;
-    private final boolean persisted;
-    private final String method;
-    private final String body;
-    private final long expirationTime;
-    private final boolean restApiCall;
+    Rpc findById(TenantId tenantId, RpcId id);
 
+    ListenableFuture<Rpc> findRpcByIdAsync(TenantId tenantId, RpcId id);
+
+    PageData<Rpc> findAllByDeviceIdAndStatus(DeviceId deviceId, RpcStatus rpcStatus, PageLink pageLink);
 }

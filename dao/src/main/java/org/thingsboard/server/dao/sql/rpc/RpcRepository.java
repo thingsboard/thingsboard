@@ -13,11 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.dao.sql.rpc;
 
-/**
- * @author Andrew Shvayka
- */
-public enum EntityType {
-    TENANT, CUSTOMER, USER, DASHBOARD, ASSET, DEVICE, ALARM, RULE_CHAIN, RULE_NODE, ENTITY_VIEW, WIDGETS_BUNDLE, WIDGET_TYPE, TENANT_PROFILE, DEVICE_PROFILE, API_USAGE_STATE, TB_RESOURCE, OTA_PACKAGE, EDGE, RPC;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.CrudRepository;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
+import org.thingsboard.server.dao.model.sql.RpcEntity;
+
+import java.util.UUID;
+
+public interface RpcRepository extends CrudRepository<RpcEntity, UUID> {
+    Page<RpcEntity> findAllByDeviceIdAndStatus(UUID deviceId, RpcStatus status, Pageable pageable);
 }

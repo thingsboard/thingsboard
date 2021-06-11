@@ -38,8 +38,10 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -93,6 +95,19 @@ public class RpcController extends BaseController {
         return handleDeviceRPCRequest(false, new DeviceId(UUID.fromString(deviceIdStr)), requestBody);
     }
 
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/persisted/{rpcId}", method = RequestMethod.GET)
+    @ResponseBody
+    public Rpc getPersistedRpc(@PathVariable("rpcId") String strRpc) throws ThingsboardException {
+        checkParameter("RpcId", strRpc);
+        try {
+            RpcId rpcId = new RpcId(UUID.fromString(strRpc));
+            return checkRpcId(rpcId, Operation.READ);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
     private DeferredResult<ResponseEntity> handleDeviceRPCRequest(boolean oneWay, DeviceId deviceId, String requestBody) throws ThingsboardException {
         try {
             JsonNode rpcRequestBody = jsonMapper.readTree(requestBody);
@@ -103,6 +118,7 @@ public class RpcController extends BaseController {
             long timeout = rpcRequestBody.has("timeout") ? rpcRequestBody.get("timeout").asLong() : defaultTimeout;
             long expTime = System.currentTimeMillis() + Math.max(minTimeout, timeout);
             UUID rpcRequestUUID = rpcRequestBody.has("requestUUID") ? UUID.fromString(rpcRequestBody.get("requestUUID").asText()) : UUID.randomUUID();
+            boolean persisted = rpcRequestBody.has("persisted") && rpcRequestBody.get("persisted").asBoolean();
             accessValidator.validate(currentUser, Operation.RPC_CALL, deviceId, new HttpValidationCallback(response, new FutureCallback<DeferredResult<ResponseEntity>>() {
                 @Override
                 public void onSuccess(@Nullable DeferredResult<ResponseEntity> result) {
@@ -111,7 +127,8 @@ public class RpcController extends BaseController {
                             deviceId,
                             oneWay,
                             expTime,
-                            body
+                            body,
+                            persisted
                     );
                     deviceRpcService.processRestApiRpcRequest(rpcRequest, fromDeviceRpcResponse -> reply(new LocalRequestMetaData(rpcRequest, currentUser, result), fromDeviceRpcResponse), currentUser);
                 }
