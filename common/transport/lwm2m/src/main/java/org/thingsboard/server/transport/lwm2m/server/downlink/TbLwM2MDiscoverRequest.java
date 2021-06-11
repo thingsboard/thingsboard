@@ -17,7 +17,6 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import lombok.Builder;
 import org.eclipse.leshan.core.response.DiscoverResponse;
-import org.eclipse.leshan.core.response.ReadResponse;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 
 public class TbLwM2MDiscoverRequest extends AbstractTbLwM2MTargetedDownlinkRequest<DiscoverResponse> {

@@ -16,7 +16,6 @@
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import lombok.Builder;
-import lombok.Getter;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 

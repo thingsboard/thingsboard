@@ -15,23 +15,22 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
-import org.eclipse.leshan.core.response.ObserveResponse;
-import org.eclipse.leshan.core.response.ReadResponse;
+import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
-public class TbLwM2MObserveRequestCallback extends AbstractTbLwM2MRequestCallback<ObserveResponse> {
+public class TbLwM2MExecuteCallback extends AbstractTbLwM2MRequestCallback<ExecuteResponse> {
 
     private final String targetId;
 
-    public TbLwM2MObserveRequestCallback(LwM2mUplinkMsgHandler handler, LwM2mClient client, String targetId) {
+    public TbLwM2MExecuteCallback(LwM2mUplinkMsgHandler handler, LwM2mClient client, String targetId) {
         super(handler, client);
         this.targetId = targetId;
     }
 
     @Override
-    public void onSuccess(ObserveResponse response) {
-        //TODO: handle the response (at least log to telemetry)
+    public void onSuccess(ExecuteResponse response) {
+        //TODO: separate callback wrapper for the RPC calls.
     }
 
 }

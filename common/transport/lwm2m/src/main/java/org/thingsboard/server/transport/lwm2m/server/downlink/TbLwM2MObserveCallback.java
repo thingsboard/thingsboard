@@ -15,24 +15,22 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
+import org.eclipse.leshan.core.response.ObserveResponse;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE_CANCEL;
+public class TbLwM2MObserveCallback extends AbstractTbLwM2MRequestCallback<ObserveResponse> {
 
-public class TbLwM2MCancelObserveRequestCallback extends AbstractTbLwM2MRequestCallback<Integer> {
+    private final String targetId;
 
-    private final String versionedId;
-
-    public TbLwM2MCancelObserveRequestCallback(LwM2mUplinkMsgHandler handler, LwM2mClient client, String versionedId) {
+    public TbLwM2MObserveCallback(LwM2mUplinkMsgHandler handler, LwM2mClient client, String targetId) {
         super(handler, client);
-        this.versionedId = versionedId;
+        this.targetId = targetId;
     }
 
     @Override
-    public void onSuccess(Integer canceledSubscriptionsCount) {
-        String observeCancelMsg = String.format("%s: type operation %s paths: %s count: %d", LOG_LW2M_INFO, OBSERVE_CANCEL.name(), versionedId, canceledSubscriptionsCount);
+    public void onSuccess(ObserveResponse response) {
+        //TODO: handle the response (at least log to telemetry)
     }
 
 }

@@ -29,7 +29,6 @@ import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.observation.Observation;
-import org.eclipse.leshan.core.request.CancelObservationRequest;
 import org.eclipse.leshan.core.request.WriteRequest;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.server.registration.Registration;
@@ -67,18 +66,15 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2mFwSwUpdate;
 import org.thingsboard.server.transport.lwm2m.server.client.ParametersAnalyzeResult;
 import org.thingsboard.server.transport.lwm2m.server.client.ResourceValue;
 import org.thingsboard.server.transport.lwm2m.server.client.ResultsAddKeyValueProto;
-import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCallback;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelAllObserveRequestCallback;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelAllRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.LwM2mDownlinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveRequestCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDiscoverCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDiscoverRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveAllRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveRequestCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MReadRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MReadRequestCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MReadCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttributesCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttributesRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplaceCallback;
@@ -659,12 +655,12 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
 
     private void sendReadRequest(LwM2mClient lwM2MClient, String versionedId) {
         TbLwM2MReadRequest request = TbLwM2MReadRequest.builder().versionedId(versionedId).timeout(this.config.getTimeout()).build();
-        defaultLwM2MDownlinkMsgHandler.sendReadRequest(lwM2MClient, request, new TbLwM2MReadRequestCallback(this, lwM2MClient, versionedId));
+        defaultLwM2MDownlinkMsgHandler.sendReadRequest(lwM2MClient, request, new TbLwM2MReadCallback(this, lwM2MClient, versionedId));
     }
 
     private void sendObserveRequest(LwM2mClient lwM2MClient, String versionedId) {
         TbLwM2MObserveRequest request = TbLwM2MObserveRequest.builder().versionedId(versionedId).timeout(this.config.getTimeout()).build();
-        defaultLwM2MDownlinkMsgHandler.sendObserveRequest(lwM2MClient, request, new TbLwM2MObserveRequestCallback(this, lwM2MClient, versionedId));
+        defaultLwM2MDownlinkMsgHandler.sendObserveRequest(lwM2MClient, request, new TbLwM2MObserveCallback(this, lwM2MClient, versionedId));
     }
 
     private void sendWriteAttributesRequest(LwM2mClient lwM2MClient, String targetId, ObjectAttributes params) {
@@ -674,7 +670,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
 
     private void sendCancelObserveRequest(String versionedId, LwM2mClient client) {
         TbLwM2MCancelObserveRequest request = TbLwM2MCancelObserveRequest.builder().versionedId(versionedId).timeout(this.config.getTimeout()).build();
-        defaultLwM2MDownlinkMsgHandler.sendCancelObserveRequest(client, request, new TbLwM2MCancelObserveRequestCallback(this, client, versionedId));
+        defaultLwM2MDownlinkMsgHandler.sendCancelObserveRequest(client, request, new TbLwM2MCancelObserveCallback(this, client, versionedId));
     }
 
     /**

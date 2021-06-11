@@ -15,23 +15,24 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
-import org.eclipse.leshan.core.response.ReadResponse;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
-public class TbLwM2MReadRequestCallback extends AbstractTbLwM2MRequestCallback<ReadResponse> {
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE_CANCEL;
 
-    private final String targetId;
+public class TbLwM2MCancelObserveCallback extends AbstractTbLwM2MRequestCallback<Integer> {
 
-    public TbLwM2MReadRequestCallback(LwM2mUplinkMsgHandler handler, LwM2mClient client, String targetId) {
+    private final String versionedId;
+
+    public TbLwM2MCancelObserveCallback(LwM2mUplinkMsgHandler handler, LwM2mClient client, String versionedId) {
         super(handler, client);
-        this.targetId = targetId;
+        this.versionedId = versionedId;
     }
 
     @Override
-    public void onSuccess(ReadResponse response) {
-        //TODO: separate callback wrapper for the RPC calls.
-        handler.onUpdateValueAfterReadResponse(client.getRegistration(), targetId, response, null);
+    public void onSuccess(Integer canceledSubscriptionsCount) {
+        String observeCancelMsg = String.format("%s: type operation %s paths: %s count: %d", LOG_LW2M_INFO, OBSERVE_CANCEL.name(), versionedId, canceledSubscriptionsCount);
     }
 
 }

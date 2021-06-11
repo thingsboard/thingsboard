@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server;
+package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,23 +50,10 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.device.data.lwm2m.ObjectAttributes;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientRpcRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCallback;
-import org.thingsboard.server.transport.lwm2m.server.downlink.HasContentFormat;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelAllRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDeleteRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDiscoverAllRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDiscoverRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MExecuteRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveAllRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MReadRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttributesRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplaceRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteUpdateRequest;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;

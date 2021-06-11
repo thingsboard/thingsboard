@@ -19,7 +19,6 @@ import lombok.Builder;
 import lombok.Getter;
 import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.response.ObserveResponse;
-import org.eclipse.leshan.core.response.ReadResponse;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 
 public class TbLwM2MObserveRequest extends AbstractTbLwM2MTargetedDownlinkRequest<ObserveResponse> implements HasContentFormat {

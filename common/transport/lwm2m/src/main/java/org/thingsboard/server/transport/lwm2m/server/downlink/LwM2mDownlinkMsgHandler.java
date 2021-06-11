@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server;
+package org.thingsboard.server.transport.lwm2m.server.downlink;
 
-import org.eclipse.leshan.core.response.CancelObservationResponse;
 import org.eclipse.leshan.core.response.DeleteResponse;
 import org.eclipse.leshan.core.response.DiscoverResponse;
 import org.eclipse.leshan.core.response.ExecuteResponse;
@@ -24,19 +23,6 @@ import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.core.response.WriteAttributesResponse;
 import org.eclipse.leshan.core.response.WriteResponse;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
-import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCallback;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelAllRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDeleteRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDiscoverAllRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDiscoverRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MExecuteRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveAllRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MReadRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttributesRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplaceRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteUpdateRequest;
 
 import java.util.Set;
 

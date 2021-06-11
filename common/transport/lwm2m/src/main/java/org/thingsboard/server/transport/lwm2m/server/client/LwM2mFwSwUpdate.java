@@ -19,19 +19,18 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.server.DefaultLwM2MUplinkMsgHandler;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mDownlinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.downlink.LwM2mDownlinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MExecuteRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MExecuteRequestCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MExecuteCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveRequestCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplaceCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplaceRequest;
 
@@ -67,7 +66,6 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.L
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_5_BINARY;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.EXECUTE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_REPLACE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_INSTALL_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_NAME_ID;
@@ -247,7 +245,7 @@ public class LwM2mFwSwUpdate {
         this.sendLogs(handler, EXECUTE.name(), LOG_LW2M_INFO, null);
         //TODO: user this.rpcRequest???
         TbLwM2MExecuteRequest downlink = TbLwM2MExecuteRequest.builder().versionedId(pathInstallId).timeout(handler.config.getTimeout()).build();
-        request.sendExecuteRequest(lwM2MClient, downlink, new TbLwM2MExecuteRequestCallback(handler, lwM2MClient, pathInstallId));
+        request.sendExecuteRequest(lwM2MClient, downlink, new TbLwM2MExecuteCallback(handler, lwM2MClient, pathInstallId));
     }
 
     /**
@@ -432,7 +430,7 @@ public class LwM2mFwSwUpdate {
         }
         this.pendingInfoRequestsStart.forEach(versionedId -> {
             TbLwM2MObserveRequest downlink = TbLwM2MObserveRequest.builder().versionedId(versionedId).build();
-            request.sendObserveRequest(this.lwM2MClient, downlink, new TbLwM2MObserveRequestCallback(handler, lwM2MClient, versionedId));
+            request.sendObserveRequest(this.lwM2MClient, downlink, new TbLwM2MObserveCallback(handler, lwM2MClient, versionedId));
         });
 
     }
