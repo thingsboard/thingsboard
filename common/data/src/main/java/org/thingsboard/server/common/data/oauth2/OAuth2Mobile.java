@@ -31,12 +31,12 @@ public class OAuth2Mobile extends BaseData<OAuth2MobileId> {
 
     private OAuth2ParamsId oauth2ParamsId;
     private String pkgName;
-    private String callbackUrlScheme;
+    private String appSecret;
 
     public OAuth2Mobile(OAuth2Mobile mobile) {
         super(mobile);
         this.oauth2ParamsId = mobile.oauth2ParamsId;
         this.pkgName = mobile.pkgName;
-        this.callbackUrlScheme = mobile.callbackUrlScheme;
+        this.appSecret = mobile.appSecret;
     }
 }

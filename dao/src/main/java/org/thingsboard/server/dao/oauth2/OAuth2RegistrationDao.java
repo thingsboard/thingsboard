@@ -29,6 +29,6 @@ public interface OAuth2RegistrationDao extends Dao<OAuth2Registration> {
 
     List<OAuth2Registration> findByOAuth2ParamsId(UUID oauth2ParamsId);
 
-    String findCallbackUrlScheme(UUID id, String pkgName);
+    String findAppSecret(UUID id, String pkgName);
 
 }

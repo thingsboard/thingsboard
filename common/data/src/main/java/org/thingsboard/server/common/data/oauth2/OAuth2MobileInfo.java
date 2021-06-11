@@ -30,5 +30,5 @@ import lombok.ToString;
 @Builder
 public class OAuth2MobileInfo {
     private String pkgName;
-    private String callbackUrlScheme;
+    private String appSecret;
 }

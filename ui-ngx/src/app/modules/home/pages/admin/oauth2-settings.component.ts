@@ -42,7 +42,7 @@ import { WINDOW } from '@core/services/window.service';
 import { forkJoin, Subscription } from 'rxjs';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
-import { isDefined, isDefinedAndNotNull } from '@core/utils';
+import { isDefined, isDefinedAndNotNull, randomAlphanumeric } from '@core/utils';
 import { OAuth2Service } from '@core/http/oauth2.service';
 import { ActivatedRoute } from '@angular/router';
 
@@ -275,7 +275,8 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   private buildMobileInfoForm(mobileInfo?: OAuth2MobileInfo): FormGroup {
     return this.fb.group({
       pkgName: [mobileInfo?.pkgName, [Validators.required]],
-      callbackUrlScheme: [mobileInfo?.callbackUrlScheme, [Validators.required]],
+      appSecret: [mobileInfo?.appSecret, [Validators.required, Validators.minLength(16), Validators.maxLength(2048),
+        Validators.pattern(/^[A-Za-z0-9]+$/)]],
     }, {validators: this.uniquePkgNameValidator});
   }
 
@@ -529,7 +530,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   addMobileInfo(control: AbstractControl): void {
     this.mobileInfos(control).push(this.buildMobileInfoForm({
       pkgName: '',
-      callbackUrlScheme: ''
+      appSecret: randomAlphanumeric(24)
     }));
   }
 
