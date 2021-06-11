@@ -123,13 +123,17 @@ public class LwM2mFwSwUpdate {
     @Getter
     @Setter
     private volatile int updateStrategy;
+    @Getter
+    @Setter
+    private volatile String updateRecourse;
 
-    public LwM2mFwSwUpdate(LwM2mClient lwM2MClient, OtaPackageType type, int updateStrategy) {
+    public LwM2mFwSwUpdate(LwM2mClient lwM2MClient, OtaPackageType type, int updateStrategy, String updateRecourse) {
         this.lwM2MClient = lwM2MClient;
         this.pendingInfoRequestsStart = new CopyOnWriteArrayList<>();
         this.type = type;
         this.stateUpdate = null;
         this.updateStrategy = updateStrategy;
+        this.updateRecourse = updateRecourse;
         this.initPathId();
     }
 
@@ -191,9 +195,8 @@ public class LwM2mFwSwUpdate {
                 byte[] firmwareChunk = handler.otaPackageDataCache.get(this.currentId.toString(), chunkSize, chunk);
                 request.sendAllRequest(this.lwM2MClient, targetIdVer, WRITE_REPLACE, ContentFormat.OPAQUE,
                         firmwareChunk, handler.config.getTimeout(), this.rpcRequest);
-            } else if (LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL.code == this.updateStrategy) {
-                String apiFont = "coap://176.36.143.9:5685";
-                String uri =  apiFont  + "/" + FIRMWARE_UPDATE_COAP_RECOURSE + "/" + this.currentId.toString();
+            } else if (LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL.code == this.updateStrategy && this.updateRecourse != null) {
+                String uri =  this.updateRecourse  + "/" + FIRMWARE_UPDATE_COAP_RECOURSE + "/" + this.currentId.toString();
                 log.warn("89) coapUri: [{}]", uri);
                 request.sendAllRequest(this.lwM2MClient, targetIdVer, WRITE_REPLACE, null,
                         uri, handler.config.getTimeout(), this.rpcRequest);

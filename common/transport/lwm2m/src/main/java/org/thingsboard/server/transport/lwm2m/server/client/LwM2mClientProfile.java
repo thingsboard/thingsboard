@@ -26,15 +26,24 @@ import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2MSof
 
 @Data
 public class LwM2mClientProfile {
+    /**
+     *   fwUpdateStrategy: number;
+     *   swUpdateStrategy: number;
+     *   fwUpdateRecourse: string;
+     *   swUpdateRecourse: string;
+     */
     private final String clientStrategyStr = "clientStrategy";
     private final String fwUpdateStrategyStr = "fwUpdateStrategy";
     private final String swUpdateStrategyStr = "swUpdateStrategy";
+    private final String fwUpdateRecourseStr = "fwUpdateRecourse";
+    private final String swUpdateRecourseStr = "swUpdateRecourse";
 
     private TenantId tenantId;
     /**
      *   "clientLwM2mSettings": {
      *     "fwUpdateStrategy": "1",
-     *     "swUpdateStrategy": "1",
+     *     "swUpdateStrategy": "2",
+     *     "fwUpdateRecourse": "coap://localhost:5685"
      *     "clientStrategy": "1"
      *   }
      **/
@@ -109,5 +118,17 @@ public class LwM2mClientProfile {
         return this.postClientLwM2mSettings.getAsJsonObject().has(this.swUpdateStrategyStr) ?
                 Integer.parseInt(this.postClientLwM2mSettings.getAsJsonObject().get(this.swUpdateStrategyStr).getAsString()) :
                 LwM2MSoftwareUpdateStrategy.BINARY.code;
+    }
+
+    public String getFwUpdateRecourse() {
+        return this.getFwUpdateStrategy() == LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL.code && this.postClientLwM2mSettings.getAsJsonObject().has(this.fwUpdateRecourseStr) ?
+                this.postClientLwM2mSettings.getAsJsonObject().get(this.fwUpdateRecourseStr).getAsString() :
+                null;
+    }
+
+    public String getSwUpdateRecourse() {
+        return this.getSwUpdateStrategy() == LwM2MSoftwareUpdateStrategy.TEMP_URL.code && this.postClientLwM2mSettings.getAsJsonObject().has(this.swUpdateRecourseStr) ?
+                this.postClientLwM2mSettings.getAsJsonObject().get(this.swUpdateRecourseStr).getAsString() :
+                null;
     }
 }

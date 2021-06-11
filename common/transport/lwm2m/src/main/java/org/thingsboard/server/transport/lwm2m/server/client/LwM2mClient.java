@@ -396,7 +396,7 @@ public class LwM2mClient implements Cloneable {
     public LwM2mFwSwUpdate  getFwUpdate (LwM2mClientContext clientContext) {
         if (this.fwUpdate == null) {
             LwM2mClientProfile lwM2mClientProfile = clientContext.getProfile(this.getProfileId());
-            this.fwUpdate = new LwM2mFwSwUpdate(this, OtaPackageType.FIRMWARE, lwM2mClientProfile.getFwUpdateStrategy());
+            this.fwUpdate = new LwM2mFwSwUpdate(this, OtaPackageType.FIRMWARE, lwM2mClientProfile.getFwUpdateStrategy(), lwM2mClientProfile.getFwUpdateRecourse());
         }
         return this.fwUpdate;
     }
@@ -404,7 +404,7 @@ public class LwM2mClient implements Cloneable {
     public LwM2mFwSwUpdate  getSwUpdate (LwM2mClientContext clientContext) {
         if (this.swUpdate == null) {
             LwM2mClientProfile lwM2mClientProfile = clientContext.getProfile(this.getProfileId());
-            this.swUpdate = new LwM2mFwSwUpdate(this, OtaPackageType.SOFTWARE, lwM2mClientProfile.getSwUpdateStrategy());
+            this.swUpdate = new LwM2mFwSwUpdate(this, OtaPackageType.SOFTWARE, lwM2mClientProfile.getSwUpdateStrategy(), lwM2mClientProfile.getSwUpdateRecourse());
         }
         return this.fwUpdate;
     }
