@@ -13,19 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.lwm2m;
+:host{
+  .fields-group {
+    padding: 8px;
+    margin: 10px 0;
+    border: 1px groove rgba(0, 0, 0, .25);
+    border-radius: 4px;
 
-import lombok.Data;
-
-@Data
-public class ServerSecurityConfig {
-    String host;
-    String securityHost;
-    Integer port;
-    Integer securityPort;
-    String serverPublicKey;
-    boolean bootstrapServerIs = true;
-    Integer clientHoldOffTime = 1;
-    Integer serverId = 111;
-    Integer bootstrapServerAccountTimeout = 0;
+    legend {
+      color: rgba(0, 0, 0, .7);
+    }
+  }
 }
