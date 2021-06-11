@@ -20,7 +20,6 @@ export const INSTANCE = 'instance';
 export const RESOURCES = 'resources';
 export const ATTRIBUTE_LWM2M = 'attributeLwm2m';
 export const CLIENT_LWM2M = 'clientLwM2M';
-export const CLIENT_LWM2M_SETTINGS = 'clientLwM2mSettings';
 export const OBSERVE_ATTR_TELEMETRY = 'observeAttrTelemetry';
 export const OBSERVE = 'observe';
 export const ATTRIBUTE = 'attribute';
@@ -43,9 +42,9 @@ export const KEY_REGEXP_HEX_DEC = /^[-+]?[0-9A-Fa-f]+\.?[0-9A-Fa-f]*?$/;
 export const KEY_REGEXP_NUMBER = /^(\-?|\+?)\d*$/;
 export const INSTANCES_ID_VALUE_MIN = 0;
 export const INSTANCES_ID_VALUE_MAX = 65535;
-export const DEFAULT_OTA_UPDATE_PROTOCOL = "coap://";
-export const DEFAULT_FW_UPDATE_RESOURCE = DEFAULT_OTA_UPDATE_PROTOCOL + DEFAULT_LOCAL_HOST_NAME + ":"+ DEFAULT_PORT_SERVER_NO_SEC;
-export const DEFAULT_SW_UPDATE_RESOURCE = DEFAULT_OTA_UPDATE_PROTOCOL + DEFAULT_LOCAL_HOST_NAME + ":"+ DEFAULT_PORT_SERVER_NO_SEC;
+export const DEFAULT_OTA_UPDATE_PROTOCOL = 'coap://';
+export const DEFAULT_FW_UPDATE_RESOURCE = DEFAULT_OTA_UPDATE_PROTOCOL + DEFAULT_LOCAL_HOST_NAME + ':' + DEFAULT_PORT_SERVER_NO_SEC;
+export const DEFAULT_SW_UPDATE_RESOURCE = DEFAULT_OTA_UPDATE_PROTOCOL + DEFAULT_LOCAL_HOST_NAME + ':' + DEFAULT_PORT_SERVER_NO_SEC;
 
 
 export enum BINDING_MODE {
@@ -113,19 +112,19 @@ export const ATTRIBUTE_LWM2M_MAP = new Map<ATTRIBUTE_LWM2M_ENUM, string>(
 
 export const ATTRIBUTE_KEYS = Object.keys(ATTRIBUTE_LWM2M_ENUM) as string[];
 
-export enum SECURITY_CONFIG_MODE {
+export enum securityConfigMode {
   PSK = 'PSK',
   RPK = 'RPK',
   X509 = 'X509',
   NO_SEC = 'NO_SEC'
 }
 
-export const SECURITY_CONFIG_MODE_NAMES = new Map<SECURITY_CONFIG_MODE, string>(
+export const securityConfigModeNames = new Map<securityConfigMode, string>(
   [
-    [SECURITY_CONFIG_MODE.PSK, 'Pre-Shared Key'],
-    [SECURITY_CONFIG_MODE.RPK, 'Raw Public Key'],
-    [SECURITY_CONFIG_MODE.X509, 'X.509 Certificate'],
-    [SECURITY_CONFIG_MODE.NO_SEC, 'No Security']
+    [securityConfigMode.PSK, 'Pre-Shared Key'],
+    [securityConfigMode.RPK, 'Raw Public Key'],
+    [securityConfigMode.X509, 'X.509 Certificate'],
+    [securityConfigMode.NO_SEC, 'No Security']
   ]
 );
 
@@ -144,9 +143,10 @@ export interface BootstrapServersSecurityConfig {
 
 export interface ServerSecurityConfig {
   host?: string;
+  securityHost?: string;
   port?: number;
-  bootstrapServerIs?: boolean;
-  securityMode: string;
+  securityPort?: number;
+  securityMode: securityConfigMode;
   clientPublicKeyOrId?: string;
   clientSecretKey?: string;
   serverPublicKey?: string;
@@ -169,8 +169,8 @@ export interface Lwm2mProfileConfigModels {
 
 export interface ClientLwM2mSettings {
   clientStrategy: string;
-  fwUpdateStrategy: string;
-  swUpdateStrategy: string;
+  fwUpdateStrategy: number;
+  swUpdateStrategy: number;
   fwUpdateRecourse: string;
   swUpdateRecourse: string;
 }
@@ -193,12 +193,11 @@ export function getDefaultBootstrapServersSecurityConfig(): BootstrapServersSecu
   };
 }
 
-export function getDefaultBootstrapServerSecurityConfig(hostname: any): ServerSecurityConfig {
+export function getDefaultBootstrapServerSecurityConfig(hostname: string): ServerSecurityConfig {
   return {
     host: hostname,
     port: DEFAULT_PORT_BOOTSTRAP_NO_SEC,
-    bootstrapServerIs: true,
-    securityMode: SECURITY_CONFIG_MODE.NO_SEC.toString(),
+    securityMode: securityConfigMode.NO_SEC,
     serverPublicKey: '',
     clientHoldOffTime: DEFAULT_CLIENT_HOLD_OFF_TIME,
     serverId: DEFAULT_ID_BOOTSTRAP,
@@ -208,7 +207,6 @@ export function getDefaultBootstrapServerSecurityConfig(hostname: any): ServerSe
 
 export function getDefaultLwM2MServerSecurityConfig(hostname): ServerSecurityConfig {
   const DefaultLwM2MServerSecurityConfig = getDefaultBootstrapServerSecurityConfig(hostname);
-  DefaultLwM2MServerSecurityConfig.bootstrapServerIs = false;
   DefaultLwM2MServerSecurityConfig.port = DEFAULT_PORT_SERVER_NO_SEC;
   DefaultLwM2MServerSecurityConfig.serverId = DEFAULT_ID_SERVER;
   return DefaultLwM2MServerSecurityConfig;
@@ -242,9 +240,9 @@ export function getDefaultProfileConfig(hostname?: any): Lwm2mProfileConfigModel
 
 function getDefaultProfileClientLwM2mSettingsConfig(): ClientLwM2mSettings {
   return {
-    clientStrategy: "1",
-    fwUpdateStrategy: "1",
-    swUpdateStrategy: "1",
+    clientStrategy: '1',
+    fwUpdateStrategy: 1,
+    swUpdateStrategy: 1,
     fwUpdateRecourse: DEFAULT_FW_UPDATE_RESOURCE,
     swUpdateRecourse: DEFAULT_SW_UPDATE_RESOURCE
   };
