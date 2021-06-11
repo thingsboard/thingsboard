@@ -697,12 +697,12 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   }
 
   public onRowClick($event: Event, alarm: AlarmDataInfo) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.alarmsDatasource.toggleCurrentAlarm(alarm);
     const descriptors = this.ctx.actionsApi.getActionDescriptors('rowClick');
     if (descriptors.length) {
+      if ($event) {
+        $event.stopPropagation();
+      }
+      this.alarmsDatasource.toggleCurrentAlarm(alarm);
       let entityId;
       let entityName;
       if (alarm && alarm.originator) {
