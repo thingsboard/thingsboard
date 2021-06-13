@@ -150,7 +150,16 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         }
         if (lwM2mClient == null) {
             log.warn("Device TimeOut? lwM2mClient is null.");
-            log.warn("SessionInfo input [{}], lwM2mClientsByEndpoint size: [{}] lwM2mClientsByRegistrationId: [{}]", sessionInfo, lwM2mClientsByEndpoint.values(), lwM2mClientsByRegistrationId.values());
+            log.warn("000.10) SessionInfo input [{}], " +
+                            "lwM2mClientsByEndpoint_EndPoint: [{}], lwM2mClientsByEndpoint_Registration: [{}], lwM2mClientsByEndpoint_Session: [{}],  " +
+                            "lwM2mClientsByRegistrationId_EndPoint: [{}], lwM2mClientsByRegistrationId_Registration: [{}], lwM2mClientsByRegistrationId_Session: [{}]",
+                    new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()),
+                    ((LwM2mClient)lwM2mClientsByEndpoint.values().toArray()[0]).getEndpoint(),
+                    ((LwM2mClient)lwM2mClientsByEndpoint.values().toArray()[0]).getRegistration().getId(),
+                    new UUID(((LwM2mClient)lwM2mClientsByEndpoint.values().toArray()[0]).getSession().getSessionIdMSB(), ((LwM2mClient)lwM2mClientsByEndpoint.values().toArray()[0]).getSession().getSessionIdLSB()),
+                    ((LwM2mClient)lwM2mClientsByRegistrationId.values().toArray()[0]).getEndpoint(),
+                    ((LwM2mClient)lwM2mClientsByRegistrationId.values().toArray()[0]).getRegistration().getId(),
+                    new UUID(((LwM2mClient)lwM2mClientsByRegistrationId.values().toArray()[0]).getSession().getSessionIdMSB(), ((LwM2mClient)lwM2mClientsByEndpoint.values().toArray()[0]).getSession().getSessionIdLSB()));
             log.error("", new RuntimeException());
         }
         return lwM2mClient;

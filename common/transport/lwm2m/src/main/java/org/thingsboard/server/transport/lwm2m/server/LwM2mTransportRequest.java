@@ -206,7 +206,7 @@ public class LwM2mTransportRequest {
                         break;
                     // lwm2mClientRpcRequest != null
                     case FW_UPDATE:
-                        handler.getInfoFirmwareUpdate(lwM2MClient, lwm2mClientRpcRequest);
+                        handler.firmwareUpdateData(lwM2MClient, lwm2mClientRpcRequest);
                         break;
                 }
             }
@@ -236,13 +236,13 @@ public class LwM2mTransportRequest {
                 String msg = String.format("%s: Send Observation  %s.", LOG_LW2M_INFO, targetIdVer);
                 log.warn(msg);
                 if (resultIds.isResource()) {
-                    Set<Observation> observations = context.getServer().getObservationService().getObservations(registration);
-                    Set<Observation> paths = observations.stream().filter(observation -> observation.getPath().equals(resultIds)).collect(Collectors.toSet());
+                    Set<Observation> paths = this.isObserveByLwM2mPath(registration, resultIds);
                     if (paths.size() == 0) {
                         request = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId());
-                    } else {
-                        request = new ReadRequest(contentFormat, target);
                     }
+//                    else {
+//                        request = new ReadRequest(contentFormat, target);
+//                    }
                 } else if (resultIds.isObjectInstance()) {
                     request = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId());
                 } else if (resultIds.getObjectId() >= 0) {
@@ -609,5 +609,11 @@ public class LwM2mTransportRequest {
             rpcRequest.setInfoMsg(String.format("Count: %d", observeCancelCnt));
             handler.sentRpcResponse(rpcRequest, CONTENT.name(), null, LOG_LW2M_INFO);
         }
+    }
+
+    public Set<Observation> isObserveByLwM2mPath(Registration registration, LwM2mPath resultIds) {
+        Set<Observation> observations = context.getServer().getObservationService().getObservations(registration);
+        return observations.stream().filter(observation -> observation.getPath().equals(resultIds)).collect(Collectors.toSet());
+
     }
 }

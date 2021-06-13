@@ -47,8 +47,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageKey;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
-import org.thingsboard.server.common.data.ota.OtaPackageUtil;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientProfile;
 
@@ -85,6 +85,7 @@ import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.FAIL
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATING;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.VERIFIED;
+import static org.thingsboard.server.common.data.ota.OtaPackageUtil.getAttributeKey;
 
 @Slf4j
 public class LwM2mTransportUtil {
@@ -379,7 +380,7 @@ public class LwM2mTransportUtil {
         switch (updateResultFw) {
             case INITIAL:
                 return equalsFwSateToFirmwareUpdateStatus(stateFw);
-             case UPDATE_SUCCESSFULLY:
+            case UPDATE_SUCCESSFULLY:
                 return UPDATED;
             case NOT_ENOUGH:
             case OUT_OFF_MEMORY:
@@ -399,7 +400,7 @@ public class LwM2mTransportUtil {
         switch (updateResultFw) {
             case INITIAL:
                 return VERIFIED;
-             case UPDATE_SUCCESSFULLY:
+            case UPDATE_SUCCESSFULLY:
                 return UPDATED;
             case NOT_ENOUGH:
             case OUT_OFF_MEMORY:
@@ -695,7 +696,7 @@ public class LwM2mTransportUtil {
         }
     }
 
-    public static LwM2mOtaConvert convertOtaUpdateValueToString (String pathIdVer, Object value, ResourceModel.Type currentType) {
+    public static LwM2mOtaConvert convertOtaUpdateValueToString(String pathIdVer, Object value, ResourceModel.Type currentType) {
         String path = convertPathFromIdVerToObjectId(pathIdVer);
         LwM2mOtaConvert lwM2mOtaConvert = new LwM2mOtaConvert();
         if (path != null) {
@@ -703,18 +704,15 @@ public class LwM2mTransportUtil {
                 lwM2mOtaConvert.setCurrentType(STRING);
                 lwM2mOtaConvert.setValue(StateFw.fromStateFwByCode(((Long) value).intValue()).type);
                 return lwM2mOtaConvert;
-            }
-            else if (FW_RESULT_ID.equals(path)) {
+            } else if (FW_RESULT_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
                 lwM2mOtaConvert.setValue(UpdateResultFw.fromUpdateResultFwByCode(((Long) value).intValue()).type);
                 return lwM2mOtaConvert;
-            }
-            else if (SW_UPDATE_STATE_ID.equals(path)) {
+            } else if (SW_UPDATE_STATE_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
                 lwM2mOtaConvert.setValue(UpdateStateSw.fromUpdateStateSwByCode(((Long) value).intValue()).type);
                 return lwM2mOtaConvert;
-            }
-            else if (SW_RESULT_ID.equals(path)) {
+            } else if (SW_RESULT_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
                 lwM2mOtaConvert.setValue(UpdateResultSw.fromUpdateResultSwByCode(((Long) value).intValue()).type);
                 return lwM2mOtaConvert;
@@ -1095,15 +1093,12 @@ public class LwM2mTransportUtil {
     }
 
     public static boolean isFwSwWords(String pathName) {
-        return OtaPackageUtil.getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.VERSION).equals(pathName)
-                || OtaPackageUtil.getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.TITLE).equals(pathName)
-                || OtaPackageUtil.getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.CHECKSUM).equals(pathName)
-                || OtaPackageUtil.getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.CHECKSUM_ALGORITHM).equals(pathName)
-                || OtaPackageUtil.getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.SIZE).equals(pathName)
-                || OtaPackageUtil.getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.VERSION).equals(pathName)
-                || OtaPackageUtil.getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.TITLE).equals(pathName)
-                || OtaPackageUtil.getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.CHECKSUM).equals(pathName)
-                || OtaPackageUtil.getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.CHECKSUM_ALGORITHM).equals(pathName)
-                || OtaPackageUtil.getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.SIZE).equals(pathName);
+        return pathName.contains(OtaPackageType.FIRMWARE.getKeyPrefix())
+                ||  pathName.contains(OtaPackageType.SOFTWARE.getKeyPrefix());
+    }
+
+    public static String getOtaParamsValue(List<TransportProtos.TsKvProto> tsKvProtos, OtaPackageType otaPackageType, OtaPackageKey otaPackageKey) {
+        TransportProtos.TsKvProto protoKey = tsKvProtos.stream().filter(c -> c.getKv().getKey().equals(getAttributeKey(otaPackageType, otaPackageKey))).findFirst().orElse(null);
+        return protoKey != null ? protoKey.getKv().getStringV() : null;
     }
 }

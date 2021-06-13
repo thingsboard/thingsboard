@@ -112,6 +112,14 @@ public class LwM2mClient implements Cloneable {
     @Getter
     private boolean init;
 
+    public void lock() {
+        lock.lock();
+    }
+
+    public void unlock() {
+        lock.unlock();
+    }
+
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
     }
@@ -142,12 +150,14 @@ public class LwM2mClient implements Cloneable {
         }
     }
 
-    public void lock() {
-        lock.lock();
-    }
-
-    public void unlock() {
-        lock.unlock();
+    public void initReadValue(DefaultLwM2MTransportMsgHandler serviceImpl, String path) {
+        if (path != null) {
+            this.pendingReadRequests.remove(path);
+        }
+        if (this.pendingReadRequests.size() == 0) {
+            this.init = true;
+            serviceImpl.putDelayedUpdateResourcesThingsboard(this);
+        }
     }
 
     public void onDeviceUpdate(Device device, Optional<DeviceProfile> deviceProfileOpt) {
@@ -371,16 +381,6 @@ public class LwM2mClient implements Cloneable {
                 .stream()
                 .filter(e -> idVer.equals(e.split(LWM2M_SEPARATOR_PATH)[1]))
                 .collect(Collectors.toSet());
-    }
-
-    public void initReadValue(DefaultLwM2MTransportMsgHandler serviceImpl, String path) {
-        if (path != null) {
-            this.pendingReadRequests.remove(path);
-        }
-        if (this.pendingReadRequests.size() == 0) {
-            this.init = true;
-            serviceImpl.putDelayedUpdateResourcesThingsboard(this);
-        }
     }
 
     public ContentFormat getDefaultContentFormat() {

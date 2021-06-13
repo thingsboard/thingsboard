@@ -140,7 +140,7 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
             response.setPayload(fwData);
             if (exchange.getRequestOptions().getBlock2() != null) {
                 int chunkSize = exchange.getRequestOptions().getBlock2().getSzx();
-                boolean moreFlag = fwData.length > chunkSize;
+                boolean moreFlag = fwData.length <= chunkSize;
                 response.getOptions().setBlock2(chunkSize, moreFlag, 0);
                 log.warn("92) with blokc2 Send currentId: [{}], length: [{}], chunkSize [{}], moreFlag [{}]", currentId.toString(), fwData.length, chunkSize, moreFlag);
             }
