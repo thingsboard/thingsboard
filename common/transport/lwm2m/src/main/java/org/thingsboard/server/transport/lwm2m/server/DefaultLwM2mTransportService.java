@@ -26,7 +26,6 @@ import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.californium.LeshanServerBuilder;
 import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
-import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
@@ -35,7 +34,6 @@ import org.thingsboard.server.transport.lwm2m.secure.LWM2MGenerationPSkRPkECC;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MAuthorizer;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MDtlsCertificateVerifier;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
-import org.thingsboard.server.transport.lwm2m.server.store.TbEditableSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
@@ -99,9 +97,9 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         /**
          * Add a resource to the server.
          * CoapResource ->
-         * path = FW_PACKAGE or SW_PACKAGE
-         * nameFile = "BC68JAR01A09_TO_BC68JAR01A10.bin"
-         * "coap://host:port/{path}/{token}/{nameFile}"
+         * path = FIRMWARE_UPDATE_COAP_RECOURSE or SOFTWARE_UPDATE_COAP_RECOURSE
+         * packageId = 547da270-cb3f-11eb-9e9a-15643fa49827
+         * "coap://host:port/{path}/{packageId}"
          */
 
 

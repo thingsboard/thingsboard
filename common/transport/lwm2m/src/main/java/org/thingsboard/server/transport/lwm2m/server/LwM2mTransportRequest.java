@@ -63,6 +63,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -116,7 +117,7 @@ public class LwM2mTransportRequest {
                 new NamedThreadFactory(String.format("LwM2M %s channel response after request", RESPONSE_REQUEST_CHANNEL)));
     }
 
-    public void sendAllRequest(LwM2mClient lwM2MClient, String targetIdVer, LwM2mTypeOper typeOper, Object params, long timeoutInMs, LwM2mClientRpcRequest lwm2mClientRpcRequest) {
+    public void sendAllRequestLwM2mVersion(LwM2mClient lwM2MClient, String targetIdVer, LwM2mTypeOper typeOper, Object params, long timeoutInMs, LwM2mClientRpcRequest lwm2mClientRpcRequest) {
         sendAllRequest(lwM2MClient, targetIdVer, typeOper, lwM2MClient.getDefaultContentFormat(), params, timeoutInMs, lwm2mClientRpcRequest);
     }
 
@@ -126,9 +127,15 @@ public class LwM2mTransportRequest {
         Registration registration = lwM2MClient.getRegistration();
         try {
             String target = convertPathFromIdVerToObjectId(targetIdVer);
-            if(contentFormat == null){
-                contentFormat = ContentFormat.DEFAULT;
+
+            if (contentFormat == null) {
+//                contentFormat = ContentFormat.DEFAULT;
+                contentFormat = lwM2MClient.getDefaultContentFormat();
             }
+            String msgSendRequest =  String.format(": sendAllRequest contentFormat: %s  regId: %s sessionId: %s,  typeOper: %s, target: %s",
+                    contentFormat.getName(), registration.getId(), new UUID(lwM2MClient.getSession().getSessionIdMSB(), lwM2MClient.getSession().getSessionIdLSB()), typeOper.name(), targetIdVer);
+            log.warn("000.6) client [{}], [{}]",  lwM2MClient.getEndpoint(), msgSendRequest);
+            handler.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_INFO + msgSendRequest);
             LwM2mPath resultIds = target != null ? new LwM2mPath(target) : null;
             if (!OBSERVE_CANCEL.name().equals(typeOper.name()) && resultIds != null && registration != null && resultIds.getObjectId() >= 0 && lwM2MClient != null) {
                 if (lwM2MClient.isValidObjectVersion(targetIdVer)) {
@@ -222,8 +229,8 @@ public class LwM2mTransportRequest {
     }
 
     private SimpleDownlinkRequest createRequest(Registration registration, LwM2mClient lwM2MClient, LwM2mTypeOper typeOper,
-                                          ContentFormat contentFormat, String target, String targetIdVer,
-                                          LwM2mPath resultIds, Object params, LwM2mClientRpcRequest rpcRequest) {
+                                                ContentFormat contentFormat, String target, String targetIdVer,
+                                                LwM2mPath resultIds, Object params, LwM2mClientRpcRequest rpcRequest) {
         SimpleDownlinkRequest request = null;
         switch (typeOper) {
             case READ:
@@ -550,8 +557,7 @@ public class LwM2mTransportRequest {
                     if (rpcRequest != null) {
                         rpcRequest.setInfoMsg(msg);
                     }
-                }
-                else if (rpcRequest != null) {
+                } else if (rpcRequest != null) {
                     handler.sentRpcResponse(rpcRequest, response.getCode().getName(), msg, LOG_LW2M_INFO);
                 }
             }
