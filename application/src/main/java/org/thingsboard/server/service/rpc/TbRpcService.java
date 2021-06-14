@@ -41,9 +41,10 @@ public class TbRpcService {
     private final RpcService rpcService;
     private final TbClusterService tbClusterService;
 
-    public void save(TenantId tenantId, Rpc rpc) {
-        Rpc saved = rpcService.save(tenantId, rpc);
+    public Rpc save(TenantId tenantId, Rpc rpc) {
+        Rpc saved = rpcService.save(rpc);
         pushRpcMsgToRuleEngine(tenantId, saved);
+        return saved;
     }
 
     public void save(TenantId tenantId, RpcId rpcId, RpcStatus newStatus, JsonNode response) {
@@ -53,7 +54,7 @@ public class TbRpcService {
             if (response != null) {
                 foundRpc.setResponse(response);
             }
-            Rpc saved = rpcService.save(tenantId, foundRpc);
+            Rpc saved = rpcService.save(foundRpc);
             pushRpcMsgToRuleEngine(tenantId, saved);
         } else {
             log.warn("[{}] Failed to update RPC status because RPC was already deleted", rpcId);
@@ -69,8 +70,8 @@ public class TbRpcService {
         return rpcService.findById(tenantId, rpcId);
     }
 
-    public PageData<Rpc> findAllByDeviceIdAndStatus(DeviceId deviceId, RpcStatus rpcStatus, PageLink pageLink) {
-        return rpcService.findAllByDeviceIdAndStatus(deviceId, rpcStatus, pageLink);
+    public PageData<Rpc> findAllByDeviceIdAndStatus(TenantId tenantId, DeviceId deviceId, RpcStatus rpcStatus, PageLink pageLink) {
+        return rpcService.findAllByDeviceIdAndStatus(tenantId, deviceId, rpcStatus, pageLink);
     }
 
 }

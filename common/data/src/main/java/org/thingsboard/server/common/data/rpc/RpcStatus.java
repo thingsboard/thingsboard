@@ -16,5 +16,5 @@
 package org.thingsboard.server.common.data.rpc;
 
 public enum RpcStatus {
-    QUEUED, SENT, DELIVERED, SUCCESSFUL, TIMEOUT, FAILED
+    QUEUED, DELIVERED, SUCCESSFUL, TIMEOUT, FAILED
 }

@@ -354,9 +354,8 @@ export enum MessageType {
   TIMESERIES_UPDATED = 'TIMESERIES_UPDATED',
   TIMESERIES_DELETED = 'TIMESERIES_DELETED',
   RPC_QUEUED = 'RPC_QUEUED',
-  RPC_SENT = 'RPC_SENT',
-  RPC_DELIVERED = 'RPC_SENT',
-  RPC_SUCCESSFUL = 'RPC_DELIVERED',
+  RPC_DELIVERED = 'RPC_DELIVERED',
+  RPC_SUCCESSFUL = 'RPC_SUCCESSFUL',
   RPC_TIMEOUT = 'RPC_TIMEOUT',
   RPC_FAILED = 'RPC_FAILED'
 }
@@ -381,7 +380,6 @@ export const messageTypeNames = new Map<MessageType, string>(
     [MessageType.TIMESERIES_UPDATED, 'Timeseries Updated'],
     [MessageType.TIMESERIES_DELETED, 'Timeseries Deleted'],
     [MessageType.RPC_QUEUED, 'RPC Queued'],
-    [MessageType.RPC_SENT, 'RPC Sent'],
     [MessageType.RPC_DELIVERED, 'RPC Delivered'],
     [MessageType.RPC_SUCCESSFUL, 'RPC Successful'],
     [MessageType.RPC_TIMEOUT, 'RPC Timeout'],

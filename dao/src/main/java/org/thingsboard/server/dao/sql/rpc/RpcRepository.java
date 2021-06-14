@@ -26,7 +26,9 @@ import org.thingsboard.server.dao.model.sql.RpcEntity;
 import java.util.UUID;
 
 public interface RpcRepository extends CrudRepository<RpcEntity, UUID> {
-    Page<RpcEntity> findAllByDeviceIdAndStatus(UUID deviceId, RpcStatus status, Pageable pageable);
+    Page<RpcEntity> findAllByTenantIdAndDeviceIdAndStatus(UUID tenantId, UUID deviceId, RpcStatus status, Pageable pageable);
+
+    Page<RpcEntity> findAllByTenantId(UUID tenantId, Pageable pageable);
 
     @Query(value = "WITH deleted AS (DELETE FROM rpc WHERE (tenant_id = :tenantId AND created_time < :expirationTime) IS TRUE RETURNING *) SELECT count(*) FROM deleted",
             nativeQuery = true)

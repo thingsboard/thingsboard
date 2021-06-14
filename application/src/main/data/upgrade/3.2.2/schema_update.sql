@@ -209,3 +209,5 @@ CREATE TABLE IF NOT EXISTS rpc (
     status varchar(255) NOT NULL
 );
 
+CREATE INDEX IF NOT EXISTS idx_rpc_tenant_id_device_id ON rpc(tenant_id, device_id);
+

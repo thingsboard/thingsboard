@@ -49,10 +49,14 @@ public class JpaRpcDao extends JpaAbstractDao<RpcEntity, Rpc> implements RpcDao 
         return rpcRepository;
     }
 
+    @Override
+    public PageData<Rpc> findAllByDeviceId(TenantId tenantId, DeviceId deviceId, RpcStatus rpcStatus, PageLink pageLink) {
+        return DaoUtil.toPageData(rpcRepository.findAllByTenantIdAndDeviceIdAndStatus(tenantId.getId(), deviceId.getId(), rpcStatus, DaoUtil.toPageable(pageLink)));
+    }
 
     @Override
-    public PageData<Rpc> findAllByDeviceId(DeviceId deviceId, RpcStatus rpcStatus, PageLink pageLink) {
-        return DaoUtil.toPageData(rpcRepository.findAllByDeviceIdAndStatus(deviceId.getId(), rpcStatus, DaoUtil.toPageable(pageLink)));
+    public PageData<Rpc> findAllRpcByTenantId(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(rpcRepository.findAllByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override

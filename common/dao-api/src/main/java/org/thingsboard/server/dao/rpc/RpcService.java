@@ -25,13 +25,15 @@ import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 
 public interface RpcService {
-    Rpc save(TenantId tenantId, Rpc rpc);
+    Rpc save(Rpc rpc);
 
-    void remove(TenantId tenantId, RpcId id);
+    void deleteRpc(TenantId tenantId, RpcId id);
+
+    void deleteAllRpcByTenantId(TenantId tenantId);
 
     Rpc findById(TenantId tenantId, RpcId id);
 
     ListenableFuture<Rpc> findRpcByIdAsync(TenantId tenantId, RpcId id);
 
-    PageData<Rpc> findAllByDeviceIdAndStatus(DeviceId deviceId, RpcStatus rpcStatus, PageLink pageLink);
+    PageData<Rpc> findAllByDeviceIdAndStatus(TenantId tenantId, DeviceId deviceId, RpcStatus rpcStatus, PageLink pageLink);
 }

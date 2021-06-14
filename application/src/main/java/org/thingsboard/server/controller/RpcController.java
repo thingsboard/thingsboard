@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -41,7 +42,10 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rpc.Rpc;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -95,7 +99,7 @@ public class RpcController extends BaseController {
         return handleDeviceRPCRequest(false, new DeviceId(UUID.fromString(deviceIdStr)), requestBody);
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/persisted/{rpcId}", method = RequestMethod.GET)
     @ResponseBody
     public Rpc getPersistedRpc(@PathVariable("rpcId") String strRpc) throws ThingsboardException {
@@ -103,6 +107,39 @@ public class RpcController extends BaseController {
         try {
             RpcId rpcId = new RpcId(UUID.fromString(strRpc));
             return checkRpcId(rpcId, Operation.READ);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/persisted/{deviceId}", method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<Rpc> getPersistedRpcByDevice(@PathVariable("deviceId") String strDeviceId,
+                                                 @RequestParam int pageSize,
+                                                 @RequestParam int page,
+                                                 @RequestParam RpcStatus rpcStatus,
+                                                 @RequestParam(required = false) String textSearch,
+                                                 @RequestParam(required = false) String sortProperty,
+                                                 @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        checkParameter("DeviceId", strDeviceId);
+        try {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            DeviceId deviceId = new DeviceId(UUID.fromString(strDeviceId));
+            return checkNotNull(rpcService.findAllByDeviceIdAndStatus(tenantId, deviceId, rpcStatus, pageLink));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/persisted/{rpcId}", method = RequestMethod.DELETE)
+    @ResponseBody
+    public void deleteResource(@PathVariable("rpcId") String strRpc) throws ThingsboardException {
+        checkParameter("RpcId", strRpc);
+        try {
+            rpcService.deleteRpc(getTenantId(), new RpcId(UUID.fromString(strRpc)));
         } catch (Exception e) {
             throw handleException(e);
         }

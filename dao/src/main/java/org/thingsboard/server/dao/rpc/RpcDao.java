@@ -24,7 +24,9 @@ import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.dao.Dao;
 
 public interface RpcDao extends Dao<Rpc> {
-    PageData<Rpc> findAllByDeviceId(DeviceId deviceId, RpcStatus rpcStatus, PageLink pageLink);
+    PageData<Rpc> findAllByDeviceId(TenantId tenantId, DeviceId deviceId, RpcStatus rpcStatus, PageLink pageLink);
+
+    PageData<Rpc> findAllRpcByTenantId(TenantId tenantId, PageLink pageLink);
 
     Long deleteOutdatedRpcByTenantId(TenantId tenantId, Long expirationTime);
 }
