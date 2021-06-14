@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -80,7 +80,7 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MReadCallbac
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MReadRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttributesCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttributesRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplaceCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteResponseCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplaceRequest;
 import org.thingsboard.server.transport.lwm2m.server.rpc.LwM2MRpcRequestHandler;
 import org.thingsboard.server.transport.lwm2m.server.rpc.LwM2mClientRpcRequest;
@@ -115,7 +115,6 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.L
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_TELEMETRY;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_WARN;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType.READ;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertOtaUpdateValueToString;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
@@ -333,29 +332,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
                     this.updateResourcesValue(registration, lwM2mResource, path);
                 }
             }
-            if (rpcRequest != null) {
-                //TODO: move this to separate callback.
-                this.sendRpcRequestAfterReadResponse(registration, lwM2MClient, path, response, rpcRequest);
-            }
         }
-    }
-
-    private void sendRpcRequestAfterReadResponse(Registration registration, LwM2mClient lwM2MClient, String pathIdVer, ReadResponse response,
-                                                 LwM2mClientRpcRequest rpcRequest) {
-        Object value = null;
-        if (response.getContent() instanceof LwM2mObject) {
-            value = lwM2MClient.objectToString((LwM2mObject) response.getContent(), this.converter, pathIdVer);
-        } else if (response.getContent() instanceof LwM2mObjectInstance) {
-            value = lwM2MClient.instanceToString((LwM2mObjectInstance) response.getContent(), this.converter, pathIdVer);
-        } else if (response.getContent() instanceof LwM2mResource) {
-            value = lwM2MClient.resourceToString((LwM2mResource) response.getContent(), this.converter, pathIdVer);
-        }
-        String msg = String.format("%s: type operation %s path - %s value - %s", LOG_LW2M_INFO,
-                READ, pathIdVer, value);
-        this.sendLogsToThingsboard(lwM2MClient, msg);
-        rpcRequest.setValueMsg(String.format("%s", value));
-        //TODO: refactor
-//        this.sentRpcResponse(rpcRequest, response.getCode().getName(), (String) value, LOG_LW2M_VALUE);
     }
 
     /**
@@ -964,7 +941,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
     private void updateResourcesValueToClient(LwM2mClient lwM2MClient, Object valueOld, Object newValue, String versionedId) {
         if (newValue != null && (valueOld == null || !newValue.toString().equals(valueOld.toString()))) {
             TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionedId).value(newValue).timeout(this.config.getTimeout()).build();
-            defaultLwM2MDownlinkMsgHandler.sendWriteReplaceRequest(lwM2MClient, request, new TbLwM2MWriteReplaceCallback(this, lwM2MClient, versionedId));
+            defaultLwM2MDownlinkMsgHandler.sendWriteReplaceRequest(lwM2MClient, request, new TbLwM2MWriteResponseCallback(this, lwM2MClient, versionedId));
         } else {
             log.error("Failed update resource [{}] [{}]", versionedId, newValue);
             String logMsg = String.format("%s: Failed update resource versionedId - %s value - %s. Value is not changed or bad",

@@ -47,6 +47,7 @@ import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.device.data.lwm2m.ObjectAttributes;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
@@ -98,30 +99,30 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
 
     @Override
     public void sendReadRequest(LwM2mClient client, TbLwM2MReadRequest request, DownlinkRequestCallback<ReadResponse> callback) {
-        if (request.getObjectId() != null && client.isValidObjectVersion(request.getVersionedId())) {
-            ReadRequest downlink = new ReadRequest(getContentFormat(client, request), request.getObjectId());
-            sendRequest(client, downlink, request.getTimeout(), callback);
-        }
+        validateVersionedId(client, request);
+        ReadRequest downlink = new ReadRequest(getContentFormat(client, request), request.getObjectId());
+        sendRequest(client, downlink, request.getTimeout(), callback);
     }
 
     @Override
     public void sendObserveRequest(LwM2mClient client, TbLwM2MObserveRequest request, DownlinkRequestCallback<ObserveResponse> callback) {
-        if (request.getObjectId() != null && client.isValidObjectVersion(request.getVersionedId())) {
-            LwM2mPath resultIds = new LwM2mPath(request.getObjectId());
-            Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
-            if (observations.stream().noneMatch(observation -> observation.getPath().equals(resultIds))) {
-                ObserveRequest downlink;
-                ContentFormat contentFormat = getContentFormat(client, request);
-                if (resultIds.isResource()) {
-                    downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId());
-                } else if (resultIds.isObjectInstance()) {
-                    downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId());
-                } else {
-                    downlink = new ObserveRequest(contentFormat, resultIds.getObjectId());
-                }
-                log.info("[{}] Send observation: {}.", client.getEndpoint(), request.getVersionedId());
-                sendRequest(client, downlink, request.getTimeout(), callback);
+        validateVersionedId(client, request);
+        LwM2mPath resultIds = new LwM2mPath(request.getObjectId());
+        Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
+        if (observations.stream().noneMatch(observation -> observation.getPath().equals(resultIds))) {
+            ObserveRequest downlink;
+            ContentFormat contentFormat = getContentFormat(client, request);
+            if (resultIds.isResource()) {
+                downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId());
+            } else if (resultIds.isObjectInstance()) {
+                downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId());
+            } else {
+                downlink = new ObserveRequest(contentFormat, resultIds.getObjectId());
             }
+            log.info("[{}] Send observation: {}.", client.getEndpoint(), request.getVersionedId());
+            sendRequest(client, downlink, request.getTimeout(), callback);
+        } else {
+            throw new IllegalArgumentException("Observation is already registered!");
         }
     }
 
@@ -133,10 +134,8 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
     }
 
     @Override
-    public void sendDiscoverAllRequest(LwM2mClient client, TbLwM2MDiscoverAllRequest request, DownlinkRequestCallback<Set<String>> callback) {
-        Link[] objectLinks = client.getRegistration().getSortedObjectLinks();
-        Set<String> paths = Arrays.stream(objectLinks).map(Link::toString).collect(Collectors.toUnmodifiableSet());
-        callback.onSuccess(paths);
+    public void sendDiscoverAllRequest(LwM2mClient client, TbLwM2MDiscoverAllRequest request, DownlinkRequestCallback<List<Link>> callback) {
+        callback.onSuccess(Arrays.asList(client.getRegistration().getSortedObjectLinks()));
     }
 
     @Override
@@ -172,27 +171,28 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
 
     @Override
     public void sendDiscoverRequest(LwM2mClient client, TbLwM2MDiscoverRequest request, DownlinkRequestCallback<DiscoverResponse> callback) {
-        if (request.getObjectId() != null && client.isValidObjectVersion(request.getVersionedId())) {
-            sendRequest(client, new DiscoverRequest(request.getObjectId()), request.getTimeout(), callback);
-        }
+        validateVersionedId(client, request);
+        sendRequest(client, new DiscoverRequest(request.getObjectId()), request.getTimeout(), callback);
     }
 
     @Override
     public void sendWriteAttributesRequest(LwM2mClient client, TbLwM2MWriteAttributesRequest request, DownlinkRequestCallback<WriteAttributesResponse> callback) {
-        if (request.getObjectId() != null && client.isValidObjectVersion(request.getVersionedId()) && request.getAttributes() != null) {
-            ObjectAttributes params = request.getAttributes();
-            List<Attribute> attributes = new LinkedList<>();
+        validateVersionedId(client, request);
+        if (request.getAttributes() == null) {
+            throw new IllegalArgumentException("Attributes to write are not specified!");
+        }
+        ObjectAttributes params = request.getAttributes();
+        List<Attribute> attributes = new LinkedList<>();
 //            Dimension and Object version are read only attributes.
 //            addAttribute(attributes, DIMENSION, params.getDim(), dim -> dim >= 0 && dim <= 255);
 //            addAttribute(attributes, OBJECT_VERSION, params.getVer(), StringUtils::isNotEmpty, Function.identity());
-            addAttribute(attributes, MAXIMUM_PERIOD, params.getPmax());
-            addAttribute(attributes, MINIMUM_PERIOD, params.getPmin());
-            addAttribute(attributes, GREATER_THAN, params.getGt());
-            addAttribute(attributes, LESSER_THAN, params.getLt());
-            addAttribute(attributes, STEP, params.getSt());
-            AttributeSet attributeSet = new AttributeSet(attributes);
-            sendRequest(client, new WriteAttributesRequest(request.getObjectId(), attributeSet), request.getTimeout(), callback);
-        }
+        addAttribute(attributes, MAXIMUM_PERIOD, params.getPmax());
+        addAttribute(attributes, MINIMUM_PERIOD, params.getPmin());
+        addAttribute(attributes, GREATER_THAN, params.getGt());
+        addAttribute(attributes, LESSER_THAN, params.getLt());
+        addAttribute(attributes, STEP, params.getSt());
+        AttributeSet attributeSet = new AttributeSet(attributes);
+        sendRequest(client, new WriteAttributesRequest(request.getObjectId(), attributeSet), request.getTimeout(), callback);
     }
 
     @Override
@@ -642,7 +642,14 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
 //            handler.sentRpcResponse(rpcRequest, CONTENT.name(), null, LOG_LW2M_INFO);
 //        }
 //    }
-
+    private void validateVersionedId(LwM2mClient client, HasVersionedId request) {
+        if (!client.isValidObjectVersion(request.getVersionedId())) {
+            throw new IllegalArgumentException("Specified resource id is not configured in the device profile!");
+        }
+        if (request.getObjectId() == null) {
+            throw new IllegalArgumentException("Specified object id is null!");
+        }
+    }
 
     private static <T> void addAttribute(List<Attribute> attributes, String attributeName, T value) {
         addAttribute(attributes, attributeName, value, null, null);

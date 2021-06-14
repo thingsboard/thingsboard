@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
+import org.eclipse.leshan.core.Link;
 import org.eclipse.leshan.core.response.DeleteResponse;
 import org.eclipse.leshan.core.response.DiscoverResponse;
 import org.eclipse.leshan.core.response.ExecuteResponse;
@@ -24,6 +25,7 @@ import org.eclipse.leshan.core.response.WriteAttributesResponse;
 import org.eclipse.leshan.core.response.WriteResponse;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
+import java.util.List;
 import java.util.Set;
 
 public interface LwM2mDownlinkMsgHandler {
@@ -44,7 +46,7 @@ public interface LwM2mDownlinkMsgHandler {
 
     void sendDiscoverRequest(LwM2mClient client, TbLwM2MDiscoverRequest request, DownlinkRequestCallback<DiscoverResponse> callback);
 
-    void sendDiscoverAllRequest(LwM2mClient client, TbLwM2MDiscoverAllRequest request, DownlinkRequestCallback<Set<String>> callback);
+    void sendDiscoverAllRequest(LwM2mClient client, TbLwM2MDiscoverAllRequest request, DownlinkRequestCallback<List<Link>> callback);
 
     void sendWriteAttributesRequest(LwM2mClient client, TbLwM2MWriteAttributesRequest request, DownlinkRequestCallback<WriteAttributesResponse> callback);
 

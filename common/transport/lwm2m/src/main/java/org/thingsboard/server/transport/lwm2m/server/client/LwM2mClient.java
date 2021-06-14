@@ -26,6 +26,7 @@ import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
+import org.eclipse.leshan.core.node.codec.LwM2mValueConverter;
 import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
@@ -40,7 +41,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mQueuedRequest;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
-import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import java.util.Collection;
 import java.util.List;
@@ -257,7 +257,7 @@ public class LwM2mClient implements Cloneable {
                 .getObjectModel(pathIds.getObjectId()) : null;
     }
 
-    public String objectToString(LwM2mObject lwM2mObject, LwM2mValueConverterImpl converter, String pathIdVer) {
+    public String objectToString(LwM2mObject lwM2mObject, LwM2mValueConverter converter, String pathIdVer) {
         StringBuilder builder = new StringBuilder();
         builder.append("LwM2mObject [id=").append(lwM2mObject.getId()).append(", instances={");
         lwM2mObject.getInstances().forEach((instId, inst) -> {
@@ -271,7 +271,7 @@ public class LwM2mClient implements Cloneable {
         return builder.toString();
     }
 
-    public String instanceToString(LwM2mObjectInstance objectInstance, LwM2mValueConverterImpl converter, String pathIdVer) {
+    public String instanceToString(LwM2mObjectInstance objectInstance, LwM2mValueConverter converter, String pathIdVer) {
         StringBuilder builder = new StringBuilder();
         builder.append("LwM2mObjectInstance [id=").append(objectInstance.getId()).append(", resources={");
         objectInstance.getResources().forEach((resId, res) -> {
@@ -285,19 +285,12 @@ public class LwM2mClient implements Cloneable {
         return builder.toString();
     }
 
-    public String resourceToString(LwM2mResource lwM2mResource, LwM2mValueConverterImpl converter, String pathIdVer) {
-        if (!OPAQUE.equals(lwM2mResource.getType())) {
-            return lwM2mResource.isMultiInstances() ? ((LwM2mMultipleResource) lwM2mResource).toString() :
-                    ((LwM2mSingleResource) lwM2mResource).toString();
-        } else {
-            return String.format("LwM2mSingleResource [id=%s, value=%s, type=%s]", lwM2mResource.getId(),
-                    converter.convertValue(lwM2mResource.getValue(),
-                            OPAQUE, STRING, new LwM2mPath(fromVersionedIdToObjectId(pathIdVer))), lwM2mResource.getType().name());
-        }
+    public String resourceToString(LwM2mResource lwM2mResource, LwM2mValueConverter converter, String pathIdVer) {
+        return lwM2mResource.getValue().toString();
     }
 
     public Collection<LwM2mResource> getNewResourceForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
-                                                               LwM2mValueConverterImpl converter) {
+                                                               LwM2mValueConverter converter) {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRezIdVer));
         Collection<LwM2mResource> resources = ConcurrentHashMap.newKeySet();
         Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
@@ -313,7 +306,7 @@ public class LwM2mClient implements Cloneable {
     }
 
     public Collection<LwM2mResource> getNewResourcesForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
-                                                                LwM2mValueConverterImpl converter) {
+                                                                LwM2mValueConverter converter) {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRezIdVer));
         Collection<LwM2mResource> resources = ConcurrentHashMap.newKeySet();
         Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
@@ -395,7 +388,7 @@ public class LwM2mClient implements Cloneable {
         }
     }
 
-    public LwM2mFwSwUpdate  getFwUpdate(LwM2mUplinkMsgHandler handler, LwM2mClientContext clientContext) {
+    public LwM2mFwSwUpdate getFwUpdate(LwM2mUplinkMsgHandler handler, LwM2mClientContext clientContext) {
         if (this.fwUpdate == null) {
             var profile = clientContext.getProfile(this.getProfileId());
             this.fwUpdate = new LwM2mFwSwUpdate(handler, this, OtaPackageType.FIRMWARE, profile.getClientLwM2mSettings().getFwUpdateStrategy());
@@ -403,7 +396,7 @@ public class LwM2mClient implements Cloneable {
         return this.fwUpdate;
     }
 
-    public LwM2mFwSwUpdate  getSwUpdate (LwM2mUplinkMsgHandler handler,LwM2mClientContext clientContext) {
+    public LwM2mFwSwUpdate getSwUpdate(LwM2mUplinkMsgHandler handler, LwM2mClientContext clientContext) {
         if (this.swUpdate == null) {
             var profile = clientContext.getProfile(this.getProfileId());
             this.swUpdate = new LwM2mFwSwUpdate(handler, this, OtaPackageType.SOFTWARE, profile.getClientLwM2mSettings().getSwUpdateStrategy());

@@ -19,11 +19,11 @@ import org.eclipse.leshan.core.response.WriteResponse;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
-public class TbLwM2MWriteReplaceCallback extends AbstractTbLwM2MRequestCallback<WriteResponse> {
+public class TbLwM2MWriteResponseCallback extends AbstractTbLwM2MRequestCallback<WriteResponse> {
 
     private final String targetId;
 
-    public TbLwM2MWriteReplaceCallback(LwM2mUplinkMsgHandler handler, LwM2mClient client, String targetId) {
+    public TbLwM2MWriteResponseCallback(LwM2mUplinkMsgHandler handler, LwM2mClient client, String targetId) {
         super(handler, client);
         this.targetId = targetId;
     }

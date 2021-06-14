@@ -33,7 +33,7 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MExecuteRequ
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MExecuteCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveCallback;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplaceCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteResponseCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplaceRequest;
 
 import java.util.ArrayList;
@@ -201,14 +201,14 @@ public class LwM2mFwSwUpdate {
                 byte[] firmwareChunk = handler.otaPackageDataCache.get(this.currentId.toString(), chunkSize, chunk);
 
                 TbLwM2MWriteReplaceRequest downlink = TbLwM2MWriteReplaceRequest.builder().versionedId(targetIdVer).value(firmwareChunk).timeout(handler.config.getTimeout()).build();
-                request.sendWriteReplaceRequest(lwM2MClient, downlink, new TbLwM2MWriteReplaceCallback(handler, lwM2MClient, targetIdVer));
+                request.sendWriteReplaceRequest(lwM2MClient, downlink, new TbLwM2MWriteResponseCallback(handler, lwM2MClient, targetIdVer));
             } else if (LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL.code == this.updateStrategy) {
                 String apiFont = "coap://176.36.143.9:5685";
                 String uri =  apiFont  + "/" + FIRMWARE_UPDATE_COAP_RECOURSE + "/" + this.currentId.toString();
                 log.warn("89) coapUri: [{}]", uri);
                 //TODO: user this.rpcRequest???
                 TbLwM2MWriteReplaceRequest downlink = TbLwM2MWriteReplaceRequest.builder().versionedId(targetIdVer).value(uri).timeout(handler.config.getTimeout()).build();
-                request.sendWriteReplaceRequest(lwM2MClient, downlink, new TbLwM2MWriteReplaceCallback(handler, lwM2MClient, targetIdVer));
+                request.sendWriteReplaceRequest(lwM2MClient, downlink, new TbLwM2MWriteResponseCallback(handler, lwM2MClient, targetIdVer));
             } else if (LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_19_BINARY.code == this.updateStrategy) {
 
             }
