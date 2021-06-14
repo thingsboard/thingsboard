@@ -24,8 +24,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
-import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 import java.util.Map;
@@ -120,7 +118,7 @@ public class LwM2mClientRpcRequest {
             if (this.bodyParams.contains(KEY_NAME_KEY)) {
                 String targetIdVerStr = this.getValueKeyFromBody(KEY_NAME_KEY);
                 if (targetIdVerStr != null) {
-                    String targetIdVer = handler.getPresentPathIntoProfile(sessionInfo, targetIdVerStr);
+                    String targetIdVer = handler.getObjectIdByKeyNameFromProfile(sessionInfo, targetIdVerStr);
                     if (targetIdVer != null) {
                         this.targetIdVer = targetIdVer;
                         this.setInfoMsg(String.format("Changed by: key - %s, pathIdVer - %s",
@@ -258,7 +256,7 @@ public class LwM2mClientRpcRequest {
                     int id = Integer.parseInt(k);
                     paramsIdVer.put(String.valueOf(id), v);
                 } catch (NumberFormatException e) {
-                    String targetIdVer = serviceImpl.getPresentPathIntoProfile(sessionInfo, k);
+                    String targetIdVer = serviceImpl.getObjectIdByKeyNameFromProfile(sessionInfo, k);
                     if (targetIdVer != null) {
                         LwM2mPath lwM2mPath = new LwM2mPath(Objects.requireNonNull(fromVersionedIdToObjectId(targetIdVer)));
                         paramsIdVer.put(String.valueOf(lwM2mPath.getResourceId()), v);

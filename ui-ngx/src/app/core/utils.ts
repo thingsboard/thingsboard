@@ -445,3 +445,14 @@ export function validateEntityId(entityId: EntityId | null): boolean {
 export function isMobileApp(): boolean {
   return isDefined((window as any).flutter_inappwebview);
 }
+
+const alphanumericCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const alphanumericCharactersLength = alphanumericCharacters.length;
+
+export function randomAlphanumeric(length: number): string {
+  let result = '';
+  for ( let i = 0; i < length; i++ ) {
+    result += alphanumericCharacters.charAt(Math.floor(Math.random() * alphanumericCharactersLength));
+  }
+  return result;
+}

@@ -48,20 +48,6 @@
               <mat-label translate>device.label</mat-label>
               <input matInput formControlName="label">
             </mat-form-field>
-            <mat-form-field class="mat-block" style="padding-bottom: 14px;">
-              <mat-label translate>device-profile.transport-type</mat-label>
-              <mat-select formControlName="transportType" required>
-                <mat-option *ngFor="let type of deviceTransportTypes" [value]="type">
-                  {{deviceTransportTypeTranslations.get(type) | translate}}
-                </mat-option>
-              </mat-select>
-              <mat-hint *ngIf="deviceWizardFormGroup.get('transportType').value">
-                {{deviceTransportTypeHints.get(deviceWizardFormGroup.get('transportType').value) | translate}}
-              </mat-hint>
-              <mat-error *ngIf="deviceWizardFormGroup.get('transportType').hasError('required')">
-                {{ 'device-profile.transport-type-required' | translate }}
-              </mat-error>
-            </mat-form-field>
             <div fxLayout="row" fxLayoutGap="16px">
               <mat-radio-group fxLayout="column" formControlName="addProfileType" fxLayoutAlign="space-around">
                 <mat-radio-button [value]="0" color="primary">
@@ -74,13 +60,10 @@
               <div fxLayout="column">
                 <tb-device-profile-autocomplete
                   [required]="!createProfile"
-                  [transportType]="deviceWizardFormGroup.get('transportType').value"
                   formControlName="deviceProfileId"
                   [ngClass]="{invisible: deviceWizardFormGroup.get('addProfileType').value !== 0}"
-                  (deviceProfileChanged)="$event?.transportType ? deviceWizardFormGroup.get('transportType').patchValue($event?.transportType) : {}"
                   [addNewProfile]="false"
                   [selectDefaultProfile]="true"
-                  [selectFirstProfile]="true"
                   [editProfileEnabled]="false">
                 </tb-device-profile-autocomplete>
                 <mat-form-field fxFlex class="mat-block"
@@ -124,9 +107,22 @@
           </fieldset>
         </form>
       </mat-step>
-      <mat-step [stepControl]="transportConfigFormGroup" *ngIf="createTransportConfiguration">
+      <mat-step [stepControl]="transportConfigFormGroup" [optional]="true" *ngIf="createProfile">
         <form [formGroup]="transportConfigFormGroup" style="padding-bottom: 16px;">
-          <ng-template matStepLabel>{{ 'device-profile.transport-configuration' | translate }}</ng-template>
+          <ng-template matStepLabel>{{ 'device-profile.transport-configuration' | translate }}</ng-template><mat-form-field class="mat-block" style="padding-bottom: 14px;">
+          <mat-label translate>device-profile.transport-type</mat-label>
+          <mat-select formControlName="transportType" required>
+            <mat-option *ngFor="let type of deviceTransportTypes" [value]="type">
+              {{deviceTransportTypeTranslations.get(type) | translate}}
+            </mat-option>
+          </mat-select>
+          <mat-hint *ngIf="transportConfigFormGroup.get('transportType').value">
+            {{deviceTransportTypeHints.get(transportConfigFormGroup.get('transportType').value) | translate}}
+          </mat-hint>
+          <mat-error *ngIf="transportConfigFormGroup.get('transportType').hasError('required')">
+            {{ 'device-profile.transport-type-required' | translate }}
+          </mat-error>
+        </mat-form-field>
           <tb-device-profile-transport-configuration
             formControlName="transportConfiguration"
             required>

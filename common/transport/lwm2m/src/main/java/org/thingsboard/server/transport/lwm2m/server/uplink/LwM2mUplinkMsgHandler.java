@@ -60,7 +60,9 @@ public interface LwM2mUplinkMsgHandler {
 
     void onToTransportUpdateCredentials(TransportProtos.ToTransportUpdateCredentialsProto updateCredentials);
 
-    String getPresentPathIntoProfile(TransportProtos.SessionInfoProto sessionInfo, String name);
+    String getObjectIdByKeyNameFromProfile(TransportProtos.SessionInfoProto sessionInfo, String name);
+
+    String getObjectIdByKeyNameFromProfile(LwM2mClient lwM2mClient, String keyName);
 
     void onGetAttributesResponse(TransportProtos.GetAttributeResponseMsg attributesResponse, TransportProtos.SessionInfoProto sessionInfo);
 

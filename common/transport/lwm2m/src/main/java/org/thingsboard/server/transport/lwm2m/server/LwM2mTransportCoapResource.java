@@ -71,10 +71,10 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
     @Override
     protected void processHandleGet(CoapExchange exchange) {
         log.warn("90) processHandleGet [{}]", exchange);
-        if (exchange.getRequestOptions().getUriPath().size() == 2 &&
-                (FIRMWARE_UPDATE_COAP_RECOURSE.equals(exchange.getRequestOptions().getUriPath().get(0)) ||
-                 SOFTWARE_UPDATE_COAP_RECOURSE.equals(exchange.getRequestOptions().getUriPath().get(0)))) {
-            this.sentOtaData(exchange);
+        if (exchange.getRequestOptions().getUriPath().size() >= 2 &&
+                (FIRMWARE_UPDATE_COAP_RECOURSE.equals(exchange.getRequestOptions().getUriPath().get(exchange.getRequestOptions().getUriPath().size()-2)) ||
+                        SOFTWARE_UPDATE_COAP_RECOURSE.equals(exchange.getRequestOptions().getUriPath().get(exchange.getRequestOptions().getUriPath().size()-2)))) {
+            this.sendOtaData(exchange);
         }
     }
 
@@ -131,23 +131,25 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
         }
     }
 
-    private void sentOtaData(CoapExchange exchange) {
-        String idStr = exchange.getRequestOptions().getUriPath().get(1);
+    private void sendOtaData(CoapExchange exchange) {
+        String idStr = exchange.getRequestOptions().getUriPath().get(exchange.getRequestOptions().getUriPath().size()-1
+        );
         UUID currentId = UUID.fromString(idStr);
-        if (exchange.getRequestOptions().getBlock2() != null) {
-            int chunkSize = exchange.getRequestOptions().getBlock2().getSzx();
-            int chunk = 0;
-            Response response = new Response(CoAP.ResponseCode.CONTENT);
-            byte[] fwData = this.getOtaData(currentId);
-            log.warn("91) read softWare data (length): [{}]", fwData.length);
-            if (fwData != null && fwData.length > 0) {
-                response.setPayload(fwData);
+        Response response = new Response(CoAP.ResponseCode.CONTENT);
+        byte[] fwData = this.getOtaData(currentId);
+        log.warn("91) read softWare data (length): [{}]", fwData.length);
+        if (fwData != null && fwData.length > 0) {
+            response.setPayload(fwData);
+            if (exchange.getRequestOptions().getBlock2() != null) {
+                int chunkSize = exchange.getRequestOptions().getBlock2().getSzx();
                 boolean moreFlag = fwData.length > chunkSize;
-                response.getOptions().setBlock2(chunkSize, moreFlag, chunk);
-                log.warn("92) Send currentId: [{}], length: [{}], chunkSize [{}], moreFlag [{}]", currentId.toString(), fwData.length, chunkSize, moreFlag);
-                exchange.respond(response);
+                response.getOptions().setBlock2(chunkSize, moreFlag, 0);
+                log.warn("92) with blokc2 Send currentId: [{}], length: [{}], chunkSize [{}], moreFlag [{}]", currentId.toString(), fwData.length, chunkSize, moreFlag);
             }
-
+            else {
+                log.warn("92) with block1 Send currentId: [{}], length: [{}], ", currentId.toString(), fwData.length);
+            }
+            exchange.respond(response);
         }
     }
 

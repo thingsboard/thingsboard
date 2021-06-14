@@ -16,11 +16,16 @@
 
 -->
 <button mat-icon-button
+        type="button"
+        [color]="color"
         [disabled]="disabled"
         [matTooltip]="matTooltipText"
         [matTooltipPosition]="matTooltipPosition"
         (click)="copy($event)">
-  <mat-icon [svgIcon]="mdiIconSymbol" [ngStyle]="style" [ngClass]="{'copied': copied}">
-    {{ iconSymbol }}
+  <mat-icon [svgIcon]="mdiIcon" [ngStyle]="style" *ngIf="!copied; else copiedTemplate">
+    {{ icon }}
   </mat-icon>
+  <ng-template #copiedTemplate>
+    <mat-icon [ngStyle]="style" class="copied">done</mat-icon>
+  </ng-template>
 </button>

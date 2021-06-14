@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -376,7 +376,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
             log.warn("2) OnAttributeUpdate, SharedUpdatedList() [{}]", msg.getSharedUpdatedList());
             msg.getSharedUpdatedList().forEach(tsKvProto -> {
                 String pathName = tsKvProto.getKv().getKey();
-                String pathIdVer = this.getPresentPathIntoProfile(sessionInfo, pathName);
+                String pathIdVer = this.getObjectIdByKeyNameFromProfile(sessionInfo, pathName);
                 Object valueNew = getValueFromKvProto(tsKvProto.getKv());
                 if ((OtaPackageUtil.getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.VERSION).equals(pathName)
                         && (!valueNew.equals(lwM2MClient.getFwUpdate().getCurrentVersion())))
@@ -987,16 +987,22 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
      * Get path to resource from profile equal keyName
      *
      * @param sessionInfo -
-     * @param name        -
+     * @param keyName        -
      * @return -
      */
     @Override
-    public String getPresentPathIntoProfile(TransportProtos.SessionInfoProto sessionInfo, String name) {
-        var profile = clientContext.getProfile(new UUID(sessionInfo.getDeviceProfileIdMSB(), sessionInfo.getDeviceProfileIdLSB()));
-        LwM2mClient lwM2mClient = clientContext.getClientBySessionInfo(sessionInfo);
+    public String getObjectIdByKeyNameFromProfile(TransportProtos.SessionInfoProto sessionInfo, String keyName) {
+        return getObjectIdByKeyNameFromProfile(clientContext.getClientBySessionInfo(sessionInfo), keyName);
+    }
+
+    @Override
+    public String getObjectIdByKeyNameFromProfile(LwM2mClient lwM2mClient, String keyName) {
+        Lwm2mDeviceProfileTransportConfiguration profile = clientContext.getProfile(lwM2mClient.getProfileId());
+
         return profile.getObserveAttr().getKeyName().entrySet().stream()
-                .filter(e -> e.getValue().equals(name) && validateResourceInModel(lwM2mClient, e.getKey(), false)).findFirst().map(Map.Entry::getKey)
-                .orElse(null);
+                .filter(e -> e.getValue().equals(keyName) && validateResourceInModel(lwM2mClient, e.getKey(), false)).findFirst().orElseThrow(
+                        () -> new IllegalArgumentException(keyName + " is not configured in the device profile!")
+                ).getKey();
     }
 
     /**
@@ -1033,7 +1039,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
         if (lwM2MClient != null) {
             log.warn("1) UpdateAttributeFromThingsboard, tsKvProtos [{}]", tsKvProtos);
             tsKvProtos.forEach(tsKvProto -> {
-                String pathIdVer = this.getPresentPathIntoProfile(sessionInfo, tsKvProto.getKv().getKey());
+                String pathIdVer = this.getObjectIdByKeyNameFromProfile(sessionInfo, tsKvProto.getKv().getKey());
                 if (pathIdVer != null) {
                     // #1.1
                     if (lwM2MClient.getDelayedRequests().containsKey(pathIdVer) && tsKvProto.getTs() > lwM2MClient.getDelayedRequests().get(pathIdVer).getTs()) {

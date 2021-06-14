@@ -15,175 +15,172 @@
     limitations under the License.
 
 -->
-<section style="padding-bottom: 16px; margin: 0" mat-dialog-content>
+<section style="padding-bottom: 16px; margin: 0">
   <mat-tab-group dynamicHeight>
     <mat-tab label="{{ 'device-profile.lwm2m.model-tab' | translate }}">
       <ng-template matTabContent>
         <section [formGroup]="lwm2mDeviceProfileFormGroup">
-          <div class="mat-padding" style="padding-top: 0">
-            <tb-profile-lwm2m-object-list
-              (addList)="addObjectsList($event)"
-              (removeList)="removeObjectsList($event)"
-              [required]="required"
-              formControlName="objectIds">
-            </tb-profile-lwm2m-object-list>
-          </div>
-          <div class="mat-padding">
-            <tb-profile-lwm2m-observe-attr-telemetry
-              [required]="required"
-              formControlName="observeAttrTelemetry">
-            </tb-profile-lwm2m-observe-attr-telemetry>
-          </div>
+          <tb-profile-lwm2m-object-list
+            (addList)="addObjectsList($event)"
+            (removeList)="removeObjectsList($event)"
+            [required]="required"
+            formControlName="objectIds">
+          </tb-profile-lwm2m-object-list>
+          <tb-profile-lwm2m-observe-attr-telemetry
+            [required]="required"
+            formControlName="observeAttrTelemetry">
+          </tb-profile-lwm2m-observe-attr-telemetry>
         </section>
       </ng-template>
     </mat-tab>
-    <mat-tab label="{{ 'device-profile.lwm2m.bootstrap-tab' | translate }}">
+    <mat-tab label="{{ 'device-profile.lwm2m.servers' | translate }}">
       <ng-template matTabContent>
-        <section [formGroup]="lwm2mDeviceProfileFormGroup">
-          <div class="mat-padding">
-            <mat-accordion multi="true" class="mat-body-1">
-              <mat-expansion-panel>
-                <mat-expansion-panel-header>
-                  <mat-panel-title>
-                    <div class="tb-panel-title">{{ 'device-profile.lwm2m.servers' | translate | uppercase }}</div>
-                  </mat-panel-title>
-                </mat-expansion-panel-header>
-                <ng-template matExpansionPanelContent>
-                  <div fxLayout="column">
-                    <div fxLayout="row" fxLayoutGap="8px">
-                      <mat-form-field fxFlex>
-                        <mat-label>{{ 'device-profile.lwm2m.short-id' | translate }}</mat-label>
-                        <input matInput type="number" formControlName="shortId" required>
-                        <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('shortId').hasError('required')">
-                          {{ 'device-profile.lwm2m.short-id' | translate }}
-                          <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
-                        </mat-error>
-                      </mat-form-field>
-                      <mat-form-field fxFlex>
-                        <mat-label>{{ 'device-profile.lwm2m.lifetime' | translate }}</mat-label>
-                        <input matInput type="number" formControlName="lifetime" required>
-                        <mat-error
-                          *ngIf="lwm2mDeviceProfileFormGroup.get('lifetime').hasError('required')">
-                          {{ 'device-profile.lwm2m.lifetime' | translate }}
-                          <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
-                        </mat-error>
-                      </mat-form-field>
-                      <mat-form-field fxFlex>
-                        <mat-label>{{ 'device-profile.lwm2m.default-min-period' | translate }}</mat-label>
-                        <input matInput type="number" formControlName="defaultMinPeriod" required>
-                        <mat-error
-                          *ngIf="lwm2mDeviceProfileFormGroup.get('defaultMinPeriod').hasError('required')">
-                          {{ 'device-profile.lwm2m.default-min-period' | translate }}
-                          <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
-                        </mat-error>
-                      </mat-form-field>
-                    </div>
-                    <div fxLayout="row" fxLayoutGap="8px">
-                      <mat-form-field class="mat-block" fxFlex="100">
-                        <mat-label>{{ 'device-profile.lwm2m.binding' | translate }}</mat-label>
-                        <mat-select formControlName="binding">
-                          <mat-option *ngFor="let bindingMode of  bindingModeTypes"
-                                      [value]="bindingMode">
-                            {{ bindingModeTypeNamesMap.get(bindingModeType[bindingMode]) }}
-                          </mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
-                    <div>
-                      <mat-checkbox formControlName="notifIfDisabled" color="primary">
-                        {{ 'device-profile.lwm2m.notif-if-disabled' | translate }}
-                      </mat-checkbox>
-                    </div>
-                  </div>
-                </ng-template>
-              </mat-expansion-panel>
-            </mat-accordion>
-            <mat-accordion multi="true" class="mat-body-1">
-              <mat-expansion-panel>
-                <mat-expansion-panel-header>
-                  <mat-panel-title>
-                    <div
-                      class="tb-panel-title">{{ 'device-profile.lwm2m.bootstrap-server' | translate | uppercase }}</div>
-                  </mat-panel-title>
-                </mat-expansion-panel-header>
-                <ng-template matExpansionPanelContent>
-                  <div class="mat-padding">
-                    <tb-profile-lwm2m-device-config-server
-                      [required]="required"
-                      formControlName="bootstrapServer"
-                      [bootstrapServerIs]=true>
-                    </tb-profile-lwm2m-device-config-server>
-                  </div>
-                </ng-template>
-              </mat-expansion-panel>
-            </mat-accordion>
-            <mat-accordion multi="true" class="mat-body-1">
-              <mat-expansion-panel>
-                <mat-expansion-panel-header>
-                  <mat-panel-title>
-                    <div class="tb-panel-title">{{ 'device-profile.lwm2m.lwm2m-server' | translate | uppercase }}</div>
-                  </mat-panel-title>
-                </mat-expansion-panel-header>
-                <ng-template matExpansionPanelContent>
-                  <div class="mat-padding">
-                    <tb-profile-lwm2m-device-config-server
-                      [required]="required"
-                      formControlName="lwm2mServer"
-                      [bootstrapServerIs]=false>
-                    </tb-profile-lwm2m-device-config-server>
-                  </div>
-                </ng-template>
-              </mat-expansion-panel>
-            </mat-accordion>
-          </div>
+        <section [formGroup]="lwm2mDeviceProfileFormGroup" style="padding: 4px 2px">
+          <mat-accordion multi="true">
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>{{ 'device-profile.lwm2m.servers' | translate }}</mat-panel-title>
+              </mat-expansion-panel-header>
+              <ng-template matExpansionPanelContent>
+                <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px" fxLayoutGap.xs="0px">
+                  <mat-form-field fxFlex>
+                    <mat-label>{{ 'device-profile.lwm2m.short-id' | translate }}</mat-label>
+                    <input matInput type="number" formControlName="shortId" required>
+                    <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('shortId').hasError('required')">
+                      {{ 'device-profile.lwm2m.short-id' | translate }}
+                      <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
+                    </mat-error>
+                  </mat-form-field>
+                  <mat-form-field fxFlex>
+                    <mat-label>{{ 'device-profile.lwm2m.lifetime' | translate }}</mat-label>
+                    <input matInput type="number" formControlName="lifetime" required>
+                    <mat-error
+                      *ngIf="lwm2mDeviceProfileFormGroup.get('lifetime').hasError('required')">
+                      {{ 'device-profile.lwm2m.lifetime' | translate }}
+                      <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
+                    </mat-error>
+                  </mat-form-field>
+                  <mat-form-field fxFlex>
+                    <mat-label>{{ 'device-profile.lwm2m.default-min-period' | translate }}</mat-label>
+                    <input matInput type="number" formControlName="defaultMinPeriod" required>
+                    <mat-error
+                      *ngIf="lwm2mDeviceProfileFormGroup.get('defaultMinPeriod').hasError('required')">
+                      {{ 'device-profile.lwm2m.default-min-period' | translate }}
+                      <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+                <mat-form-field class="mat-block">
+                  <mat-label>{{ 'device-profile.lwm2m.binding' | translate }}</mat-label>
+                  <mat-select formControlName="binding">
+                    <mat-option *ngFor="let bindingMode of  bindingModeTypes"
+                                [value]="bindingMode">
+                      {{ bindingModeTypeNamesMap.get(bindingModeType[bindingMode]) }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-checkbox formControlName="notifIfDisabled" color="primary">
+                  {{ 'device-profile.lwm2m.notif-if-disabled' | translate }}
+                </mat-checkbox>
+              </ng-template>
+            </mat-expansion-panel>
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>{{ 'device-profile.lwm2m.bootstrap-server' | translate }}</mat-panel-title>
+              </mat-expansion-panel-header>
+              <ng-template matExpansionPanelContent>
+                <tb-profile-lwm2m-device-config-server
+                  [required]="required"
+                  formControlName="bootstrapServer"
+                  [isBootstrapServer]="true">
+                </tb-profile-lwm2m-device-config-server>
+              </ng-template>
+            </mat-expansion-panel>
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>{{ 'device-profile.lwm2m.lwm2m-server' | translate }}</mat-panel-title>
+              </mat-expansion-panel-header>
+              <ng-template matExpansionPanelContent>
+                <tb-profile-lwm2m-device-config-server
+                  [required]="required"
+                  formControlName="lwm2mServer"
+                  [isBootstrapServer]="false">
+                </tb-profile-lwm2m-device-config-server>
+              </ng-template>
+            </mat-expansion-panel>
+          </mat-accordion>
         </section>
       </ng-template>
     </mat-tab>
     <mat-tab label="{{ 'device-profile.lwm2m.others-tab' | translate }}">
       <ng-template matTabContent>
         <section [formGroup]="lwm2mDeviceProfileFormGroup">
-          <div *ngIf="false" class="mat-padding" style="padding-bottom: 0px">
-            <mat-form-field class="mat-block">
-              <mat-label>{{ 'device-profile.lwm2m.client-strategy-label' | translate }}</mat-label>
-              <mat-select formControlName="clientStrategy"
-                          matTooltip="{{ 'device-profile.lwm2m.client-strategy-tip' | translate:
-                          { count: +lwm2mDeviceProfileFormGroup.get('clientStrategy').value } }}"
-                          matTooltipPosition="above">
-                <mat-option value=1>{{ 'device-profile.lwm2m.client-strategy' | translate:
-                  {count: 1} }}</mat-option>
-                <mat-option value=2>{{ 'device-profile.lwm2m.client-strategy' | translate:
-                  {count: 2} }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-          </div>
-          <div class="mat-padding" style="padding-bottom: 0px">
-            <mat-form-field class="mat-block">
-              <mat-label>{{ 'device-profile.lwm2m.fw-update-strategy-label' | translate }}</mat-label>
+          <fieldset class="fields-group">
+            <legend class="group-title" translate>device-profile.lwm2m.fw-update</legend>
+            <mat-form-field class="mat-block" fxFlex>
+              <mat-label>{{ 'device-profile.lwm2m.fw-update-strategy' | translate }}</mat-label>
               <mat-select formControlName="fwUpdateStrategy">
-                <mat-option value=1>{{ 'device-profile.lwm2m.fw-update-strategy' | translate:
-                  {count: 1} }}</mat-option>
-                <mat-option value=2>{{ 'device-profile.lwm2m.fw-update-strategy' | translate:
-                  {count: 2} }}</mat-option>
-                <mat-option value=2>{{ 'device-profile.lwm2m.fw-update-strategy' | translate:
-                  {count: 3} }}</mat-option>
+                <mat-option [value]=1>{{ 'device-profile.lwm2m.fw-update-strategy-package' | translate }}</mat-option>
+                <mat-option [value]=2>{{ 'device-profile.lwm2m.fw-update-strategy-package-uri' | translate }}</mat-option>
+                <mat-option [value]=3>{{ 'device-profile.lwm2m.fw-update-strategy-data' | translate }}</mat-option>
               </mat-select>
             </mat-form-field>
-            <mat-form-field class="mat-block">
-              <mat-label>{{ 'device-profile.lwm2m.sw-update-strategy-label' | translate }}</mat-label>
+            <mat-form-field class="mat-block" fxFlex *ngIf="isFwUpdateStrategy">
+              <mat-label>{{ 'device-profile.lwm2m.fw-update-recourse' | translate }}</mat-label>
+              <input matInput formControlName="fwUpdateRecourse" required>
+              <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('fwUpdateRecourse').hasError('required')">
+                {{ 'device-profile.lwm2m.fw-update-recourse-required' | translate }}
+              </mat-error>
+            </mat-form-field>
+          </fieldset>
+          <fieldset class="fields-group">
+            <legend class="group-title" translate>device-profile.lwm2m.sw-update</legend>
+            <mat-form-field class="mat-block" fxFlex>
+              <mat-label>{{ 'device-profile.lwm2m.sw-update-strategy' | translate }}</mat-label>
               <mat-select formControlName="swUpdateStrategy">
-                <mat-option value=1>{{ 'device-profile.lwm2m.sw-update-strategy' | translate:
-                  {count: 1} }}</mat-option>
-                <mat-option value=2>{{ 'device-profile.lwm2m.sw-update-strategy' | translate:
-                  {count: 2} }}</mat-option>
+                <mat-option [value]=1>{{ 'device-profile.lwm2m.sw-update-strategy-package' | translate }}</mat-option>
+                <mat-option [value]=2>{{ 'device-profile.lwm2m.sw-update-strategy-package-uri' | translate }}</mat-option>
               </mat-select>
             </mat-form-field>
-          </div>
+            <mat-form-field class="mat-block" fxFlex *ngIf="isSwUpdateStrategy">
+              <mat-label>{{ 'device-profile.lwm2m.sw-update-recourse' | translate }}</mat-label>
+              <input matInput formControlName="swUpdateRecourse" required>
+              <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('swUpdateRecourse').hasError('required')">
+                {{ 'device-profile.lwm2m.sw-update-recourse-required' | translate }}
+              </mat-error>
+            </mat-form-field>
+          </fieldset>
+<!--          <mat-accordion multi="true">-->
+<!--            <div *ngIf="false">-->
+<!--              <mat-expansion-panel>-->
+<!--                <mat-expansion-panel-header>-->
+<!--                  <mat-panel-title>{{ 'device-profile.lwm2m.client-strategy' | translate }}</mat-panel-title>-->
+<!--                </mat-expansion-panel-header>-->
+<!--                <ng-template matExpansionPanelContent>-->
+<!--                  <div fxLayout="column">-->
+<!--                    <mat-form-field class="mat-block">-->
+<!--                      <mat-label>{{ 'device-profile.lwm2m.client-strategy-label' | translate }}</mat-label>-->
+<!--                      <mat-select formControlName="clientStrategy"-->
+<!--                                  matTooltip="{{ 'device-profile.lwm2m.client-strategy-tip' | translate:-->
+<!--                                  { count: +lwm2mDeviceProfileFormGroup.get('clientStrategy').value } }}"-->
+<!--                                  matTooltipPosition="above">-->
+<!--                        <mat-option value=1>{{ 'device-profile.lwm2m.client-strategy-connect' | translate:-->
+<!--                          {count: 1} }}</mat-option>-->
+<!--                        <mat-option value=2>{{ 'device-profile.lwm2m.client-strategy-connect' | translate:-->
+<!--                          {count: 2} }}</mat-option>-->
+<!--                      </mat-select>-->
+<!--                    </mat-form-field>-->
+<!--                  </div>-->
+<!--                </ng-template>-->
+<!--              </mat-expansion-panel>-->
+<!--            </div>-->
+<!--          </mat-accordion>-->
         </section>
       </ng-template>
     </mat-tab>
     <mat-tab label="{{ 'device-profile.lwm2m.config-json-tab' | translate }}">
       <ng-template matTabContent>
-        <section [formGroup]="lwm2mDeviceConfigFormGroup" class="mat-padding">
+        <section [formGroup]="lwm2mDeviceConfigFormGroup" style="padding: 8px 0">
           <tb-json-object-edit
             [required]="required"
             [sort]="sortFunction"

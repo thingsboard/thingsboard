@@ -408,10 +408,20 @@ public class ModelConstants {
     /**
      * OAuth2 client registration constants.
      */
-    public static final String OAUTH2_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+
+    public static final String OAUTH2_PARAMS_COLUMN_FAMILY_NAME = "oauth2_params";
+    public static final String OAUTH2_PARAMS_ENABLED_PROPERTY = "enabled";
+    public static final String OAUTH2_PARAMS_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+
+    public static final String OAUTH2_REGISTRATION_COLUMN_FAMILY_NAME = "oauth2_registration";
+    public static final String OAUTH2_DOMAIN_COLUMN_FAMILY_NAME = "oauth2_domain";
+    public static final String OAUTH2_MOBILE_COLUMN_FAMILY_NAME = "oauth2_mobile";
+    public static final String OAUTH2_PARAMS_ID_PROPERTY = "oauth2_params_id";
+    public static final String OAUTH2_PKG_NAME_PROPERTY = "pkg_name";
+    public static final String OAUTH2_APP_SECRET_PROPERTY = "app_secret";
+
     public static final String OAUTH2_CLIENT_REGISTRATION_INFO_COLUMN_FAMILY_NAME = "oauth2_client_registration_info";
     public static final String OAUTH2_CLIENT_REGISTRATION_COLUMN_FAMILY_NAME = "oauth2_client_registration";
-    public static final String OAUTH2_CLIENT_REGISTRATION_TO_DOMAIN_COLUMN_FAMILY_NAME = "oauth2_client_registration_to_domain";
     public static final String OAUTH2_CLIENT_REGISTRATION_TEMPLATE_COLUMN_FAMILY_NAME = "oauth2_client_registration_template";
     public static final String OAUTH2_ENABLED_PROPERTY = "enabled";
     public static final String OAUTH2_TEMPLATE_PROVIDER_ID_PROPERTY = "provider_id";
@@ -422,8 +432,8 @@ public class ModelConstants {
     public static final String OAUTH2_CLIENT_SECRET_PROPERTY = "client_secret";
     public static final String OAUTH2_AUTHORIZATION_URI_PROPERTY = "authorization_uri";
     public static final String OAUTH2_TOKEN_URI_PROPERTY = "token_uri";
-    public static final String OAUTH2_REDIRECT_URI_TEMPLATE_PROPERTY = "redirect_uri_template";
     public static final String OAUTH2_SCOPE_PROPERTY = "scope";
+    public static final String OAUTH2_PLATFORMS_PROPERTY = "platforms";
     public static final String OAUTH2_USER_INFO_URI_PROPERTY = "user_info_uri";
     public static final String OAUTH2_USER_NAME_ATTRIBUTE_NAME_PROPERTY = "user_name_attribute_name";
     public static final String OAUTH2_JWK_SET_URI_PROPERTY = "jwk_set_uri";

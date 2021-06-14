@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,6 @@ package org.thingsboard.server.transport.lwm2m.server.rpc;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.ResponseCode;
-import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
@@ -111,26 +110,22 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     }
 
     private void sendReadRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg rpcRequst) {
-        String id = getIdFromParameters(rpcRequst);
+        String id = getIdFromParameters(client, rpcRequst);
         TbLwM2MReadRequest request = TbLwM2MReadRequest.builder().versionedId(id).timeout(this.config.getTimeout()).build();
         downlinkHandler.sendReadRequest(client, request, new TbLwM2MReadCallback(uplinkHandler, client, id));
     }
 
-    private String getIdFromParameters(TransportProtos.ToDeviceRpcRequestMsg rpcRequst) {
+    private String getIdFromParameters(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg rpcRequst) {
         IdOrKeyRequest requestParams = JacksonUtil.fromString(rpcRequst.getParams(), IdOrKeyRequest.class);
-        String id;
+        String targetId;
         if (StringUtils.isNotEmpty(requestParams.getKey())) {
-            id = requestParams.getKey();
+            targetId = uplinkHandler.getObjectIdByKeyNameFromProfile(client, requestParams.getKey());
         } else if (StringUtils.isNotEmpty(requestParams.getId())) {
-            id = requestParams.getId();
+            targetId = requestParams.getId();
         } else {
             throw new IllegalArgumentException("Can't find 'key' or 'id' in the requestParams parameters!");
         }
-        return id;
-    }
-
-    private String getTargetId(LwM2mClient client, String params) {
-
+        return targetId;
     }
 
     private void sendErrorRpcResponse(TransportProtos.SessionInfoProto sessionInfo, int requestId, String result, String error) {
