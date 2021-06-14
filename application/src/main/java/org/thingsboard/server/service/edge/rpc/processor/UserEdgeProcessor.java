@@ -30,8 +30,6 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
-import java.util.Collections;
-
 @Component
 @Slf4j
 @TbCoreComponent
@@ -48,14 +46,14 @@ public class UserEdgeProcessor extends BaseEdgeProcessor {
                     CustomerId customerId = getCustomerIdIfEdgeAssignedToCustomer(user, edge);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addAllUserUpdateMsg(Collections.singletonList(userMsgConstructor.constructUserUpdatedMsg(msgType, user, customerId)))
+                            .addUserUpdateMsg(userMsgConstructor.constructUserUpdatedMsg(msgType, user, customerId))
                             .build();
                 }
                 break;
             case DELETED:
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addAllUserUpdateMsg(Collections.singletonList(userMsgConstructor.constructUserDeleteMsg(userId)))
+                        .addUserUpdateMsg(userMsgConstructor.constructUserDeleteMsg(userId))
                         .build();
                 break;
             case CREDENTIALS_UPDATED:
@@ -65,7 +63,7 @@ public class UserEdgeProcessor extends BaseEdgeProcessor {
                             userMsgConstructor.constructUserCredentialsUpdatedMsg(userCredentialsByUserId);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addAllUserCredentialsUpdateMsg(Collections.singletonList(userCredentialsUpdateMsg))
+                            .addUserCredentialsUpdateMsg(userCredentialsUpdateMsg)
                             .build();
                 }
         }

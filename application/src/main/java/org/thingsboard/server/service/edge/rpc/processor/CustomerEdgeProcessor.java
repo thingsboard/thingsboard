@@ -35,7 +35,6 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
-import java.util.Collections;
 import java.util.UUID;
 
 @Component
@@ -55,7 +54,7 @@ public class CustomerEdgeProcessor extends BaseEdgeProcessor {
                             customerMsgConstructor.constructCustomerUpdatedMsg(msgType, customer);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addAllCustomerUpdateMsg(Collections.singletonList(customerUpdateMsg))
+                            .addCustomerUpdateMsg(customerUpdateMsg)
                             .build();
                 }
                 break;
@@ -64,7 +63,7 @@ public class CustomerEdgeProcessor extends BaseEdgeProcessor {
                         customerMsgConstructor.constructCustomerDeleteMsg(customerId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addAllCustomerUpdateMsg(Collections.singletonList(customerUpdateMsg))
+                        .addCustomerUpdateMsg(customerUpdateMsg)
                         .build();
                 break;
         }

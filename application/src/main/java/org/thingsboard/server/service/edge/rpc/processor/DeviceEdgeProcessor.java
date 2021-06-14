@@ -63,7 +63,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponseActorMsg;
 
-import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -340,7 +339,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                             deviceMsgConstructor.constructDeviceUpdatedMsg(msgType, device, customerId, null);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addAllDeviceUpdateMsg(Collections.singletonList(deviceUpdateMsg))
+                            .addDeviceUpdateMsg(deviceUpdateMsg)
                             .build();
                 }
                 break;
@@ -350,7 +349,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                         deviceMsgConstructor.constructDeviceDeleteMsg(deviceId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addAllDeviceUpdateMsg(Collections.singletonList(deviceUpdateMsg))
+                        .addDeviceUpdateMsg(deviceUpdateMsg)
                         .build();
                 break;
             case CREDENTIALS_UPDATED:
@@ -360,7 +359,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                             deviceMsgConstructor.constructDeviceCredentialsUpdatedMsg(deviceCredentials);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addAllDeviceCredentialsUpdateMsg(Collections.singletonList(deviceCredentialsUpdateMsg))
+                            .addDeviceCredentialsUpdateMsg(deviceCredentialsUpdateMsg)
                             .build();
                 }
                 break;
@@ -374,7 +373,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                 deviceMsgConstructor.constructDeviceRpcCallMsg(edgeEvent.getEntityId(), edgeEvent.getBody());
         return DownlinkMsg.newBuilder()
                 .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                .addAllDeviceRpcCallMsg(Collections.singletonList(deviceRpcCallMsg))
+                .addDeviceRpcCallMsg(deviceRpcCallMsg)
                 .build();
     }
 }

@@ -55,7 +55,7 @@ public class DashboardEdgeProcessor extends BaseEdgeProcessor {
                             dashboardMsgConstructor.constructDashboardUpdatedMsg(msgType, dashboard, customerId);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addAllDashboardUpdateMsg(Collections.singletonList(dashboardUpdateMsg))
+                            .addDashboardUpdateMsg(dashboardUpdateMsg)
                             .build();
                 }
                 break;
@@ -65,7 +65,7 @@ public class DashboardEdgeProcessor extends BaseEdgeProcessor {
                         dashboardMsgConstructor.constructDashboardDeleteMsg(dashboardId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addAllDashboardUpdateMsg(Collections.singletonList(dashboardUpdateMsg))
+                        .addDashboardUpdateMsg(dashboardUpdateMsg)
                         .build();
                 break;
         }

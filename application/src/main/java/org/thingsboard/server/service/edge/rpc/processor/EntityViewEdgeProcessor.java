@@ -29,8 +29,6 @@ import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
-import java.util.Collections;
-
 @Component
 @Slf4j
 @TbCoreComponent
@@ -52,7 +50,7 @@ public class EntityViewEdgeProcessor extends BaseEdgeProcessor {
                             entityViewMsgConstructor.constructEntityViewUpdatedMsg(msgType, entityView, customerId);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addAllEntityViewUpdateMsg(Collections.singletonList(entityViewUpdateMsg))
+                            .addEntityViewUpdateMsg(entityViewUpdateMsg)
                             .build();
                 }
                 break;
@@ -62,7 +60,7 @@ public class EntityViewEdgeProcessor extends BaseEdgeProcessor {
                         entityViewMsgConstructor.constructEntityViewDeleteMsg(entityViewId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addAllEntityViewUpdateMsg(Collections.singletonList(entityViewUpdateMsg))
+                        .addEntityViewUpdateMsg(entityViewUpdateMsg)
                         .build();
                 break;
         }
