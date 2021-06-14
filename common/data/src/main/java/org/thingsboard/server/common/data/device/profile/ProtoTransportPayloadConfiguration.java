@@ -47,6 +47,7 @@ public class ProtoTransportPayloadConfiguration implements TransportPayloadTypeC
     public static final String TELEMETRY_PROTO_SCHEMA = "telemetry proto schema";
     public static final String RPC_RESPONSE_PROTO_SCHEMA = "rpc response proto schema";
     public static final String RPC_REQUEST_PROTO_SCHEMA = "rpc request proto schema";
+    private static final String PROTO_3_SYNTAX = "proto3";
 
     private String deviceTelemetryProtoSchema;
     private String deviceAttributesProtoSchema;
@@ -123,6 +124,7 @@ public class ProtoTransportPayloadConfiguration implements TransportPayloadTypeC
     public DynamicSchema getDynamicSchema(ProtoFileElement protoFileElement, String schemaName) {
         DynamicSchema.Builder schemaBuilder = DynamicSchema.newBuilder();
         schemaBuilder.setName(schemaName);
+        schemaBuilder.setSyntax(PROTO_3_SYNTAX);
         schemaBuilder.setPackage(!isEmptyStr(protoFileElement.getPackageName()) ?
                 protoFileElement.getPackageName() : schemaName.toLowerCase());
         List<TypeElement> types = protoFileElement.getTypes();

@@ -160,7 +160,7 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
 
     private String dynamicMsgToJson(byte[] bytes, Descriptors.Descriptor descriptor) throws InvalidProtocolBufferException {
         DynamicMessage dynamicMessage = DynamicMessage.parseFrom(descriptor, bytes);
-        return JsonFormat.printer().includingDefaultValueFields().print(dynamicMessage);
+        return JsonFormat.printer().print(dynamicMessage);
     }
 
 }
