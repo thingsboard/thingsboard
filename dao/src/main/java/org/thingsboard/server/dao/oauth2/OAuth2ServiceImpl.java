@@ -21,7 +21,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.*;
+import org.thingsboard.server.common.data.oauth2.MapperType;
+import org.thingsboard.server.common.data.oauth2.OAuth2BasicMapperConfig;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
+import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
+import org.thingsboard.server.common.data.oauth2.OAuth2Domain;
+import org.thingsboard.server.common.data.oauth2.OAuth2DomainInfo;
+import org.thingsboard.server.common.data.oauth2.OAuth2Info;
+import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
+import org.thingsboard.server.common.data.oauth2.OAuth2Mobile;
+import org.thingsboard.server.common.data.oauth2.OAuth2MobileInfo;
+import org.thingsboard.server.common.data.oauth2.OAuth2Params;
+import org.thingsboard.server.common.data.oauth2.OAuth2ParamsInfo;
+import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
+import org.thingsboard.server.common.data.oauth2.OAuth2RegistrationInfo;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
+import org.thingsboard.server.common.data.oauth2.SchemeType;
+import org.thingsboard.server.common.data.oauth2.TenantNameStrategyType;
 import org.thingsboard.server.common.data.oauth2.deprecated.ClientRegistrationDto;
 import org.thingsboard.server.common.data.oauth2.deprecated.DomainInfo;
 import org.thingsboard.server.common.data.oauth2.deprecated.ExtendedOAuth2ClientRegistrationInfo;
@@ -36,7 +52,11 @@ import org.thingsboard.server.dao.oauth2.deprecated.OAuth2ClientRegistrationDao;
 import org.thingsboard.server.dao.oauth2.deprecated.OAuth2ClientRegistrationInfoDao;
 
 import javax.transaction.Transactional;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -164,11 +184,11 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
     }
 
     @Override
-    public String findCallbackUrlScheme(UUID id, String pkgName) {
-        log.trace("Executing findCallbackUrlScheme [{}][{}]", id, pkgName);
+    public String findAppSecret(UUID id, String pkgName) {
+        log.trace("Executing findAppSecret [{}][{}]", id, pkgName);
         validateId(id, INCORRECT_CLIENT_REGISTRATION_ID + id);
         validateString(pkgName, "Incorrect package name");
-        return oauth2RegistrationDao.findCallbackUrlScheme(id, pkgName);
+        return oauth2RegistrationDao.findAppSecret(id, pkgName);
     }
 
 
@@ -323,8 +343,11 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
                     if (StringUtils.isEmpty(mobileInfo.getPkgName())) {
                         throw new DataValidationException("Package should be specified!");
                     }
-                    if (StringUtils.isEmpty(mobileInfo.getCallbackUrlScheme())) {
-                        throw new DataValidationException("Callback URL scheme should be specified!");
+                    if (StringUtils.isEmpty(mobileInfo.getAppSecret())) {
+                        throw new DataValidationException("Application secret should be specified!");
+                    }
+                    if (mobileInfo.getAppSecret().length() < 16) {
+                        throw new DataValidationException("Application secret should be at least 16 characters!");
                     }
                 }
                 oauth2Params.getMobileInfos().stream()

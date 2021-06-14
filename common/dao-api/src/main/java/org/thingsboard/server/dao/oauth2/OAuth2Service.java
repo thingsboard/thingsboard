@@ -42,5 +42,5 @@ public interface OAuth2Service {
 
     List<OAuth2Registration> findAllRegistrations();
 
-    String findCallbackUrlScheme(UUID registrationId, String pkgName);
+    String findAppSecret(UUID registrationId, String pkgName);
 }

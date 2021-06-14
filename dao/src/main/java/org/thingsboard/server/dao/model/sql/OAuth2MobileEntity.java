@@ -40,8 +40,8 @@ public class OAuth2MobileEntity extends BaseSqlEntity<OAuth2Mobile> {
     @Column(name = ModelConstants.OAUTH2_PKG_NAME_PROPERTY)
     private String pkgName;
 
-    @Column(name = ModelConstants.OAUTH2_CALLBACK_URL_SCHEME_PROPERTY)
-    private String callbackUrlScheme;
+    @Column(name = ModelConstants.OAUTH2_APP_SECRET_PROPERTY)
+    private String appSecret;
 
     public OAuth2MobileEntity() {
         super();
@@ -56,7 +56,7 @@ public class OAuth2MobileEntity extends BaseSqlEntity<OAuth2Mobile> {
             this.oauth2ParamsId = mobile.getOauth2ParamsId().getId();
         }
         this.pkgName = mobile.getPkgName();
-        this.callbackUrlScheme = mobile.getCallbackUrlScheme();
+        this.appSecret = mobile.getAppSecret();
     }
 
     @Override
@@ -66,7 +66,7 @@ public class OAuth2MobileEntity extends BaseSqlEntity<OAuth2Mobile> {
         mobile.setCreatedTime(createdTime);
         mobile.setOauth2ParamsId(new OAuth2ParamsId(oauth2ParamsId));
         mobile.setPkgName(pkgName);
-        mobile.setCallbackUrlScheme(callbackUrlScheme);
+        mobile.setAppSecret(appSecret);
         return mobile;
     }
 }

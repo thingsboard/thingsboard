@@ -42,12 +42,12 @@ public interface OAuth2RegistrationRepository extends CrudRepository<OAuth2Regis
 
     List<OAuth2RegistrationEntity> findByOauth2ParamsId(UUID oauth2ParamsId);
 
-    @Query("SELECT mobile.callbackUrlScheme " +
+    @Query("SELECT mobile.appSecret " +
             "FROM OAuth2MobileEntity mobile " +
             "LEFT JOIN OAuth2RegistrationEntity reg on mobile.oauth2ParamsId = reg.oauth2ParamsId " +
             "WHERE reg.id = :registrationId " +
             "AND mobile.pkgName = :pkgName")
-    String findCallbackUrlScheme(@Param("registrationId") UUID id,
-                                 @Param("pkgName") String pkgName);
+    String findAppSecret(@Param("registrationId") UUID id,
+                         @Param("pkgName") String pkgName);
 
 }

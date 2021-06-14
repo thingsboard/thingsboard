@@ -34,7 +34,7 @@ export interface OAuth2DomainInfo {
 
 export interface OAuth2MobileInfo {
   pkgName: string;
-  callbackUrlScheme: string;
+  appSecret: string;
 }
 
 export enum DomainSchema{

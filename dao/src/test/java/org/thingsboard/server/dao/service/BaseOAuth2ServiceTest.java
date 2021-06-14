@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.dao.service;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -487,7 +487,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testFindCallbackUrlScheme() {
+    public void testFindAppSecret() {
         OAuth2Info oAuth2Info = new OAuth2Info(true, Lists.newArrayList(
                 OAuth2ParamsInfo.builder()
                         .domainInfos(Lists.newArrayList(
@@ -496,8 +496,8 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
                                 OAuth2DomainInfo.builder().name("third-domain").scheme(SchemeType.HTTPS).build()
                         ))
                         .mobileInfos(Lists.newArrayList(
-                                OAuth2MobileInfo.builder().pkgName("com.test.pkg1").callbackUrlScheme("testPkg1Callback").build(),
-                                OAuth2MobileInfo.builder().pkgName("com.test.pkg2").callbackUrlScheme("testPkg2Callback").build()
+                                validMobileInfo("com.test.pkg1", "testPkg1AppSecret"),
+                                validMobileInfo("com.test.pkg2", "testPkg2AppSecret")
                         ))
                         .clientRegistrations(Lists.newArrayList(
                                 validRegistrationInfo(),
@@ -527,14 +527,14 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
         for (OAuth2ClientInfo clientInfo : firstDomainHttpClients) {
             String[] segments = clientInfo.getUrl().split("/");
             String registrationId = segments[segments.length-1];
-            String callbackUrlScheme = oAuth2Service.findCallbackUrlScheme(UUID.fromString(registrationId), "com.test.pkg1");
-            Assert.assertNotNull(callbackUrlScheme);
-            Assert.assertEquals("testPkg1Callback", callbackUrlScheme);
-            callbackUrlScheme = oAuth2Service.findCallbackUrlScheme(UUID.fromString(registrationId), "com.test.pkg2");
-            Assert.assertNotNull(callbackUrlScheme);
-            Assert.assertEquals("testPkg2Callback", callbackUrlScheme);
-            callbackUrlScheme = oAuth2Service.findCallbackUrlScheme(UUID.fromString(registrationId), "com.test.pkg3");
-            Assert.assertNull(callbackUrlScheme);
+            String appSecret = oAuth2Service.findAppSecret(UUID.fromString(registrationId), "com.test.pkg1");
+            Assert.assertNotNull(appSecret);
+            Assert.assertEquals("testPkg1AppSecret", appSecret);
+            appSecret = oAuth2Service.findAppSecret(UUID.fromString(registrationId), "com.test.pkg2");
+            Assert.assertNotNull(appSecret);
+            Assert.assertEquals("testPkg2AppSecret", appSecret);
+            appSecret = oAuth2Service.findAppSecret(UUID.fromString(registrationId), "com.test.pkg3");
+            Assert.assertNull(appSecret);
         }
     }
 
@@ -548,8 +548,8 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
                                 OAuth2DomainInfo.builder().name("third-domain").scheme(SchemeType.HTTPS).build()
                         ))
                         .mobileInfos(Lists.newArrayList(
-                                OAuth2MobileInfo.builder().pkgName("com.test.pkg1").callbackUrlScheme("testPkg1Callback").build(),
-                                OAuth2MobileInfo.builder().pkgName("com.test.pkg2").callbackUrlScheme("testPkg2Callback").build()
+                                validMobileInfo("com.test.pkg1", "testPkg1Callback"),
+                                validMobileInfo("com.test.pkg2", "testPkg2Callback")
                         ))
                         .clientRegistrations(Lists.newArrayList(
                                 validRegistrationInfo("Google", Arrays.asList(PlatformType.WEB, PlatformType.ANDROID)),
@@ -649,6 +649,12 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
                                 )
                                 .build()
                 )
+                .build();
+    }
+
+    private OAuth2MobileInfo validMobileInfo(String pkgName, String appSecret) {
+        return OAuth2MobileInfo.builder().pkgName(pkgName)
+                .appSecret(appSecret != null ? appSecret : RandomStringUtils.randomAlphanumeric(24))
                 .build();
     }
 }

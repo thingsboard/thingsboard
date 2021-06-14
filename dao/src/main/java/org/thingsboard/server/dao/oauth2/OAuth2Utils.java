@@ -148,7 +148,7 @@ public class OAuth2Utils {
     public static OAuth2MobileInfo toOAuth2MobileInfo(OAuth2Mobile mobile) {
         return OAuth2MobileInfo.builder()
                 .pkgName(mobile.getPkgName())
-                .callbackUrlScheme(mobile.getCallbackUrlScheme())
+                .appSecret(mobile.getAppSecret())
                 .build();
     }
 
@@ -191,7 +191,7 @@ public class OAuth2Utils {
         OAuth2Mobile mobile = new OAuth2Mobile();
         mobile.setOauth2ParamsId(oauth2ParamsId);
         mobile.setPkgName(mobileInfo.getPkgName());
-        mobile.setCallbackUrlScheme(mobileInfo.getCallbackUrlScheme());
+        mobile.setAppSecret(mobileInfo.getAppSecret());
         return mobile;
     }
 

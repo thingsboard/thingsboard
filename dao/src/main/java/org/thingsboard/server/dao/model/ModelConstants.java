@@ -418,7 +418,7 @@ public class ModelConstants {
     public static final String OAUTH2_MOBILE_COLUMN_FAMILY_NAME = "oauth2_mobile";
     public static final String OAUTH2_PARAMS_ID_PROPERTY = "oauth2_params_id";
     public static final String OAUTH2_PKG_NAME_PROPERTY = "pkg_name";
-    public static final String OAUTH2_CALLBACK_URL_SCHEME_PROPERTY = "callback_url_scheme";
+    public static final String OAUTH2_APP_SECRET_PROPERTY = "app_secret";
 
     public static final String OAUTH2_CLIENT_REGISTRATION_INFO_COLUMN_FAMILY_NAME = "oauth2_client_registration_info";
     public static final String OAUTH2_CLIENT_REGISTRATION_COLUMN_FAMILY_NAME = "oauth2_client_registration";
