@@ -426,7 +426,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       this.displayedColumns.push('actions');
     }
 
-    this.alarmsDatasource = new AlarmsDatasource(this.subscription, latestDataKeys);
+    this.alarmsDatasource = new AlarmsDatasource(this.subscription, latestDataKeys, this.ngZone);
     if (this.enableSelection) {
       this.alarmsDatasource.selectionModeChanged$.subscribe((selectionMode) => {
         const hideTitlePanel = selectionMode || this.textSearchMode;
@@ -957,7 +957,8 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
   private appliedSortOrderLabel: string;
 
   constructor(private subscription: IWidgetSubscription,
-              private dataKeys: Array<DataKey>) {
+              private dataKeys: Array<DataKey>,
+              private ngZone: NgZone) {
   }
 
   connect(collectionViewer: CollectionViewer): Observable<AlarmDataInfo[] | ReadonlyArray<AlarmDataInfo>> {
@@ -989,6 +990,7 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
   updateAlarms() {
     const subscriptionAlarms = this.subscription.alarms;
     let alarms = new Array<AlarmDataInfo>();
+    let isEmptySelection = false;
     subscriptionAlarms.data.forEach((alarmData) => {
       alarms.push(this.alarmDataToInfo(alarmData));
     });
@@ -1001,7 +1003,7 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
       const toRemove = this.selection.selected.filter(alarmId => alarmIds.indexOf(alarmId) === -1);
       this.selection.deselect(...toRemove);
       if (this.selection.isEmpty()) {
-        this.onSelectionModeChanged(false);
+        isEmptySelection = true;
       }
     }
     const alarmsPageData: PageData<AlarmDataInfo> = {
@@ -1010,9 +1012,14 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
       totalElements: subscriptionAlarms.totalElements,
       hasNext: subscriptionAlarms.hasNext
     };
-    this.alarmsSubject.next(alarms);
-    this.pageDataSubject.next(alarmsPageData);
-    this.dataLoading = false;
+    this.ngZone.run(() => {
+      if (isEmptySelection) {
+        this.onSelectionModeChanged(false);
+      }
+      this.alarmsSubject.next(alarms);
+      this.pageDataSubject.next(alarmsPageData);
+      this.dataLoading = false;
+    });
   }
 
   private alarmDataToInfo(alarmData: AlarmData): AlarmDataInfo {

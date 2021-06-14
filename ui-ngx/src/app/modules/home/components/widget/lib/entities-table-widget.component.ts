@@ -415,8 +415,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     if (this.actionCellDescriptors.length) {
       this.displayedColumns.push('actions');
     }
-    this.entityDatasource = new EntityDatasource(
-      this.translate, dataKeys, this.subscription);
+    this.entityDatasource = new EntityDatasource(this.translate, dataKeys, this.subscription, this.ngZone);
   }
 
   private editColumnsToDisplay($event: Event) {
@@ -689,7 +688,8 @@ class EntityDatasource implements DataSource<EntityData> {
   constructor(
        private translate: TranslateService,
        private dataKeys: Array<DataKey>,
-       private subscription: IWidgetSubscription
+       private subscription: IWidgetSubscription,
+       private ngZone: NgZone
     ) {
   }
 
@@ -732,9 +732,11 @@ class EntityDatasource implements DataSource<EntityData> {
       totalElements: datasourcesPageData.totalElements,
       hasNext: datasourcesPageData.hasNext
     };
-    this.entitiesSubject.next(entities);
-    this.pageDataSubject.next(entitiesPageData);
-    this.dataLoading = false;
+    this.ngZone.run(() => {
+      this.entitiesSubject.next(entities);
+      this.pageDataSubject.next(entitiesPageData);
+      this.dataLoading = false;
+    });
   }
 
   private datasourceToEntityData(datasource: Datasource, data: DatasourceData[]): EntityData {

@@ -235,7 +235,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   }
 
   public getTabLabel(source: TimeseriesTableSource){
-    if(this.useEntityLabel){
+    if (this.useEntityLabel) {
       return source.datasource.entityLabel || source.datasource.entityName;
     } else {
       return source.datasource.entityName;
@@ -286,7 +286,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         if (this.actionCellDescriptors.length) {
           source.displayedColumns.push('actions');
         }
-        const tsDatasource = new TimeseriesDatasource(source, this.hideEmptyLines, this.dateFormatFilter, this.datePipe);
+        const tsDatasource = new TimeseriesDatasource(source, this.hideEmptyLines, this.dateFormatFilter, this.datePipe, this.ngZone);
         tsDatasource.dataUpdated(this.data);
         this.sources.push(source);
       }
@@ -545,7 +545,8 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
     private source: TimeseriesTableSource,
     private hideEmptyLines: boolean,
     private dateFormatFilter: string,
-    private datePipe: DatePipe
+    private datePipe: DatePipe,
+    private ngZone: NgZone
   ) {
     this.source.timeseriesDatasource = this;
   }
@@ -568,8 +569,10 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
       catchError(() => of(emptyPageData<TimeseriesRow>())),
     ).subscribe(
       (pageData) => {
-        this.rowsSubject.next(pageData.data);
-        this.pageDataSubject.next(pageData);
+        this.ngZone.run(() => {
+          this.rowsSubject.next(pageData.data);
+          this.pageDataSubject.next(pageData);
+        });
       }
     );
   }
