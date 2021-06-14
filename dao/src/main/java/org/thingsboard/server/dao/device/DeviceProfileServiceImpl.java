@@ -82,6 +82,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import static com.google.protobuf.FieldType.MESSAGE;
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_PROFILE_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -381,6 +382,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                             ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration =
                                     (ProtoTransportPayloadConfiguration) mqttTransportConfiguration.getTransportPayloadTypeConfiguration();
                             validateProtoSchemas(protoTransportPayloadConfiguration);
+                            validateTelemetryDynamicMessageFields(protoTransportPayloadConfiguration);
                             validateRpcRequestDynamicMessageFields(protoTransportPayloadConfiguration);
                         }
                     } else if (transportConfiguration instanceof CoapDeviceProfileTransportConfiguration) {
@@ -392,6 +394,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                             if (transportPayloadTypeConfiguration instanceof ProtoTransportPayloadConfiguration) {
                                 ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
                                 validateProtoSchemas(protoTransportPayloadConfiguration);
+                                validateTelemetryDynamicMessageFields(protoTransportPayloadConfiguration);
                                 validateRpcRequestDynamicMessageFields(protoTransportPayloadConfiguration);
                             }
                         }
@@ -608,6 +611,33 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                 }
 
             };
+
+    private void validateTelemetryDynamicMessageFields(ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration) {
+        String deviceTelemetryProtoSchema = protoTransportPayloadTypeConfiguration.getDeviceTelemetryProtoSchema();
+        Descriptors.Descriptor telemetryDynamicMessageDescriptor = protoTransportPayloadTypeConfiguration.getTelemetryDynamicMessageDescriptor(deviceTelemetryProtoSchema);
+        if (telemetryDynamicMessageDescriptor == null) {
+            throw new DataValidationException(invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA) + " Failed to get telemetryDynamicMessageDescriptor!");
+        } else {
+            List<Descriptors.FieldDescriptor> fields = telemetryDynamicMessageDescriptor.getFields();
+            if (CollectionUtils.isEmpty(fields)) {
+                throw new DataValidationException(invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA) + " " + telemetryDynamicMessageDescriptor.getName() + " fields is empty!");
+            } else if (fields.size() == 2) {
+                Descriptors.FieldDescriptor tsFieldDescriptor = telemetryDynamicMessageDescriptor.findFieldByName("ts");
+                Descriptors.FieldDescriptor valuesFieldDescriptor = telemetryDynamicMessageDescriptor.findFieldByName("values");
+                if (tsFieldDescriptor != null && valuesFieldDescriptor != null) {
+                    if (!Descriptors.FieldDescriptor.Type.MESSAGE.equals(valuesFieldDescriptor.getType())) {
+                        throw new DataValidationException(invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA) + " Field 'values' has invalid data type. Only message type is supported!");
+                    }
+                    if (!Descriptors.FieldDescriptor.Type.INT64.equals(tsFieldDescriptor.getType())) {
+                        throw new DataValidationException(invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA) + " Field 'ts' has invalid data type. Only int64 type is supported!");
+                    }
+                    if (!tsFieldDescriptor.hasOptionalKeyword()) {
+                        throw new DataValidationException(invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA) + " Field 'ts' has invalid label. Field 'ts' should have optional keyword!");
+                    }
+                }
+            }
+        }
+    }
 
     private void validateRpcRequestDynamicMessageFields(ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration) {
         DynamicMessage.Builder rpcRequestDynamicMessageBuilder = protoTransportPayloadTypeConfiguration.getRpcRequestDynamicMessageBuilder(protoTransportPayloadTypeConfiguration.getDeviceRpcRequestProtoSchema());

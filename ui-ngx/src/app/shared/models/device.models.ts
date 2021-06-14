@@ -131,16 +131,16 @@ export const defaultTelemetrySchema =
   '\n' +
   'message SensorDataReading {\n' +
   '\n' +
-  '  double temperature = 1;\n' +
-  '  double humidity = 2;\n' +
+  '  optional double temperature = 1;\n' +
+  '  optional double humidity = 2;\n' +
   '  InnerObject innerObject = 3;\n' +
   '\n' +
   '  message InnerObject {\n' +
-  '    string key1 = 1;\n' +
-  '    bool key2 = 2;\n' +
-  '    double key3 = 3;\n' +
-  '    int32 key4 = 4;\n' +
-  '    string key5 = 5;\n' +
+  '    optional string key1 = 1;\n' +
+  '    optional bool key2 = 2;\n' +
+  '    optional double key3 = 3;\n' +
+  '    optional int32 key4 = 4;\n' +
+  '    optional string key5 = 5;\n' +
   '  }\n' +
   '}\n';
 
@@ -149,8 +149,8 @@ export const defaultAttributesSchema =
   'package attributes;\n' +
   '\n' +
   'message SensorConfiguration {\n' +
-  '  string firmwareVersion = 1;\n' +
-  '  string serialNumber = 2;\n' +
+  '  optional string firmwareVersion = 1;\n' +
+  '  optional string serialNumber = 2;\n' +
   '}';
 
 export const defaultRpcRequestSchema =
@@ -158,9 +158,9 @@ export const defaultRpcRequestSchema =
   'package rpc;\n' +
   '\n' +
   'message RpcRequestMsg {\n' +
-  '  string method = 1;\n' +
-  '  int32 requestId = 2;\n' +
-  '  string params = 3;\n' +
+  '  optional string method = 1;\n' +
+  '  optional int32 requestId = 2;\n' +
+  '  optional string params = 3;\n' +
   '}';
 
 export const defaultRpcResponseSchema =
@@ -168,7 +168,7 @@ export const defaultRpcResponseSchema =
   'package rpc;\n' +
   '\n' +
   'message RpcResponseMsg {\n' +
-  '  string payload = 1;\n' +
+  '  optional string payload = 1;\n' +
   '}';
 
 export const coapDeviceTypeTranslationMap = new Map<CoapTransportDeviceType, string>(

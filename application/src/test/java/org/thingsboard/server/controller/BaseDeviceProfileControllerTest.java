@@ -634,6 +634,72 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 dynamicMsgToJson(sampleMsgDescriptor, sampleMsgWithOneOfSubMessage.toByteArray()));
     }
 
+    @Test
+    public void testSaveProtoDeviceProfileWithInvalidTelemetrySchemaTsField() throws Exception {
+        testSaveDeviceProfileWithInvalidProtoSchema("syntax =\"proto3\";\n" +
+                "\n" +
+                "package schemavalidation;\n" +
+                "\n" +
+                "message PostTelemetry {\n" +
+                "  int64 ts = 1;\n" +
+                "  Values values = 2;\n" +
+                "  \n" +
+                "  message Values {\n" +
+                "    string key1 = 3;\n" +
+                "    bool key2 = 4;\n" +
+                "    double key3 = 5;\n" +
+                "    int32 key4 = 6;\n" +
+                "    JsonObject key5 = 7;\n" +
+                "  }\n" +
+                "  \n" +
+                "  message JsonObject {\n" +
+                "    optional int32 someNumber = 8;\n" +
+                "    repeated int32 someArray = 9;\n" +
+                "    NestedJsonObject someNestedObject = 10;\n" +
+                "    message NestedJsonObject {\n" +
+                "       optional string key = 11;\n" +
+                "    }\n" +
+                "  }\n" +
+                "}", "[Transport Configuration] invalid telemetry proto schema provided! Field 'ts' has invalid label. Field 'ts' should have optional keyword!");
+    }
+
+    @Test
+    public void testSaveProtoDeviceProfileWithInvalidTelemetrySchemaTsDateType() throws Exception {
+        testSaveDeviceProfileWithInvalidProtoSchema("syntax =\"proto3\";\n" +
+                "\n" +
+                "package schemavalidation;\n" +
+                "\n" +
+                "message PostTelemetry {\n" +
+                "  optional int32 ts = 1;\n" +
+                "  Values values = 2;\n" +
+                "  \n" +
+                "  message Values {\n" +
+                "    string key1 = 3;\n" +
+                "    bool key2 = 4;\n" +
+                "    double key3 = 5;\n" +
+                "    int32 key4 = 6;\n" +
+                "    JsonObject key5 = 7;\n" +
+                "  }\n" +
+                "  \n" +
+                "  message JsonObject {\n" +
+                "    optional int32 someNumber = 8;\n" +
+                "  }\n" +
+                "}", "[Transport Configuration] invalid telemetry proto schema provided! Field 'ts' has invalid data type. Only int64 type is supported!");
+    }
+
+    @Test
+    public void testSaveProtoDeviceProfileWithInvalidTelemetrySchemaValuesDateType() throws Exception {
+        testSaveDeviceProfileWithInvalidProtoSchema("syntax =\"proto3\";\n" +
+                "\n" +
+                "package schemavalidation;\n" +
+                "\n" +
+                "message PostTelemetry {\n" +
+                "  optional int64 ts = 1;\n" +
+                "  string values = 2;\n" +
+                "  \n" +
+                "}", "[Transport Configuration] invalid telemetry proto schema provided! Field 'values' has invalid data type. Only message type is supported!");
+    }
+
     private DeviceProfile testSaveDeviceProfileWithProtoPayloadType(String schema) throws Exception {
         ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = this.createProtoTransportPayloadConfiguration(schema, schema);
         MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = this.createMqttDeviceProfileTransportConfiguration(protoTransportPayloadConfiguration);

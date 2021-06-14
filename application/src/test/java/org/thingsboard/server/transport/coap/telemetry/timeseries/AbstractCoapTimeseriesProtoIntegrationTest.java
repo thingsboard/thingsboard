@@ -32,6 +32,9 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportC
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 
+import java.util.Arrays;
+import java.util.Collections;
+
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -84,7 +87,7 @@ public abstract class AbstractCoapTimeseriesProtoIntegrationTest extends Abstrac
                 .setField(postTelemetryMsgDescriptor.findFieldByName("key4"), 4)
                 .setField(postTelemetryMsgDescriptor.findFieldByName("key5"), jsonObject)
                 .build();
-        processTestPostTelemetry(postTelemetryMsg.toByteArray(), false);
+        processTestPostTelemetry(postTelemetryMsg.toByteArray(), Arrays.asList("key1", "key2", "key3", "key4", "key5"), false, false);
     }
 
     @Test
@@ -94,23 +97,23 @@ public abstract class AbstractCoapTimeseriesProtoIntegrationTest extends Abstrac
                 "package test;\n" +
                 "\n" +
                 "message PostTelemetry {\n" +
-                "  int64 ts = 1;\n" +
+                "  optional int64 ts = 1;\n" +
                 "  Values values = 2;\n" +
                 "  \n" +
                 "  message Values {\n" +
-                "    string key1 = 3;\n" +
-                "    bool key2 = 4;\n" +
-                "    double key3 = 5;\n" +
-                "    int32 key4 = 6;\n" +
+                "    optional string key1 = 3;\n" +
+                "    optional bool key2 = 4;\n" +
+                "    optional double key3 = 5;\n" +
+                "    optional int32 key4 = 6;\n" +
                 "    JsonObject key5 = 7;\n" +
                 "  }\n" +
                 "  \n" +
                 "  message JsonObject {\n" +
-                "    int32 someNumber = 8;\n" +
+                "    optional int32 someNumber = 8;\n" +
                 "    repeated int32 someArray = 9;\n" +
                 "    NestedJsonObject someNestedObject = 10;\n" +
                 "    message NestedJsonObject {\n" +
-                "       string key = 11;\n" +
+                "       optional string key = 11;\n" +
                 "    }\n" +
                 "  }\n" +
                 "}";
@@ -164,7 +167,126 @@ public abstract class AbstractCoapTimeseriesProtoIntegrationTest extends Abstrac
                 .setField(postTelemetryMsgDescriptor.findFieldByName("values"), valuesMsg)
                 .build();
 
-        processTestPostTelemetry(postTelemetryMsg.toByteArray(), true);
+        processTestPostTelemetry(postTelemetryMsg.toByteArray(),  Arrays.asList("key1", "key2", "key3", "key4", "key5"), true, false);
+    }
+
+    @Test
+    public void testPushTelemetryWithExplicitPresenceProtoKeys() throws Exception {
+        super.processBeforeTest("Test Post Telemetry device proto payload", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF);
+        DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
+        assertTrue(transportConfiguration instanceof CoapDeviceProfileTransportConfiguration);
+        CoapDeviceProfileTransportConfiguration coapDeviceProfileTransportConfiguration = (CoapDeviceProfileTransportConfiguration) transportConfiguration;
+        CoapDeviceTypeConfiguration coapDeviceTypeConfiguration = coapDeviceProfileTransportConfiguration.getCoapDeviceTypeConfiguration();
+        assertTrue(coapDeviceTypeConfiguration instanceof DefaultCoapDeviceTypeConfiguration);
+        DefaultCoapDeviceTypeConfiguration defaultCoapDeviceTypeConfiguration = (DefaultCoapDeviceTypeConfiguration) coapDeviceTypeConfiguration;
+        TransportPayloadTypeConfiguration transportPayloadTypeConfiguration = defaultCoapDeviceTypeConfiguration.getTransportPayloadTypeConfiguration();
+        assertTrue(transportPayloadTypeConfiguration instanceof ProtoTransportPayloadConfiguration);
+        ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
+        ProtoFileElement transportProtoSchema = protoTransportPayloadConfiguration.getTransportProtoSchema(DEVICE_TELEMETRY_PROTO_SCHEMA);
+        DynamicSchema telemetrySchema = protoTransportPayloadConfiguration.getDynamicSchema(transportProtoSchema, "telemetrySchema");
+
+        DynamicMessage.Builder nestedJsonObjectBuilder = telemetrySchema.newMessageBuilder("PostTelemetry.JsonObject.NestedJsonObject");
+        Descriptors.Descriptor nestedJsonObjectBuilderDescriptor = nestedJsonObjectBuilder.getDescriptorForType();
+        assertNotNull(nestedJsonObjectBuilderDescriptor);
+        DynamicMessage nestedJsonObject = nestedJsonObjectBuilder.setField(nestedJsonObjectBuilderDescriptor.findFieldByName("key"), "value").build();
+
+        DynamicMessage.Builder jsonObjectBuilder = telemetrySchema.newMessageBuilder("PostTelemetry.JsonObject");
+        Descriptors.Descriptor jsonObjectBuilderDescriptor = jsonObjectBuilder.getDescriptorForType();
+        assertNotNull(jsonObjectBuilderDescriptor);
+        DynamicMessage jsonObject = jsonObjectBuilder
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 1)
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 2)
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 3)
+                .setField(jsonObjectBuilderDescriptor.findFieldByName("someNestedObject"), nestedJsonObject)
+                .build();
+
+        DynamicMessage.Builder postTelemetryBuilder = telemetrySchema.newMessageBuilder("PostTelemetry");
+        Descriptors.Descriptor postTelemetryMsgDescriptor = postTelemetryBuilder.getDescriptorForType();
+        assertNotNull(postTelemetryMsgDescriptor);
+        DynamicMessage postTelemetryMsg = postTelemetryBuilder
+                .setField(postTelemetryMsgDescriptor.findFieldByName("key1"), "")
+                .setField(postTelemetryMsgDescriptor.findFieldByName("key2"), false)
+                .setField(postTelemetryMsgDescriptor.findFieldByName("key3"), 0.0)
+                .setField(postTelemetryMsgDescriptor.findFieldByName("key4"), 0)
+                .setField(postTelemetryMsgDescriptor.findFieldByName("key5"), jsonObject)
+                .build();
+        processTestPostTelemetry(postTelemetryMsg.toByteArray(), Arrays.asList("key1", "key2", "key3", "key4", "key5"), false, true);
+    }
+
+    @Test
+    public void testPushTelemetryWithTsAndNoPresenceFields() throws Exception {
+        String schemaStr = "syntax =\"proto3\";\n" +
+                "\n" +
+                "package test;\n" +
+                "\n" +
+                "message PostTelemetry {\n" +
+                "  optional int64 ts = 1;\n" +
+                "  Values values = 2;\n" +
+                "  \n" +
+                "  message Values {\n" +
+                "    string key1 = 3;\n" +
+                "    bool key2 = 4;\n" +
+                "    double key3 = 5;\n" +
+                "    int32 key4 = 6;\n" +
+                "    JsonObject key5 = 7;\n" +
+                "  }\n" +
+                "  \n" +
+                "  message JsonObject {\n" +
+                "    optional int32 someNumber = 8;\n" +
+                "    repeated int32 someArray = 9;\n" +
+                "    NestedJsonObject someNestedObject = 10;\n" +
+                "    message NestedJsonObject {\n" +
+                "       optional string key = 11;\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+        super.processBeforeTest("Test Post Telemetry device proto payload", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF, schemaStr, null, null, null, null, null, DeviceProfileProvisionType.DISABLED);
+        DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
+        assertTrue(transportConfiguration instanceof CoapDeviceProfileTransportConfiguration);
+        CoapDeviceProfileTransportConfiguration coapDeviceProfileTransportConfiguration = (CoapDeviceProfileTransportConfiguration) transportConfiguration;
+        CoapDeviceTypeConfiguration coapDeviceTypeConfiguration = coapDeviceProfileTransportConfiguration.getCoapDeviceTypeConfiguration();
+        assertTrue(coapDeviceTypeConfiguration instanceof DefaultCoapDeviceTypeConfiguration);
+        DefaultCoapDeviceTypeConfiguration defaultCoapDeviceTypeConfiguration = (DefaultCoapDeviceTypeConfiguration) coapDeviceTypeConfiguration;
+        TransportPayloadTypeConfiguration transportPayloadTypeConfiguration = defaultCoapDeviceTypeConfiguration.getTransportPayloadTypeConfiguration();
+        assertTrue(transportPayloadTypeConfiguration instanceof ProtoTransportPayloadConfiguration);
+        ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
+        ProtoFileElement transportProtoSchema = protoTransportPayloadConfiguration.getTransportProtoSchema(schemaStr);
+        DynamicSchema telemetrySchema = protoTransportPayloadConfiguration.getDynamicSchema(transportProtoSchema, "telemetrySchema");
+
+        DynamicMessage.Builder nestedJsonObjectBuilder = telemetrySchema.newMessageBuilder("PostTelemetry.JsonObject.NestedJsonObject");
+        Descriptors.Descriptor nestedJsonObjectBuilderDescriptor = nestedJsonObjectBuilder.getDescriptorForType();
+        assertNotNull(nestedJsonObjectBuilderDescriptor);
+        DynamicMessage nestedJsonObject = nestedJsonObjectBuilder.setField(nestedJsonObjectBuilderDescriptor.findFieldByName("key"), "value").build();
+
+        DynamicMessage.Builder jsonObjectBuilder = telemetrySchema.newMessageBuilder("PostTelemetry.JsonObject");
+        Descriptors.Descriptor jsonObjectBuilderDescriptor = jsonObjectBuilder.getDescriptorForType();
+        assertNotNull(jsonObjectBuilderDescriptor);
+        DynamicMessage jsonObject = jsonObjectBuilder
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 1)
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 2)
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 3)
+                .setField(jsonObjectBuilderDescriptor.findFieldByName("someNestedObject"), nestedJsonObject)
+                .build();
+
+
+        DynamicMessage.Builder valuesBuilder = telemetrySchema.newMessageBuilder("PostTelemetry.Values");
+        Descriptors.Descriptor valuesDescriptor = valuesBuilder.getDescriptorForType();
+        assertNotNull(valuesDescriptor);
+
+        DynamicMessage valuesMsg = valuesBuilder
+                .setField(valuesDescriptor.findFieldByName("key4"), 0)
+                .setField(valuesDescriptor.findFieldByName("key5"), jsonObject)
+                .build();
+
+        DynamicMessage.Builder postTelemetryBuilder = telemetrySchema.newMessageBuilder("PostTelemetry");
+        Descriptors.Descriptor postTelemetryMsgDescriptor = postTelemetryBuilder.getDescriptorForType();
+        assertNotNull(postTelemetryMsgDescriptor);
+        DynamicMessage postTelemetryMsg = postTelemetryBuilder
+                .setField(postTelemetryMsgDescriptor.findFieldByName("ts"), 10000L)
+                .setField(postTelemetryMsgDescriptor.findFieldByName("values"), valuesMsg)
+                .build();
+
+        processTestPostTelemetry(postTelemetryMsg.toByteArray(), Collections.singletonList("key5"), true, true);
     }
 
 }
