@@ -42,9 +42,9 @@
                  matSort [matSortActive]="sortOrderProperty" [matSortDirection]="pageLinkSortDirection()" matSortDisableClear>
         <ng-container [matColumnDef]="column.def" *ngFor="let column of columns; trackBy: trackByColumnDef;">
           <mat-header-cell [ngStyle]="headerStyle(column)" *matHeaderCellDef mat-sort-header> {{ column.title }} </mat-header-cell>
-          <mat-cell *matCellDef="let entity;"
-                    [innerHTML]="cellContent(entity, column)"
-                    [ngStyle]="cellStyle(entity, column)">
+          <mat-cell *matCellDef="let entity; let row = index"
+                    [innerHTML]="cellContent(entity, column, row)"
+                    [ngStyle]="cellStyle(entity, column, row)">
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" [stickyEnd]="enableStickyAction">
@@ -84,8 +84,8 @@
         <mat-header-row *matHeaderRowDef="displayedColumns; sticky: enableStickyHeader"></mat-header-row>
         <mat-row [ngClass]="{'tb-current-entity': entityDatasource.isCurrentEntity(entity),
                              'invisible': entityDatasource.dataLoading}"
-                 *matRowDef="let entity; columns: displayedColumns;"
-                 [ngStyle]="rowStyle(entity)"
+                 *matRowDef="let entity; columns: displayedColumns; let row = index"
+                 [ngStyle]="rowStyle(entity, row)"
                  (click)="onRowClick($event, entity)" (dblclick)="onRowClick($event, entity, true)"></mat-row>
       </table>
       <span [fxShow]="(entityDatasource.isEmpty() | async) && !entityDatasource.dataLoading"

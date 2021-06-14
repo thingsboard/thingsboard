@@ -63,7 +63,7 @@
   </mat-menu>
   <div [ngClass]="dashboardClass" id="gridster-background" style="height: auto; min-height: 100%; display: inline;">
     <gridster #gridster id="gridster-child" [options]="gridsterOpts">
-      <gridster-item [item]="widget" class="tb-noselect" *ngFor="let widget of dashboardWidgets">
+      <gridster-item [item]="widget" [ngClass]="{'tb-noselect': isEdit}" *ngFor="let widget of dashboardWidgets">
         <tb-widget-container
           [widget]="widget"
           [dashboardWidgets]="dashboardWidgets"

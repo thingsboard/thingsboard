@@ -59,5 +59,13 @@
   #widget-container {
     min-height: 0;
     min-width: 0;
+
+    canvas {
+      user-select: none;
+
+      &::selection, &::-moz-selection {
+        background-color: transparent;
+      }
+    }
   }
 }
