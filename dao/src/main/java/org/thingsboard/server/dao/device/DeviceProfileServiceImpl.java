@@ -675,7 +675,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                 throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Failed to get field descriptor for field: params!");
             } else {
                 if (paramsFieldDescriptor.isRepeated()) {
-                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + "Field 'params' has invalid label!");
+                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Field 'params' has invalid label!");
                 }
             }
         }
