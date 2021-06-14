@@ -16,7 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import org.eclipse.leshan.core.response.ExecuteResponse;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
 public class TbLwM2MExecuteCallback extends AbstractTbLwM2MRequestCallback<ExecuteResponse> {

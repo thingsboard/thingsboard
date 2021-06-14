@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
-import org.thingsboard.server.transport.lwm2m.server.LwM2mUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
 public abstract class AbstractTbLwM2MRequestCallback<T> implements DownlinkRequestCallback<T> {

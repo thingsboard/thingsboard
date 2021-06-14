@@ -17,7 +17,7 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import lombok.Builder;
 import org.eclipse.leshan.core.response.DiscoverResponse;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType;
 
 public class TbLwM2MDiscoverRequest extends AbstractTbLwM2MTargetedDownlinkRequest<DiscoverResponse> {
 
@@ -27,8 +27,8 @@ public class TbLwM2MDiscoverRequest extends AbstractTbLwM2MTargetedDownlinkReque
     }
 
     @Override
-    public LwM2mTransportUtil.LwM2mTypeOper getType() {
-        return LwM2mTransportUtil.LwM2mTypeOper.DISCOVER;
+    public LwM2mOperationType getType() {
+        return LwM2mOperationType.DISCOVER;
     }
 
 

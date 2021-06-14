@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.client;
+package org.thingsboard.server.transport.lwm2m.server.rpc;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -24,7 +24,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.transport.lwm2m.server.DefaultLwM2MUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 import java.util.Map;
 import java.util.Objects;
@@ -36,15 +38,17 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.F
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FINISH_VALUE_KEY;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.INFO_KEY;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.KEY_NAME_KEY;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.DISCOVER_ALL;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.EXECUTE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.FW_UPDATE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE_CANCEL;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.OBSERVE_READ_ALL;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_ATTRIBUTES;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_REPLACE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.WRITE_UPDATE;
+
+import org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType;
+
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType.DISCOVER_ALL;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType.EXECUTE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType.FW_UPDATE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType.OBSERVE_CANCEL;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType.OBSERVE_READ_ALL;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType.WRITE_ATTRIBUTES;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType.WRITE_REPLACE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType.WRITE_UPDATE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.METHOD_KEY;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.PARAMS_KEY;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.RESULT_KEY;
@@ -64,7 +68,7 @@ public class LwM2mClientRpcRequest {
     private String bodyParams;
     private int requestId;
 
-    private LwM2mTypeOper typeOper;
+    private LwM2mOperationType typeOper;
     private String key;
     private String targetIdVer;
     private Object value;
@@ -78,8 +82,8 @@ public class LwM2mClientRpcRequest {
     public LwM2mClientRpcRequest() {
     }
 
-    public LwM2mClientRpcRequest(LwM2mTypeOper lwM2mTypeOper, String bodyParams, int requestId,
-                                 TransportProtos.SessionInfoProto sessionInfo, Registration registration, DefaultLwM2MUplinkMsgHandler handler) {
+    public LwM2mClientRpcRequest(LwM2mOperationType lwM2mTypeOper, String bodyParams, int requestId,
+                                 TransportProtos.SessionInfoProto sessionInfo, Registration registration, LwM2mUplinkMsgHandler handler) {
         this.registration = registration;
         this.sessionInfo = sessionInfo;
         this.requestId = requestId;
@@ -88,7 +92,7 @@ public class LwM2mClientRpcRequest {
         } else {
             this.errorMsg = METHOD_KEY + " - " + typeOper + " is not valid.";
         }
-        if (this.errorMsg == null &&  !bodyParams.equals("null")) {
+        if (this.errorMsg == null && !bodyParams.equals("null")) {
             this.bodyParams = bodyParams;
             this.init(handler);
         }
@@ -110,7 +114,7 @@ public class LwM2mClientRpcRequest {
                 .build();
     }
 
-    private void init(DefaultLwM2MUplinkMsgHandler handler) {
+    private void init(LwM2mUplinkMsgHandler handler) {
         try {
             // #1
             if (this.bodyParams.contains(KEY_NAME_KEY)) {
@@ -179,7 +183,7 @@ public class LwM2mClientRpcRequest {
         }
     }
 
-    private void setValidParamsKey(DefaultLwM2MUplinkMsgHandler handler) {
+    private void setValidParamsKey(LwM2mUplinkMsgHandler handler) {
         String paramsStr = this.getValueKeyFromBody(PARAMS_KEY);
         if (paramsStr != null) {
             String params2Json =
@@ -245,7 +249,7 @@ public class LwM2mClientRpcRequest {
     }
 
     private ConcurrentHashMap<String, Object> convertParamsToResourceId(ConcurrentHashMap<String, Object> params,
-                                                                        DefaultLwM2MUplinkMsgHandler serviceImpl) {
+                                                                        LwM2mUplinkMsgHandler serviceImpl) {
         Map<String, Object> paramsIdVer = new ConcurrentHashMap<>();
         LwM2mPath targetId = new LwM2mPath(Objects.requireNonNull(fromVersionedIdToObjectId(this.targetIdVer)));
         if (targetId.isObjectInstance()) {
@@ -257,7 +261,7 @@ public class LwM2mClientRpcRequest {
                     String targetIdVer = serviceImpl.getPresentPathIntoProfile(sessionInfo, k);
                     if (targetIdVer != null) {
                         LwM2mPath lwM2mPath = new LwM2mPath(Objects.requireNonNull(fromVersionedIdToObjectId(targetIdVer)));
-                            paramsIdVer.put(String.valueOf(lwM2mPath.getResourceId()), v);
+                        paramsIdVer.put(String.valueOf(lwM2mPath.getResourceId()), v);
                     }
                     /** WRITE_UPDATE*/
                     else {
@@ -272,10 +276,11 @@ public class LwM2mClientRpcRequest {
         return (ConcurrentHashMap<String, Object>) paramsIdVer;
     }
 
-    private String getRezIdByResourceNameAndObjectInstanceId(String resourceName, DefaultLwM2MUplinkMsgHandler handler) {
-        LwM2mClient lwM2mClient = handler.clientContext.getClientBySessionInfo(this.sessionInfo);
-        return lwM2mClient != null ?
-                lwM2mClient.getRezIdByResourceNameAndObjectInstanceId(resourceName, this.targetIdVer, handler.config.getModelProvider()) :
-                null;
+    private String getRezIdByResourceNameAndObjectInstanceId(String resourceName, LwM2mUplinkMsgHandler handler) {
+//        LwM2mClient lwM2mClient = handler.clientContext.getClientBySessionInfo(this.sessionInfo);
+//        return lwM2mClient != null ?
+//                lwM2mClient.getRezIdByResourceNameAndObjectInstanceId(resourceName, this.targetIdVer, handler.config.getModelProvider()) :
+//                null;
+        return null;
     }
 }

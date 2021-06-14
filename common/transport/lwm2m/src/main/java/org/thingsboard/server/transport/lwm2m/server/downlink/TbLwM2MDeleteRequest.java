@@ -17,7 +17,7 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import lombok.Builder;
 import org.eclipse.leshan.core.response.ReadResponse;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType;
 
 public class TbLwM2MDeleteRequest extends AbstractTbLwM2MTargetedDownlinkRequest<ReadResponse> {
 
@@ -27,8 +27,8 @@ public class TbLwM2MDeleteRequest extends AbstractTbLwM2MTargetedDownlinkRequest
     }
 
     @Override
-    public LwM2mTransportUtil.LwM2mTypeOper getType() {
-        return LwM2mTransportUtil.LwM2mTypeOper.DELETE;
+    public LwM2mOperationType getType() {
+        return LwM2mOperationType.DELETE;
     }
 
 

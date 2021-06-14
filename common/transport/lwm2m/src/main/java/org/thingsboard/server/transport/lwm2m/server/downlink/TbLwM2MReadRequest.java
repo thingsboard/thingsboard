@@ -19,7 +19,7 @@ import lombok.Builder;
 import lombok.Getter;
 import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.response.ReadResponse;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType;
 
 public class TbLwM2MReadRequest extends AbstractTbLwM2MTargetedDownlinkRequest<ReadResponse> implements HasContentFormat {
 
@@ -33,8 +33,8 @@ public class TbLwM2MReadRequest extends AbstractTbLwM2MTargetedDownlinkRequest<R
     }
 
     @Override
-    public LwM2mTransportUtil.LwM2mTypeOper getType() {
-        return LwM2mTransportUtil.LwM2mTypeOper.READ;
+    public LwM2mOperationType getType() {
+        return LwM2mOperationType.READ;
     }
 
 

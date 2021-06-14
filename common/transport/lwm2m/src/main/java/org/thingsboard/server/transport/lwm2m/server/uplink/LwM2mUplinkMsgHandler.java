@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server;
+package org.thingsboard.server.transport.lwm2m.server.uplink;
 
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.response.ReadResponse;
@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientRpcRequest;
+import org.thingsboard.server.transport.lwm2m.server.rpc.LwM2mClientRpcRequest;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -50,12 +50,6 @@ public interface LwM2mUplinkMsgHandler {
 
     void onResourceDelete(Optional<TransportProtos.ResourceDeleteMsg> resourceDeleteMsgOpt);
 
-    void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg toDeviceRequest, TransportProtos.SessionInfoProto sessionInfo);
-
-    void onToDeviceRpcResponse(TransportProtos.ToDeviceRpcResponseMsg toDeviceRpcResponse, TransportProtos.SessionInfoProto sessionInfo);
-
-    void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse);
-
     void doDisconnect(TransportProtos.SessionInfoProto sessionInfo);
 
     void onAwakeDev(Registration registration);
@@ -63,6 +57,12 @@ public interface LwM2mUplinkMsgHandler {
     void sendLogsToThingsboard(LwM2mClient client, String msg);
 
     void sendLogsToThingsboard(String registrationId, String msg);
+
+    void onToTransportUpdateCredentials(TransportProtos.ToTransportUpdateCredentialsProto updateCredentials);
+
+    String getPresentPathIntoProfile(TransportProtos.SessionInfoProto sessionInfo, String name);
+
+    void onGetAttributesResponse(TransportProtos.GetAttributeResponseMsg attributesResponse, TransportProtos.SessionInfoProto sessionInfo);
 
     LwM2MTransportServerConfig getConfig();
 }

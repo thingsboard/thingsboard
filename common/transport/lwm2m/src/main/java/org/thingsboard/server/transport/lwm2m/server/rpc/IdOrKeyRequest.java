@@ -13,27 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.downlink;
+package org.thingsboard.server.transport.lwm2m.server.rpc;
 
-import lombok.Builder;
-import lombok.Getter;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType;
+import lombok.Data;
 
-public class TbLwM2MDiscoverAllRequest implements TbLwM2MDownlinkRequest<String> {
+@Data
+public class IdOrKeyRequest {
 
-    @Getter
-    private final long timeout;
-
-    @Builder
-    private TbLwM2MDiscoverAllRequest(long timeout) {
-        this.timeout = timeout;
-    }
-
-    @Override
-    public LwM2mOperationType getType() {
-        return LwM2mOperationType.DISCOVER_ALL;
-    }
-
-
+    private String key;
+    private String id;
 
 }

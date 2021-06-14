@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server;
+package org.thingsboard.server.transport.lwm2m.server.uplink;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -21,7 +21,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mObject;
@@ -55,30 +54,36 @@ import org.thingsboard.server.gen.transport.TransportProtos.SessionEvent;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mOtaConvert;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mQueuedRequest;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mSessionMsgListener;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClientState;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClientStateException;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientRpcRequest;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mFwSwUpdate;
 import org.thingsboard.server.transport.lwm2m.server.client.ParametersAnalyzeResult;
 import org.thingsboard.server.transport.lwm2m.server.client.ResourceValue;
 import org.thingsboard.server.transport.lwm2m.server.client.ResultsAddKeyValueProto;
 import org.thingsboard.server.transport.lwm2m.server.downlink.LwM2mDownlinkMsgHandler;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDiscoverCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDiscoverRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveCallback;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MReadRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MReadCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MReadRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttributesCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttributesRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplaceCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplaceRequest;
+import org.thingsboard.server.transport.lwm2m.server.rpc.LwM2MRpcRequestHandler;
+import org.thingsboard.server.transport.lwm2m.server.rpc.LwM2mClientRpcRequest;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
@@ -98,7 +103,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static org.eclipse.californium.core.coap.CoAP.ResponseCode.BAD_REQUEST;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.FAILED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.INITIATED;
@@ -110,16 +114,14 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.F
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_TELEMETRY;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_VALUE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_WARN;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper.READ;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType.READ;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertOtaUpdateValueToString;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.getAckCallback;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.isFwSwWords;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.setValidTypeOper;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.validateObjectVerFromKey;
 
 
@@ -141,12 +143,14 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
     private final LwM2MJsonAdaptor adaptor;
     private final TbLwM2MDtlsSessionStore sessionStore;
     public final LwM2mClientContext clientContext;
+    private final LwM2MRpcRequestHandler rpcHandler;
     public final LwM2mDownlinkMsgHandler defaultLwM2MDownlinkMsgHandler;
-    private final Map<UUID, Long> rpcSubscriptions;
+
     public final Map<String, Integer> firmwareUpdateState;
 
     public DefaultLwM2MUplinkMsgHandler(TransportService transportService, LwM2MTransportServerConfig config, LwM2mTransportServerHelper helper,
                                         LwM2mClientContext clientContext,
+                                        @Lazy LwM2MRpcRequestHandler rpcHandler,
                                         @Lazy LwM2mDownlinkMsgHandler defaultLwM2MDownlinkMsgHandler,
                                         OtaPackageDataCache otaPackageDataCache,
                                         LwM2mTransportContext context, LwM2MJsonAdaptor adaptor, TbLwM2MDtlsSessionStore sessionStore) {
@@ -154,11 +158,11 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
         this.config = config;
         this.helper = helper;
         this.clientContext = clientContext;
+        this.rpcHandler = rpcHandler;
         this.defaultLwM2MDownlinkMsgHandler = defaultLwM2MDownlinkMsgHandler;
         this.otaPackageDataCache = otaPackageDataCache;
         this.context = context;
         this.adaptor = adaptor;
-        this.rpcSubscriptions = new ConcurrentHashMap<>();
         this.firmwareUpdateState = new ConcurrentHashMap<>();
         this.sessionStore = sessionStore;
     }
@@ -195,7 +199,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
                     this.clientContext.register(lwM2MClient, registration);
                     this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_INFO + ": Client registered with registration id: " + registration.getId());
                     SessionInfoProto sessionInfo = lwM2MClient.getSession();
-                    transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(this, sessionInfo));
+                    transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(this, rpcHandler, sessionInfo));
                     log.warn("40) sessionId [{}] Registering rpc subscription after Registration client", new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
                     TransportProtos.TransportToDeviceActorMsg msg = TransportProtos.TransportToDeviceActorMsg.newBuilder()
                             .setSessionInfo(sessionInfo)
@@ -350,7 +354,8 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
                 READ, pathIdVer, value);
         this.sendLogsToThingsboard(lwM2MClient, msg);
         rpcRequest.setValueMsg(String.format("%s", value));
-        this.sentRpcResponse(rpcRequest, response.getCode().getName(), (String) value, LOG_LW2M_VALUE);
+        //TODO: refactor
+//        this.sentRpcResponse(rpcRequest, response.getCode().getName(), (String) value, LOG_LW2M_VALUE);
     }
 
     /**
@@ -450,98 +455,6 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
     public void onResourceDelete(Optional<TransportProtos.ResourceDeleteMsg> resourceDeleteMsgOpt) {
         String pathIdVer = resourceDeleteMsgOpt.get().getResourceKey();
         clientContext.getLwM2mClients().forEach(e -> e.deleteResources(pathIdVer, this.config.getModelProvider()));
-    }
-
-    /**
-     * #1 del from rpcSubscriptions by timeout
-     * #2 if not present in rpcSubscriptions by requestId: create new LwM2mClientRpcRequest, after success - add requestId, timeout
-     */
-    @Override
-    public void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg toDeviceRpcRequestMsg, SessionInfoProto sessionInfo) {
-        // #1
-        this.checkRpcRequestTimeout();
-        log.warn("4) toDeviceRpcRequestMsg: [{}], sessionUUID: [{}]", toDeviceRpcRequestMsg, new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
-        String bodyParams = StringUtils.trimToNull(toDeviceRpcRequestMsg.getParams()) != null ? toDeviceRpcRequestMsg.getParams() : "null";
-        LwM2mTypeOper lwM2mTypeOper = setValidTypeOper(toDeviceRpcRequestMsg.getMethodName());
-        UUID requestUUID = new UUID(toDeviceRpcRequestMsg.getRequestIdMSB(), toDeviceRpcRequestMsg.getRequestIdLSB());
-        if (!this.rpcSubscriptions.containsKey(requestUUID)) {
-            this.rpcSubscriptions.put(requestUUID, toDeviceRpcRequestMsg.getExpirationTime());
-            LwM2mClientRpcRequest lwm2mClientRpcRequest = null;
-            try {
-                LwM2mClient client = clientContext.getClientBySessionInfo(sessionInfo);
-                Registration registration = client.getRegistration();
-                if (registration != null) {
-                    lwm2mClientRpcRequest = new LwM2mClientRpcRequest(lwM2mTypeOper, bodyParams, toDeviceRpcRequestMsg.getRequestId(), sessionInfo, registration, this);
-                    if (lwm2mClientRpcRequest.getErrorMsg() != null) {
-                        lwm2mClientRpcRequest.setResponseCode(BAD_REQUEST.name());
-                        this.onToDeviceRpcResponse(lwm2mClientRpcRequest.getDeviceRpcResponseResultMsg(), sessionInfo);
-                    } else {
-                        //TODO: use different methods and RPC callback wrapper.
-//                        defaultLwM2MDownlinkMsgHandler.sendAllRequest(client, lwm2mClientRpcRequest.getTargetIdVer(), lwm2mClientRpcRequest.getTypeOper(),
-//                                null,
-//                                lwm2mClientRpcRequest.getValue() == null ? lwm2mClientRpcRequest.getParams() : lwm2mClientRpcRequest.getValue(),
-//                                this.config.getTimeout(), lwm2mClientRpcRequest);
-                    }
-                } else {
-                    this.sendErrorRpcResponse(lwm2mClientRpcRequest, "registration == null", sessionInfo);
-                }
-            } catch (Exception e) {
-                this.sendErrorRpcResponse(lwm2mClientRpcRequest, e.getMessage(), sessionInfo);
-            }
-        }
-    }
-
-    private void sendErrorRpcResponse(LwM2mClientRpcRequest lwm2mClientRpcRequest, String msgError, SessionInfoProto sessionInfo) {
-        if (lwm2mClientRpcRequest == null) {
-            lwm2mClientRpcRequest = new LwM2mClientRpcRequest();
-        }
-        lwm2mClientRpcRequest.setResponseCode(BAD_REQUEST.name());
-        if (lwm2mClientRpcRequest.getErrorMsg() == null) {
-            lwm2mClientRpcRequest.setErrorMsg(msgError);
-        }
-        this.onToDeviceRpcResponse(lwm2mClientRpcRequest.getDeviceRpcResponseResultMsg(), sessionInfo);
-    }
-
-    private void checkRpcRequestTimeout() {
-        log.warn("4.1) before rpcSubscriptions.size(): [{}]", rpcSubscriptions.size());
-        if (rpcSubscriptions.size() > 0) {
-            Set<UUID> rpcSubscriptionsToRemove = rpcSubscriptions.entrySet().stream().filter(kv -> System.currentTimeMillis() > kv.getValue()).map(Map.Entry::getKey).collect(Collectors.toSet());
-            log.warn("4.2) System.currentTimeMillis(): [{}]", System.currentTimeMillis());
-            log.warn("4.3) rpcSubscriptionsToRemove: [{}]", rpcSubscriptionsToRemove);
-            rpcSubscriptionsToRemove.forEach(rpcSubscriptions::remove);
-        }
-        log.warn("4.4) after rpcSubscriptions.size(): [{}]", rpcSubscriptions.size());
-    }
-
-    public void sentRpcResponse(LwM2mClientRpcRequest rpcRequest, String requestCode, String msg, String typeMsg) {
-        rpcRequest.setResponseCode(requestCode);
-        if (LOG_LW2M_ERROR.equals(typeMsg)) {
-            rpcRequest.setInfoMsg(null);
-            rpcRequest.setValueMsg(null);
-            if (rpcRequest.getErrorMsg() == null) {
-                msg = msg.isEmpty() ? null : msg;
-                rpcRequest.setErrorMsg(msg);
-            }
-        } else if (LOG_LW2M_INFO.equals(typeMsg)) {
-            if (rpcRequest.getInfoMsg() == null) {
-                rpcRequest.setInfoMsg(msg);
-            }
-        } else if (LOG_LW2M_VALUE.equals(typeMsg)) {
-            if (rpcRequest.getValueMsg() == null) {
-                rpcRequest.setValueMsg(msg);
-            }
-        }
-        this.onToDeviceRpcResponse(rpcRequest.getDeviceRpcResponseResultMsg(), rpcRequest.getSessionInfo());
-    }
-
-    @Override
-    public void onToDeviceRpcResponse(TransportProtos.ToDeviceRpcResponseMsg toDeviceResponse, SessionInfoProto sessionInfo) {
-        log.warn("5) onToDeviceRpcResponse: [{}], sessionUUID: [{}]", toDeviceResponse, new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
-        transportService.process(sessionInfo, toDeviceResponse, null);
-    }
-
-    public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse) {
-        log.info("[{}] toServerRpcResponse", toServerResponse);
     }
 
     /**
@@ -1065,6 +978,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
      * @param updateCredentials - Credentials include config only security Client (without config attr/telemetry...)
      *                          config attr/telemetry... in profile
      */
+    @Override
     public void onToTransportUpdateCredentials(TransportProtos.ToTransportUpdateCredentialsProto updateCredentials) {
         log.info("[{}] idList [{}] valueList updateCredentials", updateCredentials.getCredentialsIdList(), updateCredentials.getCredentialsValueList());
     }
@@ -1076,6 +990,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
      * @param name        -
      * @return -
      */
+    @Override
     public String getPresentPathIntoProfile(TransportProtos.SessionInfoProto sessionInfo, String name) {
         var profile = clientContext.getProfile(new UUID(sessionInfo.getDeviceProfileIdMSB(), sessionInfo.getDeviceProfileIdLSB()));
         LwM2mClient lwM2mClient = clientContext.getClientBySessionInfo(sessionInfo);
@@ -1093,6 +1008,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
      * @param attributesResponse -
      * @param sessionInfo        -
      */
+    @Override
     public void onGetAttributesResponse(TransportProtos.GetAttributeResponseMsg attributesResponse, TransportProtos.SessionInfoProto sessionInfo) {
         try {
             List<TransportProtos.TsKvProto> tsKvProtos = attributesResponse.getSharedAttributeListList();
@@ -1163,7 +1079,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
      */
     private void reportActivityAndRegister(SessionInfoProto sessionInfo) {
         if (sessionInfo != null && transportService.reportActivity(sessionInfo) == null) {
-            transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(this, sessionInfo));
+            transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(this, rpcHandler, sessionInfo));
             this.reportActivitySubscription(sessionInfo);
         }
     }
@@ -1236,7 +1152,8 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
                                             lwM2MClient.getDeviceName(), response.getResponseStatus().toString());
                                     log.trace(msgError);
                                     if (rpcRequest != null) {
-                                        sendErrorRpcResponse(rpcRequest, msgError, sessionInfo);
+                                        //TODO: refactor
+//                                        sendErrorRpcResponse(rpcRequest, msgError, sessionInfo);
                                     }
                                 }
                             }

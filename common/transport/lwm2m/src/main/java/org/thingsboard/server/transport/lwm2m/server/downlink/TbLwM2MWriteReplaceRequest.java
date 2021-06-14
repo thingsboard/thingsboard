@@ -18,7 +18,7 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 import lombok.Builder;
 import lombok.Getter;
 import org.eclipse.leshan.core.response.WriteResponse;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType;
 
 public class TbLwM2MWriteReplaceRequest extends AbstractTbLwM2MTargetedDownlinkRequest<WriteResponse> {
 
@@ -32,8 +32,8 @@ public class TbLwM2MWriteReplaceRequest extends AbstractTbLwM2MTargetedDownlinkR
     }
 
     @Override
-    public LwM2mTransportUtil.LwM2mTypeOper getType() {
-        return LwM2mTransportUtil.LwM2mTypeOper.WRITE_REPLACE;
+    public LwM2mOperationType getType() {
+        return LwM2mOperationType.WRITE_REPLACE;
     }
 
 

@@ -15,11 +15,11 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType;
 
 public interface TbLwM2MDownlinkRequest<T> {
 
-    LwM2mTransportUtil.LwM2mTypeOper getType();
+    LwM2mOperationType getType();
 
     long getTimeout();
 

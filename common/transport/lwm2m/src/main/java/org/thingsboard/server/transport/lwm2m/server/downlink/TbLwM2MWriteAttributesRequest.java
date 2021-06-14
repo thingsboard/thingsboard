@@ -19,7 +19,7 @@ import lombok.Builder;
 import lombok.Getter;
 import org.eclipse.leshan.core.response.WriteAttributesResponse;
 import org.thingsboard.server.common.data.device.data.lwm2m.ObjectAttributes;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType;
 
 public class TbLwM2MWriteAttributesRequest extends AbstractTbLwM2MTargetedDownlinkRequest<WriteAttributesResponse> {
 
@@ -33,8 +33,8 @@ public class TbLwM2MWriteAttributesRequest extends AbstractTbLwM2MTargetedDownli
     }
 
     @Override
-    public LwM2mTransportUtil.LwM2mTypeOper getType() {
-        return LwM2mTransportUtil.LwM2mTypeOper.WRITE_ATTRIBUTES;
+    public LwM2mOperationType getType() {
+        return LwM2mOperationType.WRITE_ATTRIBUTES;
     }
 
 
