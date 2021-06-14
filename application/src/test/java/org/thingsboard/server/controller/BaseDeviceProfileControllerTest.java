@@ -364,7 +364,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 "package schemavalidation;\n" +
                 "\n" +
                 "message SchemaValidationTest {\n" +
-                "   int32 parameter = 1;\n" +
+                "   optional int32 parameter = 1;\n" +
                 "}", "[Transport Configuration] invalid attributes proto schema provided! Schema options don't support!");
     }
 
@@ -377,7 +377,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 "package schemavalidation;\n" +
                 "\n" +
                 "message SchemaValidationTest {\n" +
-                "   int32 parameter = 1;\n" +
+                "   optional int32 parameter = 1;\n" +
                 "}", "[Transport Configuration] invalid attributes proto schema provided! Schema public imports don't support!");
     }
 
@@ -390,7 +390,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 "package schemavalidation;\n" +
                 "\n" +
                 "message SchemaValidationTest {\n" +
-                "   int32 parameter = 1;\n" +
+                "   optional int32 parameter = 1;\n" +
                 "}", "[Transport Configuration] invalid attributes proto schema provided! Schema imports don't support!");
     }
 
@@ -419,7 +419,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 "}\n" +
                 "\n" +
                 "message testMessage {\n" +
-                "   int32 parameter = 1;\n" +
+                "   optional int32 parameter = 1;\n" +
                 "}", "[Transport Configuration] invalid attributes proto schema provided! Enum definitions options are not supported!");
     }
 
@@ -444,7 +444,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 "\n" +
                 "message testMessage {\n" +
                 "   option allow_alias = true;\n" +
-                "   int32 parameter = 1;\n" +
+                "   optional int32 parameter = 1;\n" +
                 "}", "[Transport Configuration] invalid attributes proto schema provided! Message definition options don't support!");
     }
 
@@ -479,8 +479,8 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 "\n" +
                 "message TestMessage {\n" +
                 "  repeated group Result = 1 {\n" +
-                "    string url = 2;\n" +
-                "    string title = 3;\n" +
+                "    optional string url = 2;\n" +
+                "    optional string title = 3;\n" +
                 "    repeated string snippets = 4;\n" +
                 "  }\n" +
                 "}", "[Transport Configuration] invalid attributes proto schema provided! Message definition groups don't support!");
@@ -513,15 +513,15 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 "message Outer {\n" +
                 "  message MiddleAA {\n" +
                 "    message Inner {\n" +
-                "      int64 ival = 1;\n" +
-                "      bool  booly = 2;\n" +
+                "      optional int64 ival = 1;\n" +
+                "      optional bool  booly = 2;\n" +
                 "    }\n" +
                 "    Inner inner = 1;\n" +
                 "  }\n" +
                 "  message MiddleBB {\n" +
                 "    message Inner {\n" +
-                "      int32 ival = 1;\n" +
-                "      bool  booly = 2;\n" +
+                "      optional int32 ival = 1;\n" +
+                "      optional bool  booly = 2;\n" +
                 "    }\n" +
                 "    Inner inner = 1;\n" +
                 "  }\n" +
@@ -599,6 +599,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 "}\n" +
                 "\n" +
                 "message SampleMessage {\n" +
+                "  optional int32 id = 1;\n" +
                 "  oneof testOneOf {\n" +
                 "     string name = 4;\n" +
                 "     SubMessage subMessage = 9;\n" +
@@ -616,7 +617,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         assertNotNull(sampleMsgDescriptor);
 
         List<Descriptors.FieldDescriptor> fields = sampleMsgDescriptor.getFields();
-        assertEquals(2, fields.size());
+        assertEquals(3, fields.size());
         DynamicMessage sampleMsg = sampleMsgBuilder
                 .setField(sampleMsgDescriptor.findFieldByName("name"), "Bob")
                 .build();
@@ -700,8 +701,133 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 "}", "[Transport Configuration] invalid telemetry proto schema provided! Field 'values' has invalid data type. Only message type is supported!");
     }
 
+    @Test
+    public void testSaveProtoDeviceProfileWithInvalidRpcRequestSchemaMethodDateType() throws Exception {
+        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("syntax =\"proto3\";\n" +
+                "\n" +
+                "package schemavalidation;\n" +
+                "\n" +
+                "message RpcRequestMsg {\n" +
+                "  optional int32 method = 1;\n" +
+                "  optional int32 requestId = 2;\n" +
+                "  optional string params = 3;\n" +
+                "  \n" +
+                "}", "[Transport Configuration] invalid rpc request proto schema provided! Field 'method' has invalid data type. Only string type is supported!");
+    }
+
+    @Test
+    public void testSaveProtoDeviceProfileWithInvalidRpcRequestSchemaRequestIdDateType() throws Exception {
+        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("syntax =\"proto3\";\n" +
+                "\n" +
+                "package schemavalidation;\n" +
+                "\n" +
+                "message RpcRequestMsg {\n" +
+                "  optional string method = 1;\n" +
+                "  optional int64 requestId = 2;\n" +
+                "  optional string params = 3;\n" +
+                "  \n" +
+                "}", "[Transport Configuration] invalid rpc request proto schema provided! Field 'requestId' has invalid data type. Only int32 type is supported!");
+    }
+
+    @Test
+    public void testSaveProtoDeviceProfileWithInvalidRpcRequestSchemaMethodLabel() throws Exception {
+        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("syntax =\"proto3\";\n" +
+                "\n" +
+                "package schemavalidation;\n" +
+                "\n" +
+                "message RpcRequestMsg {\n" +
+                "  repeated string method = 1;\n" +
+                "  optional int32 requestId = 2;\n" +
+                "  optional string params = 3;\n" +
+                "  \n" +
+                "}", "[Transport Configuration] invalid rpc request proto schema provided! Field 'method' has invalid label!");
+    }
+
+    @Test
+    public void testSaveProtoDeviceProfileWithInvalidRpcRequestSchemaRequestIdLabel() throws Exception {
+        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("syntax =\"proto3\";\n" +
+                "\n" +
+                "package schemavalidation;\n" +
+                "\n" +
+                "message RpcRequestMsg {\n" +
+                "  optional string method = 1;\n" +
+                "  repeated int32 requestId = 2;\n" +
+                "  optional string params = 3;\n" +
+                "  \n" +
+                "}", "[Transport Configuration] invalid rpc request proto schema provided! Field 'requestId' has invalid label!");
+    }
+
+    @Test
+    public void testSaveProtoDeviceProfileWithInvalidRpcRequestSchemaParamsLabel() throws Exception {
+        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("syntax =\"proto3\";\n" +
+                "\n" +
+                "package schemavalidation;\n" +
+                "\n" +
+                "message RpcRequestMsg {\n" +
+                "  optional string method = 1;\n" +
+                "  optional int32 requestId = 2;\n" +
+                "  repeated string params = 3;\n" +
+                "  \n" +
+                "}", "[Transport Configuration] invalid rpc request proto schema provided! Field 'params' has invalid label!");
+    }
+
+    @Test
+    public void testSaveProtoDeviceProfileWithInvalidRpcRequestSchemaFieldsCount() throws Exception {
+        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("syntax =\"proto3\";\n" +
+                "\n" +
+                "package schemavalidation;\n" +
+                "\n" +
+                "message RpcRequestMsg {\n" +
+                "  optional int32 requestId = 2;\n" +
+                "  repeated string params = 3;\n" +
+                "  \n" +
+                "}", "[Transport Configuration] invalid rpc request proto schema provided! RpcRequestMsg message should always contains 3 fields: method, requestId and params!");
+    }
+
+    @Test
+    public void testSaveProtoDeviceProfileWithInvalidRpcRequestSchemaFieldMethodIsNoSet() throws Exception {
+        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("syntax =\"proto3\";\n" +
+                "\n" +
+                "package schemavalidation;\n" +
+                "\n" +
+                "message RpcRequestMsg {\n" +
+                "  optional string methodName = 1;\n" +
+                "  optional int32 requestId = 2;\n" +
+                "  repeated string params = 3;\n" +
+                "  \n" +
+                "}", "[Transport Configuration] invalid rpc request proto schema provided! Failed to get field descriptor for field: method!");
+    }
+
+    @Test
+    public void testSaveProtoDeviceProfileWithInvalidRpcRequestSchemaFieldRequestIdIsNotSet() throws Exception {
+        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("syntax =\"proto3\";\n" +
+                "\n" +
+                "package schemavalidation;\n" +
+                "\n" +
+                "message RpcRequestMsg {\n" +
+                "  optional string method = 1;\n" +
+                "  optional int32 requestIdentifier = 2;\n" +
+                "  repeated string params = 3;\n" +
+                "  \n" +
+                "}", "[Transport Configuration] invalid rpc request proto schema provided! Failed to get field descriptor for field: requestId!");
+    }
+
+    @Test
+    public void testSaveProtoDeviceProfileWithInvalidRpcRequestSchemaFieldParamsIsNotSet() throws Exception {
+        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("syntax =\"proto3\";\n" +
+                "\n" +
+                "package schemavalidation;\n" +
+                "\n" +
+                "message RpcRequestMsg {\n" +
+                "  optional string method = 1;\n" +
+                "  optional int32 requestId = 2;\n" +
+                "  repeated string parameters = 3;\n" +
+                "  \n" +
+                "}", "[Transport Configuration] invalid rpc request proto schema provided! Failed to get field descriptor for field: params!");
+    }
+
     private DeviceProfile testSaveDeviceProfileWithProtoPayloadType(String schema) throws Exception {
-        ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = this.createProtoTransportPayloadConfiguration(schema, schema);
+        ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = this.createProtoTransportPayloadConfiguration(schema, schema, null, null);
         MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = this.createMqttDeviceProfileTransportConfiguration(protoTransportPayloadConfiguration);
         DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile", mqttDeviceProfileTransportConfiguration);
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
@@ -711,7 +837,15 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
     }
 
     private void testSaveDeviceProfileWithInvalidProtoSchema(String schema, String errorMsg) throws Exception {
-        ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = this.createProtoTransportPayloadConfiguration(schema, schema);
+        ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = this.createProtoTransportPayloadConfiguration(schema, schema, null, null);
+        MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = this.createMqttDeviceProfileTransportConfiguration(protoTransportPayloadConfiguration);
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile", mqttDeviceProfileTransportConfiguration);
+        doPost("/api/deviceProfile", deviceProfile).andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(errorMsg)));
+    }
+
+    private void testSaveDeviceProfileWithInvalidRpcRequestProtoSchema(String schema, String errorMsg) throws Exception {
+        ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = this.createProtoTransportPayloadConfiguration(schema, schema, schema, null);
         MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = this.createMqttDeviceProfileTransportConfiguration(protoTransportPayloadConfiguration);
         DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile", mqttDeviceProfileTransportConfiguration);
         doPost("/api/deviceProfile", deviceProfile).andExpect(status().isBadRequest())
