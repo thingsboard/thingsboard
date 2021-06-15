@@ -28,7 +28,10 @@ import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.observation.Observation;
+import org.eclipse.leshan.core.request.ObserveRequest;
+import org.eclipse.leshan.core.request.ReadRequest;
 import org.eclipse.leshan.core.request.WriteRequest;
+import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.context.annotation.Lazy;
@@ -69,7 +72,9 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2mFwSwUpdate;
 import org.thingsboard.server.transport.lwm2m.server.client.ParametersAnalyzeResult;
 import org.thingsboard.server.transport.lwm2m.server.client.ResourceValue;
 import org.thingsboard.server.transport.lwm2m.server.client.ResultsAddKeyValueProto;
+import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.LwM2mDownlinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MLatchCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDiscoverCallback;
@@ -99,6 +104,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -510,16 +516,29 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
         Set<String> targetIds = new HashSet<>(profile.getObserveAttr().getAttribute());
         targetIds.addAll(profile.getObserveAttr().getTelemetry());
         targetIds = targetIds.stream().filter(target -> isSupportedTargetId(supportedObjects, target)).collect(Collectors.toSet());
-        lwM2MClient.getPendingReadRequests().addAll(targetIds);
-        targetIds.forEach(versionedId -> sendReadRequest(lwM2MClient, versionedId));
+
+        CountDownLatch latch = new CountDownLatch(targetIds.size());
+        targetIds.forEach(versionedId -> sendReadRequest(lwM2MClient, versionedId,
+                new TbLwM2MLatchCallback<>(latch, new TbLwM2MReadCallback(this, lwM2MClient, versionedId))));
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            log.error("Failed to await Read requests!");
+        }
     }
 
     private void sendObserveRequests(LwM2mClient lwM2MClient, Lwm2mDeviceProfileTransportConfiguration profile, Set<String> supportedObjects) {
         Set<String> targetIds = profile.getObserveAttr().getObserve();
         targetIds = targetIds.stream().filter(target -> isSupportedTargetId(supportedObjects, target)).collect(Collectors.toSet());
-//        TODO: why do we need to put observe into pending read requests?
-//        lwM2MClient.getPendingReadRequests().addAll(targetIds);
-        targetIds.forEach(targetId -> sendObserveRequest(lwM2MClient, targetId));
+
+        CountDownLatch latch = new CountDownLatch(targetIds.size());
+        targetIds.forEach(targetId -> sendObserveRequest(lwM2MClient, targetId,
+                new TbLwM2MLatchCallback<>(latch, new TbLwM2MObserveCallback(this, lwM2MClient, targetId))));
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            log.error("Failed to await Observe requests!");
+        }
     }
 
     private void sendWriteAttributeRequests(LwM2mClient lwM2MClient, Lwm2mDeviceProfileTransportConfiguration profile, Set<String> supportedObjects) {
@@ -544,13 +563,21 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
     }
 
     private void sendReadRequest(LwM2mClient lwM2MClient, String versionedId) {
+        sendReadRequest(lwM2MClient, versionedId, new TbLwM2MReadCallback(this, lwM2MClient, versionedId));
+    }
+
+    private void sendReadRequest(LwM2mClient lwM2MClient, String versionedId, DownlinkRequestCallback<ReadRequest, ReadResponse> callback) {
         TbLwM2MReadRequest request = TbLwM2MReadRequest.builder().versionedId(versionedId).timeout(this.config.getTimeout()).build();
-        defaultLwM2MDownlinkMsgHandler.sendReadRequest(lwM2MClient, request, new TbLwM2MReadCallback(this, lwM2MClient, versionedId));
+        defaultLwM2MDownlinkMsgHandler.sendReadRequest(lwM2MClient, request, callback);
     }
 
     private void sendObserveRequest(LwM2mClient lwM2MClient, String versionedId) {
+        sendObserveRequest(lwM2MClient, versionedId, new TbLwM2MObserveCallback(this, lwM2MClient, versionedId));
+    }
+
+    private void sendObserveRequest(LwM2mClient lwM2MClient, String versionedId, DownlinkRequestCallback<ObserveRequest, ObserveResponse> callback) {
         TbLwM2MObserveRequest request = TbLwM2MObserveRequest.builder().versionedId(versionedId).timeout(this.config.getTimeout()).build();
-        defaultLwM2MDownlinkMsgHandler.sendObserveRequest(lwM2MClient, request, new TbLwM2MObserveCallback(this, lwM2MClient, versionedId));
+        defaultLwM2MDownlinkMsgHandler.sendObserveRequest(lwM2MClient, request, callback);
     }
 
     private void sendWriteAttributesRequest(LwM2mClient lwM2MClient, String targetId, ObjectAttributes params) {
