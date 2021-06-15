@@ -201,7 +201,11 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
             try {
                 log.warn("[{}] [{{}] Client: create after Registration", registration.getEndpoint(), registration.getId());
                 if (lwM2MClient != null) {
-                    this.clientContext.register(lwM2MClient, registration);
+                    Optional<SessionInfoProto> oldSessionInfo = this.clientContext.register(lwM2MClient, registration);
+                    if (oldSessionInfo.isPresent()) {
+                        log.info("[{}] Closing old session: {}", registration.getEndpoint(), new UUID(oldSessionInfo.get().getSessionIdMSB(), oldSessionInfo.get().getSessionIdLSB()));
+                        closeSession(oldSessionInfo.get());
+                    }
                     this.logToTelemetry(lwM2MClient, LOG_LWM2M_INFO + ": Client registered with registration id: " + registration.getId());
                     SessionInfoProto sessionInfo = lwM2MClient.getSession();
                     transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(this, rpcHandler, sessionInfo));
@@ -278,8 +282,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
                 clientContext.unregister(client, registration);
                 SessionInfoProto sessionInfo = client.getSession();
                 if (sessionInfo != null) {
-                    transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.CLOSED), null);
-                    transportService.deregisterSession(sessionInfo);
+                    closeSession(sessionInfo);
                     sessionStore.remove(registration.getEndpoint());
                     log.info("Client close session: [{}] unReg [{}] name  [{}] profile ", registration.getId(), registration.getEndpoint(), sessionInfo.getDeviceType());
                 } else {
@@ -292,6 +295,11 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
                 this.logToTelemetry(client, LOG_LWM2M_ERROR + String.format(": Client Unable un Registration, %s", t.getMessage()));
             }
         });
+    }
+
+    public void closeSession(SessionInfoProto sessionInfo) {
+        transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.CLOSED), null);
+        transportService.deregisterSession(sessionInfo);
     }
 
     @Override
@@ -447,8 +455,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
      */
     @Override
     public void doDisconnect(SessionInfoProto sessionInfo) {
-        transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.CLOSED), null);
-        transportService.deregisterSession(sessionInfo);
+        closeSession(sessionInfo);
     }
 
     /**
@@ -613,7 +620,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
      * #3 If fr_update -> UpdateFirmware
      * #4 updateAttrTelemetry
      *
-     * @param lwM2MClient  - Registration LwM2M Client
+     * @param lwM2MClient   - Registration LwM2M Client
      * @param lwM2mResource - LwM2mSingleResource response.getContent()
      * @param path          - resource
      */
@@ -811,13 +818,6 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
         return lwm2mResourceValue;
     }
 
-    /**
-     * Update resource (attribute) value  on thingsboard after update value in client
-     *
-     * @param registration -
-     * @param path         -
-     * @param request      -
-     */
     @Override
     public void onWriteResponseOk(LwM2mClient client, String path, WriteRequest request) {
         if (request.getNode() instanceof LwM2mResource) {
@@ -982,7 +982,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
      * Get path to resource from profile equal keyName
      *
      * @param sessionInfo -
-     * @param keyName        -
+     * @param keyName     -
      * @return -
      */
     @Override

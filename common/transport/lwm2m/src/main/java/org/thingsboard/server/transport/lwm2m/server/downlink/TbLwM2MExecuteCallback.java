@@ -20,18 +20,10 @@ import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
-public class TbLwM2MExecuteCallback extends AbstractTbLwM2MRequestCallback<ExecuteRequest, ExecuteResponse> {
-
-    private final String targetId;
+public class TbLwM2MExecuteCallback extends TbLwM2MTargetedCallback<ExecuteRequest, ExecuteResponse> {
 
     public TbLwM2MExecuteCallback(LwM2mUplinkMsgHandler handler, LwM2mClient client, String targetId) {
-        super(handler, client);
-        this.targetId = targetId;
-    }
-
-    @Override
-    public void onSuccess(ExecuteRequest request, ExecuteResponse response) {
-        //TODO: separate callback wrapper for the RPC calls.
+        super(handler, client, targetId);
     }
 
 }

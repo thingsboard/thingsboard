@@ -15,12 +15,13 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
-import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType.OBSERVE_CANCEL_ALL;
 
+@Slf4j
 public class TbLwM2MCancelAllObserveCallback extends AbstractTbLwM2MRequestCallback<TbLwM2MCancelAllRequest, Integer> {
 
     public TbLwM2MCancelAllObserveCallback(LwM2mUplinkMsgHandler handler, LwM2mClient client) {
@@ -29,7 +30,8 @@ public class TbLwM2MCancelAllObserveCallback extends AbstractTbLwM2MRequestCallb
 
     @Override
     public void onSuccess(TbLwM2MCancelAllRequest request, Integer canceledSubscriptionsCount) {
-        String observeCancelMsg = String.format("%s: type operation %s paths: count: %d", LOG_LWM2M_INFO, OBSERVE_CANCEL_ALL.name(), canceledSubscriptionsCount);
+        log.trace("[{}] Cancel of all observations was successful: {}", client.getEndpoint(),  canceledSubscriptionsCount);
+        handler.logToTelemetry(client, String.format("[%s]: Cancel of all observations was successful. Result: [%s]", LOG_LWM2M_INFO, canceledSubscriptionsCount));
     }
 
 }

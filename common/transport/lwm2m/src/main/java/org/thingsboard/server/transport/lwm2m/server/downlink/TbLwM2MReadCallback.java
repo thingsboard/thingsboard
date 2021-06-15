@@ -31,7 +31,7 @@ public class TbLwM2MReadCallback extends TbLwM2MTargetedCallback<ReadRequest, Re
     @Override
     public void onSuccess(ReadRequest request, ReadResponse response) {
         super.onSuccess(request, response);
-        handler.onUpdateValueAfterReadResponse(client.getRegistration(), targetId, response, null);
+        handler.onUpdateValueAfterReadResponse(client.getRegistration(), versionedId, response, null);
     }
 
 }

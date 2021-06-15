@@ -17,13 +17,9 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.request.ObserveRequest;
-import org.eclipse.leshan.core.request.ReadRequest;
 import org.eclipse.leshan.core.response.ObserveResponse;
-import org.eclipse.leshan.core.response.ReadResponse;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
-
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
 
 @Slf4j
 public class TbLwM2MObserveCallback extends TbLwM2MTargetedCallback<ObserveRequest, ObserveResponse> {
@@ -35,6 +31,6 @@ public class TbLwM2MObserveCallback extends TbLwM2MTargetedCallback<ObserveReque
     @Override
     public void onSuccess(ObserveRequest request, ObserveResponse response) {
         super.onSuccess(request, response);
-        handler.onUpdateValueAfterReadResponse(client.getRegistration(), targetId, response, null);
+        handler.onUpdateValueAfterReadResponse(client.getRegistration(), versionedId, response, null);
     }
 }
