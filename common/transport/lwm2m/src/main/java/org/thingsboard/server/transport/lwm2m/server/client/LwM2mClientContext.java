@@ -22,6 +22,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -33,7 +34,7 @@ public interface LwM2mClientContext {
 
     LwM2mClient getClientBySessionInfo(TransportProtos.SessionInfoProto sessionInfo);
 
-    void register(LwM2mClient lwM2MClient, Registration registration) throws LwM2MClientStateException;
+    Optional<TransportProtos.SessionInfoProto> register(LwM2mClient lwM2MClient, Registration registration) throws LwM2MClientStateException;
 
     void updateRegistration(LwM2mClient client, Registration registration) throws LwM2MClientStateException;
 

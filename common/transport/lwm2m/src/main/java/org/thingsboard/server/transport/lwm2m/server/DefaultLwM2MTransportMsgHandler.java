@@ -114,6 +114,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.c
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.getAckCallback;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.getOtaParamsValue;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.getOtaParamsVersionValue;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.isFwSwWords;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.setValidTypeOper;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.validateObjectVerFromKey;
@@ -125,6 +126,8 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.v
 public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler {
 
     private ExecutorService registrationExecutor;
+    private ExecutorService updateAttribute;
+    private ExecutorService getAttributesResponse;
     private ExecutorService updateRegistrationExecutor;
     private ExecutorService unRegistrationExecutor;
     public LwM2mValueConverterImpl converter;
@@ -139,7 +142,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     public final LwM2mClientContext clientContext;
     public final LwM2mTransportRequest lwM2mTransportRequest;
     private final Map<UUID, Long> rpcSubscriptions;
-    public final Map<String, Integer> firmwareUpdateState;
+    public final Map<LwM2mClient, String> firmwareUpdateState;
 
     public DefaultLwM2MTransportMsgHandler(TransportService transportService, LwM2MTransportServerConfig config, LwM2mTransportServerHelper helper,
                                            LwM2mClientContext clientContext,
@@ -163,6 +166,8 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     public void init() {
         this.context.getScheduler().scheduleAtFixedRate(this::reportActivity, new Random().nextInt((int) config.getSessionReportTimeout()), config.getSessionReportTimeout(), TimeUnit.MILLISECONDS);
         this.registrationExecutor = ThingsBoardExecutors.newWorkStealingPool(this.config.getRegisteredPoolSize(), "LwM2M registration");
+        this.updateAttribute = ThingsBoardExecutors.newWorkStealingPool(10, "LwM2M updateAttribute");
+        this.getAttributesResponse = ThingsBoardExecutors.newWorkStealingPool(10, "LwM2M getAttributesResponse");
         this.updateRegistrationExecutor = ThingsBoardExecutors.newWorkStealingPool(this.config.getUpdateRegisteredPoolSize(), "LwM2M update registration");
         this.unRegistrationExecutor = ThingsBoardExecutors.newWorkStealingPool(this.config.getUnRegisteredPoolSize(), "LwM2M unRegistration");
         this.converter = LwM2mValueConverterImpl.getInstance();
@@ -186,14 +191,19 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         registrationExecutor.submit(() -> {
             LwM2mClient lwM2MClient = this.clientContext.getClientByEndpoint(registration.getEndpoint());
             try {
-                 log.warn("000.1) [{}] [{{}] Client: create after Registration", registration.getEndpoint(), registration.getId());
+                log.warn("000.1) [{}] [{{}] Client: create after Registration", registration.getEndpoint(), registration.getId());
                 if (lwM2MClient != null) {
-                    this.clientContext.register(lwM2MClient, registration);
+//                    this.clientContext.register(lwM2MClient, registration);
+                    Optional<SessionInfoProto> oldSessionInfo = this.clientContext.register(lwM2MClient, registration);
+                    if (oldSessionInfo.isPresent()) {
+                        log.info("[{}] Closing old session: {}", registration.getEndpoint(), new UUID(oldSessionInfo.get().getSessionIdMSB(), oldSessionInfo.get().getSessionIdLSB()));
+                        this.closeSession(oldSessionInfo.get());
+                    }
                     SessionInfoProto sessionInfo = lwM2MClient.getSession();
                     transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(this, sessionInfo));
-                    String msgReg =  String.format(": Client registered with registrationId: %s sessionId: %s",
+                    String msgReg = String.format(": Client registered with registrationId: %s sessionId: %s",
                             registration.getId(), new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
-                    log.warn("000.2) [{}], Registering rpc subscription after Registration client [{}]",  lwM2MClient.getEndpoint(), msgReg);
+                    log.warn("000.2) [{}], Registering rpc subscription after Registration client [{}]", lwM2MClient.getEndpoint(), msgReg);
                     this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_INFO + msgReg);
                     TransportProtos.TransportToDeviceActorMsg msg = TransportProtos.TransportToDeviceActorMsg.newBuilder()
                             .setSessionInfo(sessionInfo)
@@ -239,10 +249,10 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                         request.send();
                     }
                 }
-                String msgUpdateReg =  String.format(": Client updateRegistered with registrationId: %s sessionId: %s",
+                String msgUpdateReg = String.format(": Client updateRegistered with registrationId: %s sessionId: %s",
                         registration.getId(), new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
                 this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_INFO + msgUpdateReg);
-                log.warn("000.3) [{}] [{}]",  lwM2MClient.getEndpoint(), msgUpdateReg);
+                log.warn("000.3) [{}] [{}]", lwM2MClient.getEndpoint(), msgUpdateReg);
             } catch (LwM2MClientStateException stateException) {
                 if (LwM2MClientState.REGISTERED.equals(stateException.getState())) {
                     log.info("[{}] update registration failed because client has different registration id: [{}] {}.", registration.getEndpoint(), stateException.getState(), stateException.getMessage());
@@ -265,14 +275,13 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
             LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
             try {
                 SessionInfoProto sessionInfo = lwM2MClient.getSession();
-                String msgUnReg =  String.format(": Client unRegistration with registrationId: %s sessionId: %s",
+                String msgUnReg = String.format(": Client unRegistration with registrationId: %s sessionId: %s",
                         registration.getId(), new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
-                log.warn("000.5_1) [{}] [{}]",  lwM2MClient.getEndpoint(), msgUnReg);
+                log.warn("000.5_1) [{}] [{}]", lwM2MClient.getEndpoint(), msgUnReg);
                 this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_INFO + msgUnReg);
                 clientContext.unregister(lwM2MClient, registration);
                 if (sessionInfo != null) {
-                    transportService.deregisterSession(sessionInfo);
-                    this.doCloseSession(sessionInfo);
+                    this.closeSession(sessionInfo);
                     sessionStore.remove(registration.getEndpoint());
                     log.warn("000.5_2) [{}] Client close session: [{}] unReg [{}] name  [{}] sessionInfo ", lwM2MClient.getEndpoint(), registration.getId(), registration.getEndpoint(), new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
                 } else {
@@ -285,6 +294,11 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                 this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_ERROR + String.format(": Client Unable un Registration, %s", t.getMessage()));
             }
         });
+    }
+
+    public void closeSession(SessionInfoProto sessionInfo) {
+        transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.CLOSED), null);
+        transportService.deregisterSession(sessionInfo);
     }
 
     @Override
@@ -372,46 +386,49 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      */
     @Override
     public void onAttributeUpdate(AttributeUpdateNotificationMsg msg, TransportProtos.SessionInfoProto sessionInfo) {
-        LwM2mClient lwM2MClient = clientContext.getClientBySessionInfo(sessionInfo);
-        if (msg.getSharedUpdatedCount() > 0 && lwM2MClient != null) {
-            log.warn("2) OnAttributeUpdate, SharedUpdatedList size [{}]", msg.getSharedUpdatedList().size());
-            msg.getSharedUpdatedList().forEach(tsKvProto -> {
-                String pathName = tsKvProto.getKv().getKey();
-                String pathIdVer = this.getPresentPathIntoProfile(sessionInfo, pathName);
-                Object valueNew = getValueFromKvProto(tsKvProto.getKv());
-                if (pathIdVer != null) {
-                    ResourceModel resourceModel = lwM2MClient.getResourceModel(pathIdVer, this.config
-                            .getModelProvider());
-                    if (resourceModel != null && resourceModel.operations.isWritable()) {
-                        this.updateResourcesValueToClient(lwM2MClient, this.getResourceValueFormatKv(lwM2MClient, pathIdVer), valueNew, pathIdVer);
-                    } else {
-                        log.error("Resource path - [{}] value - [{}] is not Writable and cannot be updated", pathIdVer, valueNew);
-                        String logMsg = String.format("%s: attributeUpdate: Resource path - %s value - %s is not Writable and cannot be updated",
-                                LOG_LW2M_ERROR, pathIdVer, valueNew);
+        updateAttribute.submit(() -> {
+            LwM2mClient lwM2MClient = clientContext.getClientBySessionInfo(sessionInfo);
+            if (msg.getSharedUpdatedCount() > 0 && lwM2MClient != null) {
+                log.warn("2) OnAttributeUpdate, SharedUpdatedList size [{}]", msg.getSharedUpdatedList().size());
+                msg.getSharedUpdatedList().forEach(tsKvProto -> {
+                    String pathName = tsKvProto.getKv().getKey();
+                    String pathIdVer = this.getPresentPathIntoProfile(sessionInfo, pathName);
+                    Object valueNew = getValueFromKvProto(tsKvProto.getKv());
+                    if (pathIdVer != null) {
+                        ResourceModel resourceModel = lwM2MClient.getResourceModel(pathIdVer, this.config
+                                .getModelProvider());
+                        if (resourceModel != null && resourceModel.operations.isWritable()) {
+                            this.updateResourcesValueToClient(lwM2MClient, this.getResourceValueFormatKv(lwM2MClient, pathIdVer), valueNew, pathIdVer);
+                        } else {
+                            log.error("Resource path - [{}] value - [{}] is not Writable and cannot be updated", pathIdVer, valueNew);
+                            String logMsg = String.format("%s: attributeUpdate: Resource path - %s value - %s is not Writable and cannot be updated",
+                                    LOG_LW2M_ERROR, pathIdVer, valueNew);
+                            this.sendLogsToThingsboard(lwM2MClient, logMsg);
+                        }
+                    } else if (!isFwSwWords(pathName)) {
+                        log.error("Resource name name - [{}] value - [{}] is not present as attribute/telemetry in profile and cannot be updated", pathName, valueNew);
+                        String logMsg = String.format("%s: attributeUpdate: attribute name - %s value - %s is not present as attribute in profile and cannot be updated",
+                                LOG_LW2M_ERROR, pathName, valueNew);
                         this.sendLogsToThingsboard(lwM2MClient, logMsg);
                     }
-                }
-                else if (!isFwSwWords(pathName)) {
-                    log.error("Resource name name - [{}] value - [{}] is not present as attribute/telemetry in profile and cannot be updated", pathName, valueNew);
-                    String logMsg = String.format("%s: attributeUpdate: attribute name - %s value - %s is not present as attribute in profile and cannot be updated",
-                            LOG_LW2M_ERROR, pathName, valueNew);
-                    this.sendLogsToThingsboard(lwM2MClient, logMsg);
-                }
-            });
-            // #2
-            this.otaUpdate(lwM2MClient, msg.getSharedUpdatedList());
-        } else if (msg.getSharedDeletedCount() > 0 && lwM2MClient != null) {
-            msg.getSharedUpdatedList().forEach(tsKvProto -> {
-                String pathName = tsKvProto.getKv().getKey();
-                Object valueNew = getValueFromKvProto(tsKvProto.getKv());
-                if (getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.VERSION).equals(pathName) && !valueNew.equals(lwM2MClient.getFwUpdate().getCurrentVersion())) {
-                    lwM2MClient.getFwUpdate().setCurrentVersion((String) valueNew);
-                }
-            });
-            log.info("[{}] delete [{}]  onAttributeUpdate", msg.getSharedDeletedList(), sessionInfo);
-        } else if (lwM2MClient == null) {
-            log.error("OnAttributeUpdate, lwM2MClient is null");
-        }
+                });
+                // #2
+                this.otaUpdate(lwM2MClient, msg.getSharedUpdatedList());
+            } else if (msg.getSharedDeletedCount() > 0 && lwM2MClient != null) {
+                msg.getSharedDeletedList().forEach(value -> {
+                    String pathName = value;
+                    if (getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.VERSION).equals(pathName)) {
+                        lwM2MClient.setFwUpdate(null);
+                    }
+                    if (getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.VERSION).equals(pathName)) {
+                        lwM2MClient.setSwUpdate(null);
+                    }
+                });
+                log.info("[{}] delete [{}]  onAttributeUpdate", msg.getSharedDeletedList(), sessionInfo);
+            } else if (lwM2MClient == null) {
+                log.error("OnAttributeUpdate, lwM2MClient is null");
+            }
+        });
     }
 
     /**
@@ -548,8 +565,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      */
     @Override
     public void doDisconnect(SessionInfoProto sessionInfo) {
-        transportService.process(sessionInfo, DefaultTransportService.getSessionEventMsg(SessionEvent.CLOSED), null);
-        transportService.deregisterSession(sessionInfo);
+        this.closeSession(sessionInfo);
     }
 
     /**
@@ -679,7 +695,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                     (convertPathFromObjectIdToIdVer(FW_STATE_ID, registration).equals(path))) {
                 LwM2mFwSwUpdate fwUpdate = lwM2MClient.getFwUpdate(clientContext);
                 log.warn("93) path: [{}] value: [{}]", path, lwM2mResource.getValue());
-                fwUpdate.updateStateOta(this, lwM2mTransportRequest, registration, path, ((Long) lwM2mResource.getValue()).intValue());
+                fwUpdate.fwUpdateStateChange(this, lwM2mTransportRequest, registration, path, ((Long) lwM2mResource.getValue()).intValue());
             }
             Set<String> paths = new HashSet<>();
             paths.add(path);
@@ -898,13 +914,6 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         return lwm2mResourceValue;
     }
 
-    /**
-     * Update resource (attribute) value  on thingsboard after update value in client
-     *
-     * @param registration -
-     * @param path         -
-     * @param request      -
-     */
     public void onWriteResponseOk(Registration registration, String path, WriteRequest request) {
         if (request.getNode() instanceof LwM2mResource) {
             this.updateResourcesValue(registration, ((LwM2mResource) request.getNode()), path);
@@ -937,6 +946,8 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      * #6
      * #6.1 - update WriteAttribute
      * #6.2 - del WriteAttribute
+     *
+     * #7 - update Firmware/Software in client
      *
      * @param clients       -
      * @param deviceProfile -
@@ -1035,6 +1046,23 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                     }
                 });
             }
+
+            // # 7
+            // update value in FwSwUpdate
+            clients.forEach(client -> {
+                if (client.getFwUpdate() != null) {
+                    client.getFwUpdate().setUpdateStrategy(lwM2MClientProfileNew.getFwUpdateStrategy());
+                    if (lwM2MClientProfileNew.getFwUpdateRecourse() != null) {
+                        client.getFwUpdate().setUpdateRecourse(lwM2MClientProfileNew.getFwUpdateRecourse());
+                    }
+                }
+                if (client.getSwUpdate() != null) {
+                    client.getSwUpdate().setUpdateStrategy(lwM2MClientProfileNew.getSwUpdateStrategy());
+                    if (lwM2MClientProfileNew.getSwUpdateRecourse() != null) {
+                        client.getSwUpdate().setUpdateRecourse(lwM2MClientProfileNew.getSwUpdateRecourse());
+                    }
+                }
+            });
         }
     }
 
@@ -1214,7 +1242,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     public void onGetAttributesResponse(TransportProtos.GetAttributeResponseMsg attributesResponse, TransportProtos.SessionInfoProto sessionInfo) {
         try {
             List<TransportProtos.TsKvProto> tsKvProtos = attributesResponse.getSharedAttributeListList();
-            this.updateAttributeFromThingsboard(tsKvProtos, sessionInfo);
+            this.onGetAttributesResponse(tsKvProtos, sessionInfo);
         } catch (Exception e) {
             log.error("", e);
         }
@@ -1231,31 +1259,33 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      * @param tsKvProtos
      * @param sessionInfo
      */
-    public void updateAttributeFromThingsboard(List<TransportProtos.TsKvProto> tsKvProtos, TransportProtos.SessionInfoProto sessionInfo) {
-        LwM2mClient lwM2MClient = clientContext.getClientBySessionInfo(sessionInfo);
-        if (lwM2MClient != null) {
-            log.warn("1) UpdateAttributeFromThingsboard, tsKvProtos [{}]", tsKvProtos);
-            tsKvProtos.forEach(tsKvProto -> {
-                String pathIdVer = this.getPresentPathIntoProfile(sessionInfo, tsKvProto.getKv().getKey());
-                if (pathIdVer != null) {
-                    // #1.1
-                    if (lwM2MClient.getDelayedRequests().containsKey(pathIdVer) && tsKvProto.getTs() > lwM2MClient.getDelayedRequests().get(pathIdVer).getTs()) {
-                        lwM2MClient.getDelayedRequests().put(pathIdVer, tsKvProto);
-                    } else if (!lwM2MClient.getDelayedRequests().containsKey(pathIdVer)) {
-                        lwM2MClient.getDelayedRequests().put(pathIdVer, tsKvProto);
+    public void onGetAttributesResponse(List<TransportProtos.TsKvProto> tsKvProtos, TransportProtos.SessionInfoProto sessionInfo) {
+        getAttributesResponse.submit(() -> {
+            LwM2mClient lwM2MClient = clientContext.getClientBySessionInfo(sessionInfo);
+            if (lwM2MClient != null) {
+                log.warn("1) UpdateAttributeFromThingsboard, tsKvProtos [{}]", tsKvProtos);
+                tsKvProtos.forEach(tsKvProto -> {
+                    String pathIdVer = this.getPresentPathIntoProfile(sessionInfo, tsKvProto.getKv().getKey());
+                    if (pathIdVer != null) {
+                        // #1.1
+                        if (lwM2MClient.getDelayedRequests().containsKey(pathIdVer) && tsKvProto.getTs() > lwM2MClient.getDelayedRequests().get(pathIdVer).getTs()) {
+                            lwM2MClient.getDelayedRequests().put(pathIdVer, tsKvProto);
+                        } else if (!lwM2MClient.getDelayedRequests().containsKey(pathIdVer)) {
+                            lwM2MClient.getDelayedRequests().put(pathIdVer, tsKvProto);
+                        }
                     }
-                }
-            });
-            // #2.1
-            lwM2MClient.getDelayedRequests().forEach((pathIdVer, tsKvProto) -> {
-                this.updateResourcesValueToClient(lwM2MClient, this.getResourceValueFormatKv(lwM2MClient, pathIdVer),
-                        getValueFromKvProto(tsKvProto.getKv()), pathIdVer);
-            });
-            // #3
-            this.otaUpdate(lwM2MClient, tsKvProtos);
-        } else {
-            log.error("UpdateAttributeFromThingsboard, lwM2MClient is null");
-        }
+                });
+                // #2.1
+                lwM2MClient.getDelayedRequests().forEach((pathIdVer, tsKvProto) -> {
+                    this.updateResourcesValueToClient(lwM2MClient, this.getResourceValueFormatKv(lwM2MClient, pathIdVer),
+                            getValueFromKvProto(tsKvProto.getKv()), pathIdVer);
+                });
+                // #3
+                this.otaUpdate(lwM2MClient, tsKvProtos);
+            } else {
+                log.error("UpdateAttributeFromThingsboard, lwM2MClient is null");
+            }
+        });
     }
 
     /**
@@ -1268,7 +1298,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      */
     private void otaUpdate(LwM2mClient lwM2MClient, List<TransportProtos.TsKvProto> tsKvProtos) {
         // #3.1 FW
-        String otaVersion = getOtaParamsValue(tsKvProtos, OtaPackageType.FIRMWARE, OtaPackageKey.VERSION);
+        String otaVersion = getOtaParamsVersionValue(tsKvProtos, OtaPackageType.FIRMWARE);
         if (otaVersion != null) {
             LwM2mFwSwUpdate fwUpdate = lwM2MClient.getFwUpdate(clientContext);
             fwUpdate.setCurrentVersion(otaVersion);
@@ -1276,35 +1306,9 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
             fwUpdate.sendReadObserveInfo(lwM2mTransportRequest, this);
         }
         // #3.2 SW
-//        versionKey = (getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.VERSION));
-//        String versionKeySw = versionKey;
-//        isVersionFilter = c -> c.getKv().getKey().equals(versionKeySw);
-//        protoVersion = tsKvProtos.stream().filter(isVersionFilter).findFirst().orElse(null);
-//        if (protoVersion != null && (otaVersion = protoVersion.getKv().getStringV()) != null) {
-//            this.swUpdate(lwM2MClient, tsKvProtos, otaVersion);
-//        }
+        // TODO
     }
 
-
-    /**
-     *
-     */
-//    private void fwUpdate(LwM2mClient lwM2MClient) {
-//
-//        this.firmwareUpdateData(lwM2MClient, null);
-//        this.firmwareUpdateDataUrl(lwM2MClient, null);
-//
-//        TransportProtos.TsKvProto protoKey = tsKvProtos.stream().filter(c -> c.getKv().getKey().equals(getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.URL))).findFirst().orElse(null);
-//        String otaURL = null;
-//        if (protoKey != null && (otaURL = protoKey.getKv().getStringV()) != null) {
-//            this.firmwareUpdateDataUrl(lwM2MClient, null);
-//        } else {
-//            this.firmwareUpdateData(lwM2MClient, null);
-//        }
-//    }
-    private void swUpdate(LwM2mClient lwM2MClient, List<TransportProtos.TsKvProto> tsKvProtos, String otaVersion) {
-
-    }
 
     /**
      * @param lwM2MClient -
@@ -1358,8 +1362,10 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
             //#1.1
             Collection<String> sharedKeys = new ArrayList<>();
             sharedKeys.add(getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.VERSION));
+            sharedKeys.add(getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.TITLE));
             sharedKeys.add(getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.URL));
             sharedKeys.add(getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.VERSION));
+            sharedKeys.add(getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.TITLE));
             sharedKeys.add(getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.URL));
             sharedKeys.addAll(this.getNamesFromProfileForSharedAttributes(lwM2MClient).values());
             try {
@@ -1391,14 +1397,20 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
 
                                     }
                                     if (!FAILED.name().equals(fwUpdate.getStateUpdate())) {
-                                        log.warn("7) firmware start with ver: [{}]", response.getVersion());
-                                        fwUpdate.setCurrentTitle(response.getTitle());
-                                        fwUpdate.setCurrentId(new UUID(response.getOtaPackageIdMSB(), response.getOtaPackageIdLSB()));
-                                        fwUpdate.writeFwSwWare(handler, lwM2mTransportRequest);
+                                        String currentVersion = response.getTitle() != null && response.getVersion() != null ?
+                                                response.getTitle() + response.getVersion() : null;
+                                        if (currentVersion != null) {
+                                            log.warn("7.1) firmware start with ver: [{}]", currentVersion);
+                                            fwUpdate.setCurrentVersion(currentVersion);
+                                            fwUpdate.setCurrentId(new UUID(response.getOtaPackageIdMSB(), response.getOtaPackageIdLSB()));
+                                            fwUpdate.writeFwSwWare(handler, lwM2mTransportRequest);
+                                        } else {
+                                            log.warn("7.2) firmware error start with ver: [{}]", currentVersion);
+                                        }
                                     } else {
                                         String msgError = String.format("OtaPackage device: %s, version: %s, stateUpdate: %s",
                                                 lwM2MClient.getDeviceName(), response.getVersion(), fwUpdate.getStateUpdate());
-                                        log.warn("7.1 [{}]", msgError);
+                                        log.warn("7.3 [{}]", msgError);
                                     }
                                 } else {
                                     String msgError = String.format("OtaPackage device: %s, responseStatus: %s",
@@ -1430,15 +1442,18 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                             public void onSuccess(TransportProtos.GetOtaPackageResponseMsg response) {
                                 if (TransportProtos.ResponseStatus.SUCCESS.equals(response.getResponseStatus())
                                         && response.getType().equals(OtaPackageType.SOFTWARE.name())) {
-                                    lwM2MClient.getSwUpdate().setRpcRequest(rpcRequest);
-                                    lwM2MClient.getSwUpdate().setCurrentVersion(response.getVersion());
-                                    lwM2MClient.getSwUpdate().setCurrentTitle(response.getTitle());
-                                    lwM2MClient.getSwUpdate().setCurrentId(new OtaPackageId(new UUID(response.getOtaPackageIdMSB(), response.getOtaPackageIdLSB())).getId());
-                                    lwM2MClient.getSwUpdate().sendReadObserveInfo(lwM2mTransportRequest, handler);
-                                    if (rpcRequest == null) {
+                                    String currentVersion = response.getTitle() != null && response.getVersion() != null ?
+                                            response.getTitle() + response.getVersion() : null;
+                                    if (currentVersion != null) {
+                                        lwM2MClient.getSwUpdate().setRpcRequest(rpcRequest);
+                                        lwM2MClient.getSwUpdate().setCurrentVersion(currentVersion);
+                                        lwM2MClient.getSwUpdate().setCurrentId(new OtaPackageId(new UUID(response.getOtaPackageIdMSB(), response.getOtaPackageIdLSB())).getId());
                                         lwM2MClient.getSwUpdate().sendReadObserveInfo(lwM2mTransportRequest, handler);
-                                    } else {
-                                        lwM2MClient.getSwUpdate().writeFwSwWare(handler, lwM2mTransportRequest);
+                                        if (rpcRequest == null) {
+                                            lwM2MClient.getSwUpdate().sendReadObserveInfo(lwM2mTransportRequest, handler);
+                                        } else {
+                                            lwM2MClient.getSwUpdate().writeFwSwWare(handler, lwM2mTransportRequest);
+                                        }
                                     }
                                 } else {
                                     log.trace("Software [{}] [{}]", lwM2MClient.getDeviceName(), response.getResponseStatus().toString());

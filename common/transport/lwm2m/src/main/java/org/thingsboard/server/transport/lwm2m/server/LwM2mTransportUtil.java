@@ -1101,4 +1101,9 @@ public class LwM2mTransportUtil {
         TransportProtos.TsKvProto protoKey = tsKvProtos.stream().filter(c -> c.getKv().getKey().equals(getAttributeKey(otaPackageType, otaPackageKey))).findFirst().orElse(null);
         return protoKey != null ? protoKey.getKv().getStringV() : null;
     }
+    public static String getOtaParamsVersionValue(List<TransportProtos.TsKvProto> tsKvProtos, OtaPackageType otaPackageType) {
+        String title =  getOtaParamsValue(tsKvProtos, otaPackageType, OtaPackageKey.TITLE);
+        String version =  getOtaParamsValue(tsKvProtos, otaPackageType, OtaPackageKey.VERSION);
+        return (title != null && version != null) ? title + version : null;
+    }
 }

@@ -103,7 +103,7 @@ public class LwM2mNetworkConfig {
          */
         coapConfig.setInt(NetworkConfig.Keys.MAX_MESSAGE_SIZE, 1024);
 
-        coapConfig.setInt(NetworkConfig.Keys.MAX_RETRANSMIT, 4);
+        coapConfig.setInt(NetworkConfig.Keys.MAX_RETRANSMIT, 10);
 
         return coapConfig;
     }
