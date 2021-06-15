@@ -34,53 +34,47 @@
       </ng-template>
     </mat-tab>
     <mat-tab label="{{ 'device-profile.lwm2m.servers' | translate }}">
-      <ng-template matTabContent>
-        <section [formGroup]="lwm2mDeviceProfileFormGroup" style="padding: 4px 2px">
+      <section [formGroup]="lwm2mDeviceProfileFormGroup">
+        <section formGroupName="bootstrap" style="padding: 4px 2px">
           <mat-accordion multi="true">
             <mat-expansion-panel>
               <mat-expansion-panel-header>
                 <mat-panel-title>{{ 'device-profile.lwm2m.servers' | translate }}</mat-panel-title>
               </mat-expansion-panel-header>
-              <ng-template matExpansionPanelContent>
+              <ng-template formGroupName="servers">
                 <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px" fxLayoutGap.xs="0px">
                   <mat-form-field fxFlex>
                     <mat-label>{{ 'device-profile.lwm2m.short-id' | translate }}</mat-label>
-                    <input matInput type="number" formControlName="shortId" required>
-                    <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('shortId').hasError('required')">
-                      {{ 'device-profile.lwm2m.short-id' | translate }}
-                      <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
+                    <input matInput type="number" min="0" formControlName="shortId" required>
+                    <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('bootstrap.servers.shortId').hasError('required')">
+                      {{ 'device-profile.lwm2m.short-id-required' | translate }}
                     </mat-error>
                   </mat-form-field>
                   <mat-form-field fxFlex>
                     <mat-label>{{ 'device-profile.lwm2m.lifetime' | translate }}</mat-label>
-                    <input matInput type="number" formControlName="lifetime" required>
-                    <mat-error
-                      *ngIf="lwm2mDeviceProfileFormGroup.get('lifetime').hasError('required')">
-                      {{ 'device-profile.lwm2m.lifetime' | translate }}
-                      <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
+                    <input matInput type="number" min="0" formControlName="lifetime" required>
+                    <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('bootstrap.servers.lifetime').hasError('required')">
+                      {{ 'device-profile.lwm2m.lifetime-required' | translate }}
                     </mat-error>
                   </mat-form-field>
                   <mat-form-field fxFlex>
                     <mat-label>{{ 'device-profile.lwm2m.default-min-period' | translate }}</mat-label>
-                    <input matInput type="number" formControlName="defaultMinPeriod" required>
-                    <mat-error
-                      *ngIf="lwm2mDeviceProfileFormGroup.get('defaultMinPeriod').hasError('required')">
-                      {{ 'device-profile.lwm2m.default-min-period' | translate }}
-                      <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
+                    <input matInput type="number" min="0" formControlName="defaultMinPeriod" required>
+                    <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('bootstrap.servers.defaultMinPeriod').hasError('required')">
+                      {{ 'device-profile.lwm2m.default-min-period-required' | translate }}
                     </mat-error>
                   </mat-form-field>
                 </div>
                 <mat-form-field class="mat-block">
                   <mat-label>{{ 'device-profile.lwm2m.binding' | translate }}</mat-label>
                   <mat-select formControlName="binding">
-                    <mat-option *ngFor="let bindingMode of  bindingModeTypes"
-                                [value]="bindingMode">
-                      {{ bindingModeTypeNamesMap.get(bindingModeType[bindingMode]) }}
+                    <mat-option *ngFor="let bindingMode of bindingModeTypes" [value]="bindingMode">
+                      {{ bindingModeTypeNamesMap.get(bindingMode) | translate }}
                     </mat-option>
                   </mat-select>
                 </mat-form-field>
                 <mat-checkbox formControlName="notifIfDisabled" color="primary">
-                  {{ 'device-profile.lwm2m.notif-if-disabled' | translate }}
+                  {{ 'device-profile.lwm2m.notification-storing' | translate }}
                 </mat-checkbox>
               </ng-template>
             </mat-expansion-panel>
@@ -88,33 +82,27 @@
               <mat-expansion-panel-header>
                 <mat-panel-title>{{ 'device-profile.lwm2m.bootstrap-server' | translate }}</mat-panel-title>
               </mat-expansion-panel-header>
-              <ng-template matExpansionPanelContent>
-                <tb-profile-lwm2m-device-config-server
-                  [required]="required"
-                  formControlName="bootstrapServer"
-                  [isBootstrapServer]="true">
-                </tb-profile-lwm2m-device-config-server>
-              </ng-template>
+              <tb-profile-lwm2m-device-config-server
+                formControlName="bootstrapServer"
+                [isBootstrapServer]="true">
+              </tb-profile-lwm2m-device-config-server>
             </mat-expansion-panel>
             <mat-expansion-panel>
               <mat-expansion-panel-header>
                 <mat-panel-title>{{ 'device-profile.lwm2m.lwm2m-server' | translate }}</mat-panel-title>
               </mat-expansion-panel-header>
-              <ng-template matExpansionPanelContent>
-                <tb-profile-lwm2m-device-config-server
-                  [required]="required"
-                  formControlName="lwm2mServer"
-                  [isBootstrapServer]="false">
-                </tb-profile-lwm2m-device-config-server>
-              </ng-template>
+              <tb-profile-lwm2m-device-config-server
+                formControlName="lwm2mServer"
+                [isBootstrapServer]="false">
+              </tb-profile-lwm2m-device-config-server>
             </mat-expansion-panel>
           </mat-accordion>
         </section>
-      </ng-template>
+      </section>
     </mat-tab>
     <mat-tab label="{{ 'device-profile.lwm2m.others-tab' | translate }}">
-      <ng-template matTabContent>
-        <section [formGroup]="lwm2mDeviceProfileFormGroup">
+      <ng-template matTabContent [formGroup]="lwm2mDeviceProfileFormGroup">
+        <section formGroupName="clientLwM2mSettings">
           <fieldset class="fields-group">
             <legend class="group-title" translate>device-profile.lwm2m.fw-update</legend>
             <mat-form-field class="mat-block" fxFlex>
@@ -128,7 +116,7 @@
             <mat-form-field class="mat-block" fxFlex *ngIf="isFwUpdateStrategy">
               <mat-label>{{ 'device-profile.lwm2m.fw-update-recourse' | translate }}</mat-label>
               <input matInput formControlName="fwUpdateRecourse" required>
-              <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('fwUpdateRecourse').hasError('required')">
+              <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateRecourse').hasError('required')">
                 {{ 'device-profile.lwm2m.fw-update-recourse-required' | translate }}
               </mat-error>
             </mat-form-field>
@@ -145,7 +133,7 @@
             <mat-form-field class="mat-block" fxFlex *ngIf="isSwUpdateStrategy">
               <mat-label>{{ 'device-profile.lwm2m.sw-update-recourse' | translate }}</mat-label>
               <input matInput formControlName="swUpdateRecourse" required>
-              <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('swUpdateRecourse').hasError('required')">
+              <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateRecourse').hasError('required')">
                 {{ 'device-profile.lwm2m.sw-update-recourse-required' | translate }}
               </mat-error>
             </mat-form-field>
@@ -182,6 +170,7 @@
       <ng-template matTabContent>
         <section [formGroup]="lwm2mDeviceConfigFormGroup" style="padding: 8px 0">
           <tb-json-object-edit
+            readonly
             [required]="required"
             [sort]="sortFunction"
             label="{{ 'device-profile.transport-type-lwm2m' | translate }}"

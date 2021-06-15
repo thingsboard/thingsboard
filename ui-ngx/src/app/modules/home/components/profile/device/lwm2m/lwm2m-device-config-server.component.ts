@@ -15,7 +15,14 @@
 ///
 
 import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  FormBuilder,
+  FormGroup,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR, ValidationErrors, Validator,
+  Validators
+} from '@angular/forms';
 import {
   DEFAULT_PORT_BOOTSTRAP_NO_SEC,
   DEFAULT_PORT_SERVER_NO_SEC,
@@ -40,11 +47,16 @@ import { deepClone } from '@core/utils';
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => Lwm2mDeviceConfigServerComponent),
       multi: true
-    }
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => Lwm2mDeviceConfigServerComponent),
+      multi: true
+    },
   ]
 })
 
-export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAccessor, OnDestroy {
+export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAccessor, Validator, OnDestroy {
 
   private disabled = false;
   private destroy$ = new Subject();
@@ -159,11 +171,7 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
 
   private propagateChangeState = (value: ServerSecurityConfig): void => {
     if (value !== undefined) {
-      if (this.serverFormGroup.valid) {
-        this.propagateChange(value);
-      } else {
-        this.propagateChange(null);
-      }
+      this.propagateChange(value);
     }
   }
 
@@ -197,5 +205,11 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
         break;
     }
     return config;
+  }
+
+  validate(): ValidationErrors | null {
+    return this.serverFormGroup.valid ? null : {
+      serverFormGroup: true
+    };
   }
 }

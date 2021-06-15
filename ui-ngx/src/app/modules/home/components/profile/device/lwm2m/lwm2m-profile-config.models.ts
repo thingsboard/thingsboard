@@ -47,7 +47,7 @@ export const DEFAULT_FW_UPDATE_RESOURCE = DEFAULT_OTA_UPDATE_PROTOCOL + DEFAULT_
 export const DEFAULT_SW_UPDATE_RESOURCE = DEFAULT_OTA_UPDATE_PROTOCOL + DEFAULT_LOCAL_HOST_NAME + ':' + DEFAULT_PORT_SERVER_NO_SEC;
 
 
-export enum BINDING_MODE {
+export enum BingingMode {
   U = 'U',
   UQ = 'UQ',
   T = 'T',
@@ -60,18 +60,18 @@ export enum BINDING_MODE {
   TQS = 'TQS'
 }
 
-export const BINDING_MODE_NAMES = new Map<BINDING_MODE, string>(
+export const BingingModeTranslationsMap = new Map<BingingMode, string>(
   [
-    [BINDING_MODE.U, 'U: UDP connection in standard mode'],
-    [BINDING_MODE.UQ, 'UQ: UDP connection in queue mode'],
-    [BINDING_MODE.US, 'US: both UDP and SMS connections active, both in standard mode'],
-    [BINDING_MODE.UQS, 'UQS: both UDP and SMS connections active; UDP in queue mode, SMS in standard mode'],
-    [BINDING_MODE.T, 'T: TCP connection in standard mode'],
-    [BINDING_MODE.TQ, 'TQ: TCP connection in queue mode'],
-    [BINDING_MODE.TS, 'TS: both TCP and SMS connections active, both in standard mode'],
-    [BINDING_MODE.TQS, 'TQS: both TCP and SMS connections active; TCP in queue mode, SMS in standard mode'],
-    [BINDING_MODE.S, 'S: SMS connection in standard mode'],
-    [BINDING_MODE.SQ, 'SQ: SMS connection in queue mode']
+    [BingingMode.U, 'device-profile.lwm2m.binding-type.u'],
+    [BingingMode.UQ, 'device-profile.lwm2m.binding-type.uq'],
+    [BingingMode.US, 'device-profile.lwm2m.binding-type.us'],
+    [BingingMode.UQS, 'device-profile.lwm2m.binding-type.uqs'],
+    [BingingMode.T, 'device-profile.lwm2m.binding-type.t'],
+    [BingingMode.TQ, 'device-profile.lwm2m.binding-type.tq'],
+    [BingingMode.TS, 'device-profile.lwm2m.binding-type.ts'],
+    [BingingMode.TQS, 'device-profile.lwm2m.binding-type.tqs'],
+    [BingingMode.S, 'device-profile.lwm2m.binding-type.s'],
+    [BingingMode.SQ, 'device-profile.lwm2m.binding-type.sq']
   ]
 );
 
