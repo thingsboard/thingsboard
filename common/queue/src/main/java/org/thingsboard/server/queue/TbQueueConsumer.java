@@ -34,4 +34,6 @@ public interface TbQueueConsumer<T extends TbQueueMsg> {
 
     void commit();
 
+    boolean isStopped();
+
 }
