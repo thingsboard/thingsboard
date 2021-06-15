@@ -328,8 +328,6 @@
         "resolve-multiple": "Tomar como múltiples entidades",
         "filter-type": "Filtro por tipo",
         "filter-type-required": "Se requiere filtro por tipo.",
-        "filter-type-edge-type": "Tipo de borde",
-        "filter-type-edge-type-description": "Bordes del tipo '{{edgeType}}'",
        "entity-filter-no-entity-matched": "No se han encontrado entidades con el filtro especificado.",
         "no-entity-filter-specified": "No hay filtro de entidades especificado",
         "root-state-entity": "Usar estado de panel como raíz",
@@ -2098,9 +2096,6 @@
         "unset-auto-assign-to-edge-title": "¿Está seguro de que desea anular la asignación de la cadena de reglas de borde '{{ruleChainName}}' a los bordes en la creación?",
         "unset-auto-assign-to-edge-text": "Después de la confirmación, la cadena de reglas de borde ya no se asignará automáticamente a los bordes en la creación.",
         "edge-template-root": "Raíz de plantilla",
-        "search": "Cadenas de reglas de búsqueda",
-        "selected-rulechains": "{count, plural, 1 {1 cadena de reglas} otras {# cadenas de reglas}} seleccionadas",
-        "open-rulechain": "Cadena de reglas abierta",
         "assign-to-edge": "Asignar a Edge",
         "edge-rulechain": "Cadena de regla de borde"
     },
