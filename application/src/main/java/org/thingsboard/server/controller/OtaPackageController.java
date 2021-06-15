@@ -128,7 +128,7 @@ public class OtaPackageController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/otaPackage/{otaPackageId}", method = RequestMethod.POST)
     @ResponseBody
-    public OtaPackage saveOtaPackageData(@PathVariable(OTA_PACKAGE_ID) String strOtaPackageId,
+    public OtaPackageInfo saveOtaPackageData(@PathVariable(OTA_PACKAGE_ID) String strOtaPackageId,
                                          @RequestParam(required = false) String checksum,
                                          @RequestParam(CHECKSUM_ALGORITHM) String checksumAlgorithmStr,
                                          @RequestBody MultipartFile file) throws ThingsboardException {
@@ -160,7 +160,7 @@ public class OtaPackageController extends BaseController {
             otaPackage.setContentType(file.getContentType());
             otaPackage.setData(ByteBuffer.wrap(bytes));
             otaPackage.setDataSize((long) bytes.length);
-            OtaPackage savedOtaPackage = otaPackageService.saveOtaPackage(otaPackage);
+            OtaPackageInfo savedOtaPackage = otaPackageService.saveOtaPackage(otaPackage);
             logEntityAction(savedOtaPackage.getId(), savedOtaPackage, null, ActionType.UPDATED, null);
             return savedOtaPackage;
         } catch (Exception e) {

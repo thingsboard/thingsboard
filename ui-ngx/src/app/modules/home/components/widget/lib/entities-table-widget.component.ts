@@ -40,7 +40,16 @@ import {
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { createLabelFromDatasource, deepClone, hashCode, isDefined, isNumber, isObject } from '@core/utils';
+import {
+  createLabelFromDatasource,
+  deepClone,
+  hashCode,
+  isDefined,
+  isNumber,
+  isObject,
+  isString,
+  isUndefined
+} from '@core/utils';
 import cssjs from '@core/css/css';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -130,6 +139,10 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   public displayedColumns: string[] = [];
   public actionCellDescriptors: WidgetActionDescriptor[];
   public entityDatasource: EntityDatasource;
+
+  private cellContentCache: Array<any> = [];
+  private cellStyleCache: Array<any> = [];
+  private rowStyleCache: Array<any> = [];
 
   private settings: EntitiesTableWidgetSettings;
   private widgetConfig: WidgetConfig;
@@ -222,6 +235,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   public onDataUpdated() {
     this.updateTitle(true);
     this.entityDatasource.dataUpdated();
+    this.clearCache();
   }
 
   public pageLinkSortDirection(): SortDirection {
@@ -415,8 +429,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     if (this.actionCellDescriptors.length) {
       this.displayedColumns.push('actions');
     }
-    this.entityDatasource = new EntityDatasource(
-      this.translate, dataKeys, this.subscription);
+    this.entityDatasource = new EntityDatasource(this.translate, dataKeys, this.subscription, this.ngZone);
   }
 
   private editColumnsToDisplay($event: Event) {
@@ -460,6 +473,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
             if (this.actionCellDescriptors.length) {
               this.displayedColumns.push('actions');
             }
+            this.clearCache();
           }
         } as DisplayColumnsPanelData
       },
@@ -535,91 +549,98 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     return widthStyle(columnWidth);
   }
 
-  public rowStyle(entity: EntityData): any {
-    let style: any = {};
-    if (entity) {
-      if (this.rowStylesInfo.useRowStyleFunction && this.rowStylesInfo.rowStyleFunction) {
+  public rowStyle(entity: EntityData, row: number): any {
+    let res = this.rowStyleCache[row];
+    if (!res) {
+      res = {};
+      if (entity && this.rowStylesInfo.useRowStyleFunction && this.rowStylesInfo.rowStyleFunction) {
         try {
-          style = this.rowStylesInfo.rowStyleFunction(entity, this.ctx);
-          if (!isObject(style)) {
-            throw new TypeError(`${style === null ? 'null' : typeof style} instead of style object`);
+          res = this.rowStylesInfo.rowStyleFunction(entity, this.ctx);
+          if (!isObject(res)) {
+            throw new TypeError(`${res === null ? 'null' : typeof res} instead of style object`);
           }
-          if (Array.isArray(style)) {
+          if (Array.isArray(res)) {
             throw new TypeError(`Array instead of style object`);
           }
         } catch (e) {
-          style = {};
+          res = {};
           console.warn(`Row style function in widget '${this.ctx.widgetTitle}' ` +
             `returns '${e}'. Please check your row style function.`);
         }
-      } else {
-        style = {};
       }
+      this.rowStyleCache[row] = res;
     }
-    return style;
+    return res;
   }
 
-  public cellStyle(entity: EntityData, key: EntityColumn): any {
-    let style: any = {};
-    if (entity && key) {
-      const styleInfo = this.stylesInfo[key.def];
-      const value = getEntityValue(entity, key);
-      if (styleInfo.useCellStyleFunction && styleInfo.cellStyleFunction) {
-        try {
-          style = styleInfo.cellStyleFunction(value, entity, this.ctx);
-          if (!isObject(style)) {
-            throw new TypeError(`${style === null ? 'null' : typeof style} instead of style object`);
+  public cellStyle(entity: EntityData, key: EntityColumn, row: number): any {
+    const col = this.columns.indexOf(key);
+    const index = row * this.columns.length + col;
+    let res = this.cellStyleCache[index];
+    if (!res) {
+      res = {};
+      if (entity && key) {
+        const styleInfo = this.stylesInfo[key.def];
+        const value = getEntityValue(entity, key);
+        if (styleInfo.useCellStyleFunction && styleInfo.cellStyleFunction) {
+          try {
+            res = styleInfo.cellStyleFunction(value, entity, this.ctx);
+            if (!isObject(res)) {
+              throw new TypeError(`${res === null ? 'null' : typeof res} instead of style object`);
+            }
+            if (Array.isArray(res)) {
+              throw new TypeError(`Array instead of style object`);
+            }
+          } catch (e) {
+            res = {};
+            console.warn(`Cell style function for data key '${key.label}' in widget '${this.ctx.widgetTitle}' ` +
+              `returns '${e}'. Please check your cell style function.`);
           }
-          if (Array.isArray(style)) {
-            throw new TypeError(`Array instead of style object`);
-          }
-        } catch (e) {
-          style = {};
-          console.warn(`Cell style function for data key '${key.label}' in widget '${this.ctx.widgetTitle}' ` +
-            `returns '${e}'. Please check your cell style function.`);
         }
-      } else {
-        style = {};
+        this.cellStyleCache[index] = res;
       }
     }
-    if (!style.width) {
+    if (!res.width) {
       const columnWidth = this.columnWidth[key.def];
-      style = {...style, ...widthStyle(columnWidth)};
+      res = Object.assign(res, widthStyle(columnWidth));
     }
-    return style;
+    return res;
   }
 
-  public cellContent(entity: EntityData, key: EntityColumn): SafeHtml {
-    if (entity && key) {
-      const contentInfo = this.contentsInfo[key.def];
-      const value = getEntityValue(entity, key);
-      let content: string;
-      if (contentInfo.useCellContentFunction && contentInfo.cellContentFunction) {
-        try {
-          content = contentInfo.cellContentFunction(value, entity, this.ctx);
-        } catch (e) {
-          content = '' + value;
+  public cellContent(entity: EntityData, key: EntityColumn, row: number): SafeHtml {
+    const col = this.columns.indexOf(key);
+    const index = row * this.columns.length + col;
+    let res = this.cellContentCache[index];
+    if (isUndefined(res)) {
+      res = '';
+      if (entity && key) {
+        const contentInfo = this.contentsInfo[key.def];
+        const value = getEntityValue(entity, key);
+        let content: string;
+        if (contentInfo.useCellContentFunction && contentInfo.cellContentFunction) {
+          try {
+            content = contentInfo.cellContentFunction(value, entity, this.ctx);
+          } catch (e) {
+            content = '' + value;
+          }
+        } else {
+          content = this.defaultContent(key, contentInfo, value);
         }
-      } else {
-        content = this.defaultContent(key, contentInfo, value);
-      }
 
-      if (!isDefined(content)) {
-        return '';
-
-      } else {
-        content = this.utils.customTranslation(content, content);
-        switch (typeof content) {
-          case 'string':
-            return this.domSanitizer.bypassSecurityTrustHtml(content);
-          default:
-            return content;
+        if (isDefined(content)) {
+          content = this.utils.customTranslation(content, content);
+          switch (typeof content) {
+            case 'string':
+              res = this.domSanitizer.bypassSecurityTrustHtml(content);
+              break;
+            default:
+              res = content;
+          }
         }
       }
-
-    } else {
-      return '';
+      this.cellContentCache[index] = res;
     }
+    return res;
   }
 
   private defaultContent(key: EntityColumn, contentInfo: CellContentInfo, value: any): any {
@@ -672,6 +693,12 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     }
     this.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, {entity}, entityLabel);
   }
+
+  private clearCache() {
+    this.cellContentCache.length = 0;
+    this.cellStyleCache.length = 0;
+    this.rowStyleCache.length = 0;
+  }
 }
 
 class EntityDatasource implements DataSource<EntityData> {
@@ -689,7 +716,8 @@ class EntityDatasource implements DataSource<EntityData> {
   constructor(
        private translate: TranslateService,
        private dataKeys: Array<DataKey>,
-       private subscription: IWidgetSubscription
+       private subscription: IWidgetSubscription,
+       private ngZone: NgZone
     ) {
   }
 
@@ -732,9 +760,11 @@ class EntityDatasource implements DataSource<EntityData> {
       totalElements: datasourcesPageData.totalElements,
       hasNext: datasourcesPageData.hasNext
     };
-    this.entitiesSubject.next(entities);
-    this.pageDataSubject.next(entitiesPageData);
-    this.dataLoading = false;
+    this.ngZone.run(() => {
+      this.entitiesSubject.next(entities);
+      this.pageDataSubject.next(entitiesPageData);
+      this.dataLoading = false;
+    });
   }
 
   private datasourceToEntityData(datasource: Datasource, data: DatasourceData[]): EntityData {
