@@ -16,25 +16,29 @@
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.request.ObserveRequest;
 import org.eclipse.leshan.core.request.ReadRequest;
-import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
-import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
 
 @Slf4j
-public class TbLwM2MObserveCallback extends TbLwM2MTargetedCallback<ObserveRequest, ObserveResponse> {
+public abstract class TbLwM2MTargetedCallback<R, T> extends AbstractTbLwM2MRequestCallback<R, T> {
 
-    public TbLwM2MObserveCallback(LwM2mUplinkMsgHandler handler, LwM2mClient client, String targetId) {
-        super(handler, client, targetId);
+    protected final String targetId;
+
+    public TbLwM2MTargetedCallback(LwM2mUplinkMsgHandler handler, LwM2mClient client, String targetId) {
+        super(handler, client);
+        this.targetId = targetId;
     }
 
     @Override
-    public void onSuccess(ObserveRequest request, ObserveResponse response) {
-        super.onSuccess(request, response);
-        handler.onUpdateValueAfterReadResponse(client.getRegistration(), targetId, response, null);
+    public void onSuccess(R request, T response) {
+        //TODO convert camelCase to "camel case" using .split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")
+        String requestName = request.getClass().getSimpleName();
+        log.trace("[{}] {} [{}] successful: {}", client.getEndpoint(), requestName, targetId, response);
+        handler.logToTelemetry(client, String.format("[%s]: %s [%s] successful. Result: [%s]", LOG_LWM2M_INFO, requestName, targetId, response));
     }
+
 }

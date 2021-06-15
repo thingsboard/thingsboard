@@ -15,22 +15,24 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.request.ReadRequest;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
-public class TbLwM2MReadCallback extends AbstractTbLwM2MRequestCallback<ReadResponse> {
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
 
-    private final String targetId;
+@Slf4j
+public class TbLwM2MReadCallback extends TbLwM2MTargetedCallback<ReadRequest, ReadResponse> {
 
     public TbLwM2MReadCallback(LwM2mUplinkMsgHandler handler, LwM2mClient client, String targetId) {
-        super(handler, client);
-        this.targetId = targetId;
+        super(handler, client, targetId);
     }
 
     @Override
-    public void onSuccess(ReadResponse response) {
-        //TODO: separate callback wrapper for the RPC calls.
+    public void onSuccess(ReadRequest request, ReadResponse response) {
+        super.onSuccess(request, response);
         handler.onUpdateValueAfterReadResponse(client.getRegistration(), targetId, response, null);
     }
 

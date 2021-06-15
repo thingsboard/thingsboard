@@ -15,22 +15,15 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
+import org.eclipse.leshan.core.request.DiscoverRequest;
 import org.eclipse.leshan.core.response.DiscoverResponse;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
-public class TbLwM2MDiscoverCallback extends AbstractTbLwM2MRequestCallback<DiscoverResponse> {
-
-    private final String targetId;
+public class TbLwM2MDiscoverCallback extends TbLwM2MTargetedCallback<DiscoverRequest, DiscoverResponse> {
 
     public TbLwM2MDiscoverCallback(LwM2mUplinkMsgHandler handler, LwM2mClient client, String targetId) {
-        super(handler, client);
-        this.targetId = targetId;
-    }
-
-    @Override
-    public void onSuccess(DiscoverResponse response) {
-        //TODO: separate callback wrapper for the RPC calls.
+        super(handler, client, targetId);
     }
 
 }

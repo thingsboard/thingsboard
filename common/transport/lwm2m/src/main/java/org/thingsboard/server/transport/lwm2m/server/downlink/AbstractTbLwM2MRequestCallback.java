@@ -15,10 +15,14 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
-import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
-public abstract class AbstractTbLwM2MRequestCallback<T> implements DownlinkRequestCallback<T> {
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_WARN;
+
+@Slf4j
+public abstract class AbstractTbLwM2MRequestCallback<R, T> implements DownlinkRequestCallback<R, T> {
 
     protected final LwM2mUplinkMsgHandler handler;
     protected final LwM2mClient client;
@@ -29,12 +33,14 @@ public abstract class AbstractTbLwM2MRequestCallback<T> implements DownlinkReque
     }
 
     @Override
-    public void onValidationError(String msg) {
-
+    public void onValidationError(String params, String msg) {
+        log.trace("[{}] Request [{}] validation failed. Reason: {}", client.getEndpoint(), params, msg);
+        handler.logToTelemetry(client, String.format("[%s]: Request [%s] validation failed. Reason: %s", LOG_LWM2M_WARN, params, msg));
     }
 
     @Override
-    public void onError(Exception e) {
-
+    public void onError(String params, Exception e) {
+        log.trace("[{}] Request [{}] processing failed", client.getEndpoint(), params, e);
+        handler.logToTelemetry(client, String.format("[%s]: Request [%s] processing failed. Reason: %s", LOG_LWM2M_WARN, params, e));
     }
 }

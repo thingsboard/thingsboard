@@ -15,11 +15,12 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
+import org.eclipse.leshan.core.request.WriteAttributesRequest;
 import org.eclipse.leshan.core.response.WriteAttributesResponse;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
-public class TbLwM2MWriteAttributesCallback extends AbstractTbLwM2MRequestCallback<WriteAttributesResponse> {
+public class TbLwM2MWriteAttributesCallback extends AbstractTbLwM2MRequestCallback<WriteAttributesRequest, WriteAttributesResponse> {
 
     private final String targetId;
 
@@ -29,7 +30,7 @@ public class TbLwM2MWriteAttributesCallback extends AbstractTbLwM2MRequestCallba
     }
 
     @Override
-    public void onSuccess(WriteAttributesResponse response) {
+    public void onSuccess(WriteAttributesRequest request, WriteAttributesResponse response) {
         //TODO: separate callback wrapper for the RPC calls.
     }
 

@@ -24,16 +24,16 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCallback;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
-public abstract class RpcDownlinkRequestCallbackProxy<T> implements DownlinkRequestCallback<T> {
+public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkRequestCallback<R, T> {
 
     private final TransportService transportService;
     private final TransportProtos.ToDeviceRpcRequestMsg request;
-    private final DownlinkRequestCallback<T> callback;
+    private final DownlinkRequestCallback<R, T> callback;
 
     protected final LwM2mClient client;
     protected final LwM2mValueConverter converter;
 
-    public RpcDownlinkRequestCallbackProxy(TransportService transportService, LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, DownlinkRequestCallback<T> callback) {
+    public RpcDownlinkRequestCallbackProxy(TransportService transportService, LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, DownlinkRequestCallback<R, T> callback) {
         this.transportService = transportService;
         this.client = client;
         this.request = requestMsg;
@@ -42,26 +42,26 @@ public abstract class RpcDownlinkRequestCallbackProxy<T> implements DownlinkRequ
     }
 
     @Override
-    public void onSuccess(T response) {
+    public void onSuccess(R request, T response) {
         sendRpcReplyOnSuccess(response);
         if (callback != null) {
-            callback.onSuccess(response);
+            callback.onSuccess(request, response);
         }
     }
 
     @Override
-    public void onValidationError(String msg) {
+    public void onValidationError(String params, String msg) {
         sendRpcReplyOnValidationError(msg);
         if (callback != null) {
-            callback.onValidationError(msg);
+            callback.onValidationError(params, msg);
         }
     }
 
     @Override
-    public void onError(Exception e) {
+    public void onError(String params, Exception e) {
         sendRpcReplyOnError(e);
         if (callback != null) {
-            callback.onError(e);
+            callback.onError(params, e);
         }
     }
 

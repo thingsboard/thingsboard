@@ -15,22 +15,15 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
+import org.eclipse.leshan.core.request.DeleteRequest;
 import org.eclipse.leshan.core.response.DeleteResponse;
-import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
-public class TbLwM2MDeleteCallback extends AbstractTbLwM2MRequestCallback<DeleteResponse> {
-
-    private final String targetId;
+public class TbLwM2MDeleteCallback extends TbLwM2MTargetedCallback<DeleteRequest, DeleteResponse> {
 
     public TbLwM2MDeleteCallback(LwM2mUplinkMsgHandler handler, LwM2mClient client, String targetId) {
-        super(handler, client);
-        this.targetId = targetId;
-    }
-
-    @Override
-    public void onSuccess(DeleteResponse response) {
-        //TODO: separate callback wrapper for the RPC calls.
+        super(handler, client, targetId);
     }
 
 }

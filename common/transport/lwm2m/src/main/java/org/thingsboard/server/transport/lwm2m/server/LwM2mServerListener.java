@@ -27,7 +27,7 @@ import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandle
 
 import java.util.Collection;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
 
 @Slf4j
@@ -87,9 +87,7 @@ public class LwM2mServerListener {
 
         @Override
         public void cancelled(Observation observation) {
-            String msg = String.format("%s:  Canceled Observation  %s.", LOG_LW2M_INFO, observation.getPath());
-            service.sendLogsToThingsboard(observation.getRegistrationId(), msg);
-            log.warn(msg);
+            log.trace("Canceled Observation {}.", observation.getPath());
         }
 
         @Override
@@ -102,15 +100,12 @@ public class LwM2mServerListener {
 
         @Override
         public void onError(Observation observation, Registration registration, Exception error) {
-            log.error(String.format("Unable to handle notification of [%s:%s]", observation.getRegistrationId(), observation.getPath()), error);
+            log.error("Unable to handle notification of [{}:{}]", observation.getRegistrationId(), observation.getPath(), error);
         }
 
         @Override
         public void newObservation(Observation observation, Registration registration) {
-            String msg = String.format("%s: Successful start newObservation  %s.", LOG_LW2M_INFO,
-                    observation.getPath());
-            log.warn(msg);
-            service.sendLogsToThingsboard(registration.getId(), msg);
+            log.trace("Successful start newObservation {}.", observation.getPath());
         }
     };
 }

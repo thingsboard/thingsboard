@@ -27,9 +27,9 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCal
 import java.util.Optional;
 import java.util.Set;
 
-public class RpcLinkSetCallback<T> extends RpcDownlinkRequestCallbackProxy<T> {
+public class RpcLinkSetCallback<R, T> extends RpcDownlinkRequestCallbackProxy<R, T> {
 
-    public RpcLinkSetCallback(TransportService transportService, LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, DownlinkRequestCallback<T> callback) {
+    public RpcLinkSetCallback(TransportService transportService, LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, DownlinkRequestCallback<R, T> callback) {
         super(transportService, client, requestMsg, callback);
     }
 

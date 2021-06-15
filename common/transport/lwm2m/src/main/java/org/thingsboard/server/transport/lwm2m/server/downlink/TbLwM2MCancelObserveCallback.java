@@ -18,10 +18,10 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType.OBSERVE_CANCEL;
 
-public class TbLwM2MCancelObserveCallback extends AbstractTbLwM2MRequestCallback<Integer> {
+public class TbLwM2MCancelObserveCallback extends AbstractTbLwM2MRequestCallback<TbLwM2MCancelObserveRequest, Integer> {
 
     private final String versionedId;
 
@@ -31,8 +31,8 @@ public class TbLwM2MCancelObserveCallback extends AbstractTbLwM2MRequestCallback
     }
 
     @Override
-    public void onSuccess(Integer canceledSubscriptionsCount) {
-        String observeCancelMsg = String.format("%s: type operation %s paths: %s count: %d", LOG_LW2M_INFO, OBSERVE_CANCEL.name(), versionedId, canceledSubscriptionsCount);
+    public void onSuccess(TbLwM2MCancelObserveRequest request, Integer canceledSubscriptionsCount) {
+        String observeCancelMsg = String.format("%s: type operation %s paths: %s count: %d", LOG_LWM2M_INFO, OBSERVE_CANCEL.name(), versionedId, canceledSubscriptionsCount);
     }
 
 }

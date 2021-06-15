@@ -19,6 +19,7 @@ import org.eclipse.leshan.core.Link;
 import org.eclipse.leshan.core.node.LwM2mObject;
 import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mResource;
+import org.eclipse.leshan.core.request.DiscoverRequest;
 import org.eclipse.leshan.core.response.DiscoverResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.jetbrains.annotations.NotNull;
@@ -30,9 +31,9 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCal
 
 import java.util.Optional;
 
-public class RpcDiscoverCallback extends RpcLwM2MDownlinkCallback<DiscoverResponse> {
+public class RpcDiscoverCallback extends RpcLwM2MDownlinkCallback<DiscoverRequest, DiscoverResponse> {
 
-    public RpcDiscoverCallback(TransportService transportService, LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, DownlinkRequestCallback<DiscoverResponse> callback) {
+    public RpcDiscoverCallback(TransportService transportService, LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, DownlinkRequestCallback<DiscoverRequest, DiscoverResponse> callback) {
         super(transportService, client, requestMsg, callback);
     }
 

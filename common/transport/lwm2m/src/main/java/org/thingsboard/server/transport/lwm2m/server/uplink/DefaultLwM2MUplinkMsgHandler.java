@@ -111,10 +111,10 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.D
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_5_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_RESULT_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_STATE_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_ERROR;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_TELEMETRY;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_WARN;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_ERROR;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_TELEMETRY;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_WARN;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SW_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertOtaUpdateValueToString;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
@@ -196,7 +196,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
                 log.warn("[{}] [{{}] Client: create after Registration", registration.getEndpoint(), registration.getId());
                 if (lwM2MClient != null) {
                     this.clientContext.register(lwM2MClient, registration);
-                    this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_INFO + ": Client registered with registration id: " + registration.getId());
+                    this.logToTelemetry(lwM2MClient, LOG_LWM2M_INFO + ": Client registered with registration id: " + registration.getId());
                     SessionInfoProto sessionInfo = lwM2MClient.getSession();
                     transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(this, rpcHandler, sessionInfo));
                     log.warn("40) sessionId [{}] Registering rpc subscription after Registration client", new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
@@ -219,11 +219,11 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
                     // Race condition detected and the client was in progress of unregistration while new registration arrived. Let's try again.
                     onRegistered(registration, previousObservations);
                 } else {
-                    this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_WARN + ": Client registration failed due to invalid state: " + stateException.getState());
+                    this.logToTelemetry(lwM2MClient, LOG_LWM2M_WARN + ": Client registration failed due to invalid state: " + stateException.getState());
                 }
             } catch (Throwable t) {
                 log.error("[{}] endpoint [{}] error Unable registration.", registration.getEndpoint(), t);
-                this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_WARN + ": Client registration failed due to: " + t.getMessage());
+                this.logToTelemetry(lwM2MClient, LOG_LWM2M_WARN + ": Client registration failed due to: " + t.getMessage());
             }
         });
     }
@@ -255,7 +255,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
                 }
             } catch (Throwable t) {
                 log.error("[{}] endpoint [{}] error Unable update registration.", registration.getEndpoint(), t);
-                this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_ERROR + String.format(": Client update Registration, %s", t.getMessage()));
+                this.logToTelemetry(lwM2MClient, LOG_LWM2M_ERROR + String.format(": Client update Registration, %s", t.getMessage()));
             }
         });
     }
@@ -268,7 +268,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
         unRegistrationExecutor.submit(() -> {
             LwM2mClient client = clientContext.getClientByEndpoint(registration.getEndpoint());
             try {
-                this.sendLogsToThingsboard(client, LOG_LW2M_INFO + ": Client unRegistration");
+                this.logToTelemetry(client, LOG_LWM2M_INFO + ": Client unRegistration");
                 clientContext.unregister(client, registration);
                 SessionInfoProto sessionInfo = client.getSession();
                 if (sessionInfo != null) {
@@ -283,7 +283,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
                 log.info("[{}] delete registration: [{}] {}.", registration.getEndpoint(), stateException.getState(), stateException.getMessage());
             } catch (Throwable t) {
                 log.error("[{}] endpoint [{}] error Unable un registration.", registration.getEndpoint(), t);
-                this.sendLogsToThingsboard(client, LOG_LW2M_ERROR + String.format(": Client Unable un Registration, %s", t.getMessage()));
+                this.logToTelemetry(client, LOG_LWM2M_ERROR + String.format(": Client Unable un Registration, %s", t.getMessage()));
             }
         });
     }
@@ -291,7 +291,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
     @Override
     public void onSleepingDev(Registration registration) {
         log.info("[{}] [{}] Received endpoint Sleeping version event", registration.getId(), registration.getEndpoint());
-        this.sendLogsToThingsboard(clientContext.getClientByEndpoint(registration.getEndpoint()), LOG_LW2M_INFO + ": Client is sleeping!");
+        this.logToTelemetry(clientContext.getClientByEndpoint(registration.getEndpoint()), LOG_LWM2M_INFO + ": Client is sleeping!");
         //TODO: associate endpointId with device information.
     }
 
@@ -323,13 +323,13 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
             if (objectModelVersion != null) {
                 if (response.getContent() instanceof LwM2mObject) {
                     LwM2mObject lwM2mObject = (LwM2mObject) response.getContent();
-                    this.updateObjectResourceValue(registration, lwM2mObject, path);
+                    this.updateObjectResourceValue(lwM2MClient, lwM2mObject, path);
                 } else if (response.getContent() instanceof LwM2mObjectInstance) {
                     LwM2mObjectInstance lwM2mObjectInstance = (LwM2mObjectInstance) response.getContent();
-                    this.updateObjectInstanceResourceValue(registration, lwM2mObjectInstance, path);
+                    this.updateObjectInstanceResourceValue(lwM2MClient, lwM2mObjectInstance, path);
                 } else if (response.getContent() instanceof LwM2mResource) {
                     LwM2mResource lwM2mResource = (LwM2mResource) response.getContent();
-                    this.updateResourcesValue(registration, lwM2mResource, path);
+                    this.updateResourcesValue(lwM2MClient, lwM2mResource, path);
                 }
             }
         }
@@ -374,14 +374,14 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
                     } else {
                         log.error("Resource path - [{}] value - [{}] is not Writable and cannot be updated", pathIdVer, valueNew);
                         String logMsg = String.format("%s: attributeUpdate: Resource path - %s value - %s is not Writable and cannot be updated",
-                                LOG_LW2M_ERROR, pathIdVer, valueNew);
-                        this.sendLogsToThingsboard(lwM2MClient, logMsg);
+                                LOG_LWM2M_ERROR, pathIdVer, valueNew);
+                        this.logToTelemetry(lwM2MClient, logMsg);
                     }
                 } else if (!isFwSwWords(pathName)) {
                     log.error("Resource name name - [{}] value - [{}] is not present as attribute/telemetry in profile and cannot be updated", pathName, valueNew);
                     String logMsg = String.format("%s: attributeUpdate: attribute name - %s value - %s is not present as attribute in profile and cannot be updated",
-                            LOG_LW2M_ERROR, pathName, valueNew);
-                    this.sendLogsToThingsboard(lwM2MClient, logMsg);
+                            LOG_LWM2M_ERROR, pathName, valueNew);
+                    this.logToTelemetry(lwM2MClient, logMsg);
                 }
 
             });
@@ -454,7 +454,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
     @Override
     public void onAwakeDev(Registration registration) {
         log.trace("[{}] [{}] Received endpoint Awake version event", registration.getId(), registration.getEndpoint());
-        this.sendLogsToThingsboard(clientContext.getClientByEndpoint(registration.getEndpoint()), LOG_LW2M_INFO + ": Client is awake!");
+        this.logToTelemetry(clientContext.getClientByEndpoint(registration.getEndpoint()), LOG_LWM2M_INFO + ": Client is awake!");
         //TODO: associate endpointId with device information.
     }
 
@@ -463,17 +463,17 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
      * @param registrationId - Id of Registration LwM2M Client
      */
     @Override
-    public void sendLogsToThingsboard(String registrationId, String logMsg) {
-        sendLogsToThingsboard(clientContext.getClientByRegistrationId(registrationId), logMsg);
+    public void logToTelemetry(String registrationId, String logMsg) {
+        logToTelemetry(clientContext.getClientByRegistrationId(registrationId), logMsg);
     }
 
     @Override
-    public void sendLogsToThingsboard(LwM2mClient client, String logMsg) {
+    public void logToTelemetry(LwM2mClient client, String logMsg) {
         if (logMsg != null && client != null && client.getSession() != null) {
             if (logMsg.length() > 1024) {
                 logMsg = logMsg.substring(0, 1024);
             }
-            this.helper.sendParametersOnThingsboardTelemetry(this.helper.getKvStringtoThingsboard(LOG_LW2M_TELEMETRY, logMsg), client.getSession());
+            this.helper.sendParametersOnThingsboardTelemetry(this.helper.getKvStringtoThingsboard(LOG_LWM2M_TELEMETRY, logMsg), client.getSession());
         }
     }
 
@@ -563,29 +563,19 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
         defaultLwM2MDownlinkMsgHandler.sendCancelObserveRequest(client, request, new TbLwM2MCancelObserveCallback(this, client, versionedId));
     }
 
-    /**
-     * @param registration -
-     * @param lwM2mObject  -
-     * @param pathIdVer    -
-     */
-    private void updateObjectResourceValue(Registration registration, LwM2mObject lwM2mObject, String pathIdVer) {
+    private void updateObjectResourceValue(LwM2mClient client, LwM2mObject lwM2mObject, String pathIdVer) {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer));
         lwM2mObject.getInstances().forEach((instanceId, instance) -> {
             String pathInstance = pathIds.toString() + "/" + instanceId;
-            this.updateObjectInstanceResourceValue(registration, instance, pathInstance);
+            this.updateObjectInstanceResourceValue(client, instance, pathInstance);
         });
     }
 
-    /**
-     * @param registration        -
-     * @param lwM2mObjectInstance -
-     * @param pathIdVer           -
-     */
-    private void updateObjectInstanceResourceValue(Registration registration, LwM2mObjectInstance lwM2mObjectInstance, String pathIdVer) {
+    private void updateObjectInstanceResourceValue(LwM2mClient client, LwM2mObjectInstance lwM2mObjectInstance, String pathIdVer) {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer));
         lwM2mObjectInstance.getResources().forEach((resourceId, resource) -> {
             String pathRez = pathIds.toString() + "/" + resourceId;
-            this.updateResourcesValue(registration, resource, pathRez);
+            this.updateResourcesValue(client, resource, pathRez);
         });
     }
 
@@ -596,12 +586,12 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
      * #3 If fr_update -> UpdateFirmware
      * #4 updateAttrTelemetry
      *
-     * @param registration  - Registration LwM2M Client
+     * @param lwM2MClient  - Registration LwM2M Client
      * @param lwM2mResource - LwM2mSingleResource response.getContent()
      * @param path          - resource
      */
-    private void updateResourcesValue(Registration registration, LwM2mResource lwM2mResource, String path) {
-        LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
+    private void updateResourcesValue(LwM2mClient lwM2MClient, LwM2mResource lwM2mResource, String path) {
+        Registration registration = lwM2MClient.getRegistration();
         if (lwM2MClient.saveResourceValue(path, lwM2mResource, this.config.getModelProvider())) {
             /** version != null
              * set setClient_fw_info... = value
@@ -801,12 +791,13 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
      * @param path         -
      * @param request      -
      */
-    public void onWriteResponseOk(Registration registration, String path, WriteRequest request) {
+    @Override
+    public void onWriteResponseOk(LwM2mClient client, String path, WriteRequest request) {
         if (request.getNode() instanceof LwM2mResource) {
-            this.updateResourcesValue(registration, ((LwM2mResource) request.getNode()), path);
+            this.updateResourcesValue(client, ((LwM2mResource) request.getNode()), path);
         } else if (request.getNode() instanceof LwM2mObjectInstance) {
             ((LwM2mObjectInstance) request.getNode()).getResources().forEach((resId, resource) -> {
-                this.updateResourcesValue(registration, resource, path + "/" + resId);
+                this.updateResourcesValue(client, resource, path + "/" + resId);
             });
         }
 
@@ -945,8 +936,8 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
         } else {
             log.error("Failed update resource [{}] [{}]", versionedId, newValue);
             String logMsg = String.format("%s: Failed update resource versionedId - %s value - %s. Value is not changed or bad",
-                    LOG_LW2M_ERROR, versionedId, newValue);
-            this.sendLogsToThingsboard(lwM2MClient, logMsg);
+                    LOG_LWM2M_ERROR, versionedId, newValue);
+            this.logToTelemetry(lwM2MClient, logMsg);
             log.info("Failed update resource [{}] [{}]", versionedId, newValue);
         }
     }

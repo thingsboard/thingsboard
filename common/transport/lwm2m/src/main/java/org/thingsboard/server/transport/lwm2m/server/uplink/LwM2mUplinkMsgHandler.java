@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.server.uplink;
 
 import org.eclipse.leshan.core.observation.Observation;
+import org.eclipse.leshan.core.request.WriteRequest;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.common.data.Device;
@@ -54,9 +55,11 @@ public interface LwM2mUplinkMsgHandler {
 
     void onAwakeDev(Registration registration);
 
-    void sendLogsToThingsboard(LwM2mClient client, String msg);
+    void logToTelemetry(LwM2mClient client, String msg);
 
-    void sendLogsToThingsboard(String registrationId, String msg);
+    void logToTelemetry(String registrationId, String msg);
+
+    void onWriteResponseOk(LwM2mClient client, String path, WriteRequest request);
 
     void onToTransportUpdateCredentials(TransportProtos.ToTransportUpdateCredentialsProto updateCredentials);
 

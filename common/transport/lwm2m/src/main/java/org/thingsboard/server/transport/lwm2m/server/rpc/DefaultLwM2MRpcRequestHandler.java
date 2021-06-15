@@ -59,9 +59,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static org.eclipse.californium.core.coap.CoAP.ResponseCode.BAD_REQUEST;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_ERROR;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_VALUE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_ERROR;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_VALUE;
 
 @Slf4j
 @Service
@@ -167,12 +167,12 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
 
     private void sendObserveAllRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
         TbLwM2MObserveAllRequest request = TbLwM2MObserveAllRequest.builder().timeout(this.config.getTimeout()).build();
-        downlinkHandler.sendObserveAllRequest(client, request, new RpcLinkSetCallback(transportService, client, requestMsg, null));
+        downlinkHandler.sendObserveAllRequest(client, request, new RpcLinkSetCallback<>(transportService, client, requestMsg, null));
     }
 
     private void sendDiscoverAllRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
         TbLwM2MDiscoverAllRequest request = TbLwM2MDiscoverAllRequest.builder().timeout(this.config.getTimeout()).build();
-        downlinkHandler.sendDiscoverAllRequest(client, request, new RpcLinkSetCallback(transportService, client, requestMsg, null));
+        downlinkHandler.sendDiscoverAllRequest(client, request, new RpcLinkSetCallback<>(transportService, client, requestMsg, null));
     }
 
     private void sendDiscoverRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
@@ -235,7 +235,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     private void sendCancelAllObserveRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
         TbLwM2MCancelAllRequest downlink = TbLwM2MCancelAllRequest.builder().timeout(this.config.getTimeout()).build();
         var mainCallback = new TbLwM2MCancelAllObserveCallback(uplinkHandler, client);
-        var rpcCallback = new RpcCancelObserveCallback(transportService, client, requestMsg, mainCallback);
+        var rpcCallback = new RpcCancelAllObserveCallback(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendCancelAllRequest(client, downlink, rpcCallback);
     }
 
@@ -283,18 +283,18 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
 
     public void sentRpcResponse(LwM2mClientRpcRequest rpcRequest, String requestCode, String msg, String typeMsg) {
         rpcRequest.setResponseCode(requestCode);
-        if (LOG_LW2M_ERROR.equals(typeMsg)) {
+        if (LOG_LWM2M_ERROR.equals(typeMsg)) {
             rpcRequest.setInfoMsg(null);
             rpcRequest.setValueMsg(null);
             if (rpcRequest.getErrorMsg() == null) {
                 msg = msg.isEmpty() ? null : msg;
                 rpcRequest.setErrorMsg(msg);
             }
-        } else if (LOG_LW2M_INFO.equals(typeMsg)) {
+        } else if (LOG_LWM2M_INFO.equals(typeMsg)) {
             if (rpcRequest.getInfoMsg() == null) {
                 rpcRequest.setInfoMsg(msg);
             }
-        } else if (LOG_LW2M_VALUE.equals(typeMsg)) {
+        } else if (LOG_LWM2M_VALUE.equals(typeMsg)) {
             if (rpcRequest.getValueMsg() == null) {
                 rpcRequest.setValueMsg(msg);
             }

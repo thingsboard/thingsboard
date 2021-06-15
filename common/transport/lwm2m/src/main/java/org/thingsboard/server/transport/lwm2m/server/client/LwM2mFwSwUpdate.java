@@ -61,8 +61,8 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.F
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_STATE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_UPDATE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_UPDATE_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_ERROR;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_ERROR;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_19_BINARY;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_5_BINARY;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL;
@@ -124,7 +124,6 @@ public class LwM2mFwSwUpdate {
     @Getter
     LwM2mClient lwM2MClient;
     @Getter
-    @Setter
     private final List<String> pendingInfoRequestsStart;
     @Getter
     @Setter
@@ -189,11 +188,11 @@ public class LwM2mFwSwUpdate {
     public void writeFwSwWare(DefaultLwM2MUplinkMsgHandler handler, LwM2mDownlinkMsgHandler request) {
         if (this.currentId != null) {
             this.stateUpdate = OtaPackageUpdateStatus.INITIATED.name();
-            this.sendLogs(handler, WRITE_REPLACE.name(), LOG_LW2M_INFO, null);
+            this.sendLogs(handler, WRITE_REPLACE.name(), LOG_LWM2M_INFO, null);
             String targetIdVer = convertPathFromObjectIdToIdVer(this.pathPackageId, this.lwM2MClient.getRegistration());
-            String fwMsg = String.format("%s: Start type operation %s paths:  %s", LOG_LW2M_INFO,
+            String fwMsg = String.format("%s: Start type operation %s paths:  %s", LOG_LWM2M_INFO,
                     LwM2mOperationType.FW_UPDATE.name(), this.pathPackageId);
-            handler.sendLogsToThingsboard(fwMsg, lwM2MClient.getRegistration().getId());
+            handler.logToTelemetry(fwMsg, lwM2MClient.getRegistration().getId());
             log.warn("8) Start firmware Update. Send save to: [{}] ver: [{}] path: [{}]", this.lwM2MClient.getDeviceName(), this.currentVersion, targetIdVer);
             if (LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_5_BINARY.code == this.updateStrategy) {
                 int chunkSize = 0;
@@ -220,7 +219,7 @@ public class LwM2mFwSwUpdate {
 //                handler.sentRpcResponse(this.rpcRequest, CONTENT.name(), msgError, LOG_LW2M_ERROR);
             }
             log.error(msgError);
-            this.sendLogs(handler, WRITE_REPLACE.name(), LOG_LW2M_ERROR, msgError);
+            this.sendLogs(handler, WRITE_REPLACE.name(), LOG_LWM2M_ERROR, msgError);
         }
     }
 
@@ -228,10 +227,10 @@ public class LwM2mFwSwUpdate {
 //        this.sendSateOnThingsBoard(handler);
         String msg = String.format("%s: %s, %s, pkgVer: %s: pkgName - %s state - %s.",
                 typeInfo, this.wUpdate, typeOper, this.currentVersion, this.currentTitle, this.stateUpdate);
-        if (LOG_LW2M_ERROR.equals(typeInfo)) {
+        if (LOG_LWM2M_ERROR.equals(typeInfo)) {
             msg = String.format("%s Error: %s", msg, msgError);
         }
-        handler.sendLogsToThingsboard(lwM2MClient, msg);
+        handler.logToTelemetry(lwM2MClient, msg);
     }
 
 
@@ -241,7 +240,7 @@ public class LwM2mFwSwUpdate {
      * send execute
      */
     public void executeFwSwWare(DefaultLwM2MUplinkMsgHandler handler, LwM2mDownlinkMsgHandler request) {
-        this.sendLogs(handler, EXECUTE.name(), LOG_LW2M_INFO, null);
+        this.sendLogs(handler, EXECUTE.name(), LOG_LWM2M_INFO, null);
         //TODO: user this.rpcRequest???
         TbLwM2MExecuteRequest downlink = TbLwM2MExecuteRequest.builder().versionedId(pathInstallId).timeout(handler.config.getTimeout()).build();
         request.sendExecuteRequest(lwM2MClient, downlink, new TbLwM2MExecuteCallback(handler, lwM2MClient, pathInstallId));
@@ -272,14 +271,14 @@ public class LwM2mFwSwUpdate {
                         ver3 != null && ver3.contains(this.currentVersion)
         )) ||
                 (this.currentTitle != null && pathName != null && this.currentTitle.equals(pathName))) {
-            fwMsg = String.format("%s: The update was interrupted. The device has the same version: %s.", LOG_LW2M_ERROR,
+            fwMsg = String.format("%s: The update was interrupted. The device has the same version: %s.", LOG_LWM2M_ERROR,
                     this.currentVersion);
         } else if (updateResultFw != null && updateResultFw > LwM2mTransportUtil.UpdateResultFw.UPDATE_SUCCESSFULLY.code) {
-            fwMsg = String.format("%s: The update was interrupted. The device has the status UpdateResult: error (%d).", LOG_LW2M_ERROR,
+            fwMsg = String.format("%s: The update was interrupted. The device has the status UpdateResult: error (%d).", LOG_LWM2M_ERROR,
                     updateResultFw);
         }
         if (fwMsg != null) {
-            handler.sendLogsToThingsboard(fwMsg, lwM2MClient.getRegistration().getId());
+            handler.logToTelemetry(fwMsg, lwM2MClient.getRegistration().getId());
             return false;
         } else {
             return true;
@@ -364,10 +363,10 @@ public class LwM2mFwSwUpdate {
         String key = splitCamelCaseString((String) this.lwM2MClient.getResourceNameByRezId(null, this.pathResultId));
         if (success) {
             this.stateUpdate = OtaPackageUpdateStatus.UPDATED.name();
-            this.sendLogs(handler, EXECUTE.name(), LOG_LW2M_INFO, null);
+            this.sendLogs(handler, EXECUTE.name(), LOG_LWM2M_INFO, null);
         } else {
             this.stateUpdate = OtaPackageUpdateStatus.FAILED.name();
-            this.sendLogs(handler, EXECUTE.name(), LOG_LW2M_ERROR, value);
+            this.sendLogs(handler, EXECUTE.name(), LOG_LWM2M_ERROR, value);
         }
         handler.helper.sendParametersOnThingsboardTelemetry(
                 handler.helper.getKvStringtoThingsboard(key, value), this.lwM2MClient.getSession());
