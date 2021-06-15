@@ -83,7 +83,7 @@ public class ProtoTransportPayloadConfiguration implements TransportPayloadTypeC
                     "package rpc;\n" +
                     "\n" +
                     "message RpcResponseMsg {\n" +
-                    "  string payload = 1;\n" +
+                    "  optional string payload = 1;\n" +
                     "}";
         }
     }
@@ -96,9 +96,9 @@ public class ProtoTransportPayloadConfiguration implements TransportPayloadTypeC
                     "package rpc;\n" +
                     "\n" +
                     "message RpcRequestMsg {\n" +
-                    "  string method = 1;\n" +
-                    "  int32 requestId = 2;\n" +
-                    "  string params = 3;\n" +
+                    "  optional string method = 1;\n" +
+                    "  optional int32 requestId = 2;\n" +
+                    "  optional string params = 3;\n" +
                     "}";
         }
     }
