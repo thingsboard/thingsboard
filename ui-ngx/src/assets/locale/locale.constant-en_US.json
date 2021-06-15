@@ -1269,7 +1269,6 @@
         "edge-details": "Edge details",
         "add-edge-text": "Add new edge",
         "delete": "Delete edge",
-        "delete-edges": "Delete edges",
         "delete-edge-title": "Are you sure you want to delete the edge '{{edgeName}}'?",
         "delete-edge-text": "Be careful, after the confirmation the edge and all related data will become unrecoverable.",
         "delete-edges-title": "Are you sure you want to edge { count, plural, 1 {1 edge} other {# edges} }?",

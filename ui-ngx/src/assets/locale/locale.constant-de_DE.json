@@ -735,7 +735,6 @@
     "edge-details": "Details der Rand",
     "add-edge-text": "Neue Rand hinzufügen",
     "delete": "Rand löschen",
-    "delete-edges": "Rand löschen",
     "delete-edge-title": "Möchten Sie des Rands wirklich löschen '{{edgeName}}'?",
     "delete-edge-text": "Seien Sie vorsichtig, nach der Bestätigung werden der Rand und alle zugehörigen Daten nicht wiederhergestellt.",
     "delete-edges-title": "Sind Sie sicher, dass Sie die Rand löschen möchten { count, plural, 1 {1 Rand} other {# Rand} }?",

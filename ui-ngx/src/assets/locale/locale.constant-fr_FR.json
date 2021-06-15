@@ -753,7 +753,6 @@
         "edge-details": "Détails de la bordure",
         "add-edge-text": "Ajouter une nouveau bordure",
         "delete": "Supprimer la bordure",
-        "delete-edges": "Supprimer les bordures",
         "delete-edge-title": "Êtes-vous sûr de vouloir supprimer la bordure '{{edgeName}}'?",
         "delete-edge-text": "Faites attention, après la confirmation, la bordure et toutes les données associées deviendront irrécupérables",
         "delete-edges-title": "Êtes-vous sûr de vouloir supprimer {count, plural, 1 {1 bordure} other {# bordure}}?",

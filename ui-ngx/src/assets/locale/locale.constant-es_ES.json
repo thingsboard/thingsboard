@@ -1123,7 +1123,6 @@
         "edge-details": "Detalles del borde",
         "add-edge-text": "Agregar nuevo borde",
         "delete": "Eliminar borde",
-        "delete-edges": "Eliminar bordes",
         "delete-edge-title": "¿Está seguro de que desea eliminar el borde '{{edgeName}}'?",
         "delete-edge-text": "Tenga cuidado, después de la confirmación, el borde y todos los datos relacionados serán irrecuperables",
         "delete-edges-title": "¿Está seguro de que desea edge {count, plural, 1 {1 borde} other {# bordes}}?",
