@@ -615,7 +615,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
             if (LwM2mTransportUtil.LwM2MClientStrategy.CLIENT_STRATEGY_2.code == lwM2MClientProfile.getClientStrategy()) {
                 // #2
                 lwM2MClient.getPendingReadRequests().addAll(clientObjects);
-                clientObjects.forEach(path -> lwM2mTransportRequest.sendAllRequestLwM2mVersion(lwM2MClient, path, READ,
+                clientObjects.forEach(path -> lwM2mTransportRequest.sendAllRequest(lwM2MClient, path, READ,
                         null, this.config.getTimeout(), null));
             }
             // #1
@@ -747,7 +747,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                 lwM2MClient.getPendingReadRequests().addAll(targetObjectIds);
                 targetObjectIds.forEach(target -> {
                     Object additionalParams = params != null ? params.get(target) : null;
-                    lwM2mTransportRequest.sendAllRequestLwM2mVersion(lwM2MClient, target, operationType, additionalParams, this.config.getTimeout(), null);
+                    lwM2mTransportRequest.sendAllRequest(lwM2MClient, target, operationType, additionalParams, this.config.getTimeout(), null);
                 });
                 if (OBSERVE.equals(operationType)) {
                     lwM2MClient.initReadValue(this, null);
@@ -1075,10 +1075,10 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
             LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(target));
             if (pathIds.isResource()) {
                 if (READ.equals(typeOper)) {
-                    lwM2mTransportRequest.sendAllRequestLwM2mVersion(client, target, typeOper,
+                    lwM2mTransportRequest.sendAllRequest(client, target, typeOper,
                             null, this.config.getTimeout(), null);
                 } else if (OBSERVE.equals(typeOper)) {
-                    lwM2mTransportRequest.sendAllRequestLwM2mVersion(client, target, typeOper,
+                    lwM2mTransportRequest.sendAllRequest(client, target, typeOper,
                             null, this.config.getTimeout(), null);
                 }
             }
@@ -1133,7 +1133,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                         .collect(Collectors.toUnmodifiableSet());
                 if (!pathSend.isEmpty()) {
                     ConcurrentHashMap<String, Object> finalParams = lwm2mAttributesNew;
-                    pathSend.forEach(target -> lwM2mTransportRequest.sendAllRequestLwM2mVersion(client, target, WRITE_ATTRIBUTES,
+                    pathSend.forEach(target -> lwM2mTransportRequest.sendAllRequest(client, target, WRITE_ATTRIBUTES,
                             finalParams.get(target), this.config.getTimeout(), null));
                 }
             });
@@ -1150,7 +1150,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                         Map<String, Object> params = (Map<String, Object>) lwm2mAttributesOld.get(target);
                         params.clear();
                         params.put(OBJECT_VERSION, "");
-                        lwM2mTransportRequest.sendAllRequestLwM2mVersion(client, target, WRITE_ATTRIBUTES, params, this.config.getTimeout(), null);
+                        lwM2mTransportRequest.sendAllRequest(client, target, WRITE_ATTRIBUTES, params, this.config.getTimeout(), null);
                     });
                 }
             });
@@ -1161,7 +1161,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     private void cancelObserveFromProfile(LwM2mClient lwM2mClient, Set<String> paramAnallyzer) {
         paramAnallyzer.forEach(pathIdVer -> {
                     if (this.getResourceValueFromLwM2MClient(lwM2mClient, pathIdVer) != null) {
-                        lwM2mTransportRequest.sendAllRequestLwM2mVersion(lwM2mClient, pathIdVer, OBSERVE_CANCEL, null, this.config.getTimeout(), null);
+                        lwM2mTransportRequest.sendAllRequest(lwM2mClient, pathIdVer, OBSERVE_CANCEL, null, this.config.getTimeout(), null);
                     }
                 }
         );
@@ -1169,7 +1169,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
 
     private void updateResourcesValueToClient(LwM2mClient lwM2MClient, Object valueOld, Object valueNew, String path) {
         if (valueNew != null && (valueOld == null || !valueNew.toString().equals(valueOld.toString()))) {
-            lwM2mTransportRequest.sendAllRequestLwM2mVersion(lwM2MClient, path, WRITE_REPLACE, valueNew, this.config.getTimeout(), null);
+            lwM2mTransportRequest.sendAllRequest(lwM2MClient, path, WRITE_REPLACE, valueNew, this.config.getTimeout(), null);
         } else {
             log.error("Failed update resource [{}] [{}]", path, valueNew);
             String logMsg = String.format("%s: Failed update resource path - %s value - %s. Value is not changed or bad",

@@ -249,7 +249,7 @@ public class LwM2mFwSwUpdate {
      */
     public void executeFwSwWare(DefaultLwM2MTransportMsgHandler handler, LwM2mTransportRequest request) {
         this.sendLogs(handler, EXECUTE.name(), LOG_LW2M_INFO, null);
-        request.sendAllRequestLwM2mVersion(this.lwM2MClient, this.pathInstallId, EXECUTE, null, 0, this.rpcRequest);
+        request.sendAllRequest(this.lwM2MClient, this.pathInstallId, EXECUTE, null, 0, this.rpcRequest);
     }
 
     /**
@@ -450,7 +450,7 @@ public class LwM2mFwSwUpdate {
         if (this.pendingInfoRequestsStart.size() > 0) {
             this.infoFwSwUpdate = true;
             this.pendingInfoRequestsStart.forEach(pathIdVer -> {
-                request.sendAllRequestLwM2mVersion(this.lwM2MClient, pathIdVer, OBSERVE, null, 0, this.rpcRequest);
+                request.sendAllRequest(this.lwM2MClient, pathIdVer, OBSERVE, null, 0, this.rpcRequest);
             });
         } else {
             this.otaUpdateStart(handler, request);
