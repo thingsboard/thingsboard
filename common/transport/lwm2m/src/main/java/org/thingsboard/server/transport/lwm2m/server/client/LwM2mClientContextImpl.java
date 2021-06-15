@@ -60,12 +60,14 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     @Override
-    public void register(LwM2mClient lwM2MClient, Registration registration) throws LwM2MClientStateException {
+    public Optional<TransportProtos.SessionInfoProto> register(LwM2mClient lwM2MClient, Registration registration) throws LwM2MClientStateException {
+        TransportProtos.SessionInfoProto oldSession = null;
         lwM2MClient.lock();
         try {
             if (LwM2MClientState.UNREGISTERED.equals(lwM2MClient.getState())) {
                 throw new LwM2MClientStateException(lwM2MClient.getState(), "Client is in invalid state.");
             }
+            oldSession = lwM2MClient.getSession();
             TbLwM2MSecurityInfo securityInfo = securityStore.getTbLwM2MSecurityInfoByEndpoint(lwM2MClient.getEndpoint());
             if (securityInfo.getSecurityMode() != null) {
                 if (securityInfo.getDeviceProfile() != null) {
@@ -89,6 +91,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         } finally {
             lwM2MClient.unlock();
         }
+        return Optional.ofNullable(oldSession);
     }
 
     @Override

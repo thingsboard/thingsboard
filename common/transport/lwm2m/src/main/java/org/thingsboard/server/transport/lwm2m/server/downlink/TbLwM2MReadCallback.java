@@ -21,8 +21,6 @@ import org.eclipse.leshan.core.response.ReadResponse;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
-
 @Slf4j
 public class TbLwM2MReadCallback extends TbLwM2MTargetedCallback<ReadRequest, ReadResponse> {
 
@@ -33,7 +31,7 @@ public class TbLwM2MReadCallback extends TbLwM2MTargetedCallback<ReadRequest, Re
     @Override
     public void onSuccess(ReadRequest request, ReadResponse response) {
         super.onSuccess(request, response);
-        handler.onUpdateValueAfterReadResponse(client.getRegistration(), targetId, response, null);
+        handler.onUpdateValueAfterReadResponse(client.getRegistration(), versionedId, response, null);
     }
 
 }
