@@ -77,8 +77,6 @@ public class LwM2mClient implements Cloneable {
     @Getter
     private final Map<String, TsKvProto> sharedAttributes;
     @Getter
-    private final List<String> pendingReadRequests;
-    @Getter
     private final Queue<LwM2mQueuedRequest> queuedRequests;
 
     @Getter
@@ -110,9 +108,6 @@ public class LwM2mClient implements Cloneable {
 
     private ValidateDeviceCredentialsResponse credentials;
 
-    @Getter
-    private boolean init;
-
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
     }
@@ -122,7 +117,6 @@ public class LwM2mClient implements Cloneable {
         this.endpoint = endpoint;
         this.lock = new ReentrantLock();
         this.sharedAttributes = new ConcurrentHashMap<>();
-        this.pendingReadRequests = new CopyOnWriteArrayList<>();
         this.resources = new ConcurrentHashMap<>();
         this.queuedRequests = new ConcurrentLinkedQueue<>();
         this.state = LwM2MClientState.CREATED;
@@ -132,7 +126,6 @@ public class LwM2mClient implements Cloneable {
         this.identity = identity;
         this.securityInfo = securityInfo;
         this.credentials = credentials;
-        this.init = false;
         this.session = createSession(nodeId, sessionId, credentials);
         this.tenantId = new TenantId(new UUID(session.getTenantIdMSB(), session.getTenantIdLSB()));
         this.deviceId = new UUID(session.getDeviceIdMSB(), session.getDeviceIdLSB());
@@ -363,16 +356,6 @@ public class LwM2mClient implements Cloneable {
                 .stream()
                 .filter(e -> idVer.equals(e.split(LWM2M_SEPARATOR_PATH)[1]))
                 .collect(Collectors.toSet());
-    }
-
-    public void initReadValue(DefaultLwM2MUplinkMsgHandler serviceImpl, String path) {
-        if (path != null) {
-            this.pendingReadRequests.remove(path);
-        }
-        if (this.pendingReadRequests.size() == 0) {
-            this.init = true;
-            serviceImpl.initAttributes(this);
-        }
     }
 
     public ContentFormat getDefaultContentFormat() {

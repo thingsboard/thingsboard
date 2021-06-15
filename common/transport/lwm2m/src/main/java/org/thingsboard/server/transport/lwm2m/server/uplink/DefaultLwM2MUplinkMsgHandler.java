@@ -61,7 +61,6 @@ import org.thingsboard.server.transport.lwm2m.server.LwM2mSessionMsgListener;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
-import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
 import org.thingsboard.server.transport.lwm2m.server.attributes.LwM2MAttributesService;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClientState;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClientStateException;
@@ -86,6 +85,7 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttrib
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttributesRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteResponseCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplaceRequest;
+import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MOtaUpdateService;
 import org.thingsboard.server.transport.lwm2m.server.rpc.LwM2MRpcRequestHandler;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
@@ -109,7 +109,6 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.FAILED;
-import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.INITIATED;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper.getValueFromKvProto;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_5_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_RESULT_ID;
@@ -138,10 +137,10 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
     private final TransportService transportService;
     private final LwM2mTransportContext context;
     private final LwM2MAttributesService attributesService;
+    private final LwM2MOtaUpdateService otaService;
     public final LwM2MTransportServerConfig config;
     public final OtaPackageDataCache otaPackageDataCache;
     public final LwM2mTransportServerHelper helper;
-    private final LwM2MJsonAdaptor adaptor;
     private final TbLwM2MDtlsSessionStore sessionStore;
     public final LwM2mClientContext clientContext;
     private final LwM2MRpcRequestHandler rpcHandler;
@@ -149,14 +148,16 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
 
     public final Map<String, Integer> firmwareUpdateState;
 
-    public DefaultLwM2MUplinkMsgHandler(TransportService transportService, LwM2MAttributesService attributesService, LwM2MTransportServerConfig config, LwM2mTransportServerHelper helper,
+    public DefaultLwM2MUplinkMsgHandler(TransportService transportService, LwM2MAttributesService attributesService, LwM2MOtaUpdateService otaService,
+                                        LwM2MTransportServerConfig config, LwM2mTransportServerHelper helper,
                                         LwM2mClientContext clientContext,
                                         @Lazy LwM2MRpcRequestHandler rpcHandler,
                                         @Lazy LwM2mDownlinkMsgHandler defaultLwM2MDownlinkMsgHandler,
                                         OtaPackageDataCache otaPackageDataCache,
-                                        LwM2mTransportContext context, LwM2MJsonAdaptor adaptor, TbLwM2MDtlsSessionStore sessionStore) {
+                                        LwM2mTransportContext context, TbLwM2MDtlsSessionStore sessionStore) {
         this.transportService = transportService;
         this.attributesService = attributesService;
+        this.otaService = otaService;
         this.config = config;
         this.helper = helper;
         this.clientContext = clientContext;
@@ -164,7 +165,6 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
         this.defaultLwM2MDownlinkMsgHandler = defaultLwM2MDownlinkMsgHandler;
         this.otaPackageDataCache = otaPackageDataCache;
         this.context = context;
-        this.adaptor = adaptor;
         this.firmwareUpdateState = new ConcurrentHashMap<>();
         this.sessionStore = sessionStore;
     }
@@ -218,6 +218,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
                     this.getInfoSoftwareUpdate(lwM2MClient);
                     this.initClientTelemetry(lwM2MClient);
                     this.initAttributes(lwM2MClient);
+                    otaService.init(lwM2MClient);
                 } else {
                     log.error("Client: [{}] onRegistered [{}] name [{}] lwM2MClient ", registration.getId(), registration.getEndpoint(), null);
                 }
@@ -441,7 +442,6 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
         if (supportedObjects != null && supportedObjects.size() > 0) {
             if (LwM2mTransportUtil.LwM2MClientStrategy.CLIENT_STRATEGY_2.code == profile.getClientLwM2mSettings().getClientOnlyObserveAfterConnect()) {
                 // #2
-                lwM2MClient.getPendingReadRequests().addAll(supportedObjects);
                 supportedObjects.forEach(versionedId -> sendReadRequest(lwM2MClient, versionedId));
             }
             // #1
@@ -464,7 +464,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
         try {
             latch.await();
         } catch (InterruptedException e) {
-            log.error("Failed to await Read requests!");
+            log.error("[{}] Failed to await Read requests!", lwM2MClient.getEndpoint());
         }
     }
 
@@ -478,7 +478,7 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
         try {
             latch.await();
         } catch (InterruptedException e) {
-            log.error("Failed to await Observe requests!");
+            log.error("[{}] Failed to await Observe requests!", lwM2MClient.getEndpoint());
         }
     }
 
