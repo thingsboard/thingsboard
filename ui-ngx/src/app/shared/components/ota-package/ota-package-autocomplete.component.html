@@ -21,7 +21,8 @@
          formControlName="packageId"
          (focusin)="onFocus()"
          [required]="required"
-         [matAutocomplete]="packageAutocomplete">
+         [matAutocomplete]="packageAutocomplete"
+         [matAutocompleteDisabled]="disabled">
   <button *ngIf="otaPackageFormGroup.get('packageId').value && !disabled"
           type="button"
           matSuffix mat-button mat-icon-button aria-label="Clear"

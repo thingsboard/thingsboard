@@ -149,7 +149,7 @@
           <input matInput formControlName="url"
                  type="text"
                  [required]="entityForm.get('resource').value === 'url'">
-          <mat-error *ngIf="entityForm.get('url').hasError('required')" translate>
+          <mat-error *ngIf="entityForm.get('url').hasError('required') || entityForm.get('url').hasError('pattern')" translate>
             ota-update.direct-url-required
           </mat-error>
         </mat-form-field>
