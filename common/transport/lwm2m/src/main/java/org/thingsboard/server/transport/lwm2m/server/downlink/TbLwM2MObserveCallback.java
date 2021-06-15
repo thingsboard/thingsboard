@@ -31,6 +31,6 @@ public class TbLwM2MObserveCallback extends TbLwM2MTargetedCallback<ObserveReque
     @Override
     public void onSuccess(ObserveRequest request, ObserveResponse response) {
         super.onSuccess(request, response);
-        handler.onUpdateValueAfterReadResponse(client.getRegistration(), versionedId, response, null);
+        handler.onUpdateValueAfterReadResponse(client.getRegistration(), versionedId, response);
     }
 }

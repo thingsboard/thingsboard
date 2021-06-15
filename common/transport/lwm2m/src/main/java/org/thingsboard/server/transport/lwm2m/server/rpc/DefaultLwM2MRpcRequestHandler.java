@@ -58,11 +58,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static org.eclipse.californium.core.coap.CoAP.ResponseCode.BAD_REQUEST;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_ERROR;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_VALUE;
-
 @Slf4j
 @Service
 @TbLwM2mTransportComponent
@@ -258,17 +253,6 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         transportService.process(sessionInfo, msg, null);
     }
 
-    private void sendErrorRpcResponse(LwM2mClientRpcRequest lwm2mClientRpcRequest, String msgError, TransportProtos.SessionInfoProto sessionInfo) {
-        if (lwm2mClientRpcRequest == null) {
-            lwm2mClientRpcRequest = new LwM2mClientRpcRequest();
-        }
-        lwm2mClientRpcRequest.setResponseCode(BAD_REQUEST.name());
-        if (lwm2mClientRpcRequest.getErrorMsg() == null) {
-            lwm2mClientRpcRequest.setErrorMsg(msgError);
-        }
-        this.onToDeviceRpcResponse(lwm2mClientRpcRequest.getDeviceRpcResponseResultMsg(), sessionInfo);
-    }
-
     private void cleanupOldSessions() {
         log.warn("4.1) before rpcSubscriptions.size(): [{}]", rpcSubscriptions.size());
         if (rpcSubscriptions.size() > 0) {
@@ -279,27 +263,6 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
             rpcSubscriptionsToRemove.forEach(rpcSubscriptions::remove);
         }
         log.warn("4.4) after rpcSubscriptions.size(): [{}]", rpcSubscriptions.size());
-    }
-
-    public void sentRpcResponse(LwM2mClientRpcRequest rpcRequest, String requestCode, String msg, String typeMsg) {
-        rpcRequest.setResponseCode(requestCode);
-        if (LOG_LWM2M_ERROR.equals(typeMsg)) {
-            rpcRequest.setInfoMsg(null);
-            rpcRequest.setValueMsg(null);
-            if (rpcRequest.getErrorMsg() == null) {
-                msg = msg.isEmpty() ? null : msg;
-                rpcRequest.setErrorMsg(msg);
-            }
-        } else if (LOG_LWM2M_INFO.equals(typeMsg)) {
-            if (rpcRequest.getInfoMsg() == null) {
-                rpcRequest.setInfoMsg(msg);
-            }
-        } else if (LOG_LWM2M_VALUE.equals(typeMsg)) {
-            if (rpcRequest.getValueMsg() == null) {
-                rpcRequest.setValueMsg(msg);
-            }
-        }
-        this.onToDeviceRpcResponse(rpcRequest.getDeviceRpcResponseResultMsg(), rpcRequest.getSessionInfo());
     }
 
     @Override

@@ -75,7 +75,7 @@ public class LwM2mClient implements Cloneable {
     @Getter
     private final Map<String, ResourceValue> resources;
     @Getter
-    private final Map<String, TsKvProto> delayedRequests;
+    private final Map<String, TsKvProto> sharedAttributes;
     @Getter
     private final List<String> pendingReadRequests;
     @Getter
@@ -121,7 +121,7 @@ public class LwM2mClient implements Cloneable {
         this.nodeId = nodeId;
         this.endpoint = endpoint;
         this.lock = new ReentrantLock();
-        this.delayedRequests = new ConcurrentHashMap<>();
+        this.sharedAttributes = new ConcurrentHashMap<>();
         this.pendingReadRequests = new CopyOnWriteArrayList<>();
         this.resources = new ConcurrentHashMap<>();
         this.queuedRequests = new ConcurrentLinkedQueue<>();
@@ -371,7 +371,7 @@ public class LwM2mClient implements Cloneable {
         }
         if (this.pendingReadRequests.size() == 0) {
             this.init = true;
-            serviceImpl.putDelayedUpdateResourcesThingsboard(this);
+            serviceImpl.initAttributes(this);
         }
     }
 

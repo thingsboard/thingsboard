@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType;
-import org.thingsboard.server.transport.lwm2m.server.rpc.LwM2mClientRpcRequest;
 import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.downlink.LwM2mDownlinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
@@ -127,9 +126,6 @@ public class LwM2mFwSwUpdate {
     private final List<String> pendingInfoRequestsStart;
     @Getter
     @Setter
-    private volatile LwM2mClientRpcRequest rpcRequest;
-    @Getter
-    @Setter
     private volatile int updateStrategy;
 
     public LwM2mFwSwUpdate(LwM2mUplinkMsgHandler handler, LwM2mClient lwM2MClient, OtaPackageType type, int updateStrategy) {
@@ -214,10 +210,10 @@ public class LwM2mFwSwUpdate {
         } else {
             String msgError = "FirmWareId is null.";
             log.warn("6) [{}]", msgError);
-            if (this.rpcRequest != null) {
+//            if (this.rpcRequest != null) {
 //                TODO: refactor.
 //                handler.sentRpcResponse(this.rpcRequest, CONTENT.name(), msgError, LOG_LW2M_ERROR);
-            }
+//            }
             log.error(msgError);
             this.sendLogs(handler, WRITE_REPLACE.name(), LOG_LWM2M_ERROR, msgError);
         }
