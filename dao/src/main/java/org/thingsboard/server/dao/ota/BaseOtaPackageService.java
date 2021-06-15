@@ -277,7 +277,9 @@ public class BaseOtaPackageService implements OtaPackageService {
                     throw new DataValidationException("Wrong otaPackage file!");
                 }
             } else {
-                //TODO: validate url
+                if(otaPackage.getData() != null) {
+                    throw new DataValidationException("File can't be saved if URL present!");
+                }
             }
         }
 
@@ -335,6 +337,10 @@ public class BaseOtaPackageService implements OtaPackageService {
 
         if (otaPackageOld.getDataSize() != null && !otaPackageOld.getDataSize().equals(otaPackage.getDataSize())) {
             throw new DataValidationException("Updating otaPackage data size is prohibited!");
+        }
+
+        if(otaPackageOld.getUrl() != null && !otaPackageOld.getUrl().equals(otaPackage.getUrl())) {
+            throw new DataValidationException("Updating otaPackage URL is prohibited!");
         }
     }
 

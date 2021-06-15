@@ -17,7 +17,6 @@ package org.thingsboard.server.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.validator.internal.constraintvalidators.hv.URLValidator;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -35,10 +34,10 @@ import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
-import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
+import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -115,7 +114,7 @@ public class OtaPackageController extends BaseController {
         boolean created = otaPackageInfo.getId() == null;
         try {
             if(isUrl && (StringUtils.isEmpty(otaPackageInfo.getUrl()) || otaPackageInfo.getUrl().trim().length() == 0)) {
-                throw new DataValidationException("URL can not be empty or blank!");
+                throw new DataValidationException("Ota package URL should be specified!");
             }
             otaPackageInfo.setTenantId(getTenantId());
             checkEntity(otaPackageInfo.getId(), otaPackageInfo, Resource.OTA_PACKAGE);

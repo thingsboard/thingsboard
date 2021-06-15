@@ -21,6 +21,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.thingsboard.common.util.JacksonUtil;
@@ -53,6 +54,7 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
     private static final String CHECKSUM_ALGORITHM = "SHA256";
     private static final String CHECKSUM = "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a";
     private static final ByteBuffer DATA = ByteBuffer.wrap(new byte[]{1});
+    private static final String URL = "https://test.com/testurl";
 
     private Tenant savedTenant;
     private User tenantAdmin;
@@ -98,7 +100,7 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
         firmwareInfo.setTitle(TITLE);
         firmwareInfo.setVersion(VERSION);
 
-        OtaPackageInfo savedFirmwareInfo = save(firmwareInfo);
+        OtaPackageInfo savedFirmwareInfo = save(firmwareInfo, false);
 
         Assert.assertNotNull(savedFirmwareInfo);
         Assert.assertNotNull(savedFirmwareInfo.getId());
@@ -109,7 +111,7 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
 
         savedFirmwareInfo.setAdditionalInfo(JacksonUtil.newObjectNode());
 
-        save(savedFirmwareInfo);
+        save(savedFirmwareInfo, false);
 
         OtaPackageInfo foundFirmwareInfo = doGet("/api/otaPackage/info/" + savedFirmwareInfo.getId().getId().toString(), OtaPackageInfo.class);
         Assert.assertEquals(foundFirmwareInfo.getTitle(), savedFirmwareInfo.getTitle());
@@ -123,7 +125,7 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
         firmwareInfo.setTitle(TITLE);
         firmwareInfo.setVersion(VERSION);
 
-        OtaPackageInfo savedFirmwareInfo = save(firmwareInfo);
+        OtaPackageInfo savedFirmwareInfo = save(firmwareInfo, false);
 
         Assert.assertNotNull(savedFirmwareInfo);
         Assert.assertNotNull(savedFirmwareInfo.getId());
@@ -134,7 +136,7 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
 
         savedFirmwareInfo.setAdditionalInfo(JacksonUtil.newObjectNode());
 
-        save(savedFirmwareInfo);
+        save(savedFirmwareInfo, false);
 
         OtaPackageInfo foundFirmwareInfo = doGet("/api/otaPackage/info/" + savedFirmwareInfo.getId().getId().toString(), OtaPackageInfo.class);
         Assert.assertEquals(foundFirmwareInfo.getTitle(), savedFirmwareInfo.getTitle());
@@ -157,10 +159,10 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
         firmwareInfo.setTitle(TITLE);
         firmwareInfo.setVersion(VERSION);
 
-        OtaPackageInfo savedFirmwareInfo = save(firmwareInfo);
+        OtaPackageInfo savedFirmwareInfo = save(firmwareInfo, false);
 
         loginDifferentTenant();
-        doPost("/api/otaPackage", savedFirmwareInfo, OtaPackageInfo.class, status().isForbidden());
+        doPost("/api/otaPackage?isUrl=false", savedFirmwareInfo, OtaPackageInfo.class, status().isForbidden());
         deleteDifferentTenant();
     }
 
@@ -172,7 +174,7 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
         firmwareInfo.setTitle(TITLE);
         firmwareInfo.setVersion(VERSION);
 
-        OtaPackageInfo savedFirmwareInfo = save(firmwareInfo);
+        OtaPackageInfo savedFirmwareInfo = save(firmwareInfo, false);
 
         OtaPackageInfo foundFirmware = doGet("/api/otaPackage/info/" + savedFirmwareInfo.getId().getId().toString(), OtaPackageInfo.class);
         Assert.assertNotNull(foundFirmware);
@@ -187,7 +189,7 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
         firmwareInfo.setTitle(TITLE);
         firmwareInfo.setVersion(VERSION);
 
-        OtaPackageInfo savedFirmwareInfo = save(firmwareInfo);
+        OtaPackageInfo savedFirmwareInfo = save(firmwareInfo, false);
 
         MockMultipartFile testData = new MockMultipartFile("file", FILE_NAME, CONTENT_TYPE, DATA.array());
 
@@ -207,7 +209,7 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
         firmwareInfo.setTitle(TITLE);
         firmwareInfo.setVersion(VERSION);
 
-        OtaPackageInfo savedFirmwareInfo = save(firmwareInfo);
+        OtaPackageInfo savedFirmwareInfo = save(firmwareInfo, false);
 
         doDelete("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString())
                 .andExpect(status().isOk());
@@ -226,7 +228,7 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
             firmwareInfo.setTitle(TITLE);
             firmwareInfo.setVersion(VERSION + i);
 
-            OtaPackageInfo savedFirmwareInfo = save(firmwareInfo);
+            OtaPackageInfo savedFirmwareInfo = save(firmwareInfo, false);
 
             if (i > 100) {
                 MockMultipartFile testData = new MockMultipartFile("file", FILE_NAME, CONTENT_TYPE, DATA.array());
@@ -269,7 +271,7 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
             firmwareInfo.setTitle(TITLE);
             firmwareInfo.setVersion(VERSION + i);
 
-            OtaPackageInfo savedFirmwareInfo = save(firmwareInfo);
+            OtaPackageInfo savedFirmwareInfo = save(firmwareInfo, false);
 
             if (i > 100) {
                 MockMultipartFile testData = new MockMultipartFile("file", FILE_NAME, CONTENT_TYPE, DATA.array());
@@ -316,9 +318,66 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
         Assert.assertEquals(allOtaPackages, allLoadedOtaPackages);
     }
 
+    @Test
+    public void testSaveOtaPackageUsingUrl() throws Exception {
+        OtaPackageInfo firmwareInfo = new OtaPackageInfo();
+        firmwareInfo.setDeviceProfileId(deviceProfileId);
+        firmwareInfo.setType(FIRMWARE);
+        firmwareInfo.setTitle(TITLE);
+        firmwareInfo.setVersion(VERSION);
+        firmwareInfo.setUrl(URL);
 
-    private OtaPackageInfo save(OtaPackageInfo firmwareInfo) throws Exception {
-        return doPost("/api/otaPackage", firmwareInfo, OtaPackageInfo.class);
+        OtaPackageInfo savedFirmwareInfo = save(firmwareInfo, true);
+        Assert.assertEquals(savedFirmwareInfo.getUrl(), URL);
+    }
+
+    @Test
+    public void testSaveOtaPackageBlankUrlValidation() {
+        OtaPackageInfo firmwareInfo = new OtaPackageInfo();
+        firmwareInfo.setDeviceProfileId(deviceProfileId);
+        firmwareInfo.setType(FIRMWARE);
+        firmwareInfo.setTitle(TITLE);
+        firmwareInfo.setVersion(VERSION);
+        firmwareInfo.setUrl("   ");
+        try {
+            save(firmwareInfo, true, status().isBadRequest());
+        } catch (Exception e) {
+            Assert.assertEquals(e.getMessage(), "Ota package URL should be specified!");
+        }
+
+        try {
+            firmwareInfo.setUrl("");
+            save(firmwareInfo, true, status().isBadRequest());
+        } catch (Exception e) {
+            Assert.assertEquals(e.getMessage(), "Ota package URL should be specified!");
+        }
+    }
+
+    @Test
+    public void testSaveOtaPackageCantUpdateURL() throws Exception {
+        OtaPackageInfo firmwareInfo = new OtaPackageInfo();
+        firmwareInfo.setDeviceProfileId(deviceProfileId);
+        firmwareInfo.setType(FIRMWARE);
+        firmwareInfo.setTitle(TITLE);
+        firmwareInfo.setVersion(VERSION);
+        firmwareInfo.setUrl(URL);
+
+        OtaPackageInfo savedFirmwareInfo = save(firmwareInfo, true);
+
+        try {
+            savedFirmwareInfo.setUrl("newURL");
+            save(savedFirmwareInfo, true, status().isBadRequest());
+        } catch (Exception e) {
+            Assert.assertEquals(e.getMessage(), "Updating otaPackage URL is prohibited!");
+        }
+    }
+
+    private OtaPackageInfo save(OtaPackageInfo firmwareInfo, boolean isUrl) throws Exception {
+        return save(firmwareInfo, isUrl, status().isOk());
+    }
+
+    private OtaPackageInfo save(OtaPackageInfo firmwareInfo, boolean isUrl, ResultMatcher resultMatcher) throws Exception {
+        return doPost("/api/otaPackage?isUrl=" + isUrl, firmwareInfo, OtaPackageInfo.class, resultMatcher);
     }
 
     protected OtaPackageInfo savaData(String urlTemplate, MockMultipartFile content, String... params) throws Exception {
