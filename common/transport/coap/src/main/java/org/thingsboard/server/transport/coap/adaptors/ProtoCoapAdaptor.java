@@ -16,7 +16,6 @@
 package org.thingsboard.server.transport.coap.adaptors;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;

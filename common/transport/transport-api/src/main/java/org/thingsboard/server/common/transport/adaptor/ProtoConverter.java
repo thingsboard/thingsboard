@@ -175,7 +175,7 @@ public class ProtoConverter {
     }
 
     public static byte[] convertToRpcRequest(TransportProtos.ToDeviceRpcRequestMsg toDeviceRpcRequestMsg, DynamicMessage.Builder rpcRequestDynamicMessageBuilder) throws AdaptorException {
-        rpcRequestDynamicMessageBuilder.clear();
+        rpcRequestDynamicMessageBuilder = rpcRequestDynamicMessageBuilder.getDefaultInstanceForType().newBuilderForType();
         JsonObject rpcRequestJson = new JsonObject();
         rpcRequestJson.addProperty("method", toDeviceRpcRequestMsg.getMethodName());
         rpcRequestJson.addProperty("requestId", toDeviceRpcRequestMsg.getRequestId());

@@ -779,7 +779,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 "\n" +
                 "message RpcRequestMsg {\n" +
                 "  optional int32 requestId = 2;\n" +
-                "  repeated string params = 3;\n" +
+                "  optional string params = 3;\n" +
                 "  \n" +
                 "}", "[Transport Configuration] invalid rpc request proto schema provided! RpcRequestMsg message should always contains 3 fields: method, requestId and params!");
     }
@@ -793,7 +793,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 "message RpcRequestMsg {\n" +
                 "  optional string methodName = 1;\n" +
                 "  optional int32 requestId = 2;\n" +
-                "  repeated string params = 3;\n" +
+                "  optional string params = 3;\n" +
                 "  \n" +
                 "}", "[Transport Configuration] invalid rpc request proto schema provided! Failed to get field descriptor for field: method!");
     }
@@ -807,7 +807,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 "message RpcRequestMsg {\n" +
                 "  optional string method = 1;\n" +
                 "  optional int32 requestIdentifier = 2;\n" +
-                "  repeated string params = 3;\n" +
+                "  optional string params = 3;\n" +
                 "  \n" +
                 "}", "[Transport Configuration] invalid rpc request proto schema provided! Failed to get field descriptor for field: requestId!");
     }
@@ -821,7 +821,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
                 "message RpcRequestMsg {\n" +
                 "  optional string method = 1;\n" +
                 "  optional int32 requestId = 2;\n" +
-                "  repeated string parameters = 3;\n" +
+                "  optional string parameters = 3;\n" +
                 "  \n" +
                 "}", "[Transport Configuration] invalid rpc request proto schema provided! Failed to get field descriptor for field: params!");
     }
