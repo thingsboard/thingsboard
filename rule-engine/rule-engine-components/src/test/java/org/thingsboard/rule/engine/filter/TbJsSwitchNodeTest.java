@@ -73,7 +73,7 @@ public class TbJsSwitchNodeTest {
 
         TbMsg msg = TbMsg.newMsg( "USER", null, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
         mockJsExecutor();
-        when(scriptEngine.executeSwitch(msg)).thenReturn(Sets.newHashSet("one", "three"));
+        when(scriptEngine.executeSwitchAsync(msg)).thenReturn(Futures.immediateFuture(Sets.newHashSet("one", "three")));
 
         node.onMsg(ctx, msg);
         verify(ctx).getJsExecutor();

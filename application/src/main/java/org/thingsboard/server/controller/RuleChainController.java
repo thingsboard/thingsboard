@@ -400,7 +400,7 @@ public class RuleChainController extends BaseController {
                         output = Boolean.toString(result);
                         break;
                     case "switch":
-                        Set<String> states = engine.executeSwitch(inMsg);
+                        Set<String> states = engine.executeSwitchAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
                         output = objectMapper.writeValueAsString(states);
                         break;
                     case "json":

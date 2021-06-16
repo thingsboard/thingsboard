@@ -35,7 +35,7 @@ public interface ScriptEngine {
 
     ListenableFuture<Boolean> executeFilterAsync(TbMsg msg);
 
-    Set<String> executeSwitch(TbMsg msg) throws ScriptException;
+    ListenableFuture<Set<String>> executeSwitchAsync(TbMsg msg);
 
     JsonNode executeJson(TbMsg msg) throws ScriptException;
 

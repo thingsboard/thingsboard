@@ -195,9 +195,7 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
         }, MoreExecutors.directExecutor());
     }
 
-    @Override
-    public Set<String> executeSwitch(TbMsg msg) throws ScriptException {
-        JsonNode result = executeScript(msg);
+    Set<String> executeSwitchPostProcessFunction(JsonNode result) throws ScriptException {
         if (result.isTextual()) {
             return Collections.singleton(result.asText());
         } else if (result.isArray()) {
@@ -215,6 +213,14 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
             log.warn("Wrong result type: {}", result.getNodeType());
             throw new ScriptException("Wrong result type: " + result.getNodeType());
         }
+    }
+
+    @Override
+    public ListenableFuture<Set<String>> executeSwitchAsync(TbMsg msg) {
+        log.trace("execute switch async, msg {}", msg);
+        return Futures.transformAsync(executeScriptAsync(msg),
+                result -> Futures.immediateFuture(executeSwitchPostProcessFunction(result)),
+                MoreExecutors.directExecutor()); //usually runs in a callbackExecutor
     }
 
     private JsonNode executeScript(TbMsg msg) throws ScriptException {

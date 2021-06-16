@@ -15,7 +15,11 @@
  */
 package org.thingsboard.rule.engine.filter;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.ScriptEngine;
@@ -58,17 +62,20 @@ public class TbJsSwitchNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        ListeningExecutor jsExecutor = ctx.getJsExecutor();
         ctx.logJsEvalRequest();
-        withCallback(jsExecutor.executeAsync(() -> jsEngine.executeSwitch(msg)),
-                result -> {
-                    ctx.logJsEvalResponse();
-                    processSwitch(ctx, msg, result);
-                },
-                t -> {
-                    ctx.logJsEvalFailure();
-                    ctx.tellFailure(msg, t);
-                }, ctx.getDbCallbackExecutor());
+        Futures.addCallback(jsEngine.executeSwitchAsync(msg), new FutureCallback<Set<String>>() {
+            @Override
+            public void onSuccess(@Nullable Set<String> result) {
+                ctx.logJsEvalResponse();
+                processSwitch(ctx, msg, result);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                ctx.logJsEvalFailure();
+                ctx.tellFailure(msg, t);
+            }
+        }, MoreExecutors.directExecutor()); //usually runs in a callbackExecutor
     }
 
     private void processSwitch(TbContext ctx, TbMsg msg, Set<String> nextRelations) {
