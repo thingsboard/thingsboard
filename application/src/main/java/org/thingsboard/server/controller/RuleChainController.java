@@ -390,13 +390,13 @@ public class RuleChainController extends BaseController {
                 TbMsg inMsg = TbMsg.newMsg(msgType, null, new TbMsgMetaData(metadata), TbMsgDataType.JSON, data);
                 switch (scriptType) {
                     case "update":
-                        output = msgToOutput(engine.executeUpdate(inMsg));
+                        output = msgToOutput(engine.executeUpdateAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS));
                         break;
                     case "generate":
                         output = msgToOutput(engine.executeGenerateAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS));
                         break;
                     case "filter":
-                        boolean result = engine.executeFilter(inMsg);
+                        boolean result = engine.executeFilterAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
                         output = Boolean.toString(result);
                         break;
                     case "switch":
@@ -404,11 +404,11 @@ public class RuleChainController extends BaseController {
                         output = objectMapper.writeValueAsString(states);
                         break;
                     case "json":
-                        JsonNode json = engine.executeJson(inMsg);
+                        JsonNode json = engine.executeJsonAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
                         output = objectMapper.writeValueAsString(json);
                         break;
                     case "string":
-                        output = engine.executeToString(inMsg);
+                        output = engine.executeToStringAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
                         break;
                     default:
                         throw new IllegalArgumentException("Unsupported script type: " + scriptType);

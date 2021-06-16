@@ -107,95 +107,76 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
     }
 
     @Override
-    public List<TbMsg> executeUpdate(TbMsg msg) throws ScriptException {
-        JsonNode result = executeScript(msg);
-        if (result.isObject()) {
-            return Collections.singletonList(unbindMsg(result, msg));
-        } else if (result.isArray()){
-            List<TbMsg> res = new ArrayList<>(result.size());
-            result.forEach(jsonObject -> res.add(unbindMsg(jsonObject, msg)));
-            return res;
-        } else {
-            log.warn("Wrong result type: {}", result.getNodeType());
-            throw new ScriptException("Wrong result type: " + result.getNodeType());
-        }
-    }
-
-    @Override
     public ListenableFuture<List<TbMsg>> executeUpdateAsync(TbMsg msg) {
         ListenableFuture<JsonNode> result = executeScriptAsync(msg);
-        return Futures.transformAsync(result, json -> {
-            if (json.isObject()) {
-                return Futures.immediateFuture(Collections.singletonList(unbindMsg(json, msg)));
-            } else if (json.isArray()){
-                List<TbMsg> res = new ArrayList<>(json.size());
-                json.forEach(jsonObject -> res.add(unbindMsg(jsonObject, msg)));
-                return Futures.immediateFuture(res);
-            }
-            else{
-                log.warn("Wrong result type: {}", json.getNodeType());
-                return Futures.immediateFailedFuture(new ScriptException("Wrong result type: " + json.getNodeType()));
-            }
-        }, MoreExecutors.directExecutor());
+        return Futures.transformAsync(result,
+                json -> executeUpdateTransform(msg, json),
+                MoreExecutors.directExecutor());
+    }
+
+    ListenableFuture<List<TbMsg>> executeUpdateTransform(TbMsg msg, JsonNode json) {
+        if (json.isObject()) {
+            return Futures.immediateFuture(Collections.singletonList(unbindMsg(json, msg)));
+        } else if (json.isArray()) {
+            List<TbMsg> res = new ArrayList<>(json.size());
+            json.forEach(jsonObject -> res.add(unbindMsg(jsonObject, msg)));
+            return Futures.immediateFuture(res);
+        }
+        log.warn("Wrong result type: {}", json.getNodeType());
+        return Futures.immediateFailedFuture(new ScriptException("Wrong result type: " + json.getNodeType()));
     }
 
     @Override
     public ListenableFuture<TbMsg> executeGenerateAsync(TbMsg prevMsg) {
-        log.trace("execute generate async, prevMsg {}", prevMsg);
-        return Futures.transformAsync(executeScriptAsync(prevMsg), result -> {
-            if (!result.isObject()) {
-                log.warn("Wrong result type: {}", result.getNodeType());
-                Futures.immediateFailedFuture(new ScriptException("Wrong result type: " + result.getNodeType()));
-            }
-            return Futures.immediateFuture(unbindMsg(result, prevMsg));
-        }, MoreExecutors.directExecutor());
+        return Futures.transformAsync(executeScriptAsync(prevMsg),
+                result -> executeGenerateTransform(prevMsg, result),
+                MoreExecutors.directExecutor());
+    }
 
+    ListenableFuture<TbMsg> executeGenerateTransform(TbMsg prevMsg, JsonNode result) {
+        if (!result.isObject()) {
+            log.warn("Wrong result type: {}", result.getNodeType());
+            Futures.immediateFailedFuture(new ScriptException("Wrong result type: " + result.getNodeType()));
+        }
+        return Futures.immediateFuture(unbindMsg(result, prevMsg));
     }
 
     @Override
-    public JsonNode executeJson(TbMsg msg) throws ScriptException {
-        return executeScript(msg);
-    }
-
-    @Override
-    public ListenableFuture<JsonNode> executeJsonAsync(TbMsg msg) throws ScriptException {
+    public ListenableFuture<JsonNode> executeJsonAsync(TbMsg msg) {
         return executeScriptAsync(msg);
     }
 
     @Override
-    public String executeToString(TbMsg msg) throws ScriptException {
-        JsonNode result = executeScript(msg);
-        if (!result.isTextual()) {
-            log.warn("Wrong result type: {}", result.getNodeType());
-            throw new ScriptException("Wrong result type: " + result.getNodeType());
-        }
-        return result.asText();
+    public ListenableFuture<String> executeToStringAsync(TbMsg msg) {
+        return Futures.transformAsync(executeScriptAsync(msg),
+                this::executeToStringTransform,
+                MoreExecutors.directExecutor());
     }
 
-    @Override
-    public boolean executeFilter(TbMsg msg) throws ScriptException {
-        JsonNode result = executeScript(msg);
-        if (!result.isBoolean()) {
-            log.warn("Wrong result type: {}", result.getNodeType());
-            throw new ScriptException("Wrong result type: " + result.getNodeType());
+    ListenableFuture<String> executeToStringTransform(JsonNode result) {
+        if (result.isTextual()) {
+            return Futures.immediateFuture(result.asText());
         }
-        return result.asBoolean();
+        log.warn("Wrong result type: {}", result.getNodeType());
+        return Futures.immediateFailedFuture(new ScriptException("Wrong result type: " + result.getNodeType()));
     }
 
     @Override
     public ListenableFuture<Boolean> executeFilterAsync(TbMsg msg) {
-        ListenableFuture<JsonNode> result = executeScriptAsync(msg);
-        return Futures.transformAsync(result, json -> {
-            if (!json.isBoolean()) {
-                log.warn("Wrong result type: {}", json.getNodeType());
-                return Futures.immediateFailedFuture(new ScriptException("Wrong result type: " + json.getNodeType()));
-            } else {
-                return Futures.immediateFuture(json.asBoolean());
-            }
-        }, MoreExecutors.directExecutor());
+        return Futures.transformAsync(executeScriptAsync(msg),
+                this::executeFilterTransform,
+                MoreExecutors.directExecutor());
     }
 
-    ListenableFuture<Set<String>> executeSwitchPostProcessAsyncFunction(JsonNode result) {
+    ListenableFuture<Boolean> executeFilterTransform(JsonNode json) {
+        if (json.isBoolean()) {
+            return Futures.immediateFuture(json.asBoolean());
+        }
+        log.warn("Wrong result type: {}", json.getNodeType());
+        return Futures.immediateFailedFuture(new ScriptException("Wrong result type: " + json.getNodeType()));
+    }
+
+    ListenableFuture<Set<String>> executeSwitchTransform(JsonNode result) {
         if (result.isTextual()) {
             return Futures.immediateFuture(Collections.singleton(result.asText()));
         }
@@ -217,34 +198,19 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
 
     @Override
     public ListenableFuture<Set<String>> executeSwitchAsync(TbMsg msg) {
-        log.trace("execute switch async, msg {}", msg);
         return Futures.transformAsync(executeScriptAsync(msg),
-                this::executeSwitchPostProcessAsyncFunction,
+                this::executeSwitchTransform,
                 MoreExecutors.directExecutor()); //usually runs in a callbackExecutor
     }
 
-    private JsonNode executeScript(TbMsg msg) throws ScriptException {
-        try {
-            String[] inArgs = prepareArgs(msg);
-            String eval = sandboxService.invokeFunction(tenantId, msg.getCustomerId(), this.scriptId, inArgs[0], inArgs[1], inArgs[2]).get().toString();
-            return mapper.readTree(eval);
-        } catch (ExecutionException e) {
-            if (e.getCause() instanceof ScriptException) {
-                throw (ScriptException) e.getCause();
-            } else if (e.getCause() instanceof RuntimeException) {
-                throw new ScriptException(e.getCause().getMessage());
-            } else {
-                throw new ScriptException(e);
-            }
-        } catch (Exception e) {
-            throw new ScriptException(e);
-        }
-    }
-
-    private ListenableFuture<JsonNode> executeScriptAsync(TbMsg msg) {
+    ListenableFuture<JsonNode> executeScriptAsync(TbMsg msg) {
         log.trace("execute script async, msg {}", msg);
         String[] inArgs = prepareArgs(msg);
-        return Futures.transformAsync(sandboxService.invokeFunction(tenantId, msg.getCustomerId(), this.scriptId, inArgs[0], inArgs[1], inArgs[2]),
+        return executeScriptAsync(msg.getCustomerId(), inArgs[0], inArgs[1], inArgs[2]);
+    }
+
+    ListenableFuture<JsonNode> executeScriptAsync(CustomerId customerId, Object... args) {
+        return Futures.transformAsync(sandboxService.invokeFunction(tenantId, customerId, this.scriptId, args),
                 o -> {
                     try {
                         return Futures.immediateFuture(mapper.readTree(o.toString()));

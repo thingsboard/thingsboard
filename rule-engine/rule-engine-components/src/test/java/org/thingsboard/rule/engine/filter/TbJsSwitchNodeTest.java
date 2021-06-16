@@ -64,7 +64,7 @@ public class TbJsSwitchNodeTest {
     private RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
     @Test
-    public void multipleRoutesAreAllowed() throws TbNodeException, ScriptException {
+    public void multipleRoutesAreAllowed() throws TbNodeException {
         initWithScript();
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "10");
@@ -72,11 +72,9 @@ public class TbJsSwitchNodeTest {
         String rawJson = "{\"name\": \"Vit\", \"passed\": 5}";
 
         TbMsg msg = TbMsg.newMsg( "USER", null, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
-        mockJsExecutor();
         when(scriptEngine.executeSwitchAsync(msg)).thenReturn(Futures.immediateFuture(Sets.newHashSet("one", "three")));
 
         node.onMsg(ctx, msg);
-        verify(ctx).getJsExecutor();
         verify(ctx).tellNext(msg, Sets.newHashSet("one", "three"));
     }
 
@@ -90,19 +88,6 @@ public class TbJsSwitchNodeTest {
 
         node = new TbJsSwitchNode();
         node.init(ctx, nodeConfiguration);
-    }
-
-    @SuppressWarnings("unchecked")
-    private void mockJsExecutor() {
-        when(ctx.getJsExecutor()).thenReturn(executor);
-        doAnswer((Answer<ListenableFuture<Set<String>>>) invocationOnMock -> {
-            try {
-                Callable task = (Callable) (invocationOnMock.getArguments())[0];
-                return Futures.immediateFuture((Set<String>) task.call());
-            } catch (Throwable th) {
-                return Futures.immediateFailedFuture(th);
-            }
-        }).when(executor).executeAsync(ArgumentMatchers.any(Callable.class));
     }
 
     private void verifyError(TbMsg msg, String message, Class expectedClass) {
