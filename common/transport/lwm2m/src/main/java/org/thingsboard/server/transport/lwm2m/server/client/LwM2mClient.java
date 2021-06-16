@@ -40,6 +40,7 @@ import org.thingsboard.server.transport.lwm2m.server.DefaultLwM2MTransportMsgHan
 import org.thingsboard.server.transport.lwm2m.server.LwM2mQueuedRequest;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +74,9 @@ public class LwM2mClient implements Cloneable {
     @Getter
     @Setter
     private LwM2MClientState state;
+    @Getter
+    @Setter
+    private ContentFormat contentFormat;
     @Getter
     private final Map<String, ResourceValue> resources;
     @Getter
@@ -407,6 +411,11 @@ public class LwM2mClient implements Cloneable {
             this.swUpdate = new LwM2mFwSwUpdate(this, OtaPackageType.SOFTWARE, lwM2mClientProfile.getSwUpdateStrategy(), lwM2mClientProfile.getSwUpdateRecourse());
         }
         return this.fwUpdate;
+    }
+
+    public void setContentFormat () {
+        String ctStr = Arrays.stream(registration.getObjectLinks()).filter(c -> c.getUrl().toString().equals("/")).findAny().orElse(null).getAttributes().get("ct");
+        this.contentFormat = ctStr != null ? ContentFormat.fromCode(Integer.parseInt(ctStr)) : this.getDefaultContentFormat();
     }
 
 }

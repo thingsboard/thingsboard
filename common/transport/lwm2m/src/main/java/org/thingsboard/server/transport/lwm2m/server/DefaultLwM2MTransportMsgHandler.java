@@ -190,10 +190,11 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     public void onRegistered(Registration registration, Collection<Observation> previousObservations) {
         registrationExecutor.submit(() -> {
             LwM2mClient lwM2MClient = this.clientContext.getClientByEndpoint(registration.getEndpoint());
+            lwM2MClient.setRegistration(registration);
             try {
-                log.warn("000.1) [{}] [{{}] Client: create after Registration", registration.getEndpoint(), registration.getId());
+                log.warn("000.1) [{}] [{{}] lwm2m version [{}] identity [{}] Client: create after Registration", registration.getEndpoint(), registration.getId(), registration.getLwM2mVersion(), registration.getIdentity().getPeerAddress());
                 if (lwM2MClient != null) {
-//                    this.clientContext.register(lwM2MClient, registration);
+                    lwM2MClient.setContentFormat();
                     Optional<SessionInfoProto> oldSessionInfo = this.clientContext.register(lwM2MClient, registration);
                     if (oldSessionInfo.isPresent()) {
                         log.info("[{}] Closing old session: {}", registration.getEndpoint(), new UUID(oldSessionInfo.get().getSessionIdMSB(), oldSessionInfo.get().getSessionIdLSB()));
@@ -201,8 +202,8 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                     }
                     SessionInfoProto sessionInfo = lwM2MClient.getSession();
                     transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(this, sessionInfo));
-                    String msgReg = String.format(": Client registered with registrationId: %s sessionId: %s",
-                            registration.getId(), new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
+                    String msgReg = String.format(": Client registered with registrationId: %s sessionId: %s identity: %s",
+                            registration.getId(), new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()), registration.getIdentity().getPeerAddress());
                     log.warn("000.2) [{}], Registering rpc subscription after Registration client [{}]", lwM2MClient.getEndpoint(), msgReg);
                     this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_INFO + msgReg);
                     TransportProtos.TransportToDeviceActorMsg msg = TransportProtos.TransportToDeviceActorMsg.newBuilder()
@@ -225,7 +226,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                     this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_ERROR + ": Client registration failed due to invalid state: " + stateException.getState());
                 }
             } catch (Throwable t) {
-                log.error("[{}] endpoint [{}] error Unable registration.", registration.getEndpoint(), t);
+                log.error("endpoint [{}]  [{}] error Unable registration.", registration.getEndpoint(), t.getMessage());
                 this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_ERROR + ": Client registration failed due to: " + t.getMessage());
             }
         });
@@ -249,10 +250,15 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                         request.send();
                     }
                 }
-                String msgUpdateReg = String.format(": Client updateRegistered with registrationId: %s sessionId: %s",
-                        registration.getId(), new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
+                String msgUpdateReg = String.format(": Client updateRegistered with registrationId: %s sessionId: %s identity: %s",
+                        registration.getId(), new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()), registration.getIdentity().getPeerAddress());
                 this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_INFO + msgUpdateReg);
-                log.warn("000.3) [{}] [{}]", lwM2MClient.getEndpoint(), msgUpdateReg);
+                log.warn("000.3_1) [{}] [{}]", lwM2MClient.getEndpoint(), msgUpdateReg);
+                lwM2MClient.initReadValue(this, null);
+                String msgUpdateRegOtaUpdate = String.format(": Client after updateRegistered otaUpdate with registrationId: %s sessionId: %s identity %s",
+                        registration.getId(), new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()), registration.getIdentity().getPeerAddress());
+                log.warn("000.3_2) [{}] [{}]", lwM2MClient.getEndpoint(), msgUpdateRegOtaUpdate);
+                this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_INFO +msgUpdateRegOtaUpdate);
             } catch (LwM2MClientStateException stateException) {
                 if (LwM2MClientState.REGISTERED.equals(stateException.getState())) {
                     log.info("[{}] update registration failed because client has different registration id: [{}] {}.", registration.getEndpoint(), stateException.getState(), stateException.getMessage());
@@ -274,13 +280,13 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
         unRegistrationExecutor.submit(() -> {
             LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
             try {
-                SessionInfoProto sessionInfo = lwM2MClient.getSession();
-                String msgUnReg = String.format(": Client unRegistration with registrationId: %s sessionId: %s",
-                        registration.getId(), new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
-                log.warn("000.5_1) [{}] [{}]", lwM2MClient.getEndpoint(), msgUnReg);
-                this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_INFO + msgUnReg);
                 clientContext.unregister(lwM2MClient, registration);
+                SessionInfoProto sessionInfo = lwM2MClient.getSession();
                 if (sessionInfo != null) {
+                    String msgUnReg = String.format(": Client unRegistration with registrationId: %s sessionId: %s",
+                            registration.getId(), new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
+                    log.warn("000.5_1) [{}] [{}]", lwM2MClient.getEndpoint(), msgUnReg);
+                    this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_INFO + msgUnReg);
                     this.closeSession(sessionInfo);
                     sessionStore.remove(registration.getEndpoint());
                     log.warn("000.5_2) [{}] Client close session: [{}] unReg [{}] name  [{}] sessionInfo ", lwM2MClient.getEndpoint(), registration.getId(), registration.getEndpoint(), new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
@@ -290,7 +296,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
             } catch (LwM2MClientStateException stateException) {
                 log.info("[{}] delete registration: [{}] {}.", registration.getEndpoint(), stateException.getState(), stateException.getMessage());
             } catch (Throwable t) {
-                log.error("[{}] endpoint [{}] error Unable un registration.", registration.getEndpoint(), t);
+                log.error("Endpoint: [{}] error: [{}] error Unable un registration.", registration.getEndpoint(), t.getMessage());
                 this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_ERROR + String.format(": Client Unable un Registration, %s", t.getMessage()));
             }
         });
@@ -617,8 +623,6 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      * #1 clientOnlyObserveAfterConnect == true
      * - Only Observe Request to the client marked as observe from the profile configuration.
      * #2. clientOnlyObserveAfterConnect == false
-     * После регистрации отправляю запрос на read  всех ресурсов, которые после регистрации есть у клиента,
-     * а затем запрос на observe (edited)
      * - Read Request to the client after registration to read all resource values for all objects
      * - then Observe Request to the client marked as observe from the profile configuration.
      *

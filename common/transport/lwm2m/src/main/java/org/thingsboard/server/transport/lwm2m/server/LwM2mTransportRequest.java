@@ -118,7 +118,7 @@ public class LwM2mTransportRequest {
     }
 
     public void sendAllRequest(LwM2mClient lwM2MClient, String targetIdVer, LwM2mTypeOper typeOper, Object params, long timeoutInMs, LwM2mClientRpcRequest lwm2mClientRpcRequest) {
-        sendAllRequest(lwM2MClient, targetIdVer, typeOper, lwM2MClient.getDefaultContentFormat(), params, timeoutInMs, lwm2mClientRpcRequest);
+        sendAllRequest(lwM2MClient, targetIdVer, typeOper, lwM2MClient.getContentFormat(), params, timeoutInMs, lwm2mClientRpcRequest);
     }
 
 
@@ -127,10 +127,8 @@ public class LwM2mTransportRequest {
         Registration registration = lwM2MClient.getRegistration();
         try {
             String target = convertPathFromIdVerToObjectId(targetIdVer);
-
             if (contentFormat == null) {
-//                contentFormat = ContentFormat.DEFAULT;
-                contentFormat = lwM2MClient.getDefaultContentFormat();
+                contentFormat = lwM2MClient.getContentFormat();
             }
             String msgSendRequest =  String.format(": sendAllRequest contentFormat: %s  regId: %s sessionId: %s,  typeOper: %s, target: %s",
                     contentFormat.getName(), registration.getId(), new UUID(lwM2MClient.getSession().getSessionIdMSB(), lwM2MClient.getSession().getSessionIdLSB()), typeOper.name(), targetIdVer);
