@@ -414,7 +414,7 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
   }
 
   private loadChildren(parentNode: HierarchyNavTreeNode, datasource: HierarchyNodeDatasource, childrenNodesLoadCb: NodesCallback) {
-    const nodeCtx = parentNode.data.nodeCtx;
+    const nodeCtx: HierarchyNodeContext = parentNode.data.nodeCtx;
     nodeCtx.childrenNodesLoaded = false;
     const entityFilter = this.prepareNodeRelationsQueryFilter(nodeCtx);
     const childrenDatasource = {
@@ -442,9 +442,8 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
             const datasourcesPageData = subscription.datasourcePages[0];
             const dataPageData = subscription.dataPages[0];
             const childNodes: HierarchyNavTreeNode[] = [];
-            const parentNodeCtx: HierarchyNodeContext = parentNode.data.nodeCtx;
             datasourcesPageData.data.forEach((childDatasource, index) => {
-              childNodes.push(this.datasourceToNode(childDatasource as HierarchyNodeDatasource, dataPageData.data[index], parentNodeCtx));
+              childNodes.push(this.datasourceToNode(childDatasource as HierarchyNodeDatasource, dataPageData.data[index], nodeCtx));
             });
             nodeCtx.childrenNodesLoaded = true;
             childrenNodesLoadCb(this.prepareNodes(childNodes));
