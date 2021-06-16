@@ -178,7 +178,7 @@ public class OAuth2RegistrationEntity extends BaseSqlEntity<OAuth2Registration> 
                         .activateUser(activateUser)
                         .type(type)
                         .basic(
-                                (type == MapperType.BASIC || type == MapperType.GITHUB) ?
+                                (type == MapperType.BASIC || type == MapperType.GITHUB || type == MapperType.APPLE) ?
                                         OAuth2BasicMapperConfig.builder()
                                                 .emailAttributeKey(emailAttributeKey)
                                                 .firstNameAttributeKey(firstNameAttributeKey)

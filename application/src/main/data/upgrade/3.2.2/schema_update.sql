@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS oauth2_registration (
     created_time bigint NOT NULL,
     additional_info varchar,
     client_id varchar(255),
-    client_secret varchar(255),
+    client_secret varchar(2048),
     authorization_uri varchar(255),
     token_uri varchar(255),
     scope varchar(255),
