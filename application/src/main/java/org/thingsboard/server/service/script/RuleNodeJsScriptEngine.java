@@ -18,7 +18,6 @@ package org.thingsboard.server.service.script;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -32,6 +31,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import javax.script.ScriptException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -145,7 +145,7 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
         return Futures.transformAsync(executeScriptAsync(prevMsg), result -> {
             if (!result.isObject()) {
                 log.warn("Wrong result type: {}", result.getNodeType());
-                throw new ScriptException("Wrong result type: " + result.getNodeType());
+                Futures.immediateFailedFuture(new ScriptException("Wrong result type: " + result.getNodeType()));
             }
             return Futures.immediateFuture(unbindMsg(result, prevMsg));
         }, MoreExecutors.directExecutor());
@@ -195,31 +195,31 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
         }, MoreExecutors.directExecutor());
     }
 
-    Set<String> executeSwitchPostProcessFunction(JsonNode result) throws ScriptException {
+    ListenableFuture<Set<String>> executeSwitchPostProcessAsyncFunction(JsonNode result) {
         if (result.isTextual()) {
-            return Collections.singleton(result.asText());
-        } else if (result.isArray()) {
-            Set<String> nextStates = Sets.newHashSet();
+            return Futures.immediateFuture(Collections.singleton(result.asText()));
+        }
+        if (result.isArray()) {
+            Set<String> nextStates = new HashSet<>();
             for (JsonNode val : result) {
                 if (!val.isTextual()) {
                     log.warn("Wrong result type: {}", val.getNodeType());
-                    throw new ScriptException("Wrong result type: " + val.getNodeType());
+                    return Futures.immediateFailedFuture(new ScriptException("Wrong result type: " + val.getNodeType()));
                 } else {
                     nextStates.add(val.asText());
                 }
             }
-            return nextStates;
-        } else {
-            log.warn("Wrong result type: {}", result.getNodeType());
-            throw new ScriptException("Wrong result type: " + result.getNodeType());
+            return Futures.immediateFuture(nextStates);
         }
+        log.warn("Wrong result type: {}", result.getNodeType());
+        return Futures.immediateFailedFuture(new ScriptException("Wrong result type: " + result.getNodeType()));
     }
 
     @Override
     public ListenableFuture<Set<String>> executeSwitchAsync(TbMsg msg) {
         log.trace("execute switch async, msg {}", msg);
         return Futures.transformAsync(executeScriptAsync(msg),
-                result -> Futures.immediateFuture(executeSwitchPostProcessFunction(result)),
+                this::executeSwitchPostProcessAsyncFunction,
                 MoreExecutors.directExecutor()); //usually runs in a callbackExecutor
     }
 
