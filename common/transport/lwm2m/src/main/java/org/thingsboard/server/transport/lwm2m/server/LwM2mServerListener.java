@@ -27,8 +27,7 @@ import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandle
 
 import java.util.Collection;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertObjectIdToVersionedId;
 
 @Slf4j
 public class LwM2mServerListener {
@@ -93,7 +92,7 @@ public class LwM2mServerListener {
         @Override
         public void onResponse(Observation observation, Registration registration, ObserveResponse response) {
             if (registration != null) {
-                service.onUpdateValueAfterReadResponse(registration, convertPathFromObjectIdToIdVer(observation.getPath().toString(), registration), response);
+                service.onUpdateValueAfterReadResponse(registration, convertObjectIdToVersionedId(observation.getPath().toString(), registration), response);
             }
         }
 

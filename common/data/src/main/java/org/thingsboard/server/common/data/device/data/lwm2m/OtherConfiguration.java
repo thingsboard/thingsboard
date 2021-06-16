@@ -23,5 +23,7 @@ public class OtherConfiguration {
     private Integer fwUpdateStrategy;
     private Integer swUpdateStrategy;
     private Integer clientOnlyObserveAfterConnect;
+    private String fwUpdateRecourse;
+    private String swUpdateRecourse;
 
 }

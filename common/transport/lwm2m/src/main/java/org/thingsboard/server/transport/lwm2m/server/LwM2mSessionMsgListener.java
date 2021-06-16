@@ -33,7 +33,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseM
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
 import org.thingsboard.server.transport.lwm2m.server.attributes.LwM2MAttributesService;
 import org.thingsboard.server.transport.lwm2m.server.rpc.LwM2MRpcRequestHandler;
-import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 import java.util.Optional;
@@ -54,7 +53,7 @@ public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? s
 
     @Override
     public void onAttributeUpdate(AttributeUpdateNotificationMsg attributeUpdateNotification) {
-        this.attributesService.onAttributeUpdate(attributeUpdateNotification, this.sessionInfo);
+        this.attributesService.onAttributesUpdate(attributeUpdateNotification, this.sessionInfo);
      }
 
     @Override

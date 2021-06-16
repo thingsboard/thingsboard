@@ -38,11 +38,9 @@ import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsRes
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mQueuedRequest;
-import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
@@ -50,14 +48,13 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.TRANSPORT_DEFAULT_LWM2M_VERSION;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertObjectIdToVersionedId;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.equalsResourceTypeGetSimpleName;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.getVerFromPathIdVerOrId;
@@ -202,7 +199,7 @@ public class LwM2mClient implements Cloneable {
     }
 
     public Object getResourceValue(String pathRezIdVer, String pathRezId) {
-        String pathRez = pathRezIdVer == null ? convertPathFromObjectIdToIdVer(pathRezId, this.registration) : pathRezIdVer;
+        String pathRez = pathRezIdVer == null ? convertObjectIdToVersionedId(pathRezId, this.registration) : pathRezIdVer;
         if (this.resources.get(pathRez) != null) {
             return this.resources.get(pathRez).getLwM2mResource().getValue();
         }
@@ -210,7 +207,7 @@ public class LwM2mClient implements Cloneable {
     }
 
     public Object getResourceNameByRezId(String pathRezIdVer, String pathRezId) {
-        String pathRez = pathRezIdVer == null ? convertPathFromObjectIdToIdVer(pathRezId, this.registration) : pathRezIdVer;
+        String pathRez = pathRezIdVer == null ? convertObjectIdToVersionedId(pathRezId, this.registration) : pathRezIdVer;
         if (this.resources.get(pathRez) != null) {
             return this.resources.get(pathRez).getResourceModel().name;
         }

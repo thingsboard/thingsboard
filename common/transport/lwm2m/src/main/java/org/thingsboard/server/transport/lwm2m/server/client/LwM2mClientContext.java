@@ -53,7 +53,10 @@ public interface LwM2mClientContext {
 
     LwM2mClient getClientByDeviceId(UUID deviceId);
 
-    void registerClient(Registration registration, ValidateDeviceCredentialsResponse credentials);
+    String getObjectIdByKeyNameFromProfile(TransportProtos.SessionInfoProto sessionInfo, String keyName);
 
+    String getObjectIdByKeyNameFromProfile(LwM2mClient lwM2mClient, String keyName);
+
+    void registerClient(Registration registration, ValidateDeviceCredentialsResponse credentials);
 
 }

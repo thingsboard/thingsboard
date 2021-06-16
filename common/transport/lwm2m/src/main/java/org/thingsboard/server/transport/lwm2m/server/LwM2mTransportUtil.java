@@ -30,6 +30,7 @@ import org.eclipse.leshan.core.node.LwM2mNode;
 import org.eclipse.leshan.core.node.LwM2mObject;
 import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
+import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.node.codec.CodecException;
 import org.eclipse.leshan.core.request.SimpleDownlinkRequest;
@@ -48,6 +49,7 @@ import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
 import org.thingsboard.server.common.data.ota.OtaPackageUtil;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.client.ResourceValue;
 import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
 
 import java.util.ArrayList;
@@ -120,24 +122,8 @@ public class LwM2mTransportUtil {
     public static final String CLIENT_NOT_AUTHORIZED = "Client not authorized";
     public static final String LWM2M_VERSION_DEFAULT = "1.0";
 
-    // RPC
-    public static final String TYPE_OPER_KEY = "typeOper";
-    public static final String TARGET_ID_VER_KEY = "targetIdVer";
-    public static final String KEY_NAME_KEY = "key";
-    public static final String VALUE_KEY = "value";
-    public static final String PARAMS_KEY = "params";
-    public static final String SEPARATOR_KEY = ":";
-    public static final String FINISH_VALUE_KEY = ",";
-    public static final String START_JSON_KEY = "{";
-    public static final String FINISH_JSON_KEY = "}";
-    public static final String INFO_KEY = "info";
-    public static final String RESULT_KEY = "result";
-    public static final String ERROR_KEY = "error";
-    public static final String METHOD_KEY = "methodName";
-
-
     // Firmware
-    public static final String FIRMWARE_UPDATE_COAP_RECOURSE = "firmwareUpdateCoapRecourse";
+    public static final String FIRMWARE_UPDATE_COAP_RECOURSE = "tbfw";
     public static final String FW_UPDATE = "Firmware update";
     public static final Integer FW_5_ID = 5;
     public static final Integer FW_19_ID = 19;
@@ -155,6 +141,7 @@ public class LwM2mTransportUtil {
     public static final String FW_NAME_ID = "/5/0/6";
     // PkgVersion R
     public static final String FW_5_VER_ID = "/5/0/7";
+
     /**
      * Quectel@Hi15RM1-HLB_V1.0@BC68JAR01A10,V150R100C20B300SP7,V150R100C20B300SP7@8
      * BC68JAR01A10
@@ -212,107 +199,13 @@ public class LwM2mTransportUtil {
     }
 
     /**
-     * /** State R
-     * 0: Idle (before downloading or after successful updating)
-     * 1: Downloading (The data sequence is on the way)
-     * 2: Downloaded
-     * 3: Updating
-     */
-    public enum StateFw {
-        IDLE(0, "Idle"),
-        DOWNLOADING(1, "Downloading"),
-        DOWNLOADED(2, "Downloaded"),
-        UPDATING(3, "Updating");
-
-        public int code;
-        public String type;
-
-        StateFw(int code, String type) {
-            this.code = code;
-            this.type = type;
-        }
-
-        public static StateFw fromStateFwByType(String type) {
-            for (StateFw to : StateFw.values()) {
-                if (to.type.equals(type)) {
-                    return to;
-                }
-            }
-            throw new IllegalArgumentException(String.format("Unsupported FW State type  : %s", type));
-        }
-
-        public static StateFw fromStateFwByCode(int code) {
-            for (StateFw to : StateFw.values()) {
-                if (to.code == code) {
-                    return to;
-                }
-            }
-            throw new IllegalArgumentException(String.format("Unsupported FW State code : %s", code));
-        }
-    }
-
-    /**
-     * FW Update Result
-     * 0: Initial value. Once the updating process is initiated (Download /Update), this Resource MUST be reset to Initial value.
-     * 1: Firmware updated successfully.
-     * 2: Not enough flash memory for the new firmware package.
-     * 3: Out of RAM during downloading process.
-     * 4: Connection lost during downloading process.
-     * 5: Integrity check failure for new downloaded package.
-     * 6: Unsupported package type.
-     * 7: Invalid URI.
-     * 8: Firmware update failed.
-     * 9: Unsupported protocol.
-     */
-    public enum UpdateResultFw {
-        INITIAL(0, "Initial value", false),
-        UPDATE_SUCCESSFULLY(1, "Firmware updated successfully", false),
-        NOT_ENOUGH(2, "Not enough flash memory for the new firmware package", false),
-        OUT_OFF_MEMORY(3, "Out of RAM during downloading process", false),
-        CONNECTION_LOST(4, "Connection lost during downloading process", true),
-        INTEGRITY_CHECK_FAILURE(5, "Integrity check failure for new downloaded package", true),
-        UNSUPPORTED_TYPE(6, "Unsupported package type", false),
-        INVALID_URI(7, "Invalid URI", false),
-        UPDATE_FAILED(8, "Firmware update failed", false),
-        UNSUPPORTED_PROTOCOL(9, "Unsupported protocol", false);
-
-        public int code;
-        public String type;
-        public boolean isAgain;
-
-        UpdateResultFw(int code, String type, boolean isAgain) {
-            this.code = code;
-            this.type = type;
-            this.isAgain = isAgain;
-        }
-
-        public static UpdateResultFw fromUpdateResultFwByType(String type) {
-            for (UpdateResultFw to : UpdateResultFw.values()) {
-                if (to.type.equals(type)) {
-                    return to;
-                }
-            }
-            throw new IllegalArgumentException(String.format("Unsupported FW Update Result type  : %s", type));
-        }
-
-        public static UpdateResultFw fromUpdateResultFwByCode(int code) {
-            for (UpdateResultFw to : UpdateResultFw.values()) {
-                if (to.code == code) {
-                    return to;
-                }
-            }
-            throw new IllegalArgumentException(String.format("Unsupported FW Update Result code  : %s", code));
-        }
-    }
-
-    /**
      * FirmwareUpdateStatus {
      * DOWNLOADING, DOWNLOADED, VERIFIED, UPDATING, UPDATED, FAILED
      */
-    public static OtaPackageUpdateStatus equalsFwSateFwResultToFirmwareUpdateStatus(StateFw stateFw, UpdateResultFw updateResultFw) {
+    public static OtaPackageUpdateStatus equalsFwSateFwResultToFirmwareUpdateStatus(UpdateStateFw updateStateFw, UpdateResultFw updateResultFw) {
         switch (updateResultFw) {
             case INITIAL:
-                return equalsFwSateToFirmwareUpdateStatus(stateFw);
+                return toOtaPackageUpdateStatus(updateStateFw);
             case UPDATE_SUCCESSFULLY:
                 return UPDATED;
             case NOT_ENOUGH:
@@ -325,11 +218,11 @@ public class LwM2mTransportUtil {
             case UNSUPPORTED_PROTOCOL:
                 return FAILED;
             default:
-                throw new CodecException("Invalid value stateFw %s   %s for FirmwareUpdateStatus.", stateFw.name(), updateResultFw.name());
+                throw new CodecException("Invalid value stateFw %s   %s for FirmwareUpdateStatus.", updateStateFw.name(), updateResultFw.name());
         }
     }
 
-    public static OtaPackageUpdateStatus equalsFwResultToFirmwareUpdateStatus(UpdateResultFw updateResultFw) {
+    public static OtaPackageUpdateStatus toOtaPackageUpdateStatus(UpdateResultFw updateResultFw) {
         switch (updateResultFw) {
             case INITIAL:
                 return VERIFIED;
@@ -349,8 +242,8 @@ public class LwM2mTransportUtil {
         }
     }
 
-    public static OtaPackageUpdateStatus equalsFwSateToFirmwareUpdateStatus(StateFw stateFw) {
-        switch (stateFw) {
+    public static OtaPackageUpdateStatus toOtaPackageUpdateStatus(UpdateStateFw updateStateFw) {
+        switch (updateStateFw) {
             case IDLE:
                 return VERIFIED;
             case DOWNLOADING:
@@ -360,7 +253,7 @@ public class LwM2mTransportUtil {
             case UPDATING:
                 return UPDATING;
             default:
-                throw new CodecException("Invalid value stateFw %d for FirmwareUpdateStatus.", stateFw);
+                throw new CodecException("Invalid value stateFw %d for FirmwareUpdateStatus.", updateStateFw);
         }
     }
 
@@ -508,70 +401,6 @@ public class LwM2mTransportUtil {
         }
     }
 
-    public enum LwM2MFirmwareUpdateStrategy {
-        OBJ_5_BINARY(1, "ObjectId 5, Binary"),
-        OBJ_5_TEMP_URL(2, "ObjectId 5, URI"),
-        OBJ_19_BINARY(3, "ObjectId 19, Binary");
-
-        public int code;
-        public String type;
-
-        LwM2MFirmwareUpdateStrategy(int code, String type) {
-            this.code = code;
-            this.type = type;
-        }
-
-        public static LwM2MFirmwareUpdateStrategy fromStrategyFwByType(String type) {
-            for (LwM2MFirmwareUpdateStrategy to : LwM2MFirmwareUpdateStrategy.values()) {
-                if (to.type.equals(type)) {
-                    return to;
-                }
-            }
-            throw new IllegalArgumentException(String.format("Unsupported FW State type  : %s", type));
-        }
-
-        public static LwM2MFirmwareUpdateStrategy fromStrategyFwByCode(int code) {
-            for (LwM2MFirmwareUpdateStrategy to : LwM2MFirmwareUpdateStrategy.values()) {
-                if (to.code == code) {
-                    return to;
-                }
-            }
-            throw new IllegalArgumentException(String.format("Unsupported FW Strategy code : %s", code));
-        }
-    }
-
-    public enum LwM2MSoftwareUpdateStrategy {
-        BINARY(1, "ObjectId 9, Binary"),
-        TEMP_URL(2, "ObjectId 9, URI");
-
-        public int code;
-        public String type;
-
-        LwM2MSoftwareUpdateStrategy(int code, String type) {
-            this.code = code;
-            this.type = type;
-        }
-
-        public static LwM2MSoftwareUpdateStrategy fromStrategySwByType(String type) {
-            for (LwM2MSoftwareUpdateStrategy to : LwM2MSoftwareUpdateStrategy.values()) {
-                if (to.type.equals(type)) {
-                    return to;
-                }
-            }
-            throw new IllegalArgumentException(String.format("Unsupported SW Strategy type  : %s", type));
-        }
-
-        public static LwM2MSoftwareUpdateStrategy fromStrategySwByCode(int code) {
-            for (LwM2MSoftwareUpdateStrategy to : LwM2MSoftwareUpdateStrategy.values()) {
-                if (to.code == code) {
-                    return to;
-                }
-            }
-            throw new IllegalArgumentException(String.format("Unsupported SW Strategy code : %s", code));
-        }
-
-    }
-
     /**
      * FirmwareUpdateStatus {
      * DOWNLOADING, DOWNLOADED, VERIFIED, UPDATING, UPDATED, FAILED
@@ -635,7 +464,7 @@ public class LwM2mTransportUtil {
         if (path != null) {
             if (FW_STATE_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
-                lwM2mOtaConvert.setValue(StateFw.fromStateFwByCode(((Long) value).intValue()).type);
+                lwM2mOtaConvert.setValue(UpdateStateFw.fromStateFwByCode(((Long) value).intValue()).type);
                 return lwM2mOtaConvert;
             } else if (FW_RESULT_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
@@ -796,12 +625,12 @@ public class LwM2mTransportUtil {
                 return pathIdVer;
             } else {
                 LwM2mPath pathObjId = new LwM2mPath(pathIdVer);
-                return convertPathFromObjectIdToIdVer(pathIdVer, registration);
+                return convertObjectIdToVersionedId(pathIdVer, registration);
             }
         }
     }
 
-    public static String convertPathFromObjectIdToIdVer(String path, Registration registration) {
+    public static String convertObjectIdToVersionedId(String path, Registration registration) {
         String ver = registration.getSupportedObject().get(new LwM2mPath(path).getObjectId());
         ver = ver != null ? ver : LWM2M_VERSION_DEFAULT;
         try {
@@ -946,5 +775,21 @@ public class LwM2mTransportUtil {
                 || OtaPackageUtil.getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.CHECKSUM).equals(pathName)
                 || OtaPackageUtil.getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.CHECKSUM_ALGORITHM).equals(pathName)
                 || OtaPackageUtil.getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.SIZE).equals(pathName);
+    }
+
+    /**
+     * @param lwM2MClient -
+     * @param path        -
+     * @return - return value of Resource by idPath
+     */
+    public static LwM2mResource getResourceValueFromLwM2MClient(LwM2mClient lwM2MClient, String path) {
+        LwM2mResource lwm2mResourceValue = null;
+        ResourceValue resourceValue = lwM2MClient.getResources().get(path);
+        if (resourceValue != null) {
+            if (new LwM2mPath(fromVersionedIdToObjectId(path)).isResource()) {
+                lwm2mResourceValue = lwM2MClient.getResources().get(path).getLwM2mResource();
+            }
+        }
+        return lwm2mResourceValue;
     }
 }

@@ -238,7 +238,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         IdOrKeyRequest requestParams = JacksonUtil.fromString(rpcRequst.getParams(), IdOrKeyRequest.class);
         String targetId;
         if (StringUtils.isNotEmpty(requestParams.getKey())) {
-            targetId = uplinkHandler.getObjectIdByKeyNameFromProfile(client, requestParams.getKey());
+            targetId = clientContext.getObjectIdByKeyNameFromProfile(client, requestParams.getKey());
         } else if (StringUtils.isNotEmpty(requestParams.getId())) {
             targetId = requestParams.getId();
         } else {
