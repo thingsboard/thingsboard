@@ -1288,11 +1288,12 @@
             "sw-update-strategy": "Software update strategy",
             "sw-update-strategy-package": "Push binary file using Object 9 and Resource 2 (Package)",
             "sw-update-strategy-package-uri": "Auto-generate unique CoAP URL to download the package and push software update using Object 9 and Resource 3 (Package URI)",
-            "fw-update-recourse": "Firmware update CoAP recourse",
-            "fw-update-recourse-required": "Firmware update CoAP recourse is required.",
-            "sw-update-recourse": "Software update CoAP recourse",
-            "sw-update-recourse-required": "Software update CoAP recourse is required.",
-            "config-json-tab": "Json Config Profile Device"
+            "fw-update-resource": "Firmware update CoAP resource",
+            "fw-update-resource-required": "Firmware update CoAP resource is required.",
+            "sw-update-resource": "Software update CoAP resource",
+            "sw-update-resource-required": "Software update CoAP resource is required.",
+            "config-json-tab": "Json Config Profile Device",
+            "power-mode": "Power Mode"
         }
     },
     "dialog": {

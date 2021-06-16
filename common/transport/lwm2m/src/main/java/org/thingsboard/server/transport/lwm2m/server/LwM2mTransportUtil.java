@@ -137,7 +137,7 @@ public class LwM2mTransportUtil {
 
 
     // Firmware
-    public static final String FIRMWARE_UPDATE_COAP_RECOURSE = "firmwareUpdateCoapRecourse";
+    public static final String FIRMWARE_UPDATE_COAP_RESOURCE = "firmwareUpdateCoapResource";
     public static final String FW_UPDATE = "Firmware update";
     public static final Integer FW_5_ID = 5;
     public static final Integer FW_19_ID = 19;
@@ -169,7 +169,7 @@ public class LwM2mTransportUtil {
     public static final String FW_UPDATE_ID = "/5/0/2";
 
     // Software
-    public static final String SOFTWARE_UPDATE_COAP_RECOURSE = "softwareUpdateCoapRecourse";
+    public static final String SOFTWARE_UPDATE_COAP_RESOURCE = "softwareUpdateCoapResource";
     public static final String SW_UPDATE = "Software update";
     public static final Integer SW_ID = 9;
     // Package W

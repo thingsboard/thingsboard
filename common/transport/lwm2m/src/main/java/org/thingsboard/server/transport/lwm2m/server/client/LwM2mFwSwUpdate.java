@@ -49,7 +49,7 @@ import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.INIT
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATING;
 import static org.thingsboard.server.common.data.ota.OtaPackageUtil.getAttributeKey;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FIRMWARE_UPDATE_COAP_RECOURSE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FIRMWARE_UPDATE_COAP_RESOURCE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_3_VER_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_5_VER_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_NAME_ID;
@@ -199,7 +199,7 @@ public class LwM2mFwSwUpdate {
                 request.sendWriteReplaceRequest(lwM2MClient, downlink, new TbLwM2MWriteResponseCallback(handler, lwM2MClient, targetIdVer));
             } else if (LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL.code == this.updateStrategy) {
                 String apiFont = "coap://176.36.143.9:5685";
-                String uri =  apiFont  + "/" + FIRMWARE_UPDATE_COAP_RECOURSE + "/" + this.currentId.toString();
+                String uri =  apiFont  + "/" + FIRMWARE_UPDATE_COAP_RESOURCE + "/" + this.currentId.toString();
                 log.warn("89) coapUri: [{}]", uri);
                 //TODO: user this.rpcRequest???
                 TbLwM2MWriteReplaceRequest downlink = TbLwM2MWriteReplaceRequest.builder().versionedId(targetIdVer).value(uri).timeout(handler.config.getTimeout()).build();

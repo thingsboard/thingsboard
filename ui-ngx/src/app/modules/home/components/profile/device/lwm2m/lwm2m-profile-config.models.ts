@@ -128,6 +128,20 @@ export const securityConfigModeNames = new Map<securityConfigMode, string>(
   ]
 );
 
+export enum powerMode {
+  PSM = 'PSM',
+  DRX = 'DRX',
+  E_DRX = 'E_DRX'
+}
+
+export const powerModeNames = new Map<powerMode, string>(
+  [
+    [powerMode.PSM, 'Power Saving Mode (PSM)'],
+    [powerMode.DRX, 'Discontinuous Reception (DRX)'],
+    [powerMode.E_DRX, 'Extended Discontinuous Reception (eDRX)']
+  ]
+);
+
 export interface ModelValue {
   objectIds: string[];
   objectsList: ObjectLwM2M[];
@@ -168,11 +182,12 @@ export interface Lwm2mProfileConfigModels {
 }
 
 export interface ClientLwM2mSettings {
-  clientStrategy: string;
+  clientOnlyObserveAfterConnect: string;
   fwUpdateStrategy: number;
   swUpdateStrategy: number;
-  fwUpdateRecourse: string;
-  swUpdateRecourse: string;
+  fwUpdateResource: string;
+  swUpdateResource: string;
+  powerMode: powerMode;
 }
 
 export interface ObservableAttributes {
@@ -240,11 +255,12 @@ export function getDefaultProfileConfig(hostname?: any): Lwm2mProfileConfigModel
 
 function getDefaultProfileClientLwM2mSettingsConfig(): ClientLwM2mSettings {
   return {
-    clientStrategy: '1',
+    clientOnlyObserveAfterConnect: '1',
     fwUpdateStrategy: 1,
     swUpdateStrategy: 1,
-    fwUpdateRecourse: DEFAULT_FW_UPDATE_RESOURCE,
-    swUpdateRecourse: DEFAULT_SW_UPDATE_RESOURCE
+    fwUpdateResource: DEFAULT_FW_UPDATE_RESOURCE,
+    swUpdateResource: DEFAULT_SW_UPDATE_RESOURCE,
+    powerMode: powerMode.DRX
   };
 }
 

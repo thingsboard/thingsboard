@@ -13,19 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.data.lwm2m;
+package org.thingsboard.server.common.data.device.data;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.device.data.PowerMode;
-
-@Data
-public class OtherConfiguration {
-
-    private Integer fwUpdateStrategy;
-    private String fwUpdateResource;
-    private Integer swUpdateStrategy;
-    private String swUpdateResource;
-    private Integer clientOnlyObserveAfterConnect;
-    private PowerMode powerMode;
-
+public enum  PowerMode {
+    PSM, DRX, E_DRX
 }

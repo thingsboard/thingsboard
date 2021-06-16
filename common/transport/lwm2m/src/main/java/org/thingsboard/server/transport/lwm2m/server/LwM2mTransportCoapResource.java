@@ -32,8 +32,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FIRMWARE_UPDATE_COAP_RECOURSE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SOFTWARE_UPDATE_COAP_RECOURSE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FIRMWARE_UPDATE_COAP_RESOURCE;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SOFTWARE_UPDATE_COAP_RESOURCE;
 
 @Slf4j
 public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
@@ -72,8 +72,8 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
     protected void processHandleGet(CoapExchange exchange) {
         log.warn("90) processHandleGet [{}]", exchange);
         if (exchange.getRequestOptions().getUriPath().size() >= 2 &&
-                (FIRMWARE_UPDATE_COAP_RECOURSE.equals(exchange.getRequestOptions().getUriPath().get(exchange.getRequestOptions().getUriPath().size()-2)) ||
-                        SOFTWARE_UPDATE_COAP_RECOURSE.equals(exchange.getRequestOptions().getUriPath().get(exchange.getRequestOptions().getUriPath().size()-2)))) {
+                (FIRMWARE_UPDATE_COAP_RESOURCE.equals(exchange.getRequestOptions().getUriPath().get(exchange.getRequestOptions().getUriPath().size()-2)) ||
+                        SOFTWARE_UPDATE_COAP_RESOURCE.equals(exchange.getRequestOptions().getUriPath().get(exchange.getRequestOptions().getUriPath().size()-2)))) {
             this.sendOtaData(exchange);
         }
     }

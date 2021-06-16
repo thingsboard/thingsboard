@@ -126,10 +126,10 @@
               </mat-select>
             </mat-form-field>
             <mat-form-field class="mat-block" fxFlex *ngIf="isFwUpdateStrategy">
-              <mat-label>{{ 'device-profile.lwm2m.fw-update-recourse' | translate }}</mat-label>
-              <input matInput formControlName="fwUpdateRecourse" required>
-              <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('fwUpdateRecourse').hasError('required')">
-                {{ 'device-profile.lwm2m.fw-update-recourse-required' | translate }}
+              <mat-label>{{ 'device-profile.lwm2m.fw-update-resource' | translate }}</mat-label>
+              <input matInput formControlName="fwUpdateResource" required>
+              <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('fwUpdateResource').hasError('required')">
+                {{ 'device-profile.lwm2m.fw-update-resource-required' | translate }}
               </mat-error>
             </mat-form-field>
           </fieldset>
@@ -143,11 +143,23 @@
               </mat-select>
             </mat-form-field>
             <mat-form-field class="mat-block" fxFlex *ngIf="isSwUpdateStrategy">
-              <mat-label>{{ 'device-profile.lwm2m.sw-update-recourse' | translate }}</mat-label>
-              <input matInput formControlName="swUpdateRecourse" required>
-              <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('swUpdateRecourse').hasError('required')">
-                {{ 'device-profile.lwm2m.sw-update-recourse-required' | translate }}
+              <mat-label>{{ 'device-profile.lwm2m.sw-update-resource' | translate }}</mat-label>
+              <input matInput formControlName="swUpdateResource" required>
+              <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('swUpdateResource').hasError('required')">
+                {{ 'device-profile.lwm2m.sw-update-resource-required' | translate }}
               </mat-error>
+            </mat-form-field>
+          </fieldset>
+          <fieldset class="fields-group">
+            <legend class="group-title" translate>device-profile.lwm2m.power-mode</legend>
+            <mat-form-field class="mat-block" fxFlex>
+              <mat-label> </mat-label>
+              <mat-select formControlName="powerMode">
+                <mat-option *ngFor="let powerMode of powerModeLwM2MTypes"
+                            [value]="powerMode">
+                  {{ powerModeLwM2MNamesMap.get(powerModeLwM2MType[powerMode]) }}
+                </mat-option>
+              </mat-select>
             </mat-form-field>
           </fieldset>
 <!--          <mat-accordion multi="true">-->
@@ -160,9 +172,9 @@
 <!--                  <div fxLayout="column">-->
 <!--                    <mat-form-field class="mat-block">-->
 <!--                      <mat-label>{{ 'device-profile.lwm2m.client-strategy-label' | translate }}</mat-label>-->
-<!--                      <mat-select formControlName="clientStrategy"-->
+<!--                      <mat-select formControlName="clientOnlyObserveAfterConnect"-->
 <!--                                  matTooltip="{{ 'device-profile.lwm2m.client-strategy-tip' | translate:-->
-<!--                                  { count: +lwm2mDeviceProfileFormGroup.get('clientStrategy').value } }}"-->
+<!--                                  { count: +lwm2mDeviceProfileFormGroup.get('clientOnlyObserveAfterConnect').value } }}"-->
 <!--                                  matTooltipPosition="above">-->
 <!--                        <mat-option value=1>{{ 'device-profile.lwm2m.client-strategy-connect' | translate:-->
 <!--                          {count: 1} }}</mat-option>-->
