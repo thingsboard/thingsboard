@@ -29,7 +29,7 @@ kafka:
   acks: "TB_KAFKA_ACKS" # -1 = all; 0 = no acknowledgments; 1 = only waits for the leader to acknowledge
   batch_size: "TB_KAFKA_BATCH_SIZE" # for producer
   linger_ms: "TB_KAFKA_LINGER_MS" # for producer
-  partitions_consumed_concurrently: "TB_KAFKA_PARTITIONS_CONSUMED_CONCURRENTLY" # increase this value if you are planning to handle more than one partition (scale up, scale down) - this will decrease the latency
+  partitions_consumed_concurrently: "TB_KAFKA_PARTITIONS_CONSUMED_CONCURRENTLY" # (EXPERIMENTAL) increase this value if you are planning to handle more than one partition (scale up, scale down) - this will decrease the latency
   requestTimeout: "TB_QUEUE_KAFKA_REQUEST_TIMEOUT_MS"
   compression: "TB_QUEUE_KAFKA_COMPRESSION" # gzip or uncompressed
   topic_properties: "TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES"

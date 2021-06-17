@@ -29,7 +29,7 @@ kafka:
   acks: "1" # -1 = all; 0 = no acknowledgments; 1 = only waits for the leader to acknowledge
   batch_size: "128" # for producer
   linger_ms: "1" # for producer
-  partitions_consumed_concurrently: "1" # increase this value if you are planning to handle more than one partition (scale up, scale down) - this will decrease the latency
+  partitions_consumed_concurrently: "1" # (EXPERIMENTAL) increase this value if you are planning to handle more than one partition (scale up, scale down) - this will decrease the latency
   requestTimeout: "30000" # The default value in kafkajs is: 30000
   compression: "gzip" # gzip or uncompressed
   topic_properties: "retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600;partitions:100;min.insync.replicas:1"
