@@ -341,6 +341,7 @@ public class BaseOtaPackageService implements OtaPackageService {
         if (otaPackageOld.getDataSize() != null && !otaPackageOld.getDataSize().equals(otaPackage.getDataSize())) {
             throw new DataValidationException("Updating otaPackage data size is prohibited!");
         }
+
         if(otaPackageOld.getUrl() != null && !otaPackageOld.getUrl().equals(otaPackage.getUrl())) {
             throw new DataValidationException("Updating otaPackage URL is prohibited!");
         }
@@ -374,6 +375,15 @@ public class BaseOtaPackageService implements OtaPackageService {
         if (StringUtils.isEmpty(otaPackageInfo.getVersion())) {
             throw new DataValidationException("OtaPackage version should be specified!");
         }
+
+        if(otaPackageInfo.getTitle().length() > 255) {
+            throw new DataValidationException("The length of title should be equal or shorter than 255");
+        }
+
+        if(otaPackageInfo.getVersion().length() > 255) {
+            throw new DataValidationException("The length of version should be equal or shorter than 255");
+        }
+
     }
 
     private PaginatedRemover<TenantId, OtaPackageInfo> tenantOtaPackageRemover =

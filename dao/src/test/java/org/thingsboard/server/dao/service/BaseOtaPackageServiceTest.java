@@ -661,6 +661,38 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         otaPackageService.saveOtaPackageInfo(savedFirmwareInfo, true);
     }
 
+    @Test
+    public void testSaveOtaPackageCantViolateSizeOfTitleAndVersion() {
+        OtaPackageInfo firmwareInfo = new OtaPackageInfo();
+        firmwareInfo.setDeviceProfileId(deviceProfileId);
+        firmwareInfo.setType(FIRMWARE);
+        firmwareInfo.setTitle("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
+                "aaaaaaaaaa");
+        firmwareInfo.setVersion(VERSION);
+        firmwareInfo.setUrl(URL);
+        firmwareInfo.setTenantId(tenantId);
+
+        thrown.expect(DataValidationException.class);
+        thrown.expectMessage("The length of title should be equal or shorter than 255");
+
+        otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
+
+        firmwareInfo.setTitle(TITLE);
+        firmwareInfo.setVersion("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
+                "aaaaaaaaaa");
+        thrown.expectMessage("The length of version should be equal or shorter than 255");
+
+        otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
+    }
+
     private OtaPackage createFirmware(TenantId tenantId, String version) {
         OtaPackage firmware = new OtaPackage();
         firmware.setTenantId(tenantId);
