@@ -28,8 +28,6 @@ public interface ScriptEngine {
 
     ListenableFuture<TbMsg> executeGenerateAsync(TbMsg prevMsg);
 
-    boolean executeFilter(TbMsg msg) throws ScriptException;
-
     ListenableFuture<Boolean> executeFilterAsync(TbMsg msg);
 
     ListenableFuture<Set<String>> executeSwitchAsync(TbMsg msg);
