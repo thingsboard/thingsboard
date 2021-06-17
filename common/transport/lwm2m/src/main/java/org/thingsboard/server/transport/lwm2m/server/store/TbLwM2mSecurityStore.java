@@ -85,6 +85,7 @@ public class TbLwM2mSecurityStore implements TbEditableSecurityStore {
 
     @Override
     public void remove(String endpoint) {
-        securityStore.remove(endpoint);
+        //TODO: Make sure we delay removal of security store from endpoint due to reg/unreg race condition.
+//        securityStore.remove(endpoint);
     }
 }

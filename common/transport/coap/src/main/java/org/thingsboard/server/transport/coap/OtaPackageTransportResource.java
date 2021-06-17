@@ -134,8 +134,8 @@ public class OtaPackageTransportResource extends AbstractCoapTransportResource {
             response.setPayload(data);
             if (exchange.getRequestOptions().getBlock2() != null) {
                 int chunkSize = exchange.getRequestOptions().getBlock2().getSzx();
-                boolean moreFlag = data.length > chunkSize;
-                response.getOptions().setBlock2(chunkSize, moreFlag, 0);
+                boolean lastFlag = data.length > chunkSize;
+                response.getOptions().setBlock2(chunkSize, lastFlag, 0);
             }
             exchange.respond(response);
         }

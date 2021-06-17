@@ -76,32 +76,11 @@ public class LwM2mTransportServerHelper {
         return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) * 1000L + (atomicTs.getAndIncrement() % 1000);
     }
 
-    /**
-     * send to Thingsboard Attribute || Telemetry
-     *
-     * @param msg - JsonObject: [{name: value}]
-     * @return - dummyWriteReplace {\"targetIdVer\":\"/19_1.0/0/0\",\"value\":0082}
-     */
-    private <T> TransportServiceCallback<Void> getPubAckCallbackSendAttrTelemetry(final T msg) {
-        return new TransportServiceCallback<>() {
-            @Override
-            public void onSuccess(Void dummy) {
-                log.trace("Success to publish msg: {}, dummy: {}", msg, dummy);
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                log.trace("[{}] Failed to publish msg: {}", msg, e);
-            }
-        };
-    }
-
     public void sendParametersOnThingsboardAttribute(List<TransportProtos.KeyValueProto> result, SessionInfoProto sessionInfo) {
         PostAttributeMsg.Builder request = PostAttributeMsg.newBuilder();
         request.addAllKv(result);
         PostAttributeMsg postAttributeMsg = request.build();
-        TransportServiceCallback call = this.getPubAckCallbackSendAttrTelemetry(postAttributeMsg);
-        context.getTransportService().process(sessionInfo, postAttributeMsg, this.getPubAckCallbackSendAttrTelemetry(call));
+        context.getTransportService().process(sessionInfo, postAttributeMsg, TransportServiceCallback.EMPTY);
     }
 
     public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> result, SessionInfoProto sessionInfo) {
@@ -111,8 +90,7 @@ public class LwM2mTransportServerHelper {
         builder.addAllKv(result);
         request.addTsKvList(builder.build());
         PostTelemetryMsg postTelemetryMsg = request.build();
-        TransportServiceCallback call = this.getPubAckCallbackSendAttrTelemetry(postTelemetryMsg);
-        context.getTransportService().process(sessionInfo, postTelemetryMsg, this.getPubAckCallbackSendAttrTelemetry(call));
+        context.getTransportService().process(sessionInfo, postTelemetryMsg, TransportServiceCallback.EMPTY);
     }
 
     /**
