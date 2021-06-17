@@ -47,7 +47,6 @@ import {
   isDefined,
   isNumber,
   isObject,
-  isString,
   isUndefined
 } from '@core/utils';
 import cssjs from '@core/css/css';
@@ -236,6 +235,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.updateTitle(true);
     this.entityDatasource.dataUpdated();
     this.clearCache();
+    this.ctx.detectChanges();
   }
 
   public pageLinkSortDirection(): SortDirection {
