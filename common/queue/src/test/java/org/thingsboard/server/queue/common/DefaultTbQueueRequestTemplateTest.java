@@ -105,10 +105,7 @@ public class DefaultTbQueueRequestTemplateTest {
 
     @Test
     public void givenExternalExecutor_whenInitStop_thenOK() {
-        willDoNothing().given(inst).mainLoop();
-
         inst.init();
-        //assertNotEquals(0, inst.tickTs);
         assertThat(inst.nextCleanupNs, equalTo(0L));
         verify(queueAdmin, times(1)).createTopicIfNotExists(topic);
         verify(requestTemplate, times(1)).init();
@@ -184,7 +181,6 @@ public class DefaultTbQueueRequestTemplateTest {
         inst.init();
         inst.setupNextCleanup();
         willReturn(Collections.emptyList()).given(inst).doPoll();
-        willDoNothing().given(inst).processResponse(any());
 
         //when
         long stepNs = TimeUnit.MILLISECONDS.toNanos(1);
