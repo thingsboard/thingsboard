@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.store;
 
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
@@ -25,6 +26,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+@Slf4j
 public class TbInMemorySecurityStore implements TbEditableSecurityStore {
     // lock for the two maps
     protected final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
@@ -121,7 +123,11 @@ public class TbInMemorySecurityStore implements TbEditableSecurityStore {
     public TbLwM2MSecurityInfo getTbLwM2MSecurityInfoByEndpoint(String endpoint) {
         readLock.lock();
         try {
-            return securityByEp.get(endpoint);
+            TbLwM2MSecurityInfo securityInfo = securityByEp.get(endpoint);
+            if (securityInfo == null) {
+                log.warn("000.1_1)  endpoint [{}], SecurityInfoByEndpoint after Registration. SecurityByEp [{}]", endpoint, securityByEp);
+            }
+            return  securityInfo;
         } finally {
             readLock.unlock();
         }

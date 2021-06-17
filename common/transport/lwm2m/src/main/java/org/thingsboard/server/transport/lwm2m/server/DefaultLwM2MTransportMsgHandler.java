@@ -190,12 +190,11 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     public void onRegistered(Registration registration, Collection<Observation> previousObservations) {
         registrationExecutor.submit(() -> {
             LwM2mClient lwM2MClient = this.clientContext.getClientByEndpoint(registration.getEndpoint());
-            lwM2MClient.setRegistration(registration);
             try {
                 log.warn("000.1) [{}] [{{}] lwm2m version [{}] identity [{}] Client: create after Registration", registration.getEndpoint(), registration.getId(), registration.getLwM2mVersion(), registration.getIdentity().getPeerAddress());
                 if (lwM2MClient != null) {
-                    lwM2MClient.setContentFormat();
                     Optional<SessionInfoProto> oldSessionInfo = this.clientContext.register(lwM2MClient, registration);
+                    lwM2MClient.setContentFormat();
                     if (oldSessionInfo.isPresent()) {
                         log.info("[{}] Closing old session: {}", registration.getEndpoint(), new UUID(oldSessionInfo.get().getSessionIdMSB(), oldSessionInfo.get().getSessionIdLSB()));
                         this.closeSession(oldSessionInfo.get());
@@ -226,7 +225,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                     this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_ERROR + ": Client registration failed due to invalid state: " + stateException.getState());
                 }
             } catch (Throwable t) {
-                log.error("endpoint [{}]  [{}] error Unable registration.", registration.getEndpoint(), t.getMessage());
+                log.error("endpoint [{}]  [{}] error Unable registration.", registration.getEndpoint(), t.toString());
                 this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_ERROR + ": Client registration failed due to: " + t.getMessage());
             }
         });
