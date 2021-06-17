@@ -245,7 +245,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
     }
 
     void sendToRequestTemplate(Request request, UUID requestId, SettableFuture<Response> future, ResponseMetaData<Response> responseMetaData) {
-        log.trace("[{}] Sending request, key [{}], expTime [{}], request {}", requestId, request.getKey(), responseMetaData.expTime, String.valueOf(request).replace("\n", " "));
+        log.trace("[{}] Sending request, key [{}], expTime [{}], request {}", requestId, request.getKey(), responseMetaData.expTime, request);
         if (messagesStats != null) {
             messagesStats.incrementTotal();
         }
@@ -255,7 +255,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
                 if (messagesStats != null) {
                     messagesStats.incrementSuccessful();
                 }
-                log.trace("[{}] Request sent: {}, request {}", requestId, metadata, String.valueOf(request).replace("\n", " "));
+                log.trace("[{}] Request sent: {}, request {}", requestId, metadata, request);
             }
 
             @Override
