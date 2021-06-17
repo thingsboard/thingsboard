@@ -124,12 +124,6 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
         DisableListInfo disableListInfo = disabledFunctions.computeIfAbsent(scriptId, key -> new DisableListInfo());
         log.warn("Script has exception and will increment counter {} on disabledFunctions for id {}, exception {}, cause {}, scriptBody {}",
                 disableListInfo.get(), scriptId, t, t.getCause(), scriptBody);
-//        if (t instanceof TimeoutException || (t.getCause() != null && t.getCause() instanceof TimeoutException)) {
-//            log.warn("Script has TimeoutException and will increment counter {} on disabledFunctions for id {}", //TODO remove after test
-//                    disableListInfo.get(),
-//                    scriptId);
-//            //return; //timeout is not a good reason to disable function
-//        }
         disableListInfo.incrementAndGet();
     }
 

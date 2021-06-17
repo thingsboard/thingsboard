@@ -111,7 +111,6 @@ public class DefaultActorService extends TbApplicationEventListener<PartitionCha
         } else {
             return ThingsBoardExecutors.newWorkStealingPool(poolSize, dispatcherName);
         }
-        //return Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 1, ThingsBoardThreadFactory.forName(dispatcherName));
     }
 
     @EventListener(ApplicationReadyEvent.class)
