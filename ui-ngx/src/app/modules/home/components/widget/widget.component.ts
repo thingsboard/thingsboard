@@ -759,7 +759,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         this.dynamicWidgetComponent = this.dynamicWidgetComponentRef.instance;
         this.widgetContext.$container = $(this.dynamicWidgetComponentRef.location.nativeElement);
         this.widgetContext.$container.css('display', 'block');
-        this.widgetContext.$container.css('user-select', 'none');
         this.widgetContext.$container.attr('id', 'container');
         if (this.widgetSizeDetected) {
           this.widgetContext.$container.css('height', this.widgetContext.height + 'px');

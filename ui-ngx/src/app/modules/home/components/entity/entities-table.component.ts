@@ -528,7 +528,7 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
       const col = this.entitiesTableConfig.columns.indexOf(column);
       const index = row * this.entitiesTableConfig.columns.length + col;
       let res = this.cellContentCache[index];
-      if (!res) {
+      if (isUndefined(res)) {
         res = this.domSanitizer.bypassSecurityTrustHtml(column.cellContentFunction(entity, column.key));
         this.cellContentCache[index] = res;
       }

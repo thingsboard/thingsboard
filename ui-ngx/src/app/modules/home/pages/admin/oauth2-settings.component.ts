@@ -311,8 +311,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       scope: this.fb.array(registration?.scope ? registration.scope : [], OAuth2SettingsComponent.validateScope),
       jwkSetUri: [registration?.jwkSetUri ? registration.jwkSetUri : '', Validators.pattern(this.URL_REGEXP)],
       userInfoUri: [registration?.userInfoUri ? registration.userInfoUri : '',
-        [Validators.required,
-          Validators.pattern(this.URL_REGEXP)]],
+        [Validators.pattern(this.URL_REGEXP)]],
       clientAuthenticationMethod: [
         registration?.clientAuthenticationMethod ? registration.clientAuthenticationMethod : ClientAuthenticationMethod.POST,
         Validators.required],

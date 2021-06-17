@@ -99,7 +99,7 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
 
     @Override
     protected void doCommit() {
-        consumer.commitAsync();
+        consumer.commitSync();
     }
 
     @Override

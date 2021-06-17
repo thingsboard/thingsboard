@@ -60,8 +60,9 @@
         formControlName="defaultRuleChainId">
       </tb-rule-chain-autocomplete>
       <tb-dashboard-autocomplete
-        placeholder="{{'device-profile.default-dashboard' | translate}}"
+        placeholder="{{'device-profile.mobile-dashboard' | translate}}"
         formControlName="defaultDashboardId">
+        <div tb-hint>{{'device-profile.mobile-dashboard-hint' | translate}}</div>
       </tb-dashboard-autocomplete>
       <tb-queue-type-list
         [queueType]="serviceType"
