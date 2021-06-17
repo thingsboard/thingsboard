@@ -103,7 +103,9 @@ public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
             "    }\n" +
             "  },\n" +
             "  \"clientLwM2mSettings\": {\n" +
-            "    \"clientOnlyObserveAfterConnect\": 1\n" +
+            "    \"clientOnlyObserveAfterConnect\": 1,\n" +
+            "    \"fwUpdateStrategy\": 1,\n" +
+            "    \"swUpdateStrategy\": 1\n" +
             "  }\n" +
             "}";
 

@@ -52,7 +52,6 @@ public class X509LwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
     private final String endpoint = "deviceAEndpoint";
     private final String serverUri = "coaps://localhost:" + port;
 
-    @NotNull
     private Device createDevice(X509ClientCredentials clientCredentials) throws Exception {
         Device device = new Device();
         device.setName("Device A");
