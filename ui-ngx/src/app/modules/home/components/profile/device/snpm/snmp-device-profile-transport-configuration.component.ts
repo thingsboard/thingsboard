@@ -15,9 +15,16 @@
 ///
 
 import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
-import { Store } from '@ngrx/store';
-import { AppState } from '@app/core/core.state';
+import {
+  ControlValueAccessor,
+  FormBuilder,
+  FormGroup,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  ValidationErrors,
+  Validator,
+  Validators
+} from '@angular/forms';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   DeviceProfileTransportConfiguration,
@@ -40,19 +47,24 @@ export interface OidMappingConfiguration {
   selector: 'tb-snmp-device-profile-transport-configuration',
   templateUrl: './snmp-device-profile-transport-configuration.component.html',
   styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => SnmpDeviceProfileTransportConfigurationComponent),
-    multi: true
-  }]
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => SnmpDeviceProfileTransportConfigurationComponent),
+      multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => SnmpDeviceProfileTransportConfigurationComponent),
+      multi: true
+    }]
 })
-export class SnmpDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit, OnDestroy {
+export class SnmpDeviceProfileTransportConfigurationComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
 
   snmpDeviceProfileTransportConfigurationFormGroup: FormGroup;
 
   private destroy$ = new Subject();
   private requiredValue: boolean;
-  private configuration = [];
 
   get required(): boolean {
     return this.requiredValue;
@@ -69,12 +81,14 @@ export class SnmpDeviceProfileTransportConfigurationComponent implements Control
   private propagateChange = (v: any) => {
   }
 
-  constructor(private store: Store<AppState>, private fb: FormBuilder) {
+  constructor(private fb: FormBuilder) {
   }
 
   ngOnInit(): void {
     this.snmpDeviceProfileTransportConfigurationFormGroup = this.fb.group({
-      configuration: [null, Validators.required]
+      timeoutMs: [0, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
+      retries: [0, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
+      communicationConfigs: [null, Validators.required],
     });
     this.snmpDeviceProfileTransportConfigurationFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -95,18 +109,33 @@ export class SnmpDeviceProfileTransportConfigurationComponent implements Control
   registerOnTouched(fn: any): void {
   }
 
+  setDisabledState(isDisabled: boolean) {
+    this.disabled = isDisabled;
+    if (this.disabled) {
+      this.snmpDeviceProfileTransportConfigurationFormGroup.disable({emitEvent: false});
+    } else {
+      this.snmpDeviceProfileTransportConfigurationFormGroup.enable({emitEvent: false});
+    }
+  }
+
   writeValue(value: SnmpDeviceProfileTransportConfiguration | null): void {
     if (isDefinedAndNotNull(value)) {
-      this.snmpDeviceProfileTransportConfigurationFormGroup.patchValue({configuration: value}, {emitEvent: false});
+      this.snmpDeviceProfileTransportConfigurationFormGroup.patchValue(value, {emitEvent: !value.communicationConfigs});
     }
   }
 
   private updateModel() {
     let configuration: DeviceProfileTransportConfiguration = null;
     if (this.snmpDeviceProfileTransportConfigurationFormGroup.valid) {
-      configuration = this.snmpDeviceProfileTransportConfigurationFormGroup.getRawValue().configuration;
+      configuration = this.snmpDeviceProfileTransportConfigurationFormGroup.getRawValue();
       configuration.type = DeviceTransportType.SNMP;
     }
     this.propagateChange(configuration);
+  }
+
+  validate(): ValidationErrors | null {
+    return this.snmpDeviceProfileTransportConfigurationFormGroup.valid ? null : {
+      snmpDeviceProfileTransportConfiguration: false
+    };
   }
 }

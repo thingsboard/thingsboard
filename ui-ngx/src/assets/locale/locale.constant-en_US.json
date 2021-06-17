@@ -1297,6 +1297,31 @@
             "sw-update-recourse": "Software update CoAP recourse",
             "sw-update-recourse-required": "Software update CoAP recourse is required.",
             "config-json-tab": "Json Config Profile Device"
+        },
+        "snmp": {
+            "add-communication-config": "Add communication config",
+            "add-mapping": "Add mapping",
+            "communication-configs": "Communication configs",
+            "data-key": "Data key",
+            "data-key-required": "Data key is required.",
+            "data-type": "Data type",
+            "data-type-required": "Data type is required.",
+            "oid": "OID",
+            "oid-pattern": "Invalid OID format.",
+            "oid-required": "OID is required.",
+            "please-add-communication-config": "Please add communication config",
+            "please-add-mapping-config": "Please add mapping config",
+            "querying-frequency": "Querying frequency, ms",
+            "querying-frequency-invalid-format": "Querying frequency must be a positive integer.",
+            "querying-frequency-required": "Querying frequency is required.",
+            "retries": "Retries",
+            "retries-invalid-format": "Retries must be a positive integer.",
+            "retries-required": "Retries is required.",
+            "scope": "Scope",
+            "scope-required": "Scope is required.",
+            "timeout-ms": "Timeout, ms",
+            "timeout-ms-invalid-format": "Timeout must be a positive integer.",
+            "timeout-ms-required": "Timeout is required."
         }
     },
     "dialog": {

@@ -29,6 +29,7 @@ import * as _moment from 'moment';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
 import { OtaPackageId } from '@shared/models/id/ota-package-id';
 import { DashboardId } from '@shared/models/id/dashboard-id';
+import { DataType } from '@shared/models/constants';
 
 export enum DeviceProfileType {
   DEFAULT = 'DEFAULT',
@@ -257,7 +258,35 @@ export interface Lwm2mDeviceProfileTransportConfiguration {
 }
 
 export interface SnmpDeviceProfileTransportConfiguration {
-  [key: string]: any;
+  timeoutMs?: number;
+  retries?: number;
+  communicationConfigs?: SnmpCommunicationConfig[];
+}
+
+export enum SnmpSpecType {
+  TELEMETRY_QUERYING = 'TELEMETRY_QUERYING',
+  CLIENT_ATTRIBUTES_QUERYING = 'CLIENT_ATTRIBUTES_QUERYING',
+  SHARED_ATTRIBUTES_SETTING = 'SHARED_ATTRIBUTES_SETTING',
+  TO_DEVICE_RPC_REQUEST = 'TO_DEVICE_RPC_REQUEST'
+}
+
+export const SnmpSpecTypeTranslationMap = new Map<SnmpSpecType, string>([
+  [SnmpSpecType.TELEMETRY_QUERYING, ' Telemetry'],
+  [SnmpSpecType.CLIENT_ATTRIBUTES_QUERYING, 'Client attributes'],
+  [SnmpSpecType.SHARED_ATTRIBUTES_SETTING, 'Shared attributes'],
+  [SnmpSpecType.TO_DEVICE_RPC_REQUEST, 'RPC request']
+]);
+
+export interface SnmpCommunicationConfig {
+  spec: SnmpSpecType;
+  mappings: SnmpMapping[];
+  queryingFrequencyMs?: number;
+}
+
+export interface SnmpMapping {
+  oid: string;
+  key: string;
+  dataType: DataType;
 }
 
 export type DeviceProfileTransportConfigurations = DefaultDeviceProfileTransportConfiguration &
@@ -332,7 +361,11 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
         break;
       case DeviceTransportType.SNMP:
-        const snmpTransportConfiguration: SnmpDeviceProfileTransportConfiguration = {};
+        const snmpTransportConfiguration: SnmpDeviceProfileTransportConfiguration = {
+          timeoutMs: 0,
+          retries: 0,
+          communicationConfigs: null
+        };
         transportConfiguration = {...snmpTransportConfiguration, type: DeviceTransportType.SNMP};
         break;
     }
