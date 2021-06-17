@@ -41,6 +41,7 @@ public class LwM2MClientOtaInfo {
     private boolean currentFetchFailure;
     private String currentName;
     private String currentVersion;
+    private Integer deliveryMethod;
 
     //TODO: use value from device if applicable;
     private LwM2MFirmwareUpdateStrategy strategy;
@@ -96,4 +97,5 @@ public class LwM2MClientOtaInfo {
     private static String getPackageId(String name, String version) {
         return (StringUtils.isNotEmpty(name) ? name : "") + (StringUtils.isNotEmpty(version) ? version : "");
     }
+
 }

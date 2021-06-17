@@ -109,6 +109,7 @@ import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.FAIL
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_3_VER_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_5_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_5_VER_ID;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_DELIVERY_METHOD;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_NAME_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_RESULT_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_STATE_ID;
@@ -571,6 +572,8 @@ public class DefaultLwM2MUplinkMsgHandler implements LwM2mUplinkMsgHandler {
                 otaService.onCurrentFirmwareStateUpdate(lwM2MClient, (Long) lwM2mResource.getValue());
             } else if (path.equals(convertObjectIdToVersionedId(FW_RESULT_ID, registration))) {
                 otaService.onCurrentFirmwareResultUpdate(lwM2MClient, (Long) lwM2mResource.getValue());
+            } else if (path.equals(convertObjectIdToVersionedId(FW_DELIVERY_METHOD, registration))) {
+                otaService.onCurrentFirmwareDeliveryMethodUpdate(lwM2MClient, (Long) lwM2mResource.getValue());
             }
             this.updateAttrTelemetry(registration, Collections.singleton(path));
         } else {

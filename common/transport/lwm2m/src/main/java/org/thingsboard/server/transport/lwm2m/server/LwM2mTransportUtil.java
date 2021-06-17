@@ -137,6 +137,9 @@ public class LwM2mTransportUtil {
     public static final String FW_STATE_ID = "/5/0/3";
     // Update Result R
     public static final String FW_RESULT_ID = "/5/0/5";
+
+    public static final String FW_DELIVERY_METHOD = "/5/0/9";
+
     // PkgName R
     public static final String FW_NAME_ID = "/5/0/6";
     // PkgVersion R

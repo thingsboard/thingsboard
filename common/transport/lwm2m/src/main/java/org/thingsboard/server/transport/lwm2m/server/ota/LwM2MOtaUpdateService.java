@@ -34,4 +34,6 @@ public interface LwM2MOtaUpdateService {
     void onCurrentFirmwareStateUpdate(LwM2mClient client, Long state);
 
     void onCurrentFirmwareResultUpdate(LwM2mClient client, Long result);
+
+    void onCurrentFirmwareDeliveryMethodUpdate(LwM2mClient lwM2MClient, Long value);
 }

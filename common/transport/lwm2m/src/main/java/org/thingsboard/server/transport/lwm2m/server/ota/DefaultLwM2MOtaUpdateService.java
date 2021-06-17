@@ -33,6 +33,7 @@ import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MFirmwareUpdateStrategy;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 import org.thingsboard.server.transport.lwm2m.server.UpdateStateFw;
@@ -181,6 +182,12 @@ public class DefaultLwM2MOtaUpdateService implements LwM2MOtaUpdateService {
     }
 
     @Override
+    public void onCurrentFirmwareDeliveryMethodUpdate(LwM2mClient client, Long value) {
+        LwM2MClientOtaInfo fwInfo = getOrInitFwInfo(client);
+        fwInfo.setDeliveryMethod(value.intValue());
+    }
+
+    @Override
     public void onTargetSoftwareUpdate(LwM2mClient client, String newSoftwareTitle, String newSoftwareVersion) {
 
     }
@@ -211,7 +218,12 @@ public class DefaultLwM2MOtaUpdateService implements LwM2MOtaUpdateService {
                         if (TransportProtos.ResponseStatus.SUCCESS.equals(response.getResponseStatus())
                                 && response.getType().equals(OtaPackageType.FIRMWARE.name())) {
                             UUID otaPackageId = new UUID(response.getOtaPackageIdMSB(), response.getOtaPackageIdLSB());
-                            var strategy = fwInfo.getStrategy();
+                            LwM2MFirmwareUpdateStrategy strategy;
+                            if (fwInfo.getDeliveryMethod() == null || fwInfo.getDeliveryMethod() == 2) {
+                                strategy = fwInfo.getStrategy();
+                            } else {
+                                strategy = fwInfo.getDeliveryMethod() == 0 ? LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL : LwM2MFirmwareUpdateStrategy.OBJ_5_BINARY;
+                            }
                             switch (strategy) {
                                 case OBJ_5_BINARY:
                                     byte[] firmwareChunk = otaPackageDataCache.get(otaPackageId.toString(), 0, 0);
