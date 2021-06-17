@@ -56,8 +56,6 @@ import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2mTypeOper;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClientState;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClientStateException;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientProfile;
@@ -189,22 +187,17 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      */
     public void onRegistered(Registration registration, Collection<Observation> previousObservations) {
         registrationExecutor.submit(() -> {
-            LwM2mClient lwM2MClient = this.clientContext.getClientByEndpoint(registration.getEndpoint());
+            Optional<LwM2mClient> lwM2MClient = this.clientContext.register(registration);
             try {
-                log.warn("000.1) [{}] [{{}] lwm2m version [{}] identity [{}] Client: create after Registration", registration.getEndpoint(), registration.getId(), registration.getLwM2mVersion(), registration.getIdentity().getPeerAddress());
-                if (lwM2MClient != null) {
-                    Optional<SessionInfoProto> oldSessionInfo = this.clientContext.register(lwM2MClient, registration);
-                    lwM2MClient.setContentFormat();
-                    if (oldSessionInfo.isPresent()) {
-                        log.info("[{}] Closing old session: {}", registration.getEndpoint(), new UUID(oldSessionInfo.get().getSessionIdMSB(), oldSessionInfo.get().getSessionIdLSB()));
-                        this.closeSession(oldSessionInfo.get());
-                    }
-                    SessionInfoProto sessionInfo = lwM2MClient.getSession();
+                if (lwM2MClient.isPresent()) {
+                     log.warn("000.1) [{}] [{{}] lwm2m version [{}] identity [{}] Client: create after Registration", registration.getEndpoint(), registration.getId(), registration.getLwM2mVersion(), registration.getIdentity().getPeerAddress());
+                    lwM2MClient.get().setContentFormat();
+                    SessionInfoProto sessionInfo = lwM2MClient.get().getSession();
                     transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(this, sessionInfo));
                     String msgReg = String.format(": Client registered with registrationId: %s sessionId: %s identity: %s",
                             registration.getId(), new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()), registration.getIdentity().getPeerAddress());
-                    log.warn("000.2) [{}], Registering rpc subscription after Registration client [{}]", lwM2MClient.getEndpoint(), msgReg);
-                    this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_INFO + msgReg);
+                    log.warn("000.2) [{}], Registering rpc subscription after Registration client [{}]", lwM2MClient.get().getEndpoint(), msgReg);
+                    this.sendLogsToThingsboard(lwM2MClient.get(), LOG_LW2M_INFO + msgReg);
                     TransportProtos.TransportToDeviceActorMsg msg = TransportProtos.TransportToDeviceActorMsg.newBuilder()
                             .setSessionInfo(sessionInfo)
                             .setSessionEvent(DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN))
@@ -212,21 +205,14 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                             .setSubscribeToRPC(TransportProtos.SubscribeToRPCMsg.newBuilder().setSessionType(TransportProtos.SessionType.ASYNC).build())
                             .build();
                     transportService.process(msg, null);
-                    this.initClientTelemetry(lwM2MClient);
+                    this.initClientTelemetry(lwM2MClient.get());
                 } else {
                     log.error("Client: [{}] onRegistered [{}] name [{}] lwM2MClient ", registration.getId(), registration.getEndpoint(), null);
                 }
-            } catch (LwM2MClientStateException stateException) {
-                if (LwM2MClientState.UNREGISTERED.equals(stateException.getState())) {
-                    log.error("[{}] retry registration due to race condition: [{}].", registration.getEndpoint(), stateException.getState());
-                    // Race condition detected and the client was in progress of unregistration while new registration arrived. Let's try again.
-                    onRegistered(registration, previousObservations);
-                } else {
-                    this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_ERROR + ": Client registration failed due to invalid state: " + stateException.getState());
-                }
-            } catch (Throwable t) {
+            }
+            catch (Throwable t) {
                 log.error("endpoint [{}]  [{}] error Unable registration.", registration.getEndpoint(), t.toString());
-                this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_ERROR + ": Client registration failed due to: " + t.getMessage());
+                this.sendLogsToThingsboard(lwM2MClient.get(), LOG_LW2M_ERROR + ": Client registration failed due to: " + t.getMessage());
             }
         });
     }
@@ -238,35 +224,31 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      */
     public void updatedReg(Registration registration) {
         updateRegistrationExecutor.submit(() -> {
-            LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
+            Optional<LwM2mClient> lwM2MClient = clientContext.updateRegistration(registration);
             try {
-                clientContext.updateRegistration(lwM2MClient, registration);
-                TransportProtos.SessionInfoProto sessionInfo = lwM2MClient.getSession();
-                this.reportActivityAndRegister(sessionInfo);
-                if (registration.usesQueueMode()) {
-                    LwM2mQueuedRequest request;
-                    while ((request = lwM2MClient.getQueuedRequests().poll()) != null) {
-                        request.send();
+                if (lwM2MClient.isPresent()) {
+                    TransportProtos.SessionInfoProto sessionInfo = lwM2MClient.get().getSession();
+                    this.reportActivityAndRegister(sessionInfo);
+                    if (registration.usesQueueMode()) {
+                        LwM2mQueuedRequest request;
+                        while ((request = lwM2MClient.get().getQueuedRequests().poll()) != null) {
+                            request.send();
+                        }
                     }
+                    String msgUpdateReg = String.format(": Client updateRegistered with registrationId: %s sessionId: %s identity: %s",
+                            registration.getId(), new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()), registration.getIdentity().getPeerAddress());
+                    this.sendLogsToThingsboard(lwM2MClient.get(), LOG_LW2M_INFO + msgUpdateReg);
+                    log.warn("000.3_1) [{}] [{}]", lwM2MClient.get().getEndpoint(), msgUpdateReg);
+                    lwM2MClient.get().initReadValue(this, null);
+                    String msgUpdateRegOtaUpdate = String.format(": Client after updateRegistered otaUpdate with registrationId: %s sessionId: %s identity %s",
+                            registration.getId(), new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()), registration.getIdentity().getPeerAddress());
+                    log.warn("000.3_2) [{}] [{}]", lwM2MClient.get().getEndpoint(), msgUpdateRegOtaUpdate);
+                    this.sendLogsToThingsboard(lwM2MClient.get(), LOG_LW2M_INFO + msgUpdateRegOtaUpdate);
                 }
-                String msgUpdateReg = String.format(": Client updateRegistered with registrationId: %s sessionId: %s identity: %s",
-                        registration.getId(), new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()), registration.getIdentity().getPeerAddress());
-                this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_INFO + msgUpdateReg);
-                log.warn("000.3_1) [{}] [{}]", lwM2MClient.getEndpoint(), msgUpdateReg);
-                lwM2MClient.initReadValue(this, null);
-                String msgUpdateRegOtaUpdate = String.format(": Client after updateRegistered otaUpdate with registrationId: %s sessionId: %s identity %s",
-                        registration.getId(), new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()), registration.getIdentity().getPeerAddress());
-                log.warn("000.3_2) [{}] [{}]", lwM2MClient.getEndpoint(), msgUpdateRegOtaUpdate);
-                this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_INFO +msgUpdateRegOtaUpdate);
-            } catch (LwM2MClientStateException stateException) {
-                if (LwM2MClientState.REGISTERED.equals(stateException.getState())) {
-                    log.info("[{}] update registration failed because client has different registration id: [{}] {}.", registration.getEndpoint(), stateException.getState(), stateException.getMessage());
-                } else {
-                    onRegistered(registration, Collections.emptyList());
-                }
-            } catch (Throwable t) {
+            }
+            catch (Throwable t) {
                 log.error("[{}] endpoint [{}] error Unable update registration.", registration.getEndpoint(), t);
-                this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_ERROR + String.format(": Client update Registration, %s", t.getMessage()));
+                this.sendLogsToThingsboard(registration.getId(), LOG_LW2M_ERROR + String.format(": Client update Registration, %s", t.getMessage()));
             }
         });
     }
@@ -277,26 +259,25 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      */
     public void unReg(Registration registration, Collection<Observation> observations) {
         unRegistrationExecutor.submit(() -> {
-            LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
+            Optional<LwM2mClient> lwM2MClient = clientContext.unregister(registration);
             try {
-                clientContext.unregister(lwM2MClient, registration);
-                SessionInfoProto sessionInfo = lwM2MClient.getSession();
-                if (sessionInfo != null) {
-                    String msgUnReg = String.format(": Client unRegistration with registrationId: %s sessionId: %s",
-                            registration.getId(), new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
-                    log.warn("000.5_1) [{}] [{}]", lwM2MClient.getEndpoint(), msgUnReg);
-                    this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_INFO + msgUnReg);
-                    this.closeSession(sessionInfo);
-                    sessionStore.remove(registration.getEndpoint());
-                    log.warn("000.5_2) [{}] Client close session: [{}] unReg [{}] name  [{}] sessionInfo ", lwM2MClient.getEndpoint(), registration.getId(), registration.getEndpoint(), new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
-                } else {
-                    log.error("[{}] Client close session: [{}] unReg [{}] name  [{}] sessionInfo ", lwM2MClient.getEndpoint(), registration.getId(), registration.getEndpoint(), null);
+                if (lwM2MClient.isPresent()) {
+                    SessionInfoProto sessionInfo = lwM2MClient.get().getSession();
+                    if (sessionInfo != null) {
+                        String msgUnReg = String.format(": Client unRegistration with registrationId: %s sessionId: %s",
+                                registration.getId(), new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
+                        log.warn("000.5_1) [{}] [{}]", lwM2MClient.get().getEndpoint(), msgUnReg);
+                        this.sendLogsToThingsboard(lwM2MClient.get(), LOG_LW2M_INFO + msgUnReg);
+                        this.closeSession(sessionInfo);
+                        sessionStore.remove(registration.getEndpoint());
+                        log.warn("000.5_2) [{}] Client close session: [{}] unReg [{}] name  [{}] sessionInfo ", lwM2MClient.get().getEndpoint(), registration.getId(), registration.getEndpoint(), new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
+                    } else {
+                        log.error("[{}] Client close session: [{}] unReg [{}] name  [{}] sessionInfo ", lwM2MClient.get().getEndpoint(), registration.getId(), registration.getEndpoint(), null);
+                    }
                 }
-            } catch (LwM2MClientStateException stateException) {
-                log.info("[{}] delete registration: [{}] {}.", registration.getEndpoint(), stateException.getState(), stateException.getMessage());
             } catch (Throwable t) {
                 log.error("Endpoint: [{}] error: [{}] error Unable un registration.", registration.getEndpoint(), t.getMessage());
-                this.sendLogsToThingsboard(lwM2MClient, LOG_LW2M_ERROR + String.format(": Client Unable un Registration, %s", t.getMessage()));
+                this.sendLogsToThingsboard(registration.getId(), LOG_LW2M_ERROR + String.format(": Client Unable un Registration, %s", t.getMessage()));
             }
         });
     }
@@ -309,7 +290,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     @Override
     public void onSleepingDev(Registration registration) {
         log.info("[{}] [{}] Received endpoint Sleeping version event", registration.getId(), registration.getEndpoint());
-        this.sendLogsToThingsboard(clientContext.getClientByEndpoint(registration.getEndpoint()), LOG_LW2M_INFO + ": Client is sleeping!");
+        this.sendLogsToThingsboard(clientContext.updateRegistration(registration).get(), LOG_LW2M_INFO + ": Client is sleeping!");
         //TODO: associate endpointId with device information.
     }
 
@@ -319,9 +300,9 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     @Override
     public void setCancelObservationsAll(Registration registration) {
         if (registration != null) {
-            LwM2mClient client = clientContext.getClientByEndpoint(registration.getEndpoint());
-            if (client != null && client.getRegistration() != null && client.getRegistration().getId().equals(registration.getId())) {
-                this.lwM2mTransportRequest.sendAllRequest(client, null, OBSERVE_CANCEL_ALL,
+            Optional<LwM2mClient> client = clientContext.updateRegistration(registration);
+            if (client.isPresent()) {
+                this.lwM2mTransportRequest.sendAllRequest(client.get(), null, OBSERVE_CANCEL_ALL,
                         null, null, this.config.getTimeout(), null);
             }
         }
@@ -336,9 +317,9 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      */
     @Override
     public void onUpdateValueAfterReadResponse(Registration registration, String path, ReadResponse response, LwM2mClientRpcRequest rpcRequest) {
-        if (response.getContent() != null) {
-            LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
-            ObjectModel objectModelVersion = lwM2MClient.getObjectModel(path, this.config.getModelProvider());
+        Optional<LwM2mClient> lwM2MClient = clientContext.updateRegistration(registration);
+        if (response.getContent() != null && lwM2MClient.isPresent()) {
+            ObjectModel objectModelVersion = lwM2MClient.get().getObjectModel(path, this.config.getModelProvider());
             if (objectModelVersion != null) {
                 if (response.getContent() instanceof LwM2mObject) {
                     LwM2mObject lwM2mObject = (LwM2mObject) response.getContent();
@@ -352,7 +333,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
                 }
             }
             if (rpcRequest != null) {
-                this.sendRpcRequestAfterReadResponse(registration, lwM2MClient, path, response, rpcRequest);
+                this.sendRpcRequestAfterReadResponse(registration, lwM2MClient.get(), path, response, rpcRequest);
             }
         }
     }
@@ -595,7 +576,10 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     @Override
     public void onAwakeDev(Registration registration) {
         log.trace("[{}] [{}] Received endpoint Awake version event", registration.getId(), registration.getEndpoint());
-        this.sendLogsToThingsboard(clientContext.getClientByEndpoint(registration.getEndpoint()), LOG_LW2M_INFO + ": Client is awake!");
+        Optional<LwM2mClient> lwM2MClient = clientContext.updateRegistration(registration);
+        if (lwM2MClient.isPresent()) {
+            this.sendLogsToThingsboard(registration.getId(), LOG_LW2M_INFO + ": Client is awake!");
+        }
         //TODO: associate endpointId with device information.
     }
 
@@ -682,21 +666,22 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      * @param path          - resource
      */
     private void updateResourcesValue(Registration registration, LwM2mResource lwM2mResource, String path) {
-        LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
-        if (lwM2MClient.saveResourceValue(path, lwM2mResource, this.config.getModelProvider())) {
+//        LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
+        Optional<LwM2mClient> lwM2MClient = clientContext.updateRegistration(registration);
+        if (lwM2MClient.isPresent() && lwM2MClient.get().saveResourceValue(path, lwM2mResource, this.config.getModelProvider())) {
             /** version != null
              * set setClient_fw_info... = value
              **/
-            if (lwM2MClient.getFwUpdate() != null && lwM2MClient.getFwUpdate().isInfoFwSwUpdate()) {
-                lwM2MClient.getFwUpdate().initReadValue(this, this.lwM2mTransportRequest, path);
+            if (lwM2MClient.get().getFwUpdate() != null && lwM2MClient.get().getFwUpdate().isInfoFwSwUpdate()) {
+                lwM2MClient.get().getFwUpdate().initReadValue(this, this.lwM2mTransportRequest, path);
             }
-            if (lwM2MClient.getSwUpdate() != null && lwM2MClient.getSwUpdate().isInfoFwSwUpdate()) {
-                lwM2MClient.getSwUpdate().initReadValue(this, this.lwM2mTransportRequest, path);
+            if (lwM2MClient.get().getSwUpdate() != null && lwM2MClient.get().getSwUpdate().isInfoFwSwUpdate()) {
+                lwM2MClient.get().getSwUpdate().initReadValue(this, this.lwM2mTransportRequest, path);
             }
 
             if ((convertPathFromObjectIdToIdVer(FW_RESULT_ID, registration).equals(path)) ||
                     (convertPathFromObjectIdToIdVer(FW_STATE_ID, registration).equals(path))) {
-                LwM2mFwSwUpdate fwUpdate = lwM2MClient.getFwUpdate(clientContext);
+                LwM2mFwSwUpdate fwUpdate = lwM2MClient.get().getFwUpdate(clientContext);
                 log.warn("93) path: [{}] value: [{}]", path, lwM2mResource.getValue());
                 fwUpdate.fwUpdateStateChange(this, lwM2mTransportRequest, registration, path, ((Long) lwM2mResource.getValue()).intValue());
             }
@@ -843,44 +828,47 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
     }
 
     private TransportProtos.KeyValueProto getKvToThingsboard(String pathIdVer, Registration registration) {
-        LwM2mClient lwM2MClient = this.clientContext.getClientByEndpoint(registration.getEndpoint());
-        JsonObject names = clientContext.getProfiles().get(lwM2MClient.getProfileId()).getPostKeyNameProfile();
-        if (names != null && names.has(pathIdVer)) {
-            String resourceName = names.get(pathIdVer).getAsString();
-            if (resourceName != null && !resourceName.isEmpty()) {
-                try {
-                    LwM2mResource resourceValue = lwM2MClient != null ? getResourceValueFromLwM2MClient(lwM2MClient, pathIdVer) : null;
-                    if (resourceValue != null) {
-                        ResourceModel.Type currentType = resourceValue.getType();
-                        ResourceModel.Type expectedType = this.helper.getResourceModelTypeEqualsKvProtoValueType(currentType, pathIdVer);
-                        Object valueKvProto = null;
-                        if (resourceValue.isMultiInstances()) {
-                            valueKvProto = new JsonObject();
-                            Object finalvalueKvProto = valueKvProto;
-                            Gson gson = new GsonBuilder().create();
-                            ResourceModel.Type finalCurrentType = currentType;
-                            resourceValue.getInstances().forEach((k, v) -> {
-                                Object val = this.converter.convertValue(v, finalCurrentType, expectedType,
+//        LwM2mClient lwM2MClient = this.clientContext.getClientByEndpoint(registration.getEndpoint());
+        Optional<LwM2mClient> lwM2MClient = clientContext.updateRegistration(registration);
+        if (lwM2MClient.isPresent()) {
+            JsonObject names = clientContext.getProfiles().get(lwM2MClient.get().getProfileId()).getPostKeyNameProfile();
+            if (names != null && names.has(pathIdVer)) {
+                String resourceName = names.get(pathIdVer).getAsString();
+                if (resourceName != null && !resourceName.isEmpty()) {
+                    try {
+                        LwM2mResource resourceValue = lwM2MClient != null ? getResourceValueFromLwM2MClient(lwM2MClient.get(), pathIdVer) : null;
+                        if (resourceValue != null) {
+                            ResourceModel.Type currentType = resourceValue.getType();
+                            ResourceModel.Type expectedType = this.helper.getResourceModelTypeEqualsKvProtoValueType(currentType, pathIdVer);
+                            Object valueKvProto = null;
+                            if (resourceValue.isMultiInstances()) {
+                                valueKvProto = new JsonObject();
+                                Object finalvalueKvProto = valueKvProto;
+                                Gson gson = new GsonBuilder().create();
+                                ResourceModel.Type finalCurrentType = currentType;
+                                resourceValue.getInstances().forEach((k, v) -> {
+                                    Object val = this.converter.convertValue(v, finalCurrentType, expectedType,
+                                            new LwM2mPath(convertPathFromIdVerToObjectId(pathIdVer)));
+                                    JsonElement element = gson.toJsonTree(val, val.getClass());
+                                    ((JsonObject) finalvalueKvProto).add(String.valueOf(k), element);
+                                });
+                                valueKvProto = gson.toJson(valueKvProto);
+                            } else {
+                                valueKvProto = this.converter.convertValue(resourceValue.getValue(), currentType, expectedType,
                                         new LwM2mPath(convertPathFromIdVerToObjectId(pathIdVer)));
-                                JsonElement element = gson.toJsonTree(val, val.getClass());
-                                ((JsonObject) finalvalueKvProto).add(String.valueOf(k), element);
-                            });
-                            valueKvProto = gson.toJson(valueKvProto);
-                        } else {
-                            valueKvProto = this.converter.convertValue(resourceValue.getValue(), currentType, expectedType,
-                                    new LwM2mPath(convertPathFromIdVerToObjectId(pathIdVer)));
+                            }
+                            LwM2mOtaConvert lwM2mOtaConvert = convertOtaUpdateValueToString(pathIdVer, valueKvProto, currentType);
+                            valueKvProto = lwM2mOtaConvert.getValue();
+                            currentType = lwM2mOtaConvert.getCurrentType();
+                            return valueKvProto != null ? this.helper.getKvAttrTelemetryToThingsboard(currentType, resourceName, valueKvProto, resourceValue.isMultiInstances()) : null;
                         }
-                        LwM2mOtaConvert lwM2mOtaConvert = convertOtaUpdateValueToString(pathIdVer, valueKvProto, currentType);
-                        valueKvProto = lwM2mOtaConvert.getValue();
-                        currentType = lwM2mOtaConvert.getCurrentType();
-                        return valueKvProto != null ? this.helper.getKvAttrTelemetryToThingsboard(currentType, resourceName, valueKvProto, resourceValue.isMultiInstances()) : null;
+                    } catch (Exception e) {
+                        log.error("Failed to add parameters.", e);
                     }
-                } catch (Exception e) {
-                    log.error("Failed to add parameters.", e);
                 }
+            } else {
+                log.error("Failed to add parameters. path: [{}], names: [{}]", pathIdVer, names);
             }
-        } else {
-            log.error("Failed to add parameters. path: [{}], names: [{}]", pathIdVer, names);
         }
         return null;
     }
@@ -949,7 +937,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      * #6
      * #6.1 - update WriteAttribute
      * #6.2 - del WriteAttribute
-     *
+     * <p>
      * #7 - update Firmware/Software in client
      *
      * @param clients       -
@@ -1293,7 +1281,7 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
 
     /**
      * #3.1 Fw update
-     *
+     * <p>
      * #3.2 Sw update
      *
      * @param lwM2MClient
@@ -1329,7 +1317,10 @@ public class DefaultLwM2MTransportMsgHandler implements LwM2mTransportMsgHandler
      * @return - sessionInfo after access connect client
      */
     public SessionInfoProto getSessionInfoOrCloseSession(Registration registration) {
-        return getSessionInfo(clientContext.getClientByEndpoint(registration.getEndpoint()));
+//        return getSessionInfo(clientContext.getClientByEndpoint(registration.getEndpoint()));
+        Optional<LwM2mClient> lwM2MClient = clientContext.updateRegistration(registration);
+//        return getSessionInfo(clientContext.getClientByEndpoint(registration.getEndpoint()));
+        return lwM2MClient.isPresent() ? getSessionInfo(lwM2MClient.get()) : null;
     }
 
     /**

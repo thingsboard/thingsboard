@@ -26,7 +26,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
-import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2mSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
 
 @Component
@@ -45,7 +44,7 @@ public class TbLwM2MAuthorizer implements Authorizer {
             TbX509DtlsSessionInfo sessionInfo = sessionStorage.get(registration.getEndpoint());
             if (sessionInfo != null) {
                 if (sessionInfo.getX509CommonName().endsWith(senderIdentity.getX509CommonName())) {
-                    clientContext.registerClient(registration, sessionInfo.getCredentials());
+                    clientContext.registerClientIsX509(registration, sessionInfo.getCredentials());
                     // X509 certificate is valid and matches endpoint.
                     return registration;
                 } else {

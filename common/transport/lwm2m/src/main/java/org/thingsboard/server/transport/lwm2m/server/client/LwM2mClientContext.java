@@ -30,15 +30,13 @@ public interface LwM2mClientContext {
 
     LwM2mClient getClientByRegistrationId(String registrationId);
 
-    LwM2mClient getClientByEndpoint(String endpoint);
-
     LwM2mClient getClientBySessionInfo(TransportProtos.SessionInfoProto sessionInfo);
 
-    Optional<TransportProtos.SessionInfoProto> register(LwM2mClient lwM2MClient, Registration registration) throws LwM2MClientStateException;
+    Optional<LwM2mClient> register(Registration registration);
 
-    void updateRegistration(LwM2mClient client, Registration registration) throws LwM2MClientStateException;
+    Optional<LwM2mClient> updateRegistration(Registration registration) ;
 
-    void unregister(LwM2mClient client, Registration registration) throws LwM2MClientStateException;
+    Optional<LwM2mClient> unregister(Registration registration);
 
     Collection<LwM2mClient> getLwM2mClients();
 
@@ -56,7 +54,6 @@ public interface LwM2mClientContext {
 
     LwM2mClient getClientByDeviceId(UUID deviceId);
 
-    void registerClient(Registration registration, ValidateDeviceCredentialsResponse credentials);
-
+    void registerClientIsX509(Registration registration, ValidateDeviceCredentialsResponse credentials);
 
 }

@@ -73,9 +73,6 @@ public class LwM2mClient implements Cloneable {
     private final Lock lock;
     @Getter
     @Setter
-    private LwM2MClientState state;
-    @Getter
-    @Setter
     private ContentFormat contentFormat;
     @Getter
     private final Map<String, ResourceValue> resources;
@@ -128,15 +125,15 @@ public class LwM2mClient implements Cloneable {
         return super.clone();
     }
 
-    public LwM2mClient(String nodeId, String endpoint) {
+    public LwM2mClient(String nodeId, Registration registration) {
         this.nodeId = nodeId;
-        this.endpoint = endpoint;
+        this.endpoint = registration.getEndpoint();
         this.lock = new ReentrantLock();
         this.delayedRequests = new ConcurrentHashMap<>();
         this.pendingReadRequests = new CopyOnWriteArrayList<>();
         this.resources = new ConcurrentHashMap<>();
         this.queuedRequests = new ConcurrentLinkedQueue<>();
-        this.state = LwM2MClientState.CREATED;
+        this.registration = registration;
     }
 
     public void init(String identity, SecurityInfo securityInfo, ValidateDeviceCredentialsResponse credentials, UUID profileId, UUID sessionId) {
