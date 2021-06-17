@@ -89,6 +89,13 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
       objectsList: [this.objectsList],
       objectLwm2m: ['']
     });
+    this.lwm2mListFormGroup.valueChanges.subscribe((value) => {
+      let formValue = null;
+      if (this.lwm2mListFormGroup.valid) {
+        formValue = value;
+      }
+      this.propagateChange(formValue);
+    });
   }
 
   private updateValidators = (): void => {
@@ -142,7 +149,7 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
         this.objectsList = [];
         this.modelValue = [];
       }
-      this.lwm2mListFormGroup.get('objectsList').setValue(this.objectsList, {emitEvents: false});
+      this.lwm2mListFormGroup.patchValue({objectsList: this.objectsList}, {emitEvent: false});
       this.dirty = false;
     }
   }
@@ -195,9 +202,9 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
     }
   }
 
-  private clear = (): void => {
+  private clear() {
     this.searchText = '';
-    this.lwm2mListFormGroup.get('objectLwm2m').patchValue(null);
+    this.lwm2mListFormGroup.get('objectLwm2m').patchValue(null, {emitEvent: false});
     setTimeout(() => {
       this.objectInput.nativeElement.blur();
       this.objectInput.nativeElement.focus();
