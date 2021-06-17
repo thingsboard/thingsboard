@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.downlink;
+package org.thingsboard.server.transport.lwm2m.server.log;
 
-import org.eclipse.leshan.core.request.DiscoverRequest;
-import org.eclipse.leshan.core.response.DiscoverResponse;
-import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
-import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
-public class TbLwM2MDiscoverCallback extends TbLwM2MTargetedCallback<DiscoverRequest, DiscoverResponse> {
+public interface LwM2MTelemetryLogService {
 
-    public TbLwM2MDiscoverCallback(LwM2MTelemetryLogService logService, LwM2mClient client, String targetId) {
-        super(logService, client, targetId);
-    }
+    void log(LwM2mClient client, String msg);
+
+    void log(String registrationId, String msg);
 
 }

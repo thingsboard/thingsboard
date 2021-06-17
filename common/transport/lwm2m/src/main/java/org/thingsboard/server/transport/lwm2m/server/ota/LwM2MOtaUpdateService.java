@@ -23,13 +23,17 @@ public interface LwM2MOtaUpdateService {
 
     void init(LwM2mClient client);
 
+    void forceFirmwareUpdate(LwM2mClient client);
+
     void onTargetFirmwareUpdate(LwM2mClient client, String newFirmwareTitle, String newFirmwareVersion, Optional<String> newFirmwareUrl);
 
     void onTargetSoftwareUpdate(LwM2mClient client, String newSoftwareTitle, String newSoftwareVersion);
 
     void onCurrentFirmwareNameUpdate(LwM2mClient client, String name);
 
-    void onCurrentFirmwareVersionUpdate(LwM2mClient client, String version);
+    void onCurrentFirmwareVersion3Update(LwM2mClient client, String version);
+
+    void onCurrentFirmwareVersion5Update(LwM2mClient client, String version);
 
     void onCurrentFirmwareStateUpdate(LwM2mClient client, Long state);
 

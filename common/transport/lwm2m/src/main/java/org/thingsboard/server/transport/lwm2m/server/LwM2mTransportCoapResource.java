@@ -24,6 +24,7 @@ import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.eclipse.californium.core.server.resources.ResourceObserver;
+import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
@@ -39,11 +40,11 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.S
 public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
     private final ConcurrentMap<String, ObserveRelation> tokenToObserveRelationMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, AtomicInteger> tokenToObserveNotificationSeqMap = new ConcurrentHashMap<>();
-    private final LwM2mUplinkMsgHandler handler;
+    private final OtaPackageDataCache otaPackageDataCache;
 
-    public LwM2mTransportCoapResource(LwM2mUplinkMsgHandler handler, String name) {
+    public LwM2mTransportCoapResource(OtaPackageDataCache otaPackageDataCache, String name) {
         super(name);
-        this.handler = handler;
+        this.otaPackageDataCache = otaPackageDataCache;
         this.setObservable(true); // enable observing
         this.addObserver(new CoapResourceObserver());
     }
@@ -154,7 +155,7 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
     }
 
     private byte[] getOtaData(UUID currentId) {
-        return ((DefaultLwM2MUplinkMsgHandler) handler).otaPackageDataCache.get(currentId.toString());
+        return otaPackageDataCache.get(currentId.toString());
     }
 
 }

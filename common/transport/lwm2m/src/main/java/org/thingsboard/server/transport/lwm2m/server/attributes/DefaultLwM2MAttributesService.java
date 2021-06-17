@@ -39,6 +39,7 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.downlink.LwM2mDownlinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplaceRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteResponseCallback;
+import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService;
 import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MOtaUpdateService;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
@@ -71,6 +72,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
     private final LwM2MTransportServerConfig config;
     private final LwM2mUplinkMsgHandler uplinkHandler;
     private final LwM2mDownlinkMsgHandler downlinkHandler;
+    private final LwM2MTelemetryLogService logService;
     private final LwM2MOtaUpdateService otaUpdateService;
 
     @Override
@@ -150,14 +152,6 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
             if (!otherAttributes.isEmpty()) {
                 onAttributesUpdate(lwM2MClient, otherAttributes);
             }
-        } else if (msg.getSharedDeletedCount() > 0 && lwM2MClient != null) {
-            msg.getSharedUpdatedList().forEach(tsKvProto -> {
-                String pathName = tsKvProto.getKv().getKey();
-                Object valueNew = getValueFromKvProto(tsKvProto.getKv());
-                if (OtaPackageUtil.getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.VERSION).equals(pathName) && !valueNew.equals(lwM2MClient.getFwUpdate().getCurrentVersion())) {
-                    lwM2MClient.getFwUpdate().setCurrentVersion((String) valueNew);
-                }
-            });
         } else if (lwM2MClient == null) {
             log.error("OnAttributeUpdate, lwM2MClient is null");
         }
@@ -197,12 +191,12 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
     private void pushUpdateToClientIfNeeded(LwM2mClient lwM2MClient, Object valueOld, Object newValue, String versionedId) {
         if (newValue != null && (valueOld == null || !newValue.toString().equals(valueOld.toString()))) {
             TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionedId).value(newValue).timeout(this.config.getTimeout()).build();
-            downlinkHandler.sendWriteReplaceRequest(lwM2MClient, request, new TbLwM2MWriteResponseCallback(uplinkHandler, lwM2MClient, versionedId));
+            downlinkHandler.sendWriteReplaceRequest(lwM2MClient, request, new TbLwM2MWriteResponseCallback(uplinkHandler, logService, lwM2MClient, versionedId));
         } else {
             log.error("Failed update resource [{}] [{}]", versionedId, newValue);
             String logMsg = String.format("%s: Failed update resource versionedId - %s value - %s. Value is not changed or bad",
                     LOG_LWM2M_ERROR, versionedId, newValue);
-            uplinkHandler.logToTelemetry(lwM2MClient, logMsg);
+            logService.log(lwM2MClient, logMsg);
             log.info("Failed update resource [{}] [{}]", versionedId, newValue);
         }
     }

@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
+import lombok.Getter;
+
 /**
  * FW Update Result
  * 0: Initial value. Once the updating process is initiated (Download /Update), this Resource MUST be reset to Initial value.
@@ -40,14 +42,17 @@ public enum UpdateResultFw {
     UPDATE_FAILED(8, "Firmware update failed", false),
     UNSUPPORTED_PROTOCOL(9, "Unsupported protocol", false);
 
-    public int code;
-    public String type;
-    public boolean isAgain;
+    @Getter
+    private int code;
+    @Getter
+    private String type;
+    @Getter
+    private boolean again;
 
     UpdateResultFw(int code, String type, boolean isAgain) {
         this.code = code;
         this.type = type;
-        this.isAgain = isAgain;
+        this.again = isAgain;
     }
 
     public static UpdateResultFw fromUpdateResultFwByType(String type) {

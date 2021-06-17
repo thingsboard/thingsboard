@@ -52,10 +52,6 @@ public interface LwM2mUplinkMsgHandler {
 
     void onAwakeDev(Registration registration);
 
-    void logToTelemetry(LwM2mClient client, String msg);
-
-    void logToTelemetry(String registrationId, String msg);
-
     void onWriteResponseOk(LwM2mClient client, String path, WriteRequest request);
 
     void onToTransportUpdateCredentials(TransportProtos.ToTransportUpdateCredentialsProto updateCredentials);

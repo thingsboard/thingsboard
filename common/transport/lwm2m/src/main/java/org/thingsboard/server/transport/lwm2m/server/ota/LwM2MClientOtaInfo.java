@@ -31,7 +31,6 @@ public class LwM2MClientOtaInfo {
     private final OtaPackageType type;
 
     private String baseUrl;
-    private boolean supported;
 
     private boolean targetFetchFailure;
     private String targetName;
@@ -40,7 +39,8 @@ public class LwM2MClientOtaInfo {
 
     private boolean currentFetchFailure;
     private String currentName;
-    private String currentVersion;
+    private String currentVersion3;
+    private String currentVersion5;
     private Integer deliveryMethod;
 
     //TODO: use value from device if applicable;
@@ -65,24 +65,27 @@ public class LwM2MClientOtaInfo {
     }
 
     public boolean isUpdateRequired() {
-        if (StringUtils.isEmpty(targetName) ||
-                StringUtils.isEmpty(targetVersion) ||
-                (StringUtils.isEmpty(currentName) && StringUtils.isEmpty(currentVersion))) {
+        if (StringUtils.isEmpty(targetName) || StringUtils.isEmpty(targetVersion) || !isSupported()) {
             return false;
         } else {
             String targetPackageId = getPackageId(targetName, targetVersion);
-            String currentPackageId = getPackageId(currentName, currentVersion);
+            String currentPackageIdUsingObject5 = getPackageId(currentName, currentVersion5);
             if (StringUtils.isNotEmpty(failedPackageId) && failedPackageId.equals(targetPackageId)) {
                 return false;
             } else {
-                return !targetPackageId.equals(currentPackageId);
+                if (targetPackageId.equals(currentPackageIdUsingObject5)) {
+                    return false;
+                } else if (StringUtils.isNotEmpty(currentVersion3)) {
+                    return !currentVersion3.contains(targetPackageId);
+                } else {
+                    return true;
+                }
             }
         }
     }
 
-    public boolean isUpdateFailed() {
-        return (StringUtils.isNotEmpty(targetName) && StringUtils.isNotEmpty(targetVersion) &&
-                (StringUtils.isEmpty(currentName) && StringUtils.isEmpty(currentVersion)));
+    public boolean isSupported() {
+        return StringUtils.isNotEmpty(currentName) || StringUtils.isNotEmpty(currentVersion5) || StringUtils.isNotEmpty(currentVersion3);
     }
 
     public void setUpdateResult(UpdateResultFw updateResult) {

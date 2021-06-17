@@ -19,13 +19,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.request.ReadRequest;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 @Slf4j
-public class TbLwM2MReadCallback extends TbLwM2MTargetedCallback<ReadRequest, ReadResponse> {
+public class TbLwM2MReadCallback extends TbLwM2MUplinkTargetedCallback<ReadRequest, ReadResponse> {
 
-    public TbLwM2MReadCallback(LwM2mUplinkMsgHandler handler, LwM2mClient client, String targetId) {
-        super(handler, client, targetId);
+    public TbLwM2MReadCallback(LwM2mUplinkMsgHandler handler, LwM2MTelemetryLogService logService, LwM2mClient client, String targetId) {
+        super(handler, logService, client, targetId);
     }
 
     @Override

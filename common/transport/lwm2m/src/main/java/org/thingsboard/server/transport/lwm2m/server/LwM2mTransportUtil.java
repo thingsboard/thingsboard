@@ -201,16 +201,12 @@ public class LwM2mTransportUtil {
         }
     }
 
-    /**
-     * FirmwareUpdateStatus {
-     * DOWNLOADING, DOWNLOADED, VERIFIED, UPDATING, UPDATED, FAILED
-     */
-    public static OtaPackageUpdateStatus equalsFwSateFwResultToFirmwareUpdateStatus(UpdateStateFw updateStateFw, UpdateResultFw updateResultFw) {
+    public static Optional<OtaPackageUpdateStatus> toOtaPackageUpdateStatus(UpdateResultFw updateResultFw) {
         switch (updateResultFw) {
             case INITIAL:
-                return toOtaPackageUpdateStatus(updateStateFw);
+                return Optional.empty();
             case UPDATE_SUCCESSFULLY:
-                return UPDATED;
+                return Optional.of(UPDATED);
             case NOT_ENOUGH:
             case OUT_OFF_MEMORY:
             case CONNECTION_LOST:
@@ -219,42 +215,22 @@ public class LwM2mTransportUtil {
             case INVALID_URI:
             case UPDATE_FAILED:
             case UNSUPPORTED_PROTOCOL:
-                return FAILED;
-            default:
-                throw new CodecException("Invalid value stateFw %s   %s for FirmwareUpdateStatus.", updateStateFw.name(), updateResultFw.name());
-        }
-    }
-
-    public static OtaPackageUpdateStatus toOtaPackageUpdateStatus(UpdateResultFw updateResultFw) {
-        switch (updateResultFw) {
-            case INITIAL:
-                return VERIFIED;
-            case UPDATE_SUCCESSFULLY:
-                return UPDATED;
-            case NOT_ENOUGH:
-            case OUT_OFF_MEMORY:
-            case CONNECTION_LOST:
-            case INTEGRITY_CHECK_FAILURE:
-            case UNSUPPORTED_TYPE:
-            case INVALID_URI:
-            case UPDATE_FAILED:
-            case UNSUPPORTED_PROTOCOL:
-                return FAILED;
+                return Optional.of(FAILED);
             default:
                 throw new CodecException("Invalid value stateFw %s for FirmwareUpdateStatus.", updateResultFw.name());
         }
     }
 
-    public static OtaPackageUpdateStatus toOtaPackageUpdateStatus(UpdateStateFw updateStateFw) {
+    public static Optional<OtaPackageUpdateStatus> toOtaPackageUpdateStatus(UpdateStateFw updateStateFw) {
         switch (updateStateFw) {
             case IDLE:
-                return VERIFIED;
+                return Optional.empty();
             case DOWNLOADING:
-                return DOWNLOADING;
+                return Optional.of(DOWNLOADING);
             case DOWNLOADED:
-                return DOWNLOADED;
+                return Optional.of(DOWNLOADED);
             case UPDATING:
-                return UPDATING;
+                return Optional.of(UPDATING);
             default:
                 throw new CodecException("Invalid value stateFw %d for FirmwareUpdateStatus.", updateStateFw);
         }
@@ -471,7 +447,7 @@ public class LwM2mTransportUtil {
                 return lwM2mOtaConvert;
             } else if (FW_RESULT_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
-                lwM2mOtaConvert.setValue(UpdateResultFw.fromUpdateResultFwByCode(((Long) value).intValue()).type);
+                lwM2mOtaConvert.setValue(UpdateResultFw.fromUpdateResultFwByCode(((Long) value).intValue()).getType());
                 return lwM2mOtaConvert;
             } else if (SW_UPDATE_STATE_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
@@ -585,7 +561,7 @@ public class LwM2mTransportUtil {
 
     public static String fromVersionedIdToObjectId(String pathIdVer) {
         try {
-            if(pathIdVer == null) {
+            if (pathIdVer == null) {
                 return null;
             }
             String[] keyArray = pathIdVer.split(LWM2M_SEPARATOR_PATH);

@@ -95,12 +95,6 @@ public class LwM2mClient implements Cloneable {
     private UUID profileId;
     @Getter
     @Setter
-    private volatile LwM2mFwSwUpdate fwUpdate;
-    @Getter
-    @Setter
-    private volatile LwM2mFwSwUpdate swUpdate;
-    @Getter
-    @Setter
     private Registration registration;
 
     private ValidateDeviceCredentialsResponse credentials;
@@ -363,22 +357,6 @@ public class LwM2mClient implements Cloneable {
         } else {
             return ContentFormat.TEXT;
         }
-    }
-
-    public LwM2mFwSwUpdate getFwUpdate(LwM2mUplinkMsgHandler handler, LwM2mClientContext clientContext) {
-        if (this.fwUpdate == null) {
-            var profile = clientContext.getProfile(this.getProfileId());
-            this.fwUpdate = new LwM2mFwSwUpdate(handler, this, OtaPackageType.FIRMWARE, profile.getClientLwM2mSettings().getFwUpdateStrategy());
-        }
-        return this.fwUpdate;
-    }
-
-    public LwM2mFwSwUpdate getSwUpdate(LwM2mUplinkMsgHandler handler, LwM2mClientContext clientContext) {
-        if (this.swUpdate == null) {
-            var profile = clientContext.getProfile(this.getProfileId());
-            this.swUpdate = new LwM2mFwSwUpdate(handler, this, OtaPackageType.SOFTWARE, profile.getClientLwM2mSettings().getSwUpdateStrategy());
-        }
-        return this.fwUpdate;
     }
 
 }

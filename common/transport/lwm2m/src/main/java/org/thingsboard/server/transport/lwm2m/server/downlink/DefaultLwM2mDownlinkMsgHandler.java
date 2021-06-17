@@ -26,7 +26,6 @@ import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.ObjectLink;
 import org.eclipse.leshan.core.node.codec.CodecException;
 import org.eclipse.leshan.core.observation.Observation;
-import org.eclipse.leshan.core.request.CancelObservationRequest;
 import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.request.DeleteRequest;
 import org.eclipse.leshan.core.request.DiscoverRequest;
@@ -45,7 +44,6 @@ import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.core.response.WriteAttributesResponse;
 import org.eclipse.leshan.core.response.WriteResponse;
 import org.eclipse.leshan.core.util.Hex;
-import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
@@ -54,17 +52,18 @@ import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.common.LwM2MExecutorAwareService;
+import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -74,25 +73,38 @@ import static org.eclipse.leshan.core.attributes.Attribute.LESSER_THAN;
 import static org.eclipse.leshan.core.attributes.Attribute.MAXIMUM_PERIOD;
 import static org.eclipse.leshan.core.attributes.Attribute.MINIMUM_PERIOD;
 import static org.eclipse.leshan.core.attributes.Attribute.STEP;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.RESPONSE_REQUEST_CHANNEL;
 
 @Slf4j
 @Service
 @TbLwM2mTransportComponent
 @RequiredArgsConstructor
-public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
-    private ExecutorService responseRequestExecutor;
+public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService implements LwM2mDownlinkMsgHandler {
 
     public LwM2mValueConverterImpl converter;
 
     private final LwM2mTransportContext context;
     private final LwM2MTransportServerConfig config;
+    private final LwM2MTelemetryLogService logService;
 
     @PostConstruct
     public void init() {
+        super.init();
         this.converter = LwM2mValueConverterImpl.getInstance();
-        responseRequestExecutor = Executors.newFixedThreadPool(this.config.getResponsePoolSize(),
-                new NamedThreadFactory(String.format("LwM2M %s channel response after request", RESPONSE_REQUEST_CHANNEL)));
+    }
+
+    @PreDestroy
+    public void destroy() {
+        super.destroy();
+    }
+
+    @Override
+    protected int getExecutorSize() {
+        return config.getDownlinkPoolSize();
+    }
+
+    @Override
+    protected String getExecutorName() {
+        return "LwM2M Downlink";
     }
 
     @Override
@@ -221,7 +233,8 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
              **/
             Collection<LwM2mResource> resources = client.getNewResourceForInstance(request.getVersionedId(), request.getValue(), this.config.getModelProvider(), this.converter);
             ResourceModel resourceModelWrite = client.getResourceModel(request.getVersionedId(), this.config.getModelProvider());
-            WriteRequest downlink = new WriteRequest(WriteRequest.Mode.UPDATE, convertResourceModelTypeToContentFormat(client, resourceModelWrite.type), resultIds.getObjectId(),
+            ContentFormat contentFormat = request.getObjectContentFormat() != null ? request.getObjectContentFormat() : convertResourceModelTypeToContentFormat(client, resourceModelWrite.type);
+            WriteRequest downlink = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(),
                     resultIds.getObjectInstanceId(), resources);
             sendRequest(client, downlink, request.getTimeout(), callback);
         } else if (resultIds.isObjectInstance()) {
@@ -245,19 +258,24 @@ public class DefaultLwM2mDownlinkMsgHandler implements LwM2mDownlinkMsgHandler {
 
     private <R extends SimpleDownlinkRequest<T>, T extends LwM2mResponse> void sendRequest(LwM2mClient client, R request, long timeoutInMs, DownlinkRequestCallback<R, T> callback) {
         Registration registration = client.getRegistration();
-        context.getServer().send(registration, request, timeoutInMs, response -> {
-            responseRequestExecutor.submit(() -> {
-                try {
-                    callback.onSuccess(request, response);
-                } catch (Exception e) {
-                    log.error("[{}] failed to process successful response [{}] ", registration.getEndpoint(), response, e);
-                }
+        try {
+            logService.log(client, String.format("[%s][%s] Sending request: %s to %s", registration.getId(), registration.getSocketAddress(), request.getClass().getSimpleName(), request.getPath()));
+            context.getServer().send(registration, request, timeoutInMs, response -> {
+                executor.submit(() -> {
+                    try {
+                        callback.onSuccess(request, response);
+                    } catch (Exception e) {
+                        log.error("[{}] failed to process successful response [{}] ", registration.getEndpoint(), response, e);
+                    }
+                });
+            }, e -> {
+                executor.submit(() -> {
+                    callback.onError(JacksonUtil.toString(request), e);
+                });
             });
-        }, e -> {
-            responseRequestExecutor.submit(() -> {
-                callback.onError(JacksonUtil.toString(request), e);
-            });
-        });
+        } catch (Exception e) {
+            callback.onError(JacksonUtil.toString(request), e);
+        }
     }
 
     private WriteRequest getWriteRequestSingleResource(ResourceModel.Type type, ContentFormat contentFormat, int objectId, int instanceId, int resourceId, Object value) {
