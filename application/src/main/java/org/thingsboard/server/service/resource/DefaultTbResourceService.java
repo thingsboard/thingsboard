@@ -87,7 +87,7 @@ public class DefaultTbResourceService implements TbResourceService {
                     throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getSearchText()));
                 }
             } catch (InvalidDDFFileException | IOException e) {
-                throw new ThingsboardException(e, ThingsboardErrorCode.GENERAL);
+                throw new ThingsboardException(e.getMessage(), ThingsboardErrorCode.GENERAL);
             }
             if (resource.getResourceType().equals(ResourceType.LWM2M_MODEL) && toLwM2mObject(resource, true) == null) {
                 throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getSearchText()));
