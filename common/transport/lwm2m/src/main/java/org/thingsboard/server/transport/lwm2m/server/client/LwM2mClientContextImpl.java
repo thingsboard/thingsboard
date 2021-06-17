@@ -17,13 +17,16 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
+import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
@@ -39,7 +42,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 import static org.eclipse.leshan.core.SecurityMode.NO_SEC;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertObjectIdToVersionedId;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.validateObjectVerFromKey;
 
 @Slf4j
 @Service
@@ -48,10 +53,11 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.c
 public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     private final LwM2mTransportContext context;
+    private final LwM2MTransportServerConfig config;
     private final TbEditableSecurityStore securityStore;
     private final Map<String, LwM2mClient> lwM2mClientsByEndpoint = new ConcurrentHashMap<>();
     private final Map<String, LwM2mClient> lwM2mClientsByRegistrationId = new ConcurrentHashMap<>();
-    private Map<UUID, LwM2mClientProfile> profiles = new ConcurrentHashMap<>();
+    private final Map<UUID, Lwm2mDeviceProfileTransportConfiguration> profiles = new ConcurrentHashMap<>();
 
     @Override
     public LwM2mClient getClientByEndpoint(String endpoint) {
@@ -59,20 +65,22 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     @Override
-    public void register(LwM2mClient lwM2MClient, Registration registration) throws LwM2MClientStateException {
+    public Optional<TransportProtos.SessionInfoProto> register(LwM2mClient lwM2MClient, Registration registration) throws LwM2MClientStateException {
+        TransportProtos.SessionInfoProto oldSession = null;
         lwM2MClient.lock();
         try {
             if (LwM2MClientState.UNREGISTERED.equals(lwM2MClient.getState())) {
                 throw new LwM2MClientStateException(lwM2MClient.getState(), "Client is in invalid state.");
             }
+            oldSession = lwM2MClient.getSession();
             TbLwM2MSecurityInfo securityInfo = securityStore.getTbLwM2MSecurityInfoByEndpoint(lwM2MClient.getEndpoint());
             if (securityInfo.getSecurityMode() != null) {
                 if (securityInfo.getDeviceProfile() != null) {
-                    UUID profileUuid = profileUpdate(securityInfo.getDeviceProfile()) != null ? securityInfo.getDeviceProfile().getUuidId() : null;
+                    profileUpdate(securityInfo.getDeviceProfile());
                     if (securityInfo.getSecurityInfo() != null) {
-                        lwM2MClient.init(securityInfo.getSecurityInfo().getIdentity(), securityInfo.getSecurityInfo(), securityInfo.getMsg(), profileUuid, UUID.randomUUID());
+                        lwM2MClient.init(securityInfo.getSecurityInfo().getIdentity(), securityInfo.getSecurityInfo(), securityInfo.getMsg(), UUID.randomUUID());
                     } else if (NO_SEC.equals(securityInfo.getSecurityMode())) {
-                        lwM2MClient.init(null, null, securityInfo.getMsg(), profileUuid, UUID.randomUUID());
+                        lwM2MClient.init(null, null, securityInfo.getMsg(), UUID.randomUUID());
                     } else {
                         throw new RuntimeException(String.format("Registration failed: device %s not found.", lwM2MClient.getEndpoint()));
                     }
@@ -88,6 +96,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         } finally {
             lwM2MClient.unlock();
         }
+        return Optional.ofNullable(oldSession);
     }
 
     @Override
@@ -156,6 +165,28 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         return lwM2mClient;
     }
 
+    /**
+     * Get path to resource from profile equal keyName
+     *
+     * @param sessionInfo -
+     * @param keyName     -
+     * @return -
+     */
+    @Override
+    public String getObjectIdByKeyNameFromProfile(TransportProtos.SessionInfoProto sessionInfo, String keyName) {
+        return getObjectIdByKeyNameFromProfile(getClientBySessionInfo(sessionInfo), keyName);
+    }
+
+    @Override
+    public String getObjectIdByKeyNameFromProfile(LwM2mClient lwM2mClient, String keyName) {
+        Lwm2mDeviceProfileTransportConfiguration profile = getProfile(lwM2mClient.getProfileId());
+
+        return profile.getObserveAttr().getKeyName().entrySet().stream()
+                .filter(e -> e.getValue().equals(keyName) && validateResourceInModel(lwM2mClient, e.getKey(), false)).findFirst().orElseThrow(
+                        () -> new IllegalArgumentException(keyName + " is not configured in the device profile!")
+                ).getKey();
+    }
+
     public Registration getRegistration(String registrationId) {
         return this.lwM2mClientsByRegistrationId.get(registrationId).getRegistration();
     }
@@ -163,7 +194,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     @Override
     public void registerClient(Registration registration, ValidateDeviceCredentialsResponse credentials) {
         LwM2mClient client = getClientByEndpoint(registration.getEndpoint());
-        client.init(null, null, credentials, credentials.getDeviceProfile().getUuidId(), UUID.randomUUID());
+        client.init(null, null, credentials, UUID.randomUUID());
         lwM2mClientsByRegistrationId.put(registration.getId(), client);
         profileUpdate(credentials.getDeviceProfile());
     }
@@ -174,35 +205,20 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     @Override
-    public Map<UUID, LwM2mClientProfile> getProfiles() {
-        return profiles;
-    }
-
-    @Override
-    public LwM2mClientProfile getProfile(UUID profileId) {
+    public Lwm2mDeviceProfileTransportConfiguration getProfile(UUID profileId) {
         return profiles.get(profileId);
     }
 
     @Override
-    public LwM2mClientProfile getProfile(Registration registration) {
-        return this.getProfiles().get(getClientByEndpoint(registration.getEndpoint()).getProfileId());
+    public Lwm2mDeviceProfileTransportConfiguration getProfile(Registration registration) {
+        return profiles.get(getClientByEndpoint(registration.getEndpoint()).getProfileId());
     }
 
     @Override
-    public Map<UUID, LwM2mClientProfile> setProfiles(Map<UUID, LwM2mClientProfile> profiles) {
-        return this.profiles = profiles;
-    }
-
-    @Override
-    public LwM2mClientProfile profileUpdate(DeviceProfile deviceProfile) {
-        LwM2mClientProfile lwM2MClientProfile = deviceProfile != null ?
-                LwM2mTransportUtil.toLwM2MClientProfile(deviceProfile) : null;
-        if (lwM2MClientProfile != null) {
-            profiles.put(deviceProfile.getUuidId(), lwM2MClientProfile);
-            return lwM2MClientProfile;
-        } else {
-            return null;
-        }
+    public Lwm2mDeviceProfileTransportConfiguration profileUpdate(DeviceProfile deviceProfile) {
+        Lwm2mDeviceProfileTransportConfiguration lwM2MClientProfile = LwM2mTransportUtil.toLwM2MClientProfile(deviceProfile);
+        profiles.put(deviceProfile.getUuidId(), lwM2MClientProfile);
+        return lwM2MClientProfile;
     }
 
     @Override
@@ -211,7 +227,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         Arrays.stream(client.getRegistration().getObjectLinks()).forEach(link -> {
             LwM2mPath pathIds = new LwM2mPath(link.getUrl());
             if (!pathIds.isRoot()) {
-                clientObjects.add(convertPathFromObjectIdToIdVer(link.getUrl(), client.getRegistration()));
+                clientObjects.add(convertObjectIdToVersionedId(link.getUrl(), client.getRegistration()));
             }
         });
         return (clientObjects.size() > 0) ? clientObjects : null;
@@ -220,6 +236,16 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     @Override
     public LwM2mClient getClientByDeviceId(UUID deviceId) {
         return lwM2mClientsByRegistrationId.values().stream().filter(e -> deviceId.equals(e.getDeviceId())).findFirst().orElse(null);
+    }
+
+    private boolean validateResourceInModel(LwM2mClient lwM2mClient, String pathIdVer, boolean isWritableNotOptional) {
+        ResourceModel resourceModel = lwM2mClient.getResourceModel(pathIdVer, this.config
+                .getModelProvider());
+        Integer objectId = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer)).getObjectId();
+        String objectVer = validateObjectVerFromKey(pathIdVer);
+        return resourceModel != null && (isWritableNotOptional ?
+                objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)) && resourceModel.operations.isWritable() :
+                objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)));
     }
 
 }

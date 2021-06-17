@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server;
+package org.thingsboard.server.transport.lwm2m.server.uplink;
 
 import org.eclipse.leshan.core.observation.Observation;
+import org.eclipse.leshan.core.request.WriteRequest;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.common.data.Device;
@@ -23,12 +24,11 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientRpcRequest;
 
 import java.util.Collection;
 import java.util.Optional;
 
-public interface LwM2mTransportMsgHandler {
+public interface LwM2mUplinkMsgHandler {
 
     void onRegistered(Registration registration, Collection<Observation> previousObsersations);
 
@@ -38,33 +38,23 @@ public interface LwM2mTransportMsgHandler {
 
     void onSleepingDev(Registration registration);
 
-    void setCancelObservationsAll(Registration registration);
-
-    void onUpdateValueAfterReadResponse(Registration registration, String path, ReadResponse response, LwM2mClientRpcRequest rpcRequest);
-
-    void onAttributeUpdate(TransportProtos.AttributeUpdateNotificationMsg msg, TransportProtos.SessionInfoProto sessionInfo);
+    void onUpdateValueAfterReadResponse(Registration registration, String path, ReadResponse response);
 
     void onDeviceProfileUpdate(TransportProtos.SessionInfoProto sessionInfo, DeviceProfile deviceProfile);
 
     void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt);
 
-    void onResourceUpdate (Optional<TransportProtos.ResourceUpdateMsg> resourceUpdateMsgOpt);
+    void onResourceUpdate(Optional<TransportProtos.ResourceUpdateMsg> resourceUpdateMsgOpt);
 
     void onResourceDelete(Optional<TransportProtos.ResourceDeleteMsg> resourceDeleteMsgOpt);
-
-    void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg toDeviceRequest, TransportProtos.SessionInfoProto sessionInfo);
-
-    void onToDeviceRpcResponse(TransportProtos.ToDeviceRpcResponseMsg toDeviceRpcResponse, TransportProtos.SessionInfoProto sessionInfo);
-
-    void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse);
 
     void doDisconnect(TransportProtos.SessionInfoProto sessionInfo);
 
     void onAwakeDev(Registration registration);
 
-    void sendLogsToThingsboard(LwM2mClient client, String msg);
+    void onWriteResponseOk(LwM2mClient client, String path, WriteRequest request);
 
-    void sendLogsToThingsboard(String registrationId, String msg);
+    void onToTransportUpdateCredentials(TransportProtos.ToTransportUpdateCredentialsProto updateCredentials);
 
     LwM2MTransportServerConfig getConfig();
 }

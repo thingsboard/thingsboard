@@ -13,20 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.client;
+package org.thingsboard.server.transport.lwm2m.server.rpc;
 
 import lombok.Data;
 
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 @Data
-public class ResultsAnalyzerParameters {
-    Set<String> pathPostParametersAdd;
-    Set<String> pathPostParametersDel;
+public class IdOrKeyRequest {
 
-    public ResultsAnalyzerParameters() {
-        this.pathPostParametersAdd = ConcurrentHashMap.newKeySet();
-        this.pathPostParametersDel = ConcurrentHashMap.newKeySet();
-    }
+    private String key;
+    private String id;
+
 }
