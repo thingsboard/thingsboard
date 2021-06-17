@@ -148,9 +148,9 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
         LwM2MTestClient client = new LwM2MTestClient(executor, ENDPOINT);
         client.init(SECURITY, COAP_CONFIG);
 
-        device.setFirmwareId(firmware.getId());
-
         Thread.sleep(1000);
+
+        device.setFirmwareId(firmware.getId());
 
         device = doPost("/api/device", device, Device.class);
 

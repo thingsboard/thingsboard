@@ -35,8 +35,8 @@ import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
-import org.thingsboard.server.transport.lwm2m.server.UpdateStateFw;
 import org.thingsboard.server.transport.lwm2m.server.UpdateResultFw;
+import org.thingsboard.server.transport.lwm2m.server.UpdateStateFw;
 import org.thingsboard.server.transport.lwm2m.server.attributes.LwM2MAttributesService;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
@@ -193,6 +193,8 @@ public class DefaultLwM2MOtaUpdateService implements LwM2MOtaUpdateService {
             } else {
                 startFirmwareUpdateUsingBinary(client, fwInfo);
             }
+        } else if (fwInfo.isUpdateFailed()) {
+            sendStateUpdateToTelemetry(client, fwInfo, OtaPackageUpdateStatus.FAILED);
         }
     }
 

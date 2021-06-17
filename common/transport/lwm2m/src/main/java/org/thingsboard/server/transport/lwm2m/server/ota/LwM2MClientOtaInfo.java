@@ -79,6 +79,11 @@ public class LwM2MClientOtaInfo {
         }
     }
 
+    public boolean isUpdateFailed() {
+        return (StringUtils.isNotEmpty(targetName) && StringUtils.isNotEmpty(targetVersion) &&
+                (StringUtils.isEmpty(currentName) && StringUtils.isEmpty(currentVersion)));
+    }
+
     public void setUpdateResult(UpdateResultFw updateResult) {
         this.updateResult = updateResult;
         switch (updateResult) {
