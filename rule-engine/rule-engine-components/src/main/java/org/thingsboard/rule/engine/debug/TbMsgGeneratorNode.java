@@ -152,7 +152,7 @@ public class TbMsgGeneratorNode implements TbNode {
                 ctx.logJsEvalResponse();
                 prevMsg = ctx.newMsg(ServiceQueue.MAIN, generated.getType(), originatorId, msg.getCustomerId(), generated.getMetaData(), generated.getData());
                 return Futures.immediateFuture(prevMsg);
-            }, MoreExecutors.directExecutor());
+            }, MoreExecutors.directExecutor()); //usually it runs on js-executor-remote-callback thread pool
         }
         return Futures.immediateFuture(prevMsg);
 
