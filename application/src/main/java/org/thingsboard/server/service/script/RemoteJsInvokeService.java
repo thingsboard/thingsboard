@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StopWatch;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
@@ -180,6 +181,9 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .setInvokeRequest(jsRequestBuilder.build())
                 .build();
 
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
+
         ListenableFuture<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> future = requestTemplate.send(new TbProtoJsQueueMsg<>(UUID.randomUUID(), jsRequestWrapper));
         if (maxRequestsTimeout > 0) {
             future = Futures.withTimeout(future, maxRequestsTimeout, TimeUnit.MILLISECONDS, timeoutExecutorService);
@@ -201,6 +205,8 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
             }
         }, callbackExecutor);
         return Futures.transform(future, response -> {
+            stopWatch.stop();
+            log.trace("doInvokeFunction js-response took {}ms for uuid {}", stopWatch.getTotalTimeMillis(), response.getKey());
             JsInvokeProtos.JsInvokeResponse invokeResult = response.getValue().getInvokeResponse();
             if (invokeResult.getSuccess()) {
                 return invokeResult.getResult();
