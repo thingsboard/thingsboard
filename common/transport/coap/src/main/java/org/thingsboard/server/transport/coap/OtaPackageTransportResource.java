@@ -20,8 +20,10 @@ import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.network.Exchange;
+import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
+import org.eclipse.californium.core.server.resources.ResourceObserver;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
@@ -41,6 +43,8 @@ public class OtaPackageTransportResource extends AbstractCoapTransportResource {
 
     public OtaPackageTransportResource(CoapTransportContext ctx, OtaPackageType otaPackageType) {
         super(ctx, otaPackageType.getKeyPrefix());
+        this.setObservable(true);
+        this.addObserver(new OtaPackageTransportResource.CoapResourceObserver());
         this.otaPackageType = otaPackageType;
     }
 
@@ -135,9 +139,42 @@ public class OtaPackageTransportResource extends AbstractCoapTransportResource {
             if (exchange.getRequestOptions().getBlock2() != null) {
                 int chunkSize = exchange.getRequestOptions().getBlock2().getSzx();
                 boolean lastFlag = data.length > chunkSize;
+                response.getOptions().setUriPath(exchange.getRequestOptions().getUriPathString());
                 response.getOptions().setBlock2(chunkSize, lastFlag, 0);
             }
             exchange.respond(response);
+        }
+    }
+
+    public class CoapResourceObserver implements ResourceObserver {
+        @Override
+        public void changedName(String old) {
+
+        }
+
+        @Override
+        public void changedPath(String old) {
+
+        }
+
+        @Override
+        public void addedChild(Resource child) {
+
+        }
+
+        @Override
+        public void removedChild(Resource child) {
+
+        }
+
+        @Override
+        public void addedObserveRelation(ObserveRelation relation) {
+
+        }
+
+        @Override
+        public void removedObserveRelation(ObserveRelation relation) {
+
         }
     }
 
