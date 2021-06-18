@@ -148,6 +148,22 @@ export enum ValueType {
   JSON = 'JSON'
 }
 
+export enum DataType {
+  STRING = 'STRING',
+  LONG = 'LONG',
+  BOOLEAN = 'BOOLEAN',
+  DOUBLE = 'DOUBLE',
+  JSON = 'JSON'
+}
+
+export const DataTypeTranslationMap = new Map([
+  [DataType.STRING, 'value.string'],
+  [DataType.LONG, 'value.integer'],
+  [DataType.BOOLEAN, 'value.boolean'],
+  [DataType.DOUBLE, 'value.double'],
+  [DataType.JSON, 'value.json']
+]);
+
 export const valueTypesMap = new Map<ValueType, ValueTypeData>(
   [
     [
