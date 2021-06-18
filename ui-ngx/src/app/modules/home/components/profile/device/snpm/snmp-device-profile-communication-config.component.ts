@@ -179,7 +179,7 @@ export class SnmpDeviceProfileCommunicationConfigComponent implements OnInit, On
     if (isUndefinedOrNull(value)) {
       value = {
         spec: this.getFirstUnusedSeverity(),
-        queryingFrequencyMs: 0,
+        queryingFrequencyMs: 5000,
         mappings: null
       };
     }
@@ -196,7 +196,7 @@ export class SnmpDeviceProfileCommunicationConfigComponent implements OnInit, On
     ).subscribe(spec => {
       if (this.isShowFrequency(spec)) {
         form.addControl('queryingFrequencyMs',
-          this.fb.control(0, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]));
+          this.fb.control(5000, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]));
       } else {
         form.removeControl('queryingFrequencyMs');
       }

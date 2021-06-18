@@ -362,7 +362,7 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
         break;
       case DeviceTransportType.SNMP:
         const snmpTransportConfiguration: SnmpDeviceProfileTransportConfiguration = {
-          timeoutMs: 0,
+          timeoutMs: 500,
           retries: 0,
           communicationConfigs: null
         };
@@ -394,7 +394,12 @@ export function createDeviceTransportConfiguration(type: DeviceTransportType): D
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
         break;
       case DeviceTransportType.SNMP:
-        const snmpTransportConfiguration: SnmpDeviceTransportConfiguration = {};
+        const snmpTransportConfiguration: SnmpDeviceTransportConfiguration = {
+          host: 'localhost',
+          port: 161,
+          protocolVersion: SnmpDeviceProtocolVersion.V2C,
+          community: 'public'
+        };
         transportConfiguration = {...snmpTransportConfiguration, type: DeviceTransportType.SNMP};
         break;
     }
@@ -572,8 +577,57 @@ export interface Lwm2mDeviceTransportConfiguration {
   [key: string]: any;
 }
 
+export enum SnmpDeviceProtocolVersion {
+  V1 = 'V1',
+  V2C = 'V2C',
+  V3 = 'V3'
+}
+
+export enum SnmpAuthenticationProtocol {
+  SHA_1 = 'SHA_1',
+  SHA_224 = 'SHA_224',
+  SHA_256 = 'SHA_256',
+  SHA_384 = 'SHA_384',
+  SHA_512 = 'SHA_512',
+  MD5 = 'MD%'
+}
+
+export const SnmpAuthenticationProtocolTranslationMap = new Map<SnmpAuthenticationProtocol, string>([
+  [SnmpAuthenticationProtocol.SHA_1, 'SHA-1'],
+  [SnmpAuthenticationProtocol.SHA_224, 'SHA-224'],
+  [SnmpAuthenticationProtocol.SHA_256, 'SHA-256'],
+  [SnmpAuthenticationProtocol.SHA_384, 'SHA-384'],
+  [SnmpAuthenticationProtocol.SHA_512, 'SHA-512'],
+  [SnmpAuthenticationProtocol.MD5, 'MD5']
+]);
+
+export enum SnmpPrivacyProtocol {
+  DES = 'DES',
+  AES_128 = 'AES_128',
+  AES_192 = 'AES_192',
+  AES_256 = 'AES_256'
+}
+
+export const SnmpPrivacyProtocolTranslationMap = new Map<SnmpPrivacyProtocol, string>([
+  [SnmpPrivacyProtocol.DES, 'DES'],
+  [SnmpPrivacyProtocol.AES_128, 'AES-128'],
+  [SnmpPrivacyProtocol.AES_192, 'AES-192'],
+  [SnmpPrivacyProtocol.AES_256, 'AES-256'],
+]);
+
 export interface SnmpDeviceTransportConfiguration {
-  [key: string]: any;
+  host?: string;
+  port?: number;
+  protocolVersion?: SnmpDeviceProtocolVersion;
+  community?: string;
+  username?: string;
+  securityName?: string;
+  contextName?: string;
+  authenticationProtocol?: SnmpAuthenticationProtocol;
+  authenticationPassphrase?: string;
+  privacyProtocol?: SnmpPrivacyProtocol;
+  privacyPassphrase?: string;
+  engineId?: string;
 }
 
 export type DeviceTransportConfigurations = DefaultDeviceTransportConfiguration &

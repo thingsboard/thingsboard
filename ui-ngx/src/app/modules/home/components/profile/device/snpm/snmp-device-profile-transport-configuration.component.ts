@@ -86,7 +86,7 @@ export class SnmpDeviceProfileTransportConfigurationComponent implements OnInit,
 
   ngOnInit(): void {
     this.snmpDeviceProfileTransportConfigurationFormGroup = this.fb.group({
-      timeoutMs: [0, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
+      timeoutMs: [500, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
       retries: [0, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
       communicationConfigs: [null, Validators.required],
     });
