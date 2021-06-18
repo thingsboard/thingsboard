@@ -1257,7 +1257,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         params.put("deviceProfileId", deviceProfileId.getId().toString());
 
         return restTemplate.exchange(
-                baseURL + "/api/devices/count/{otaPackageType}?deviceProfileId={deviceProfileId}",
+                baseURL + "/api/devices/count/{otaPackageType}/{deviceProfileId}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<Long>() {
