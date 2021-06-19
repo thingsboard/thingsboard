@@ -25,8 +25,6 @@ import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.eclipse.californium.core.server.resources.ResourceObserver;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
-import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
-import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -143,7 +141,7 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
             response.setPayload(fwData);
             if (exchange.getRequestOptions().getBlock2() != null) {
                 int chunkSize = exchange.getRequestOptions().getBlock2().getSzx();
-                boolean lastFlag = fwData.length > chunkSize;
+                boolean lastFlag = fwData.length <= chunkSize;
                 response.getOptions().setBlock2(chunkSize, lastFlag, 0);
                 log.warn("92) with blokc2 Send currentId: [{}], length: [{}], chunkSize [{}], moreFlag [{}]", currentId.toString(), fwData.length, chunkSize, lastFlag);
             }

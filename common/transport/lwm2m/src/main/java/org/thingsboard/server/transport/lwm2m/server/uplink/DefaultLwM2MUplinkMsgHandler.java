@@ -37,7 +37,6 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
-import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -53,6 +52,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.SessionEvent;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MFirmwareUpdateStrategy;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MSoftwareUpdateStrategy;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mOtaConvert;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mQueuedRequest;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mSessionMsgListener;
@@ -100,7 +101,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -778,6 +778,29 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 for (String targetId : observeToRemove) {
                     clients.forEach(client -> sendCancelObserveRequest(targetId, client));
                 }
+            }
+
+            // # 7.1
+            // update value in fwInfo
+            if (!newProfile.getClientLwM2mSettings().getFwUpdateStrategy().equals(oldProfile.getClientLwM2mSettings().getFwUpdateStrategy())
+                    || (LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL.code == newProfile.getClientLwM2mSettings().getFwUpdateStrategy() &&
+                        !newProfile.getClientLwM2mSettings().getFwUpdateRecourse().equals(oldProfile.getClientLwM2mSettings().getFwUpdateRecourse()))) {
+                clients.forEach(lwM2MClient -> {
+                    otaService.onCurrentFirmwareStrategyUpdate(lwM2MClient,
+                            newProfile.getClientLwM2mSettings().getFwUpdateStrategy(),
+                            newProfile.getClientLwM2mSettings().getFwUpdateRecourse());
+                });
+            }
+
+            //# 7.2 // update value in swInfo
+            if (!newProfile.getClientLwM2mSettings().getSwUpdateStrategy().equals(oldProfile.getClientLwM2mSettings().getSwUpdateStrategy())
+                    || (LwM2MSoftwareUpdateStrategy.TEMP_URL.code == newProfile.getClientLwM2mSettings().getSwUpdateStrategy() &&
+                    !newProfile.getClientLwM2mSettings().getSwUpdateRecourse().equals(oldProfile.getClientLwM2mSettings().getSwUpdateRecourse()))) {
+                clients.forEach(lwM2MClient -> {
+                    otaService.onCurrentSoftwareStrategyUpdate(lwM2MClient,
+                            newProfile.getClientLwM2mSettings().getFwUpdateStrategy(),
+                            newProfile.getClientLwM2mSettings().getFwUpdateRecourse());
+                });
             }
         }
     }

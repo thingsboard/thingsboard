@@ -58,10 +58,12 @@ public class LwM2mCredentialsSecurityInfoValidator {
     public TbLwM2MSecurityInfo getEndpointSecurityInfoByCredentialsId(String credentialsId, LwM2mTransportUtil.LwM2mTypeServer keyValue) {
         CountDownLatch latch = new CountDownLatch(1);
         final TbLwM2MSecurityInfo[] resultSecurityStore = new TbLwM2MSecurityInfo[1];
+        log.warn("001) [{}]", credentialsId);
         context.getTransportService().process(ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder().setCredentialsId(credentialsId).build(),
                 new TransportServiceCallback<>() {
                     @Override
                     public void onSuccess(ValidateDeviceCredentialsResponse msg) {
+                        log.warn("002) [{}] [{}]", credentialsId, msg);
                         String credentialsBody = msg.getCredentials();
                         resultSecurityStore[0] = createSecurityInfo(credentialsId, credentialsBody, keyValue);
                         resultSecurityStore[0].setMsg(msg);
@@ -71,6 +73,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
 
                     @Override
                     public void onError(Throwable e) {
+                        log.warn("003) [{}] [{}] Failed to process credentials ", credentialsId, e);
                         log.trace("[{}] [{}] Failed to process credentials ", credentialsId, e);
                         resultSecurityStore[0] = createSecurityInfo(credentialsId, null, null);
                         latch.countDown();

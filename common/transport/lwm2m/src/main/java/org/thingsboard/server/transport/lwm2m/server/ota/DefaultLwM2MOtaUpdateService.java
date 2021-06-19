@@ -33,6 +33,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MFirmwareUpdateStrategy;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MSoftwareUpdateStrategy;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 import org.thingsboard.server.transport.lwm2m.server.UpdateResultFw;
@@ -175,6 +176,24 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     }
 
     @Override
+    public void onCurrentFirmwareStrategyUpdate(LwM2mClient client, Integer newStrategy, String newBaseUrl) {
+        log.debug("[{}] Current fw strategy: {}", client.getEndpoint(), newStrategy);
+        LwM2MClientOtaInfo fwInfo = getOrInitFwInfo(client);
+        fwInfo.setFwStrategy(LwM2MFirmwareUpdateStrategy.fromStrategyFwByCode(newStrategy));
+        fwInfo.setBaseUrl(newBaseUrl);
+        startFirmwareUpdateIfNeeded(client, fwInfo);
+    }
+
+    @Override
+    public void onCurrentSoftwareStrategyUpdate(LwM2mClient client, Integer newStrategy, String newBaseUrl) {
+        log.debug("[{}] Current sw strategy: {}", client.getEndpoint(), newStrategy);
+        LwM2MClientOtaInfo swInfo = getOrInitSwInfo(client);
+        swInfo.setSwStrategy(LwM2MSoftwareUpdateStrategy.fromStrategySwByCode(newStrategy));
+        swInfo.setBaseUrl(newBaseUrl);
+        startSoftwareUpdateIfNeeded(client, swInfo);
+    }
+
+    @Override
     public void onCurrentFirmwareVersion3Update(LwM2mClient client, String version) {
         log.debug("[{}] Current fw version: {}", client.getEndpoint(), version);
         LwM2MClientOtaInfo fwInfo = getOrInitFwInfo(client);
@@ -250,6 +269,10 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         }
     }
 
+    private void startSoftwareUpdateIfNeeded(LwM2mClient client, LwM2MClientOtaInfo swInfo) {
+
+    }
+
     private void startFirmwareUpdateUsingUrl(LwM2mClient client, String url) {
         String targetIdVer = convertObjectIdToVersionedId(FW_URL_ID, client.getRegistration());
         TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(targetIdVer).value(url).timeout(config.getTimeout()).build();
@@ -277,7 +300,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
             UUID otaPackageId = new UUID(response.getOtaPackageIdMSB(), response.getOtaPackageIdLSB());
             LwM2MFirmwareUpdateStrategy strategy;
             if (fwInfo.getDeliveryMethod() == null || fwInfo.getDeliveryMethod() == 2) {
-                strategy = fwInfo.getStrategy();
+                strategy = fwInfo.getFwStrategy();
             } else {
                 strategy = fwInfo.getDeliveryMethod() == 0 ? LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL : LwM2MFirmwareUpdateStrategy.OBJ_5_BINARY;
             }
@@ -328,9 +351,9 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         return Optional.empty();
     }
 
-    private LwM2MClientOtaInfo getOrInitFwInfo(LwM2mClient client) {
+    public LwM2MClientOtaInfo getOrInitFwInfo(LwM2mClient client) {
         //TODO: fetch state from the cache or DB.
-        return fwStates.computeIfAbsent(client.getEndpoint(), endpoint -> {
+        return this.fwStates.computeIfAbsent(client.getEndpoint(), endpoint -> {
             var profile = clientContext.getProfile(client.getProfileId());
             return new LwM2MClientOtaInfo(endpoint, OtaPackageType.FIRMWARE, profile.getClientLwM2mSettings().getFwUpdateStrategy(),
                     profile.getClientLwM2mSettings().getFwUpdateRecourse());

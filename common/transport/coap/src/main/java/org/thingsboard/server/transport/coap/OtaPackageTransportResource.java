@@ -17,11 +17,13 @@ package org.thingsboard.server.transport.coap;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
+import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.network.Exchange;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
@@ -32,16 +34,21 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 
 @Slf4j
 public class OtaPackageTransportResource extends AbstractCoapTransportResource {
     private static final int ACCESS_TOKEN_POSITION = 2;
 
     private final OtaPackageType otaPackageType;
+    private final ExecutorService sendOtaDataOutUriLarge;
 
     public OtaPackageTransportResource(CoapTransportContext ctx, OtaPackageType otaPackageType) {
         super(ctx, otaPackageType.getKeyPrefix());
         this.otaPackageType = otaPackageType;
+
+        this.setObservable(true);
+        this.sendOtaDataOutUriLarge = ThingsBoardExecutors.newWorkStealingPool(10, "LwM2M sendOtaDataOutUriLarge");
     }
 
     @Override
@@ -132,11 +139,13 @@ public class OtaPackageTransportResource extends AbstractCoapTransportResource {
         Response response = new Response(CoAP.ResponseCode.CONTENT);
         if (data != null && data.length > 0) {
             response.setPayload(data);
+            response.getOptions().setAccept(MediaTypeRegistry.APPLICATION_OCTET_STREAM);
             if (exchange.getRequestOptions().getBlock2() != null) {
                 int chunkSize = exchange.getRequestOptions().getBlock2().getSzx();
-                boolean lastFlag = data.length > chunkSize;
-                response.getOptions().setBlock2(chunkSize, lastFlag, 0);
-            }
+                boolean lastFlag = data.length <= chunkSize;
+                this.sendOtaDataOutUriLarge.submit(() -> {
+                    response.getOptions().setBlock2(chunkSize, lastFlag, 0);
+                });            }
             exchange.respond(response);
         }
     }
