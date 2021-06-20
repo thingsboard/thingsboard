@@ -33,7 +33,7 @@ import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -45,6 +45,7 @@ import static org.eclipse.leshan.core.SecurityMode.NO_SEC;
 import static org.eclipse.leshan.core.SecurityMode.PSK;
 import static org.eclipse.leshan.core.SecurityMode.RPK;
 import static org.eclipse.leshan.core.SecurityMode.X509;
+import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer.BOOTSTRAP;
 
 @Slf4j
 @Component
@@ -55,7 +56,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
     private final LwM2mTransportContext context;
     private final LwM2MTransportServerConfig config;
 
-    public TbLwM2MSecurityInfo getEndpointSecurityInfoByCredentialsId(String credentialsId, LwM2mTransportUtil.LwM2mTypeServer keyValue) {
+    public TbLwM2MSecurityInfo getEndpointSecurityInfoByCredentialsId(String credentialsId, LwM2mTypeServer keyValue) {
         CountDownLatch latch = new CountDownLatch(1);
         final TbLwM2MSecurityInfo[] resultSecurityStore = new TbLwM2MSecurityInfo[1];
         log.warn("001) [{}]", credentialsId);
@@ -94,11 +95,11 @@ public class LwM2mCredentialsSecurityInfoValidator {
      * @param keyValue -
      * @return SecurityInfo
      */
-    private TbLwM2MSecurityInfo createSecurityInfo(String endpoint, String jsonStr, LwM2mTransportUtil.LwM2mTypeServer keyValue) {
+    private TbLwM2MSecurityInfo createSecurityInfo(String endpoint, String jsonStr, LwM2mTypeServer keyValue) {
         TbLwM2MSecurityInfo result = new TbLwM2MSecurityInfo();
         LwM2MCredentials credentials = JacksonUtil.fromString(jsonStr, LwM2MCredentials.class);
         if (credentials != null) {
-            if (keyValue.equals(LwM2mTransportUtil.LwM2mTypeServer.BOOTSTRAP)) {
+            if (keyValue.equals(BOOTSTRAP)) {
                 result.setBootstrapCredentialConfig(credentials.getBootstrap());
                 if (LwM2MSecurityMode.PSK.equals(credentials.getClient().getSecurityConfigClientMode())) {
                     PSKClientCredentials pskClientConfig = (PSKClientCredentials) credentials.getClient();

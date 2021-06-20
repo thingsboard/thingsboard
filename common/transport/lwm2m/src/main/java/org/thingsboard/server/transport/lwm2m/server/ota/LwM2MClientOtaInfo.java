@@ -18,10 +18,10 @@ package org.thingsboard.server.transport.lwm2m.server.ota;
 import lombok.Data;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
-import org.thingsboard.server.transport.lwm2m.server.LwM2MFirmwareUpdateStrategy;
-import org.thingsboard.server.transport.lwm2m.server.LwM2MSoftwareUpdateStrategy;
-import org.thingsboard.server.transport.lwm2m.server.UpdateResultFw;
-import org.thingsboard.server.transport.lwm2m.server.UpdateStateFw;
+import org.thingsboard.server.transport.lwm2m.server.ota.firmware.LwM2MFirmwareUpdateStrategy;
+import org.thingsboard.server.transport.lwm2m.server.ota.firmware.UpdateResultFw;
+import org.thingsboard.server.transport.lwm2m.server.ota.firmware.UpdateStateFw;
+import org.thingsboard.server.transport.lwm2m.server.ota.software.LwM2MSoftwareUpdateStrategy;
 
 import java.util.Optional;
 
