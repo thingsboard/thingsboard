@@ -160,7 +160,7 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
                     return ((Invocable) engine).invokeFunction(functionName, args);
                 }
             } catch (Exception e) {
-                onScriptExecutionError(scriptId);
+                onScriptExecutionError(scriptId, e, functionName);
                 throw new ExecutionException(e);
             }
         });

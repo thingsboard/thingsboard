@@ -53,7 +53,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
     private final int PORT = 5685;
     private final Security SECURITY = noSec("coap://localhost:" + PORT, 123);
     private final NetworkConfig COAP_CONFIG = new NetworkConfig().setString("COAP_PORT", Integer.toString(PORT));
-    private final String ENDPOINT = "deviceAEndpoint";
+    private final String ENDPOINT = "noSecEndpoint";
 
     private Device createDevice() throws Exception {
         Device device = new Device();

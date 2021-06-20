@@ -256,6 +256,7 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
             LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
             try {
                 log.warn("[{}] [{{}] Client: update after Registration", registration.getEndpoint(), registration.getId());
+                logService.log(lwM2MClient, String.format("[%s][%s] Updated registration.", registration.getId(), registration.getSocketAddress()));
                 clientContext.updateRegistration(lwM2MClient, registration);
                 TransportProtos.SessionInfoProto sessionInfo = lwM2MClient.getSession();
                 this.reportActivityAndRegister(sessionInfo);

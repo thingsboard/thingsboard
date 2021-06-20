@@ -206,7 +206,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     }
 
     private void sendWriteReplaceRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
-        RpcWriteUpdateRequest requestBody = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteUpdateRequest.class);
+        RpcWriteReplaceRequest requestBody = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteReplaceRequest.class);
         TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionedId)
                 .value(requestBody.getValue())
                 .timeout(this.config.getTimeout()).build();
