@@ -223,6 +223,27 @@
                   "funcBody": null,
                   "usePostProcessing": null,
                   "postFuncBody": null
+                },
+                {
+                  "name": "fw_url",
+                  "type": "attribute",
+                  "label": "fw_url",
+                  "color": "#e91e63",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": "",
+                    "defaultColumnVisibility": "hidden",
+                    "columnSelectionToDisplay": "disabled"
+                  },
+                  "_hash": 0.4204673738685043,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
                 }
               ]
             }
@@ -249,23 +270,23 @@
                 "icon": "edit",
                 "type": "customPretty",
                 "customHtml": "<form #editEntityForm=\"ngForm\" [formGroup]=\"editEntityFormGroup\"\n      (ngSubmit)=\"save()\"  class=\"edit-entity-form\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Edit firmware {{entityName}}</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div *ngIf=\"entity.deviceProfileId\" mat-dialog-content fxLayout=\"column\">\n        <tb-ota-package-autocomplete\n            [useFullEntityId]=\"true\"\n            [deviceProfileId]=\"entity.deviceProfileId.id\"\n            formControlName=\"firmwareId\">\n        </tb-ota-package-autocomplete>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n        <button mat-button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty\">\n            Save\n        </button>\n    </div>\n</form>",
-                "customCss": "",
+                "customCss": "form {\n    min-width: 300px !important;\n}",
                 "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\n}\n\nfunction EditEntityDialogController(instance) {\n    let vm = instance;\n\n    vm.entityName = entityName;\n    vm.entity = {};\n\n    vm.editEntityFormGroup = vm.fb.group({\n        firmwareId: [null]\n    });\n\n    getEntityInfo();\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n\n    vm.save = function() {\n        vm.editEntityFormGroup.markAsPristine();\n        saveEntity().subscribe(\n            function () {\n                // widgetContext.updateAliases();\n                vm.dialogRef.close(null);\n            }\n        );\n    };\n\n\n    function getEntityInfo() {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                vm.entity = data;\n                vm.editEntityFormGroup.patchValue({\n                    firmwareId: vm.entity.firmwareId\n                }, {emitEvent: false});\n            }\n        );\n    }\n\n    function saveEntity() {\n        const formValues = vm.editEntityFormGroup.value;\n        vm.entity.firmwareId = formValues.firmwareId;\n        return deviceService.saveDevice(vm.entity);\n    }\n}",
                 "customResources": [],
                 "id": "23099c1d-454b-25dc-8bc0-7cf33c21c5d5"
               },
               {
-                "name": "Download firware",
+                "name": "Download firmware",
                 "icon": "file_download",
                 "type": "custom",
-                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceFirmware();\n\nfunction getDeviceFirmware() {\n    entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n        function (data) {\n            if (data.firmwareId !== null) {\n                otaPackageService.downloadOtaPackage(data.firmwareId.id).subscribe();    \n            } else {\n                deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                    function (deviceProfile) {\n                        if (deviceProfile.firmwareId !== null) {\n                            otaPackageService.downloadOtaPackage(deviceProfile.firmwareId.id).subscribe();\n                        } else {\n                            widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n\n                        }\n                });\n            }\n        }\n    );\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceFirmware();\n\nfunction getDeviceFirmware() {\n    var entityIdValue = entityId.id;\n    var data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url === '') {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                if (data.firmwareId !== null) {\n                    otaPackageService.downloadOtaPackage(data.firmwareId.id).subscribe();    \n                } else {\n                    deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                        function (deviceProfile) {\n                            if (deviceProfile.firmwareId !== null) {\n                                otaPackageService.downloadOtaPackage(deviceProfile.firmwareId.id).subscribe();\n                            } else {\n                                widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n                            }\n                    });\n                }\n            }\n        );\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
                 "id": "12533058-42f6-e75f-620c-219c48d01ec0"
               },
               {
-                "name": "Copy checksum",
+                "name": "Copy checksum/URL",
                 "icon": "content_copy",
                 "type": "custom",
-                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_checksum');\nvar checksum = data.data[0][1];\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Firmware checksum has been copied to clipboard', 2000, 'top');\n} else {\n    widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n}",
+                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_checksum');\nvar checksum = data.data[0][1];\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Firmware checksum has been copied to clipboard', 2000, 'top');\n} else {\n    data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url !== '') {\n        copyToClipboard(url);\n        widgetContext.showSuccessToast('Firmware direct URL has been copied to clipboard', 2000, 'top');\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
                 "id": "09323079-7111-87f7-90d1-c62cd7d85dc7"
               }
             ]
@@ -997,6 +1018,27 @@
                   "funcBody": null,
                   "usePostProcessing": null,
                   "postFuncBody": null
+                },
+                {
+                  "name": "fw_url",
+                  "type": "attribute",
+                  "label": "fw_url",
+                  "color": "#e91e63",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": "",
+                    "defaultColumnVisibility": "hidden",
+                    "columnSelectionToDisplay": "disabled"
+                  },
+                  "_hash": 0.4204673738685043,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
                 }
               ]
             }
@@ -1023,23 +1065,23 @@
                 "icon": "edit",
                 "type": "customPretty",
                 "customHtml": "<form #editEntityForm=\"ngForm\" [formGroup]=\"editEntityFormGroup\"\n      (ngSubmit)=\"save()\"  class=\"edit-entity-form\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Edit firmware {{entityName}}</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div *ngIf=\"entity.deviceProfileId\" mat-dialog-content fxLayout=\"column\">\n        <tb-ota-package-autocomplete\n            [useFullEntityId]=\"true\"\n            [deviceProfileId]=\"entity.deviceProfileId.id\"\n            formControlName=\"firmwareId\">\n        </tb-ota-package-autocomplete>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n        <button mat-button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty\">\n            Save\n        </button>\n    </div>\n</form>",
-                "customCss": "",
+                "customCss": "form {\n    min-width: 300px !important;\n}",
                 "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\n}\n\nfunction EditEntityDialogController(instance) {\n    let vm = instance;\n\n    vm.entityName = entityName;\n    vm.entity = {};\n\n    vm.editEntityFormGroup = vm.fb.group({\n        firmwareId: [null]\n    });\n\n    getEntityInfo();\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n\n    vm.save = function() {\n        vm.editEntityFormGroup.markAsPristine();\n        saveEntity().subscribe(\n            function () {\n                // widgetContext.updateAliases();\n                vm.dialogRef.close(null);\n            }\n        );\n    };\n\n\n    function getEntityInfo() {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                vm.entity = data;\n                vm.editEntityFormGroup.patchValue({\n                    firmwareId: vm.entity.firmwareId\n                }, {emitEvent: false});\n            }\n        );\n    }\n\n    function saveEntity() {\n        const formValues = vm.editEntityFormGroup.value;\n        vm.entity.firmwareId = formValues.firmwareId;\n        return deviceService.saveDevice(vm.entity);\n    }\n}",
                 "customResources": [],
                 "id": "23099c1d-454b-25dc-8bc0-7cf33c21c5d5"
               },
               {
-                "name": "Download firware",
+                "name": "Download firmware",
                 "icon": "file_download",
                 "type": "custom",
-                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceFirmware();\n\nfunction getDeviceFirmware() {\n    entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n        function (data) {\n            if (data.firmwareId !== null) {\n                otaPackageService.downloadOtaPackage(data.firmwareId.id).subscribe();    \n            } else {\n                deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                    function (deviceProfile) {\n                        if (deviceProfile.firmwareId !== null) {\n                            otaPackageService.downloadOtaPackage(deviceProfile.firmwareId.id).subscribe();\n                        } else {\n                            widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n\n                        }\n                });\n            }\n        }\n    );\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceFirmware();\n\nfunction getDeviceFirmware() {\n    var entityIdValue = entityId.id;\n    var data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url === '') {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                if (data.firmwareId !== null) {\n                    otaPackageService.downloadOtaPackage(data.firmwareId.id).subscribe();    \n                } else {\n                    deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                        function (deviceProfile) {\n                            if (deviceProfile.firmwareId !== null) {\n                                otaPackageService.downloadOtaPackage(deviceProfile.firmwareId.id).subscribe();\n                            } else {\n                                widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n                            }\n                    });\n                }\n            }\n        );\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
                 "id": "12533058-42f6-e75f-620c-219c48d01ec0"
               },
               {
-                "name": "Copy checksum",
+                "name": "Copy checksum/URL",
                 "icon": "content_copy",
                 "type": "custom",
-                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_checksum');\nvar checksum = data.data[0][1];\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Firmware checksum has been copied to clipboard', 2000, 'top');\n} else {\n    widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n}",
+                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_checksum');\nvar checksum = data.data[0][1];\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Firmware checksum has been copied to clipboard', 2000, 'top');\n} else {\n    data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url !== '') {\n        copyToClipboard(url);\n        widgetContext.showSuccessToast('Firmware direct URL has been copied to clipboard', 2000, 'top');\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
                 "id": "09323079-7111-87f7-90d1-c62cd7d85dc7"
               }
             ]
@@ -1273,6 +1315,27 @@
                   "funcBody": null,
                   "usePostProcessing": null,
                   "postFuncBody": null
+                },
+                {
+                  "name": "fw_url",
+                  "type": "attribute",
+                  "label": "fw_url",
+                  "color": "#e91e63",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": "",
+                    "defaultColumnVisibility": "hidden",
+                    "columnSelectionToDisplay": "disabled"
+                  },
+                  "_hash": 0.4204673738685043,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
                 }
               ]
             }
@@ -1299,23 +1362,23 @@
                 "icon": "edit",
                 "type": "customPretty",
                 "customHtml": "<form #editEntityForm=\"ngForm\" [formGroup]=\"editEntityFormGroup\"\n      (ngSubmit)=\"save()\"  class=\"edit-entity-form\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Edit firmware {{entityName}}</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div *ngIf=\"entity.deviceProfileId\" mat-dialog-content fxLayout=\"column\">\n        <tb-ota-package-autocomplete\n            [useFullEntityId]=\"true\"\n            [deviceProfileId]=\"entity.deviceProfileId.id\"\n            formControlName=\"firmwareId\">\n        </tb-ota-package-autocomplete>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n        <button mat-button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty\">\n            Save\n        </button>\n    </div>\n</form>",
-                "customCss": "",
+                "customCss": "form {\n    min-width: 300px !important;\n}",
                 "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\n}\n\nfunction EditEntityDialogController(instance) {\n    let vm = instance;\n\n    vm.entityName = entityName;\n    vm.entity = {};\n\n    vm.editEntityFormGroup = vm.fb.group({\n        firmwareId: [null]\n    });\n\n    getEntityInfo();\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n\n    vm.save = function() {\n        vm.editEntityFormGroup.markAsPristine();\n        saveEntity().subscribe(\n            function () {\n                // widgetContext.updateAliases();\n                vm.dialogRef.close(null);\n            }\n        );\n    };\n\n\n    function getEntityInfo() {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                vm.entity = data;\n                vm.editEntityFormGroup.patchValue({\n                    firmwareId: vm.entity.firmwareId\n                }, {emitEvent: false});\n            }\n        );\n    }\n\n    function saveEntity() {\n        const formValues = vm.editEntityFormGroup.value;\n        vm.entity.firmwareId = formValues.firmwareId;\n        return deviceService.saveDevice(vm.entity);\n    }\n}",
                 "customResources": [],
                 "id": "23099c1d-454b-25dc-8bc0-7cf33c21c5d5"
               },
               {
-                "name": "Download firware",
+                "name": "Download firmware",
                 "icon": "file_download",
                 "type": "custom",
-                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceFirmware();\n\nfunction getDeviceFirmware() {\n    entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n        function (data) {\n            if (data.firmwareId !== null) {\n                otaPackageService.downloadOtaPackage(data.firmwareId.id).subscribe();    \n            } else {\n                deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                    function (deviceProfile) {\n                        if (deviceProfile.firmwareId !== null) {\n                            otaPackageService.downloadOtaPackage(deviceProfile.firmwareId.id).subscribe();\n                        } else {\n                            widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n\n                        }\n                });\n            }\n        }\n    );\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceFirmware();\n\nfunction getDeviceFirmware() {\n    var entityIdValue = entityId.id;\n    var data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url === '') {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                if (data.firmwareId !== null) {\n                    otaPackageService.downloadOtaPackage(data.firmwareId.id).subscribe();    \n                } else {\n                    deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                        function (deviceProfile) {\n                            if (deviceProfile.firmwareId !== null) {\n                                otaPackageService.downloadOtaPackage(deviceProfile.firmwareId.id).subscribe();\n                            } else {\n                                widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n                            }\n                    });\n                }\n            }\n        );\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
                 "id": "12533058-42f6-e75f-620c-219c48d01ec0"
               },
               {
-                "name": "Copy checksum",
+                "name": "Copy checksum/URL",
                 "icon": "content_copy",
                 "type": "custom",
-                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_checksum');\nvar checksum = data.data[0][1];\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Firmware checksum has been copied to clipboard', 2000, 'top');\n} else {\n    widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n}",
+                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_checksum');\nvar checksum = data.data[0][1];\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Firmware checksum has been copied to clipboard', 2000, 'top');\n} else {\n    data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url !== '') {\n        copyToClipboard(url);\n        widgetContext.showSuccessToast('Firmware direct URL has been copied to clipboard', 2000, 'top');\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
                 "id": "09323079-7111-87f7-90d1-c62cd7d85dc7"
               }
             ]
@@ -1549,6 +1612,27 @@
                   "funcBody": null,
                   "usePostProcessing": null,
                   "postFuncBody": null
+                },
+                {
+                  "name": "fw_url",
+                  "type": "attribute",
+                  "label": "fw_url",
+                  "color": "#e91e63",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": "",
+                    "defaultColumnVisibility": "hidden",
+                    "columnSelectionToDisplay": "disabled"
+                  },
+                  "_hash": 0.4204673738685043,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
                 }
               ]
             }
@@ -1575,23 +1659,23 @@
                 "icon": "edit",
                 "type": "customPretty",
                 "customHtml": "<form #editEntityForm=\"ngForm\" [formGroup]=\"editEntityFormGroup\"\n      (ngSubmit)=\"save()\"  class=\"edit-entity-form\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Edit firmware {{entityName}}</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div *ngIf=\"entity.deviceProfileId\" mat-dialog-content fxLayout=\"column\">\n        <tb-ota-package-autocomplete\n            [useFullEntityId]=\"true\"\n            [deviceProfileId]=\"entity.deviceProfileId.id\"\n            formControlName=\"firmwareId\">\n        </tb-ota-package-autocomplete>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n        <button mat-button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty\">\n            Save\n        </button>\n    </div>\n</form>",
-                "customCss": "",
+                "customCss": "form {\n    min-width: 300px !important;\n}",
                 "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\n}\n\nfunction EditEntityDialogController(instance) {\n    let vm = instance;\n\n    vm.entityName = entityName;\n    vm.entity = {};\n\n    vm.editEntityFormGroup = vm.fb.group({\n        firmwareId: [null]\n    });\n\n    getEntityInfo();\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n\n    vm.save = function() {\n        vm.editEntityFormGroup.markAsPristine();\n        saveEntity().subscribe(\n            function () {\n                // widgetContext.updateAliases();\n                vm.dialogRef.close(null);\n            }\n        );\n    };\n\n\n    function getEntityInfo() {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                vm.entity = data;\n                vm.editEntityFormGroup.patchValue({\n                    firmwareId: vm.entity.firmwareId\n                }, {emitEvent: false});\n            }\n        );\n    }\n\n    function saveEntity() {\n        const formValues = vm.editEntityFormGroup.value;\n        vm.entity.firmwareId = formValues.firmwareId;\n        return deviceService.saveDevice(vm.entity);\n    }\n}",
                 "customResources": [],
                 "id": "23099c1d-454b-25dc-8bc0-7cf33c21c5d5"
               },
               {
-                "name": "Download firware",
+                "name": "Download firmware",
                 "icon": "file_download",
                 "type": "custom",
-                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceFirmware();\n\nfunction getDeviceFirmware() {\n    entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n        function (data) {\n            if (data.firmwareId !== null) {\n                otaPackageService.downloadOtaPackage(data.firmwareId.id).subscribe();    \n            } else {\n                deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                    function (deviceProfile) {\n                        if (deviceProfile.firmwareId !== null) {\n                            otaPackageService.downloadOtaPackage(deviceProfile.firmwareId.id).subscribe();\n                        } else {\n                            widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n\n                        }\n                });\n            }\n        }\n    );\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceFirmware();\n\nfunction getDeviceFirmware() {\n    var entityIdValue = entityId.id;\n    var data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url === '') {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                if (data.firmwareId !== null) {\n                    otaPackageService.downloadOtaPackage(data.firmwareId.id).subscribe();    \n                } else {\n                    deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                        function (deviceProfile) {\n                            if (deviceProfile.firmwareId !== null) {\n                                otaPackageService.downloadOtaPackage(deviceProfile.firmwareId.id).subscribe();\n                            } else {\n                                widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n                            }\n                    });\n                }\n            }\n        );\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
                 "id": "12533058-42f6-e75f-620c-219c48d01ec0"
               },
               {
-                "name": "Copy checksum",
+                "name": "Copy checksum/URL",
                 "icon": "content_copy",
                 "type": "custom",
-                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_checksum');\nvar checksum = data.data[0][1];\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Firmware checksum has been copied to clipboard', 2000, 'top');\n} else {\n    widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n}",
+                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_checksum');\nvar checksum = data.data[0][1];\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Firmware checksum has been copied to clipboard', 2000, 'top');\n} else {\n    data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url !== '') {\n        copyToClipboard(url);\n        widgetContext.showSuccessToast('Firmware direct URL has been copied to clipboard', 2000, 'top');\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
                 "id": "09323079-7111-87f7-90d1-c62cd7d85dc7"
               }
             ]
@@ -1825,6 +1909,27 @@
                   "funcBody": null,
                   "usePostProcessing": null,
                   "postFuncBody": null
+                },
+                {
+                  "name": "fw_url",
+                  "type": "attribute",
+                  "label": "fw_url",
+                  "color": "#e91e63",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": "",
+                    "defaultColumnVisibility": "hidden",
+                    "columnSelectionToDisplay": "disabled"
+                  },
+                  "_hash": 0.4204673738685043,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
                 }
               ]
             }
@@ -1851,23 +1956,23 @@
                 "icon": "edit",
                 "type": "customPretty",
                 "customHtml": "<form #editEntityForm=\"ngForm\" [formGroup]=\"editEntityFormGroup\"\n      (ngSubmit)=\"save()\"  class=\"edit-entity-form\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Edit firmware {{entityName}}</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div *ngIf=\"entity.deviceProfileId\" mat-dialog-content fxLayout=\"column\">\n        <tb-ota-package-autocomplete\n            [useFullEntityId]=\"true\"\n            [deviceProfileId]=\"entity.deviceProfileId.id\"\n            formControlName=\"firmwareId\">\n        </tb-ota-package-autocomplete>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n        <button mat-button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty\">\n            Save\n        </button>\n    </div>\n</form>",
-                "customCss": "",
+                "customCss": "form {\n    min-width: 300px !important;\n}",
                 "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\n}\n\nfunction EditEntityDialogController(instance) {\n    let vm = instance;\n\n    vm.entityName = entityName;\n    vm.entity = {};\n\n    vm.editEntityFormGroup = vm.fb.group({\n        firmwareId: [null]\n    });\n\n    getEntityInfo();\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n\n    vm.save = function() {\n        vm.editEntityFormGroup.markAsPristine();\n        saveEntity().subscribe(\n            function () {\n                // widgetContext.updateAliases();\n                vm.dialogRef.close(null);\n            }\n        );\n    };\n\n\n    function getEntityInfo() {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                vm.entity = data;\n                vm.editEntityFormGroup.patchValue({\n                    firmwareId: vm.entity.firmwareId\n                }, {emitEvent: false});\n            }\n        );\n    }\n\n    function saveEntity() {\n        const formValues = vm.editEntityFormGroup.value;\n        vm.entity.firmwareId = formValues.firmwareId;\n        return deviceService.saveDevice(vm.entity);\n    }\n}",
                 "customResources": [],
                 "id": "23099c1d-454b-25dc-8bc0-7cf33c21c5d5"
               },
               {
-                "name": "Download firware",
+                "name": "Download firmware",
                 "icon": "file_download",
                 "type": "custom",
-                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceFirmware();\n\nfunction getDeviceFirmware() {\n    entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n        function (data) {\n            if (data.firmwareId !== null) {\n                otaPackageService.downloadOtaPackage(data.firmwareId.id).subscribe();    \n            } else {\n                deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                    function (deviceProfile) {\n                        if (deviceProfile.firmwareId !== null) {\n                            otaPackageService.downloadOtaPackage(deviceProfile.firmwareId.id).subscribe();\n                        } else {\n                            widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n\n                        }\n                });\n            }\n        }\n    );\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceFirmware();\n\nfunction getDeviceFirmware() {\n    var entityIdValue = entityId.id;\n    var data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url === '') {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                if (data.firmwareId !== null) {\n                    otaPackageService.downloadOtaPackage(data.firmwareId.id).subscribe();    \n                } else {\n                    deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                        function (deviceProfile) {\n                            if (deviceProfile.firmwareId !== null) {\n                                otaPackageService.downloadOtaPackage(deviceProfile.firmwareId.id).subscribe();\n                            } else {\n                                widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n                            }\n                    });\n                }\n            }\n        );\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
                 "id": "12533058-42f6-e75f-620c-219c48d01ec0"
               },
               {
-                "name": "Copy checksum",
+                "name": "Copy checksum/URL",
                 "icon": "content_copy",
                 "type": "custom",
-                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_checksum');\nvar checksum = data.data[0][1];\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Firmware checksum has been copied to clipboard', 2000, 'top');\n} else {\n    widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n}",
+                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_checksum');\nvar checksum = data.data[0][1];\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Firmware checksum has been copied to clipboard', 2000, 'top');\n} else {\n    data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url !== '') {\n        copyToClipboard(url);\n        widgetContext.showSuccessToast('Firmware direct URL has been copied to clipboard', 2000, 'top');\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
                 "id": "09323079-7111-87f7-90d1-c62cd7d85dc7"
               }
             ]
@@ -1936,7 +2041,7 @@
         }
       },
       "device_firmware_history": {
-        "name": "Device Firmware history",
+        "name": "Firmware history: ${entityName}",
         "root": false,
         "layouts": {
           "main": {
@@ -2379,7 +2484,8 @@
       "titleColor": "rgba(0,0,0,0.870588)",
       "showFilters": true,
       "showDashboardLogo": false,
-      "dashboardLogoUrl": null
+      "dashboardLogoUrl": null,
+      "showUpdateDashboardImage": false
     }
   },
   "name": "Firmware"

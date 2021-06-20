@@ -51,6 +51,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_TABLE_
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_TENANT_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_TILE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_TYPE_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_URL_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_VERSION_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
 
@@ -76,6 +77,9 @@ public class OtaPackageEntity extends BaseSqlEntity<OtaPackage> implements Searc
 
     @Column(name = OTA_PACKAGE_VERSION_COLUMN)
     private String version;
+
+    @Column(name = OTA_PACKAGE_URL_COLUMN)
+    private String url;
 
     @Column(name = OTA_PACKAGE_FILE_NAME_COLUMN)
     private String fileName;
@@ -118,6 +122,7 @@ public class OtaPackageEntity extends BaseSqlEntity<OtaPackage> implements Searc
         this.type = firmware.getType();
         this.title = firmware.getTitle();
         this.version = firmware.getVersion();
+        this.url = firmware.getUrl();
         this.fileName = firmware.getFileName();
         this.contentType = firmware.getContentType();
         this.checksumAlgorithm = firmware.getChecksumAlgorithm();
@@ -148,6 +153,7 @@ public class OtaPackageEntity extends BaseSqlEntity<OtaPackage> implements Searc
         firmware.setType(type);
         firmware.setTitle(title);
         firmware.setVersion(version);
+        firmware.setUrl(url);
         firmware.setFileName(fileName);
         firmware.setContentType(contentType);
         firmware.setChecksumAlgorithm(checksumAlgorithm);

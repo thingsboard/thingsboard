@@ -23,18 +23,18 @@ import org.eclipse.leshan.server.queue.PresenceListener;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.registration.RegistrationListener;
 import org.eclipse.leshan.server.registration.RegistrationUpdate;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 import java.util.Collection;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertObjectIdToVersionedId;
 
 @Slf4j
 public class LwM2mServerListener {
 
-    private final LwM2mTransportMsgHandler service;
+    private final LwM2mUplinkMsgHandler service;
 
-    public LwM2mServerListener(LwM2mTransportMsgHandler service) {
+    public LwM2mServerListener(LwM2mUplinkMsgHandler service) {
         this.service = service;
     }
 
@@ -86,30 +86,24 @@ public class LwM2mServerListener {
 
         @Override
         public void cancelled(Observation observation) {
-            String msg = String.format("%s:  Canceled Observation  %s.", LOG_LW2M_INFO, observation.getPath());
-            service.sendLogsToThingsboard(msg, observation.getRegistrationId());
-            log.warn(msg);
+            log.trace("Canceled Observation {}.", observation.getPath());
         }
 
         @Override
         public void onResponse(Observation observation, Registration registration, ObserveResponse response) {
             if (registration != null) {
-                service.onUpdateValueAfterReadResponse(registration, convertPathFromObjectIdToIdVer(observation.getPath().toString(),
-                        registration), response, null);
+                service.onUpdateValueAfterReadResponse(registration, convertObjectIdToVersionedId(observation.getPath().toString(), registration), response);
             }
         }
 
         @Override
         public void onError(Observation observation, Registration registration, Exception error) {
-            log.error(String.format("Unable to handle notification of [%s:%s]", observation.getRegistrationId(), observation.getPath()), error);
+            log.error("Unable to handle notification of [{}:{}]", observation.getRegistrationId(), observation.getPath(), error);
         }
 
         @Override
         public void newObservation(Observation observation, Registration registration) {
-            String msg = String.format("%s: Successful start newObservation  %s.", LOG_LW2M_INFO,
-                    observation.getPath());
-            log.warn(msg);
-            service.sendLogsToThingsboard(msg, registration.getId());
+            log.trace("Successful start newObservation {}.", observation.getPath());
         }
     };
 }

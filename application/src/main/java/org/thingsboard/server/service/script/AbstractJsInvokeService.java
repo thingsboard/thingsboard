@@ -30,6 +30,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -84,8 +85,10 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
                 apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.JS_EXEC_COUNT, 1);
                 return doInvokeFunction(scriptId, functionName, args);
             } else {
-                return Futures.immediateFailedFuture(
-                        new RuntimeException("Script invocation is blocked due to maximum error count " + getMaxErrors() + "!"));
+                String message = "Script invocation is blocked due to maximum error count "
+                        + getMaxErrors() + ", scriptId " + scriptId + "!";
+                log.warn(message);
+                return Futures.immediateFailedFuture(new RuntimeException(message));
             }
         } else {
             return Futures.immediateFailedFuture(new RuntimeException("JS Execution is disabled due to API limits!"));
@@ -117,8 +120,11 @@ public abstract class AbstractJsInvokeService implements JsInvokeService {
 
     protected abstract long getMaxBlacklistDuration();
 
-    protected void onScriptExecutionError(UUID scriptId) {
-        disabledFunctions.computeIfAbsent(scriptId, key -> new DisableListInfo()).incrementAndGet();
+    protected void onScriptExecutionError(UUID scriptId, Throwable t, String scriptBody) {
+        DisableListInfo disableListInfo = disabledFunctions.computeIfAbsent(scriptId, key -> new DisableListInfo());
+        log.warn("Script has exception and will increment counter {} on disabledFunctions for id {}, exception {}, cause {}, scriptBody {}",
+                disableListInfo.get(), scriptId, t, t.getCause(), scriptBody);
+        disableListInfo.incrementAndGet();
     }
 
     private String generateJsScript(JsScriptType scriptType, String functionName, String scriptBody, String... argNames) {

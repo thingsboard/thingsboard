@@ -97,7 +97,7 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
     }
 
     @Override
-    public WriteResponse write(ServerIdentity identity, int resourceid, LwM2mResource value) {
+    public WriteResponse write(ServerIdentity identity, boolean replace, int resourceid, LwM2mResource value) {
         log.info("Write on Device resource /{}/{}/{}", getModel().id, getId(), resourceid);
 
         switch (resourceid) {
@@ -112,7 +112,7 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
                 fireResourcesChange(resourceid);
                 return WriteResponse.success();
             default:
-                return super.write(identity, resourceid, value);
+                return super.write(identity, replace, resourceid, value);
         }
     }
 

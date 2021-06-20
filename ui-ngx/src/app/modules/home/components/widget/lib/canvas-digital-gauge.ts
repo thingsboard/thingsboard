@@ -772,7 +772,7 @@ function drawDigitalLabel(context: DigitalGaugeCanvasRenderingContext2D, options
   context.textAlign = 'center';
   context.font = Drawings.font(options, 'Label', fontSizeFactor);
   context.lineWidth = 0;
-  drawText(context, options, 'Label', options.label.toUpperCase(), textX, textY);
+  drawText(context, options, 'Label', options.label, textX, textY);
 }
 
 function drawDigitalMinMax(context: DigitalGaugeCanvasRenderingContext2D, options: CanvasDigitalGaugeOptions) {

@@ -102,15 +102,15 @@ public class LwM2MTransportBootstrapService {
         builder.setLocalSecureAddress(bootstrapConfig.getSecureHost(), bootstrapConfig.getSecurePort());
 
         /** Create CoAP Config */
-        builder.setCoapConfig(getCoapConfig(bootstrapConfig.getPort(), bootstrapConfig.getSecurePort()));
+        builder.setCoapConfig(getCoapConfig(bootstrapConfig.getPort(), bootstrapConfig.getSecurePort(), serverConfig));
 
         /** Define model provider (Create Models )*/
 
         /**  Create credentials */
         this.setServerWithCredentials(builder);
 
-        /** Set securityStore with new ConfigStore */
-        builder.setConfigStore(lwM2MInMemoryBootstrapConfigStore);
+//        /** Set securityStore with new ConfigStore */
+//        builder.setConfigStore(lwM2MInMemoryBootstrapConfigStore);
 
         /** SecurityStore */
         builder.setSecurityStore(lwM2MBootstrapSecurityStore);

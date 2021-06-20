@@ -16,13 +16,9 @@
 package org.thingsboard.server.transport.lwm2m.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Sets;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.leshan.core.attributes.Attribute;
@@ -34,25 +30,28 @@ import org.eclipse.leshan.core.node.LwM2mNode;
 import org.eclipse.leshan.core.node.LwM2mObject;
 import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
+import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.node.codec.CodecException;
-import org.eclipse.leshan.core.request.DownlinkRequest;
+import org.eclipse.leshan.core.request.SimpleDownlinkRequest;
 import org.eclipse.leshan.core.request.WriteAttributesRequest;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.registration.Registration;
 import org.nustaq.serialization.FSTConfiguration;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.device.data.lwm2m.BootstrapConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.ota.OtaPackageKey;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
 import org.thingsboard.server.common.data.ota.OtaPackageUtil;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientProfile;
+import org.thingsboard.server.transport.lwm2m.server.client.ResourceValue;
+import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -60,7 +59,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.eclipse.leshan.core.attributes.Attribute.DIMENSION;
@@ -77,17 +75,22 @@ import static org.eclipse.leshan.core.model.ResourceModel.Type.OBJLNK;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.STRING;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.TIME;
+import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
+import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADING;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.FAILED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATING;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.VERIFIED;
-import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
-import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 
 @Slf4j
 public class LwM2mTransportUtil {
+
+    public static final String EVENT_AWAKE = "AWAKE";
+    public static final String RESPONSE_REQUEST_CHANNEL = "RESP_REQ";
+    public static final String RESPONSE_CHANNEL = "RESP";
+    public static final String OBSERVE_CHANNEL = "OBSERVE";
 
     public static final String TRANSPORT_DEFAULT_LWM2M_VERSION = "1.0";
     public static final String CLIENT_LWM2M_SETTINGS = "clientLwM2mSettings";
@@ -110,56 +113,59 @@ public class LwM2mTransportUtil {
 
     public static final long DEFAULT_TIMEOUT = 2 * 60 * 1000L; // 2min in ms
 
-    public static final String LOG_LW2M_TELEMETRY = "logLwm2m";
-    public static final String LOG_LW2M_INFO = "info";
-    public static final String LOG_LW2M_ERROR = "error";
-    public static final String LOG_LW2M_WARN = "warn";
-    public static final String LOG_LW2M_VALUE = "value";
-
-    public static final int LWM2M_STRATEGY_1 = 1;
-    public static final int LWM2M_STRATEGY_2 = 2;
+    public static final String LOG_LWM2M_TELEMETRY = "logLwm2m";
+    public static final String LOG_LWM2M_INFO = "info";
+    public static final String LOG_LWM2M_ERROR = "error";
+    public static final String LOG_LWM2M_WARN = "warn";
+    public static final String LOG_LWM2M_VALUE = "value";
 
     public static final String CLIENT_NOT_AUTHORIZED = "Client not authorized";
     public static final String LWM2M_VERSION_DEFAULT = "1.0";
 
-    // RPC
-    public static final String TYPE_OPER_KEY = "typeOper";
-    public static final String TARGET_ID_VER_KEY = "targetIdVer";
-    public static final String KEY_NAME_KEY = "key";
-    public static final String VALUE_KEY = "value";
-    public static final String PARAMS_KEY = "params";
-    public static final String SEPARATOR_KEY = ":";
-    public static final String FINISH_VALUE_KEY = ",";
-    public static final String START_JSON_KEY = "{";
-    public static final String FINISH_JSON_KEY = "}";
-    //    public static final String contentFormatNameKey = "contentFormatName";
-    public static final String INFO_KEY = "info";
-    //    public static final String TIME_OUT_IN_MS = "timeOutInMs";
-    public static final String RESULT_KEY = "result";
-    public static final String ERROR_KEY = "error";
-    public static final String METHOD_KEY = "methodName";
-
     // Firmware
+    public static final String FIRMWARE_UPDATE_COAP_RECOURSE = "tbfw";
     public static final String FW_UPDATE = "Firmware update";
-    public static final Integer FW_ID = 5;
+    public static final Integer FW_5_ID = 5;
+    public static final Integer FW_19_ID = 19;
+
     // Package W
-    public static final String FW_PACKAGE_ID = "/5/0/0";
+    public static final String FW_PACKAGE_5_ID = "/5/0/0";
+    public static final String FW_PACKAGE_19_ID = "/19/0/0";
+    // Package URI
+    public static final String FW_PACKAGE_URI_ID = "/5/0/1";
     // State R
     public static final String FW_STATE_ID = "/5/0/3";
     // Update Result R
     public static final String FW_RESULT_ID = "/5/0/5";
+
+    public static final String FW_DELIVERY_METHOD = "/5/0/9";
+
     // PkgName R
     public static final String FW_NAME_ID = "/5/0/6";
     // PkgVersion R
-    public static final String FW_VER_ID = "/5/0/7";
+    public static final String FW_5_VER_ID = "/5/0/7";
+
+    /**
+     * Quectel@Hi15RM1-HLB_V1.0@BC68JAR01A10,V150R100C20B300SP7,V150R100C20B300SP7@8
+     * BC68JAR01A10
+     * # Request prodct type number
+     * ATI
+     * Quectel
+     * BC68
+     * Revision:BC68JAR01A10
+     */
+    public static final String FW_3_VER_ID = "/3/0/3";
     // Update E
     public static final String FW_UPDATE_ID = "/5/0/2";
 
     // Software
+    public static final String SOFTWARE_UPDATE_COAP_RECOURSE = "softwareUpdateCoapRecourse";
     public static final String SW_UPDATE = "Software update";
     public static final Integer SW_ID = 9;
     // Package W
     public static final String SW_PACKAGE_ID = "/9/0/2";
+    // Package URI
+    public static final String SW_PACKAGE_URI_ID = "/9/0/3";
     // Update State R
     public static final String SW_UPDATE_STATE_ID = "/9/0/7";
     // Update Result R
@@ -195,181 +201,12 @@ public class LwM2mTransportUtil {
         }
     }
 
-    /**
-     * Define the behavior of a write request.
-     */
-    public enum LwM2mTypeOper {
-        /**
-         * GET
-         */
-        READ(0, "Read"),
-        DISCOVER(1, "Discover"),
-        DISCOVER_ALL(2, "DiscoverAll"),
-        OBSERVE_READ_ALL(3, "ObserveReadAll"),
-        /**
-         * POST
-         */
-        OBSERVE(4, "Observe"),
-        OBSERVE_CANCEL(5, "ObserveCancel"),
-        OBSERVE_CANCEL_ALL(6, "ObserveCancelAll"),
-        EXECUTE(7, "Execute"),
-        /**
-         * Replaces the Object Instance or the Resource(s) with the new value provided in the “Write” operation. (see
-         * section 5.3.3 of the LW M2M spec).
-         * if all resources are to be replaced
-         */
-        WRITE_REPLACE(8, "WriteReplace"),
-        /*
-          PUT
-         */
-        /**
-         * Adds or updates Resources provided in the new value and leaves other existing Resources unchanged. (see section
-         * 5.3.3 of the LW M2M spec).
-         * if this is a partial update request
-         */
-        WRITE_UPDATE(9, "WriteUpdate"),
-        WRITE_ATTRIBUTES(10, "WriteAttributes"),
-        DELETE(11, "Delete"),
-
-        // only for RPC
-        FW_UPDATE(12,"FirmwareUpdate");
-//        FW_READ_INFO(12, "FirmwareReadInfo"),
-
-//        SW_READ_INFO(15, "SoftwareReadInfo"),
-//        SW_UPDATE(16, "SoftwareUpdate"),
-//        SW_UNINSTALL(18, "SoftwareUninstall");
-
-        public int code;
-        public String type;
-
-        LwM2mTypeOper(int code, String type) {
-            this.code = code;
-            this.type = type;
-        }
-
-        public static LwM2mTypeOper fromLwLwM2mTypeOper(String type) {
-            for (LwM2mTypeOper to : LwM2mTypeOper.values()) {
-                if (to.type.equals(type)) {
-                    return to;
-                }
-            }
-            throw new IllegalArgumentException(String.format("Unsupported typeOper type  : %s", type));
-        }
-    }
-
-    /**
-     * /** State R
-     * 0: Idle (before downloading or after successful updating)
-     * 1: Downloading (The data sequence is on the way)
-     * 2: Downloaded
-     * 3: Updating
-     */
-    public enum StateFw {
-        IDLE(0, "Idle"),
-        DOWNLOADING(1, "Downloading"),
-        DOWNLOADED(2, "Downloaded"),
-        UPDATING(3, "Updating");
-
-        public int code;
-        public String type;
-
-        StateFw(int code, String type) {
-            this.code = code;
-            this.type = type;
-        }
-
-        public static StateFw fromStateFwByType(String type) {
-            for (StateFw to : StateFw.values()) {
-                if (to.type.equals(type)) {
-                    return to;
-                }
-            }
-            throw new IllegalArgumentException(String.format("Unsupported FW State type  : %s", type));
-        }
-
-        public static StateFw fromStateFwByCode(int code) {
-            for (StateFw to : StateFw.values()) {
-                if (to.code == code) {
-                    return to;
-                }
-            }
-            throw new IllegalArgumentException(String.format("Unsupported FW State code : %s", code));
-        }
-    }
-
-    /**
-     * FW Update Result
-     * 0: Initial value. Once the updating process is initiated (Download /Update), this Resource MUST be reset to Initial value.
-     * 1: Firmware updated successfully.
-     * 2: Not enough flash memory for the new firmware package.
-     * 3: Out of RAM during downloading process.
-     * 4: Connection lost during downloading process.
-     * 5: Integrity check failure for new downloaded package.
-     * 6: Unsupported package type.
-     * 7: Invalid URI.
-     * 8: Firmware update failed.
-     * 9: Unsupported protocol.
-     */
-    public enum UpdateResultFw {
-        INITIAL(0, "Initial value", false),
-        UPDATE_SUCCESSFULLY(1, "Firmware updated successfully", false),
-        NOT_ENOUGH(2, "Not enough flash memory for the new firmware package", false),
-        OUT_OFF_MEMORY(3, "Out of RAM during downloading process", false),
-        CONNECTION_LOST(4, "Connection lost during downloading process", true),
-        INTEGRITY_CHECK_FAILURE(5, "Integrity check failure for new downloaded package", true),
-        UNSUPPORTED_TYPE(6, "Unsupported package type", false),
-        INVALID_URI(7, "Invalid URI", false),
-        UPDATE_FAILED(8, "Firmware update failed", false),
-        UNSUPPORTED_PROTOCOL(9, "Unsupported protocol", false);
-
-        public int code;
-        public String type;
-        public boolean isAgain;
-
-        UpdateResultFw(int code, String type, boolean isAgain) {
-            this.code = code;
-            this.type = type;
-            this.isAgain = isAgain;
-        }
-
-        public static UpdateResultFw fromUpdateResultFwByType(String type) {
-            for (UpdateResultFw to : UpdateResultFw.values()) {
-                if (to.type.equals(type)) {
-                    return to;
-                }
-            }
-            throw new IllegalArgumentException(String.format("Unsupported FW Update Result type  : %s", type));
-        }
-
-        public static UpdateResultFw fromUpdateResultFwByCode(int code) {
-            for (UpdateResultFw to : UpdateResultFw.values()) {
-                if (to.code == code) {
-                    return to;
-                }
-            }
-            throw new IllegalArgumentException(String.format("Unsupported FW Update Result code  : %s", code));
-        }
-    }
-
-    /**
-     * FirmwareUpdateStatus {
-     * DOWNLOADING, DOWNLOADED, VERIFIED, UPDATING, UPDATED, FAILED
-     */
-    public static OtaPackageUpdateStatus EqualsFwSateToFirmwareUpdateStatus(StateFw stateFw, UpdateResultFw updateResultFw) {
+    public static Optional<OtaPackageUpdateStatus> toOtaPackageUpdateStatus(UpdateResultFw updateResultFw) {
         switch (updateResultFw) {
             case INITIAL:
-                switch (stateFw) {
-                    case IDLE:
-                        return VERIFIED;
-                    case DOWNLOADING:
-                        return DOWNLOADING;
-                    case DOWNLOADED:
-                        return DOWNLOADED;
-                    case UPDATING:
-                        return UPDATING;
-                }
+                return Optional.empty();
             case UPDATE_SUCCESSFULLY:
-                return UPDATED;
+                return Optional.of(UPDATED);
             case NOT_ENOUGH:
             case OUT_OFF_MEMORY:
             case CONNECTION_LOST:
@@ -378,9 +215,24 @@ public class LwM2mTransportUtil {
             case INVALID_URI:
             case UPDATE_FAILED:
             case UNSUPPORTED_PROTOCOL:
-                return FAILED;
+                return Optional.of(FAILED);
             default:
-                throw new CodecException("Invalid value stateFw %s   %s for FirmwareUpdateStatus.", stateFw.name(), updateResultFw.name());
+                throw new CodecException("Invalid value stateFw %s for FirmwareUpdateStatus.", updateResultFw.name());
+        }
+    }
+
+    public static Optional<OtaPackageUpdateStatus> toOtaPackageUpdateStatus(UpdateStateFw updateStateFw) {
+        switch (updateStateFw) {
+            case IDLE:
+                return Optional.empty();
+            case DOWNLOADING:
+                return Optional.of(DOWNLOADING);
+            case DOWNLOADED:
+                return Optional.of(DOWNLOADED);
+            case UPDATING:
+                return Optional.of(UPDATING);
+            default:
+                throw new CodecException("Invalid value stateFw %d for FirmwareUpdateStatus.", updateStateFw);
         }
     }
 
@@ -497,6 +349,37 @@ public class LwM2mTransportUtil {
         }
     }
 
+    public enum LwM2MClientStrategy {
+        CLIENT_STRATEGY_1(1, "Read only resources marked as observation"),
+        CLIENT_STRATEGY_2(2, "Read all client resources");
+
+        public int code;
+        public String type;
+
+        LwM2MClientStrategy(int code, String type) {
+            this.code = code;
+            this.type = type;
+        }
+
+        public static LwM2MClientStrategy fromStrategyClientByType(String type) {
+            for (LwM2MClientStrategy to : LwM2MClientStrategy.values()) {
+                if (to.type.equals(type)) {
+                    return to;
+                }
+            }
+            throw new IllegalArgumentException(String.format("Unsupported Client Strategy type  : %s", type));
+        }
+
+        public static LwM2MClientStrategy fromStrategyClientByCode(int code) {
+            for (LwM2MClientStrategy to : LwM2MClientStrategy.values()) {
+                if (to.code == code) {
+                    return to;
+                }
+            }
+            throw new IllegalArgumentException(String.format("Unsupported Client Strategy code : %s", code));
+        }
+    }
+
     /**
      * FirmwareUpdateStatus {
      * DOWNLOADING, DOWNLOADED, VERIFIED, UPDATING, UPDATED, FAILED
@@ -534,10 +417,6 @@ public class LwM2mTransportUtil {
         }
     }
 
-    public static final String EVENT_AWAKE = "AWAKE";
-    public static final String RESPONSE_REQUEST_CHANNEL = "RESP_REQ";
-    public static final String RESPONSE_CHANNEL = "RESP";
-    public static final String OBSERVE_CHANNEL = "OBSERVE";
 
     public static boolean equalsResourceValue(Object valueOld, Object valueNew, ResourceModel.Type type, LwM2mPath
             resourcePath) throws CodecException {
@@ -558,6 +437,33 @@ public class LwM2mTransportUtil {
         }
     }
 
+    public static LwM2mOtaConvert convertOtaUpdateValueToString(String pathIdVer, Object value, ResourceModel.Type currentType) {
+        String path = fromVersionedIdToObjectId(pathIdVer);
+        LwM2mOtaConvert lwM2mOtaConvert = new LwM2mOtaConvert();
+        if (path != null) {
+            if (FW_STATE_ID.equals(path)) {
+                lwM2mOtaConvert.setCurrentType(STRING);
+                lwM2mOtaConvert.setValue(UpdateStateFw.fromStateFwByCode(((Long) value).intValue()).type);
+                return lwM2mOtaConvert;
+            } else if (FW_RESULT_ID.equals(path)) {
+                lwM2mOtaConvert.setCurrentType(STRING);
+                lwM2mOtaConvert.setValue(UpdateResultFw.fromUpdateResultFwByCode(((Long) value).intValue()).getType());
+                return lwM2mOtaConvert;
+            } else if (SW_UPDATE_STATE_ID.equals(path)) {
+                lwM2mOtaConvert.setCurrentType(STRING);
+                lwM2mOtaConvert.setValue(UpdateStateSw.fromUpdateStateSwByCode(((Long) value).intValue()).type);
+                return lwM2mOtaConvert;
+            } else if (SW_RESULT_ID.equals(path)) {
+                lwM2mOtaConvert.setCurrentType(STRING);
+                lwM2mOtaConvert.setValue(UpdateResultSw.fromUpdateResultSwByCode(((Long) value).intValue()).type);
+                return lwM2mOtaConvert;
+            }
+        }
+        lwM2mOtaConvert.setCurrentType(currentType);
+        lwM2mOtaConvert.setValue(value);
+        return lwM2mOtaConvert;
+    }
+
     public static LwM2mNode getLvM2mNodeToObject(LwM2mNode content) {
         if (content instanceof LwM2mObject) {
             return (LwM2mObject) content;
@@ -571,116 +477,31 @@ public class LwM2mTransportUtil {
         return null;
     }
 
+//    public static LwM2mClientProfile getNewProfileParameters(JsonObject profilesConfigData, TenantId tenantId) {
+//        LwM2mClientProfile lwM2MClientProfile = new LwM2mClientProfile();
+//        lwM2MClientProfile.setTenantId(tenantId);
+//        lwM2MClientProfile.setPostClientLwM2mSettings(profilesConfigData.get(CLIENT_LWM2M_SETTINGS).getAsJsonObject());
+//        lwM2MClientProfile.setPostKeyNameProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(KEY_NAME).getAsJsonObject());
+//        lwM2MClientProfile.setPostAttributeProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE).getAsJsonArray());
+//        lwM2MClientProfile.setPostTelemetryProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(TELEMETRY).getAsJsonArray());
+//        lwM2MClientProfile.setPostObserveProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(OBSERVE_LWM2M).getAsJsonArray());
+//        lwM2MClientProfile.setPostAttributeLwm2mProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE_LWM2M).getAsJsonObject());
+//        return lwM2MClientProfile;
+//    }
 
-    public static LwM2mClientProfile getNewProfileParameters(JsonObject profilesConfigData, TenantId tenantId) {
-        LwM2mClientProfile lwM2MClientProfile = new LwM2mClientProfile();
-        lwM2MClientProfile.setTenantId(tenantId);
-        lwM2MClientProfile.setPostClientLwM2mSettings(profilesConfigData.get(CLIENT_LWM2M_SETTINGS).getAsJsonObject());
-        lwM2MClientProfile.setPostKeyNameProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(KEY_NAME).getAsJsonObject());
-        lwM2MClientProfile.setPostAttributeProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE).getAsJsonArray());
-        lwM2MClientProfile.setPostTelemetryProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(TELEMETRY).getAsJsonArray());
-        lwM2MClientProfile.setPostObserveProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(OBSERVE_LWM2M).getAsJsonArray());
-        lwM2MClientProfile.setPostAttributeLwm2mProfile(profilesConfigData.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE_LWM2M).getAsJsonObject());
-        return lwM2MClientProfile;
-    }
-
-    /**
-     * @return deviceProfileBody with Observe&Attribute&Telemetry From Thingsboard
-     * Example:
-     * property: {"clientLwM2mSettings": {
-     * clientUpdateValueAfterConnect: false;
-     * }
-     * property: "observeAttr"
-     * {"keyName": {
-     * "/3/0/1": "modelNumber",
-     * "/3/0/0": "manufacturer",
-     * "/3/0/2": "serialNumber"
-     * },
-     * "attribute":["/2/0/1","/3/0/9"],
-     * "telemetry":["/1/0/1","/2/0/1","/6/0/1"],
-     * "observe":["/2/0","/2/0/0","/4/0/2"]}
-     * "attributeLwm2m": {"/3_1.0": {"ver": "currentTimeTest11"},
-     * "/3_1.0/0": {"gt": 17},
-     * "/3_1.0/0/9": {"pmax": 45}, "/3_1.2": {ver": "3_1.2"}}
-     */
-    public static LwM2mClientProfile toLwM2MClientProfile(DeviceProfile deviceProfile) {
-        if (((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties().size() > 0) {
-            Object profile = ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties();
-            try {
-                ObjectMapper mapper = new ObjectMapper();
-                String profileStr = mapper.writeValueAsString(profile);
-                JsonObject profileJson = (profileStr != null) ? validateJson(profileStr) : null;
-                return getValidateCredentialsBodyFromThingsboard(profileJson) ? LwM2mTransportUtil.getNewProfileParameters(profileJson, deviceProfile.getTenantId()) : null;
-            } catch (IOException e) {
-                log.error("", e);
-            }
+    public static Lwm2mDeviceProfileTransportConfiguration toLwM2MClientProfile(DeviceProfile deviceProfile) {
+        DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
+        if (transportConfiguration.getType().equals(DeviceTransportType.LWM2M)) {
+            return (Lwm2mDeviceProfileTransportConfiguration) transportConfiguration;
+        } else {
+            log.warn("[{}] Received profile with invalid transport configuration: {}", deviceProfile.getId(), deviceProfile.getProfileData().getTransportConfiguration());
+            throw new IllegalArgumentException("Received profile with invalid transport configuration: " + transportConfiguration.getType());
         }
-        return null;
     }
 
-    public static JsonObject getBootstrapParametersFromThingsboard(DeviceProfile deviceProfile) {
-        if (deviceProfile != null && ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties().size() > 0) {
-            Object bootstrap = ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile.getProfileData().getTransportConfiguration()).getProperties();
-            try {
-                ObjectMapper mapper = new ObjectMapper();
-                String bootstrapStr = mapper.writeValueAsString(bootstrap);
-                JsonObject objectMsg = (bootstrapStr != null) ? validateJson(bootstrapStr) : null;
-                return (getValidateBootstrapProfileFromThingsboard(objectMsg)) ? objectMsg.get(BOOTSTRAP).getAsJsonObject() : null;
-            } catch (IOException e) {
-                log.error("", e);
-            }
-        }
-        return null;
+    public static BootstrapConfiguration getBootstrapParametersFromThingsboard(DeviceProfile deviceProfile) {
+        return toLwM2MClientProfile(deviceProfile).getBootstrap();
     }
-
-    public static int getClientOnlyObserveAfterConnect(LwM2mClientProfile profile) {
-        return profile.getPostClientLwM2mSettings().getAsJsonObject().has("clientOnlyObserveAfterConnect") ?
-                profile.getPostClientLwM2mSettings().getAsJsonObject().get("clientOnlyObserveAfterConnect").getAsInt() : 1;
-    }
-
-    private static boolean getValidateCredentialsBodyFromThingsboard(JsonObject objectMsg) {
-        return (objectMsg != null &&
-                !objectMsg.isJsonNull() &&
-                objectMsg.has(CLIENT_LWM2M_SETTINGS) &&
-                !objectMsg.get(CLIENT_LWM2M_SETTINGS).isJsonNull() &&
-                objectMsg.get(CLIENT_LWM2M_SETTINGS).isJsonObject() &&
-                objectMsg.has(OBSERVE_ATTRIBUTE_TELEMETRY) &&
-                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).isJsonNull() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).isJsonObject() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(KEY_NAME) &&
-                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(KEY_NAME).isJsonNull() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(KEY_NAME).isJsonObject() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(ATTRIBUTE) &&
-                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE).isJsonNull() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE).isJsonArray() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(TELEMETRY) &&
-                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(TELEMETRY).isJsonNull() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(TELEMETRY).isJsonArray() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(OBSERVE_LWM2M) &&
-                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(OBSERVE_LWM2M).isJsonNull() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(OBSERVE_LWM2M).isJsonArray() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().has(ATTRIBUTE_LWM2M) &&
-                !objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE_LWM2M).isJsonNull() &&
-                objectMsg.get(OBSERVE_ATTRIBUTE_TELEMETRY).getAsJsonObject().get(ATTRIBUTE_LWM2M).isJsonObject());
-    }
-
-    private static boolean getValidateBootstrapProfileFromThingsboard(JsonObject objectMsg) {
-        return (objectMsg != null &&
-                !objectMsg.isJsonNull() &&
-                objectMsg.has(BOOTSTRAP) &&
-                objectMsg.get(BOOTSTRAP).isJsonObject() &&
-                !objectMsg.get(BOOTSTRAP).isJsonNull() &&
-                objectMsg.get(BOOTSTRAP).getAsJsonObject().has(SERVERS) &&
-                !objectMsg.get(BOOTSTRAP).getAsJsonObject().get(SERVERS).isJsonNull() &&
-                objectMsg.get(BOOTSTRAP).getAsJsonObject().get(SERVERS).isJsonObject() &&
-                objectMsg.get(BOOTSTRAP).getAsJsonObject().has(BOOTSTRAP_SERVER) &&
-                !objectMsg.get(BOOTSTRAP).getAsJsonObject().get(BOOTSTRAP_SERVER).isJsonNull() &&
-                objectMsg.get(BOOTSTRAP).getAsJsonObject().get(BOOTSTRAP_SERVER).isJsonObject() &&
-                objectMsg.get(BOOTSTRAP).getAsJsonObject().has(LWM2M_SERVER) &&
-                !objectMsg.get(BOOTSTRAP).getAsJsonObject().get(LWM2M_SERVER).isJsonNull() &&
-                objectMsg.get(BOOTSTRAP).getAsJsonObject().get(LWM2M_SERVER).isJsonObject());
-    }
-
 
     public static JsonObject validateJson(String jsonStr) {
         JsonObject object = null;
@@ -738,8 +559,11 @@ public class LwM2mTransportUtil {
         };
     }
 
-    public static String convertPathFromIdVerToObjectId(String pathIdVer) {
+    public static String fromVersionedIdToObjectId(String pathIdVer) {
         try {
+            if (pathIdVer == null) {
+                return null;
+            }
             String[] keyArray = pathIdVer.split(LWM2M_SEPARATOR_PATH);
             if (keyArray.length > 1 && keyArray[1].split(LWM2M_SEPARATOR_KEY).length == 2) {
                 keyArray[1] = keyArray[1].split(LWM2M_SEPARATOR_KEY)[0];
@@ -748,7 +572,8 @@ public class LwM2mTransportUtil {
                 return pathIdVer;
             }
         } catch (Exception e) {
-            return null;
+            log.warn("Issue converting path with version [{}] to path without version: ", pathIdVer, e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -779,12 +604,12 @@ public class LwM2mTransportUtil {
                 return pathIdVer;
             } else {
                 LwM2mPath pathObjId = new LwM2mPath(pathIdVer);
-                return convertPathFromObjectIdToIdVer(pathIdVer, registration);
+                return convertObjectIdToVersionedId(pathIdVer, registration);
             }
         }
     }
 
-    public static String convertPathFromObjectIdToIdVer(String path, Registration registration) {
+    public static String convertObjectIdToVersionedId(String path, Registration registration) {
         String ver = registration.getSupportedObject().get(new LwM2mPath(path).getObjectId());
         ver = ver != null ? ver : LWM2M_VERSION_DEFAULT;
         try {
@@ -839,12 +664,12 @@ public class LwM2mTransportUtil {
      * Attribute pmax = new Attribute(MAXIMUM_PERIOD, "60");
      * Attribute [] attrs = {gt, st};
      */
-    public static DownlinkRequest createWriteAttributeRequest(String target, Object params, DefaultLwM2MTransportMsgHandler serviceImpl) {
+    public static SimpleDownlinkRequest createWriteAttributeRequest(String target, Object params, DefaultLwM2MUplinkMsgHandler serviceImpl) {
         AttributeSet attrSet = new AttributeSet(createWriteAttributes(params, serviceImpl, target));
         return attrSet.getAttributes().size() > 0 ? new WriteAttributesRequest(target, attrSet) : null;
     }
 
-    private static Attribute[] createWriteAttributes(Object params, DefaultLwM2MTransportMsgHandler serviceImpl, String target) {
+    private static Attribute[] createWriteAttributes(Object params, DefaultLwM2MUplinkMsgHandler serviceImpl, String target) {
         List<Attribute> attributeLists = new ArrayList<>();
         ObjectMapper oMapper = new ObjectMapper();
         Map<String, Object> map = oMapper.convertValue(params, ConcurrentHashMap.class);
@@ -860,12 +685,6 @@ public class LwM2mTransportUtil {
             }
         });
         return attributeLists.toArray(Attribute[]::new);
-    }
-
-    public static Set<String> convertJsonArrayToSet(JsonArray jsonArray) {
-        List<String> attributeListOld = new Gson().fromJson(jsonArray, new TypeToken<List<String>>() {
-        }.getType());
-        return Sets.newConcurrentHashSet(attributeListOld);
     }
 
     public static ResourceModel.Type equalsResourceTypeGetSimpleName(Object value) {
@@ -889,15 +708,7 @@ public class LwM2mTransportUtil {
         }
     }
 
-    public static LwM2mTypeOper setValidTypeOper(String typeOper) {
-        try {
-            return LwM2mTransportUtil.LwM2mTypeOper.fromLwLwM2mTypeOper(typeOper);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    public static Object convertWriteAttributes(String type, Object value, DefaultLwM2MTransportMsgHandler serviceImpl, String target) {
+    public static Object convertWriteAttributes(String type, Object value, DefaultLwM2MUplinkMsgHandler serviceImpl, String target) {
         switch (type) {
             /** Integer [0:255]; */
             case DIMENSION:
@@ -914,7 +725,7 @@ public class LwM2mTransportUtil {
             case GREATER_THAN:
             case LESSER_THAN:
             case STEP:
-                if (value.getClass().getSimpleName().equals("String") ) {
+                if (value.getClass().getSimpleName().equals("String")) {
                     value = Double.valueOf((String) value);
                 }
                 return serviceImpl.converter.convertValue(value, equalsResourceTypeGetSimpleName(value), FLOAT, new LwM2mPath(target));
@@ -928,11 +739,11 @@ public class LwM2mTransportUtil {
             return new Attribute(key, attrValue);
         } catch (Exception e) {
             log.error("CreateAttribute, not valid parameter key: [{}], attrValue: [{}], error: [{}]", key, attrValue, e.getMessage());
-            return  null;
+            return null;
         }
     }
 
-    public static boolean isFwSwWords (String pathName) {
+    public static boolean isFwSwWords(String pathName) {
         return OtaPackageUtil.getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.VERSION).equals(pathName)
                 || OtaPackageUtil.getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.TITLE).equals(pathName)
                 || OtaPackageUtil.getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.CHECKSUM).equals(pathName)
@@ -943,5 +754,21 @@ public class LwM2mTransportUtil {
                 || OtaPackageUtil.getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.CHECKSUM).equals(pathName)
                 || OtaPackageUtil.getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.CHECKSUM_ALGORITHM).equals(pathName)
                 || OtaPackageUtil.getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.SIZE).equals(pathName);
+    }
+
+    /**
+     * @param lwM2MClient -
+     * @param path        -
+     * @return - return value of Resource by idPath
+     */
+    public static LwM2mResource getResourceValueFromLwM2MClient(LwM2mClient lwM2MClient, String path) {
+        LwM2mResource lwm2mResourceValue = null;
+        ResourceValue resourceValue = lwM2MClient.getResources().get(path);
+        if (resourceValue != null) {
+            if (new LwM2mPath(fromVersionedIdToObjectId(path)).isResource()) {
+                lwm2mResourceValue = lwM2MClient.getResources().get(path).getLwM2mResource();
+            }
+        }
+        return lwm2mResourceValue;
     }
 }

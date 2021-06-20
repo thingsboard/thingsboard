@@ -39,6 +39,7 @@ public enum ActionType {
     RELATIONS_DELETED(false),
     ALARM_ACK(false),
     ALARM_CLEAR(false),
+    ALARM_DELETE(false),
     LOGIN(false),
     LOGOUT(false),
     LOCKOUT(false),

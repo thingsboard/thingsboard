@@ -41,7 +41,7 @@ import { Subject } from 'rxjs';
 @Component({
   selector: 'tb-security-config-lwm2m-server',
   templateUrl: './security-config-lwm2m-server.component.html',
-  styleUrls: ['./security-config-lwm2m-server.component.scss'],
+  styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

@@ -104,7 +104,8 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
 
     this.config.entitiesFetchFunction = pageLink => this.deviceProfileService.getDeviceProfiles(pageLink);
     this.config.loadEntity = id => this.deviceProfileService.getDeviceProfile(id.id);
-    this.config.saveEntity = deviceProfile => this.deviceProfileService.saveDeviceProfile(deviceProfile);
+    this.config.saveEntity = (deviceProfile, originDeviceProfile) =>
+      this.deviceProfileService.saveDeviceProfileAndConfirmOtaChange(originDeviceProfile, deviceProfile);
     this.config.deleteEntity = id => this.deviceProfileService.deleteDeviceProfile(id.id);
     this.config.onEntityAction = action => this.onDeviceProfileAction(action);
     this.config.deleteEnabled = (deviceProfile) => deviceProfile && !deviceProfile.default;
