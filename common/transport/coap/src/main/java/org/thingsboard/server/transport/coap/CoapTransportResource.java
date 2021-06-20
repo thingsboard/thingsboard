@@ -44,7 +44,6 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportC
 import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
-import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
@@ -139,10 +138,6 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
             processExchangeGetRequest(exchange, featureType.get());
         } else if (featureType.get() == FeatureType.ATTRIBUTES) {
             processRequest(exchange, SessionMsgType.GET_ATTRIBUTES_REQUEST);
-        } else if (featureType.get() == FeatureType.FIRMWARE) {
-            processRequest(exchange, SessionMsgType.GET_FIRMWARE_REQUEST);
-        } else if (featureType.get() == FeatureType.SOFTWARE) {
-            processRequest(exchange, SessionMsgType.GET_SOFTWARE_REQUEST);
         } else {
             log.trace("Invalid feature type parameter");
             exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
@@ -349,12 +344,6 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                             coapTransportAdaptor.convertToGetAttributes(sessionId, request),
                             new CoapNoOpCallback(exchange));
                     break;
-                case GET_FIRMWARE_REQUEST:
-                    getOtaPackageCallback(sessionInfo, exchange, OtaPackageType.FIRMWARE);
-                    break;
-                case GET_SOFTWARE_REQUEST:
-                    getOtaPackageCallback(sessionInfo, exchange, OtaPackageType.SOFTWARE);
-                    break;
             }
         } catch (AdaptorException e) {
             log.trace("[{}] Failed to decode message: ", sessionId, e);
@@ -364,16 +353,6 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
 
     private UUID toSessionId(TransportProtos.SessionInfoProto sessionInfoProto) {
         return new UUID(sessionInfoProto.getSessionIdMSB(), sessionInfoProto.getSessionIdLSB());
-    }
-
-    private void getOtaPackageCallback(TransportProtos.SessionInfoProto sessionInfo, CoapExchange exchange, OtaPackageType firmwareType) {
-        TransportProtos.GetOtaPackageRequestMsg requestMsg = TransportProtos.GetOtaPackageRequestMsg.newBuilder()
-                .setTenantIdMSB(sessionInfo.getTenantIdMSB())
-                .setTenantIdLSB(sessionInfo.getTenantIdLSB())
-                .setDeviceIdMSB(sessionInfo.getDeviceIdMSB())
-                .setDeviceIdLSB(sessionInfo.getDeviceIdLSB())
-                .setType(firmwareType.name()).build();
-        transportContext.getTransportService().process(sessionInfo, requestMsg, new OtaPackageCallback(exchange));
     }
 
     private TransportProtos.SessionInfoProto lookupAsyncSessionInfo(String token) {
@@ -460,40 +439,6 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                 exchange.respond(responseCode, JsonConverter.toJson(msg).toString());
             } else {
                 exchange.respond(responseCode, msg.toByteArray());
-            }
-        }
-
-        @Override
-        public void onError(Throwable e) {
-            log.warn("Failed to process request", e);
-            exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    private class OtaPackageCallback implements TransportServiceCallback<TransportProtos.GetOtaPackageResponseMsg> {
-        private final CoapExchange exchange;
-
-        OtaPackageCallback(CoapExchange exchange) {
-            this.exchange = exchange;
-        }
-
-        @Override
-        public void onSuccess(TransportProtos.GetOtaPackageResponseMsg msg) {
-            String title = exchange.getQueryParameter("title");
-            String version = exchange.getQueryParameter("version");
-            if (msg.getResponseStatus().equals(TransportProtos.ResponseStatus.SUCCESS)) {
-                if (msg.getTitle().equals(title) && msg.getVersion().equals(version)) {
-                    String firmwareId = new UUID(msg.getOtaPackageIdMSB(), msg.getOtaPackageIdLSB()).toString();
-                    String strChunkSize = exchange.getQueryParameter("size");
-                    String strChunk = exchange.getQueryParameter("chunk");
-                    int chunkSize = StringUtils.isEmpty(strChunkSize) ? 0 : Integer.parseInt(strChunkSize);
-                    int chunk = StringUtils.isEmpty(strChunk) ? 0 : Integer.parseInt(strChunk);
-                    exchange.respond(CoAP.ResponseCode.CONTENT, transportContext.getOtaPackageDataCache().get(firmwareId, chunkSize, chunk));
-                } else {
-                    exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
-                }
-            } else {
-                exchange.respond(CoAP.ResponseCode.NOT_FOUND);
             }
         }
 

@@ -75,6 +75,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -89,6 +90,7 @@ public class RuleChainController extends BaseController {
     private static final int DEFAULT_PAGE_SIZE = 1000;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    public static final int TIMEOUT = 20;
 
     @Autowired
     private InstallScripts installScripts;
@@ -391,25 +393,25 @@ public class RuleChainController extends BaseController {
                 TbMsg inMsg = TbMsg.newMsg(msgType, null, new TbMsgMetaData(metadata), TbMsgDataType.JSON, data);
                 switch (scriptType) {
                     case "update":
-                        output = msgToOutput(engine.executeUpdate(inMsg));
+                        output = msgToOutput(engine.executeUpdateAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS));
                         break;
                     case "generate":
-                        output = msgToOutput(engine.executeGenerate(inMsg));
+                        output = msgToOutput(engine.executeGenerateAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS));
                         break;
                     case "filter":
-                        boolean result = engine.executeFilter(inMsg);
+                        boolean result = engine.executeFilterAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
                         output = Boolean.toString(result);
                         break;
                     case "switch":
-                        Set<String> states = engine.executeSwitch(inMsg);
+                        Set<String> states = engine.executeSwitchAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
                         output = objectMapper.writeValueAsString(states);
                         break;
                     case "json":
-                        JsonNode json = engine.executeJson(inMsg);
+                        JsonNode json = engine.executeJsonAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
                         output = objectMapper.writeValueAsString(json);
                         break;
                     case "string":
-                        output = engine.executeToString(inMsg);
+                        output = engine.executeToStringAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
                         break;
                     default:
                         throw new IllegalArgumentException("Unsupported script type: " + scriptType);

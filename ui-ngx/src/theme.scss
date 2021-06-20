@@ -174,6 +174,48 @@ $tb-dark-theme: get-tb-dark-theme(
   }
 }
 
+@mixin _mat-toolbar-inverse-color($palette) {
+  background: mat-color($palette, default-contrast);
+  color: $dark-primary-text;
+}
+
+@mixin mat-fab-toolbar-inverse-theme($theme) {
+  $primary: map-get($theme, primary);
+  $accent: map-get($theme, accent);
+  $warn: map-get($theme, warn);
+  $background: map-get($theme, foreground);
+  $foreground: map-get($theme, background);
+
+  mat-fab-toolbar {
+    .mat-fab-toolbar-background {
+      background: mat-color($background, app-bar);
+      color: mat-color($foreground, text);
+    }
+    &.mat-primary {
+      .mat-fab-toolbar-background {
+        @include _mat-toolbar-inverse-color($primary);
+      }
+    }
+    mat-toolbar {
+      &.mat-primary {
+        @include _mat-toolbar-inverse-color($primary);
+        button.mat-icon-button {
+          mat-icon {
+            color: mat-color($primary);
+          }
+        }
+      }
+    }
+    .mat-fab {
+      &.mat-primary {
+        background: mat-color($primary, default-contrast);
+        color: mat-color($primary);
+      }
+    }
+  }
+
+}
+
 @mixin tb-components-theme($theme) {
   $primary: map-get($theme, primary);
 
@@ -184,6 +226,10 @@ $tb-dark-theme: get-tb-dark-theme(
   }
 
   @include mat-fab-toolbar-theme($tb-theme);
+
+  div.tb-dashboard-page.mobile-app {
+    @include mat-fab-toolbar-inverse-theme($tb-theme);
+  }
 }
 
 .tb-default {
@@ -195,3 +241,4 @@ $tb-dark-theme: get-tb-dark-theme(
 .tb-dark {
   @include angular-material-theme($tb-dark-theme);
 }
+

@@ -160,7 +160,6 @@ public abstract class AbstractServiceTest {
     @Autowired
     protected ResourceService resourceService;
 
-
     @Autowired
     protected OtaPackageService otaPackageService;
 

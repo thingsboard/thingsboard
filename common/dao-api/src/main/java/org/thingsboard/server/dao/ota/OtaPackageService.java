@@ -44,9 +44,11 @@ public interface OtaPackageService {
 
     PageData<OtaPackageInfo> findTenantOtaPackagesByTenantId(TenantId tenantId, PageLink pageLink);
 
-    PageData<OtaPackageInfo> findTenantOtaPackagesByTenantIdAndDeviceProfileIdAndTypeAndHasData(TenantId tenantId, DeviceProfileId deviceProfileId, OtaPackageType otaPackageType, boolean hasData, PageLink pageLink);
+    PageData<OtaPackageInfo> findTenantOtaPackagesByTenantIdAndDeviceProfileIdAndTypeAndHasData(TenantId tenantId, DeviceProfileId deviceProfileId, OtaPackageType otaPackageType, PageLink pageLink);
 
     void deleteOtaPackage(TenantId tenantId, OtaPackageId otaPackageId);
 
     void deleteOtaPackagesByTenantId(TenantId tenantId);
+
+    long sumDataSizeByTenantId(TenantId tenantId);
 }

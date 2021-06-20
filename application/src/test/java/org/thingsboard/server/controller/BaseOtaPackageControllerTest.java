@@ -50,7 +50,7 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
     private static final String FILE_NAME = "filename.txt";
     private static final String VERSION = "v1.0";
     private static final String CONTENT_TYPE = "text/plain";
-    private static final String CHECKSUM_ALGORITHM = "sha256";
+    private static final String CHECKSUM_ALGORITHM = "SHA256";
     private static final String CHECKSUM = "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a";
     private static final ByteBuffer DATA = ByteBuffer.wrap(new byte[]{1});
 
@@ -141,10 +141,12 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
 
         MockMultipartFile testData = new MockMultipartFile("file", FILE_NAME, CONTENT_TYPE, DATA.array());
 
-        OtaPackage savedFirmware = savaData("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString() + "?checksum={checksum}&checksumAlgorithm={checksumAlgorithm}", testData, CHECKSUM, CHECKSUM_ALGORITHM);
+        OtaPackageInfo savedFirmware = savaData("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString() + "?checksum={checksum}&checksumAlgorithm={checksumAlgorithm}", testData, CHECKSUM, CHECKSUM_ALGORITHM);
 
         Assert.assertEquals(FILE_NAME, savedFirmware.getFileName());
         Assert.assertEquals(CONTENT_TYPE, savedFirmware.getContentType());
+        Assert.assertEquals(CHECKSUM_ALGORITHM, savedFirmware.getChecksumAlgorithm().name());
+        Assert.assertEquals(CHECKSUM, savedFirmware.getChecksum());
     }
 
     @Test
@@ -189,11 +191,12 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
 
         MockMultipartFile testData = new MockMultipartFile("file", FILE_NAME, CONTENT_TYPE, DATA.array());
 
-        OtaPackage savedFirmware = savaData("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString() + "?checksum={checksum}&checksumAlgorithm={checksumAlgorithm}", testData, CHECKSUM, CHECKSUM_ALGORITHM);
+        OtaPackageInfo savedFirmware = savaData("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString() + "?checksum={checksum}&checksumAlgorithm={checksumAlgorithm}", testData, CHECKSUM, CHECKSUM_ALGORITHM);
 
         OtaPackage foundFirmware = doGet("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString(), OtaPackage.class);
         Assert.assertNotNull(foundFirmware);
-        Assert.assertEquals(savedFirmware, foundFirmware);
+        Assert.assertEquals(savedFirmware, new OtaPackageInfo(foundFirmware));
+        Assert.assertEquals(DATA, foundFirmware.getData());
     }
 
     @Test
@@ -228,8 +231,8 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
             if (i > 100) {
                 MockMultipartFile testData = new MockMultipartFile("file", FILE_NAME, CONTENT_TYPE, DATA.array());
 
-                OtaPackage savedFirmware = savaData("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString() + "?checksum={checksum}&checksumAlgorithm={checksumAlgorithm}", testData, CHECKSUM, CHECKSUM_ALGORITHM);
-                otaPackages.add(new OtaPackageInfo(savedFirmware));
+                OtaPackageInfo savedFirmware = savaData("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString() + "?checksum={checksum}&checksumAlgorithm={checksumAlgorithm}", testData, CHECKSUM, CHECKSUM_ALGORITHM);
+                otaPackages.add(savedFirmware);
             } else {
                 otaPackages.add(savedFirmwareInfo);
             }
@@ -257,7 +260,7 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
     @Test
     public void testFindTenantFirmwaresByHasData() throws Exception {
         List<OtaPackageInfo> otaPackagesWithData = new ArrayList<>();
-        List<OtaPackageInfo> otaPackagesWithoutData = new ArrayList<>();
+        List<OtaPackageInfo> allOtaPackages = new ArrayList<>();
 
         for (int i = 0; i < 165; i++) {
             OtaPackageInfo firmwareInfo = new OtaPackageInfo();
@@ -271,45 +274,46 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
             if (i > 100) {
                 MockMultipartFile testData = new MockMultipartFile("file", FILE_NAME, CONTENT_TYPE, DATA.array());
 
-                OtaPackage savedFirmware = savaData("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString() + "?checksum={checksum}&checksumAlgorithm={checksumAlgorithm}", testData, CHECKSUM, CHECKSUM_ALGORITHM);
-                otaPackagesWithData.add(new OtaPackageInfo(savedFirmware));
-            } else {
-                otaPackagesWithoutData.add(savedFirmwareInfo);
+                OtaPackageInfo savedFirmware = savaData("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString() + "?checksum={checksum}&checksumAlgorithm={checksumAlgorithm}", testData, CHECKSUM, CHECKSUM_ALGORITHM);
+                savedFirmwareInfo = new OtaPackageInfo(savedFirmware);
+                otaPackagesWithData.add(savedFirmwareInfo);
             }
+
+            allOtaPackages.add(savedFirmwareInfo);
         }
 
-        List<OtaPackageInfo> loadedFirmwaresWithData = new ArrayList<>();
+        List<OtaPackageInfo> loadedOtaPackagesWithData = new ArrayList<>();
         PageLink pageLink = new PageLink(24);
         PageData<OtaPackageInfo> pageData;
         do {
-            pageData = doGetTypedWithPageLink("/api/otaPackages/" + deviceProfileId.toString() + "/FIRMWARE/true?",
+            pageData = doGetTypedWithPageLink("/api/otaPackages/" + deviceProfileId.toString() + "/FIRMWARE?",
                     new TypeReference<>() {
                     }, pageLink);
-            loadedFirmwaresWithData.addAll(pageData.getData());
+            loadedOtaPackagesWithData.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
-        List<OtaPackageInfo> loadedFirmwaresWithoutData = new ArrayList<>();
+        List<OtaPackageInfo> allLoadedOtaPackages = new ArrayList<>();
         pageLink = new PageLink(24);
         do {
-            pageData = doGetTypedWithPageLink("/api/otaPackages/" + deviceProfileId.toString() + "/FIRMWARE/false?",
+            pageData = doGetTypedWithPageLink("/api/otaPackages?",
                     new TypeReference<>() {
                     }, pageLink);
-            loadedFirmwaresWithoutData.addAll(pageData.getData());
+            allLoadedOtaPackages.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
         Collections.sort(otaPackagesWithData, idComparator);
-        Collections.sort(otaPackagesWithoutData, idComparator);
-        Collections.sort(loadedFirmwaresWithData, idComparator);
-        Collections.sort(loadedFirmwaresWithoutData, idComparator);
+        Collections.sort(allOtaPackages, idComparator);
+        Collections.sort(loadedOtaPackagesWithData, idComparator);
+        Collections.sort(allLoadedOtaPackages, idComparator);
 
-        Assert.assertEquals(otaPackagesWithData, loadedFirmwaresWithData);
-        Assert.assertEquals(otaPackagesWithoutData, loadedFirmwaresWithoutData);
+        Assert.assertEquals(otaPackagesWithData, loadedOtaPackagesWithData);
+        Assert.assertEquals(allOtaPackages, allLoadedOtaPackages);
     }
 
 
@@ -317,11 +321,11 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
         return doPost("/api/otaPackage", firmwareInfo, OtaPackageInfo.class);
     }
 
-    protected OtaPackage savaData(String urlTemplate, MockMultipartFile content, String... params) throws Exception {
+    protected OtaPackageInfo savaData(String urlTemplate, MockMultipartFile content, String... params) throws Exception {
         MockMultipartHttpServletRequestBuilder postRequest = MockMvcRequestBuilders.multipart(urlTemplate, params);
         postRequest.file(content);
         setJwtToken(postRequest);
-        return readResponse(mockMvc.perform(postRequest).andExpect(status().isOk()), OtaPackage.class);
+        return readResponse(mockMvc.perform(postRequest).andExpect(status().isOk()), OtaPackageInfo.class);
     }
 
 }

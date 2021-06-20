@@ -143,6 +143,7 @@ import { SelectableColumnsPipe } from '@shared/pipe/selectable-columns.pipe';
 import { QuickTimeIntervalComponent } from '@shared/components/time/quick-time-interval.component';
 import { OtaPackageAutocompleteComponent } from '@shared/components/ota-package/ota-package-autocomplete.component';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
+import { CopyButtonComponent } from '@shared/components/button/copy-button.component';
 
 @NgModule({
   providers: [
@@ -240,7 +241,8 @@ import { MAT_DATE_LOCALE } from '@angular/material/core';
     EntityGatewaySelectComponent,
     ContactComponent,
     OtaPackageAutocompleteComponent,
-    WidgetsBundleSearchComponent
+    WidgetsBundleSearchComponent,
+    CopyButtonComponent
   ],
   imports: [
     CommonModule,
@@ -412,7 +414,8 @@ import { MAT_DATE_LOCALE } from '@angular/material/core';
     EntityGatewaySelectComponent,
     ContactComponent,
     OtaPackageAutocompleteComponent,
-    WidgetsBundleSearchComponent
+    WidgetsBundleSearchComponent,
+    CopyButtonComponent
   ]
 })
 export class SharedModule { }

@@ -35,4 +35,16 @@
       <mat-icon>{{ disabled ? 'visibility' : (alarmRuleFormGroup.get('alarmDetails').value ? 'edit' : 'add') }}</mat-icon>
     </button>
   </div>
+  <div *ngIf="!disabled || alarmRuleFormGroup.get('dashboardId').value" fxLayout="column" fxLayoutAlign="start start"
+       fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center">
+    <span class="tb-alarm-rule-dashboard title">
+      {{ ('device-profile.alarm-rule-mobile-dashboard' | translate) + ': ' }}
+    </span>
+    <tb-dashboard-autocomplete class="tb-alarm-rule-dashboard dashboard"
+      floatLabel="never"
+      placeholder="{{ 'device-profile.alarm-rule-no-mobile-dashboard' | translate }}"
+      formControlName="dashboardId">
+      <div tb-hint>{{'device-profile.alarm-rule-mobile-dashboard-hint' | translate}}</div>
+    </tb-dashboard-autocomplete>
+  </div>
 </div>

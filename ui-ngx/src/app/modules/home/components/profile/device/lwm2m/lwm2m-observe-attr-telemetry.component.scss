@@ -24,6 +24,9 @@
 }
 
 :host{
+  section {
+    padding: 2px;
+  }
   .instance-list {
     mat-expansion-panel-header {
       color: inherit;

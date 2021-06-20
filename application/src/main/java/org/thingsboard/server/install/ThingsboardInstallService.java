@@ -199,6 +199,7 @@ public class ThingsboardInstallService {
                             databaseEntitiesUpgradeService.upgradeDatabase("3.2.2");
 
                             dataUpdateService.updateData("3.2.2");
+                            systemDataLoaderService.createOAuth2Templates();
 
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();

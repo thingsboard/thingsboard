@@ -216,13 +216,13 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
       direction: Direction.ASC
     });
     return this.otaPackageService.getOtaPackagesInfoByDeviceProfileId(pageLink, this.deviceProfileId, this.type,
-                                                          true, {ignoreLoading: true}).pipe(
+                                                                {ignoreLoading: true}).pipe(
       map((data) => data && data.data.length ? data.data : null)
     );
   }
 
   clear() {
-    this.otaPackageFormGroup.get('packageId').patchValue('', {emitEvent: true});
+    this.otaPackageFormGroup.get('packageId').patchValue('', {emitEvent: false});
     setTimeout(() => {
       this.packageInput.nativeElement.blur();
       this.packageInput.nativeElement.focus();

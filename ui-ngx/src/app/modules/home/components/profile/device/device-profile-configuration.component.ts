@@ -14,13 +14,15 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DeviceProfileConfiguration, DeviceProfileType } from '@shared/models/device.models';
 import { deepClone } from '@core/utils';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-device-profile-configuration',
@@ -32,11 +34,13 @@ import { deepClone } from '@core/utils';
     multi: true
   }]
 })
-export class DeviceProfileConfigurationComponent implements ControlValueAccessor, OnInit {
+export class DeviceProfileConfigurationComponent implements ControlValueAccessor, OnInit, OnDestroy {
 
   deviceProfileType = DeviceProfileType;
 
   deviceProfileConfigurationFormGroup: FormGroup;
+
+  private destroy$ = new Subject();
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -69,9 +73,16 @@ export class DeviceProfileConfigurationComponent implements ControlValueAccessor
     this.deviceProfileConfigurationFormGroup = this.fb.group({
       configuration: [null, Validators.required]
     });
-    this.deviceProfileConfigurationFormGroup.valueChanges.subscribe(() => {
+    this.deviceProfileConfigurationFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
       this.updateModel();
     });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   setDisabledState(isDisabled: boolean): void {

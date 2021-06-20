@@ -18,7 +18,6 @@ package org.thingsboard.server.service.lwm2m;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.util.Hex;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
@@ -50,40 +49,20 @@ public class LwM2MServerSecurityInfoRepository {
     private final LwM2MTransportServerConfig serverConfig;
     private final LwM2MTransportBootstrapConfig bootstrapConfig;
 
-    /**
-     * @param securityMode
-     * @param bootstrapServer
-     * @return ServerSecurityConfig more value is default: Important - port, host, publicKey
-     */
-    public ServerSecurityConfig getServerSecurityInfo(SecurityMode securityMode, boolean bootstrapServer) {
-        ServerSecurityConfig result = getServerSecurityConfig(bootstrapServer ? bootstrapConfig : serverConfig, securityMode);
+    public ServerSecurityConfig getServerSecurityInfo(boolean bootstrapServer) {
+        ServerSecurityConfig result = getServerSecurityConfig(bootstrapServer ? bootstrapConfig : serverConfig);
         result.setBootstrapServerIs(bootstrapServer);
         return result;
     }
 
-    private ServerSecurityConfig getServerSecurityConfig(LwM2MSecureServerConfig serverConfig, SecurityMode securityMode) {
+    private ServerSecurityConfig getServerSecurityConfig(LwM2MSecureServerConfig serverConfig) {
         ServerSecurityConfig bsServ = new ServerSecurityConfig();
         bsServ.setServerId(serverConfig.getId());
-        switch (securityMode) {
-            case NO_SEC:
-                bsServ.setHost(serverConfig.getHost());
-                bsServ.setPort(serverConfig.getPort());
-                bsServ.setServerPublicKey("");
-                break;
-            case PSK:
-                bsServ.setHost(serverConfig.getSecureHost());
-                bsServ.setPort(serverConfig.getSecurePort());
-                bsServ.setServerPublicKey("");
-                break;
-            case RPK:
-            case X509:
-                bsServ.setHost(serverConfig.getSecureHost());
-                bsServ.setPort(serverConfig.getSecurePort());
-                bsServ.setServerPublicKey(getPublicKey(serverConfig.getCertificateAlias(), this.serverConfig.getPublicX(), this.serverConfig.getPublicY()));
-                break;
-            default:
-                break;
-        }
+        bsServ.setHost(serverConfig.getHost());
+        bsServ.setPort(serverConfig.getPort());
+        bsServ.setSecurityHost(serverConfig.getSecureHost());
+        bsServ.setSecurityPort(serverConfig.getSecurePort());
+        bsServ.setServerPublicKey(getPublicKey(serverConfig.getCertificateAlias(), this.serverConfig.getPublicX(), this.serverConfig.getPublicY()));
         return bsServ;
     }
 

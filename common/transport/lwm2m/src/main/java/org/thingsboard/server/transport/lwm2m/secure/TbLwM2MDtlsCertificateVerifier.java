@@ -29,22 +29,21 @@ import org.eclipse.californium.scandium.dtls.HandshakeResultHandler;
 import org.eclipse.californium.scandium.dtls.x509.NewAdvancedCertificateVerifier;
 import org.eclipse.californium.scandium.dtls.x509.StaticCertificateVerifier;
 import org.eclipse.californium.scandium.util.ServerNames;
+import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredentials;
 import org.thingsboard.server.common.msg.EncryptionUtil;
-import org.thingsboard.server.common.transport.TransportService;
-import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.util.SslUtil;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredentials;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
+import org.thingsboard.server.transport.lwm2m.server.store.TbEditableSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
 
 import javax.annotation.PostConstruct;
@@ -57,8 +56,6 @@ import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
@@ -66,9 +63,10 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVerifier {
 
-    private final TransportService transportService;
     private final TbLwM2MDtlsSessionStore sessionStorage;
     private final LwM2MTransportServerConfig config;
+    private final LwM2mCredentialsSecurityInfoValidator securityInfoValidator;
+    private final TbEditableSecurityStore securityStore;
 
     @SuppressWarnings("deprecation")
     private StaticCertificateVerifier staticCertificateVerifier;
@@ -119,48 +117,33 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
 
                         String strCert = SslUtil.getCertificateString(cert);
                         String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
-                        final ValidateDeviceCredentialsResponse[] deviceCredentialsResponse = new ValidateDeviceCredentialsResponse[1];
-                        CountDownLatch latch = new CountDownLatch(1);
-                        transportService.process(TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder().setCredentialsId(sha3Hash).build(),
-                                new TransportServiceCallback<>() {
-                                    @Override
-                                    public void onSuccess(ValidateDeviceCredentialsResponse msg) {
-                                        if (!StringUtils.isEmpty(msg.getCredentials())) {
-                                            deviceCredentialsResponse[0] = msg;
-                                        }
-                                        latch.countDown();
+                        TbLwM2MSecurityInfo securityInfo = securityInfoValidator.getEndpointSecurityInfoByCredentialsId(sha3Hash, LwM2mTransportUtil.LwM2mTypeServer.CLIENT);
+                        ValidateDeviceCredentialsResponse msg = securityInfo != null ? securityInfo.getMsg() : null;
+                        if (msg != null && org.thingsboard.server.common.data.StringUtils.isNotEmpty(msg.getCredentials())) {
+                            LwM2MCredentials credentials = JacksonUtil.fromString(msg.getCredentials(), LwM2MCredentials.class);
+                            if (!credentials.getClient().getSecurityConfigClientMode().equals(LwM2MSecurityMode.X509)) {
+                                continue;
+                            }
+                            X509ClientCredentials config = (X509ClientCredentials) credentials.getClient();
+                            String certBody = config.getCert();
+                            String endpoint = config.getEndpoint();
+                            if (strCert.equals(certBody)) {
+                                x509CredentialsFound = true;
+                                DeviceProfile deviceProfile = msg.getDeviceProfile();
+                                if (msg.hasDeviceInfo() && deviceProfile != null) {
+                                    sessionStorage.put(endpoint, new TbX509DtlsSessionInfo(cert.getSubjectX500Principal().getName(), msg));
+                                    try {
+                                        securityStore.put(securityInfo);
+                                    } catch (NonUniqueSecurityInfoException e) {
+                                        log.trace("Failed to add security info: {}", securityInfo, e);
                                     }
-
-                                    @Override
-                                    public void onError(Throwable e) {
-                                        log.error(e.getMessage(), e);
-                                        latch.countDown();
-                                    }
-                                });
-                        if (latch.await(10, TimeUnit.SECONDS)) {
-                            ValidateDeviceCredentialsResponse msg = deviceCredentialsResponse[0];
-                            if (msg != null && org.thingsboard.server.common.data.StringUtils.isNotEmpty(msg.getCredentials())) {
-                                LwM2MCredentials credentials = JacksonUtil.fromString(msg.getCredentials(), LwM2MCredentials.class);
-                                if(!credentials.getClient().getSecurityConfigClientMode().equals(LwM2MSecurityMode.X509)){
-                                    continue;
+                                    break;
                                 }
-                                X509ClientCredentials config = (X509ClientCredentials) credentials.getClient();
-                                String certBody = config.getCert();
-                                String endpoint = config.getEndpoint();
-                                if (strCert.equals(certBody)) {
-                                    x509CredentialsFound = true;
-                                    DeviceProfile deviceProfile = msg.getDeviceProfile();
-                                    if (msg.hasDeviceInfo() && deviceProfile != null) {
-                                        sessionStorage.put(endpoint, new TbX509DtlsSessionInfo(cert.getSubjectX500Principal().getName(), msg));
-                                        break;
-                                    }
-                                } else {
-                                    log.trace("[{}][{}] Certificate mismatch. Expected: {}, Actual: {}", endpoint, sha3Hash, strCert, certBody);
-                                }
+                            } else {
+                                log.trace("[{}][{}] Certificate mismatch. Expected: {}, Actual: {}", endpoint, sha3Hash, strCert, certBody);
                             }
                         }
-                    } catch (InterruptedException |
-                            CertificateEncodingException |
+                    } catch (CertificateEncodingException |
                             CertificateExpiredException |
                             CertificateNotYetValidException e) {
                         log.error(e.getMessage(), e);
