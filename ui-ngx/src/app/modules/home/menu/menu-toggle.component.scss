@@ -21,9 +21,38 @@
       margin: auto 0 auto auto;
       background-size: 100% auto;
       transition: transform .3s ease-in-out;
+
       &.tb-toggled {
         transform: rotateZ(180deg);
       }
+    }
+  }
+
+  .tb-menu-tooltip {
+    border-radius: 7px;
+    position: fixed;
+    padding: 10px;
+    left: 54 + 10px;
+    color: #2F3842;
+    background-color: #FFFFFF;
+
+    -webkit-box-shadow: 0px 3px 6px 0px rgba(50, 50, 50, 0.75);
+    -moz-box-shadow: 0px 3px 6px 0px rgba(50, 50, 50, 0.75);
+    box-shadow: 0px 3px 6px 0px rgba(50, 50, 50, 0.75);
+
+    hr {
+      color: #F5F6F7;
+    }
+
+    h6 {
+      text-align: left;
+      font-weight: bold;
+      font-size: 0.9rem;
+      margin-left: 5px;
+    }
+
+    .tb-menu-toggle-list a.mat-button {
+      padding-left: 0;
     }
   }
 
@@ -38,7 +67,7 @@
 
     a.mat-button {
       padding: 0 16px 0 32px;
-      font-weight: 500;
+      font-weight: normal;
       text-transform: none !important;
       text-rendering: optimizeLegibility;
     }

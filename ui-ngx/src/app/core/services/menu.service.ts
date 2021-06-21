@@ -20,7 +20,7 @@ import { select, Store } from '@ngrx/store';
 import { AppState } from '../core.state';
 import { selectAuth, selectIsAuthenticated } from '../auth/auth.selectors';
 import { take } from 'rxjs/operators';
-import { HomeSection, MenuSection } from '@core/services/menu.models';
+import {HomeSection, HomeSectionPlace, MenuSection} from '@core/services/menu.models';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { Authority } from '@shared/models/authority.enum';
 import { guid } from '@core/utils';
@@ -52,16 +52,16 @@ export class MenuService {
           let homeSections: Array<HomeSection>;
           switch (authState.authUser.authority) {
             case Authority.SYS_ADMIN:
-              menuSections = this.buildSysAdminMenu(authState);
-              homeSections = this.buildSysAdminHome(authState);
+              menuSections = this.encapsulateThingsboardMenu(this.buildSysAdminMenu(authState));
+              homeSections = this.encapsulateThingsboardHomeMenu(this.buildSysAdminHome(authState));
               break;
             case Authority.TENANT_ADMIN:
-              menuSections = this.buildTenantAdminMenu(authState);
-              homeSections = this.buildTenantAdminHome(authState);
+              menuSections = this.encapsulateThingsboardMenu(this.buildTenantAdminMenu(authState));
+              homeSections = this.encapsulateThingsboardHomeMenu(this.buildTenantAdminHome(authState));
               break;
             case Authority.CUSTOMER_USER:
-              menuSections = this.buildCustomerUserMenu(authState);
-              homeSections = this.buildCustomerUserHome(authState);
+              menuSections = this.encapsulateThingsboardMenu(this.buildCustomerUserMenu(authState));
+              homeSections = this.encapsulateThingsboardHomeMenu(this.buildCustomerUserHome(authState));
               break;
           }
           this.menuSections$.next(menuSections);
@@ -69,6 +69,24 @@ export class MenuService {
         }
       }
     );
+  }
+
+  private encapsulateThingsboardMenu(menuItems: Array<MenuSection>): Array<MenuSection> {
+    const sections: Array<MenuSection> = [];
+    sections.push({
+      id: guid(),
+      name: 'Thingsboard',
+      type: 'toggle',
+      path: '/home',
+      icon: 'home',
+      height: '240px',
+      pages: menuItems
+    });
+    return sections;
+  }
+
+  private encapsulateThingsboardHomeMenu(menuItems: Array<HomeSection>): Array<HomeSection> {
+    return menuItems;
   }
 
   private buildSysAdminMenu(authState: AuthState): Array<MenuSection> {

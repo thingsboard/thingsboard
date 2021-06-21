@@ -15,33 +15,74 @@
  */
 :host {
   width: 100%;
+  color: #7583A0;
 }
 
 :host ::ng-deep {
-
   .tb-side-menu,
   .tb-side-menu ul {
     padding: 0;
-    margin-top: 0;
+    margin-top: 13px;
     list-style: none;
+    overflow: hidden;
   }
 
-  .tb-side-menu > li {
-    border-bottom: 1px solid rgba(0, 0, 0, .12);
+  .tb-menu-svg {
+    content: '';
+    margin-top: 5px;
+    margin-bottom: 13px;
+    line-height: 60px;
+    vertical-align: center;
+    color: #556485;
+    text-align: center;
+  }
+
+  hr {
+    width: 32px;
+    margin-top: 31px;
+    margin-bottom: 20px;
+    background: rgba(0, 0, 0, .12);
+  }
+
+  svg {
+    height: 24px;
+    width: 24px;
+  }
+
+  .tb-menu-icon {
+    line-height: 60px;
+    vertical-align: center;
+    border: none;
+    height: 60px;
+  }
+
+  .li-bottom {
+    position: absolute;
+    bottom: 0;
+  }
+
+  li {
+    text-align: center;
+    overflow: hidden;
   }
 
   a.mat-button {
+    border: none;
+    text-align: center;
     display: flex;
     overflow: hidden;
     line-height: 40px;
     border-radius: 0;
+
     &:hover {
       border-bottom: none;
-      background-color: rgba(255,255,255,0.08);
+      background-color: rgba(255, 255, 255, 0.08);
     }
+
     &:focus {
       border-bottom: none;
     }
+
     &.tb-active {
       font-weight: 500;
       background-color: rgba(255, 255, 255, .15);
@@ -51,14 +92,17 @@
       width: 100%;
       display: inline-flex;
       align-items: center;
+
       mat-icon {
         margin-right: 8px;
         margin-left: 0;
       }
+
       span {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+
         &.tb-toggle-icon {
           padding-top: 12px;
           padding-bottom: 12px;

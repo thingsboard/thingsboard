@@ -14,24 +14,20 @@
 /// limitations under the License.
 ///
 
-import {Component, OnInit} from '@angular/core';
-import {MenuService} from '@core/services/menu.service';
-import {MenuSection} from '@core/services/menu.models';
+import {Component, Input, OnInit} from '@angular/core';
 
 @Component({
-  selector: 'tb-side-menu',
-  templateUrl: './side-menu.component.html',
-  styleUrls: ['./side-menu.component.scss']
+  selector: 'tb-menu-link',
+  templateUrl: './custom-menu-link.component.html',
+  styleUrls: ['./custom-menu-link.component.scss']
 })
-export class SideMenuComponent implements OnInit {
-  menuSections$ = this.menuService.menuSections();
+export class CustomMenuLinkComponent implements OnInit {
 
-  constructor(private menuService: MenuService) {
-  }
+  @Input() title: string;
+  @Input() icon: string;
+  @Input() path: string;
 
-  trackByMenuSection(index: number, section: MenuSection) {
-
-    return section.id;
+  constructor() {
   }
 
   ngOnInit() {

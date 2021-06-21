@@ -178,6 +178,9 @@ $tb-dark-theme: get-tb-dark-theme(
   $primary: map-get($theme, primary);
 
   mat-toolbar{
+    background-color: #FFFFFF !important; //Target override
+    overflow: hidden !important;
+
     &.mat-hue-3 {
       background-color: mat-color($primary, 'A100');
     }

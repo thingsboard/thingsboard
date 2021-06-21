@@ -203,7 +203,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   addingLayoutCtx: DashboardPageLayoutContext;
 
-  logo = 'assets/logo_title_white.svg';
+  logo = 'assets/logo.svg';
 
   dashboardCtx: DashboardContext = {
     instanceId: this.utils.guid(),
