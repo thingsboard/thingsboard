@@ -273,6 +273,12 @@ sql:
         enabled: "${SQL_TTL_EDGE_EVENTS_ENABLED:true}"
         execution_interval_ms: "${SQL_TTL_EDGE_EVENTS_EXECUTION_INTERVAL:86400000}" # Number of milliseconds. The current value corresponds to one day
         edge_events_ttl: "${SQL_TTL_EDGE_EVENTS_TTL:2628000}" # Number of seconds. The current value corresponds to one month
+      alarms:
+        checking_interval: "${SQL_ALARMS_TTL_CHECKING_INTERVAL:7200000}" # Number of milliseconds. The current value corresponds to two hours
+        removal_batch_size: "${SQL_ALARMS_TTL_REMOVAL_BATCH_SIZE:3000}" # To delete outdated alarms not all at once but in batches
+      rpc:
+        enabled: "${SQL_TTL_RPC_ENABLED:true}"
+        checking_interval: "${SQL_RPC_TTL_CHECKING_INTERVAL:7200000}" # Number of milliseconds. The current value corresponds to two hours
 
 # Actor system parameters
 actors:
@@ -329,6 +335,7 @@ actors:
 cache:
   # caffeine or redis
   type: "${CACHE_TYPE:caffeine}"
+  maximumPoolSize: "${CACHE_MAXIMUM_POOL_SIZE:16}" # max pool size to process futures that calls the external cache
   attributes:
     # make sure that if cache.type is 'redis' and cache.attributes.enabled is 'true' that you change 'maxmemory-policy' Redis config property to 'allkeys-lru', 'allkeys-lfu' or 'allkeys-random'
     enabled: "${CACHE_ATTRIBUTES_ENABLED:true}"
@@ -371,7 +378,10 @@ caffeine:
     tokensOutdatageTime:
       timeToLiveInMinutes: 20000
       maxSize: 10000
-    firmwares:
+    otaPackages:
+      timeToLiveInMinutes: 60
+      maxSize: 10
+    otaPackagesData:
       timeToLiveInMinutes: 60
       maxSize: 10
     edges:
@@ -497,7 +507,7 @@ audit-log:
       "device_profile": "${AUDIT_LOG_MASK_DEVICE_PROFILE:W}"
       "edge": "${AUDIT_LOG_MASK_EDGE:W}"
       "tb_resource": "${AUDIT_LOG_MASK_RESOURCE:W}"
-      "firmware": "${AUDIT_LOG_MASK_FIRMWARE:W}"
+      "ota_package": "${AUDIT_LOG_MASK_OTA_PACKAGE:W}"
   sink:
     # Type of external sink. possible options: none, elasticsearch
     type: "${AUDIT_LOG_SINK_TYPE:none}"
@@ -643,13 +653,14 @@ transport:
         private_encoded: "${LWM2M_SERVER_PRIVATE_ENCODED:308193020100301306072a8648ce3d020106082a8648ce3d030107047930770201010420dc774b309e547ceb48fee547e104ce201a9c48c449dc5414cd04e7f5cf05f67ba00a06082a8648ce3d030107a1440342000405064b9e6762dd8d8b8a52355d7b4d8b9a3d64e6d2ee277d76c248861353f3585eeb1838e4f9e37b31fa347aef5ce3431eb54e0a2506910c5e0298817445721b}"
         # Only Certificate_x509:
         alias: "${LWM2M_KEYSTORE_ALIAS_SERVER:server}"
+        skip_validity_check_for_client_cert: "${TB_LWM2M_SERVER_SECURITY_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
     bootstrap:
       enable: "${LWM2M_ENABLED_BS:true}"
       id: "${LWM2M_SERVER_ID_BS:111}"
       bind_address: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
       bind_port: "${LWM2M_BIND_PORT_BS:5687}"
       security:
-        bind_address: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
+        bind_address: "${LWM2M_BIND_ADDRESS_SECURITY_BS:0.0.0.0}"
         bind_port: "${LWM2M_BIND_PORT_SECURITY_BS:5688}"
         #  Only for RPK: Public & Private Key. If the keystore file is missing or not working
         public_x: "${LWM2M_SERVER_PUBLIC_X_BS:5017c87a1c1768264656b3b355434b0def6edb8b9bf166a4762d9930cd730f91}"
@@ -670,12 +681,11 @@ transport:
     timeout: "${LWM2M_TIMEOUT:120000}"
     recommended_ciphers: "${LWM2M_RECOMMENDED_CIPHERS:false}"
     recommended_supported_groups: "${LWM2M_RECOMMENDED_SUPPORTED_GROUPS:true}"
-    response_pool_size: "${LWM2M_RESPONSE_POOL_SIZE:100}"
-    registered_pool_size: "${LWM2M_REGISTERED_POOL_SIZE:10}"
+    uplink_pool_size: "${LWM2M_UPLINK_POOL_SIZE:10}"
+    downlink_pool_size: "${LWM2M_DOWNLINK_POOL_SIZE:10}"
+    ota_pool_size: "${LWM2M_OTA_POOL_SIZE:10}"
     registration_store_pool_size: "${LWM2M_REGISTRATION_STORE_POOL_SIZE:100}"
     clean_period_in_sec: "${LWM2M_CLEAN_PERIOD_IN_SEC:2}"
-    update_registered_pool_size: "${LWM2M_UPDATE_REGISTERED_POOL_SIZE:10}"
-    un_registered_pool_size: "${LWM2M_UN_REGISTERED_POOL_SIZE:10}"
     log_max_length: "${LWM2M_LOG_MAX_LENGTH:100}"
     # Use redis for Security and Registration stores
     redis.enabled: "${LWM2M_REDIS_ENABLED:false}"
@@ -748,7 +758,7 @@ queue:
       sasl.config: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_JAAS_CONFIG:org.apache.kafka.common.security.plain.PlainLoginModule required username=\"CLUSTER_API_KEY\" password=\"CLUSTER_API_SECRET\";}"
       security.protocol: "${TB_QUEUE_KAFKA_CONFLUENT_SECURITY_PROTOCOL:SASL_SSL}"
     consumer-properties-per-topic:
-      tb_firmware:
+      tb_ota_package:
         - key: max.poll.records
           value: 10
     other:
@@ -758,7 +768,7 @@ queue:
       transport-api: "${TB_QUEUE_KAFKA_TA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600;partitions:100;min.insync.replicas:1}"
-      fw-updates: "${TB_QUEUE_KAFKA_FW_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
+      ota-updates: "${TB_QUEUE_KAFKA_OTA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
     consumer-stats:
       enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
       print-interval-ms: "${TB_QUEUE_KAFKA_CONSUMER_STATS_MIN_PRINT_INTERVAL_MS:60000}"
@@ -829,10 +839,10 @@ queue:
     poll-interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
     partitions: "${TB_QUEUE_CORE_PARTITIONS:10}"
     pack-processing-timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:2000}"
-    firmware:
-      topic: "${TB_QUEUE_CORE_FW_TOPIC:tb_firmware}"
-      pack-interval-ms: "${TB_QUEUE_CORE_FW_PACK_INTERVAL_MS:60000}"
-      pack-size: "${TB_QUEUE_CORE_FW_PACK_SIZE:100}"
+    ota:
+      topic: "${TB_QUEUE_CORE_OTA_TOPIC:tb_ota_package}"
+      pack-interval-ms: "${TB_QUEUE_CORE_OTA_PACK_INTERVAL_MS:60000}"
+      pack-size: "${TB_QUEUE_CORE_OTA_PACK_SIZE:100}"
     usage-stats-topic: "${TB_QUEUE_US_TOPIC:tb_usage_stats}"
     stats:
       enabled: "${TB_QUEUE_CORE_STATS_ENABLED:true}"

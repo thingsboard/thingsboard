@@ -74,9 +74,9 @@ export class DateRangeNavigatorWidgetComponent extends PageComponent implements 
   private firstUpdate = true;
   private dashboardTimewindowChangedSubscription: Subscription;
 
-  originalOrder = (a: KeyValue<number,DateIntervalEntry>, b: KeyValue<number,DateIntervalEntry>): number => {
+  originalOrder = (a: KeyValue<string, DateIntervalEntry>, b: KeyValue<string, DateIntervalEntry>): number => {
     return 0;
-  };
+  }
 
   constructor(private utils: UtilsService,
               private overlay: Overlay,

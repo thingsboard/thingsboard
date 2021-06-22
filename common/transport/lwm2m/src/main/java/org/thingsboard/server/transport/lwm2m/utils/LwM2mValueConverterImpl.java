@@ -43,6 +43,9 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
     @Override
     public Object convertValue(Object value, Type currentType, Type expectedType, LwM2mPath resourcePath)
             throws CodecException {
+        if (value == null) {
+           return null;
+        }
         if (expectedType == null) {
             /** unknown resource, trusted value */
             return value;
@@ -114,7 +117,7 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                 switch (currentType) {
                     case INTEGER:
                         log.debug("Trying to convert long value {} to date", value);
-                        /** let's assume we received the millisecond since 1970/1/1 */
+                        /* let's assume we received the millisecond since 1970/1/1 */
                         return new Date(((Number) value).longValue() * 1000L);
                     case STRING:
                         log.debug("Trying to convert string value {} to date", value);

@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
+import org.thingsboard.server.common.data.exception.ApiUsageLimitsExceededException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -150,6 +151,8 @@ class DeviceState {
             stateChanged = processAlarmClearNotification(ctx, msg);
         } else if (msg.getType().equals(DataConstants.ALARM_ACK)) {
             processAlarmAckNotification(ctx, msg);
+        } else if (msg.getType().equals(DataConstants.ALARM_DELETE)) {
+            processAlarmDeleteNotification(ctx, msg);
         } else {
             if (msg.getType().equals(DataConstants.ENTITY_ASSIGNED) || msg.getType().equals(DataConstants.ENTITY_UNASSIGNED)) {
                 dynamicPredicateValueCtx.resetCustomer();
@@ -190,6 +193,12 @@ class DeviceState {
                     a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
             alarmState.processAckAlarm(alarmNf);
         }
+        ctx.tellSuccess(msg);
+    }
+
+    private void processAlarmDeleteNotification(TbContext ctx, TbMsg msg) {
+        Alarm alarm = JacksonUtil.fromString(msg.getData(), Alarm.class);
+        alarmStates.values().removeIf(alarmState -> alarmState.getCurrentAlarm().getId().equals(alarm.getId()));
         ctx.tellSuccess(msg);
     }
 
@@ -253,7 +262,12 @@ class DeviceState {
                 for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
                     AlarmState alarmState = alarmStates.computeIfAbsent(alarm.getId(),
                             a -> new AlarmState(this.deviceProfile, deviceId, alarm, getOrInitPersistedAlarmState(alarm), dynamicPredicateValueCtx));
-                    stateChanged |= alarmState.process(ctx, msg, latestValues, update);
+                    try {
+                        stateChanged |= alarmState.process(ctx, msg, latestValues, update);
+                    } catch (ApiUsageLimitsExceededException e) {
+                        alarmStates.remove(alarm.getId());
+                        throw e;
+                    }
                 }
             }
         }

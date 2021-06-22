@@ -17,16 +17,14 @@ package org.thingsboard.server.transport.lwm2m.server.store;
 
 import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
 import org.eclipse.leshan.server.californium.registration.InMemoryRegistrationStore;
-import org.eclipse.leshan.server.security.EditableSecurityStore;
-import org.eclipse.leshan.server.security.InMemorySecurityStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.cache.TBRedisCacheConfiguration;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
+import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
+import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 
 import java.util.Optional;
 
@@ -38,8 +36,10 @@ public class TbLwM2mStoreFactory {
     private Optional<TBRedisCacheConfiguration> redisConfiguration;
 
     @Autowired
-    @Lazy
-    private LwM2mClientContext clientContext;
+    private LwM2MTransportServerConfig config;
+
+    @Autowired
+    private LwM2mCredentialsSecurityInfoValidator validator;
 
     @Value("${transport.lwm2m.redis.enabled:false}")
     private boolean useRedis;
@@ -47,13 +47,19 @@ public class TbLwM2mStoreFactory {
     @Bean
     private CaliforniumRegistrationStore registrationStore() {
         return redisConfiguration.isPresent() && useRedis ?
-                new TbLwM2mRedisRegistrationStore(redisConfiguration.get().redisConnectionFactory()) : new InMemoryRegistrationStore();
+                new TbLwM2mRedisRegistrationStore(redisConfiguration.get().redisConnectionFactory()) : new InMemoryRegistrationStore(config.getCleanPeriodInSec());
     }
 
     @Bean
-    private EditableSecurityStore securityStore() {
-        return new TbLwM2mSecurityStore(clientContext, redisConfiguration.isPresent() && useRedis ?
-                new TbLwM2mRedisSecurityStore(redisConfiguration.get().redisConnectionFactory()) : new InMemorySecurityStore());
+    private TbMainSecurityStore securityStore() {
+        return new TbLwM2mSecurityStore(redisConfiguration.isPresent() && useRedis ?
+                new TbLwM2mRedisSecurityStore(redisConfiguration.get().redisConnectionFactory()) : new TbInMemorySecurityStore(), validator);
+    }
+
+    @Bean
+    private TbLwM2MDtlsSessionStore sessionStore() {
+        return redisConfiguration.isPresent() && useRedis ?
+                new TbLwM2MDtlsSessionRedisStore(redisConfiguration.get().redisConnectionFactory()) : new TbL2M2MDtlsSessionInMemoryStore();
     }
 
 }

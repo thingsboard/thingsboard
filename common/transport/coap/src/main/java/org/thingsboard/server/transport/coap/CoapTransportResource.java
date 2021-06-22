@@ -28,6 +28,7 @@ import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.eclipse.californium.core.server.resources.ResourceObserver;
+import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.coapserver.CoapServerService;
 import org.thingsboard.server.coapserver.TbCoapDtlsSessionInfo;
 import org.thingsboard.server.common.data.DataConstants;
@@ -43,7 +44,7 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportC
 import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
-import org.thingsboard.server.common.data.firmware.FirmwareType;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
@@ -55,11 +56,14 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.adaptors.CoapTransportAdaptor;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
@@ -72,25 +76,30 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
     private static final int REQUEST_ID_POSITION_CERTIFICATE_REQUEST = 4;
     private static final String DTLS_SESSION_ID_KEY = "DTLS_SESSION_ID";
 
-    private final ConcurrentMap<String, TransportProtos.SessionInfoProto> tokenToSessionIdMap = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, AtomicInteger> tokenToNotificationCounterMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, TransportProtos.SessionInfoProto> tokenToSessionInfoMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, AtomicInteger> tokenToObserveNotificationSeqMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TransportProtos.SessionInfoProto, ObserveRelation> sessionInfoToObserveRelationMap = new ConcurrentHashMap<>();
     private final Set<UUID> rpcSubscriptions = ConcurrentHashMap.newKeySet();
     private final Set<UUID> attributeSubscriptions = ConcurrentHashMap.newKeySet();
 
     private ConcurrentMap<String, TbCoapDtlsSessionInfo> dtlsSessionIdMap;
     private long timeout;
+    private long sessionReportTimeout;
 
-    public CoapTransportResource(CoapTransportContext coapTransportContext, CoapServerService coapServerService, String name) {
-        super(coapTransportContext, name);
+    public CoapTransportResource(CoapTransportContext ctx, CoapServerService coapServerService, String name) {
+        super(ctx, name);
         this.setObservable(true); // enable observing
         this.addObserver(new CoapResourceObserver());
         this.dtlsSessionIdMap = coapServerService.getDtlsSessionsMap();
         this.timeout = coapServerService.getTimeout();
-//        this.setObservable(false); // disable observing
-//        this.setObserveType(CoAP.Type.CON); // configure the notification type to CONs
-//        this.getAttributes().setObservable(); // mark observable in the Link-Format
+        this.sessionReportTimeout = ctx.getSessionReportTimeout();
+        ctx.getScheduler().scheduleAtFixedRate(() -> {
+            Set<TransportProtos.SessionInfoProto> observeSessions = sessionInfoToObserveRelationMap.keySet();
+            observeSessions.forEach(this::reportActivity);
+        }, new Random().nextInt((int) sessionReportTimeout), sessionReportTimeout, TimeUnit.MILLISECONDS);
     }
 
+    @Override
     public void checkObserveRelation(Exchange exchange, Response response) {
         String token = getTokenFromRequest(exchange.getRequest());
         final ObserveRelation relation = exchange.getRelation();
@@ -103,9 +112,18 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                 relation.setEstablished();
                 addObserveRelation(relation);
             }
-            AtomicInteger notificationCounter = tokenToNotificationCounterMap.computeIfAbsent(token, s -> new AtomicInteger(0));
+            AtomicInteger notificationCounter = tokenToObserveNotificationSeqMap.computeIfAbsent(token, s -> new AtomicInteger(0));
             response.getOptions().setObserve(notificationCounter.getAndIncrement());
         } // ObserveLayer takes care of the else case
+    }
+
+    public void clearAndNotifyObserveRelation(ObserveRelation relation, CoAP.ResponseCode code) {
+        relation.cancel();
+        relation.getExchange().sendResponse(new Response(code));
+    }
+
+    public Map<TransportProtos.SessionInfoProto, ObserveRelation> getSessionInfoToObserveRelationMap() {
+        return sessionInfoToObserveRelationMap;
     }
 
     @Override
@@ -121,10 +139,6 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
             processExchangeGetRequest(exchange, featureType.get());
         } else if (featureType.get() == FeatureType.ATTRIBUTES) {
             processRequest(exchange, SessionMsgType.GET_ATTRIBUTES_REQUEST);
-        } else if (featureType.get() == FeatureType.FIRMWARE) {
-            processRequest(exchange, SessionMsgType.GET_FIRMWARE_REQUEST);
-        } else if (featureType.get() == FeatureType.SOFTWARE) {
-            processRequest(exchange, SessionMsgType.GET_SOFTWARE_REQUEST);
         } else {
             log.trace("Invalid feature type parameter");
             exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
@@ -239,7 +253,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
     }
 
     private void processRequest(CoapExchange exchange, SessionMsgType type, Request request, TransportProtos.SessionInfoProto sessionInfo, DeviceProfile deviceProfile) {
-        UUID sessionId = new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
+        UUID sessionId = toSessionId(sessionInfo);
         try {
             TransportConfigurationContainer transportConfigurationContainer = getTransportConfigurationContainer(deviceProfile);
             CoapTransportAdaptor coapTransportAdaptor = getCoapTransportAdaptor(transportConfigurationContainer.isJsonPayload());
@@ -249,14 +263,14 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                             coapTransportAdaptor.convertToPostAttributes(sessionId, request,
                                     transportConfigurationContainer.getAttributesMsgDescriptor()),
                             new CoapOkCallback(exchange, CoAP.ResponseCode.CREATED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
-                    reportActivity(sessionInfo, attributeSubscriptions.contains(sessionId), rpcSubscriptions.contains(sessionId));
+                    reportSubscriptionInfo(sessionInfo, attributeSubscriptions.contains(sessionId), rpcSubscriptions.contains(sessionId));
                     break;
                 case POST_TELEMETRY_REQUEST:
                     transportService.process(sessionInfo,
                             coapTransportAdaptor.convertToPostTelemetry(sessionId, request,
                                     transportConfigurationContainer.getTelemetryMsgDescriptor()),
                             new CoapOkCallback(exchange, CoAP.ResponseCode.CREATED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
-                    reportActivity(sessionInfo, attributeSubscriptions.contains(sessionId), rpcSubscriptions.contains(sessionId));
+                    reportSubscriptionInfo(sessionInfo, attributeSubscriptions.contains(sessionId), rpcSubscriptions.contains(sessionId));
                     break;
                 case CLAIM_REQUEST:
                     transportService.process(sessionInfo,
@@ -264,49 +278,52 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                             new CoapOkCallback(exchange, CoAP.ResponseCode.CREATED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
                     break;
                 case SUBSCRIBE_ATTRIBUTES_REQUEST:
-                    TransportProtos.SessionInfoProto currentAttrSession = tokenToSessionIdMap.get(getTokenFromRequest(request));
+                    TransportProtos.SessionInfoProto currentAttrSession = tokenToSessionInfoMap.get(getTokenFromRequest(request));
                     if (currentAttrSession == null) {
                         attributeSubscriptions.add(sessionId);
                         registerAsyncCoapSession(exchange, sessionInfo, coapTransportAdaptor,
                                 transportConfigurationContainer.getRpcRequestDynamicMessageBuilder(), getTokenFromRequest(request));
                         transportService.process(sessionInfo,
                                 TransportProtos.SubscribeToAttributeUpdatesMsg.getDefaultInstance(), new CoapNoOpCallback(exchange));
+                        transportService.process(sessionInfo,
+                                TransportProtos.GetAttributeRequestMsg.newBuilder().setOnlyShared(true).build(),
+                                new CoapNoOpCallback(exchange));
                     }
                     break;
                 case UNSUBSCRIBE_ATTRIBUTES_REQUEST:
                     TransportProtos.SessionInfoProto attrSession = lookupAsyncSessionInfo(getTokenFromRequest(request));
                     if (attrSession != null) {
-                        UUID attrSessionId = new UUID(attrSession.getSessionIdMSB(), attrSession.getSessionIdLSB());
+                        UUID attrSessionId = toSessionId(attrSession);
                         attributeSubscriptions.remove(attrSessionId);
+                        sessionInfoToObserveRelationMap.remove(attrSession);
                         transportService.process(attrSession,
                                 TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().setUnsubscribe(true).build(),
                                 new CoapOkCallback(exchange, CoAP.ResponseCode.DELETED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
-                        closeAndDeregister(sessionInfo, sessionId);
+                        closeAndDeregister(sessionInfo);
                     }
                     break;
                 case SUBSCRIBE_RPC_COMMANDS_REQUEST:
-                    TransportProtos.SessionInfoProto currentRpcSession = tokenToSessionIdMap.get(getTokenFromRequest(request));
+                    TransportProtos.SessionInfoProto currentRpcSession = tokenToSessionInfoMap.get(getTokenFromRequest(request));
                     if (currentRpcSession == null) {
                         rpcSubscriptions.add(sessionId);
                         registerAsyncCoapSession(exchange, sessionInfo, coapTransportAdaptor,
                                 transportConfigurationContainer.getRpcRequestDynamicMessageBuilder(), getTokenFromRequest(request));
                         transportService.process(sessionInfo,
                                 TransportProtos.SubscribeToRPCMsg.getDefaultInstance(),
-                                new CoapNoOpCallback(exchange));
-                    } else {
-                        UUID rpcSessionId = new UUID(currentRpcSession.getSessionIdMSB(), currentRpcSession.getSessionIdLSB());
-                        reportActivity(currentRpcSession, attributeSubscriptions.contains(rpcSessionId), rpcSubscriptions.contains(rpcSessionId));
+                                new CoapOkCallback(exchange, CoAP.ResponseCode.VALID, CoAP.ResponseCode.INTERNAL_SERVER_ERROR)
+                        );
                     }
                     break;
                 case UNSUBSCRIBE_RPC_COMMANDS_REQUEST:
                     TransportProtos.SessionInfoProto rpcSession = lookupAsyncSessionInfo(getTokenFromRequest(request));
                     if (rpcSession != null) {
-                        UUID rpcSessionId = new UUID(rpcSession.getSessionIdMSB(), rpcSession.getSessionIdLSB());
+                        UUID rpcSessionId = toSessionId(rpcSession);
                         rpcSubscriptions.remove(rpcSessionId);
+                        sessionInfoToObserveRelationMap.remove(rpcSession);
                         transportService.process(rpcSession,
                                 TransportProtos.SubscribeToRPCMsg.newBuilder().setUnsubscribe(true).build(),
                                 new CoapOkCallback(exchange, CoAP.ResponseCode.DELETED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
-                        closeAndDeregister(sessionInfo, sessionId);
+                        closeAndDeregister(sessionInfo);
                     }
                     break;
                 case TO_DEVICE_RPC_RESPONSE:
@@ -316,23 +333,17 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                     break;
                 case TO_SERVER_RPC_REQUEST:
                     transportService.registerSyncSession(sessionInfo, getCoapSessionListener(exchange, coapTransportAdaptor,
-                            transportConfigurationContainer.getRpcRequestDynamicMessageBuilder()), timeout);
+                            transportConfigurationContainer.getRpcRequestDynamicMessageBuilder(), sessionInfo), timeout);
                     transportService.process(sessionInfo,
                             coapTransportAdaptor.convertToServerRpcRequest(sessionId, request),
                             new CoapNoOpCallback(exchange));
                     break;
                 case GET_ATTRIBUTES_REQUEST:
                     transportService.registerSyncSession(sessionInfo, getCoapSessionListener(exchange, coapTransportAdaptor,
-                            transportConfigurationContainer.getRpcRequestDynamicMessageBuilder()), timeout);
+                            transportConfigurationContainer.getRpcRequestDynamicMessageBuilder(), sessionInfo), timeout);
                     transportService.process(sessionInfo,
                             coapTransportAdaptor.convertToGetAttributes(sessionId, request),
                             new CoapNoOpCallback(exchange));
-                    break;
-                case GET_FIRMWARE_REQUEST:
-                    getFirmwareCallback(sessionInfo, exchange, FirmwareType.FIRMWARE);
-                    break;
-                case GET_SOFTWARE_REQUEST:
-                    getFirmwareCallback(sessionInfo, exchange, FirmwareType.SOFTWARE);
                     break;
             }
         } catch (AdaptorException e) {
@@ -341,29 +352,23 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         }
     }
 
-    private void getFirmwareCallback(TransportProtos.SessionInfoProto sessionInfo, CoapExchange exchange, FirmwareType firmwareType) {
-        TransportProtos.GetFirmwareRequestMsg requestMsg = TransportProtos.GetFirmwareRequestMsg.newBuilder()
-                .setTenantIdMSB(sessionInfo.getTenantIdMSB())
-                .setTenantIdLSB(sessionInfo.getTenantIdLSB())
-                .setDeviceIdMSB(sessionInfo.getDeviceIdMSB())
-                .setDeviceIdLSB(sessionInfo.getDeviceIdLSB())
-                .setType(firmwareType.name()).build();
-        transportContext.getTransportService().process(sessionInfo, requestMsg, new FirmwareCallback(exchange));
+    private UUID toSessionId(TransportProtos.SessionInfoProto sessionInfoProto) {
+        return new UUID(sessionInfoProto.getSessionIdMSB(), sessionInfoProto.getSessionIdLSB());
     }
 
     private TransportProtos.SessionInfoProto lookupAsyncSessionInfo(String token) {
-        tokenToNotificationCounterMap.remove(token);
-        return tokenToSessionIdMap.remove(token);
+        tokenToObserveNotificationSeqMap.remove(token);
+        return tokenToSessionInfoMap.remove(token);
     }
 
     private void registerAsyncCoapSession(CoapExchange exchange, TransportProtos.SessionInfoProto sessionInfo, CoapTransportAdaptor coapTransportAdaptor, DynamicMessage.Builder rpcRequestDynamicMessageBuilder, String token) {
-        tokenToSessionIdMap.putIfAbsent(token, sessionInfo);
-        transportService.registerAsyncSession(sessionInfo, getCoapSessionListener(exchange, coapTransportAdaptor, rpcRequestDynamicMessageBuilder));
+        tokenToSessionInfoMap.putIfAbsent(token, sessionInfo);
+        transportService.registerAsyncSession(sessionInfo, getCoapSessionListener(exchange, coapTransportAdaptor, rpcRequestDynamicMessageBuilder, sessionInfo));
         transportService.process(sessionInfo, getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
     }
 
-    private CoapSessionListener getCoapSessionListener(CoapExchange exchange, CoapTransportAdaptor coapTransportAdaptor, DynamicMessage.Builder rpcRequestDynamicMessageBuilder) {
-        return new CoapSessionListener(exchange, coapTransportAdaptor, rpcRequestDynamicMessageBuilder);
+    private CoapSessionListener getCoapSessionListener(CoapExchange exchange, CoapTransportAdaptor coapTransportAdaptor, DynamicMessage.Builder rpcRequestDynamicMessageBuilder, TransportProtos.SessionInfoProto sessionInfo) {
+        return new CoapSessionListener(this, exchange, coapTransportAdaptor, rpcRequestDynamicMessageBuilder, sessionInfo);
     }
 
     private String getTokenFromRequest(Request request) {
@@ -445,56 +450,26 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         }
     }
 
-    private class FirmwareCallback implements TransportServiceCallback<TransportProtos.GetFirmwareResponseMsg> {
-        private final CoapExchange exchange;
-
-        FirmwareCallback(CoapExchange exchange) {
-            this.exchange = exchange;
-        }
-
-        @Override
-        public void onSuccess(TransportProtos.GetFirmwareResponseMsg msg) {
-            String title = exchange.getQueryParameter("title");
-            String version = exchange.getQueryParameter("version");
-            if (msg.getResponseStatus().equals(TransportProtos.ResponseStatus.SUCCESS)) {
-                if (msg.getTitle().equals(title) && msg.getVersion().equals(version)) {
-                    String firmwareId = new UUID(msg.getFirmwareIdMSB(), msg.getFirmwareIdLSB()).toString();
-                    String strChunkSize = exchange.getQueryParameter("size");
-                    String strChunk = exchange.getQueryParameter("chunk");
-                    int chunkSize = StringUtils.isEmpty(strChunkSize) ? 0 : Integer.parseInt(strChunkSize);
-                    int chunk = StringUtils.isEmpty(strChunk) ? 0 : Integer.parseInt(strChunk);
-                    exchange.respond(CoAP.ResponseCode.CONTENT, transportContext.getFirmwareDataCache().get(firmwareId, chunkSize, chunk));
-                } else {
-                    exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
-                }
-            } else {
-                exchange.respond(CoAP.ResponseCode.NOT_FOUND);
-            }
-        }
-
-        @Override
-        public void onError(Throwable e) {
-            log.warn("Failed to process request", e);
-            exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
-        }
-    }
-
     private static class CoapSessionListener implements SessionMsgListener {
 
+        private final CoapTransportResource coapTransportResource;
         private final CoapExchange exchange;
         private final CoapTransportAdaptor coapTransportAdaptor;
         private final DynamicMessage.Builder rpcRequestDynamicMessageBuilder;
+        private final TransportProtos.SessionInfoProto sessionInfo;
 
-        CoapSessionListener(CoapExchange exchange, CoapTransportAdaptor coapTransportAdaptor, DynamicMessage.Builder rpcRequestDynamicMessageBuilder) {
+        CoapSessionListener(CoapTransportResource coapTransportResource, CoapExchange exchange, CoapTransportAdaptor coapTransportAdaptor, DynamicMessage.Builder rpcRequestDynamicMessageBuilder, TransportProtos.SessionInfoProto sessionInfo) {
+            this.coapTransportResource = coapTransportResource;
             this.exchange = exchange;
             this.coapTransportAdaptor = coapTransportAdaptor;
             this.rpcRequestDynamicMessageBuilder = rpcRequestDynamicMessageBuilder;
+            this.sessionInfo = sessionInfo;
         }
 
         @Override
         public void onGetAttributesResponse(TransportProtos.GetAttributeResponseMsg msg) {
             try {
-                exchange.respond(coapTransportAdaptor.convertToPublish(msg));
+                exchange.respond(coapTransportAdaptor.convertToPublish(isConRequest(), msg));
             } catch (AdaptorException e) {
                 log.trace("Failed to reply due to error", e);
                 exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
@@ -512,24 +487,57 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         }
 
         @Override
-        public void onRemoteSessionCloseCommand(TransportProtos.SessionCloseNotificationProto sessionCloseNotification) {
-            exchange.respond(CoAP.ResponseCode.SERVICE_UNAVAILABLE);
+        public void onRemoteSessionCloseCommand(UUID sessionId, TransportProtos.SessionCloseNotificationProto sessionCloseNotification) {
+            log.trace("[{}] Received the remote command to close the session: {}", sessionId, sessionCloseNotification.getMessage());
+            Map<TransportProtos.SessionInfoProto, ObserveRelation> sessionToObserveRelationMap = coapTransportResource.getSessionInfoToObserveRelationMap();
+            if (coapTransportResource.getObserverCount() > 0 && !CollectionUtils.isEmpty(sessionToObserveRelationMap)) {
+                Set<TransportProtos.SessionInfoProto> observeSessions = sessionToObserveRelationMap.keySet();
+                Optional<TransportProtos.SessionInfoProto> observeSessionToClose = observeSessions.stream().filter(sessionInfoProto -> {
+                    UUID observeSessionId = new UUID(sessionInfoProto.getSessionIdMSB(), sessionInfoProto.getSessionIdLSB());
+                    return observeSessionId.equals(sessionId);
+                }).findFirst();
+                if (observeSessionToClose.isPresent()) {
+                    TransportProtos.SessionInfoProto sessionInfoProto = observeSessionToClose.get();
+                    ObserveRelation observeRelation = sessionToObserveRelationMap.get(sessionInfoProto);
+                    coapTransportResource.clearAndNotifyObserveRelation(observeRelation, CoAP.ResponseCode.SERVICE_UNAVAILABLE);
+                }
+            }
         }
 
         @Override
         public void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg msg) {
+            boolean successful;
             try {
                 exchange.respond(coapTransportAdaptor.convertToPublish(isConRequest(), msg, rpcRequestDynamicMessageBuilder));
+                successful = true;
             } catch (AdaptorException e) {
                 log.trace("Failed to reply due to error", e);
                 exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
+                successful = false;
+            }
+            if (msg.getPersisted()) {
+                    RpcStatus status;
+                    if (!successful) {
+                        status = RpcStatus.FAILED;
+                    } else if (msg.getOneway()) {
+                        status = RpcStatus.SUCCESSFUL;
+                    } else {
+                        status = RpcStatus.DELIVERED;
+                    }
+                    TransportProtos.ToDevicePersistedRpcResponseMsg responseMsg = TransportProtos.ToDevicePersistedRpcResponseMsg.newBuilder()
+                            .setRequestId(msg.getRequestId())
+                            .setRequestIdLSB(msg.getRequestIdLSB())
+                            .setRequestIdMSB(msg.getRequestIdMSB())
+                            .setStatus(status.name())
+                            .build();
+                    coapTransportResource.transportService.process(sessionInfo, responseMsg, TransportServiceCallback.EMPTY);
             }
         }
 
         @Override
         public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg msg) {
             try {
-                exchange.respond(coapTransportAdaptor.convertToPublish(msg));
+                exchange.respond(coapTransportAdaptor.convertToPublish(isConRequest(), msg));
             } catch (AdaptorException e) {
                 log.trace("Failed to reply due to error", e);
                 exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
@@ -561,29 +569,29 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
 
         @Override
         public void addedObserveRelation(ObserveRelation relation) {
-            if (log.isTraceEnabled()) {
-                Request request = relation.getExchange().getRequest();
-                log.trace("Added Observe relation for token: {}", getTokenFromRequest(request));
-            }
+            Request request = relation.getExchange().getRequest();
+            String token = getTokenFromRequest(request);
+            sessionInfoToObserveRelationMap.putIfAbsent(tokenToSessionInfoMap.get(token), relation);
+            log.trace("Added Observe relation for token: {}", token);
         }
 
         @Override
         public void removedObserveRelation(ObserveRelation relation) {
             Request request = relation.getExchange().getRequest();
-            String tokenFromRequest = getTokenFromRequest(request);
-            log.trace("Relation removed for token: {}", tokenFromRequest);
-            TransportProtos.SessionInfoProto sessionInfoToRemove = lookupAsyncSessionInfo(tokenFromRequest);
-            if (sessionInfoToRemove != null) {
-                closeAndDeregister(sessionInfoToRemove, new UUID(sessionInfoToRemove.getSessionIdMSB(), sessionInfoToRemove.getDeviceIdLSB()));
-            }
+            String token = getTokenFromRequest(request);
+            TransportProtos.SessionInfoProto session = tokenToSessionInfoMap.get(token);
+            sessionInfoToObserveRelationMap.remove(session);
+            log.trace("Relation removed for token: {}", token);
         }
     }
 
-    private void closeAndDeregister(TransportProtos.SessionInfoProto session, UUID sessionId) {
+    private void closeAndDeregister(TransportProtos.SessionInfoProto session) {
+        UUID sessionId = toSessionId(session);
         transportService.process(session, getSessionEventMsg(TransportProtos.SessionEvent.CLOSED), null);
         transportService.deregisterSession(session);
         rpcSubscriptions.remove(sessionId);
         attributeSubscriptions.remove(sessionId);
+        sessionInfoToObserveRelationMap.remove(session);
     }
 
     private TransportConfigurationContainer getTransportConfigurationContainer(DeviceProfile deviceProfile) throws AdaptorException {

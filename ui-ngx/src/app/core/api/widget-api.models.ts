@@ -69,8 +69,8 @@ export interface WidgetSubscriptionApi {
 }
 
 export interface RpcApi {
-  sendOneWayCommand: (method: string, params?: any, timeout?: number) => Observable<any>;
-  sendTwoWayCommand: (method: string, params?: any, timeout?: number) => Observable<any>;
+  sendOneWayCommand: (method: string, params?: any, timeout?: number, requestUUID?: string) => Observable<any>;
+  sendTwoWayCommand: (method: string, params?: any, timeout?: number, requestUUID?: string) => Observable<any>;
 }
 
 export interface IWidgetUtils {
@@ -152,6 +152,7 @@ export interface IStateController {
   getStateIndex(): number;
   getStateIdAtIndex(index: number): string;
   getEntityId(entityParamName: string): EntityId;
+  getCurrentStateName(): string;
 }
 
 export interface SubscriptionInfo {
@@ -298,8 +299,8 @@ export interface IWidgetSubscription {
   onResetTimewindow(): void;
   updateTimewindowConfig(newTimewindow: Timewindow): void;
 
-  sendOneWayCommand(method: string, params?: any, timeout?: number): Observable<any>;
-  sendTwoWayCommand(method: string, params?: any, timeout?: number): Observable<any>;
+  sendOneWayCommand(method: string, params?: any, timeout?: number, requestUUID?: string): Observable<any>;
+  sendTwoWayCommand(method: string, params?: any, timeout?: number, requestUUID?: string): Observable<any>;
   clearRpcError(): void;
 
   subscribe(): void;

@@ -235,6 +235,10 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
     return result;
   }
 
+  public getCurrentStateName(): string {
+    return this.getStateName(this.stateObject.length - 1);
+  }
+
   public selectedStateIndexChanged() {
     this.navigatePrevState(this.selectedStateIndex);
   }
@@ -271,6 +275,7 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
   }
 
   private gotoState(stateId: string, update: boolean, openRightLayout?: boolean) {
+    update = update && this.dashboardCtrl.dashboardCtx.state !== stateId;
     this.dashboardCtrl.openDashboardState(stateId, openRightLayout);
     this.mobileService.handleDashboardStateName(this.getStateName(this.stateObject.length - 1));
     if (update) {

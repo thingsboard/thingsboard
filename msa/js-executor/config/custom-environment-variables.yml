@@ -16,6 +16,7 @@
 
 queue_type: "TB_QUEUE_TYPE" #kafka (Apache Kafka) or aws-sqs (AWS SQS) or pubsub (PubSub) or service-bus (Azure Service Bus) or rabbitmq (RabbitMQ)
 request_topic: "REMOTE_JS_EVAL_REQUEST_TOPIC"
+http_port: "HTTP_PORT"      # /livenessProbe
 
 js:
   response_poll_interval: "REMOTE_JS_RESPONSE_POLL_INTERVAL_MS"
@@ -26,6 +27,9 @@ kafka:
     servers: "TB_KAFKA_SERVERS"
   replication_factor: "TB_QUEUE_KAFKA_REPLICATION_FACTOR"
   acks: "TB_KAFKA_ACKS" # -1 = all; 0 = no acknowledgments; 1 = only waits for the leader to acknowledge
+  batch_size: "TB_KAFKA_BATCH_SIZE" # for producer
+  linger_ms: "TB_KAFKA_LINGER_MS" # for producer
+  partitions_consumed_concurrently: "TB_KAFKA_PARTITIONS_CONSUMED_CONCURRENTLY" # (EXPERIMENTAL) increase this value if you are planning to handle more than one partition (scale up, scale down) - this will decrease the latency
   requestTimeout: "TB_QUEUE_KAFKA_REQUEST_TIMEOUT_MS"
   compression: "TB_QUEUE_KAFKA_COMPRESSION" # gzip or uncompressed
   topic_properties: "TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES"
@@ -70,6 +74,7 @@ logger:
 
 script:
   use_sandbox: "SCRIPT_USE_SANDBOX"
+  stat_print_frequency: "SCRIPT_STAT_PRINT_FREQUENCY"
   script_body_trace_frequency: "SCRIPT_BODY_TRACE_FREQUENCY"
   max_active_scripts: "MAX_ACTIVE_SCRIPTS"
   slow_query_log_ms: "SLOW_QUERY_LOG_MS" #1.123456

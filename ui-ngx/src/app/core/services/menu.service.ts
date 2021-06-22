@@ -284,11 +284,11 @@ export class MenuService {
       },
       {
         id: guid(),
-        name: 'firmware.firmware',
+        name: 'ota-update.ota-updates',
         type: 'link',
-        path: '/firmwares',
         isMdiIcon: true,
         icon: 'firmware'
+        path: '/otaUpdates',
       },
       {
         id: guid(),
@@ -303,25 +303,25 @@ export class MenuService {
       sections.push(
         {
           id: guid(),
+          name: 'edge.edge-instances',
+          type: 'link',
+          path: '/edgeInstances',
+          icon: 'router'
+        },
+        {
+          id: guid(),
           name: 'edge.management',
           type: 'toggle',
-          path: '/edges',
-          height: '80px',
-          icon: 'router',
+          path: '/edgeManagement',
+          height: '40px',
+          icon: 'settings_input_antenna',
           pages: [
-            {
-              id: guid(),
-              name: 'edge.edge-instances',
-              type: 'link',
-              path: '/edges',
-              icon: 'router'
-            },
             {
               id: guid(),
               name: 'edge.rulechain-templates',
               type: 'link',
-              path: '/edges/ruleChains',
               isMdiIcon: true,
+              path: '/edgeManagement/ruleChains',
               icon: 'rule_chains'
             }
           ]
@@ -444,10 +444,10 @@ export class MenuService {
             icon: 'device_profiles'
           },
           {
-            name: 'firmware.firmware',
-            path: '/firmwares',
+            name: 'ota-update.ota-updates',
             isMdiIcon: true,
-            icon: 'firmware'
+            icon: 'firmware',
+            path: '/otaUpdates'
           }
         ]
       },
@@ -471,11 +471,11 @@ export class MenuService {
             {
               name: 'edge.edge-instances',
               icon: 'router',
-              path: '/edges'
+              path: '/edgeInstances'
             },
             {
               name: 'edge.rulechain-templates',
-              path: '/edges/ruleChains',
+              path: '/edgeManagement/ruleChains',
               isMdiIcon: true,
               icon: 'rule_chains'
             }
@@ -573,7 +573,7 @@ export class MenuService {
           id: guid(),
           name: 'edge.edge-instances',
           type: 'link',
-          path: '/edges',
+          path: '/edgeInstances',
           icon: 'router'
         }
       );
@@ -635,8 +635,8 @@ export class MenuService {
           places: [
             {
               name: 'edge.edge-instances',
-              icon: 'router',
-              path: '/edges'
+              icon: 'settings_input_antenna',
+              path: '/edgeInstances'
             }
           ]
         }

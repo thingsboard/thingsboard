@@ -18,7 +18,6 @@ package org.thingsboard.server.service.script;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +25,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StopWatch;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
@@ -39,6 +40,8 @@ import javax.annotation.PreDestroy;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -69,6 +72,8 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     private final AtomicInteger queueEvalMsgs = new AtomicInteger(0);
     private final AtomicInteger queueFailedMsgs = new AtomicInteger(0);
     private final AtomicInteger queueTimeoutMsgs = new AtomicInteger(0);
+    private final ExecutorService callbackExecutor = Executors.newFixedThreadPool(
+            Runtime.getRuntime().availableProcessors(), ThingsBoardThreadFactory.forName("js-executor-remote-callback"));
 
     public RemoteJsInvokeService(TbApiUsageStateService apiUsageStateService, TbApiUsageClient apiUsageClient) {
         super(apiUsageStateService, apiUsageClient);
@@ -139,7 +144,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 }
                 queueFailedMsgs.incrementAndGet();
             }
-        }, MoreExecutors.directExecutor());
+        }, callbackExecutor);
         return Futures.transform(future, response -> {
             JsInvokeProtos.JsCompileResponse compilationResult = response.getValue().getCompileResponse();
             UUID compiledScriptId = new UUID(compilationResult.getScriptIdMSB(), compilationResult.getScriptIdLSB());
@@ -151,12 +156,13 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 log.debug("[{}] Failed to compile script due to [{}]: {}", compiledScriptId, compilationResult.getErrorCode().name(), compilationResult.getErrorDetails());
                 throw new RuntimeException(compilationResult.getErrorDetails());
             }
-        }, MoreExecutors.directExecutor());
+        }, callbackExecutor);
     }
 
     @Override
     protected ListenableFuture<Object> doInvokeFunction(UUID scriptId, String functionName, Object[] args) {
-        String scriptBody = scriptIdToBodysMap.get(scriptId);
+        log.trace("doInvokeFunction js-request for uuid {} with timeout {}ms", scriptId, maxRequestsTimeout);
+        final String scriptBody = scriptIdToBodysMap.get(scriptId);
         if (scriptBody == null) {
             return Futures.immediateFailedFuture(new RuntimeException("No script body found for scriptId: [" + scriptId + "]!"));
         }
@@ -165,7 +171,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 .setScriptIdLSB(scriptId.getLeastSignificantBits())
                 .setFunctionName(functionName)
                 .setTimeout((int) maxRequestsTimeout)
-                .setScriptBody(scriptIdToBodysMap.get(scriptId));
+                .setScriptBody(scriptBody);
 
         for (Object arg : args) {
             jsRequestBuilder.addArgs(arg.toString());
@@ -174,6 +180,9 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
         JsInvokeProtos.RemoteJsRequest jsRequestWrapper = JsInvokeProtos.RemoteJsRequest.newBuilder()
                 .setInvokeRequest(jsRequestBuilder.build())
                 .build();
+
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
 
         ListenableFuture<TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> future = requestTemplate.send(new TbProtoJsQueueMsg<>(UUID.randomUUID(), jsRequestWrapper));
         if (maxRequestsTimeout > 0) {
@@ -188,23 +197,26 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
 
             @Override
             public void onFailure(Throwable t) {
-                onScriptExecutionError(scriptId);
+                onScriptExecutionError(scriptId, t, scriptBody);
                 if (t instanceof TimeoutException || (t.getCause() != null && t.getCause() instanceof TimeoutException)) {
                     queueTimeoutMsgs.incrementAndGet();
                 }
                 queueFailedMsgs.incrementAndGet();
             }
-        }, MoreExecutors.directExecutor());
+        }, callbackExecutor);
         return Futures.transform(future, response -> {
+            stopWatch.stop();
+            log.trace("doInvokeFunction js-response took {}ms for uuid {}", stopWatch.getTotalTimeMillis(), response.getKey());
             JsInvokeProtos.JsInvokeResponse invokeResult = response.getValue().getInvokeResponse();
             if (invokeResult.getSuccess()) {
                 return invokeResult.getResult();
             } else {
-                onScriptExecutionError(scriptId);
+                final RuntimeException e = new RuntimeException(invokeResult.getErrorDetails());
+                onScriptExecutionError(scriptId, e, scriptBody);
                 log.debug("[{}] Failed to compile script due to [{}]: {}", scriptId, invokeResult.getErrorCode().name(), invokeResult.getErrorDetails());
-                throw new RuntimeException(invokeResult.getErrorDetails());
+                throw e;
             }
-        }, MoreExecutors.directExecutor());
+        }, callbackExecutor);
     }
 
     @Override

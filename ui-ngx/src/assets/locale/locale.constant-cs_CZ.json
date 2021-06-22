@@ -923,7 +923,7 @@
             "existing-device-profile": "Vybrat existující profil zařízení",
             "specific-configuration": "Specifická konfigurace",
             "customer-to-assign-device": "Přiřadit zařízení zákazníkovi",
-            "add-credential": "Přidat přístupový údaj"
+            "add-credentials": "Přidat přístupový údaj"
         }
     },
     "device-profile": {

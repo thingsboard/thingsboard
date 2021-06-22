@@ -29,6 +29,7 @@ import { getCurrentAuthUser } from '@app/core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { FloatLabelType } from '@angular/material/form-field/form-field';
 
 @Component({
   selector: 'tb-dashboard-autocomplete',
@@ -63,6 +64,9 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
 
   @Input()
   customerId: string;
+
+  @Input()
+  floatLabel: FloatLabelType = 'auto';
 
   private requiredValue: boolean;
   get required(): boolean {

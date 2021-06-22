@@ -72,15 +72,15 @@ public class DefaultTbResourceService implements TbResourceService {
         if (ResourceType.LWM2M_MODEL.equals(resource.getResourceType())) {
             try {
                 List<ObjectModel> objectModels =
-                        ddfFileParser.parseEx(new ByteArrayInputStream(Base64.getDecoder().decode(resource.getData())), resource.getSearchText());
+                        ddfFileParser.parse(new ByteArrayInputStream(Base64.getDecoder().decode(resource.getData())), resource.getSearchText());
                 if (!objectModels.isEmpty()) {
                     ObjectModel objectModel = objectModels.get(0);
 
-                    String resourceKey = objectModel.id + LWM2M_SEPARATOR_KEY + objectModel.getVersion();
+                    String resourceKey = objectModel.id + LWM2M_SEPARATOR_KEY + objectModel.version;
                     String name = objectModel.name;
                     resource.setResourceKey(resourceKey);
                     if (resource.getId() == null) {
-                        resource.setTitle(name + " id=" + objectModel.id + " v" + objectModel.getVersion());
+                        resource.setTitle(name + " id=" + objectModel.id + " v" + objectModel.version);
                     }
                     resource.setSearchText(resourceKey + LWM2M_SEPARATOR_SEARCH_TEXT + name);
                 } else {
@@ -89,7 +89,7 @@ public class DefaultTbResourceService implements TbResourceService {
             } catch (InvalidDDFFileException | IOException e) {
                 throw new ThingsboardException(e, ThingsboardErrorCode.GENERAL);
             }
-            if (resource.getResourceType().equals(ResourceType.LWM2M_MODEL) && toLwM2mObject(resource) == null) {
+            if (resource.getResourceType().equals(ResourceType.LWM2M_MODEL) && toLwM2mObject(resource, true) == null) {
                 throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getSearchText()));
             }
         } else {
@@ -131,7 +131,7 @@ public class DefaultTbResourceService implements TbResourceService {
         List<TbResource> resources = resourceService.findTenantResourcesByResourceTypeAndObjectIds(tenantId, ResourceType.LWM2M_MODEL,
                 objectIds);
         return resources.stream()
-                .flatMap(s -> Stream.ofNullable(toLwM2mObject(s)))
+                .flatMap(s -> Stream.ofNullable(toLwM2mObject(s, false)))
                 .sorted(getComparator(sortProperty, sortOrder))
                 .collect(Collectors.toList());
     }
@@ -142,7 +142,7 @@ public class DefaultTbResourceService implements TbResourceService {
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         PageData<TbResource> resourcePageData = resourceService.findTenantResourcesByResourceTypeAndPageLink(tenantId, ResourceType.LWM2M_MODEL, pageLink);
         return resourcePageData.getData().stream()
-                .flatMap(s -> Stream.ofNullable(toLwM2mObject(s)))
+                .flatMap(s -> Stream.ofNullable(toLwM2mObject(s, false)))
                 .sorted(getComparator(sortProperty, sortOrder))
                 .collect(Collectors.toList());
     }
@@ -157,6 +157,11 @@ public class DefaultTbResourceService implements TbResourceService {
         resourceService.deleteResourcesByTenantId(tenantId);
     }
 
+    @Override
+    public long sumDataSizeByTenantId(TenantId tenantId) {
+        return resourceService.sumDataSizeByTenantId(tenantId);
+    }
+
     private Comparator<? super LwM2mObject> getComparator(String sortProperty, String sortOrder) {
         Comparator<LwM2mObject> comparator;
         if ("name".equals(sortProperty)) {
@@ -167,11 +172,11 @@ public class DefaultTbResourceService implements TbResourceService {
         return "DESC".equals(sortOrder) ? comparator.reversed() : comparator;
     }
 
-    private LwM2mObject toLwM2mObject(TbResource resource) {
+    private LwM2mObject toLwM2mObject(TbResource resource, boolean isSave) {
         try {
             DDFFileParser ddfFileParser = new DDFFileParser(new DefaultDDFFileValidator());
             List<ObjectModel> objectModels =
-                    ddfFileParser.parseEx(new ByteArrayInputStream(Base64.getDecoder().decode(resource.getData())), resource.getSearchText());
+                    ddfFileParser.parse(new ByteArrayInputStream(Base64.getDecoder().decode(resource.getData())), resource.getSearchText());
             if (objectModels.size() == 0) {
                 return null;
             } else {
@@ -186,12 +191,16 @@ public class DefaultTbResourceService implements TbResourceService {
                 instance.setId(0);
                 List<LwM2mResourceObserve> resources = new ArrayList<>();
                 obj.resources.forEach((k, v) -> {
-                    if (v.operations.isReadable()) {
+                    if (isSave) {
+                        LwM2mResourceObserve lwM2MResourceObserve = new LwM2mResourceObserve(k, v.name, false, false, false);
+                        resources.add(lwM2MResourceObserve);
+                    }
+                    else if (v.operations.isReadable()) {
                         LwM2mResourceObserve lwM2MResourceObserve = new LwM2mResourceObserve(k, v.name, false, false, false);
                         resources.add(lwM2MResourceObserve);
                     }
                 });
-                if (resources.size() > 0) {
+                if (isSave || resources.size() > 0) {
                     instance.setResources(resources.toArray(LwM2mResourceObserve[]::new));
                     lwM2mObject.setInstances(new LwM2mInstance[]{instance});
                     return lwM2mObject;

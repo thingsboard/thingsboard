@@ -28,6 +28,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.ProtocolStringList;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
@@ -188,8 +189,8 @@ public class GatewaySessionHandler {
         }
     }
 
-    void writeAndFlush(MqttMessage mqttMessage) {
-        channel.writeAndFlush(mqttMessage);
+    ChannelFuture writeAndFlush(MqttMessage mqttMessage) {
+        return channel.writeAndFlush(mqttMessage);
     }
 
     int nextMsgId() {
@@ -251,14 +252,19 @@ public class GatewaySessionHandler {
                         new TransportServiceCallback<GetOrCreateDeviceFromGatewayResponse>() {
                             @Override
                             public void onSuccess(GetOrCreateDeviceFromGatewayResponse msg) {
-                                GatewayDeviceSessionCtx deviceSessionCtx = new GatewayDeviceSessionCtx(GatewaySessionHandler.this, msg.getDeviceInfo(), msg.getDeviceProfile(), mqttQoSMap);
+                                GatewayDeviceSessionCtx deviceSessionCtx = new GatewayDeviceSessionCtx(GatewaySessionHandler.this, msg.getDeviceInfo(), msg.getDeviceProfile(), mqttQoSMap, transportService);
                                 if (devices.putIfAbsent(deviceName, deviceSessionCtx) == null) {
                                     log.trace("[{}] First got or created device [{}], type [{}] for the gateway session", sessionId, deviceName, deviceType);
                                     SessionInfoProto deviceSessionInfo = deviceSessionCtx.getSessionInfo();
                                     transportService.registerAsyncSession(deviceSessionInfo, deviceSessionCtx);
-                                    transportService.process(deviceSessionInfo, DefaultTransportService.getSessionEventMsg(TransportProtos.SessionEvent.OPEN), null);
-                                    transportService.process(deviceSessionInfo, TransportProtos.SubscribeToRPCMsg.getDefaultInstance(), null);
-                                    transportService.process(deviceSessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.getDefaultInstance(), null);
+                                    transportService.process(TransportProtos.TransportToDeviceActorMsg.newBuilder()
+                                            .setSessionInfo(deviceSessionInfo)
+                                            .setSessionEvent(DefaultTransportService.getSessionEventMsg(TransportProtos.SessionEvent.OPEN))
+                                            .setSubscribeToAttributes(TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder()
+                                                    .setSessionType(TransportProtos.SessionType.ASYNC).build())
+                                            .setSubscribeToRPC(TransportProtos.SubscribeToRPCMsg.newBuilder()
+                                                    .setSessionType(TransportProtos.SessionType.ASYNC).build())
+                                            .build(), null);
                                 }
                                 futureToSet.set(devices.get(deviceName));
                                 deviceFutures.remove(deviceName);
