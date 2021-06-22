@@ -39,7 +39,7 @@ export const DEFAULT_BOOTSTRAP_SERVER_ACCOUNT_TIME_OUT = 0;
 export const LEN_MAX_PUBLIC_KEY_RPK = 182;
 export const LEN_MAX_PUBLIC_KEY_X509 = 3000;
 export const KEY_REGEXP_HEX_DEC = /^[-+]?[0-9A-Fa-f]+\.?[0-9A-Fa-f]*?$/;
-export const KEY_REGEXP_NUMBER = /^(\-?|\+?)\d*$/;
+export const KEY_REGEXP_NUMBER = /^(-?|\+?)\d*$/;
 export const INSTANCES_ID_VALUE_MIN = 0;
 export const INSTANCES_ID_VALUE_MAX = 65535;
 export const DEFAULT_OTA_UPDATE_PROTOCOL = 'coap://';
@@ -143,16 +143,18 @@ export interface BootstrapServersSecurityConfig {
 
 export interface ServerSecurityConfig {
   host?: string;
-  securityHost?: string;
   port?: number;
-  securityPort?: number;
   securityMode: securityConfigMode;
-  clientPublicKeyOrId?: string;
-  clientSecretKey?: string;
   serverPublicKey?: string;
   clientHoldOffTime?: number;
   serverId?: number;
   bootstrapServerAccountTimeout: number;
+}
+
+export interface ServerSecurityConfigInfo extends ServerSecurityConfig {
+  securityHost?: string;
+  securityPort?: number;
+  bootstrapServerIs: boolean;
 }
 
 interface BootstrapSecurityConfig {
@@ -168,7 +170,7 @@ export interface Lwm2mProfileConfigModels {
 }
 
 export interface ClientLwM2mSettings {
-  clientStrategy: string;
+  clientOnlyObserveAfterConnect: number;
   fwUpdateStrategy: number;
   swUpdateStrategy: number;
   fwUpdateRecourse: string;
@@ -193,9 +195,9 @@ export function getDefaultBootstrapServersSecurityConfig(): BootstrapServersSecu
   };
 }
 
-export function getDefaultBootstrapServerSecurityConfig(hostname: string): ServerSecurityConfig {
+export function getDefaultBootstrapServerSecurityConfig(): ServerSecurityConfig {
   return {
-    host: hostname,
+    host: DEFAULT_LOCAL_HOST_NAME,
     port: DEFAULT_PORT_BOOTSTRAP_NO_SEC,
     securityMode: securityConfigMode.NO_SEC,
     serverPublicKey: '',
@@ -205,22 +207,14 @@ export function getDefaultBootstrapServerSecurityConfig(hostname: string): Serve
   };
 }
 
-export function getDefaultLwM2MServerSecurityConfig(hostname): ServerSecurityConfig {
-  const DefaultLwM2MServerSecurityConfig = getDefaultBootstrapServerSecurityConfig(hostname);
+export function getDefaultLwM2MServerSecurityConfig(): ServerSecurityConfig {
+  const DefaultLwM2MServerSecurityConfig = getDefaultBootstrapServerSecurityConfig();
   DefaultLwM2MServerSecurityConfig.port = DEFAULT_PORT_SERVER_NO_SEC;
   DefaultLwM2MServerSecurityConfig.serverId = DEFAULT_ID_SERVER;
   return DefaultLwM2MServerSecurityConfig;
 }
 
-function getDefaultProfileBootstrapSecurityConfig(hostname: any): BootstrapSecurityConfig {
-  return {
-    servers: getDefaultBootstrapServersSecurityConfig(),
-    bootstrapServer: getDefaultBootstrapServerSecurityConfig(hostname),
-    lwm2mServer: getDefaultLwM2MServerSecurityConfig(hostname)
-  };
-}
-
-function getDefaultProfileObserveAttrConfig(): ObservableAttributes {
+export function getDefaultProfileObserveAttrConfig(): ObservableAttributes {
   return {
     observe: [],
     attribute: [],
@@ -230,17 +224,9 @@ function getDefaultProfileObserveAttrConfig(): ObservableAttributes {
   };
 }
 
-export function getDefaultProfileConfig(hostname?: any): Lwm2mProfileConfigModels {
+export function getDefaultProfileClientLwM2mSettingsConfig(): ClientLwM2mSettings {
   return {
-    clientLwM2mSettings: getDefaultProfileClientLwM2mSettingsConfig(),
-    observeAttr: getDefaultProfileObserveAttrConfig(),
-    bootstrap: getDefaultProfileBootstrapSecurityConfig((hostname) ? hostname : DEFAULT_LOCAL_HOST_NAME)
-  };
-}
-
-function getDefaultProfileClientLwM2mSettingsConfig(): ClientLwM2mSettings {
-  return {
-    clientStrategy: '1',
+    clientOnlyObserveAfterConnect: 1,
     fwUpdateStrategy: 1,
     swUpdateStrategy: 1,
     fwUpdateRecourse: DEFAULT_FW_UPDATE_RESOURCE,

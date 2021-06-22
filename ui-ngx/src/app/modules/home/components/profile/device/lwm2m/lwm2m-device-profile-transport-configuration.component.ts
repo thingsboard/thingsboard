@@ -29,7 +29,10 @@ import {
   DEFAULT_MIN_PERIOD,
   DEFAULT_NOTIF_IF_DESIBLED,
   DEFAULT_SW_UPDATE_RESOURCE,
-  getDefaultProfileConfig,
+  getDefaultBootstrapServerSecurityConfig,
+  getDefaultBootstrapServersSecurityConfig, getDefaultLwM2MServerSecurityConfig,
+  getDefaultProfileClientLwM2mSettingsConfig,
+  getDefaultProfileObserveAttrConfig,
   Instance,
   INSTANCES,
   KEY_NAME,
@@ -38,7 +41,7 @@ import {
   ObjectLwM2M,
   OBSERVE,
   OBSERVE_ATTR_TELEMETRY,
-  RESOURCES,
+  RESOURCES, ServerSecurityConfig,
   TELEMETRY
 } from './lwm2m-profile-config.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
@@ -94,16 +97,16 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       bootstrap: this.fb.group({
         servers: this.fb.group({
           binding: [DEFAULT_BINDING],
-          shortId: [DEFAULT_ID_SERVER, [Validators.required, Validators.min(0)]],
-          lifetime: [DEFAULT_LIFE_TIME, [Validators.required, Validators.min(0)]],
+          shortId: [DEFAULT_ID_SERVER, [Validators.required, Validators.min(1), Validators.max(65534), Validators.pattern('[0-9]*')]],
+          lifetime: [DEFAULT_LIFE_TIME, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
           notifIfDisabled: [DEFAULT_NOTIF_IF_DESIBLED, []],
-          defaultMinPeriod: [DEFAULT_MIN_PERIOD, [Validators.required, Validators.min(0)]],
+          defaultMinPeriod: [DEFAULT_MIN_PERIOD, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
         }),
         bootstrapServer: [null, Validators.required],
         lwm2mServer: [null, Validators.required]
       }),
       clientLwM2mSettings: this.fb.group({
-        clientStrategy: [1, []],
+        clientOnlyObserveAfterConnect: [1, []],
         fwUpdateStrategy: [1, []],
         swUpdateStrategy: [1, []],
         fwUpdateRecourse: [{value: '', disabled: true}, []],
@@ -177,18 +180,41 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     }
   }
 
-  writeValue(value: Lwm2mProfileConfigModels | null): void {
+  async writeValue(value: Lwm2mProfileConfigModels | null) {
     if (isDefinedAndNotNull(value)) {
-      if (Object.keys(value).length !== 0 && (value?.clientLwM2mSettings || value?.observeAttr || value?.bootstrap)) {
+      if (value?.clientLwM2mSettings || value?.observeAttr || value?.bootstrap) {
         this.configurationValue = value;
       } else {
-        this.configurationValue = getDefaultProfileConfig();
+        this.configurationValue = await this.defaultProfileConfig();
       }
       this.lwm2mDeviceConfigFormGroup.patchValue({
         configurationJson: this.configurationValue
       }, {emitEvent: false});
       this.initWriteValue();
     }
+  }
+
+  private async defaultProfileConfig(): Promise<Lwm2mProfileConfigModels> {
+    let bootstrap: ServerSecurityConfig;
+    let lwm2m: ServerSecurityConfig;
+    try {
+      [bootstrap, lwm2m] = await Promise.all([
+        this.deviceProfileService.getLwm2mBootstrapSecurityInfoBySecurityType(true).toPromise(),
+        this.deviceProfileService.getLwm2mBootstrapSecurityInfoBySecurityType(false).toPromise()
+      ]);
+    } catch (e) {
+      bootstrap = getDefaultBootstrapServerSecurityConfig();
+      lwm2m = getDefaultLwM2MServerSecurityConfig();
+    }
+    return {
+      observeAttr: getDefaultProfileObserveAttrConfig(),
+      bootstrap: {
+        servers: getDefaultBootstrapServersSecurityConfig(),
+        bootstrapServer: bootstrap,
+        lwm2mServer: lwm2m
+      },
+      clientLwM2mSettings: getDefaultProfileClientLwM2mSettingsConfig()
+    };
   }
 
   private initWriteValue = (): void => {
@@ -220,7 +246,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         observeAttrTelemetry: this.getObserveAttrTelemetryObjects(value.objectsList),
         bootstrap: this.configurationValue.bootstrap,
         clientLwM2mSettings: {
-          clientStrategy: this.configurationValue.clientLwM2mSettings.clientStrategy,
+          clientOnlyObserveAfterConnect: this.configurationValue.clientLwM2mSettings.clientOnlyObserveAfterConnect,
           fwUpdateStrategy: this.configurationValue.clientLwM2mSettings.fwUpdateStrategy || 1,
           swUpdateStrategy: this.configurationValue.clientLwM2mSettings.swUpdateStrategy || 1,
           fwUpdateRecourse: fwResource,
