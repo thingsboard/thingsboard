@@ -27,8 +27,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Random;
 import java.util.concurrent.ConcurrentMap;
@@ -87,12 +85,6 @@ public class DefaultCoapServerService implements CoapServerService {
     }
 
     private CoapServer createCoapServer() throws UnknownHostException {
-        server = new CoapServer();
-
-        CoapEndpoint.Builder noSecCoapEndpointBuilder = new CoapEndpoint.Builder();
-        InetAddress addr = InetAddress.getByName(coapServerContext.getHost());
-        InetSocketAddress sockAddr = new InetSocketAddress(addr, coapServerContext.getPort());
-        noSecCoapEndpointBuilder.setInetSocketAddress(sockAddr);
         NetworkConfig networkConfig = new NetworkConfig();
         networkConfig.setBoolean(NetworkConfig.Keys.BLOCKWISE_STRICT_BLOCK2_OPTION, true);
         networkConfig.setBoolean(NetworkConfig.Keys.BLOCKWISE_ENTITY_TOO_LARGE_AUTO_FAILOVER, true);
@@ -102,10 +94,7 @@ public class DefaultCoapServerService implements CoapServerService {
         networkConfig.setInt(NetworkConfig.Keys.PREFERRED_BLOCK_SIZE, 1024);
         networkConfig.setInt(NetworkConfig.Keys.MAX_MESSAGE_SIZE, 1024);
         networkConfig.setInt(NetworkConfig.Keys.MAX_RETRANSMIT, 4);
-        noSecCoapEndpointBuilder.setNetworkConfig(networkConfig);
-        CoapEndpoint noSecCoapEndpoint = noSecCoapEndpointBuilder.build();
-        server.addEndpoint(noSecCoapEndpoint);
-
+        server = new CoapServer(networkConfig, coapServerContext.getPort());
         if (isDtlsEnabled()) {
             CoapEndpoint.Builder dtlsCoapEndpointBuilder = new CoapEndpoint.Builder();
             TbCoapDtlsSettings dtlsSettings = coapServerContext.getDtlsSettings();
