@@ -322,29 +322,34 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     void process(TbActorCtx context, TransportToDeviceActorMsgWrapper wrapper) {
         TransportToDeviceActorMsg msg = wrapper.getMsg();
         TbCallback callback = wrapper.getCallback();
+        var sessionInfo = msg.getSessionInfo();
+
         if (msg.hasSessionEvent()) {
-            processSessionStateMsgs(msg.getSessionInfo(), msg.getSessionEvent());
+            processSessionStateMsgs(sessionInfo, msg.getSessionEvent());
         }
         if (msg.hasSubscribeToAttributes()) {
-            processSubscriptionCommands(context, msg.getSessionInfo(), msg.getSubscribeToAttributes());
+            processSubscriptionCommands(context, sessionInfo, msg.getSubscribeToAttributes());
         }
         if (msg.hasSubscribeToRPC()) {
-            processSubscriptionCommands(context, msg.getSessionInfo(), msg.getSubscribeToRPC());
+            processSubscriptionCommands(context, sessionInfo, msg.getSubscribeToRPC());
+        }
+        if (msg.hasSendPendingRPC()) {
+            sendPendingRequests(context, getSessionId(sessionInfo), sessionInfo);
         }
         if (msg.hasGetAttributes()) {
-            handleGetAttributesRequest(context, msg.getSessionInfo(), msg.getGetAttributes());
+            handleGetAttributesRequest(context, sessionInfo, msg.getGetAttributes());
         }
         if (msg.hasToDeviceRPCCallResponse()) {
-            processRpcResponses(context, msg.getSessionInfo(), msg.getToDeviceRPCCallResponse());
+            processRpcResponses(context, sessionInfo, msg.getToDeviceRPCCallResponse());
         }
         if (msg.hasSubscriptionInfo()) {
-            handleSessionActivity(context, msg.getSessionInfo(), msg.getSubscriptionInfo());
+            handleSessionActivity(context, sessionInfo, msg.getSubscriptionInfo());
         }
         if (msg.hasClaimDevice()) {
-            handleClaimDeviceMsg(context, msg.getSessionInfo(), msg.getClaimDevice());
+            handleClaimDeviceMsg(context, sessionInfo, msg.getClaimDevice());
         }
         if (msg.hasPersistedRpcResponseMsg()) {
-            processPersistedRpcResponses(context, msg.getSessionInfo(), msg.getPersistedRpcResponseMsg());
+            processPersistedRpcResponses(context, sessionInfo, msg.getPersistedRpcResponseMsg());
         }
         callback.onSuccess();
     }
