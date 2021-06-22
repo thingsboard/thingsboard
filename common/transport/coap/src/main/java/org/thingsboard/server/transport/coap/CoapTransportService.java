@@ -18,17 +18,20 @@ package org.thingsboard.server.transport.coap;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
+import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.coapserver.CoapServerService;
 import org.thingsboard.server.coapserver.TbCoapServerComponent;
+import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.transport.coap.efento.CoapEfentoTransportResource;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.net.UnknownHostException;
+
+import static org.eclipse.californium.core.network.config.NetworkConfigDefaults.DEFAULT_BLOCKWISE_STATUS_LIFETIME;
 
 @Service("CoapTransportService")
 @TbCoapServerComponent
@@ -52,6 +55,14 @@ public class CoapTransportService implements TbTransportService {
     public void init() throws UnknownHostException {
         log.info("Starting CoAP transport...");
         coapServer = coapServerService.getCoapServer();
+        coapServer.getConfig().setBoolean(NetworkConfig.Keys.BLOCKWISE_STRICT_BLOCK2_OPTION, true);
+        coapServer.getConfig().setBoolean(NetworkConfig.Keys.BLOCKWISE_ENTITY_TOO_LARGE_AUTO_FAILOVER, true);
+        coapServer.getConfig().setLong(NetworkConfig.Keys.BLOCKWISE_STATUS_LIFETIME, DEFAULT_BLOCKWISE_STATUS_LIFETIME);
+        coapServer.getConfig().setInt(NetworkConfig.Keys.MAX_RESOURCE_BODY_SIZE, 256 * 1024 * 1024);
+        coapServer.getConfig().setString(NetworkConfig.Keys.RESPONSE_MATCHING, "RELAXED");
+        coapServer.getConfig().setInt(NetworkConfig.Keys.PREFERRED_BLOCK_SIZE, 1024);
+        coapServer.getConfig().setInt(NetworkConfig.Keys.MAX_MESSAGE_SIZE, 1024);
+        coapServer.getConfig().setInt(NetworkConfig.Keys.MAX_RETRANSMIT, 10);
         CoapResource api = new CoapResource(API);
         api.add(new CoapTransportResource(coapTransportContext, coapServerService, V1));
 

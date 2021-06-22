@@ -42,9 +42,8 @@ import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
-import org.thingsboard.server.transport.lwm2m.server.store.TbEditableSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
+import org.thingsboard.server.transport.lwm2m.server.store.TbMainSecurityStore;
 
 import javax.annotation.PostConstruct;
 import javax.security.auth.x500.X500Principal;
@@ -57,6 +56,8 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer.CLIENT;
+
 @Slf4j
 @Component
 @TbLwM2mTransportComponent
@@ -66,7 +67,7 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
     private final TbLwM2MDtlsSessionStore sessionStorage;
     private final LwM2MTransportServerConfig config;
     private final LwM2mCredentialsSecurityInfoValidator securityInfoValidator;
-    private final TbEditableSecurityStore securityStore;
+    private final TbMainSecurityStore securityStore;
 
     @SuppressWarnings("deprecation")
     private StaticCertificateVerifier staticCertificateVerifier;
@@ -117,7 +118,7 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
 
                         String strCert = SslUtil.getCertificateString(cert);
                         String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
-                        TbLwM2MSecurityInfo securityInfo = securityInfoValidator.getEndpointSecurityInfoByCredentialsId(sha3Hash, LwM2mTransportUtil.LwM2mTypeServer.CLIENT);
+                        TbLwM2MSecurityInfo securityInfo = securityInfoValidator.getEndpointSecurityInfoByCredentialsId(sha3Hash, CLIENT);
                         ValidateDeviceCredentialsResponse msg = securityInfo != null ? securityInfo.getMsg() : null;
                         if (msg != null && org.thingsboard.server.common.data.StringUtils.isNotEmpty(msg.getCredentials())) {
                             LwM2MCredentials credentials = JacksonUtil.fromString(msg.getCredentials(), LwM2MCredentials.class);
@@ -133,7 +134,7 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                                 if (msg.hasDeviceInfo() && deviceProfile != null) {
                                     sessionStorage.put(endpoint, new TbX509DtlsSessionInfo(cert.getSubjectX500Principal().getName(), msg));
                                     try {
-                                        securityStore.put(securityInfo);
+                                        securityStore.putX509(securityInfo);
                                     } catch (NonUniqueSecurityInfoException e) {
                                         log.trace("Failed to add security info: {}", securityInfo, e);
                                     }

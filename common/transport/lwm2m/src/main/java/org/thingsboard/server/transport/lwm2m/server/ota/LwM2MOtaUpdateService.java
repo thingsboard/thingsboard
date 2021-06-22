@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.ota;
 
+import org.thingsboard.server.common.data.device.data.lwm2m.OtherConfiguration;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
 import java.util.Optional;
@@ -30,6 +31,10 @@ public interface LwM2MOtaUpdateService {
     void onTargetSoftwareUpdate(LwM2mClient client, String newSoftwareTitle, String newSoftwareVersion);
 
     void onCurrentFirmwareNameUpdate(LwM2mClient client, String name);
+
+    void onCurrentFirmwareStrategyUpdate(LwM2mClient client, OtherConfiguration configuration);
+
+    void onCurrentSoftwareStrategyUpdate(LwM2mClient client, OtherConfiguration configuration);
 
     void onCurrentFirmwareVersion3Update(LwM2mClient client, String version);
 
