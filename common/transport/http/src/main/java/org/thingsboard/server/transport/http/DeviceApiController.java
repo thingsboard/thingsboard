@@ -386,7 +386,8 @@ public class DeviceApiController implements TbTransportService {
         }
 
         @Override
-        public void onAttributeUpdate(AttributeUpdateNotificationMsg msg) {
+        public void onAttributeUpdate(UUID sessionId, AttributeUpdateNotificationMsg msg) {
+            log.trace("[{}] Received attributes update notification to device", sessionId);
             responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg).toString(), HttpStatus.OK));
         }
 
@@ -397,7 +398,8 @@ public class DeviceApiController implements TbTransportService {
         }
 
         @Override
-        public void onToDeviceRpcRequest(ToDeviceRpcRequestMsg msg) {
+        public void onToDeviceRpcRequest(UUID sessionId, ToDeviceRpcRequestMsg msg) {
+            log.trace("[{}] Received RPC command to device", sessionId);
             responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg, true).toString(), HttpStatus.OK));
         }
 

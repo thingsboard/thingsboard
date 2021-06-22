@@ -127,7 +127,8 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     }
 
     @Override
-    public void onAttributeUpdate(AttributeUpdateNotificationMsg attributeUpdateNotification) {
+    public void onAttributeUpdate(UUID sessionId, AttributeUpdateNotificationMsg attributeUpdateNotification) {
+        log.trace("[{}] Received attributes update notification to device", sessionId);
         snmpTransportContext.getSnmpTransportService().onAttributeUpdate(this, attributeUpdateNotification);
     }
 
@@ -137,7 +138,8 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     }
 
     @Override
-    public void onToDeviceRpcRequest(ToDeviceRpcRequestMsg toDeviceRequest) {
+    public void onToDeviceRpcRequest(UUID sessionId, ToDeviceRpcRequestMsg toDeviceRequest) {
+       log.trace("[{}] Received RPC command to device", sessionId);
        snmpTransportContext.getSnmpTransportService().onToDeviceRpcRequest(this, toDeviceRequest);
     }
 
