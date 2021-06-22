@@ -39,7 +39,8 @@ public enum Resource {
     API_USAGE_STATE(EntityType.API_USAGE_STATE),
     TB_RESOURCE(EntityType.TB_RESOURCE),
     OTA_PACKAGE(EntityType.OTA_PACKAGE),
-    EDGE(EntityType.EDGE);
+    EDGE(EntityType.EDGE),
+    RPC(EntityType.RPC);
 
     private final EntityType entityType;
 
