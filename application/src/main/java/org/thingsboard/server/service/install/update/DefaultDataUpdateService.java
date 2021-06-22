@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNodeConfiguration;
 import org.thingsboard.server.common.data.EntityView;
@@ -35,6 +36,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.oauth2.OAuth2Info;
+import org.thingsboard.server.common.data.oauth2.deprecated.OAuth2ClientsParams;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -45,10 +48,11 @@ import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.oauth2.OAuth2Service;
+import org.thingsboard.server.dao.oauth2.OAuth2Utils;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.service.install.InstallScripts;
 
 import java.util.ArrayList;
@@ -88,6 +92,9 @@ public class DefaultDataUpdateService implements DataUpdateService {
     @Autowired
     private AlarmDao alarmDao;
 
+    @Autowired
+    private OAuth2Service oAuth2Service;
+
     @Override
     public void updateData(String fromVersion) throws Exception {
         switch (fromVersion) {
@@ -107,6 +114,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 log.info("Updating data from version 3.2.2 to 3.3.0 ...");
                 tenantsDefaultEdgeRuleChainUpdater.updateEntities(null);
                 tenantsAlarmsCustomerUpdater.updateEntities(null);
+                updateOAuth2Params();
                 break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
@@ -359,6 +367,22 @@ public class DefaultDataUpdateService implements DataUpdateService {
             } else {
                 hasNext = false;
             }
+        }
+    }
+
+    private void updateOAuth2Params() {
+        try {
+            OAuth2ClientsParams oauth2ClientsParams = oAuth2Service.findOAuth2Params();
+            if (!oauth2ClientsParams.getDomainsParams().isEmpty()) {
+                log.info("Updating OAuth2 parameters ...");
+                OAuth2Info oAuth2Info = OAuth2Utils.clientParamsToOAuth2Info(oauth2ClientsParams);
+                oAuth2Service.saveOAuth2Info(oAuth2Info);
+                oAuth2Service.saveOAuth2Params(new OAuth2ClientsParams(false, Collections.emptyList()));
+                log.info("Successfully updated OAuth2 parameters!");
+            }
+        }
+        catch (Exception e) {
+           log.error("Failed to update OAuth2 parameters", e);
         }
     }
 

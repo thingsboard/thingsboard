@@ -716,7 +716,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                         if (!firmware.getType().equals(OtaPackageType.FIRMWARE)) {
                             throw new DataValidationException("Can't assign firmware with type: " + firmware.getType());
                         }
-                        if (firmware.getData() == null) {
+                        if (firmware.getData() == null && !firmware.hasUrl()) {
                             throw new DataValidationException("Can't assign firmware with empty data!");
                         }
                         if (!firmware.getDeviceProfileId().equals(device.getDeviceProfileId())) {
@@ -732,7 +732,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                         if (!software.getType().equals(OtaPackageType.SOFTWARE)) {
                             throw new DataValidationException("Can't assign software with type: " + software.getType());
                         }
-                        if (software.getData() == null) {
+                        if (software.getData() == null && !software.hasUrl()) {
                             throw new DataValidationException("Can't assign software with empty data!");
                         }
                         if (!software.getDeviceProfileId().equals(device.getDeviceProfileId())) {

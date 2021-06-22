@@ -374,6 +374,97 @@ CREATE TABLE IF NOT EXISTS ts_kv_dictionary (
     CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
 );
 
+CREATE TABLE IF NOT EXISTS oauth2_params (
+    id uuid NOT NULL CONSTRAINT oauth2_params_pkey PRIMARY KEY,
+    enabled boolean,
+    tenant_id uuid,
+    created_time bigint NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS oauth2_registration (
+    id uuid NOT NULL CONSTRAINT oauth2_registration_pkey PRIMARY KEY,
+    oauth2_params_id uuid NOT NULL,
+    created_time bigint NOT NULL,
+    additional_info varchar,
+    client_id varchar(255),
+    client_secret varchar(2048),
+    authorization_uri varchar(255),
+    token_uri varchar(255),
+    scope varchar(255),
+    platforms varchar(255),
+    user_info_uri varchar(255),
+    user_name_attribute_name varchar(255),
+    jwk_set_uri varchar(255),
+    client_authentication_method varchar(255),
+    login_button_label varchar(255),
+    login_button_icon varchar(255),
+    allow_user_creation boolean,
+    activate_user boolean,
+    type varchar(31),
+    basic_email_attribute_key varchar(31),
+    basic_first_name_attribute_key varchar(31),
+    basic_last_name_attribute_key varchar(31),
+    basic_tenant_name_strategy varchar(31),
+    basic_tenant_name_pattern varchar(255),
+    basic_customer_name_pattern varchar(255),
+    basic_default_dashboard_name varchar(255),
+    basic_always_full_screen boolean,
+    custom_url varchar(255),
+    custom_username varchar(255),
+    custom_password varchar(255),
+    custom_send_token boolean,
+    CONSTRAINT fk_registration_oauth2_params FOREIGN KEY (oauth2_params_id) REFERENCES oauth2_params(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS oauth2_domain (
+    id uuid NOT NULL CONSTRAINT oauth2_domain_pkey PRIMARY KEY,
+    oauth2_params_id uuid NOT NULL,
+    created_time bigint NOT NULL,
+    domain_name varchar(255),
+    domain_scheme varchar(31),
+    CONSTRAINT fk_domain_oauth2_params FOREIGN KEY (oauth2_params_id) REFERENCES oauth2_params(id) ON DELETE CASCADE,
+    CONSTRAINT oauth2_domain_unq_key UNIQUE (oauth2_params_id, domain_name, domain_scheme)
+);
+
+CREATE TABLE IF NOT EXISTS oauth2_mobile (
+    id uuid NOT NULL CONSTRAINT oauth2_mobile_pkey PRIMARY KEY,
+    oauth2_params_id uuid NOT NULL,
+    created_time bigint NOT NULL,
+    pkg_name varchar(255),
+    app_secret varchar(2048),
+    CONSTRAINT fk_mobile_oauth2_params FOREIGN KEY (oauth2_params_id) REFERENCES oauth2_params(id) ON DELETE CASCADE,
+    CONSTRAINT oauth2_mobile_unq_key UNIQUE (oauth2_params_id, pkg_name)
+);
+
+CREATE TABLE IF NOT EXISTS oauth2_client_registration_template (
+    id uuid NOT NULL CONSTRAINT oauth2_client_registration_template_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    additional_info varchar,
+    provider_id varchar(255),
+    authorization_uri varchar(255),
+    token_uri varchar(255),
+    scope varchar(255),
+    user_info_uri varchar(255),
+    user_name_attribute_name varchar(255),
+    jwk_set_uri varchar(255),
+    client_authentication_method varchar(255),
+    type varchar(31),
+    basic_email_attribute_key varchar(31),
+    basic_first_name_attribute_key varchar(31),
+    basic_last_name_attribute_key varchar(31),
+    basic_tenant_name_strategy varchar(31),
+    basic_tenant_name_pattern varchar(255),
+    basic_customer_name_pattern varchar(255),
+    basic_default_dashboard_name varchar(255),
+    basic_always_full_screen boolean,
+    comment varchar,
+    login_button_icon varchar(255),
+    login_button_label varchar(255),
+    help_link varchar(255),
+    CONSTRAINT oauth2_template_provider_id_unq_key UNIQUE (provider_id)
+);
+
+-- Deprecated
 CREATE TABLE IF NOT EXISTS oauth2_client_registration_info (
     id uuid NOT NULL CONSTRAINT oauth2_client_registration_info_pkey PRIMARY KEY,
     enabled boolean,
@@ -407,40 +498,13 @@ CREATE TABLE IF NOT EXISTS oauth2_client_registration_info (
     custom_send_token boolean
 );
 
+-- Deprecated
 CREATE TABLE IF NOT EXISTS oauth2_client_registration (
     id uuid NOT NULL CONSTRAINT oauth2_client_registration_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     domain_name varchar(255),
     domain_scheme varchar(31),
     client_registration_info_id uuid
-);
-
-CREATE TABLE IF NOT EXISTS oauth2_client_registration_template (
-    id uuid NOT NULL CONSTRAINT oauth2_client_registration_template_pkey PRIMARY KEY,
-    created_time bigint NOT NULL,
-    additional_info varchar,
-    provider_id varchar(255),
-    authorization_uri varchar(255),
-    token_uri varchar(255),
-    scope varchar(255),
-    user_info_uri varchar(255),
-    user_name_attribute_name varchar(255),
-    jwk_set_uri varchar(255),
-    client_authentication_method varchar(255),
-    type varchar(31),
-    basic_email_attribute_key varchar(31),
-    basic_first_name_attribute_key varchar(31),
-    basic_last_name_attribute_key varchar(31),
-    basic_tenant_name_strategy varchar(31),
-    basic_tenant_name_pattern varchar(255),
-    basic_customer_name_pattern varchar(255),
-    basic_default_dashboard_name varchar(255),
-    basic_always_full_screen boolean,
-    comment varchar,
-    login_button_icon varchar(255),
-    login_button_label varchar(255),
-    help_link varchar(255),
-    CONSTRAINT oauth2_template_provider_id_unq_key UNIQUE (provider_id)
 );
 
 CREATE TABLE IF NOT EXISTS api_usage_state (

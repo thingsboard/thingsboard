@@ -14,24 +14,29 @@
 /// limitations under the License.
 ///
 
-import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-import {PageLink} from '@shared/models/page/page-link';
-import {defaultHttpOptionsFromConfig, RequestConfig} from './http-utils';
-import {Observable} from 'rxjs';
-import {PageData} from '@shared/models/page/page-data';
-import {DeviceProfile, DeviceProfileInfo, DeviceTransportType} from '@shared/models/device.models';
-import {isDefinedAndNotNull, isEmptyStr} from '@core/utils';
-import {ObjectLwM2M, ServerSecurityConfig} from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
-import {SortOrder} from '@shared/models/page/sort-order';
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { PageLink } from '@shared/models/page/page-link';
+import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import { Observable, of, throwError } from 'rxjs';
+import { PageData } from '@shared/models/page/page-data';
+import { DeviceProfile, DeviceProfileInfo, DeviceTransportType } from '@shared/models/device.models';
+import { isDefinedAndNotNull, isEmptyStr } from '@core/utils';
+import { ObjectLwM2M, ServerSecurityConfig } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
+import { SortOrder } from '@shared/models/page/sort-order';
+import { OtaPackageService } from '@core/http/ota-package.service';
+import { mergeMap, tap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DeviceProfileService {
 
+  private lwm2mBootstrapSecurityInfoInMemoryCache = new Map<boolean, ServerSecurityConfig>();
+
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    private otaPackageService: OtaPackageService
   ) {
   }
 
@@ -55,18 +60,31 @@ export class DeviceProfileService {
     return this.http.get<Array<ObjectLwM2M>>(url, defaultHttpOptionsFromConfig(config));
   }
 
-  public getLwm2mBootstrapSecurityInfo(securityMode: string, bootstrapServerIs: boolean,
-                                       config?: RequestConfig): Observable<ServerSecurityConfig> {
-    return this.http.get<ServerSecurityConfig>(
-      `/api/lwm2m/deviceProfile/bootstrap/${securityMode}/${bootstrapServerIs}`,
-      defaultHttpOptionsFromConfig(config)
-    );
+  public getLwm2mBootstrapSecurityInfo(isBootstrapServer: boolean, config?: RequestConfig): Observable<ServerSecurityConfig> {
+    const securityConfig = this.lwm2mBootstrapSecurityInfoInMemoryCache.get(isBootstrapServer);
+    if (securityConfig) {
+      return of(securityConfig);
+    } else {
+      return this.http.get<ServerSecurityConfig>(
+        `/api/lwm2m/deviceProfile/bootstrap/${isBootstrapServer}`,
+        defaultHttpOptionsFromConfig(config)
+      ).pipe(
+        tap(serverConfig => this.lwm2mBootstrapSecurityInfoInMemoryCache.set(isBootstrapServer, serverConfig))
+      );
+    }
   }
 
   public getLwm2mObjectsPage(pageLink: PageLink, config?: RequestConfig): Observable<Array<ObjectLwM2M>> {
     return this.http.get<Array<ObjectLwM2M>>(
       `/api/resource/lwm2m/page${pageLink.toQuery()}`,
       defaultHttpOptionsFromConfig(config)
+    );
+  }
+
+  public saveDeviceProfileAndConfirmOtaChange(originDeviceProfile: DeviceProfile, deviceProfile: DeviceProfile,
+                                              config?: RequestConfig): Observable<DeviceProfile> {
+    return this.otaPackageService.confirmDialogUpdatePackage(deviceProfile, originDeviceProfile).pipe(
+      mergeMap((update) => update ? this.saveDeviceProfile(deviceProfile, config) : throwError('Canceled saving device profiles'))
     );
   }
 

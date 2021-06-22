@@ -428,6 +428,7 @@ export interface CustomTimeSchedulerItem{
 export interface AlarmRule {
   condition: AlarmCondition;
   alarmDetails?: string;
+  dashboardId?: DashboardId;
   schedule?: AlarmSchedule;
 }
 

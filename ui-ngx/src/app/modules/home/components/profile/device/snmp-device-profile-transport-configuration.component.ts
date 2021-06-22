@@ -14,17 +14,19 @@
 /// limitations under the License.
 ///
 
-import {Component, forwardRef, Input, OnInit} from '@angular/core';
-import {ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators} from '@angular/forms';
-import {Store} from '@ngrx/store';
-import {AppState} from '@app/core/core.state';
-import {coerceBooleanProperty} from '@angular/cdk/coercion';
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { Store } from '@ngrx/store';
+import { AppState } from '@app/core/core.state';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   DeviceProfileTransportConfiguration,
   DeviceTransportType,
   SnmpDeviceProfileTransportConfiguration
 } from '@shared/models/device.models';
-import {isDefinedAndNotNull} from "@core/utils";
+import { isDefinedAndNotNull } from '@core/utils';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 export interface OidMappingConfiguration {
   isAttribute: boolean;
@@ -44,8 +46,11 @@ export interface OidMappingConfiguration {
     multi: true
   }]
 })
-export class SnmpDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit {
+export class SnmpDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit, OnDestroy {
+
   snmpDeviceProfileTransportConfigurationFormGroup: FormGroup;
+
+  private destroy$ = new Subject();
   private requiredValue: boolean;
   private configuration = [];
 
@@ -71,9 +76,16 @@ export class SnmpDeviceProfileTransportConfigurationComponent implements Control
     this.snmpDeviceProfileTransportConfigurationFormGroup = this.fb.group({
       configuration: [null, Validators.required]
     });
-    this.snmpDeviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
+    this.snmpDeviceProfileTransportConfigurationFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
       this.updateModel();
     });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   registerOnChange(fn: any): void {

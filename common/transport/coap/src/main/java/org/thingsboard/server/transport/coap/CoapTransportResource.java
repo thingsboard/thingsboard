@@ -482,13 +482,16 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
             String title = exchange.getQueryParameter("title");
             String version = exchange.getQueryParameter("version");
             if (msg.getResponseStatus().equals(TransportProtos.ResponseStatus.SUCCESS)) {
+                String firmwareId = new UUID(msg.getOtaPackageIdMSB(), msg.getOtaPackageIdLSB()).toString();
                 if (msg.getTitle().equals(title) && msg.getVersion().equals(version)) {
-                    String firmwareId = new UUID(msg.getOtaPackageIdMSB(), msg.getOtaPackageIdLSB()).toString();
                     String strChunkSize = exchange.getQueryParameter("size");
                     String strChunk = exchange.getQueryParameter("chunk");
                     int chunkSize = StringUtils.isEmpty(strChunkSize) ? 0 : Integer.parseInt(strChunkSize);
                     int chunk = StringUtils.isEmpty(strChunk) ? 0 : Integer.parseInt(strChunk);
                     exchange.respond(CoAP.ResponseCode.CONTENT, transportContext.getOtaPackageDataCache().get(firmwareId, chunkSize, chunk));
+                }
+                else if (firmwareId != null) {
+                    sendOtaData(exchange, firmwareId);
                 } else {
                     exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
                 }
@@ -501,6 +504,20 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         public void onError(Throwable e) {
             log.warn("Failed to process request", e);
             exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private void sendOtaData(CoapExchange exchange, String firmwareId) {
+        Response response = new Response(CoAP.ResponseCode.CONTENT);
+        byte[] fwData = transportContext.getOtaPackageDataCache().get(firmwareId);
+        if (fwData != null && fwData.length > 0) {
+            response.setPayload(fwData);
+            if (exchange.getRequestOptions().getBlock2() != null) {
+                int chunkSize = exchange.getRequestOptions().getBlock2().getSzx();
+                boolean moreFlag = fwData.length > chunkSize;
+                response.getOptions().setBlock2(chunkSize, moreFlag, 0);
+             }
+            exchange.respond(response);
         }
     }
 

@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="selectDashboardFormGroup" class="mat-block">
+<mat-form-field [formGroup]="selectDashboardFormGroup" class="mat-block" [floatLabel]="floatLabel">
   <input matInput type="text" placeholder="{{ placeholder || ('dashboard.dashboard' | translate) }}"
          #dashboardInput
          formControlName="dashboard"

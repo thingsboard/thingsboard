@@ -36,6 +36,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 import static org.eclipse.leshan.core.SecurityMode.NO_SEC;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
@@ -96,12 +97,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
             if (!LwM2MClientState.REGISTERED.equals(lwM2MClient.getState())) {
                 throw new LwM2MClientStateException(lwM2MClient.getState(), "Client is in invalid state.");
             }
-            Registration currentRegistration = lwM2MClient.getRegistration();
-            if (currentRegistration.getId().equals(registration.getId())) {
-                lwM2MClient.setRegistration(registration);
-            } else {
-                throw new LwM2MClientStateException(lwM2MClient.getState(), "Client has different registration.");
-            }
+            lwM2MClient.setRegistration(registration);
         } finally {
             lwM2MClient.unlock();
         }
@@ -120,7 +116,6 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
                 lwM2MClient.setState(LwM2MClientState.UNREGISTERED);
                 lwM2mClientsByEndpoint.remove(lwM2MClient.getEndpoint());
                 this.securityStore.remove(lwM2MClient.getEndpoint());
-                this.lwM2mClientsByRegistrationId.remove(registration.getId());
                 UUID profileId = lwM2MClient.getProfileId();
                 if (profileId != null) {
                     Optional<LwM2mClient> otherClients = lwM2mClientsByRegistrationId.values().stream().filter(e -> e.getProfileId().equals(profileId)).findFirst();
@@ -143,14 +138,19 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public LwM2mClient getClientBySessionInfo(TransportProtos.SessionInfoProto sessionInfo) {
-        LwM2mClient lwM2mClient = lwM2mClientsByEndpoint.values().stream().filter(c ->
+        LwM2mClient lwM2mClient = null;
+        Predicate<LwM2mClient> isClientFilter = c ->
                 (new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()))
-                        .equals((new UUID(c.getSession().getSessionIdMSB(), c.getSession().getSessionIdLSB())))
-
-        ).findAny().orElse(null);
+                        .equals((new UUID(c.getSession().getSessionIdMSB(), c.getSession().getSessionIdLSB())));
+        if (this.lwM2mClientsByEndpoint.size() > 0) {
+            lwM2mClient = this.lwM2mClientsByEndpoint.values().stream().filter(isClientFilter).findAny().orElse(null);
+        }
+        if (lwM2mClient == null && this.lwM2mClientsByRegistrationId.size() > 0) {
+            lwM2mClient = this.lwM2mClientsByRegistrationId.values().stream().filter(isClientFilter).findAny().orElse(null);
+        }
         if (lwM2mClient == null) {
             log.warn("Device TimeOut? lwM2mClient is null.");
-            log.warn("SessionInfo input [{}], lwM2mClientsByEndpoint size: [{}]", sessionInfo, lwM2mClientsByEndpoint.values().size());
+            log.warn("SessionInfo input [{}], lwM2mClientsByEndpoint size: [{}] lwM2mClientsByRegistrationId: [{}]", sessionInfo, lwM2mClientsByEndpoint.values(), lwM2mClientsByRegistrationId.values());
             log.error("", new RuntimeException());
         }
         return lwM2mClient;
@@ -205,19 +205,13 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         }
     }
 
-    /**
-     * if isVer - ok or default ver=DEFAULT_LWM2M_VERSION
-     *
-     * @param registration -
-     * @return - all objectIdVer in client
-     */
     @Override
-    public Set<String> getSupportedIdVerInClient(Registration registration) {
+    public Set<String> getSupportedIdVerInClient(LwM2mClient client) {
         Set<String> clientObjects = ConcurrentHashMap.newKeySet();
-        Arrays.stream(registration.getObjectLinks()).forEach(url -> {
-            LwM2mPath pathIds = new LwM2mPath(url.getUrl());
+        Arrays.stream(client.getRegistration().getObjectLinks()).forEach(link -> {
+            LwM2mPath pathIds = new LwM2mPath(link.getUrl());
             if (!pathIds.isRoot()) {
-                clientObjects.add(convertPathFromObjectIdToIdVer(url.getUrl(), registration));
+                clientObjects.add(convertPathFromObjectIdToIdVer(link.getUrl(), client.getRegistration()));
             }
         });
         return (clientObjects.size() > 0) ? clientObjects : null;

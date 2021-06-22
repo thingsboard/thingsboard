@@ -20,15 +20,23 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2MClientStrategy;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2MFirmwareUpdateStrategy;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LwM2MSoftwareUpdateStrategy;
 
 @Data
 public class LwM2mClientProfile {
+    private final String clientStrategyStr = "clientStrategy";
+    private final String fwUpdateStrategyStr = "fwUpdateStrategy";
+    private final String swUpdateStrategyStr = "swUpdateStrategy";
 
     private TenantId tenantId;
     /**
-     * {"clientLwM2mSettings": {
-     *      clientUpdateValueAfterConnect: false;
-     *       }
+     *   "clientLwM2mSettings": {
+     *     "fwUpdateStrategy": "1",
+     *     "swUpdateStrategy": "1",
+     *     "clientStrategy": "1"
+     *   }
      **/
     private JsonObject postClientLwM2mSettings;
 
@@ -85,5 +93,21 @@ public class LwM2mClientProfile {
         }
     }
 
+    public int getClientStrategy() {
+        return this.postClientLwM2mSettings.getAsJsonObject().has(this.clientStrategyStr) ?
+                Integer.parseInt(this.postClientLwM2mSettings.getAsJsonObject().get(this.clientStrategyStr).getAsString()) :
+                LwM2MClientStrategy.CLIENT_STRATEGY_1.code;
+    }
 
+    public int getFwUpdateStrategy() {
+        return this.postClientLwM2mSettings.getAsJsonObject().has(this.fwUpdateStrategyStr) ?
+                Integer.parseInt(this.postClientLwM2mSettings.getAsJsonObject().get(this.fwUpdateStrategyStr).getAsString()) :
+                LwM2MFirmwareUpdateStrategy.OBJ_5_BINARY.code;
+    }
+
+    public int getSwUpdateStrategy() {
+        return this.postClientLwM2mSettings.getAsJsonObject().has(this.swUpdateStrategyStr) ?
+                Integer.parseInt(this.postClientLwM2mSettings.getAsJsonObject().get(this.swUpdateStrategyStr).getAsString()) :
+                LwM2MSoftwareUpdateStrategy.BINARY.code;
+    }
 }

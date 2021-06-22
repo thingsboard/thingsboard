@@ -26,6 +26,7 @@ import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
+import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.SecurityInfo;
@@ -69,7 +70,8 @@ public class LwM2mClient implements Cloneable {
     @Getter
     private final String endpoint;
     private final Lock lock;
-    @Getter @Setter
+    @Getter
+    @Setter
     private LwM2MClientState state;
     @Getter
     private final Map<String, ResourceValue> resources;
@@ -91,8 +93,6 @@ public class LwM2mClient implements Cloneable {
     private SecurityInfo securityInfo;
     @Getter
     private UUID deviceId;
-    @Getter
-    private UUID sessionId;
     @Getter
     private SessionInfoProto session;
     @Getter
@@ -133,8 +133,6 @@ public class LwM2mClient implements Cloneable {
         this.credentials = credentials;
         this.profileId = profileId;
         this.init = false;
-        this.fwUpdate = new LwM2mFwSwUpdate(this, OtaPackageType.FIRMWARE);
-        this.swUpdate = new LwM2mFwSwUpdate(this, OtaPackageType.SOFTWARE);
         if (this.credentials != null && this.credentials.hasDeviceInfo()) {
             this.session = createSession(nodeId, sessionId, credentials);
             this.deviceId = new UUID(session.getDeviceIdMSB(), session.getDeviceIdLSB());
@@ -383,6 +381,32 @@ public class LwM2mClient implements Cloneable {
             this.init = true;
             serviceImpl.putDelayedUpdateResourcesThingsboard(this);
         }
+    }
+
+    public ContentFormat getDefaultContentFormat() {
+        if (registration == null) {
+            return ContentFormat.DEFAULT;
+        } else if (registration.getLwM2mVersion().equals("1.0")) {
+            return ContentFormat.TLV;
+        } else {
+            return ContentFormat.TEXT;
+        }
+    }
+
+    public LwM2mFwSwUpdate  getFwUpdate (LwM2mClientContext clientContext) {
+        if (this.fwUpdate == null) {
+            LwM2mClientProfile lwM2mClientProfile = clientContext.getProfile(this.getProfileId());
+            this.fwUpdate = new LwM2mFwSwUpdate(this, OtaPackageType.FIRMWARE, lwM2mClientProfile.getFwUpdateStrategy());
+        }
+        return this.fwUpdate;
+    }
+
+    public LwM2mFwSwUpdate  getSwUpdate (LwM2mClientContext clientContext) {
+        if (this.swUpdate == null) {
+            LwM2mClientProfile lwM2mClientProfile = clientContext.getProfile(this.getProfileId());
+            this.swUpdate = new LwM2mFwSwUpdate(this, OtaPackageType.SOFTWARE, lwM2mClientProfile.getSwUpdateStrategy());
+        }
+        return this.fwUpdate;
     }
 
 }

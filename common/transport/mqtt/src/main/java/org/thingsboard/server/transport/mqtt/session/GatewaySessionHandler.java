@@ -259,8 +259,10 @@ public class GatewaySessionHandler {
                                     transportService.process(TransportProtos.TransportToDeviceActorMsg.newBuilder()
                                             .setSessionInfo(deviceSessionInfo)
                                             .setSessionEvent(DefaultTransportService.getSessionEventMsg(TransportProtos.SessionEvent.OPEN))
-                                            .setSubscribeToAttributes(TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build())
-                                            .setSubscribeToRPC(TransportProtos.SubscribeToRPCMsg.newBuilder().build())
+                                            .setSubscribeToAttributes(TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder()
+                                                    .setSessionType(TransportProtos.SessionType.ASYNC).build())
+                                            .setSubscribeToRPC(TransportProtos.SubscribeToRPCMsg.newBuilder()
+                                                    .setSessionType(TransportProtos.SessionType.ASYNC).build())
                                             .build(), null);
                                 }
                                 futureToSet.set(devices.get(deviceName));
