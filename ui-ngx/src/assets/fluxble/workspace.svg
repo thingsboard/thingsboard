@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="17px" height="18px" viewBox="0 0 17 18" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>workspace</title>
+    <g id="Pre-Login" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" stroke-linecap="round">
+        <path d="M2.140625,1 L14.140625,1 C14.6929097,1 15.140625,1.44771525 15.140625,2 L15.140625,8.64864865 C15.140625,9.2009334 14.6929097,9.64864865 14.140625,9.64864865 L2.140625,9.64864865 C1.58834025,9.64864865 1.140625,9.2009334 1.140625,8.64864865 L1.140625,2 C1.140625,1.44771525 1.58834025,1 2.140625,1 Z M2.015625,13.1081081 L14.265625,13.1081081 M2.015625,16.5675676 L14.265625,16.5675676" id="workspace" stroke="#556485" stroke-width="1.8" fill-rule="nonzero"></path>
+    </g>
+</svg>

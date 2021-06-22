@@ -33,6 +33,7 @@
     position: fixed;
     padding: 10px;
     left: 54 + 10px;
+    top: 20%;
     color: #2F3842;
     background-color: #FFFFFF;
 
@@ -41,7 +42,10 @@
     box-shadow: 0px 3px 6px 0px rgba(50, 50, 50, 0.75);
 
     hr {
-      color: #F5F6F7;
+      margin-top: 0;
+      margin-bottom: 0;
+      width: 100%;
+      background: rgba(0, 0, 0, .12);
     }
 
     h6 {
@@ -66,10 +70,15 @@
     transition-property: height;
 
     a.mat-button {
-      padding: 0 16px 0 32px;
+      padding: 0 0px 0 32px;
       font-weight: normal;
       text-transform: none !important;
       text-rendering: optimizeLegibility;
+
+      .mat-button-wrapper {
+        text-align: left;
+      }
+
     }
   }
 }

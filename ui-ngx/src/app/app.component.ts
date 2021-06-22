@@ -16,20 +16,20 @@
 
 import 'hammerjs';
 
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 
-import { environment as env } from '@env/environment';
+import {environment as env} from '@env/environment';
 
-import { TranslateService } from '@ngx-translate/core';
-import { select, Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { LocalStorageService } from '@core/local-storage/local-storage.service';
-import { DomSanitizer } from '@angular/platform-browser';
-import { MatIconRegistry } from '@angular/material/icon';
-import { combineLatest } from 'rxjs';
-import { selectIsAuthenticated, selectIsUserLoaded } from '@core/auth/auth.selectors';
-import { distinctUntilChanged, filter, map, skip } from 'rxjs/operators';
-import { AuthService } from '@core/auth/auth.service';
+import {TranslateService} from '@ngx-translate/core';
+import {select, Store} from '@ngrx/store';
+import {AppState} from '@core/core.state';
+import {LocalStorageService} from '@core/local-storage/local-storage.service';
+import {DomSanitizer} from '@angular/platform-browser';
+import {MatIconRegistry} from '@angular/material/icon';
+import {combineLatest} from 'rxjs';
+import {selectIsAuthenticated, selectIsUserLoaded} from '@core/auth/auth.selectors';
+import {distinctUntilChanged, filter, map, skip} from 'rxjs/operators';
+import {AuthService} from '@core/auth/auth.service';
 
 @Component({
   selector: 'tb-root',
@@ -49,6 +49,40 @@ export class AppComponent implements OnInit {
 
     this.matIconRegistry.addSvgIconSetInNamespace('mdi',
       this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/mdi.svg'));
+
+    this.matIconRegistry.addSvgIcon('adit_usage', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/adit_usage.svg'));
+
+
+    this.matIconRegistry.addSvgIcon('adit_usage', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/adit_usage.svg'));
+    this.matIconRegistry.addSvgIcon('api_usage', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/api_usage_.svg'));
+    this.matIconRegistry.addSvgIcon('assets', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/assets_.svg'));
+    this.matIconRegistry.addSvgIcon('collaboration', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/collaboration.svg'));
+    this.matIconRegistry.addSvgIcon('customer', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/customer_svg.svg'));
+    this.matIconRegistry.addSvgIcon('dashboard', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/dashboard_.svg'));
+    this.matIconRegistry.addSvgIcon('device', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/device_.svg'));
+    this.matIconRegistry.addSvgIcon('device_profiles', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/device_profiles.svg'));
+    this.matIconRegistry.addSvgIcon('entity_views', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/entity_views_.svg'));
+    this.matIconRegistry.addSvgIcon('files', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/files.svg'));
+    this.matIconRegistry.addSvgIcon('firmware', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/firmware_.svg'));
+    this.matIconRegistry.addSvgIcon('home_settings', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/home_settings.svg'));
+    this.matIconRegistry.addSvgIcon('planner', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/planner.svg'));
+    this.matIconRegistry.addSvgIcon('resources_library', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/resources_library.svg'));
+    this.matIconRegistry.addSvgIcon('rule_chains', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/rule_chains.svg'));
+    this.matIconRegistry.addSvgIcon('task', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/task.svg'));
+    this.matIconRegistry.addSvgIcon('thingsboard_selected', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/thingsboard_selected.svg'));
+    this.matIconRegistry.addSvgIcon('thingsboard_unselected', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/thingsboard_unselected.svg'));
+    this.matIconRegistry.addSvgIcon('fluxble_home', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/fluxble_home.svg'));
+    this.matIconRegistry.addSvgIcon('venue', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/venue.svg'));
+    this.matIconRegistry.addSvgIcon('widgets_library', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/widgets_library.svg'));
+    this.matIconRegistry.addSvgIcon('workspace', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/workspace.svg'));
+
+
+    this.matIconRegistry.addSvgIcon('contact_support', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/contact_support.svg'));
+    this.matIconRegistry.addSvgIcon('documentation', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/documentation.svg'));
+    this.matIconRegistry.addSvgIcon('help', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/help.svg'));
+    this.matIconRegistry.addSvgIcon('online_chat', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/online_chat.svg'));
+    this.matIconRegistry.addSvgIcon('plus', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/plus.svg'));
+
 
     this.matIconRegistry.addSvgIconLiteral(
       'alpha-a-circle-outline',
@@ -113,7 +147,7 @@ export class AppComponent implements OnInit {
     ).pipe(
       map(results => ({isAuthenticated: results[0], isUserLoaded: results[1]})),
       distinctUntilChanged(),
-      filter((data) => data.isUserLoaded ),
+      filter((data) => data.isUserLoaded),
       skip(1),
     ).subscribe((data) => {
       this.authService.gotoDefaultPlace(data.isAuthenticated);

@@ -22,7 +22,7 @@
   .tb-side-menu,
   .tb-side-menu ul {
     padding: 0;
-    margin-top: 13px;
+    margin-top: 0;
     list-style: none;
     overflow: hidden;
   }
@@ -32,7 +32,7 @@
     margin-top: 5px;
     margin-bottom: 13px;
     line-height: 60px;
-    vertical-align: center;
+    vertical-align: middle;
     color: #556485;
     text-align: center;
   }
@@ -45,25 +45,46 @@
   }
 
   svg {
-    height: 24px;
-    width: 24px;
+    height: 16px;
+    width: 16px;
   }
 
   .tb-menu-icon {
     line-height: 60px;
-    vertical-align: center;
+    vertical-align: middle;
     border: none;
     height: 60px;
   }
 
   .li-bottom {
+    li {
+      height: 46px;
+      text-align: center;
+      align-items: center;
+      vertical-align: middle;
+    }
+
     position: absolute;
+    vertical-align: middle;
     bottom: 0;
+    margin-bottom: 10px;
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
   }
 
   li {
     text-align: center;
     overflow: hidden;
+  }
+
+  li.auto {
+    .mat-icon svg {
+      width: 24px;
+      height: 24px;
+    }
   }
 
   a.mat-button {
@@ -73,9 +94,11 @@
     overflow: hidden;
     line-height: 40px;
     border-radius: 0;
+    align-items: center;
+    padding-left: 8px;
+    width: 100%;
 
     &:hover {
-      border-bottom: none;
       background-color: rgba(255, 255, 255, 0.08);
     }
 
@@ -85,17 +108,23 @@
 
     &.tb-active {
       font-weight: 500;
-      background-color: rgba(255, 255, 255, .15);
+
+
+      .mat-button-wrapper .mat-icon {
+        color: white;
+        fill: white;
+        background: rgba(25, 121, 255, .9);
+      }
     }
 
     .mat-button-wrapper {
       width: 100%;
-      display: inline-flex;
       align-items: center;
+      text-align: center;
 
       mat-icon {
-        margin-right: 8px;
         margin-left: 0;
+        border-radius: 9px;
       }
 
       span {

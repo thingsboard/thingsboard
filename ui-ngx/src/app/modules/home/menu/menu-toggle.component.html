@@ -19,8 +19,6 @@
         routerLinkActive="tb-active" [routerLinkActiveOptions]="{exact: true}" routerLink="{{section.path}}">
   <mat-icon *ngIf="!section.isMdiIcon && section.icon != null" class="material-icons">{{section.icon}}</mat-icon>
   <mat-icon *ngIf="section.isMdiIcon && section.icon != null" [svgIcon]="section.icon"></mat-icon>
-  <span class=" pull-right fa fa-chevron-down tb-toggle-icon"
-        [ngClass]="{'tb-toggled' : sectionActive()}"></span>
 </a>
 <div class="tb-menu-tooltip" *ngIf="shouldShow()" (mouseenter)="mouseEnter()" (mouseleave)="mouseLeave()">
   <h6>{{section.name | translate}}</h6>
