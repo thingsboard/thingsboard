@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2021 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -86,8 +86,9 @@ public class DefaultTbResourceService implements TbResourceService {
                 } else {
                     throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getSearchText()));
                 }
-            } catch(InvalidDDFFileException e) {
-                throw new DataValidationException("Failed to parse XML file!");
+            } catch (InvalidDDFFileException e) {
+                log.error("Failed to parse file {}", resource.getFileName(), e);
+                throw new DataValidationException("Failed to parse file " + resource.getFileName());
             } catch (IOException e) {
                 throw new ThingsboardException(e, ThingsboardErrorCode.GENERAL);
             }
@@ -196,8 +197,7 @@ public class DefaultTbResourceService implements TbResourceService {
                     if (isSave) {
                         LwM2mResourceObserve lwM2MResourceObserve = new LwM2mResourceObserve(k, v.name, false, false, false);
                         resources.add(lwM2MResourceObserve);
-                    }
-                    else if (v.operations.isReadable()) {
+                    } else if (v.operations.isReadable()) {
                         LwM2mResourceObserve lwM2MResourceObserve = new LwM2mResourceObserve(k, v.name, false, false, false);
                         resources.add(lwM2MResourceObserve);
                     }
@@ -206,8 +206,7 @@ public class DefaultTbResourceService implements TbResourceService {
                     instance.setResources(resources.toArray(LwM2mResourceObserve[]::new));
                     lwM2mObject.setInstances(new LwM2mInstance[]{instance});
                     return lwM2mObject;
-                }
-                else {
+                } else {
                     return null;
                 }
             }
