@@ -443,12 +443,12 @@ message TransportToDeviceActorMsg {
   GetAttributeRequestMsg getAttributes = 3;
   SubscribeToAttributeUpdatesMsg subscribeToAttributes = 4;
   SubscribeToRPCMsg subscribeToRPC = 5;
-  SendPendingRPCMsg sendPendingRPC = 6;
-  ToDeviceRpcResponseMsg toDeviceRPCCallResponse = 7;
-  SubscriptionInfoProto subscriptionInfo = 8;
-  ClaimDeviceMsg claimDevice = 9;
-  ProvisionDeviceRequestMsg provisionDevice = 10;
-  ToDevicePersistedRpcResponseMsg persistedRpcResponseMsg = 11;
+  ToDeviceRpcResponseMsg toDeviceRPCCallResponse = 6;
+  SubscriptionInfoProto subscriptionInfo = 7;
+  ClaimDeviceMsg claimDevice = 8;
+  ProvisionDeviceRequestMsg provisionDevice = 9;
+  ToDevicePersistedRpcResponseMsg persistedRpcResponseMsg = 10;
+  SendPendingRPCMsg sendPendingRPC = 11;
 }
 
 message TransportToRuleEngineMsg {
