@@ -22,10 +22,10 @@ import org.thingsboard.server.common.data.device.data.PowerMode;
 public class OtherConfiguration {
 
     private Integer fwUpdateStrategy;
-    private String fwUpdateResource;
     private Integer swUpdateStrategy;
-    private String swUpdateResource;
     private Integer clientOnlyObserveAfterConnect;
     private PowerMode powerMode;
+    private String fwUpdateResource;
+    private String swUpdateResource;
 
 }

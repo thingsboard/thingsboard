@@ -17,13 +17,14 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import org.eclipse.leshan.core.request.DiscoverRequest;
 import org.eclipse.leshan.core.response.DiscoverResponse;
+import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
 public class TbLwM2MDiscoverCallback extends TbLwM2MTargetedCallback<DiscoverRequest, DiscoverResponse> {
 
-    public TbLwM2MDiscoverCallback(LwM2mUplinkMsgHandler handler, LwM2mClient client, String targetId) {
-        super(handler, client, targetId);
+    public TbLwM2MDiscoverCallback(LwM2MTelemetryLogService logService, LwM2mClient client, String targetId) {
+        super(logService, client, targetId);
     }
 
 }

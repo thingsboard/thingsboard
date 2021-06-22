@@ -27,6 +27,7 @@ import org.eclipse.leshan.server.californium.LeshanServerBuilder;
 import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
@@ -64,7 +65,7 @@ import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CBC_SHA256;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CCM_8;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mNetworkConfig.getCoapConfig;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FIRMWARE_UPDATE_COAP_RESOURCE;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FIRMWARE_UPDATE_COAP_RESOURCE;
 
 @Slf4j
 @Component
@@ -80,6 +81,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
     private final LwM2mTransportContext context;
     private final LwM2MTransportServerConfig config;
     private final LwM2mTransportServerHelper helper;
+    private final OtaPackageDataCache otaPackageDataCache;
     private final DefaultLwM2MUplinkMsgHandler handler;
     private final CaliforniumRegistrationStore registrationStore;
     private final TbSecurityStore securityStore;
@@ -103,8 +105,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
          * "coap://host:port/{path}/{token}/{nameFile}"
          */
 
-
-        LwM2mTransportCoapResource otaCoapResource = new LwM2mTransportCoapResource(handler, FIRMWARE_UPDATE_COAP_RESOURCE);
+        LwM2mTransportCoapResource otaCoapResource = new LwM2mTransportCoapResource(otaPackageDataCache, FIRMWARE_UPDATE_COAP_RESOURCE);
         this.server.coap().getServer().add(otaCoapResource);
         this.startLhServer();
         this.context.setServer(server);

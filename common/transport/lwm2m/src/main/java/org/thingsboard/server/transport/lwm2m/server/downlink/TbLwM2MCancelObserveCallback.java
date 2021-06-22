@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
@@ -27,15 +28,15 @@ public class TbLwM2MCancelObserveCallback extends AbstractTbLwM2MRequestCallback
 
     private final String versionedId;
 
-    public TbLwM2MCancelObserveCallback(LwM2mUplinkMsgHandler handler, LwM2mClient client, String versionedId) {
-        super(handler, client);
+    public TbLwM2MCancelObserveCallback(LwM2MTelemetryLogService logService, LwM2mClient client, String versionedId) {
+        super(logService, client);
         this.versionedId = versionedId;
     }
 
     @Override
     public void onSuccess(TbLwM2MCancelObserveRequest request, Integer canceledSubscriptionsCount) {
         log.trace("[{}] Cancel observation of [{}] successful: {}", client.getEndpoint(),  versionedId, canceledSubscriptionsCount);
-        handler.logToTelemetry(client, String.format("[%s]: Cancel Observe for [%s] successful. Result: [%s]", LOG_LWM2M_INFO, versionedId, canceledSubscriptionsCount));
+        logService.log(client, String.format("[%s]: Cancel Observe for [%s] successful. Result: [%s]", LOG_LWM2M_INFO, versionedId, canceledSubscriptionsCount));
     }
 
 }

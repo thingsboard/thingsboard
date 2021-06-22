@@ -15,5 +15,8 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.ota;
 
-public class LwM2MClientOtaState {
+public enum LwM2MClientOtaState {
+
+    IDLE, IN_PROGRESS, SUCCESS, FAILED
+
 }

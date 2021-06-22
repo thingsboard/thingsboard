@@ -182,7 +182,7 @@ export interface Lwm2mProfileConfigModels {
 }
 
 export interface ClientLwM2mSettings {
-  clientOnlyObserveAfterConnect: string;
+  clientOnlyObserveAfterConnect: number;
   fwUpdateStrategy: number;
   swUpdateStrategy: number;
   fwUpdateResource: string;
@@ -255,7 +255,7 @@ export function getDefaultProfileConfig(hostname?: any): Lwm2mProfileConfigModel
 
 function getDefaultProfileClientLwM2mSettingsConfig(): ClientLwM2mSettings {
   return {
-    clientOnlyObserveAfterConnect: '1',
+    clientOnlyObserveAfterConnect: 1,
     fwUpdateStrategy: 1,
     swUpdateStrategy: 1,
     fwUpdateResource: DEFAULT_FW_UPDATE_RESOURCE,

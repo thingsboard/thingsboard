@@ -37,6 +37,8 @@ import org.eclipse.leshan.core.model.DefaultDDFFileValidator;
 import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mPath;
+import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.codec.CodecException;
 import org.eclipse.leshan.core.request.ContentFormat;
 import org.springframework.stereotype.Component;
@@ -49,6 +51,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.client.ResourceValue;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -58,6 +61,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.BOOLEAN_V;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
 
 @Slf4j
 @Component
@@ -68,37 +72,15 @@ public class LwM2mTransportServerHelper {
     private final LwM2mTransportContext context;
     private final AtomicInteger atomicTs = new AtomicInteger(0);
 
-
     public long getTS() {
         return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) * 1000L + (atomicTs.getAndIncrement() % 1000);
-    }
-
-    /**
-     * send to Thingsboard Attribute || Telemetry
-     *
-     * @param msg - JsonObject: [{name: value}]
-     * @return - dummyWriteReplace {\"targetIdVer\":\"/19_1.0/0/0\",\"value\":0082}
-     */
-    private <T> TransportServiceCallback<Void> getPubAckCallbackSendAttrTelemetry(final T msg) {
-        return new TransportServiceCallback<>() {
-            @Override
-            public void onSuccess(Void dummy) {
-                log.trace("Success to publish msg: {}, dummy: {}", msg, dummy);
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                log.trace("[{}] Failed to publish msg: {}", msg, e);
-            }
-        };
     }
 
     public void sendParametersOnThingsboardAttribute(List<TransportProtos.KeyValueProto> result, SessionInfoProto sessionInfo) {
         PostAttributeMsg.Builder request = PostAttributeMsg.newBuilder();
         request.addAllKv(result);
         PostAttributeMsg postAttributeMsg = request.build();
-        TransportServiceCallback call = this.getPubAckCallbackSendAttrTelemetry(postAttributeMsg);
-        context.getTransportService().process(sessionInfo, postAttributeMsg, this.getPubAckCallbackSendAttrTelemetry(call));
+        context.getTransportService().process(sessionInfo, postAttributeMsg, TransportServiceCallback.EMPTY);
     }
 
     public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> result, SessionInfoProto sessionInfo) {
@@ -108,8 +90,7 @@ public class LwM2mTransportServerHelper {
         builder.addAllKv(result);
         request.addTsKvList(builder.build());
         PostTelemetryMsg postTelemetryMsg = request.build();
-        TransportServiceCallback call = this.getPubAckCallbackSendAttrTelemetry(postTelemetryMsg);
-        context.getTransportService().process(sessionInfo, postTelemetryMsg, this.getPubAckCallbackSendAttrTelemetry(call));
+        context.getTransportService().process(sessionInfo, postTelemetryMsg, TransportServiceCallback.EMPTY);
     }
 
     /**
@@ -226,4 +207,5 @@ public class LwM2mTransportServerHelper {
         }
         return null;
     }
+
 }

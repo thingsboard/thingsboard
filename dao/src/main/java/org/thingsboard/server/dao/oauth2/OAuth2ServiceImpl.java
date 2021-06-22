@@ -377,9 +377,6 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
                 if (StringUtils.isEmpty(clientRegistration.getScope())) {
                     throw new DataValidationException("Scope should be specified!");
                 }
-                if (StringUtils.isEmpty(clientRegistration.getUserInfoUri())) {
-                    throw new DataValidationException("User info uri should be specified!");
-                }
                 if (StringUtils.isEmpty(clientRegistration.getUserNameAttributeName())) {
                     throw new DataValidationException("User name attribute name should be specified!");
                 }
