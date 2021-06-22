@@ -249,9 +249,10 @@ public final class EdgeGrpcSession implements Closeable {
 
             @Override
             public void onFailure(Throwable t) {
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "";
                 UplinkResponseMsg uplinkResponseMsg = UplinkResponseMsg.newBuilder()
                         .setUplinkMsgId(uplinkMsg.getUplinkMsgId())
-                        .setSuccess(false).setErrorMsg(t.getMessage()).build();
+                        .setSuccess(false).setErrorMsg(errorMsg).build();
                 sendDownlinkMsg(ResponseMsg.newBuilder()
                         .setUplinkResponseMsg(uplinkResponseMsg)
                         .build());
