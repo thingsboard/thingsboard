@@ -274,6 +274,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.updateTitle(true);
     this.alarmsDatasource.updateAlarms();
     this.clearCache();
+    this.ctx.detectChanges();
   }
 
   public pageLinkSortDirection(): SortDirection {

@@ -98,7 +98,7 @@ const routes: Routes = [
         }
       },
       {
-        path: ':customerId/edges',
+        path: ':customerId/edgeInstances',
         component: EntitiesTableComponent,
         data: {
           auth: [Authority.TENANT_ADMIN],

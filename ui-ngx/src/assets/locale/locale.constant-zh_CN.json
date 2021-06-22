@@ -1994,7 +1994,6 @@
     "delete-resources-title": "确定要删除 { count, plural, 1 {# 个资源} other {# 个资源} }?",
     "drop-file": "拖拽资源文件或单击以选择要上传的文件。",
     "empty": "资源为空",
-    "export": "导出资源",
     "no-resource-matching": "找不到与 '{{widgetsBundle}}' 匹配的资源。",
     "no-resource-text": "找不到资源",
     "open-widgets-bundle": "打开部件库",
