@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -269,16 +270,22 @@ class AlarmState {
     private JsonNode createDetails(AlarmRuleState ruleState) {
         JsonNode alarmDetails;
         String alarmDetailsStr = ruleState.getAlarmRule().getAlarmDetails();
+        DashboardId dashboardId = ruleState.getAlarmRule().getDashboardId();
 
-        if (StringUtils.isNotEmpty(alarmDetailsStr)) {
-            for (var keyFilter : ruleState.getAlarmRule().getCondition().getCondition()) {
-                EntityKeyValue entityKeyValue = dataSnapshot.getValue(keyFilter.getKey());
-                if (entityKeyValue != null) {
-                    alarmDetailsStr = alarmDetailsStr.replaceAll(String.format("\\$\\{%s}", keyFilter.getKey().getKey()), getValueAsString(entityKeyValue));
-                }
-            }
+        if (StringUtils.isNotEmpty(alarmDetailsStr) || dashboardId != null) {
             ObjectNode newDetails = JacksonUtil.newObjectNode();
-            newDetails.put("data", alarmDetailsStr);
+            if (StringUtils.isNotEmpty(alarmDetailsStr)) {
+                for (var keyFilter : ruleState.getAlarmRule().getCondition().getCondition()) {
+                    EntityKeyValue entityKeyValue = dataSnapshot.getValue(keyFilter.getKey());
+                    if (entityKeyValue != null) {
+                        alarmDetailsStr = alarmDetailsStr.replaceAll(String.format("\\$\\{%s}", keyFilter.getKey().getKey()), getValueAsString(entityKeyValue));
+                    }
+                }
+                newDetails.put("data", alarmDetailsStr);
+            }
+            if (dashboardId != null) {
+                newDetails.put("dashboardId", dashboardId.getId().toString());
+            }
             alarmDetails = newDetails;
         } else if (currentAlarm != null) {
             alarmDetails = currentAlarm.getDetails();

@@ -24,6 +24,9 @@ import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.eclipse.californium.core.server.resources.ResourceObserver;
+import org.thingsboard.server.cache.ota.OtaPackageDataCache;
+import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,11 +40,11 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.S
 public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
     private final ConcurrentMap<String, ObserveRelation> tokenToObserveRelationMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, AtomicInteger> tokenToObserveNotificationSeqMap = new ConcurrentHashMap<>();
-    private final LwM2mTransportMsgHandler handler;
+    private final OtaPackageDataCache otaPackageDataCache;
 
-    public LwM2mTransportCoapResource(LwM2mTransportMsgHandler handler, String name) {
+    public LwM2mTransportCoapResource(OtaPackageDataCache otaPackageDataCache, String name) {
         super(name);
-        this.handler = handler;
+        this.otaPackageDataCache = otaPackageDataCache;
         this.setObservable(true); // enable observing
         this.addObserver(new CoapResourceObserver());
     }
@@ -140,9 +143,9 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
             response.setPayload(fwData);
             if (exchange.getRequestOptions().getBlock2() != null) {
                 int chunkSize = exchange.getRequestOptions().getBlock2().getSzx();
-                boolean moreFlag = fwData.length > chunkSize;
-                response.getOptions().setBlock2(chunkSize, moreFlag, 0);
-                log.warn("92) with blokc2 Send currentId: [{}], length: [{}], chunkSize [{}], moreFlag [{}]", currentId.toString(), fwData.length, chunkSize, moreFlag);
+                boolean lastFlag = fwData.length > chunkSize;
+                response.getOptions().setBlock2(chunkSize, lastFlag, 0);
+                log.warn("92) with blokc2 Send currentId: [{}], length: [{}], chunkSize [{}], moreFlag [{}]", currentId.toString(), fwData.length, chunkSize, lastFlag);
             }
             else {
                 log.warn("92) with block1 Send currentId: [{}], length: [{}], ", currentId.toString(), fwData.length);
@@ -152,7 +155,7 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
     }
 
     private byte[] getOtaData(UUID currentId) {
-        return ((DefaultLwM2MTransportMsgHandler) handler).otaPackageDataCache.get(currentId.toString());
+        return otaPackageDataCache.get(currentId.toString());
     }
 
 }

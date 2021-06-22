@@ -34,7 +34,7 @@ export interface OAuth2DomainInfo {
 
 export interface OAuth2MobileInfo {
   pkgName: string;
-  callbackUrlScheme: string;
+  appSecret: string;
 }
 
 export enum DomainSchema{
@@ -54,7 +54,8 @@ export const domainSchemaTranslations = new Map<DomainSchema, string>(
 export enum MapperConfigType{
   BASIC = 'BASIC',
   CUSTOM = 'CUSTOM',
-  GITHUB = 'GITHUB'
+  GITHUB = 'GITHUB',
+  APPLE = 'APPLE'
 }
 
 export enum TenantNameStrategy{

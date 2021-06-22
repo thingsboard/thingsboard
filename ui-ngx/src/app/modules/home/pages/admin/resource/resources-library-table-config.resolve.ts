@@ -69,10 +69,10 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
 
     this.config.cellActionDescriptors.push(
       {
-        name: this.translate.instant('resource.export'),
+        name: this.translate.instant('resource.download'),
         icon: 'file_download',
         isEnabled: () => true,
-        onAction: ($event, entity) => this.exportResource($event, entity)
+        onAction: ($event, entity) => this.downloadResource($event, entity)
       }
     );
 
@@ -118,7 +118,7 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
     return this.config;
   }
 
-  exportResource($event: Event, resource: ResourceInfo) {
+  downloadResource($event: Event, resource: ResourceInfo) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -127,8 +127,8 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
 
   onResourceAction(action: EntityAction<ResourceInfo>): boolean {
     switch (action.action) {
-      case 'uploadResource':
-        this.exportResource(action.event, action.entity);
+      case 'downloadResource':
+        this.downloadResource(action.event, action.entity);
         return true;
     }
     return false;

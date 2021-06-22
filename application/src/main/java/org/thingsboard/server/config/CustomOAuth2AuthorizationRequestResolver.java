@@ -39,6 +39,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.service.security.auth.oauth2.TbOAuth2ParameterNames;
+import org.thingsboard.server.service.security.model.token.OAuth2AppTokenFactory;
 import org.thingsboard.server.utils.MiscUtils;
 
 import javax.servlet.http.HttpServletRequest;
@@ -69,6 +70,9 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
     @Autowired
     private OAuth2Service oAuth2Service;
 
+    @Autowired
+    private OAuth2AppTokenFactory oAuth2AppTokenFactory;
+
     @Autowired(required = false)
     private OAuth2Configuration oauth2Configuration;
 
@@ -78,7 +82,8 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
         String registrationId = this.resolveRegistrationId(request);
         String redirectUriAction = getAction(request, "login");
         String appPackage = getAppPackage(request);
-        return resolve(request, registrationId, redirectUriAction, appPackage);
+        String appToken = getAppToken(request);
+        return resolve(request, registrationId, redirectUriAction, appPackage, appToken);
     }
 
     @Override
@@ -88,7 +93,8 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
         }
         String redirectUriAction = getAction(request, "authorize");
         String appPackage = getAppPackage(request);
-        return resolve(request, registrationId, redirectUriAction, appPackage);
+        String appToken = getAppToken(request);
+        return resolve(request, registrationId, redirectUriAction, appPackage, appToken);
     }
 
     private String getAction(HttpServletRequest request, String defaultAction) {
@@ -103,8 +109,12 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
         return request.getParameter("pkg");
     }
 
+    private String getAppToken(HttpServletRequest request) {
+        return request.getParameter("appToken");
+    }
+
     @SuppressWarnings("deprecation")
-    private OAuth2AuthorizationRequest resolve(HttpServletRequest request, String registrationId, String redirectUriAction, String appPackage) {
+    private OAuth2AuthorizationRequest resolve(HttpServletRequest request, String registrationId, String redirectUriAction, String appPackage, String appToken) {
         if (registrationId == null) {
             return null;
         }
@@ -117,10 +127,14 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
         Map<String, Object> attributes = new HashMap<>();
         attributes.put(OAuth2ParameterNames.REGISTRATION_ID, clientRegistration.getRegistrationId());
         if (!StringUtils.isEmpty(appPackage)) {
-            String callbackUrlScheme = this.oAuth2Service.findCallbackUrlScheme(UUID.fromString(registrationId), appPackage);
-            if (StringUtils.isEmpty(callbackUrlScheme)) {
-                throw new IllegalArgumentException("Invalid package: " + appPackage + ". No package info found for Client Registration.");
+            if (StringUtils.isEmpty(appToken)) {
+                throw new IllegalArgumentException("Invalid application token.");
             } else {
+                String appSecret = this.oAuth2Service.findAppSecret(UUID.fromString(registrationId), appPackage);
+                if (StringUtils.isEmpty(appSecret)) {
+                    throw new IllegalArgumentException("Invalid package: " + appPackage + ". No application secret found for Client Registration with given application package.");
+                }
+                String callbackUrlScheme = this.oAuth2AppTokenFactory.validateTokenAndGetCallbackUrlScheme(appPackage, appToken, appSecret);
                 attributes.put(TbOAuth2ParameterNames.CALLBACK_URL_SCHEME, callbackUrlScheme);
             }
         }

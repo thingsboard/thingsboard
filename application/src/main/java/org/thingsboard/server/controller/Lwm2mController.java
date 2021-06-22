@@ -17,7 +17,6 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.SecurityMode;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -45,14 +44,11 @@ import java.util.Map;
 public class Lwm2mController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/lwm2m/deviceProfile/bootstrap/{securityMode}/{bootstrapServerIs}", method = RequestMethod.GET)
+    @RequestMapping(value = "/lwm2m/deviceProfile/bootstrap/{isBootstrapServer}", method = RequestMethod.GET)
     @ResponseBody
-    public ServerSecurityConfig getLwm2mBootstrapSecurityInfo(@PathVariable("securityMode") String strSecurityMode,
-                                                              @PathVariable("bootstrapServerIs") boolean bootstrapServer) throws ThingsboardException {
-        checkNotNull(strSecurityMode);
+    public ServerSecurityConfig getLwm2mBootstrapSecurityInfo(@PathVariable("isBootstrapServer") boolean bootstrapServer) throws ThingsboardException {
         try {
-            SecurityMode securityMode = SecurityMode.valueOf(strSecurityMode);
-            return lwM2MServerSecurityInfoRepository.getServerSecurityInfo(securityMode, bootstrapServer);
+            return lwM2MServerSecurityInfoRepository.getServerSecurityInfo(bootstrapServer);
         } catch (Exception e) {
             throw handleException(e);
         }

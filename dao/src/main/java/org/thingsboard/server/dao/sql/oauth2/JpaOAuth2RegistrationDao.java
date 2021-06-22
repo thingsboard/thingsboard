@@ -57,8 +57,8 @@ public class JpaOAuth2RegistrationDao extends JpaAbstractDao<OAuth2RegistrationE
     }
 
     @Override
-    public String findCallbackUrlScheme(UUID id, String pkgName) {
-        return repository.findCallbackUrlScheme(id, pkgName);
+    public String findAppSecret(UUID id, String pkgName) {
+        return repository.findAppSecret(id, pkgName);
     }
 
 }

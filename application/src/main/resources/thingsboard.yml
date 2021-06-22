@@ -335,6 +335,7 @@ actors:
 cache:
   # caffeine or redis
   type: "${CACHE_TYPE:caffeine}"
+  maximumPoolSize: "${CACHE_MAXIMUM_POOL_SIZE:16}" # max pool size to process futures that calls the external cache
   attributes:
     # make sure that if cache.type is 'redis' and cache.attributes.enabled is 'true' that you change 'maxmemory-policy' Redis config property to 'allkeys-lru', 'allkeys-lfu' or 'allkeys-random'
     enabled: "${CACHE_ATTRIBUTES_ENABLED:true}"
@@ -680,12 +681,11 @@ transport:
     timeout: "${LWM2M_TIMEOUT:120000}"
     recommended_ciphers: "${LWM2M_RECOMMENDED_CIPHERS:false}"
     recommended_supported_groups: "${LWM2M_RECOMMENDED_SUPPORTED_GROUPS:true}"
-    response_pool_size: "${LWM2M_RESPONSE_POOL_SIZE:100}"
-    registered_pool_size: "${LWM2M_REGISTERED_POOL_SIZE:10}"
+    uplink_pool_size: "${LWM2M_UPLINK_POOL_SIZE:10}"
+    downlink_pool_size: "${LWM2M_DOWNLINK_POOL_SIZE:10}"
+    ota_pool_size: "${LWM2M_OTA_POOL_SIZE:10}"
     registration_store_pool_size: "${LWM2M_REGISTRATION_STORE_POOL_SIZE:100}"
     clean_period_in_sec: "${LWM2M_CLEAN_PERIOD_IN_SEC:2}"
-    update_registered_pool_size: "${LWM2M_UPDATE_REGISTERED_POOL_SIZE:10}"
-    un_registered_pool_size: "${LWM2M_UN_REGISTERED_POOL_SIZE:10}"
     log_max_length: "${LWM2M_LOG_MAX_LENGTH:100}"
     # Use redis for Security and Registration stores
     redis.enabled: "${LWM2M_REDIS_ENABLED:false}"

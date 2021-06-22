@@ -36,7 +36,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 @Component(value = "oauth2AuthenticationFailureHandler")
-@ConditionalOnProperty(prefix = "security.oauth2", value = "enabled", havingValue = "true")
 public class Oauth2AuthenticationFailureHandler extends SimpleUrlAuthenticationFailureHandler {
 
     private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;

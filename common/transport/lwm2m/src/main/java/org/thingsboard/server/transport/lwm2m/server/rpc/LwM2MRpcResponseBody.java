@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.client;
+package org.thingsboard.server.transport.lwm2m.server.rpc;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Builder;
 import lombok.Data;
 
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 @Data
-public class ResultsAnalyzerParameters {
-    Set<String> pathPostParametersAdd;
-    Set<String> pathPostParametersDel;
+@Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class LwM2MRpcResponseBody {
 
-    public ResultsAnalyzerParameters() {
-        this.pathPostParametersAdd = ConcurrentHashMap.newKeySet();
-        this.pathPostParametersDel = ConcurrentHashMap.newKeySet();
-    }
+    private String result;
+    private String value;
+    private String error;
+    private String info;
+
 }

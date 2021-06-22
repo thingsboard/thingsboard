@@ -34,6 +34,9 @@ import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseNotifica
 import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
+import org.thingsboard.server.transport.lwm2m.server.attributes.LwM2MAttributesService;
+import org.thingsboard.server.transport.lwm2m.server.rpc.LwM2MRpcRequestHandler;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -41,19 +44,21 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? super Void>>, SessionMsgListener {
-    private final DefaultLwM2MTransportMsgHandler handler;
+    private final LwM2mUplinkMsgHandler handler;
+    private final LwM2MAttributesService attributesService;
+    private final LwM2MRpcRequestHandler rpcHandler;
     private final TransportProtos.SessionInfoProto sessionInfo;
     private final TransportService transportService;
 
     @Override
     public void onGetAttributesResponse(GetAttributeResponseMsg getAttributesResponse) {
-        this.handler.onGetAttributesResponse(getAttributesResponse, this.sessionInfo);
+        this.attributesService.onGetAttributesResponse(getAttributesResponse, this.sessionInfo);
     }
 
     @Override
     public void onAttributeUpdate(AttributeUpdateNotificationMsg attributeUpdateNotification) {
-        this.handler.onAttributeUpdate(attributeUpdateNotification, this.sessionInfo);
-    }
+        this.attributesService.onAttributesUpdate(attributeUpdateNotification, this.sessionInfo);
+     }
 
     @Override
     public void onRemoteSessionCloseCommand(UUID sessionId, SessionCloseNotificationProto sessionCloseNotification) {
@@ -77,7 +82,7 @@ public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? s
 
     @Override
     public void onToDeviceRpcRequest(ToDeviceRpcRequestMsg toDeviceRequest) {
-        this.handler.onToDeviceRpcRequest(toDeviceRequest, this.sessionInfo);
+        this.rpcHandler.onToDeviceRpcRequest(toDeviceRequest, this.sessionInfo);
         if (toDeviceRequest.getPersisted()) {
             RpcStatus status;
             if (toDeviceRequest.getOneway()) {
@@ -97,7 +102,7 @@ public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? s
 
     @Override
     public void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse) {
-        this.handler.onToServerRpcResponse(toServerResponse);
+        this.rpcHandler.onToServerRpcResponse(toServerResponse);
     }
 
     @Override

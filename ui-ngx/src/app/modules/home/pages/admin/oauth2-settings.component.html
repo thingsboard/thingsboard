@@ -90,23 +90,26 @@
                                       <mat-form-field fxFlex class="mat-block">
                                         <mat-label translate>admin.oauth2.redirect-uri-template</mat-label>
                                         <input matInput [value]="redirectURI(domainInfo)" readonly>
-                                        <button mat-icon-button color="primary" matSuffix type="button"
-                                                ngxClipboard cbContent="{{ redirectURI(domainInfo) }}"
-                                                matTooltip="{{ 'admin.oauth2.copy-redirect-uri' | translate }}"
-                                                matTooltipPosition="above">
-                                          <mat-icon class="material-icons" svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-                                        </button>
+                                        <tb-copy-button
+                                          matSuffix
+                                          color="primary"
+                                          [copyText]="redirectURI(domainInfo)"
+                                          tooltipText="{{ 'admin.oauth2.copy-redirect-uri' | translate }}"
+                                          tooltipPosition="above"
+                                          mdiIcon="mdi:clipboard-arrow-left">
+                                        </tb-copy-button>
                                       </mat-form-field>
-
                                       <mat-form-field fxFlex *ngIf="domainInfo.get('scheme').value === 'MIXED'" class="mat-block">
                                         <mat-label></mat-label>
                                         <input matInput [value]="redirectURIMixed(domainInfo)" readonly>
-                                        <button mat-icon-button color="primary" matSuffix type="button"
-                                                ngxClipboard cbContent="{{ redirectURIMixed(domainInfo) }}"
-                                                matTooltip="{{ 'admin.oauth2.copy-redirect-uri' | translate }}"
-                                                matTooltipPosition="above">
-                                          <mat-icon class="material-icons" svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-                                        </button>
+                                        <tb-copy-button
+                                          matSuffix
+                                          color="primary"
+                                          [copyText]="redirectURIMixed(domainInfo)"
+                                          tooltipText="{{ 'admin.oauth2.copy-redirect-uri' | translate }}"
+                                          tooltipPosition="above"
+                                          mdiIcon="mdi:clipboard-arrow-left">
+                                        </tb-copy-button>
                                       </mat-form-field>
                                     </div>
                                   </div>
@@ -144,18 +147,32 @@
                                 <div [formGroupName]="n" fxLayout="row" fxLayoutGap="8px">
                                   <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
                                     <div fxFlex fxLayout="column">
-                                      <mat-form-field fxFlex class="mat-block">
+                                      <mat-form-field fxFlex class="mat-block" floatLabel="always">
                                         <mat-label translate>admin.oauth2.mobile-package</mat-label>
-                                        <input matInput formControlName="pkgName" required>
+                                        <input matInput formControlName="pkgName" placeholder="{{ 'admin.oauth2.mobile-package-placeholder' | translate }}" required>
+                                        <mat-hint translate>admin.oauth2.mobile-package-hint</mat-hint>
                                       </mat-form-field>
                                       <mat-error *ngIf="mobileInfo.hasError('unique')">
                                         {{ 'admin.oauth2.mobile-package-unique' | translate }}
                                       </mat-error>
                                     </div>
-                                    <mat-form-field fxFlex class="mat-block">
-                                      <mat-label translate>admin.oauth2.mobile-callback-url-scheme</mat-label>
-                                      <input matInput formControlName="callbackUrlScheme" required>
-                                    </mat-form-field>
+                                    <div fxFlex fxLayout="row">
+                                      <mat-form-field fxFlex class="mat-block">
+                                        <mat-label translate>admin.oauth2.mobile-app-secret</mat-label>
+                                        <textarea matInput formControlName="appSecret" rows="1" required></textarea>
+                                        <tb-copy-button
+                                          matSuffix
+                                          color="primary"
+                                          [copyText]="mobileInfo.get('appSecret').value"
+                                          tooltipText="{{ 'admin.oauth2.copy-mobile-app-secret' | translate }}"
+                                          tooltipPosition="above"
+                                          mdiIcon="mdi:clipboard-arrow-left">
+                                        </tb-copy-button>
+                                        <mat-error *ngIf="mobileInfo.get('appSecret').invalid">
+                                          {{ 'admin.oauth2.invalid-mobile-app-secret' | translate }}
+                                        </mat-error>
+                                      </mat-form-field>
+                                    </div>
                                   </div>
                                   <div fxLayout="column" fxLayoutAlign="center start">
                                     <button type="button" mat-icon-button color="primary"
@@ -304,16 +321,13 @@
 
                                             <mat-form-field fxFlex class="mat-block">
                                               <mat-label translate>admin.oauth2.user-info-uri</mat-label>
-                                              <input matInput formControlName="userInfoUri" required>
+                                              <input matInput formControlName="userInfoUri">
                                               <button mat-icon-button matSuffix
                                                       type="button"
                                                       (click)="toggleEditMode(registration, 'userInfoUri')"
                                                       *ngIf="!isCustomProvider(registration)">
                                                 <mat-icon class="material-icons">create</mat-icon>
                                               </button>
-                                              <mat-error *ngIf="registration.get('userInfoUri').hasError('required')">
-                                                {{ 'admin.oauth2.user-info-uri-required' | translate }}
-                                              </mat-error>
                                               <mat-error *ngIf="registration.get('userInfoUri').hasError('pattern')">
                                                 {{ 'admin.oauth2.uri-pattern-error' | translate }}
                                               </mat-error>

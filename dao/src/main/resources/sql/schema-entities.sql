@@ -424,7 +424,7 @@ CREATE TABLE IF NOT EXISTS oauth2_registration (
     created_time bigint NOT NULL,
     additional_info varchar,
     client_id varchar(255),
-    client_secret varchar(255),
+    client_secret varchar(2048),
     authorization_uri varchar(255),
     token_uri varchar(255),
     scope varchar(255),
@@ -468,7 +468,7 @@ CREATE TABLE IF NOT EXISTS oauth2_mobile (
     oauth2_params_id uuid NOT NULL,
     created_time bigint NOT NULL,
     pkg_name varchar(255),
-    callback_url_scheme varchar(255),
+    app_secret varchar(2048),
     CONSTRAINT fk_mobile_oauth2_params FOREIGN KEY (oauth2_params_id) REFERENCES oauth2_params(id) ON DELETE CASCADE,
     CONSTRAINT oauth2_mobile_unq_key UNIQUE (oauth2_params_id, pkg_name)
 );

@@ -19,29 +19,22 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import javax.script.ScriptException;
 import java.util.List;
 import java.util.Set;
 
 public interface ScriptEngine {
 
-    List<TbMsg> executeUpdate(TbMsg msg) throws ScriptException;
-
     ListenableFuture<List<TbMsg>> executeUpdateAsync(TbMsg msg);
 
-    TbMsg executeGenerate(TbMsg prevMsg) throws ScriptException;
-
-    boolean executeFilter(TbMsg msg) throws ScriptException;
+    ListenableFuture<TbMsg> executeGenerateAsync(TbMsg prevMsg);
 
     ListenableFuture<Boolean> executeFilterAsync(TbMsg msg);
 
-    Set<String> executeSwitch(TbMsg msg) throws ScriptException;
+    ListenableFuture<Set<String>> executeSwitchAsync(TbMsg msg);
 
-    JsonNode executeJson(TbMsg msg) throws ScriptException;
+    ListenableFuture<JsonNode> executeJsonAsync(TbMsg msg);
 
-    ListenableFuture<JsonNode> executeJsonAsync(TbMsg msg) throws ScriptException;
-
-    String executeToString(TbMsg msg) throws ScriptException;
+    ListenableFuture<String> executeToStringAsync(TbMsg msg);
 
     void destroy();
 
