@@ -2378,7 +2378,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public void setUserCredentialsEnabled(UserId userId, boolean userCredentialsEnabled) {
         restTemplate.postForLocation(
-                baseURL + "/api/user/{userId}/userCredentialsEnabled?serCredentialsEnabled={serCredentialsEnabled}",
+                baseURL + "/api/user/{userId}/userCredentialsEnabled?userCredentialsEnabled={userCredentialsEnabled}",
                 null,
                 userId.getId(),
                 userCredentialsEnabled);
