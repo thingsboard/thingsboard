@@ -72,7 +72,7 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
 
         public DynamicModel(Registration registration) {
             this.registration = registration;
-            this.tenantId = lwM2mClientContext.getProfile(registration).getTenantId();
+            this.tenantId = lwM2mClientContext.getClientByEndpoint(registration.getEndpoint()).getTenantId();
         }
 
         @Override

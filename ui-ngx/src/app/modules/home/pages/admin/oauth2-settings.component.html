@@ -321,16 +321,13 @@
 
                                             <mat-form-field fxFlex class="mat-block">
                                               <mat-label translate>admin.oauth2.user-info-uri</mat-label>
-                                              <input matInput formControlName="userInfoUri" required>
+                                              <input matInput formControlName="userInfoUri">
                                               <button mat-icon-button matSuffix
                                                       type="button"
                                                       (click)="toggleEditMode(registration, 'userInfoUri')"
                                                       *ngIf="!isCustomProvider(registration)">
                                                 <mat-icon class="material-icons">create</mat-icon>
                                               </button>
-                                              <mat-error *ngIf="registration.get('userInfoUri').hasError('required')">
-                                                {{ 'admin.oauth2.user-info-uri-required' | translate }}
-                                              </mat-error>
                                               <mat-error *ngIf="registration.get('userInfoUri').hasError('pattern')">
                                                 {{ 'admin.oauth2.uri-pattern-error' | translate }}
                                               </mat-error>

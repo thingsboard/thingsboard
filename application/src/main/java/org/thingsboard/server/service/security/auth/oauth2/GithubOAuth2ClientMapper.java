@@ -29,6 +29,7 @@ import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
 import org.thingsboard.server.dao.oauth2.OAuth2User;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
@@ -46,7 +47,7 @@ public class GithubOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
     private OAuth2Configuration oAuth2Configuration;
 
     @Override
-    public SecurityUser getOrCreateUserByClientPrincipal(OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Registration registration) {
+    public SecurityUser getOrCreateUserByClientPrincipal(HttpServletRequest request, OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Registration registration) {
         OAuth2MapperConfig config = registration.getMapperConfig();
         Map<String, String> githubMapperConfig = oAuth2Configuration.getGithubMapper();
         String email = getEmail(githubMapperConfig.get(EMAIL_URL_KEY), providerAccessToken);

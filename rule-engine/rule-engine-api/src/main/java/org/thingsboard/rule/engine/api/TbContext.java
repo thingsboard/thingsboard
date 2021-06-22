@@ -214,6 +214,10 @@ public interface TbContext {
 
     EdgeEventService getEdgeEventService();
 
+    /**
+     * Js script executors call are completely asynchronous
+     * */
+    @Deprecated
     ListeningExecutor getJsExecutor();
 
     ListeningExecutor getMailExecutor();

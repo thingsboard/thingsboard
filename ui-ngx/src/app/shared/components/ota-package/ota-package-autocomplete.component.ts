@@ -222,7 +222,7 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
   }
 
   clear() {
-    this.otaPackageFormGroup.get('packageId').patchValue('', {emitEvent: true});
+    this.otaPackageFormGroup.get('packageId').patchValue('', {emitEvent: false});
     setTimeout(() => {
       this.packageInput.nativeElement.blur();
       this.packageInput.nativeElement.focus();
