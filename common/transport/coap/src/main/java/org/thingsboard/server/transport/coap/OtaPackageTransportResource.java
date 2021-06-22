@@ -24,6 +24,7 @@ import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.eclipse.californium.core.server.resources.ResourceObserver;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
@@ -34,6 +35,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 
 @Slf4j
 public class OtaPackageTransportResource extends AbstractCoapTransportResource {
@@ -43,9 +45,9 @@ public class OtaPackageTransportResource extends AbstractCoapTransportResource {
 
     public OtaPackageTransportResource(CoapTransportContext ctx, OtaPackageType otaPackageType) {
         super(ctx, otaPackageType.getKeyPrefix());
-        this.setObservable(true);
-        this.addObserver(new OtaPackageTransportResource.CoapResourceObserver());
         this.otaPackageType = otaPackageType;
+
+        this.setObservable(true);
     }
 
     @Override
@@ -138,43 +140,10 @@ public class OtaPackageTransportResource extends AbstractCoapTransportResource {
             response.setPayload(data);
             if (exchange.getRequestOptions().getBlock2() != null) {
                 int chunkSize = exchange.getRequestOptions().getBlock2().getSzx();
-                boolean lastFlag = data.length > chunkSize;
-                response.getOptions().setUriPath(exchange.getRequestOptions().getUriPathString());
+                boolean lastFlag = data.length <= chunkSize;
                 response.getOptions().setBlock2(chunkSize, lastFlag, 0);
             }
-            exchange.respond(response);
-        }
-    }
-
-    public class CoapResourceObserver implements ResourceObserver {
-        @Override
-        public void changedName(String old) {
-
-        }
-
-        @Override
-        public void changedPath(String old) {
-
-        }
-
-        @Override
-        public void addedChild(Resource child) {
-
-        }
-
-        @Override
-        public void removedChild(Resource child) {
-
-        }
-
-        @Override
-        public void addedObserveRelation(ObserveRelation relation) {
-
-        }
-
-        @Override
-        public void removedObserveRelation(ObserveRelation relation) {
-
+            transportContext.getExecutor().submit(() -> exchange.respond(response));
         }
     }
 

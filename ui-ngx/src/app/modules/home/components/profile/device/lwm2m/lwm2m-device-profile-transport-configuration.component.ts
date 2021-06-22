@@ -97,7 +97,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       binding: [],
       bootstrapServer: [null, Validators.required],
       lwm2mServer: [null, Validators.required],
-      clientStrategy: [1, []],
+      clientOnlyObserveAfterConnect: [1, []],
       fwUpdateStrategy: [1, []],
       swUpdateStrategy: [1, []],
       fwUpdateRecourse: [{value: '', disabled: true}, []],
@@ -216,7 +216,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         binding: this.configurationValue.bootstrap.servers.binding,
         bootstrapServer: this.configurationValue.bootstrap.bootstrapServer,
         lwm2mServer: this.configurationValue.bootstrap.lwm2mServer,
-        clientStrategy: this.configurationValue.clientLwM2mSettings.clientStrategy,
+        clientOnlyObserveAfterConnect: this.configurationValue.clientLwM2mSettings.clientOnlyObserveAfterConnect,
         fwUpdateStrategy: this.configurationValue.clientLwM2mSettings.fwUpdateStrategy || 1,
         swUpdateStrategy: this.configurationValue.clientLwM2mSettings.swUpdateStrategy || 1,
         fwUpdateRecourse: fwResource,
@@ -257,7 +257,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       bootstrapServers.defaultMinPeriod = config.defaultMinPeriod;
       bootstrapServers.notifIfDisabled = config.notifIfDisabled;
       bootstrapServers.binding = config.binding;
-      this.configurationValue.clientLwM2mSettings.clientStrategy = config.clientStrategy;
+      this.configurationValue.clientLwM2mSettings.clientOnlyObserveAfterConnect = config.clientOnlyObserveAfterConnect;
       this.configurationValue.clientLwM2mSettings.fwUpdateStrategy = config.fwUpdateStrategy;
       this.configurationValue.clientLwM2mSettings.swUpdateStrategy = config.swUpdateStrategy;
       this.configurationValue.clientLwM2mSettings.fwUpdateRecourse = config.fwUpdateRecourse;
