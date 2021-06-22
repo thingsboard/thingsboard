@@ -41,6 +41,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
@@ -662,16 +663,11 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testSaveOtaPackageCantViolateSizeOfTitleAndVersion() {
+    public void testSaveOtaPackageCantViolateSizeOfTitle() {
         OtaPackageInfo firmwareInfo = new OtaPackageInfo();
         firmwareInfo.setDeviceProfileId(deviceProfileId);
         firmwareInfo.setType(FIRMWARE);
-        firmwareInfo.setTitle("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
-                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
-                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
-                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
-                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
-                "aaaaaaaaaa");
+        firmwareInfo.setTitle(randomStringByLength(257));
         firmwareInfo.setVersion(VERSION);
         firmwareInfo.setUrl(URL);
         firmwareInfo.setTenantId(tenantId);
@@ -680,14 +676,18 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         thrown.expectMessage("The length of title should be equal or shorter than 255");
 
         otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
+    }
 
+    @Test
+    public void testSaveOtaPackageCantViolateSizeOfVersion() {
+        OtaPackageInfo firmwareInfo = new OtaPackageInfo();
+        firmwareInfo.setDeviceProfileId(deviceProfileId);
+        firmwareInfo.setType(FIRMWARE);
+        firmwareInfo.setUrl(URL);
+        firmwareInfo.setTenantId(tenantId);
         firmwareInfo.setTitle(TITLE);
-        firmwareInfo.setVersion("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
-                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
-                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
-                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
-                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" +
-                "aaaaaaaaaa");
+
+        firmwareInfo.setVersion(randomStringByLength(257));
         thrown.expectMessage("The length of version should be equal or shorter than 255");
 
         otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
@@ -707,6 +707,19 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setData(DATA);
         firmware.setDataSize(DATA_SIZE);
         return otaPackageService.saveOtaPackage(firmware);
+    }
+
+    private String randomStringByLength(int length) {
+        int leftLimit = 97;
+        int rightLimit = 122;
+        Random random = new Random();
+        StringBuilder buffer = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            int randomLimitedInt = leftLimit + (int)
+                    (random.nextFloat() * (rightLimit - leftLimit + 1));
+            buffer.append((char) randomLimitedInt);
+        }
+        return buffer.toString();
     }
 
 }
