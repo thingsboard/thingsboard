@@ -21,7 +21,7 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.commons.codec.binary.Hex;
 
-public abstract class HasKey extends AbstractLwM2MClientCredentials {
+public abstract class AbstractLwM2MClientCredentialsWithKey extends AbstractLwM2MClientCredentials {
     @Getter
     @Setter
     private String key;
