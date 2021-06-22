@@ -16,20 +16,13 @@
 package org.thingsboard.server.transport.lwm2m.server.store;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
 import org.eclipse.leshan.server.security.SecurityInfo;
-import org.eclipse.leshan.server.security.SecurityStore;
-import org.eclipse.leshan.server.security.SecurityStoreListener;
 import org.jetbrains.annotations.Nullable;
-import org.springframework.stereotype.Component;
-import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 
-import java.util.Collection;
+import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer.CLIENT;
 
 @Slf4j
 public class TbLwM2mSecurityStore implements TbEditableSecurityStore {
@@ -67,7 +60,7 @@ public class TbLwM2mSecurityStore implements TbEditableSecurityStore {
 
     @Nullable
     public SecurityInfo fetchAndPutSecurityInfo(String credentialsId) {
-        TbLwM2MSecurityInfo securityInfo = validator.getEndpointSecurityInfoByCredentialsId(credentialsId, LwM2mTransportUtil.LwM2mTypeServer.CLIENT);
+        TbLwM2MSecurityInfo securityInfo = validator.getEndpointSecurityInfoByCredentialsId(credentialsId, CLIENT);
         try {
             if (securityInfo != null) {
                 securityStore.put(securityInfo);

@@ -37,7 +37,6 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
-import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -82,6 +81,8 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttrib
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttributesRequest;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MOtaUpdateService;
+import org.thingsboard.server.transport.lwm2m.server.ota.firmware.LwM2MFirmwareUpdateStrategy;
+import org.thingsboard.server.transport.lwm2m.server.ota.software.LwM2MSoftwareUpdateStrategy;
 import org.thingsboard.server.transport.lwm2m.server.rpc.LwM2MRpcRequestHandler;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
@@ -100,23 +101,22 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_3_VER_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_5_VER_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_DELIVERY_METHOD;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_NAME_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_RESULT_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_STATE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_WARN;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertObjectIdToVersionedId;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertOtaUpdateValueToString;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_3_VER_ID;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_5_VER_ID;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_DELIVERY_METHOD;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_NAME_ID;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_RESULT_ID;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_STATE_ID;
 
 
 @Slf4j
@@ -779,6 +779,29 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 for (String targetId : observeToRemove) {
                     clients.forEach(client -> sendCancelObserveRequest(targetId, client));
                 }
+            }
+
+            // # 7.1
+            // update value in fwInfo
+            if (!newProfile.getClientLwM2mSettings().getFwUpdateStrategy().equals(oldProfile.getClientLwM2mSettings().getFwUpdateStrategy())
+                    || (LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL.code == newProfile.getClientLwM2mSettings().getFwUpdateStrategy() &&
+                        !newProfile.getClientLwM2mSettings().getFwUpdateRecourse().equals(oldProfile.getClientLwM2mSettings().getFwUpdateRecourse()))) {
+                clients.forEach(lwM2MClient -> {
+                    otaService.onCurrentFirmwareStrategyUpdate(lwM2MClient,
+                            newProfile.getClientLwM2mSettings().getFwUpdateStrategy(),
+                            newProfile.getClientLwM2mSettings().getFwUpdateRecourse());
+                });
+            }
+
+            //# 7.2 // update value in swInfo
+            if (!newProfile.getClientLwM2mSettings().getSwUpdateStrategy().equals(oldProfile.getClientLwM2mSettings().getSwUpdateStrategy())
+                    || (LwM2MSoftwareUpdateStrategy.TEMP_URL.code == newProfile.getClientLwM2mSettings().getSwUpdateStrategy() &&
+                    !newProfile.getClientLwM2mSettings().getSwUpdateRecourse().equals(oldProfile.getClientLwM2mSettings().getSwUpdateRecourse()))) {
+                clients.forEach(lwM2MClient -> {
+                    otaService.onCurrentSoftwareStrategyUpdate(lwM2MClient,
+                            newProfile.getClientLwM2mSettings().getFwUpdateStrategy(),
+                            newProfile.getClientLwM2mSettings().getFwUpdateRecourse());
+                });
             }
         }
     }

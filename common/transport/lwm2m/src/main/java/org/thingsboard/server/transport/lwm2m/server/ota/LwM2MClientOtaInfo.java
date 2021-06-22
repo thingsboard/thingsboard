@@ -18,9 +18,10 @@ package org.thingsboard.server.transport.lwm2m.server.ota;
 import lombok.Data;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
-import org.thingsboard.server.transport.lwm2m.server.LwM2MFirmwareUpdateStrategy;
-import org.thingsboard.server.transport.lwm2m.server.UpdateStateFw;
-import org.thingsboard.server.transport.lwm2m.server.UpdateResultFw;
+import org.thingsboard.server.transport.lwm2m.server.ota.firmware.LwM2MFirmwareUpdateStrategy;
+import org.thingsboard.server.transport.lwm2m.server.ota.firmware.UpdateResultFw;
+import org.thingsboard.server.transport.lwm2m.server.ota.firmware.UpdateStateFw;
+import org.thingsboard.server.transport.lwm2m.server.ota.software.LwM2MSoftwareUpdateStrategy;
 
 import java.util.Optional;
 
@@ -44,7 +45,8 @@ public class LwM2MClientOtaInfo {
     private Integer deliveryMethod;
 
     //TODO: use value from device if applicable;
-    private LwM2MFirmwareUpdateStrategy strategy;
+    private LwM2MFirmwareUpdateStrategy fwStrategy;
+    private LwM2MSoftwareUpdateStrategy swStrategy;
     private UpdateStateFw updateState;
     private UpdateResultFw updateResult;
 
@@ -54,7 +56,7 @@ public class LwM2MClientOtaInfo {
     public LwM2MClientOtaInfo(String endpoint, OtaPackageType type, Integer strategyCode, String baseUrl) {
         this.endpoint = endpoint;
         this.type = type;
-        this.strategy = LwM2MFirmwareUpdateStrategy.fromStrategyFwByCode(strategyCode);
+        this.fwStrategy = LwM2MFirmwareUpdateStrategy.fromStrategyFwByCode(strategyCode);
         this.baseUrl = baseUrl;
     }
 

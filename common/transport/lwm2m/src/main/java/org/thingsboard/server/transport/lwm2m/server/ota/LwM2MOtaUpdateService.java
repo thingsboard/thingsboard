@@ -31,6 +31,10 @@ public interface LwM2MOtaUpdateService {
 
     void onCurrentFirmwareNameUpdate(LwM2mClient client, String name);
 
+    void onCurrentFirmwareStrategyUpdate(LwM2mClient client, Integer newStrategy, String newBaseUrl);
+
+    void onCurrentSoftwareStrategyUpdate(LwM2mClient client, Integer newStrategy, String newBaseUrl);
+
     void onCurrentFirmwareVersion3Update(LwM2mClient client, String version);
 
     void onCurrentFirmwareVersion5Update(LwM2mClient client, String version);

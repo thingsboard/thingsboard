@@ -42,7 +42,6 @@ import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 import org.thingsboard.server.transport.lwm2m.server.store.TbEditableSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
 
@@ -56,6 +55,8 @@ import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
+
+import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer.CLIENT;
 
 @Slf4j
 @Component
@@ -117,7 +118,7 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
 
                         String strCert = SslUtil.getCertificateString(cert);
                         String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
-                        TbLwM2MSecurityInfo securityInfo = securityInfoValidator.getEndpointSecurityInfoByCredentialsId(sha3Hash, LwM2mTransportUtil.LwM2mTypeServer.CLIENT);
+                        TbLwM2MSecurityInfo securityInfo = securityInfoValidator.getEndpointSecurityInfoByCredentialsId(sha3Hash, CLIENT);
                         ValidateDeviceCredentialsResponse msg = securityInfo != null ? securityInfo.getMsg() : null;
                         if (msg != null && org.thingsboard.server.common.data.StringUtils.isNotEmpty(msg.getCredentials())) {
                             LwM2MCredentials credentials = JacksonUtil.fromString(msg.getCredentials(), LwM2MCredentials.class);
