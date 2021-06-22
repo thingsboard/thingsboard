@@ -36,6 +36,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static org.eclipse.californium.core.network.config.NetworkConfigDefaults.DEFAULT_BLOCKWISE_STATUS_LIFETIME;
+
 @Slf4j
 @Component
 @TbCoapServerComponent
@@ -91,7 +93,16 @@ public class DefaultCoapServerService implements CoapServerService {
         InetAddress addr = InetAddress.getByName(coapServerContext.getHost());
         InetSocketAddress sockAddr = new InetSocketAddress(addr, coapServerContext.getPort());
         noSecCoapEndpointBuilder.setInetSocketAddress(sockAddr);
-        noSecCoapEndpointBuilder.setNetworkConfig(NetworkConfig.getStandard());
+        NetworkConfig networkConfig = new NetworkConfig();
+        networkConfig.setBoolean(NetworkConfig.Keys.BLOCKWISE_STRICT_BLOCK2_OPTION, true);
+        networkConfig.setBoolean(NetworkConfig.Keys.BLOCKWISE_ENTITY_TOO_LARGE_AUTO_FAILOVER, true);
+        networkConfig.setLong(NetworkConfig.Keys.BLOCKWISE_STATUS_LIFETIME, DEFAULT_BLOCKWISE_STATUS_LIFETIME);
+        networkConfig.setInt(NetworkConfig.Keys.MAX_RESOURCE_BODY_SIZE, 256 * 1024 * 1024);
+        networkConfig.setString(NetworkConfig.Keys.RESPONSE_MATCHING, "RELAXED");
+        networkConfig.setInt(NetworkConfig.Keys.PREFERRED_BLOCK_SIZE, 1024);
+        networkConfig.setInt(NetworkConfig.Keys.MAX_MESSAGE_SIZE, 1024);
+        networkConfig.setInt(NetworkConfig.Keys.MAX_RETRANSMIT, 4);
+        noSecCoapEndpointBuilder.setNetworkConfig(networkConfig);
         CoapEndpoint noSecCoapEndpoint = noSecCoapEndpointBuilder.build();
         server.addEndpoint(noSecCoapEndpoint);
 

@@ -1,0 +1,72 @@
+<!--
+
+    Copyright © 2016-2021 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div fxLayout="column">
+  <div *ngFor="let deviceProfileCommunication of communicationConfigFormArray().controls; let $index = index;
+               last as isLast;" fxLayout="row" fxLayoutAlign="start center"
+       fxLayoutGap="8px" class="scope-row" [formGroup]="deviceProfileCommunication">
+    <div class="communication-config" fxFlex fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start">
+      <mat-form-field class="spec mat-block" floatLabel="always" hideRequiredMarker>
+        <mat-label translate>device-profile.snmp.scope</mat-label>
+        <mat-select formControlName="spec" required>
+          <mat-option *ngFor="let snmpSpecType of snmpSpecTypes" [value]="snmpSpecType"
+                      [disabled]="isDisabledSeverity(snmpSpecType, $index)">
+            {{ snmpSpecTypeTranslationMap.get(snmpSpecType) }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="deviceProfileCommunication.get('spec').hasError('required')">
+          {{ 'device-profile.snmp.scope-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <mat-divider vertical></mat-divider>
+      <section fxFlex fxLayout="column">
+        <mat-form-field *ngIf="isShowFrequency(deviceProfileCommunication.get('spec').value)">
+          <mat-label translate>device-profile.snmp.querying-frequency</mat-label>
+          <input matInput formControlName="queryingFrequencyMs" type="number" min="0" required/>
+          <mat-error *ngIf="deviceProfileCommunication.get('queryingFrequencyMs').hasError('required')">
+            {{ 'device-profile.snmp.querying-frequency-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="deviceProfileCommunication.get('queryingFrequencyMs').hasError('pattern') ||
+    deviceProfileCommunication.get('queryingFrequencyMs').hasError('min')">
+            {{ 'device-profile.snmp.querying-frequency-invalid-format' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <tb-snmp-device-profile-mapping formControlName="mappings">
+        </tb-snmp-device-profile-mapping>
+      </section>
+    </div>
+    <button *ngIf="!disabled"
+            mat-icon-button color="primary" style="min-width: 40px;"
+            type="button"
+            (click)="removeCommunicationConfig($index)"
+            matTooltip="{{ 'action.remove' | translate }}"
+            matTooltipPosition="above">
+      <mat-icon>remove_circle_outline</mat-icon>
+    </button>
+  </div>
+  <div *ngIf="!communicationConfigFormArray().controls.length && !disabled">
+      <span fxLayoutAlign="center center" class="tb-prompt required required-text" translate>device-profile.snmp.please-add-communication-config</span>
+  </div>
+  <div *ngIf="!disabled && isAddEnabled">
+    <button mat-stroked-button color="primary"
+            type="button"
+            (click)="addCommunicationConfig()">
+      <mat-icon class="button-icon">add_circle_outline</mat-icon>
+      {{ 'device-profile.snmp.add-communication-config' | translate }}
+    </button>
+  </div>
+</div>

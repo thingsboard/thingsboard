@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.lwm2m;
 
 import org.eclipse.leshan.client.object.Security;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredentials;
 import org.thingsboard.server.common.transport.util.SslUtil;
@@ -23,7 +24,9 @@ import org.thingsboard.server.common.transport.util.SslUtil;
 import static org.eclipse.leshan.client.object.Security.x509;
 
 public class X509LwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
+
     @Test
+    @Ignore
     public void testConnectAndObserveTelemetry() throws Exception {
         X509ClientCredentials credentials = new X509ClientCredentials();
         credentials.setEndpoint(ENDPOINT);
@@ -47,4 +50,5 @@ public class X509LwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
                 serverX509Cert.getEncoded());
         super.basicTestConnectionObserveTelemetry(security, credentials, SECURE_COAP_CONFIG, ENDPOINT);
     }
+
 }

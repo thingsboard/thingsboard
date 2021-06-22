@@ -42,7 +42,7 @@ import {
 
 const routes: Routes = [
   {
-    path: 'edges',
+    path: 'edgeInstances',
     data: {
       breadcrumb: {
         label: 'edge.edge-instances',
@@ -187,6 +187,24 @@ const routes: Routes = [
             }
           }
         ]
+      }
+    ]
+  },
+  {
+    path: 'edgeManagement',
+    data: {
+      breadcrumb: {
+        label: 'edge.management',
+        icon: 'settings_input_antenna'
+      }
+    },
+    children: [
+      {
+        path: '',
+        data: {
+          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          redirectTo: '/edgeManagement/ruleChains'
+        }
       },
       {
         path: 'ruleChains',

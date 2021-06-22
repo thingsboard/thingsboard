@@ -15,8 +15,25 @@
  */
 package org.thingsboard.server.transport.lwm2m;
 
+import org.junit.Assert;
 import org.junit.Test;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredentials;
+import org.thingsboard.server.common.data.query.EntityData;
+import org.thingsboard.server.common.data.query.EntityDataPageLink;
+import org.thingsboard.server.common.data.query.EntityDataQuery;
+import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.common.data.query.EntityKeyType;
+import org.thingsboard.server.common.data.query.SingleEntityFilter;
+import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
+import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
+import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
+import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
+import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
+
+import java.util.Collections;
+import java.util.List;
 
 public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
@@ -25,6 +42,56 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
         NoSecClientCredentials clientCredentials = new NoSecClientCredentials();
         clientCredentials.setEndpoint(ENDPOINT);
         super.basicTestConnectionObserveTelemetry(SECURITY, clientCredentials, COAP_CONFIG, ENDPOINT);
+    }
+
+    @Test
+    public void testFirmwareUpdateWithClientWithoutFirmwareInfo() throws Exception {
+        createDeviceProfile(TRANSPORT_CONFIGURATION);
+        NoSecClientCredentials clientCredentials = new NoSecClientCredentials();
+        clientCredentials.setEndpoint(ENDPOINT);
+        Device device = createDevice(clientCredentials);
+
+        OtaPackageInfo firmware = createFirmware();
+
+        LwM2MTestClient client = new LwM2MTestClient(executor, ENDPOINT);
+        client.init(SECURITY, COAP_CONFIG);
+
+        Thread.sleep(1000);
+
+        device.setFirmwareId(firmware.getId());
+
+        device = doPost("/api/device", device, Device.class);
+
+        Thread.sleep(1000);
+
+        SingleEntityFilter sef = new SingleEntityFilter();
+        sef.setSingleEntity(device.getId());
+        LatestValueCmd latestCmd = new LatestValueCmd();
+        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "fw_state")));
+        EntityDataQuery edq = new EntityDataQuery(sef, new EntityDataPageLink(1, 0, null, null),
+                Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+
+        EntityDataCmd cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
+        TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
+        wrapper.setEntityDataCmds(Collections.singletonList(cmd));
+
+        wsClient.send(mapper.writeValueAsString(wrapper));
+        wsClient.waitForReply();
+
+        wsClient.registerWaitForUpdate();
+
+        String msg = wsClient.waitForUpdate();
+
+        EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        List<EntityData> eData = update.getUpdate();
+        Assert.assertNotNull(eData);
+        Assert.assertEquals(1, eData.size());
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
+        var tsValue = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("fw_state");
+        Assert.assertEquals("FAILED", tsValue.getValue());
+        client.destroy();
     }
 
 }
