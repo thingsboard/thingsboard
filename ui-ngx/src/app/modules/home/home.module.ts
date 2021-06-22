@@ -23,6 +23,8 @@ import { SharedModule } from '@app/shared/shared.module';
 import { MenuLinkComponent } from '@modules/home/menu/menu-link.component';
 import { MenuToggleComponent } from '@modules/home/menu/menu-toggle.component';
 import { SideMenuComponent } from '@modules/home/menu/side-menu.component';
+import {TargetAddMenuComponent} from '@home/menu/target-add-menu.component';
+import {TargetHelpMenuComponent} from '@home/menu/target-help-menu.component';
 
 @NgModule({
   declarations:
@@ -30,6 +32,8 @@ import { SideMenuComponent } from '@modules/home/menu/side-menu.component';
       HomeComponent,
       MenuLinkComponent,
       MenuToggleComponent,
+      TargetAddMenuComponent,
+      TargetHelpMenuComponent,
       SideMenuComponent
     ],
   imports: [

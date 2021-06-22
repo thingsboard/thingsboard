@@ -18,6 +18,32 @@
   color: #7583A0;
 }
 
+::ng-deep .mat-tooltip {
+  background-color: #717D9D !important;
+  color: white !important;
+  border-radius: 2px !important;
+  margin: 0 !important;
+}
+
+::ng-deep .tb-tooltip-right {
+  // to make possible place arrow pseudo element outside tooltip with absolute positioning
+  overflow: visible !important;
+  position: relative !important;
+
+  &::before {
+    position: absolute;
+    content: '';
+    display: inline-block;
+    background-color: #717D9D;
+    clip-path: polygon(50% 0, 0 50%, 50% 100%);
+    left: -5px;
+    width: 15px;
+    height: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}
+
 :host ::ng-deep {
   .tb-side-menu,
   .tb-side-menu ul {
@@ -39,7 +65,7 @@
 
   hr {
     width: 32px;
-    margin-top: 31px;
+    margin-top: 28px;
     margin-bottom: 20px;
     background: rgba(0, 0, 0, .12);
   }
@@ -70,6 +96,7 @@
     margin-bottom: 10px;
 
     svg {
+      margin: 0;
       width: 24px;
       height: 24px;
     }
@@ -92,7 +119,7 @@
     text-align: center;
     display: flex;
     overflow: hidden;
-    line-height: 40px;
+    line-height: 43px;
     border-radius: 0;
     align-items: center;
     padding-left: 8px;
@@ -113,7 +140,6 @@
       .mat-button-wrapper .mat-icon {
         color: white;
         fill: white;
-        background: rgba(25, 121, 255, .9);
       }
     }
 

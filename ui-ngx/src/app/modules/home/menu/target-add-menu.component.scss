@@ -1,0 +1,64 @@
+
+:host ::ng-deep {
+  .tb-button-toggle {
+    .tb-toggle-icon {
+      display: inline-block;
+      width: 15px;
+      margin: auto 0 auto auto;
+      background-size: 100% auto;
+      transition: transform .3s ease-in-out;
+
+      &.tb-toggled {
+        transform: rotateZ(180deg);
+      }
+    }
+  }
+
+  .tb-menu-tooltip {
+    border-radius: 7px;
+    position: fixed;
+    padding: 10px;
+    left: 54 + 10px;
+    top: 70%;
+    color: #2F3842;
+    background-color: #FFFFFF;
+
+    -webkit-box-shadow: 0px 3px 6px 0px rgba(50, 50, 50, 0.75);
+    -moz-box-shadow: 0px 3px 6px 0px rgba(50, 50, 50, 0.75);
+    box-shadow: 0px 3px 6px 0px rgba(50, 50, 50, 0.75);
+
+    .tb-menu-toggle-list a.mat-button {
+      padding-left: 0;
+    }
+  }
+
+  .tb-menu-toggle-list {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+
+    transition: .75s cubic-bezier(.35, 0, .25, 1);
+
+    transition-property: height;
+
+    a.mat-button {
+      padding: 0 0px 0 32px;
+      font-weight: normal;
+      text-transform: none !important;
+      text-rendering: optimizeLegibility;
+
+      span {
+        font-size: 13px;
+        font-weight: bold;
+        text-align: left;
+        color: rgb(109, 120, 147)
+      }
+
+      .mat-button-wrapper {
+        text-align: left;
+        background: white;
+      }
+
+    }
+  }
+}

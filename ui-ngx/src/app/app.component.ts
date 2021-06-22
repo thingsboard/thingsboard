@@ -75,8 +75,6 @@ export class AppComponent implements OnInit {
     this.matIconRegistry.addSvgIcon('venue', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/venue.svg'));
     this.matIconRegistry.addSvgIcon('widgets_library', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/widgets_library.svg'));
     this.matIconRegistry.addSvgIcon('workspace', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/workspace.svg'));
-
-
     this.matIconRegistry.addSvgIcon('contact_support', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/contact_support.svg'));
     this.matIconRegistry.addSvgIcon('documentation', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/documentation.svg'));
     this.matIconRegistry.addSvgIcon('help', this.domSanitizer.bypassSecurityTrustResourceUrl('./assets/fluxble/help.svg'));
