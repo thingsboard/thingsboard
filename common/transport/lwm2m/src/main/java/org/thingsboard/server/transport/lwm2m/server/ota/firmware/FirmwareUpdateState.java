@@ -16,40 +16,41 @@
 package org.thingsboard.server.transport.lwm2m.server.ota.firmware;
 
 /**
- * /** Delivery Method R
- * 0: Pull only
- * 1: Push only
- * 2: Both:
- * - In this case the LwM2M Server MAY choose the preferred mechanism for conveying the firmware image to the LwM2M Client.
+ * /** State R
+ * 0: Idle (before downloading or after successful updating)
+ * 1: Downloading (The data sequence is on the way)
+ * 2: Downloaded
+ * 3: Updating
  */
-public enum UpdateDeliveryFw {
-    PULL(0, "Pull only"),
-    PUSH(1, "Push only"),
-    BOTH(2, "Push or Push");
+public enum FirmwareUpdateState {
+    IDLE(0, "Idle"),
+    DOWNLOADING(1, "Downloading"),
+    DOWNLOADED(2, "Downloaded"),
+    UPDATING(3, "Updating");
 
     public int code;
     public String type;
 
-    UpdateDeliveryFw(int code, String type) {
+    FirmwareUpdateState(int code, String type) {
         this.code = code;
         this.type = type;
     }
 
-    public static UpdateDeliveryFw fromStateFwByType(String type) {
-        for (UpdateDeliveryFw to : UpdateDeliveryFw.values()) {
+    public static FirmwareUpdateState fromStateFwByType(String type) {
+        for (FirmwareUpdateState to : FirmwareUpdateState.values()) {
             if (to.type.equals(type)) {
                 return to;
             }
         }
-        throw new IllegalArgumentException(String.format("Unsupported FW delivery type  : %s", type));
+        throw new IllegalArgumentException(String.format("Unsupported FW State type  : %s", type));
     }
 
-    public static UpdateDeliveryFw fromStateFwByCode(int code) {
-        for (UpdateDeliveryFw to : UpdateDeliveryFw.values()) {
+    public static FirmwareUpdateState fromStateFwByCode(int code) {
+        for (FirmwareUpdateState to : FirmwareUpdateState.values()) {
             if (to.code == code) {
                 return to;
             }
         }
-        throw new IllegalArgumentException(String.format("Unsupported FW delivery code : %s", code));
+        throw new IllegalArgumentException(String.format("Unsupported FW State code : %s", code));
     }
 }

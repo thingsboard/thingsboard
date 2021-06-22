@@ -15,42 +15,34 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.ota.firmware;
 
-/**
- * /** State R
- * 0: Idle (before downloading or after successful updating)
- * 1: Downloading (The data sequence is on the way)
- * 2: Downloaded
- * 3: Updating
- */
-public enum UpdateStateFw {
-    IDLE(0, "Idle"),
-    DOWNLOADING(1, "Downloading"),
-    DOWNLOADED(2, "Downloaded"),
-    UPDATING(3, "Updating");
+public enum FirmwareDeliveryMethod {
+    PULL(0, "Pull only"),
+    PUSH(1, "Push only"),
+    BOTH(2, "Push or Push");
 
     public int code;
     public String type;
 
-    UpdateStateFw(int code, String type) {
+    FirmwareDeliveryMethod(int code, String type) {
         this.code = code;
         this.type = type;
     }
 
-    public static UpdateStateFw fromStateFwByType(String type) {
-        for (UpdateStateFw to : UpdateStateFw.values()) {
+    public static FirmwareDeliveryMethod fromStateFwByType(String type) {
+        for (FirmwareDeliveryMethod to : FirmwareDeliveryMethod.values()) {
             if (to.type.equals(type)) {
                 return to;
             }
         }
-        throw new IllegalArgumentException(String.format("Unsupported FW State type  : %s", type));
+        throw new IllegalArgumentException(String.format("Unsupported FW delivery type  : %s", type));
     }
 
-    public static UpdateStateFw fromStateFwByCode(int code) {
-        for (UpdateStateFw to : UpdateStateFw.values()) {
+    public static FirmwareDeliveryMethod fromStateFwByCode(int code) {
+        for (FirmwareDeliveryMethod to : FirmwareDeliveryMethod.values()) {
             if (to.code == code) {
                 return to;
             }
         }
-        throw new IllegalArgumentException(String.format("Unsupported FW State code : %s", code));
+        throw new IllegalArgumentException(String.format("Unsupported FW delivery code : %s", code));
     }
 }

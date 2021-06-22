@@ -39,7 +39,7 @@ package org.thingsboard.server.transport.lwm2m.server.ota.software;
  * 60-200 : (for expansion, selection to be in blocks depending on new introduction of features)
  * This Resource MAY be reported by sending Observe operation.
  */
-public enum UpdateResultSw {
+public enum SoftwareUpdateResult {
     INITIAL(0, "Initial value", false),
     DOWNLOADING(1, "Downloading", false),
     SUCCESSFULLY_INSTALLED(2, "Software successfully installed", false),
@@ -58,14 +58,14 @@ public enum UpdateResultSw {
     public String type;
     public boolean isAgain;
 
-    UpdateResultSw(int code, String type, boolean isAgain) {
+    SoftwareUpdateResult(int code, String type, boolean isAgain) {
         this.code = code;
         this.type = type;
         this.isAgain = isAgain;
     }
 
-    public static UpdateResultSw fromUpdateResultSwByType(String type) {
-        for (UpdateResultSw to : UpdateResultSw.values()) {
+    public static SoftwareUpdateResult fromUpdateResultSwByType(String type) {
+        for (SoftwareUpdateResult to : SoftwareUpdateResult.values()) {
             if (to.type.equals(type)) {
                 return to;
             }
@@ -73,8 +73,8 @@ public enum UpdateResultSw {
         throw new IllegalArgumentException(String.format("Unsupported SW Update Result type  : %s", type));
     }
 
-    public static UpdateResultSw fromUpdateResultSwByCode(int code) {
-        for (UpdateResultSw to : UpdateResultSw.values()) {
+    public static SoftwareUpdateResult fromUpdateResultSwByCode(int code) {
+        for (SoftwareUpdateResult to : SoftwareUpdateResult.values()) {
             if (to.code == code) {
                 return to;
             }

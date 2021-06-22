@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.device.data.lwm2m.OtherConfiguration;
 import org.thingsboard.server.common.data.ota.OtaPackageKey;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
@@ -45,12 +46,12 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplac
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteResponseCallback;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.ota.firmware.LwM2MFirmwareUpdateStrategy;
-import org.thingsboard.server.transport.lwm2m.server.ota.firmware.UpdateDeliveryFw;
-import org.thingsboard.server.transport.lwm2m.server.ota.firmware.UpdateResultFw;
-import org.thingsboard.server.transport.lwm2m.server.ota.firmware.UpdateStateFw;
+import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareDeliveryMethod;
+import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateResult;
+import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateState;
 import org.thingsboard.server.transport.lwm2m.server.ota.software.LwM2MSoftwareUpdateStrategy;
-import org.thingsboard.server.transport.lwm2m.server.ota.software.UpdateResultSw;
-import org.thingsboard.server.transport.lwm2m.server.ota.software.UpdateStateSw;
+import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateResult;
+import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateState;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 import javax.annotation.PostConstruct;
@@ -201,20 +202,20 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     }
 
     @Override
-    public void onCurrentFirmwareStrategyUpdate(LwM2mClient client, Integer newStrategy, String newBaseUrl) {
-        log.debug("[{}] Current fw strategy: {}", client.getEndpoint(), newStrategy);
+    public void onCurrentFirmwareStrategyUpdate(LwM2mClient client, OtherConfiguration configuration) {
+        log.debug("[{}] Current fw strategy: {}", client.getEndpoint(), configuration.getFwUpdateStrategy());
         LwM2MClientOtaInfo fwInfo = getOrInitFwInfo(client);
-        fwInfo.setFwStrategy(LwM2MFirmwareUpdateStrategy.fromStrategyFwByCode(newStrategy));
-        fwInfo.setBaseUrl(newBaseUrl);
+        fwInfo.setFwStrategy(LwM2MFirmwareUpdateStrategy.fromStrategyFwByCode(configuration.getFwUpdateStrategy()));
+        fwInfo.setBaseUrl(configuration.getFwUpdateRecourse());
         startFirmwareUpdateIfNeeded(client, fwInfo);
     }
 
     @Override
-    public void onCurrentSoftwareStrategyUpdate(LwM2mClient client, Integer newStrategy, String newBaseUrl) {
-        log.debug("[{}] Current sw strategy: {}", client.getEndpoint(), newStrategy);
+    public void onCurrentSoftwareStrategyUpdate(LwM2mClient client, OtherConfiguration configuration) {
+        log.debug("[{}] Current sw strategy: {}", client.getEndpoint(), configuration.getSwUpdateStrategy());
         LwM2MClientOtaInfo swInfo = getOrInitSwInfo(client);
-        swInfo.setSwStrategy(LwM2MSoftwareUpdateStrategy.fromStrategySwByCode(newStrategy));
-        swInfo.setBaseUrl(newBaseUrl);
+        swInfo.setSwStrategy(LwM2MSoftwareUpdateStrategy.fromStrategySwByCode(configuration.getSwUpdateStrategy()));
+        swInfo.setBaseUrl(configuration.getSwUpdateRecourse());
         startSoftwareUpdateIfNeeded(client, swInfo);
     }
 
@@ -236,8 +237,8 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     public void onCurrentFirmwareStateUpdate(LwM2mClient client, Long stateCode) {
         log.debug("[{}] Current fw state: {}", client.getEndpoint(), stateCode);
         LwM2MClientOtaInfo fwInfo = getOrInitFwInfo(client);
-        UpdateStateFw state = UpdateStateFw.fromStateFwByCode(stateCode.intValue());
-        if (UpdateStateFw.DOWNLOADED.equals(state)) {
+        FirmwareUpdateState state = FirmwareUpdateState.fromStateFwByCode(stateCode.intValue());
+        if (FirmwareUpdateState.DOWNLOADED.equals(state)) {
             executeFwUpdate(client);
         }
         fwInfo.setUpdateState(state);
@@ -250,7 +251,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     public void onCurrentFirmwareResultUpdate(LwM2mClient client, Long code) {
         log.debug("[{}] Current fw result: {}", client.getEndpoint(), code);
         LwM2MClientOtaInfo fwInfo = getOrInitFwInfo(client);
-        UpdateResultFw result = UpdateResultFw.fromUpdateResultFwByCode(code.intValue());
+        FirmwareUpdateResult result = FirmwareUpdateResult.fromUpdateResultFwByCode(code.intValue());
         Optional<OtaPackageUpdateStatus> status = this.toOtaPackageUpdateStatus(result);
         status.ifPresent(otaStatus -> sendStateUpdateToTelemetry(client, fwInfo,
                 otaStatus, "Firmware Update Result: " + result.name()));
@@ -324,10 +325,10 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         if (TransportProtos.ResponseStatus.SUCCESS.equals(response.getResponseStatus())) {
             UUID otaPackageId = new UUID(response.getOtaPackageIdMSB(), response.getOtaPackageIdLSB());
             LwM2MFirmwareUpdateStrategy strategy;
-            if (fwInfo.getDeliveryMethod() == null || fwInfo.getDeliveryMethod() == UpdateDeliveryFw.BOTH.code) {
+            if (fwInfo.getDeliveryMethod() == null || fwInfo.getDeliveryMethod() == FirmwareDeliveryMethod.BOTH.code) {
                 strategy = fwInfo.getFwStrategy();
             } else {
-                strategy = fwInfo.getDeliveryMethod() == UpdateDeliveryFw.PULL.code ? LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL : LwM2MFirmwareUpdateStrategy.OBJ_5_BINARY;
+                strategy = fwInfo.getDeliveryMethod() == FirmwareDeliveryMethod.PULL.code ? LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL : LwM2MFirmwareUpdateStrategy.OBJ_5_BINARY;
             }
             switch (strategy) {
                 case OBJ_5_BINARY:
@@ -405,8 +406,8 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         helper.sendParametersOnThingsboardTelemetry(result, client.getSession());
     }
 
-    private static Optional<OtaPackageUpdateStatus> toOtaPackageUpdateStatus(UpdateResultFw updateResultFw) {
-        switch (updateResultFw) {
+    private static Optional<OtaPackageUpdateStatus> toOtaPackageUpdateStatus(FirmwareUpdateResult fwUpdateResult) {
+        switch (fwUpdateResult) {
             case INITIAL:
                 return Optional.empty();
             case UPDATE_SUCCESSFULLY:
@@ -421,12 +422,12 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
             case UNSUPPORTED_PROTOCOL:
                 return Optional.of(FAILED);
             default:
-                throw new CodecException("Invalid value stateFw %s for FirmwareUpdateStatus.", updateResultFw.name());
+                throw new CodecException("Invalid value stateFw %s for FirmwareUpdateStatus.", fwUpdateResult.name());
         }
     }
 
-    private static Optional<OtaPackageUpdateStatus> toOtaPackageUpdateStatus(UpdateStateFw updateStateFw) {
-        switch (updateStateFw) {
+    private static Optional<OtaPackageUpdateStatus> toOtaPackageUpdateStatus(FirmwareUpdateState firmwareUpdateState) {
+        switch (firmwareUpdateState) {
             case IDLE:
                 return Optional.empty();
             case DOWNLOADING:
@@ -436,7 +437,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
             case UPDATING:
                 return Optional.of(UPDATING);
             default:
-                throw new CodecException("Invalid value stateFw %d for FirmwareUpdateStatus.", updateStateFw);
+                throw new CodecException("Invalid value stateFw %d for FirmwareUpdateStatus.", firmwareUpdateState);
         }
     }
 
@@ -444,10 +445,10 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
      * FirmwareUpdateStatus {
      * DOWNLOADING, DOWNLOADED, VERIFIED, UPDATING, UPDATED, FAILED
      */
-    public static Optional<OtaPackageUpdateStatus> toSwSateResultUpdateStatus(UpdateStateSw updateStateSw, UpdateResultSw updateResultSw) {
-        switch (updateResultSw) {
+    public static Optional<OtaPackageUpdateStatus> toSwSateResultUpdateStatus(SoftwareUpdateState softwareUpdateState, SoftwareUpdateResult softwareUpdateResult) {
+        switch (softwareUpdateResult) {
             case INITIAL:
-                switch (updateStateSw) {
+                switch (softwareUpdateState) {
                     case INITIAL:
                     case DOWNLOAD_STARTED:
                         return Optional.of(DOWNLOADING);
@@ -473,10 +474,8 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
             case UN_INSTALL_FAILURE:
                 return Optional.of(FAILED);
             default:
-                throw new CodecException("Invalid value stateFw %s   %s for FirmwareUpdateStatus.", updateStateSw.name(), updateResultSw.name());
+                throw new CodecException("Invalid value stateFw %s   %s for FirmwareUpdateStatus.", softwareUpdateState.name(), softwareUpdateResult.name());
         }
     }
-
-
 
 }

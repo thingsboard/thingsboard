@@ -26,7 +26,7 @@ package org.thingsboard.server.transport.lwm2m.server.ota.software;
  * After executing the UnInstall Resource, the state changes to INITIAL.
  * 4: INSTALLED
  */
-public enum UpdateStateSw {
+public enum SoftwareUpdateState {
     INITIAL(0, "Initial"),
     DOWNLOAD_STARTED(1, "DownloadStarted"),
     DOWNLOADED(2, "Downloaded"),
@@ -36,13 +36,13 @@ public enum UpdateStateSw {
     public int code;
     public String type;
 
-    UpdateStateSw(int code, String type) {
+    SoftwareUpdateState(int code, String type) {
         this.code = code;
         this.type = type;
     }
 
-    public static UpdateStateSw fromUpdateStateSwByType(String type) {
-        for (UpdateStateSw to : UpdateStateSw.values()) {
+    public static SoftwareUpdateState fromUpdateStateSwByType(String type) {
+        for (SoftwareUpdateState to : SoftwareUpdateState.values()) {
             if (to.type.equals(type)) {
                 return to;
             }
@@ -50,8 +50,8 @@ public enum UpdateStateSw {
         throw new IllegalArgumentException(String.format("Unsupported SW State type  : %s", type));
     }
 
-    public static UpdateStateSw fromUpdateStateSwByCode(int code) {
-        for (UpdateStateSw to : UpdateStateSw.values()) {
+    public static SoftwareUpdateState fromUpdateStateSwByCode(int code) {
+        for (SoftwareUpdateState to : SoftwareUpdateState.values()) {
             if (to.code == code) {
                 return to;
             }

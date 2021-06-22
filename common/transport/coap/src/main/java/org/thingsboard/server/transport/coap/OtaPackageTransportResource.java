@@ -42,14 +42,12 @@ public class OtaPackageTransportResource extends AbstractCoapTransportResource {
     private static final int ACCESS_TOKEN_POSITION = 2;
 
     private final OtaPackageType otaPackageType;
-    private final ExecutorService sendOtaDataOutUriLarge;
 
     public OtaPackageTransportResource(CoapTransportContext ctx, OtaPackageType otaPackageType) {
         super(ctx, otaPackageType.getKeyPrefix());
         this.otaPackageType = otaPackageType;
 
         this.setObservable(true);
-        this.sendOtaDataOutUriLarge = ThingsBoardExecutors.newWorkStealingPool(10, "LwM2M sendOtaDataOutUriLarge");
     }
 
     @Override
@@ -140,46 +138,12 @@ public class OtaPackageTransportResource extends AbstractCoapTransportResource {
         Response response = new Response(CoAP.ResponseCode.CONTENT);
         if (data != null && data.length > 0) {
             response.setPayload(data);
-//            response.getOptions().setAccept(MediaTypeRegistry.APPLICATION_OCTET_STREAM);
             if (exchange.getRequestOptions().getBlock2() != null) {
                 int chunkSize = exchange.getRequestOptions().getBlock2().getSzx();
                 boolean lastFlag = data.length <= chunkSize;
-                this.sendOtaDataOutUriLarge.submit(() -> {
-                    response.getOptions().setBlock2(chunkSize, lastFlag, 0);
-                });            }
-            exchange.respond(response);
-        }
-    }
-
-    public class CoapResourceObserver implements ResourceObserver {
-        @Override
-        public void changedName(String old) {
-
-        }
-
-        @Override
-        public void changedPath(String old) {
-
-        }
-
-        @Override
-        public void addedChild(Resource child) {
-
-        }
-
-        @Override
-        public void removedChild(Resource child) {
-
-        }
-
-        @Override
-        public void addedObserveRelation(ObserveRelation relation) {
-
-        }
-
-        @Override
-        public void removedObserveRelation(ObserveRelation relation) {
-
+                response.getOptions().setBlock2(chunkSize, lastFlag, 0);
+            }
+            transportContext.getExecutor().submit(() -> exchange.respond(response));
         }
     }
 

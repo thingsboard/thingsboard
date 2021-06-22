@@ -19,8 +19,8 @@ import lombok.Data;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.transport.lwm2m.server.ota.firmware.LwM2MFirmwareUpdateStrategy;
-import org.thingsboard.server.transport.lwm2m.server.ota.firmware.UpdateResultFw;
-import org.thingsboard.server.transport.lwm2m.server.ota.firmware.UpdateStateFw;
+import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateResult;
+import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateState;
 import org.thingsboard.server.transport.lwm2m.server.ota.software.LwM2MSoftwareUpdateStrategy;
 
 import java.util.Optional;
@@ -47,8 +47,8 @@ public class LwM2MClientOtaInfo {
     //TODO: use value from device if applicable;
     private LwM2MFirmwareUpdateStrategy fwStrategy;
     private LwM2MSoftwareUpdateStrategy swStrategy;
-    private UpdateStateFw updateState;
-    private UpdateResultFw updateResult;
+    private FirmwareUpdateState updateState;
+    private FirmwareUpdateResult updateResult;
 
     private String failedPackageId;
     private int retryAttempts;
@@ -90,7 +90,7 @@ public class LwM2MClientOtaInfo {
         return StringUtils.isNotEmpty(currentName) || StringUtils.isNotEmpty(currentVersion5) || StringUtils.isNotEmpty(currentVersion3);
     }
 
-    public void setUpdateResult(UpdateResultFw updateResult) {
+    public void setUpdateResult(FirmwareUpdateResult updateResult) {
         this.updateResult = updateResult;
         switch (updateResult) {
             case INITIAL:

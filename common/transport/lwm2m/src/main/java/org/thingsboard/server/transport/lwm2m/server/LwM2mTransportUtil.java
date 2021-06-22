@@ -46,10 +46,10 @@ import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTrans
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.ResourceValue;
-import org.thingsboard.server.transport.lwm2m.server.ota.firmware.UpdateResultFw;
-import org.thingsboard.server.transport.lwm2m.server.ota.firmware.UpdateStateFw;
-import org.thingsboard.server.transport.lwm2m.server.ota.software.UpdateResultSw;
-import org.thingsboard.server.transport.lwm2m.server.ota.software.UpdateStateSw;
+import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateResult;
+import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateState;
+import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateResult;
+import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateState;
 import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
 
 import java.util.ArrayList;
@@ -148,19 +148,19 @@ public class LwM2mTransportUtil {
         if (path != null) {
             if (FW_STATE_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
-                lwM2mOtaConvert.setValue(UpdateStateFw.fromStateFwByCode(((Long) value).intValue()).type);
+                lwM2mOtaConvert.setValue(FirmwareUpdateState.fromStateFwByCode(((Long) value).intValue()).type);
                 return lwM2mOtaConvert;
             } else if (FW_RESULT_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
-                lwM2mOtaConvert.setValue(UpdateResultFw.fromUpdateResultFwByCode(((Long) value).intValue()).getType());
+                lwM2mOtaConvert.setValue(FirmwareUpdateResult.fromUpdateResultFwByCode(((Long) value).intValue()).getType());
                 return lwM2mOtaConvert;
             } else if (SW_UPDATE_STATE_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
-                lwM2mOtaConvert.setValue(UpdateStateSw.fromUpdateStateSwByCode(((Long) value).intValue()).type);
+                lwM2mOtaConvert.setValue(SoftwareUpdateState.fromUpdateStateSwByCode(((Long) value).intValue()).type);
                 return lwM2mOtaConvert;
             } else if (SW_RESULT_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
-                lwM2mOtaConvert.setValue(UpdateResultSw.fromUpdateResultSwByCode(((Long) value).intValue()).type);
+                lwM2mOtaConvert.setValue(SoftwareUpdateResult.fromUpdateResultSwByCode(((Long) value).intValue()).type);
                 return lwM2mOtaConvert;
             }
         }
@@ -434,19 +434,6 @@ public class LwM2mTransportUtil {
             return null;
         }
     }
-
-//    public static boolean isFwSwWords(String pathName) {
-//        return OtaPackageUtil.getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.VERSION).equals(pathName)
-//                || OtaPackageUtil.getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.TITLE).equals(pathName)
-//                || OtaPackageUtil.getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.CHECKSUM).equals(pathName)
-//                || OtaPackageUtil.getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.CHECKSUM_ALGORITHM).equals(pathName)
-//                || OtaPackageUtil.getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.SIZE).equals(pathName)
-//                || OtaPackageUtil.getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.VERSION).equals(pathName)
-//                || OtaPackageUtil.getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.TITLE).equals(pathName)
-//                || OtaPackageUtil.getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.CHECKSUM).equals(pathName)
-//                || OtaPackageUtil.getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.CHECKSUM_ALGORITHM).equals(pathName)
-//                || OtaPackageUtil.getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.SIZE).equals(pathName);
-//    }
 
     /**
      * @param lwM2MClient -

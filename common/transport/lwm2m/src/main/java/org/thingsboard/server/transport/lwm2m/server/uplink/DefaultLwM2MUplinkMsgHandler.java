@@ -40,7 +40,9 @@ import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.data.lwm2m.ObjectAttributes;
+import org.thingsboard.server.common.data.device.data.lwm2m.OtherConfiguration;
 import org.thingsboard.server.common.data.device.data.lwm2m.TelemetryMappingConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.ota.OtaPackageUtil;
@@ -130,16 +132,13 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     private final LwM2mTransportContext context;
     private final LwM2MAttributesService attributesService;
     private final LwM2MOtaUpdateService otaService;
-    public final LwM2MTransportServerConfig config;
+    private final LwM2MTransportServerConfig config;
     private final LwM2MTelemetryLogService logService;
-    public final OtaPackageDataCache otaPackageDataCache;
-    public final LwM2mTransportServerHelper helper;
+    private final LwM2mTransportServerHelper helper;
     private final TbLwM2MDtlsSessionStore sessionStore;
-    public final LwM2mClientContext clientContext;
+    private final LwM2mClientContext clientContext;
     private final LwM2MRpcRequestHandler rpcHandler;
-    public final LwM2mDownlinkMsgHandler defaultLwM2MDownlinkMsgHandler;
-
-    public final Map<String, Integer> firmwareUpdateState;
+    private final LwM2mDownlinkMsgHandler defaultLwM2MDownlinkMsgHandler;
 
     public DefaultLwM2MUplinkMsgHandler(TransportService transportService,
                                         LwM2MTransportServerConfig config,
@@ -150,7 +149,6 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
                                         @Lazy LwM2MAttributesService attributesService,
                                         @Lazy LwM2MRpcRequestHandler rpcHandler,
                                         @Lazy LwM2mDownlinkMsgHandler defaultLwM2MDownlinkMsgHandler,
-                                        OtaPackageDataCache otaPackageDataCache,
                                         LwM2mTransportContext context, TbLwM2MDtlsSessionStore sessionStore) {
         this.transportService = transportService;
         this.attributesService = attributesService;
@@ -161,9 +159,7 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
         this.logService = logService;
         this.rpcHandler = rpcHandler;
         this.defaultLwM2MDownlinkMsgHandler = defaultLwM2MDownlinkMsgHandler;
-        this.otaPackageDataCache = otaPackageDataCache;
         this.context = context;
-        this.firmwareUpdateState = new ConcurrentHashMap<>();
         this.sessionStore = sessionStore;
     }
 
@@ -781,27 +777,19 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 }
             }
 
-            // # 7.1
             // update value in fwInfo
-            if (!newProfile.getClientLwM2mSettings().getFwUpdateStrategy().equals(oldProfile.getClientLwM2mSettings().getFwUpdateStrategy())
-                    || (LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL.code == newProfile.getClientLwM2mSettings().getFwUpdateStrategy() &&
-                        !newProfile.getClientLwM2mSettings().getFwUpdateRecourse().equals(oldProfile.getClientLwM2mSettings().getFwUpdateRecourse()))) {
-                clients.forEach(lwM2MClient -> {
-                    otaService.onCurrentFirmwareStrategyUpdate(lwM2MClient,
-                            newProfile.getClientLwM2mSettings().getFwUpdateStrategy(),
-                            newProfile.getClientLwM2mSettings().getFwUpdateRecourse());
-                });
+            OtherConfiguration newLwM2mSettings = newProfile.getClientLwM2mSettings();
+            OtherConfiguration oldLwM2mSettings = oldProfile.getClientLwM2mSettings();
+            if (!newLwM2mSettings.getFwUpdateStrategy().equals(oldLwM2mSettings.getFwUpdateStrategy())
+                    || (StringUtils.isNotEmpty(newLwM2mSettings.getFwUpdateRecourse()) &&
+                    !newLwM2mSettings.getFwUpdateRecourse().equals(oldLwM2mSettings.getFwUpdateRecourse()))) {
+                clients.forEach(lwM2MClient -> otaService.onCurrentFirmwareStrategyUpdate(lwM2MClient, newLwM2mSettings));
             }
 
-            //# 7.2 // update value in swInfo
-            if (!newProfile.getClientLwM2mSettings().getSwUpdateStrategy().equals(oldProfile.getClientLwM2mSettings().getSwUpdateStrategy())
-                    || (LwM2MSoftwareUpdateStrategy.TEMP_URL.code == newProfile.getClientLwM2mSettings().getSwUpdateStrategy() &&
-                    !newProfile.getClientLwM2mSettings().getSwUpdateRecourse().equals(oldProfile.getClientLwM2mSettings().getSwUpdateRecourse()))) {
-                clients.forEach(lwM2MClient -> {
-                    otaService.onCurrentSoftwareStrategyUpdate(lwM2MClient,
-                            newProfile.getClientLwM2mSettings().getFwUpdateStrategy(),
-                            newProfile.getClientLwM2mSettings().getFwUpdateRecourse());
-                });
+            if (!newLwM2mSettings.getSwUpdateStrategy().equals(oldLwM2mSettings.getSwUpdateStrategy())
+                    || (StringUtils.isNotEmpty(newLwM2mSettings.getSwUpdateRecourse()) &&
+                    !newLwM2mSettings.getSwUpdateRecourse().equals(oldLwM2mSettings.getSwUpdateRecourse()))) {
+                clients.forEach(lwM2MClient -> otaService.onCurrentSoftwareStrategyUpdate(lwM2MClient, newLwM2mSettings));
             }
         }
     }
