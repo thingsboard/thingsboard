@@ -13,11 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.transport.lwm2m.server.store;
 
-/**
- * @author Andrew Shvayka
- */
-public enum EntityType {
-    TENANT, CUSTOMER, USER, DASHBOARD, ASSET, DEVICE, ALARM, RULE_CHAIN, RULE_NODE, ENTITY_VIEW, WIDGETS_BUNDLE, WIDGET_TYPE, TENANT_PROFILE, DEVICE_PROFILE, API_USAGE_STATE, TB_RESOURCE, OTA_PACKAGE, EDGE, RPC;
+import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
+import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
+
+public interface TbMainSecurityStore extends TbSecurityStore {
+
+    void putX509(TbLwM2MSecurityInfo tbSecurityInfo) throws NonUniqueSecurityInfoException;
+
+    void registerX509(String endpoint, String registrationId);
+
+    void remove(String endpoint, String registrationId);
+
 }

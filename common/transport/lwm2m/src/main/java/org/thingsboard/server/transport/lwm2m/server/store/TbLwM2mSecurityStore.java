@@ -22,13 +22,22 @@ import org.jetbrains.annotations.Nullable;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer.CLIENT;
 
 @Slf4j
-public class TbLwM2mSecurityStore implements TbEditableSecurityStore {
+public class TbLwM2mSecurityStore implements TbMainSecurityStore {
 
     private final TbEditableSecurityStore securityStore;
     private final LwM2mCredentialsSecurityInfoValidator validator;
+    private final ConcurrentMap<String, Set<String>> endpointRegistrations = new ConcurrentHashMap<>();
 
     public TbLwM2mSecurityStore(TbEditableSecurityStore securityStore, LwM2mCredentialsSecurityInfoValidator validator) {
         this.securityStore = securityStore;
@@ -61,24 +70,42 @@ public class TbLwM2mSecurityStore implements TbEditableSecurityStore {
     @Nullable
     public SecurityInfo fetchAndPutSecurityInfo(String credentialsId) {
         TbLwM2MSecurityInfo securityInfo = validator.getEndpointSecurityInfoByCredentialsId(credentialsId, CLIENT);
-        try {
-            if (securityInfo != null) {
-                securityStore.put(securityInfo);
-            }
-        } catch (NonUniqueSecurityInfoException e) {
-            log.trace("Failed to add security info: {}", securityInfo, e);
-        }
+        doPut(securityInfo);
         return securityInfo != null ? securityInfo.getSecurityInfo() : null;
     }
 
-    @Override
-    public void put(TbLwM2MSecurityInfo tbSecurityInfo) throws NonUniqueSecurityInfoException {
-        securityStore.put(tbSecurityInfo);
+    private void doPut(TbLwM2MSecurityInfo securityInfo) {
+        if (securityInfo != null) {
+            try {
+                securityStore.put(securityInfo);
+            } catch (NonUniqueSecurityInfoException e) {
+                log.trace("Failed to add security info: {}", securityInfo, e);
+            }
+        }
     }
 
     @Override
-    public void remove(String endpoint) {
-        //TODO: Make sure we delay removal of security store from endpoint due to reg/unreg race condition.
-//        securityStore.remove(endpoint);
+    public void putX509(TbLwM2MSecurityInfo securityInfo) throws NonUniqueSecurityInfoException {
+        securityStore.put(securityInfo);
+    }
+
+    @Override
+    public void registerX509(String endpoint, String registrationId) {
+        endpointRegistrations.computeIfAbsent(endpoint, ep -> new HashSet<>()).add(registrationId);
+    }
+
+    @Override
+    public void remove(String endpoint, String registrationId) {
+        Set<String> epRegistrationIds = endpointRegistrations.get(endpoint);
+        boolean shouldRemove;
+        if (epRegistrationIds == null) {
+            shouldRemove = true;
+        } else {
+            epRegistrationIds.remove(registrationId);
+            shouldRemove = epRegistrationIds.isEmpty();
+        }
+        if (shouldRemove) {
+            securityStore.remove(endpoint);
+        }
     }
 }

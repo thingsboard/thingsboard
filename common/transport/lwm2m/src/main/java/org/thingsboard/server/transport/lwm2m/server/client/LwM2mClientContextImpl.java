@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.server.registration.Registration;
@@ -30,7 +31,7 @@ import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
-import org.thingsboard.server.transport.lwm2m.server.store.TbEditableSecurityStore;
+import org.thingsboard.server.transport.lwm2m.server.store.TbMainSecurityStore;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -54,7 +55,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     private final LwM2mTransportContext context;
     private final LwM2MTransportServerConfig config;
-    private final TbEditableSecurityStore securityStore;
+    private final TbMainSecurityStore securityStore;
     private final Map<String, LwM2mClient> lwM2mClientsByEndpoint = new ConcurrentHashMap<>();
     private final Map<String, LwM2mClient> lwM2mClientsByRegistrationId = new ConcurrentHashMap<>();
     private final Map<UUID, Lwm2mDeviceProfileTransportConfiguration> profiles = new ConcurrentHashMap<>();
@@ -75,6 +76,9 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
             oldSession = lwM2MClient.getSession();
             TbLwM2MSecurityInfo securityInfo = securityStore.getTbLwM2MSecurityInfoByEndpoint(lwM2MClient.getEndpoint());
             if (securityInfo.getSecurityMode() != null) {
+                if (SecurityMode.X509.equals(securityInfo.getSecurityMode())) {
+                    securityStore.registerX509(registration.getEndpoint(), registration.getId());
+                }
                 if (securityInfo.getDeviceProfile() != null) {
                     profileUpdate(securityInfo.getDeviceProfile());
                     if (securityInfo.getSecurityInfo() != null) {
@@ -124,7 +128,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
             if (currentRegistration.getId().equals(registration.getId())) {
                 lwM2MClient.setState(LwM2MClientState.UNREGISTERED);
                 lwM2mClientsByEndpoint.remove(lwM2MClient.getEndpoint());
-                this.securityStore.remove(lwM2MClient.getEndpoint());
+                this.securityStore.remove(lwM2MClient.getEndpoint(), registration.getId());
                 UUID profileId = lwM2MClient.getProfileId();
                 if (profileId != null) {
                     Optional<LwM2mClient> otherClients = lwM2mClientsByRegistrationId.values().stream().filter(e -> e.getProfileId().equals(profileId)).findFirst();
