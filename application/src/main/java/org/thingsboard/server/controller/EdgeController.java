@@ -127,7 +127,7 @@ public class EdgeController extends BaseController {
             accessControlService.checkPermission(getCurrentUser(), Resource.EDGE, operation,
                     edge.getId(), edge);
 
-            Edge savedEdge = checkNotNull(edgeService.saveEdge(edge));
+            Edge savedEdge = checkNotNull(edgeService.saveEdge(edge, true));
 
             if (created) {
                 ruleChainService.assignRuleChainToEdge(tenantId, edgeTemplateRootRuleChain.getId(), savedEdge.getId());

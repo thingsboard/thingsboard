@@ -495,7 +495,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
     @Test
     public void testFindEdgeRuleChainsByTenantIdAndName() {
         Edge edge = constructEdge(tenantId, "My edge", "default");
-        Edge savedEdge = edgeService.saveEdge(edge);
+        Edge savedEdge = edgeService.saveEdge(edge, true);
 
         String name1 = "Edge RuleChain name 1";
         List<RuleChain> ruleChainsName1 = new ArrayList<>();

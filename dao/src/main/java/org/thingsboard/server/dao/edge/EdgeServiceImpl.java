@@ -180,9 +180,11 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
 
     @CacheEvict(cacheNames = EDGE_CACHE, key = "{#edge.tenantId, #edge.name}")
     @Override
-    public Edge saveEdge(Edge edge) {
+    public Edge saveEdge(Edge edge, boolean doValidate) {
         log.trace("Executing saveEdge [{}]", edge);
-        edgeValidator.validate(edge, Edge::getTenantId);
+        if (doValidate) {
+            edgeValidator.validate(edge, Edge::getTenantId);
+        }
         try {
             return edgeDao.save(edge.getTenantId(), edge);
         } catch (Exception t) {
@@ -201,7 +203,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
         log.trace("[{}] Executing assignEdgeToCustomer [{}][{}]", tenantId, edgeId, customerId);
         Edge edge = findEdgeById(tenantId, edgeId);
         edge.setCustomerId(customerId);
-        return saveEdge(edge);
+        return saveEdge(edge, true);
     }
 
     @Override
@@ -209,7 +211,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
         log.trace("[{}] Executing unassignEdgeFromCustomer [{}]", tenantId, edgeId);
         Edge edge = findEdgeById(tenantId, edgeId);
         edge.setCustomerId(null);
-        return saveEdge(edge);
+        return saveEdge(edge, true);
     }
 
     @Override
