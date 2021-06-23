@@ -302,7 +302,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                         attributeSubscriptions.remove(attrSessionId);
                         transportService.process(attrSession,
                                 TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().setUnsubscribe(true).build(),
-                                new CoapNoOpCallback(exchange));
+                                new CoapOkCallback(exchange, CoAP.ResponseCode.DELETED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
                     }
                     closeAndDeregister(sessionInfo);
                     break;
