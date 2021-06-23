@@ -2362,7 +2362,7 @@
         "delete-resource-text": "Be careful, after the confirmation the resource will become unrecoverable.",
         "delete-resource-title": "Are you sure you want to delete the resource '{{resourceTitle}}'?",
         "delete-resources-action-title": "Delete { count, plural, 1 {1 resource} other {# resources} }",
-        "delete-resources-text": "Be careful, after the confirmation all selected resources will be removed.",
+        "delete-resources-text": "Please note that the selected resources, even if they are used in device profiles, will be deleted.",
         "delete-resources-title": "Are you sure you want to delete { count, plural, 1 {1 resource} other {# resources} }?",
         "download": "Download resource",
         "drop-file": "Drop a resource file or click to select a file to upload.",
