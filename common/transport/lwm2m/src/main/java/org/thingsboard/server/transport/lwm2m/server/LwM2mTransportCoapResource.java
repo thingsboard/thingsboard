@@ -25,16 +25,14 @@ import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.eclipse.californium.core.server.resources.ResourceObserver;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
-import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
-import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FIRMWARE_UPDATE_COAP_RECOURSE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.SOFTWARE_UPDATE_COAP_RECOURSE;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FIRMWARE_UPDATE_COAP_RECOURSE;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SOFTWARE_UPDATE_COAP_RECOURSE;
 
 @Slf4j
 public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
@@ -143,7 +141,7 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
             response.setPayload(fwData);
             if (exchange.getRequestOptions().getBlock2() != null) {
                 int chunkSize = exchange.getRequestOptions().getBlock2().getSzx();
-                boolean lastFlag = fwData.length > chunkSize;
+                boolean lastFlag = fwData.length <= chunkSize;
                 response.getOptions().setBlock2(chunkSize, lastFlag, 0);
                 log.warn("92) with blokc2 Send currentId: [{}], length: [{}], chunkSize [{}], moreFlag [{}]", currentId.toString(), fwData.length, chunkSize, lastFlag);
             }

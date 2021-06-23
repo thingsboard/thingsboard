@@ -37,11 +37,12 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
-import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.data.lwm2m.ObjectAttributes;
+import org.thingsboard.server.common.data.device.data.lwm2m.OtherConfiguration;
 import org.thingsboard.server.common.data.device.data.lwm2m.TelemetryMappingConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.ota.OtaPackageUtil;
@@ -82,6 +83,8 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttrib
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttributesRequest;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MOtaUpdateService;
+import org.thingsboard.server.transport.lwm2m.server.ota.firmware.LwM2MFirmwareUpdateStrategy;
+import org.thingsboard.server.transport.lwm2m.server.ota.software.LwM2MSoftwareUpdateStrategy;
 import org.thingsboard.server.transport.lwm2m.server.rpc.LwM2MRpcRequestHandler;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
@@ -100,23 +103,22 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_3_VER_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_5_VER_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_DELIVERY_METHOD;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_NAME_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_RESULT_ID;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.FW_STATE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_WARN;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertObjectIdToVersionedId;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertOtaUpdateValueToString;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_3_VER_ID;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_5_VER_ID;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_DELIVERY_METHOD;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_NAME_ID;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_RESULT_ID;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_STATE_ID;
 
 
 @Slf4j
@@ -130,16 +132,13 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     private final LwM2mTransportContext context;
     private final LwM2MAttributesService attributesService;
     private final LwM2MOtaUpdateService otaService;
-    public final LwM2MTransportServerConfig config;
+    private final LwM2MTransportServerConfig config;
     private final LwM2MTelemetryLogService logService;
-    public final OtaPackageDataCache otaPackageDataCache;
-    public final LwM2mTransportServerHelper helper;
+    private final LwM2mTransportServerHelper helper;
     private final TbLwM2MDtlsSessionStore sessionStore;
-    public final LwM2mClientContext clientContext;
+    private final LwM2mClientContext clientContext;
     private final LwM2MRpcRequestHandler rpcHandler;
-    public final LwM2mDownlinkMsgHandler defaultLwM2MDownlinkMsgHandler;
-
-    public final Map<String, Integer> firmwareUpdateState;
+    private final LwM2mDownlinkMsgHandler defaultLwM2MDownlinkMsgHandler;
 
     public DefaultLwM2MUplinkMsgHandler(TransportService transportService,
                                         LwM2MTransportServerConfig config,
@@ -150,7 +149,6 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
                                         @Lazy LwM2MAttributesService attributesService,
                                         @Lazy LwM2MRpcRequestHandler rpcHandler,
                                         @Lazy LwM2mDownlinkMsgHandler defaultLwM2MDownlinkMsgHandler,
-                                        OtaPackageDataCache otaPackageDataCache,
                                         LwM2mTransportContext context, TbLwM2MDtlsSessionStore sessionStore) {
         this.transportService = transportService;
         this.attributesService = attributesService;
@@ -161,9 +159,7 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
         this.logService = logService;
         this.rpcHandler = rpcHandler;
         this.defaultLwM2MDownlinkMsgHandler = defaultLwM2MDownlinkMsgHandler;
-        this.otaPackageDataCache = otaPackageDataCache;
         this.context = context;
-        this.firmwareUpdateState = new ConcurrentHashMap<>();
         this.sessionStore = sessionStore;
     }
 
@@ -216,7 +212,7 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
                     }
                     logService.log(lwM2MClient, LOG_LWM2M_INFO + ": Client registered with registration id: " + registration.getId());
                     SessionInfoProto sessionInfo = lwM2MClient.getSession();
-                    transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(this, attributesService, rpcHandler, sessionInfo));
+                    transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(this, attributesService, rpcHandler, sessionInfo, transportService));
                     log.warn("40) sessionId [{}] Registering rpc subscription after Registration client", new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
                     TransportProtos.TransportToDeviceActorMsg msg = TransportProtos.TransportToDeviceActorMsg.newBuilder()
                             .setSessionInfo(sessionInfo)
@@ -780,6 +776,21 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
                     clients.forEach(client -> sendCancelObserveRequest(targetId, client));
                 }
             }
+
+            // update value in fwInfo
+            OtherConfiguration newLwM2mSettings = newProfile.getClientLwM2mSettings();
+            OtherConfiguration oldLwM2mSettings = oldProfile.getClientLwM2mSettings();
+            if (!newLwM2mSettings.getFwUpdateStrategy().equals(oldLwM2mSettings.getFwUpdateStrategy())
+                    || (StringUtils.isNotEmpty(newLwM2mSettings.getFwUpdateRecourse()) &&
+                    !newLwM2mSettings.getFwUpdateRecourse().equals(oldLwM2mSettings.getFwUpdateRecourse()))) {
+                clients.forEach(lwM2MClient -> otaService.onCurrentFirmwareStrategyUpdate(lwM2MClient, newLwM2mSettings));
+            }
+
+            if (!newLwM2mSettings.getSwUpdateStrategy().equals(oldLwM2mSettings.getSwUpdateStrategy())
+                    || (StringUtils.isNotEmpty(newLwM2mSettings.getSwUpdateRecourse()) &&
+                    !newLwM2mSettings.getSwUpdateRecourse().equals(oldLwM2mSettings.getSwUpdateRecourse()))) {
+                clients.forEach(lwM2MClient -> otaService.onCurrentSoftwareStrategyUpdate(lwM2MClient, newLwM2mSettings));
+            }
         }
     }
 
@@ -877,7 +888,7 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
      */
     private void reportActivityAndRegister(SessionInfoProto sessionInfo) {
         if (sessionInfo != null && transportService.reportActivity(sessionInfo) == null) {
-            transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(this, attributesService, rpcHandler, sessionInfo));
+            transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(this, attributesService, rpcHandler, sessionInfo, transportService));
             this.reportActivitySubscription(sessionInfo);
         }
     }

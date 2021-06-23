@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server;
+package org.thingsboard.server.transport.lwm2m.server.ota.firmware;
 
 import lombok.Getter;
 
@@ -30,7 +30,7 @@ import lombok.Getter;
  * 8: Firmware update failed.
  * 9: Unsupported protocol.
  */
-public enum UpdateResultFw {
+public enum FirmwareUpdateResult {
     INITIAL(0, "Initial value", false),
     UPDATE_SUCCESSFULLY(1, "Firmware updated successfully", false),
     NOT_ENOUGH(2, "Not enough flash memory for the new firmware package", false),
@@ -49,14 +49,14 @@ public enum UpdateResultFw {
     @Getter
     private boolean again;
 
-    UpdateResultFw(int code, String type, boolean isAgain) {
+    FirmwareUpdateResult(int code, String type, boolean isAgain) {
         this.code = code;
         this.type = type;
         this.again = isAgain;
     }
 
-    public static UpdateResultFw fromUpdateResultFwByType(String type) {
-        for (UpdateResultFw to : UpdateResultFw.values()) {
+    public static FirmwareUpdateResult fromUpdateResultFwByType(String type) {
+        for (FirmwareUpdateResult to : FirmwareUpdateResult.values()) {
             if (to.type.equals(type)) {
                 return to;
             }
@@ -64,8 +64,8 @@ public enum UpdateResultFw {
         throw new IllegalArgumentException(String.format("Unsupported FW Update Result type  : %s", type));
     }
 
-    public static UpdateResultFw fromUpdateResultFwByCode(int code) {
-        for (UpdateResultFw to : UpdateResultFw.values()) {
+    public static FirmwareUpdateResult fromUpdateResultFwByCode(int code) {
+        for (FirmwareUpdateResult to : FirmwareUpdateResult.values()) {
             if (to.code == code) {
                 return to;
             }

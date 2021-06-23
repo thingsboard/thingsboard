@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server;
+package org.thingsboard.server.transport.lwm2m.server.ota.firmware;
 
 public enum LwM2MFirmwareUpdateStrategy {
     OBJ_5_BINARY(1, "ObjectId 5, Binary"),
