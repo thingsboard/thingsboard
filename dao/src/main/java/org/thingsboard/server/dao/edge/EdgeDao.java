@@ -176,4 +176,10 @@ public interface EdgeDao extends Dao<Edge> {
      * @return the list of rule chain objects
      */
     ListenableFuture<List<Edge>> findEdgesByTenantIdAndDashboardId(UUID tenantId, UUID dashboardId);
+
+    /**
+     * Executes stored procedure to cleanup old edge events.
+     * @param ttl the ttl for edge events in seconds
+     */
+    void cleanupEvents(long ttl);
 }
