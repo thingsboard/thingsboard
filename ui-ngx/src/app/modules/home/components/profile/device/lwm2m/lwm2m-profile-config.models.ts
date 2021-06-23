@@ -14,6 +14,8 @@
 /// limitations under the License.
 ///
 
+import { ValidatorFn, Validators } from '@angular/forms';
+
 export const PAGE_SIZE_LIMIT = 50;
 export const INSTANCES = 'instances';
 export const INSTANCE = 'instance';
@@ -74,43 +76,28 @@ export const BingingModeTranslationsMap = new Map<BingingMode, string>(
     [BingingMode.SQ, 'device-profile.lwm2m.binding-type.sq']
   ]
 );
-
-export enum ATTRIBUTE_LWM2M_ENUM {
-  dim = 'dim',
-  ver = 'ver',
+// TODO: wait release Leshan for issues: https://github.com/eclipse/leshan/issues/1026
+export enum AttributeName {
   pmin = 'pmin',
   pmax = 'pmax',
   gt = 'gt',
   lt = 'lt',
   st = 'st'
+  // epmin = 'epmin',
+  // epmax = 'epmax'
 }
 
-export const ATTRIBUTE_LWM2M_LABEL = new Map<ATTRIBUTE_LWM2M_ENUM, string>(
+export const AttributeNameTranslationMap = new Map<AttributeName, string>(
   [
-    [ATTRIBUTE_LWM2M_ENUM.dim, 'dim='],
-    [ATTRIBUTE_LWM2M_ENUM.ver, 'ver='],
-    [ATTRIBUTE_LWM2M_ENUM.pmin, 'pmin='],
-    [ATTRIBUTE_LWM2M_ENUM.pmax, 'pmax='],
-    [ATTRIBUTE_LWM2M_ENUM.gt, '>'],
-    [ATTRIBUTE_LWM2M_ENUM.lt, '<'],
-    [ATTRIBUTE_LWM2M_ENUM.st, 'st=']
+    [AttributeName.pmin, 'device-profile.lwm2m.attributes-name.min-period'],
+    [AttributeName.pmax, 'device-profile.lwm2m.attributes-name.max-period'],
+    [AttributeName.gt, 'device-profile.lwm2m.attributes-name.greater-than'],
+    [AttributeName.lt, 'device-profile.lwm2m.attributes-name.less-than'],
+    [AttributeName.st, 'device-profile.lwm2m.attributes-name.step'],
+    // [AttributeName.epmin, 'device-profile.lwm2m.attributes-name.min-evaluation-period'],
+    // [AttributeName.epmax, 'device-profile.lwm2m.attributes-name.max-evaluation-period']
   ]
 );
-
-export const ATTRIBUTE_LWM2M_MAP = new Map<ATTRIBUTE_LWM2M_ENUM, string>(
-  [
-    [ATTRIBUTE_LWM2M_ENUM.dim, 'Dimension'],
-    [ATTRIBUTE_LWM2M_ENUM.ver, 'Object version'],
-    [ATTRIBUTE_LWM2M_ENUM.pmin, 'Minimum period'],
-    [ATTRIBUTE_LWM2M_ENUM.pmax, 'Maximum period'],
-    [ATTRIBUTE_LWM2M_ENUM.gt, 'Greater than'],
-    [ATTRIBUTE_LWM2M_ENUM.lt, 'Lesser than'],
-    [ATTRIBUTE_LWM2M_ENUM.st, 'Step'],
-
-  ]
-);
-
-export const ATTRIBUTE_KEYS = Object.keys(ATTRIBUTE_LWM2M_ENUM) as string[];
 
 export enum securityConfigMode {
   PSK = 'PSK',
@@ -182,7 +169,7 @@ export interface ObservableAttributes {
   attribute: string[];
   telemetry: string[];
   keyName: {};
-  attributeLwm2m: {};
+  attributeLwm2m?: AttributesNameValueMap;
 }
 
 export function getDefaultBootstrapServersSecurityConfig(): BootstrapServersSecurityConfig {
@@ -241,12 +228,12 @@ export interface ResourceLwM2M {
   attribute: boolean;
   telemetry: boolean;
   keyName: string;
-  attributeLwm2m?: {};
+  attributeLwm2m?: AttributesNameValueMap;
 }
 
 export interface Instance {
   id: number;
-  attributeLwm2m?: {};
+  attributeLwm2m?: AttributesNameValueMap;
   resources: ResourceLwM2M[];
 }
 
@@ -257,12 +244,33 @@ export interface Instance {
  * mandatory == false => Optional
  */
 export interface ObjectLwM2M {
-
   id: number;
   keyId: string;
   name: string;
   multiple?: boolean;
   mandatory?: boolean;
-  attributeLwm2m?: {};
+  attributeLwm2m?: AttributesNameValueMap;
   instances?: Instance [];
+}
+
+export type AttributesNameValueMap = {
+  [key in AttributeName]?: number;
+};
+
+export interface AttributesNameValue {
+  name: AttributeName;
+  value: number;
+}
+
+export function valueValidatorByAttributeName(attributeName: AttributeName): ValidatorFn[] {
+  const validators = [Validators.required];
+  switch (attributeName) {
+    case AttributeName.pmin:
+    case AttributeName.pmax:
+    // case AttributeName.epmin:
+    // case AttributeName.epmax:
+      validators.push(Validators.min(0), Validators.pattern('[0-9]*'));
+      break;
+  }
+  return validators;
 }

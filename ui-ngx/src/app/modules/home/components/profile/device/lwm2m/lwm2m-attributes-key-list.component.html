@@ -15,69 +15,60 @@
     limitations under the License.
 
 -->
-<section fxLayout="column" class="tb-kv-map" [formGroup]="kvListFormGroup">
-  <div>
-    <mat-label translate class="tb-title no-padding">device-profile.lwm2m.attribute-lwm2m-destination</mat-label>
-    <mat-label class="tb-editor-area-title-panel">{{ titleText }}</mat-label>
-  </div>
+<section fxLayout="column" class="name-value-map" [formGroup]="attributesValueFormGroup">
   <div fxLayout="row" fxLayoutGap="8px" style="max-height: 40px; margin-top: 8px;">
-    <mat-label fxFlex class="tb-title no-padding" translate>device-profile.lwm2m.attribute-lwm2m-name</mat-label>
-    <mat-label fxFlex class="tb-title no-padding" translate>device-profile.lwm2m.attribute-lwm2m-value</mat-label>
-    <div [fxShow]="!disabled" style="width: 40px;"></div>
+    <label fxFlex="40" class="tb-title no-padding" style="min-width: 230px;" translate>device-profile.lwm2m.attribute-name</label>
+    <label fxFlex="60" class="tb-title no-padding" translate>device-profile.lwm2m.attribute-value</label>
+    <span [fxShow]="!disabled" style="width: 40px;"></span>
   </div>
-  <div fxLayout="column" formArrayName="keyVals"
-       *ngFor="let keyValControl of keyValsFormArray().controls; let $index = index">
-    <div fxLayout="row"  fxLayoutAlign="start center" fxLayoutGap="8px">
-      <mat-form-field class="mat-block"  style="max-heights: 400px">
+  <div fxLayout="column" class="map-list"
+       *ngFor="let nameValueControl of attributesValueFormArray().controls; let $index = index"
+        [formGroup]="nameValueControl">
+    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <mat-form-field fxFlex="40" floatLabel="always" hideRequiredMarker>
         <mat-label></mat-label>
-        <mat-select [formControl]="keyValControl.get('key')">
-          <mat-option *ngFor="let attributeLwm2m of attrKeys"
-                      [value]="attributeLwm2m">
-            {{ attributeLwm2mMap.get(attrKey[attributeLwm2m]) }}
+        <mat-select formControlName="name" required>
+          <mat-option *ngFor="let attributeName of attributeNames" [value]="attributeName"
+                      [disabled]="isDisabledAttributeName(attributeName, $index)">
+            {{ attributeNameTranslationMap.get(attributeName) | translate }}
           </mat-option>
         </mat-select>
+        <mat-error *ngIf="nameValueControl.get('name').hasError('required')">
+          {{ 'device-profile.lwm2m.attribute-name-required' | translate }}
+        </mat-error>
       </mat-form-field>
-      <mat-form-field fxFlex floatLabel="always" hideRequiredMarker class="mat-block"
-                      style="max-height: 40px;">
+      <mat-form-field fxFlex="60" floatLabel="always" hideRequiredMarker>
         <mat-label></mat-label>
-        <input [formControl]="keyValControl.get('value')" matInput
-               placeholder="{{ ('key-val.value') | translate }}"/>
+        <input formControlName="value" matInput required
+               placeholder="{{ 'key-val.value' | translate }}">
+        <mat-error fxLayout="row" *ngIf="nameValueControl.get('value').hasError('required')">
+          {{ 'device-profile.lwm2m.attribute-value-required' | translate }}
+        </mat-error>
+        <mat-error fxLayout="row" *ngIf="nameValueControl.get('value').hasError('min') ||
+                                          nameValueControl.get('value').hasError('pattern')">
+          {{ 'device-profile.lwm2m.attribute-value-pattern' | translate }}
+        </mat-error>
       </mat-form-field>
-      <button mat-button mat-icon-button color="primary"
-              [fxShow]="!disabled"
+      <button *ngIf="!disabled"
+              mat-icon-button color="primary" style="min-width: 40px;"
               type="button"
               (click)="removeKeyVal($index)"
-              [disabled]="isLoading$ | async"
-              matTooltip="{{ 'device-profile.lwm2m.attribute-lwm2m-remove-tip' | translate }}"
+              matTooltip="{{ 'device-profile.lwm2m.remove-attribute' | translate }}"
               matTooltipPosition="above">
         <mat-icon>close</mat-icon>
       </button>
     </div>
-    <mat-error *ngIf="keyValControl.get('key').hasError('required')" style="font-size: smaller">
-      {{ 'device-profile.lwm2m.key-name' | translate }}
-      <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
-    </mat-error>
-    <mat-error fxLayout="row" *ngIf="keyValControl.get('key').hasError('validAttributeKey')"
-               style="font-size: smaller">
-      {{ 'device-profile.lwm2m.valid-attribute-lwm2m-key' | translate: {attrEnums: attrKeys} }}
-    </mat-error>
-    <mat-error fxLayout="row" *ngIf="keyValControl.get('value').hasError('validAttributeValue')"
-               style="font-size: smaller">
-      {{ 'device-profile.lwm2m.valid-attribute-lwm2m-value' | translate: {attrEnums: attrKeys} }}
-    </mat-error>
   </div>
-  <span [fxShow]="!keyValsFormArray().length"
-        fxLayoutAlign="center center" [ngClass]="{'disabled': disabled}"
-        class="no-data-found" translate>{{noDataText ? noDataText : 'device-profile.lwm2m.no-data'}}</span>
-  <div style="margin-top: 8px;">
-    <button mat-button mat-raised-button color="primary"
-            [fxShow]="!disabled"
+  <div [fxShow]="!attributesValueFormArray().length"
+        fxLayoutAlign="center center"
+        class="map-list" translate>device-profile.lwm2m.no-attributes-set</div>
+  <div style="margin-top: 9px;" *ngIf="!disabled && isAddEnabled">
+    <button mat-stroked-button color="primary"
             [disabled]="isLoading$ | async"
-            (click)="addKeyVal()"
             type="button"
-            matTooltip="{{ 'device-profile.lwm2m.attribute-lwm2m-add-tip' | translate }}"
-            matTooltipPosition="above">
-      {{ 'action.add' | translate }}
+            (click)="addKeyVal()">
+      <mat-icon class="button-icon">add_circle_outline</mat-icon>
+      {{ 'device-profile.lwm2m.add-attribute' | translate }}
     </button>
   </div>
 </section>

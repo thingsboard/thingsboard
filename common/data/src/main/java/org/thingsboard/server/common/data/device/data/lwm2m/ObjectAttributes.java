@@ -24,10 +24,10 @@ public class ObjectAttributes {
 
     private Long dim;
     private String ver;
-    private Long pmin;
-    private Long pmax;
-    private Double gt;
-    private Double lt;
-    private Double st;
+    private Integer pmin;
+    private Integer pmax;
+    private Float gt;
+    private Float lt;
+    private Float st;
 
 }
