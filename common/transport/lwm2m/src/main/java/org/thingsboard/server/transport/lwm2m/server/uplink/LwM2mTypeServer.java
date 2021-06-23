@@ -13,22 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.credentials.lwm2m;
+package org.thingsboard.server.transport.lwm2m.server.uplink;
 
-import lombok.SneakyThrows;
-import org.apache.commons.codec.binary.Hex;
+public enum LwM2mTypeServer {
+    BOOTSTRAP(0, "bootstrap"),
+    CLIENT(1, "client");
 
-public abstract class HasKey extends AbstractLwM2MClientCredentials {
-    private byte[] key;
+    public int code;
+    public String type;
 
-    @SneakyThrows
-    public void setKey(String key) {
-        if (key != null) {
-            this.key = Hex.decodeHex(key.toLowerCase().toCharArray());
-        }
+    LwM2mTypeServer(int code, String type) {
+        this.code = code;
+        this.type = type;
     }
 
-    public byte[] getKey() {
-        return key;
+    public static LwM2mTypeServer fromLwM2mTypeServer(String type) {
+        for (LwM2mTypeServer sm : LwM2mTypeServer.values()) {
+            if (sm.type.equals(type)) {
+                return sm;
+            }
+        }
+        throw new IllegalArgumentException(String.format("Unsupported typeServer type : %d", type));
     }
 }
+

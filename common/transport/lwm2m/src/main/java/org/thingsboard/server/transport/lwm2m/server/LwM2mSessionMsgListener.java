@@ -23,7 +23,10 @@ import org.jetbrains.annotations.NotNull;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.transport.SessionMsgListener;
+import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
@@ -45,6 +48,7 @@ public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? s
     private final LwM2MAttributesService attributesService;
     private final LwM2MRpcRequestHandler rpcHandler;
     private final TransportProtos.SessionInfoProto sessionInfo;
+    private final TransportService transportService;
 
     @Override
     public void onGetAttributesResponse(GetAttributeResponseMsg getAttributesResponse) {
@@ -52,9 +56,10 @@ public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? s
     }
 
     @Override
-    public void onAttributeUpdate(AttributeUpdateNotificationMsg attributeUpdateNotification) {
+    public void onAttributeUpdate(UUID sessionId, AttributeUpdateNotificationMsg attributeUpdateNotification) {
+        log.trace("[{}] Received attributes update notification to device", sessionId);
         this.attributesService.onAttributesUpdate(attributeUpdateNotification, this.sessionInfo);
-     }
+    }
 
     @Override
     public void onRemoteSessionCloseCommand(UUID sessionId, SessionCloseNotificationProto sessionCloseNotification) {
@@ -77,8 +82,24 @@ public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? s
     }
 
     @Override
-    public void onToDeviceRpcRequest(ToDeviceRpcRequestMsg toDeviceRequest) {
-        this.rpcHandler.onToDeviceRpcRequest(toDeviceRequest,this.sessionInfo);
+    public void onToDeviceRpcRequest(UUID sessionId, ToDeviceRpcRequestMsg toDeviceRequest) {
+        log.trace("[{}] Received RPC command to device", sessionId);
+        this.rpcHandler.onToDeviceRpcRequest(toDeviceRequest, this.sessionInfo);
+        if (toDeviceRequest.getPersisted()) {
+            RpcStatus status;
+            if (toDeviceRequest.getOneway()) {
+                status = RpcStatus.SUCCESSFUL;
+            } else {
+                status = RpcStatus.DELIVERED;
+            }
+            TransportProtos.ToDevicePersistedRpcResponseMsg responseMsg = TransportProtos.ToDevicePersistedRpcResponseMsg.newBuilder()
+                    .setRequestId(toDeviceRequest.getRequestId())
+                    .setRequestIdLSB(toDeviceRequest.getRequestIdLSB())
+                    .setRequestIdMSB(toDeviceRequest.getRequestIdMSB())
+                    .setStatus(status.name())
+                    .build();
+            transportService.process(sessionInfo, responseMsg, TransportServiceCallback.EMPTY);
+        }
     }
 
     @Override
