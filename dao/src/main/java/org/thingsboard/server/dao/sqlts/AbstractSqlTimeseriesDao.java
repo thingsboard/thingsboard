@@ -29,6 +29,7 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 
 import javax.annotation.Nullable;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -67,17 +68,18 @@ public abstract class AbstractSqlTimeseriesDao extends BaseAbstractSqlTimeseries
     private long systemTtl;
 
     public void cleanup(long systemTtl) {
-        try {
-            log.info("Going to cleanup old timeseries data using ttl: {}s", systemTtl);
-            PreparedStatement stmt = dataSource.getConnection().prepareStatement("call cleanup_timeseries_by_ttl(?,?,?)");
+        log.info("Going to cleanup old timeseries data using ttl: {}s", systemTtl);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement stmt = connection.prepareStatement("call cleanup_timeseries_by_ttl(?,?,?)")) {
             stmt.setObject(1, ModelConstants.NULL_UUID);
             stmt.setLong(2, systemTtl);
             stmt.setLong(3, 0);
             stmt.execute();
             printWarnings(stmt);
-            ResultSet resultSet = stmt.getResultSet();
-            resultSet.next();
-            log.info("Total telemetry removed stats by TTL for entities: [{}]", resultSet.getLong(1));
+            try (ResultSet resultSet = stmt.getResultSet()) {
+                resultSet.next();
+                log.info("Total telemetry removed stats by TTL for entities: [{}]", resultSet.getLong(1));
+            }
         } catch (SQLException e) {
             log.error("SQLException occurred during timeseries TTL task execution ", e);
         }

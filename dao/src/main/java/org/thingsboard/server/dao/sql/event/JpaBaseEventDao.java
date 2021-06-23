@@ -39,6 +39,7 @@ import org.thingsboard.server.dao.event.EventDao;
 import org.thingsboard.server.dao.model.sql.EventEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -260,17 +261,18 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
 
     @Override
     public void cleanupEvents(long otherEventsTtl, long debugEventsTtl) {
-        try {
-            log.info("Going to cleanup old events using debug events ttl: {}s and other events ttl: {}s", debugEventsTtl, otherEventsTtl);
-            PreparedStatement stmt = dataSource.getConnection().prepareStatement("call cleanup_events_by_ttl(?,?,?)");
+        log.info("Going to cleanup old events using debug events ttl: {}s and other events ttl: {}s", debugEventsTtl, otherEventsTtl);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement stmt = connection.prepareStatement("call cleanup_events_by_ttl(?,?,?)")) {
             stmt.setLong(1, otherEventsTtl);
             stmt.setLong(2, debugEventsTtl);
             stmt.setLong(3, 0);
             stmt.execute();
             printWarnings(stmt);
-            ResultSet resultSet = stmt.getResultSet();
-            resultSet.next();
-            log.info("Total events removed by TTL: [{}]", resultSet.getLong(1));
+            try (ResultSet resultSet = stmt.getResultSet()){
+                resultSet.next();
+                log.info("Total events removed by TTL: [{}]", resultSet.getLong(1));
+            }
         } catch (SQLException e) {
             log.error("SQLException occurred during events TTL task execution ", e);
         }
