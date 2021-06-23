@@ -56,9 +56,10 @@ public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? s
     }
 
     @Override
-    public void onAttributeUpdate(AttributeUpdateNotificationMsg attributeUpdateNotification) {
+    public void onAttributeUpdate(UUID sessionId, AttributeUpdateNotificationMsg attributeUpdateNotification) {
+        log.trace("[{}] Received attributes update notification to device", sessionId);
         this.attributesService.onAttributesUpdate(attributeUpdateNotification, this.sessionInfo);
-     }
+    }
 
     @Override
     public void onRemoteSessionCloseCommand(UUID sessionId, SessionCloseNotificationProto sessionCloseNotification) {
@@ -81,7 +82,8 @@ public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? s
     }
 
     @Override
-    public void onToDeviceRpcRequest(ToDeviceRpcRequestMsg toDeviceRequest) {
+    public void onToDeviceRpcRequest(UUID sessionId, ToDeviceRpcRequestMsg toDeviceRequest) {
+        log.trace("[{}] Received RPC command to device", sessionId);
         this.rpcHandler.onToDeviceRpcRequest(toDeviceRequest, this.sessionInfo);
         if (toDeviceRequest.getPersisted()) {
             RpcStatus status;

@@ -752,7 +752,7 @@ public class DefaultTransportService implements TransportService {
                     listener.onGetAttributesResponse(toSessionMsg.getGetAttributesResponse());
                 }
                 if (toSessionMsg.hasAttributeUpdateNotification()) {
-                    listener.onAttributeUpdate(toSessionMsg.getAttributeUpdateNotification());
+                    listener.onAttributeUpdate(sessionId, toSessionMsg.getAttributeUpdateNotification());
                 }
                 if (toSessionMsg.hasSessionCloseNotification()) {
                     listener.onRemoteSessionCloseCommand(sessionId, toSessionMsg.getSessionCloseNotification());
@@ -761,7 +761,7 @@ public class DefaultTransportService implements TransportService {
                     listener.onToTransportUpdateCredentials(toSessionMsg.getToTransportUpdateCredentialsNotification());
                 }
                 if (toSessionMsg.hasToDeviceRequest()) {
-                    listener.onToDeviceRpcRequest(toSessionMsg.getToDeviceRequest());
+                    listener.onToDeviceRpcRequest(sessionId, toSessionMsg.getToDeviceRequest());
                 }
                 if (toSessionMsg.hasToServerResponse()) {
                     String requestId = sessionId + "-" + toSessionMsg.getToServerResponse().getRequestId();
