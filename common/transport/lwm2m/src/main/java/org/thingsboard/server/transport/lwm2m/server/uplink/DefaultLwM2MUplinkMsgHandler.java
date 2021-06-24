@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -247,14 +247,7 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 log.warn("[{}] [{{}] Client: update after Registration", registration.getEndpoint(), registration.getId());
                 logService.log(lwM2MClient, String.format("[%s][%s] Updated registration.", registration.getId(), registration.getSocketAddress()));
                 clientContext.updateRegistration(lwM2MClient, registration);
-                TransportProtos.SessionInfoProto sessionInfo = lwM2MClient.getSession();
-                this.reportActivityAndRegister(sessionInfo);
-                if (registration.usesQueueMode()) {
-                    LwM2mQueuedRequest request;
-                    while ((request = lwM2MClient.getQueuedRequests().poll()) != null) {
-                        request.send();
-                    }
-                }
+                this.reportActivityAndRegister(lwM2MClient.getSession());
             } catch (LwM2MClientStateException stateException) {
                 if (LwM2MClientState.REGISTERED.equals(stateException.getState())) {
                     log.info("[{}] update registration failed because client has different registration id: [{}] {}.", registration.getEndpoint(), stateException.getState(), stateException.getMessage());
