@@ -158,8 +158,9 @@ public final class EdgeGrpcSession implements Closeable {
                 if (connected && requestMsg.getMsgType().equals(RequestMsgType.SYNC_REQUEST_RPC_MESSAGE)) {
                     if (requestMsg.getSyncRequestMsg().getSyncRequired()) {
                         startSyncProcess(edge.getTenantId(), edge.getId());
+                    } else {
+                        syncCompleted = true;
                     }
-                    syncCompleted = true;
                 }
                 if (connected) {
                     if (requestMsg.getMsgType().equals(RequestMsgType.UPLINK_RPC_MESSAGE) && requestMsg.hasUplinkMsg()) {
@@ -228,6 +229,8 @@ public final class EdgeGrpcSession implements Closeable {
                         .setSyncCompletedMsg(SyncCompletedMsg.newBuilder().build())
                         .build();
                 sendDownlinkMsgsPack(Collections.singletonList(syncCompleteDownlinkMsg));
+
+                syncCompleted = true;
             } catch (Exception e) {
                 log.error("[{}][{}] Exception during sync process", edge.getTenantId(), edge.getId(), e);
             }
