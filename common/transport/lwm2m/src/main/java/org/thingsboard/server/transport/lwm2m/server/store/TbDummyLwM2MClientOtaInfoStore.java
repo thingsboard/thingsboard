@@ -15,13 +15,18 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.store;
 
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MClientOtaInfo;
 
-public interface TbLwM2MClientStore {
+public class TbDummyLwM2MClientOtaInfoStore implements TbLwM2MClientOtaInfoStore {
 
-    LwM2mClient get(String endpoint);
+    @Override
+    public LwM2MClientOtaInfo get(OtaPackageType type, String endpoint) {
+        return null;
+    }
 
-    void put(LwM2mClient client);
+    @Override
+    public void put(LwM2MClientOtaInfo info) {
 
-    void remove(String endpoint);
+    }
 }

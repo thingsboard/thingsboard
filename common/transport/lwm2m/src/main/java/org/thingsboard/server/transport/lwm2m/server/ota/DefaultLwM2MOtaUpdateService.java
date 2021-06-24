@@ -52,6 +52,7 @@ import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdate
 import org.thingsboard.server.transport.lwm2m.server.ota.software.LwM2MSoftwareUpdateStrategy;
 import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateResult;
 import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateState;
+import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MClientOtaInfoStore;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 import javax.annotation.PostConstruct;
@@ -123,6 +124,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     private final OtaPackageDataCache otaPackageDataCache;
     private final LwM2MTelemetryLogService logService;
     private final LwM2mTransportServerHelper helper;
+    private final TbLwM2MClientOtaInfoStore otaInfoStore;
 
     @Autowired
     @Lazy
@@ -174,6 +176,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
             }, throwable -> {
                 if (fwInfo.isSupported()) {
                     fwInfo.setTargetFetchFailure(true);
+                    update(fwInfo);
                 }
             }, executor);
         }
@@ -191,6 +194,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     public void onTargetFirmwareUpdate(LwM2mClient client, String newFirmwareTitle, String newFirmwareVersion, Optional<String> newFirmwareUrl) {
         LwM2MClientOtaInfo fwInfo = getOrInitFwInfo(client);
         fwInfo.updateTarget(newFirmwareTitle, newFirmwareVersion, newFirmwareUrl);
+        update(fwInfo);
         startFirmwareUpdateIfNeeded(client, fwInfo);
     }
 
@@ -202,7 +206,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     }
 
     @Override
-    public void onCurrentFirmwareStrategyUpdate(LwM2mClient client, OtherConfiguration configuration) {
+    public void onFirmwareStrategyUpdate(LwM2mClient client, OtherConfiguration configuration) {
         log.debug("[{}] Current fw strategy: {}", client.getEndpoint(), configuration.getFwUpdateStrategy());
         LwM2MClientOtaInfo fwInfo = getOrInitFwInfo(client);
         fwInfo.setFwStrategy(LwM2MFirmwareUpdateStrategy.fromStrategyFwByCode(configuration.getFwUpdateStrategy()));
@@ -242,9 +246,10 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
             executeFwUpdate(client);
         }
         fwInfo.setUpdateState(state);
-        Optional<OtaPackageUpdateStatus> status = this.toOtaPackageUpdateStatus(state);
+        Optional<OtaPackageUpdateStatus> status = toOtaPackageUpdateStatus(state);
         status.ifPresent(otaStatus -> sendStateUpdateToTelemetry(client, fwInfo,
                 otaStatus, "Firmware Update State: " + state.name()));
+        update(fwInfo);
     }
 
     @Override
@@ -252,15 +257,16 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         log.debug("[{}] Current fw result: {}", client.getEndpoint(), code);
         LwM2MClientOtaInfo fwInfo = getOrInitFwInfo(client);
         FirmwareUpdateResult result = FirmwareUpdateResult.fromUpdateResultFwByCode(code.intValue());
-        Optional<OtaPackageUpdateStatus> status = this.toOtaPackageUpdateStatus(result);
+        Optional<OtaPackageUpdateStatus> status = toOtaPackageUpdateStatus(result);
         status.ifPresent(otaStatus -> sendStateUpdateToTelemetry(client, fwInfo,
                 otaStatus, "Firmware Update Result: " + result.name()));
         if (result.isAgain() && fwInfo.getRetryAttempts() <= 2) {
             fwInfo.setRetryAttempts(fwInfo.getRetryAttempts() + 1);
             startFirmwareUpdateIfNeeded(client, fwInfo);
         } else {
-            fwInfo.setUpdateResult(result);
+            fwInfo.update(result);
         }
+        update(fwInfo);
     }
 
     @Override
@@ -378,21 +384,36 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     }
 
     public LwM2MClientOtaInfo getOrInitFwInfo(LwM2mClient client) {
-        //TODO: fetch state from the cache or DB.
         return this.fwStates.computeIfAbsent(client.getEndpoint(), endpoint -> {
-            var profile = clientContext.getProfile(client.getProfileId());
-            return new LwM2MClientOtaInfo(endpoint, OtaPackageType.FIRMWARE, profile.getClientLwM2mSettings().getFwUpdateStrategy(),
-                    profile.getClientLwM2mSettings().getFwUpdateResource());
+            LwM2MClientOtaInfo info = otaInfoStore.get(OtaPackageType.FIRMWARE, endpoint);
+            if (info == null) {
+                var profile = clientContext.getProfile(client.getProfileId());
+                info = new LwM2MClientOtaInfo(endpoint, OtaPackageType.FIRMWARE,
+                        LwM2MFirmwareUpdateStrategy.fromStrategyFwByCode(profile.getClientLwM2mSettings().getFwUpdateStrategy()),
+                        profile.getClientLwM2mSettings().getFwUpdateResource());
+                update(info);
+            }
+            return info;
         });
     }
 
     private LwM2MClientOtaInfo getOrInitSwInfo(LwM2mClient client) {
-        //TODO: fetch state from the cache or DB.
-        return swStates.computeIfAbsent(client.getEndpoint(), endpoint -> {
-            var profile = clientContext.getProfile(client.getProfileId());
-            return new LwM2MClientOtaInfo(endpoint, OtaPackageType.SOFTWARE, profile.getClientLwM2mSettings().getSwUpdateStrategy(), profile.getClientLwM2mSettings().getSwUpdateResource());
+        return this.fwStates.computeIfAbsent(client.getEndpoint(), endpoint -> {
+            LwM2MClientOtaInfo info = otaInfoStore.get(OtaPackageType.SOFTWARE, endpoint);
+            if (info == null) {
+                var profile = clientContext.getProfile(client.getProfileId());
+                info = new LwM2MClientOtaInfo(endpoint, OtaPackageType.SOFTWARE,
+                        LwM2MSoftwareUpdateStrategy.fromStrategySwByCode(profile.getClientLwM2mSettings().getFwUpdateStrategy()),
+                        profile.getClientLwM2mSettings().getSwUpdateResource());
+                update(info);
+            }
+            return info;
         });
 
+    }
+
+    private void update(LwM2MClientOtaInfo info) {
+        otaInfoStore.put(info);
     }
 
     private void sendStateUpdateToTelemetry(LwM2mClient client, LwM2MClientOtaInfo fwInfo, OtaPackageUpdateStatus status, String log) {

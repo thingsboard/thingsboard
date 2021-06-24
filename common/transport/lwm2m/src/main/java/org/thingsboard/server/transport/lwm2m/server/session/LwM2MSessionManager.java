@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.store;
+package org.thingsboard.server.transport.lwm2m.server.session;
 
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.gen.transport.TransportProtos;
 
-public interface TbLwM2MClientStore {
+public interface LwM2MSessionManager {
 
-    LwM2mClient get(String endpoint);
+    void register(TransportProtos.SessionInfoProto sessionInfo);
 
-    void put(LwM2mClient client);
+    void deregister(TransportProtos.SessionInfoProto sessionInfo);
 
-    void remove(String endpoint);
+
 }

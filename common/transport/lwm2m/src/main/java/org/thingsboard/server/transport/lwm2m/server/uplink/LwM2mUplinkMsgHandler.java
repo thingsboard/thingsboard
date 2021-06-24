@@ -48,8 +48,6 @@ public interface LwM2mUplinkMsgHandler {
 
     void onResourceDelete(Optional<TransportProtos.ResourceDeleteMsg> resourceDeleteMsgOpt);
 
-    void doDisconnect(TransportProtos.SessionInfoProto sessionInfo);
-
     void onAwakeDev(Registration registration);
 
     void onWriteResponseOk(LwM2mClient client, String path, WriteRequest request);
