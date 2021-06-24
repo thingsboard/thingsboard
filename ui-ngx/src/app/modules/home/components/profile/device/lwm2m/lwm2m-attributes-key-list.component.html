@@ -39,7 +39,7 @@
       </mat-form-field>
       <mat-form-field fxFlex="60" floatLabel="always" hideRequiredMarker>
         <mat-label></mat-label>
-        <input formControlName="value" matInput required
+        <input formControlName="value" matInput required type="number"
                placeholder="{{ 'key-val.value' | translate }}">
         <mat-error fxLayout="row" *ngIf="nameValueControl.get('value').hasError('required')">
           {{ 'device-profile.lwm2m.attribute-value-required' | translate }}
