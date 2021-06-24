@@ -407,14 +407,13 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
         LwM2mClient lwM2MClient = this.clientContext.getClientByEndpoint(registration.getEndpoint());
 
         if (LwM2MClientState.REGISTERED.equals(lwM2MClient.getState())) {
-            Lwm2mDeviceProfileTransportConfiguration deviceProfile = clientContext.getProfile(lwM2MClient.getProfileId());
-
             PowerMode powerMode = lwM2MClient.getPowerMode();
             if (powerMode == null) {
+                Lwm2mDeviceProfileTransportConfiguration deviceProfile = clientContext.getProfile(lwM2MClient.getProfileId());
                 powerMode = deviceProfile.getClientLwM2mSettings().getPowerMode();
             }
 
-            if (powerMode.equals(PowerMode.PSM) || powerMode.equals(PowerMode.E_DRX)) {
+            if (PowerMode.PSM.equals(powerMode) || PowerMode.E_DRX.equals(powerMode)) {
                 initAttributes(lwM2MClient);
                 TransportProtos.TransportToDeviceActorMsg toDeviceActorMsg = TransportProtos.TransportToDeviceActorMsg
                         .newBuilder()
