@@ -50,7 +50,6 @@ import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
-import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.transport.SessionMsgListener;
@@ -819,25 +818,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     .ifPresent(payload -> {
                         ChannelFuture channelFuture = deviceSessionCtx.getChannel().writeAndFlush(payload);
                         if (rpcRequest.getPersisted()) {
-                            channelFuture.addListener(future -> {
-                                RpcStatus status;
-                                Throwable t = future.cause();
-                                if (t != null) {
-                                    log.error("Failed delivering RPC command to device!", t);
-                                    status = RpcStatus.FAILED;
-                                } else if (rpcRequest.getOneway()) {
-                                    status = RpcStatus.SUCCESSFUL;
-                                } else {
-                                    status = RpcStatus.DELIVERED;
-                                }
-                                TransportProtos.ToDevicePersistedRpcResponseMsg msg = TransportProtos.ToDevicePersistedRpcResponseMsg.newBuilder()
-                                        .setRequestId(rpcRequest.getRequestId())
-                                        .setRequestIdLSB(rpcRequest.getRequestIdLSB())
-                                        .setRequestIdMSB(rpcRequest.getRequestIdMSB())
-                                        .setStatus(status.name())
-                                        .build();
-                                transportService.process(deviceSessionCtx.getSessionInfo(), msg, TransportServiceCallback.EMPTY);
-                            });
+                            channelFuture.addListener(future ->
+                                    transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest,
+                                            future.cause() != null, TransportServiceCallback.EMPTY)
+                            );
                         }
                     });
         } catch (Exception e) {

@@ -18,7 +18,6 @@ package org.thingsboard.server.transport.mqtt.session;
 import io.netty.channel.ChannelFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
@@ -100,25 +99,9 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
                     payload -> {
                         ChannelFuture channelFuture = parent.writeAndFlush(payload);
                         if (request.getPersisted()) {
-                            channelFuture.addListener(future -> {
-                                RpcStatus status;
-                                Throwable t = future.cause();
-                                if (t != null) {
-                                    log.error("Failed delivering RPC command to device!", t);
-                                    status = RpcStatus.FAILED;
-                                } else if (request.getOneway()) {
-                                    status = RpcStatus.SUCCESSFUL;
-                                } else {
-                                    status = RpcStatus.DELIVERED;
-                                }
-                                TransportProtos.ToDevicePersistedRpcResponseMsg msg = TransportProtos.ToDevicePersistedRpcResponseMsg.newBuilder()
-                                        .setRequestId(request.getRequestId())
-                                        .setRequestIdLSB(request.getRequestIdLSB())
-                                        .setRequestIdMSB(request.getRequestIdMSB())
-                                        .setStatus(status.name())
-                                        .build();
-                                transportService.process(getSessionInfo(), msg, TransportServiceCallback.EMPTY);
-                            });
+                            channelFuture.addListener(future ->
+                                    transportService.process(getSessionInfo(), request, future.cause() != null, TransportServiceCallback.EMPTY)
+                            );
                         }
                     }
             );

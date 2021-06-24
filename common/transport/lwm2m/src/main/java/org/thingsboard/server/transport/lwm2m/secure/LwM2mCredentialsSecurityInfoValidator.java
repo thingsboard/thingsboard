@@ -33,6 +33,7 @@ import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer;
 
 import java.io.IOException;
@@ -84,7 +85,14 @@ public class LwM2mCredentialsSecurityInfoValidator {
         } catch (InterruptedException e) {
             log.error("Failed to await credentials!", e);
         }
-        return resultSecurityStore[0];
+
+        TbLwM2MSecurityInfo securityInfo = resultSecurityStore[0];
+
+        if (securityInfo.getSecurityMode() == null) {
+            throw new LwM2MAuthException();
+        }
+
+        return securityInfo;
     }
 
     /**

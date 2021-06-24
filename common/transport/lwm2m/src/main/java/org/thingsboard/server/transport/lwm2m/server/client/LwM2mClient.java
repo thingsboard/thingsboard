@@ -32,6 +32,8 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
+import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
@@ -80,6 +82,9 @@ public class LwM2mClient implements Cloneable {
     private String deviceProfileName;
 
     @Getter
+    private PowerMode powerMode;
+
+    @Getter
     private String identity;
     @Getter
     private SecurityInfo securityInfo;
@@ -121,6 +126,7 @@ public class LwM2mClient implements Cloneable {
         this.profileId = new UUID(session.getDeviceProfileIdMSB(), session.getDeviceProfileIdLSB());
         this.deviceName = session.getDeviceName();
         this.deviceProfileName = session.getDeviceType();
+        this.powerMode = credentials.getDeviceInfo().getPowerMode();
     }
 
     public void lock() {
@@ -140,6 +146,7 @@ public class LwM2mClient implements Cloneable {
         builder.setDeviceName(deviceName);
         deviceProfileOpt.ifPresent(deviceProfile -> updateSession(deviceProfile, builder));
         this.session = builder.build();
+        this.powerMode = ((Lwm2mDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration()).getPowerMode();
     }
 
     public void onDeviceProfileUpdate(DeviceProfile deviceProfile) {

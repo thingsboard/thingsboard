@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.transport.auth;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -30,6 +31,7 @@ public class TransportDeviceInfo {
     private DeviceId deviceId;
     private String deviceName;
     private String deviceType;
+    private PowerMode powerMode;
     private String additionalInfo;
 
 }

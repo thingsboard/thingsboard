@@ -1213,6 +1213,13 @@
         "export-failed-error": "Unable to export device profile: {{error}}",
         "device-profile-file": "Device profile file",
         "invalid-device-profile-file-error": "Unable to import device profile: Invalid device profile data structure.",
+        "power-saving-mode": "Power Saving Mode",
+        "power-saving-mode-type": {
+            "default": "Use device profile power saving mode",
+            "psm": "Power Saving Mode (PSM)",
+            "drx": "Discontinuous Reception (DRX)",
+            "edrx": "Extended Discontinuous Reception (eDRX)"
+        },
         "lwm2m": {
             "object-list": "Object list",
             "object-list-empty": "No objects selected.",

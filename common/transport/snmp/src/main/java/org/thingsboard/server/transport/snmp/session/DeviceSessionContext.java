@@ -26,7 +26,6 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
@@ -140,22 +139,8 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
 
     @Override
     public void onToDeviceRpcRequest(ToDeviceRpcRequestMsg toDeviceRequest) {
-       snmpTransportContext.getSnmpTransportService().onToDeviceRpcRequest(this, toDeviceRequest);
-        if (toDeviceRequest.getPersisted()) {
-            RpcStatus status;
-            if (toDeviceRequest.getOneway()) {
-                status = RpcStatus.SUCCESSFUL;
-            } else {
-                status = RpcStatus.DELIVERED;
-            }
-            TransportProtos.ToDevicePersistedRpcResponseMsg responseMsg = TransportProtos.ToDevicePersistedRpcResponseMsg.newBuilder()
-                    .setRequestId(toDeviceRequest.getRequestId())
-                    .setRequestIdLSB(toDeviceRequest.getRequestIdLSB())
-                    .setRequestIdMSB(toDeviceRequest.getRequestIdMSB())
-                    .setStatus(status.name())
-                    .build();
-            snmpTransportContext.getTransportService().process(getSessionInfo(), responseMsg, TransportServiceCallback.EMPTY);
-        }
+        snmpTransportContext.getSnmpTransportService().onToDeviceRpcRequest(this, toDeviceRequest);
+        snmpTransportContext.getTransportService().process(getSessionInfo(), toDeviceRequest, false, TransportServiceCallback.EMPTY);
     }
 
     @Override

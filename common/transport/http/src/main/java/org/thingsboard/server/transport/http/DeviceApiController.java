@@ -406,21 +406,7 @@ public class DeviceApiController implements TbTransportService {
         @Override
         public void onToDeviceRpcRequest(ToDeviceRpcRequestMsg msg) {
             responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg, true).toString(), HttpStatus.OK));
-            if (msg.getPersisted()) {
-                RpcStatus status;
-                if (msg.getOneway()) {
-                    status = RpcStatus.SUCCESSFUL;
-                } else {
-                    status = RpcStatus.DELIVERED;
-                }
-                TransportProtos.ToDevicePersistedRpcResponseMsg responseMsg = TransportProtos.ToDevicePersistedRpcResponseMsg.newBuilder()
-                        .setRequestId(msg.getRequestId())
-                        .setRequestIdLSB(msg.getRequestIdLSB())
-                        .setRequestIdMSB(msg.getRequestIdMSB())
-                        .setStatus(status.name())
-                        .build();
-                transportService.process(sessionInfo, responseMsg, TransportServiceCallback.EMPTY);
-            }
+            transportService.process(sessionInfo, msg, false, TransportServiceCallback.EMPTY);
         }
 
         @Override

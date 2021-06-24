@@ -44,7 +44,6 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportC
 import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
-import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
@@ -515,23 +514,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                 exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
                 successful = false;
             }
-            if (msg.getPersisted()) {
-                    RpcStatus status;
-                    if (!successful) {
-                        status = RpcStatus.FAILED;
-                    } else if (msg.getOneway()) {
-                        status = RpcStatus.SUCCESSFUL;
-                    } else {
-                        status = RpcStatus.DELIVERED;
-                    }
-                    TransportProtos.ToDevicePersistedRpcResponseMsg responseMsg = TransportProtos.ToDevicePersistedRpcResponseMsg.newBuilder()
-                            .setRequestId(msg.getRequestId())
-                            .setRequestIdLSB(msg.getRequestIdLSB())
-                            .setRequestIdMSB(msg.getRequestIdMSB())
-                            .setStatus(status.name())
-                            .build();
-                    coapTransportResource.transportService.process(sessionInfo, responseMsg, TransportServiceCallback.EMPTY);
-            }
+            coapTransportResource.transportService.process(sessionInfo, msg, !successful, TransportServiceCallback.EMPTY);
         }
 
         @Override

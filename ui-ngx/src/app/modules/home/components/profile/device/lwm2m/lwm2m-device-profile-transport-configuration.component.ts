@@ -32,7 +32,7 @@ import {
   ModelValue,
   ObjectLwM2M,
   OBSERVE,
-  OBSERVE_ATTR_TELEMETRY, powerMode, powerModeNames,
+  OBSERVE_ATTR_TELEMETRY, PowerMode, PowerModeTranslationMap,
   RESOURCES,
   TELEMETRY
 } from './lwm2m-profile-config.models';
@@ -72,9 +72,8 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   sortFunction: (key: string, value: object) => object;
   isFwUpdateStrategy: boolean;
   isSwUpdateStrategy: boolean;
-  powerModeLwM2MType = powerMode;
-  powerModeLwM2MTypes = Object.keys(powerMode);
-  powerModeLwM2MNamesMap = powerModeNames;
+  powerMods = Object.values(PowerMode);
+  powerModeTranslationMap = PowerModeTranslationMap;
 
   get required(): boolean {
     return this.requiredValue;
@@ -208,7 +207,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   private updateWriteValue = (value: ModelValue): void => {
     const fwResource = isDefinedAndNotNull(this.configurationValue.clientLwM2mSettings.fwUpdateResource) ?
       this.configurationValue.clientLwM2mSettings.fwUpdateResource : '';
-    const swResource = isDefinedAndNotNull(this.configurationValue.clientLwM2mSettings.fwUpdateResource) ?
+    const swResource = isDefinedAndNotNull(this.configurationValue.clientLwM2mSettings.swUpdateResource) ?
       this.configurationValue.clientLwM2mSettings.swUpdateResource : '';
     this.lwm2mDeviceProfileFormGroup.patchValue({
         objectIds: value,

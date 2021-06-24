@@ -115,6 +115,7 @@ message DeviceInfoProto {
   int64 deviceProfileIdLSB = 9;
   int64 customerIdMSB = 10;
   int64 customerIdLSB = 11;
+  string powerMode = 12;
 }
 
 /**
