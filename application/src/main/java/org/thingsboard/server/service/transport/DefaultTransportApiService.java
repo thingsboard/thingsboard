@@ -468,7 +468,7 @@ public class DefaultTransportApiService implements TransportApiService {
                 break;
         }
 
-        return DeviceInfoProto.newBuilder()
+        DeviceInfoProto.Builder builder = DeviceInfoProto.newBuilder()
                 .setTenantIdMSB(device.getTenantId().getId().getMostSignificantBits())
                 .setTenantIdLSB(device.getTenantId().getId().getLeastSignificantBits())
                 .setCustomerIdMSB(Optional.ofNullable(device.getCustomerId()).map(customerId -> customerId.getId().getMostSignificantBits()).orElse(0L))
@@ -479,9 +479,11 @@ public class DefaultTransportApiService implements TransportApiService {
                 .setDeviceType(device.getType())
                 .setDeviceProfileIdMSB(device.getDeviceProfileId().getId().getMostSignificantBits())
                 .setDeviceProfileIdLSB(device.getDeviceProfileId().getId().getLeastSignificantBits())
-                .setAdditionalInfo(mapper.writeValueAsString(device.getAdditionalInfo()))
-                .setPowerMode(powerMode != null ? powerMode.name() : null)
-                .build();
+                .setAdditionalInfo(mapper.writeValueAsString(device.getAdditionalInfo()));
+        if (powerMode != null) {
+            builder.setPowerMode(powerMode.name());
+        }
+        return builder.build();
     }
 
     private ListenableFuture<TransportApiResponseMsg> getEmptyTransportApiResponseFuture() {
