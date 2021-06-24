@@ -30,14 +30,15 @@ import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.request.ObserveRequest;
 import org.eclipse.leshan.core.request.ReadRequest;
+import org.eclipse.leshan.core.request.WriteCompositeRequest;
 import org.eclipse.leshan.core.request.WriteRequest;
 import org.eclipse.leshan.core.response.ObserveResponse;
+import org.eclipse.leshan.core.response.ReadCompositeResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
-import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.StringUtils;
@@ -83,8 +84,6 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttrib
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttributesRequest;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MOtaUpdateService;
-import org.thingsboard.server.transport.lwm2m.server.ota.firmware.LwM2MFirmwareUpdateStrategy;
-import org.thingsboard.server.transport.lwm2m.server.ota.software.LwM2MSoftwareUpdateStrategy;
 import org.thingsboard.server.transport.lwm2m.server.rpc.LwM2MRpcRequestHandler;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
@@ -94,6 +93,7 @@ import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -354,6 +354,22 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
         }
     }
 
+    public void onUpdateValueAfterReadCompositeResponse(Registration registration, String path, ReadCompositeResponse response) {
+        log.warn("201) ReadCompositeResponse: [{}]", response);
+        if (response.getContent() != null) {
+            LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
+            response.getContent().forEach((k, v) -> {
+                if (v instanceof LwM2mObject) {
+                    this.updateObjectResourceValue(lwM2MClient, (LwM2mObject) v, k.toString());
+                } else if (v instanceof LwM2mObjectInstance) {
+                    this.updateObjectInstanceResourceValue(lwM2MClient, (LwM2mObjectInstance) v, k.toString());
+                } else if (v instanceof LwM2mResource) {
+                    this.updateResourcesValue(lwM2MClient, (LwM2mResource) v, k.toString());
+                }
+            });
+        }
+    }
+
     /**
      * @param sessionInfo   -
      * @param deviceProfile -
@@ -429,6 +445,17 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
         if (supportedObjects != null && supportedObjects.size() > 0) {
             // #1
             this.sendReadRequests(lwM2MClient, profile, supportedObjects);
+            // test composite
+            String[] paths = new String[]{"/3/0", "/1/0", "/5/0"};
+//        String [] paths = new String[] {"/5"};
+//            String [] paths = new String[] {"/"};
+//        String [] paths = new String[] {"/9"};
+            defaultLwM2MDownlinkMsgHandler.sendReadCompositeRequest(lwM2MClient, paths, this);
+            Map<String, Object> nodes = new HashMap<>();
+            nodes.put("/3/0/14", "+02");
+            nodes.put("/1/0/2", 100);
+            nodes.put("/5/0/1", "coap://localhost:5685");
+            defaultLwM2MDownlinkMsgHandler.sendWriteCompositeRequest(lwM2MClient, nodes, this);
             this.sendObserveRequests(lwM2MClient, profile, supportedObjects);
             this.sendWriteAttributeRequests(lwM2MClient, profile, supportedObjects);
 //            Removed. Used only for debug.
@@ -710,6 +737,14 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
             });
         }
 
+    }
+
+    @Override
+    public void onWriteCompositeResponseOk(LwM2mClient client, WriteCompositeRequest request) {
+        log.warn("202) ReadCompositeResponse: [{}]", request.getNodes());
+        request.getNodes().forEach((k, v) -> {
+            this.updateResourcesValue(client, (LwM2mResource) v, k.toString());
+        });
     }
 
     //TODO: review and optimize the logic to minimize number of the requests to device.

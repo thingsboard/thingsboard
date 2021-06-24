@@ -31,17 +31,21 @@ import org.eclipse.leshan.core.request.DeleteRequest;
 import org.eclipse.leshan.core.request.DiscoverRequest;
 import org.eclipse.leshan.core.request.ExecuteRequest;
 import org.eclipse.leshan.core.request.ObserveRequest;
+import org.eclipse.leshan.core.request.ReadCompositeRequest;
 import org.eclipse.leshan.core.request.ReadRequest;
 import org.eclipse.leshan.core.request.SimpleDownlinkRequest;
 import org.eclipse.leshan.core.request.WriteAttributesRequest;
+import org.eclipse.leshan.core.request.WriteCompositeRequest;
 import org.eclipse.leshan.core.request.WriteRequest;
 import org.eclipse.leshan.core.response.DeleteResponse;
 import org.eclipse.leshan.core.response.DiscoverResponse;
 import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.eclipse.leshan.core.response.LwM2mResponse;
 import org.eclipse.leshan.core.response.ObserveResponse;
+import org.eclipse.leshan.core.response.ReadCompositeResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.core.response.WriteAttributesResponse;
+import org.eclipse.leshan.core.response.WriteCompositeResponse;
 import org.eclipse.leshan.core.response.WriteResponse;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.registration.Registration;
@@ -54,6 +58,7 @@ import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.common.LwM2MExecutorAwareService;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
+import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
@@ -63,6 +68,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -110,9 +116,35 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     @Override
     public void sendReadRequest(LwM2mClient client, TbLwM2MReadRequest request, DownlinkRequestCallback<ReadRequest, ReadResponse> callback) {
         validateVersionedId(client, request);
-        ReadRequest downlink = new ReadRequest(getContentFormat(client, request), request.getObjectId());
+        ReadRequest downlink = new ReadRequest(getRequestContentFormat(client, request), request.getObjectId());
         sendRequest(client, downlink, request.getTimeout(), callback);
     }
+
+    @Override
+//    public void sendReadCompositeRequest(LwM2mClient client, TbLwM2MReadCompositeRequest request, DownlinkRequestCallback<ReadCompositeRequest, ReadCompositeResponse> callback) {
+    public void sendReadCompositeRequest(LwM2mClient client, String [] paths, DefaultLwM2MUplinkMsgHandler lwM2MUplinkMsgHandler) {
+//        validateVersionedId(client, request);
+        DownlinkRequestCallback<ReadCompositeRequest, ReadCompositeResponse> callback = new TbLwM2MReadCompositeCallback(lwM2MUplinkMsgHandler, logService, client, null);
+        ContentFormat requestContentFormat = ContentFormat.SENML_JSON;
+        ContentFormat responseContentFormat = ContentFormat.SENML_JSON;
+        ReadCompositeRequest downlink = new ReadCompositeRequest(requestContentFormat, responseContentFormat, paths);
+        sendReadRequestComposite(client, downlink, this.config.getTimeout(), callback);
+    }
+
+    @Override
+    public void sendWriteCompositeRequest(LwM2mClient client, Map<String, Object> nodes, DefaultLwM2MUplinkMsgHandler handler) {
+//        ResourceModel resourceModelWrite = client.getResourceModel(request.getVersionedId(), this.config.getModelProvider());
+        TbLwM2MWriteResponseCompositeCallback callback = new TbLwM2MWriteResponseCompositeCallback (handler, logService, client, null);
+            ContentFormat contentFormat = ContentFormat.SENML_JSON;
+            try {
+                WriteCompositeRequest downlink = new WriteCompositeRequest(contentFormat, nodes);
+                sendWriteCompositeRequest(client, downlink, this.config.getTimeout(), callback);
+            } catch (Exception e) {
+                callback.onError(JacksonUtil.toString(nodes), e);
+            }
+
+    }
+
 
     @Override
     public void sendObserveRequest(LwM2mClient client, TbLwM2MObserveRequest request, DownlinkRequestCallback<ObserveRequest, ObserveResponse> callback) {
@@ -121,7 +153,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
         if (observations.stream().noneMatch(observation -> observation.getPath().equals(resultIds))) {
             ObserveRequest downlink;
-            ContentFormat contentFormat = getContentFormat(client, request);
+            ContentFormat contentFormat = getRequestContentFormat(client, request);
             if (resultIds.isResource()) {
                 downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId());
             } else if (resultIds.isObjectInstance()) {
@@ -278,6 +310,73 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         }
     }
 
+    private <R extends SimpleDownlinkRequest<T>, T extends LwM2mResponse> void sendWriteCompositeRequest(LwM2mClient client, WriteCompositeRequest request, long timeoutInMs, DownlinkRequestCallback<WriteCompositeRequest, WriteCompositeResponse> callback) {
+        Registration registration = client.getRegistration();
+        try {
+            logService.log(client, String.format("[%s][%s] Sending request: %s to %s", registration.getId(), registration.getSocketAddress(), request.getClass().getSimpleName(), request.getPaths()));
+            context.getServer().send(registration, request, timeoutInMs, response -> {
+                executor.submit(() -> {
+                    try {
+                        callback.onSuccess(request, response);
+                    } catch (Exception e) {
+                        log.error("[{}] failed to process successful response [{}] ", registration.getEndpoint(), response, e);
+                    }
+                });
+            }, e -> {
+                executor.submit(() -> {
+                    callback.onError(JacksonUtil.toString(request), e);
+                });
+            });
+        } catch (Exception e) {
+            callback.onError(JacksonUtil.toString(request), e);
+        }
+    }
+
+    private <R extends SimpleDownlinkRequest<T>, T extends LwM2mResponse> void sendReadRequestComposite(LwM2mClient client, ReadCompositeRequest request, long timeoutInMs, DownlinkRequestCallback<ReadCompositeRequest, ReadCompositeResponse> callback) {
+        Registration registration = client.getRegistration();
+        try {
+            logService.log(client, String.format("[%s][%s] Sending request: %s to %s", registration.getId(), registration.getSocketAddress(), request.getClass().getSimpleName(), request.getPaths()));
+            context.getServer().send(registration, request, timeoutInMs, response -> {
+                executor.submit(() -> {
+                    try {
+                        /**
+                         * [{"bn":"/3/0/","n":"0","vs":"Thingsboard Test Device"},
+                         *               {"n":"1","vs":"Model 500"},
+                         *               {"n":"2","vs":"TH-500-000-0001"},
+                         *               {"n":"3","vs":"TestThingsboard@TestMore1024_2.04"},
+                         *               {"n":"6","v":1},{"n":"7","v":56},
+                         *               {"n":"8","v":42},{"n":"9","v":16},
+                         *               {"n":"10","v":127619},{"n":"13","v":1624520988},
+                         *               {"n":"14","vs":"+03"},{"n":"15","vs":"Europe/Kiev"},
+                         *               {"n":"16","vs":"U"},{"n":"17","vs":"smart meters"},
+                         *               {"n":"18","vs":"1.01"},{"n":"19","vs":"1.02"},
+                         *               {"n":"20","v":3},{"n":"21","v":256000},
+                         *  {"bn":"/5/0/","n":"1","vs":""},
+                         *               {"n":"3","v":0},{"n":"5","v":0},
+                         *               {"n":"6","vs":""},{"n":"7","vs":""},
+                         *               {"n":"8/0","v":0},{"n":"8/1","v":1},
+                         *               {"n":"9","v":2},
+                         *  {"bn":"/1/0/","n":"0","v":123},
+                         *               {"n":"1","v":300},
+                         *               {"n":"6","vb":false},
+                         *               {"n":"22","vs":"U"},
+                         *               {"n":"7","vs":"U"}]
+                         */
+                        callback.onSuccess(request, response);
+                    } catch (Exception e) {
+                        log.error("[{}] failed to process successful response [{}] ", registration.getEndpoint(), response, e);
+                    }
+                });
+            }, e -> {
+                executor.submit(() -> {
+                    callback.onError(JacksonUtil.toString(request), e);
+                });
+            });
+        } catch (Exception e) {
+            callback.onError(JacksonUtil.toString(request), e);
+        }
+    }
+
     private WriteRequest getWriteRequestSingleResource(ResourceModel.Type type, ContentFormat contentFormat, int objectId, int instanceId, int resourceId, Object value) {
         switch (type) {
             case STRING:    // String
@@ -347,7 +446,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         throw new CodecException("Invalid ResourceModel_Type for %s ContentFormat.", type);
     }
 
-    private static ContentFormat getContentFormat(LwM2mClient client, HasContentFormat request) {
-        return request.getContentFormat() != null ? request.getContentFormat() : client.getDefaultContentFormat();
+    private static ContentFormat getRequestContentFormat(LwM2mClient client, HasContentFormat request) {
+        return request.getRequestContentFormat() != null ? request.getRequestContentFormat() : client.getDefaultContentFormat();
     }
 }

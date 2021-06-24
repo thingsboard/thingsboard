@@ -18,7 +18,6 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
-import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
 
@@ -30,6 +29,11 @@ public abstract class TbLwM2MTargetedCallback<R, T> extends AbstractTbLwM2MReque
     public TbLwM2MTargetedCallback(LwM2MTelemetryLogService logService, LwM2mClient client, String versionedId) {
         super(logService, client);
         this.versionedId = versionedId;
+    }
+
+    public TbLwM2MTargetedCallback(LwM2MTelemetryLogService logService, LwM2mClient client) {
+        super(logService, client);
+        this.versionedId = null;
     }
 
     @Override

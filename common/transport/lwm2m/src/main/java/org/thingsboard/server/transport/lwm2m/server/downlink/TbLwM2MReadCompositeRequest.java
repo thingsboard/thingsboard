@@ -18,25 +18,27 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 import lombok.Builder;
 import lombok.Getter;
 import org.eclipse.leshan.core.request.ContentFormat;
-import org.eclipse.leshan.core.response.ObserveResponse;
+import org.eclipse.leshan.core.response.ReadCompositeResponse;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType;
 
-public class TbLwM2MObserveRequest extends AbstractTbLwM2MTargetedDownlinkRequest<ObserveResponse> implements HasContentFormat {
+public class TbLwM2MReadCompositeRequest extends AbstractTbLwM2MTargetedDownlinkRequest<ReadCompositeResponse> implements HasContentFormat {
 
     @Getter
     private final ContentFormat requestContentFormat;
 
+    @Getter
+    private final ContentFormat responseContentFormat;
+
     @Builder
-    private TbLwM2MObserveRequest(String versionedId, long timeout, ContentFormat requestContentFormat) {
+    private TbLwM2MReadCompositeRequest(String versionedId, long timeout, ContentFormat requestContentFormat, ContentFormat responseContentFormat) {
         super(versionedId, timeout);
         this.requestContentFormat = requestContentFormat;
+        this.responseContentFormat = responseContentFormat;
     }
 
     @Override
     public LwM2mOperationType getType() {
-        return LwM2mOperationType.OBSERVE;
+        return LwM2mOperationType.READ_COMPOSITE;
     }
-
-
 
 }

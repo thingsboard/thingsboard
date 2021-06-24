@@ -450,4 +450,5 @@ public class LwM2mTransportUtil {
         }
         return lwm2mResourceValue;
     }
+
 }
