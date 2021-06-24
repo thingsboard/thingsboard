@@ -115,6 +115,20 @@ export const securityConfigModeNames = new Map<securityConfigMode, string>(
   ]
 );
 
+export enum PowerMode {
+  PSM = 'PSM',
+  DRX = 'DRX',
+  E_DRX = 'E_DRX'
+}
+
+export const PowerModeTranslationMap = new Map<PowerMode, string>(
+  [
+    [PowerMode.PSM, 'device-profile.power-saving-mode-type.psm'],
+    [PowerMode.DRX, 'device-profile.power-saving-mode-type.drx'],
+    [PowerMode.E_DRX, 'device-profile.power-saving-mode-type.edrx']
+  ]
+);
+
 export interface ModelValue {
   objectIds: string[];
   objectsList: ObjectLwM2M[];
@@ -160,8 +174,9 @@ export interface ClientLwM2mSettings {
   clientOnlyObserveAfterConnect: number;
   fwUpdateStrategy: number;
   swUpdateStrategy: number;
-  fwUpdateRecourse: string;
-  swUpdateRecourse: string;
+  fwUpdateResource: string;
+  swUpdateResource: string;
+  powerMode: PowerMode;
 }
 
 export interface ObservableAttributes {
@@ -216,8 +231,9 @@ export function getDefaultProfileClientLwM2mSettingsConfig(): ClientLwM2mSetting
     clientOnlyObserveAfterConnect: 1,
     fwUpdateStrategy: 1,
     swUpdateStrategy: 1,
-    fwUpdateRecourse: DEFAULT_FW_UPDATE_RESOURCE,
-    swUpdateRecourse: DEFAULT_SW_UPDATE_RESOURCE
+    fwUpdateResource: DEFAULT_FW_UPDATE_RESOURCE,
+    swUpdateResource: DEFAULT_SW_UPDATE_RESOURCE,
+    powerMode: PowerMode.DRX
   };
 }
 

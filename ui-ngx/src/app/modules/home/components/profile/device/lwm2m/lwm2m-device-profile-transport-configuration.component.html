@@ -133,10 +133,10 @@
               </mat-select>
             </mat-form-field>
             <mat-form-field class="mat-block" fxFlex *ngIf="isFwUpdateStrategy">
-              <mat-label>{{ 'device-profile.lwm2m.fw-update-recourse' | translate }}</mat-label>
-              <input matInput formControlName="fwUpdateRecourse" required>
-              <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateRecourse').hasError('required')">
-                {{ 'device-profile.lwm2m.fw-update-recourse-required' | translate }}
+              <mat-label>{{ 'device-profile.lwm2m.fw-update-resource' | translate }}</mat-label>
+              <input matInput formControlName="fwUpdateResource" required>
+              <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateResource').hasError('required')">
+                {{ 'device-profile.lwm2m.fw-update-resource-required' | translate }}
               </mat-error>
             </mat-form-field>
           </fieldset>
@@ -150,11 +150,22 @@
               </mat-select>
             </mat-form-field>
             <mat-form-field class="mat-block" fxFlex *ngIf="isSwUpdateStrategy">
-              <mat-label>{{ 'device-profile.lwm2m.sw-update-recourse' | translate }}</mat-label>
-              <input matInput formControlName="swUpdateRecourse" required>
-              <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateRecourse').hasError('required')">
-                {{ 'device-profile.lwm2m.sw-update-recourse-required' | translate }}
+              <mat-label>{{ 'device-profile.lwm2m.sw-update-resource' | translate }}</mat-label>
+              <input matInput formControlName="swUpdateResource" required>
+              <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateResource').hasError('required')">
+                {{ 'device-profile.lwm2m.sw-update-resource-required' | translate }}
               </mat-error>
+            </mat-form-field>
+          </fieldset>
+          <fieldset class="fields-group">
+            <legend class="group-title" translate>device-profile.power-saving-mode</legend>
+            <mat-form-field class="mat-block" fxFlex>
+              <mat-label> </mat-label>
+              <mat-select formControlName="powerMode">
+                <mat-option *ngFor="let powerMod of powerMods" [value]="powerMod">
+                  {{ powerModeTranslationMap.get(powerMod) | translate}}
+                </mat-option>
+              </mat-select>
             </mat-form-field>
           </fieldset>
 <!--          <mat-accordion multi="true">-->

@@ -23,6 +23,7 @@ import {
   DeviceTransportConfiguration,
   DeviceTransportType, Lwm2mDeviceTransportConfiguration
 } from '@shared/models/device.models';
+import {PowerMode, PowerModeTranslationMap} from "@home/components/profile/device/lwm2m/lwm2m-profile-config.models";
 
 @Component({
   selector: 'tb-lwm2m-device-transport-configuration',
@@ -37,6 +38,8 @@ import {
 export class Lwm2mDeviceTransportConfigurationComponent implements ControlValueAccessor, OnInit {
 
   lwm2mDeviceTransportConfigurationFormGroup: FormGroup;
+  powerMods = Object.values(PowerMode);
+  powerModeTranslationMap = PowerModeTranslationMap;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -65,7 +68,7 @@ export class Lwm2mDeviceTransportConfigurationComponent implements ControlValueA
 
   ngOnInit() {
     this.lwm2mDeviceTransportConfigurationFormGroup = this.fb.group({
-      configuration: [null, Validators.required]
+      powerMode: [null]
     });
     this.lwm2mDeviceTransportConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
@@ -82,13 +85,13 @@ export class Lwm2mDeviceTransportConfigurationComponent implements ControlValueA
   }
 
   writeValue(value: Lwm2mDeviceTransportConfiguration | null): void {
-    this.lwm2mDeviceTransportConfigurationFormGroup.patchValue({configuration: value}, {emitEvent: false});
+    this.lwm2mDeviceTransportConfigurationFormGroup.patchValue(value, {emitEvent: false});
   }
 
   private updateModel() {
     let configuration: DeviceTransportConfiguration = null;
     if (this.lwm2mDeviceTransportConfigurationFormGroup.valid) {
-      configuration = this.lwm2mDeviceTransportConfigurationFormGroup.getRawValue().configuration;
+      configuration = this.lwm2mDeviceTransportConfigurationFormGroup.getRawValue();
       // configuration.type = DeviceTransportType.LWM2M;
     }
     this.propagateChange(configuration);
