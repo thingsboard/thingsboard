@@ -14,48 +14,20 @@
  * limitations under the License.
  */
 :host {
-  .tb-kv-map {
-    span.no-data-found {
-      position: relative;
-      display: flex;
-      height: 40px;
-
-      &.disabled {
-        color: rgba(0, 0, 0, .38);
-      }
-    }
+  .resource-name-lw-end{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align:end;
+    //width: 80px;
+    cursor: pointer;
   }
-}
 
-:host ::ng-deep {
-  .mat-form-field-wrapper {
-    padding-bottom: 0;
+  .resource-name-lw{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
   }
-  .mat-form-field-infix {
-    border-top: 0;
-  }
-  .mat-form-field-underline {
-    bottom: 0;
-  }
-}
-
-.vertical-padding {
-  padding: 0 0 10px 20px;
-}
-
-.resource-name-lw-end{
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align:end;
-  //width: 80px;
-  cursor: pointer;
-}
-
-.resource-name-lw{
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  cursor: pointer;
 }
 

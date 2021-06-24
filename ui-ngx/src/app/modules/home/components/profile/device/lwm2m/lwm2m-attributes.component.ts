@@ -17,11 +17,10 @@
 import { Component, EventEmitter, forwardRef, Input, Output } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { deepClone, isDefinedAndNotNull, isEmpty } from '@core/utils';
+import { isEmpty, isUndefinedOrNull } from '@core/utils';
 import { Lwm2mAttributesDialogComponent, Lwm2mAttributesDialogData } from './lwm2m-attributes-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
-import { TranslateService } from '@ngx-translate/core';
-import { ATTRIBUTE_LWM2M_LABEL } from './lwm2m-profile-config.models';
+import { AttributesNameValueMap } from './lwm2m-profile-config.models';
 
 
 @Component({
@@ -36,21 +35,20 @@ import { ATTRIBUTE_LWM2M_LABEL } from './lwm2m-profile-config.models';
 })
 export class Lwm2mAttributesComponent implements ControlValueAccessor {
   attributeLwm2mFormGroup: FormGroup;
-  attributeLwm2mLabel = ATTRIBUTE_LWM2M_LABEL;
 
   private requiredValue: boolean;
-
-  @Input()
-  attributeLwm2m: {};
 
   @Input()
   isAttributeTelemetry: boolean;
 
   @Input()
-  destName: string;
+  modelName: string;
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  isResource = false;
 
   @Output()
   updateAttributeLwm2m = new EventEmitter<any>();
@@ -64,8 +62,7 @@ export class Lwm2mAttributesComponent implements ControlValueAccessor {
   }
 
   constructor(private dialog: MatDialog,
-              private fb: FormBuilder,
-              private translate: TranslateService) {}
+              private fb: FormBuilder) {}
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
@@ -85,63 +82,66 @@ export class Lwm2mAttributesComponent implements ControlValueAccessor {
 
   ngOnInit() {
     this.attributeLwm2mFormGroup = this.fb.group({
-      attributeLwm2m: [this.attributeLwm2m]
+      attributes: [{}]
     });
   }
 
-  writeValue(value: {} | null): void {}
-
-  attributeLwm2mToString = (): string => {
-    return this.isIconEditAdd () ? this.attributeLwm2mLabelToString() : this.translate.instant('device-profile.lwm2m.no-data');
+  writeValue(value: AttributesNameValueMap | null) {
+    this.attributeLwm2mFormGroup.patchValue({attributes: value}, {emitEvent: false});
   }
 
-  private attributeLwm2mLabelToString = (): string => {
-    let label = JSON.stringify(this.attributeLwm2m);
-    label = deepClone(label.replace('{', ''));
-    label = deepClone(label.replace('}', ''));
-    this.attributeLwm2mLabel.forEach((value: string, key: string) => {
-      const dest = '\"' + key + '\"\:';
-      label = deepClone(label.replace(dest, value));
-    });
-    return label;
+  get attributesValueMap(): AttributesNameValueMap {
+    return this.attributeLwm2mFormGroup.get('attributes').value;
   }
 
   isDisableBtn(): boolean {
-    return this.disabled || this.isAttributeTelemetry ? !(isDefinedAndNotNull(this.attributeLwm2m) &&
-      !isEmpty(this.attributeLwm2m) && this.disabled) :  this.disabled;
+    return !this.disabled && this.isAttributeTelemetry;
   }
 
-  isIconView(): boolean {
-    return this.isAttributeTelemetry || this.disabled;
+  isEmpty(): boolean {
+    const value = this.attributesValueMap;
+    return isUndefinedOrNull(value) || isEmpty(value);
   }
 
-  isIconEditAdd(): boolean {
-    return isDefinedAndNotNull(this.attributeLwm2m) && !isEmpty(this.attributeLwm2m);
+  get tooltipSetAttributesTelemetry(): string {
+    return this.isDisableBtn() ? 'device-profile.lwm2m.edit-attributes-select' : '';
   }
 
-  isToolTipLabel(): string {
-    return this.disabled ? this.translate.instant('device-profile.lwm2m.attribute-lwm2m-tip') :
-      this.isAttributeTelemetry ? this.translate.instant('device-profile.lwm2m.attribute-lwm2m-disable-tip') :
-        this.translate.instant('device-profile.lwm2m.attribute-lwm2m-tip');
+  get tooltipButton(): string {
+    if (this.disabled) {
+      return 'device-profile.lwm2m.view-attribute';
+    } else if (this.isEmpty()) {
+      return 'device-profile.lwm2m.add-attribute';
+    }
+    return 'device-profile.lwm2m.edit-attribute';
+  }
+
+  get iconButton(): string {
+    if (this.disabled) {
+      return 'visibility';
+    } else if (this.isEmpty()) {
+      return 'add';
+    }
+    return 'edit';
   }
 
   public editAttributesLwm2m = ($event: Event): void => {
     if ($event) {
       $event.stopPropagation();
     }
-    this.dialog.open<Lwm2mAttributesDialogComponent, Lwm2mAttributesDialogData, object>(Lwm2mAttributesDialogComponent, {
+    this.dialog.open<Lwm2mAttributesDialogComponent, Lwm2mAttributesDialogData, AttributesNameValueMap>(Lwm2mAttributesDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         readonly: this.disabled,
-        attributeLwm2m: this.disabled ? this.attributeLwm2m : deepClone(this.attributeLwm2m),
-        destName: this.destName
+        attributes: this.attributesValueMap,
+        modelName: this.modelName,
+        isResource: this.isResource
       }
     }).afterClosed().subscribe((result) => {
       if (result) {
-        this.attributeLwm2m = result;
-        this.attributeLwm2mFormGroup.patchValue({attributeLwm2m: this.attributeLwm2m});
-        this.updateAttributeLwm2m.next(this.attributeLwm2m);
+        this.attributeLwm2mFormGroup.patchValue({attributeLwm2m: result});
+        this.updateAttributeLwm2m.next(result);
       }
     });
   }
