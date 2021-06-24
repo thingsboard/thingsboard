@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.secure;
+package org.thingsboard.server.transport.lwm2m.server.store;
 
-import lombok.Data;
-import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
+import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
+import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 
-import java.io.Serializable;
+public interface TbMainSecurityStore extends TbSecurityStore {
 
-@Data
-public class TbX509DtlsSessionInfo implements Serializable {
+    void putX509(TbLwM2MSecurityInfo tbSecurityInfo) throws NonUniqueSecurityInfoException;
 
-    private final String x509CommonName;
-    private final ValidateDeviceCredentialsResponse credentials;
+    void registerX509(String endpoint, String registrationId);
+
+    void remove(String endpoint, String registrationId);
 
 }

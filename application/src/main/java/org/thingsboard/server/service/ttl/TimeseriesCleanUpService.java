@@ -13,19 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.ttl.timeseries;
+package org.thingsboard.server.service.ttl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ttl.AbstractCleanUpService;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-
+@TbCoreComponent
 @Slf4j
-public abstract class AbstractTimeseriesCleanUpService extends AbstractCleanUpService {
+@Service
+public class TimeseriesCleanUpService extends AbstractCleanUpService {
 
     @Value("${sql.ttl.ts.ts_key_value_ttl}")
     protected long systemTtl;
@@ -33,14 +35,17 @@ public abstract class AbstractTimeseriesCleanUpService extends AbstractCleanUpSe
     @Value("${sql.ttl.ts.enabled}")
     private boolean ttlTaskExecutionEnabled;
 
+    private final TimeseriesService timeseriesService;
+
+    public TimeseriesCleanUpService(PartitionService partitionService, TimeseriesService timeseriesService) {
+        super(partitionService);
+        this.timeseriesService = timeseriesService;
+    }
+
     @Scheduled(initialDelayString = "${sql.ttl.ts.execution_interval_ms}", fixedDelayString = "${sql.ttl.ts.execution_interval_ms}")
     public void cleanUp() {
-        if (ttlTaskExecutionEnabled) {
-            try (Connection conn = getConnection()) {
-                doCleanUp(conn);
-            } catch (SQLException e) {
-                log.error("SQLException occurred during TTL task execution ", e);
-            }
+        if (ttlTaskExecutionEnabled && isSystemTenantPartitionMine()) {
+            timeseriesService.cleanup(systemTtl);
         }
     }
 

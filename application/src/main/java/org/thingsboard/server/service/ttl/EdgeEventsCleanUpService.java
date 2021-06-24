@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.ttl.edge;
+package org.thingsboard.server.service.ttl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.dao.util.PsqlDao;
+import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ttl.AbstractCleanUpService;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-
-@PsqlDao
+@TbCoreComponent
 @Slf4j
 @Service
 public class EdgeEventsCleanUpService extends AbstractCleanUpService {
@@ -37,20 +35,18 @@ public class EdgeEventsCleanUpService extends AbstractCleanUpService {
     @Value("${sql.ttl.edge_events.enabled}")
     private boolean ttlTaskExecutionEnabled;
 
+    private final EdgeService edgeService;
+
+    public EdgeEventsCleanUpService(PartitionService partitionService, EdgeService edgeService) {
+        super(partitionService);
+        this.edgeService = edgeService;
+    }
+
     @Scheduled(initialDelayString = "${sql.ttl.edge_events.execution_interval_ms}", fixedDelayString = "${sql.ttl.edge_events.execution_interval_ms}")
     public void cleanUp() {
-        if (ttlTaskExecutionEnabled) {
-            try (Connection conn = getConnection()) {
-                doCleanUp(conn);
-            } catch (SQLException e) {
-                log.error("SQLException occurred during TTL task execution ", e);
-            }
+        if (ttlTaskExecutionEnabled && isSystemTenantPartitionMine()) {
+            edgeService.cleanupEvents(ttl);
         }
     }
 
-    @Override
-    protected void doCleanUp(Connection connection) throws SQLException {
-        long totalEdgeEventsRemoved = executeQuery(connection, "call cleanup_edge_events_by_ttl(" + ttl + ", 0);");
-        log.info("Total edge events removed by TTL: [{}]", totalEdgeEventsRemoved);
-    }
 }

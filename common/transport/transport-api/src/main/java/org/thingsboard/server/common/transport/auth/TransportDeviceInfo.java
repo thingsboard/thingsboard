@@ -22,8 +22,10 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.io.Serializable;
+
 @Data
-public class TransportDeviceInfo {
+public class TransportDeviceInfo implements Serializable {
 
     private TenantId tenantId;
     private CustomerId customerId;

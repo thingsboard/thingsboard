@@ -146,10 +146,10 @@ public class LwM2mCredentialsSecurityInfoValidator {
         PSKClientCredentials pskConfig = (PSKClientCredentials) clientCredentialsConfig;
         if (StringUtils.isNotEmpty(pskConfig.getIdentity())) {
             try {
-                if (pskConfig.getKey() != null && pskConfig.getKey().length > 0) {
+                if (pskConfig.getDecodedKey() != null && pskConfig.getDecodedKey().length > 0) {
                     endpoint = StringUtils.isNotEmpty(pskConfig.getEndpoint()) ? pskConfig.getEndpoint() : endpoint;
                     if (endpoint != null && !endpoint.isEmpty()) {
-                        result.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(endpoint, pskConfig.getIdentity(), pskConfig.getKey()));
+                        result.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(endpoint, pskConfig.getIdentity(), pskConfig.getDecodedKey()));
                         result.setSecurityMode(PSK);
                     }
                 }
@@ -164,8 +164,8 @@ public class LwM2mCredentialsSecurityInfoValidator {
     private void createClientSecurityInfoRPK(TbLwM2MSecurityInfo result, String endpoint, LwM2MClientCredentials clientCredentialsConfig) {
         RPKClientCredentials rpkConfig = (RPKClientCredentials) clientCredentialsConfig;
         try {
-            if (rpkConfig.getKey() != null) {
-                PublicKey key = SecurityUtil.publicKey.decode(rpkConfig.getKey());
+            if (rpkConfig.getDecodedKey() != null) {
+                PublicKey key = SecurityUtil.publicKey.decode(rpkConfig.getDecodedKey());
                 result.setSecurityInfo(SecurityInfo.newRawPublicKeyInfo(endpoint, key));
                 result.setSecurityMode(RPK);
             } else {

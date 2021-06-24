@@ -51,7 +51,7 @@ public class TbLwM2mStoreFactory {
     }
 
     @Bean
-    private TbEditableSecurityStore securityStore() {
+    private TbMainSecurityStore securityStore() {
         return new TbLwM2mSecurityStore(redisConfiguration.isPresent() && useRedis ?
                 new TbLwM2mRedisSecurityStore(redisConfiguration.get().redisConnectionFactory()) : new TbInMemorySecurityStore(), validator);
     }
