@@ -60,7 +60,7 @@ public abstract class SqlAbstractDatabaseSchemaService implements DatabaseSchema
     @Override
     public void createDatabaseSchema(boolean createIndexes) throws Exception {
 
-        log.info("Installing SQL DataBase schema part: " + schemaSql);
+        log.info("Installing SQL DataBase schema part: {} with URL {}", schemaSql, dbUrl);
 
         Path schemaFile = Paths.get(installScripts.getDataDir(), SQL_DIR, schemaSql);
         try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
