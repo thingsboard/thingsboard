@@ -56,7 +56,7 @@ const thingsboardPalette: PaletteOptions = {
 
 export default {
   typography: {
-    fontFamily: 'Roboto, \'Helvetica Neue\', sans-serif'
+    fontFamily: '\'Helvetica Neue\', Arial, sans-serif'
   },
   palette: thingsboardPalette,
 } as ThemeOptions;

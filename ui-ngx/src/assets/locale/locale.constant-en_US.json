@@ -1682,7 +1682,7 @@
             "file-storage": "File storage",
             "memory-storage": "Memory storage"
         },
-        "thingsboard": "ThingsBoard",
+        "thingsboard": "4impact Industrial IoT Platform",
         "thingsboard-host": "ThingsBoard host",
         "thingsboard-host-required": "Host is required.",
         "thingsboard-port": "ThingsBoard port",

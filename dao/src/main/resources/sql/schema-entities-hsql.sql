@@ -17,7 +17,7 @@
 CREATE TABLE IF NOT EXISTS admin_settings (
     id uuid NOT NULL CONSTRAINT admin_settings_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
-    json_value varchar,
+    json_value varchar(10000000),
     key varchar(255)
 );
 
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS alarm (
     created_time bigint NOT NULL,
     ack_ts bigint,
     clear_ts bigint,
-    additional_info varchar,
+    additional_info varchar(10000000),
     end_ts bigint,
     originator_id uuid,
     originator_type integer,
@@ -35,14 +35,14 @@ CREATE TABLE IF NOT EXISTS alarm (
     start_ts bigint,
     status varchar(255),
     tenant_id uuid,
-    propagate_relation_types varchar,
+    propagate_relation_types varchar(10000000),
     type varchar(255)
 );
 
 CREATE TABLE IF NOT EXISTS asset (
     id uuid NOT NULL CONSTRAINT asset_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
-    additional_info varchar,
+    additional_info varchar(10000000),
     customer_id uuid,
     name varchar(255),
     label varchar(255),
@@ -86,8 +86,8 @@ CREATE TABLE IF NOT EXISTS component_descriptor (
     id uuid NOT NULL CONSTRAINT component_descriptor_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     actions varchar(255),
-    clazz varchar UNIQUE,
-    configuration_descriptor varchar,
+    clazz varchar(10000000) UNIQUE,
+    configuration_descriptor varchar(10000000),
     name varchar(255),
     scope varchar(255),
     search_text varchar(255),
@@ -97,9 +97,9 @@ CREATE TABLE IF NOT EXISTS component_descriptor (
 CREATE TABLE IF NOT EXISTS customer (
     id uuid NOT NULL CONSTRAINT customer_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
-    additional_info varchar,
-    address varchar,
-    address2 varchar,
+    additional_info varchar(10000000),
+    address varchar(10000000),
+    address2 varchar(10000000),
     city varchar(255),
     country varchar(255),
     email varchar(255),
@@ -124,7 +124,7 @@ CREATE TABLE IF NOT EXISTS dashboard (
 CREATE TABLE IF NOT EXISTS rule_chain (
     id uuid NOT NULL CONSTRAINT rule_chain_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
-    additional_info varchar,
+    additional_info varchar(10000000),
     configuration varchar(10000000),
     name varchar(255),
     first_rule_node_id uuid,
@@ -138,7 +138,7 @@ CREATE TABLE IF NOT EXISTS rule_node (
     id uuid NOT NULL CONSTRAINT rule_node_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     rule_chain_id uuid,
-    additional_info varchar,
+    additional_info varchar(10000000),
     configuration varchar(10000000),
     type varchar(255),
     name varchar(255),
@@ -165,13 +165,13 @@ CREATE TABLE IF NOT EXISTS device_profile (
     transport_type varchar(255),
     provision_type varchar(255),
     profile_data jsonb,
-    description varchar,
+    description varchar(10000000),
     search_text varchar(255),
     is_default boolean,
     tenant_id uuid,
     default_rule_chain_id uuid,
     default_queue_name varchar(255),
-    provision_device_key varchar,
+    provision_device_key varchar(10000000),
     CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),
     CONSTRAINT device_provision_key_unq_key UNIQUE (provision_device_key),
     CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id)
@@ -180,7 +180,7 @@ CREATE TABLE IF NOT EXISTS device_profile (
 CREATE TABLE IF NOT EXISTS device (
     id uuid NOT NULL CONSTRAINT device_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
-    additional_info varchar,
+    additional_info varchar(10000000),
     customer_id uuid,
     device_profile_id uuid NOT NULL,
     device_data jsonb,
@@ -196,9 +196,9 @@ CREATE TABLE IF NOT EXISTS device (
 CREATE TABLE IF NOT EXISTS device_credentials (
     id uuid NOT NULL CONSTRAINT device_credentials_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
-    credentials_id varchar,
+    credentials_id varchar(10000000),
     credentials_type varchar(255),
-    credentials_value varchar,
+    credentials_value varchar(10000000),
     device_id uuid,
     CONSTRAINT device_credentials_id_unq_key UNIQUE (credentials_id),
     CONSTRAINT device_credentials_device_id_unq_key UNIQUE (device_id)
@@ -224,14 +224,14 @@ CREATE TABLE IF NOT EXISTS relation (
     to_type varchar(255),
     relation_type_group varchar(255),
     relation_type varchar(255),
-    additional_info varchar,
+    additional_info varchar(10000000),
     CONSTRAINT relation_pkey PRIMARY KEY (from_id, from_type, relation_type_group, relation_type, to_id, to_type)
 );
 
 CREATE TABLE IF NOT EXISTS tb_user (
     id uuid NOT NULL CONSTRAINT tb_user_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
-    additional_info varchar,
+    additional_info varchar(10000000),
     authority varchar(255),
     customer_id uuid,
     email varchar(255) UNIQUE,
@@ -246,7 +246,7 @@ CREATE TABLE IF NOT EXISTS tenant_profile (
     created_time bigint NOT NULL,
     name varchar(255),
     profile_data jsonb,
-    description varchar,
+    description varchar(10000000),
     search_text varchar(255),
     is_default boolean,
     isolated_tb_core boolean,
@@ -257,10 +257,10 @@ CREATE TABLE IF NOT EXISTS tenant_profile (
 CREATE TABLE IF NOT EXISTS tenant (
     id uuid NOT NULL CONSTRAINT tenant_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
-    additional_info varchar,
+    additional_info varchar(10000000),
     tenant_profile_id uuid NOT NULL,
-    address varchar,
-    address2 varchar,
+    address varchar(10000000),
+    address2 varchar(10000000),
     city varchar(255),
     country varchar(255),
     email varchar(255),
@@ -319,7 +319,7 @@ CREATE TABLE IF NOT EXISTS entity_view (
     start_ts bigint,
     end_ts bigint,
     search_text varchar(255),
-    additional_info varchar
+    additional_info varchar(10000000)
 );
 
 CREATE TABLE IF NOT EXISTS ts_kv_latest (
@@ -345,7 +345,7 @@ CREATE TABLE IF NOT EXISTS oauth2_client_registration_info (
     id uuid NOT NULL CONSTRAINT oauth2_client_registration_info_pkey PRIMARY KEY,
     enabled boolean,
     created_time bigint NOT NULL,
-    additional_info varchar,
+    additional_info varchar(10000000),
     client_id varchar(255),
     client_secret varchar(255),
     authorization_uri varchar(255),
@@ -385,7 +385,7 @@ CREATE TABLE IF NOT EXISTS oauth2_client_registration (
 CREATE TABLE IF NOT EXISTS oauth2_client_registration_template (
     id uuid NOT NULL CONSTRAINT oauth2_client_registration_template_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
-    additional_info varchar,
+    additional_info varchar(10000000),
     provider_id varchar(255),
     authorization_uri varchar(255),
     token_uri varchar(255),
@@ -403,7 +403,7 @@ CREATE TABLE IF NOT EXISTS oauth2_client_registration_template (
     basic_customer_name_pattern varchar(255),
     basic_default_dashboard_name varchar(255),
     basic_always_full_screen boolean,
-    comment varchar,
+    comment varchar(10000000),
     login_button_icon varchar(255),
     login_button_label varchar(255),
     help_link varchar(255),

@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS ts_kv_dictionary (
     CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
 );
 
-CREATE FUNCTION to_uuid(IN entity_id varchar)
+CREATE FUNCTION to_uuid(IN entity_id varchar(10000000))
   RETURNS UUID
   RETURN UUID(substring(entity_id, 8, 8) || '-' || substring(entity_id, 4, 4) || '-1' || substring(entity_id, 1, 3) ||
                '-' || substring(entity_id, 16, 4) || '-' || substring(entity_id, 20, 12));
