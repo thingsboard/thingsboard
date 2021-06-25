@@ -24,7 +24,7 @@
             "tsConfig": "src/tsconfig.app.json",
             "aot": true,
             "assets": [
-              "src/thingsboard.ico",
+              "src/4impact.ico",
               "src/assets",
               {
                 "glob": "worker-html.js",
