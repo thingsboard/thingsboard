@@ -78,7 +78,7 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
 
     @Getter
     @Value("${transport.lwm2m.security.key_store:}")
-    private String keyStorePathFile;
+    private String keyStoreFilePath;
 
     @Getter
     @Setter
@@ -141,14 +141,27 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     public void init() {
         URI uri = null;
         try {
-            uri = Resources.getResource(keyStorePathFile).toURI();
-            log.info("URI: {}", uri);
-            File keyStoreFile = new File(uri);
-            InputStream inKeyStore = new FileInputStream(keyStoreFile);
+            InputStream keyStoreInputStream;
+            File keyStoreFile = new File(keyStoreFilePath);
+            if (keyStoreFile.exists()) {
+                log.info("Reading key store from file {}", keyStoreFilePath);
+                keyStoreInputStream = new FileInputStream(keyStoreFile);
+            } else {
+                InputStream classPathStream = this.getClass().getClassLoader().getResourceAsStream(keyStoreFilePath);
+                if (classPathStream != null) {
+                    log.info("Reading key store from class path {}", keyStoreFilePath);
+                    keyStoreInputStream = classPathStream;
+                } else {
+                    uri = Resources.getResource(keyStoreFilePath).toURI();
+                    log.info("Reading key store from URI {}", keyStoreFilePath);
+                    keyStoreInputStream = new FileInputStream(new File(uri));
+                }
+            }
             keyStoreValue = KeyStore.getInstance(keyStoreType);
-            keyStoreValue.load(inKeyStore, keyStorePassword == null ? null : keyStorePassword.toCharArray());
+            keyStoreValue.load(keyStoreInputStream, keyStorePassword == null ? null : keyStorePassword.toCharArray());
         } catch (Exception e) {
-            log.info("Unable to lookup LwM2M keystore. Reason: {}, {}" , uri, e.getMessage());
+            log.info("Unable to lookup LwM2M keystore. Reason: {}, {}", uri, e.getMessage());
         }
     }
+
 }
