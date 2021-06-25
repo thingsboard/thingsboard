@@ -123,7 +123,7 @@ public class LwM2mTransportUtil {
         }
     }
 
-     public static boolean equalsResourceValue(Object valueOld, Object valueNew, ResourceModel.Type type, LwM2mPath
+    public static boolean equalsResourceValue(Object valueOld, Object valueNew, ResourceModel.Type type, LwM2mPath
             resourcePath) throws CodecException {
         switch (type) {
             case BOOLEAN:

@@ -56,7 +56,7 @@ public class LwM2MClientOtaInfo {
     public LwM2MClientOtaInfo(String endpoint, OtaPackageType type, Integer strategyCode, String baseUrl) {
         this.endpoint = endpoint;
         this.type = type;
-        this.fwStrategy = LwM2MFirmwareUpdateStrategy.fromStrategyFwByCode(strategyCode);
+        this.fwStrategy = strategyCode != null ? LwM2MFirmwareUpdateStrategy.fromStrategyFwByCode(strategyCode) : LwM2MFirmwareUpdateStrategy.OBJ_5_BINARY;
         this.baseUrl = baseUrl;
     }
 

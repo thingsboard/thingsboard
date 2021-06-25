@@ -87,8 +87,8 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     public static final String SOFTWARE_TITLE = getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.TITLE);
     public static final String SOFTWARE_URL = getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.URL);
 
-    public static final String FIRMWARE_UPDATE_COAP_RECOURSE = "tbfw";
-    public static final String SOFTWARE_UPDATE_COAP_RECOURSE = "tbsw";
+    public static final String FIRMWARE_UPDATE_COAP_RESOURCE = "tbfw";
+    public static final String SOFTWARE_UPDATE_COAP_RESOURCE = "tbsw";
     private static final String FW_PACKAGE_5_ID = "/5/0/0";
     private static final String FW_URL_ID = "/5/0/1";
     private static final String FW_EXECUTE_ID = "/5/0/2";
@@ -206,7 +206,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         log.debug("[{}] Current fw strategy: {}", client.getEndpoint(), configuration.getFwUpdateStrategy());
         LwM2MClientOtaInfo fwInfo = getOrInitFwInfo(client);
         fwInfo.setFwStrategy(LwM2MFirmwareUpdateStrategy.fromStrategyFwByCode(configuration.getFwUpdateStrategy()));
-        fwInfo.setBaseUrl(configuration.getFwUpdateRecourse());
+        fwInfo.setBaseUrl(configuration.getFwUpdateResource());
         startFirmwareUpdateIfNeeded(client, fwInfo);
     }
 
@@ -215,7 +215,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         log.debug("[{}] Current sw strategy: {}", client.getEndpoint(), configuration.getSwUpdateStrategy());
         LwM2MClientOtaInfo swInfo = getOrInitSwInfo(client);
         swInfo.setSwStrategy(LwM2MSoftwareUpdateStrategy.fromStrategySwByCode(configuration.getSwUpdateStrategy()));
-        swInfo.setBaseUrl(configuration.getSwUpdateRecourse());
+        swInfo.setBaseUrl(configuration.getSwUpdateResource());
         startSoftwareUpdateIfNeeded(client, swInfo);
     }
 
@@ -339,7 +339,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
                     downlinkHandler.sendWriteReplaceRequest(client, writeRequest, new TbLwM2MWriteResponseCallback(uplinkHandler, logService, client, versionedId));
                     break;
                 case OBJ_5_TEMP_URL:
-                    startFirmwareUpdateUsingUrl(client, fwInfo.getBaseUrl() + "/" + FIRMWARE_UPDATE_COAP_RECOURSE + "/" + otaPackageId.toString());
+                    startFirmwareUpdateUsingUrl(client, fwInfo.getBaseUrl() + "/" + FIRMWARE_UPDATE_COAP_RESOURCE + "/" + otaPackageId.toString());
                     break;
                 default:
                     sendStateUpdateToTelemetry(client, fwInfo, OtaPackageUpdateStatus.FAILED, "Unsupported strategy: " + strategy.name());
@@ -382,7 +382,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         return this.fwStates.computeIfAbsent(client.getEndpoint(), endpoint -> {
             var profile = clientContext.getProfile(client.getProfileId());
             return new LwM2MClientOtaInfo(endpoint, OtaPackageType.FIRMWARE, profile.getClientLwM2mSettings().getFwUpdateStrategy(),
-                    profile.getClientLwM2mSettings().getFwUpdateRecourse());
+                    profile.getClientLwM2mSettings().getFwUpdateResource());
         });
     }
 
@@ -390,7 +390,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         //TODO: fetch state from the cache or DB.
         return swStates.computeIfAbsent(client.getEndpoint(), endpoint -> {
             var profile = clientContext.getProfile(client.getProfileId());
-            return new LwM2MClientOtaInfo(endpoint, OtaPackageType.SOFTWARE, profile.getClientLwM2mSettings().getSwUpdateStrategy(), profile.getClientLwM2mSettings().getSwUpdateRecourse());
+            return new LwM2MClientOtaInfo(endpoint, OtaPackageType.SOFTWARE, profile.getClientLwM2mSettings().getSwUpdateStrategy(), profile.getClientLwM2mSettings().getSwUpdateResource());
         });
 
     }

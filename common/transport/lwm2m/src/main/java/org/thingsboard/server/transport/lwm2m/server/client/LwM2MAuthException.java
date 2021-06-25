@@ -13,19 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.data.lwm2m;
+package org.thingsboard.server.transport.lwm2m.server.client;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.device.data.PowerMode;
+public class LwM2MAuthException extends RuntimeException {
 
-@Data
-public class OtherConfiguration {
-
-    private Integer fwUpdateStrategy;
-    private Integer swUpdateStrategy;
-    private Integer clientOnlyObserveAfterConnect;
-    private PowerMode powerMode;
-    private String fwUpdateResource;
-    private String swUpdateResource;
+    private static final long serialVersionUID = 4202690897971364044L;
 
 }

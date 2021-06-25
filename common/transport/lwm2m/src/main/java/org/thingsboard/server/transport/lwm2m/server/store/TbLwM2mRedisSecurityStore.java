@@ -46,7 +46,7 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
             lock = redisLock.obtain(toLockKey(endpoint));
             lock.lock();
             byte[] data = connection.get((SEC_EP + endpoint).getBytes());
-            if (data == null) {
+            if (data == null || data.length == 0) {
                 return null;
             } else {
                 return ((TbLwM2MSecurityInfo) serializer.asObject(data)).getSecurityInfo();
@@ -69,7 +69,7 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
                 return null;
             } else {
                 byte[] data = connection.get((SEC_EP + new String(ep)).getBytes());
-                if (data == null) {
+                if (data == null || data.length == 0) {
                     return null;
                 } else {
                     return ((TbLwM2MSecurityInfo) serializer.asObject(data)).getSecurityInfo();
@@ -122,7 +122,11 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
             lock = redisLock.obtain(endpoint);
             lock.lock();
             byte[] data = connection.get((SEC_EP + endpoint).getBytes());
-            return (TbLwM2MSecurityInfo) serializer.asObject(data);
+            if (data != null && data.length > 0) {
+                return (TbLwM2MSecurityInfo) serializer.asObject(data);
+            } else {
+                return null;
+            }
         } finally {
             if (lock != null) {
                 lock.unlock();
@@ -137,7 +141,7 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
             lock = redisLock.obtain(endpoint);
             lock.lock();
             byte[] data = connection.get((SEC_EP + endpoint).getBytes());
-            if (data != null) {
+            if (data != null && data.length > 0) {
                 SecurityInfo info = ((TbLwM2MSecurityInfo) serializer.asObject(data)).getSecurityInfo();
                 if (info != null && info.getIdentity() != null) {
                     connection.hDel(PSKID_SEC.getBytes(), info.getIdentity().getBytes());
