@@ -210,7 +210,6 @@ public class DefaultTransportService implements TransportService {
                     }
                     records.forEach(record -> {
                         try {
-                            log.info("[{}] SessionIdMSB, [{}] SessionIdLSB, records", record.getValue().getSessionIdMSB(), record.getValue().getSessionIdLSB());
                             processToTransportMsg(record.getValue());
                         } catch (Throwable e) {
                             log.warn("Failed to process the notification.", e);
@@ -771,6 +770,7 @@ public class DefaultTransportService implements TransportService {
         UUID sessionId = new UUID(toSessionMsg.getSessionIdMSB(), toSessionMsg.getSessionIdLSB());
         SessionMetaData md = sessions.get(sessionId);
         if (md != null) {
+            log.trace("[{}] Processing notification: {}", sessionId, toSessionMsg);
             SessionMsgListener listener = md.getListener();
             transportCallbackExecutor.submit(() -> {
                 if (toSessionMsg.hasGetAttributesResponse()) {
@@ -798,12 +798,14 @@ public class DefaultTransportService implements TransportService {
                 deregisterSession(md.getSessionInfo());
             }
         } else {
+            log.trace("Processing broadcast notification: {}", toSessionMsg);
             if (toSessionMsg.hasEntityUpdateMsg()) {
                 TransportProtos.EntityUpdateMsg msg = toSessionMsg.getEntityUpdateMsg();
                 EntityType entityType = EntityType.valueOf(msg.getEntityType());
                 if (EntityType.DEVICE_PROFILE.equals(entityType)) {
                     DeviceProfile deviceProfile = deviceProfileCache.put(msg.getData());
                     if (deviceProfile != null) {
+                        log.info("On device profile update: {}", deviceProfile);
                         onProfileUpdate(deviceProfile);
                     }
                 } else if (EntityType.TENANT_PROFILE.equals(entityType)) {
