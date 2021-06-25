@@ -353,21 +353,28 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
      */
     @Override
     public void onDeviceProfileUpdate(SessionInfoProto sessionInfo, DeviceProfile deviceProfile) {
-        List<LwM2mClient> clients = clientContext.getLwM2mClients()
-                .stream().filter(e -> e.getProfileId() != null)
-                .filter(e -> e.getProfileId().equals(deviceProfile.getUuidId())).collect(Collectors.toList());
-        clients.forEach(client -> client.onDeviceProfileUpdate(deviceProfile));
-        if (clients.size() > 0) {
-            this.onDeviceProfileUpdate(clients, deviceProfile);
+        try {
+            List<LwM2mClient> clients = clientContext.getLwM2mClients()
+                    .stream().filter(e -> e.getProfileId() != null)
+                    .filter(e -> e.getProfileId().equals(deviceProfile.getUuidId())).collect(Collectors.toList());
+            clients.forEach(client -> client.onDeviceProfileUpdate(deviceProfile));
+            if (clients.size() > 0) {
+                this.onDeviceProfileUpdate(clients, deviceProfile);
+            }
+        } catch (Exception e) {
+            log.warn("[{}] failed to update profile: {}", deviceProfile.getId(), deviceProfile);
         }
     }
 
     @Override
     public void onDeviceUpdate(SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
-        //TODO: check, maybe device has multiple sessions/registrations? Is this possible according to the standard.
-        LwM2mClient client = clientContext.getClientByDeviceId(device.getUuidId());
-        if (client != null) {
-            this.onDeviceUpdate(client, device, deviceProfileOpt);
+        try {
+            LwM2mClient client = clientContext.getClientByDeviceId(device.getUuidId());
+            if (client != null) {
+                this.onDeviceUpdate(client, device, deviceProfileOpt);
+            }
+        } catch (Exception e) {
+            log.warn("[{}] failed to update device: {}", device.getId(), device);
         }
     }
 
