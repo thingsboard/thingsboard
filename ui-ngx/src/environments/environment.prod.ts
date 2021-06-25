@@ -15,7 +15,7 @@
 ///
 
 export const environment = {
-  appTitle: 'ThingsBoard',
+  appTitle: '4impact Industrial IoT Platform',
   production: true,
 // @ts-ignore
   tbVersion: TB_VERSION,
