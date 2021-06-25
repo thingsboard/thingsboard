@@ -59,7 +59,7 @@ public class TbLwM2mStoreFactory {
 
     @Bean
     private TbLwM2MClientStore clientStore() {
-        return new TbDummyLwM2MClientStore();
+        return isRedis() ? new TbRedisLwM2MClientStore(getConnectionFactory()) : new TbDummyLwM2MClientStore();
     }
 
     @Bean
