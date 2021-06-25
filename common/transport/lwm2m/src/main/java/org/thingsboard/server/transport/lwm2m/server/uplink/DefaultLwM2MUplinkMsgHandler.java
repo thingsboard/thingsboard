@@ -354,7 +354,8 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     @Override
     public void onDeviceProfileUpdate(SessionInfoProto sessionInfo, DeviceProfile deviceProfile) {
         List<LwM2mClient> clients = clientContext.getLwM2mClients()
-                .stream().filter(e -> e.getProfileId().equals(deviceProfile.getUuidId())).collect(Collectors.toList());
+                .stream().filter(e -> e.getProfileId() != null)
+                .filter(e -> e.getProfileId().equals(deviceProfile.getUuidId())).collect(Collectors.toList());
         clients.forEach(client -> client.onDeviceProfileUpdate(deviceProfile));
         if (clients.size() > 0) {
             this.onDeviceProfileUpdate(clients, deviceProfile);
