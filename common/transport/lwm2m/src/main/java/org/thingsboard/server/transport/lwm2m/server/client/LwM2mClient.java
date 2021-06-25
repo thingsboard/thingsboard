@@ -29,7 +29,6 @@ import org.eclipse.leshan.core.node.codec.LwM2mValueConverter;
 import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
-import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
@@ -39,6 +38,8 @@ import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsRes
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
@@ -66,10 +67,10 @@ public class LwM2mClient implements Serializable {
     @Getter
     private final String endpoint;
 
-    private transient final Lock lock = new ReentrantLock();
-    //TODO: define custom serialization of those fields.
+    private transient Lock lock;
+
     @Getter
-    private transient final Map<String, ResourceValue> resources;
+    private final Map<String, ResourceValue> resources;
     @Getter
     private final Map<String, TsKvProto> sharedAttributes;
 
@@ -100,6 +101,7 @@ public class LwM2mClient implements Serializable {
         this.sharedAttributes = new ConcurrentHashMap<>();
         this.resources = new ConcurrentHashMap<>();
         this.state = LwM2MClientState.CREATED;
+        this.lock = new ReentrantLock();
     }
 
     public void init(ValidateDeviceCredentialsResponse credentials, UUID sessionId) {
@@ -351,6 +353,11 @@ public class LwM2mClient implements Serializable {
         } else {
             return ContentFormat.TEXT;
         }
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        this.lock = new ReentrantLock();
     }
 
 }
