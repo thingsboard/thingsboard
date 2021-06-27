@@ -131,7 +131,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         this.attributeSubscriptions = new HashMap<>();
         this.rpcSubscriptions = new HashMap<>();
         this.toDeviceRpcPendingMap = new HashMap<>();
-        this.sessions = new LinkedHashMapRemoveEldest<>(systemContext.getMaxConcurrentSessionsPerDevice(), this::notifyTransportAboutClosedSession);
+        this.sessions = new LinkedHashMapRemoveEldest<>(systemContext.getMaxConcurrentSessionsPerDevice(), this::notifyTransportAboutClosedSessionMaxSessionsLimit);
         if (initAttributes()) {
             restoreSessions();
         }
@@ -615,6 +615,11 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
         }
     }
+
+    private void notifyTransportAboutClosedSessionMaxSessionsLimit(UUID sessionId, SessionInfoMetaData sessionMd) {
+        notifyTransportAboutClosedSession(sessionId, sessionMd, "max concurrent sessions limit reached per device!");
+    }
+
 
     private void notifyTransportAboutClosedSession(UUID sessionId, SessionInfoMetaData sessionMd, String message) {
         SessionCloseNotificationProto sessionCloseNotificationProto = SessionCloseNotificationProto
