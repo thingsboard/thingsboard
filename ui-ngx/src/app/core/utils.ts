@@ -411,7 +411,7 @@ export function sortObjectKeys<T>(obj: T): T {
 }
 
 export function deepTrim<T>(obj: T): T {
-  if (isNumber(obj) || isUndefined(obj) || isString(obj) || obj === null) {
+  if (isNumber(obj) || isUndefined(obj) || isString(obj) || obj === null || obj instanceof File) {
     return obj;
   }
   return Object.keys(obj).reduce((acc, curr) => {
@@ -438,6 +438,21 @@ export function generateSecret(length?: number): string {
   return str.concat(generateSecret(length - str.length));
 }
 
-export function validateEntityId(entityId: EntityId): boolean {
-  return isDefinedAndNotNull(entityId.id) && entityId.id !== NULL_UUID && isDefinedAndNotNull(entityId.entityType);
+export function validateEntityId(entityId: EntityId | null): boolean {
+    return isDefinedAndNotNull(entityId?.id) && entityId.id !== NULL_UUID && isDefinedAndNotNull(entityId?.entityType);
+}
+
+export function isMobileApp(): boolean {
+  return isDefined((window as any).flutter_inappwebview);
+}
+
+const alphanumericCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const alphanumericCharactersLength = alphanumericCharacters.length;
+
+export function randomAlphanumeric(length: number): string {
+  let result = '';
+  for ( let i = 0; i < length; i++ ) {
+    result += alphanumericCharacters.charAt(Math.floor(Math.random() * alphanumericCharactersLength));
+  }
+  return result;
 }

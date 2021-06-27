@@ -17,20 +17,19 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -38,6 +37,8 @@ import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
+import org.thingsboard.server.common.data.OtaPackage;
+import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -67,6 +68,8 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.OtaPackageId;
+import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -75,24 +78,18 @@ import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.DataType;
-import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgDataType;
-import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
@@ -106,11 +103,12 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.dao.resource.TbResourceService;
+import org.thingsboard.server.dao.rpc.RpcService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
@@ -123,13 +121,16 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.action.RuleEngineEntityActionService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.edge.rpc.EdgeGrpcService;
 import org.thingsboard.server.service.edge.rpc.init.SyncEdgeService;
-import org.thingsboard.server.service.lwm2m.LwM2MModelsRepository;
+import org.thingsboard.server.service.lwm2m.LwM2MServerSecurityInfoRepository;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.service.resource.TbResourceService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -141,11 +142,9 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -154,8 +153,6 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 public abstract class BaseController {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
-    public static final String YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION = "You don't have permission to perform this operation!";
-
     protected static final String DEFAULT_DASHBOARD = "defaultDashboardId";
     protected static final String HOME_DASHBOARD = "homeDashboardId";
 
@@ -246,6 +243,15 @@ public abstract class BaseController {
     protected TbResourceService resourceService;
 
     @Autowired
+    protected OtaPackageService otaPackageService;
+
+    @Autowired
+    protected OtaPackageStateService otaPackageStateService;
+
+    @Autowired
+    protected RpcService rpcService;
+
+    @Autowired
     protected TbQueueProducerProvider producerProvider;
 
     @Autowired
@@ -255,7 +261,7 @@ public abstract class BaseController {
     protected TbDeviceProfileCache deviceProfileCache;
 
     @Autowired
-    protected LwM2MModelsRepository lwM2MModelsRepository;
+    protected LwM2MServerSecurityInfoRepository lwM2MServerSecurityInfoRepository;
 
     @Autowired(required = false)
     protected EdgeService edgeService;
@@ -268,6 +274,9 @@ public abstract class BaseController {
 
     @Autowired(required = false)
     protected EdgeGrpcService edgeGrpcService;
+
+    @Autowired
+    protected RuleEngineEntityActionService ruleEngineEntityActionService;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -500,6 +509,9 @@ public abstract class BaseController {
                     return;
                 case TB_RESOURCE:
                     checkResourceId(new TbResourceId(entityId.getId()), operation);
+                    return;
+                case OTA_PACKAGE:
+                    checkOtaPackageId(new OtaPackageId(entityId.getId()), operation);
                     return;
                 default:
                     throw new IllegalArgumentException("Unsupported entity type: " + entityId.getEntityType());
@@ -756,6 +768,42 @@ public abstract class BaseController {
         }
     }
 
+    OtaPackage checkOtaPackageId(OtaPackageId otaPackageId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(otaPackageId, "Incorrect otaPackageId " + otaPackageId);
+            OtaPackage otaPackage = otaPackageService.findOtaPackageById(getCurrentUser().getTenantId(), otaPackageId);
+            checkNotNull(otaPackage);
+            accessControlService.checkPermission(getCurrentUser(), Resource.OTA_PACKAGE, operation, otaPackageId, otaPackage);
+            return otaPackage;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    OtaPackageInfo checkOtaPackageInfoId(OtaPackageId otaPackageId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(otaPackageId, "Incorrect otaPackageId " + otaPackageId);
+            OtaPackageInfo otaPackageIn = otaPackageService.findOtaPackageInfoById(getCurrentUser().getTenantId(), otaPackageId);
+            checkNotNull(otaPackageIn);
+            accessControlService.checkPermission(getCurrentUser(), Resource.OTA_PACKAGE, operation, otaPackageId, otaPackageIn);
+            return otaPackageIn;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    Rpc checkRpcId(RpcId rpcId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(rpcId, "Incorrect rpcId " + rpcId);
+            Rpc rpc = rpcService.findById(getCurrentUser().getTenantId(), rpcId);
+            checkNotNull(rpc);
+            accessControlService.checkPermission(getCurrentUser(), Resource.RPC, operation, rpcId, rpc);
+            return rpc;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     protected <I extends EntityId> I emptyId(EntityType entityType) {
         return (I) EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
@@ -772,7 +820,7 @@ public abstract class BaseController {
             customerId = user.getCustomerId();
         }
         if (e == null) {
-            pushEntityActionToRuleEngine(entityId, entity, user, customerId, actionType, additionalInfo);
+            ruleEngineEntityActionService.pushEntityActionToRuleEngine(entityId, entity, user.getTenantId(), customerId, actionType, user, additionalInfo);
         }
         auditLogService.logEntityAction(user.getTenantId(), customerId, user.getId(), user.getName(), entityId, entity, actionType, e, additionalInfo);
     }
@@ -780,184 +828,6 @@ public abstract class BaseController {
 
     public static Exception toException(Throwable error) {
         return error != null ? (Exception.class.isInstance(error) ? (Exception) error : new Exception(error)) : null;
-    }
-
-    private <E extends HasName, I extends EntityId> void pushEntityActionToRuleEngine(I entityId, E entity, User user, CustomerId customerId,
-                                                                                      ActionType actionType, Object... additionalInfo) {
-        String msgType = null;
-        switch (actionType) {
-            case ADDED:
-                msgType = DataConstants.ENTITY_CREATED;
-                break;
-            case DELETED:
-                msgType = DataConstants.ENTITY_DELETED;
-                break;
-            case UPDATED:
-                msgType = DataConstants.ENTITY_UPDATED;
-                break;
-            case ASSIGNED_TO_CUSTOMER:
-                msgType = DataConstants.ENTITY_ASSIGNED;
-                break;
-            case UNASSIGNED_FROM_CUSTOMER:
-                msgType = DataConstants.ENTITY_UNASSIGNED;
-                break;
-            case ATTRIBUTES_UPDATED:
-                msgType = DataConstants.ATTRIBUTES_UPDATED;
-                break;
-            case ATTRIBUTES_DELETED:
-                msgType = DataConstants.ATTRIBUTES_DELETED;
-                break;
-            case ALARM_ACK:
-                msgType = DataConstants.ALARM_ACK;
-                break;
-            case ALARM_CLEAR:
-                msgType = DataConstants.ALARM_CLEAR;
-                break;
-            case ASSIGNED_FROM_TENANT:
-                msgType = DataConstants.ENTITY_ASSIGNED_FROM_TENANT;
-                break;
-            case ASSIGNED_TO_TENANT:
-                msgType = DataConstants.ENTITY_ASSIGNED_TO_TENANT;
-                break;
-            case PROVISION_SUCCESS:
-                msgType = DataConstants.PROVISION_SUCCESS;
-                break;
-            case PROVISION_FAILURE:
-                msgType = DataConstants.PROVISION_FAILURE;
-                break;
-            case TIMESERIES_UPDATED:
-                msgType = DataConstants.TIMESERIES_UPDATED;
-                break;
-            case TIMESERIES_DELETED:
-                msgType = DataConstants.TIMESERIES_DELETED;
-                break;
-            case ASSIGNED_TO_EDGE:
-                msgType = DataConstants.ENTITY_ASSIGNED_TO_EDGE;
-                break;
-            case UNASSIGNED_FROM_EDGE:
-                msgType = DataConstants.ENTITY_UNASSIGNED_FROM_EDGE;
-                break;
-        }
-        if (!StringUtils.isEmpty(msgType)) {
-            try {
-                TbMsgMetaData metaData = new TbMsgMetaData();
-                metaData.putValue("userId", user.getId().toString());
-                metaData.putValue("userName", user.getName());
-                if (customerId != null && !customerId.isNullUid()) {
-                    metaData.putValue("customerId", customerId.toString());
-                }
-                if (actionType == ActionType.ASSIGNED_TO_CUSTOMER) {
-                    String strCustomerId = extractParameter(String.class, 1, additionalInfo);
-                    String strCustomerName = extractParameter(String.class, 2, additionalInfo);
-                    metaData.putValue("assignedCustomerId", strCustomerId);
-                    metaData.putValue("assignedCustomerName", strCustomerName);
-                } else if (actionType == ActionType.UNASSIGNED_FROM_CUSTOMER) {
-                    String strCustomerId = extractParameter(String.class, 1, additionalInfo);
-                    String strCustomerName = extractParameter(String.class, 2, additionalInfo);
-                    metaData.putValue("unassignedCustomerId", strCustomerId);
-                    metaData.putValue("unassignedCustomerName", strCustomerName);
-                } else if (actionType == ActionType.ASSIGNED_FROM_TENANT) {
-                    String strTenantId = extractParameter(String.class, 0, additionalInfo);
-                    String strTenantName = extractParameter(String.class, 1, additionalInfo);
-                    metaData.putValue("assignedFromTenantId", strTenantId);
-                    metaData.putValue("assignedFromTenantName", strTenantName);
-                } else if (actionType == ActionType.ASSIGNED_TO_TENANT) {
-                    String strTenantId = extractParameter(String.class, 0, additionalInfo);
-                    String strTenantName = extractParameter(String.class, 1, additionalInfo);
-                    metaData.putValue("assignedToTenantId", strTenantId);
-                    metaData.putValue("assignedToTenantName", strTenantName);
-                } else if (actionType == ActionType.ASSIGNED_TO_EDGE) {
-                    String strEdgeId = extractParameter(String.class, 1, additionalInfo);
-                    String strEdgeName = extractParameter(String.class, 2, additionalInfo);
-                    metaData.putValue("assignedEdgeId", strEdgeId);
-                    metaData.putValue("assignedEdgeName", strEdgeName);
-                } else if (actionType == ActionType.UNASSIGNED_FROM_EDGE) {
-                    String strEdgeId = extractParameter(String.class, 1, additionalInfo);
-                    String strEdgeName = extractParameter(String.class, 2, additionalInfo);
-                    metaData.putValue("unassignedEdgeId", strEdgeId);
-                    metaData.putValue("unassignedEdgeName", strEdgeName);
-                }
-                ObjectNode entityNode;
-                if (entity != null) {
-                    entityNode = json.valueToTree(entity);
-                    if (entityId.getEntityType() == EntityType.DASHBOARD) {
-                        entityNode.put("configuration", "");
-                    }
-                } else {
-                    entityNode = json.createObjectNode();
-                    if (actionType == ActionType.ATTRIBUTES_UPDATED) {
-                        String scope = extractParameter(String.class, 0, additionalInfo);
-                        @SuppressWarnings("unchecked")
-                        List<AttributeKvEntry> attributes = extractParameter(List.class, 1, additionalInfo);
-                        metaData.putValue(DataConstants.SCOPE, scope);
-                        if (attributes != null) {
-                            for (AttributeKvEntry attr : attributes) {
-                                addKvEntry(entityNode, attr);
-                            }
-                        }
-                    } else if (actionType == ActionType.ATTRIBUTES_DELETED) {
-                        String scope = extractParameter(String.class, 0, additionalInfo);
-                        @SuppressWarnings("unchecked")
-                        List<String> keys = extractParameter(List.class, 1, additionalInfo);
-                        metaData.putValue(DataConstants.SCOPE, scope);
-                        ArrayNode attrsArrayNode = entityNode.putArray("attributes");
-                        if (keys != null) {
-                            keys.forEach(attrsArrayNode::add);
-                        }
-                    } else if (actionType == ActionType.TIMESERIES_UPDATED) {
-                        @SuppressWarnings("unchecked")
-                        List<TsKvEntry> timeseries = extractParameter(List.class, 0, additionalInfo);
-                        addTimeseries(entityNode, timeseries);
-                    } else if (actionType == ActionType.TIMESERIES_DELETED) {
-                        @SuppressWarnings("unchecked")
-                        List<String> keys = extractParameter(List.class, 0, additionalInfo);
-                        if (keys != null) {
-                            ArrayNode timeseriesArrayNode = entityNode.putArray("timeseries");
-                            keys.forEach(timeseriesArrayNode::add);
-                        }
-                        entityNode.put("startTs", extractParameter(Long.class, 1, additionalInfo));
-                        entityNode.put("endTs", extractParameter(Long.class, 2, additionalInfo));
-                    }
-                }
-                TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
-                TenantId tenantId = user.getTenantId();
-                if (tenantId.isNullUid()) {
-                    if (entity instanceof HasTenantId) {
-                        tenantId = ((HasTenantId) entity).getTenantId();
-                    }
-                }
-                tbClusterService.pushMsgToRuleEngine(tenantId, entityId, tbMsg, null);
-            } catch (Exception e) {
-                log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);
-            }
-        }
-    }
-
-    private void addKvEntry(ObjectNode entityNode, KvEntry kvEntry) throws Exception {
-        if (kvEntry.getDataType() == DataType.BOOLEAN) {
-            kvEntry.getBooleanValue().ifPresent(value -> entityNode.put(kvEntry.getKey(), value));
-        } else if (kvEntry.getDataType() == DataType.DOUBLE) {
-            kvEntry.getDoubleValue().ifPresent(value -> entityNode.put(kvEntry.getKey(), value));
-        } else if (kvEntry.getDataType() == DataType.LONG) {
-            kvEntry.getLongValue().ifPresent(value -> entityNode.put(kvEntry.getKey(), value));
-        } else if (kvEntry.getDataType() == DataType.JSON) {
-            if (kvEntry.getJsonValue().isPresent()) {
-                entityNode.set(kvEntry.getKey(), json.readTree(kvEntry.getJsonValue().get()));
-            }
-        } else {
-            entityNode.put(kvEntry.getKey(), kvEntry.getValueAsString());
-        }
-    }
-
-    private <T> T extractParameter(Class<T> clazz, int index, Object... additionalInfo) {
-        T result = null;
-        if (additionalInfo != null && additionalInfo.length > index) {
-            Object paramObject = additionalInfo[index];
-            if (clazz.isInstance(paramObject)) {
-                result = clazz.cast(paramObject);
-            }
-        }
-        return result;
     }
 
     protected <E extends HasName> String entityToStr(E entity) {
@@ -1056,23 +926,6 @@ public abstract class BaseController {
         return result;
     }
 
-    private void addTimeseries(ObjectNode entityNode, List<TsKvEntry> timeseries) throws Exception {
-        if (timeseries != null && !timeseries.isEmpty()) {
-            ArrayNode result = entityNode.putArray("timeseries");
-            Map<Long, List<TsKvEntry>> groupedTelemetry = timeseries.stream()
-                    .collect(Collectors.groupingBy(TsKvEntry::getTs));
-            for (Map.Entry<Long, List<TsKvEntry>> entry : groupedTelemetry.entrySet()) {
-                ObjectNode element = json.createObjectNode();
-                element.put("ts", entry.getKey());
-                ObjectNode values = element.putObject("values");
-                for (TsKvEntry tsKvEntry : entry.getValue()) {
-                    addKvEntry(values, tsKvEntry);
-                }
-                result.add(element);
-            }
-        }
-    }
-
     protected void processDashboardIdFromAdditionalInfo(ObjectNode additionalInfo, String requiredFields) throws ThingsboardException {
         String dashboardId = additionalInfo.has(requiredFields) ? additionalInfo.get(requiredFields).asText() : null;
         if (dashboardId != null && !dashboardId.equals("null")) {
@@ -1082,4 +935,11 @@ public abstract class BaseController {
         }
     }
 
+    protected MediaType parseMediaType(String contentType) {
+        try {
+            return MediaType.parseMediaType(contentType);
+        } catch (Exception e) {
+            return MediaType.APPLICATION_OCTET_STREAM;
+        }
+    }
 }

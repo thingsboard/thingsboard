@@ -38,7 +38,9 @@ public enum Resource {
     DEVICE_PROFILE(EntityType.DEVICE_PROFILE),
     API_USAGE_STATE(EntityType.API_USAGE_STATE),
     TB_RESOURCE(EntityType.TB_RESOURCE),
-    EDGE(EntityType.EDGE);
+    OTA_PACKAGE(EntityType.OTA_PACKAGE),
+    EDGE(EntityType.EDGE),
+    RPC(EntityType.RPC);
 
     private final EntityType entityType;
 

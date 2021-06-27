@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -29,6 +29,8 @@ import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   defaultAttributesSchema,
+  defaultRpcRequestSchema,
+  defaultRpcResponseSchema,
   defaultTelemetrySchema,
   DeviceProfileTransportConfiguration,
   DeviceTransportType,
@@ -37,6 +39,8 @@ import {
   transportPayloadTypeTranslationMap
 } from '@shared/models/device.models';
 import { isDefinedAndNotNull } from '@core/utils';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-mqtt-device-profile-transport-configuration',
@@ -48,7 +52,7 @@ import { isDefinedAndNotNull } from '@core/utils';
     multi: true
   }]
 })
-export class MqttDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit {
+export class MqttDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit, OnDestroy {
 
   transportPayloadTypes = Object.keys(TransportPayloadType);
 
@@ -56,6 +60,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
 
   mqttDeviceProfileTransportConfigurationFormGroup: FormGroup;
 
+  private destroy$ = new Subject();
   private requiredValue: boolean;
 
   get required(): boolean {
@@ -90,17 +95,27 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
         transportPayloadTypeConfiguration: this.fb.group({
           transportPayloadType: [TransportPayloadType.JSON, Validators.required],
           deviceTelemetryProtoSchema: [defaultTelemetrySchema, Validators.required],
-          deviceAttributesProtoSchema: [defaultAttributesSchema, Validators.required]
+          deviceAttributesProtoSchema: [defaultAttributesSchema, Validators.required],
+          deviceRpcRequestProtoSchema: [defaultRpcRequestSchema, Validators.required],
+          deviceRpcResponseProtoSchema: [defaultRpcResponseSchema, Validators.required]
         })
       }, {validator: this.uniqueDeviceTopicValidator}
     );
-    this.mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.transportPayloadType')
-      .valueChanges.subscribe(payloadType => {
+    this.mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.transportPayloadType').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(payloadType => {
       this.updateTransportPayloadBasedControls(payloadType, true);
     });
-    this.mqttDeviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
+    this.mqttDeviceProfileTransportConfigurationFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
       this.updateModel();
     });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -139,15 +154,21 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     if (forceUpdated) {
       transportPayloadTypeForm.patchValue({
         deviceTelemetryProtoSchema: defaultTelemetrySchema,
-        deviceAttributesProtoSchema: defaultAttributesSchema
+        deviceAttributesProtoSchema: defaultAttributesSchema,
+        deviceRpcRequestProtoSchema: defaultRpcRequestSchema,
+        deviceRpcResponseProtoSchema: defaultRpcResponseSchema
       }, {emitEvent: false});
     }
     if (type === TransportPayloadType.PROTOBUF && !this.disabled) {
       transportPayloadTypeForm.get('deviceTelemetryProtoSchema').enable({emitEvent: false});
       transportPayloadTypeForm.get('deviceAttributesProtoSchema').enable({emitEvent: false});
+      transportPayloadTypeForm.get('deviceRpcRequestProtoSchema').enable({emitEvent: false});
+      transportPayloadTypeForm.get('deviceRpcResponseProtoSchema').enable({emitEvent: false});
     } else {
       transportPayloadTypeForm.get('deviceTelemetryProtoSchema').disable({emitEvent: false});
       transportPayloadTypeForm.get('deviceAttributesProtoSchema').disable({emitEvent: false});
+      transportPayloadTypeForm.get('deviceRpcRequestProtoSchema').enable({emitEvent: false});
+      transportPayloadTypeForm.get('deviceRpcResponseProtoSchema').disable({emitEvent: false});
     }
   }
 
@@ -182,8 +203,8 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
   }
 
   private uniqueDeviceTopicValidator(control: FormGroup): { [key: string]: boolean } | null {
-    if (control.value) {
-      const formValue = control.value as MqttDeviceProfileTransportConfiguration;
+    if (control.getRawValue()) {
+      const formValue = control.getRawValue() as MqttDeviceProfileTransportConfiguration;
       if (formValue.deviceAttributesTopic === formValue.deviceTelemetryTopic) {
         return {unique: true};
       }

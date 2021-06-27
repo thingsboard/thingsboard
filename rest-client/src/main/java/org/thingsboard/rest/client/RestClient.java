@@ -19,18 +19,26 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.support.HttpRequestWrapper;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rest.client.utils.RestJsonConverter;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ClaimRequest;
@@ -47,6 +55,10 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.OtaPackage;
+import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -77,8 +89,10 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationTemplateId;
+import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -89,7 +103,10 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientsParams;
+import org.thingsboard.server.common.data.oauth2.OAuth2Info;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
+import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
@@ -121,7 +138,6 @@ import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -129,7 +145,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
@@ -145,8 +160,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     private String token;
     private String refreshToken;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private ExecutorService service = Executors.newWorkStealingPool(10);
-
+    private ExecutorService service = ThingsBoardExecutors.newWorkStealingPool(10, getClass());
 
     protected static final String ACTIVATE_TOKEN_REGEX = "/api/noauth/activate?activateToken=";
 
@@ -306,16 +320,24 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public PageData<AlarmInfo> getAlarms(EntityId entityId, AlarmSearchStatus searchStatus, AlarmStatus status, TimePageLink pageLink, Boolean fetchOriginator) {
+        String urlSecondPart = "/api/alarm/{entityType}/{entityId}?fetchOriginator={fetchOriginator}";
         Map<String, String> params = new HashMap<>();
         params.put("entityType", entityId.getEntityType().name());
         params.put("entityId", entityId.getId().toString());
-        params.put("searchStatus", searchStatus.name());
-        params.put("status", status.name());
         params.put("fetchOriginator", String.valueOf(fetchOriginator));
+        if(searchStatus != null) {
+            params.put("searchStatus", searchStatus.name());
+            urlSecondPart += "&searchStatus={searchStatus}";
+        }
+        if(status != null) {
+            params.put("status", status.name());
+            urlSecondPart += "&status={status}";
+        }
+
         addTimePageLinkToParam(params, pageLink);
 
         return restTemplate.exchange(
-                baseURL + "/api/alarm/{entityType}/{entityId}?searchStatus={searchStatus}&status={status}&fetchOriginator={fetchOriginator}&" + getTimeUrlParams(pageLink),
+                baseURL +  urlSecondPart + getTimeUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<AlarmInfo>>() {
@@ -1230,6 +1252,21 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 HttpEntity.EMPTY, Device.class, tenantId, deviceId).getBody();
     }
 
+    public Long countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(OtaPackageType otaPackageType, DeviceProfileId deviceProfileId) {
+        Map<String, String> params = new HashMap<>();
+        params.put("otaPackageType", otaPackageType.name());
+        params.put("deviceProfileId", deviceProfileId.getId().toString());
+
+        return restTemplate.exchange(
+                baseURL + "/api/devices/count/{otaPackageType}/{deviceProfileId}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<Long>() {
+                },
+                params
+        ).getBody();
+    }
+
     @Deprecated
     public Device createDevice(String name, String type) {
         Device device = new Device();
@@ -1736,21 +1773,37 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 }).getBody();
     }
 
-    public List<OAuth2ClientInfo> getOAuth2Clients() {
+    public List<OAuth2ClientInfo> getOAuth2Clients(String pkgName, PlatformType platformType) {
+        Map<String, String> params = new HashMap<>();
+        StringBuilder urlBuilder = new StringBuilder(baseURL);
+        urlBuilder.append("/api/noauth/oauth2Clients");
+        if (pkgName != null) {
+            urlBuilder.append("?pkgName={pkgName}");
+            params.put("pkgName", pkgName);
+        }
+        if (platformType != null) {
+            if (pkgName != null) {
+                urlBuilder.append("&");
+            } else {
+                urlBuilder.append("?");
+            }
+            urlBuilder.append("platform={platform}");
+            params.put("platform", platformType.name());
+        }
         return restTemplate.exchange(
-                baseURL + "/api/noauth/oauth2Clients",
+                urlBuilder.toString(),
                 HttpMethod.POST,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<OAuth2ClientInfo>>() {
-                }).getBody();
+                }, params).getBody();
     }
 
-    public OAuth2ClientsParams getCurrentOAuth2Params() {
-        return restTemplate.getForEntity(baseURL + "/api/oauth2/config", OAuth2ClientsParams.class).getBody();
+    public OAuth2Info getCurrentOAuth2Info() {
+        return restTemplate.getForEntity(baseURL + "/api/oauth2/config", OAuth2Info.class).getBody();
     }
 
-    public OAuth2ClientsParams saveOAuth2Params(OAuth2ClientsParams oauth2Params) {
-        return restTemplate.postForEntity(baseURL + "/api/oauth2/config", oauth2Params, OAuth2ClientsParams.class).getBody();
+    public OAuth2Info saveOAuth2Info(OAuth2Info oauth2Info) {
+        return restTemplate.postForEntity(baseURL + "/api/oauth2/config", oauth2Info, OAuth2Info.class).getBody();
     }
 
     public String getLoginProcessingUrl() {
@@ -2325,7 +2378,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public void setUserCredentialsEnabled(UserId userId, boolean userCredentialsEnabled) {
         restTemplate.postForLocation(
-                baseURL + "/api/user/{userId}/userCredentialsEnabled?serCredentialsEnabled={serCredentialsEnabled}",
+                baseURL + "/api/user/{userId}/userCredentialsEnabled?userCredentialsEnabled={userCredentialsEnabled}",
                 null,
                 userId.getId(),
                 userCredentialsEnabled);
@@ -2822,6 +2875,176 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         restTemplate.postForEntity(baseURL + "/api/edge/sync/{edgeId}", null, EdgeId.class, params);
     }
 
+    public ResponseEntity<Resource> downloadResource(TbResourceId resourceId) {
+        Map<String, String> params = new HashMap<>();
+        params.put("resourceId", resourceId.getId().toString());
+
+        return restTemplate.exchange(
+                baseURL + "/api/resource/{resourceId}/download",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<>() {},
+                params
+        );
+    }
+
+    public TbResourceInfo getResourceInfoById(TbResourceId resourceId) {
+        Map<String, String> params = new HashMap<>();
+        params.put("resourceId", resourceId.getId().toString());
+
+        return restTemplate.exchange(
+                baseURL + "/api/resource/info/{resourceId}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TbResourceInfo>() {},
+                params
+        ).getBody();
+    }
+
+    public TbResource getResourceId(TbResourceId resourceId) {
+        Map<String, String> params = new HashMap<>();
+        params.put("resourceId", resourceId.getId().toString());
+
+        return restTemplate.exchange(
+                baseURL + "/api/resource/{resourceId}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<TbResource>() {},
+                params
+        ).getBody();
+    }
+
+    public TbResource saveResource(TbResource resource) {
+        return restTemplate.postForEntity(
+                baseURL + "/api/resource",
+                resource,
+                TbResource.class
+        ).getBody();
+    }
+
+    public PageData<TbResourceInfo> getResources(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/resource?" + getUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<TbResourceInfo>>() {},
+                params
+        ).getBody();
+    }
+
+    public void deleteResource(TbResourceId resourceId) {
+        restTemplate.delete("/api/resource/{resourceId}", resourceId.getId().toString());
+    }
+
+    public ResponseEntity<Resource> downloadOtaPackage(OtaPackageId otaPackageId) {
+        Map<String, String> params = new HashMap<>();
+        params.put("otaPackageId", otaPackageId.getId().toString());
+
+        return restTemplate.exchange(
+                baseURL + "/api/otaPackage/{otaPackageId}/download",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<>() {},
+                params
+        );
+    }
+
+    public OtaPackageInfo getOtaPackageInfoById(OtaPackageId otaPackageId) {
+        Map<String, String> params = new HashMap<>();
+        params.put("otaPackageId", otaPackageId.getId().toString());
+
+        return restTemplate.exchange(
+                baseURL + "/api/otaPackage/info/{otaPackageId}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<OtaPackageInfo>() {},
+                params
+        ).getBody();
+    }
+
+    public OtaPackage getOtaPackageById(OtaPackageId otaPackageId) {
+        Map<String, String> params = new HashMap<>();
+        params.put("otaPackageId", otaPackageId.getId().toString());
+
+        return restTemplate.exchange(
+                baseURL + "/api/otaPackage/{otaPackageId}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<OtaPackage>() {},
+                params
+        ).getBody();
+    }
+
+    public OtaPackageInfo saveOtaPackageInfo(OtaPackageInfo otaPackageInfo) {
+        return restTemplate.postForEntity(baseURL + "/api/otaPackage", otaPackageInfo, OtaPackageInfo.class).getBody();
+    }
+
+    public OtaPackageInfo saveOtaPackageData(OtaPackageId otaPackageId, String checkSum, ChecksumAlgorithm checksumAlgorithm, MultipartFile file) throws Exception {
+        HttpHeaders header = new HttpHeaders();
+        header.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        MultiValueMap<String, String> fileMap = new LinkedMultiValueMap<>();
+        fileMap.add(HttpHeaders.CONTENT_DISPOSITION, "form-data; name=file; filename=" + file.getName());
+        HttpEntity<ByteArrayResource> fileEntity = new HttpEntity<>(new ByteArrayResource(file.getBytes()), fileMap);
+
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", fileEntity);
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, header);
+
+        Map<String, String> params = new HashMap<>();
+        params.put("otaPackageId", otaPackageId.getId().toString());
+        params.put("checksumAlgorithm", checksumAlgorithm.name());
+        String url = "/api/otaPackage/{otaPackageId}?checksumAlgorithm={checksumAlgorithm}";
+
+        if(checkSum != null) {
+            url += "&checkSum={checkSum}";
+        }
+
+        return restTemplate.postForEntity(
+                baseURL + url, requestEntity, OtaPackageInfo.class, params
+        ).getBody();
+    }
+
+    public PageData<OtaPackageInfo> getOtaPackages(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+
+        return restTemplate.exchange(
+                baseURL + "/api/otaPackages?" + getUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<OtaPackageInfo>>() {
+                },
+                params
+        ).getBody();
+    }
+
+    public PageData<OtaPackageInfo> getOtaPackages(DeviceProfileId deviceProfileId,
+                                                   OtaPackageType otaPackageType,
+                                                   boolean hasData,
+                                                   PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("hasData", String.valueOf(hasData));
+        params.put("deviceProfileId", deviceProfileId.getId().toString());
+        params.put("type", otaPackageType.name());
+        addPageLinkToParam(params, pageLink);
+
+        return restTemplate.exchange(
+                baseURL + "/api/otaPackages/{deviceProfileId}/{type}/{hasData}?" + getUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<OtaPackageInfo>>() {
+                },
+                params
+        ).getBody();
+    }
+
+    public void deleteOtaPackage(OtaPackageId otaPackageId) {
+        restTemplate.delete(baseURL + "/api/otaPackage/{otaPackageId}", otaPackageId.getId().toString());
+    }
+
     @Deprecated
     public Optional<JsonNode> getAttributes(String accessToken, String clientKeys, String sharedKeys) {
         Map<String, String> params = new HashMap<>();
@@ -2841,7 +3064,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     private String getTimeUrlParams(TimePageLink pageLink) {
-        String urlParams = "limit={limit}&ascOrder={ascOrder}";
+        String urlParams = getUrlParams(pageLink);
         if (pageLink.getStartTime() != null) {
             urlParams += "&startTime={startTime}";
         }

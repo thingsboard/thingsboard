@@ -80,6 +80,7 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
     return this.fb.group(
       {
         title: [entity ? entity.title : '', [Validators.required]],
+        image: [entity ? entity.image : null],
         configuration: this.fb.group(
           {
             description: [entity && entity.configuration ? entity.configuration.description : ''],
@@ -92,6 +93,7 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
   updateForm(entity: Dashboard) {
     this.updateFields(entity);
     this.entityForm.patchValue({title: entity.title});
+    this.entityForm.patchValue({image: entity.image});
     this.entityForm.patchValue({configuration: {description: entity.configuration ? entity.configuration.description : ''}});
   }
 

@@ -75,11 +75,12 @@ import {
   StringOperation
 } from '@shared/models/query/query.models';
 import { alarmFields } from '@shared/models/alarm.models';
-import { EdgeService } from "@core/http/edge.service";
+import { OtaPackageService } from '@core/http/ota-package.service';
+import { EdgeService } from '@core/http/edge.service';
 import { Edge, EdgeEventType } from '@shared/models/edge.models';
-import { RuleChainType } from "@shared/models/rule-chain.models";
-import { WidgetService } from "@core/http/widget.service";
-import { DeviceProfileService } from "@core/http/device-profile.service";
+import { RuleChainType } from '@shared/models/rule-chain.models';
+import { WidgetService } from '@core/http/widget.service';
+import { DeviceProfileService } from '@core/http/device-profile.service';
 
 @Injectable({
   providedIn: 'root'
@@ -100,6 +101,7 @@ export class EntityService {
     private dashboardService: DashboardService,
     private entityRelationService: EntityRelationService,
     private attributeService: AttributeService,
+    private otaPackageService: OtaPackageService,
     private widgetService: WidgetService,
     private deviceProfileService: DeviceProfileService,
     private utils: UtilsService
@@ -139,6 +141,9 @@ export class EntityService {
         break;
       case EntityType.ALARM:
         console.error('Get Alarm Entity is not implemented!');
+        break;
+      case EntityType.OTA_PACKAGE:
+        observable = this.otaPackageService.getOtaPackageInfo(entityId, config);
         break;
     }
     return observable;
@@ -353,6 +358,10 @@ export class EntityService {
         break;
       case EntityType.ALARM:
         console.error('Get Alarm Entities is not implemented!');
+        break;
+      case EntityType.OTA_PACKAGE:
+        pageLink.sortOrder.property = 'title';
+        entitiesObservable = this.otaPackageService.getOtaPackages(pageLink, config);
         break;
     }
     return entitiesObservable;

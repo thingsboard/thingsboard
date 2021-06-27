@@ -1,0 +1,133 @@
+<!--
+
+    Copyright © 2016-2021 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form [formGroup]="snmpDeviceTransportConfigurationFormGroup" style="padding-bottom: 16px;"  fxLayoutGap="8px" fxLayout="column">
+  <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column">
+    <mat-form-field fxFlex>
+      <mat-label translate>device-profile.snmp.host</mat-label>
+      <input matInput formControlName="host" required>
+      <mat-error *ngIf="snmpDeviceTransportConfigurationFormGroup.get('host').hasError('required') ||
+                          snmpDeviceTransportConfigurationFormGroup.get('host').hasError('pattern')">
+        {{ 'device-profile.snmp.host-required' | translate }}
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field fxFlex>
+      <mat-label translate>device-profile.snmp.port</mat-label>
+      <input matInput formControlName="port" type="number" min="0" required>
+      <mat-error *ngIf="snmpDeviceTransportConfigurationFormGroup.get('port').hasError('required')">
+        {{ 'device-profile.snmp.port-required' | translate }}
+      </mat-error>
+      <mat-error *ngIf="snmpDeviceTransportConfigurationFormGroup.get('port').hasError('pattern') ||
+                          snmpDeviceTransportConfigurationFormGroup.get('port').hasError('min')">
+        {{ 'device-profile.snmp.port-format' | translate }}
+      </mat-error>
+    </mat-form-field>
+  </div>
+  <mat-form-field class="mat-block" floatLabel="always" hideRequiredMarker>
+    <mat-label translate>device-profile.snmp.protocol-version</mat-label>
+    <mat-select formControlName="protocolVersion" required>
+      <mat-option *ngFor="let snmpDeviceProtocolVersion of snmpDeviceProtocolVersions" [value]="snmpDeviceProtocolVersion">
+        {{ snmpDeviceProtocolVersion | lowercase }}
+      </mat-option>
+    </mat-select>
+    <mat-error *ngIf="snmpDeviceTransportConfigurationFormGroup.get('protocolVersion').hasError('required')">
+      {{ 'device-profile.snmp.protocol-version-required' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <section *ngIf="!isV3protocolVersion()">
+    <mat-form-field class="mat-block">
+      <mat-label translate>device-profile.snmp.community</mat-label>
+      <input matInput formControlName="community" required>
+      <mat-error *ngIf="snmpDeviceTransportConfigurationFormGroup.get('community').hasError('required') ||
+                          snmpDeviceTransportConfigurationFormGroup.get('community').hasError('pattern')">
+        {{ 'device-profile.snmp.community-required' | translate }}
+      </mat-error>
+    </mat-form-field>
+  </section>
+  <section *ngIf="isV3protocolVersion()">
+    <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column">
+      <mat-form-field fxFlex>
+        <mat-label translate>device-profile.snmp.user-name</mat-label>
+        <input matInput formControlName="username" required>
+        <mat-error *ngIf="snmpDeviceTransportConfigurationFormGroup.get('username').hasError('required') ||
+                            snmpDeviceTransportConfigurationFormGroup.get('username').hasError('pattern')">
+          {{ 'device-profile.snmp.user-name-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field fxFlex>
+        <mat-label translate>device-profile.snmp.security-name</mat-label>
+        <input matInput formControlName="securityName" required>
+        <mat-error *ngIf="snmpDeviceTransportConfigurationFormGroup.get('securityName').hasError('required') ||
+                            snmpDeviceTransportConfigurationFormGroup.get('securityName').hasError('pattern')">
+          {{ 'device-profile.snmp.security-name-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+    </div>
+    <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column">
+      <mat-form-field fxFlex floatLabel="always" hideRequiredMarker>
+        <mat-label translate>device-profile.snmp.authentication-protocol</mat-label>
+        <mat-select formControlName="authenticationProtocol" required>
+          <mat-option *ngFor="let snmpAuthenticationProtocol of snmpAuthenticationProtocols" [value]="snmpAuthenticationProtocol">
+            {{ snmpAuthenticationProtocolTranslation.get(snmpAuthenticationProtocol) }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="snmpDeviceTransportConfigurationFormGroup.get('authenticationProtocol').hasError('required')">
+          {{ 'device-profile.snmp.authentication-protocol-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field fxFlex>
+        <mat-label translate>device-profile.snmp.authentication-passphrase</mat-label>
+        <input matInput formControlName="authenticationPassphrase" required>
+        <mat-error *ngIf="snmpDeviceTransportConfigurationFormGroup.get('authenticationPassphrase').hasError('required') ||
+                            snmpDeviceTransportConfigurationFormGroup.get('authenticationPassphrase').hasError('pattern')">
+          {{ 'device-profile.snmp.authentication-passphrase-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+    </div>
+    <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column">
+      <mat-form-field fxFlex floatLabel="always" hideRequiredMarker>
+        <mat-label translate>device-profile.snmp.privacy-protocol</mat-label>
+        <mat-select formControlName="privacyProtocol" required>
+          <mat-option *ngFor="let snmpPrivacyProtocol of snmpPrivacyProtocols" [value]="snmpPrivacyProtocol">
+            {{ snmpPrivacyProtocolTranslation.get(snmpPrivacyProtocol) }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="snmpDeviceTransportConfigurationFormGroup.get('privacyProtocol').hasError('required')">
+          {{ 'device-profile.snmp.privacy-protocol-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field fxFlex>
+        <mat-label translate>device-profile.snmp.privacy-passphrase</mat-label>
+        <input matInput formControlName="privacyPassphrase" required>
+        <mat-error *ngIf="snmpDeviceTransportConfigurationFormGroup.get('privacyPassphrase').hasError('required') ||
+                            snmpDeviceTransportConfigurationFormGroup.get('privacyPassphrase').hasError('pattern')">
+          {{ 'device-profile.snmp.privacy-passphrase-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+    </div>
+    <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column">
+      <mat-form-field fxFlex>
+        <mat-label translate>device-profile.snmp.context-name</mat-label>
+        <input matInput formControlName="contextName">
+      </mat-form-field>
+      <mat-form-field fxFlex>
+        <mat-label translate>device-profile.snmp.engine-id</mat-label>
+        <input matInput formControlName="engineId">
+      </mat-form-field>
+    </div>
+  </section>
+</form>

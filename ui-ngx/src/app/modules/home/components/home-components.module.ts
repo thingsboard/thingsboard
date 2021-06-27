@@ -55,6 +55,7 @@ import { ManageWidgetActionsComponent } from '@home/components/widget/action/man
 import { WidgetActionDialogComponent } from '@home/components/widget/action/widget-action-dialog.component';
 import { CustomActionPrettyResourcesTabsComponent } from '@home/components/widget/action/custom-action-pretty-resources-tabs.component';
 import { CustomActionPrettyEditorComponent } from '@home/components/widget/action/custom-action-pretty-editor.component';
+import { MobileActionEditorComponent } from '@home/components/widget/action/mobile-action-editor.component';
 import { CustomDialogService } from '@home/components/widget/dialog/custom-dialog.service';
 import { CustomDialogContainerComponent } from '@home/components/widget/dialog/custom-dialog-container.component';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
@@ -137,6 +138,11 @@ import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/emb
 import { EdgeDownlinkTableComponent } from '@home/components/edge/edge-downlink-table.component';
 import { EdgeDownlinkTableHeaderComponent } from '@home/components/edge/edge-downlink-table-header.component';
 import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-page/widget-types-panel.component';
+import { SecurityConfigLwm2mComponent } from '@home/components/device/security-config-lwm2m.component';
+import { SecurityConfigLwm2mServerComponent } from '@home/components/device/security-config-lwm2m-server.component';
+import { DashboardImageDialogComponent } from '@home/components/dashboard-page/dashboard-image-dialog.component';
+import { WidgetContainerComponent } from '@home/components/widget/widget-container.component';
+import { SnmpDeviceProfileTransportModule } from '@home/components/profile/device/snpm/snmp-device-profile-transport.module';
 
 @NgModule({
   declarations:
@@ -167,6 +173,7 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
       EntityAliasesDialogComponent,
       EntityAliasDialogComponent,
       DashboardComponent,
+      WidgetContainerComponent,
       WidgetComponent,
       LegendComponent,
       WidgetConfigComponent,
@@ -182,6 +189,7 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
       WidgetActionDialogComponent,
       CustomActionPrettyResourcesTabsComponent,
       CustomActionPrettyEditorComponent,
+      MobileActionEditorComponent,
       CustomDialogContainerComponent,
       ImportDialogComponent,
       ImportDialogCsvComponent,
@@ -237,6 +245,8 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
       DeviceWizardDialogComponent,
       DeviceCredentialsComponent,
       CopyDeviceCredentialsComponent,
+      SecurityConfigLwm2mComponent,
+      SecurityConfigLwm2mServerComponent,
       AlarmScheduleDialogComponent,
       EditAlarmDetailsDialogComponent,
       SmsProviderConfigurationComponent,
@@ -252,6 +262,7 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
       DashboardSettingsDialogComponent,
       ManageDashboardStatesDialogComponent,
       DashboardStateDialogComponent,
+      DashboardImageDialogComponent,
       EmbedDashboardDialogComponent,
       DisplayWidgetTypesPanelComponent
     ],
@@ -260,6 +271,7 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
     SharedModule,
     SharedHomeComponentsModule,
     Lwm2mProfileComponentsModule,
+    SnmpDeviceProfileTransportModule,
     StatesControllerModule
   ],
   exports: [
@@ -280,6 +292,7 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
     EntityAliasesDialogComponent,
     EntityAliasDialogComponent,
     DashboardComponent,
+    WidgetContainerComponent,
     WidgetComponent,
     LegendComponent,
     WidgetConfigComponent,
@@ -294,6 +307,7 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
     WidgetActionDialogComponent,
     CustomActionPrettyResourcesTabsComponent,
     CustomActionPrettyEditorComponent,
+    MobileActionEditorComponent,
     CustomDialogContainerComponent,
     ImportDialogComponent,
     ImportDialogCsvComponent,
@@ -339,6 +353,8 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
     DeviceWizardDialogComponent,
     DeviceCredentialsComponent,
     CopyDeviceCredentialsComponent,
+    SecurityConfigLwm2mComponent,
+    SecurityConfigLwm2mServerComponent,
     AlarmScheduleInfoComponent,
     AlarmScheduleComponent,
     AlarmScheduleDialogComponent,
@@ -358,6 +374,7 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
     DashboardSettingsDialogComponent,
     ManageDashboardStatesDialogComponent,
     DashboardStateDialogComponent,
+    DashboardImageDialogComponent,
     EmbedDashboardDialogComponent,
     DisplayWidgetTypesPanelComponent
   ],

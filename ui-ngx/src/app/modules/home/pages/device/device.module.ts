@@ -24,16 +24,15 @@ import { DeviceCredentialsDialogComponent } from '@modules/home/pages/device/dev
 import { HomeDialogsModule } from '../../dialogs/home-dialogs.module';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { DeviceTabsComponent } from '@home/pages/device/device-tabs.component';
-import { SecurityConfigComponent } from '@home/pages/device/lwm2m/security-config.component';
-import { SecurityConfigServerComponent } from '@home/pages/device/lwm2m/security-config-server.component';
 import { DefaultDeviceConfigurationComponent } from './data/default-device-configuration.component';
 import { DeviceConfigurationComponent } from './data/device-configuration.component';
 import { DeviceDataComponent } from './data/device-data.component';
 import { DefaultDeviceTransportConfigurationComponent } from './data/default-device-transport-configuration.component';
 import { DeviceTransportConfigurationComponent } from './data/device-transport-configuration.component';
 import { MqttDeviceTransportConfigurationComponent } from './data/mqtt-device-transport-configuration.component';
-import { Lwm2mDeviceTransportConfigurationComponent } from './data/lwm2m-device-transport-configuration.component';
 import { CoapDeviceTransportConfigurationComponent } from './data/coap-device-transport-configuration.component';
+import { Lwm2mDeviceTransportConfigurationComponent } from './data/lwm2m-device-transport-configuration.component';
+import { SnmpDeviceTransportConfigurationComponent } from './data/snmp-device-transport-configuration.component';
 
 @NgModule({
   declarations: [
@@ -41,16 +40,15 @@ import { CoapDeviceTransportConfigurationComponent } from './data/coap-device-tr
     DeviceConfigurationComponent,
     DefaultDeviceTransportConfigurationComponent,
     MqttDeviceTransportConfigurationComponent,
-    Lwm2mDeviceTransportConfigurationComponent,
     CoapDeviceTransportConfigurationComponent,
+    Lwm2mDeviceTransportConfigurationComponent,
+    SnmpDeviceTransportConfigurationComponent,
     DeviceTransportConfigurationComponent,
     DeviceDataComponent,
     DeviceComponent,
     DeviceTabsComponent,
     DeviceTableHeaderComponent,
-    DeviceCredentialsDialogComponent,
-    SecurityConfigComponent,
-    SecurityConfigServerComponent
+    DeviceCredentialsDialogComponent
   ],
   imports: [
     CommonModule,

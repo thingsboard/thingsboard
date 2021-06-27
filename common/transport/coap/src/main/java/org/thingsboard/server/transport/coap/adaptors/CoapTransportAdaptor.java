@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.coap.adaptors;
 
 import com.google.protobuf.Descriptors;
+import com.google.protobuf.DynamicMessage;
 import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.coap.Response;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
@@ -32,19 +33,19 @@ public interface CoapTransportAdaptor {
 
     TransportProtos.GetAttributeRequestMsg convertToGetAttributes(UUID sessionId, Request inbound) throws AdaptorException;
 
-    TransportProtos.ToDeviceRpcResponseMsg convertToDeviceRpcResponse(UUID sessionId, Request inbound) throws AdaptorException;
+    TransportProtos.ToDeviceRpcResponseMsg convertToDeviceRpcResponse(UUID sessionId, Request inbound, Descriptors.Descriptor rpcResponseMsgDescriptor) throws AdaptorException;
 
     TransportProtos.ToServerRpcRequestMsg convertToServerRpcRequest(UUID sessionId, Request inbound) throws AdaptorException;
 
     TransportProtos.ClaimDeviceMsg convertToClaimDevice(UUID sessionId, Request inbound, TransportProtos.SessionInfoProto sessionInfo) throws AdaptorException;
 
-    Response convertToPublish(TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException;
+    Response convertToPublish(boolean isConfirmable, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException;
 
     Response convertToPublish(boolean isConfirmable, TransportProtos.AttributeUpdateNotificationMsg notificationMsg) throws AdaptorException;
 
-    Response convertToPublish(boolean isConfirmable, TransportProtos.ToDeviceRpcRequestMsg rpcRequest) throws AdaptorException;
+    Response convertToPublish(boolean isConfirmable, TransportProtos.ToDeviceRpcRequestMsg rpcRequest, DynamicMessage.Builder rpcRequestDynamicMessageBuilder) throws AdaptorException;
 
-    Response convertToPublish(TransportProtos.ToServerRpcResponseMsg msg) throws AdaptorException;
+    Response convertToPublish(boolean isConfirmable, TransportProtos.ToServerRpcResponseMsg msg) throws AdaptorException;
 
     ProvisionDeviceRequestMsg convertToProvisionRequestMsg(UUID sessionId, Request inbound) throws AdaptorException;
 

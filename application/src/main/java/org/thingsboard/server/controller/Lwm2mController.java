@@ -44,12 +44,11 @@ import java.util.Map;
 public class Lwm2mController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/lwm2m/deviceProfile/bootstrap/{securityMode}/{bootstrapServerIs}", method = RequestMethod.GET)
+    @RequestMapping(value = "/lwm2m/deviceProfile/bootstrap/{isBootstrapServer}", method = RequestMethod.GET)
     @ResponseBody
-    public ServerSecurityConfig getLwm2mBootstrapSecurityInfo(@PathVariable("securityMode") String securityMode,
-                                                              @PathVariable("bootstrapServerIs") boolean bootstrapServerIs) throws ThingsboardException {
+    public ServerSecurityConfig getLwm2mBootstrapSecurityInfo(@PathVariable("isBootstrapServer") boolean bootstrapServer) throws ThingsboardException {
         try {
-            return lwM2MModelsRepository.getBootstrapSecurityInfo(securityMode, bootstrapServerIs);
+            return lwM2MServerSecurityInfoRepository.getServerSecurityInfo(bootstrapServer);
         } catch (Exception e) {
             throw handleException(e);
         }

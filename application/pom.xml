@@ -90,6 +90,10 @@
             <artifactId>lwm2m</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.thingsboard.common.transport</groupId>
+            <artifactId>snmp</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.thingsboard</groupId>
             <artifactId>dao</artifactId>
         </dependency>
@@ -140,6 +144,10 @@
             <artifactId>ui-ngx</artifactId>
             <version>${project.version}</version>
             <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.integration</groupId>
+            <artifactId>spring-integration-redis</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

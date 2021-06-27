@@ -141,7 +141,9 @@ import { FileSizePipe } from '@shared/pipe/file-size.pipe';
 import { WidgetsBundleSearchComponent } from '@shared/components/widgets-bundle-search.component';
 import { SelectableColumnsPipe } from '@shared/pipe/selectable-columns.pipe';
 import { QuickTimeIntervalComponent } from '@shared/components/time/quick-time-interval.component';
+import { OtaPackageAutocompleteComponent } from '@shared/components/ota-package/ota-package-autocomplete.component';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
+import { CopyButtonComponent } from '@shared/components/button/copy-button.component';
 
 @NgModule({
   providers: [
@@ -238,7 +240,9 @@ import { MAT_DATE_LOCALE } from '@angular/material/core';
     HistorySelectorComponent,
     EntityGatewaySelectComponent,
     ContactComponent,
-    WidgetsBundleSearchComponent
+    OtaPackageAutocompleteComponent,
+    WidgetsBundleSearchComponent,
+    CopyButtonComponent
   ],
   imports: [
     CommonModule,
@@ -409,7 +413,9 @@ import { MAT_DATE_LOCALE } from '@angular/material/core';
     HistorySelectorComponent,
     EntityGatewaySelectComponent,
     ContactComponent,
-    WidgetsBundleSearchComponent
+    OtaPackageAutocompleteComponent,
+    WidgetsBundleSearchComponent,
+    CopyButtonComponent
   ]
 })
 export class SharedModule { }

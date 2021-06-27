@@ -48,8 +48,6 @@ public interface TbResourceRepository extends CrudRepository<TbResourceEntity, U
             @Param("searchText") String search,
             Pageable pageable);
 
-    void removeAllByTenantId(UUID tenantId);
-
     @Query("SELECT tr FROM TbResourceEntity tr " +
             "WHERE tr.resourceType = :resourceType " +
             "AND LOWER(tr.searchText) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
@@ -79,4 +77,7 @@ public interface TbResourceRepository extends CrudRepository<TbResourceEntity, U
                                               @Param("systemAdminId") UUID sysAdminId,
                                               @Param("resourceType") String resourceType,
                                               @Param("resourceIds") String[] objectIds);
+
+    @Query(value = "SELECT COALESCE(SUM(LENGTH(r.data)), 0) FROM resource r WHERE r.tenant_id = :tenantId", nativeQuery = true)
+    Long sumDataSizeByTenantId(@Param("tenantId") UUID tenantId);
 }

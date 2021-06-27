@@ -66,6 +66,7 @@ public class DataConstants {
     public static final String TIMESERIES_DELETED = "TIMESERIES_DELETED";
     public static final String ALARM_ACK = "ALARM_ACK";
     public static final String ALARM_CLEAR = "ALARM_CLEAR";
+    public static final String ALARM_DELETE = "ALARM_DELETE";
     public static final String ENTITY_ASSIGNED_FROM_TENANT = "ENTITY_ASSIGNED_FROM_TENANT";
     public static final String ENTITY_ASSIGNED_TO_TENANT = "ENTITY_ASSIGNED_TO_TENANT";
     public static final String PROVISION_SUCCESS = "PROVISION_SUCCESS";
@@ -74,6 +75,12 @@ public class DataConstants {
     public static final String ENTITY_UNASSIGNED_FROM_EDGE = "ENTITY_UNASSIGNED_FROM_EDGE";
 
     public static final String RPC_CALL_FROM_SERVER_TO_DEVICE = "RPC_CALL_FROM_SERVER_TO_DEVICE";
+
+    public static final String RPC_QUEUED = "RPC_QUEUED";
+    public static final String RPC_DELIVERED = "RPC_DELIVERED";
+    public static final String RPC_SUCCESSFUL = "RPC_SUCCESSFUL";
+    public static final String RPC_TIMEOUT = "RPC_TIMEOUT";
+    public static final String RPC_FAILED = "RPC_FAILED";
 
     public static final String DEFAULT_SECRET_KEY = "";
     public static final String SECRET_KEY_FIELD_NAME = "secretKey";
@@ -92,7 +99,7 @@ public class DataConstants {
     public static final String CLIENT_ID = "clientId";
     public static final String USERNAME = "username";
     public static final String PASSWORD = "password";
-
     public static final String EDGE_MSG_SOURCE = "edge";
     public static final String MSG_SOURCE_KEY = "source";
+
 }

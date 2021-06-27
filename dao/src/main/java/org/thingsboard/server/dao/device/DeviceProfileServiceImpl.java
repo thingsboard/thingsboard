@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.dao.device;
 
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.DynamicMessage;
 import com.squareup.wire.Syntax;
 import com.squareup.wire.schema.Field;
 import com.squareup.wire.schema.Location;
@@ -34,12 +36,14 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
@@ -53,12 +57,17 @@ import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfilePr
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -87,6 +96,8 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     private static final Location LOCATION = new Location("", "", -1, -1);
     private static final String ATTRIBUTES_PROTO_SCHEMA = "attributes proto schema";
     private static final String TELEMETRY_PROTO_SCHEMA = "telemetry proto schema";
+    private static final String RPC_REQUEST_PROTO_SCHEMA = "rpc request proto schema";
+    private static final String RPC_RESPONSE_PROTO_SCHEMA = "rpc response proto schema";
 
     private static String invalidSchemaProvidedMessage(String schemaName) {
         return "[Transport Configuration] invalid " + schemaName + " provided!";
@@ -106,6 +117,15 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
 
     @Autowired
     private CacheManager cacheManager;
+
+    @Autowired
+    private OtaPackageService otaPackageService;
+
+    @Autowired
+    private RuleChainService ruleChainService;
+
+    @Autowired
+    private DashboardService dashboardService;
 
     private final Lock findOrCreateLock = new ReentrantLock();
 
@@ -326,7 +346,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     }
 
     private DataValidator<DeviceProfile> deviceProfileValidator =
-            new DataValidator<DeviceProfile>() {
+            new DataValidator<>() {
                 @Override
                 protected void validateDataImpl(TenantId tenantId, DeviceProfile deviceProfile) {
                     if (StringUtils.isEmpty(deviceProfile.getName())) {
@@ -354,12 +374,14 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                     }
 
                     DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
+                    transportConfiguration.validate();
                     if (transportConfiguration instanceof MqttDeviceProfileTransportConfiguration) {
                         MqttDeviceProfileTransportConfiguration mqttTransportConfiguration = (MqttDeviceProfileTransportConfiguration) transportConfiguration;
                         if (mqttTransportConfiguration.getTransportPayloadTypeConfiguration() instanceof ProtoTransportPayloadConfiguration) {
-                            ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration =
+                            ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration =
                                     (ProtoTransportPayloadConfiguration) mqttTransportConfiguration.getTransportPayloadTypeConfiguration();
-                            validateProtoSchemas(protoTransportPayloadTypeConfiguration);
+                            validateProtoSchemas(protoTransportPayloadConfiguration);
+                            validateRpcRequestDynamicMessageFields(protoTransportPayloadConfiguration);
                         }
                     } else if (transportConfiguration instanceof CoapDeviceProfileTransportConfiguration) {
                         CoapDeviceProfileTransportConfiguration coapDeviceProfileTransportConfiguration = (CoapDeviceProfileTransportConfiguration) transportConfiguration;
@@ -370,6 +392,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                             if (transportPayloadTypeConfiguration instanceof ProtoTransportPayloadConfiguration) {
                                 ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
                                 validateProtoSchemas(protoTransportPayloadConfiguration);
+                                validateRpcRequestDynamicMessageFields(protoTransportPayloadConfiguration);
                             }
                         }
                     }
@@ -389,6 +412,51 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                         }
                     }
 
+                    if (deviceProfile.getDefaultRuleChainId() != null) {
+                        RuleChain ruleChain = ruleChainService.findRuleChainById(tenantId, deviceProfile.getDefaultRuleChainId());
+                        if (ruleChain == null) {
+                            throw new DataValidationException("Can't assign non-existent rule chain!");
+                        }
+                    }
+
+                    if (deviceProfile.getDefaultDashboardId() != null) {
+                        DashboardInfo dashboard = dashboardService.findDashboardInfoById(tenantId, deviceProfile.getDefaultDashboardId());
+                        if (dashboard == null) {
+                            throw new DataValidationException("Can't assign non-existent dashboard!");
+                        }
+                    }
+
+                    if (deviceProfile.getFirmwareId() != null) {
+                        OtaPackage firmware = otaPackageService.findOtaPackageById(tenantId, deviceProfile.getFirmwareId());
+                        if (firmware == null) {
+                            throw new DataValidationException("Can't assign non-existent firmware!");
+                        }
+                        if (!firmware.getType().equals(OtaPackageType.FIRMWARE)) {
+                            throw new DataValidationException("Can't assign firmware with type: " + firmware.getType());
+                        }
+                        if (firmware.getData() == null && !firmware.hasUrl()) {
+                            throw new DataValidationException("Can't assign firmware with empty data!");
+                        }
+                        if (!firmware.getDeviceProfileId().equals(deviceProfile.getId())) {
+                            throw new DataValidationException("Can't assign firmware with different deviceProfile!");
+                        }
+                    }
+
+                    if (deviceProfile.getSoftwareId() != null) {
+                        OtaPackage software = otaPackageService.findOtaPackageById(tenantId, deviceProfile.getSoftwareId());
+                        if (software == null) {
+                            throw new DataValidationException("Can't assign non-existent software!");
+                        }
+                        if (!software.getType().equals(OtaPackageType.SOFTWARE)) {
+                            throw new DataValidationException("Can't assign software with type: " + software.getType());
+                        }
+                        if (software.getData() == null && !software.hasUrl()) {
+                            throw new DataValidationException("Can't assign software with empty data!");
+                        }
+                        if (!software.getDeviceProfileId().equals(deviceProfile.getId())) {
+                            throw new DataValidationException("Can't assign firmware with different deviceProfile!");
+                        }
+                    }
                 }
 
                 @Override
@@ -417,6 +485,8 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                     try {
                         validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceAttributesProtoSchema(), ATTRIBUTES_PROTO_SCHEMA);
                         validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceTelemetryProtoSchema(), TELEMETRY_PROTO_SCHEMA);
+                        validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceRpcRequestProtoSchema(), RPC_REQUEST_PROTO_SCHEMA);
+                        validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceRpcResponseProtoSchema(), RPC_RESPONSE_PROTO_SCHEMA);
                     } catch (Exception exception) {
                         throw new DataValidationException(exception.getMessage());
                     }
@@ -538,6 +608,48 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                 }
 
             };
+
+    private void validateRpcRequestDynamicMessageFields(ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration) {
+        DynamicMessage.Builder rpcRequestDynamicMessageBuilder = protoTransportPayloadTypeConfiguration.getRpcRequestDynamicMessageBuilder(protoTransportPayloadTypeConfiguration.getDeviceRpcRequestProtoSchema());
+        Descriptors.Descriptor rpcRequestDynamicMessageDescriptor = rpcRequestDynamicMessageBuilder.getDescriptorForType();
+        if (rpcRequestDynamicMessageDescriptor == null) {
+            throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Failed to get rpcRequestDynamicMessageDescriptor!");
+        } else {
+            if (CollectionUtils.isEmpty(rpcRequestDynamicMessageDescriptor.getFields()) || rpcRequestDynamicMessageDescriptor.getFields().size() != 3) {
+                throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " " + rpcRequestDynamicMessageDescriptor.getName() + " message should always contains 3 fields: method, requestId and params!");
+            }
+            Descriptors.FieldDescriptor methodFieldDescriptor = rpcRequestDynamicMessageDescriptor.findFieldByName("method");
+            if (methodFieldDescriptor == null) {
+                throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Failed to get field descriptor for field: method!");
+            } else {
+                if (!Descriptors.FieldDescriptor.Type.STRING.equals(methodFieldDescriptor.getType())) {
+                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Field 'method' has invalid data type. Only string type is supported!");
+                }
+                if (methodFieldDescriptor.isRepeated()) {
+                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Field 'method' has invalid label!");
+                }
+            }
+            Descriptors.FieldDescriptor requestIdFieldDescriptor = rpcRequestDynamicMessageDescriptor.findFieldByName("requestId");
+            if (requestIdFieldDescriptor == null) {
+                throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Failed to get field descriptor for field: requestId!");
+            } else {
+                if (!Descriptors.FieldDescriptor.Type.INT32.equals(requestIdFieldDescriptor.getType())) {
+                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Field 'requestId' has invalid data type. Only int32 type is supported!");
+                }
+                if (requestIdFieldDescriptor.isRepeated()) {
+                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Field 'requestId' has invalid label!");
+                }
+            }
+            Descriptors.FieldDescriptor paramsFieldDescriptor = rpcRequestDynamicMessageDescriptor.findFieldByName("params");
+            if (paramsFieldDescriptor == null) {
+                throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Failed to get field descriptor for field: params!");
+            } else {
+                if (paramsFieldDescriptor.isRepeated()) {
+                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + "Field 'params' has invalid label!");
+                }
+            }
+        }
+    }
 
     private PaginatedRemover<TenantId, DeviceProfile> tenantDeviceProfilesRemover =
             new PaginatedRemover<TenantId, DeviceProfile>() {

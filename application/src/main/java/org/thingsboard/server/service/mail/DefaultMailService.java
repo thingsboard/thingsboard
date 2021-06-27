@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.ApiUsageStateMailMessage;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -233,7 +234,7 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void send(TenantId tenantId, String from, String to, String cc, String bcc, String subject, String body) throws MessagingException {
+    public void send(TenantId tenantId, CustomerId customerId, String from, String to, String cc, String bcc, String subject, String body) throws MessagingException {
         if (apiUsageStateService.getApiUsageState(tenantId).isEmailSendEnabled()) {
             MimeMessage mailMsg = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mailMsg, "UTF-8");
@@ -248,7 +249,7 @@ public class DefaultMailService implements MailService {
             helper.setSubject(subject);
             helper.setText(body);
             mailSender.send(helper.getMimeMessage());
-            apiUsageClient.report(tenantId, ApiUsageRecordKey.EMAIL_EXEC_COUNT, 1);
+            apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.EMAIL_EXEC_COUNT, 1);
         } else {
             throw new RuntimeException("Email sending is disabled due to API limits!");
         }
@@ -308,6 +309,8 @@ public class DefaultMailService implements MailService {
             case EMAIL:
             case SMS:
                 return "send";
+            case ALARM:
+                return "create";
             default:
                 throw new RuntimeException("Not implemented!");
         }
@@ -326,6 +329,8 @@ public class DefaultMailService implements MailService {
             case EMAIL:
             case SMS:
                 return "sent";
+            case ALARM:
+                return "created";
             default:
                 throw new RuntimeException("Not implemented!");
         }

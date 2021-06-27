@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -148,6 +149,7 @@ public class CustomerController extends BaseController {
                     ActionType.DELETED, null, strCustomerId);
 
             sendDeleteNotificationMsg(getTenantId(), customerId, relatedEdgeIds);
+            tbClusterService.onEntityStateChange(getTenantId(), customerId, ComponentLifecycleEvent.DELETED);
         } catch (Exception e) {
 
             logEntityAction(emptyId(EntityType.CUSTOMER),

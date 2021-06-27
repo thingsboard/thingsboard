@@ -32,7 +32,7 @@ public class LwM2MServerBootstrap {
     String host = "0.0.0.0";
     Integer port = 0;
 
-    String securityMode = SecurityMode.NO_SEC.name();
+    SecurityMode securityMode = SecurityMode.NO_SEC;
 
     Integer serverId = 123;
     boolean bootstrapServerIs = false;

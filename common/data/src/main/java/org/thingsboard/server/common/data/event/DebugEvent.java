@@ -16,7 +16,7 @@
 package org.thingsboard.server.common.data.event;
 
 import lombok.Data;
-import org.eclipse.leshan.core.util.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 
 @Data
 public abstract class DebugEvent implements EventFilter {

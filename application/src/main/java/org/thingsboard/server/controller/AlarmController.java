@@ -46,8 +46,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.UUID;
-
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
@@ -112,8 +110,11 @@ public class AlarmController extends BaseController {
         checkParameter(ALARM_ID, strAlarmId);
         try {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-            checkAlarmId(alarmId, Operation.WRITE);
+            Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
 
+            logEntityAction(alarm.getOriginator(), alarm,
+                    getCurrentUser().getCustomerId(),
+                    ActionType.ALARM_DELETE, null);
             sendEntityNotificationMsg(getTenantId(), alarmId, EdgeEventActionType.DELETED);
 
             return alarmService.deleteAlarm(getTenantId(), alarmId);
@@ -177,7 +178,6 @@ public class AlarmController extends BaseController {
             @RequestParam(required = false) String sortOrder,
             @RequestParam(required = false) Long startTime,
             @RequestParam(required = false) Long endTime,
-            @RequestParam(required = false) String offset,
             @RequestParam(required = false) Boolean fetchOriginator
     ) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
@@ -191,12 +191,43 @@ public class AlarmController extends BaseController {
         }
         checkEntityId(entityId, Operation.READ);
         TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
-        UUID idOffsetUuid = null;
-        if (StringUtils.isNotEmpty(offset)) {
-            idOffsetUuid = toUUID(offset);
-        }
+
         try {
-            return checkNotNull(alarmService.findAlarms(getCurrentUser().getTenantId(), new AlarmQuery(entityId, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator, idOffsetUuid)).get());
+            return checkNotNull(alarmService.findAlarms(getCurrentUser().getTenantId(), new AlarmQuery(entityId, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator)).get());
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/alarms", method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<AlarmInfo> getAllAlarms(
+            @RequestParam(required = false) String searchStatus,
+            @RequestParam(required = false) String status,
+            @RequestParam int pageSize,
+            @RequestParam int page,
+            @RequestParam(required = false) String textSearch,
+            @RequestParam(required = false) String sortProperty,
+            @RequestParam(required = false) String sortOrder,
+            @RequestParam(required = false) Long startTime,
+            @RequestParam(required = false) Long endTime,
+            @RequestParam(required = false) Boolean fetchOriginator
+    ) throws ThingsboardException {
+        AlarmSearchStatus alarmSearchStatus = StringUtils.isEmpty(searchStatus) ? null : AlarmSearchStatus.valueOf(searchStatus);
+        AlarmStatus alarmStatus = StringUtils.isEmpty(status) ? null : AlarmStatus.valueOf(status);
+        if (alarmSearchStatus != null && alarmStatus != null) {
+            throw new ThingsboardException("Invalid alarms search query: Both parameters 'searchStatus' " +
+                    "and 'status' can't be specified at the same time!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+        TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
+
+        try {
+            if (getCurrentUser().isCustomerUser()) {
+                return checkNotNull(alarmService.findCustomerAlarms(getCurrentUser().getTenantId(), getCurrentUser().getCustomerId(), new AlarmQuery(null, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator)).get());
+            } else {
+                return checkNotNull(alarmService.findAlarms(getCurrentUser().getTenantId(), new AlarmQuery(null, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator)).get());
+            }
         } catch (Exception e) {
             throw handleException(e);
         }

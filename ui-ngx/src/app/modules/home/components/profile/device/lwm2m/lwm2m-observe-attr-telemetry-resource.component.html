@@ -15,45 +15,42 @@
     limitations under the License.
 
 -->
-<section [formGroup]="resourceFormGroup" class="mat-padding">
+<section [formGroup]="resourceFormGroup">
   <div fxLayout="row" fxFill formArrayName="resources"
        *ngFor="let resourceLwM2M of resourceFormArray.controls; let i = index; trackBy: trackByParams">
     <div class="vertical-padding" fxLayout="column" fxFill [formGroupName]="i">
       <div fxLayout="row" fxFill fxLayoutAlign="start center" [fxShow]="!i">
-        <div fxFlex="20">
+        <div fxFlex="30">
             <mat-label translate>device-profile.lwm2m.resource-label</mat-label>
         </div>
-        <div fxFlex="10">
+        <div fxFlex="10" style="text-align: center">
             <mat-label translate>device-profile.lwm2m.attribute-label</mat-label>
         </div>
-        <div fxFlex="10">
+        <div fxFlex="10" style="text-align: center">
             <mat-label translate>device-profile.lwm2m.telemetry-label</mat-label>
         </div>
-        <div fxFlex="10">
+        <div fxFlex="10" style="text-align: center">
           <mat-label translate>device-profile.lwm2m.observe-label</mat-label>
         </div>
         <div fxFlex>
             <mat-label translate>device-profile.lwm2m.key-name-label</mat-label>
         </div>
-        <div fxFlex="17" fxFlexOffset="0">
-          <mat-label translate>device-profile.lwm2m.attribute-lwm2m-label</mat-label>
-        </div>
       </div>
       <div fxLayout="row" fxFill fxLayoutAlign="start center">
-        <div class="resource-name-lw" fxFlex="25"
+        <div class="resource-name-lw" fxFlex="30"
              matTooltip="{{'device-profile.lwm2m.resource-tip' | translate}}" matTooltipPosition="above">
           <<b>{{resourceLwM2M.get('id').value}}</b>> <b><i>{{resourceLwM2M.get('name').value}}</i></b>
         </div>
         <div fxFlex="10" fxLayoutAlign="center center">
           <mat-checkbox formControlName="attribute" color="warn"
-                        [checked]="updateObserve(i)"
+                        (change)="updateObserve(i)"
                         matTooltip="{{'device-profile.lwm2m.is-attr-tip' | translate}}"
                         matTooltipPosition="above">
           </mat-checkbox>
         </div>
         <div fxFlex="10" fxLayoutAlign="center center">
           <mat-checkbox formControlName="telemetry" color="primary"
-                        [checked]="updateObserve(i)"
+                        (change)="updateObserve(i)"
                         matTooltip="{{'device-profile.lwm2m.is-telemetry-tip' | translate}}"
                         matTooltipPosition="above">
           </mat-checkbox>
@@ -65,7 +62,7 @@
                         matTooltipPosition="above">
           </mat-checkbox>
         </div>
-        <mat-form-field fxFlex="25">
+        <mat-form-field fxFlex="33">
           <mat-label  *ngIf="resourceLwM2M.get('keyName').hasError('required')">
             {{ 'device-profile.lwm2m.key-name-label' | translate }}</mat-label>
           <input  class="resource-name-lw" matInput type="text" formControlName="keyName" required
@@ -77,12 +74,13 @@
             <strong>{{ 'device-profile.lwm2m.required' | translate }}</strong>
           </mat-error>
         </mat-form-field>
-        <div fxFlex="20" class="resource-name-lw-end" fxFlexOffset="5">
+        <span fxFlex></span>
+        <div class="resource-name-lw-end">
           <tb-profile-lwm2m-attributes
             formControlName="attributeLwm2m"
-            [attributeLwm2m]="resourceLwM2M.get('attributeLwm2m').value"
             [isAttributeTelemetry]="disableObserve(i)"
-            [destName]="getNameResourceLwm2m(resourceLwM2M.value)"
+            isResource="true"
+            [modelName]="getNameResourceLwm2m(resourceLwM2M.value)"
             [disabled]="this.disabled"
             (updateAttributeLwm2m)="updateAttributeLwm2m($event, i)">
           </tb-profile-lwm2m-attributes>

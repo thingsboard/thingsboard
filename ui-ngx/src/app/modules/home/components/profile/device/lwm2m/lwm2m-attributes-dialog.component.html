@@ -15,12 +15,11 @@
     limitations under the License.
 
 -->
-<form [formGroup]="attributeLwm2mDialogFormGroup" (ngSubmit)="save()" style="width: 500px;">
+<form [formGroup]="attributeFormGroup" (ngSubmit)="save()" style="min-width: 500px;">
   <mat-toolbar color="primary">
-    <div fxFlex fxLayout="column" fxLayoutAlign="start">
-      <h2>{{ (readonly ? 'device-profile.lwm2m.attribute-lwm2m-toolbar-view' :
-        'device-profile.lwm2m.attribute-lwm2m-toolbar-edit') | translate }}</h2>
-    </div>
+    <h2>
+      {{ (readonly ? 'device-profile.lwm2m.view-attributes' : 'device-profile.lwm2m.edit-attributes') | translate : {name: name} }}
+    </h2>
     <span fxFlex></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -32,8 +31,8 @@
   </mat-progress-bar>
   <div mat-dialog-content>
     <tb-lwm2m-attributes-key-list
-      formControlName="keyFilters"
-      titleText="{{data.destName}}">
+      [isResource]="isResource"
+      formControlName="attributes">
     </tb-lwm2m-attributes-key-list>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
@@ -46,7 +45,7 @@
     <button mat-raised-button color="primary"
             *ngIf="!readonly"
             type="submit"
-            [disabled]="(isLoading$ | async) || attributeLwm2mDialogFormGroup.invalid || !attributeLwm2mDialogFormGroup.dirty">
+            [disabled]="(isLoading$ | async) || attributeFormGroup.invalid || !attributeFormGroup.dirty">
       {{ 'action.save' | translate }}
     </button>
   </div>

@@ -35,7 +35,7 @@ import { modulesMap } from '../../common/modules-map';
 import { DeviceProfileModule } from './device-profile/device-profile.module';
 import { ApiUsageModule } from '@home/pages/api-usage/api-usage.module';
 import { EdgeModule } from '@home/pages/edge/edge.module';
-import { ResourceModule } from '@home/pages/resource/resource.module';
+import { OtaUpdateModule } from '@home/pages/ota-update/ota-update.module';
 
 @NgModule({
   exports: [
@@ -55,7 +55,7 @@ import { ResourceModule } from '@home/pages/resource/resource.module';
     DashboardModule,
     AuditLogModule,
     ApiUsageModule,
-    ResourceModule,
+    OtaUpdateModule,
     UserModule
   ],
   providers: [

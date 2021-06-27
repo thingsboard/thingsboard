@@ -186,6 +186,17 @@ public class AwsSqsMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEng
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), ToUsageStatsServiceMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> createToOtaPackageStateServiceMsgConsumer() {
+        return new TbAwsSqsConsumerTemplate<>(transportApiAdmin, sqsSettings, coreSettings.getOtaPackageTopic(),
+                msg -> new TbProtoQueueMsg<>(msg.getKey(), ToOtaPackageStateServiceMsg.parseFrom(msg.getData()), msg.getHeaders()));
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> createToOtaPackageStateServiceMsgProducer() {
+        return new TbAwsSqsProducerTemplate<>(coreAdmin, sqsSettings, coreSettings.getOtaPackageTopic());
+    }
+
     @PreDestroy
     private void destroy() {
         if (coreAdmin != null) {

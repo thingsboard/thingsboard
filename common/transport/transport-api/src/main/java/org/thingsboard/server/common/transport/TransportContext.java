@@ -20,15 +20,14 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
-import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Created by ashvayka on 15.10.18.
@@ -51,9 +50,16 @@ public abstract class TransportContext {
     @Getter
     private ExecutorService executor;
 
+    @Getter
+    @Autowired
+    private OtaPackageDataCache otaPackageDataCache;
+
+    @Autowired
+    private TransportResourceCache transportResourceCache;
+
     @PostConstruct
     public void init() {
-        executor = Executors.newWorkStealingPool(50);
+        executor = ThingsBoardExecutors.newWorkStealingPool(50, getClass());
     }
 
     @PreDestroy

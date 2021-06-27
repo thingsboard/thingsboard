@@ -288,15 +288,15 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         break;
       case EventType.LC_EVENT:
         this.filterColumns.push(
-          {key: 'method', title: 'event.event'},
+          {key: 'event', title: 'event.event'},
           {key: 'status', title: 'event.status'},
           {key: 'error', title: 'event.error'}
         );
         break;
       case EventType.STATS:
         this.filterColumns.push(
-          {key: 'messagesProcessed', title: 'event.messages-processed'},
-          {key: 'errorsOccurred', title: 'event.errors-occurred'}
+          {key: 'messagesProcessed', title: 'event.min-messages-processed'},
+          {key: 'errorsOccurred', title: 'event.min-errors-occurred'}
         );
         break;
       case DebugEventType.DEBUG_RULE_NODE:
@@ -356,6 +356,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     componentRef.onDestroy(() => {
       if (componentRef.instance.result && !isEqual(this.filterParams, componentRef.instance.result.filterParams)) {
         this.filterParams = componentRef.instance.result.filterParams;
+        this.table.paginator.pageIndex = 0;
         this.table.updateData();
       }
     });

@@ -18,11 +18,12 @@ package org.thingsboard.server.transport.coap;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.coapserver.CoapServerService;
+import org.thingsboard.server.coapserver.TbCoapServerComponent;
+import org.thingsboard.server.common.data.TbTransportService;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.transport.coap.efento.CoapEfentoTransportResource;
 
 import javax.annotation.PostConstruct;
@@ -30,9 +31,9 @@ import javax.annotation.PreDestroy;
 import java.net.UnknownHostException;
 
 @Service("CoapTransportService")
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.coap.enabled}'=='true')")
+@TbCoapServerComponent
 @Slf4j
-public class CoapTransportService {
+public class CoapTransportService implements TbTransportService {
 
     private static final String V1 = "v1";
     private static final String API = "api";
@@ -59,11 +60,18 @@ public class CoapTransportService {
         efento.add(efentoMeasurementsTransportResource);
         coapServer.add(api);
         coapServer.add(efento);
+        coapServer.add(new OtaPackageTransportResource(coapTransportContext, OtaPackageType.FIRMWARE));
+        coapServer.add(new OtaPackageTransportResource(coapTransportContext, OtaPackageType.SOFTWARE));
         log.info("CoAP transport started!");
     }
 
     @PreDestroy
     public void shutdown() {
         log.info("CoAP transport stopped!");
+    }
+
+    @Override
+    public String getName() {
+        return "COAP";
     }
 }

@@ -23,7 +23,7 @@ type unitPrecisionMap = {
 
 const defaultPrecisionMap: unitPrecisionMap = {
   bytes: 0,
-  KB: 0,
+  KB: 1,
   MB: 1,
   GB: 1,
   TB: 2,

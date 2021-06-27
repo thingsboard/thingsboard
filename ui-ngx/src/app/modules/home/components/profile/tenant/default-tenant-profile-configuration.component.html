@@ -89,6 +89,30 @@
     </mat-error>
   </mat-form-field>
   <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.maximum-resources-sum-data-size</mat-label>
+    <input matInput required min="0" step="1"
+           formControlName="maxResourcesInBytes"
+           type="number">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxResourcesInBytes').hasError('required')">
+      {{ 'tenant-profile.maximum-resources-sum-data-size-required' | translate}}
+    </mat-error>
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxResourcesInBytes').hasError('min')">
+      {{ 'tenant-profile.maximum-resources-sum-data-size-range' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.maximum-ota-packages-sum-data-size</mat-label>
+    <input matInput required min="0" step="1"
+           formControlName="maxOtaPackagesInBytes"
+           type="number">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxOtaPackagesInBytes').hasError('required')">
+      {{ 'tenant-profile.maximum-ota-packages-sum-data-size-required' | translate}}
+    </mat-error>
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxOtaPackagesInBytes').hasError('min')">
+      {{ 'tenant-profile.maximum-ota-packages-sum-data-size-range' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
     <mat-label translate>tenant-profile.max-transport-messages</mat-label>
     <input matInput required min="0" step="1"
            formControlName="maxTransportMessages"
@@ -161,6 +185,30 @@
     </mat-error>
   </mat-form-field>
   <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.alarms-ttl-days</mat-label>
+    <input matInput required min="0" step="1"
+           formControlName="alarmsTtlDays"
+           type="number">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('alarmsTtlDays').hasError('required')">
+      {{ 'tenant-profile.alarms-ttl-days-required' | translate}}
+    </mat-error>
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('alarmsTtlDays').hasError('min')">
+      {{ 'tenant-profile.alarms-ttl-days-days-range' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.rpc-ttl-days</mat-label>
+    <input matInput required min="0" step="1"
+           formControlName="rpcTtlDays"
+           type="number">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('rpcTtlDays').hasError('required')">
+      {{ 'tenant-profile.rpc-ttl-days-required' | translate}}
+    </mat-error>
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('rpcTtlDays').hasError('min')">
+      {{ 'tenant-profile.rpc-ttl-days-days-range' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
     <mat-label translate>tenant-profile.max-rule-node-executions-per-message</mat-label>
     <input matInput required min="0" step="1"
            formControlName="maxRuleNodeExecutionsPerMessage"
@@ -194,6 +242,18 @@
     </mat-error>
     <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxSms').hasError('min')">
       {{ 'tenant-profile.max-sms-range' | translate}}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tenant-profile.max-created-alarms</mat-label>
+    <input matInput required min="0" step="1"
+           formControlName="maxCreatedAlarms"
+           type="number">
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCreatedAlarms').hasError('required')">
+      {{ 'tenant-profile.max-created-alarms-required' | translate}}
+    </mat-error>
+    <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCreatedAlarms').hasError('min')">
+      {{ 'tenant-profile.max-created-alarms-range' | translate}}
     </mat-error>
   </mat-form-field>
   <mat-form-field class="mat-block">

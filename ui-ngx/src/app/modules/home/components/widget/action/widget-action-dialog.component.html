@@ -120,7 +120,7 @@
                                      widgetActionFormGroup.get('type').value === widgetActionType.updateDashboardState ||
                                      widgetActionFormGroup.get('type').value === widgetActionType.openDashboard ?
                                      widgetActionFormGroup.get('type').value : ''">
-          <mat-checkbox formControlName="setEntityId">
+          <mat-checkbox *ngIf="data.widgetType !== widgetType.static" formControlName="setEntityId">
             {{ 'widget-action.set-entity-from-widget' | translate }}
           </mat-checkbox>
           <mat-form-field *ngIf="actionTypeFormGroup.get('setEntityId').value"
@@ -179,6 +179,11 @@
           <tb-custom-action-pretty-editor
             formControlName="customAction">
           </tb-custom-action-pretty-editor>
+        </ng-template>
+        <ng-template [ngSwitchCase]="widgetActionType.mobileAction">
+          <tb-mobile-action-editor #mobileActionEditor
+            formControlName="mobileAction">
+          </tb-mobile-action-editor>
         </ng-template>
       </section>
     </fieldset>

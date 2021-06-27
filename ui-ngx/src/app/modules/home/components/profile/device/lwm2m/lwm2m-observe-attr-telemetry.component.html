@@ -16,7 +16,7 @@
 
 -->
 <section [formGroup]="observeAttrTelemetryFormGroup">
-  <mat-accordion multi="true" class="mat-body-1" formArrayName="clientLwM2M">
+  <mat-accordion multi="true" formArrayName="clientLwM2M">
     <mat-expansion-panel
       *ngFor="let objectLwM2M of clientLwM2MFormArray.controls; let i = index;"
       [formGroupName]="i">
@@ -26,17 +26,15 @@
           <div fxFlex class="resource-name-lw-end">
             <tb-profile-lwm2m-attributes
               formControlName="attributeLwm2m"
-              [attributeLwm2m]="objectLwM2M.get('attributeLwm2m').value"
               [isAttributeTelemetry]="disableObserveObject(i)"
-              [destName]="getNameObjectLwm2m( objectLwM2M.get('name').value, objectLwM2M.get('keyId').value)"
+              [modelName]="getNameObjectLwm2m( objectLwM2M.get('name').value, objectLwM2M.get('keyId').value)"
               [disabled]="this.disabled"
               (updateAttributeLwm2m)="updateAttributeLwm2mObject($event, objectLwM2M.get('keyId').value)">
             </tb-profile-lwm2m-attributes>
           </div>
         </mat-panel-title>
-        <mat-panel-description fxFlex="5" fxLayoutAlign="end center" *ngIf="!disabled">
+        <mat-panel-description fxFlex="5" fxLayoutAlign="end center" *ngIf="!disabled && objectLwM2M.get('multiple').value">
           <button type="button"
-                  [fxShow]="objectLwM2M.get('multiple').value"
                   mat-button mat-icon-button (click)="addInstances($event, objectLwM2M.value)"
                   matTooltip="{{'device-profile.lwm2m.add-instances-tip' | translate}}"
                   matTooltipPosition="above">
@@ -56,7 +54,7 @@
               <mat-panel-title>
                 <div class="tb-panel-title-height" fxFlex="100">
                   <div fxLayout="row" fxFill>
-                    <div fxFlex="22">
+                    <div fxFlex="30">
                       {{'device-profile.lwm2m.instance-label' | translate}} <<b>{{instances.get('id').value}}</b>>
                     </div>
                      <div class="checkbox-padding" fxFlex="10">
@@ -95,14 +93,13 @@
                                     matTooltipPosition="above">
                       </mat-checkbox>
                     </div>
-                    <div fxFlex="10">
+                    <div fxFlex="7">
                     </div>
                     <div fxFlex="37" class="resource-name-lw-end" fxFlexOffset="5">
                       <tb-profile-lwm2m-attributes
                         formControlName="attributeLwm2m"
-                        [attributeLwm2m]="instances.get('attributeLwm2m').value"
                         [isAttributeTelemetry]="disableObserveInstance(instances)"
-                        [destName]="getNameInstanceLwm2m(instances.value, objectLwM2M.get('keyId').value)"
+                        [modelName]="getNameInstanceLwm2m(instances.value, objectLwM2M.get('keyId').value)"
                         [disabled]="this.disabled"
                         (updateAttributeLwm2m)="updateAttributeLwm2mInstance($event, y, objectLwM2M.get('keyId').value)">
                       </tb-profile-lwm2m-attributes>

@@ -209,6 +209,12 @@ public class PsqlTsDatabaseUpgradeService extends AbstractSqlTsDatabaseUpgradeSe
                     executeQuery(conn, "DROP FUNCTION IF EXISTS delete_customer_records_from_ts_kv(character varying, character varying, bigint);");
                 }
                 break;
+            case "3.2.2":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Load Drop Partitions functions ...");
+                    loadSql(conn, LOAD_DROP_PARTITIONS_FUNCTIONS_SQL, "2.4.3");
+                }
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
         }

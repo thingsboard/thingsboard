@@ -16,6 +16,7 @@
 
 queue_type: "kafka"
 request_topic: "js_eval.requests"
+http_port: "8888" # /livenessProbe
 
 js:
   response_poll_interval: "25"
@@ -25,8 +26,15 @@ kafka:
     # Kafka Bootstrap Servers
     servers: "localhost:9092"
   replication_factor: "1"
+  acks: "1" # -1 = all; 0 = no acknowledgments; 1 = only waits for the leader to acknowledge
+  batch_size: "128" # for producer
+  linger_ms: "1" # for producer
+  partitions_consumed_concurrently: "1" # (EXPERIMENTAL) increase this value if you are planning to handle more than one partition (scale up, scale down) - this will decrease the latency
+  requestTimeout: "30000" # The default value in kafkajs is: 30000
+  compression: "gzip" # gzip or uncompressed
   topic_properties: "retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600;partitions:100;min.insync.replicas:1"
   use_confluent_cloud: false
+  client_id: "kafkajs" #inject pod name to easy identify the client using /opt/kafka/bin/kafka-consumer-groups.sh
   confluent:
     sasl:
       mechanism: "PLAIN"
@@ -55,5 +63,8 @@ logger:
 
 script:
   use_sandbox: "true"
-  script_body_trace_frequency: "1000"
+  script_body_trace_frequency: "10000"
+  stat_print_frequency: "10000"
   max_active_scripts: "1000"
+  slow_query_log_ms: "5.000000" #millis
+  slow_query_log_body: "false"
