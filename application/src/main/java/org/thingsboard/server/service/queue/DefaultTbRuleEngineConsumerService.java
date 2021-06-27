@@ -89,6 +89,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     private long packProcessingTimeout;
     @Value("${queue.rule-engine.stats.enabled:true}")
     private boolean statsEnabled;
+    @Value("${queue.rule-engine.prometheus-stats.enabled:false}")
+    boolean prometheusStatsEnabled;
 
     private final StatsFactory statsFactory;
     private final TbRuleEngineSubmitStrategyFactory submitStrategyFactory;
