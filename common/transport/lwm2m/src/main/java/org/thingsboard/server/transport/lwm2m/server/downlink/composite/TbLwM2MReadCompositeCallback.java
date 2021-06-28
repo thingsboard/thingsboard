@@ -13,24 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.downlink;
+package org.thingsboard.server.transport.lwm2m.server.downlink.composite;
 
-import org.eclipse.leshan.core.request.WriteCompositeRequest;
-import org.eclipse.leshan.core.response.WriteCompositeResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.request.ReadCompositeRequest;
+import org.eclipse.leshan.core.response.ReadCompositeResponse;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MUplinkTargetedCallback;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
-public class TbLwM2MWriteResponseCompositeCallback extends TbLwM2MUplinkTargetedCallback<WriteCompositeRequest, WriteCompositeResponse> {
+@Slf4j
+public class TbLwM2MReadCompositeCallback extends TbLwM2MUplinkTargetedCallback<ReadCompositeRequest, ReadCompositeResponse> {
 
-    public TbLwM2MWriteResponseCompositeCallback(LwM2mUplinkMsgHandler handler, LwM2MTelemetryLogService logService, LwM2mClient client, String targetId) {
-        super(handler, logService, client, targetId);
+    public TbLwM2MReadCompositeCallback(LwM2mUplinkMsgHandler handler, LwM2MTelemetryLogService logService, LwM2mClient client, String[] versionedIds) {
+        super(handler, logService, client, versionedIds);
     }
 
     @Override
-    public void onSuccess(WriteCompositeRequest request, WriteCompositeResponse response) {
+    public void onSuccess(ReadCompositeRequest request, ReadCompositeResponse response) {
         super.onSuccess(request, response);
-        handler.onWriteCompositeResponseOk(client, request);
+        handler.onUpdateValueAfterReadCompositeResponse(client.getRegistration(), response);
     }
 
 }

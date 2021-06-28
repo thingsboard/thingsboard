@@ -29,22 +29,19 @@ import java.util.Optional;
 
 public class RpcReadResponseCallback<R extends LwM2mRequest<T>, T extends ReadResponse> extends RpcLwM2MDownlinkCallback<R, T> {
 
-    private final String versionedId;
-
-    public RpcReadResponseCallback(TransportService transportService, LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId, DownlinkRequestCallback<R, T> callback) {
+    public RpcReadResponseCallback(TransportService transportService, LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, DownlinkRequestCallback<R, T> callback) {
         super(transportService, client, requestMsg, callback);
-        this.versionedId = versionedId;
     }
 
     @Override
     protected Optional<String> serializeSuccessfulResponse(T response) {
         Object value = null;
         if (response.getContent() instanceof LwM2mObject) {
-            value = client.objectToString((LwM2mObject) response.getContent(), this.converter, versionedId);
+            value = client.objectToString((LwM2mObject) response.getContent());
         } else if (response.getContent() instanceof LwM2mObjectInstance) {
-            value = client.instanceToString((LwM2mObjectInstance) response.getContent(), this.converter, versionedId);
+            value = client.instanceToString((LwM2mObjectInstance) response.getContent());
         } else if (response.getContent() instanceof LwM2mResource) {
-            value = client.resourceToString((LwM2mResource) response.getContent(), this.converter, versionedId);
+            value = client.resourceToString((LwM2mResource) response.getContent());
         }
         return Optional.of(String.format("%s", value));
     }

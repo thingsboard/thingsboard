@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.data.lwm2m;
+package org.thingsboard.server.transport.lwm2m.server.downlink;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.device.data.PowerMode;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
 
-@Data
-public class OtherConfiguration {
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
-    private Integer fwUpdateStrategy;
-    private Integer swUpdateStrategy;
-    private Integer clientOnlyObserveAfterConnect;
-    private PowerMode powerMode;
-    private String fwUpdateResource;
-    private String swUpdateResource;
-    private boolean composite;
+public interface HasVersionedIds {
+
+    String[] getVersionedIds();
+
+    default String[] getObjectIds() {
+        Set objectIds = ConcurrentHashMap.newKeySet();
+        for (String versionedId : getVersionedIds()) {
+            objectIds.add(LwM2mTransportUtil.fromVersionedIdToObjectId(versionedId));
+        }
+        return (String[]) objectIds.toArray(String[]::new);
+    }
 
 }

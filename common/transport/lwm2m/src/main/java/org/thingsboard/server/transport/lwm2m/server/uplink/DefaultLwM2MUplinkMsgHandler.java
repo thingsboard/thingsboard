@@ -350,17 +350,19 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
         }
     }
 
-    public void onUpdateValueAfterReadCompositeResponse(Registration registration, String path, ReadCompositeResponse response) {
+    public void onUpdateValueAfterReadCompositeResponse(Registration registration, ReadCompositeResponse response) {
         log.warn("201) ReadCompositeResponse: [{}]", response);
         if (response.getContent() != null) {
             LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
             response.getContent().forEach((k, v) -> {
-                if (v instanceof LwM2mObject) {
-                    this.updateObjectResourceValue(lwM2MClient, (LwM2mObject) v, k.toString());
-                } else if (v instanceof LwM2mObjectInstance) {
-                    this.updateObjectInstanceResourceValue(lwM2MClient, (LwM2mObjectInstance) v, k.toString());
-                } else if (v instanceof LwM2mResource) {
-                    this.updateResourcesValue(lwM2MClient, (LwM2mResource) v, k.toString());
+                if (v != null) {
+                    if (v instanceof LwM2mObject) {
+                        this.updateObjectResourceValue(lwM2MClient, (LwM2mObject) v, k.toString());
+                    } else if (v instanceof LwM2mObjectInstance) {
+                        this.updateObjectInstanceResourceValue(lwM2MClient, (LwM2mObjectInstance) v, k.toString());
+                    } else if (v instanceof LwM2mResource) {
+                        this.updateResourcesValue(lwM2MClient, (LwM2mResource) v, k.toString());
+                    }
                 }
             });
         }
@@ -474,12 +476,12 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
 //        String [] paths = new String[] {"/5"};
 //            String [] paths = new String[] {"/"};
 //        String [] paths = new String[] {"/9"};
-            defaultLwM2MDownlinkMsgHandler.sendReadCompositeRequest(lwM2MClient, paths, this);
+//            defaultLwM2MDownlinkMsgHandler.sendReadCompositeRequest(lwM2MClient, paths, this);
             Map<String, Object> nodes = new HashMap<>();
             nodes.put("/3/0/14", "+02");
             nodes.put("/1/0/2", 100);
             nodes.put("/5/0/1", "coap://localhost:5685");
-            defaultLwM2MDownlinkMsgHandler.sendWriteCompositeRequest(lwM2MClient, nodes, this);
+//            defaultLwM2MDownlinkMsgHandler.sendWriteCompositeRequest(lwM2MClient, nodes, this);
             this.sendObserveRequests(lwM2MClient, profile, supportedObjects);
             this.sendWriteAttributeRequests(lwM2MClient, profile, supportedObjects);
 //            Removed. Used only for debug.

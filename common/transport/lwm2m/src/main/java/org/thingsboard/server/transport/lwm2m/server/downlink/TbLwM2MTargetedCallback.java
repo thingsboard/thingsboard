@@ -25,15 +25,18 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.L
 public abstract class TbLwM2MTargetedCallback<R, T> extends AbstractTbLwM2MRequestCallback<R, T> {
 
     protected final String versionedId;
+    protected final String[] versionedIds;
 
     public TbLwM2MTargetedCallback(LwM2MTelemetryLogService logService, LwM2mClient client, String versionedId) {
         super(logService, client);
         this.versionedId = versionedId;
+        this.versionedIds = null;
     }
 
-    public TbLwM2MTargetedCallback(LwM2MTelemetryLogService logService, LwM2mClient client) {
+    public TbLwM2MTargetedCallback(LwM2MTelemetryLogService logService, LwM2mClient client, String[] versionedIds) {
         super(logService, client);
         this.versionedId = null;
+        this.versionedIds = versionedIds;
     }
 
     @Override

@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.client;
+package org.thingsboard.server.transport.lwm2m.server.rpc.composite;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
-import java.util.UUID;
-
 @Data
-public class LwM2mSoftwareUpdate {
-    private volatile String clientSwVersion;
-    private volatile String currentSwVersion;
-    private volatile UUID currentSwId;
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class RpcReadCompositeRequest {
+
+    private String [] keys;
+    private String [] ids;
+
 }

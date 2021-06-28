@@ -57,6 +57,8 @@ import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.common.LwM2MExecutorAwareService;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MReadCompositeRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MWriteResponseCompositeCallback;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
@@ -79,6 +81,7 @@ import static org.eclipse.leshan.core.attributes.Attribute.LESSER_THAN;
 import static org.eclipse.leshan.core.attributes.Attribute.MAXIMUM_PERIOD;
 import static org.eclipse.leshan.core.attributes.Attribute.MINIMUM_PERIOD;
 import static org.eclipse.leshan.core.attributes.Attribute.STEP;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
 
 @Slf4j
 @Service
@@ -121,27 +124,26 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     }
 
     @Override
-//    public void sendReadCompositeRequest(LwM2mClient client, TbLwM2MReadCompositeRequest request, DownlinkRequestCallback<ReadCompositeRequest, ReadCompositeResponse> callback) {
-    public void sendReadCompositeRequest(LwM2mClient client, String [] paths, DefaultLwM2MUplinkMsgHandler lwM2MUplinkMsgHandler) {
-//        validateVersionedId(client, request);
-        DownlinkRequestCallback<ReadCompositeRequest, ReadCompositeResponse> callback = new TbLwM2MReadCompositeCallback(lwM2MUplinkMsgHandler, logService, client, null);
+    public void sendReadCompositeRequest(LwM2mClient client, TbLwM2MReadCompositeRequest request, DownlinkRequestCallback<ReadCompositeRequest, ReadCompositeResponse> callback) {
+        validateVersionedIds(client, request);
         ContentFormat requestContentFormat = ContentFormat.SENML_JSON;
         ContentFormat responseContentFormat = ContentFormat.SENML_JSON;
-        ReadCompositeRequest downlink = new ReadCompositeRequest(requestContentFormat, responseContentFormat, paths);
+
+        ReadCompositeRequest downlink = new ReadCompositeRequest(requestContentFormat, responseContentFormat, request.getObjectIds());
         sendReadRequestComposite(client, downlink, this.config.getTimeout(), callback);
     }
 
     @Override
     public void sendWriteCompositeRequest(LwM2mClient client, Map<String, Object> nodes, DefaultLwM2MUplinkMsgHandler handler) {
 //        ResourceModel resourceModelWrite = client.getResourceModel(request.getVersionedId(), this.config.getModelProvider());
-        TbLwM2MWriteResponseCompositeCallback callback = new TbLwM2MWriteResponseCompositeCallback (handler, logService, client, null);
-            ContentFormat contentFormat = ContentFormat.SENML_JSON;
-            try {
-                WriteCompositeRequest downlink = new WriteCompositeRequest(contentFormat, nodes);
-                sendWriteCompositeRequest(client, downlink, this.config.getTimeout(), callback);
-            } catch (Exception e) {
-                callback.onError(JacksonUtil.toString(nodes), e);
-            }
+        TbLwM2MWriteResponseCompositeCallback callback = new TbLwM2MWriteResponseCompositeCallback(handler, logService, client, null);
+        ContentFormat contentFormat = ContentFormat.SENML_JSON;
+        try {
+            WriteCompositeRequest downlink = new WriteCompositeRequest(contentFormat, nodes);
+            sendWriteCompositeRequest(client, downlink, this.config.getTimeout(), callback);
+        } catch (Exception e) {
+            callback.onError(JacksonUtil.toString(nodes), e);
+        }
 
     }
 
@@ -277,7 +279,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
              */
             Collection<LwM2mResource> resources = client.getNewResourcesForInstance(request.getVersionedId(), request.getValue(), this.config.getModelProvider(), this.converter);
             if (resources.size() > 0) {
-                ContentFormat contentFormat = request.getObjectContentFormat() != null ? request.getObjectContentFormat() : client.getDefaultContentFormat();
+                ContentFormat contentFormat = request.getObjectContentFormat() != null ? request.getObjectContentFormat() : ContentFormat.DEFAULT;
                 WriteRequest downlink = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resources);
                 sendRequest(client, downlink, request.getTimeout(), callback);
             } else {
@@ -407,11 +409,20 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     }
 
     private void validateVersionedId(LwM2mClient client, HasVersionedId request) {
-        if (!client.isValidObjectVersion(request.getVersionedId())) {
-            throw new IllegalArgumentException("Specified resource id is not configured in the device profile!");
-        }
+        client.isValidObjectVersion(request.getVersionedId());
         if (request.getObjectId() == null) {
             throw new IllegalArgumentException("Specified object id is null!");
+        }
+    }
+
+    private void validateVersionedIds(LwM2mClient client, HasVersionedIds request) {
+        for (String versionedId : request.getVersionedIds()) {
+            client.isValidObjectVersion(versionedId);
+        }
+        for (String objectId : request.getObjectIds()) {
+            if (objectId == null) {
+                throw new IllegalArgumentException("Specified object id is null!");
+            }
         }
     }
 
@@ -447,6 +458,15 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     }
 
     private static ContentFormat getRequestContentFormat(LwM2mClient client, HasContentFormat request) {
-        return request.getRequestContentFormat() != null ? request.getRequestContentFormat() : client.getDefaultContentFormat();
+        if (request.getRequestContentFormat() != null) {
+            return request.getRequestContentFormat();
+        } else {
+            String versionedId = fromVersionedIdToObjectId(((TbLwM2MReadRequest) request).getVersionedId());
+            if (versionedId != null && (new LwM2mPath(versionedId).isObject() || new LwM2mPath(versionedId).isObjectInstance())) {
+                return ContentFormat.DEFAULT;
+            } else {
+                return client.getDefaultContentFormat();
+            }
+        }
     }
 }

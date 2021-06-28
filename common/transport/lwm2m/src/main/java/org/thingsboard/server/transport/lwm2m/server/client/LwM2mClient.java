@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
+import org.thingsboard.server.transport.lwm2m.config.LwM2mVersion;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mQueuedRequest;
 
 import java.util.Collection;
@@ -53,7 +54,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LWM2M_VERSION_DEFAULT;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LWM2M_OBJECT_VERSION_DEFAULT;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertObjectIdToVersionedId;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.equalsResourceTypeGetSimpleName;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
@@ -243,11 +244,11 @@ public class LwM2mClient implements Cloneable {
                 .getObjectModel(pathIds.getObjectId()) : null;
     }
 
-    public String objectToString(LwM2mObject lwM2mObject, LwM2mValueConverter converter, String pathIdVer) {
+    public String objectToString(LwM2mObject lwM2mObject) {
         StringBuilder builder = new StringBuilder();
         builder.append("LwM2mObject [id=").append(lwM2mObject.getId()).append(", instances={");
         lwM2mObject.getInstances().forEach((instId, inst) -> {
-            builder.append(instId).append("=").append(this.instanceToString(inst, converter, pathIdVer)).append(", ");
+            builder.append(instId).append("=").append(this.instanceToString(inst)).append(", ");
         });
         int startInd = builder.lastIndexOf(", ");
         if (startInd > 0) {
@@ -257,11 +258,11 @@ public class LwM2mClient implements Cloneable {
         return builder.toString();
     }
 
-    public String instanceToString(LwM2mObjectInstance objectInstance, LwM2mValueConverter converter, String pathIdVer) {
+    public String instanceToString(LwM2mObjectInstance objectInstance) {
         StringBuilder builder = new StringBuilder();
         builder.append("LwM2mObjectInstance [id=").append(objectInstance.getId()).append(", resources={");
         objectInstance.getResources().forEach((resId, res) -> {
-            builder.append(resId).append("=").append(this.resourceToString(res, converter, pathIdVer)).append(", ");
+            builder.append(resId).append("=").append(this.resourceToString(res)).append(", ");
         });
         int startInd = builder.lastIndexOf(", ");
         if (startInd > 0) {
@@ -271,8 +272,9 @@ public class LwM2mClient implements Cloneable {
         return builder.toString();
     }
 
-    public String resourceToString(LwM2mResource lwM2mResource, LwM2mValueConverter converter, String pathIdVer) {
-        return lwM2mResource.getValue().toString();
+    public String resourceToString(LwM2mResource lwM2mResource) {
+
+        return lwM2mResource.isMultiInstances() ? lwM2mResource.getInstances().toString() : lwM2mResource.getValue().toString();
     }
 
     public Collection<LwM2mResource> getNewResourceForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
@@ -308,11 +310,14 @@ public class LwM2mClient implements Cloneable {
         return resources;
     }
 
-    public boolean isValidObjectVersion(String path) {
+    public void isValidObjectVersion(String path) {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(path));
         String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
         String verRez = getVerFromPathIdVerOrId(path);
-        return verRez == null ? LWM2M_VERSION_DEFAULT.equals(verSupportedObject) : verRez.equals(verSupportedObject);
+        if ((verRez != null && !verRez.equals(verSupportedObject)) ||
+                (verRez == null && !LWM2M_OBJECT_VERSION_DEFAULT.equals(verSupportedObject))) {
+            throw new IllegalArgumentException(String.format("Specified resource id %s is not valid version! Must be version: %s", path, verSupportedObject));
+        }
     }
 
     /**
@@ -357,10 +362,8 @@ public class LwM2mClient implements Cloneable {
     public ContentFormat getDefaultContentFormat() {
         if (registration == null) {
             return ContentFormat.DEFAULT;
-        } else if (registration.getLwM2mVersion().equals("1.0")) {
-            return ContentFormat.TLV;
         } else {
-            return ContentFormat.TEXT;
+            return LwM2mVersion.fromContentFormat(registration.getLwM2mVersion());
         }
     }
 

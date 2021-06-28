@@ -13,32 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.downlink;
+package org.thingsboard.server.transport.lwm2m.server.downlink.composite;
 
 import lombok.Builder;
 import lombok.Getter;
 import org.eclipse.leshan.core.request.ContentFormat;
-import org.eclipse.leshan.core.response.ReadCompositeResponse;
+import org.eclipse.leshan.core.response.WriteCompositeResponse;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType;
+import org.thingsboard.server.transport.lwm2m.server.downlink.AbstractTbLwM2MTargetedDownlinkRequest;
 
-public class TbLwM2MReadCompositeRequest extends AbstractTbLwM2MTargetedDownlinkRequest<ReadCompositeResponse> implements HasContentFormat {
-
-    @Getter
-    private final ContentFormat requestContentFormat;
+public class TbLwM2MWriteCompositeRequest extends AbstractTbLwM2MTargetedDownlinkRequest<WriteCompositeResponse> {
 
     @Getter
-    private final ContentFormat responseContentFormat;
+    private final ContentFormat contentFormat;
+    @Getter
+    private final Object value;
 
     @Builder
-    private TbLwM2MReadCompositeRequest(String versionedId, long timeout, ContentFormat requestContentFormat, ContentFormat responseContentFormat) {
+    private TbLwM2MWriteCompositeRequest(String versionedId, long timeout, ContentFormat contentFormat, Object value) {
         super(versionedId, timeout);
-        this.requestContentFormat = requestContentFormat;
-        this.responseContentFormat = responseContentFormat;
+        this.contentFormat = contentFormat;
+        this.value = value;
     }
 
     @Override
     public LwM2mOperationType getType() {
-        return LwM2mOperationType.READ_COMPOSITE;
+        return LwM2mOperationType.WRITE_REPLACE;
     }
+
+
 
 }

@@ -22,37 +22,37 @@ import lombok.Getter;
  */
 public enum LwM2mOperationType {
 
-    READ(0, "Read", true),
-    READ_COMPOSITE(1, "ReadComposite", true),
-    DISCOVER(2, "Discover", true),
-    DISCOVER_ALL(3, "DiscoverAll", false),
-    OBSERVE_READ_ALL(4, "ObserveReadAll", false),
+    READ(0, "Read", 1),
+    READ_COMPOSITE(1, "ReadComposite", 2),
+    DISCOVER(2, "Discover", 1),
+    DISCOVER_ALL(3, "DiscoverAll", 0),
+    OBSERVE_READ_ALL(4, "ObserveReadAll", 0),
 
-    OBSERVE(5, "Observe", true),
-    OBSERVE_COMPOSITE(6, "ObserveComposite", true),
-    OBSERVE_CANCEL(7, "ObserveCancel", true),
-    OBSERVE_COMPOSITE_CANCEL(8, "ObserveCompositeCancel", true),
-    OBSERVE_CANCEL_ALL(9, "ObserveCancelAll", false),
-    EXECUTE(10, "Execute", true),
+    OBSERVE(5, "Observe", 1),
+    OBSERVE_COMPOSITE(6, "ObserveComposite", 2),
+    OBSERVE_CANCEL(7, "ObserveCancel", 1),
+    OBSERVE_COMPOSITE_CANCEL(8, "ObserveCompositeCancel", 2),
+    OBSERVE_CANCEL_ALL(9, "ObserveCancelAll", 0),
+    EXECUTE(10, "Execute", 1),
     /**
      * Replaces the Object Instance or the Resource(s) with the new value provided in the “Write” operation. (see
      * section 5.3.3 of the LW M2M spec).
      * if all resources are to be replaced
      */
-    WRITE_REPLACE(11, "WriteReplace", true),
+    WRITE_REPLACE(11, "WriteReplace", 1),
 
     /**
      * Adds or updates Resources provided in the new value and leaves other existing Resources unchanged. (see section
      * 5.3.3 of the LW M2M spec).
      * if this is a partial update request
      */
-    WRITE_UPDATE(12, "WriteUpdate", true),
-    WRITE_COMPOSITE(14, "WriteComposite", true),
-    WRITE_ATTRIBUTES(15, "WriteAttributes", true),
-    DELETE(16, "Delete", true),
+    WRITE_UPDATE(12, "WriteUpdate", 1),
+    WRITE_COMPOSITE(14, "WriteComposite", 2),
+    WRITE_ATTRIBUTES(15, "WriteAttributes", 1),
+    DELETE(16, "Delete", 1),
 
     // only for RPC
-    FW_UPDATE(17, "FirmwareUpdate", false);
+    FW_UPDATE(17, "FirmwareUpdate", 0);
 
 //        FW_READ_INFO(18, "FirmwareReadInfo"),
 //        SW_READ_INFO(19, "SoftwareReadInfo"),
@@ -64,12 +64,12 @@ public enum LwM2mOperationType {
     @Getter
     private final String type;
     @Getter
-    private final boolean hasObjectId;
+    private final int hasObjectIdOrComposite;
 
-    LwM2mOperationType(int code, String type, boolean hasObjectId) {
+    LwM2mOperationType(int code, String type, int hasObjectIdOrComposite) {
         this.code = code;
         this.type = type;
-        this.hasObjectId = hasObjectId;
+        this.hasObjectIdOrComposite = hasObjectIdOrComposite;
     }
 
     public static LwM2mOperationType fromType(String type) {

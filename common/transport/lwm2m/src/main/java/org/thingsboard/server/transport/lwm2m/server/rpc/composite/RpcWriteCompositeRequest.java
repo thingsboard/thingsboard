@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.data.lwm2m;
+package org.thingsboard.server.transport.lwm2m.server.rpc.composite;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
-import org.thingsboard.server.common.data.device.data.PowerMode;
+
+import java.util.Map;
 
 @Data
-public class OtherConfiguration {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class RpcWriteCompositeRequest {
 
-    private Integer fwUpdateStrategy;
-    private Integer swUpdateStrategy;
-    private Integer clientOnlyObserveAfterConnect;
-    private PowerMode powerMode;
-    private String fwUpdateResource;
-    private String swUpdateResource;
-    private boolean composite;
+    private Map<String, Object> nodes;
 
 }
