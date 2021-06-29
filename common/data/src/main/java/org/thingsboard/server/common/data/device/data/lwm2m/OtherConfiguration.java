@@ -27,6 +27,6 @@ public class OtherConfiguration {
     private PowerMode powerMode;
     private String fwUpdateResource;
     private String swUpdateResource;
-    private boolean composite;
+    private boolean compositeOperationsSupport;
 
 }
