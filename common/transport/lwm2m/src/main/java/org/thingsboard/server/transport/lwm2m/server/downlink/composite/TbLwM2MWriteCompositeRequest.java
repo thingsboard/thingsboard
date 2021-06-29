@@ -13,28 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.downlink;
+package org.thingsboard.server.transport.lwm2m.server.downlink.composite;
 
 import lombok.Builder;
 import lombok.Getter;
 import org.eclipse.leshan.core.request.ContentFormat;
-import org.eclipse.leshan.core.response.ObserveResponse;
+import org.eclipse.leshan.core.response.WriteCompositeResponse;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType;
+import org.thingsboard.server.transport.lwm2m.server.downlink.AbstractTbLwM2MTargetedDownlinkRequest;
 
-public class TbLwM2MObserveRequest extends AbstractTbLwM2MTargetedDownlinkRequest<ObserveResponse> implements HasContentFormat {
+public class TbLwM2MWriteCompositeRequest extends AbstractTbLwM2MTargetedDownlinkRequest<WriteCompositeResponse> {
 
     @Getter
-    private final ContentFormat requestContentFormat;
+    private final ContentFormat contentFormat;
+    @Getter
+    private final Object value;
 
     @Builder
-    private TbLwM2MObserveRequest(String versionedId, long timeout, ContentFormat requestContentFormat) {
+    private TbLwM2MWriteCompositeRequest(String versionedId, long timeout, ContentFormat contentFormat, Object value) {
         super(versionedId, timeout);
-        this.requestContentFormat = requestContentFormat;
+        this.contentFormat = contentFormat;
+        this.value = value;
     }
 
     @Override
     public LwM2mOperationType getType() {
-        return LwM2mOperationType.OBSERVE;
+        return LwM2mOperationType.WRITE_REPLACE;
     }
 
 

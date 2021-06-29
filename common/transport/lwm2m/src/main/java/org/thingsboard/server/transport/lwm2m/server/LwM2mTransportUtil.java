@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.device.data.lwm2m.BootstrapConfigurati
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.transport.lwm2m.config.LwM2mVersion;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.ResourceValue;
 import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateResult;
@@ -85,7 +86,7 @@ import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaU
 @Slf4j
 public class LwM2mTransportUtil {
 
-    public static final String LWM2M_VERSION_DEFAULT = "1.0";
+    public static final String LWM2M_OBJECT_VERSION_DEFAULT = "1.0";
 
     public static final String LOG_LWM2M_TELEMETRY = "transportLog";
     public static final String LOG_LWM2M_INFO = "info";
@@ -234,7 +235,7 @@ public class LwM2mTransportUtil {
 
     public static String convertObjectIdToVersionedId(String path, Registration registration) {
         String ver = registration.getSupportedObject().get(new LwM2mPath(path).getObjectId());
-        ver = ver != null ? ver : LWM2M_VERSION_DEFAULT;
+        ver = ver != null ? ver : LwM2mVersion.VERSION_1_0.getVersion().toString();
         try {
             String[] keyArray = path.split(LWM2M_SEPARATOR_PATH);
             if (keyArray.length > 1) {
@@ -381,4 +382,5 @@ public class LwM2mTransportUtil {
         }
         return lwm2mResourceValue;
     }
+
 }
