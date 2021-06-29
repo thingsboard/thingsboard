@@ -469,7 +469,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                 versionedId = ((TbLwM2MObserveRequest) request).getVersionedId();
             }
             String id = fromVersionedIdToObjectId(versionedId);
-            if (id != null && !client.isResourceMultiInstances(versionedId, modelProvider)) {
+            if (id != null && new LwM2mPath(id).isResource() && !client.isResourceMultiInstances(versionedId, modelProvider)) {
                 return client.getDefaultContentFormat();
             }
             else {
