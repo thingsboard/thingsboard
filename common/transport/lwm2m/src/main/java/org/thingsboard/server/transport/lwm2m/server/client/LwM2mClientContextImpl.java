@@ -26,9 +26,9 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
-import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
@@ -68,6 +68,17 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     private final Map<String, LwM2mClient> lwM2mClientsByRegistrationId = new ConcurrentHashMap<>();
     private final Map<UUID, Lwm2mDeviceProfileTransportConfiguration> profiles = new ConcurrentHashMap<>();
 
+    @AfterStartUp
+    public void init() {
+        String nodeId = context.getNodeId();
+        Set<LwM2mClient> fetchedClients = clientStore.getAll();
+        log.debug("Fetched clients from store: {}", fetchedClients);
+        fetchedClients.forEach(client -> {
+            lwM2mClientsByEndpoint.put(client.getEndpoint(), client);
+            updateFetchedClient(nodeId, client);
+        });
+    }
+
     @Override
     public LwM2mClient getClientByEndpoint(String endpoint) {
         return lwM2mClientsByEndpoint.computeIfAbsent(endpoint, ep -> {
@@ -78,21 +89,25 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
                 client = new LwM2mClient(nodeId, ep);
             } else {
                 log.debug("[{}] fetched client from store: {}", endpoint, client);
-                boolean updated = false;
-                if (client.getRegistration() != null) {
-                    lwM2mClientsByRegistrationId.put(client.getRegistration().getId(), client);
-                }
-                if (client.getSession() != null) {
-                    client.refreshSessionId(nodeId);
-                    sessionManager.register(client.getSession());
-                    updated = true;
-                }
-                if (updated) {
-                    clientStore.put(client);
-                }
+                updateFetchedClient(nodeId, client);
             }
             return client;
         });
+    }
+
+    private void updateFetchedClient(String nodeId, LwM2mClient client) {
+        boolean updated = false;
+        if (client.getRegistration() != null) {
+            lwM2mClientsByRegistrationId.put(client.getRegistration().getId(), client);
+        }
+        if (client.getSession() != null) {
+            client.refreshSessionId(nodeId);
+            sessionManager.register(client.getSession());
+            updated = true;
+        }
+        if (updated) {
+            clientStore.put(client);
+        }
     }
 
     @Override
