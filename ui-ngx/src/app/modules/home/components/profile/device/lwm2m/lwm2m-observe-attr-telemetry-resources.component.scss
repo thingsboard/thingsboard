@@ -14,20 +14,43 @@
  * limitations under the License.
  */
 :host {
-  .resource-name-lw-end{
+  .resource-name{
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    text-align:end;
-    //width: 80px;
-    cursor: pointer;
   }
 
-  .resource-name-lw{
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    cursor: pointer;
+  .checkbox-column-title {
+    text-align: center;
+  }
+
+  .mat-divider {
+    margin-bottom: 4px;
+  }
+
+  .resource-list {
+    padding-bottom: 8px;
+    height: 42px;
   }
 }
 
+:host ::ng-deep {
+  .resource-list {
+    mat-form-field {
+      .mat-form-field-wrapper {
+        padding-bottom: 0;
+        .mat-form-field-infix {
+          border-top-width: 0.2em;
+          width: auto;
+          min-width: auto;
+        }
+        .mat-form-field-underline {
+          bottom: 0;
+        }
+        .mat-form-field-subscript-wrapper{
+          margin-top: 1.8em;
+        }
+      }
+    }
+  }
+}
