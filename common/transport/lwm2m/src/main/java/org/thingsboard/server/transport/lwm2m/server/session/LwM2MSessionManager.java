@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.log;
+package org.thingsboard.server.transport.lwm2m.server.session;
 
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.gen.transport.TransportProtos;
 
-public interface LwM2MTelemetryLogService {
+public interface LwM2MSessionManager {
 
-    void log(LwM2mClient client, String msg);
+    void register(TransportProtos.SessionInfoProto sessionInfo);
+
+    void deregister(TransportProtos.SessionInfoProto sessionInfo);
+
 
 }

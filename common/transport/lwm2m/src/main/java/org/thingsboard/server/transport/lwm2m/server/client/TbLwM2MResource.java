@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.log;
+package org.thingsboard.server.transport.lwm2m.server.client;
 
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.eclipse.leshan.core.node.LwM2mResource;
 
-public interface LwM2MTelemetryLogService {
-
-    void log(LwM2mClient client, String msg);
-
+public interface TbLwM2MResource extends LwM2mResource {
 }

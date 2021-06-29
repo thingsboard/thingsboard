@@ -29,7 +29,6 @@ import org.eclipse.leshan.core.node.codec.LwM2mValueConverter;
 import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
-import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
@@ -38,16 +37,16 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mQueuedRequest;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -60,47 +59,37 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.f
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.getVerFromPathIdVerOrId;
 
 @Slf4j
-public class LwM2mClient implements Cloneable {
+public class LwM2mClient implements Serializable {
+
+    private static final long serialVersionUID = 8793482946289222623L;
 
     private final String nodeId;
     @Getter
     private final String endpoint;
-    private final Lock lock;
-    @Getter
-    @Setter
-    private LwM2MClientState state;
+
+    private transient Lock lock;
+
     @Getter
     private final Map<String, ResourceValue> resources;
     @Getter
     private final Map<String, TsKvProto> sharedAttributes;
-    @Getter
-    private final Queue<LwM2mQueuedRequest> queuedRequests;
 
-    @Getter
-    private String deviceName;
-    @Getter
-    private String deviceProfileName;
-
-    @Getter
-    private PowerMode powerMode;
-
-    @Getter
-    private String identity;
-    @Getter
-    private SecurityInfo securityInfo;
     @Getter
     private TenantId tenantId;
     @Getter
+    private UUID profileId;
+    @Getter
     private UUID deviceId;
+    @Getter
+    @Setter
+    private LwM2MClientState state;
     @Getter
     private SessionInfoProto session;
     @Getter
-    private UUID profileId;
+    private PowerMode powerMode;
     @Getter
     @Setter
     private Registration registration;
-
-    private ValidateDeviceCredentialsResponse credentials;
 
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
@@ -109,23 +98,17 @@ public class LwM2mClient implements Cloneable {
     public LwM2mClient(String nodeId, String endpoint) {
         this.nodeId = nodeId;
         this.endpoint = endpoint;
-        this.lock = new ReentrantLock();
         this.sharedAttributes = new ConcurrentHashMap<>();
         this.resources = new ConcurrentHashMap<>();
-        this.queuedRequests = new ConcurrentLinkedQueue<>();
         this.state = LwM2MClientState.CREATED;
+        this.lock = new ReentrantLock();
     }
 
-    public void init(String identity, SecurityInfo securityInfo, ValidateDeviceCredentialsResponse credentials, UUID sessionId) {
-        this.identity = identity;
-        this.securityInfo = securityInfo;
-        this.credentials = credentials;
+    public void init(ValidateDeviceCredentialsResponse credentials, UUID sessionId) {
         this.session = createSession(nodeId, sessionId, credentials);
         this.tenantId = new TenantId(new UUID(session.getTenantIdMSB(), session.getTenantIdLSB()));
         this.deviceId = new UUID(session.getDeviceIdMSB(), session.getDeviceIdLSB());
         this.profileId = new UUID(session.getDeviceProfileIdMSB(), session.getDeviceProfileIdLSB());
-        this.deviceName = session.getDeviceName();
-        this.deviceProfileName = session.getDeviceType();
         this.powerMode = credentials.getDeviceInfo().getPowerMode();
     }
 
@@ -140,10 +123,9 @@ public class LwM2mClient implements Cloneable {
     public void onDeviceUpdate(Device device, Optional<DeviceProfile> deviceProfileOpt) {
         SessionInfoProto.Builder builder = SessionInfoProto.newBuilder().mergeFrom(session);
         this.deviceId = device.getUuidId();
-        this.deviceName = device.getName();
         builder.setDeviceIdMSB(deviceId.getMostSignificantBits());
         builder.setDeviceIdLSB(deviceId.getLeastSignificantBits());
-        builder.setDeviceName(deviceName);
+        builder.setDeviceName(device.getName());
         deviceProfileOpt.ifPresent(deviceProfile -> updateSession(deviceProfile, builder));
         this.session = builder.build();
         this.powerMode = ((Lwm2mDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration()).getPowerMode();
@@ -156,12 +138,21 @@ public class LwM2mClient implements Cloneable {
     }
 
     private void updateSession(DeviceProfile deviceProfile, SessionInfoProto.Builder builder) {
-        this.deviceProfileName = deviceProfile.getName();
         this.profileId = deviceProfile.getUuidId();
         builder.setDeviceProfileIdMSB(profileId.getMostSignificantBits());
         builder.setDeviceProfileIdLSB(profileId.getLeastSignificantBits());
-        builder.setDeviceType(this.deviceProfileName);
+        builder.setDeviceType(deviceProfile.getName());
     }
+
+    public void refreshSessionId(String nodeId) {
+        UUID newId = UUID.randomUUID();
+        SessionInfoProto.Builder builder = SessionInfoProto.newBuilder().mergeFrom(session);
+        builder.setNodeId(nodeId);
+        builder.setSessionIdMSB(newId.getMostSignificantBits());
+        builder.setSessionIdLSB(newId.getLeastSignificantBits());
+        this.session = builder.build();
+    }
+
 
     private SessionInfoProto createSession(String nodeId, UUID sessionId, ValidateDeviceCredentialsResponse msg) {
         return SessionInfoProto.newBuilder()
@@ -362,6 +353,11 @@ public class LwM2mClient implements Cloneable {
         } else {
             return ContentFormat.TEXT;
         }
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        this.lock = new ReentrantLock();
     }
 
 }

@@ -13,12 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.log;
+package org.thingsboard.server.transport.lwm2m.server.client;
 
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.eclipse.leshan.core.model.ResourceModel;
 
-public interface LwM2MTelemetryLogService {
+import java.io.Serializable;
 
-    void log(LwM2mClient client, String msg);
+public class TbResourceModel extends ResourceModel implements Serializable {
 
+    private static final long serialVersionUID = -2082846558899793932L;
+
+    public TbResourceModel(Integer id, String name, Operations operations, Boolean multiple, Boolean mandatory, Type type, String rangeEnumeration, String units, String description) {
+        super(id, name, operations, multiple, mandatory, type, rangeEnumeration, units, description);
+    }
 }

@@ -181,6 +181,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
                 }
             }
         });
+        clientContext.update(lwM2MClient);
         // #2.1
         lwM2MClient.getSharedAttributes().forEach((pathIdVer, tsKvProto) -> {
             this.pushUpdateToClientIfNeeded(lwM2MClient, this.getResourceValueFormatKv(lwM2MClient, pathIdVer),

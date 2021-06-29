@@ -13,12 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.log;
+package org.thingsboard.server.transport.lwm2m.server.store;
 
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
-public interface LwM2MTelemetryLogService {
+public class TbDummyLwM2MClientStore implements TbLwM2MClientStore {
+    @Override
+    public LwM2mClient get(String endpoint) {
+        return null;
+    }
 
-    void log(LwM2mClient client, String msg);
+    @Override
+    public void put(LwM2mClient client) {
 
+    }
+
+    @Override
+    public void remove(String endpoint) {
+
+    }
 }

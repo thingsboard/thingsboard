@@ -15,7 +15,9 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.ota;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.transport.lwm2m.server.ota.firmware.LwM2MFirmwareUpdateStrategy;
@@ -26,10 +28,11 @@ import org.thingsboard.server.transport.lwm2m.server.ota.software.LwM2MSoftwareU
 import java.util.Optional;
 
 @Data
+@NoArgsConstructor
 public class LwM2MClientOtaInfo {
 
-    private final String endpoint;
-    private final OtaPackageType type;
+    private String endpoint;
+    private OtaPackageType type;
 
     private String baseUrl;
 
@@ -53,10 +56,17 @@ public class LwM2MClientOtaInfo {
     private String failedPackageId;
     private int retryAttempts;
 
-    public LwM2MClientOtaInfo(String endpoint, OtaPackageType type, Integer strategyCode, String baseUrl) {
+    public LwM2MClientOtaInfo(String endpoint, OtaPackageType type, LwM2MFirmwareUpdateStrategy fwStrategy, String baseUrl) {
         this.endpoint = endpoint;
         this.type = type;
-        this.fwStrategy = strategyCode != null ? LwM2MFirmwareUpdateStrategy.fromStrategyFwByCode(strategyCode) : LwM2MFirmwareUpdateStrategy.OBJ_5_BINARY;
+        this.fwStrategy = fwStrategy;
+        this.baseUrl = baseUrl;
+    }
+
+    public LwM2MClientOtaInfo(String endpoint, OtaPackageType type, LwM2MSoftwareUpdateStrategy swStrategy, String baseUrl) {
+        this.endpoint = endpoint;
+        this.type = type;
+        this.swStrategy = swStrategy;
         this.baseUrl = baseUrl;
     }
 
@@ -66,6 +76,7 @@ public class LwM2MClientOtaInfo {
         this.targetUrl = newFirmwareUrl.orElse(null);
     }
 
+    @JsonIgnore
     public boolean isUpdateRequired() {
         if (StringUtils.isEmpty(targetName) || StringUtils.isEmpty(targetVersion) || !isSupported()) {
             return false;
@@ -86,11 +97,12 @@ public class LwM2MClientOtaInfo {
         }
     }
 
+    @JsonIgnore
     public boolean isSupported() {
         return StringUtils.isNotEmpty(currentName) || StringUtils.isNotEmpty(currentVersion5) || StringUtils.isNotEmpty(currentVersion3);
     }
 
-    public void setUpdateResult(FirmwareUpdateResult updateResult) {
+    public void update(FirmwareUpdateResult updateResult) {
         this.updateResult = updateResult;
         switch (updateResult) {
             case INITIAL:
