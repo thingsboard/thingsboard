@@ -24,6 +24,8 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -61,6 +63,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     private final TbMainSecurityStore securityStore;
     private final TbLwM2MClientStore clientStore;
     private final LwM2MSessionManager sessionManager;
+    private final TransportDeviceProfileCache deviceProfileCache;
     private final Map<String, LwM2mClient> lwM2mClientsByEndpoint = new ConcurrentHashMap<>();
     private final Map<String, LwM2mClient> lwM2mClientsByRegistrationId = new ConcurrentHashMap<>();
     private final Map<UUID, Lwm2mDeviceProfileTransportConfiguration> profiles = new ConcurrentHashMap<>();
@@ -231,12 +234,26 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public Lwm2mDeviceProfileTransportConfiguration getProfile(UUID profileId) {
-        return profiles.get(profileId);
+        return doGetAndCache(profileId);
     }
 
     @Override
     public Lwm2mDeviceProfileTransportConfiguration getProfile(Registration registration) {
-        return profiles.get(getClientByEndpoint(registration.getEndpoint()).getProfileId());
+        UUID profileId = getClientByEndpoint(registration.getEndpoint()).getProfileId();
+        Lwm2mDeviceProfileTransportConfiguration result = doGetAndCache(profileId);
+        if (result == null) {
+            log.debug("[{}] Fetching profile [{}]", registration.getEndpoint(), profileId);
+            DeviceProfile deviceProfile = deviceProfileCache.get(new DeviceProfileId(profileId));
+            if (deviceProfile != null) {
+                profileUpdate(deviceProfile);
+                result = doGetAndCache(profileId);
+            }
+        }
+        return result;
+    }
+
+    private Lwm2mDeviceProfileTransportConfiguration doGetAndCache(UUID profileId) {
+        return profiles.get(profileId);
     }
 
     @Override
