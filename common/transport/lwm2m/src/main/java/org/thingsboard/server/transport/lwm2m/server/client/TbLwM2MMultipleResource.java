@@ -13,12 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.log;
+package org.thingsboard.server.transport.lwm2m.server.client;
 
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mMultipleResource;
+import org.eclipse.leshan.core.node.LwM2mResourceInstance;
 
-public interface LwM2MTelemetryLogService {
+import java.io.Serializable;
+import java.util.Collection;
 
-    void log(LwM2mClient client, String msg);
+public class TbLwM2MMultipleResource extends LwM2mMultipleResource implements TbLwM2MResource, Serializable {
 
+    private static final long serialVersionUID = 4658477128628087186L;
+
+    public TbLwM2MMultipleResource(int id, ResourceModel.Type type, TbLwM2MResourceInstance... instances) {
+        super(id, type, instances);
+    }
 }

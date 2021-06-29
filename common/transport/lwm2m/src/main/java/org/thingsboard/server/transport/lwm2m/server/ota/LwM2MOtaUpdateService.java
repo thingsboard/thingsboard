@@ -32,7 +32,7 @@ public interface LwM2MOtaUpdateService {
 
     void onCurrentFirmwareNameUpdate(LwM2mClient client, String name);
 
-    void onCurrentFirmwareStrategyUpdate(LwM2mClient client, OtherConfiguration configuration);
+    void onFirmwareStrategyUpdate(LwM2mClient client, OtherConfiguration configuration);
 
     void onCurrentSoftwareStrategyUpdate(LwM2mClient client, OtherConfiguration configuration);
 

@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.log;
+package org.thingsboard.server.transport.lwm2m.server.store;
 
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MClientOtaInfo;
 
-public interface LwM2MTelemetryLogService {
+public interface TbLwM2MClientOtaInfoStore {
 
-    void log(LwM2mClient client, String msg);
+    LwM2MClientOtaInfo get(OtaPackageType type, String endpoint);
 
+    void put(LwM2MClientOtaInfo info);
 }

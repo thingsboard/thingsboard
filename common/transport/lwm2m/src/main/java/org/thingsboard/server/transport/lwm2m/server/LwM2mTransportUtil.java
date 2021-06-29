@@ -88,7 +88,7 @@ public class LwM2mTransportUtil {
 
     public static final String LWM2M_OBJECT_VERSION_DEFAULT = "1.0";
 
-    public static final String LOG_LWM2M_TELEMETRY = "logLwm2m";
+    public static final String LOG_LWM2M_TELEMETRY = "transportLog";
     public static final String LOG_LWM2M_INFO = "info";
     public static final String LOG_LWM2M_ERROR = "error";
     public static final String LOG_LWM2M_WARN = "warn";
@@ -170,19 +170,6 @@ public class LwM2mTransportUtil {
         return lwM2mOtaConvert;
     }
 
-    public static LwM2mNode getLvM2mNodeToObject(LwM2mNode content) {
-        if (content instanceof LwM2mObject) {
-            return (LwM2mObject) content;
-        } else if (content instanceof LwM2mObjectInstance) {
-            return (LwM2mObjectInstance) content;
-        } else if (content instanceof LwM2mSingleResource) {
-            return (LwM2mSingleResource) content;
-        } else if (content instanceof LwM2mMultipleResource) {
-            return (LwM2mMultipleResource) content;
-        }
-        return null;
-    }
-
     public static Lwm2mDeviceProfileTransportConfiguration toLwM2MClientProfile(DeviceProfile deviceProfile) {
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         if (transportConfiguration.getType().equals(DeviceTransportType.LWM2M)) {
@@ -195,62 +182,6 @@ public class LwM2mTransportUtil {
 
     public static BootstrapConfiguration getBootstrapParametersFromThingsboard(DeviceProfile deviceProfile) {
         return toLwM2MClientProfile(deviceProfile).getBootstrap();
-    }
-
-    public static JsonObject validateJson(String jsonStr) {
-        JsonObject object = null;
-        if (jsonStr != null && !jsonStr.isEmpty()) {
-            String jsonValidFlesh = jsonStr.replaceAll("\\\\", "");
-            jsonValidFlesh = jsonValidFlesh.replaceAll("\n", "");
-            jsonValidFlesh = jsonValidFlesh.replaceAll("\t", "");
-            jsonValidFlesh = jsonValidFlesh.replaceAll(" ", "");
-            String jsonValid = (jsonValidFlesh.charAt(0) == '"' && jsonValidFlesh.charAt(jsonValidFlesh.length() - 1) == '"') ? jsonValidFlesh.substring(1, jsonValidFlesh.length() - 1) : jsonValidFlesh;
-            try {
-                object = new JsonParser().parse(jsonValid).getAsJsonObject();
-            } catch (JsonSyntaxException e) {
-                log.error("[{}] Fail validateJson [{}]", jsonStr, e.getMessage());
-            }
-        }
-        return object;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T> Optional<T> decode(byte[] byteArray) {
-        try {
-            FSTConfiguration config = FSTConfiguration.createDefaultConfiguration();
-            T msg = (T) config.asObject(byteArray);
-            return Optional.ofNullable(msg);
-        } catch (IllegalArgumentException e) {
-            log.error("Error during deserialization message, [{}]", e.getMessage());
-            return Optional.empty();
-        }
-    }
-
-    public static String splitCamelCaseString(String s) {
-        LinkedList<String> linkedListOut = new LinkedList<>();
-        LinkedList<String> linkedList = new LinkedList<String>((Arrays.asList(s.split(" "))));
-        linkedList.forEach(str -> {
-            String strOut = str.replaceAll("\\W", "").replaceAll("_", "").toUpperCase();
-            if (strOut.length() > 1) linkedListOut.add(strOut.charAt(0) + strOut.substring(1).toLowerCase());
-            else linkedListOut.add(strOut);
-        });
-        linkedListOut.set(0, (linkedListOut.get(0).substring(0, 1).toLowerCase() + linkedListOut.get(0).substring(1)));
-        return StringUtils.join(linkedListOut, "");
-    }
-
-    public static <T> TransportServiceCallback<Void> getAckCallback(LwM2mClient lwM2MClient,
-                                                                    int requestId, String typeTopic) {
-        return new TransportServiceCallback<Void>() {
-            @Override
-            public void onSuccess(Void dummy) {
-                log.trace("[{}] [{}] - requestId [{}] - EndPoint  , Access AckCallback", typeTopic, requestId, lwM2MClient.getEndpoint());
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                log.trace("[{}] Failed to publish msg", e.toString());
-            }
-        };
     }
 
     public static String fromVersionedIdToObjectId(String pathIdVer) {
