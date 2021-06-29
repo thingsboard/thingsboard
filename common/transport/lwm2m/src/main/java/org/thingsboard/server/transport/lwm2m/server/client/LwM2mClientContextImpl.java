@@ -23,10 +23,11 @@ import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
-import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
@@ -34,9 +35,11 @@ import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
+import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MOtaUpdateService;
 import org.thingsboard.server.transport.lwm2m.server.session.LwM2MSessionManager;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MClientStore;
 import org.thingsboard.server.transport.lwm2m.server.store.TbMainSecurityStore;
+import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -64,6 +67,8 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     private final TbLwM2MClientStore clientStore;
     private final LwM2MSessionManager sessionManager;
     private final TransportDeviceProfileCache deviceProfileCache;
+    private final DefaultLwM2MUplinkMsgHandler defaultLwM2MUplinkMsgHandler;
+    private final LwM2MOtaUpdateService otaUpdateService;
     private final Map<String, LwM2mClient> lwM2mClientsByEndpoint = new ConcurrentHashMap<>();
     private final Map<String, LwM2mClient> lwM2mClientsByRegistrationId = new ConcurrentHashMap<>();
     private final Map<UUID, Lwm2mDeviceProfileTransportConfiguration> profiles = new ConcurrentHashMap<>();
@@ -143,6 +148,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
             }
             client.setRegistration(registration);
             clientStore.put(client);
+            sendMsgsAfterSleeping(client);
         } finally {
             client.unlock();
         }
@@ -231,6 +237,28 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     @Override
     public void removeCredentials(TransportProtos.SessionInfoProto sessionInfo) {
         //TODO: implement
+    }
+
+    @Override
+    public void sendMsgsAfterSleeping(LwM2mClient lwM2MClient) {
+        if (LwM2MClientState.REGISTERED.equals(lwM2MClient.getState())) {
+            PowerMode powerMode = lwM2MClient.getPowerMode();
+            if (powerMode == null) {
+                Lwm2mDeviceProfileTransportConfiguration deviceProfile = getProfile(lwM2MClient.getProfileId());
+                powerMode = deviceProfile.getClientLwM2mSettings().getPowerMode();
+            }
+
+            if (PowerMode.PSM.equals(powerMode) || PowerMode.E_DRX.equals(powerMode)) {
+                defaultLwM2MUplinkMsgHandler.initAttributes(lwM2MClient);
+                TransportProtos.TransportToDeviceActorMsg persistentRpcRequestMsg = TransportProtos.TransportToDeviceActorMsg
+                        .newBuilder()
+                        .setSessionInfo(lwM2MClient.getSession())
+                        .setSendPendingRPC(TransportProtos.SendPendingRPCMsg.newBuilder().build())
+                        .build();
+                context.getTransportService().process(persistentRpcRequestMsg, TransportServiceCallback.EMPTY);
+                otaUpdateService.init(lwM2MClient);
+            }
+        }
     }
 
     @Override

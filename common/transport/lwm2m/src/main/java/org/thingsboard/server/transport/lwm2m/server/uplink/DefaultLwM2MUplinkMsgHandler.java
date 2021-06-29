@@ -42,7 +42,6 @@ import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.device.data.lwm2m.ObjectAttributes;
 import org.thingsboard.server.common.data.device.data.lwm2m.OtherConfiguration;
 import org.thingsboard.server.common.data.device.data.lwm2m.TelemetryMappingConfiguration;
@@ -142,9 +141,9 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     public DefaultLwM2MUplinkMsgHandler(TransportService transportService,
                                         LwM2MTransportServerConfig config,
                                         LwM2mTransportServerHelper helper,
-                                        LwM2mClientContext clientContext,
                                         LwM2MTelemetryLogService logService,
                                         LwM2MSessionManager sessionManager,
+                                        @Lazy LwM2mClientContext clientContext,
                                         @Lazy LwM2MOtaUpdateService otaService,
                                         @Lazy LwM2MAttributesService attributesService,
                                         @Lazy LwM2MRpcRequestHandler rpcHandler,
@@ -390,24 +389,6 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
         log.trace("[{}] [{}] Received endpoint Awake version event", registration.getId(), registration.getEndpoint());
         LwM2mClient lwM2MClient = this.clientContext.getClientByEndpoint(registration.getEndpoint());
         logService.log(lwM2MClient, LOG_LWM2M_INFO + ": Client is awake!");
-
-        if (LwM2MClientState.REGISTERED.equals(lwM2MClient.getState())) {
-            PowerMode powerMode = lwM2MClient.getPowerMode();
-            if (powerMode == null) {
-                Lwm2mDeviceProfileTransportConfiguration deviceProfile = clientContext.getProfile(lwM2MClient.getProfileId());
-                powerMode = deviceProfile.getClientLwM2mSettings().getPowerMode();
-            }
-
-            if (PowerMode.PSM.equals(powerMode) || PowerMode.E_DRX.equals(powerMode)) {
-                initAttributes(lwM2MClient);
-                TransportProtos.TransportToDeviceActorMsg persistentRpcRequestMsg = TransportProtos.TransportToDeviceActorMsg
-                        .newBuilder()
-                        .setSessionInfo(lwM2MClient.getSession())
-                        .setSendPendingRPC(TransportProtos.SendPendingRPCMsg.newBuilder().build())
-                        .build();
-                transportService.process(persistentRpcRequestMsg, TransportServiceCallback.EMPTY);
-            }
-        }
     }
 
     /**
