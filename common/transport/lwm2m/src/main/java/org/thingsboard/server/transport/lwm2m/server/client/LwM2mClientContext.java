@@ -56,4 +56,6 @@ public interface LwM2mClientContext {
     void registerClient(Registration registration, ValidateDeviceCredentialsResponse credentials);
 
     void update(LwM2mClient lwM2MClient);
+
+    void removeCredentials(TransportProtos.SessionInfoProto sessionInfo);
 }

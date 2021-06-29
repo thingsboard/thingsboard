@@ -229,6 +229,11 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     @Override
+    public void removeCredentials(TransportProtos.SessionInfoProto sessionInfo) {
+        //TODO: implement
+    }
+
+    @Override
     public Collection<LwM2mClient> getLwM2mClients() {
         return lwM2mClientsByEndpoint.values();
     }

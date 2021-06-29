@@ -824,12 +824,13 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     }
 
     /**
+     * @param sessionInfo
      * @param updateCredentials - Credentials include config only security Client (without config attr/telemetry...)
-     *                          config attr/telemetry... in profile
      */
     @Override
-    public void onToTransportUpdateCredentials(TransportProtos.ToTransportUpdateCredentialsProto updateCredentials) {
+    public void onToTransportUpdateCredentials(SessionInfoProto sessionInfo, TransportProtos.ToTransportUpdateCredentialsProto updateCredentials) {
         log.info("[{}] idList [{}] valueList updateCredentials", updateCredentials.getCredentialsIdList(), updateCredentials.getCredentialsValueList());
+        this.clientContext.removeCredentials(sessionInfo);
     }
 
     /**

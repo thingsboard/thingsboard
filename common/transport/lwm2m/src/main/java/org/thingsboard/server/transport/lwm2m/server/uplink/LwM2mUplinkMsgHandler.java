@@ -52,7 +52,7 @@ public interface LwM2mUplinkMsgHandler {
 
     void onWriteResponseOk(LwM2mClient client, String path, WriteRequest request);
 
-    void onToTransportUpdateCredentials(TransportProtos.ToTransportUpdateCredentialsProto updateCredentials);
+    void onToTransportUpdateCredentials(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToTransportUpdateCredentialsProto updateCredentials);
 
     LwM2MTransportServerConfig getConfig();
 }
