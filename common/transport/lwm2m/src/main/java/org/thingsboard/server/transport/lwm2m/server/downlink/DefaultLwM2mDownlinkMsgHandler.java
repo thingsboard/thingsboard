@@ -48,6 +48,7 @@ import org.eclipse.leshan.core.response.WriteAttributesResponse;
 import org.eclipse.leshan.core.response.WriteCompositeResponse;
 import org.eclipse.leshan.core.response.WriteResponse;
 import org.eclipse.leshan.core.util.Hex;
+import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
@@ -119,7 +120,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     @Override
     public void sendReadRequest(LwM2mClient client, TbLwM2MReadRequest request, DownlinkRequestCallback<ReadRequest, ReadResponse> callback) {
         validateVersionedId(client, request);
-        ReadRequest downlink = new ReadRequest(getRequestContentFormat(client, request), request.getObjectId());
+        ReadRequest downlink = new ReadRequest(getRequestContentFormat(client, request, this.config.getModelProvider()), request.getObjectId());
         sendRequest(client, downlink, request.getTimeout(), callback);
     }
 
@@ -155,7 +156,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
         if (observations.stream().noneMatch(observation -> observation.getPath().equals(resultIds))) {
             ObserveRequest downlink;
-            ContentFormat contentFormat = getRequestContentFormat(client, request);
+            ContentFormat contentFormat = getRequestContentFormat(client, request, this.config.getModelProvider());
             if (resultIds.isResource()) {
                 downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId());
             } else if (resultIds.isObjectInstance()) {
@@ -457,15 +458,22 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         throw new CodecException("Invalid ResourceModel_Type for %s ContentFormat.", type);
     }
 
-    private static ContentFormat getRequestContentFormat(LwM2mClient client, HasContentFormat request) {
+    private static ContentFormat getRequestContentFormat(LwM2mClient client, HasContentFormat request, LwM2mModelProvider modelProvider) {
         if (request.getRequestContentFormat() != null) {
             return request.getRequestContentFormat();
         } else {
-            String versionedId = fromVersionedIdToObjectId(((TbLwM2MReadRequest) request).getVersionedId());
-            if (versionedId != null && (new LwM2mPath(versionedId).isObject() || new LwM2mPath(versionedId).isObjectInstance())) {
-                return ContentFormat.DEFAULT;
-            } else {
+            String versionedId = null;
+            if (request instanceof TbLwM2MReadRequest) {
+                versionedId = ((TbLwM2MReadRequest) request).getVersionedId();
+            } else if (request instanceof TbLwM2MObserveRequest) {
+                versionedId = ((TbLwM2MObserveRequest) request).getVersionedId();
+            }
+            String id = fromVersionedIdToObjectId(versionedId);
+            if (id != null && !client.isResourceMultiInstances(versionedId, modelProvider)) {
                 return client.getDefaultContentFormat();
+            }
+            else {
+                return ContentFormat.DEFAULT;
             }
         }
     }

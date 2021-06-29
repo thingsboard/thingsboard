@@ -236,6 +236,12 @@ public class LwM2mClient implements Cloneable {
                 .getResourceModel(pathIds.getObjectId(), pathIds.getResourceId()) : null;
     }
 
+    public boolean isResourceMultiInstances(String pathIdVer, LwM2mModelProvider modelProvider) {
+        ResourceModel resourceModel = getResourceModel(pathIdVer, modelProvider);
+        return resourceModel.multiple;
+
+    }
+
     public ObjectModel getObjectModel(String pathIdVer, LwM2mModelProvider modelProvider) {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer));
         String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
@@ -273,7 +279,6 @@ public class LwM2mClient implements Cloneable {
     }
 
     public String resourceToString(LwM2mResource lwM2mResource) {
-
         return lwM2mResource.isMultiInstances() ? lwM2mResource.getInstances().toString() : lwM2mResource.getValue().toString();
     }
 
