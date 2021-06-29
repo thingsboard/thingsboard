@@ -132,7 +132,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             log.info("[{}] Send observation: {}.", client.getEndpoint(), request.getVersionedId());
             sendRequest(client, downlink, request.getTimeout(), callback);
         } else {
-            throw new IllegalArgumentException("Observation is already registered!");
+            callback.onError("Observation is already registered!", new RuntimeException());
         }
     }
 
