@@ -129,7 +129,7 @@ export class Lwm2mObserveAttrTelemetryResourcesComponent implements ControlValue
 
   private updatedResources(resources: ResourceLwM2M[]): void {
     if (resources.length === this.resourcesFormArray.length) {
-      this.resourcesFormArray.patchValue(resources, {emitEvent: false});
+      this.resourcesFormArray.patchValue(resources, {onlySelf: true});
     } else {
       if (this.valueChange$) {
         this.valueChange$.unsubscribe();
@@ -144,7 +144,7 @@ export class Lwm2mObserveAttrTelemetryResourcesComponent implements ControlValue
       if (this.disabled) {
         this.resourcesFormGroup.disable({emitEvent: false});
       }
-      this.valueChange$ = this.resourcesFormGroup.valueChanges.subscribe(value => {
+      this.valueChange$ = this.resourcesFormGroup.valueChanges.subscribe(() => {
         this.updateModel(this.resourcesFormGroup.getRawValue().resources);
       });
     }
