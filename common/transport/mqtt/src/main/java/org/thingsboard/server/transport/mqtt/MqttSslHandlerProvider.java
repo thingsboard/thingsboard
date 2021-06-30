@@ -73,7 +73,16 @@ public class MqttSslHandlerProvider {
     @Autowired
     private TransportService transportService;
 
+    private SslHandler sslHandler;
+
     public SslHandler getSslHandler() {
+        if (sslHandler == null) {
+            sslHandler = createSslHandler();
+        }
+        return sslHandler;
+    }
+
+    private SslHandler createSslHandler() {
         try {
             TrustManagerFactory tmFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             KeyStore trustStore = KeyStore.getInstance(keyStoreType);
