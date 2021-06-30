@@ -117,7 +117,8 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         swUpdateStrategy: [1, []],
         fwUpdateResource: [{value: '', disabled: true}, []],
         swUpdateResource: [{value: '', disabled: true}, []],
-        powerMode: [null, Validators.required]
+        powerMode: [PowerMode.DRX, Validators.required],
+        compositeOperationsSupport: [false]
       })
     });
     this.lwm2mDeviceConfigFormGroup = this.fb.group({
@@ -258,7 +259,8 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
           swUpdateStrategy: this.configurationValue.clientLwM2mSettings.swUpdateStrategy || 1,
           fwUpdateResource: fwResource,
           swUpdateResource: swResource,
-          powerMode: this.configurationValue.clientLwM2mSettings.powerMode
+          powerMode: this.configurationValue.clientLwM2mSettings.powerMode || PowerMode.DRX,
+          compositeOperationsSupport: this.configurationValue.clientLwM2mSettings.compositeOperationsSupport || false
         }
       },
       {emitEvent: false});

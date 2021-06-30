@@ -82,7 +82,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     public void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg rpcRequst, TransportProtos.SessionInfoProto sessionInfo) {
         this.cleanupOldSessions();
         UUID requestUUID = new UUID(rpcRequst.getRequestIdMSB(), rpcRequst.getRequestIdLSB());
-        log.warn("Received params: {}", rpcRequst.getParams());
+        log.debug("Received params: {}", rpcRequst.getParams());
         // We use this map to protect from browser issue that the same command is sent twice.
         // TODO: This is probably not the best place and should be moved to DeviceActor
         if (!this.rpcSubscriptions.containsKey(requestUUID)) {
@@ -324,20 +324,19 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     }
 
     private void cleanupOldSessions() {
-        log.warn("4.1) before rpcSubscriptions.size(): [{}]", rpcSubscriptions.size());
+        log.debug("Before rpcSubscriptions.size(): [{}]", rpcSubscriptions.size());
         if (rpcSubscriptions.size() > 0) {
             long currentTime = System.currentTimeMillis();
             Set<UUID> rpcSubscriptionsToRemove = rpcSubscriptions.entrySet().stream().filter(kv -> currentTime > kv.getValue()).map(Map.Entry::getKey).collect(Collectors.toSet());
-            log.warn("4.2) System.currentTimeMillis(): [{}]", System.currentTimeMillis());
-            log.warn("4.3) rpcSubscriptionsToRemove: [{}]", rpcSubscriptionsToRemove);
+            log.debug("RpcSubscriptionsToRemove: [{}]", rpcSubscriptionsToRemove);
             rpcSubscriptionsToRemove.forEach(rpcSubscriptions::remove);
         }
-        log.warn("4.4) after rpcSubscriptions.size(): [{}]", rpcSubscriptions.size());
+        log.debug("After rpcSubscriptions.size(): [{}]", rpcSubscriptions.size());
     }
 
     @Override
     public void onToDeviceRpcResponse(TransportProtos.ToDeviceRpcResponseMsg toDeviceResponse, TransportProtos.SessionInfoProto sessionInfo) {
-        log.warn("5) onToDeviceRpcResponse: [{}], sessionUUID: [{}]", toDeviceResponse, new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
+        log.debug("OnToDeviceRpcResponse: [{}], sessionUUID: [{}]", toDeviceResponse, new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB()));
         transportService.process(sessionInfo, toDeviceResponse, null);
     }
 

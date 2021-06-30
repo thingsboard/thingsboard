@@ -58,4 +58,6 @@ public interface LwM2mClientContext {
     void update(LwM2mClient lwM2MClient);
 
     void removeCredentials(TransportProtos.SessionInfoProto sessionInfo);
+
+    void sendMsgsAfterSleeping(LwM2mClient lwM2MClient);
 }

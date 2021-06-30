@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.client;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -62,6 +63,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.f
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.getVerFromPathIdVerOrId;
 
 @Slf4j
+@EqualsAndHashCode(of = {"endpoint"})
 public class LwM2mClient implements Serializable {
 
     private static final long serialVersionUID = 8793482946289222623L;
