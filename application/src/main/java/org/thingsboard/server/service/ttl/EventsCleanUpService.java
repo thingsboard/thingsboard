@@ -45,7 +45,7 @@ public class EventsCleanUpService extends AbstractCleanUpService {
         this.eventService = eventService;
     }
 
-    @Scheduled(initialDelayString = "${sql.ttl.events.execution_interval_ms}", fixedDelayString = "${sql.ttl.events.execution_interval_ms}")
+    @Scheduled(initialDelayString = "#{T(org.apache.commons.lang3.RandomUtils).nextLong(0, ${sql.ttl.events.execution_interval_ms})}", fixedDelayString = "${sql.ttl.events.execution_interval_ms}")
     public void cleanUp() {
         if (ttlTaskExecutionEnabled && isSystemTenantPartitionMine()) {
             eventService.cleanupEvents(ttl, debugTtl);
