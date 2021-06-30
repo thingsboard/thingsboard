@@ -20,15 +20,19 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ResourceUtils;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.KeyStore;
 
 @Slf4j
@@ -139,29 +143,15 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
 
     @PostConstruct
     public void init() {
-        URI uri = null;
         try {
-            InputStream keyStoreInputStream;
-            File keyStoreFile = new File(keyStoreFilePath);
-            if (keyStoreFile.exists()) {
-                log.info("Reading key store from file {}", keyStoreFilePath);
-                keyStoreInputStream = new FileInputStream(keyStoreFile);
-            } else {
-                InputStream classPathStream = this.getClass().getClassLoader().getResourceAsStream(keyStoreFilePath);
-                if (classPathStream != null) {
-                    log.info("Reading key store from class path {}", keyStoreFilePath);
-                    keyStoreInputStream = classPathStream;
-                } else {
-                    uri = Resources.getResource(keyStoreFilePath).toURI();
-                    log.info("Reading key store from URI {}", keyStoreFilePath);
-                    keyStoreInputStream = new FileInputStream(new File(uri));
-                }
-            }
+            InputStream keyStoreInputStream = ResourceUtils.getInputStream(this, keyStoreFilePath);
             keyStoreValue = KeyStore.getInstance(keyStoreType);
             keyStoreValue.load(keyStoreInputStream, keyStorePassword == null ? null : keyStorePassword.toCharArray());
         } catch (Exception e) {
-            log.info("Unable to lookup LwM2M keystore. Reason: {}, {}", uri, e.getMessage());
+            log.info("Unable to lookup LwM2M keystore. Reason: {}, {}", keyStoreFilePath, e.getMessage());
         }
     }
+
+
 
 }

@@ -25,6 +25,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.ResourceUtils;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
@@ -74,20 +75,15 @@ public class MqttSslHandlerProvider {
 
     public SslHandler getSslHandler() {
         try {
-            URL ksUrl = Resources.getResource(keyStoreFile);
-            File ksFile = new File(ksUrl.toURI());
-            URL tsUrl = Resources.getResource(keyStoreFile);
-            File tsFile = new File(tsUrl.toURI());
-
             TrustManagerFactory tmFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             KeyStore trustStore = KeyStore.getInstance(keyStoreType);
-            try (InputStream tsFileInputStream = new FileInputStream(tsFile)) {
+            try (InputStream tsFileInputStream = ResourceUtils.getInputStream(this, keyStoreFile)) {
                 trustStore.load(tsFileInputStream, keyStorePassword.toCharArray());
             }
             tmFactory.init(trustStore);
 
             KeyStore ks = KeyStore.getInstance(keyStoreType);
-            try (InputStream ksFileInputStream = new FileInputStream(ksFile)) {
+            try (InputStream ksFileInputStream = ResourceUtils.getInputStream(this, keyStoreFile)) {
                 ks.load(ksFileInputStream, keyStorePassword.toCharArray());
             }
             KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());

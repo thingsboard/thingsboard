@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ResourceUtils;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 
@@ -87,7 +88,7 @@ public class TbCoapDtlsSettings {
         } else {
             DtlsConnectorConfig.Builder configBuilder = new DtlsConnectorConfig.Builder();
             configBuilder.setAddress(getInetSocketAddress());
-            String keyStoreFilePath = Resources.getResource(keyStoreFile).getPath();
+            String keyStoreFilePath = ResourceUtils.getUri(this, keyStoreFile);
             SslContextUtil.Credentials serverCredentials = loadServerCredentials(keyStoreFilePath);
             SecurityMode securityMode = securityModeOpt.get();
             if (securityMode.equals(SecurityMode.NO_AUTH)) {
