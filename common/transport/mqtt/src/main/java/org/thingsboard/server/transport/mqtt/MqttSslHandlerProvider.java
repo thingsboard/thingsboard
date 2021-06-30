@@ -55,7 +55,6 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @Component("MqttSslHandlerProvider")
-@ConditionalOnExpression("'${transport.mqtt.enabled}'=='true'")
 @ConditionalOnProperty(prefix = "transport.mqtt.ssl", value = "enabled", havingValue = "true", matchIfMissing = false)
 public class MqttSslHandlerProvider {
 
