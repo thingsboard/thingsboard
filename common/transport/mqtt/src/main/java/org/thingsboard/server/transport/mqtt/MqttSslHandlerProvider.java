@@ -68,16 +68,23 @@ public class MqttSslHandlerProvider {
     @Autowired
     private TransportService transportService;
 
-    private SSLEngine sslEngine;
+    private SSLContext sslContext;
 
     public SslHandler getSslHandler() {
-        if (sslEngine == null) {
-            sslEngine = createSslEngine();
+        if (sslContext == null) {
+            sslContext = createSslContext();
         }
+        SSLEngine sslEngine = sslContext.createSSLEngine();
+        sslEngine.setUseClientMode(false);
+        sslEngine.setNeedClientAuth(false);
+        sslEngine.setWantClientAuth(true);
+        sslEngine.setEnabledProtocols(sslEngine.getSupportedProtocols());
+        sslEngine.setEnabledCipherSuites(sslEngine.getSupportedCipherSuites());
+        sslEngine.setEnableSessionCreation(true);
         return new SslHandler(sslEngine);
     }
 
-    private SSLEngine createSslEngine() {
+    private SSLContext createSslContext() {
         try {
             TrustManagerFactory tmFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             KeyStore trustStore = KeyStore.getInstance(keyStoreType);
@@ -101,17 +108,10 @@ public class MqttSslHandlerProvider {
             }
             SSLContext sslContext = SSLContext.getInstance(sslProtocol);
             sslContext.init(km, tm, null);
-            SSLEngine sslEngine = sslContext.createSSLEngine();
-            sslEngine.setUseClientMode(false);
-            sslEngine.setNeedClientAuth(false);
-            sslEngine.setWantClientAuth(true);
-            sslEngine.setEnabledProtocols(sslEngine.getSupportedProtocols());
-            sslEngine.setEnabledCipherSuites(sslEngine.getSupportedCipherSuites());
-            sslEngine.setEnableSessionCreation(true);
-            return sslEngine;
+            return sslContext;
         } catch (Exception e) {
             log.error("Unable to set up SSL context. Reason: " + e.getMessage(), e);
-            throw new RuntimeException("Failed to get SSL engine", e);
+            throw new RuntimeException("Failed to get SSL context", e);
         }
     }
 
