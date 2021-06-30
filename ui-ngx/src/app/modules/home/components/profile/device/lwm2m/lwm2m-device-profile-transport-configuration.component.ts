@@ -40,7 +40,6 @@ import {
   Lwm2mProfileConfigModels,
   ObjectLwM2M,
   OBSERVE,
-  OBSERVE_ATTR_TELEMETRY,
   PowerMode,
   PowerModeTranslationMap,
   RESOURCES,
@@ -517,7 +516,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   removeObjectsList = (value: ObjectLwM2M): void => {
-    const objectsOld = this.lwm2mDeviceProfileFormGroup.get(OBSERVE_ATTR_TELEMETRY).value.clientLwM2M;
+    const objectsOld = this.lwm2mDeviceProfileFormGroup.get('observeAttrTelemetry').value;
     const isIdIndex = (element) => element.keyId === value.keyId;
     const index = objectsOld.findIndex(isIdIndex);
     if (index >= 0) {
