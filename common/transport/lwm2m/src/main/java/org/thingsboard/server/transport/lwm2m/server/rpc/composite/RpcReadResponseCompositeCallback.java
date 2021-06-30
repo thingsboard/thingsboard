@@ -16,7 +16,6 @@
 package org.thingsboard.server.transport.lwm2m.server.rpc.composite;
 
 import org.eclipse.leshan.core.request.LwM2mRequest;
-import org.eclipse.leshan.core.request.ReadCompositeRequest;
 import org.eclipse.leshan.core.response.ReadCompositeResponse;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -34,6 +33,6 @@ public class RpcReadResponseCompositeCallback<R extends LwM2mRequest<T>, T exten
 
     @Override
     protected Optional<String> serializeSuccessfulResponse(T response) {
-        return Optional.of(String.format("%s", response.getContent().toString()));
+        return client.contentToString (response.getContent());
     }
 }

@@ -97,7 +97,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                 return;
             }
             try {
-                if (operationType.isHasObjectId()) {
+                 if (operationType.isHasObjectId()) {
                     String objectId = getIdFromParameters(client, rpcRequst);
                     switch (operationType) {
                         case READ:
@@ -131,16 +131,23 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                             throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
                     }
                 } else if (operationType.isComposite()) {
-                    switch (operationType) {
-                        case READ_COMPOSITE:
-                            sendReadCompositeRequest(client, rpcRequst);
-                            break;
-                        case WRITE_COMPOSITE:
-                            sendWriteCompositeRequest(client, rpcRequst);
-                            break;
-                        default:
-                            throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
-                    }
+                     if (client.isComposite(clientContext)) {
+                         switch (operationType) {
+                             case READ_COMPOSITE:
+                                 sendReadCompositeRequest(client, rpcRequst);
+                                 break;
+                             case WRITE_COMPOSITE:
+                                 sendWriteCompositeRequest(client, rpcRequst);
+                                 break;
+                             default:
+                                 throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
+                         }
+                     }
+                     else {
+                         this.sendErrorRpcResponse(sessionInfo, rpcRequst.getRequestId(),
+                                 ResponseCode.INTERNAL_SERVER_ERROR.getName(), "This device does not support Composite Operation");
+                         return;
+                     }
                 } else {
                     switch (operationType) {
                         case OBSERVE_CANCEL_ALL:
@@ -239,6 +246,15 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         downlinkHandler.sendWriteReplaceRequest(client, request, rpcCallback);
     }
 
+    /**
+     *             Map<String, Object> nodes = new HashMap<>();
+     *             nodes.put("/3/0/14", "+02");
+     *             nodes.put("/1/0/2", 100);
+     *             nodes.put("/5/0/1", "coap://localhost:5685");
+     * //            defaultLwM2MDownlinkMsgHandler.sendWriteCompositeRequest(lwM2MClient, nodes, this);
+     * @param client
+     * @param requestMsg
+     */
     private void sendWriteCompositeRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
         RpcWriteCompositeRequest nodes = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteCompositeRequest.class);
 //        TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionedId)

@@ -91,7 +91,6 @@ import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -427,17 +426,6 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
         if (supportedObjects != null && supportedObjects.size() > 0) {
             // #1
             this.sendReadRequests(lwM2MClient, profile, supportedObjects);
-            // test composite
-            String[] paths = new String[]{"/3/0", "/1/0", "/5/0"};
-//        String [] paths = new String[] {"/5"};
-//            String [] paths = new String[] {"/"};
-//        String [] paths = new String[] {"/9"};
-//            defaultLwM2MDownlinkMsgHandler.sendReadCompositeRequest(lwM2MClient, paths, this);
-            Map<String, Object> nodes = new HashMap<>();
-            nodes.put("/3/0/14", "+02");
-            nodes.put("/1/0/2", 100);
-            nodes.put("/5/0/1", "coap://localhost:5685");
-//            defaultLwM2MDownlinkMsgHandler.sendWriteCompositeRequest(lwM2MClient, nodes, this);
             this.sendObserveRequests(lwM2MClient, profile, supportedObjects);
             this.sendWriteAttributeRequests(lwM2MClient, profile, supportedObjects);
 //            Removed. Used only for debug.
