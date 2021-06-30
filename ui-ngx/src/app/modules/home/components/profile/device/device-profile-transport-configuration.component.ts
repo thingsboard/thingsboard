@@ -90,6 +90,9 @@ export class DeviceProfileTransportConfigurationComponent implements ControlValu
       delete configuration.type;
     }
     this.deviceProfileTransportConfigurationFormGroup.patchValue({configuration}, {emitEvent: false});
+    setTimeout(() => {
+      this.deviceProfileTransportConfigurationFormGroup.updateValueAndValidity();
+    }, 0);
   }
 
   private updateModel() {

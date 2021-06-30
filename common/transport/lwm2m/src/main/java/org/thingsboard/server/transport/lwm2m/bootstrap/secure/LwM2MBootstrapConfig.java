@@ -21,10 +21,11 @@ import org.eclipse.leshan.core.request.BindingMode;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfig;
 
+import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 
 @Data
-public class LwM2MBootstrapConfig {
+public class LwM2MBootstrapConfig implements Serializable {
     /*
       interface BootstrapSecurityConfig
         servers: BootstrapServersSecurityConfig,

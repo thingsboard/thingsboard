@@ -102,4 +102,10 @@ public interface EventDao extends Dao<Event> {
      */
     List<Event> findLatestEvents(UUID tenantId, EntityId entityId, String eventType, int limit);
 
+    /**
+     * Executes stored procedure to cleanup old events. Uses separate ttl for debug and other events.
+     * @param otherEventsTtl the ttl for events in seconds
+     * @param debugEventsTtl the ttl for debug events in seconds
+     */
+    void cleanupEvents(long otherEventsTtl, long debugEventsTtl);
 }

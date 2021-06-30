@@ -15,7 +15,16 @@
 ///
 
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  FormBuilder,
+  FormGroup,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  ValidationErrors,
+  Validator,
+  Validators
+} from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
@@ -29,13 +38,20 @@ import {
   selector: 'tb-device-data',
   templateUrl: './device-data.component.html',
   styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => DeviceDataComponent),
-    multi: true
-  }]
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => DeviceDataComponent),
+      multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => DeviceDataComponent),
+      multi: true
+    },
+  ]
 })
-export class DeviceDataComponent implements ControlValueAccessor, OnInit {
+export class DeviceDataComponent implements ControlValueAccessor, OnInit, Validator {
 
   deviceDataFormGroup: FormGroup;
 
@@ -95,6 +111,12 @@ export class DeviceDataComponent implements ControlValueAccessor, OnInit {
       deviceTransportTypeConfigurationInfoMap.get(deviceTransportType).hasDeviceConfiguration;
     this.deviceDataFormGroup.patchValue({configuration: value?.configuration}, {emitEvent: false});
     this.deviceDataFormGroup.patchValue({transportConfiguration: value?.transportConfiguration}, {emitEvent: false});
+  }
+
+  validate(): ValidationErrors | null {
+    return this.deviceDataFormGroup.valid ? null : {
+      deviceDataForm: false
+    };
   }
 
   private updateModel() {

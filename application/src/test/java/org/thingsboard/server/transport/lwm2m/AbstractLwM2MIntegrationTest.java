@@ -17,24 +17,47 @@ package org.thingsboard.server.transport.lwm2m;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.californium.core.network.config.NetworkConfig;
+import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.util.Hex;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredentials;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.query.EntityData;
+import org.thingsboard.server.common.data.query.EntityDataPageLink;
+import org.thingsboard.server.common.data.query.EntityDataQuery;
+import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.common.data.query.EntityKeyType;
+import org.thingsboard.server.common.data.query.SingleEntityFilter;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.controller.AbstractWebsocketTest;
 import org.thingsboard.server.controller.TbTestWebSocketClient;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
+import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
+import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
+import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
+import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
+import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,8 +77,14 @@ import java.security.spec.ECPrivateKeySpec;
 import java.security.spec.ECPublicKeySpec;
 import java.security.spec.KeySpec;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+
+import static org.eclipse.leshan.client.object.Security.noSec;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
 @DaoSqlTest
 public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
@@ -103,7 +132,9 @@ public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
             "    }\n" +
             "  },\n" +
             "  \"clientLwM2mSettings\": {\n" +
-            "    \"clientOnlyObserveAfterConnect\": 1\n" +
+            "    \"clientOnlyObserveAfterConnect\": 1,\n" +
+            "    \"fwUpdateStrategy\": 1,\n" +
+            "    \"swUpdateStrategy\": 1\n" +
             "  }\n" +
             "}";
 
@@ -136,6 +167,15 @@ public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
     protected final X509Certificate rootCAX509Cert;
     // certificates trustedby the server (should contain rootCA)
     protected final Certificate[] trustedCertificates = new Certificate[1];
+
+    protected static final int SECURE_PORT = 5686;
+    protected static final NetworkConfig SECURE_COAP_CONFIG = new NetworkConfig().setString("COAP_SECURE_PORT", Integer.toString(SECURE_PORT));
+    protected static final String ENDPOINT = "deviceAEndpoint";
+    protected static final String SECURE_URI = "coaps://localhost:" + SECURE_PORT;
+
+    protected static final int PORT = 5685;
+    protected static final Security SECURITY = noSec("coap://localhost:" + PORT, 123);
+    protected static final NetworkConfig COAP_CONFIG = new NetworkConfig().setString("COAP_PORT", Integer.toString(PORT));
 
     public AbstractLwM2MIntegrationTest() {
 // create client credentials
@@ -260,10 +300,95 @@ public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
         Assert.assertNotNull(deviceProfile);
     }
 
+    @NotNull
+    protected Device createDevice(LwM2MClientCredentials clientCredentials) throws Exception {
+        Device device = new Device();
+        device.setName("Device A");
+        device.setDeviceProfileId(deviceProfile.getId());
+        device.setTenantId(tenantId);
+        device = doPost("/api/device", device, Device.class);
+        Assert.assertNotNull(device);
+
+        DeviceCredentials deviceCredentials =
+                doGet("/api/device/" + device.getId().getId().toString() + "/credentials", DeviceCredentials.class);
+        Assert.assertEquals(device.getId(), deviceCredentials.getDeviceId());
+        deviceCredentials.setCredentialsType(DeviceCredentialsType.LWM2M_CREDENTIALS);
+
+        LwM2MCredentials credentials = new LwM2MCredentials();
+
+        credentials.setClient(clientCredentials);
+
+        deviceCredentials.setCredentialsValue(JacksonUtil.toString(credentials));
+        doPost("/api/device/credentials", deviceCredentials).andExpect(status().isOk());
+        return device;
+    }
+
+
+    protected OtaPackageInfo createFirmware() throws Exception {
+        String CHECKSUM = "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a";
+
+        OtaPackageInfo firmwareInfo = new OtaPackageInfo();
+        firmwareInfo.setDeviceProfileId(deviceProfile.getId());
+        firmwareInfo.setType(FIRMWARE);
+        firmwareInfo.setTitle("My firmware");
+        firmwareInfo.setVersion("v1.0");
+
+        OtaPackageInfo savedFirmwareInfo = doPost("/api/otaPackage", firmwareInfo, OtaPackageInfo.class);
+
+        MockMultipartFile testData = new MockMultipartFile("file", "filename.txt", "text/plain", new byte[]{1});
+
+        return savaData("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString() + "?checksum={checksum}&checksumAlgorithm={checksumAlgorithm}", testData, CHECKSUM, "SHA256");
+    }
+
+    protected OtaPackageInfo savaData(String urlTemplate, MockMultipartFile content, String... params) throws Exception {
+        MockMultipartHttpServletRequestBuilder postRequest = MockMvcRequestBuilders.multipart(urlTemplate, params);
+        postRequest.file(content);
+        setJwtToken(postRequest);
+        return readResponse(mockMvc.perform(postRequest).andExpect(status().isOk()), OtaPackageInfo.class);
+    }
+
     @After
     public void after() {
         executor.shutdownNow();
         wsClient.close();
     }
 
+    public void basicTestConnectionObserveTelemetry(Security security,
+                                                    LwM2MClientCredentials credentials,
+                                                    NetworkConfig coapConfig,
+                                                    String endpoint) throws Exception {
+        createDeviceProfile(TRANSPORT_CONFIGURATION);
+        Device device = createDevice(credentials);
+
+        SingleEntityFilter sef = new SingleEntityFilter();
+        sef.setSingleEntity(device.getId());
+        LatestValueCmd latestCmd = new LatestValueCmd();
+        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "batteryLevel")));
+        EntityDataQuery edq = new EntityDataQuery(sef, new EntityDataPageLink(1, 0, null, null),
+                Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+
+        EntityDataCmd cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
+        TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
+        wrapper.setEntityDataCmds(Collections.singletonList(cmd));
+
+        wsClient.send(mapper.writeValueAsString(wrapper));
+        wsClient.waitForReply();
+
+        wsClient.registerWaitForUpdate();
+        LwM2MTestClient client = new LwM2MTestClient(executor, endpoint);
+
+        client.init(security, coapConfig);
+        String msg = wsClient.waitForUpdate();
+
+        EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        List<EntityData> eData = update.getUpdate();
+        Assert.assertNotNull(eData);
+        Assert.assertEquals(1, eData.size());
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
+        var tsValue = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("batteryLevel");
+        Assert.assertEquals(42, Long.parseLong(tsValue.getValue()));
+        client.destroy();
+    }
 }

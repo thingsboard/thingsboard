@@ -152,7 +152,7 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
     }
     if (this.ruleNode.targetRuleChainId) {
       if (this.ruleChainType === RuleChainType.EDGE) {
-        this.router.navigateByUrl(`/edges/ruleChains/${this.ruleNode.targetRuleChainId}`);
+        this.router.navigateByUrl(`/edgeManagement/ruleChains/${this.ruleNode.targetRuleChainId}`);
       } else {
         this.router.navigateByUrl(`/ruleChains/${this.ruleNode.targetRuleChainId}`);
       }

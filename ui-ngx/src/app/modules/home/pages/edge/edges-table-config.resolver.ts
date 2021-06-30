@@ -417,7 +417,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
         suffix = 'ruleChains';
         break;
     }
-    this.router.navigateByUrl(`edges/${edge.id.id}/${suffix}`);
+    this.router.navigateByUrl(`edgeInstances/${edge.id.id}/${suffix}`);
   }
 
   assignToCustomer($event: Event, edgesIds: Array<EdgeId>) {
