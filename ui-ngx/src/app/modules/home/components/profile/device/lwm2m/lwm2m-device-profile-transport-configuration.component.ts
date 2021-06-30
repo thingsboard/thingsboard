@@ -38,7 +38,6 @@ import {
   INSTANCES,
   KEY_NAME,
   Lwm2mProfileConfigModels,
-  ModelValue,
   ObjectLwM2M,
   OBSERVE,
   OBSERVE_ATTR_TELEMETRY,
@@ -49,7 +48,7 @@ import {
   TELEMETRY
 } from './lwm2m-profile-config.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
-import { deepClone, isDefinedAndNotNull, isEmpty, isUndefined } from '@core/utils';
+import { deepClone, isDefinedAndNotNull, isEmpty } from '@core/utils';
 import { JsonArray, JsonObject } from '@angular/compiler-cli/ngcc/src/packages/entry_point';
 import { Direction } from '@shared/models/page/sort-order';
 import _ from 'lodash';
@@ -226,32 +225,30 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   private initWriteValue = (): void => {
-    const modelValue = {objectIds: [], objectsList: []} as ModelValue;
-    modelValue.objectIds = this.getObjectsFromJsonAllConfig();
-    if (modelValue.objectIds.length > 0) {
+    const objectIds = this.getObjectsFromJsonAllConfig();
+    if (objectIds.length > 0) {
       const sortOrder = {
         property: 'id',
         direction: Direction.ASC
       };
-      this.deviceProfileService.getLwm2mObjects(sortOrder, modelValue.objectIds, null).subscribe(
+      this.deviceProfileService.getLwm2mObjects(sortOrder, objectIds, null).subscribe(
         (objectsList) => {
-          modelValue.objectsList = objectsList;
-          this.updateWriteValue(modelValue);
+          this.updateWriteValue(objectsList);
         }
       );
     } else {
-      this.updateWriteValue(modelValue);
+      this.updateWriteValue([]);
     }
   }
 
-  private updateWriteValue = (value: ModelValue): void => {
+  private updateWriteValue = (value: ObjectLwM2M[]): void => {
     const fwResource = isDefinedAndNotNull(this.configurationValue.clientLwM2mSettings.fwUpdateResource) ?
       this.configurationValue.clientLwM2mSettings.fwUpdateResource : '';
     const swResource = isDefinedAndNotNull(this.configurationValue.clientLwM2mSettings.swUpdateResource) ?
       this.configurationValue.clientLwM2mSettings.swUpdateResource : '';
     this.lwm2mDeviceProfileFormGroup.patchValue({
         objectIds: value,
-        observeAttrTelemetry: this.getObserveAttrTelemetryObjects(value.objectsList),
+        observeAttrTelemetry: this.getObserveAttrTelemetryObjects(value),
         bootstrap: this.configurationValue.bootstrap,
         clientLwM2mSettings: {
           clientOnlyObserveAfterConnect: this.configurationValue.clientLwM2mSettings.clientOnlyObserveAfterConnect,
@@ -334,6 +331,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     const isNotZeroInstanceId = (instance) => !instance.includes('/0/');
     return attribute.some(isNotZeroInstanceId) || telemetry.some(isNotZeroInstanceId);
   }
+
   private addInstances = (attribute: string[], telemetry: string[], clientObserveAttrTelemetry: ObjectLwM2M[]): void => {
     const instancesPath = attribute.concat(telemetry)
       .filter(instance => !instance.includes('/0/'))
@@ -454,21 +452,13 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         });
       }
     });
-    if (isUndefined(this.configurationValue.observeAttr)) {
-      this.configurationValue.observeAttr = {
-        observe: observeArray,
-        attribute: attributeArray,
-        telemetry: telemetryArray,
-        keyName: this.sortObjectKeyPathJson(KEY_NAME, keyNameNew),
-        attributeLwm2m: attributes
-      };
-    } else {
-      this.configurationValue.observeAttr.observe = observeArray;
-      this.configurationValue.observeAttr.attribute = attributeArray;
-      this.configurationValue.observeAttr.telemetry = telemetryArray;
-      this.configurationValue.observeAttr.keyName = this.sortObjectKeyPathJson(KEY_NAME, keyNameNew);
-      this.configurationValue.observeAttr.attributeLwm2m = attributes;
-    }
+    this.configurationValue.observeAttr = {
+      observe: observeArray,
+      attribute: attributeArray,
+      telemetry: telemetryArray,
+      keyName: this.sortObjectKeyPathJson(KEY_NAME, keyNameNew),
+      attributeLwm2m: attributes
+    };
   }
 
   sortObjectKeyPathJson = (key: string, value: object): object => {
