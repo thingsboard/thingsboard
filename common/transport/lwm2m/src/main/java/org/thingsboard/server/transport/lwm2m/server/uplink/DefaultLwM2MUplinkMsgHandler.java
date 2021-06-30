@@ -387,8 +387,9 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     @Override
     public void onAwakeDev(Registration registration) {
         log.trace("[{}] [{}] Received endpoint Awake version event", registration.getId(), registration.getEndpoint());
-        LwM2mClient lwM2MClient = this.clientContext.getClientByEndpoint(registration.getEndpoint());
-        logService.log(lwM2MClient, LOG_LWM2M_INFO + ": Client is awake!");
+        LwM2mClient client = this.clientContext.getClientByEndpoint(registration.getEndpoint());
+        logService.log(client, LOG_LWM2M_INFO + ": Client is awake!");
+        clientContext.sendMsgsAfterSleeping(client);
     }
 
     /**
