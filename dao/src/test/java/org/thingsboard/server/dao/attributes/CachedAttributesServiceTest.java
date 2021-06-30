@@ -42,8 +42,6 @@ public class CachedAttributesServiceTest {
 
         assertThat(cachedAttributesService.getExecutor(null, cacheExecutorService), is(MoreExecutors.directExecutor()));
 
-        assertThat(cachedAttributesService.getExecutor((String) null, cacheExecutorService), is(MoreExecutors.directExecutor()));
-
         assertThat(cachedAttributesService.getExecutor("", cacheExecutorService), is(MoreExecutors.directExecutor()));
 
         assertThat(cachedAttributesService.getExecutor(CachedAttributesService.LOCAL_CACHE_TYPE, cacheExecutorService), is(MoreExecutors.directExecutor()));
