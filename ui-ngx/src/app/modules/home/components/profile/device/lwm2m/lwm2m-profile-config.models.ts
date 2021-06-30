@@ -20,7 +20,6 @@ export const PAGE_SIZE_LIMIT = 50;
 export const INSTANCES = 'instances';
 export const INSTANCE = 'instance';
 export const RESOURCES = 'resources';
-export const OBSERVE_ATTR_TELEMETRY = 'observeAttrTelemetry';
 export const OBSERVE = 'observe';
 export const ATTRIBUTE = 'attribute';
 export const TELEMETRY = 'telemetry';
