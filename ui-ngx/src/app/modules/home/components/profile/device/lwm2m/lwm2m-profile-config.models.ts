@@ -127,11 +127,6 @@ export const PowerModeTranslationMap = new Map<PowerMode, string>(
   ]
 );
 
-export interface ModelValue {
-  objectIds: string[];
-  objectsList: ObjectLwM2M[];
-}
-
 export interface BootstrapServersSecurityConfig {
   shortId: number;
   lifetime: number;
