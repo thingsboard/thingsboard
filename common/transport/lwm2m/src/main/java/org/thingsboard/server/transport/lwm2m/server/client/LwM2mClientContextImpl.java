@@ -32,6 +32,7 @@ import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
@@ -81,6 +82,17 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     private final Map<String, LwM2mClient> lwM2mClientsByRegistrationId = new ConcurrentHashMap<>();
     private final Map<UUID, Lwm2mDeviceProfileTransportConfiguration> profiles = new ConcurrentHashMap<>();
 
+    @AfterStartUp
+    public void init() {
+        String nodeId = context.getNodeId();
+        Set<LwM2mClient> fetchedClients = clientStore.getAll();
+        log.debug("Fetched clients from store: {}", fetchedClients);
+        fetchedClients.forEach(client -> {
+            lwM2mClientsByEndpoint.put(client.getEndpoint(), client);
+            updateFetchedClient(nodeId, client);
+        });
+    }
+
     @Override
     public LwM2mClient getClientByEndpoint(String endpoint) {
         return lwM2mClientsByEndpoint.computeIfAbsent(endpoint, ep -> {
@@ -91,21 +103,25 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
                 client = new LwM2mClient(nodeId, ep);
             } else {
                 log.debug("[{}] fetched client from store: {}", endpoint, client);
-                boolean updated = false;
-                if (client.getRegistration() != null) {
-                    lwM2mClientsByRegistrationId.put(client.getRegistration().getId(), client);
-                }
-                if (client.getSession() != null) {
-                    client.refreshSessionId(nodeId);
-                    sessionManager.register(client.getSession());
-                    updated = true;
-                }
-                if (updated) {
-                    clientStore.put(client);
-                }
+                updateFetchedClient(nodeId, client);
             }
             return client;
         });
+    }
+
+    private void updateFetchedClient(String nodeId, LwM2mClient client) {
+        boolean updated = false;
+        if (client.getRegistration() != null) {
+            lwM2mClientsByRegistrationId.put(client.getRegistration().getId(), client);
+        }
+        if (client.getSession() != null) {
+            client.refreshSessionId(nodeId);
+            sessionManager.register(client.getSession());
+            updated = true;
+        }
+        if (updated) {
+            clientStore.put(client);
+        }
     }
 
     @Override
@@ -282,20 +298,21 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     @Override
     public Lwm2mDeviceProfileTransportConfiguration getProfile(Registration registration) {
         UUID profileId = getClientByEndpoint(registration.getEndpoint()).getProfileId();
-        Lwm2mDeviceProfileTransportConfiguration result = doGetAndCache(profileId);
-        if (result == null) {
-            log.debug("[{}] Fetching profile [{}]", registration.getEndpoint(), profileId);
-            DeviceProfile deviceProfile = deviceProfileCache.get(new DeviceProfileId(profileId));
-            if (deviceProfile != null) {
-                profileUpdate(deviceProfile);
-                result = doGetAndCache(profileId);
-            }
-        }
-        return result;
+        return doGetAndCache(profileId);
     }
 
     private Lwm2mDeviceProfileTransportConfiguration doGetAndCache(UUID profileId) {
-        return profiles.get(profileId);
+        Lwm2mDeviceProfileTransportConfiguration result = profiles.get(profileId);
+        if (result == null) {
+            log.debug("Fetching profile [{}]", profileId);
+            DeviceProfile deviceProfile = deviceProfileCache.get(new DeviceProfileId(profileId));
+            if (deviceProfile != null) {
+                result = profileUpdate(deviceProfile);
+            } else {
+                log.info("Device profile was not found! Most probably device profile [{}] has been removed from the database.", profileId);
+            }
+        }
+        return result;
     }
 
     @Override
