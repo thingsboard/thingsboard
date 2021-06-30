@@ -42,7 +42,6 @@ import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.device.data.lwm2m.ObjectAttributes;
 import org.thingsboard.server.common.data.device.data.lwm2m.OtherConfiguration;
 import org.thingsboard.server.common.data.device.data.lwm2m.TelemetryMappingConfiguration;
@@ -388,26 +387,9 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     @Override
     public void onAwakeDev(Registration registration) {
         log.trace("[{}] [{}] Received endpoint Awake version event", registration.getId(), registration.getEndpoint());
-        LwM2mClient lwM2MClient = this.clientContext.getClientByEndpoint(registration.getEndpoint());
-        logService.log(lwM2MClient, LOG_LWM2M_INFO + ": Client is awake!");
-
-        if (LwM2MClientState.REGISTERED.equals(lwM2MClient.getState())) {
-            PowerMode powerMode = lwM2MClient.getPowerMode();
-            if (powerMode == null) {
-                Lwm2mDeviceProfileTransportConfiguration deviceProfile = clientContext.getProfile(lwM2MClient.getProfileId());
-                powerMode = deviceProfile.getClientLwM2mSettings().getPowerMode();
-            }
-
-            if (PowerMode.PSM.equals(powerMode) || PowerMode.E_DRX.equals(powerMode)) {
-                initAttributes(lwM2MClient);
-                TransportProtos.TransportToDeviceActorMsg persistentRpcRequestMsg = TransportProtos.TransportToDeviceActorMsg
-                        .newBuilder()
-                        .setSessionInfo(lwM2MClient.getSession())
-                        .setSendPendingRPC(TransportProtos.SendPendingRPCMsg.newBuilder().build())
-                        .build();
-                transportService.process(persistentRpcRequestMsg, TransportServiceCallback.EMPTY);
-            }
-        }
+        LwM2mClient client = this.clientContext.getClientByEndpoint(registration.getEndpoint());
+        logService.log(client, LOG_LWM2M_INFO + ": Client is awake!");
+        clientContext.sendMsgsAfterSleeping(client);
     }
 
     /**
