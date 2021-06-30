@@ -267,7 +267,7 @@ public class LwM2mClient implements Serializable {
     public String resourceToString(LwM2mResource resource, String key) {
         String value = null;
         StringBuilder builder = new StringBuilder();
-        if (resource instanceof LwM2mSingleResource && ((byte[]) resource.getValue()).length > 0) {
+        if (resource instanceof LwM2mSingleResource) {
             builder.append("LwM2mSingleResource");
             if (key == null) {
                 builder.append(" id=").append(String.valueOf(resource.getId()));
@@ -285,7 +285,9 @@ public class LwM2mClient implements Serializable {
                 builder.append(" key=").append(key);
             }
             builder.append(" values={");
-            builder.append(multiInstanceOpaqueToString((LwM2mMultipleResource) resource));
+            if (resource.getInstances().size() > 0) {
+                builder.append(multiInstanceOpaqueToString((LwM2mMultipleResource) resource));
+            }
             builder.append("}");
             builder.append(" type=").append(OPAQUE.toString());
             value = builder.toString();
