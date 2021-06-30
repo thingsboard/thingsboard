@@ -69,7 +69,7 @@ import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPA
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_RESULT_ID;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_STATE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SW_RESULT_ID;
-import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SW_UPDATE_STATE_ID;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SW_STATE_ID;
 
 @Slf4j
 public class LwM2mTransportUtil {
@@ -143,7 +143,7 @@ public class LwM2mTransportUtil {
                 lwM2mOtaConvert.setCurrentType(STRING);
                 lwM2mOtaConvert.setValue(FirmwareUpdateResult.fromUpdateResultFwByCode(((Long) value).intValue()).getType());
                 return lwM2mOtaConvert;
-            } else if (SW_UPDATE_STATE_ID.equals(path)) {
+            } else if (SW_STATE_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
                 lwM2mOtaConvert.setValue(SoftwareUpdateState.fromUpdateStateSwByCode(((Long) value).intValue()).type);
                 return lwM2mOtaConvert;
@@ -163,7 +163,7 @@ public class LwM2mTransportUtil {
         if (transportConfiguration.getType().equals(DeviceTransportType.LWM2M)) {
             return (Lwm2mDeviceProfileTransportConfiguration) transportConfiguration;
         } else {
-            log.warn("[{}] Received profile with invalid transport configuration: {}", deviceProfile.getId(), deviceProfile.getProfileData().getTransportConfiguration());
+            log.info("[{}] Received profile with invalid transport configuration: {}", deviceProfile.getId(), deviceProfile.getProfileData().getTransportConfiguration());
             throw new IllegalArgumentException("Received profile with invalid transport configuration: " + transportConfiguration.getType());
         }
     }
@@ -185,7 +185,7 @@ public class LwM2mTransportUtil {
                 return pathIdVer;
             }
         } catch (Exception e) {
-            log.warn("Issue converting path with version [{}] to path without version: ", pathIdVer, e);
+            log.debug("Issue converting path with version [{}] to path without version: ", pathIdVer, e);
             throw new RuntimeException(e);
         }
     }

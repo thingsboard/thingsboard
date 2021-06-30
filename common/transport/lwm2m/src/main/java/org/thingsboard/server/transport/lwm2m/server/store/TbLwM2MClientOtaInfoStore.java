@@ -17,10 +17,16 @@ package org.thingsboard.server.transport.lwm2m.server.store;
 
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MClientOtaInfo;
+import org.thingsboard.server.transport.lwm2m.server.ota.firmware.LwM2MClientFwOtaInfo;
+import org.thingsboard.server.transport.lwm2m.server.ota.software.LwM2MClientSwOtaInfo;
 
 public interface TbLwM2MClientOtaInfoStore {
 
-    LwM2MClientOtaInfo get(OtaPackageType type, String endpoint);
+    LwM2MClientFwOtaInfo getFw(String endpoint);
 
-    void put(LwM2MClientOtaInfo info);
+    LwM2MClientSwOtaInfo getSw(String endpoint);
+
+    void putFw(LwM2MClientFwOtaInfo info);
+
+    void putSw(LwM2MClientSwOtaInfo info);
 }

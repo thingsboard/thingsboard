@@ -26,6 +26,7 @@ import org.eclipse.californium.core.server.resources.Resource;
 import org.eclipse.californium.core.server.resources.ResourceObserver;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -69,17 +70,18 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
 
     @Override
     protected void processHandleGet(CoapExchange exchange) {
-        log.warn("90) processHandleGet [{}]", exchange);
-        if (exchange.getRequestOptions().getUriPath().size() >= 2 &&
-                (FIRMWARE_UPDATE_COAP_RESOURCE.equals(exchange.getRequestOptions().getUriPath().get(exchange.getRequestOptions().getUriPath().size() - 2)) ||
-                        SOFTWARE_UPDATE_COAP_RESOURCE.equals(exchange.getRequestOptions().getUriPath().get(exchange.getRequestOptions().getUriPath().size() - 2)))) {
+        log.debug("processHandleGet [{}]", exchange);
+        List<String> uriPath = exchange.getRequestOptions().getUriPath();
+        if (uriPath.size() >= 2 &&
+                (FIRMWARE_UPDATE_COAP_RESOURCE.equals(uriPath.get(uriPath.size() - 2)) ||
+                        SOFTWARE_UPDATE_COAP_RESOURCE.equals(uriPath.get(uriPath.size() - 2)))) {
             this.sendOtaData(exchange);
         }
     }
 
     @Override
     protected void processHandlePost(CoapExchange exchange) {
-        log.warn("2) processHandleGet [{}]", exchange);
+        log.debug("processHandlePost [{}]", exchange);
     }
 
     /**
@@ -136,16 +138,16 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
         UUID currentId = UUID.fromString(idStr);
         Response response = new Response(CoAP.ResponseCode.CONTENT);
         byte[] fwData = this.getOtaData(currentId);
-        log.warn("91) read softWare data (length): [{}]", fwData.length);
+        log.debug("Read softWare data (length): [{}]", fwData.length);
         if (fwData != null && fwData.length > 0) {
             response.setPayload(fwData);
             if (exchange.getRequestOptions().getBlock2() != null) {
                 int chunkSize = exchange.getRequestOptions().getBlock2().getSzx();
                 boolean lastFlag = fwData.length <= chunkSize;
                 response.getOptions().setBlock2(chunkSize, lastFlag, 0);
-                log.warn("92) with blokc2 Send currentId: [{}], length: [{}], chunkSize [{}], moreFlag [{}]", currentId.toString(), fwData.length, chunkSize, lastFlag);
+                log.trace("With block2 Send currentId: [{}], length: [{}], chunkSize [{}], moreFlag [{}]", currentId.toString(), fwData.length, chunkSize, lastFlag);
             } else {
-                log.warn("92) with block1 Send currentId: [{}], length: [{}], ", currentId.toString(), fwData.length);
+                log.trace("With block1 Send currentId: [{}], length: [{}], ", currentId.toString(), fwData.length);
             }
             exchange.respond(response);
         }
