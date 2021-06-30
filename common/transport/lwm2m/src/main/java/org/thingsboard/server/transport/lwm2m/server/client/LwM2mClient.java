@@ -407,7 +407,7 @@ public class LwM2mClient implements Serializable {
 
     public boolean isComposite (LwM2mClientContext clientContext) {
         return LwM2mVersion.fromVersionStr(registration.getLwM2mVersion()).isComposite() &
-                clientContext.getProfile(this.profileId).getClientLwM2mSettings().isComposite();
+                clientContext.getProfile(this.profileId).getClientLwM2mSettings().isCompositeOperationsSupport();
     }
 }
 
