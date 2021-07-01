@@ -164,12 +164,14 @@ export class Lwm2mObserveAttrTelemetryResourcesComponent implements ControlValue
       form.get('attribute').valueChanges.pipe(startWith(resource.attribute), takeUntil(this.destroy$)),
       form.get('telemetry').valueChanges.pipe(startWith(resource.telemetry), takeUntil(this.destroy$))
     ]).subscribe(([attribute, telemetry]) => {
-      if (attribute || telemetry) {
-        form.get('observe').enable({emitEvent: false});
-      } else {
-        form.get('observe').disable({emitEvent: false});
-        form.get('observe').patchValue(false, {emitEvent: false});
-        form.get('attributes').patchValue({}, {emitEvent: false});
+      if (!this.disabled) {
+        if (attribute || telemetry) {
+          form.get('observe').enable({emitEvent: false});
+        } else {
+          form.get('observe').disable({emitEvent: false});
+          form.get('observe').patchValue(false, {emitEvent: false});
+          form.get('attributes').patchValue({}, {emitEvent: false});
+        }
       }
     });
     return form;
