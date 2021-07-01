@@ -21,13 +21,11 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
-import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.node.codec.LwM2mValueConverter;
 import org.eclipse.leshan.core.request.ContentFormat;
-import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.common.data.Device;
@@ -44,7 +42,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -54,7 +51,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LWM2M_OBJECT_VERSION_DEFAULT;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertObjectIdToVersionedId;
@@ -179,7 +175,7 @@ public class LwM2mClient implements Serializable {
 
     public boolean saveResourceValue(String pathRezIdVer, LwM2mResource rez, LwM2mModelProvider modelProvider) {
         if (this.resources.get(pathRezIdVer) != null && this.resources.get(pathRezIdVer).getResourceModel() != null) {
-            this.resources.get(pathRezIdVer).setLwM2mResource(rez);
+            this.resources.get(pathRezIdVer).updateLwM2mResource(rez);
             return true;
         } else {
             LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRezIdVer));

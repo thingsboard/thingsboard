@@ -23,10 +23,13 @@ import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mObject;
 import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
+import org.eclipse.leshan.core.node.LwM2mResourceInstance;
+import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.request.ObserveRequest;
 import org.eclipse.leshan.core.request.ReadRequest;
@@ -110,11 +113,11 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.c
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertOtaUpdateValueToString;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_3_VER_ID;
-import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_VER_ID;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_DELIVERY_METHOD;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_NAME_ID;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_RESULT_ID;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_STATE_ID;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_VER_ID;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SW_3_VER_ID;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SW_NAME_ID;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SW_RESULT_ID;
@@ -519,29 +522,34 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     private void updateResourcesValue(LwM2mClient lwM2MClient, LwM2mResource lwM2mResource, String path) {
         Registration registration = lwM2MClient.getRegistration();
         if (lwM2MClient.saveResourceValue(path, lwM2mResource, this.config.getModelProvider())) {
-            if (path.equals(convertObjectIdToVersionedId(FW_NAME_ID, registration))) {
-                otaService.onCurrentFirmwareNameUpdate(lwM2MClient, (String) lwM2mResource.getValue());
-            } else if (path.equals(convertObjectIdToVersionedId(FW_3_VER_ID, registration))) {
-                otaService.onCurrentFirmwareVersion3Update(lwM2MClient, (String) lwM2mResource.getValue());
-            } else if (path.equals(convertObjectIdToVersionedId(FW_VER_ID, registration))) {
-                otaService.onCurrentFirmwareVersionUpdate(lwM2MClient, (String) lwM2mResource.getValue());
-            } else if (path.equals(convertObjectIdToVersionedId(FW_STATE_ID, registration))) {
-                otaService.onCurrentFirmwareStateUpdate(lwM2MClient, (Long) lwM2mResource.getValue());
-            } else if (path.equals(convertObjectIdToVersionedId(FW_RESULT_ID, registration))) {
-                otaService.onCurrentFirmwareResultUpdate(lwM2MClient, (Long) lwM2mResource.getValue());
-            } else if (path.equals(convertObjectIdToVersionedId(FW_DELIVERY_METHOD, registration))) {
-                otaService.onCurrentFirmwareDeliveryMethodUpdate(lwM2MClient, (Long) lwM2mResource.getValue());
-            } else if (path.equals(convertObjectIdToVersionedId(SW_NAME_ID, registration))) {
-                otaService.onCurrentSoftwareNameUpdate(lwM2MClient, (String) lwM2mResource.getValue());
-            } else if (path.equals(convertObjectIdToVersionedId(SW_VER_ID, registration))) {
-                otaService.onCurrentSoftwareVersionUpdate(lwM2MClient, (String) lwM2mResource.getValue());
-            } else if (path.equals(convertObjectIdToVersionedId(SW_3_VER_ID, registration))) {
-                otaService.onCurrentSoftwareVersion3Update(lwM2MClient, (String) lwM2mResource.getValue());
-            } else if (path.equals(convertObjectIdToVersionedId(SW_STATE_ID, registration))) {
-                otaService.onCurrentSoftwareStateUpdate(lwM2MClient, (Long) lwM2mResource.getValue());
-            } else if (path.equals(convertObjectIdToVersionedId(SW_RESULT_ID, registration))) {
-                otaService.onCurrentSoftwareResultUpdate(lwM2MClient, (Long) lwM2mResource.getValue());
+            if (lwM2mResource instanceof LwM2mMultipleResource) {
+
+            } else {
+                if (path.equals(convertObjectIdToVersionedId(FW_NAME_ID, registration))) {
+                    otaService.onCurrentFirmwareNameUpdate(lwM2MClient, (String) lwM2mResource.getValue());
+                } else if (path.equals(convertObjectIdToVersionedId(FW_3_VER_ID, registration))) {
+                    otaService.onCurrentFirmwareVersion3Update(lwM2MClient, (String) lwM2mResource.getValue());
+                } else if (path.equals(convertObjectIdToVersionedId(FW_VER_ID, registration))) {
+                    otaService.onCurrentFirmwareVersionUpdate(lwM2MClient, (String) lwM2mResource.getValue());
+                } else if (path.equals(convertObjectIdToVersionedId(FW_STATE_ID, registration))) {
+                    otaService.onCurrentFirmwareStateUpdate(lwM2MClient, (Long) lwM2mResource.getValue());
+                } else if (path.equals(convertObjectIdToVersionedId(FW_RESULT_ID, registration))) {
+                    otaService.onCurrentFirmwareResultUpdate(lwM2MClient, (Long) lwM2mResource.getValue());
+                } else if (path.equals(convertObjectIdToVersionedId(FW_DELIVERY_METHOD, registration))) {
+                    otaService.onCurrentFirmwareDeliveryMethodUpdate(lwM2MClient, (Long) lwM2mResource.getValue());
+                } else if (path.equals(convertObjectIdToVersionedId(SW_NAME_ID, registration))) {
+                    otaService.onCurrentSoftwareNameUpdate(lwM2MClient, (String) lwM2mResource.getValue());
+                } else if (path.equals(convertObjectIdToVersionedId(SW_VER_ID, registration))) {
+                    otaService.onCurrentSoftwareVersionUpdate(lwM2MClient, (String) lwM2mResource.getValue());
+                } else if (path.equals(convertObjectIdToVersionedId(SW_3_VER_ID, registration))) {
+                    otaService.onCurrentSoftwareVersion3Update(lwM2MClient, (String) lwM2mResource.getValue());
+                } else if (path.equals(convertObjectIdToVersionedId(SW_STATE_ID, registration))) {
+                    otaService.onCurrentSoftwareStateUpdate(lwM2MClient, (Long) lwM2mResource.getValue());
+                } else if (path.equals(convertObjectIdToVersionedId(SW_RESULT_ID, registration))) {
+                    otaService.onCurrentSoftwareResultUpdate(lwM2MClient, (Long) lwM2mResource.getValue());
+                }
             }
+
             this.updateAttrTelemetry(registration, Collections.singleton(path));
         } else {
             log.error("Fail update Resource [{}]", lwM2mResource);
@@ -702,7 +710,14 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     public void onWriteCompositeResponseOk(LwM2mClient client, WriteCompositeRequest request) {
         log.trace("ReadCompositeResponse: [{}]", request.getNodes());
         request.getNodes().forEach((k, v) -> {
-            this.updateResourcesValue(client, (LwM2mResource) v, k.toString());
+            if (v instanceof LwM2mSingleResource) {
+                this.updateResourcesValue(client, (LwM2mResource) v, k.toString());
+            }
+            else {
+                LwM2mResourceInstance resourceInstance = (LwM2mResourceInstance)v;
+                LwM2mMultipleResource multipleResource = new LwM2mMultipleResource(v.getId(), resourceInstance.getType(), resourceInstance);
+                this.updateResourcesValue(client, multipleResource, k.toString());
+            }
         });
     }
 

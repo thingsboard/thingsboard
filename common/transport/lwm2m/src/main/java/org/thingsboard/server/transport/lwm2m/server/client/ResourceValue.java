@@ -17,10 +17,12 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 
 import lombok.Data;
 import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mResourceInstance;
 
 import java.io.Serializable;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Data
@@ -32,30 +34,29 @@ public class ResourceValue implements Serializable {
     private TbResourceModel resourceModel;
 
     public ResourceValue(LwM2mResource lwM2mResource, ResourceModel resourceModel) {
-        this.lwM2mResource = toTbLwM2MResource(lwM2mResource);
+        updateLwM2mResource(lwM2mResource);
         this.resourceModel = toTbResourceModel(resourceModel);
     }
 
-    public void setLwM2mResource(LwM2mResource lwM2mResource) {
-        this.lwM2mResource = toTbLwM2MResource(lwM2mResource);
+    public void updateLwM2mResource(LwM2mResource lwM2mResource) {
+        if (lwM2mResource instanceof LwM2mMultipleResource) {
+            if (lwM2mResource.getInstances().values().size() > 0) {
+                TbLwM2MResourceInstance[] instances = lwM2mResource.getInstances().values().stream().map(ResourceValue::toTbLwM2MResourceInstance).collect(Collectors.toSet()).toArray(new TbLwM2MResourceInstance[0]);
+                TbLwM2MResource tbLwM2MResource = new TbLwM2mMultipleResource(lwM2mResource.getId(), lwM2mResource.getType(), instances);
+                if (this.lwM2mResource == null) {
+                    this.lwM2mResource = tbLwM2MResource;
+                }
+                else {
+                    this.lwM2mResource.getInstances().putAll((Map<? extends Integer, ? extends LwM2mResourceInstance>) tbLwM2MResource);
+                }
+            }
+        } else {
+            this.lwM2mResource = new TbLwM2MSingleResource(lwM2mResource.getId(), lwM2mResource.getValue(), lwM2mResource.getType());
+        }
     }
 
     public void setResourceModel(ResourceModel resourceModel) {
         this.resourceModel = toTbResourceModel(resourceModel);
-    }
-
-    private static TbLwM2MResource toTbLwM2MResource(LwM2mResource lwM2mResource) {
-        if (lwM2mResource.isMultiInstances()) {
-            if ( lwM2mResource.getInstances().values().size() > 0) {
-                TbLwM2MResourceInstance [] instances =  lwM2mResource.getInstances().values().stream().map(ResourceValue::toTbLwM2MResourceInstance).collect(Collectors.toSet()).toArray(new TbLwM2MResourceInstance[0]);
-                return new TbLwM2MMultipleResource(lwM2mResource.getId(), lwM2mResource.getType(), instances);
-            }
-            else {
-                return new TbLwM2MMultipleResource(lwM2mResource.getId(), lwM2mResource.getType(), new TbLwM2MResourceInstance[0]);
-            }
-        } else  {
-            return new TbLwM2MSingleResource(lwM2mResource.getId(), lwM2mResource.getValue(), lwM2mResource.getType());
-        }
     }
 
     private static TbLwM2MResourceInstance toTbLwM2MResourceInstance(LwM2mResourceInstance instance) {
