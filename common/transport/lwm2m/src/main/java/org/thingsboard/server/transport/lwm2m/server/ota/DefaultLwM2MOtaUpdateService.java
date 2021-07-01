@@ -337,7 +337,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         SoftwareUpdateResult result = SoftwareUpdateResult.fromUpdateResultSwByCode(code.intValue());
         Optional<OtaPackageUpdateStatus> status = toOtaPackageUpdateStatus(result);
         status.ifPresent(otaStatus -> sendStateUpdateToTelemetry(client, swInfo,
-                otaStatus, "Firmware Update Result: " + result.name()));
+                otaStatus, "Software Update Result: " + result.name()));
         if (result.isAgain() && swInfo.getRetryAttempts() <= 2) {
             swInfo.setRetryAttempts(swInfo.getRetryAttempts() + 1);
             startSoftwareUpdateIfNeeded(client, swInfo);
