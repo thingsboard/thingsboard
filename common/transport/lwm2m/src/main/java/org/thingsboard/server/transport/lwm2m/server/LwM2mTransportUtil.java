@@ -22,8 +22,10 @@ import org.eclipse.leshan.core.attributes.Attribute;
 import org.eclipse.leshan.core.attributes.AttributeSet;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
+import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.node.codec.CodecException;
 import org.eclipse.leshan.core.request.SimpleDownlinkRequest;
 import org.eclipse.leshan.core.request.WriteAttributesRequest;
@@ -48,6 +50,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.eclipse.leshan.core.attributes.Attribute.DIMENSION;
@@ -369,6 +372,82 @@ public class LwM2mTransportUtil {
             }
         }
         return lwm2mResourceValue;
+    }
+
+    public static Optional<String> contentToString(Object content) {
+        try {
+            String value = null;
+            LwM2mResource resource = null;
+            String key = null;
+            if (content instanceof Map) {
+                Map<Object, Object> contentAsMap = (Map<Object, Object>) content;
+                if (contentAsMap.size() == 1) {
+                    for (Map.Entry<Object, Object> kv : contentAsMap.entrySet()) {
+                        if (kv.getValue() instanceof LwM2mResource) {
+                            key = kv.getKey().toString();
+                            resource = (LwM2mResource) kv.getValue();
+                        }
+                    }
+                }
+            } else if (content instanceof LwM2mResource) {
+                resource = (LwM2mResource) content;
+            }
+            if (resource != null && resource.getType() == OPAQUE) {
+                value = opaqueResourceToString(resource, key);
+            }
+            value = value == null ? content.toString() : value;
+            return Optional.of(value);
+        } catch (Exception e) {
+            log.debug("Failed to convert content " + content + " to string", e);
+            return Optional.ofNullable(content != null ? content.toString() : null);
+        }
+    }
+
+    private static String opaqueResourceToString(LwM2mResource resource, String key) {
+        String value = null;
+        StringBuilder builder = new StringBuilder();
+        if (resource instanceof LwM2mSingleResource) {
+            builder.append("LwM2mSingleResource");
+            if (key == null) {
+                builder.append(" id=").append(String.valueOf(resource.getId()));
+            } else {
+                builder.append(" key=").append(key);
+            }
+            builder.append(" value=").append(opaqueToString((byte[]) resource.getValue()));
+            builder.append(" type=").append(OPAQUE.toString());
+            value = builder.toString();
+        } else if (resource instanceof LwM2mMultipleResource) {
+            builder.append("LwM2mMultipleResource");
+            if (key == null) {
+                builder.append(" id=").append(String.valueOf(resource.getId()));
+            } else {
+                builder.append(" key=").append(key);
+            }
+            builder.append(" values={");
+            if (resource.getInstances().size() > 0) {
+                builder.append(multiInstanceOpaqueToString((LwM2mMultipleResource) resource));
+            }
+            builder.append("}");
+            builder.append(" type=").append(OPAQUE.toString());
+            value = builder.toString();
+        }
+        return value;
+    }
+
+    private static String multiInstanceOpaqueToString(LwM2mMultipleResource resource) {
+        StringBuilder builder = new StringBuilder();
+        resource.getInstances().values()
+                .forEach(v -> builder.append(" id=").append(v.getId()).append(" value=").append(Hex.encodeHexString((byte[]) v.getValue())).append(", "));
+        int startInd = builder.lastIndexOf(", ");
+        if (startInd > 0) {
+            builder.delete(startInd, startInd + 2);
+        }
+        return builder.toString();
+    }
+
+    private static String opaqueToString(byte[] value) {
+        String opaque = Hex.encodeHexString(value);
+        return opaque.length() > 1024 ? opaque.substring(0, 1024) : opaque;
     }
 
 }

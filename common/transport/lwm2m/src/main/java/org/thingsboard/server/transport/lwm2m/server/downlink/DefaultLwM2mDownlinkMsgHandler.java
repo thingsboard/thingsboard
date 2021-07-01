@@ -61,9 +61,8 @@ import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.common.LwM2MExecutorAwareService;
 import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MReadCompositeRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MWriteResponseCompositeCallback;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
-import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcWriteCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
@@ -73,7 +72,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -134,19 +132,6 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
         ReadCompositeRequest downlink = new ReadCompositeRequest(requestContentFormat, responseContentFormat, request.getObjectIds());
         sendCompositeRequest(client, downlink, this.config.getTimeout(), callback);
-    }
-
-    @Override
-    public void sendWriteCompositeRequest(LwM2mClient client, Map<String, Object> nodes, DefaultLwM2MUplinkMsgHandler handler) {
-//        ResourceModel resourceModelWrite = client.getResourceModel(request.getVersionedId(), this.config.getModelProvider());
-        TbLwM2MWriteResponseCompositeCallback callback = new TbLwM2MWriteResponseCompositeCallback(handler, logService, client, null);
-        ContentFormat contentFormat = ContentFormat.SENML_JSON;
-        try {
-            WriteCompositeRequest downlink = new WriteCompositeRequest(contentFormat, nodes);
-            sendWriteCompositeRequest(client, downlink, this.config.getTimeout(), callback);
-        } catch (Exception e) {
-            callback.onError(JacksonUtil.toString(nodes), e);
-        }
     }
 
     @Override
@@ -259,6 +244,17 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     }
 
     @Override
+    public void sendWriteCompositeRequest(LwM2mClient client, RpcWriteCompositeRequest rpcWriteCompositeRequest, DownlinkRequestCallback<WriteCompositeRequest, WriteCompositeResponse> callback) {
+        ContentFormat contentFormat = ContentFormat.SENML_JSON;
+        try {
+            WriteCompositeRequest downlink = new WriteCompositeRequest(contentFormat, rpcWriteCompositeRequest.getNodes());
+            sendWriteCompositeRequest(client, downlink, this.config.getTimeout(), callback);
+        } catch (Exception e) {
+            callback.onError(JacksonUtil.toString(rpcWriteCompositeRequest), e);
+        }
+    }
+
+    @Override
     public void sendWriteUpdateRequest(LwM2mClient client, TbLwM2MWriteUpdateRequest request, DownlinkRequestCallback<WriteRequest, WriteResponse> callback) {
         LwM2mPath resultIds = new LwM2mPath(request.getObjectId());
         if (resultIds.isResource()) {
@@ -330,7 +326,11 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             context.getServer().send(registration, request, timeoutInMs, response -> {
                 executor.submit(() -> {
                     try {
-                        callback.onSuccess(request, response);
+                        if (response.isSuccess()) {
+                            callback.onSuccess(request, response);
+                        } else {
+                            callback.onValidationError(request.getNodes().values().toString(), response.getErrorMessage());
+                        }
                     } catch (Exception e) {
                         log.error("[{}] failed to process successful response [{}] ", registration.getEndpoint(), response, e);
                     }

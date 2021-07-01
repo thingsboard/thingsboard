@@ -21,13 +21,13 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
-import org.eclipse.leshan.core.node.LwM2mObject;
-import org.eclipse.leshan.core.node.LwM2mObjectInstance;
+import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.node.codec.LwM2mValueConverter;
 import org.eclipse.leshan.core.request.ContentFormat;
+import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.common.data.Device;
@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -53,6 +54,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LWM2M_OBJECT_VERSION_DEFAULT;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertObjectIdToVersionedId;
@@ -241,37 +243,7 @@ public class LwM2mClient implements Serializable {
                 .getObjectModel(pathIds.getObjectId()) : null;
     }
 
-    public String objectToString(LwM2mObject lwM2mObject) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("LwM2mObject [id=").append(lwM2mObject.getId()).append(", instances={");
-        lwM2mObject.getInstances().forEach((instId, inst) -> {
-            builder.append(instId).append("=").append(this.instanceToString(inst)).append(", ");
-        });
-        int startInd = builder.lastIndexOf(", ");
-        if (startInd > 0) {
-            builder.delete(startInd, startInd + 2);
-        }
-        builder.append("}]");
-        return builder.toString();
-    }
 
-    public String instanceToString(LwM2mObjectInstance objectInstance) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("LwM2mObjectInstance [id=").append(objectInstance.getId()).append(", resources={");
-        objectInstance.getResources().forEach((resId, res) -> {
-            builder.append(resId).append("=").append(this.resourceToString(res)).append(", ");
-        });
-        int startInd = builder.lastIndexOf(", ");
-        if (startInd > 0) {
-            builder.delete(startInd, startInd + 2);
-        }
-        builder.append("}]");
-        return builder.toString();
-    }
-
-    public String resourceToString(LwM2mResource lwM2mResource) {
-        return lwM2mResource.isMultiInstances() ? lwM2mResource.getInstances().toString() : lwM2mResource.getValue().toString();
-    }
 
     public Collection<LwM2mResource> getNewResourceForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
                                                                LwM2mValueConverter converter) {

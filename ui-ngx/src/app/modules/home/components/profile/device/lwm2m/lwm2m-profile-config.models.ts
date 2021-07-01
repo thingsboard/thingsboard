@@ -20,7 +20,6 @@ export const PAGE_SIZE_LIMIT = 50;
 export const INSTANCES = 'instances';
 export const INSTANCE = 'instance';
 export const RESOURCES = 'resources';
-export const OBSERVE_ATTR_TELEMETRY = 'observeAttrTelemetry';
 export const OBSERVE = 'observe';
 export const ATTRIBUTE = 'attribute';
 export const TELEMETRY = 'telemetry';
@@ -126,11 +125,6 @@ export const PowerModeTranslationMap = new Map<PowerMode, string>(
     [PowerMode.E_DRX, 'device-profile.power-saving-mode-type.edrx']
   ]
 );
-
-export interface ModelValue {
-  objectIds: string[];
-  objectsList: ObjectLwM2M[];
-}
 
 export interface BootstrapServersSecurityConfig {
   shortId: number;
