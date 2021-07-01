@@ -43,10 +43,16 @@
               <mat-error *ngIf="deviceWizardFormGroup.get('name').hasError('required')">
                 {{ 'device.name-required' | translate }}
               </mat-error>
+              <mat-error *ngIf="deviceWizardFormGroup.get('name').hasError('maxlength')">
+                {{ 'device.name-too-long' | translate }}
+              </mat-error>
             </mat-form-field>
             <mat-form-field class="mat-block">
               <mat-label translate>device.label</mat-label>
               <input matInput formControlName="label">
+              <mat-error *ngIf="deviceWizardFormGroup.get('label').hasError('maxlength')">
+                {{ 'device.label-too-long' | translate }}
+              </mat-error>
             </mat-form-field>
             <div fxLayout="row" fxLayoutGap="16px">
               <mat-radio-group fxLayout="column" formControlName="addProfileType" fxLayoutAlign="space-around">

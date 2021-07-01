@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationInfo;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 
@@ -63,6 +64,7 @@ public class EntityRelationController extends BaseController {
             if (relation.getTypeGroup() == null) {
                 relation.setTypeGroup(RelationTypeGroup.COMMON);
             }
+            ConstraintValidator.validateFields(relation);
             relationService.saveRelation(getTenantId(), relation);
 
             logEntityAction(relation.getFrom(), null, getCurrentUser().getCustomerId(),

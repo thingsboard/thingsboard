@@ -40,6 +40,9 @@
               <mat-error *ngIf="deviceProfileDetailsFormGroup.get('name').hasError('required')">
                 {{ 'device-profile.name-required' | translate }}
               </mat-error>
+              <mat-error *ngIf="deviceProfileDetailsFormGroup.get('name').hasError('maxlength')">
+                {{ 'device-profile.name-too-long' | translate }}
+              </mat-error>
             </mat-form-field>
             <tb-rule-chain-autocomplete
               labelText="device-profile.default-rule-chain"
