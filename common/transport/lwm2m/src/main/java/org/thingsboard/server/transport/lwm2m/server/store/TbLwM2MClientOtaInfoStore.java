@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.store;
 
-import org.thingsboard.server.common.data.ota.OtaPackageType;
-import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MClientOtaInfo;
 import org.thingsboard.server.transport.lwm2m.server.ota.firmware.LwM2MClientFwOtaInfo;
 import org.thingsboard.server.transport.lwm2m.server.ota.software.LwM2MClientSwOtaInfo;
 
