@@ -19,11 +19,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
-import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.common.data.validation.Length;
 
 @Slf4j
 @Data
@@ -35,10 +36,14 @@ public class OtaPackageInfo extends SearchTextBasedWithAdditionalInfo<OtaPackage
     private TenantId tenantId;
     private DeviceProfileId deviceProfileId;
     private OtaPackageType type;
+    @Length(fieldName = "title")
     private String title;
+    @Length(fieldName = "version")
     private String version;
+    @Length(fieldName = "url")
     private String url;
     private boolean hasData;
+    @Length(fieldName = "file name")
     private String fileName;
     private String contentType;
     private ChecksumAlgorithm checksumAlgorithm;

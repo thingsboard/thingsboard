@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.Valid;
@@ -41,6 +42,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
 
     private TenantId tenantId;
     @NoXss
+    @Length(fieldName = "name")
     private String name;
     @NoXss
     private String description;

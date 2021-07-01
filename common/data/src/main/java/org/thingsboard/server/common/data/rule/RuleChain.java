@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
@@ -37,6 +38,7 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
 
     private TenantId tenantId;
     @NoXss
+    @Length(fieldName = "name")
     private String name;
     private RuleChainType type;
     private RuleNodeId firstRuleNodeId;

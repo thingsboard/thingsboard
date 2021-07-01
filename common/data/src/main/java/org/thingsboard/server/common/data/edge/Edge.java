@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.edge;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,6 +27,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.Length;
 
 @EqualsAndHashCode(callSuper = true)
 @ToString
@@ -40,8 +40,11 @@ public class Edge extends SearchTextBasedWithAdditionalInfo<EdgeId> implements H
     private TenantId tenantId;
     private CustomerId customerId;
     private RuleChainId rootRuleChainId;
+    @Length(fieldName = "name")
     private String name;
+    @Length(fieldName = "type")
     private String type;
+    @Length(fieldName = "label")
     private String label;
     private String routingKey;
     private String secret;

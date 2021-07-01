@@ -16,15 +16,12 @@
 package org.thingsboard.server.common.data.relation;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.validation.Length;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.Serializable;
 
 @Slf4j
@@ -38,6 +35,7 @@ public class EntityRelation implements Serializable {
 
     private EntityId from;
     private EntityId to;
+    @Length(fieldName = "type")
     private String type;
     private RelationTypeGroup typeGroup;
     private transient JsonNode additionalInfo;

@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
-
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @EqualsAndHashCode(callSuper = true)
@@ -36,8 +36,10 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
     private String email;
     private Authority authority;
     @NoXss
+    @Length(fieldName = "firs name")
     private String firstName;
     @NoXss
+    @Length(fieldName = "last name")
     private String lastName;
 
     public User() {
