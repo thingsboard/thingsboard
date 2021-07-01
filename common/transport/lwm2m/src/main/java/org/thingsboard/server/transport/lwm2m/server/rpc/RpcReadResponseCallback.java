@@ -24,6 +24,8 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCal
 
 import java.util.Optional;
 
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.contentToString;
+
 public class RpcReadResponseCallback<R extends LwM2mRequest<T>, T extends ReadResponse> extends RpcLwM2MDownlinkCallback<R, T> {
 
     public RpcReadResponseCallback(TransportService transportService, LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, DownlinkRequestCallback<R, T> callback) {
@@ -32,6 +34,6 @@ public class RpcReadResponseCallback<R extends LwM2mRequest<T>, T extends ReadRe
 
     @Override
     protected Optional<String> serializeSuccessfulResponse(T response) {
-        return client.contentToString (response.getContent());
+        return contentToString(response.getContent());
     }
 }

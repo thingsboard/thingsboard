@@ -98,7 +98,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                 return;
             }
             try {
-                 if (operationType.isHasObjectId()) {
+                if (operationType.isHasObjectId()) {
                     String objectId = getIdFromParameters(client, rpcRequst);
                     switch (operationType) {
                         case READ:
@@ -132,23 +132,21 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                             throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
                     }
                 } else if (operationType.isComposite()) {
-                     if (client.isComposite(clientContext)) {
-                         switch (operationType) {
-                             case READ_COMPOSITE:
-                                 sendReadCompositeRequest(client, rpcRequst);
-                                 break;
-                             case WRITE_COMPOSITE:
-                                 sendWriteCompositeRequest(client, rpcRequst);
-                                 break;
-                             default:
-                                 throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
-                         }
-                     }
-                     else {
-                         this.sendErrorRpcResponse(sessionInfo, rpcRequst.getRequestId(),
-                                 ResponseCode.INTERNAL_SERVER_ERROR.getName(), "This device does not support Composite Operation");
-                         return;
-                     }
+                    if (clientContext.isComposite(client)) {
+                        switch (operationType) {
+                            case READ_COMPOSITE:
+                                sendReadCompositeRequest(client, rpcRequst);
+                                break;
+                            case WRITE_COMPOSITE:
+                                sendWriteCompositeRequest(client, rpcRequst);
+                                break;
+                            default:
+                                throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
+                        }
+                    } else {
+                        this.sendErrorRpcResponse(sessionInfo, rpcRequst.getRequestId(),
+                                ResponseCode.INTERNAL_SERVER_ERROR.getName(), "This device does not support Composite Operation");
+                    }
                 } else {
                     switch (operationType) {
                         case OBSERVE_CANCEL_ALL:

@@ -243,74 +243,7 @@ public class LwM2mClient implements Serializable {
                 .getObjectModel(pathIds.getObjectId()) : null;
     }
 
-    public Optional<String> contentToString(Object content) {
-        String value = null;
-        LwM2mResource resource = null;
-        String key = null;
-        if (content instanceof HashMap && ((HashMap) content).size() == 1) {
-            key = ((HashMap) content).keySet().toArray()[0].toString();
-            if (((HashMap) content).values().toArray()[0] != null) {
-                if (((HashMap) content).values().toArray()[0] instanceof LwM2mResource) {
-                    resource = (LwM2mResource) ((HashMap) content).values().toArray()[0];
-                }
-            }
-        } else if (content instanceof LwM2mResource) {
-            resource = (LwM2mResource) content;
-        }
-        if (resource != null && resource.getType() == OPAQUE) {
-            value = this.resourceToString(resource, key);
-        }
-        value = value == null ? content.toString() : value;
-        return Optional.of(String.format("%s", value));
-    }
 
-    public String resourceToString(LwM2mResource resource, String key) {
-        String value = null;
-        StringBuilder builder = new StringBuilder();
-        if (resource instanceof LwM2mSingleResource) {
-            builder.append("LwM2mSingleResource");
-            if (key == null) {
-                builder.append(" id=").append(String.valueOf(resource.getId()));
-            } else {
-                builder.append(" key=").append(key);
-            }
-            builder.append(" value=").append(opaqueToString((byte[]) resource.getValue()));
-            builder.append(" type=").append(OPAQUE.toString());
-            value = builder.toString();
-        } else if (resource instanceof LwM2mMultipleResource) {
-            builder.append("LwM2mMultipleResource");
-            if (key == null) {
-                builder.append(" id=").append(String.valueOf(resource.getId()));
-            } else {
-                builder.append(" key=").append(key);
-            }
-            builder.append(" values={");
-            if (resource.getInstances().size() > 0) {
-                builder.append(multiInstanceOpaqueToString((LwM2mMultipleResource) resource));
-            }
-            builder.append("}");
-            builder.append(" type=").append(OPAQUE.toString());
-            value = builder.toString();
-        }
-        return value;
-    }
-
-    private String multiInstanceOpaqueToString(LwM2mMultipleResource resource) {
-        StringBuilder builder = new StringBuilder();
-        resource.getInstances().values().stream().map(v -> {
-            return builder.append(" id=").append(v.getId()).append(" value=").append(Hex.encodeHexString((byte[]) v.getValue())).append(", ");
-        });
-        int startInd = builder.lastIndexOf(", ");
-        if (startInd > 0) {
-            builder.delete(startInd, startInd + 2);
-        }
-        return builder.toString();
-    }
-
-    private String opaqueToString(byte[] value) {
-        String opaque = Hex.encodeHexString(value);
-        return opaque.length() > 1024 ? opaque.substring(0, 1024) : opaque;
-    }
 
     public Collection<LwM2mResource> getNewResourceForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
                                                                LwM2mValueConverter converter) {
@@ -407,9 +340,5 @@ public class LwM2mClient implements Serializable {
         this.lock = new ReentrantLock();
     }
 
-    public boolean isComposite (LwM2mClientContext clientContext) {
-        return LwM2mVersion.fromVersionStr(registration.getLwM2mVersion()).isComposite() &
-                clientContext.getProfile(this.profileId).getClientLwM2mSettings().isCompositeOperationsSupport();
-    }
 }
 

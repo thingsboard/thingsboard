@@ -328,8 +328,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                     try {
                         if (response.isSuccess()) {
                             callback.onSuccess(request, response);
-                        }
-                        else {
+                        } else {
                             callback.onValidationError(request.getNodes().values().toString(), response.getErrorMessage());
                         }
                     } catch (Exception e) {
