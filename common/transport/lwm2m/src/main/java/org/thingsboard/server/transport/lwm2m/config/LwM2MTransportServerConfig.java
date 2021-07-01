@@ -121,20 +121,12 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     private Integer securePort;
 
     @Getter
-    @Value("${transport.lwm2m.server.security.public_x:}")
-    private String publicX;
-
-    @Getter
-    @Value("${transport.lwm2m.server.security.public_y:}")
-    private String publicY;
-
-    @Getter
-    @Value("${transport.lwm2m.server.security.private_encoded:}")
-    private String privateEncoded;
-
-    @Getter
     @Value("${transport.lwm2m.server.security.alias:}")
     private String certificateAlias;
+
+    @Getter
+    @Value("${transport.lwm2m.server.security.password:}")
+    private String certificatePassword;
 
     @Getter
     @Value("${transport.lwm2m.log_max_length:}")
