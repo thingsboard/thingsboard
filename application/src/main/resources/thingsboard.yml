@@ -647,42 +647,40 @@ transport:
       bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
       bind_port: "${LWM2M_BIND_PORT:5685}"
       security:
-        bind_address: "${LWM2M_BIND_ADDRESS_SECURITY:0.0.0.0}"
-        bind_port: "${LWM2M_BIND_PORT_SECURITY:5686}"
+        bind_address: "${LWM2M_SECURITY_BIND_ADDRESS:0.0.0.0}"
+        bind_port: "${LWM2M_SECURITY_BIND_PORT:5686}"
         # Only Certificate_x509:
-        alias: "${LWM2M_KEYSTORE_SERVER_ALIAS:server}"
-        password: "${LWM2M_KEYSTORE_SERVER_PASSWORD:server_ks_password}"
+        key_alias: "${LWM2M_SERVER_KEY_ALIAS:server}"
+        key_password: "${LWM2M_SERVER_KEY_PASSWORD:server_ks_password}"
         skip_validity_check_for_client_cert: "${TB_LWM2M_SERVER_SECURITY_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
     bootstrap:
       enable: "${LWM2M_ENABLED_BS:true}"
       id: "${LWM2M_SERVER_ID_BS:111}"
-      bind_address: "${LWM2M_BIND_ADDRESS_BS:0.0.0.0}"
-      bind_port: "${LWM2M_BIND_PORT_BS:5687}"
+      bind_address: "${LWM2M_BS_BIND_ADDRESS:0.0.0.0}"
+      bind_port: "${LWM2M_BS_BIND_PORT:5687}"
       security:
-        bind_address: "${LWM2M_BIND_ADDRESS_SECURITY_BS:0.0.0.0}"
-        bind_port: "${LWM2M_BIND_PORT_SECURITY_BS:5688}"
+        bind_address: "${LWM2M_BS_SECURITY_BIND_ADDRESS:0.0.0.0}"
+        bind_port: "${LWM2M_BS_SECURITY_BIND_PORT:5688}"
         # Only Certificate_x509:
-        alias: "${LWM2M_KEYSTORE_BS_ALIAS:bootstrap}"
-        password: "${LWM2M_KEYSTORE_BS_PASSWORD:server_ks_password}"
+        key_alias: "${LWM2M_BS_KEY_ALIAS:bootstrap}"
+        key_password: "${LWM2M_BS_KEY_PASSWORD:server_ks_password}"
     security:
       # Certificate_x509:
       # To get helps about files format and how to generate it, see: https://github.com/eclipse/leshan/wiki/Credential-files-format
       # Create new X509 Certificates: common/transport/lwm2m/src/main/resources/credentials/shell/lwM2M_credentials.sh
       key_store_type: "${LWM2M_KEYSTORE_TYPE:JKS}"
       # key_store_path_file: "${KEY_STORE_PATH_FILE:/common/transport/lwm2m/src/main/resources/credentials/serverKeyStore.jks"
-      key_store: "${LWM2M_KEY_STORE:lwm2mserver.jks}"
-      key_store_password: "${LWM2M_KEY_STORE_PASSWORD:server_ks_password}"
-      root_alias: "${LWM2M_SERVER_ROOT_CA:rootca}"
-      enable_gen_new_key_psk_rpk: "${ENABLE_GEN_NEW_KEY_PSK_RPK:false}"
+      key_store: "${LWM2M_KEYSTORE:lwm2mserver.jks}"
+      key_store_password: "${LWM2M_KEYSTORE_PASSWORD:server_ks_password}"
+      root_alias: "${LWM2M_SERVER_ROOT_CA_ALIAS:rootca}"
+      recommended_ciphers: "${LWM2M_RECOMMENDED_CIPHERS:false}"
+      recommended_supported_groups: "${LWM2M_RECOMMENDED_SUPPORTED_GROUPS:true}"
     timeout: "${LWM2M_TIMEOUT:120000}"
-    recommended_ciphers: "${LWM2M_RECOMMENDED_CIPHERS:false}"
-    recommended_supported_groups: "${LWM2M_RECOMMENDED_SUPPORTED_GROUPS:true}"
     uplink_pool_size: "${LWM2M_UPLINK_POOL_SIZE:10}"
     downlink_pool_size: "${LWM2M_DOWNLINK_POOL_SIZE:10}"
     ota_pool_size: "${LWM2M_OTA_POOL_SIZE:10}"
-    registration_store_pool_size: "${LWM2M_REGISTRATION_STORE_POOL_SIZE:100}"
     clean_period_in_sec: "${LWM2M_CLEAN_PERIOD_IN_SEC:2}"
-    log_max_length: "${LWM2M_LOG_MAX_LENGTH:100}"
+    log_max_length: "${LWM2M_LOG_MAX_LENGTH:1024}"
     # Use redis for Security and Registration stores
     redis.enabled: "${LWM2M_REDIS_ENABLED:false}"
   snmp:

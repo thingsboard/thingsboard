@@ -53,11 +53,11 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     private long sessionReportTimeout;
 
     @Getter
-    @Value("${transport.lwm2m.recommended_ciphers:}")
+    @Value("${transport.lwm2m.security.recommended_ciphers:}")
     private boolean recommendedCiphers;
 
     @Getter
-    @Value("${transport.lwm2m.recommended_supported_groups:}")
+    @Value("${transport.lwm2m.security.recommended_supported_groups:}")
     private boolean recommendedSupportedGroups;
 
     @Getter
@@ -97,10 +97,6 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     private String rootCertificateAlias;
 
     @Getter
-    @Value("${transport.lwm2m.security.enable_gen_new_key_psk_rpk:}")
-    private Boolean enableGenNewKeyPskRpk;
-
-    @Getter
     @Value("${transport.lwm2m.server.id:}")
     private Integer id;
 
@@ -121,11 +117,11 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     private Integer securePort;
 
     @Getter
-    @Value("${transport.lwm2m.server.security.alias:}")
+    @Value("${transport.lwm2m.server.security.key_alias:}")
     private String certificateAlias;
 
     @Getter
-    @Value("${transport.lwm2m.server.security.password:}")
+    @Value("${transport.lwm2m.server.security.key_password:}")
     private String certificatePassword;
 
     @Getter

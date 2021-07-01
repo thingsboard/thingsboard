@@ -29,7 +29,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
-import org.thingsboard.server.transport.lwm2m.secure.LWM2MGenerationPSkRPkECC;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MAuthorizer;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MDtlsCertificateVerifier;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
@@ -74,9 +73,6 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
     @PostConstruct
     public void init() {
-        if (config.getEnableGenNewKeyPskRpk()) {
-            new LWM2MGenerationPSkRPkECC();
-        }
         this.server = getLhServer();
         /*
          * Add a resource to the server.
