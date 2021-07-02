@@ -1233,7 +1233,7 @@
             "instances-input": "Input Instance Id value",
             "instances-input-holder": "Input Instance number...",
             "instance": "Instance",
-            "resource-label": "<id> Resource name",
+            "resource-label": "#ID Resource name",
             "observe-label": "Observe",
             "attribute-label": "Attribute",
             "telemetry-label": "Telemetry",
