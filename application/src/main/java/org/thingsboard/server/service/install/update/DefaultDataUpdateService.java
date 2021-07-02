@@ -140,7 +140,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 @Override
                 protected void updateEntity(DeviceProfileEntity deviceProfile) {
                     if (deviceProfile.getProfileData().has("alarms") &&
-                            !deviceProfile.getProfileData().get("alarms").asText().equals("null")) {
+                            !deviceProfile.getProfileData().get("alarms").isNull()) {
                         JsonNode array = deviceProfile.getProfileData().get("alarms");
                         for (JsonNode node : array) {
                             if (node.has("createRules")) {
@@ -151,7 +151,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                                     }
                                 }
                             }
-                            if (node.has("clearRule") && !node.get("clearRule").asText().equals("null")) {
+                            if (node.has("clearRule") && !node.get("clearRule").isNull()) {
                                 convertDeviceProfileAlarmRulesForVersion330(node.get("clearRule").get("condition").get("spec"));
                             }
                         }
@@ -410,7 +410,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
     }
 
     private void convertDeviceProfileAlarmRulesForVersion330(JsonNode spec) {
-        if(spec != null) {
+        if (spec != null) {
             if (spec.has("type") && spec.get("type").asText().equals("DURATION")) {
                 if (spec.has("value")) {
                     long value = spec.get("value").asLong();
