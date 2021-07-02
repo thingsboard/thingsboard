@@ -211,7 +211,7 @@ export class Lwm2mObserveAttrTelemetryInstancesComponent implements ControlValue
   }
 
   getNameInstance(instance: Instance): string {
-    return `${this.translate.instant('device-profile.lwm2m.instance')} <${instance.id}>`;
+    return `${this.translate.instant('device-profile.lwm2m.instance')} #${instance.id}`;
   }
 
   disableObserveInstance = (instance: AbstractControl): boolean => {

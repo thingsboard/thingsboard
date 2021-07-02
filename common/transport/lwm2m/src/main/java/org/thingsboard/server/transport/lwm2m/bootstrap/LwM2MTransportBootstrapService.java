@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.bootstrap;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.elements.util.SslContextUtil;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.leshan.server.bootstrap.BootstrapSessionManager;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServer;
@@ -133,13 +134,14 @@ public class LwM2MTransportBootstrapService {
 
     private boolean setBuilderX509(LeshanBootstrapServerBuilder builder) {
         try {
-            X509Certificate serverCertificate = (X509Certificate) serverConfig.getKeyStoreValue().getCertificate(this.bootstrapConfig.getCertificateAlias());
+            X509Certificate[] certificateChain = SslContextUtil.asX509Certificates(serverConfig.getKeyStoreValue().getCertificateChain(this.bootstrapConfig.getCertificateAlias()));
+            X509Certificate serverCertificate = certificateChain[0];
             PrivateKey privateKey = (PrivateKey) serverConfig.getKeyStoreValue().getKey(this.bootstrapConfig.getCertificateAlias(), serverConfig.getCertificatePassword() == null ? null : serverConfig.getCertificatePassword().toCharArray());
             PublicKey publicKey = serverCertificate.getPublicKey();
             if (privateKey != null && privateKey.getEncoded().length > 0 && publicKey != null && publicKey.getEncoded().length > 0) {
                 builder.setPublicKey(serverCertificate.getPublicKey());
                 builder.setPrivateKey(privateKey);
-                builder.setCertificateChain(new X509Certificate[]{serverCertificate});
+                builder.setCertificateChain(certificateChain);
                 return true;
             } else {
                 return false;
