@@ -264,6 +264,6 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
   }
 
   getNameObject = (objectLwM2M: ObjectLwM2M): string => {
-    return `${objectLwM2M.name} <${objectLwM2M.id}>`;
+    return `${objectLwM2M.name} #${objectLwM2M.keyId}`;
   }
 }

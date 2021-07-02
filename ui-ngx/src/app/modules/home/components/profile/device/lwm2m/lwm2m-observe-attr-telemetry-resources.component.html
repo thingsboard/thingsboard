@@ -38,7 +38,7 @@
     *ngFor="let resourceLwM2M of resourcesFormArray.controls; let $index = index; trackBy: trackByParams">
     <div [formGroupName]="$index" fxLayout="row" fxLayoutAlign="start center" class="resource-list">
       <div class="resource-name" fxFlex="30">
-        <<b>{{resourceLwM2M.get('id').value}}</b>> <b>{{resourceLwM2M.get('name').value}}</b>
+        #{{resourceLwM2M.get('id').value}} <span class="name">{{resourceLwM2M.get('name').value}}</span>
       </div>
       <div fxFlex="10" fxLayoutAlign="center center">
         <mat-checkbox formControlName="attribute" color="warn">
