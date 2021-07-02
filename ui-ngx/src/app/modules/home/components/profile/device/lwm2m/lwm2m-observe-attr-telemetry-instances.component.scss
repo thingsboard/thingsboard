@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 :host{
-  .tb-panel-title-height {
+  .tb-panel {
     min-height: 42px;
+
+    .tb-panel-title {
+      font-weight: 500;
+    }
   }
 
   .instance-row {

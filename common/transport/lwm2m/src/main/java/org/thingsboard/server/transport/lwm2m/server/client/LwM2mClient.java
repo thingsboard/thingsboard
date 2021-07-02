@@ -154,7 +154,6 @@ public class LwM2mClient implements Serializable {
         this.session = builder.build();
     }
 
-
     private SessionInfoProto createSession(String nodeId, UUID sessionId, ValidateDeviceCredentialsResponse msg) {
         return SessionInfoProto.newBuilder()
                 .setNodeId(nodeId)

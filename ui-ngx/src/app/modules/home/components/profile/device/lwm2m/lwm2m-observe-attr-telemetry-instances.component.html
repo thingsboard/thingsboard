@@ -24,9 +24,9 @@
       [expanded]="isExpend"
       [disabled]="isExpend">
       <mat-expansion-panel-header>
-        <mat-panel-title class="tb-panel-title-height" fxLayout="row">
+        <mat-panel-title class="tb-panel" fxLayout="row">
           <div fxFlex="30" fxLayoutAlign="start center">
-            {{ 'device-profile.lwm2m.instance' | translate }} <<b>{{instances.get('id').value}}</b>>
+            <span class="tb-panel-title">{{ 'device-profile.lwm2m.instance' | translate }}</span>&nbsp;#{{instances.get('id').value}}
           </div>
           <div fxLayoutAlign="center center" fxFlex="10">
             <mat-checkbox color="warn"
