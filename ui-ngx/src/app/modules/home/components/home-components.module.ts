@@ -99,7 +99,6 @@ import { DeviceProfileDialogComponent } from '@home/components/profile/device-pr
 import { DeviceProfileAutocompleteComponent } from '@home/components/profile/device-profile-autocomplete.component';
 import { MqttDeviceProfileTransportConfigurationComponent } from '@home/components/profile/device/mqtt-device-profile-transport-configuration.component';
 import { CoapDeviceProfileTransportConfigurationComponent } from '@home/components/profile/device/coap-device-profile-transport-configuration.component';
-import { SnmpDeviceProfileTransportConfigurationComponent } from '@home/components/profile/device/snmp-device-profile-transport-configuration.component';
 import { DeviceProfileAlarmsComponent } from '@home/components/profile/alarm/device-profile-alarms.component';
 import { DeviceProfileAlarmComponent } from '@home/components/profile/alarm/device-profile-alarm.component';
 import { CreateAlarmRulesComponent } from '@home/components/profile/alarm/create-alarm-rules.component';
@@ -142,6 +141,9 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
 import { AlarmDurationPredicateValueComponent } from '@home/components/profile/alarm/alarm-duration-predicate-value.component';
 import { SecurityConfigLwm2mComponent } from '@home/components/device/security-config-lwm2m.component';
 import { SecurityConfigLwm2mServerComponent } from '@home/components/device/security-config-lwm2m-server.component';
+import { DashboardImageDialogComponent } from '@home/components/dashboard-page/dashboard-image-dialog.component';
+import { WidgetContainerComponent } from '@home/components/widget/widget-container.component';
+import { SnmpDeviceProfileTransportModule } from '@home/components/profile/device/snpm/snmp-device-profile-transport.module';
 
 @NgModule({
   declarations:
@@ -172,6 +174,7 @@ import { SecurityConfigLwm2mServerComponent } from '@home/components/device/secu
       EntityAliasesDialogComponent,
       EntityAliasDialogComponent,
       DashboardComponent,
+      WidgetContainerComponent,
       WidgetComponent,
       LegendComponent,
       WidgetConfigComponent,
@@ -226,7 +229,6 @@ import { SecurityConfigLwm2mServerComponent } from '@home/components/device/secu
       DefaultDeviceProfileTransportConfigurationComponent,
       MqttDeviceProfileTransportConfigurationComponent,
       CoapDeviceProfileTransportConfigurationComponent,
-      SnmpDeviceProfileTransportConfigurationComponent,
       DeviceProfileTransportConfigurationComponent,
       CreateAlarmRulesComponent,
       AlarmRuleComponent,
@@ -262,6 +264,7 @@ import { SecurityConfigLwm2mServerComponent } from '@home/components/device/secu
       DashboardSettingsDialogComponent,
       ManageDashboardStatesDialogComponent,
       DashboardStateDialogComponent,
+      DashboardImageDialogComponent,
       EmbedDashboardDialogComponent,
       DisplayWidgetTypesPanelComponent
     ],
@@ -270,6 +273,7 @@ import { SecurityConfigLwm2mServerComponent } from '@home/components/device/secu
     SharedModule,
     SharedHomeComponentsModule,
     Lwm2mProfileComponentsModule,
+    SnmpDeviceProfileTransportModule,
     StatesControllerModule
   ],
   exports: [
@@ -290,6 +294,7 @@ import { SecurityConfigLwm2mServerComponent } from '@home/components/device/secu
     EntityAliasesDialogComponent,
     EntityAliasDialogComponent,
     DashboardComponent,
+    WidgetContainerComponent,
     WidgetComponent,
     LegendComponent,
     WidgetConfigComponent,
@@ -336,7 +341,6 @@ import { SecurityConfigLwm2mServerComponent } from '@home/components/device/secu
     DefaultDeviceProfileTransportConfigurationComponent,
     MqttDeviceProfileTransportConfigurationComponent,
     CoapDeviceProfileTransportConfigurationComponent,
-    SnmpDeviceProfileTransportConfigurationComponent,
     DeviceProfileTransportConfigurationComponent,
     CreateAlarmRulesComponent,
     AlarmRuleComponent,
@@ -373,6 +377,7 @@ import { SecurityConfigLwm2mServerComponent } from '@home/components/device/secu
     DashboardSettingsDialogComponent,
     ManageDashboardStatesDialogComponent,
     DashboardStateDialogComponent,
+    DashboardImageDialogComponent,
     EmbedDashboardDialogComponent,
     DisplayWidgetTypesPanelComponent
   ],

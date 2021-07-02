@@ -18,6 +18,7 @@ package org.thingsboard.server.dao;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,5 +33,7 @@ public interface Dao<T> {
     T save(TenantId tenantId, T t);
 
     boolean removeById(TenantId tenantId, UUID id);
+
+    void removeAllByIds(Collection<UUID> ids);
 
 }

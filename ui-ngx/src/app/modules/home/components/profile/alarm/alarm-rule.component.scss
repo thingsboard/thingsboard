@@ -18,15 +18,23 @@
   .row {
     margin-top: 1em;
   }
-  .tb-alarm-rule-details {
+  .tb-alarm-rule-details, .tb-alarm-rule-dashboard {
     padding: 4px;
-    cursor: pointer;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
     &.title {
       opacity: 0.7;
       overflow: visible;
+    }
+  }
+  .tb-alarm-rule-details {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    cursor: pointer;
+  }
+  .tb-alarm-rule-dashboard {
+    &.dashboard {
+      width: 100%;
+      max-width: 350px;
     }
   }
 }

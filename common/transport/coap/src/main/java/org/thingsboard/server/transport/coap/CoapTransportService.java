@@ -19,11 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.coapserver.CoapServerService;
 import org.thingsboard.server.coapserver.TbCoapServerComponent;
+import org.thingsboard.server.common.data.TbTransportService;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.transport.coap.efento.CoapEfentoTransportResource;
 
 import javax.annotation.PostConstruct;
@@ -60,6 +60,8 @@ public class CoapTransportService implements TbTransportService {
         efento.add(efentoMeasurementsTransportResource);
         coapServer.add(api);
         coapServer.add(efento);
+        coapServer.add(new OtaPackageTransportResource(coapTransportContext, OtaPackageType.FIRMWARE));
+        coapServer.add(new OtaPackageTransportResource(coapTransportContext, OtaPackageType.SOFTWARE));
         log.info("CoAP transport started!");
     }
 

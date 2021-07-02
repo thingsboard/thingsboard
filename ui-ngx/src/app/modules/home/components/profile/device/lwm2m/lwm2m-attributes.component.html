@@ -15,18 +15,14 @@
     limitations under the License.
 
 -->
-<div fxLayout="row" [formGroup]="attributeLwm2mFormGroup">
-  <div fxFlex fxLayout="column" class="resource-name-lw-end" fxLayoutAlign="center"
-       [matTooltip]="isToolTipLabel()" matTooltipPosition="above">
-    {{attributeLwm2mToString()}}
-  </div>
+<div [fxHide]="disabled && isEmpty()" matTooltip="{{ tooltipSetAttributesTelemetry | translate }}" matTooltipPosition="above">
   <button type="button"
           [disabled]="isDisableBtn()"
           mat-button mat-icon-button
           (click)="editAttributesLwm2m($event)"
-          [matTooltip]="(isIconView() ? 'action.view' : isIconEditAdd()  ? 'action.edit' : 'action.add' ) | translate"
+          matTooltip="{{ tooltipButton |  translate }}"
           matTooltipPosition="above">
     <mat-icon
-      class="material-icons">{{isIconView() ? 'visibility' : isIconEditAdd() ? 'edit' : 'add' }}</mat-icon>
+      class="material-icons">{{ iconButton }}</mat-icon>
   </button>
 </div>

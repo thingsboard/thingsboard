@@ -72,7 +72,7 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
 
         public DynamicModel(Registration registration) {
             this.registration = registration;
-            this.tenantId = lwM2mClientContext.getProfile(registration).getTenantId();
+            this.tenantId = lwM2mClientContext.getClientByEndpoint(registration.getEndpoint()).getTenantId();
         }
 
         @Override
@@ -82,7 +82,7 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
                 if (objectModel != null)
                     return objectModel.resources.get(resourceId);
                 else
-                    log.warn("TbResources (Object model) with id [{}/0/{}] not found on the server", objectId, resourceId);
+                    log.trace("TbResources (Object model) with id [{}/0/{}] not found on the server", objectId, resourceId);
                 return null;
             } catch (Exception e) {
                 log.error("", e);

@@ -28,9 +28,10 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntitySubtype;
-import org.thingsboard.server.common.data.Firmware;
+import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -45,7 +46,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.thingsboard.server.common.data.firmware.FirmwareType.FIRMWARE;
+import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
@@ -188,7 +189,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         Assert.assertEquals(20, deviceCredentials.getCredentialsId().length());
 
 
-        Firmware firmware = new Firmware();
+        OtaPackage firmware = new OtaPackage();
         firmware.setTenantId(tenantId);
         firmware.setDeviceProfileId(device.getDeviceProfileId());
         firmware.setType(FIRMWARE);
@@ -196,10 +197,11 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         firmware.setVersion("v1.0");
         firmware.setFileName("test.txt");
         firmware.setContentType("text/plain");
-        firmware.setChecksumAlgorithm("sha256");
+        firmware.setChecksumAlgorithm(ChecksumAlgorithm.SHA256);
         firmware.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
         firmware.setData(ByteBuffer.wrap(new byte[]{1}));
-        Firmware savedFirmware = firmwareService.saveFirmware(firmware);
+        firmware.setDataSize(1L);
+        OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware);
 
         savedDevice.setFirmwareId(savedFirmware.getId());
 
@@ -222,7 +224,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         DeviceProfile savedProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
         Assert.assertNotNull(savedProfile);
 
-        Firmware firmware = new Firmware();
+        OtaPackage firmware = new OtaPackage();
         firmware.setTenantId(tenantId);
         firmware.setDeviceProfileId(savedProfile.getId());
         firmware.setType(FIRMWARE);
@@ -230,10 +232,11 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         firmware.setVersion("v1.0");
         firmware.setFileName("test.txt");
         firmware.setContentType("text/plain");
-        firmware.setChecksumAlgorithm("sha256");
+        firmware.setChecksumAlgorithm(ChecksumAlgorithm.SHA256);
         firmware.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
         firmware.setData(ByteBuffer.wrap(new byte[]{1}));
-        Firmware savedFirmware = firmwareService.saveFirmware(firmware);
+        firmware.setDataSize(1L);
+        OtaPackage savedFirmware = otaPackageService.saveOtaPackage(firmware);
 
         savedDevice.setFirmwareId(savedFirmware.getId());
 
@@ -793,4 +796,25 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         customerService.deleteCustomer(tenantId, customerId);
     }
 
+    @Test
+    public void testCleanCacheIfDeviceRenamed() {
+        String deviceNameBeforeRename = RandomStringUtils.randomAlphanumeric(15);
+        String deviceNameAfterRename = RandomStringUtils.randomAlphanumeric(15);
+
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName(deviceNameBeforeRename);
+        device.setType("default");
+        deviceService.saveDevice(device);
+
+        Device savedDevice = deviceService.findDeviceByTenantIdAndName(tenantId, deviceNameBeforeRename);
+
+        savedDevice.setName(deviceNameAfterRename);
+        deviceService.saveDevice(savedDevice);
+
+        Device renamedDevice = deviceService.findDeviceByTenantIdAndName(tenantId, deviceNameBeforeRename);
+
+        Assert.assertNull("Can't find device by name in cache if it was renamed", renamedDevice);
+        deviceService.deleteDevice(tenantId, savedDevice.getId());
+    }
 }

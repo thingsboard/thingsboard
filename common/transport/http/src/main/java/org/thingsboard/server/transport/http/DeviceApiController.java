@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.http;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -34,9 +35,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.firmware.FirmwareType;
 import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportService;
@@ -95,7 +97,9 @@ public class DeviceApiController implements TbTransportService {
                         request.addAllSharedAttributeNames(sharedKeySet);
                     }
                     TransportService transportService = transportContext.getTransportService();
-                    transportService.registerSyncSession(sessionInfo, new HttpSessionListener(responseWriter), transportContext.getDefaultTimeout());
+                    transportService.registerSyncSession(sessionInfo,
+                            new HttpSessionListener(responseWriter, transportContext.getTransportService(), sessionInfo),
+                            transportContext.getDefaultTimeout());
                     transportService.process(sessionInfo, request.build(), new SessionCloseOnErrorCallback(transportService, sessionInfo));
                 }));
         return responseWriter;
@@ -151,7 +155,8 @@ public class DeviceApiController implements TbTransportService {
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     TransportService transportService = transportContext.getTransportService();
-                    transportService.registerSyncSession(sessionInfo, new HttpSessionListener(responseWriter),
+                    transportService.registerSyncSession(sessionInfo,
+                            new HttpSessionListener(responseWriter, transportContext.getTransportService(), sessionInfo),
                             timeout == 0 ? transportContext.getDefaultTimeout() : timeout);
                     transportService.process(sessionInfo, SubscribeToRPCMsg.getDefaultInstance(),
                             new SessionCloseOnErrorCallback(transportService, sessionInfo));
@@ -181,7 +186,9 @@ public class DeviceApiController implements TbTransportService {
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     JsonObject request = new JsonParser().parse(json).getAsJsonObject();
                     TransportService transportService = transportContext.getTransportService();
-                    transportService.registerSyncSession(sessionInfo, new HttpSessionListener(responseWriter), transportContext.getDefaultTimeout());
+                    transportService.registerSyncSession(sessionInfo,
+                            new HttpSessionListener(responseWriter, transportContext.getTransportService(), sessionInfo),
+                            transportContext.getDefaultTimeout());
                     transportService.process(sessionInfo, ToServerRpcRequestMsg.newBuilder().setRequestId(0)
                                     .setMethodName(request.get("method").getAsString())
                                     .setParams(request.get("params").toString()).build(),
@@ -198,7 +205,8 @@ public class DeviceApiController implements TbTransportService {
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     TransportService transportService = transportContext.getTransportService();
-                    transportService.registerSyncSession(sessionInfo, new HttpSessionListener(responseWriter),
+                    transportService.registerSyncSession(sessionInfo,
+                            new HttpSessionListener(responseWriter, transportContext.getTransportService(), sessionInfo),
                             timeout == 0 ? transportContext.getDefaultTimeout() : timeout);
                     transportService.process(sessionInfo, SubscribeToAttributeUpdatesMsg.getDefaultInstance(),
                             new SessionCloseOnErrorCallback(transportService, sessionInfo));
@@ -213,7 +221,7 @@ public class DeviceApiController implements TbTransportService {
                                                       @RequestParam(value = "version") String version,
                                                       @RequestParam(value = "size", required = false, defaultValue = "0") int size,
                                                       @RequestParam(value = "chunk", required = false, defaultValue = "0") int chunk) {
-        return getFirmwareCallback(deviceToken, title, version, size, chunk, FirmwareType.FIRMWARE);
+        return getOtaPackageCallback(deviceToken, title, version, size, chunk, OtaPackageType.FIRMWARE);
     }
 
     @RequestMapping(value = "/{deviceToken}/software", method = RequestMethod.GET)
@@ -222,7 +230,7 @@ public class DeviceApiController implements TbTransportService {
                                                       @RequestParam(value = "version") String version,
                                                       @RequestParam(value = "size", required = false, defaultValue = "0") int size,
                                                       @RequestParam(value = "chunk", required = false, defaultValue = "0") int chunk) {
-        return getFirmwareCallback(deviceToken, title, version, size, chunk, FirmwareType.SOFTWARE);
+        return getOtaPackageCallback(deviceToken, title, version, size, chunk, OtaPackageType.SOFTWARE);
     }
 
     @RequestMapping(value = "/provision", method = RequestMethod.POST)
@@ -233,17 +241,17 @@ public class DeviceApiController implements TbTransportService {
         return responseWriter;
     }
 
-    private DeferredResult<ResponseEntity> getFirmwareCallback(String deviceToken, String title, String version, int size, int chunk, FirmwareType firmwareType) {
+    private DeferredResult<ResponseEntity> getOtaPackageCallback(String deviceToken, String title, String version, int size, int chunk, OtaPackageType firmwareType) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
-                    TransportProtos.GetFirmwareRequestMsg requestMsg = TransportProtos.GetFirmwareRequestMsg.newBuilder()
+                    TransportProtos.GetOtaPackageRequestMsg requestMsg = TransportProtos.GetOtaPackageRequestMsg.newBuilder()
                             .setTenantIdMSB(sessionInfo.getTenantIdMSB())
                             .setTenantIdLSB(sessionInfo.getTenantIdLSB())
                             .setDeviceIdMSB(sessionInfo.getDeviceIdMSB())
                             .setDeviceIdLSB(sessionInfo.getDeviceIdLSB())
                             .setType(firmwareType.name()).build();
-                    transportContext.getTransportService().process(sessionInfo, requestMsg, new GetFirmwareCallback(responseWriter, title, version, size, chunk));
+                    transportContext.getTransportService().process(sessionInfo, requestMsg, new GetOtaPackageCallback(responseWriter, title, version, size, chunk));
                 }));
         return responseWriter;
     }
@@ -294,14 +302,14 @@ public class DeviceApiController implements TbTransportService {
         }
     }
 
-    private class GetFirmwareCallback implements TransportServiceCallback<TransportProtos.GetFirmwareResponseMsg> {
+    private class GetOtaPackageCallback implements TransportServiceCallback<TransportProtos.GetOtaPackageResponseMsg> {
         private final DeferredResult<ResponseEntity> responseWriter;
         private final String title;
         private final String version;
         private final int chuckSize;
         private final int chuck;
 
-        GetFirmwareCallback(DeferredResult<ResponseEntity> responseWriter, String title, String version, int chuckSize, int chuck) {
+        GetOtaPackageCallback(DeferredResult<ResponseEntity> responseWriter, String title, String version, int chuckSize, int chuck) {
             this.responseWriter = responseWriter;
             this.title = title;
             this.version = version;
@@ -310,17 +318,17 @@ public class DeviceApiController implements TbTransportService {
         }
 
         @Override
-        public void onSuccess(TransportProtos.GetFirmwareResponseMsg firmwareResponseMsg) {
-            if (!TransportProtos.ResponseStatus.SUCCESS.equals(firmwareResponseMsg.getResponseStatus())) {
+        public void onSuccess(TransportProtos.GetOtaPackageResponseMsg otaPackageResponseMsg) {
+            if (!TransportProtos.ResponseStatus.SUCCESS.equals(otaPackageResponseMsg.getResponseStatus())) {
                 responseWriter.setResult(new ResponseEntity<>(HttpStatus.NOT_FOUND));
-            } else if (title.equals(firmwareResponseMsg.getTitle()) && version.equals(firmwareResponseMsg.getVersion())) {
-                String firmwareId = new UUID(firmwareResponseMsg.getFirmwareIdMSB(), firmwareResponseMsg.getFirmwareIdLSB()).toString();
-                ByteArrayResource resource = new ByteArrayResource(transportContext.getFirmwareDataCache().get(firmwareId, chuckSize, chuck));
+            } else if (title.equals(otaPackageResponseMsg.getTitle()) && version.equals(otaPackageResponseMsg.getVersion())) {
+                String otaPackageId = new UUID(otaPackageResponseMsg.getOtaPackageIdMSB(), otaPackageResponseMsg.getOtaPackageIdLSB()).toString();
+                ByteArrayResource resource = new ByteArrayResource(transportContext.getOtaPackageDataCache().get(otaPackageId, chuckSize, chuck));
                 ResponseEntity<ByteArrayResource> response = ResponseEntity.ok()
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + firmwareResponseMsg.getFileName())
-                        .header("x-filename", firmwareResponseMsg.getFileName())
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + otaPackageResponseMsg.getFileName())
+                        .header("x-filename", otaPackageResponseMsg.getFileName())
                         .contentLength(resource.contentLength())
-                        .contentType(parseMediaType(firmwareResponseMsg.getContentType()))
+                        .contentType(parseMediaType(otaPackageResponseMsg.getContentType()))
                         .body(resource);
                 responseWriter.setResult(response);
             } else {
@@ -372,13 +380,12 @@ public class DeviceApiController implements TbTransportService {
         }
     }
 
+    @RequiredArgsConstructor
     private static class HttpSessionListener implements SessionMsgListener {
 
         private final DeferredResult<ResponseEntity> responseWriter;
-
-        HttpSessionListener(DeferredResult<ResponseEntity> responseWriter) {
-            this.responseWriter = responseWriter;
-        }
+        private final TransportService transportService;
+        private final SessionInfoProto sessionInfo;
 
         @Override
         public void onGetAttributesResponse(GetAttributeResponseMsg msg) {
@@ -386,18 +393,22 @@ public class DeviceApiController implements TbTransportService {
         }
 
         @Override
-        public void onAttributeUpdate(AttributeUpdateNotificationMsg msg) {
+        public void onAttributeUpdate(UUID sessionId, AttributeUpdateNotificationMsg msg) {
+            log.trace("[{}] Received attributes update notification to device", sessionId);
             responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg).toString(), HttpStatus.OK));
         }
 
         @Override
-        public void onRemoteSessionCloseCommand(SessionCloseNotificationProto sessionCloseNotification) {
+        public void onRemoteSessionCloseCommand(UUID sessionId, SessionCloseNotificationProto sessionCloseNotification) {
+            log.trace("[{}] Received the remote command to close the session: {}", sessionId, sessionCloseNotification.getMessage());
             responseWriter.setResult(new ResponseEntity<>(HttpStatus.REQUEST_TIMEOUT));
         }
 
         @Override
-        public void onToDeviceRpcRequest(ToDeviceRpcRequestMsg msg) {
+        public void onToDeviceRpcRequest(UUID sessionId, ToDeviceRpcRequestMsg msg) {
+            log.trace("[{}] Received RPC command to device", sessionId);
             responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg, true).toString(), HttpStatus.OK));
+            transportService.process(sessionInfo, msg, false, TransportServiceCallback.EMPTY);
         }
 
         @Override

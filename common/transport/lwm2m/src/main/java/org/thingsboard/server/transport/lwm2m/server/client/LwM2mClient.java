@@ -15,121 +15,125 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.client;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
+import org.eclipse.leshan.core.node.codec.LwM2mValueConverter;
+import org.eclipse.leshan.core.request.ContentFormat;
+import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
-import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
+import org.thingsboard.server.common.data.device.data.PowerMode;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
-import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
-import org.thingsboard.server.transport.lwm2m.server.DefaultLwM2MTransportMsgHandler;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mQueuedRequest;
-import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
+import org.thingsboard.server.transport.lwm2m.config.LwM2mVersion;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.TRANSPORT_DEFAULT_LWM2M_VERSION;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromIdVerToObjectId;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.getVerFromPathIdVerOrId;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LWM2M_OBJECT_VERSION_DEFAULT;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertObjectIdToVersionedId;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.equalsResourceTypeGetSimpleName;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.getVerFromPathIdVerOrId;
 
 @Slf4j
-public class LwM2mClient implements Cloneable {
-    @Getter
-    private String deviceName;
-    @Getter
-    private String deviceProfileName;
-    @Getter
-    private String endpoint;
-    @Getter
-    private String identity;
-    @Getter
-    private SecurityInfo securityInfo;
-    @Getter
-    private UUID deviceId;
-    @Getter
-    private UUID sessionId;
-    @Getter
-    private SessionInfoProto session;
-    @Getter
-    private UUID profileId;
-    @Getter
-    @Setter
-    private volatile LwM2mFirmwareUpdate frUpdate;
-    @Getter
-    @Setter
-    private Registration registration;
+@EqualsAndHashCode(of = {"endpoint"})
+public class LwM2mClient implements Serializable {
 
-    private ValidateDeviceCredentialsResponseMsg credentialsResponse;
+    private static final long serialVersionUID = 8793482946289222623L;
+
+    private final String nodeId;
+    @Getter
+    private final String endpoint;
+
+    private transient Lock lock;
+
     @Getter
     private final Map<String, ResourceValue> resources;
     @Getter
-    private final Map<String, TsKvProto> delayedRequests;
+    private final Map<String, TsKvProto> sharedAttributes;
+
     @Getter
-    private final List<String> pendingReadRequests;
+    private TenantId tenantId;
     @Getter
-    private final Queue<LwM2mQueuedRequest> queuedRequests;
+    private UUID profileId;
     @Getter
-    private boolean init;
+    private UUID deviceId;
     @Getter
     @Setter
-    private volatile boolean updateFw;
+    private LwM2MClientState state;
+    @Getter
+    private SessionInfoProto session;
+    @Getter
+    private PowerMode powerMode;
+    @Getter
+    @Setter
+    private Registration registration;
 
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
     }
 
-    public LwM2mClient(String nodeId, String endpoint, String identity, SecurityInfo securityInfo, ValidateDeviceCredentialsResponseMsg credentialsResponse, UUID profileId, UUID sessionId) {
+    public LwM2mClient(String nodeId, String endpoint) {
+        this.nodeId = nodeId;
         this.endpoint = endpoint;
-        this.identity = identity;
-        this.securityInfo = securityInfo;
-        this.credentialsResponse = credentialsResponse;
-        this.delayedRequests = new ConcurrentHashMap<>();
-        this.pendingReadRequests = new CopyOnWriteArrayList<>();
+        this.sharedAttributes = new ConcurrentHashMap<>();
         this.resources = new ConcurrentHashMap<>();
-        this.profileId = profileId;
-        this.sessionId = sessionId;
-        this.init = false;
-        this.updateFw = false;
-        this.queuedRequests = new ConcurrentLinkedQueue<>();
-        this.frUpdate = new LwM2mFirmwareUpdate();
-        if (this.credentialsResponse != null && this.credentialsResponse.hasDeviceInfo()) {
-            this.session = createSession(nodeId, sessionId, credentialsResponse);
-            this.deviceId = new UUID(session.getDeviceIdMSB(), session.getDeviceIdLSB());
-            this.profileId = new UUID(session.getDeviceProfileIdMSB(), session.getDeviceProfileIdLSB());
-            this.deviceName = session.getDeviceName();
-            this.deviceProfileName = session.getDeviceType();
-        }
+        this.state = LwM2MClientState.CREATED;
+        this.lock = new ReentrantLock();
+    }
+
+    public void init(ValidateDeviceCredentialsResponse credentials, UUID sessionId) {
+        this.session = createSession(nodeId, sessionId, credentials);
+        this.tenantId = new TenantId(new UUID(session.getTenantIdMSB(), session.getTenantIdLSB()));
+        this.deviceId = new UUID(session.getDeviceIdMSB(), session.getDeviceIdLSB());
+        this.profileId = new UUID(session.getDeviceProfileIdMSB(), session.getDeviceProfileIdLSB());
+        this.powerMode = credentials.getDeviceInfo().getPowerMode();
+    }
+
+    public void lock() {
+        lock.lock();
+    }
+
+    public void unlock() {
+        lock.unlock();
     }
 
     public void onDeviceUpdate(Device device, Optional<DeviceProfile> deviceProfileOpt) {
         SessionInfoProto.Builder builder = SessionInfoProto.newBuilder().mergeFrom(session);
         this.deviceId = device.getUuidId();
-        this.deviceName = device.getName();
         builder.setDeviceIdMSB(deviceId.getMostSignificantBits());
         builder.setDeviceIdLSB(deviceId.getLeastSignificantBits());
-        builder.setDeviceName(deviceName);
+        builder.setDeviceName(device.getName());
         deviceProfileOpt.ifPresent(deviceProfile -> updateSession(deviceProfile, builder));
         this.session = builder.build();
+        this.powerMode = ((Lwm2mDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration()).getPowerMode();
     }
 
     public void onDeviceProfileUpdate(DeviceProfile deviceProfile) {
@@ -139,40 +143,49 @@ public class LwM2mClient implements Cloneable {
     }
 
     private void updateSession(DeviceProfile deviceProfile, SessionInfoProto.Builder builder) {
-        this.deviceProfileName = deviceProfile.getName();
         this.profileId = deviceProfile.getUuidId();
         builder.setDeviceProfileIdMSB(profileId.getMostSignificantBits());
         builder.setDeviceProfileIdLSB(profileId.getLeastSignificantBits());
-        builder.setDeviceType(this.deviceProfileName);
+        builder.setDeviceType(deviceProfile.getName());
     }
 
-    private SessionInfoProto createSession(String nodeId, UUID sessionId, ValidateDeviceCredentialsResponseMsg msg) {
+    public void refreshSessionId(String nodeId) {
+        UUID newId = UUID.randomUUID();
+        SessionInfoProto.Builder builder = SessionInfoProto.newBuilder().mergeFrom(session);
+        builder.setNodeId(nodeId);
+        builder.setSessionIdMSB(newId.getMostSignificantBits());
+        builder.setSessionIdLSB(newId.getLeastSignificantBits());
+        this.session = builder.build();
+    }
+
+
+    private SessionInfoProto createSession(String nodeId, UUID sessionId, ValidateDeviceCredentialsResponse msg) {
         return SessionInfoProto.newBuilder()
                 .setNodeId(nodeId)
                 .setSessionIdMSB(sessionId.getMostSignificantBits())
                 .setSessionIdLSB(sessionId.getLeastSignificantBits())
-                .setDeviceIdMSB(msg.getDeviceInfo().getDeviceIdMSB())
-                .setDeviceIdLSB(msg.getDeviceInfo().getDeviceIdLSB())
-                .setTenantIdMSB(msg.getDeviceInfo().getTenantIdMSB())
-                .setTenantIdLSB(msg.getDeviceInfo().getTenantIdLSB())
-                .setCustomerIdMSB(msg.getDeviceInfo().getCustomerIdMSB())
-                .setCustomerIdLSB(msg.getDeviceInfo().getCustomerIdLSB())
+                .setDeviceIdMSB(msg.getDeviceInfo().getDeviceId().getId().getMostSignificantBits())
+                .setDeviceIdLSB(msg.getDeviceInfo().getDeviceId().getId().getLeastSignificantBits())
+                .setTenantIdMSB(msg.getDeviceInfo().getTenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(msg.getDeviceInfo().getTenantId().getId().getLeastSignificantBits())
+                .setCustomerIdMSB(msg.getDeviceInfo().getCustomerId().getId().getMostSignificantBits())
+                .setCustomerIdLSB(msg.getDeviceInfo().getCustomerId().getId().getLeastSignificantBits())
                 .setDeviceName(msg.getDeviceInfo().getDeviceName())
                 .setDeviceType(msg.getDeviceInfo().getDeviceType())
-                .setDeviceProfileIdLSB(msg.getDeviceInfo().getDeviceProfileIdLSB())
-                .setDeviceProfileIdMSB(msg.getDeviceInfo().getDeviceProfileIdMSB())
+                .setDeviceProfileIdMSB(msg.getDeviceInfo().getDeviceProfileId().getId().getMostSignificantBits())
+                .setDeviceProfileIdLSB(msg.getDeviceInfo().getDeviceProfileId().getId().getLeastSignificantBits())
                 .build();
     }
 
-    public boolean saveResourceValue(String pathRez, LwM2mResource rez, LwM2mModelProvider modelProvider) {
-        if (this.resources.get(pathRez) != null && this.resources.get(pathRez).getResourceModel() != null) {
-            this.resources.get(pathRez).setLwM2mResource(rez);
+    public boolean saveResourceValue(String pathRezIdVer, LwM2mResource rez, LwM2mModelProvider modelProvider) {
+        if (this.resources.get(pathRezIdVer) != null && this.resources.get(pathRezIdVer).getResourceModel() != null) {
+            this.resources.get(pathRezIdVer).setLwM2mResource(rez);
             return true;
         } else {
-            LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRez));
+            LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRezIdVer));
             ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
             if (resourceModel != null) {
-                this.resources.put(pathRez, new ResourceValue(rez, resourceModel));
+                this.resources.put(pathRezIdVer, new ResourceValue(rez, resourceModel));
                 return true;
             } else {
                 return false;
@@ -180,50 +193,99 @@ public class LwM2mClient implements Cloneable {
         }
     }
 
+    public Object getResourceValue(String pathRezIdVer, String pathRezId) {
+        String pathRez = pathRezIdVer == null ? convertObjectIdToVersionedId(pathRezId, this.registration) : pathRezIdVer;
+        if (this.resources.get(pathRez) != null) {
+            return this.resources.get(pathRez).getLwM2mResource().getValue();
+        }
+        return null;
+    }
+
+    public Object getResourceNameByRezId(String pathRezIdVer, String pathRezId) {
+        String pathRez = pathRezIdVer == null ? convertObjectIdToVersionedId(pathRezId, this.registration) : pathRezIdVer;
+        if (this.resources.get(pathRez) != null) {
+            return this.resources.get(pathRez).getResourceModel().name;
+        }
+        return null;
+    }
+
+    public String getRezIdByResourceNameAndObjectInstanceId(String resourceName, String pathObjectInstanceIdVer, LwM2mModelProvider modelProvider) {
+        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathObjectInstanceIdVer));
+        if (pathIds.isObjectInstance()) {
+            Set<Integer> rezIds = modelProvider.getObjectModel(registration)
+                    .getObjectModel(pathIds.getObjectId()).resources.entrySet()
+                    .stream()
+                    .filter(map -> resourceName.equals(map.getValue().name))
+                    .map(map -> map.getKey())
+                    .collect(Collectors.toSet());
+            return rezIds.size() > 0 ? String.valueOf(rezIds.stream().findFirst().get()) : null;
+        }
+        return null;
+    }
+
     public ResourceModel getResourceModel(String pathIdVer, LwM2mModelProvider modelProvider) {
-        LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathIdVer));
+        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer));
         String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
         String verRez = getVerFromPathIdVerOrId(pathIdVer);
         return verRez == null || verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
                 .getResourceModel(pathIds.getObjectId(), pathIds.getResourceId()) : null;
     }
 
-    public Collection<LwM2mResource> getNewOneResourceForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
-                                                                  LwM2mValueConverterImpl converter) {
-        LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRezIdVer));
+    public boolean isResourceMultiInstances(String pathIdVer, LwM2mModelProvider modelProvider) {
+        return getResourceModel(pathIdVer, modelProvider).multiple;
+    }
+
+    public ObjectModel getObjectModel(String pathIdVer, LwM2mModelProvider modelProvider) {
+        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer));
+        String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
+        String verRez = getVerFromPathIdVerOrId(pathIdVer);
+        return verRez == null || verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
+                .getObjectModel(pathIds.getObjectId()) : null;
+    }
+
+
+
+    public Collection<LwM2mResource> getNewResourceForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
+                                                               LwM2mValueConverter converter) {
+        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRezIdVer));
         Collection<LwM2mResource> resources = ConcurrentHashMap.newKeySet();
         Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
                 .getObjectModel(pathIds.getObjectId()).resources;
         resourceModels.forEach((resId, resourceModel) -> {
-            if (resId == pathIds.getResourceId()) {
+            if (resId.equals(pathIds.getResourceId())) {
                 resources.add(LwM2mSingleResource.newResource(resId, converter.convertValue(params,
                         equalsResourceTypeGetSimpleName(params), resourceModel.type, pathIds), resourceModel.type));
 
-            }});
+            }
+        });
         return resources;
     }
 
-    public Collection<LwM2mResource> getNewManyResourcesForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
-                                                                  LwM2mValueConverterImpl converter) {
-        LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRezIdVer));
+    public Collection<LwM2mResource> getNewResourcesForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
+                                                                LwM2mValueConverter converter) {
+        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRezIdVer));
         Collection<LwM2mResource> resources = ConcurrentHashMap.newKeySet();
         Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
                 .getObjectModel(pathIds.getObjectId()).resources;
         resourceModels.forEach((resId, resourceModel) -> {
-            if (((ConcurrentHashMap) params).containsKey(String.valueOf(resId))) {
-                Object value = ((ConcurrentHashMap) params).get((String.valueOf(resId)));
+            if (((Map) params).containsKey(String.valueOf(resId))) {
+                Object value = ((Map) params).get((String.valueOf(resId)));
                 resources.add(LwM2mSingleResource.newResource(resId,
                         converter.convertValue(value, equalsResourceTypeGetSimpleName(value), resourceModel.type, pathIds), resourceModel.type));
 
-            }});
+            }
+        });
         return resources;
     }
 
-    public boolean isValidObjectVersion(String path) {
-        LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(path));
+    public void isValidObjectVersion(String path) {
+        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(path));
         String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
         String verRez = getVerFromPathIdVerOrId(path);
-        return verRez == null ? TRANSPORT_DEFAULT_LWM2M_VERSION.equals(verSupportedObject) : verRez.equals(verSupportedObject);
+        if ((verRez != null && !verRez.equals(verSupportedObject)) ||
+                (verRez == null && !LWM2M_OBJECT_VERSION_DEFAULT.equals(verSupportedObject))) {
+            throw new IllegalArgumentException(String.format("Specified resource id %s is not valid version! Must be version: %s", path, verSupportedObject));
+        }
     }
 
     /**
@@ -233,7 +295,7 @@ public class LwM2mClient implements Cloneable {
     public void deleteResources(String pathIdVer, LwM2mModelProvider modelProvider) {
         Set<String> key = getKeysEqualsIdVer(pathIdVer);
         key.forEach(pathRez -> {
-            LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRez));
+            LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRez));
             ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
             if (resourceModel != null) {
                 this.resources.get(pathRez).setResourceModel(resourceModel);
@@ -253,7 +315,7 @@ public class LwM2mClient implements Cloneable {
     }
 
     private void saveResourceModel(String pathRez, LwM2mModelProvider modelProvider) {
-        LwM2mPath pathIds = new LwM2mPath(convertPathFromIdVerToObjectId(pathRez));
+        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRez));
         ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
         this.resources.get(pathRez).setResourceModel(resourceModel);
     }
@@ -265,14 +327,17 @@ public class LwM2mClient implements Cloneable {
                 .collect(Collectors.toSet());
     }
 
-    public void initReadValue(DefaultLwM2MTransportMsgHandler serviceImpl, String path) {
-        if (path != null) {
-            this.pendingReadRequests.remove(path);
+    public ContentFormat getDefaultContentFormat() {
+        if (registration == null) {
+            return ContentFormat.DEFAULT;
+        } else {
+            return LwM2mVersion.fromVersionStr(registration.getLwM2mVersion()).getContentFormat();
         }
-        if (this.pendingReadRequests.size() == 0) {
-            this.init = true;
-            serviceImpl.putDelayedUpdateResourcesThingsboard(this);
-        }
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        this.lock = new ReentrantLock();
     }
 
 }

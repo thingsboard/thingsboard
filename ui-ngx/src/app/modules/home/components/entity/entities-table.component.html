@@ -163,8 +163,34 @@
                         *matCellDef="let entity; let row = index"
                         [matTooltip]="cellTooltip(entity, column, row)"
                         matTooltipPosition="above"
-                        [innerHTML]="cellContent(entity, column, row)"
                         [ngStyle]="cellStyle(entity, column, row)">
+                <span [innerHTML]="cellContent(entity, column, row)"></span>
+                <ng-template [ngIf]="column.actionCell">
+                  <ng-container [ngSwitch]="column.actionCell.type">
+                    <ng-template [ngSwitchCase]="cellActionType.COPY_BUTTON">
+                      <tb-copy-button
+                        [disabled]="isLoading$ | async"
+                        [fxShow]="column.actionCell.isEnabled(entity)"
+                        [copyText]="column.actionCell.onAction(null, entity)"
+                        tooltipText="{{ column.actionCell.nameFunction ? column.actionCell.nameFunction(entity) : column.actionCell.name }}"
+                        tooltipPosition="above"
+                        [icon]="column.actionCell.icon"
+                        [mdiIcon]="column.actionCell.mdiIcon" [style]="column.actionCell.style">
+                      </tb-copy-button>
+                    </ng-template>
+                    <ng-template ngSwitchDefault>
+                      <button mat-icon-button [disabled]="isLoading$ | async"
+                              [fxShow]="column.actionCell.isEnabled(entity)"
+                              matTooltip="{{ column.actionCell.nameFunction ? column.actionCell.nameFunction(entity) : column.actionCell.name }}"
+                              matTooltipPosition="above"
+                              (click)="column.actionCell.onAction($event, entity)">
+                        <mat-icon [svgIcon]="column.actionCell.mdiIcon" [ngStyle]="column.actionCell.style">
+                          {{column.actionCell.icon}}
+                        </mat-icon>
+                      </button>
+                    </ng-template>
+                  </ng-container>
+                </ng-template>
               </mat-cell>
             </ng-container>
             <ng-container [matColumnDef]="column.key" *ngFor="let column of actionColumns; trackBy: trackByColumnKey;">

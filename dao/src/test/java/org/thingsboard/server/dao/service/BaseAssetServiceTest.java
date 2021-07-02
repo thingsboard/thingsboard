@@ -632,4 +632,25 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
         customerService.deleteCustomer(tenantId, customerId);
     }
 
+    @Test
+    public void testCleanCacheIfAssetRenamed() {
+        String assetNameBeforeRename = RandomStringUtils.randomAlphanumeric(15);
+        String assetNameAfterRename = RandomStringUtils.randomAlphanumeric(15);
+
+        Asset asset = new Asset();
+        asset.setTenantId(tenantId);
+        asset.setName(assetNameBeforeRename);
+        asset.setType("default");
+        assetService.saveAsset(asset);
+
+        Asset savedAsset = assetService.findAssetByTenantIdAndName(tenantId, assetNameBeforeRename);
+
+        savedAsset.setName(assetNameAfterRename);
+        assetService.saveAsset(savedAsset);
+
+        Asset renamedAsset = assetService.findAssetByTenantIdAndName(tenantId, assetNameBeforeRename);
+
+        Assert.assertNull("Can't find asset by name in cache if it was renamed", renamedAsset);
+        assetService.deleteAsset(tenantId, savedAsset.getId());
+    }
 }

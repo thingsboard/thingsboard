@@ -14,30 +14,56 @@
 /// limitations under the License.
 ///
 
-import {Component, forwardRef, Input, OnInit} from '@angular/core';
-import {ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators} from '@angular/forms';
-import {Store} from '@ngrx/store';
-import {AppState} from '@app/core/core.state';
-import {coerceBooleanProperty} from '@angular/cdk/coercion';
+import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import {
+  ControlValueAccessor,
+  FormBuilder,
+  FormGroup,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  ValidationErrors,
+  Validator,
+  Validators
+} from '@angular/forms';
+import { Store } from '@ngrx/store';
+import { AppState } from '@app/core/core.state';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   DeviceTransportConfiguration,
   DeviceTransportType,
-  SnmpDeviceTransportConfiguration
+  SnmpAuthenticationProtocol,
+  SnmpAuthenticationProtocolTranslationMap,
+  SnmpDeviceProtocolVersion,
+  SnmpDeviceTransportConfiguration,
+  SnmpPrivacyProtocol,
+  SnmpPrivacyProtocolTranslationMap
 } from '@shared/models/device.models';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-snmp-device-transport-configuration',
   templateUrl: './snmp-device-transport-configuration.component.html',
   styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => SnmpDeviceTransportConfigurationComponent),
-    multi: true
-  }]
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => SnmpDeviceTransportConfigurationComponent),
+      multi: true
+    }, {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => SnmpDeviceTransportConfigurationComponent),
+      multi: true
+    }]
 })
-export class SnmpDeviceTransportConfigurationComponent implements ControlValueAccessor, OnInit {
+export class SnmpDeviceTransportConfigurationComponent implements ControlValueAccessor, OnInit, Validator {
 
   snmpDeviceTransportConfigurationFormGroup: FormGroup;
+
+  snmpDeviceProtocolVersions = Object.values(SnmpDeviceProtocolVersion);
+  snmpAuthenticationProtocols = Object.values(SnmpAuthenticationProtocol);
+  snmpAuthenticationProtocolTranslation = SnmpAuthenticationProtocolTranslationMap;
+  snmpPrivacyProtocols = Object.values(SnmpPrivacyProtocol);
+  snmpPrivacyProtocolTranslation = SnmpPrivacyProtocolTranslationMap;
 
   private requiredValue: boolean;
 
@@ -53,8 +79,7 @@ export class SnmpDeviceTransportConfigurationComponent implements ControlValueAc
   @Input()
   disabled: boolean;
 
-  private propagateChange = (v: any) => {
-  };
+  private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
               private fb: FormBuilder) {
@@ -69,11 +94,31 @@ export class SnmpDeviceTransportConfigurationComponent implements ControlValueAc
 
   ngOnInit() {
     this.snmpDeviceTransportConfigurationFormGroup = this.fb.group({
-      configuration: [null, Validators.required]
+      host: ['', [Validators.required, Validators.pattern('(.|\\s)*\\S(.|\\s)*')]],
+      port: [null, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
+      protocolVersion: [SnmpDeviceProtocolVersion.V2C, Validators.required],
+      community: ['public', [Validators.required, Validators.pattern('(.|\\s)*\\S(.|\\s)*')]],
+      username: ['', [Validators.required, Validators.pattern('(.|\\s)*\\S(.|\\s)*')]],
+      securityName: ['public', [Validators.required, Validators.pattern('(.|\\s)*\\S(.|\\s)*')]],
+      contextName: [null],
+      authenticationProtocol: [SnmpAuthenticationProtocol.SHA_512, Validators.required],
+      authenticationPassphrase: ['', [Validators.required, Validators.pattern('(.|\\s)*\\S(.|\\s)*')]],
+      privacyProtocol: [SnmpPrivacyProtocol.DES, Validators.required],
+      privacyPassphrase: ['', [Validators.required, Validators.pattern('(.|\\s)*\\S(.|\\s)*')]],
+      engineId: ['']
+    });
+    this.snmpDeviceTransportConfigurationFormGroup.get('protocolVersion').valueChanges.subscribe((protocol: SnmpDeviceProtocolVersion) => {
+      this.updateDisabledFormValue(protocol);
     });
     this.snmpDeviceTransportConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
+  }
+
+  validate(): ValidationErrors | null {
+    return this.snmpDeviceTransportConfigurationFormGroup.valid ?  null : {
+      snmpDeviceTransportConfiguration: false
+    };
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -86,13 +131,46 @@ export class SnmpDeviceTransportConfigurationComponent implements ControlValueAc
   }
 
   writeValue(value: SnmpDeviceTransportConfiguration | null): void {
-    this.snmpDeviceTransportConfigurationFormGroup.patchValue({configuration: value}, {emitEvent: false});
+    if (isDefinedAndNotNull(value)) {
+      this.snmpDeviceTransportConfigurationFormGroup.patchValue(value, {emitEvent: false});
+      if (this.snmpDeviceTransportConfigurationFormGroup.enabled) {
+        this.updateDisabledFormValue(value.protocolVersion || SnmpDeviceProtocolVersion.V2C);
+      }
+    }
+  }
+
+  isV3protocolVersion(): boolean {
+    return this.snmpDeviceTransportConfigurationFormGroup.get('protocolVersion').value === SnmpDeviceProtocolVersion.V3;
+  }
+
+  private updateDisabledFormValue(protocol: SnmpDeviceProtocolVersion) {
+    if (protocol === SnmpDeviceProtocolVersion.V3) {
+      this.snmpDeviceTransportConfigurationFormGroup.get('community').disable({emitEvent: false});
+      this.snmpDeviceTransportConfigurationFormGroup.get('username').enable({emitEvent: false});
+      this.snmpDeviceTransportConfigurationFormGroup.get('securityName').enable({emitEvent: false});
+      this.snmpDeviceTransportConfigurationFormGroup.get('contextName').enable({emitEvent: false});
+      this.snmpDeviceTransportConfigurationFormGroup.get('authenticationProtocol').enable({emitEvent: false});
+      this.snmpDeviceTransportConfigurationFormGroup.get('authenticationPassphrase').enable({emitEvent: false});
+      this.snmpDeviceTransportConfigurationFormGroup.get('privacyProtocol').enable({emitEvent: false});
+      this.snmpDeviceTransportConfigurationFormGroup.get('privacyPassphrase').enable({emitEvent: false});
+      this.snmpDeviceTransportConfigurationFormGroup.get('engineId').enable({emitEvent: false});
+    } else {
+      this.snmpDeviceTransportConfigurationFormGroup.get('community').enable({emitEvent: false});
+      this.snmpDeviceTransportConfigurationFormGroup.get('username').disable({emitEvent: false});
+      this.snmpDeviceTransportConfigurationFormGroup.get('securityName').disable({emitEvent: false});
+      this.snmpDeviceTransportConfigurationFormGroup.get('contextName').disable({emitEvent: false});
+      this.snmpDeviceTransportConfigurationFormGroup.get('authenticationProtocol').disable({emitEvent: false});
+      this.snmpDeviceTransportConfigurationFormGroup.get('authenticationPassphrase').disable({emitEvent: false});
+      this.snmpDeviceTransportConfigurationFormGroup.get('privacyProtocol').disable({emitEvent: false});
+      this.snmpDeviceTransportConfigurationFormGroup.get('privacyPassphrase').disable({emitEvent: false});
+      this.snmpDeviceTransportConfigurationFormGroup.get('engineId').disable({emitEvent: false});
+    }
   }
 
   private updateModel() {
     let configuration: DeviceTransportConfiguration = null;
     if (this.snmpDeviceTransportConfigurationFormGroup.valid) {
-      configuration = this.snmpDeviceTransportConfigurationFormGroup.getRawValue().configuration;
+      configuration = this.snmpDeviceTransportConfigurationFormGroup.value;
       configuration.type = DeviceTransportType.SNMP;
     }
     this.propagateChange(configuration);

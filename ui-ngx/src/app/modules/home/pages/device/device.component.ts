@@ -34,7 +34,8 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import { TranslateService } from '@ngx-translate/core';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { Subject } from 'rxjs';
-import { FirmwareType } from '@shared/models/firmware.models';
+import { OtaUpdateType } from '@shared/models/ota-package.models';
+import { distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-device',
@@ -47,9 +48,9 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
 
   deviceCredentials$: Subject<DeviceCredentials>;
 
-  deviceScope: 'tenant' | 'customer' | 'customer_user' | 'edge';
+  deviceScope: 'tenant' | 'customer' | 'customer_user' | 'edge' | 'edge_customer_user';
 
-  firmwareTypes = FirmwareType;
+  otaUpdateType = OtaUpdateType;
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
@@ -78,7 +79,7 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
   }
 
   buildForm(entity: DeviceInfo): FormGroup {
-    return this.fb.group(
+    const form = this.fb.group(
       {
         name: [entity ? entity.name : '', [Validators.required]],
         deviceProfileId: [entity ? entity.deviceProfileId : null, [Validators.required]],
@@ -95,6 +96,17 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
         )
       }
     );
+    form.get('deviceProfileId').valueChanges.pipe(
+      distinctUntilChanged((prev, curr) => prev?.id === curr?.id)
+    ).subscribe(profileId => {
+      if (profileId && this.isEdit) {
+        this.entityForm.patchValue({
+          firmwareId: null,
+          softwareId: null
+        }, {emitEvent: false});
+      }
+    });
+    return form;
   }
 
   updateForm(entity: DeviceInfo) {
@@ -156,10 +168,6 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
           this.entityForm.markAsDirty();
         }
       }
-      this.entityForm.patchValue({
-        firmwareId: null,
-        softwareId: null
-      });
     }
   }
 }
