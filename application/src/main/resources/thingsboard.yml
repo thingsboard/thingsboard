@@ -518,7 +518,7 @@ audit-log:
     index_pattern: "${AUDIT_LOG_SINK_INDEX_PATTERN:@{TENANT}_AUDIT_LOG_@{DATE}}"
     # Date format. Details of the pattern could be found here:
     # https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
-    date_format: "${AUDIT_LOG_SINK_DATE_FORMAT:YYYY.MM.DD}"
+    date_format: "${AUDIT_LOG_SINK_DATE_FORMAT:YYYY.MM.dd}"
     scheme_name: "${AUDIT_LOG_SINK_SCHEME_NAME:http}" # http or https
     host: "${AUDIT_LOG_SINK_HOST:localhost}"
     port: "${AUDIT_LOG_SINK_PORT:9200}"
