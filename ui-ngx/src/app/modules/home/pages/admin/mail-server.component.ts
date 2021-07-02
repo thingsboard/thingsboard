@@ -37,6 +37,7 @@ export class MailServerComponent extends PageComponent implements OnInit, HasCon
   mailSettings: FormGroup;
   adminSettings: AdminSettings<MailServerSettings>;
   smtpProtocols = ['smtp', 'smtps'];
+  passwordPresent: boolean;
 
   tlsVersions = ['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'];
 
@@ -56,6 +57,7 @@ export class MailServerComponent extends PageComponent implements OnInit, HasCon
         if (this.adminSettings.jsonValue && isString(this.adminSettings.jsonValue.enableTls)) {
           this.adminSettings.jsonValue.enableTls = (this.adminSettings.jsonValue.enableTls as any) === 'true';
         }
+        this.passwordPresent = adminSettings.jsonValue.passwordPresent;
         this.mailSettings.reset(this.adminSettings.jsonValue);
         this.enableProxyChanged();
       }
