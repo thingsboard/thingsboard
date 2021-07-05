@@ -28,16 +28,18 @@ import io.netty.handler.ssl.SslHandler;
 public class MqttTransportServerInitializer extends ChannelInitializer<SocketChannel> {
 
     private final MqttTransportContext context;
+    private final boolean sslEnabled;
 
-    public MqttTransportServerInitializer(MqttTransportContext context) {
+    public MqttTransportServerInitializer(MqttTransportContext context, boolean sslEnabled) {
         this.context = context;
+        this.sslEnabled = sslEnabled;
     }
 
     @Override
     public void initChannel(SocketChannel ch) {
         ChannelPipeline pipeline = ch.pipeline();
         SslHandler sslHandler = null;
-        if (context.getSslHandlerProvider() != null) {
+        if (sslEnabled && context.getSslHandlerProvider() != null) {
             sslHandler = context.getSslHandlerProvider().getSslHandler();
             pipeline.addLast(sslHandler);
         }

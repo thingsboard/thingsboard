@@ -47,19 +47,11 @@ public class LwM2MTransportBootstrapConfig implements LwM2MSecureServerConfig {
     private Integer securePort;
 
     @Getter
-    @Value("${transport.lwm2m.bootstrap.security.public_x:}")
-    private String publicX;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.security.public_y:}")
-    private String publicY;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.security.private_encoded:}")
-    private String privateEncoded;
-
-    @Getter
-    @Value("${transport.lwm2m.bootstrap.security.alias:}")
+    @Value("${transport.lwm2m.bootstrap.security.key_alias:}")
     private String certificateAlias;
+
+    @Getter
+    @Value("${transport.lwm2m.bootstrap.security.key_password:}")
+    private String certificatePassword;
 
 }

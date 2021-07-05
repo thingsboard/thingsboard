@@ -15,9 +15,8 @@
     limitations under the License.
 
 -->
-<mat-tab-group [ngClass]="{'tb-headless': (widgetType === widgetTypes.static && !displayAdvanced())}"
-               class="tb-widget-config tb-absolute-fill" [(selectedIndex)]="selectedTab">
-  <mat-tab label="{{ 'widget-config.data' | translate }}" [fxShow]="widgetType !== widgetTypes.static">
+<mat-tab-group class="tb-widget-config tb-absolute-fill" [(selectedIndex)]="selectedTab">
+  <mat-tab label="{{ 'widget-config.data' | translate }}" *ngIf="widgetType !== widgetTypes.static">
     <div [formGroup]="dataSettings" class="mat-content mat-padding" fxLayout="column" fxLayoutGap="8px">
       <div *ngIf="widgetType === widgetTypes.timeseries || widgetType === widgetTypes.alarm" fxFlex="100"
            fxLayout.xs="column" fxLayoutGap="8px" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center">
@@ -85,7 +84,6 @@
       </div>
       <mat-expansion-panel class="tb-datasources" *ngIf="widgetType !== widgetTypes.rpc &&
                                   widgetType !== widgetTypes.alarm &&
-                                  widgetType !== widgetTypes.static &&
                                   modelValue?.isDataEnabled" [expanded]="true">
         <mat-expansion-panel-header>
           <mat-panel-title fxLayout="column">

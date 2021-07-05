@@ -99,6 +99,10 @@ transport:
     ssl:
       # Enable/disable SSL support
       enabled: "${MQTT_SSL_ENABLED:false}"
+      # MQTT SSL bind address
+      bind_address: "${MQTT_SSL_BIND_ADDRESS:0.0.0.0}"
+      # MQTT SSL bind port
+      bind_port: "${MQTT_SSL_BIND_PORT:8883}"
       # SSL protocol: See http://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#SSLContext
       protocol: "${MQTT_SSL_PROTOCOL:TLSv1.2}"
       # Path to the key store that holds the SSL certificate

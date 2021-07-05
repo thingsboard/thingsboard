@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.edge.exception.EdgeConnectionException;
+import org.thingsboard.server.common.data.ResourceUtils;
 import org.thingsboard.server.gen.edge.ConnectRequestMsg;
 import org.thingsboard.server.gen.edge.ConnectResponseCode;
 import org.thingsboard.server.gen.edge.ConnectResponseMsg;
@@ -79,8 +80,8 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                 .keepAliveTime(keepAliveTimeSec, TimeUnit.SECONDS);
         if (sslEnabled) {
             try {
-                builder.sslContext(GrpcSslContexts.forClient().trustManager(new File(Resources.getResource(certResource).toURI())).build());
-            } catch (URISyntaxException | SSLException e) {
+                builder.sslContext(GrpcSslContexts.forClient().trustManager(ResourceUtils.getInputStream(this, certResource)).build());
+            } catch (SSLException e) {
                 log.error("Failed to initialize channel!", e);
                 throw new RuntimeException(e);
             }

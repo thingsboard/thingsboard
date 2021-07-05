@@ -18,7 +18,8 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
-import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
+
+import java.util.Arrays;
 
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
 
@@ -26,18 +27,26 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.L
 public abstract class TbLwM2MTargetedCallback<R, T> extends AbstractTbLwM2MRequestCallback<R, T> {
 
     protected final String versionedId;
+    protected final String[] versionedIds;
 
     public TbLwM2MTargetedCallback(LwM2MTelemetryLogService logService, LwM2mClient client, String versionedId) {
         super(logService, client);
         this.versionedId = versionedId;
+        this.versionedIds = null;
+    }
+
+    public TbLwM2MTargetedCallback(LwM2MTelemetryLogService logService, LwM2mClient client, String[] versionedIds) {
+        super(logService, client);
+        this.versionedId = null;
+        this.versionedIds = versionedIds;
     }
 
     @Override
     public void onSuccess(R request, T response) {
         //TODO convert camelCase to "camel case" using .split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")
         String requestName = request.getClass().getSimpleName();
-        log.trace("[{}] {} [{}] successful: {}", client.getEndpoint(), requestName, versionedId, response);
-        logService.log(client, String.format("[%s]: %s [%s] successful. Result: [%s]", LOG_LWM2M_INFO, requestName, versionedId, response));
+        log.trace("[{}] {} [{}] successful: {}", client.getEndpoint(), requestName, versionedId != null ? versionedId : versionedIds, response);
+        logService.log(client, String.format("[%s]: %s [%s] successful. Result: [%s]", LOG_LWM2M_INFO, requestName, versionedId != null ? versionedId : Arrays.toString(versionedIds), response));
     }
 
 }

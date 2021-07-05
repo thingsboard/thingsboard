@@ -52,7 +52,7 @@ public class MqttTransportContext extends TransportContext {
     private Integer maxPayloadSize;
 
     @Getter
-    @Value("${transport.mqtt.netty.skip_validity_check_for_client_cert:false}")
+    @Value("${transport.mqtt.ssl.skip_validity_check_for_client_cert:false}")
     private boolean skipValidityCheckForClientCert;
 
     @Getter

@@ -23,37 +23,41 @@ import lombok.Getter;
 public enum LwM2mOperationType {
 
     READ(0, "Read", true),
-    DISCOVER(1, "Discover", true),
-    DISCOVER_ALL(2, "DiscoverAll", false),
-    OBSERVE_READ_ALL(3, "ObserveReadAll", false),
+    READ_COMPOSITE(1, "ReadComposite", false, true),
+    DISCOVER(2, "Discover", true),
+    DISCOVER_ALL(3, "DiscoverAll", false),
+    OBSERVE_READ_ALL(4, "ObserveReadAll", false),
 
-    OBSERVE(4, "Observe", true),
-    OBSERVE_CANCEL(5, "ObserveCancel", true),
-    OBSERVE_CANCEL_ALL(6, "ObserveCancelAll", false),
-    EXECUTE(7, "Execute", true),
+    OBSERVE(5, "Observe", true),
+    OBSERVE_COMPOSITE(6, "ObserveComposite", false, true),
+    OBSERVE_CANCEL(7, "ObserveCancel", true),
+    OBSERVE_COMPOSITE_CANCEL(8, "ObserveCompositeCancel", false, true),
+    OBSERVE_CANCEL_ALL(9, "ObserveCancelAll", false),
+    EXECUTE(10, "Execute", true),
     /**
      * Replaces the Object Instance or the Resource(s) with the new value provided in the “Write” operation. (see
      * section 5.3.3 of the LW M2M spec).
      * if all resources are to be replaced
      */
-    WRITE_REPLACE(8, "WriteReplace", true),
+    WRITE_REPLACE(11, "WriteReplace", true),
 
     /**
      * Adds or updates Resources provided in the new value and leaves other existing Resources unchanged. (see section
      * 5.3.3 of the LW M2M spec).
      * if this is a partial update request
      */
-    WRITE_UPDATE(9, "WriteUpdate", true),
-    WRITE_ATTRIBUTES(10, "WriteAttributes", true),
-    DELETE(11, "Delete", true),
+    WRITE_UPDATE(12, "WriteUpdate", true),
+    WRITE_COMPOSITE(14, "WriteComposite", false, true),
+    WRITE_ATTRIBUTES(15, "WriteAttributes", true),
+    DELETE(16, "Delete", true),
 
     // only for RPC
-    FW_UPDATE(12, "FirmwareUpdate", false);
+    FW_UPDATE(17, "FirmwareUpdate", false);
 
-//        FW_READ_INFO(12, "FirmwareReadInfo"),
-//        SW_READ_INFO(15, "SoftwareReadInfo"),
-//        SW_UPDATE(16, "SoftwareUpdate"),
-//        SW_UNINSTALL(18, "SoftwareUninstall");
+//        FW_READ_INFO(18, "FirmwareReadInfo"),
+//        SW_READ_INFO(19, "SoftwareReadInfo"),
+//        SW_UPDATE(20, "SoftwareUpdate"),
+//        SW_UNINSTALL(21, "SoftwareUninstall");
 
     @Getter
     private final int code;
@@ -62,10 +66,21 @@ public enum LwM2mOperationType {
     @Getter
     private final boolean hasObjectId;
 
+    @Getter
+    private final boolean composite;
+
     LwM2mOperationType(int code, String type, boolean hasObjectId) {
+        this(code, type, hasObjectId, false);
+    }
+
+    LwM2mOperationType(int code, String type, boolean hasObjectId, boolean composite) {
         this.code = code;
         this.type = type;
         this.hasObjectId = hasObjectId;
+        this.composite = composite;
+        if(hasObjectId && composite){
+            throw new IllegalArgumentException("Can't set both Composite and hasObjectId for the same operation!");
+        }
     }
 
     public static LwM2mOperationType fromType(String type) {

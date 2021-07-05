@@ -62,7 +62,7 @@ public class TbLwM2MAuthorizer implements Authorizer {
             try {
                 expectedSecurityInfo = securityStore.getByEndpoint(registration.getEndpoint());
             } catch (LwM2MAuthException e) {
-                log.warn("Registration failed: FORBIDDEN, endpointId: [{}]", registration.getEndpoint());
+                log.info("Registration failed: FORBIDDEN, endpointId: [{}]", registration.getEndpoint());
                 return null;
             }
         }

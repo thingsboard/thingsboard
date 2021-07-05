@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCred
 import static org.eclipse.leshan.client.object.Security.rpk;
 
 public class RpkLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
+
     @Test
     public void testConnectWithRPKAndObserveTelemetry() throws Exception {
         RPKClientCredentials rpkClientCredentials = new RPKClientCredentials();
