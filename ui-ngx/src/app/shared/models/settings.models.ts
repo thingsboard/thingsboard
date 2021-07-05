@@ -40,6 +40,7 @@ export interface MailServerSettings {
   proxyPort: number;
   proxyUser: string;
   proxyPassword: string;
+  passwordPresent: boolean;
 }
 
 export interface GeneralSettings {
