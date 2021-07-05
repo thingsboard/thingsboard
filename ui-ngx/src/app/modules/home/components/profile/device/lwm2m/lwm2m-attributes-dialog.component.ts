@@ -34,7 +34,7 @@ export interface Lwm2mAttributesDialogData {
 @Component({
   selector: 'tb-lwm2m-attributes-dialog',
   templateUrl: './lwm2m-attributes-dialog.component.html',
-  styleUrls: ['./lwm2m-attributes.component.scss'],
+  styleUrls: [],
   providers: [{provide: ErrorStateMatcher, useExisting: Lwm2mAttributesDialogComponent}],
 })
 export class Lwm2mAttributesDialogComponent

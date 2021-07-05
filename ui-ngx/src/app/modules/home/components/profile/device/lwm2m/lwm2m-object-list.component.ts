@@ -28,7 +28,7 @@ import {
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { Observable } from 'rxjs';
 import { distinctUntilChanged, filter, mergeMap, share, tap } from 'rxjs/operators';
-import { ModelValue, ObjectLwM2M, PAGE_SIZE_LIMIT } from './lwm2m-profile-config.models';
+import { ObjectLwM2M, PAGE_SIZE_LIMIT } from './lwm2m-profile-config.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { Direction } from '@shared/models/page/sort-order';
 import { isDefined, isDefinedAndNotNull, isString } from '@core/utils';
@@ -54,7 +54,6 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
 
   private requiredValue: boolean;
   private dirty = false;
-  private modelValue: Array<string> = [];
 
   lwm2mListFormGroup: FormGroup;
   objectsList: Array<ObjectLwM2M> = [];
@@ -92,7 +91,7 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
     this.lwm2mListFormGroup.valueChanges.subscribe((value) => {
       let formValue = null;
       if (this.lwm2mListFormGroup.valid) {
-        formValue = value;
+        formValue = value.objectsList;
       }
       this.propagateChange(formValue);
     });
@@ -139,15 +138,13 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
     }
   }
 
-  writeValue(value: ModelValue): void {
+  writeValue(value: ObjectLwM2M[]): void {
     this.searchText = '';
     if (isDefinedAndNotNull(value)) {
-      if (Array.isArray(value.objectIds)) {
-        this.modelValue = value.objectIds;
-        this.objectsList = value.objectsList;
+      if (Array.isArray(value)) {
+        this.objectsList = value;
       } else {
         this.objectsList = [];
-        this.modelValue = [];
       }
       this.lwm2mListFormGroup.patchValue({objectsList: this.objectsList}, {emitEvent: false});
       this.dirty = false;
@@ -161,8 +158,7 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
   }
 
   private add(object: ObjectLwM2M): void {
-    if (isDefinedAndNotNull(this.modelValue) && this.modelValue.indexOf(object.keyId) === -1) {
-      this.modelValue.push(object.keyId);
+    if (isDefinedAndNotNull(this.objectsList) && this.objectsList.findIndex(item => item.keyId === object.keyId) === -1) {
       this.objectsList.push(object);
       this.lwm2mListFormGroup.get('objectsList').setValue(this.objectsList);
       this.addList.next(this.objectsList);
@@ -171,12 +167,10 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
   }
 
   remove = (object: ObjectLwM2M): void => {
-    let index = this.objectsList.indexOf(object);
+    const index = this.objectsList.indexOf(object);
     if (index >= 0) {
       this.objectsList.splice(index, 1);
       this.lwm2mListFormGroup.get('objectsList').setValue(this.objectsList);
-      index = this.modelValue.indexOf(object.keyId);
-      this.modelValue.splice(index, 1);
       this.removeList.next(object);
       this.clear();
     }

@@ -413,10 +413,7 @@ export const commonMapSettingsSchema =
         },
         'mapPageSize',
         'draggableMarker',
-        {
-            key: 'disableScrollZooming',
-            condition: 'model.provider !== "image-map"'
-        },
+        'disableScrollZooming',
         {
             key: 'latKeyName',
             condition: 'model.provider !== "image-map"'

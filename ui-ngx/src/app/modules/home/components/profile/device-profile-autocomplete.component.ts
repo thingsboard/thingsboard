@@ -20,16 +20,18 @@ import {
   EventEmitter,
   forwardRef,
   Input,
-  NgZone, OnChanges,
+  NgZone,
+  OnChanges,
   OnInit,
-  Output, SimpleChanges,
+  Output,
+  SimpleChanges,
   ViewChild
 } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
-import { map, mergeMap, share, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -44,6 +46,7 @@ import { DeviceProfileService } from '@core/http/device-profile.service';
 import { DeviceProfileDialogComponent, DeviceProfileDialogData } from './device-profile-dialog.component';
 import { MatAutocomplete } from '@angular/material/autocomplete';
 import { AddDeviceProfileDialogComponent, AddDeviceProfileDialogData } from './add-device-profile-dialog.component';
+import { emptyPageData } from "@shared/models/page/page-data";
 
 @Component({
   selector: 'tb-device-profile-autocomplete',
@@ -143,6 +146,7 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
   ngOnInit() {
     this.filteredDeviceProfiles = this.selectDeviceProfileFormGroup.get('deviceProfile').valueChanges
       .pipe(
+        debounceTime(150),
         tap((value: DeviceProfileInfo | string) => {
           let modelValue: DeviceProfileInfo | null;
           if (typeof value === 'string' || !value) {
@@ -169,7 +173,8 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
             return '';
           }
         }),
-        mergeMap(name => this.fetchDeviceProfiles(name) ),
+        distinctUntilChanged(),
+        switchMap(name => this.fetchDeviceProfiles(name)),
         share()
       );
   }
@@ -289,6 +294,7 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
       direction: Direction.ASC
     });
     return this.deviceProfileService.getDeviceProfileInfos(pageLink, this.transportType, {ignoreLoading: true}).pipe(
+      catchError(() => of(emptyPageData<DeviceProfileInfo>())),
       map(pageData => {
         let data = pageData.data;
         if (this.displayAllOnEmpty) {

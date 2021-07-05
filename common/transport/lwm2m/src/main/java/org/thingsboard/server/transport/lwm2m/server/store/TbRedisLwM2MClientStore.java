@@ -16,8 +16,16 @@
 package org.thingsboard.server.transport.lwm2m.server.store;
 
 import org.nustaq.serialization.FSTConfiguration;
+import org.springframework.data.redis.connection.RedisClusterConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.ScanOptions;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class TbRedisLwM2MClientStore implements TbLwM2MClientStore {
 
@@ -39,6 +47,30 @@ public class TbRedisLwM2MClientStore implements TbLwM2MClientStore {
             } else {
                 return (LwM2mClient) serializer.asObject(data);
             }
+        }
+    }
+
+    @Override
+    public Set<LwM2mClient> getAll() {
+        try (var connection = connectionFactory.getConnection()) {
+            Set<LwM2mClient> clients = new HashSet<>();
+            ScanOptions scanOptions = ScanOptions.scanOptions().count(100).match(CLIENT_EP + "*").build();
+            List<Cursor<byte[]>> scans = new ArrayList<>();
+            if (connection instanceof RedisClusterConnection) {
+                ((RedisClusterConnection) connection).clusterGetNodes().forEach(node -> {
+                    scans.add(((RedisClusterConnection) connection).scan(node, scanOptions));
+                });
+            } else {
+                scans.add(connection.scan(scanOptions));
+            }
+
+            scans.forEach(scan -> {
+                scan.forEachRemaining(key -> {
+                    byte[] element = connection.get(key);
+                    clients.add((LwM2mClient) serializer.asObject(element));
+                });
+            });
+            return clients;
         }
     }
 

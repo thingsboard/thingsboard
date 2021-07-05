@@ -13,15 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.client;
+:host{
+  .tb-panel {
+    min-height: 42px;
 
-import lombok.Data;
+    .tb-panel-title {
+      font-weight: 500;
+    }
+  }
 
-import java.util.UUID;
+  .instance-row {
+    mat-expansion-panel-header {
+      color: inherit;
+    }
+  }
 
-@Data
-public class LwM2mSoftwareUpdate {
-    private volatile String clientSwVersion;
-    private volatile String currentSwVersion;
-    private volatile UUID currentSwId;
+  .mat-expansion-panel-header-title {
+    margin-right: 0;
+  }
 }

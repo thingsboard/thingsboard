@@ -528,7 +528,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         deviceId: device.id.id,
-        isReadOnly: this.config.componentsData.deviceScope === 'customer_user'
+        isReadOnly: this.config.componentsData.deviceScope === 'customer_user' || this.config.componentsData.deviceScope === 'edge_customer_user'
       }
     }).afterClosed().subscribe(deviceCredentials => {
       if (isDefinedAndNotNull(deviceCredentials)) {

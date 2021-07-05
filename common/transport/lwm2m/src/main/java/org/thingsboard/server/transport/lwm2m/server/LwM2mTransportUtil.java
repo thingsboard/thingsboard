@@ -16,9 +16,6 @@
 package org.thingsboard.server.transport.lwm2m.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.leshan.core.attributes.Attribute;
@@ -26,9 +23,6 @@ import org.eclipse.leshan.core.attributes.AttributeSet;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
-import org.eclipse.leshan.core.node.LwM2mNode;
-import org.eclipse.leshan.core.node.LwM2mObject;
-import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
@@ -37,13 +31,12 @@ import org.eclipse.leshan.core.request.SimpleDownlinkRequest;
 import org.eclipse.leshan.core.request.WriteAttributesRequest;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.registration.Registration;
-import org.nustaq.serialization.FSTConfiguration;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.data.lwm2m.BootstrapConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
-import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.transport.lwm2m.config.LwM2mVersion;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.ResourceValue;
 import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateResult;
@@ -55,7 +48,6 @@ import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMs
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -80,12 +72,12 @@ import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPA
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_RESULT_ID;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_STATE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SW_RESULT_ID;
-import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SW_UPDATE_STATE_ID;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SW_STATE_ID;
 
 @Slf4j
 public class LwM2mTransportUtil {
 
-    public static final String LWM2M_VERSION_DEFAULT = "1.0";
+    public static final String LWM2M_OBJECT_VERSION_DEFAULT = "1.0";
 
     public static final String LOG_LWM2M_TELEMETRY = "transportLog";
     public static final String LOG_LWM2M_INFO = "info";
@@ -154,7 +146,7 @@ public class LwM2mTransportUtil {
                 lwM2mOtaConvert.setCurrentType(STRING);
                 lwM2mOtaConvert.setValue(FirmwareUpdateResult.fromUpdateResultFwByCode(((Long) value).intValue()).getType());
                 return lwM2mOtaConvert;
-            } else if (SW_UPDATE_STATE_ID.equals(path)) {
+            } else if (SW_STATE_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
                 lwM2mOtaConvert.setValue(SoftwareUpdateState.fromUpdateStateSwByCode(((Long) value).intValue()).type);
                 return lwM2mOtaConvert;
@@ -174,7 +166,7 @@ public class LwM2mTransportUtil {
         if (transportConfiguration.getType().equals(DeviceTransportType.LWM2M)) {
             return (Lwm2mDeviceProfileTransportConfiguration) transportConfiguration;
         } else {
-            log.warn("[{}] Received profile with invalid transport configuration: {}", deviceProfile.getId(), deviceProfile.getProfileData().getTransportConfiguration());
+            log.info("[{}] Received profile with invalid transport configuration: {}", deviceProfile.getId(), deviceProfile.getProfileData().getTransportConfiguration());
             throw new IllegalArgumentException("Received profile with invalid transport configuration: " + transportConfiguration.getType());
         }
     }
@@ -196,7 +188,7 @@ public class LwM2mTransportUtil {
                 return pathIdVer;
             }
         } catch (Exception e) {
-            log.warn("Issue converting path with version [{}] to path without version: ", pathIdVer, e);
+            log.debug("Issue converting path with version [{}] to path without version: ", pathIdVer, e);
             throw new RuntimeException(e);
         }
     }
@@ -234,7 +226,7 @@ public class LwM2mTransportUtil {
 
     public static String convertObjectIdToVersionedId(String path, Registration registration) {
         String ver = registration.getSupportedObject().get(new LwM2mPath(path).getObjectId());
-        ver = ver != null ? ver : LWM2M_VERSION_DEFAULT;
+        ver = ver != null ? ver : LwM2mVersion.VERSION_1_0.getVersion().toString();
         try {
             String[] keyArray = path.split(LWM2M_SEPARATOR_PATH);
             if (keyArray.length > 1) {
@@ -381,4 +373,81 @@ public class LwM2mTransportUtil {
         }
         return lwm2mResourceValue;
     }
+
+    public static Optional<String> contentToString(Object content) {
+        try {
+            String value = null;
+            LwM2mResource resource = null;
+            String key = null;
+            if (content instanceof Map) {
+                Map<Object, Object> contentAsMap = (Map<Object, Object>) content;
+                if (contentAsMap.size() == 1) {
+                    for (Map.Entry<Object, Object> kv : contentAsMap.entrySet()) {
+                        if (kv.getValue() instanceof LwM2mResource) {
+                            key = kv.getKey().toString();
+                            resource = (LwM2mResource) kv.getValue();
+                        }
+                    }
+                }
+            } else if (content instanceof LwM2mResource) {
+                resource = (LwM2mResource) content;
+            }
+            if (resource != null && resource.getType() == OPAQUE) {
+                value = opaqueResourceToString(resource, key);
+            }
+            value = value == null ? content.toString() : value;
+            return Optional.of(value);
+        } catch (Exception e) {
+            log.debug("Failed to convert content " + content + " to string", e);
+            return Optional.ofNullable(content != null ? content.toString() : null);
+        }
+    }
+
+    private static String opaqueResourceToString(LwM2mResource resource, String key) {
+        String value = null;
+        StringBuilder builder = new StringBuilder();
+        if (resource instanceof LwM2mSingleResource) {
+            builder.append("LwM2mSingleResource");
+            if (key == null) {
+                builder.append(" id=").append(String.valueOf(resource.getId()));
+            } else {
+                builder.append(" key=").append(key);
+            }
+            builder.append(" value=").append(opaqueToString((byte[]) resource.getValue()));
+            builder.append(" type=").append(OPAQUE.toString());
+            value = builder.toString();
+        } else if (resource instanceof LwM2mMultipleResource) {
+            builder.append("LwM2mMultipleResource");
+            if (key == null) {
+                builder.append(" id=").append(String.valueOf(resource.getId()));
+            } else {
+                builder.append(" key=").append(key);
+            }
+            builder.append(" values={");
+            if (resource.getInstances().size() > 0) {
+                builder.append(multiInstanceOpaqueToString((LwM2mMultipleResource) resource));
+            }
+            builder.append("}");
+            builder.append(" type=").append(OPAQUE.toString());
+            value = builder.toString();
+        }
+        return value;
+    }
+
+    private static String multiInstanceOpaqueToString(LwM2mMultipleResource resource) {
+        StringBuilder builder = new StringBuilder();
+        resource.getInstances().values()
+                .forEach(v -> builder.append(" id=").append(v.getId()).append(" value=").append(Hex.encodeHexString((byte[]) v.getValue())).append(", "));
+        int startInd = builder.lastIndexOf(", ");
+        if (startInd > 0) {
+            builder.delete(startInd, startInd + 2);
+        }
+        return builder.toString();
+    }
+
+    private static String opaqueToString(byte[] value) {
+        String opaque = Hex.encodeHexString(value);
+        return opaque.length() > 1024 ? opaque.substring(0, 1024) : opaque;
+    }
+
 }

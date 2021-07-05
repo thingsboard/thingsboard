@@ -16,9 +16,9 @@
 
 import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Observable } from 'rxjs';
-import { map, mergeMap, startWith, tap } from 'rxjs/operators';
-import { PageData } from '@shared/models/page/page-data';
+import { Observable, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, startWith, switchMap, tap } from 'rxjs/operators';
+import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -88,6 +88,7 @@ export class AliasesEntityAutocompleteComponent implements ControlValueAccessor,
   ngOnInit() {
     this.filteredEntityInfos = this.selectEntityInfoFormGroup.get('entityInfo').valueChanges
       .pipe(
+        debounceTime(150),
         tap(value => {
           let modelValue;
           if (typeof value === 'string' || !value) {
@@ -99,7 +100,8 @@ export class AliasesEntityAutocompleteComponent implements ControlValueAccessor,
         }),
         startWith<string | EntityInfo>(''),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
-        mergeMap(name => this.fetchEntityInfos(name) )
+        distinctUntilChanged(),
+        switchMap(name => this.fetchEntityInfos(name))
       );
   }
 
@@ -142,7 +144,9 @@ export class AliasesEntityAutocompleteComponent implements ControlValueAccessor,
   }
 
   getEntityInfos(searchText: string): Observable<PageData<EntityInfo>> {
-    return this.entityService.findEntityInfosByFilterAndName(this.entityFilter, searchText, {ignoreLoading: true});
+    return this.entityService.findEntityInfosByFilterAndName(this.entityFilter, searchText, {ignoreLoading: true}).pipe(
+      catchError(() => of(emptyPageData<EntityInfo>()))
+    );
   }
 
   clear() {

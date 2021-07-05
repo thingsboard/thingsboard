@@ -71,13 +71,13 @@ public class LwM2mServerListener {
     public final PresenceListener presenceListener = new PresenceListener() {
         @Override
         public void onSleeping(Registration registration) {
-            log.info("onSleeping");
+            log.info("[{}] onSleeping", registration.getEndpoint());
             service.onSleepingDev(registration);
         }
 
         @Override
         public void onAwake(Registration registration) {
-            log.info("onAwake");
+            log.info("[{}] onAwake", registration.getEndpoint());
             service.onAwakeDev(registration);
         }
     };

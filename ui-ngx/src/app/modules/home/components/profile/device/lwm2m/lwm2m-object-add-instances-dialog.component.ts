@@ -23,9 +23,9 @@ import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
 export interface Lwm2mObjectAddInstancesData {
-  instancesIds: Set<number>;
+  instancesId: Set<number>;
   objectName?: string;
-  objectKeyId?: string;
+  objectId?: number;
 }
 
 @Component({
@@ -48,16 +48,15 @@ export class Lwm2mObjectAddInstancesDialogComponent extends DialogComponent<Lwm2
 
   ngOnInit(): void {
     this.instancesFormGroup = this.fb.group({
-      instancesIds: this.data.instancesIds
+      instancesIds: [this.data.instancesId]
     });
   }
 
   cancel(): void {
-    this.dialogRef.close(undefined);
+    this.dialogRef.close(null);
   }
 
   add(): void {
-    this.data.instancesIds = this.instancesFormGroup.get('instancesIds').value;
-    this.dialogRef.close(this.data);
+    this.dialogRef.close(this.instancesFormGroup.get('instancesIds').value);
   }
 }

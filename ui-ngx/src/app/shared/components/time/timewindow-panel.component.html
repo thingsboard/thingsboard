@@ -17,7 +17,7 @@
 -->
 <form [formGroup]="timewindowForm" (ngSubmit)="update()">
   <fieldset [disabled]="(isLoading$ | async)">
-    <div class="mat-content" style="height: 100%;" fxLayout="column">
+    <div class="mat-content" fxLayout="column">
       <mat-tab-group dynamicHeight [ngClass]="{'tb-headless': historyOnly}"
                      (selectedIndexChange)="timewindowForm.markAsDirty()" [(selectedIndex)]="timewindow.selectedTab">
         <mat-tab label="{{ 'timewindow.realtime' | translate }}">

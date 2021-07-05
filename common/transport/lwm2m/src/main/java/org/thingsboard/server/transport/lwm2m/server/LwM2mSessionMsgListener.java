@@ -67,7 +67,7 @@ public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? s
 
     @Override
     public void onToTransportUpdateCredentials(ToTransportUpdateCredentialsProto updateCredentials) {
-        this.handler.onToTransportUpdateCredentials(updateCredentials);
+        this.handler.onToTransportUpdateCredentials(sessionInfo, updateCredentials);
     }
 
     @Override

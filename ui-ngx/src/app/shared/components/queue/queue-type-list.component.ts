@@ -16,8 +16,17 @@
 
 import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Observable } from 'rxjs';
-import { map, mergeMap, publishReplay, refCount, tap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  publishReplay,
+  refCount,
+  switchMap,
+  tap
+} from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -87,11 +96,13 @@ export class QueueTypeListComponent implements ControlValueAccessor, OnInit, Aft
   ngOnInit() {
     this.filteredQueues = this.queueFormGroup.get('queue').valueChanges
       .pipe(
+        debounceTime(150),
+        distinctUntilChanged(),
         tap(value => {
           this.updateView(value);
         }),
         map(value => value ? value : ''),
-        mergeMap(queue => this.fetchQueues(queue) )
+        switchMap(queue => this.fetchQueues(queue) )
       );
   }
 
@@ -138,6 +149,7 @@ export class QueueTypeListComponent implements ControlValueAccessor, OnInit, Aft
   fetchQueues(searchText?: string): Observable<Array<string>> {
     this.searchText = searchText;
     return this.getQueues().pipe(
+      catchError(() => of([])),
       map(queues => {
         const result = queues.filter( queue => {
           return searchText ? queue.toUpperCase().startsWith(searchText.toUpperCase()) : true;
