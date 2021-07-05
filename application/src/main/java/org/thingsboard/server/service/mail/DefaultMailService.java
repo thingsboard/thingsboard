@@ -296,15 +296,6 @@ public class DefaultMailService implements MailService {
         sendMail(mailSender, mailFrom, email, subject, message);
     }
 
-    @Override
-    public void testConnection() {
-        try {
-            mailSender.testConnection();
-        } catch (Exception e) {
-            throw new RuntimeException("Unable to connect to mail server", e);
-        }
-    }
-
     private String toEnabledValueLabel(ApiFeature apiFeature) {
         switch (apiFeature) {
             case DB:

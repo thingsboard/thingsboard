@@ -25,7 +25,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -60,6 +59,8 @@ import ua_parser.Client;
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 @RestController
 @TbCoreComponent
@@ -74,6 +75,7 @@ public class AuthController extends BaseController {
     private final SystemSecurityService systemSecurityService;
     private final AuditLogService auditLogService;
     private final ApplicationEventPublisher eventPublisher;
+    private final Executor executor = Executors.newSingleThreadExecutor();
 
     @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/auth/user", method = RequestMethod.GET)
@@ -160,27 +162,26 @@ public class AuthController extends BaseController {
 
     @RequestMapping(value = "/noauth/resetPasswordByEmail", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public void requestResetPasswordByEmail (
+    public void requestResetPasswordByEmail(
             @RequestBody JsonNode resetPasswordByEmailRequest,
             HttpServletRequest request) throws ThingsboardException {
-        try {
-            mailService.testConnection();
-            String email = resetPasswordByEmailRequest.get("email").asText();
-            UserCredentials userCredentials = userService.requestPasswordReset(TenantId.SYS_TENANT_ID, email);
-            User user = userService.findUserById(TenantId.SYS_TENANT_ID, userCredentials.getUserId());
-            String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
-            String resetUrl = String.format("%s/api/noauth/resetPassword?resetToken=%s", baseUrl,
-                    userCredentials.getResetToken());
+        executor.execute(() -> {
+            try {
+                String email = resetPasswordByEmailRequest.get("email").asText();
+                UserCredentials userCredentials = userService.requestPasswordReset(TenantId.SYS_TENANT_ID, email);
+                User user = userService.findUserById(TenantId.SYS_TENANT_ID, userCredentials.getUserId());
+                String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
+                String resetUrl = String.format("%s/api/noauth/resetPassword?resetToken=%s", baseUrl,
+                        userCredentials.getResetToken());
 
-            mailService.sendResetPasswordEmail(resetUrl, email);
-        } catch (UsernameNotFoundException use) {
-            log.error(use.getMessage());
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+                mailService.sendResetPasswordEmail(resetUrl, email);
+            } catch (Exception e) {
+                log.error("Error occurred: {}", e.getMessage());
+            }
+        });
     }
 
-    @RequestMapping(value = "/noauth/resetPassword", params = { "resetToken" }, method = RequestMethod.GET)
+    @RequestMapping(value = "/noauth/resetPassword", params = {"resetToken"}, method = RequestMethod.GET)
     public ResponseEntity<String> checkResetToken(
             @RequestParam(value = "resetToken") String resetToken) {
         HttpHeaders headers = new HttpHeaders();

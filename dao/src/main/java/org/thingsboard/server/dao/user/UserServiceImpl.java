@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
@@ -199,7 +200,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         }
         UserCredentials userCredentials = userCredentialsDao.findByUserId(tenantId, user.getUuidId());
         if (!userCredentials.isEnabled()) {
-            throw new UsernameNotFoundException(String.format("User credentials already enabled [%s]", email));
+            throw new DisabledException(String.format("User credentials not enabled [%s]", email));
         }
         userCredentials.setResetToken(RandomStringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
         return saveUserCredentials(tenantId, userCredentials);
@@ -366,7 +367,8 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         JsonNode userPasswordHistoryJson;
         if (additionalInfo.has(USER_PASSWORD_HISTORY)) {
             userPasswordHistoryJson = additionalInfo.get(USER_PASSWORD_HISTORY);
-            userPasswordHistoryMap = JacksonUtil.convertValue(userPasswordHistoryJson, new TypeReference<>(){});
+            userPasswordHistoryMap = JacksonUtil.convertValue(userPasswordHistoryJson, new TypeReference<>() {
+            });
         }
         if (userPasswordHistoryMap != null) {
             userPasswordHistoryMap.put(Long.toString(System.currentTimeMillis()), userCredentials.getPassword());

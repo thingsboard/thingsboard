@@ -47,5 +47,4 @@ public interface MailService {
 
     void sendApiFeatureStateEmail(ApiFeature apiFeature, ApiUsageStateValue stateValue, String email, ApiUsageStateMailMessage msg) throws ThingsboardException;
 
-    void testConnection();
 }
