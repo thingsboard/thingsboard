@@ -42,7 +42,7 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
 
     private TenantId tenantId;
     private CustomerId customerId;
-    @Length(field = "type")
+    @Length(fieldName = "type")
     private String type;
     private EntityId originator;
     private AlarmSeverity severity;

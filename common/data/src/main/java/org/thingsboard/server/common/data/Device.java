@@ -40,13 +40,13 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
     private TenantId tenantId;
     private CustomerId customerId;
     @NoXss
-    @Length(field = "name")
+    @Length(fieldName = "name")
     private String name;
     @NoXss
-    @Length(field = "type")
+    @Length(fieldName = "type")
     private String type;
     @NoXss
-    @Length(field = "label")
+    @Length(fieldName = "label")
     private String label;
     private DeviceProfileId deviceProfileId;
     private transient DeviceData deviceData;

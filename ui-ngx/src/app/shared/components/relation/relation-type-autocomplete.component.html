@@ -40,6 +40,6 @@
     {{ 'relation.relation-type-required' | translate }}
   </mat-error>
   <mat-error *ngIf="relationTypeFormGroup.get('relationType').hasError('maxlength')">
-    {{ 'relation.relation-type-too-long' | translate }}
+    {{ 'relation.relation-type-max-length' | translate }}
   </mat-error>
 </mat-form-field>

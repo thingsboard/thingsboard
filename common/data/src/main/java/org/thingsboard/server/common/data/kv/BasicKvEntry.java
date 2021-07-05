@@ -22,7 +22,7 @@ import java.util.Optional;
 
 public abstract class BasicKvEntry implements KvEntry {
 
-    @Length(field = "attribute key")
+    @Length(fieldName = "attribute key")
     private final String key;
 
     protected BasicKvEntry(String key) {

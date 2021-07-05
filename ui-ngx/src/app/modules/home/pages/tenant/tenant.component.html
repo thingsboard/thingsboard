@@ -49,7 +49,7 @@
           {{ 'tenant.title-required' | translate }}
         </mat-error>
         <mat-error *ngIf="entityForm.get('title').hasError('maxlength')">
-          {{ 'tenant.title-too-long' | translate }}
+          {{ 'tenant.title-max-length' | translate }}
         </mat-error>
       </mat-form-field>
       <tb-tenant-profile-autocomplete

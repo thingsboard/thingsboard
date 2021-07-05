@@ -30,7 +30,7 @@ public class TbResource extends TbResourceInfo {
     private static final long serialVersionUID = 7379609705527272306L;
 
     @NoXss
-    @Length(field = "file name")
+    @Length(fieldName = "file name")
     private String fileName;
 
     private String data;

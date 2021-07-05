@@ -28,10 +28,10 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
 
     private static final long serialVersionUID = 8057243243859922101L;
 
-    @Length(field = "title")
+    @Length(fieldName = "title")
     @NoXss
     private String title;
-    @Length(field = "region")
+    @Length(fieldName = "region")
     @NoXss
     private String region;
     private TenantProfileId tenantProfileId;

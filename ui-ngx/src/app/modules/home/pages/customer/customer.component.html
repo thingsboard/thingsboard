@@ -74,7 +74,7 @@
           {{ 'customer.title-required' | translate }}
         </mat-error>
         <mat-error *ngIf="entityForm.get('title').hasError('maxlength')">
-          {{ 'customer.title-too-long' | translate }}
+          {{ 'customer.title-max-length' | translate }}
         </mat-error>
       </mat-form-field>
       <div formGroupName="additionalInfo" fxLayout="column">

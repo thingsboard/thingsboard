@@ -30,7 +30,7 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
 
     private TenantId tenantId;
     @NoXss
-    @Length(field = "title")
+    @Length(fieldName = "title")
     private String title;
     private String image;
     @Valid

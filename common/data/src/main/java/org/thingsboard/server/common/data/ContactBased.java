@@ -25,23 +25,23 @@ public abstract class ContactBased<I extends UUIDBased> extends SearchTextBasedW
 
     private static final long serialVersionUID = 5047448057830660988L;
 
-    @Length(field = "country")
+    @Length(fieldName = "country")
     @NoXss
     protected String country;
-    @Length(field = "state")
+    @Length(fieldName = "state")
     @NoXss
     protected String state;
-    @Length(field = "city")
+    @Length(fieldName = "city")
     @NoXss
     protected String city;
     @NoXss
     protected String address;
     @NoXss
     protected String address2;
-    @Length(field = "zip or postal code")
+    @Length(fieldName = "zip or postal code")
     @NoXss
     protected String zip;
-    @Length(field = "phone")
+    @Length(fieldName = "phone")
     @NoXss
     protected String phone;
     @NoXss

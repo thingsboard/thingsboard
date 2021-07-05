@@ -26,9 +26,9 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @Constraint(validatedBy = {})
 public @interface Length {
-    String message() default "length of {field} should be less than {max}";
+    String message() default "length of {fieldName} should be equals or less than {max}";
 
-    String field();
+    String fieldName();
 
     int max() default 255;
 

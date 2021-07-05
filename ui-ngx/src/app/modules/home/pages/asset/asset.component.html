@@ -77,7 +77,7 @@
           {{ 'asset.name-required' | translate }}
         </mat-error>
         <mat-error *ngIf="entityForm.get('name').hasError('maxlength')">
-          {{ 'asset.name-too-long' | translate }}
+          {{ 'asset.name-max-length' | translate }}
         </mat-error>
       </mat-form-field>
       <tb-entity-subtype-autocomplete
@@ -90,7 +90,7 @@
         <mat-label translate>asset.label</mat-label>
         <input matInput formControlName="label">
         <mat-error *ngIf="entityForm.get('label').hasError('maxlength')">
-          {{ 'asset.label-too-long' | translate }}
+          {{ 'asset.label-max-length' | translate }}
         </mat-error>
       </mat-form-field>
       <div formGroupName="additionalInfo">

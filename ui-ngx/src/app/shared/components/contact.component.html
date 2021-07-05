@@ -29,14 +29,14 @@
       <mat-label translate>contact.city</mat-label>
       <input matInput formControlName="city">
       <mat-error *ngIf="parentForm.get('city').hasError('maxlength')">
-        {{ 'contact.city-too-long' | translate }}
+        {{ 'contact.city-max-length' | translate }}
       </mat-error>
     </mat-form-field>
     <mat-form-field class="mat-block">
       <mat-label translate>contact.state</mat-label>
       <input matInput formControlName="state">
       <mat-error *ngIf="parentForm.get('state').hasError('maxlength')">
-        {{ 'contact.state-too-long' | translate }}
+        {{ 'contact.state-max-length' | translate }}
       </mat-error>
     </mat-form-field>
     <mat-form-field class="mat-block">
@@ -59,7 +59,7 @@
     <mat-label translate>contact.phone</mat-label>
     <input matInput formControlName="phone">
     <mat-error *ngIf="parentForm.get('phone').hasError('maxlength')">
-      {{ 'contact.phone-too-long' | translate }}
+      {{ 'contact.phone-max-length' | translate }}
     </mat-error>
   </mat-form-field>
   <mat-form-field class="mat-block">

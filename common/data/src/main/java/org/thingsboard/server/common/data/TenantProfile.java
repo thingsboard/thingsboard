@@ -38,7 +38,7 @@ import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalIn
 public class TenantProfile extends SearchTextBased<TenantProfileId> implements HasName {
 
     @NoXss
-    @Length(field = "name")
+    @Length(fieldName = "name")
     private String name;
     @NoXss
     private String description;

@@ -49,7 +49,7 @@
           {{ 'tenant-profile.name-required' | translate }}
         </mat-error>
         <mat-error *ngIf="entityForm.get('name').hasError('maxlength')">
-          {{ 'tenant-profile.name-too-long' | translate }}
+          {{ 'tenant-profile.name-max-length' | translate }}
         </mat-error>
       </mat-form-field>
       <div fxLayout="column">

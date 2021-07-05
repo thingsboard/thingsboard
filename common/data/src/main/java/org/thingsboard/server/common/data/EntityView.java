@@ -42,10 +42,10 @@ public class EntityView extends SearchTextBasedWithAdditionalInfo<EntityViewId>
     private TenantId tenantId;
     private CustomerId customerId;
     @NoXss
-    @Length(field = "name")
+    @Length(fieldName = "name")
     private String name;
     @NoXss
-    @Length(field = "type")
+    @Length(fieldName = "type")
     private String type;
     private TelemetryEntityView keys;
     private long startTimeMs;

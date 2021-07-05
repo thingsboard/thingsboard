@@ -57,7 +57,7 @@
           {{ 'resource.title-required' | translate }}
         </mat-error>
         <mat-error *ngIf="entityForm.get('title').hasError('maxlength')">
-          {{ 'resource.title-too-long' | translate }}
+          {{ 'resource.title-max-length' | translate }}
         </mat-error>
       </mat-form-field>
       <tb-file-input *ngIf="isAdd"

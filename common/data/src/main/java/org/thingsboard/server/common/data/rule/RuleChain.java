@@ -38,7 +38,7 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
 
     private TenantId tenantId;
     @NoXss
-    @Length(field = "name")
+    @Length(fieldName = "name")
     private String name;
     private RuleChainType type;
     private RuleNodeId firstRuleNodeId;

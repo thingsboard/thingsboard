@@ -34,9 +34,9 @@ public class RuleNode extends SearchTextBasedWithAdditionalInfo<RuleNodeId> impl
     private static final long serialVersionUID = -5656679015121235465L;
 
     private RuleChainId ruleChainId;
-    @Length(field = "type")
+    @Length(fieldName = "type")
     private String type;
-    @Length(field = "name")
+    @Length(fieldName = "name")
     private String name;
     private boolean debugMode;
     private transient JsonNode configuration;

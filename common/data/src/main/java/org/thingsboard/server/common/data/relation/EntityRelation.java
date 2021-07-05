@@ -35,7 +35,7 @@ public class EntityRelation implements Serializable {
 
     private EntityId from;
     private EntityId to;
-    @Length(field = "type")
+    @Length(fieldName = "type")
     private String type;
     private RelationTypeGroup typeGroup;
     private transient JsonNode additionalInfo;

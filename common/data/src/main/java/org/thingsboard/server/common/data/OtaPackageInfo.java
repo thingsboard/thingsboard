@@ -36,14 +36,14 @@ public class OtaPackageInfo extends SearchTextBasedWithAdditionalInfo<OtaPackage
     private TenantId tenantId;
     private DeviceProfileId deviceProfileId;
     private OtaPackageType type;
-    @Length(field = "title")
+    @Length(fieldName = "title")
     private String title;
-    @Length(field = "version")
+    @Length(fieldName = "version")
     private String version;
-    @Length(field = "url")
+    @Length(fieldName = "url")
     private String url;
     private boolean hasData;
-    @Length(field = "file name")
+    @Length(fieldName = "file name")
     private String fileName;
     private String contentType;
     private ChecksumAlgorithm checksumAlgorithm;

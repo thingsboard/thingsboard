@@ -42,7 +42,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
 
     private TenantId tenantId;
     @NoXss
-    @Length(field = "name")
+    @Length(fieldName = "name")
     private String name;
     @NoXss
     private String description;

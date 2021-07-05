@@ -28,7 +28,7 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId {
     private static final long serialVersionUID = -1599722990298929275L;
 
     @NoXss
-    @Length(field = "title")
+    @Length(fieldName = "title")
     private String title;
     private TenantId tenantId;
 

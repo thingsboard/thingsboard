@@ -22,8 +22,6 @@ import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-import java.util.Arrays;
-
 public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements HasTenantId {
 
     private static final long serialVersionUID = -7627368878362410489L;
@@ -32,7 +30,7 @@ public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements H
     @NoXss
     private String alias;
     @NoXss
-    @Length(field = "title")
+    @Length(fieldName = "title")
     private String title;
     private String image;
     @NoXss

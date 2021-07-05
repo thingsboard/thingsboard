@@ -55,7 +55,7 @@
           {{ 'device-profile.name-required' | translate }}
         </mat-error>
         <mat-error *ngIf="entityForm.get('name').hasError('maxlength')">
-          {{ 'device-profile.name-too-long' | translate }}
+          {{ 'device-profile.name-max-length' | translate }}
         </mat-error>
       </mat-form-field>
       <tb-rule-chain-autocomplete

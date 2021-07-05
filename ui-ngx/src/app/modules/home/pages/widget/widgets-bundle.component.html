@@ -45,7 +45,7 @@
           {{ 'widgets-bundle.title-required' | translate }}
         </mat-error>
         <mat-error *ngIf="entityForm.get('title').hasError('maxlength')">
-          {{ 'widgets-bundle.title-too-long' | translate }}
+          {{ 'widgets-bundle.title-max-length' | translate }}
         </mat-error>
       </mat-form-field>
       <tb-image-input fxFlex

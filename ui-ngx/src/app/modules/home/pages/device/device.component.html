@@ -90,7 +90,7 @@
           {{ 'device.name-required' | translate }}
         </mat-error>
         <mat-error *ngIf="entityForm.get('name').hasError('maxlength')">
-          {{ 'device.name-too-long' | translate }}
+          {{ 'device.name-max-length' | translate }}
         </mat-error>
       </mat-form-field>
       <tb-device-profile-autocomplete
@@ -104,7 +104,7 @@
         <mat-label translate>device.label</mat-label>
         <input matInput formControlName="label">
         <mat-error *ngIf="entityForm.get('label').hasError('maxlength')">
-          {{ 'device.label-too-long' | translate }}
+          {{ 'device.label-max-length' | translate }}
         </mat-error>
       </mat-form-field>
       <tb-ota-package-autocomplete

@@ -33,7 +33,7 @@ public class TbResourceInfo extends SearchTextBased<TbResourceId> implements Has
 
     private TenantId tenantId;
     @NoXss
-    @Length(field = "title")
+    @Length(fieldName = "title")
     private String title;
     private ResourceType resourceType;
     private String resourceKey;

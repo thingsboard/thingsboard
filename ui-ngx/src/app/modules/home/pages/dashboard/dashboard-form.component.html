@@ -105,7 +105,7 @@
           {{ 'dashboard.title-required' | translate }}
         </mat-error>
         <mat-error *ngIf="entityForm.get('title').hasError('maxlength')">
-          {{ 'dashboard.title-too-long' | translate }}
+          {{ 'dashboard.title-max-length' | translate }}
         </mat-error>
       </mat-form-field>
       <tb-image-input fxFlex
