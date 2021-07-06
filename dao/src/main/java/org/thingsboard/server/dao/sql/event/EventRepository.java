@@ -241,4 +241,10 @@ public interface EventRepository extends PagingAndSortingRepository<EventEntity,
                                            @Param("errorsOccurred") Integer errorsOccurred,
                                            Pageable pageable);
 
+    /**
+     *  Sleep 3 second on JPA connection
+     * */
+    @Query(value = "select count(*) from pg_sleep(3)", nativeQuery = true)
+    Long slowQuery();
+
 }
