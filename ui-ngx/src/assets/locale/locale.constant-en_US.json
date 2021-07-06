@@ -2271,7 +2271,7 @@
         "expired-password-reset-message": "Your credentials has been expired! Please create new password.",
         "new-password": "New password",
         "new-password-again": "New password again",
-        "password-link-sent-message": "Password reset link was successfully sent!",
+        "password-link-sent-message": "Reset link has been sent",
         "email": "Email",
         "login-with": "Login with {{name}}",
         "or": "or",
