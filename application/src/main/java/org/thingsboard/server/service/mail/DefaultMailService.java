@@ -71,6 +71,9 @@ public class DefaultMailService implements MailService {
     @Autowired
     private TbApiUsageStateService apiUsageStateService;
 
+    @Autowired
+    private MailExecutorService mailExecutorService;
+
     private JavaMailSenderImpl mailSender;
 
     private String mailFrom;
@@ -217,6 +220,17 @@ public class DefaultMailService implements MailService {
         String message = mergeTemplateIntoString("reset.password.ftl", model);
 
         sendMail(mailSender, mailFrom, email, subject, message);
+    }
+
+    @Override
+    public void sendResetPasswordEmailAsync(String passwordResetLink, String email) {
+        mailExecutorService.execute(() -> {
+            try {
+                this.sendResetPasswordEmail(passwordResetLink, email);
+            } catch (ThingsboardException e) {
+                log.error("Error occurred: {} ", e.getMessage());
+            }
+        });
     }
 
     @Override

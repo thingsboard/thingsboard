@@ -59,8 +59,6 @@ import ua_parser.Client;
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 @RestController
 @TbCoreComponent
@@ -75,11 +73,11 @@ public class AuthController extends BaseController {
     private final SystemSecurityService systemSecurityService;
     private final AuditLogService auditLogService;
     private final ApplicationEventPublisher eventPublisher;
-    private final Executor executor = Executors.newSingleThreadExecutor();
 
     @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/auth/user", method = RequestMethod.GET)
-    public @ResponseBody User getUser() throws ThingsboardException {
+    public @ResponseBody
+    User getUser() throws ThingsboardException {
         try {
             SecurityUser securityUser = getCurrentUser();
             return userService.findUserById(securityUser.getTenantId(), securityUser.getId());
@@ -138,7 +136,7 @@ public class AuthController extends BaseController {
         }
     }
 
-    @RequestMapping(value = "/noauth/activate", params = { "activateToken" }, method = RequestMethod.GET)
+    @RequestMapping(value = "/noauth/activate", params = {"activateToken"}, method = RequestMethod.GET)
     public ResponseEntity<String> checkActivateToken(
             @RequestParam(value = "activateToken") String activateToken) {
         HttpHeaders headers = new HttpHeaders();
@@ -165,20 +163,18 @@ public class AuthController extends BaseController {
     public void requestResetPasswordByEmail(
             @RequestBody JsonNode resetPasswordByEmailRequest,
             HttpServletRequest request) throws ThingsboardException {
-        executor.execute(() -> {
-            try {
-                String email = resetPasswordByEmailRequest.get("email").asText();
-                UserCredentials userCredentials = userService.requestPasswordReset(TenantId.SYS_TENANT_ID, email);
-                User user = userService.findUserById(TenantId.SYS_TENANT_ID, userCredentials.getUserId());
-                String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
-                String resetUrl = String.format("%s/api/noauth/resetPassword?resetToken=%s", baseUrl,
-                        userCredentials.getResetToken());
+        try {
+            String email = resetPasswordByEmailRequest.get("email").asText();
+            UserCredentials userCredentials = userService.requestPasswordReset(TenantId.SYS_TENANT_ID, email);
+            User user = userService.findUserById(TenantId.SYS_TENANT_ID, userCredentials.getUserId());
+            String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
+            String resetUrl = String.format("%s/api/noauth/resetPassword?resetToken=%s", baseUrl,
+                    userCredentials.getResetToken());
 
-                mailService.sendResetPasswordEmail(resetUrl, email);
-            } catch (Exception e) {
-                log.error("Error occurred: {}", e.getMessage());
-            }
-        });
+            mailService.sendResetPasswordEmailAsync(resetUrl, email);
+        } catch (Exception e) {
+            log.warn("Error occurred: {}", e.getMessage());
+        }
     }
 
     @RequestMapping(value = "/noauth/resetPassword", params = {"resetToken"}, method = RequestMethod.GET)
