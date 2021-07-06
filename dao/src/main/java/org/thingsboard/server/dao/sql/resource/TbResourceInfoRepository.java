@@ -27,7 +27,7 @@ import java.util.UUID;
 public interface TbResourceInfoRepository extends CrudRepository<TbResourceInfoEntity, UUID> {
 
     @Query("SELECT tr FROM TbResourceInfoEntity tr WHERE " +
-            "LOWER(tr.searchText) LIKE LOWER(CONCAT(:searchText, '%'))" +
+            "LOWER(tr.title) LIKE LOWER(CONCAT('%', :searchText, '%'))" +
             "AND (tr.tenantId = :tenantId " +
             "OR (tr.tenantId = :systemAdminId " +
             "AND NOT EXISTS " +
@@ -42,7 +42,7 @@ public interface TbResourceInfoRepository extends CrudRepository<TbResourceInfoE
 
     @Query("SELECT ri FROM TbResourceInfoEntity ri WHERE " +
             "ri.tenantId = :tenantId " +
-            "AND LOWER(ri.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+            "AND LOWER(ri.title) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<TbResourceInfoEntity> findTenantResourcesByTenantId(@Param("tenantId") UUID tenantId,
                                                              @Param("searchText") String searchText,
                                                              Pageable pageable);

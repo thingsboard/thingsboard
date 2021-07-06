@@ -24,6 +24,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.LinkedHashMapRemoveEldest;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.rule.engine.api.msg.DeviceCredentialsUpdateNotificationMsg;
@@ -96,6 +97,8 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -110,7 +113,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     final TenantId tenantId;
     final DeviceId deviceId;
-    private final Map<UUID, SessionInfoMetaData> sessions;
+    final LinkedHashMapRemoveEldest<UUID, SessionInfoMetaData> sessions;
     private final Map<UUID, SessionInfo> attributeSubscriptions;
     private final Map<UUID, SessionInfo> rpcSubscriptions;
     private final Map<Integer, ToDeviceRpcRequestMetadata> toDeviceRpcPendingMap;
@@ -125,16 +128,16 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         super(systemContext);
         this.tenantId = tenantId;
         this.deviceId = deviceId;
-        this.sessions = new LinkedHashMap<>();
         this.attributeSubscriptions = new HashMap<>();
         this.rpcSubscriptions = new HashMap<>();
         this.toDeviceRpcPendingMap = new HashMap<>();
+        this.sessions = new LinkedHashMapRemoveEldest<>(systemContext.getMaxConcurrentSessionsPerDevice(), this::notifyTransportAboutClosedSessionMaxSessionsLimit);
         if (initAttributes()) {
             restoreSessions();
         }
     }
 
-    private boolean initAttributes() {
+    boolean initAttributes() {
         Device device = systemContext.getDeviceService().findDeviceById(tenantId, deviceId);
         if (device != null) {
             this.deviceName = device.getName();
@@ -552,18 +555,14 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     private void processSessionStateMsgs(SessionInfoProto sessionInfo, SessionEventMsg msg) {
         UUID sessionId = getSessionId(sessionInfo);
+        Objects.requireNonNull(sessionId);
         if (msg.getEvent() == SessionEvent.OPEN) {
             if (sessions.containsKey(sessionId)) {
                 log.debug("[{}] Received duplicate session open event [{}]", deviceId, sessionId);
                 return;
             }
-            log.debug("[{}] Processing new session [{}]", deviceId, sessionId);
-            if (sessions.size() >= systemContext.getMaxConcurrentSessionsPerDevice()) {
-                UUID sessionIdToRemove = sessions.keySet().stream().findFirst().orElse(null);
-                if (sessionIdToRemove != null) {
-                    notifyTransportAboutClosedSession(sessionIdToRemove, sessions.remove(sessionIdToRemove), "max concurrent sessions limit reached per device!");
-                }
-            }
+            log.info("[{}] Processing new session [{}]. Current sessions size {}", deviceId, sessionId, sessions.size());
+
             sessions.put(sessionId, new SessionInfoMetaData(new SessionInfo(SessionType.ASYNC, sessionInfo.getNodeId())));
             if (sessions.size() == 1) {
                 reportSessionOpen();
@@ -584,8 +583,10 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     private void handleSessionActivity(TbActorCtx context, SessionInfoProto sessionInfoProto, SubscriptionInfoProto subscriptionInfo) {
         UUID sessionId = getSessionId(sessionInfoProto);
+        Objects.requireNonNull(sessionId);
+
         SessionInfoMetaData sessionMD = sessions.computeIfAbsent(sessionId,
-                id -> new SessionInfoMetaData(new SessionInfo(SessionType.ASYNC, sessionInfoProto.getNodeId()), 0L));
+                id -> new SessionInfoMetaData(new SessionInfo(SessionType.ASYNC, sessionInfoProto.getNodeId()), subscriptionInfo.getLastActivityTime()));
 
         sessionMD.setLastActivityTime(subscriptionInfo.getLastActivityTime());
         sessionMD.setSubscribedToAttributes(subscriptionInfo.getAttributeSubscription());
@@ -614,6 +615,11 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
         }
     }
+
+    private void notifyTransportAboutClosedSessionMaxSessionsLimit(UUID sessionId, SessionInfoMetaData sessionMd) {
+        notifyTransportAboutClosedSession(sessionId, sessionMd, "max concurrent sessions limit reached per device!");
+    }
+
 
     private void notifyTransportAboutClosedSession(UUID sessionId, SessionInfoMetaData sessionMd, String message) {
         SessionCloseNotificationProto sessionCloseNotificationProto = SessionCloseNotificationProto
@@ -761,7 +767,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         return builder.build();
     }
 
-    private void restoreSessions() {
+    void restoreSessions() {
         log.debug("[{}] Restoring sessions from cache", deviceId);
         DeviceSessionsCacheEntry sessionsDump = null;
         try {
@@ -774,6 +780,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             log.debug("[{}] No session information found", deviceId);
             return;
         }
+        // TODO: Take latest max allowed sessions size from cache
         for (SessionSubscriptionInfoProto sessionSubscriptionInfoProto : sessionsDump.getSessionsList()) {
             SessionInfoProto sessionInfoProto = sessionSubscriptionInfoProto.getSessionInfo();
             UUID sessionId = getSessionId(sessionInfoProto);
@@ -843,6 +850,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     void checkSessionsTimeout() {
+        log.debug("[{}] checkSessionsTimeout started. Size before check {}", deviceId, sessions.size());
         long expTime = System.currentTimeMillis() - systemContext.getSessionInactivityTimeout();
         Map<UUID, SessionInfoMetaData> sessionsToRemove = sessions.entrySet().stream().filter(kv -> kv.getValue().getLastActivityTime() < expTime).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         sessionsToRemove.forEach((sessionId, sessionMD) -> {
@@ -854,6 +862,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         if (!sessionsToRemove.isEmpty()) {
             dumpSessions();
         }
+        log.debug("[{}] checkSessionsTimeout finished. Size after check {}", deviceId, sessions.size());
     }
 
 }
