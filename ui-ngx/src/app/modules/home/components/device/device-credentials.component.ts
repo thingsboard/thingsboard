@@ -29,6 +29,7 @@ import {
 } from '@angular/forms';
 import {
   credentialTypeNames,
+  credentialTypesByTransportType,
   DeviceCredentialMQTTBasic,
   DeviceCredentials,
   DeviceCredentialsType,
@@ -59,8 +60,21 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
   @Input()
   disabled: boolean;
 
+  private deviceTransportTypeValue = DeviceTransportType.DEFAULT;
+  get deviceTransportType(): DeviceTransportType {
+    return this.deviceTransportTypeValue
+  }
   @Input()
-  deviceTransportType = DeviceTransportType.DEFAULT;
+  set deviceTransportType(type: DeviceTransportType) {
+    if (type) {
+      this.deviceTransportTypeValue = type;
+      this.credentialsTypes = credentialTypesByTransportType.get(type);
+      const currentType = this.deviceCredentialsFormGroup.get('credentialsType').value;
+      if (!this.credentialsTypes.includes(currentType)) {
+        this.deviceCredentialsFormGroup.get('credentialsType').patchValue(this.credentialsTypes[0], {onlySelf: true});
+      }
+    }
+  }
 
   private destroy$ = new Subject();
 
@@ -68,7 +82,7 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
 
   deviceCredentialsType = DeviceCredentialsType;
 
-  credentialsTypes = Object.values(DeviceCredentialsType);
+  credentialsTypes = credentialTypesByTransportType.get(DeviceTransportType.DEFAULT);
 
   credentialTypeNamesMap = credentialTypeNames;
 
