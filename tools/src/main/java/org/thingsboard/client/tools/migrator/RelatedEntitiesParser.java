@@ -21,11 +21,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.EntityType;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class RelatedEntitiesParser {
+    private static final Pattern pattern = Pattern.compile(".*[(](.*)[)].*");
     private final Map<String, String> allEntityIdsAndTypes = new HashMap<>();
     
     private final Map<String, EntityType> tableNameAndEntityType = Map.ofEntries(
@@ -46,7 +48,7 @@ public class RelatedEntitiesParser {
             Map.entry("COPY public.api_usage_state ", EntityType.API_USAGE_STATE)
     );
 
-    public RelatedEntitiesParser(File source) throws IOException {
+    public RelatedEntitiesParser(File source) throws Exception {
         processAllTables(FileUtils.lineIterator(source));
     }
 
@@ -58,14 +60,14 @@ public class RelatedEntitiesParser {
         return StringUtils.isBlank(line) || line.equals("\\.");
     }
 
-    private void processAllTables(LineIterator lineIterator) {
+    private void processAllTables(LineIterator lineIterator) throws Exception {
         String currentLine;
         try {
             while (lineIterator.hasNext()) {
                 currentLine = lineIterator.nextLine();
                 for(Map.Entry<String, EntityType> entry : tableNameAndEntityType.entrySet()) {
                     if(currentLine.startsWith(entry.getKey())) {
-                        processBlock(lineIterator, entry.getValue());
+                        processBlock(lineIterator, entry.getValue(), idPositionInLine(currentLine));
                     }
                 }
             }
@@ -74,14 +76,28 @@ public class RelatedEntitiesParser {
         }
     }
 
-    private void processBlock(LineIterator lineIterator, EntityType entityType) {
+    private void processBlock(LineIterator lineIterator, EntityType entityType, int idPosition) {
         String currentLine;
         while(lineIterator.hasNext()) {
             currentLine = lineIterator.nextLine();
             if(isBlockFinished(currentLine)) {
                 return;
             }
-            allEntityIdsAndTypes.put(currentLine.split("\t")[0], entityType.name());
+            allEntityIdsAndTypes.put(currentLine.split("\t")[idPosition], entityType.name());
         }
+    }
+
+    private int idPositionInLine(String startOfBLock) throws Exception {
+        Matcher matcher = pattern.matcher(startOfBLock);
+        if(matcher.find()) {
+            String[] tempString = matcher.group(1).split(",");
+            for (int i = 0; i < tempString.length; i++) {
+                String temp = tempString[i].trim();
+                if (temp.equals("id")) {
+                    return i;
+                }
+            }
+        }
+        throw new Exception("WARNING! Cannot find position of ID in dump, line: \" + startOfBLock");
     }
 }

@@ -21,11 +21,16 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DictionaryParser {
-    private Map<String, String> dictionaryParsed = new HashMap<>();
+    private boolean isKeyFirst;
+    private Pattern pattern = Pattern.compile(".*[(](.*)[)].*");
+    private final Map<String, String> dictionaryParsed = new HashMap<>();
 
     public DictionaryParser(File sourceFile) throws IOException {
         parseDictionaryDump(FileUtils.lineIterator(sourceFile));
@@ -50,6 +55,7 @@ public class DictionaryParser {
                 tempLine = iterator.nextLine();
 
                 if (isBlockStarted(tempLine)) {
+                    isKeyFirst(tempLine);
                     processBlock(iterator);
                 }
             }
@@ -60,15 +66,30 @@ public class DictionaryParser {
 
     private void processBlock(LineIterator lineIterator) {
         String tempLine;
-        String[] lineSplited;
+        String[] lineSplit;
         while(lineIterator.hasNext()) {
             tempLine = lineIterator.nextLine();
             if(isBlockFinished(tempLine)) {
                 return;
             }
 
-            lineSplited = tempLine.split("\t");
-            dictionaryParsed.put(lineSplited[1], lineSplited[0]);
+            lineSplit = tempLine.split("\t");
+            if(this.isKeyFirst) {
+                dictionaryParsed.put(lineSplit[1], lineSplit[0]);
+            } else {
+                dictionaryParsed.put(lineSplit[0], lineSplit[1]);
+            }
         }
+    }
+
+    private void isKeyFirst(String startOfBlock) {
+        Matcher matcher = pattern.matcher(startOfBlock);
+        if(matcher.find()) {
+            String[] splitBlockParams = matcher.group(1).split(",");
+            Arrays.stream(splitBlockParams).forEach(line -> line = line.trim());
+            this.isKeyFirst = splitBlockParams[0].equals("key");
+            return;
+        }
+        throw new RuntimeException("Cant process signature of ts_kv_dictionary table.");
     }
 }

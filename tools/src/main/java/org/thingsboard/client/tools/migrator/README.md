@@ -23,7 +23,7 @@ It will generate single jar file with all required dependencies inside `target d
 
 1. Dump related tables that need to correct save telemetry
    
-   `pg_dump -h localhost -U postgres -d thingsboard -T admin_settings -T attribute_kv -T audit_log -T component_discriptor -T device_credentials -T event -T oauth2_client_registration -T oauth2_client_registration_info -T oauth2_client_registration_template -T relation -T rule_node_state tb_schema_settings -T user_credentials > related_entities.dmp`
+   `pg_dump -h localhost -U postgres -d thingsboard -T admin_settings -T attribute_kv -T audit_log -T component_discriptor -T device_credentials -T event -T oauth2_client_registration -T oauth2_client_registration_info -T oauth2_client_registration_template -T relation -T rule_node_state -T tb_schema_settings -T user_credentials > related_entities.dmp`
    
 2. Dump `ts_kv` and child:
    
