@@ -24,6 +24,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.NestedRuntimeException;
+import org.springframework.core.io.InputStreamSource;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -45,8 +47,8 @@ import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
 import javax.annotation.PostConstruct;
-import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
+import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -248,22 +250,47 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void send(TenantId tenantId, CustomerId customerId, String from, String to, String cc, String bcc, String subject, String body) throws MessagingException {
+    public void send(TenantId tenantId, CustomerId customerId, String from, String to, String cc, String bcc, String subject, String body, boolean isHtml, Map<String, String> images) throws ThingsboardException {
+        sendMail(tenantId, customerId, from, to, cc, bcc, subject, body, isHtml, images, this.mailSender);
+    }
+
+    @Override
+    public void send(TenantId tenantId, CustomerId customerId, String from, String to, String cc, String bcc, String subject, String body, boolean isHtml, Map<String, String> images, JavaMailSender javaMailSender) throws ThingsboardException {
+        sendMail(tenantId, customerId, from, to, cc, bcc, subject, body, isHtml, images, javaMailSender);
+    }
+
+    private void sendMail(TenantId tenantId, CustomerId customerId, String from, String to, String cc, String bcc, String subject, String body, boolean isHtml, Map<String, String> images, JavaMailSender javaMailSender) throws ThingsboardException {
         if (apiUsageStateService.getApiUsageState(tenantId).isEmailSendEnabled()) {
-            MimeMessage mailMsg = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mailMsg, "UTF-8");
-            helper.setFrom(StringUtils.isBlank(from) ? mailFrom : from);
-            helper.setTo(to.split("\\s*,\\s*"));
-            if (!StringUtils.isBlank(cc)) {
-                helper.setCc(cc.split("\\s*,\\s*"));
+            try {
+                MimeMessage mailMsg = javaMailSender.createMimeMessage();
+                boolean multipart = (images != null && !images.isEmpty());
+                MimeMessageHelper helper = new MimeMessageHelper(mailMsg, multipart, "UTF-8");
+                helper.setFrom(StringUtils.isBlank(from) ? mailFrom : from);
+                helper.setTo(to.split("\\s*,\\s*"));
+                if (!StringUtils.isBlank(cc)) {
+                    helper.setCc(cc.split("\\s*,\\s*"));
+                }
+                if (!StringUtils.isBlank(bcc)) {
+                    helper.setBcc(bcc.split("\\s*,\\s*"));
+                }
+                helper.setSubject(subject);
+                helper.setText(body, isHtml);
+
+                if (multipart) {
+                    for (String imgId : images.keySet()) {
+                        String imgValue = images.get(imgId);
+                        String value = imgValue.replaceFirst("^data:image/[^;]*;base64,?", "");
+                        byte[] bytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(value);
+                        String contentType = helper.getFileTypeMap().getContentType(imgId);
+                        InputStreamSource iss = () -> new ByteArrayInputStream(bytes);
+                        helper.addInline(imgId, iss, contentType);
+                    }
+                }
+                javaMailSender.send(helper.getMimeMessage());
+                apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.EMAIL_EXEC_COUNT, 1);
+            } catch (Exception e) {
+                throw handleException(e);
             }
-            if (!StringUtils.isBlank(bcc)) {
-                helper.setBcc(bcc.split("\\s*,\\s*"));
-            }
-            helper.setSubject(subject);
-            helper.setText(body);
-            mailSender.send(helper.getMimeMessage());
-            apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.EMAIL_EXEC_COUNT, 1);
         } else {
             throw new RuntimeException("Email sending is disabled due to API limits!");
         }

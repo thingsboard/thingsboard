@@ -23,7 +23,8 @@ export class OpenStreetMap extends LeafletMap {
     constructor(ctx: WidgetContext, $container, options: UnitedMapSettings) {
         super(ctx, $container, options);
         const map =  L.map($container, {
-          editable: !!options.editablePolygon
+          editable: !!options.editablePolygon,
+          tap: L.Browser.safari && L.Browser.mobile
         }).setView(options?.defaultCenterPosition, options?.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
         let tileLayer;
         if (options.useCustomProvider) {

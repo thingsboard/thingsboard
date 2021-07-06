@@ -25,12 +25,13 @@ export class TencentMap extends LeafletMap {
     super(ctx, $container, options);
     const txUrl = 'http://rt{s}.map.gtimg.com/realtimerender?z={z}&x={x}&y={y}&type=vector&style=0';
     const map = L.map($container, {
-      editable: !!options.editablePolygon
+      editable: !!options.editablePolygon,
+      tap: L.Browser.safari && L.Browser.mobile
     }).setView(options?.defaultCenterPosition, options?.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
     const txLayer = L.tileLayer(txUrl, {
       subdomains: '0123',
       tms: true,
-      attribution: '&copy;2020 Tencent - GS(2018)2236号- Data&copy; NavInfo'
+      attribution: '&copy;2021 Tencent - GS(2020)2236号- Data&copy; NavInfo'
     }).addTo(map);
     txLayer.addTo(map);
     super.initSettings(options);

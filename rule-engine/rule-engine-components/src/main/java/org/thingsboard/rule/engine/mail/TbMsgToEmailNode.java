@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.mail;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
@@ -27,9 +28,10 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 import static org.thingsboard.rule.engine.mail.TbSendEmailNode.SEND_EMAIL_TYPE;
@@ -49,13 +51,16 @@ import static org.thingsboard.rule.engine.mail.TbSendEmailNode.SEND_EMAIL_TYPE;
 public class TbMsgToEmailNode implements TbNode {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final String IMAGES = "images";
 
     private TbMsgToEmailNodeConfiguration config;
+    private boolean isDynamicHtmlTemplate;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgToEmailNodeConfiguration.class);
-    }
+        this.isDynamicHtmlTemplate = this.config.getMailBodyType().equals("dynamic");
+     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
@@ -80,8 +85,18 @@ public class TbMsgToEmailNode implements TbNode {
         builder.to(fromTemplate(this.config.getToTemplate(), msg));
         builder.cc(fromTemplate(this.config.getCcTemplate(), msg));
         builder.bcc(fromTemplate(this.config.getBccTemplate(), msg));
+        if(isDynamicHtmlTemplate) {
+            builder.html(Boolean.parseBoolean(fromTemplate(this.config.getIsHtmlTemplate(), msg)));
+        } else {
+            builder.html(Boolean.parseBoolean(this.config.getMailBodyType()));
+        }
         builder.subject(fromTemplate(this.config.getSubjectTemplate(), msg));
         builder.body(fromTemplate(this.config.getBodyTemplate(), msg));
+        String imagesStr = msg.getMetaData().getValue(IMAGES);
+        if (!StringUtils.isEmpty(imagesStr)) {
+            Map<String, String> imgMap = MAPPER.readValue(imagesStr, new TypeReference<HashMap<String, String>>() {});
+            builder.images(imgMap);
+        }
         return builder.build();
     }
 
