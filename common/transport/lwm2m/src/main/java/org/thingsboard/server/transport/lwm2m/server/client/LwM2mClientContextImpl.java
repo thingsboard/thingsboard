@@ -230,7 +230,6 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     @Override
     public String getObjectIdByKeyNameFromProfile(LwM2mClient client, String keyName) {
         Lwm2mDeviceProfileTransportConfiguration profile = getProfile(client.getProfileId());
-
         return profile.getObserveAttr().getKeyName().entrySet().stream()
                 .filter(e -> e.getValue().equals(keyName) && validateResourceInModel(client, e.getKey(), false)).findFirst().orElseThrow(
                         () -> new IllegalArgumentException(keyName + " is not configured in the device profile!")

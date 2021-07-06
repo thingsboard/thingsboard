@@ -26,6 +26,7 @@ import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
+import org.eclipse.leshan.core.node.ObjectLink;
 import org.eclipse.leshan.core.node.codec.CodecException;
 import org.eclipse.leshan.core.request.SimpleDownlinkRequest;
 import org.eclipse.leshan.core.request.WriteAttributesRequest;
@@ -48,6 +49,7 @@ import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMs
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -318,6 +320,26 @@ public class LwM2mTransportUtil {
                 return TIME;
             case "ObjectLink":
                 return OBJLNK;
+            default:
+                return null;
+        }
+    }
+    public static Map equalsMultiResourceValuesResourceType(ResourceModel.Type type) {
+        switch (type) {
+            case FLOAT:
+                return new HashMap<Integer, Float>();
+            case INTEGER:
+                return new HashMap<Integer, Integer>();
+            case STRING:
+                return new HashMap<Integer, String>();
+            case BOOLEAN:
+                return new HashMap<Integer, Boolean>();
+            case OPAQUE:
+                return new HashMap<Integer, byte[]>();
+            case TIME:
+                return new HashMap<Integer, Date>();
+            case OBJLNK:
+                return new HashMap<Integer, ObjectLink>();
             default:
                 return null;
         }

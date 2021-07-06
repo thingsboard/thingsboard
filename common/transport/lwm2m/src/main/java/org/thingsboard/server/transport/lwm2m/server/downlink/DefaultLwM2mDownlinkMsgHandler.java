@@ -73,6 +73,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -122,7 +123,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     public void sendReadRequest(LwM2mClient client, TbLwM2MReadRequest request, DownlinkRequestCallback<ReadRequest, ReadResponse> callback) {
         try {
             validateVersionedId(client, request);
-            ReadRequest downlink = new ReadRequest(getRequestContentFormat(client, request, this.config.getModelProvider()), request.getObjectId());
+            ReadRequest downlink = new ReadRequest(getReadRequestContentFormat(client, request, this.config.getModelProvider()), request.getObjectId());
             sendSimpleRequest(client, downlink, request.getTimeout(), callback);
         } catch (InvalidRequestException e) {
             callback.onValidationError(request.toString(), e.getMessage());
@@ -151,7 +152,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
             if (observations.stream().noneMatch(observation -> observation.getPath().equals(resultIds))) {
                 ObserveRequest downlink;
-                ContentFormat contentFormat = getRequestContentFormat(client, request, this.config.getModelProvider());
+                ContentFormat contentFormat = getReadRequestContentFormat(client, request, this.config.getModelProvider());
                 if (resultIds.isResource()) {
                     downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId());
                 } else if (resultIds.isObjectInstance()) {
@@ -250,16 +251,22 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         }
     }
 
-
     @Override
     public void sendWriteReplaceRequest(LwM2mClient client, TbLwM2MWriteReplaceRequest request, DownlinkRequestCallback<WriteRequest, WriteResponse> callback) {
         ResourceModel resourceModelWrite = client.getResourceModel(request.getVersionedId(), this.config.getModelProvider());
         if (resourceModelWrite != null) {
-            ContentFormat contentFormat = convertResourceModelTypeToContentFormat(client, resourceModelWrite.type);
+            ContentFormat contentFormat = getWriteRequestContentFormat(client, request, this.config.getModelProvider());
             try {
                 LwM2mPath path = new LwM2mPath(request.getObjectId());
-                WriteRequest downlink = this.getWriteRequestSingleResource(resourceModelWrite.type, contentFormat,
-                        path.getObjectId(), path.getObjectInstanceId(), path.getResourceId(), request.getValue());
+                WriteRequest downlink;
+                if (resourceModelWrite.multiple) {
+                    downlink = new WriteRequest(contentFormat, path.getObjectId(), path.getObjectInstanceId(), path.getResourceId(),
+                            (Map<Integer, ?>) request.getValue(), resourceModelWrite.type);
+                }
+                else {
+                    downlink = this.getWriteRequestSingleResource(resourceModelWrite.type, contentFormat,
+                            path.getObjectId(), path.getObjectInstanceId(), path.getResourceId(), request.getValue());
+                }
                 sendSimpleRequest(client, downlink, request.getTimeout(), callback);
             } catch (Exception e) {
                 callback.onError(JacksonUtil.toString(request), e);
@@ -267,6 +274,10 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         } else {
             callback.onValidationError(JacksonUtil.toString(request), "Resource " + request.getVersionedId() + " is not configured in the device profile!");
         }
+    }
+
+    public void sendWriteMultiValueResourceRequest(LwM2mClient client, TbLwM2MWriteReplaceRequest request, DownlinkRequestCallback<WriteRequest, WriteResponse> callback) {
+
     }
 
     @Override
@@ -295,7 +306,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                  **/
                 Collection<LwM2mResource> resources = client.getNewResourceForInstance(request.getVersionedId(), request.getValue(), this.config.getModelProvider(), this.converter);
                 ResourceModel resourceModelWrite = client.getResourceModel(request.getVersionedId(), this.config.getModelProvider());
-                ContentFormat contentFormat = request.getObjectContentFormat() != null ? request.getObjectContentFormat() : convertResourceModelTypeToContentFormat(client, resourceModelWrite.type);
+                ContentFormat contentFormat = request.getObjectContentFormat() != null ? request.getObjectContentFormat() : convertResourceModelTypeToContentFormat(client, resourceModelWrite);
                 WriteRequest downlink = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(),
                         resultIds.getObjectInstanceId(), resources);
                 sendSimpleRequest(client, downlink, request.getTimeout(), callback);
@@ -440,8 +451,8 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         }
     }
 
-    private static ContentFormat convertResourceModelTypeToContentFormat(LwM2mClient client, ResourceModel.Type type) {
-        switch (type) {
+    private static ContentFormat convertResourceModelTypeToContentFormat(LwM2mClient client, ResourceModel resourceModel) {
+        switch (resourceModel.type) {
             case BOOLEAN:
             case STRING:
             case TIME:
@@ -453,11 +464,11 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             case OBJLNK:
                 return ContentFormat.LINK;
             default:
+                throw new CodecException("Invalid ResourceModel_Type for %s ContentFormat.", resourceModel.type);
         }
-        throw new CodecException("Invalid ResourceModel_Type for %s ContentFormat.", type);
     }
 
-    private static ContentFormat getRequestContentFormat(LwM2mClient client, HasContentFormat request, LwM2mModelProvider modelProvider) {
+    private static ContentFormat getReadRequestContentFormat(LwM2mClient client, HasContentFormat request, LwM2mModelProvider modelProvider) {
         if (request.getRequestContentFormat() != null) {
             return request.getRequestContentFormat();
         } else {
@@ -465,14 +476,37 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             if (request instanceof TbLwM2MReadRequest) {
                 versionedId = ((TbLwM2MReadRequest) request).getVersionedId();
             } else if (request instanceof TbLwM2MObserveRequest) {
-                versionedId = ((TbLwM2MObserveRequest) request).getVersionedId();
+                return ContentFormat.JSON;
             }
-            String id = fromVersionedIdToObjectId(versionedId);
-            if (id != null && new LwM2mPath(id).isResource() && !client.isResourceMultiInstances(versionedId, modelProvider)) {
-                return client.getDefaultContentFormat();
-            } else {
-                return ContentFormat.DEFAULT;
+            return getRequestContentFormat (client, versionedId, modelProvider);        }
+    }
+
+    private static ContentFormat getWriteRequestContentFormat(LwM2mClient client, TbLwM2MDownlinkRequest request, LwM2mModelProvider modelProvider) {
+        if (request instanceof  TbLwM2MWriteReplaceRequest && ((TbLwM2MWriteReplaceRequest)request).getContentFormat()!= null) {
+            return ((TbLwM2MWriteReplaceRequest)request).getContentFormat();
+        } else if (request instanceof  TbLwM2MWriteUpdateRequest && ((TbLwM2MWriteUpdateRequest)request).getObjectContentFormat()!= null) {
+            return ((TbLwM2MWriteUpdateRequest)request).getObjectContentFormat();
+        } else {
+            String versionedId = null;
+            if (request instanceof TbLwM2MWriteReplaceRequest) {
+                versionedId = ((TbLwM2MWriteReplaceRequest) request).getVersionedId();
+            } else if (request instanceof TbLwM2MWriteUpdateRequest) {
+                versionedId = ((TbLwM2MWriteUpdateRequest) request).getVersionedId();
             }
+            return getRequestContentFormat (client, versionedId, modelProvider);
+        }
+    }
+
+    private static ContentFormat getRequestContentFormat(LwM2mClient client, String versionedId, LwM2mModelProvider modelProvider) {
+        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(versionedId));
+        if (pathIds.isResource() || pathIds.isResourceInstance()) {
+            ResourceModel resourceModel = client.getResourceModel(versionedId, modelProvider);
+            if (pathIds.isResource() && resourceModel.multiple) {
+                return client.getDefaultContentFormat().equals(ContentFormat.TEXT) ? ContentFormat.JSON : client.getDefaultContentFormat();
+            }
+            return convertResourceModelTypeToContentFormat(client, resourceModel);
+        } else {
+            return client.getDefaultContentFormat();
         }
     }
 }

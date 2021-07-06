@@ -21,11 +21,13 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.node.codec.LwM2mValueConverter;
 import org.eclipse.leshan.core.request.ContentFormat;
+import org.eclipse.leshan.core.request.WriteRequest.Mode;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.common.data.Device;
@@ -41,6 +43,7 @@ import org.thingsboard.server.transport.lwm2m.config.LwM2mVersion;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -89,8 +92,9 @@ public class LwM2mClient implements Serializable {
     @Getter
     private PowerMode powerMode;
     @Getter
-    @Setter
     private Registration registration;
+    @Getter
+    ContentFormat defaultContentFormat;
 
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
@@ -111,6 +115,11 @@ public class LwM2mClient implements Serializable {
         this.deviceId = new UUID(session.getDeviceIdMSB(), session.getDeviceIdLSB());
         this.profileId = new UUID(session.getDeviceProfileIdMSB(), session.getDeviceProfileIdLSB());
         this.powerMode = credentials.getDeviceInfo().getPowerMode();
+    }
+
+    public void setRegistration(Registration registration) {
+        this.registration = registration;
+        this.defaultContentFormat = calculateDefaultContentFormat(registration);
     }
 
     public void lock() {
@@ -172,20 +181,26 @@ public class LwM2mClient implements Serializable {
                 .build();
     }
 
-    public boolean saveResourceValue(String pathRezIdVer, LwM2mResource rez, LwM2mModelProvider modelProvider) {
-        if (this.resources.get(pathRezIdVer) != null && this.resources.get(pathRezIdVer).getResourceModel() != null) {
-            this.resources.get(pathRezIdVer).updateLwM2mResource(rez);
+    public boolean saveResourceValue(String pathRezIdVer, LwM2mResource resource, LwM2mModelProvider modelProvider, Mode mode) {
+        if (this.resources.get(pathRezIdVer) != null && this.resources.get(pathRezIdVer).getResourceModel() != null &&
+                resourceEqualsModel(resource, this.resources.get(pathRezIdVer).getResourceModel())) {
+            this.resources.get(pathRezIdVer).updateLwM2mResource(resource, mode);
             return true;
         } else {
             LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRezIdVer));
             ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
-            if (resourceModel != null) {
-                this.resources.put(pathRezIdVer, new ResourceValue(rez, resourceModel));
+            if (resourceModel != null && resourceEqualsModel(resource, resourceModel)) {
+                this.resources.put(pathRezIdVer, new ResourceValue(resource, resourceModel));
                 return true;
             } else {
                 return false;
             }
         }
+    }
+
+    private boolean resourceEqualsModel(LwM2mResource resource, ResourceModel resourceModel) {
+        return ((!resourceModel.multiple && resource instanceof LwM2mSingleResource) ||
+                (resourceModel.multiple && resource instanceof LwM2mMultipleResource));
     }
 
     public Object getResourceValue(String pathRezIdVer, String pathRezId) {
@@ -239,7 +254,6 @@ public class LwM2mClient implements Serializable {
     }
 
 
-
     public Collection<LwM2mResource> getNewResourceForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
                                                                LwM2mValueConverter converter) {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRezIdVer));
@@ -276,10 +290,14 @@ public class LwM2mClient implements Serializable {
     public void isValidObjectVersion(String path) {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(path));
         String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
-        String verRez = getVerFromPathIdVerOrId(path);
-        if ((verRez != null && !verRez.equals(verSupportedObject)) ||
-                (verRez == null && !LWM2M_OBJECT_VERSION_DEFAULT.equals(verSupportedObject))) {
-            throw new IllegalArgumentException(String.format("Specified resource id %s is not valid version! Must be version: %s", path, verSupportedObject));
+        if (verSupportedObject == null) {
+            throw new IllegalArgumentException(String.format("Specified resource id %s is missing from the client!", path));
+        } else {
+            String verRez = getVerFromPathIdVerOrId(path);
+            if ((verRez != null && !verRez.equals(verSupportedObject)) ||
+                    (verRez == null && !LWM2M_OBJECT_VERSION_DEFAULT.equals(verSupportedObject))) {
+                throw new IllegalArgumentException(String.format("Specified resource id %s is not valid version! Must be version: %s", path, verSupportedObject));
+            }
         }
     }
 
@@ -322,9 +340,20 @@ public class LwM2mClient implements Serializable {
                 .collect(Collectors.toSet());
     }
 
-    public ContentFormat getDefaultContentFormat() {
+    private ContentFormat calculateDefaultContentFormat(Registration registration) {
         if (registration == null) {
             return ContentFormat.DEFAULT;
+        } else if (Arrays.stream(registration.getObjectLinks()).filter(link -> link.getUrl().equals("/")).
+                findFirst().get() != null) {
+            String code = Arrays.stream(registration.getObjectLinks()).filter(link -> link.getUrl().equals("/")).
+                    findFirst().get().getAttributes().get("ct");
+            if (code != null) {
+                ContentFormat contentFormat = ContentFormat.fromCode(code);
+                return ContentFormat.fromName(contentFormat.getName()) != null ? contentFormat :
+                        LwM2mVersion.fromVersionStr(registration.getLwM2mVersion()).getContentFormat();
+            } else {
+                return LwM2mVersion.fromVersionStr(registration.getLwM2mVersion()).getContentFormat();
+            }
         } else {
             return LwM2mVersion.fromVersionStr(registration.getLwM2mVersion()).getContentFormat();
         }
