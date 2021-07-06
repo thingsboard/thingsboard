@@ -149,21 +149,23 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 protected void updateEntity(DeviceProfileEntity deviceProfile) {
                     if (deviceProfile.getProfileData().has("alarms") &&
                             !deviceProfile.getProfileData().get("alarms").isNull()) {
+                        boolean isUpdated = false;
                         JsonNode array = deviceProfile.getProfileData().get("alarms");
                         for (JsonNode node : array) {
                             if (node.has("createRules")) {
                                 JsonNode createRules = node.get("createRules");
                                 for (AlarmSeverity severity : AlarmSeverity.values()) {
                                     if (createRules.has(severity.name())) {
-                                        convertDeviceProfileAlarmRulesForVersion330(createRules.get(severity.name()).get("condition").get("spec"));
+                                        isUpdated = isUpdated || convertDeviceProfileAlarmRulesForVersion330(createRules.get(severity.name()).get("condition").get("spec"));
                                     }
                                 }
                             }
                             if (node.has("clearRule") && !node.get("clearRule").isNull()) {
-                                convertDeviceProfileAlarmRulesForVersion330(node.get("clearRule").get("condition").get("spec"));
+                                isUpdated = isUpdated || convertDeviceProfileAlarmRulesForVersion330(node.get("clearRule").get("condition").get("spec"));
                             }
                         }
-                        deviceProfileRepository.save(deviceProfile);
+                        if (isUpdated)
+                            deviceProfileRepository.save(deviceProfile);
                     }
                 }
             };
@@ -417,7 +419,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
         }
     }
 
-    private void convertDeviceProfileAlarmRulesForVersion330(JsonNode spec) {
+    private boolean convertDeviceProfileAlarmRulesForVersion330(JsonNode spec) {
         if (spec != null) {
             if (spec.has("type") && spec.get("type").asText().equals("DURATION")) {
                 if (spec.has("value")) {
@@ -427,6 +429,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     );
                     ((ObjectNode) spec).remove("value");
                     ((ObjectNode) spec).putPOJO("predicate", predicate);
+                    return true;
                 }
             } else if (spec.has("type") && spec.get("type").asText().equals("REPEATING")) {
                 if (spec.has("count")) {
@@ -436,9 +439,11 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     );
                     ((ObjectNode) spec).remove("count");
                     ((ObjectNode) spec).putPOJO("predicate", predicate);
+                    return true;
                 }
             }
         }
+        return false;
     }
 
     private void updateOAuth2Params() {
@@ -451,9 +456,8 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 oAuth2Service.saveOAuth2Params(new OAuth2ClientsParams(false, Collections.emptyList()));
                 log.info("Successfully updated OAuth2 parameters!");
             }
-        }
-        catch (Exception e) {
-           log.error("Failed to update OAuth2 parameters", e);
+        } catch (Exception e) {
+            log.error("Failed to update OAuth2 parameters", e);
         }
     }
 
