@@ -164,8 +164,9 @@ public class DefaultDataUpdateService implements DataUpdateService {
                                 isUpdated = isUpdated || convertDeviceProfileAlarmRulesForVersion330(node.get("clearRule").get("condition").get("spec"));
                             }
                         }
-                        if (isUpdated)
+                        if (isUpdated) {
                             deviceProfileRepository.save(deviceProfile);
+                        }
                     }
                 }
             };

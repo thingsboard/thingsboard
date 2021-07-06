@@ -100,6 +100,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     @Autowired
     private ApiUsageStateService apiUsageStateService;
 
+
     @Override
     public void upgradeDatabase(String fromVersion) throws Exception {
         switch (fromVersion) {
@@ -494,5 +495,4 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
         }
         return isOldSchema;
     }
-
 }
