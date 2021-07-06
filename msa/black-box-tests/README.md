@@ -13,6 +13,7 @@ As result, in REPOSITORY column, next images should be present:
         thingsboard/tb-lwm2m-transport
         thingsboard/tb-http-transport
         thingsboard/tb-mqtt-transport
+        thingsboard/tb-snmp-transport
         thingsboard/tb-node
         thingsboard/tb-web-ui
         thingsboard/tb-js-executor

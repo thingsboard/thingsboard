@@ -16,19 +16,25 @@
 
 import { HasUUID } from '@shared/models/id/has-uuid';
 
-export interface OAuth2ClientsParams {
+export interface OAuth2Info {
   enabled: boolean;
-  domainsParams: OAuth2ClientsDomainParams[];
+  oauth2ParamsInfos: OAuth2ParamsInfo[];
 }
 
-export interface OAuth2ClientsDomainParams {
-  clientRegistrations: ClientRegistration[];
-  domainInfos: DomainInfo[];
+export interface OAuth2ParamsInfo {
+  clientRegistrations: OAuth2RegistrationInfo[];
+  domainInfos: OAuth2DomainInfo[];
+  mobileInfos: OAuth2MobileInfo[];
 }
 
-export interface DomainInfo {
+export interface OAuth2DomainInfo {
   name: string;
   scheme: DomainSchema;
+}
+
+export interface OAuth2MobileInfo {
+  pkgName: string;
+  appSecret: string;
 }
 
 export enum DomainSchema{
@@ -48,7 +54,8 @@ export const domainSchemaTranslations = new Map<DomainSchema, string>(
 export enum MapperConfigType{
   BASIC = 'BASIC',
   CUSTOM = 'CUSTOM',
-  GITHUB = 'GITHUB'
+  GITHUB = 'GITHUB',
+  APPLE = 'APPLE'
 }
 
 export enum TenantNameStrategy{
@@ -57,7 +64,21 @@ export enum TenantNameStrategy{
   CUSTOM = 'CUSTOM'
 }
 
-export interface OAuth2ClientRegistrationTemplate extends ClientRegistration{
+export enum PlatformType {
+  WEB = 'WEB',
+  ANDROID = 'ANDROID',
+  IOS = 'IOS'
+}
+
+export const platformTypeTranslations = new Map<PlatformType, string>(
+  [
+    [PlatformType.WEB, 'admin.oauth2.platform-web'],
+    [PlatformType.ANDROID, 'admin.oauth2.platform-android'],
+    [PlatformType.IOS, 'admin.oauth2.platform-ios']
+  ]
+);
+
+export interface OAuth2ClientRegistrationTemplate extends OAuth2RegistrationInfo{
   comment: string;
   createdTime: number;
   helpLink: string;
@@ -66,7 +87,7 @@ export interface OAuth2ClientRegistrationTemplate extends ClientRegistration{
   id: HasUUID;
 }
 
-export interface ClientRegistration {
+export interface OAuth2RegistrationInfo {
   loginButtonLabel: string;
   loginButtonIcon: string;
   clientId: string;
@@ -74,6 +95,7 @@ export interface ClientRegistration {
   accessTokenUri: string;
   authorizationUri: string;
   scope: string[];
+  platforms: PlatformType[];
   jwkSetUri?: string;
   userInfoUri: string;
   clientAuthenticationMethod: ClientAuthenticationMethod;

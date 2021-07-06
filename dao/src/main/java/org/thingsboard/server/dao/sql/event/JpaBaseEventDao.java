@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.event.DebugEvent;
 import org.thingsboard.server.common.data.event.ErrorEventFilter;
 import org.thingsboard.server.common.data.event.EventFilter;
-import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.event.LifeCycleEventFilter;
 import org.thingsboard.server.common.data.event.StatisticsEventFilter;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -40,6 +39,10 @@ import org.thingsboard.server.dao.event.EventDao;
 import org.thingsboard.server.dao.model.sql.EventEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -254,6 +257,25 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
                 eventType,
                 PageRequest.of(0, limit));
         return DaoUtil.convertDataList(latest);
+    }
+
+    @Override
+    public void cleanupEvents(long otherEventsTtl, long debugEventsTtl) {
+        log.info("Going to cleanup old events using debug events ttl: {}s and other events ttl: {}s", debugEventsTtl, otherEventsTtl);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement stmt = connection.prepareStatement("call cleanup_events_by_ttl(?,?,?)")) {
+            stmt.setLong(1, otherEventsTtl);
+            stmt.setLong(2, debugEventsTtl);
+            stmt.setLong(3, 0);
+            stmt.execute();
+            printWarnings(stmt);
+            try (ResultSet resultSet = stmt.getResultSet()){
+                resultSet.next();
+                log.info("Total events removed by TTL: [{}]", resultSet.getLong(1));
+            }
+        } catch (SQLException e) {
+            log.error("SQLException occurred during events TTL task execution ", e);
+        }
     }
 
     public Optional<Event> save(EventEntity entity, boolean ifNotExists) {

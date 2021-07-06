@@ -131,13 +131,13 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToFirmwareStateServiceMsg>> createToFirmwareStateServiceMsgConsumer() {
-        return new InMemoryTbQueueConsumer<>(coreSettings.getFirmwareTopic());
+    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToOtaPackageStateServiceMsg>> createToOtaPackageStateServiceMsgConsumer() {
+        return new InMemoryTbQueueConsumer<>(coreSettings.getOtaPackageTopic());
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToFirmwareStateServiceMsg>> createToFirmwareStateServiceMsgProducer() {
-        return new InMemoryTbQueueProducer<>(coreSettings.getFirmwareTopic());
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToOtaPackageStateServiceMsg>> createToOtaPackageStateServiceMsgProducer() {
+        return new InMemoryTbQueueProducer<>(coreSettings.getOtaPackageTopic());
     }
 
     @Override

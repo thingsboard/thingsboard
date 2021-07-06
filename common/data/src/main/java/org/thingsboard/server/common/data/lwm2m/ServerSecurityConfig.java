@@ -20,7 +20,9 @@ import lombok.Data;
 @Data
 public class ServerSecurityConfig {
     String host;
+    String securityHost;
     Integer port;
+    Integer securityPort;
     String serverPublicKey;
     boolean bootstrapServerIs = true;
     Integer clientHoldOffTime = 1;

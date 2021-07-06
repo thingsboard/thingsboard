@@ -32,7 +32,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
-import org.thingsboard.server.common.data.id.FirmwareId;
+import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -49,7 +49,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
-import org.thingsboard.server.dao.firmware.FirmwareService;
+import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -102,7 +102,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     private ResourceService resourceService;
 
     @Autowired
-    private FirmwareService firmwareService;
+    private OtaPackageService otaPackageService;
 
     @Override
     public void deleteEntityRelations(TenantId tenantId, EntityId entityId) {
@@ -167,8 +167,8 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             case TB_RESOURCE:
                 hasName = resourceService.findResourceInfoByIdAsync(tenantId, new TbResourceId(entityId.getId()));
                 break;
-            case FIRMWARE:
-                hasName = firmwareService.findFirmwareInfoByIdAsync(tenantId, new FirmwareId(entityId.getId()));
+            case OTA_PACKAGE:
+                hasName = otaPackageService.findOtaPackageInfoByIdAsync(tenantId, new OtaPackageId(entityId.getId()));
                 break;
             default:
                 throw new IllegalStateException("Not Implemented!");
@@ -192,7 +192,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             case DEVICE_PROFILE:
             case API_USAGE_STATE:
             case TB_RESOURCE:
-            case FIRMWARE:
+            case OTA_PACKAGE:
                 break;
             case CUSTOMER:
                 hasCustomerId = () -> new CustomerId(entityId.getId());

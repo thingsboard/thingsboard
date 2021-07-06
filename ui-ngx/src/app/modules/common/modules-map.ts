@@ -70,6 +70,8 @@ import * as TbCore from '@core/public-api';
 import * as TbShared from '@shared/public-api';
 import * as TbHomeComponents from '@home/components/public-api';
 import * as _moment from 'moment';
+import * as DragDropModule from "@angular/cdk/drag-drop";
+import * as HttpClientModule from "@angular/common/http";
 
 declare const SystemJS;
 
@@ -77,6 +79,7 @@ export const modulesMap: {[key: string]: any} = {
   '@angular/animations': SystemJS.newModule(AngularAnimations),
   '@angular/core': SystemJS.newModule(AngularCore),
   '@angular/common': SystemJS.newModule(AngularCommon),
+  '@angular/common/http': SystemJS.newModule(HttpClientModule),
   '@angular/forms': SystemJS.newModule(AngularForms),
   '@angular/flex-layout': SystemJS.newModule(AngularFlexLayout),
   '@angular/platform-browser': SystemJS.newModule(AngularPlatformBrowser),
@@ -87,6 +90,7 @@ export const modulesMap: {[key: string]: any} = {
   '@angular/cdk/layout': SystemJS.newModule(AngularCdkLayout),
   '@angular/cdk/overlay': SystemJS.newModule(AngularCdkOverlay),
   '@angular/cdk/portal': SystemJS.newModule(AngularCdkPortal),
+  '@angular/cdk/drag-drop': SystemJS.newModule(DragDropModule),
   '@angular/material/autocomplete': SystemJS.newModule(AngularMaterialAutocomplete),
   '@angular/material/badge': SystemJS.newModule(AngularMaterialBadge),
   '@angular/material/bottom-sheet': SystemJS.newModule(AngularMaterialBottomSheet),

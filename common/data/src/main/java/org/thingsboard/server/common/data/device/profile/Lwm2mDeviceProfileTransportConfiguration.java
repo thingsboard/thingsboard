@@ -15,31 +15,20 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.thingsboard.server.common.data.device.data.lwm2m.BootstrapConfiguration;
+import org.thingsboard.server.common.data.device.data.lwm2m.OtherConfiguration;
+import org.thingsboard.server.common.data.device.data.lwm2m.TelemetryMappingConfiguration;
 
 @Data
 public class Lwm2mDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
 
-    @JsonIgnore
-    private Map<String, Object> properties = new HashMap<>();
+    private static final long serialVersionUID = 6257277825459600068L;
 
-    @JsonAnyGetter
-    public Map<String, Object> properties() {
-        return this.properties;
-    }
-
-    @JsonAnySetter
-    public void put(String name, Object value) {
-        this.properties.put(name, value);
-    }
+    private TelemetryMappingConfiguration observeAttr;
+    private BootstrapConfiguration bootstrap;
+    private OtherConfiguration clientLwM2mSettings;
 
     @Override
     public DeviceTransportType getType() {

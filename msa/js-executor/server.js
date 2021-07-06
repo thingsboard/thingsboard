@@ -51,3 +51,5 @@ switch (serviceType) {
         process.exit(-1);
 }
 
+require('./api/httpServer');
+

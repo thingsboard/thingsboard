@@ -231,7 +231,6 @@ export class DashboardUtilsService {
   private createDefaultGridSettings(): GridSettings {
     return {
       backgroundColor: '#eeeeee',
-      color: 'rgba(0,0,0,0.870588)',
       columns: 24,
       margin: 10,
       backgroundSizeMode: '100%'

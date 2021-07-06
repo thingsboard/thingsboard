@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.coap.adaptors;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
@@ -26,6 +27,7 @@ import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.coap.Response;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
@@ -118,27 +120,41 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
     }
 
     @Override
-    public Response convertToPublish(TransportProtos.ToServerRpcResponseMsg msg) throws AdaptorException {
+    public Response convertToPublish(boolean isConfirmable, TransportProtos.ToServerRpcResponseMsg msg) throws AdaptorException {
         Response response = new Response(CoAP.ResponseCode.CONTENT);
+        response.setAcknowledged(isConfirmable);
         response.setPayload(msg.toByteArray());
         return response;
     }
 
     @Override
-    public Response convertToPublish(TransportProtos.GetAttributeResponseMsg msg) throws AdaptorException {
-        if (msg.getClientAttributeListCount() == 0 && msg.getSharedAttributeListCount() == 0) {
-            return new Response(CoAP.ResponseCode.NOT_FOUND);
+    public Response convertToPublish(boolean isConfirmable, TransportProtos.GetAttributeResponseMsg msg) throws AdaptorException {
+        if (msg.getSharedStateMsg()) {
+            if (StringUtils.isEmpty(msg.getError())) {
+                Response response = new Response(CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
+                response.setAcknowledged(isConfirmable);
+                TransportProtos.AttributeUpdateNotificationMsg notificationMsg = TransportProtos.AttributeUpdateNotificationMsg.newBuilder().addAllSharedUpdated(msg.getSharedAttributeListList()).build();
+                response.setPayload(notificationMsg.toByteArray());
+                return response;
+            } else {
+                return new Response(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
+            }
         } else {
-            Response response = new Response(CoAP.ResponseCode.CONTENT);
-            response.setPayload(msg.toByteArray());
-            return response;
+            if (msg.getClientAttributeListCount() == 0 && msg.getSharedAttributeListCount() == 0) {
+                return new Response(CoAP.ResponseCode.NOT_FOUND);
+            } else {
+                Response response = new Response(CoAP.ResponseCode.CONTENT);
+                response.setAcknowledged(isConfirmable);
+                response.setPayload(msg.toByteArray());
+                return response;
+            }
         }
     }
 
     private Response getObserveNotification(boolean confirmable, byte[] notification) {
-        Response response = new Response(CoAP.ResponseCode.CONTENT);
+        Response response = new Response(CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
         response.setPayload(notification);
-        response.setConfirmable(confirmable);
+        response.setAcknowledged(confirmable);
         return response;
     }
 

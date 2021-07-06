@@ -19,7 +19,7 @@ import { EMPTY, forkJoin, Observable, of, throwError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
-import { BaseData } from '@shared/models/base-data';
+import { BaseData, HasId } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { DeviceService } from '@core/http/device.service';
 import { TenantService } from '@core/http/tenant.service';
@@ -75,12 +75,12 @@ import {
   StringOperation
 } from '@shared/models/query/query.models';
 import { alarmFields } from '@shared/models/alarm.models';
-import { FirmwareService } from '@core/http/firmware.service';
-import { EdgeService } from "@core/http/edge.service";
-import { Edge, EdgeEventType } from '@shared/models/edge.models';
-import { RuleChainType } from "@shared/models/rule-chain.models";
-import { WidgetService } from "@core/http/widget.service";
-import { DeviceProfileService } from "@core/http/device-profile.service";
+import { OtaPackageService } from '@core/http/ota-package.service';
+import { EdgeService } from '@core/http/edge.service';
+import { Edge, EdgeEvent, EdgeEventType } from '@shared/models/edge.models';
+import { RuleChainMetaData, RuleChainType } from '@shared/models/rule-chain.models';
+import { WidgetService } from '@core/http/widget.service';
+import { DeviceProfileService } from '@core/http/device-profile.service';
 
 @Injectable({
   providedIn: 'root'
@@ -101,7 +101,7 @@ export class EntityService {
     private dashboardService: DashboardService,
     private entityRelationService: EntityRelationService,
     private attributeService: AttributeService,
-    private firmwareService: FirmwareService,
+    private otaPackageService: OtaPackageService,
     private widgetService: WidgetService,
     private deviceProfileService: DeviceProfileService,
     private utils: UtilsService
@@ -142,8 +142,8 @@ export class EntityService {
       case EntityType.ALARM:
         console.error('Get Alarm Entity is not implemented!');
         break;
-      case EntityType.FIRMWARE:
-        observable = this.firmwareService.getFirmwareInfo(entityId, config);
+      case EntityType.OTA_PACKAGE:
+        observable = this.otaPackageService.getOtaPackageInfo(entityId, config);
         break;
     }
     return observable;
@@ -359,9 +359,9 @@ export class EntityService {
       case EntityType.ALARM:
         console.error('Get Alarm Entities is not implemented!');
         break;
-      case EntityType.FIRMWARE:
+      case EntityType.OTA_PACKAGE:
         pageLink.sortOrder.property = 'title';
-        entitiesObservable = this.firmwareService.getFirmwares(pageLink, config);
+        entitiesObservable = this.otaPackageService.getOtaPackages(pageLink, config);
         break;
     }
     return entitiesObservable;
@@ -1342,8 +1342,8 @@ export class EntityService {
     return entitiesObservable;
   }
 
-  public getEdgeEventContentByEntityType(entity: any): Observable<any> {
-    let entityObservable: Observable<any>;
+  public getEdgeEventContent(entity: EdgeEvent): Observable<BaseData<HasId> | RuleChainMetaData | string> {
+    let entityObservable: Observable<BaseData<HasId> | RuleChainMetaData | string>;
     const entityId: string = entity.entityId;
     const entityType: any = entity.type;
     switch (entityType) {

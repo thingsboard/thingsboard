@@ -64,7 +64,6 @@ public class LwM2MJsonAdaptor implements LwM2MTransportAdaptor  {
             }
             return result.build();
         } catch (RuntimeException e) {
-            log.warn("Failed to decode get attributes request", e);
             throw new AdaptorException(e);
         }
     }
