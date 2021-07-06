@@ -31,7 +31,8 @@ import {
   credentialTypeNames,
   DeviceCredentialMQTTBasic,
   DeviceCredentials,
-  DeviceCredentialsType
+  DeviceCredentialsType,
+  DeviceTransportType
 } from '@shared/models/device.models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -57,6 +58,9 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  deviceTransportType = DeviceTransportType.DEFAULT;
 
   private destroy$ = new Subject();
 

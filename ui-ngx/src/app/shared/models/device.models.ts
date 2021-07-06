@@ -680,6 +680,20 @@ export const credentialTypeNames = new Map<DeviceCredentialsType, string>(
   ]
 );
 
+export const credentialTypesByTransportType = new Map<DeviceTransportType, DeviceCredentialsType[]>(
+  [
+    [DeviceTransportType.DEFAULT, [
+      DeviceCredentialsType.ACCESS_TOKEN, DeviceCredentialsType.X509_CERTIFICATE, DeviceCredentialsType.MQTT_BASIC
+    ]],
+    [DeviceTransportType.MQTT, [
+      DeviceCredentialsType.ACCESS_TOKEN, DeviceCredentialsType.X509_CERTIFICATE, DeviceCredentialsType.MQTT_BASIC
+    ]],
+    [DeviceTransportType.COAP, [DeviceCredentialsType.ACCESS_TOKEN, DeviceCredentialsType.X509_CERTIFICATE]],
+    [DeviceTransportType.LWM2M, [DeviceCredentialsType.LWM2M_CREDENTIALS]],
+    [DeviceTransportType.SNMP, [DeviceCredentialsType.ACCESS_TOKEN, DeviceCredentialsType.X509_CERTIFICATE]]
+  ]
+);
+
 export interface DeviceCredentials extends BaseData<DeviceCredentialsId> {
   deviceId: DeviceId;
   credentialsType: DeviceCredentialsType;
