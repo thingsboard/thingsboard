@@ -97,6 +97,7 @@ public class TbMsgToEmailNodeTest {
             config.setToTemplate("${userEmail}");
             config.setSubjectTemplate("Hi ${username} there");
             config.setBodyTemplate("${name} is to high. Current ${passed} and ${count}");
+            config.setMailBodyType("false");
             ObjectMapper mapper = new ObjectMapper();
             TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 

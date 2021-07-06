@@ -221,7 +221,8 @@ export class ImageMap extends LeafletMap {
           zoom: 1,
           crs: L.CRS.Simple,
           attributionControl: false,
-          editable: !!this.options.editablePolygon
+          editable: !!this.options.editablePolygon,
+          tap: L.Browser.safari && L.Browser.mobile
         });
         this.updateBounds(updateImage);
       }
