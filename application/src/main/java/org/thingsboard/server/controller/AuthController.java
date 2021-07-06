@@ -76,8 +76,7 @@ public class AuthController extends BaseController {
 
     @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/auth/user", method = RequestMethod.GET)
-    public @ResponseBody
-    User getUser() throws ThingsboardException {
+    public @ResponseBody User getUser() throws ThingsboardException {
         try {
             SecurityUser securityUser = getCurrentUser();
             return userService.findUserById(securityUser.getTenantId(), securityUser.getId());
