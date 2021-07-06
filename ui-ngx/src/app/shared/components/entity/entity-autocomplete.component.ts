@@ -26,8 +26,8 @@ import {
   ViewChild
 } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Observable } from 'rxjs';
-import { map, mergeMap, share, tap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -142,6 +142,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   ngOnInit() {
     this.filteredEntities = this.selectEntityFormGroup.get('entity').valueChanges
       .pipe(
+        debounceTime(150),
         tap(value => {
           let modelValue;
           if (typeof value === 'string' || !value) {
@@ -156,7 +157,8 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
         }),
         // startWith<string | BaseData<EntityId>>(''),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
-        mergeMap(name => this.fetchEntities(name) ),
+        distinctUntilChanged(),
+        switchMap(name => this.fetchEntities(name)),
         share()
       );
   }
@@ -326,6 +328,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     const targetEntityType = this.checkEntityType(this.entityTypeValue);
     return this.entityService.getEntitiesByNameFilter(targetEntityType, searchText,
       50, this.entitySubtypeValue, {ignoreLoading: true}).pipe(
+      catchError(() => of(null)),
       map((data) => {
         if (data) {
           if (this.excludeEntityIds && this.excludeEntityIds.length) {

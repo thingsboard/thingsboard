@@ -40,6 +40,10 @@ import org.thingsboard.server.dao.model.sql.EdgeInfoEntity;
 import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -192,6 +196,24 @@ public class JpaEdgeDao extends JpaAbstractSearchTextDao<EdgeEntity, Edge> imple
         log.debug("Try to find edges by tenantId [{}], dashboardId [{}]", tenantId, dashboardId);
         ListenableFuture<List<EntityRelation>> relations = relationDao.findAllByToAndType(new TenantId(tenantId), new DashboardId(dashboardId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
         return transformFromRelationToEdge(tenantId, relations);
+    }
+
+    @Override
+    public void cleanupEvents(long ttl) {
+        log.info("Going to cleanup old edge events using ttl: {}s", ttl);
+        try (Connection connection = dataSource.getConnection();
+        PreparedStatement stmt = connection.prepareStatement("call cleanup_edge_events_by_ttl(?,?)")) {
+            stmt.setLong(1, ttl);
+            stmt.setLong(2, 0);
+            stmt.execute();
+            printWarnings(stmt);
+            try (ResultSet resultSet = stmt.getResultSet()) {
+                resultSet.next();
+                log.info("Total edge events removed by TTL: [{}]", resultSet.getLong(1));
+            }
+        } catch (SQLException e) {
+            log.error("SQLException occurred during edge events TTL task execution ", e);
+        }
     }
 
     private ListenableFuture<List<Edge>> transformFromRelationToEdge(UUID tenantId, ListenableFuture<List<EntityRelation>> relations) {

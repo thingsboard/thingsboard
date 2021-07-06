@@ -20,6 +20,7 @@ import org.eclipse.leshan.server.californium.registration.InMemoryRegistrationSt
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.cache.TBRedisCacheConfiguration;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
@@ -46,20 +47,37 @@ public class TbLwM2mStoreFactory {
 
     @Bean
     private CaliforniumRegistrationStore registrationStore() {
-        return redisConfiguration.isPresent() && useRedis ?
-                new TbLwM2mRedisRegistrationStore(redisConfiguration.get().redisConnectionFactory()) : new InMemoryRegistrationStore(config.getCleanPeriodInSec());
+        return isRedis() ?
+                new TbLwM2mRedisRegistrationStore(getConnectionFactory()) : new InMemoryRegistrationStore(config.getCleanPeriodInSec());
     }
 
     @Bean
-    private TbEditableSecurityStore securityStore() {
-        return new TbLwM2mSecurityStore(redisConfiguration.isPresent() && useRedis ?
-                new TbLwM2mRedisSecurityStore(redisConfiguration.get().redisConnectionFactory()) : new TbInMemorySecurityStore(), validator);
+    private TbMainSecurityStore securityStore() {
+        return new TbLwM2mSecurityStore(isRedis() ?
+                new TbLwM2mRedisSecurityStore(getConnectionFactory()) : new TbInMemorySecurityStore(), validator);
+    }
+
+    @Bean
+    private TbLwM2MClientStore clientStore() {
+        return isRedis() ? new TbRedisLwM2MClientStore(getConnectionFactory()) : new TbDummyLwM2MClientStore();
+    }
+
+    @Bean
+    private TbLwM2MClientOtaInfoStore otaStore() {
+        return isRedis() ? new TbLwM2mRedisClientOtaInfoStore(getConnectionFactory()) : new TbDummyLwM2MClientOtaInfoStore();
     }
 
     @Bean
     private TbLwM2MDtlsSessionStore sessionStore() {
-        return redisConfiguration.isPresent() && useRedis ?
-                new TbLwM2MDtlsSessionRedisStore(redisConfiguration.get().redisConnectionFactory()) : new TbL2M2MDtlsSessionInMemoryStore();
+        return isRedis() ? new TbLwM2MDtlsSessionRedisStore(getConnectionFactory()) : new TbL2M2MDtlsSessionInMemoryStore();
+    }
+
+    private RedisConnectionFactory getConnectionFactory() {
+        return redisConfiguration.get().redisConnectionFactory();
+    }
+
+    private boolean isRedis() {
+        return redisConfiguration.isPresent() && useRedis;
     }
 
 }

@@ -133,7 +133,7 @@ export class OtaPackageService {
   }
 
   public countUpdateDeviceAfterChangePackage(type: OtaUpdateType, entityId: EntityId, config?: RequestConfig): Observable<number> {
-    return this.http.get<number>(`/api/devices/count/${type}?deviceProfileId=${entityId.id}`, defaultHttpOptionsFromConfig(config));
+    return this.http.get<number>(`/api/devices/count/${type}/${entityId.id}`, defaultHttpOptionsFromConfig(config));
   }
 
   public confirmDialogUpdatePackage(entity: BaseData<EntityId>&OtaPagesIds,

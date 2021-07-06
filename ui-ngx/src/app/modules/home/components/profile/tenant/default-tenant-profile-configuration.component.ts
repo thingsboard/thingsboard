@@ -77,7 +77,8 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxSms: [null, [Validators.required, Validators.min(0)]],
       maxCreatedAlarms: [null, [Validators.required, Validators.min(0)]],
       defaultStorageTtlDays: [null, [Validators.required, Validators.min(0)]],
-      alarmsTtlDays: [null, [Validators.required, Validators.min(0)]]
+      alarmsTtlDays: [null, [Validators.required, Validators.min(0)]],
+      rpcTtlDays: [null, [Validators.required, Validators.min(0)]]
     });
     this.defaultTenantProfileConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();

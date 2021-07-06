@@ -424,7 +424,7 @@ CREATE TABLE IF NOT EXISTS oauth2_registration (
     created_time bigint NOT NULL,
     additional_info varchar,
     client_id varchar(255),
-    client_secret varchar(255),
+    client_secret varchar(2048),
     authorization_uri varchar(255),
     token_uri varchar(255),
     scope varchar(255),
@@ -603,6 +603,17 @@ CREATE TABLE IF NOT EXISTS edge_event (
     body varchar(10000000),
     tenant_id uuid,
     ts bigint NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS rpc (
+    id uuid NOT NULL CONSTRAINT rpc_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    device_id uuid NOT NULL,
+    expiration_time bigint NOT NULL,
+    request varchar(10000000) NOT NULL,
+    response varchar(10000000),
+    status varchar(255) NOT NULL
 );
 
 CREATE OR REPLACE PROCEDURE cleanup_events_by_ttl(IN ttl bigint, IN debug_ttl bigint, INOUT deleted bigint)

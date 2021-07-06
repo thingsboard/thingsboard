@@ -67,7 +67,7 @@ export class OtaUpdateComponent extends EntityComponent<OtaPackage> implements O
         this.entityForm.get('file').updateValueAndValidity({emitEvent: false});
       } else {
         this.entityForm.get('file').clearValidators();
-        this.entityForm.get('url').setValidators(Validators.required);
+        this.entityForm.get('url').setValidators([Validators.required, Validators.pattern('(.|\\s)*\\S(.|\\s)*')]);
         this.entityForm.get('file').updateValueAndValidity({emitEvent: false});
         this.entityForm.get('url').updateValueAndValidity({emitEvent: false});
       }
@@ -172,6 +172,11 @@ export class OtaUpdateComponent extends EntityComponent<OtaPackage> implements O
   }
 
   prepareFormValue(formValue: any): any {
+    if (formValue.resource === 'url') {
+      delete formValue.file;
+    } else {
+      delete formValue.url;
+    }
     delete formValue.resource;
     delete formValue.generateChecksum;
     return super.prepareFormValue(formValue);

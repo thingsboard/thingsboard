@@ -86,7 +86,10 @@ public class DefaultTbResourceService implements TbResourceService {
                 } else {
                     throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getSearchText()));
                 }
-            } catch (InvalidDDFFileException | IOException e) {
+            } catch (InvalidDDFFileException e) {
+                log.error("Failed to parse file {}", resource.getFileName(), e);
+                throw new DataValidationException("Failed to parse file " + resource.getFileName());
+            } catch (IOException e) {
                 throw new ThingsboardException(e, ThingsboardErrorCode.GENERAL);
             }
             if (resource.getResourceType().equals(ResourceType.LWM2M_MODEL) && toLwM2mObject(resource, true) == null) {
@@ -194,8 +197,7 @@ public class DefaultTbResourceService implements TbResourceService {
                     if (isSave) {
                         LwM2mResourceObserve lwM2MResourceObserve = new LwM2mResourceObserve(k, v.name, false, false, false);
                         resources.add(lwM2MResourceObserve);
-                    }
-                    else if (v.operations.isReadable()) {
+                    } else if (v.operations.isReadable()) {
                         LwM2mResourceObserve lwM2MResourceObserve = new LwM2mResourceObserve(k, v.name, false, false, false);
                         resources.add(lwM2MResourceObserve);
                     }
@@ -204,8 +206,7 @@ public class DefaultTbResourceService implements TbResourceService {
                     instance.setResources(resources.toArray(LwM2mResourceObserve[]::new));
                     lwM2mObject.setInstances(new LwM2mInstance[]{instance});
                     return lwM2mObject;
-                }
-                else {
+                } else {
                     return null;
                 }
             }

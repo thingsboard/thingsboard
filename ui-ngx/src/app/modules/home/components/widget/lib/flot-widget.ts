@@ -278,7 +278,7 @@ export class TbFlot {
         };
       }
 
-      if (this.chartType === 'line' && isFinite(this.settings.thresholdsLineWidth)) {
+      if ((this.chartType === 'line' || this.chartType === 'bar') && isFinite(this.settings.thresholdsLineWidth)) {
         this.options.grid.markingsLineWidth = this.settings.thresholdsLineWidth;
       }
 

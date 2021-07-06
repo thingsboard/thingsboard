@@ -84,10 +84,10 @@ public class LwM2mNetworkConfig {
          Create new instance of udp endpoint context matcher.
          Params:
          checkAddress
-         – true with address check, (STRICT, UDP)
+         – true with address check, (STRICT, UDP) - if port Registration of client is changed - it is bad
          - false, without
          */
-        coapConfig.setString(NetworkConfig.Keys.RESPONSE_MATCHING, "STRICT");
+        coapConfig.setString(NetworkConfig.Keys.RESPONSE_MATCHING, "RELAXED");
         /**
          https://tools.ietf.org/html/rfc7959#section-2.9.3
          The block size (number of bytes) to use when doing a blockwise transfer. \
@@ -103,7 +103,7 @@ public class LwM2mNetworkConfig {
          */
         coapConfig.setInt(NetworkConfig.Keys.MAX_MESSAGE_SIZE, 1024);
 
-        coapConfig.setInt(NetworkConfig.Keys.MAX_RETRANSMIT, 4);
+        coapConfig.setInt(NetworkConfig.Keys.MAX_RETRANSMIT, 10);
 
         return coapConfig;
     }

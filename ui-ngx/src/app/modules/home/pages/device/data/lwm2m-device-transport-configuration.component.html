@@ -16,9 +16,13 @@
 
 -->
 <form [formGroup]="lwm2mDeviceTransportConfigurationFormGroup" style="padding-bottom: 16px;">
-  <!--tb-json-object-edit
-    [required]="required"
-    label="{{ 'device-profile.transport-type-lwm2m' | translate }}"
-    formControlName="configuration">
-  </tb-json-object-edit-->
+  <mat-form-field class="mat-block" fxFlex>
+    <mat-label translate>device-profile.power-saving-mode</mat-label>
+    <mat-select formControlName="powerMode">
+      <mat-option [value]="null">{{ "device-profile.power-saving-mode-type.default" | translate }}</mat-option>
+      <mat-option *ngFor="let powerMod of powerMods" [value]="powerMod">
+        {{ powerModeTranslationMap.get(powerMod) | translate }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
 </form>
