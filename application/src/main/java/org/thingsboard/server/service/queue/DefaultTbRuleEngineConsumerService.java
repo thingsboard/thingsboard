@@ -82,7 +82,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
 
     public static final String SUCCESSFUL_STATUS = "successful";
     public static final String FAILED_STATUS = "failed";
-    public static final String THREAD_TOPIC_SPLITERATOR = " | ";
+    public static final String THREAD_TOPIC_SEPARATOR = " | ";
     @Value("${queue.rule-engine.poll-interval}")
     private long pollDuration;
     @Value("${queue.rule-engine.pack-processing-timeout}")
@@ -145,9 +145,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     @PreDestroy
     public void stop() {
         super.destroy();
-        if (submitExecutor != null) {
-            submitExecutor.shutdownNow();
-        }
+        submitExecutor.shutdownNow();
         ruleEngineSettings.getQueues().forEach(config -> consumerConfigurations.put(config.getName(), config));
     }
 
@@ -174,11 +172,11 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         repartitionExecutor.schedule(() -> repartitionTopicWithConsumerPerPartition(queue), 1, TimeUnit.SECONDS);
     }
 
-    void repartitionTopicWithConsumerPerPartition(final String queue) {
+    void repartitionTopicWithConsumerPerPartition(final String queueName) {
         if (stopped) {
             return;
         }
-        TbTopicWithConsumerPerPartition tbTopicWithConsumerPerPartition = topicsConsumerPerPartition.get(queue);
+        TbTopicWithConsumerPerPartition tbTopicWithConsumerPerPartition = topicsConsumerPerPartition.get(queueName);
         Queue<Set<TopicPartitionInfo>> subscribeQueue = tbTopicWithConsumerPerPartition.getSubscribeQueue();
         if (subscribeQueue.isEmpty()) {
             return;
@@ -203,16 +201,15 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                 log.info("calculated removedPartitions {}", removedPartitions);
 
                 removedPartitions.forEach((tpi) -> {
-                    removeConsumerForTopicByTpi(queue, consumers, tpi);
+                    removeConsumerForTopicByTpi(queueName, consumers, tpi);
                 });
 
                 addedPartitions.forEach((tpi) -> {
-                    log.info("[{}] Adding consumer for topic: {}", queue, tpi);
-                    TbRuleEngineQueueConfiguration configuration = consumerConfigurations.get(queue);
-                    //consumerStats.computeIfAbsent(queue, queueName -> new TbRuleEngineConsumerStats(configuration.getName(), statsFactory)); //already created on init
+                    log.info("[{}] Adding consumer for topic: {}", queueName, tpi);
+                    TbRuleEngineQueueConfiguration configuration = consumerConfigurations.get(queueName);
                     TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer = tbRuleEngineQueueFactory.createToRuleEngineMsgConsumer(configuration);
                     consumers.put(tpi, consumer);
-                    launchConsumer(consumer, consumerConfigurations.get(queue), consumerStats.get(queue), "" + queue + "-" + tpi.getPartition().orElse(-999999));
+                    launchConsumer(consumer, consumerConfigurations.get(queueName), consumerStats.get(queueName), "" + queueName + "-" + tpi.getPartition().orElse(-999999));
                     consumer.subscribe(Collections.singleton(tpi));
                 });
 
@@ -220,7 +217,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                 tbTopicWithConsumerPerPartition.getLock().unlock();
             }
         } else {
-            scheduleTopicRepartition(queue); //reschedule later
+            scheduleTopicRepartition(queueName); //reschedule later
         }
 
     }
@@ -240,7 +237,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     protected void stopMainConsumers() {
         consumers.values().forEach(TbQueueConsumer::unsubscribe);
         topicsConsumerPerPartition.values().forEach(tbTopicWithConsumerPerPartition -> tbTopicWithConsumerPerPartition.getConsumers().keySet()
-                        .forEach((tpi)-> removeConsumerForTopicByTpi(tbTopicWithConsumerPerPartition.getTopic(), tbTopicWithConsumerPerPartition.getConsumers(), tpi)));
+                .forEach((tpi) -> removeConsumerForTopicByTpi(tbTopicWithConsumerPerPartition.getTopic(), tbTopicWithConsumerPerPartition.getConsumers(), tpi)));
     }
 
     void launchConsumer(TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer, TbRuleEngineQueueConfiguration configuration, TbRuleEngineConsumerStats stats, String threadSuffix) {
@@ -304,11 +301,11 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
 
     void updateCurrentThreadName(String threadSuffix) {
         String name = Thread.currentThread().getName();
-        int spliteratorIndex = name.indexOf(THREAD_TOPIC_SPLITERATOR);
+        int spliteratorIndex = name.indexOf(THREAD_TOPIC_SEPARATOR);
         if (spliteratorIndex > 0) {
             name = name.substring(0, spliteratorIndex);
         }
-        name = name + THREAD_TOPIC_SPLITERATOR + threadSuffix;
+        name = name + THREAD_TOPIC_SEPARATOR + threadSuffix;
         Thread.currentThread().setName(name);
     }
 
