@@ -31,7 +31,19 @@
     body, html {
       height: 100%;
       overflow: hidden;
-      background-color: #eee;
+    }
+
+
+    @media (prefers-color-scheme: light) {
+      body, html {
+        background-color: #eee;
+      }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body, html {
+        background-color: #1d263c;
+      }
     }
 
     .tb-loading-spinner {

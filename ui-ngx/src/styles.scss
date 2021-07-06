@@ -550,7 +550,6 @@ mat-label {
   }
 
   mat-toolbar.mat-table-toolbar {
-    background: #fff;
     padding: 0 24px;
     .mat-toolbar-tools {
       padding: 0;
@@ -625,10 +624,10 @@ mat-label {
   .mat-row {
     transition: background-color .2s;
     &:hover:not(.tb-current-entity) {
-      background-color: #f4f4f4;
+      background-color: rgba(255, 255, 255, 0.08);
     }
     &.tb-current-entity {
-      background-color: #e9e9e9;
+      background-color: rgba(255, 255, 255, 0.08);
     }
   }
 
