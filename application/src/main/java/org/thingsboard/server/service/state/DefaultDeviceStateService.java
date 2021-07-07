@@ -560,27 +560,15 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
             if (!persistToTelemetry || deviceStateData.getState().getInactivityTimeout() != TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec)) {
                 return future; //fail fast
             }
-            final SettableFuture<DeviceStateData> resultFuture = SettableFuture.create();
-            Futures.addCallback(
-                    attributesService.find(TenantId.SYS_TENANT_ID, deviceStateData.getDeviceId(), SERVER_SCOPE, INACTIVITY_TIMEOUT),
-                    new FutureCallback<Optional<AttributeKvEntry>>() {
-                        @Override
-                        public void onSuccess(Optional<AttributeKvEntry> inactivityTimeoutOpt) {
-                            inactivityTimeoutOpt.flatMap(KvEntry::getLongValue).ifPresent((inactivityTimeout) -> {
-                                if (inactivityTimeout > 0) {
-                                    deviceStateData.getState().setInactivityTimeout(inactivityTimeout);
-                                }
-                            });
-                            resultFuture.set(deviceStateData);
-                        }
-
-                        @Override
-                        public void onFailure(Throwable t) {
-                            resultFuture.setException(t);
-                        }
-                    },
-                    deviceStateExecutor);
-            return resultFuture;
+            var attributesFuture = attributesService.find(TenantId.SYS_TENANT_ID, deviceStateData.getDeviceId(), SERVER_SCOPE, INACTIVITY_TIMEOUT);
+            return Futures.transform(attributesFuture, attributes -> {
+                attributes.flatMap(KvEntry::getLongValue).ifPresent((inactivityTimeout) -> {
+                    if (inactivityTimeout > 0) {
+                        deviceStateData.getState().setInactivityTimeout(inactivityTimeout);
+                    }
+                });
+                return deviceStateData;
+            }, deviceStateExecutor);
         }, deviceStateExecutor);
     }
 
