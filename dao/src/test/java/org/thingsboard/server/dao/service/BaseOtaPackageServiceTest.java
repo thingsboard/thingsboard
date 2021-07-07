@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,7 +42,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
@@ -667,7 +667,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         OtaPackageInfo firmwareInfo = new OtaPackageInfo();
         firmwareInfo.setDeviceProfileId(deviceProfileId);
         firmwareInfo.setType(FIRMWARE);
-        firmwareInfo.setTitle(randomStringByLength(257));
+        firmwareInfo.setTitle(RandomStringUtils.random(257));
         firmwareInfo.setVersion(VERSION);
         firmwareInfo.setUrl(URL);
         firmwareInfo.setTenantId(tenantId);
@@ -687,7 +687,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmwareInfo.setTenantId(tenantId);
         firmwareInfo.setTitle(TITLE);
 
-        firmwareInfo.setVersion(randomStringByLength(257));
+        firmwareInfo.setVersion(RandomStringUtils.random(257));
         thrown.expectMessage("The length of version should be equal or shorter than 255");
 
         otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
@@ -708,18 +708,4 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setDataSize(DATA_SIZE);
         return otaPackageService.saveOtaPackage(firmware);
     }
-
-    private String randomStringByLength(int length) {
-        int leftLimit = 97;
-        int rightLimit = 122;
-        Random random = new Random();
-        StringBuilder buffer = new StringBuilder(length);
-        for (int i = 0; i < length; i++) {
-            int randomLimitedInt = leftLimit + (int)
-                    (random.nextFloat() * (rightLimit - leftLimit + 1));
-            buffer.append((char) randomLimitedInt);
-        }
-        return buffer.toString();
-    }
-
 }
