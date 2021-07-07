@@ -555,7 +555,6 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
         return transformInactivityTimeout(future);
     }
 
-    // voba - schwarz fix to use timeseries/attributes for inactivity timeout
     private ListenableFuture<DeviceStateData> transformInactivityTimeout(ListenableFuture<DeviceStateData> future) {
         return Futures.transformAsync(future, deviceStateData -> {
             if (!persistToTelemetry || deviceStateData.getState().getInactivityTimeout() != TimeUnit.SECONDS.toMillis(defaultInactivityTimeoutInSec)) {
