@@ -136,6 +136,7 @@ import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/emb
 import { EdgeDownlinkTableComponent } from '@home/components/edge/edge-downlink-table.component';
 import { EdgeDownlinkTableHeaderComponent } from '@home/components/edge/edge-downlink-table-header.component';
 import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-page/widget-types-panel.component';
+import { AlarmDurationPredicateValueComponent } from '@home/components/profile/alarm/alarm-duration-predicate-value.component';
 import { DashboardImageDialogComponent } from '@home/components/dashboard-page/dashboard-image-dialog.component';
 import { WidgetContainerComponent } from '@home/components/widget/widget-container.component';
 import { SnmpDeviceProfileTransportModule } from '@home/components/profile/device/snpm/snmp-device-profile-transport.module';
@@ -239,6 +240,7 @@ import { DeviceCredentialsModule } from '@home/components/device/device-credenti
       AlarmScheduleInfoComponent,
       DeviceProfileProvisionConfigurationComponent,
       AlarmScheduleComponent,
+      AlarmDurationPredicateValueComponent,
       DeviceWizardDialogComponent,
       AlarmScheduleDialogComponent,
       EditAlarmDetailsDialogComponent,
@@ -348,6 +350,7 @@ import { DeviceCredentialsModule } from '@home/components/device/device-credenti
     AlarmScheduleInfoComponent,
     AlarmScheduleComponent,
     AlarmScheduleDialogComponent,
+    AlarmDurationPredicateValueComponent,
     EditAlarmDetailsDialogComponent,
     DeviceProfileProvisionConfigurationComponent,
     AlarmScheduleComponent,
