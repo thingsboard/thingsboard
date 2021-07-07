@@ -136,6 +136,7 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
         this.selectEntitySubtypeText = 'edge.select-edge-type';
         this.entitySubtypeText = 'edge.edge-type';
         this.entitySubtypeRequiredText = 'edge.edge-type-required';
+        this.entitySubtypeMaxLength = 'edge.type-max-length';
         this.broadcastSubscription = this.broadcast.on('edgeSaved', () => {
           this.subTypes = null;
         });
