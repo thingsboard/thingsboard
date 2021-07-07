@@ -76,7 +76,7 @@ COMMENT ON INDEX public.idx_event_ts
 
 DROP INDEX IF EXISTS public.idx_event_tenant_entity_type_entity_event_type_created_time_des;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_event_tenant_entity_type_entity_event_type_created_time_des
+-- CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_event_tenant_entity_type_entity_event_type_created_time_des
 CREATE INDEX IF NOT EXISTS idx_event_tenant_entity_type_entity_event_type_created_time_des
     ON public.event USING btree
     (tenant_id ASC NULLS LAST, entity_type ASC NULLS LAST, entity_id ASC NULLS LAST, event_type ASC NULLS LAST, created_time DESC NULLS LAST)
