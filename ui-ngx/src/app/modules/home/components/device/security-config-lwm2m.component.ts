@@ -89,6 +89,7 @@ export class SecurityConfigLwm2mComponent implements ControlValueAccessor, Valid
       this.lwm2mConfigFormGroup.disable({emitEvent: false});
     } else {
       this.lwm2mConfigFormGroup.enable({emitEvent: false});
+      this.securityConfigClientUpdateValidators(this.lwm2mConfigFormGroup.get('client.securityConfigClientMode').value);
     }
   }
 
@@ -126,21 +127,21 @@ export class SecurityConfigLwm2mComponent implements ControlValueAccessor, Valid
     switch (mode) {
       case Lwm2mSecurityType.NO_SEC:
         this.setValidatorsNoSecX509();
-        this.lwm2mConfigFormGroup.get('client.cert').disable();
+        this.lwm2mConfigFormGroup.get('client.cert').disable({emitEvent: false});
         break;
       case Lwm2mSecurityType.X509:
         this.setValidatorsNoSecX509();
-        this.lwm2mConfigFormGroup.get('client.cert').enable();
+        this.lwm2mConfigFormGroup.get('client.cert').enable({emitEvent: false});
         break;
       case Lwm2mSecurityType.PSK:
         this.lenMaxKeyClient = LEN_MAX_PSK;
         this.setValidatorsPskRpk(mode);
-        this.lwm2mConfigFormGroup.get('client.identity').enable();
+        this.lwm2mConfigFormGroup.get('client.identity').enable({emitEvent: false});
         break;
       case Lwm2mSecurityType.RPK:
         this.lenMaxKeyClient = LEN_MAX_PUBLIC_KEY_RPK;
         this.setValidatorsPskRpk(mode);
-        this.lwm2mConfigFormGroup.get('client.identity').disable();
+        this.lwm2mConfigFormGroup.get('client.identity').disable({emitEvent: false});
         break;
     }
     this.lwm2mConfigFormGroup.get('client.identity').updateValueAndValidity({emitEvent: false});

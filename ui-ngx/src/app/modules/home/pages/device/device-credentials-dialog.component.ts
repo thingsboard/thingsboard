@@ -43,14 +43,12 @@ export class DeviceCredentialsDialogComponent extends
   DialogComponent<DeviceCredentialsDialogComponent, DeviceCredentials> implements OnInit, ErrorStateMatcher {
 
   deviceCredentialsFormGroup: FormGroup;
-
-  isReadOnly: boolean;
-
-  deviceCredentials: DeviceCredentials;
-
-  submitted = false;
-
   deviceTransportType: DeviceTransportType;
+  isReadOnly: boolean;
+  loadingCredentials = true;
+
+  private deviceCredentials: DeviceCredentials;
+  private submitted = false;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -91,6 +89,7 @@ export class DeviceCredentialsDialogComponent extends
       this.deviceCredentialsFormGroup.patchValue({
         credential: deviceCredentials
       }, {emitEvent: false});
+      this.loadingCredentials = false;
     });
   }
 

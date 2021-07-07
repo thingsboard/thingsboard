@@ -110,7 +110,6 @@ import { RuleChainAutocompleteComponent } from '@home/components/rule-chain/rule
 import { DeviceProfileProvisionConfigurationComponent } from '@home/components/profile/device-profile-provision-configuration.component';
 import { AlarmScheduleComponent } from '@home/components/profile/alarm/alarm-schedule.component';
 import { DeviceWizardDialogComponent } from '@home/components/wizard/device-wizard-dialog.component';
-import { DeviceCredentialsComponent } from '@home/components/device/device-credentials.component';
 import { AlarmScheduleInfoComponent } from '@home/components/profile/alarm/alarm-schedule-info.component';
 import { AlarmScheduleDialogComponent } from '@home/components/profile/alarm/alarm-schedule-dialog.component';
 import { EditAlarmDetailsDialogComponent } from '@home/components/profile/alarm/edit-alarm-details-dialog.component';
@@ -120,7 +119,6 @@ import { TenantProfileConfigurationComponent } from '@home/components/profile/te
 import { SmsProviderConfigurationComponent } from '@home/components/sms/sms-provider-configuration.component';
 import { AwsSnsProviderConfigurationComponent } from '@home/components/sms/aws-sns-provider-configuration.component';
 import { TwilioSmsProviderConfigurationComponent } from '@home/components/sms/twilio-sms-provider-configuration.component';
-import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-device-credentials.component';
 import { Lwm2mProfileComponentsModule } from '@home/components/profile/device/lwm2m/lwm2m-profile-components.module';
 import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
 import { DashboardToolbarComponent } from '@home/components/dashboard-page/dashboard-toolbar.component';
@@ -138,11 +136,10 @@ import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/emb
 import { EdgeDownlinkTableComponent } from '@home/components/edge/edge-downlink-table.component';
 import { EdgeDownlinkTableHeaderComponent } from '@home/components/edge/edge-downlink-table-header.component';
 import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-page/widget-types-panel.component';
-import { SecurityConfigLwm2mComponent } from '@home/components/device/security-config-lwm2m.component';
-import { SecurityConfigLwm2mServerComponent } from '@home/components/device/security-config-lwm2m-server.component';
 import { DashboardImageDialogComponent } from '@home/components/dashboard-page/dashboard-image-dialog.component';
 import { WidgetContainerComponent } from '@home/components/widget/widget-container.component';
 import { SnmpDeviceProfileTransportModule } from '@home/components/profile/device/snpm/snmp-device-profile-transport.module';
+import { DeviceCredentialsModule } from '@home/components/device/device-credentials.module';
 
 @NgModule({
   declarations:
@@ -243,10 +240,6 @@ import { SnmpDeviceProfileTransportModule } from '@home/components/profile/devic
       DeviceProfileProvisionConfigurationComponent,
       AlarmScheduleComponent,
       DeviceWizardDialogComponent,
-      DeviceCredentialsComponent,
-      CopyDeviceCredentialsComponent,
-      SecurityConfigLwm2mComponent,
-      SecurityConfigLwm2mServerComponent,
       AlarmScheduleDialogComponent,
       EditAlarmDetailsDialogComponent,
       SmsProviderConfigurationComponent,
@@ -272,7 +265,8 @@ import { SnmpDeviceProfileTransportModule } from '@home/components/profile/devic
     SharedHomeComponentsModule,
     Lwm2mProfileComponentsModule,
     SnmpDeviceProfileTransportModule,
-    StatesControllerModule
+    StatesControllerModule,
+    DeviceCredentialsModule
   ],
   exports: [
     EntitiesTableComponent,
@@ -351,10 +345,6 @@ import { SnmpDeviceProfileTransportModule } from '@home/components/profile/devic
     AddDeviceProfileDialogComponent,
     RuleChainAutocompleteComponent,
     DeviceWizardDialogComponent,
-    DeviceCredentialsComponent,
-    CopyDeviceCredentialsComponent,
-    SecurityConfigLwm2mComponent,
-    SecurityConfigLwm2mServerComponent,
     AlarmScheduleInfoComponent,
     AlarmScheduleComponent,
     AlarmScheduleDialogComponent,

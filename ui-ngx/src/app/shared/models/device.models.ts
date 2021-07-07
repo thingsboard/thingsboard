@@ -690,7 +690,7 @@ export const credentialTypesByTransportType = new Map<DeviceTransportType, Devic
     ]],
     [DeviceTransportType.COAP, [DeviceCredentialsType.ACCESS_TOKEN, DeviceCredentialsType.X509_CERTIFICATE]],
     [DeviceTransportType.LWM2M, [DeviceCredentialsType.LWM2M_CREDENTIALS]],
-    [DeviceTransportType.SNMP, [DeviceCredentialsType.ACCESS_TOKEN, DeviceCredentialsType.X509_CERTIFICATE]]
+    [DeviceTransportType.SNMP, [DeviceCredentialsType.ACCESS_TOKEN]]
   ]
 );
 
