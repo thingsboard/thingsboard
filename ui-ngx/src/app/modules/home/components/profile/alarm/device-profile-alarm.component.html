@@ -73,8 +73,8 @@
                      style="max-width: 200px;"
                      [matChipInputFor]="relationTypesChipList"
                      [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-                     (matChipInputTokenEnd)="addRelationType($event)"
-                     [matChipInputAddOnBlur]="true">
+                     matChipInputAddOnBlur
+                     (matChipInputTokenEnd)="addRelationType($event)">
             </mat-chip-list>
             <mat-hint innerHTML="{{ 'device-profile.alarm-rule-relation-types-list-hint' | translate }}"></mat-hint>
           </mat-form-field>

@@ -45,7 +45,7 @@
       <input placeholder="{{ !alarmFilterFormGroup.get('alarmTypeList').value?.length ? ('alarm.any-type' | translate) : '' }}"
              [matChipInputFor]="alarmTypeChipList"
              [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-             [matChipInputAddOnBlur]="true"
+             matChipInputAddOnBlur
              (matChipInputTokenEnd)="addAlarmType($event)">
     </mat-chip-list>
   </mat-form-field>
