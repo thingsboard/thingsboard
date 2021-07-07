@@ -55,10 +55,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
-import static org.eclipse.leshan.core.model.ResourceModel.Type.STRING;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper.getValueFromKvProto;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_ERROR;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.equalsMultiResourceValuesResourceType;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertMultiResourceValuesFromJson;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
 
 @Slf4j
@@ -181,7 +180,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
             if (pathIdVer != null) {
                 // #1.1
                 if (lwM2MClient.getSharedAttributes().containsKey(pathIdVer)) {
-                    if (tsKvProto.getTs() > lwM2MClient.getSharedAttributes().get(pathIdVer).getTs()) {
+                    if (tsKvProto.getTs() >= lwM2MClient.getSharedAttributes().get(pathIdVer).getTs()) {
                         lwM2MClient.getSharedAttributes().put(pathIdVer, tsKvProto);
                         attributesUpdate.put(pathIdVer, tsKvProto);
                     }
@@ -215,17 +214,12 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
             String logMsg = String.format("%s: Failed update resource versionedId - %s value - %s. Value is not changed or bad",
                     LOG_LWM2M_ERROR, versionedId, newValue);
             logService.log(lwM2MClient, logMsg);
-            log.info("Failed update resource [{}] [{}]", versionedId, newValue);
         }
     }
 
     private void pushUpdateMultiToClientIfNeeded(LwM2mClient client, ResourceModel resourceModel, JsonElement newValProto,
                                                  Map<Integer, LwM2mResourceInstance> valueOld, String versionedId) {
-        Map newValues = equalsMultiResourceValuesResourceType(resourceModel.type);
-        ((JsonObject) newValProto).getAsJsonObject().entrySet().forEach((obj) -> {
-            newValues.put(Integer.valueOf(obj.getKey()), LwM2mValueConverterImpl.getInstance().convertValue(obj.getValue().getAsString(),
-                    STRING, resourceModel.type, new LwM2mPath(fromVersionedIdToObjectId(versionedId))));
-        });
+        Map newValues = convertMultiResourceValuesFromJson((JsonObject)newValProto, resourceModel.type, versionedId);
         if (newValues.size() > 0) {
             if (valueOld != null && valueOld.size() > 0) {
                 valueOld.values().stream().forEach((v) -> {

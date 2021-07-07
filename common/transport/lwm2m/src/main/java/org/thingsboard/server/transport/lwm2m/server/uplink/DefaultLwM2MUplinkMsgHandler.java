@@ -548,7 +548,7 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 }
             this.updateAttrTelemetry(registration, Collections.singleton(path));
         } else {
-            log.error("Fail update Resource [{}]", lwM2mResource);
+            log.error("Fail update path [{}] Resource [{}]", path, lwM2mResource);
         }
     }
 

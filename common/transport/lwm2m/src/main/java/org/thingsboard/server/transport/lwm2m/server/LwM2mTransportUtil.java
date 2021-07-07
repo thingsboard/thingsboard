@@ -16,6 +16,9 @@
 package org.thingsboard.server.transport.lwm2m.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.leshan.core.attributes.Attribute;
@@ -40,16 +43,19 @@ import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTrans
 import org.thingsboard.server.transport.lwm2m.config.LwM2mVersion;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.ResourceValue;
+import org.thingsboard.server.transport.lwm2m.server.downlink.HasVersionedId;
 import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateResult;
 import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateState;
 import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateResult;
 import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateState;
 import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -324,6 +330,31 @@ public class LwM2mTransportUtil {
                 return null;
         }
     }
+
+
+    public static  void validateVersionedId(LwM2mClient client, HasVersionedId request) {
+        client.isValidObjectVersion(request.getVersionedId());
+        if (request.getObjectId() == null) {
+            throw new IllegalArgumentException("Specified object id is null!");
+        }
+    }
+
+    public static Map convertMultiResourceValuesFromRpcBody(LinkedHashMap value, ResourceModel.Type type, String versionedId) {
+        Gson gson = new Gson();
+        JsonParser JSON_PARSER = new JsonParser();
+        String json = gson.toJson(value, LinkedHashMap.class);
+        return convertMultiResourceValuesFromJson((JsonObject) JSON_PARSER.parse(json), type, versionedId);
+    }
+
+    public static Map convertMultiResourceValuesFromJson(JsonObject newValProto, ResourceModel.Type type, String versionedId) {
+        Map newValues = equalsMultiResourceValuesResourceType(type);
+        newValProto.getAsJsonObject().entrySet().forEach((obj) -> {
+            newValues.put(Integer.valueOf(obj.getKey()), LwM2mValueConverterImpl.getInstance().convertValue(obj.getValue().getAsString(),
+                    STRING, type, new LwM2mPath(fromVersionedIdToObjectId(versionedId))));
+        });
+        return newValues;
+    }
+
     public static Map equalsMultiResourceValuesResourceType(ResourceModel.Type type) {
         switch (type) {
             case FLOAT:

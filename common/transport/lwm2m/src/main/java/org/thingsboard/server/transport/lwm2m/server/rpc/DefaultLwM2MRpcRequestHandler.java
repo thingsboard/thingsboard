@@ -18,6 +18,8 @@ package org.thingsboard.server.transport.lwm2m.server.rpc;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.ResponseCode;
+import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mPath;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
@@ -59,11 +61,15 @@ import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcReadRespon
 import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcWriteCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertMultiResourceValuesFromRpcBody;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
 
 @Slf4j
 @Service
@@ -237,6 +243,14 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
 
     private void sendWriteReplaceRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
         RpcWriteReplaceRequest requestBody = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteReplaceRequest.class);
+        LwM2mPath path = new LwM2mPath(fromVersionedIdToObjectId(versionedId));
+        if (path.isResource() && requestBody.getValue() instanceof LinkedHashMap) {
+            ResourceModel resourceModel = client.getResourceModel(versionedId, this.config.getModelProvider());
+            if (resourceModel != null && resourceModel.multiple) {
+                Map value = convertMultiResourceValuesFromRpcBody((LinkedHashMap) requestBody.getValue(), resourceModel.type, versionedId);
+                requestBody.setValue(value);
+            }
+        }
         TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionedId)
                 .value(requestBody.getValue())
                 .timeout(this.config.getTimeout()).build();
