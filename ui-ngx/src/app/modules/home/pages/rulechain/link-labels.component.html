@@ -37,6 +37,7 @@
            [matAutocomplete]="labelAutocomplete"
            [matChipInputFor]="chipList"
            [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+           matChipInputAddOnBlur
            (matChipInputTokenEnd)="add($event)">
   </mat-chip-list>
   <mat-autocomplete #labelAutocomplete="matAutocomplete"
