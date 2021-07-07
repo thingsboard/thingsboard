@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,7 +27,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.AdminSettings;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -69,10 +67,7 @@ public class AdminController extends BaseController {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
             AdminSettings adminSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, key));
             if (adminSettings.getKey().equals("mail")) {
-                JsonNode password = adminSettings.getJsonValue().get("password");
-                boolean passwordPresent = (!password.isNull() && StringUtils.isNotEmpty(password.asText()));
                 ((ObjectNode) adminSettings.getJsonValue()).put("password", "");
-                ((ObjectNode) adminSettings.getJsonValue()).put("saved", passwordPresent);
             }
             return adminSettings;
         } catch (Exception e) {
@@ -89,9 +84,6 @@ public class AdminController extends BaseController {
             adminSettings = checkNotNull(adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings));
             if (adminSettings.getKey().equals("mail")) {
                 mailService.updateMailConfiguration();
-                JsonNode password = adminSettings.getJsonValue().get("password");
-                boolean passwordPresent = (!password.isNull() && StringUtils.isNotEmpty(password.asText()));
-                ((ObjectNode) adminSettings.getJsonValue()).put("passwordPresent", passwordPresent);
                 ((ObjectNode) adminSettings.getJsonValue()).put("password", "");
             } else if (adminSettings.getKey().equals("sms")) {
                 smsService.updateSmsConfiguration();
