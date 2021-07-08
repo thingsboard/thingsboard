@@ -23,11 +23,13 @@ import { EntitySearchQuery } from '@shared/models/relation.models';
 import { DeviceProfileId } from '@shared/models/id/device-profile-id';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { EntityInfoData } from '@shared/models/entity.models';
-import { KeyFilter } from '@shared/models/query/query.models';
+import { FilterPredicateValue, KeyFilter } from '@shared/models/query/query.models';
 import { TimeUnit } from '@shared/models/time/time.models';
 import * as _moment from 'moment';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
-import { FirmwareId } from '@shared/models/id/firmware-id';
+import { OtaPackageId } from '@shared/models/id/ota-package-id';
+import { DashboardId } from '@shared/models/id/dashboard-id';
+import { DataType } from '@shared/models/constants';
 
 export enum DeviceProfileType {
   DEFAULT = 'DEFAULT',
@@ -198,7 +200,7 @@ export const deviceTransportTypeConfigurationInfoMap = new Map<DeviceTransportTy
       DeviceTransportType.LWM2M,
       {
         hasProfileConfiguration: true,
-        hasDeviceConfiguration: false,
+        hasDeviceConfiguration: true,
       }
     ],
     [
@@ -256,7 +258,35 @@ export interface Lwm2mDeviceProfileTransportConfiguration {
 }
 
 export interface SnmpDeviceProfileTransportConfiguration {
-  [key: string]: any;
+  timeoutMs?: number;
+  retries?: number;
+  communicationConfigs?: SnmpCommunicationConfig[];
+}
+
+export enum SnmpSpecType {
+  TELEMETRY_QUERYING = 'TELEMETRY_QUERYING',
+  CLIENT_ATTRIBUTES_QUERYING = 'CLIENT_ATTRIBUTES_QUERYING',
+  SHARED_ATTRIBUTES_SETTING = 'SHARED_ATTRIBUTES_SETTING',
+  TO_DEVICE_RPC_REQUEST = 'TO_DEVICE_RPC_REQUEST'
+}
+
+export const SnmpSpecTypeTranslationMap = new Map<SnmpSpecType, string>([
+  [SnmpSpecType.TELEMETRY_QUERYING, ' Telemetry'],
+  [SnmpSpecType.CLIENT_ATTRIBUTES_QUERYING, 'Client attributes'],
+  [SnmpSpecType.SHARED_ATTRIBUTES_SETTING, 'Shared attributes'],
+  [SnmpSpecType.TO_DEVICE_RPC_REQUEST, 'RPC request']
+]);
+
+export interface SnmpCommunicationConfig {
+  spec: SnmpSpecType;
+  mappings: SnmpMapping[];
+  queryingFrequencyMs?: number;
+}
+
+export interface SnmpMapping {
+  oid: string;
+  key: string;
+  dataType: DataType;
 }
 
 export type DeviceProfileTransportConfigurations = DefaultDeviceProfileTransportConfiguration &
@@ -331,7 +361,11 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
         break;
       case DeviceTransportType.SNMP:
-        const snmpTransportConfiguration: SnmpDeviceProfileTransportConfiguration = {};
+        const snmpTransportConfiguration: SnmpDeviceProfileTransportConfiguration = {
+          timeoutMs: 500,
+          retries: 0,
+          communicationConfigs: null
+        };
         transportConfiguration = {...snmpTransportConfiguration, type: DeviceTransportType.SNMP};
         break;
     }
@@ -360,7 +394,12 @@ export function createDeviceTransportConfiguration(type: DeviceTransportType): D
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
         break;
       case DeviceTransportType.SNMP:
-        const snmpTransportConfiguration: SnmpDeviceTransportConfiguration = {};
+        const snmpTransportConfiguration: SnmpDeviceTransportConfiguration = {
+          host: 'localhost',
+          port: 161,
+          protocolVersion: SnmpDeviceProtocolVersion.V2C,
+          community: 'public'
+        };
         transportConfiguration = {...snmpTransportConfiguration, type: DeviceTransportType.SNMP};
         break;
     }
@@ -385,8 +424,7 @@ export const AlarmConditionTypeTranslationMap = new Map<AlarmConditionType, stri
 export interface AlarmConditionSpec{
   type?: AlarmConditionType;
   unit?: TimeUnit;
-  value?: number;
-  count?: number;
+  predicate: FilterPredicateValue<number>;
 }
 
 export interface AlarmCondition {
@@ -427,6 +465,7 @@ export interface CustomTimeSchedulerItem{
 export interface AlarmRule {
   condition: AlarmCondition;
   alarmDetails?: string;
+  dashboardId?: DashboardId;
   schedule?: AlarmSchedule;
 }
 
@@ -492,18 +531,23 @@ export interface DeviceProfile extends BaseData<DeviceProfileId> {
   description?: string;
   default?: boolean;
   type: DeviceProfileType;
+  image?: string;
   transportType: DeviceTransportType;
   provisionType: DeviceProvisionType;
   provisionDeviceKey?: string;
   defaultRuleChainId?: RuleChainId;
+  defaultDashboardId?: DashboardId;
   defaultQueueName?: string;
-  firmwareId?: FirmwareId;
+  firmwareId?: OtaPackageId;
+  softwareId?: OtaPackageId;
   profileData: DeviceProfileData;
 }
 
 export interface DeviceProfileInfo extends EntityInfoData {
   type: DeviceProfileType;
   transportType: DeviceTransportType;
+  image?: string;
+  defaultDashboardId?: DashboardId;
 }
 
 export interface DefaultDeviceConfiguration {
@@ -532,8 +576,57 @@ export interface Lwm2mDeviceTransportConfiguration {
   [key: string]: any;
 }
 
+export enum SnmpDeviceProtocolVersion {
+  V1 = 'V1',
+  V2C = 'V2C',
+  V3 = 'V3'
+}
+
+export enum SnmpAuthenticationProtocol {
+  SHA_1 = 'SHA_1',
+  SHA_224 = 'SHA_224',
+  SHA_256 = 'SHA_256',
+  SHA_384 = 'SHA_384',
+  SHA_512 = 'SHA_512',
+  MD5 = 'MD%'
+}
+
+export const SnmpAuthenticationProtocolTranslationMap = new Map<SnmpAuthenticationProtocol, string>([
+  [SnmpAuthenticationProtocol.SHA_1, 'SHA-1'],
+  [SnmpAuthenticationProtocol.SHA_224, 'SHA-224'],
+  [SnmpAuthenticationProtocol.SHA_256, 'SHA-256'],
+  [SnmpAuthenticationProtocol.SHA_384, 'SHA-384'],
+  [SnmpAuthenticationProtocol.SHA_512, 'SHA-512'],
+  [SnmpAuthenticationProtocol.MD5, 'MD5']
+]);
+
+export enum SnmpPrivacyProtocol {
+  DES = 'DES',
+  AES_128 = 'AES_128',
+  AES_192 = 'AES_192',
+  AES_256 = 'AES_256'
+}
+
+export const SnmpPrivacyProtocolTranslationMap = new Map<SnmpPrivacyProtocol, string>([
+  [SnmpPrivacyProtocol.DES, 'DES'],
+  [SnmpPrivacyProtocol.AES_128, 'AES-128'],
+  [SnmpPrivacyProtocol.AES_192, 'AES-192'],
+  [SnmpPrivacyProtocol.AES_256, 'AES-256'],
+]);
+
 export interface SnmpDeviceTransportConfiguration {
-  [key: string]: any;
+  host?: string;
+  port?: number;
+  protocolVersion?: SnmpDeviceProtocolVersion;
+  community?: string;
+  username?: string;
+  securityName?: string;
+  contextName?: string;
+  authenticationProtocol?: SnmpAuthenticationProtocol;
+  authenticationPassphrase?: string;
+  privacyProtocol?: SnmpPrivacyProtocol;
+  privacyPassphrase?: string;
+  engineId?: string;
 }
 
 export type DeviceTransportConfigurations = DefaultDeviceTransportConfiguration &
@@ -557,7 +650,8 @@ export interface Device extends BaseData<DeviceId> {
   name: string;
   type: string;
   label: string;
-  firmwareId?: FirmwareId;
+  firmwareId?: OtaPackageId;
+  softwareId?: OtaPackageId;
   deviceProfileId?: DeviceProfileId;
   deviceData?: DeviceData;
   additionalInfo?: any;

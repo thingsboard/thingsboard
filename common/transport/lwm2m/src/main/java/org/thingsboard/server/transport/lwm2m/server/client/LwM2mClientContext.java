@@ -17,41 +17,49 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 
 import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
-import java.util.Map;
+import java.util.Collection;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 public interface LwM2mClientContext {
 
-    void delRemoveSessionAndListener(String registrationId);
+    LwM2mClient getClientByEndpoint(String endpoint);
 
-    LwM2mClient getLwM2MClient(String endPoint, String identity);
+    LwM2mClient getClientBySessionInfo(TransportProtos.SessionInfoProto sessionInfo);
 
-    LwM2mClient getLwM2MClient(TransportProtos.SessionInfoProto sessionInfo);
+    Optional<TransportProtos.SessionInfoProto> register(LwM2mClient lwM2MClient, Registration registration) throws LwM2MClientStateException;
 
-    LwM2mClient getLwM2mClient(UUID sessionId);
+    void updateRegistration(LwM2mClient client, Registration registration) throws LwM2MClientStateException;
 
-    LwM2mClient getLwM2mClientWithReg(Registration registration, String registrationId);
+    void unregister(LwM2mClient client, Registration registration) throws LwM2MClientStateException;
 
-    LwM2mClient updateInSessionsLwM2MClient(Registration registration);
+    Collection<LwM2mClient> getLwM2mClients();
 
-    LwM2mClient addLwM2mClientToSession(String identity);
+    //TODO: replace UUID with DeviceProfileId
+    Lwm2mDeviceProfileTransportConfiguration getProfile(UUID profileUuId);
 
-    Registration getRegistration(String registrationId);
+    Lwm2mDeviceProfileTransportConfiguration getProfile(Registration registration);
 
-    Map<String, LwM2mClient> getLwM2mClients();
+    Lwm2mDeviceProfileTransportConfiguration profileUpdate(DeviceProfile deviceProfile);
 
-    Map<UUID, LwM2mClientProfile> getProfiles();
+    Set<String> getSupportedIdVerInClient(LwM2mClient registration);
 
-    LwM2mClientProfile getProfile(UUID profileUuId);
+    LwM2mClient getClientByDeviceId(UUID deviceId);
 
-    LwM2mClientProfile getProfile(Registration registration);
+    String getObjectIdByKeyNameFromProfile(LwM2mClient lwM2mClient, String keyName);
 
-    Map<UUID, LwM2mClientProfile> setProfiles(Map<UUID, LwM2mClientProfile> profiles);
+    void registerClient(Registration registration, ValidateDeviceCredentialsResponse credentials);
 
-    boolean addUpdateProfileParameters(DeviceProfile deviceProfile);
+    void update(LwM2mClient lwM2MClient);
 
-    Set<String> getSupportedIdVerInClient(Registration registration);
+    void removeCredentials(TransportProtos.SessionInfoProto sessionInfo);
+
+    void sendMsgsAfterSleeping(LwM2mClient lwM2MClient);
+
+    boolean isComposite(LwM2mClient client);
 }

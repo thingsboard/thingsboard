@@ -87,7 +87,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                             transportService.process(sessionInfo,
                                     transportContext.getEfentoCoapAdaptor().convertToPostTelemetry(sessionId, efentoMeasurements),
                                     new CoapOkCallback(exchange, CoAP.ResponseCode.CREATED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
-                            reportActivity(sessionInfo, false, false);
+                            reportSubscriptionInfo(sessionInfo, false, false);
                         } catch (AdaptorException e) {
                             log.error("[{}] Failed to decode Efento ProtoMeasurements: ", sessionId, e);
                             exchange.respond(CoAP.ResponseCode.BAD_REQUEST);

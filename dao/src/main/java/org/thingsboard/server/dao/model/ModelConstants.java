@@ -154,6 +154,7 @@ public class ModelConstants {
     public static final String DEVICE_DEVICE_PROFILE_ID_PROPERTY = "device_profile_id";
     public static final String DEVICE_DEVICE_DATA_PROPERTY = "device_data";
     public static final String DEVICE_FIRMWARE_ID_PROPERTY = "firmware_id";
+    public static final String DEVICE_SOFTWARE_ID_PROPERTY = "software_id";
 
     public static final String DEVICE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_and_search_text";
     public static final String DEVICE_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_by_type_and_search_text";
@@ -169,15 +170,18 @@ public class ModelConstants {
     public static final String DEVICE_PROFILE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String DEVICE_PROFILE_NAME_PROPERTY = "name";
     public static final String DEVICE_PROFILE_TYPE_PROPERTY = "type";
+    public static final String DEVICE_PROFILE_IMAGE_PROPERTY = "image";
     public static final String DEVICE_PROFILE_TRANSPORT_TYPE_PROPERTY = "transport_type";
     public static final String DEVICE_PROFILE_PROVISION_TYPE_PROPERTY = "provision_type";
     public static final String DEVICE_PROFILE_PROFILE_DATA_PROPERTY = "profile_data";
     public static final String DEVICE_PROFILE_DESCRIPTION_PROPERTY = "description";
     public static final String DEVICE_PROFILE_IS_DEFAULT_PROPERTY = "is_default";
     public static final String DEVICE_PROFILE_DEFAULT_RULE_CHAIN_ID_PROPERTY = "default_rule_chain_id";
+    public static final String DEVICE_PROFILE_DEFAULT_DASHBOARD_ID_PROPERTY = "default_dashboard_id";
     public static final String DEVICE_PROFILE_DEFAULT_QUEUE_NAME_PROPERTY = "default_queue_name";
     public static final String DEVICE_PROFILE_PROVISION_DEVICE_KEY = "provision_device_key";
     public static final String DEVICE_PROFILE_FIRMWARE_ID_PROPERTY = "firmware_id";
+    public static final String DEVICE_PROFILE_SOFTWARE_ID_PROPERTY = "software_id";
 
     /**
      * Cassandra entityView constants.
@@ -255,6 +259,7 @@ public class ModelConstants {
      */
     public static final String ALARM_COLUMN_FAMILY_NAME = "alarm";
     public static final String ALARM_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String ALARM_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String ALARM_TYPE_PROPERTY = "type";
     public static final String ALARM_DETAILS_PROPERTY = "details";
     public static final String ALARM_ORIGINATOR_ID_PROPERTY = "originator_id";
@@ -331,6 +336,7 @@ public class ModelConstants {
     public static final String DASHBOARD_COLUMN_FAMILY_NAME = "dashboard";
     public static final String DASHBOARD_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String DASHBOARD_TITLE_PROPERTY = TITLE_PROPERTY;
+    public static final String DASHBOARD_IMAGE_PROPERTY = "image";
     public static final String DASHBOARD_CONFIGURATION_PROPERTY = "configuration";
     public static final String DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY = "assigned_customers";
 
@@ -402,10 +408,20 @@ public class ModelConstants {
     /**
      * OAuth2 client registration constants.
      */
-    public static final String OAUTH2_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+
+    public static final String OAUTH2_PARAMS_COLUMN_FAMILY_NAME = "oauth2_params";
+    public static final String OAUTH2_PARAMS_ENABLED_PROPERTY = "enabled";
+    public static final String OAUTH2_PARAMS_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+
+    public static final String OAUTH2_REGISTRATION_COLUMN_FAMILY_NAME = "oauth2_registration";
+    public static final String OAUTH2_DOMAIN_COLUMN_FAMILY_NAME = "oauth2_domain";
+    public static final String OAUTH2_MOBILE_COLUMN_FAMILY_NAME = "oauth2_mobile";
+    public static final String OAUTH2_PARAMS_ID_PROPERTY = "oauth2_params_id";
+    public static final String OAUTH2_PKG_NAME_PROPERTY = "pkg_name";
+    public static final String OAUTH2_APP_SECRET_PROPERTY = "app_secret";
+
     public static final String OAUTH2_CLIENT_REGISTRATION_INFO_COLUMN_FAMILY_NAME = "oauth2_client_registration_info";
     public static final String OAUTH2_CLIENT_REGISTRATION_COLUMN_FAMILY_NAME = "oauth2_client_registration";
-    public static final String OAUTH2_CLIENT_REGISTRATION_TO_DOMAIN_COLUMN_FAMILY_NAME = "oauth2_client_registration_to_domain";
     public static final String OAUTH2_CLIENT_REGISTRATION_TEMPLATE_COLUMN_FAMILY_NAME = "oauth2_client_registration_template";
     public static final String OAUTH2_ENABLED_PROPERTY = "enabled";
     public static final String OAUTH2_TEMPLATE_PROVIDER_ID_PROPERTY = "provider_id";
@@ -416,8 +432,8 @@ public class ModelConstants {
     public static final String OAUTH2_CLIENT_SECRET_PROPERTY = "client_secret";
     public static final String OAUTH2_AUTHORIZATION_URI_PROPERTY = "authorization_uri";
     public static final String OAUTH2_TOKEN_URI_PROPERTY = "token_uri";
-    public static final String OAUTH2_REDIRECT_URI_TEMPLATE_PROPERTY = "redirect_uri_template";
     public static final String OAUTH2_SCOPE_PROPERTY = "scope";
+    public static final String OAUTH2_PLATFORMS_PROPERTY = "platforms";
     public static final String OAUTH2_USER_INFO_URI_PROPERTY = "user_info_uri";
     public static final String OAUTH2_USER_NAME_ATTRIBUTE_NAME_PROPERTY = "user_name_attribute_name";
     public static final String OAUTH2_JWK_SET_URI_PROPERTY = "jwk_set_uri";
@@ -459,6 +475,7 @@ public class ModelConstants {
     public static final String API_USAGE_STATE_JS_EXEC_COLUMN = "js_exec";
     public static final String API_USAGE_STATE_EMAIL_EXEC_COLUMN = "email_exec";
     public static final String API_USAGE_STATE_SMS_EXEC_COLUMN = "sms_exec";
+    public static final String API_USAGE_STATE_ALARM_EXEC_COLUMN = "alarm_exec";
 
     /**
      * Resource constants.
@@ -472,20 +489,33 @@ public class ModelConstants {
     public static final String RESOURCE_DATA_COLUMN = "data";
 
     /**
-     * Firmware constants.
+     * Ota Package constants.
      */
-    public static final String FIRMWARE_TABLE_NAME = "firmware";
-    public static final String FIRMWARE_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
-    public static final String FIRMWARE_TITLE_COLUMN = TITLE_PROPERTY;
-    public static final String FIRMWARE_VERSION_COLUMN = "version";
-    public static final String FIRMWARE_FILE_NAME_COLUMN = "file_name";
-    public static final String FIRMWARE_CONTENT_TYPE_COLUMN = "content_type";
-    public static final String FIRMWARE_CHECKSUM_ALGORITHM_COLUMN = "checksum_algorithm";
-    public static final String FIRMWARE_CHECKSUM_COLUMN = "checksum";
-    public static final String FIRMWARE_DATA_COLUMN = "data";
-    public static final String FIRMWARE_DATA_SIZE_COLUMN = "data_size";
-    public static final String FIRMWARE_ADDITIONAL_INFO_COLUMN = ADDITIONAL_INFO_PROPERTY;
-    public static final String FIRMWARE_HAS_DATA_PROPERTY = "has_data";
+    public static final String OTA_PACKAGE_TABLE_NAME = "ota_package";
+    public static final String OTA_PACKAGE_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
+    public static final String OTA_PACKAGE_DEVICE_PROFILE_ID_COLUMN = "device_profile_id";
+    public static final String OTA_PACKAGE_TYPE_COLUMN = "type";
+    public static final String OTA_PACKAGE_TILE_COLUMN = TITLE_PROPERTY;
+    public static final String OTA_PACKAGE_VERSION_COLUMN = "version";
+    public static final String OTA_PACKAGE_URL_COLUMN = "url";
+    public static final String OTA_PACKAGE_FILE_NAME_COLUMN = "file_name";
+    public static final String OTA_PACKAGE_CONTENT_TYPE_COLUMN = "content_type";
+    public static final String OTA_PACKAGE_CHECKSUM_ALGORITHM_COLUMN = "checksum_algorithm";
+    public static final String OTA_PACKAGE_CHECKSUM_COLUMN = "checksum";
+    public static final String OTA_PACKAGE_DATA_COLUMN = "data";
+    public static final String OTA_PACKAGE_DATA_SIZE_COLUMN = "data_size";
+    public static final String OTA_PACKAGE_ADDITIONAL_INFO_COLUMN = ADDITIONAL_INFO_PROPERTY;
+
+    /**
+     * Persisted RPC constants.
+     */
+    public static final String RPC_TABLE_NAME = "rpc";
+    public static final String RPC_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
+    public static final String RPC_DEVICE_ID = "device_id";
+    public static final String RPC_EXPIRATION_TIME = "expiration_time";
+    public static final String RPC_REQUEST = "request";
+    public static final String RPC_RESPONSE = "response";
+    public static final String RPC_STATUS = "status";
 
     /**
      * Edge constants.

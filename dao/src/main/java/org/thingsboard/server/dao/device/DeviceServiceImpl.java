@@ -27,11 +27,13 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
@@ -40,7 +42,7 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.Firmware;
+import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
@@ -59,6 +61,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -74,15 +77,15 @@ import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.firmware.FirmwareService;
+import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
-import org.thingsboard.common.util.JacksonUtil;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -136,7 +139,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     private TbTenantProfileCache tenantProfileCache;
 
     @Autowired
-    private FirmwareService firmwareService;
+    private OtaPackageService otaPackageService;
 
     @Override
     public DeviceInfo findDeviceInfoById(TenantId tenantId, DeviceId deviceId) {
@@ -145,6 +148,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         return deviceDao.findDeviceInfoById(tenantId, deviceId.getId());
     }
 
+    @Cacheable(cacheNames = DEVICE_CACHE, key = "{#tenantId, #deviceId}")
     @Override
     public Device findDeviceById(TenantId tenantId, DeviceId deviceId) {
         log.trace("Executing findDeviceById [{}]", deviceId);
@@ -176,13 +180,19 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         return deviceOpt.orElse(null);
     }
 
-    @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}")
+    @Caching(evict= {
+            @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}"),
+            @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.id}")
+    })
     @Override
     public Device saveDeviceWithAccessToken(Device device, String accessToken) {
         return doSaveDevice(device, accessToken);
     }
 
-    @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}")
+    @Caching(evict= {
+            @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}"),
+            @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.id}")
+    })
     @Override
     public Device saveDevice(Device device) {
         return doSaveDevice(device, null);
@@ -198,11 +208,14 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         Device savedDevice = this.saveDeviceWithoutCredentials(device);
         deviceCredentials.setDeviceId(savedDevice.getId());
         if (device.getId() == null) {
-            deviceCredentials = deviceCredentialsService.createDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
-        }
-        else {
-            deviceCredentials.setId(deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), savedDevice.getId()).getId());
-            deviceCredentials = deviceCredentialsService.updateDeviceCredentials(device.getTenantId(), deviceCredentials);
+            deviceCredentialsService.createDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
+        } else {
+            DeviceCredentials foundDeviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), savedDevice.getId());
+            if (foundDeviceCredentials == null) {
+                deviceCredentialsService.createDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
+            } else {
+                deviceCredentialsService.updateDeviceCredentials(device.getTenantId(), deviceCredentials);
+            }
         }
         return savedDevice;
     }
@@ -244,7 +257,8 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_name_unq_key")) {
                 // remove device from cache in case null value cached in the distributed redis.
-                removeDeviceFromCache(device.getTenantId(), device.getName());
+                removeDeviceFromCacheByName(device.getTenantId(), device.getName());
+                removeDeviceFromCacheById(device.getTenantId(), device.getId());
                 throw new DataValidationException("Device with such name already exists!");
             } else {
                 throw t;
@@ -321,17 +335,23 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         }
         deleteEntityRelations(tenantId, deviceId);
 
-        removeDeviceFromCache(tenantId, device.getName());
+        removeDeviceFromCacheByName(tenantId, device.getName());
+        removeDeviceFromCacheById(tenantId, device.getId());
 
         deviceDao.removeById(tenantId, deviceId.getId());
     }
 
-    private void removeDeviceFromCache(TenantId tenantId, String name) {
-        List<Object> list = new ArrayList<>();
-        list.add(tenantId);
-        list.add(name);
+    private void removeDeviceFromCacheByName(TenantId tenantId, String name) {
         Cache cache = cacheManager.getCache(DEVICE_CACHE);
-        cache.evict(list);
+        cache.evict(Arrays.asList(tenantId, name));
+    }
+
+    private void removeDeviceFromCacheById(TenantId tenantId, DeviceId deviceId) {
+        if (deviceId == null) {
+            return;
+        }
+        Cache cache = cacheManager.getCache(DEVICE_CACHE);
+        cache.evict(Arrays.asList(tenantId, deviceId));
     }
 
     @Override
@@ -360,12 +380,24 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     }
 
     @Override
-    public PageData<Device> findDevicesByTenantIdAndTypeAndEmptyFirmware(TenantId tenantId, String type, PageLink pageLink) {
-        log.trace("Executing findDevicesByTenantIdAndType, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
+    public PageData<Device> findDevicesByTenantIdAndTypeAndEmptyOtaPackage(TenantId tenantId,
+                                                                           DeviceProfileId deviceProfileId,
+                                                                           OtaPackageType type,
+                                                                           PageLink pageLink) {
+        log.trace("Executing findDevicesByTenantIdAndTypeAndEmptyOtaPackage, tenantId [{}], deviceProfileId [{}], type [{}], pageLink [{}]",
+                tenantId, deviceProfileId, type, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateString(type, "Incorrect type " + type);
+        validateId(tenantId, INCORRECT_DEVICE_PROFILE_ID + deviceProfileId);
         validatePageLink(pageLink);
-        return deviceDao.findDevicesByTenantIdAndTypeAndEmptyFirmware(tenantId.getId(), type, pageLink);
+        return deviceDao.findDevicesByTenantIdAndTypeAndEmptyOtaPackage(tenantId.getId(), deviceProfileId.getId(), type, pageLink);
+    }
+
+    @Override
+    public Long countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(TenantId tenantId, DeviceProfileId deviceProfileId, OtaPackageType type) {
+        log.trace("Executing countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage, tenantId [{}], deviceProfileId [{}], type [{}]", tenantId, deviceProfileId, type);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, INCORRECT_DEVICE_PROFILE_ID + deviceProfileId);
+        return deviceDao.countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(tenantId.getId(), deviceProfileId.getId(), type);
     }
 
     @Override
@@ -507,7 +539,10 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     }
 
     @Transactional
-    @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}")
+    @Caching(evict= {
+            @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}"),
+            @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.id}")
+    })
     @Override
     public Device assignDeviceToTenant(TenantId tenantId, Device device) {
         log.trace("Executing assignDeviceToTenant [{}][{}]", tenantId, device);
@@ -574,6 +609,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                 throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
             }
         }
+        removeDeviceFromCacheById(savedDevice.getTenantId(), savedDevice.getId());
         return savedDevice;
     }
 
@@ -661,6 +697,9 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                     if (old == null) {
                         throw new DataValidationException("Can't update non existing device!");
                     }
+                    if (!old.getName().equals(device.getName())) {
+                        removeDeviceFromCacheByName(tenantId, old.getName());
+                    }
                 }
 
                 @Override
@@ -692,12 +731,34 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                             .ifPresent(DeviceTransportConfiguration::validate);
 
                     if (device.getFirmwareId() != null) {
-                        Firmware firmware = firmwareService.findFirmwareById(tenantId, device.getFirmwareId());
+                        OtaPackage firmware = otaPackageService.findOtaPackageById(tenantId, device.getFirmwareId());
                         if (firmware == null) {
                             throw new DataValidationException("Can't assign non-existent firmware!");
                         }
-                        if (firmware.getData() == null) {
+                        if (!firmware.getType().equals(OtaPackageType.FIRMWARE)) {
+                            throw new DataValidationException("Can't assign firmware with type: " + firmware.getType());
+                        }
+                        if (firmware.getData() == null && !firmware.hasUrl()) {
                             throw new DataValidationException("Can't assign firmware with empty data!");
+                        }
+                        if (!firmware.getDeviceProfileId().equals(device.getDeviceProfileId())) {
+                            throw new DataValidationException("Can't assign firmware with different deviceProfile!");
+                        }
+                    }
+
+                    if (device.getSoftwareId() != null) {
+                        OtaPackage software = otaPackageService.findOtaPackageById(tenantId, device.getSoftwareId());
+                        if (software == null) {
+                            throw new DataValidationException("Can't assign non-existent software!");
+                        }
+                        if (!software.getType().equals(OtaPackageType.SOFTWARE)) {
+                            throw new DataValidationException("Can't assign software with type: " + software.getType());
+                        }
+                        if (software.getData() == null && !software.hasUrl()) {
+                            throw new DataValidationException("Can't assign software with empty data!");
+                        }
+                        if (!software.getDeviceProfileId().equals(device.getDeviceProfileId())) {
+                            throw new DataValidationException("Can't assign firmware with different deviceProfile!");
                         }
                     }
                 }

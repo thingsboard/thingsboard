@@ -23,17 +23,18 @@ import org.eclipse.leshan.server.queue.PresenceListener;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.registration.RegistrationListener;
 import org.eclipse.leshan.server.registration.RegistrationUpdate;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 import java.util.Collection;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportHandler.convertPathFromObjectIdToIdVer;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertObjectIdToVersionedId;
 
 @Slf4j
 public class LwM2mServerListener {
 
-    private final LwM2mTransportServiceImpl service;
+    private final LwM2mUplinkMsgHandler service;
 
-    public LwM2mServerListener(LwM2mTransportServiceImpl service) {
+    public LwM2mServerListener(LwM2mUplinkMsgHandler service) {
         this.service = service;
     }
 
@@ -70,13 +71,13 @@ public class LwM2mServerListener {
     public final PresenceListener presenceListener = new PresenceListener() {
         @Override
         public void onSleeping(Registration registration) {
-            log.info("onSleeping");
+            log.info("[{}] onSleeping", registration.getEndpoint());
             service.onSleepingDev(registration);
         }
 
         @Override
         public void onAwake(Registration registration) {
-            log.info("onAwake");
+            log.info("[{}] onAwake", registration.getEndpoint());
             service.onAwakeDev(registration);
         }
     };
@@ -85,31 +86,24 @@ public class LwM2mServerListener {
 
         @Override
         public void cancelled(Observation observation) {
-            log.info("Received notification cancelled from [{}] ", observation.getPath());
+            log.trace("Canceled Observation {}.", observation.getPath());
         }
 
         @Override
         public void onResponse(Observation observation, Registration registration, ObserveResponse response) {
             if (registration != null) {
-                try {
-                    service.onObservationResponse(registration, convertPathFromObjectIdToIdVer(observation.getPath().toString(),
-                            registration), response, null);
-                } catch (Exception e) {
-                    log.error("[{}] onResponse", e.toString());
-
-                }
+                service.onUpdateValueAfterReadResponse(registration, convertObjectIdToVersionedId(observation.getPath().toString(), registration), response);
             }
         }
 
         @Override
         public void onError(Observation observation, Registration registration, Exception error) {
-            log.error(String.format("Unable to handle notification of [%s:%s]", observation.getRegistrationId(), observation.getPath()), error);
+            log.error("Unable to handle notification of [{}:{}]", observation.getRegistrationId(), observation.getPath(), error);
         }
 
         @Override
         public void newObservation(Observation observation, Registration registration) {
-            log.info("Received newObservation from [{}] endpoint  [{}] ", observation.getPath(), registration.getEndpoint());
+            log.trace("Successful start newObservation {}.", observation.getPath());
         }
     };
-
 }

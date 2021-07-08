@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.dashboard;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -33,7 +34,6 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
@@ -166,7 +166,16 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         log.trace("Executing deleteDashboard [{}]", dashboardId);
         Validator.validateId(dashboardId, INCORRECT_DASHBOARD_ID + dashboardId);
         deleteEntityRelations(tenantId, dashboardId);
-        dashboardDao.removeById(tenantId, dashboardId.getId());
+        try {
+            dashboardDao.removeById(tenantId, dashboardId.getId());
+        } catch (Exception t) {
+            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
+            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_default_dashboard_device_profile")) {
+                throw new DataValidationException("The dashboard referenced by the device profiles cannot be deleted!");
+            } else {
+                throw t;
+            }
+        }
     }
 
     @Override
@@ -257,6 +266,11 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         Validator.validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
         Validator.validatePageLink(pageLink);
         return dashboardInfoDao.findDashboardsByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
+    }
+
+    @Override
+    public DashboardInfo findFirstDashboardInfoByTenantIdAndName(TenantId tenantId, String name) {
+        return dashboardInfoDao.findFirstByTenantIdAndName(tenantId.getId(), name);
     }
 
     private DataValidator<Dashboard> dashboardValidator =

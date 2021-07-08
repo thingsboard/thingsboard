@@ -34,19 +34,19 @@
             {{ 'admin.oauth2.enable' | translate }}
           </mat-checkbox>
           <section *ngIf="oauth2SettingsForm.get('enabled').value" style="margin-top: 1em;">
-            <ng-container formArrayName="domainsParams">
+            <ng-container formArrayName="oauth2ParamsInfos">
               <div class="container">
                 <mat-accordion multi>
-                  <ng-container *ngFor="let domain of domainsParams.controls; let i = index; trackBy: trackByParams">
+                  <ng-container *ngFor="let oauth2ParamsInfo of oauth2ParamsInfos.controls; let i = index; trackBy: trackByParams">
                     <mat-expansion-panel [formGroupName]="i">
                       <mat-expansion-panel-header>
                         <mat-panel-title fxLayoutAlign="start center">
-                          {{ domainListTittle(domain) }}
+                          {{ domainListTittle(oauth2ParamsInfo) }}
                         </mat-panel-title>
                         <mat-panel-description fxLayoutAlign="end center">
                           <button mat-icon-button
                                   type="button"
-                                  (click)="deleteDomain($event, i)"
+                                  (click)="deleteOAuth2ParamsInfo($event, i)"
                                   matTooltip="{{ 'action.delete' | translate }}"
                                   matTooltipPosition="above">
                             <mat-icon>delete</mat-icon>
@@ -55,83 +55,150 @@
                       </mat-expansion-panel-header>
 
                       <ng-template matExpansionPanelContent>
-                        <ng-container formArrayName="domainInfos">
-                          <section *ngFor="let domainInfo of clientDomainInfos(domain).controls; let n = index; trackBy: trackByParams"
-                            class="domains-list">
-                            <div [formGroupName]="n" fxLayout="row" fxLayoutGap="8px">
-                              <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
-                                <div fxLayout="column" fxFlex.sm="60" fxFlex.gt-sm="50">
-                                  <div fxLayout="row" fxLayout.xs="column" fxLayout.md="column" fxLayoutGap="8px" fxLayoutGap.md="0px">
-                                    <mat-form-field fxFlex="30" fxFlex.md fxFlex.xs class="mat-block">
-                                      <mat-label translate>admin.oauth2.protocol</mat-label>
-                                      <mat-select formControlName="scheme">
-                                        <mat-option *ngFor="let protocol of protocols" [value]="protocol">
-                                          {{ domainSchemaTranslations.get(protocol) | translate | uppercase }}
-                                        </mat-option>
-                                      </mat-select>
-                                    </mat-form-field>
-                                    <mat-form-field fxFlex class="mat-block">
-                                      <mat-label translate>admin.domain-name</mat-label>
-                                      <input matInput formControlName="name" required>
-                                      <mat-error *ngIf="domainInfo.get('name').hasError('pattern')">
-                                        {{ 'admin.error-verification-url' | translate }}
+                        <mat-tab-group dynamicHeight>
+                          <mat-tab label="{{ 'admin.oauth2.domains' | translate }}">
+                            <ng-container formArrayName="domainInfos">
+                              <div style="padding-top: 16px;"></div>
+                              <section *ngFor="let domainInfo of domainInfos(oauth2ParamsInfo).controls; let n = index; trackBy: trackByParams"
+                                       class="domains-list">
+                                <div [formGroupName]="n" fxLayout="row" fxLayoutGap="8px">
+                                  <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
+                                    <div fxLayout="column" fxFlex.sm="60" fxFlex.gt-sm="50">
+                                      <div fxLayout="row" fxLayout.xs="column" fxLayout.md="column" fxLayoutGap="8px" fxLayoutGap.md="0px">
+                                        <mat-form-field fxFlex="30" fxFlex.md fxFlex.xs class="mat-block">
+                                          <mat-label translate>admin.oauth2.protocol</mat-label>
+                                          <mat-select formControlName="scheme">
+                                            <mat-option *ngFor="let protocol of protocols" [value]="protocol">
+                                              {{ domainSchemaTranslations.get(protocol) | translate | uppercase }}
+                                            </mat-option>
+                                          </mat-select>
+                                        </mat-form-field>
+                                        <mat-form-field fxFlex class="mat-block">
+                                          <mat-label translate>admin.domain-name</mat-label>
+                                          <input matInput formControlName="name" required>
+                                          <mat-error *ngIf="domainInfo.get('name').hasError('pattern')">
+                                            {{ 'admin.error-verification-url' | translate }}
+                                          </mat-error>
+                                        </mat-form-field>
+                                      </div>
+                                      <mat-error *ngIf="domainInfo.hasError('unique')">
+                                        {{ 'admin.domain-name-unique' | translate }}
                                       </mat-error>
-                                    </mat-form-field>
+                                    </div>
+
+                                    <div fxFlex fxLayout="column">
+                                      <mat-form-field fxFlex class="mat-block">
+                                        <mat-label translate>admin.oauth2.redirect-uri-template</mat-label>
+                                        <input matInput [value]="redirectURI(domainInfo)" readonly>
+                                        <tb-copy-button
+                                          matSuffix
+                                          color="primary"
+                                          [copyText]="redirectURI(domainInfo)"
+                                          tooltipText="{{ 'admin.oauth2.copy-redirect-uri' | translate }}"
+                                          tooltipPosition="above"
+                                          mdiIcon="mdi:clipboard-arrow-left">
+                                        </tb-copy-button>
+                                      </mat-form-field>
+                                      <mat-form-field fxFlex *ngIf="domainInfo.get('scheme').value === 'MIXED'" class="mat-block">
+                                        <mat-label></mat-label>
+                                        <input matInput [value]="redirectURIMixed(domainInfo)" readonly>
+                                        <tb-copy-button
+                                          matSuffix
+                                          color="primary"
+                                          [copyText]="redirectURIMixed(domainInfo)"
+                                          tooltipText="{{ 'admin.oauth2.copy-redirect-uri' | translate }}"
+                                          tooltipPosition="above"
+                                          mdiIcon="mdi:clipboard-arrow-left">
+                                        </tb-copy-button>
+                                      </mat-form-field>
+                                    </div>
                                   </div>
-                                  <mat-error *ngIf="domainInfo.hasError('unique')">
-                                    {{ 'admin.domain-name-unique' | translate }}
-                                  </mat-error>
-                                </div>
 
-                                <div fxFlex fxLayout="column">
-                                  <mat-form-field fxFlex class="mat-block">
-                                    <mat-label translate>admin.oauth2.redirect-uri-template</mat-label>
-                                    <input matInput [value]="redirectURI(domainInfo)" readonly>
-                                    <button mat-icon-button color="primary" matSuffix type="button"
-                                            ngxClipboard cbContent="{{ redirectURI(domainInfo) }}"
-                                            matTooltip="{{ 'admin.oauth2.copy-redirect-uri' | translate }}"
+                                  <div fxLayout="column" fxLayoutAlign="center start">
+                                    <button type="button" mat-icon-button color="primary"
+                                            (click)="removeDomainInfo($event, oauth2ParamsInfo, n)"
+                                            [disabled]="domainInfos(oauth2ParamsInfo).controls.length < 2"
+                                            matTooltip="{{ 'admin.oauth2.delete-domain' | translate }}"
                                             matTooltipPosition="above">
-                                      <mat-icon class="material-icons" svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+                                      <mat-icon>close</mat-icon>
                                     </button>
-                                  </mat-form-field>
-
-                                  <mat-form-field fxFlex *ngIf="domainInfo.get('scheme').value === 'MIXED'" class="mat-block">
-                                    <mat-label></mat-label>
-                                    <input matInput [value]="redirectURIMixed(domainInfo)" readonly>
-                                    <button mat-icon-button color="primary" matSuffix type="button"
-                                            ngxClipboard cbContent="{{ redirectURIMixed(domainInfo) }}"
-                                            matTooltip="{{ 'admin.oauth2.copy-redirect-uri' | translate }}"
-                                            matTooltipPosition="above">
-                                      <mat-icon class="material-icons" svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-                                    </button>
-                                  </mat-form-field>
+                                  </div>
                                 </div>
-                              </div>
-
-                              <div fxLayout="column" fxLayoutAlign="center start">
-                                <button type="button" mat-icon-button color="primary"
-                                        (click)="removeDomain($event, domain, n)"
-                                        [disabled]="clientDomainInfos(domain).controls.length < 2"
-                                        matTooltip="{{ 'admin.oauth2.delete-domain' | translate }}"
-                                        matTooltipPosition="above">
-                                  <mat-icon>close</mat-icon>
+                              </section>
+                              <div fxLayout="row" fxLayoutAlign="end center" style="margin-bottom: 1.25em">
+                                <button mat-button mat-raised-button color="primary"
+                                        [disabled]="(isLoading$ | async)"
+                                        (click)="addDomainInfo(oauth2ParamsInfo)"
+                                        type="button">
+                                  {{'admin.oauth2.add-domain' | translate}}
                                 </button>
                               </div>
-                            </div>
-                          </section>
-                          <div fxLayout="row" fxLayoutAlign="end center" style="margin-bottom: 1.25em">
-                            <button mat-button mat-raised-button color="primary"
-                                    [disabled]="(isLoading$ | async)"
-                                    (click)="addDomainInfo(domain)"
-                                    type="button">
-                              {{'admin.oauth2.add-domain' | translate}}
-                            </button>
-                          </div>
-                        </ng-container>
-
+                            </ng-container>
+                          </mat-tab>
+                          <mat-tab label="{{ 'admin.oauth2.mobile-apps' | translate }}">
+                            <ng-container formArrayName="mobileInfos">
+                              <div style="padding-top: 16px;"></div>
+                              <div *ngIf="mobileInfos(oauth2ParamsInfo).length === 0">
+                                  <span fxLayoutAlign="center center"
+                                          class="tb-prompt" translate>admin.oauth2.no-mobile-apps</span>
+                              </div>
+                              <section *ngFor="let mobileInfo of mobileInfos(oauth2ParamsInfo).controls; let n = index; trackBy: trackByParams"
+                                       class="apps-list">
+                                <div [formGroupName]="n" fxLayout="row" fxLayoutGap="8px">
+                                  <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
+                                    <div fxFlex fxLayout="column">
+                                      <mat-form-field fxFlex class="mat-block" floatLabel="always">
+                                        <mat-label translate>admin.oauth2.mobile-package</mat-label>
+                                        <input matInput formControlName="pkgName" placeholder="{{ 'admin.oauth2.mobile-package-placeholder' | translate }}" required>
+                                        <mat-hint translate>admin.oauth2.mobile-package-hint</mat-hint>
+                                      </mat-form-field>
+                                      <mat-error *ngIf="mobileInfo.hasError('unique')">
+                                        {{ 'admin.oauth2.mobile-package-unique' | translate }}
+                                      </mat-error>
+                                    </div>
+                                    <div fxFlex fxLayout="row">
+                                      <mat-form-field fxFlex class="mat-block">
+                                        <mat-label translate>admin.oauth2.mobile-app-secret</mat-label>
+                                        <textarea matInput formControlName="appSecret" rows="1" required></textarea>
+                                        <tb-copy-button
+                                          matSuffix
+                                          color="primary"
+                                          [copyText]="mobileInfo.get('appSecret').value"
+                                          tooltipText="{{ 'admin.oauth2.copy-mobile-app-secret' | translate }}"
+                                          tooltipPosition="above"
+                                          mdiIcon="mdi:clipboard-arrow-left">
+                                        </tb-copy-button>
+                                        <mat-error *ngIf="mobileInfo.get('appSecret').invalid">
+                                          {{ 'admin.oauth2.invalid-mobile-app-secret' | translate }}
+                                        </mat-error>
+                                      </mat-form-field>
+                                    </div>
+                                  </div>
+                                  <div fxLayout="column" fxLayoutAlign="center start">
+                                    <button type="button" mat-icon-button color="primary"
+                                            (click)="removeMobileInfo($event, oauth2ParamsInfo, n)"
+                                            matTooltip="{{ 'admin.oauth2.delete-mobile-app' | translate }}"
+                                            matTooltipPosition="above">
+                                      <mat-icon>close</mat-icon>
+                                    </button>
+                                  </div>
+                                </div>
+                              </section>
+                              <div fxLayout="row" fxLayoutAlign="end center" style="margin-bottom: 1.25em">
+                                <button mat-button mat-raised-button color="primary"
+                                        [disabled]="(isLoading$ | async)"
+                                        (click)="addMobileInfo(oauth2ParamsInfo)"
+                                        type="button">
+                                  {{'admin.oauth2.add-mobile-app' | translate}}
+                                </button>
+                              </div>
+                            </ng-container>
+                          </mat-tab>
+                        </mat-tab-group>
+                        <div class="mat-h3" translate>admin.oauth2.providers</div>
                         <ng-container formArrayName="clientRegistrations">
                           <div class="container">
-                            <mat-expansion-panel *ngFor="let registration of clientDomainProviders(domain).controls; let j = index; trackBy: trackByParams"
+                            <mat-expansion-panel *ngFor="let registration of clientRegistrations(oauth2ParamsInfo).controls; let j = index; trackBy: trackByParams"
                               class="registration-card mat-elevation-z0">
                               <mat-expansion-panel-header>
                                 <mat-panel-title fxLayoutAlign="start center">
@@ -140,8 +207,8 @@
                                 <mat-panel-description fxLayoutAlign="end center">
                                   <button mat-icon-button
                                           type="button"
-                                          [disabled]="clientDomainProviders(domain).controls.length < 2"
-                                          (click)="deleteProvider($event, domain, j)"
+                                          [disabled]="clientRegistrations(oauth2ParamsInfo).controls.length < 2"
+                                          (click)="deleteRegistration($event, oauth2ParamsInfo, j)"
                                           matTooltip="{{ 'admin.oauth2.delete-provider' | translate }}"
                                           matTooltipPosition="above">
                                     <mat-icon>delete</mat-icon>
@@ -151,18 +218,27 @@
 
                               <ng-template matExpansionPanelContent>
                                 <section [formGroupName]="j">
-                                  <section formGroupName="additionalInfo" fxLayout="row">
-                                    <mat-form-field fxFlex class="mat-block">
-                                      <mat-label translate>admin.oauth2.login-provider</mat-label>
-                                      <mat-select formControlName="providerName">
-                                        <mat-option *ngFor="let provider of templateProvider" [value]="provider">
-                                          {{ provider }}
+                                  <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+                                    <section fxFlex formGroupName="additionalInfo" fxLayout="row">
+                                      <mat-form-field fxFlex class="mat-block">
+                                        <mat-label translate>admin.oauth2.login-provider</mat-label>
+                                        <mat-select formControlName="providerName">
+                                          <mat-option *ngFor="let provider of templateProvider" [value]="provider">
+                                            {{ provider }}
+                                          </mat-option>
+                                        </mat-select>
+                                      </mat-form-field>
+                                      <div [tb-help]="getHelpLink(registration)" *ngIf="!isCustomProvider(registration)"></div>
+                                    </section>
+                                    <mat-form-field floatLabel="always" fxFlex class="mat-block">
+                                      <mat-label translate>admin.oauth2.allowed-platforms</mat-label>
+                                      <mat-select formControlName="platforms" multiple placeholder="{{ 'admin.oauth2.all-platforms' | translate }}">
+                                        <mat-option *ngFor="let platform of platformTypes" [value]="platform">
+                                          {{ platformTypeTranslations.get(platform) | translate }}
                                         </mat-option>
                                       </mat-select>
                                     </mat-form-field>
-                                    <div [tb-help]="getHelpLink(registration)" *ngIf="!isCustomProvider(registration)"></div>
-                                  </section>
-
+                                  </div>
                                   <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
                                     <mat-form-field fxFlex class="mat-block">
                                       <mat-label translate>admin.oauth2.client-id</mat-label>
@@ -245,16 +321,13 @@
 
                                             <mat-form-field fxFlex class="mat-block">
                                               <mat-label translate>admin.oauth2.user-info-uri</mat-label>
-                                              <input matInput formControlName="userInfoUri" required>
+                                              <input matInput formControlName="userInfoUri">
                                               <button mat-icon-button matSuffix
                                                       type="button"
                                                       (click)="toggleEditMode(registration, 'userInfoUri')"
                                                       *ngIf="!isCustomProvider(registration)">
                                                 <mat-icon class="material-icons">create</mat-icon>
                                               </button>
-                                              <mat-error *ngIf="registration.get('userInfoUri').hasError('required')">
-                                                {{ 'admin.oauth2.user-info-uri-required' | translate }}
-                                              </mat-error>
                                               <mat-error *ngIf="registration.get('userInfoUri').hasError('pattern')">
                                                 {{ 'admin.oauth2.uri-pattern-error' | translate }}
                                               </mat-error>
@@ -449,7 +522,7 @@
                         <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px">
                           <button mat-button mat-raised-button color="primary"
                                   [disabled]="(isLoading$ | async)"
-                                  (click)="addProvider(domain)"
+                                  (click)="addRegistration(oauth2ParamsInfo)"
                                   type="button">
                             {{'admin.oauth2.add-provider' | translate}}
                           </button>
@@ -467,7 +540,7 @@
           <button type="button" mat-raised-button color="primary"
                   [disabled]="isLoading$ | async"
                   *ngIf="oauth2SettingsForm.get('enabled').value"
-                  (click)="addDomain()">
+                  (click)="addOAuth2ParamsInfo()">
             <mat-icon>add</mat-icon>
             <span translate>action.add</span>
           </button>

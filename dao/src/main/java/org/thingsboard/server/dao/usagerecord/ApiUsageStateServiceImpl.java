@@ -90,6 +90,7 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         apiUsageState.setDbStorageState(ApiUsageStateValue.ENABLED);
         apiUsageState.setSmsExecState(ApiUsageStateValue.ENABLED);
         apiUsageState.setEmailExecState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setAlarmExecState(ApiUsageStateValue.ENABLED);
         apiUsageStateValidator.validate(apiUsageState, ApiUsageState::getTenantId);
 
         ApiUsageState saved = apiUsageStateDao.save(apiUsageState.getTenantId(), apiUsageState);
@@ -107,6 +108,8 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
                 new StringDataEntry(ApiFeature.EMAIL.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
         apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
                 new StringDataEntry(ApiFeature.SMS.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
+        apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
+                new StringDataEntry(ApiFeature.ALARM.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
         tsService.save(tenantId, saved.getId(), apiUsageStates, 0L);
 
         if (entityId.getEntityType() == EntityType.TENANT && !entityId.equals(TenantId.SYS_TENANT_ID)) {

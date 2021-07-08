@@ -105,17 +105,10 @@ export class MenuService {
       },
       {
         id: guid(),
-        name: 'resource.resources-library',
-        type: 'link',
-        path: '/resources-library',
-        icon: 'folder'
-      },
-      {
-        id: guid(),
         name: 'admin.system-settings',
         type: 'toggle',
         path: '/settings',
-        height: '200px',
+        height: '240px',
         icon: 'settings',
         pages: [
           {
@@ -152,6 +145,13 @@ export class MenuService {
             type: 'link',
             path: '/settings/oauth2',
             icon: 'security'
+          },
+          {
+            id: guid(),
+            name: 'resource.resources-library',
+            type: 'link',
+            path: '/settings/resources-library',
+            icon: 'folder'
           }
         ]
       }
@@ -189,16 +189,6 @@ export class MenuService {
         ]
       },
       {
-        name: 'resource.management',
-        places: [
-          {
-            name: 'resource.resources-library',
-            icon: 'folder',
-            path: '/resources-library'
-          }
-        ]
-      },
-      {
         name: 'admin.system-settings',
         places: [
           {
@@ -225,6 +215,11 @@ export class MenuService {
             name: 'admin.oauth2.oauth2',
             icon: 'security',
             path: '/settings/oauth2'
+          },
+          {
+            name: 'resource.resources-library',
+            icon: 'folder',
+            path: '/resources-library'
           }
         ]
       }
@@ -281,9 +276,9 @@ export class MenuService {
       },
       {
         id: guid(),
-        name: 'firmware.firmware',
+        name: 'ota-update.ota-updates',
         type: 'link',
-        path: '/firmwares',
+        path: '/otaUpdates',
         icon: 'memory'
       },
       {
@@ -298,24 +293,24 @@ export class MenuService {
       sections.push(
         {
           id: guid(),
+          name: 'edge.edge-instances',
+          type: 'link',
+          path: '/edgeInstances',
+          icon: 'router'
+        },
+        {
+          id: guid(),
           name: 'edge.management',
           type: 'toggle',
-          path: '/edges',
-          height: '80px',
-          icon: 'router',
+          path: '/edgeManagement',
+          height: '40px',
+          icon: 'settings_input_antenna',
           pages: [
-            {
-              id: guid(),
-              name: 'edge.edge-instances',
-              type: 'link',
-              path: '/edges',
-              icon: 'router'
-            },
             {
               id: guid(),
               name: 'edge.rulechain-templates',
               type: 'link',
-              path: '/edges/ruleChains',
+              path: '/edgeManagement/ruleChains',
               icon: 'settings_ethernet'
             }
           ]
@@ -339,20 +334,6 @@ export class MenuService {
       },
       {
         id: guid(),
-        name: 'resource.resources-library',
-        type: 'link',
-        path: '/resources-library',
-        icon: 'folder'
-      },
-      {
-        id: guid(),
-        name: 'admin.home-settings',
-        type: 'link',
-        path: '/settings/home',
-        icon: 'settings_applications'
-      },
-      {
-        id: guid(),
         name: 'audit-log.audit-logs',
         type: 'link',
         path: '/auditLogs',
@@ -365,6 +346,30 @@ export class MenuService {
         path: '/usage',
         icon: 'insert_chart',
         notExact: true
+      },
+      {
+        id: guid(),
+        name: 'admin.system-settings',
+        type: 'toggle',
+        path: '/settings',
+        height: '80px',
+        icon: 'settings',
+        pages: [
+          {
+            id: guid(),
+            name: 'admin.home-settings',
+            type: 'link',
+            path: '/settings/home',
+            icon: 'settings_applications'
+          },
+          {
+            id: guid(),
+            name: 'resource.resources-library',
+            type: 'link',
+            path: '/settings/resources-library',
+            icon: 'folder'
+          }
+        ]
       }
     );
     return sections;
@@ -418,9 +423,9 @@ export class MenuService {
             path: '/deviceProfiles'
           },
           {
-            name: 'firmware.firmware',
+            name: 'ota-update.ota-updates',
             icon: 'memory',
-            path: '/firmwares'
+            path: '/otaUpdates'
           }
         ]
       },
@@ -443,28 +448,18 @@ export class MenuService {
             {
               name: 'edge.edge-instances',
               icon: 'router',
-              path: '/edges'
+              path: '/edgeInstances'
             },
             {
               name: 'edge.rulechain-templates',
               icon: 'settings_ethernet',
-              path: '/edges/ruleChains'
+              path: '/edgeManagement/ruleChains'
             }
           ]
         }
       );
     }
     homeSections.push(
-      {
-        name: 'resource.management',
-        places: [
-          {
-            name: 'resource.resources-library',
-            icon: 'folder',
-            path: '/resources-library'
-          }
-        ]
-      },
       {
         name: 'dashboard.management',
         places: [
@@ -492,6 +487,21 @@ export class MenuService {
             name: 'api-usage.api-usage',
             icon: 'insert_chart',
             path: '/usage'
+          }
+        ]
+      },
+      {
+        name: 'admin.system-settings',
+        places: [
+          {
+            name: 'admin.home-settings',
+            icon: 'settings_applications',
+            path: '/settings/home'
+          },
+          {
+            name: 'resource.resources-library',
+            icon: 'folder',
+            path: '/settings/resources-library'
           }
         ]
       }
@@ -538,7 +548,7 @@ export class MenuService {
           id: guid(),
           name: 'edge.edge-instances',
           type: 'link',
-          path: '/edges',
+          path: '/edgeInstances',
           icon: 'router'
         }
       );
@@ -596,8 +606,8 @@ export class MenuService {
           places: [
             {
               name: 'edge.edge-instances',
-              icon: 'router',
-              path: '/edges'
+              icon: 'settings_input_antenna',
+              path: '/edgeInstances'
             }
           ]
         }

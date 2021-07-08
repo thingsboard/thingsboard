@@ -101,6 +101,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " a.start_ts as start_ts," +
             " a.status as status, " +
             " a.tenant_id as tenant_id, " +
+            " a.customer_id as customer_id, " +
             " a.propagate_relation_types as propagate_relation_types, " +
             " a.type as type," + SELECT_ORIGINATOR_NAME + ", ";
 

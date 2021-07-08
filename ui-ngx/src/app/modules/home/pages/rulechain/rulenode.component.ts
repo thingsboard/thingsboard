@@ -50,7 +50,7 @@ export class RuleNodeComponent extends FcNodeComponent implements OnInit {
     }
     if (node.targetRuleChainId) {
       if (node.ruleChainType === RuleChainType.EDGE) {
-        this.router.navigateByUrl(`/edges/ruleChains/${node.targetRuleChainId}`);
+        this.router.navigateByUrl(`/edgeManagement/ruleChains/${node.targetRuleChainId}`);
       } else {
         this.router.navigateByUrl(`/ruleChains/${node.targetRuleChainId}`);
       }

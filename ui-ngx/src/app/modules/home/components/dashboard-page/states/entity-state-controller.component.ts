@@ -28,6 +28,7 @@ import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { map, tap } from 'rxjs/operators';
+import { MobileService } from '@core/services/mobile.service';
 
 @Component({
   selector: 'tb-entity-state-controller',
@@ -44,6 +45,7 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
               protected statesControllerService: StatesControllerService,
               private utils: UtilsService,
               private entityService: EntityService,
+              private mobileService: MobileService,
               private dashboardUtils: DashboardUtilsService) {
     super(router, route, ngZone, statesControllerService);
   }
@@ -233,6 +235,10 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
     return result;
   }
 
+  public getCurrentStateName(): string {
+    return this.getStateName(this.stateObject.length - 1);
+  }
+
   public selectedStateIndexChanged() {
     this.navigatePrevState(this.selectedStateIndex);
   }
@@ -269,13 +275,15 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
   }
 
   private gotoState(stateId: string, update: boolean, openRightLayout?: boolean) {
+    const isStateIdChanged = this.dashboardCtrl.dashboardCtx.state !== stateId;
     this.dashboardCtrl.openDashboardState(stateId, openRightLayout);
+    this.mobileService.handleDashboardStateName(this.getStateName(this.stateObject.length - 1));
     if (update) {
-      this.updateLocation();
+      this.updateLocation(isStateIdChanged);
     }
   }
 
-  private updateLocation() {
+  private updateLocation(isStateIdChanged: boolean) {
     if (this.stateObject[this.stateObject.length - 1].id) {
       let newState;
       if (this.isDefaultState()) {
@@ -283,7 +291,7 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
       } else {
         newState = objToBase64URI(this.stateObject);
       }
-      this.updateStateParam(newState);
+      this.updateStateParam(newState, !isStateIdChanged);
     }
   }
 

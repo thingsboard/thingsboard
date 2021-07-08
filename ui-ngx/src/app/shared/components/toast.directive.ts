@@ -312,7 +312,7 @@ export class TbSnackBarComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit() {
     if (this.snackBarRef) {
       this.parentEl = this.data.parent.nativeElement;
-      this.snackBarContainerEl = this.elementRef.nativeElement.parentNode;
+      this.snackBarContainerEl = $(this.elementRef.nativeElement).closest('snack-bar-container')[0];
       this.snackBarContainerEl.style.position = 'absolute';
       this.updateContainerRect();
       this.updatePosition(this.snackBarRef.containerInstance.snackBarConfig);
@@ -356,7 +356,8 @@ export class TbSnackBarComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  action(): void {
+  action(event: MouseEvent): void {
+    event.stopPropagation();
     if (this.snackBarRef) {
       this.snackBarRef.dismissWithAction();
     } else {

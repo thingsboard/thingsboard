@@ -14,13 +14,20 @@
  * limitations under the License.
  */
 :host {
-  small {
-    white-space: normal;
+  .fields-group {
+    padding: 0 8px 8px;
+    margin: 10px 0;
+    border: 1px groove rgba(0, 0, 0, .25);
+    border-radius: 4px;
+    legend {
+      color: rgba(0, 0, 0, .7);
+      width: fit-content;
+    }
   }
 }
 
 :host ::ng-deep {
-  .mat-checkbox-label {
+  .mat-slide-toggle-content {
     white-space: normal;
   }
 }

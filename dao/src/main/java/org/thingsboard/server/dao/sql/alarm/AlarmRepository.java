@@ -17,11 +17,13 @@ package org.thingsboard.server.dao.sql.alarm;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.sql.AlarmEntity;
 import org.thingsboard.server.dao.model.sql.AlarmInfoEntity;
 
@@ -94,6 +96,58 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
                                      @Param("searchText") String searchText,
                                      Pageable pageable);
 
+    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a) FROM AlarmEntity a " +
+            "WHERE a.tenantId = :tenantId " +
+            "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
+            "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
+            "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+            "AND (LOWER(a.type) LIKE LOWER(CONCAT(:searchText, '%')) " +
+            "  OR LOWER(a.severity) LIKE LOWER(CONCAT(:searchText, '%')) " +
+            "  OR LOWER(a.status) LIKE LOWER(CONCAT(:searchText, '%'))) ",
+            countQuery = "" +
+                    "SELECT count(a) " +
+                    "FROM AlarmEntity a " +
+                    "WHERE a.tenantId = :tenantId " +
+                    "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
+                    "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
+                    "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+                    "AND (LOWER(a.type) LIKE LOWER(CONCAT(:searchText, '%')) " +
+                    "  OR LOWER(a.severity) LIKE LOWER(CONCAT(:searchText, '%')) " +
+                    "  OR LOWER(a.status) LIKE LOWER(CONCAT(:searchText, '%'))) ")
+    Page<AlarmInfoEntity> findAllAlarms(@Param("tenantId") UUID tenantId,
+                                        @Param("startTime") Long startTime,
+                                        @Param("endTime") Long endTime,
+                                        @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses,
+                                        @Param("searchText") String searchText,
+                                        Pageable pageable);
+
+    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmInfoEntity(a) FROM AlarmEntity a " +
+            "WHERE a.tenantId = :tenantId AND a.customerId = :customerId " +
+            "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
+            "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
+            "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+            "AND (LOWER(a.type) LIKE LOWER(CONCAT(:searchText, '%')) " +
+            "  OR LOWER(a.severity) LIKE LOWER(CONCAT(:searchText, '%')) " +
+            "  OR LOWER(a.status) LIKE LOWER(CONCAT(:searchText, '%'))) "
+            ,
+            countQuery = "" +
+                    "SELECT count(a) " +
+                    "FROM AlarmEntity a " +
+                    "WHERE a.tenantId = :tenantId AND a.customerId = :customerId " +
+                    "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
+                    "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
+                    "AND ((:alarmStatuses) IS NULL OR a.status in (:alarmStatuses)) " +
+                    "AND (LOWER(a.type) LIKE LOWER(CONCAT(:searchText, '%')) " +
+                    "  OR LOWER(a.severity) LIKE LOWER(CONCAT(:searchText, '%')) " +
+                    "  OR LOWER(a.status) LIKE LOWER(CONCAT(:searchText, '%'))) ")
+    Page<AlarmInfoEntity> findCustomerAlarms(@Param("tenantId") UUID tenantId,
+                                             @Param("customerId") UUID customerId,
+                                             @Param("startTime") Long startTime,
+                                             @Param("endTime") Long endTime,
+                                             @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses,
+                                             @Param("searchText") String searchText,
+                                             Pageable pageable);
+
     @Query(value = "SELECT a.severity FROM AlarmEntity a " +
             "LEFT JOIN RelationEntity re ON a.id = re.toId " +
             "AND re.relationTypeGroup = 'ALARM' " +
@@ -107,4 +161,8 @@ public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
                                            @Param("affectedEntityId") UUID affectedEntityId,
                                            @Param("affectedEntityType") String affectedEntityType,
                                            @Param("alarmStatuses") Set<AlarmStatus> alarmStatuses);
+
+    @Query("SELECT a.id FROM AlarmEntity a WHERE a.tenantId = :tenantId AND a.createdTime < :time AND a.endTs < :time")
+    Page<UUID> findAlarmsIdsByEndTsBeforeAndTenantId(@Param("time") Long time, @Param("tenantId") UUID tenantId, Pageable pageable);
+
 }

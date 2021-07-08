@@ -43,6 +43,9 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
     @Override
     public Object convertValue(Object value, Type currentType, Type expectedType, LwM2mPath resourcePath)
             throws CodecException {
+        if (value == null) {
+           return null;
+        }
         if (expectedType == null) {
             /** unknown resource, trusted value */
             return value;
@@ -60,11 +63,14 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
             case INTEGER:
                 switch (currentType) {
                     case FLOAT:
-                        log.debug("Trying to convert float value [{}] to integer", value);
+                        log.debug("Trying to convert float value [{}] to Integer", value);
                         Long longValue = ((Double) value).longValue();
                         if ((double) value == longValue.doubleValue()) {
                             return longValue;
                         }
+                    case STRING:
+                        log.debug("Trying to convert String value [{}] to Integer", value);
+                        return Long.parseLong((String) value);
                     default:
                         break;
                 }
@@ -77,6 +83,9 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                         if ((long) value == floatValue.longValue()) {
                             return floatValue;
                         }
+                    case STRING:
+                        log.debug("Trying to convert String value [{}] to Float", value);
+                        return Float.valueOf((String) value);
                     default:
                         break;
                 }
@@ -108,16 +117,18 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                 switch (currentType) {
                     case INTEGER:
                         log.debug("Trying to convert long value {} to date", value);
-                        /** let's assume we received the millisecond since 1970/1/1 */
+                        /* let's assume we received the millisecond since 1970/1/1 */
                         return new Date(((Number) value).longValue() * 1000L);
                     case STRING:
                         log.debug("Trying to convert string value {} to date", value);
                         /** let's assume we received an ISO 8601 format date */
                         try {
                             return new Date(Long.decode(value.toString()));
-//                            DatatypeFactory datatypeFactory = DatatypeFactory.newInstance();
-//                            XMLGregorianCalendar cal = datatypeFactory.newXMLGregorianCalendar((String) value);
-//                            return cal.toGregorianCalendar().getTime();
+                            /**
+                            DatatypeFactory datatypeFactory = DatatypeFactory.newInstance();
+                            XMLGregorianCalendar cal = datatypeFactory.newXMLGregorianCalendar((String) value);
+                            return cal.toGregorianCalendar().getTime();
+                             **/
                         } catch (IllegalArgumentException e) {
                             log.debug("Unable to convert string to date", e);
                             throw new CodecException("Unable to convert string (%s) to date for resource %s", value,
@@ -171,7 +182,6 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                 }
             default:
         }
-
         throw new CodecException("Invalid value type for resource %s, expected %s, got %s", resourcePath, expectedType,
                 currentType);
     }

@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.id.FirmwareId;
+import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.NoXss;
 
@@ -32,7 +32,7 @@ import java.io.IOException;
 
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasName, HasTenantId, HasCustomerId {
+public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasName, HasTenantId, HasCustomerId, HasOtaPackage {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
@@ -49,7 +49,8 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
     @JsonIgnore
     private byte[] deviceDataBytes;
 
-    private FirmwareId firmwareId;
+    private OtaPackageId firmwareId;
+    private OtaPackageId softwareId;
 
     public Device() {
         super();
@@ -69,6 +70,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         this.deviceProfileId = device.getDeviceProfileId();
         this.setDeviceData(device.getDeviceData());
         this.firmwareId = device.getFirmwareId();
+        this.softwareId = device.getSoftwareId();
     }
 
     public Device updateDevice(Device device) {
@@ -79,6 +81,8 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         this.label = device.getLabel();
         this.deviceProfileId = device.getDeviceProfileId();
         this.setDeviceData(device.getDeviceData());
+        this.setFirmwareId(device.getFirmwareId());
+        this.setSoftwareId(device.getSoftwareId());
         return this;
     }
 
@@ -163,12 +167,20 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         return getName();
     }
 
-    public FirmwareId getFirmwareId() {
+    public OtaPackageId getFirmwareId() {
         return firmwareId;
     }
 
-    public void setFirmwareId(FirmwareId firmwareId) {
+    public void setFirmwareId(OtaPackageId firmwareId) {
         this.firmwareId = firmwareId;
+    }
+
+    public OtaPackageId getSoftwareId() {
+        return softwareId;
+    }
+
+    public void setSoftwareId(OtaPackageId softwareId) {
+        this.softwareId = softwareId;
     }
 
     @Override

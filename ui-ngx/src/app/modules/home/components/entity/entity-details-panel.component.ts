@@ -280,7 +280,7 @@ export class EntityDetailsPanelComponent extends PageComponent implements AfterV
         editingEntity.additionalInfo =
           mergeDeep((this.editingEntity as any).additionalInfo, this.entityComponent.entityFormValue()?.additionalInfo);
       }
-      this.entitiesTableConfig.saveEntity(editingEntity).subscribe(
+      this.entitiesTableConfig.saveEntity(editingEntity, this.editingEntity).subscribe(
         (entity) => {
           this.entity = entity;
           this.entityComponent.entity = entity;

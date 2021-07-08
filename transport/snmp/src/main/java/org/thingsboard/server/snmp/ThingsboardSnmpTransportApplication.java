@@ -26,7 +26,7 @@ import java.util.Arrays;
 @SpringBootConfiguration
 @EnableAsync
 @EnableScheduling
-@ComponentScan({"org.thingsboard.server.snmp", "org.thingsboard.server.common", "org.thingsboard.server.transport.snmp", "org.thingsboard.server.queue"})
+@ComponentScan({"org.thingsboard.server.snmp", "org.thingsboard.server.common", "org.thingsboard.server.transport.snmp", "org.thingsboard.server.queue", "org.thingsboard.server.cache"})
 public class ThingsboardSnmpTransportApplication {
 
     private static final String SPRING_CONFIG_NAME_KEY = "--spring.config.name";

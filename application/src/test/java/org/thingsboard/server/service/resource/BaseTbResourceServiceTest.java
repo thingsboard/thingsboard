@@ -19,20 +19,26 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.server.common.data.EntityInfo;
+import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.service.AbstractServiceTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
@@ -57,7 +63,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
             "<Resources>\n" +
             "<Item ID=\"0\">\n" +
             "<Name>LWM2M</Name>\n" +
-            "<Operations></Operations>\n" +
+            "<Operations>RW</Operations>\n" +
             "<MultipleInstances>Single</MultipleInstances>\n" +
             "<Mandatory>Mandatory</Mandatory>\n" +
             "<Type>String</Type>\n" +
@@ -108,6 +114,64 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
 
         doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
                 .andExpect(status().isOk());
+    }
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
+    @Test
+    public void testSaveResourceWithMaxSumDataSizeOutOfLimit() throws Exception {
+        loginSysAdmin();
+        long limit = 1;
+        EntityInfo defaultTenantProfileInfo = doGet("/api/tenantProfileInfo/default", EntityInfo.class);
+        TenantProfile defaultTenantProfile = doGet("/api/tenantProfile/" + defaultTenantProfileInfo.getId().getId().toString(), TenantProfile.class);
+        defaultTenantProfile.getProfileData().setConfiguration(DefaultTenantProfileConfiguration.builder().maxResourcesInBytes(limit).build());
+        doPost("/api/tenantProfile", defaultTenantProfile, TenantProfile.class);
+
+        loginTenantAdmin();
+
+        Assert.assertEquals(0, resourceService.sumDataSizeByTenantId(tenantId));
+
+        createResource("test", DEFAULT_FILE_NAME);
+
+        Assert.assertEquals(1, resourceService.sumDataSizeByTenantId(tenantId));
+
+        try {
+            thrown.expect(DataValidationException.class);
+            thrown.expectMessage(String.format("Failed to create the tb resource, files size limit is exhausted %d bytes!", limit));
+            createResource("test1", 1 + DEFAULT_FILE_NAME);
+        } finally {
+            defaultTenantProfile.getProfileData().setConfiguration(DefaultTenantProfileConfiguration.builder().maxResourcesInBytes(0).build());
+            loginSysAdmin();
+            doPost("/api/tenantProfile", defaultTenantProfile, TenantProfile.class);
+        }
+    }
+
+    @Test
+    public void sumDataSizeByTenantId() throws ThingsboardException {
+        Assert.assertEquals(0, resourceService.sumDataSizeByTenantId(tenantId));
+
+        createResource("test", DEFAULT_FILE_NAME);
+        Assert.assertEquals(1, resourceService.sumDataSizeByTenantId(tenantId));
+
+        int maxSumDataSize = 8;
+
+        for (int i = 2; i <= maxSumDataSize; i++) {
+            createResource("test" + i, i + DEFAULT_FILE_NAME);
+            Assert.assertEquals(i, resourceService.sumDataSizeByTenantId(tenantId));
+        }
+
+        Assert.assertEquals(maxSumDataSize, resourceService.sumDataSizeByTenantId(tenantId));
+    }
+
+    private TbResource createResource(String title, String filename) throws ThingsboardException {
+        TbResource resource = new TbResource();
+        resource.setTenantId(tenantId);
+        resource.setTitle(title);
+        resource.setResourceType(ResourceType.JKS);
+        resource.setFileName(filename);
+        resource.setData("1");
+        return resourceService.saveResource(resource);
     }
 
     @Test

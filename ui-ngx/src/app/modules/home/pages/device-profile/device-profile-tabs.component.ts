@@ -32,7 +32,7 @@ import {
 })
 export class DeviceProfileTabsComponent extends EntityTabsComponent<DeviceProfile> {
 
-  deviceTransportTypes = Object.keys(DeviceTransportType);
+  deviceTransportTypes = Object.values(DeviceTransportType);
 
   deviceTransportTypeTranslations = deviceTransportTypeTranslationMap;
 

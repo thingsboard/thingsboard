@@ -106,6 +106,8 @@ public abstract class BaseApiUsageState {
                 return apiUsageState.getEmailExecState();
             case SMS:
                 return apiUsageState.getSmsExecState();
+            case ALARM:
+                return apiUsageState.getAlarmExecState();
             default:
                 return ApiUsageStateValue.ENABLED;
         }
@@ -131,6 +133,9 @@ public abstract class BaseApiUsageState {
                 break;
             case SMS:
                 apiUsageState.setSmsExecState(value);
+                break;
+            case ALARM:
+                apiUsageState.setAlarmExecState(value);
                 break;
         }
         return !currentValue.equals(value);

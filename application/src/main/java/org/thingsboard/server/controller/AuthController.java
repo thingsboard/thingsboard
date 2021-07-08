@@ -135,7 +135,7 @@ public class AuthController extends BaseController {
         }
     }
 
-    @RequestMapping(value = "/noauth/activate", params = { "activateToken" }, method = RequestMethod.GET)
+    @RequestMapping(value = "/noauth/activate", params = {"activateToken"}, method = RequestMethod.GET)
     public ResponseEntity<String> checkActivateToken(
             @RequestParam(value = "activateToken") String activateToken) {
         HttpHeaders headers = new HttpHeaders();
@@ -159,7 +159,7 @@ public class AuthController extends BaseController {
 
     @RequestMapping(value = "/noauth/resetPasswordByEmail", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public void requestResetPasswordByEmail (
+    public void requestResetPasswordByEmail(
             @RequestBody JsonNode resetPasswordByEmailRequest,
             HttpServletRequest request) throws ThingsboardException {
         try {
@@ -170,13 +170,13 @@ public class AuthController extends BaseController {
             String resetUrl = String.format("%s/api/noauth/resetPassword?resetToken=%s", baseUrl,
                     userCredentials.getResetToken());
 
-            mailService.sendResetPasswordEmail(resetUrl, email);
+            mailService.sendResetPasswordEmailAsync(resetUrl, email);
         } catch (Exception e) {
-            throw handleException(e);
+            log.warn("Error occurred: {}", e.getMessage());
         }
     }
 
-    @RequestMapping(value = "/noauth/resetPassword", params = { "resetToken" }, method = RequestMethod.GET)
+    @RequestMapping(value = "/noauth/resetPassword", params = {"resetToken"}, method = RequestMethod.GET)
     public ResponseEntity<String> checkResetToken(
             @RequestParam(value = "resetToken") String resetToken) {
         HttpHeaders headers = new HttpHeaders();

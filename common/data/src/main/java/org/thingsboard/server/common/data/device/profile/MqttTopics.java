@@ -31,6 +31,7 @@ public class MqttTopics {
     private static final String SUB_TOPIC = "+";
     private static final String PROVISION = "/provision";
     private static final String FIRMWARE = "/fw";
+    private static final String SOFTWARE = "/sw";
     private static final String CHUNK = "/chunk/";
     private static final String ERROR = "/error";
 
@@ -75,9 +76,18 @@ public class MqttTopics {
     // v2 topics
     public static final String BASE_DEVICE_API_TOPIC_V2 = "v2";
 
-    public static final String DEVICE_FIRMWARE_RESPONSE_TOPIC_PREFIX = BASE_DEVICE_API_TOPIC_V2 + FIRMWARE + RESPONSE + "/";
-    public static final String DEVICE_FIRMWARE_RESPONSES_TOPIC = DEVICE_FIRMWARE_RESPONSE_TOPIC_PREFIX + SUB_TOPIC + CHUNK + SUB_TOPIC;
+    public static final String REQUEST_ID_PATTERN = "(?<requestId>\\d+)";
+    public static final String CHUNK_PATTERN = "(?<chunk>\\d+)";
+
+    public static final String DEVICE_FIRMWARE_REQUEST_TOPIC_PATTERN = BASE_DEVICE_API_TOPIC_V2 + FIRMWARE + REQUEST + "/" + REQUEST_ID_PATTERN + CHUNK + CHUNK_PATTERN;
+    public static final String DEVICE_FIRMWARE_RESPONSES_TOPIC = BASE_DEVICE_API_TOPIC_V2 + FIRMWARE + RESPONSE + "/" + SUB_TOPIC + CHUNK + SUB_TOPIC;
     public static final String DEVICE_FIRMWARE_ERROR_TOPIC = BASE_DEVICE_API_TOPIC_V2 + FIRMWARE + ERROR;
+
+    public static final String DEVICE_SOFTWARE_FIRMWARE_RESPONSES_TOPIC_FORMAT = BASE_DEVICE_API_TOPIC_V2 + "/%s" + RESPONSE + "/%s" + CHUNK + "%d";
+
+    public static final String DEVICE_SOFTWARE_REQUEST_TOPIC_PATTERN = BASE_DEVICE_API_TOPIC_V2 + SOFTWARE + REQUEST + "/" + REQUEST_ID_PATTERN + CHUNK + CHUNK_PATTERN;
+    public static final String DEVICE_SOFTWARE_RESPONSES_TOPIC = BASE_DEVICE_API_TOPIC_V2 + SOFTWARE + RESPONSE + "/" + SUB_TOPIC + CHUNK + SUB_TOPIC;
+    public static final String DEVICE_SOFTWARE_ERROR_TOPIC = BASE_DEVICE_API_TOPIC_V2 + SOFTWARE + ERROR;
 
     private MqttTopics() {
     }

@@ -34,6 +34,8 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxUsers;
     private long maxDashboards;
     private long maxRuleChains;
+    private long maxResourcesInBytes;
+    private long maxOtaPackagesInBytes;
 
     private String transportTenantMsgRateLimit;
     private String transportTenantTelemetryMsgRateLimit;
@@ -50,8 +52,11 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private int maxRuleNodeExecutionsPerMessage;
     private long maxEmails;
     private long maxSms;
+    private long maxCreatedAlarms;
 
     private int defaultStorageTtlDays;
+    private int alarmsTtlDays;
+    private int rpcTtlDays;
 
     private double warnThreshold;
 
@@ -72,6 +77,8 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
                 return maxEmails;
             case SMS_EXEC_COUNT:
                 return maxSms;
+            case CREATED_ALARMS_COUNT:
+                return maxCreatedAlarms;
         }
         return 0L;
     }
