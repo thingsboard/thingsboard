@@ -56,7 +56,7 @@ public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
 
     @Override
     public PageLink getPageLink(int pageSize) {
-        return new PageLink(pageSize);
+        return null;
     }
 
     @Override
