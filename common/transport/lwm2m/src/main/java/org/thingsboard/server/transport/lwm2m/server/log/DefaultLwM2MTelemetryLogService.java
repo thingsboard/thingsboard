@@ -31,17 +31,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.L
 @RequiredArgsConstructor
 public class DefaultLwM2MTelemetryLogService implements LwM2MTelemetryLogService {
 
-    private final LwM2mClientContext clientContext;
     private final LwM2mTransportServerHelper helper;
-
-    /**
-     * @param logMsg         - text msg
-     * @param registrationId - Id of Registration LwM2M Client
-     */
-    @Override
-    public void log(String registrationId, String logMsg) {
-        log(clientContext.getClientByRegistrationId(registrationId), logMsg);
-    }
 
     @Override
     public void log(LwM2mClient client, String logMsg) {

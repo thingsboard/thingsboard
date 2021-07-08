@@ -1,0 +1,73 @@
+<!--
+
+    Copyright © 2016-2021 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="instancesFormGroup">
+  <mat-accordion multi="true" formArrayName="instances">
+    <mat-expansion-panel
+      class="instance-row"
+      *ngFor="let instances of instancesFormArray.controls; let $index = index; trackBy: trackByParams"
+      [formGroupName]="$index"
+      [expanded]="isExpend"
+      [disabled]="isExpend">
+      <mat-expansion-panel-header>
+        <mat-panel-title class="tb-panel" fxLayout="row">
+          <div fxFlex="30" fxLayoutAlign="start center">
+            <span class="tb-panel-title">{{ 'device-profile.lwm2m.instance' | translate }}</span>&nbsp;#{{instances.get('id').value}}
+          </div>
+          <div fxLayoutAlign="center center" fxFlex="10">
+            <mat-checkbox color="warn"
+                          [disabled]="this.disabled"
+                          [checked]="getChecked(instances, 'attribute')"
+                          (click)="$event.stopPropagation()"
+                          (change)="changeInstanceResourcesCheckBox($event.checked, instances, 'attribute')"
+                          [indeterminate]="getIndeterminate(instances, 'attribute')">
+            </mat-checkbox>
+          </div>
+          <div fxLayoutAlign="center center" fxFlex="10">
+            <mat-checkbox color="primary"
+                          [disabled]="this.disabled"
+                          [checked]="getChecked(instances, 'telemetry')"
+                          (click)="$event.stopPropagation()"
+                          (change)="changeInstanceResourcesCheckBox($event.checked, instances, 'telemetry')"
+                          [indeterminate]="getIndeterminate(instances, 'telemetry')">
+            </mat-checkbox>
+          </div>
+          <div fxLayoutAlign="center center" fxFlex="10">
+            <mat-checkbox color="primary"
+                          [disabled]="disableObserve(instances)"
+                          [checked]="getChecked(instances, 'observe')"
+                          (click)="$event.stopPropagation()"
+                          (change)="changeInstanceResourcesCheckBox($event.checked, instances, 'observe')"
+                          [indeterminate]="getIndeterminate(instances, 'observe')">
+            </mat-checkbox>
+          </div>
+          <span fxFlex></span>
+          <tb-profile-lwm2m-attributes
+            formControlName="attributes"
+            [isAttributeTelemetry]="disableObserveInstance(instances)"
+            [modelName]="getNameInstance(instances.value)">
+          </tb-profile-lwm2m-attributes>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <tb-profile-lwm2m-observe-attr-telemetry-resource
+          formControlName="resources">
+        </tb-profile-lwm2m-observe-attr-telemetry-resource>
+      </ng-template>
+    </mat-expansion-panel>
+  </mat-accordion>
+</section>

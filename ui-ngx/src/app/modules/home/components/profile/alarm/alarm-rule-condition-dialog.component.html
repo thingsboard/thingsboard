@@ -37,7 +37,7 @@
           [entityId]="entityId"
           formControlName="keyFilters">
         </tb-key-filter-list>
-        <section formGroupName="spec" class="row">
+        <section formGroupName="spec" style="margin-top: 1em">
           <mat-form-field class="mat-block" hideRequiredMarker>
             <mat-label translate>device-profile.condition-type</mat-label>
             <mat-select formControlName="type" required>
@@ -49,60 +49,26 @@
               {{ 'device-profile.condition-type-required' | translate }}
             </mat-error>
           </mat-form-field>
-          <div fxLayout="row" fxLayoutGap="8px" *ngIf="conditionFormGroup.get('spec.type').value == AlarmConditionType.DURATION">
-            <mat-form-field class="mat-block" hideRequiredMarker fxFlex floatLabel="always">
-              <mat-label></mat-label>
-              <input type="number" required
-                     step="1" min="1" max="2147483647" matInput
-                     placeholder="{{ 'device-profile.condition-duration-value' | translate }}"
-                     formControlName="value">
-              <mat-error *ngIf="conditionFormGroup.get('spec.value').hasError('required')">
-                {{ 'device-profile.condition-duration-value-required' | translate }}
-              </mat-error>
-              <mat-error *ngIf="conditionFormGroup.get('spec.value').hasError('min')">
-                {{ 'device-profile.condition-duration-value-range' | translate }}
-              </mat-error>
-              <mat-error *ngIf="conditionFormGroup.get('spec.value').hasError('max')">
-                {{ 'device-profile.condition-duration-value-range' | translate }}
-              </mat-error>
-              <mat-error *ngIf="conditionFormGroup.get('spec.value').hasError('pattern')">
-                {{ 'device-profile.condition-duration-value-pattern' | translate }}
-              </mat-error>
-            </mat-form-field>
-            <mat-form-field class="mat-block" hideRequiredMarker fxFlex floatLabel="always">
-              <mat-label></mat-label>
-              <mat-select formControlName="unit"
-                          required
-                          placeholder="{{ 'device-profile.condition-duration-time-unit' | translate }}">
-                <mat-option *ngFor="let timeUnit of timeUnits" [value]="timeUnit">
-                  {{ timeUnitTranslations.get(timeUnit) | translate }}
-                </mat-option>
-              </mat-select>
-              <mat-error *ngIf="conditionFormGroup.get('spec.unit').hasError('required')">
-                {{ 'device-profile.condition-duration-time-unit-required' | translate }}
-              </mat-error>
-            </mat-form-field>
-          </div>
-          <div fxLayout="row" fxLayoutGap="8px" *ngIf="conditionFormGroup.get('spec.type').value == AlarmConditionType.REPEATING">
-            <mat-form-field class="mat-block" hideRequiredMarker fxFlex floatLabel="always">
-              <mat-label></mat-label>
-              <input type="number" required
-                     step="1" min="1" max="2147483647" matInput
-                     placeholder="{{ 'device-profile.condition-repeating-value' | translate }}"
-                     formControlName="count">
-              <mat-error *ngIf="conditionFormGroup.get('spec.count').hasError('required')">
-                {{ 'device-profile.condition-repeating-value-required' | translate }}
-              </mat-error>
-              <mat-error *ngIf="conditionFormGroup.get('spec.count').hasError('min')">
-                {{ 'device-profile.condition-repeating-value-range' | translate }}
-              </mat-error>
-              <mat-error *ngIf="conditionFormGroup.get('spec.count').hasError('max')">
-                {{ 'device-profile.condition-repeating-value-range' | translate }}
-              </mat-error>
-              <mat-error *ngIf="conditionFormGroup.get('spec.count').hasError('pattern')">
-                {{ 'device-profile.condition-repeating-value-pattern' | translate }}
-              </mat-error>
-            </mat-form-field>
+          <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px" *ngIf="conditionFormGroup.get('spec.type').value != AlarmConditionType.SIMPLE">
+            <tb-alarm-duration-predicate-value
+              fxLayout="row" fxFlex formControlName="predicate"
+              [alarmConditionType]="conditionFormGroup.get('spec.type').value"
+            >
+            </tb-alarm-duration-predicate-value>
+            <div fxFlex="23" *ngIf="conditionFormGroup.get('spec.type').value == AlarmConditionType.DURATION">
+              <mat-form-field class="mat-block" hideRequiredMarker floatLabel="always">
+                <mat-label></mat-label>
+                <mat-select formControlName="unit" required
+                            placeholder="{{ 'device-profile.condition-duration-time-unit' | translate }}">
+                  <mat-option *ngFor="let timeUnit of timeUnits" [value]="timeUnit">
+                    {{ timeUnitTranslations.get(timeUnit) | translate }}
+                  </mat-option>
+                </mat-select>
+                <mat-error *ngIf="conditionFormGroup.get('spec.unit').hasError('required')">
+                  {{ 'device-profile.condition-duration-time-unit-required' | translate }}
+                </mat-error>
+              </mat-form-field>
+            </div>
           </div>
         </section>
       </div>

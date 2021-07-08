@@ -155,6 +155,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
 
         doPost("/api/noauth/resetPasswordByEmail", resetPasswordByEmailRequest)
                 .andExpect(status().isOk());
+        Thread.sleep(1000);
         doGet("/api/noauth/resetPassword?resetToken={resetToken}", TestMailService.currentResetPasswordToken)
                 .andExpect(status().isSeeOther())
                 .andExpect(header().string(HttpHeaders.LOCATION, "/login/resetPassword?resetToken=" + TestMailService.currentResetPasswordToken));

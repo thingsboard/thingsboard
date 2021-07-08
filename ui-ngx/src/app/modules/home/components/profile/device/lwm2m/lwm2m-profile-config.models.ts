@@ -14,13 +14,12 @@
 /// limitations under the License.
 ///
 
+import { ValidatorFn, Validators } from '@angular/forms';
+
 export const PAGE_SIZE_LIMIT = 50;
 export const INSTANCES = 'instances';
 export const INSTANCE = 'instance';
 export const RESOURCES = 'resources';
-export const ATTRIBUTE_LWM2M = 'attributeLwm2m';
-export const CLIENT_LWM2M = 'clientLwM2M';
-export const OBSERVE_ATTR_TELEMETRY = 'observeAttrTelemetry';
 export const OBSERVE = 'observe';
 export const ATTRIBUTE = 'attribute';
 export const TELEMETRY = 'telemetry';
@@ -39,7 +38,7 @@ export const DEFAULT_BOOTSTRAP_SERVER_ACCOUNT_TIME_OUT = 0;
 export const LEN_MAX_PUBLIC_KEY_RPK = 182;
 export const LEN_MAX_PUBLIC_KEY_X509 = 3000;
 export const KEY_REGEXP_HEX_DEC = /^[-+]?[0-9A-Fa-f]+\.?[0-9A-Fa-f]*?$/;
-export const KEY_REGEXP_NUMBER = /^(\-?|\+?)\d*$/;
+export const KEY_REGEXP_NUMBER = /^(-?|\+?)\d*$/;
 export const INSTANCES_ID_VALUE_MIN = 0;
 export const INSTANCES_ID_VALUE_MAX = 65535;
 export const DEFAULT_OTA_UPDATE_PROTOCOL = 'coap://';
@@ -47,7 +46,7 @@ export const DEFAULT_FW_UPDATE_RESOURCE = DEFAULT_OTA_UPDATE_PROTOCOL + DEFAULT_
 export const DEFAULT_SW_UPDATE_RESOURCE = DEFAULT_OTA_UPDATE_PROTOCOL + DEFAULT_LOCAL_HOST_NAME + ':' + DEFAULT_PORT_SERVER_NO_SEC;
 
 
-export enum BINDING_MODE {
+export enum BingingMode {
   U = 'U',
   UQ = 'UQ',
   T = 'T',
@@ -60,57 +59,42 @@ export enum BINDING_MODE {
   TQS = 'TQS'
 }
 
-export const BINDING_MODE_NAMES = new Map<BINDING_MODE, string>(
+export const BingingModeTranslationsMap = new Map<BingingMode, string>(
   [
-    [BINDING_MODE.U, 'U: UDP connection in standard mode'],
-    [BINDING_MODE.UQ, 'UQ: UDP connection in queue mode'],
-    [BINDING_MODE.US, 'US: both UDP and SMS connections active, both in standard mode'],
-    [BINDING_MODE.UQS, 'UQS: both UDP and SMS connections active; UDP in queue mode, SMS in standard mode'],
-    [BINDING_MODE.T, 'T: TCP connection in standard mode'],
-    [BINDING_MODE.TQ, 'TQ: TCP connection in queue mode'],
-    [BINDING_MODE.TS, 'TS: both TCP and SMS connections active, both in standard mode'],
-    [BINDING_MODE.TQS, 'TQS: both TCP and SMS connections active; TCP in queue mode, SMS in standard mode'],
-    [BINDING_MODE.S, 'S: SMS connection in standard mode'],
-    [BINDING_MODE.SQ, 'SQ: SMS connection in queue mode']
+    [BingingMode.U, 'device-profile.lwm2m.binding-type.u'],
+    [BingingMode.UQ, 'device-profile.lwm2m.binding-type.uq'],
+    [BingingMode.US, 'device-profile.lwm2m.binding-type.us'],
+    [BingingMode.UQS, 'device-profile.lwm2m.binding-type.uqs'],
+    [BingingMode.T, 'device-profile.lwm2m.binding-type.t'],
+    [BingingMode.TQ, 'device-profile.lwm2m.binding-type.tq'],
+    [BingingMode.TS, 'device-profile.lwm2m.binding-type.ts'],
+    [BingingMode.TQS, 'device-profile.lwm2m.binding-type.tqs'],
+    [BingingMode.S, 'device-profile.lwm2m.binding-type.s'],
+    [BingingMode.SQ, 'device-profile.lwm2m.binding-type.sq']
   ]
 );
-
-export enum ATTRIBUTE_LWM2M_ENUM {
-  dim = 'dim',
-  ver = 'ver',
+// TODO: wait release Leshan for issues: https://github.com/eclipse/leshan/issues/1026
+export enum AttributeName {
   pmin = 'pmin',
   pmax = 'pmax',
   gt = 'gt',
   lt = 'lt',
   st = 'st'
+  // epmin = 'epmin',
+  // epmax = 'epmax'
 }
 
-export const ATTRIBUTE_LWM2M_LABEL = new Map<ATTRIBUTE_LWM2M_ENUM, string>(
+export const AttributeNameTranslationMap = new Map<AttributeName, string>(
   [
-    [ATTRIBUTE_LWM2M_ENUM.dim, 'dim='],
-    [ATTRIBUTE_LWM2M_ENUM.ver, 'ver='],
-    [ATTRIBUTE_LWM2M_ENUM.pmin, 'pmin='],
-    [ATTRIBUTE_LWM2M_ENUM.pmax, 'pmax='],
-    [ATTRIBUTE_LWM2M_ENUM.gt, '>'],
-    [ATTRIBUTE_LWM2M_ENUM.lt, '<'],
-    [ATTRIBUTE_LWM2M_ENUM.st, 'st=']
+    [AttributeName.pmin, 'device-profile.lwm2m.attributes-name.min-period'],
+    [AttributeName.pmax, 'device-profile.lwm2m.attributes-name.max-period'],
+    [AttributeName.gt, 'device-profile.lwm2m.attributes-name.greater-than'],
+    [AttributeName.lt, 'device-profile.lwm2m.attributes-name.less-than'],
+    [AttributeName.st, 'device-profile.lwm2m.attributes-name.step'],
+    // [AttributeName.epmin, 'device-profile.lwm2m.attributes-name.min-evaluation-period'],
+    // [AttributeName.epmax, 'device-profile.lwm2m.attributes-name.max-evaluation-period']
   ]
 );
-
-export const ATTRIBUTE_LWM2M_MAP = new Map<ATTRIBUTE_LWM2M_ENUM, string>(
-  [
-    [ATTRIBUTE_LWM2M_ENUM.dim, 'Dimension'],
-    [ATTRIBUTE_LWM2M_ENUM.ver, 'Object version'],
-    [ATTRIBUTE_LWM2M_ENUM.pmin, 'Minimum period'],
-    [ATTRIBUTE_LWM2M_ENUM.pmax, 'Maximum period'],
-    [ATTRIBUTE_LWM2M_ENUM.gt, 'Greater than'],
-    [ATTRIBUTE_LWM2M_ENUM.lt, 'Lesser than'],
-    [ATTRIBUTE_LWM2M_ENUM.st, 'Step'],
-
-  ]
-);
-
-export const ATTRIBUTE_KEYS = Object.keys(ATTRIBUTE_LWM2M_ENUM) as string[];
 
 export enum securityConfigMode {
   PSK = 'PSK',
@@ -128,10 +112,19 @@ export const securityConfigModeNames = new Map<securityConfigMode, string>(
   ]
 );
 
-export interface ModelValue {
-  objectIds: string[];
-  objectsList: ObjectLwM2M[];
+export enum PowerMode {
+  PSM = 'PSM',
+  DRX = 'DRX',
+  E_DRX = 'E_DRX'
 }
+
+export const PowerModeTranslationMap = new Map<PowerMode, string>(
+  [
+    [PowerMode.PSM, 'device-profile.power-saving-mode-type.psm'],
+    [PowerMode.DRX, 'device-profile.power-saving-mode-type.drx'],
+    [PowerMode.E_DRX, 'device-profile.power-saving-mode-type.edrx']
+  ]
+);
 
 export interface BootstrapServersSecurityConfig {
   shortId: number;
@@ -143,16 +136,18 @@ export interface BootstrapServersSecurityConfig {
 
 export interface ServerSecurityConfig {
   host?: string;
-  securityHost?: string;
   port?: number;
-  securityPort?: number;
   securityMode: securityConfigMode;
-  clientPublicKeyOrId?: string;
-  clientSecretKey?: string;
   serverPublicKey?: string;
   clientHoldOffTime?: number;
   serverId?: number;
   bootstrapServerAccountTimeout: number;
+}
+
+export interface ServerSecurityConfigInfo extends ServerSecurityConfig {
+  securityHost?: string;
+  securityPort?: number;
+  bootstrapServerIs: boolean;
 }
 
 interface BootstrapSecurityConfig {
@@ -168,11 +163,13 @@ export interface Lwm2mProfileConfigModels {
 }
 
 export interface ClientLwM2mSettings {
-  clientStrategy: string;
+  clientOnlyObserveAfterConnect: number;
   fwUpdateStrategy: number;
   swUpdateStrategy: number;
-  fwUpdateRecourse: string;
-  swUpdateRecourse: string;
+  fwUpdateResource: string;
+  swUpdateResource: string;
+  powerMode: PowerMode;
+  compositeOperationsSupport: boolean;
 }
 
 export interface ObservableAttributes {
@@ -180,7 +177,7 @@ export interface ObservableAttributes {
   attribute: string[];
   telemetry: string[];
   keyName: {};
-  attributeLwm2m: {};
+  attributeLwm2m?: AttributesNameValueMap[];
 }
 
 export function getDefaultBootstrapServersSecurityConfig(): BootstrapServersSecurityConfig {
@@ -193,9 +190,9 @@ export function getDefaultBootstrapServersSecurityConfig(): BootstrapServersSecu
   };
 }
 
-export function getDefaultBootstrapServerSecurityConfig(hostname: string): ServerSecurityConfig {
+export function getDefaultBootstrapServerSecurityConfig(): ServerSecurityConfig {
   return {
-    host: hostname,
+    host: DEFAULT_LOCAL_HOST_NAME,
     port: DEFAULT_PORT_BOOTSTRAP_NO_SEC,
     securityMode: securityConfigMode.NO_SEC,
     serverPublicKey: '',
@@ -205,48 +202,36 @@ export function getDefaultBootstrapServerSecurityConfig(hostname: string): Serve
   };
 }
 
-export function getDefaultLwM2MServerSecurityConfig(hostname): ServerSecurityConfig {
-  const DefaultLwM2MServerSecurityConfig = getDefaultBootstrapServerSecurityConfig(hostname);
+export function getDefaultLwM2MServerSecurityConfig(): ServerSecurityConfig {
+  const DefaultLwM2MServerSecurityConfig = getDefaultBootstrapServerSecurityConfig();
   DefaultLwM2MServerSecurityConfig.port = DEFAULT_PORT_SERVER_NO_SEC;
   DefaultLwM2MServerSecurityConfig.serverId = DEFAULT_ID_SERVER;
   return DefaultLwM2MServerSecurityConfig;
 }
 
-function getDefaultProfileBootstrapSecurityConfig(hostname: any): BootstrapSecurityConfig {
-  return {
-    servers: getDefaultBootstrapServersSecurityConfig(),
-    bootstrapServer: getDefaultBootstrapServerSecurityConfig(hostname),
-    lwm2mServer: getDefaultLwM2MServerSecurityConfig(hostname)
-  };
-}
-
-function getDefaultProfileObserveAttrConfig(): ObservableAttributes {
+export function getDefaultProfileObserveAttrConfig(): ObservableAttributes {
   return {
     observe: [],
     attribute: [],
     telemetry: [],
     keyName: {},
-    attributeLwm2m: {}
+    attributeLwm2m: []
   };
 }
 
-export function getDefaultProfileConfig(hostname?: any): Lwm2mProfileConfigModels {
+export function getDefaultProfileClientLwM2mSettingsConfig(): ClientLwM2mSettings {
   return {
-    clientLwM2mSettings: getDefaultProfileClientLwM2mSettingsConfig(),
-    observeAttr: getDefaultProfileObserveAttrConfig(),
-    bootstrap: getDefaultProfileBootstrapSecurityConfig((hostname) ? hostname : DEFAULT_LOCAL_HOST_NAME)
-  };
-}
-
-function getDefaultProfileClientLwM2mSettingsConfig(): ClientLwM2mSettings {
-  return {
-    clientStrategy: '1',
+    clientOnlyObserveAfterConnect: 1,
     fwUpdateStrategy: 1,
     swUpdateStrategy: 1,
-    fwUpdateRecourse: DEFAULT_FW_UPDATE_RESOURCE,
-    swUpdateRecourse: DEFAULT_SW_UPDATE_RESOURCE
+    fwUpdateResource: DEFAULT_FW_UPDATE_RESOURCE,
+    swUpdateResource: DEFAULT_SW_UPDATE_RESOURCE,
+    powerMode: PowerMode.DRX,
+    compositeOperationsSupport: false
   };
 }
+
+export type ResourceSettingTelemetry = 'observe' | 'attribute' | 'telemetry';
 
 export interface ResourceLwM2M {
   id: number;
@@ -255,12 +240,12 @@ export interface ResourceLwM2M {
   attribute: boolean;
   telemetry: boolean;
   keyName: string;
-  attributeLwm2m?: {};
+  attributes?: AttributesNameValueMap;
 }
 
 export interface Instance {
   id: number;
-  attributeLwm2m?: {};
+  attributes?: AttributesNameValueMap;
   resources: ResourceLwM2M[];
 }
 
@@ -271,12 +256,33 @@ export interface Instance {
  * mandatory == false => Optional
  */
 export interface ObjectLwM2M {
-
   id: number;
   keyId: string;
   name: string;
   multiple?: boolean;
   mandatory?: boolean;
-  attributeLwm2m?: {};
+  attributes?: AttributesNameValueMap;
   instances?: Instance [];
+}
+
+export type AttributesNameValueMap = {
+  [key in AttributeName]?: number;
+};
+
+export interface AttributesNameValue {
+  name: AttributeName;
+  value: number;
+}
+
+export function valueValidatorByAttributeName(attributeName: AttributeName): ValidatorFn[] {
+  const validators = [Validators.required];
+  switch (attributeName) {
+    case AttributeName.pmin:
+    case AttributeName.pmax:
+    // case AttributeName.epmin:
+    // case AttributeName.epmax:
+      validators.push(Validators.min(0), Validators.pattern('[0-9]*'));
+      break;
+  }
+  return validators;
 }

@@ -23,7 +23,7 @@ import { EntitySearchQuery } from '@shared/models/relation.models';
 import { DeviceProfileId } from '@shared/models/id/device-profile-id';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { EntityInfoData } from '@shared/models/entity.models';
-import { KeyFilter } from '@shared/models/query/query.models';
+import { FilterPredicateValue, KeyFilter } from '@shared/models/query/query.models';
 import { TimeUnit } from '@shared/models/time/time.models';
 import * as _moment from 'moment';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
@@ -200,7 +200,7 @@ export const deviceTransportTypeConfigurationInfoMap = new Map<DeviceTransportTy
       DeviceTransportType.LWM2M,
       {
         hasProfileConfiguration: true,
-        hasDeviceConfiguration: false,
+        hasDeviceConfiguration: true,
       }
     ],
     [
@@ -424,8 +424,7 @@ export const AlarmConditionTypeTranslationMap = new Map<AlarmConditionType, stri
 export interface AlarmConditionSpec{
   type?: AlarmConditionType;
   unit?: TimeUnit;
-  value?: number;
-  count?: number;
+  predicate: FilterPredicateValue<number>;
 }
 
 export interface AlarmCondition {

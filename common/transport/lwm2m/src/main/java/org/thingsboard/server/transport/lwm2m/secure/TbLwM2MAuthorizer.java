@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.secure;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.request.Identity;
 import org.eclipse.leshan.core.request.UplinkRequest;
 import org.eclipse.leshan.server.registration.Registration;
@@ -24,14 +25,15 @@ import org.eclipse.leshan.server.security.SecurityChecker;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
-import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2mSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
 
 @Component
 @RequiredArgsConstructor
 @TbLwM2mTransportComponent
+@Slf4j
 public class TbLwM2MAuthorizer implements Authorizer {
 
     private final TbLwM2MDtlsSessionStore sessionStorage;
@@ -57,7 +59,12 @@ public class TbLwM2MAuthorizer implements Authorizer {
         }
         SecurityInfo expectedSecurityInfo = null;
         if (securityStore != null) {
-            expectedSecurityInfo = securityStore.getByEndpoint(registration.getEndpoint());
+            try {
+                expectedSecurityInfo = securityStore.getByEndpoint(registration.getEndpoint());
+            } catch (LwM2MAuthException e) {
+                log.info("Registration failed: FORBIDDEN, endpointId: [{}]", registration.getEndpoint());
+                return null;
+            }
         }
         if (securityChecker.checkSecurityInfo(registration.getEndpoint(), senderIdentity, expectedSecurityInfo)) {
             return registration;

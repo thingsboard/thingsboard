@@ -69,6 +69,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
+import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -85,6 +86,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -108,6 +110,7 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.rpc.RpcService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
@@ -250,6 +253,9 @@ public abstract class BaseController {
 
     @Autowired
     protected OtaPackageStateService otaPackageStateService;
+
+    @Autowired
+    protected RpcService rpcService;
 
     @Autowired
     protected TbQueueProducerProvider producerProvider;
@@ -784,6 +790,18 @@ public abstract class BaseController {
             checkNotNull(otaPackageIn);
             accessControlService.checkPermission(getCurrentUser(), Resource.OTA_PACKAGE, operation, otaPackageId, otaPackageIn);
             return otaPackageIn;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    Rpc checkRpcId(RpcId rpcId, Operation operation) throws ThingsboardException {
+        try {
+            validateId(rpcId, "Incorrect rpcId " + rpcId);
+            Rpc rpc = rpcService.findById(getCurrentUser().getTenantId(), rpcId);
+            checkNotNull(rpc);
+            accessControlService.checkPermission(getCurrentUser(), Resource.RPC, operation, rpcId, rpc);
+            return rpc;
         } catch (Exception e) {
             throw handleException(e, false);
         }

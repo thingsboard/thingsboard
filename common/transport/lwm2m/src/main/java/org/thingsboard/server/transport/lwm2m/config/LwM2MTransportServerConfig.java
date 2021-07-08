@@ -20,15 +20,19 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ResourceUtils;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.KeyStore;
 
 @Slf4j
@@ -49,11 +53,11 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     private long sessionReportTimeout;
 
     @Getter
-    @Value("${transport.lwm2m.recommended_ciphers:}")
+    @Value("${transport.lwm2m.security.recommended_ciphers:}")
     private boolean recommendedCiphers;
 
     @Getter
-    @Value("${transport.lwm2m.recommended_supported_groups:}")
+    @Value("${transport.lwm2m.security.recommended_supported_groups:}")
     private boolean recommendedSupportedGroups;
 
     @Getter
@@ -78,7 +82,7 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
 
     @Getter
     @Value("${transport.lwm2m.security.key_store:}")
-    private String keyStorePathFile;
+    private String keyStoreFilePath;
 
     @Getter
     @Setter
@@ -91,10 +95,6 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     @Getter
     @Value("${transport.lwm2m.security.root_alias:}")
     private String rootCertificateAlias;
-
-    @Getter
-    @Value("${transport.lwm2m.security.enable_gen_new_key_psk_rpk:}")
-    private Boolean enableGenNewKeyPskRpk;
 
     @Getter
     @Value("${transport.lwm2m.server.id:}")
@@ -117,20 +117,12 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     private Integer securePort;
 
     @Getter
-    @Value("${transport.lwm2m.server.security.public_x:}")
-    private String publicX;
-
-    @Getter
-    @Value("${transport.lwm2m.server.security.public_y:}")
-    private String publicY;
-
-    @Getter
-    @Value("${transport.lwm2m.server.security.private_encoded:}")
-    private String privateEncoded;
-
-    @Getter
-    @Value("${transport.lwm2m.server.security.alias:}")
+    @Value("${transport.lwm2m.server.security.key_alias:}")
     private String certificateAlias;
+
+    @Getter
+    @Value("${transport.lwm2m.server.security.key_password:}")
+    private String certificatePassword;
 
     @Getter
     @Value("${transport.lwm2m.log_max_length:}")
@@ -139,16 +131,15 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
 
     @PostConstruct
     public void init() {
-        URI uri = null;
         try {
-            uri = Resources.getResource(keyStorePathFile).toURI();
-            log.error("URI: {}", uri);
-            File keyStoreFile = new File(uri);
-            InputStream inKeyStore = new FileInputStream(keyStoreFile);
+            InputStream keyStoreInputStream = ResourceUtils.getInputStream(this, keyStoreFilePath);
             keyStoreValue = KeyStore.getInstance(keyStoreType);
-            keyStoreValue.load(inKeyStore, keyStorePassword == null ? null : keyStorePassword.toCharArray());
+            keyStoreValue.load(keyStoreInputStream, keyStorePassword == null ? null : keyStorePassword.toCharArray());
         } catch (Exception e) {
-            log.info("Unable to lookup LwM2M keystore. Reason: {}, {}" , uri, e.getMessage());
+            log.info("Unable to lookup LwM2M keystore. Reason: {}, {}", keyStoreFilePath, e.getMessage());
         }
     }
+
+
+
 }

@@ -319,7 +319,7 @@ export const parseWithTranslation = {
 };
 
 export function parseData(input: DatasourceData[]): FormattedData[] {
-  return _(input).groupBy(el => el?.datasource.entityId + el?.datasource.entityType)
+  return _(input).groupBy(el => el?.datasource.entityName + el?.datasource.entityType)
     .values().value().map((entityArray, i) => {
       const obj: FormattedData = {
         entityName: entityArray[0]?.datasource?.entityName,

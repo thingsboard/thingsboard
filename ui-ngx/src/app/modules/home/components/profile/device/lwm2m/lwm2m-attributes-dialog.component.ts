@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
+import { Component, Inject, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Store } from '@ngrx/store';
@@ -22,54 +22,50 @@ import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm } from '@angular/forms';
-import { JsonObject } from '@angular/compiler-cli/ngcc/src/packages/entry_point';
+import { AttributesNameValueMap } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
 
 export interface Lwm2mAttributesDialogData {
   readonly: boolean;
-  attributeLwm2m: JsonObject;
-  destName: string;
+  attributes: AttributesNameValueMap;
+  modelName: string;
+  isResource: boolean;
 }
 
 @Component({
   selector: 'tb-lwm2m-attributes-dialog',
   templateUrl: './lwm2m-attributes-dialog.component.html',
-  styleUrls: ['./lwm2m-attributes.component.scss'],
+  styleUrls: [],
   providers: [{provide: ErrorStateMatcher, useExisting: Lwm2mAttributesDialogComponent}],
 })
-export class Lwm2mAttributesDialogComponent extends DialogComponent<Lwm2mAttributesDialogComponent, object>
-  implements OnInit, ErrorStateMatcher {
+export class Lwm2mAttributesDialogComponent
+  extends DialogComponent<Lwm2mAttributesDialogComponent, AttributesNameValueMap> implements ErrorStateMatcher {
 
-  readonly = this.data.readonly;
+  readonly: boolean;
+  name: string;
+  isResource: boolean;
 
-  attributeLwm2m = this.data.attributeLwm2m;
+  private submitted = false;
 
-  submitted = false;
-
-  dirtyValue = false;
-
-  attributeLwm2mDialogFormGroup: FormGroup;
+  attributeFormGroup: FormGroup;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
-              @Inject(MAT_DIALOG_DATA) public data: Lwm2mAttributesDialogData,
+              @Inject(MAT_DIALOG_DATA) private data: Lwm2mAttributesDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
-              public dialogRef: MatDialogRef<Lwm2mAttributesDialogComponent, object>,
+              public dialogRef: MatDialogRef<Lwm2mAttributesDialogComponent, AttributesNameValueMap>,
               private fb: FormBuilder) {
     super(store, router, dialogRef);
 
-    this.attributeLwm2mDialogFormGroup = this.fb.group({
-      keyFilters: [{}, []]
-    });
-    this.attributeLwm2mDialogFormGroup.patchValue({keyFilters: this.attributeLwm2m});
-    this.attributeLwm2mDialogFormGroup.get('keyFilters').valueChanges.subscribe((attributes) => {
-      this.attributeLwm2m = attributes;
+    this.readonly = data.readonly;
+    this.name = data.modelName;
+    this.isResource = data.isResource;
+
+    this.attributeFormGroup = this.fb.group({
+      attributes: [data.attributes]
     });
     if (this.readonly) {
-      this.attributeLwm2mDialogFormGroup.disable({emitEvent: false});
+      this.attributeFormGroup.disable({emitEvent: false});
     }
-  }
-
-  ngOnInit(): void {
   }
 
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -80,7 +76,7 @@ export class Lwm2mAttributesDialogComponent extends DialogComponent<Lwm2mAttribu
 
   save(): void {
     this.submitted = true;
-    this.dialogRef.close(this.attributeLwm2m);
+    this.dialogRef.close(this.attributeFormGroup.get('attributes').value);
   }
 
   cancel(): void {
