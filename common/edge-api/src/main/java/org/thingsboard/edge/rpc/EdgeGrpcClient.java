@@ -185,8 +185,8 @@ public class EdgeGrpcClient implements EdgeRpcClient {
 
     @Override
     public void sendUplinkMsg(UplinkMsg msg) {
+        uplinkMsgLock.lock();
         try {
-            uplinkMsgLock.lock();
             this.inputStream.onNext(RequestMsg.newBuilder()
                     .setMsgType(RequestMsgType.UPLINK_RPC_MESSAGE)
                     .setUplinkMsg(msg)
@@ -198,8 +198,8 @@ public class EdgeGrpcClient implements EdgeRpcClient {
 
     @Override
     public void sendSyncRequestMsg(boolean syncRequired) {
+        uplinkMsgLock.lock();
         try {
-            uplinkMsgLock.lock();
             SyncRequestMsg syncRequestMsg = SyncRequestMsg.newBuilder().setSyncRequired(syncRequired).build();
             this.inputStream.onNext(RequestMsg.newBuilder()
                     .setMsgType(RequestMsgType.SYNC_REQUEST_RPC_MESSAGE)
@@ -212,8 +212,8 @@ public class EdgeGrpcClient implements EdgeRpcClient {
 
     @Override
     public void sendDownlinkResponseMsg(DownlinkResponseMsg downlinkResponseMsg) {
+        uplinkMsgLock.lock();
         try {
-            uplinkMsgLock.lock();
             this.inputStream.onNext(RequestMsg.newBuilder()
                     .setMsgType(RequestMsgType.UPLINK_RPC_MESSAGE)
                     .setDownlinkResponseMsg(downlinkResponseMsg)

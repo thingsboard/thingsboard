@@ -275,8 +275,8 @@ public class EdgeImitator {
 
     private ListenableFuture<Void> saveDownlinkMsg(AbstractMessage message) {
         if (!ignoredTypes.contains(message.getClass())) {
+            lock.lock();
             try {
-                lock.lock();
                 downlinkMsgs.add(message);
             } finally {
                 lock.unlock();
@@ -312,8 +312,8 @@ public class EdgeImitator {
     @SuppressWarnings("unchecked")
     public <T extends AbstractMessage> Optional<T> findMessageByType(Class<T> tClass) {
         Optional<T> result;
+        lock.lock();
         try {
-            lock.lock();
             result = (Optional<T>) downlinkMsgs.stream().filter(downlinkMsg -> downlinkMsg.getClass().isAssignableFrom(tClass)).findAny();
         } finally {
             lock.unlock();
@@ -324,8 +324,8 @@ public class EdgeImitator {
     @SuppressWarnings("unchecked")
     public <T extends AbstractMessage> List<T> findAllMessagesByType(Class<T> tClass) {
         List<T> result;
+        lock.lock();
         try {
-            lock.lock();
             result = (List<T>) downlinkMsgs.stream().filter(downlinkMsg -> downlinkMsg.getClass().isAssignableFrom(tClass)).collect(Collectors.toList());
         } finally {
             lock.unlock();

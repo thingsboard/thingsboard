@@ -124,8 +124,8 @@ public abstract class AbstractNashornJsInvokeService extends AbstractJsInvokeSer
     protected ListenableFuture<UUID> doEval(UUID scriptId, String functionName, String jsScript) {
         jsPushedMsgs.incrementAndGet();
         ListenableFuture<UUID> result = jsExecutor.executeAsync(() -> {
+            evalLock.lock();
             try {
-                evalLock.lock();
                 try {
                     if (useJsSandbox()) {
                         sandbox.eval(jsScript);

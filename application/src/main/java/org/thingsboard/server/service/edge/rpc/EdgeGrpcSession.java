@@ -280,8 +280,8 @@ public final class EdgeGrpcSession implements Closeable {
     private void sendDownlinkMsg(ResponseMsg downlinkMsg) {
         log.trace("[{}] Sending downlink msg [{}]", this.sessionId, downlinkMsg);
         if (isConnected()) {
+            downlinkMsgLock.lock();
             try {
-                downlinkMsgLock.lock();
                 outputStream.onNext(downlinkMsg);
             } catch (Exception e) {
                 log.error("[{}] Failed to send downlink message [{}]", this.sessionId, downlinkMsg, e);
@@ -345,8 +345,8 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     private boolean sendDownlinkMsgsPack(List<DownlinkMsg> downlinkMsgsPack) throws InterruptedException {
+        downlinkMsgsPackLock.lock();
         try {
-            downlinkMsgsPackLock.lock();
             boolean success;
             pendingMsgsMap.clear();
             downlinkMsgsPack.forEach(msg -> pendingMsgsMap.put(msg.getDownlinkMsgId(), msg));
