@@ -90,7 +90,7 @@
         <jts.version>1.15.0</jts.version>
         <bouncycastle.version>1.64</bouncycastle.version>
         <winsw.version>2.0.1</winsw.version>
-        <hsqldb.version>2.5.0</hsqldb.version>
+        <hsqldb.version>2.6.0</hsqldb.version>
         <dbunit.version>2.5.3</dbunit.version>
         <spring-test-dbunit.version>1.2.1</spring-test-dbunit.version>
         <postgresql.driver.version>42.2.20</postgresql.driver.version>
