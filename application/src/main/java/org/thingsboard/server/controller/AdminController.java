@@ -72,7 +72,7 @@ public class AdminController extends BaseController {
                 JsonNode password = adminSettings.getJsonValue().get("password");
                 boolean passwordPresent = (!password.isNull() && StringUtils.isNotEmpty(password.asText()));
                 ((ObjectNode) adminSettings.getJsonValue()).put("password", "");
-                ((ObjectNode) adminSettings.getJsonValue()).put("saved", passwordPresent);
+                ((ObjectNode) adminSettings.getJsonValue()).put("passwordPresent", passwordPresent);
             }
             return adminSettings;
         } catch (Exception e) {
