@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -267,6 +268,7 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
             stmt.setLong(1, otherEventsTtl);
             stmt.setLong(2, debugEventsTtl);
             stmt.setLong(3, 0);
+            stmt.setQueryTimeout((int) TimeUnit.HOURS.toSeconds(1));
             stmt.execute();
             printWarnings(stmt);
             try (ResultSet resultSet = stmt.getResultSet()){
