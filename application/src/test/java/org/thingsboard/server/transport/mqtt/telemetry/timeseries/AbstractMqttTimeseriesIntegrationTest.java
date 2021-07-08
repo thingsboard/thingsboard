@@ -61,20 +61,20 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
     }
 
     @Test
-    public void testPushMqttTelemetry() throws Exception {
+    public void testPushTelemetry() throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        processTelemetryTest(MqttTopics.DEVICE_TELEMETRY_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes(), false);
+        processJsonPayloadTelemetryTest(MqttTopics.DEVICE_TELEMETRY_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes(), false);
     }
 
     @Test
-    public void testPushMqttTelemetryWithTs() throws Exception {
+    public void testPushTelemetryWithTs() throws Exception {
         String payloadStr = "{\"ts\": 10000, \"values\": " + PAYLOAD_VALUES_STR + "}";
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        processTelemetryTest(MqttTopics.DEVICE_TELEMETRY_TOPIC, expectedKeys, payloadStr.getBytes(), true);
+        processJsonPayloadTelemetryTest(MqttTopics.DEVICE_TELEMETRY_TOPIC, expectedKeys, payloadStr.getBytes(), true);
     }
 
     @Test
-    public void testPushMqttTelemetryGateway() throws Exception {
+    public void testPushTelemetryGateway() throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
         String deviceName1 = "Device A";
         String deviceName2 = "Device B";
@@ -97,7 +97,11 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         assertNotNull(device);
     }
 
-    protected void processTelemetryTest(String topic, List<String> expectedKeys, byte[] payload, boolean withTs) throws Exception {
+    protected void processJsonPayloadTelemetryTest(String topic, List<String> expectedKeys, byte[] payload, boolean withTs) throws Exception {
+        processTelemetryTest(topic, expectedKeys, payload, withTs, false);
+    }
+
+    protected void processTelemetryTest(String topic, List<String> expectedKeys, byte[] payload, boolean withTs, boolean presenceFieldsTest) throws Exception {
         MqttAsyncClient client = getMqttAsyncClient(accessToken);
         publishMqttMsg(client, payload, topic);
 
@@ -157,10 +161,19 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         }
         assertNotNull(values);
 
-        if (withTs) {
-            assertTs(values, expectedKeys, 10000, 0);
+        if (presenceFieldsTest) {
+            if (withTs) {
+                assertTsForExplicitProtoFieldValues(values, expectedKeys, 10000, 0);
+                assertExplicitProtoFieldValuesWithTs(values);
+            } else {
+                assertExplicitProtoFieldValues(values);
+            }
+        } else {
+            if (withTs) {
+                assertTs(values, expectedKeys, 10000, 0);
+            }
+            assertValues(values, 0);
         }
-        assertValues(values, 0);
     }
 
     protected void processGatewayTelemetryTest(String topic, List<String> expectedKeys, byte[] payload, String firstDeviceName, String secondDeviceName) throws Exception {
@@ -252,6 +265,41 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
                     break;
             }
         }
+    }
+
+    private void assertExplicitProtoFieldValues(Map<String, List<Map<String, Object>>> deviceValues) {
+        for (Map.Entry<String, List<Map<String, Object>>> entry : deviceValues.entrySet()) {
+            String key = entry.getKey();
+            List<Map<String, Object>> tsKv = entry.getValue();
+            String value = (String) tsKv.get(0).get("value");
+            switch (key) {
+                case "key1":
+                    assertEquals("", value);
+                    break;
+                case "key2":
+                    assertEquals("false", value);
+                    break;
+                case "key3":
+                    assertEquals("0.0", value);
+                    break;
+                case "key4":
+                    assertEquals("0", value);
+                    break;
+                case "key5":
+                    assertEquals("{\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}", value);
+                    break;
+            }
+        }
+    }
+
+    private void assertExplicitProtoFieldValuesWithTs(Map<String, List<Map<String, Object>>> deviceValues) {
+        assertEquals(1, deviceValues.size());
+        List<Map<String, Object>> tsKv = deviceValues.get("key5");
+        assertEquals("{\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}", tsKv.get(0).get("value"));
+    }
+
+    private void assertTsForExplicitProtoFieldValues(Map<String, List<Map<String, Object>>> deviceValues, List<String> expectedKeys, int ts, int arrayIndex) {
+        assertEquals(ts, deviceValues.get(expectedKeys.get(0)).get(arrayIndex).get("ts"));
     }
 
     private void assertTs(Map<String, List<Map<String, Object>>> deviceValues, List<String> expectedKeys, int ts, int arrayIndex) {

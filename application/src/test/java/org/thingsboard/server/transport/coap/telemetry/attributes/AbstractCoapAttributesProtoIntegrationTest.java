@@ -32,7 +32,6 @@ import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadCo
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 
 import java.util.Arrays;
-import java.util.List;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -48,7 +47,6 @@ public abstract class AbstractCoapAttributesProtoIntegrationTest extends Abstrac
     @Test
     public void testPushAttributes() throws Exception {
         super.processBeforeTest("Test Post Attributes device Proto", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF);
-        List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         assertTrue(transportConfiguration instanceof CoapDeviceProfileTransportConfiguration);
         CoapDeviceProfileTransportConfiguration coapTransportConfiguration = (CoapDeviceProfileTransportConfiguration) transportConfiguration;
@@ -87,7 +85,50 @@ public abstract class AbstractCoapAttributesProtoIntegrationTest extends Abstrac
                 .setField(postAttributesMsgDescriptor.findFieldByName("key4"), 4)
                 .setField(postAttributesMsgDescriptor.findFieldByName("key5"), jsonObject)
                 .build();
-        processAttributesTest(expectedKeys, postAttributesMsg.toByteArray());
+        processAttributesTest(Arrays.asList("key1", "key2", "key3", "key4", "key5"), postAttributesMsg.toByteArray(), false);
+    }
+
+    @Test
+    public void testPushAttributesWithExplicitPresenceProtoKeys() throws Exception {
+        super.processBeforeTest("Test Post Attributes device Proto", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF);
+        DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
+        assertTrue(transportConfiguration instanceof CoapDeviceProfileTransportConfiguration);
+        CoapDeviceProfileTransportConfiguration coapTransportConfiguration = (CoapDeviceProfileTransportConfiguration) transportConfiguration;
+        CoapDeviceTypeConfiguration coapDeviceTypeConfiguration = coapTransportConfiguration.getCoapDeviceTypeConfiguration();
+        assertTrue(coapDeviceTypeConfiguration instanceof DefaultCoapDeviceTypeConfiguration);
+        DefaultCoapDeviceTypeConfiguration defaultCoapDeviceTypeConfiguration = (DefaultCoapDeviceTypeConfiguration) coapDeviceTypeConfiguration;
+        TransportPayloadTypeConfiguration transportPayloadTypeConfiguration = defaultCoapDeviceTypeConfiguration.getTransportPayloadTypeConfiguration();
+        assertTrue(transportPayloadTypeConfiguration instanceof ProtoTransportPayloadConfiguration);
+        ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
+        ProtoFileElement transportProtoSchemaFile = protoTransportPayloadConfiguration.getTransportProtoSchema(DEVICE_ATTRIBUTES_PROTO_SCHEMA);
+        DynamicSchema attributesSchema = protoTransportPayloadConfiguration.getDynamicSchema(transportProtoSchemaFile, ProtoTransportPayloadConfiguration.ATTRIBUTES_PROTO_SCHEMA);
+
+        DynamicMessage.Builder nestedJsonObjectBuilder = attributesSchema.newMessageBuilder("PostAttributes.JsonObject.NestedJsonObject");
+        Descriptors.Descriptor nestedJsonObjectBuilderDescriptor = nestedJsonObjectBuilder.getDescriptorForType();
+        assertNotNull(nestedJsonObjectBuilderDescriptor);
+        DynamicMessage nestedJsonObject = nestedJsonObjectBuilder.setField(nestedJsonObjectBuilderDescriptor.findFieldByName("key"), "value").build();
+
+        DynamicMessage.Builder jsonObjectBuilder = attributesSchema.newMessageBuilder("PostAttributes.JsonObject");
+        Descriptors.Descriptor jsonObjectBuilderDescriptor = jsonObjectBuilder.getDescriptorForType();
+        assertNotNull(jsonObjectBuilderDescriptor);
+        DynamicMessage jsonObject = jsonObjectBuilder
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 1)
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 2)
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 3)
+                .setField(jsonObjectBuilderDescriptor.findFieldByName("someNestedObject"), nestedJsonObject)
+                .build();
+
+        DynamicMessage.Builder postAttributesBuilder = attributesSchema.newMessageBuilder("PostAttributes");
+        Descriptors.Descriptor postAttributesMsgDescriptor = postAttributesBuilder.getDescriptorForType();
+        assertNotNull(postAttributesMsgDescriptor);
+        DynamicMessage postAttributesMsg = postAttributesBuilder
+                .setField(postAttributesMsgDescriptor.findFieldByName("key1"), "")
+                .setField(postAttributesMsgDescriptor.findFieldByName("key2"), false)
+                .setField(postAttributesMsgDescriptor.findFieldByName("key3"), 0.0)
+                .setField(postAttributesMsgDescriptor.findFieldByName("key4"), 0)
+                .setField(postAttributesMsgDescriptor.findFieldByName("key5"), jsonObject)
+                .build();
+        processAttributesTest(Arrays.asList("key1", "key2", "key3", "key4", "key5"), postAttributesMsg.toByteArray(), true);
     }
 
 }

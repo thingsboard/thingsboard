@@ -352,10 +352,12 @@ public abstract class AbstractWebTest {
         return mqttDeviceProfileTransportConfiguration;
     }
 
-    protected ProtoTransportPayloadConfiguration createProtoTransportPayloadConfiguration(String deviceAttributesProtoSchema, String deviceTelemetryProtoSchema) {
+    protected ProtoTransportPayloadConfiguration createProtoTransportPayloadConfiguration(String attributesProtoSchema, String telemetryProtoSchema, String rpcRequestProtoSchema, String rpcResponseProtoSchema) {
         ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = new ProtoTransportPayloadConfiguration();
-        protoTransportPayloadConfiguration.setDeviceAttributesProtoSchema(deviceAttributesProtoSchema);
-        protoTransportPayloadConfiguration.setDeviceTelemetryProtoSchema(deviceTelemetryProtoSchema);
+        protoTransportPayloadConfiguration.setDeviceAttributesProtoSchema(attributesProtoSchema);
+        protoTransportPayloadConfiguration.setDeviceTelemetryProtoSchema(telemetryProtoSchema);
+        protoTransportPayloadConfiguration.setDeviceRpcRequestProtoSchema(rpcRequestProtoSchema);
+        protoTransportPayloadConfiguration.setDeviceRpcResponseProtoSchema(rpcResponseProtoSchema);
         return protoTransportPayloadConfiguration;
     }
 

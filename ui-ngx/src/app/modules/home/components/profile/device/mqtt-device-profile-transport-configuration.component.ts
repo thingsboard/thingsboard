@@ -167,7 +167,7 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     } else {
       transportPayloadTypeForm.get('deviceTelemetryProtoSchema').disable({emitEvent: false});
       transportPayloadTypeForm.get('deviceAttributesProtoSchema').disable({emitEvent: false});
-      transportPayloadTypeForm.get('deviceRpcRequestProtoSchema').enable({emitEvent: false});
+      transportPayloadTypeForm.get('deviceRpcRequestProtoSchema').disable({emitEvent: false});
       transportPayloadTypeForm.get('deviceRpcResponseProtoSchema').disable({emitEvent: false});
     }
   }

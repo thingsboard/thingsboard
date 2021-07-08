@@ -40,13 +40,13 @@ public abstract class AbstractMqttAttributesJsonIntegrationTest extends Abstract
     }
 
     @Test
-    public void testPushMqttAttributes() throws Exception {
+    public void testPushAttributes() throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        processAttributesTest(POST_DATA_ATTRIBUTES_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes());
+        processJsonPayloadAttributesTest(POST_DATA_ATTRIBUTES_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes());
     }
 
     @Test
-    public void testPushMqttAttributesGateway() throws Exception {
+    public void testPushAttributesGateway() throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
         String deviceName1 = "Device A";
         String deviceName2 = "Device B";
