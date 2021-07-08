@@ -39,8 +39,8 @@ import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.ObjectLoader;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.StaticModel;
-import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeDecoder;
-import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeEncoder;
+import org.eclipse.leshan.core.node.codec.DefaultLwM2mDecoder;
+import org.eclipse.leshan.core.node.codec.DefaultLwM2mEncoder;
 import org.eclipse.leshan.core.request.BootstrapRequest;
 import org.eclipse.leshan.core.request.DeregisterRequest;
 import org.eclipse.leshan.core.request.RegisterRequest;
@@ -130,8 +130,8 @@ public class LwM2MTestClient {
         builder.setRegistrationEngineFactory(engineFactory);
         builder.setEndpointFactory(endpointFactory);
         builder.setSharedExecutor(executor);
-        builder.setDecoder(new DefaultLwM2mNodeDecoder(true));
-        builder.setEncoder(new DefaultLwM2mNodeEncoder(true));
+        builder.setDecoder(new DefaultLwM2mDecoder(true));
+        builder.setEncoder(new DefaultLwM2mEncoder(true));
         client = builder.build();
 
         LwM2mClientObserver observer = new LwM2mClientObserver() {

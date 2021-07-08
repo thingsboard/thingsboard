@@ -45,6 +45,7 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -53,9 +54,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LWM2M_OBJECT_VERSION_DEFAULT;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertMultiResourceValuesFromRpcBody;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertObjectIdToVersionedId;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.equalsResourceTypeGetSimpleName;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
@@ -94,6 +97,8 @@ public class LwM2mClient implements Serializable {
     @Getter
     private Registration registration;
     @Getter
+    Set<ContentFormat> clientSupportContentFormats;
+    @Getter
     ContentFormat defaultContentFormat;
 
     public Object clone() throws CloneNotSupportedException {
@@ -119,6 +124,7 @@ public class LwM2mClient implements Serializable {
 
     public void setRegistration(Registration registration) {
         this.registration = registration;
+        this.clientSupportContentFormats = clientSupportContentFormat(registration);
         this.defaultContentFormat = calculateDefaultContentFormat(registration);
     }
 
@@ -276,12 +282,22 @@ public class LwM2mClient implements Serializable {
         Collection<LwM2mResource> resources = ConcurrentHashMap.newKeySet();
         Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
                 .getObjectModel(pathIds.getObjectId()).resources;
-        resourceModels.forEach((resId, resourceModel) -> {
-            if (((Map) params).containsKey(String.valueOf(resId))) {
-                Object value = ((Map) params).get((String.valueOf(resId)));
-                resources.add(LwM2mSingleResource.newResource(resId,
-                        converter.convertValue(value, equalsResourceTypeGetSimpleName(value), resourceModel.type, pathIds), resourceModel.type));
-
+        resourceModels.forEach((resourceId, resourceModel) -> {
+            if (((Map) params).containsKey(String.valueOf(resourceId))) {
+                Object value = ((Map) params).get((String.valueOf(resourceId)));
+                LwM2mResource resource = null;
+                if (resourceModel.multiple) {
+                    if (value instanceof LinkedHashMap) {
+                        Map values = convertMultiResourceValuesFromRpcBody((LinkedHashMap) value, resourceModel.type, pathRezIdVer);
+                        resource = LwM2mMultipleResource.newResource(resourceId, (Map<Integer, ?>) values, resourceModel.type);
+                    }
+                } else {
+                    resource = LwM2mSingleResource.newResource(resourceId,
+                            converter.convertValue(value, equalsResourceTypeGetSimpleName(value), resourceModel.type, pathIds), resourceModel.type);
+                }
+                if (resource != null) {
+                    resources.add(resource);
+                }
             }
         });
         return resources;
@@ -343,20 +359,30 @@ public class LwM2mClient implements Serializable {
     private ContentFormat calculateDefaultContentFormat(Registration registration) {
         if (registration == null) {
             return ContentFormat.DEFAULT;
-        } else if (Arrays.stream(registration.getObjectLinks()).filter(link -> link.getUrl().equals("/")).
-                findFirst().get() != null) {
+        } else{
+            return LwM2mVersion.fromVersion(registration.getLwM2mVersion()).getContentFormat();
+        }
+    }
+
+    private Set<ContentFormat> clientSupportContentFormat(Registration registration) {
+        Set<ContentFormat> contentFormats = ConcurrentHashMap.newKeySet();
+        if (registration == null) {
+            contentFormats.add(ContentFormat.DEFAULT);
+        } else {
             String code = Arrays.stream(registration.getObjectLinks()).filter(link -> link.getUrl().equals("/")).
                     findFirst().get().getAttributes().get("ct");
             if (code != null) {
-                ContentFormat contentFormat = ContentFormat.fromCode(code);
-                return ContentFormat.fromName(contentFormat.getName()) != null ? contentFormat :
-                        LwM2mVersion.fromVersionStr(registration.getLwM2mVersion()).getContentFormat();
+                Set<ContentFormat> codes = Stream.of(code.replaceAll("\"", "").split(" ", -1))
+                        .map(String::trim)
+                        .map(Integer::parseInt)
+                        .map(ContentFormat::fromCode)
+                        .collect(Collectors.toSet());
+                contentFormats.addAll(codes);
             } else {
-                return LwM2mVersion.fromVersionStr(registration.getLwM2mVersion()).getContentFormat();
+                contentFormats.add(ContentFormat.DEFAULT);
             }
-        } else {
-            return LwM2mVersion.fromVersionStr(registration.getLwM2mVersion()).getContentFormat();
         }
+        return contentFormats;
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {

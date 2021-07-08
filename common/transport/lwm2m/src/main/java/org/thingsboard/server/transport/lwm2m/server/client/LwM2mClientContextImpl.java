@@ -341,7 +341,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public boolean isComposite(LwM2mClient client) {
-        return LwM2mVersion.fromVersionStr(client.getRegistration().getLwM2mVersion()).isComposite() &
+        return LwM2mVersion.fromVersionStr(client.getRegistration().getLwM2mVersion().toString()).isComposite() &
                 getProfile(client.getProfileId()).getClientLwM2mSettings().isCompositeOperationsSupport();
     }
 
