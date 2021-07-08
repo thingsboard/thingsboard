@@ -144,14 +144,6 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
 
     @Override
     public PageData<Event> findEvents(UUID tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
-        log.warn("going to run slow query");
-        try {
-            eventRepository.slowQuery();
-        } catch (Exception e) {
-            log.error("slowQuery" , e);
-            throw e;
-        }
-        log.warn("finished slow query");
         return DaoUtil.toPageData(
                 eventRepository
                         .findEventsByTenantIdAndEntityIdAndEventType(
