@@ -15,21 +15,25 @@
  */
 package org.thingsboard.server.common.data.page;
 
-public class PageDataIterable<T> extends BasePageDataIterable<T> {
+import org.thingsboard.server.common.data.id.TenantId;
+
+public class PageDataIterableByTenant<T> extends BasePageDataIterable<T> {
 
     private final FetchFunction<T> function;
+    private final TenantId tenantId;
 
-    public PageDataIterable(FetchFunction<T> function, int fetchSize) {
+    public PageDataIterableByTenant(FetchFunction<T> function, TenantId tenantId, int fetchSize) {
         super(fetchSize);
         this.function = function;
+        this.tenantId = tenantId;
     }
 
     @Override
     PageData<T> fetchPageData(PageLink link) {
-        return function.fetch(link);
+        return function.fetch(tenantId, link);
     }
 
     public interface FetchFunction<T> {
-        PageData<T> fetch(PageLink link);
+        PageData<T> fetch(TenantId tenantId, PageLink link);
     }
 }

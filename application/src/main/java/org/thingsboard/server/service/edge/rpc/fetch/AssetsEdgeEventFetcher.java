@@ -28,26 +28,20 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.service.edge.rpc.EdgeEventUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @AllArgsConstructor
 @Slf4j
-public class AssetsEdgeEventFetcher extends BasePageableEdgeEventFetcher {
+public class AssetsEdgeEventFetcher extends BasePageableEdgeEventFetcher<Asset> {
 
     private final AssetService assetService;
 
     @Override
-    public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, Edge edge, PageLink pageLink) {
-        log.trace("[{}] start fetching edge events [{}]", tenantId, edge.getId());
-        PageData<Asset> pageData = assetService.findAssetsByTenantIdAndEdgeId(tenantId, edge.getId(), pageLink);
-        List<EdgeEvent> result = new ArrayList<>();
-        if (!pageData.getData().isEmpty()) {
-            for (Asset asset : pageData.getData()) {
-                result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ASSET,
-                        EdgeEventActionType.ADDED, asset.getId(), null));
-            }
-        }
-        return new PageData<>(result, pageData.getTotalPages(), pageData.getTotalElements(), pageData.hasNext());
+    PageData<Asset> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
+        return assetService.findAssetsByTenantIdAndEdgeId(tenantId, edge.getId(), pageLink);
+    }
+
+    @Override
+    EdgeEvent constructEdgeEvent(TenantId tenantId, Edge edge, Asset asset) {
+        return EdgeEventUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ASSET,
+                EdgeEventActionType.ADDED, asset.getId(), null);
     }
 }

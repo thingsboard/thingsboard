@@ -28,27 +28,21 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.edge.rpc.EdgeEventUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Slf4j
 @AllArgsConstructor
-public abstract class BaseUsersEdgeEventFetcher extends BasePageableEdgeEventFetcher {
+public abstract class BaseUsersEdgeEventFetcher extends BasePageableEdgeEventFetcher<User> {
 
     protected final UserService userService;
 
     @Override
-    public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, Edge edge, PageLink pageLink) {
-        log.trace("[{}] start fetching edge events [{}]", tenantId, edge.getId());
-        PageData<User> pageData = findUsers(tenantId, pageLink);
-        List<EdgeEvent> result = new ArrayList<>();
-        if (!pageData.getData().isEmpty()) {
-            for (User user : pageData.getData()) {
-                result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.USER,
-                        EdgeEventActionType.ADDED, user.getId(), null));
-            }
-        }
-        return new PageData<>(result, pageData.getTotalPages(), pageData.getTotalElements(), pageData.hasNext());
+    PageData<User> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
+        return findUsers(tenantId, pageLink);
+    }
+
+    @Override
+    EdgeEvent constructEdgeEvent(TenantId tenantId, Edge edge, User user) {
+        return EdgeEventUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.USER,
+                EdgeEventActionType.ADDED, user.getId(), null);
     }
 
     protected abstract PageData<User> findUsers(TenantId tenantId, PageLink pageLink);

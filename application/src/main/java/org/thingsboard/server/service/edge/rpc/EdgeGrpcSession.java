@@ -316,6 +316,7 @@ public final class EdgeGrpcSession implements Closeable {
             if (ifOffset != null) {
                 Long newStartTs = Uuids.unixTimestamp(ifOffset);
                 updateQueueStartTs(newStartTs);
+                log.debug("[{}] queue offset was updated [{}][{}]", this.sessionId, ifOffset, newStartTs);
             }
         }
         log.trace("[{}] processHandleMessages finished", this.sessionId);

@@ -28,26 +28,20 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.service.edge.rpc.EdgeEventUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @AllArgsConstructor
 @Slf4j
-public class DeviceProfilesEdgeEventFetcher extends BasePageableEdgeEventFetcher {
+public class DeviceProfilesEdgeEventFetcher extends BasePageableEdgeEventFetcher<DeviceProfile> {
 
     private final DeviceProfileService deviceProfileService;
 
     @Override
-    public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, Edge edge, PageLink pageLink) {
-        log.trace("[{}] start fetching edge events [{}]", tenantId, edge.getId());
-        PageData<DeviceProfile> pageData = deviceProfileService.findDeviceProfiles(tenantId, pageLink);
-        List<EdgeEvent> result = new ArrayList<>();
-        if (!pageData.getData().isEmpty()) {
-            for (DeviceProfile deviceProfile : pageData.getData()) {
-                result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE_PROFILE,
-                        EdgeEventActionType.ADDED, deviceProfile.getId(), null));
-            }
-        }
-        return new PageData<>(result, pageData.getTotalPages(), pageData.getTotalElements(), pageData.hasNext());
+    PageData<DeviceProfile> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
+        return deviceProfileService.findDeviceProfiles(tenantId, pageLink);
+    }
+
+    @Override
+    EdgeEvent constructEdgeEvent(TenantId tenantId, Edge edge, DeviceProfile deviceProfile) {
+        return EdgeEventUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE_PROFILE,
+                EdgeEventActionType.ADDED, deviceProfile.getId(), null);
     }
 }

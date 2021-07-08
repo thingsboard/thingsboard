@@ -28,26 +28,20 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.service.edge.rpc.EdgeEventUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @AllArgsConstructor
 @Slf4j
-public class DashboardsEdgeEventFetcher extends BasePageableEdgeEventFetcher {
+public class DashboardsEdgeEventFetcher extends BasePageableEdgeEventFetcher<DashboardInfo> {
 
     private final DashboardService dashboardService;
 
     @Override
-    public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, Edge edge, PageLink pageLink) {
-        log.trace("[{}] start fetching edge events [{}]", tenantId, edge.getId());
-        PageData<DashboardInfo> pageData = dashboardService.findDashboardsByTenantIdAndEdgeId(tenantId, edge.getId(), pageLink);
-        List<EdgeEvent> result = new ArrayList<>();
-        if (!pageData.getData().isEmpty()) {
-            for (DashboardInfo dashboardInfo : pageData.getData()) {
-                result.add(EdgeEventUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.DASHBOARD,
-                        EdgeEventActionType.ADDED, dashboardInfo.getId(), null));
-            }
-        }
-        return new PageData<>(result, pageData.getTotalPages(), pageData.getTotalElements(), pageData.hasNext());
+    PageData<DashboardInfo> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
+        return dashboardService.findDashboardsByTenantIdAndEdgeId(tenantId, edge.getId(), pageLink);
+    }
+
+    @Override
+    EdgeEvent constructEdgeEvent(TenantId tenantId, Edge edge, DashboardInfo dashboardInfo) {
+        return EdgeEventUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.DASHBOARD,
+                EdgeEventActionType.ADDED, dashboardInfo.getId(), null);
     }
 }
