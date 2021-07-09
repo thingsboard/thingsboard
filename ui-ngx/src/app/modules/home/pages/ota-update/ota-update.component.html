@@ -93,17 +93,17 @@
       </mat-form-field>
       <section *ngIf="isAdd">
         <div class="mat-caption" style="margin: -8px 0 8px;" translate>ota-update.warning-after-save-no-edit</div>
-        <mat-radio-group formControlName="resource" fxLayoutGap="16px">
-          <mat-radio-button value="file">Upload binary file</mat-radio-button>
-          <mat-radio-button value="url">Use external URL</mat-radio-button>
+        <mat-radio-group formControlName="isURL" fxLayoutGap="16px">
+          <mat-radio-button [value]="false">Upload binary file</mat-radio-button>
+          <mat-radio-button [value]="true">Use external URL</mat-radio-button>
         </mat-radio-group>
       </section>
-      <section *ngIf="entityForm.get('resource').value === 'file'">
+      <section *ngIf="!entityForm.get('isURL').value">
         <section *ngIf="isAdd">
           <tb-file-input
             formControlName="file"
             workFromFileObj="true"
-            [required]="entityForm.get('resource').value === 'file'"
+            [required]="!entityForm.get('isURL').value"
             dropLabel="{{'ota-update.drop-file' | translate}}">
           </tb-file-input>
           <mat-checkbox formControlName="generateChecksum" style="margin-top: 16px">
@@ -143,12 +143,12 @@
           </div>
         </section>
       </section>
-      <section *ngIf="entityForm.get('resource').value === 'url'" style="margin-top: 8px">
+      <section *ngIf="entityForm.get('isURL').value" style="margin-top: 8px">
         <mat-form-field class="mat-block">
           <mat-label translate>ota-update.direct-url</mat-label>
           <input matInput formControlName="url"
                  type="text"
-                 [required]="entityForm.get('resource').value === 'url'">
+                 [required]="entityForm.get('isURL').value">
           <mat-error *ngIf="entityForm.get('url').hasError('required') || entityForm.get('url').hasError('pattern')" translate>
             ota-update.direct-url-required
           </mat-error>
