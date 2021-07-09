@@ -20,13 +20,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 public class Customer extends ContactBased<CustomerId> implements HasTenantId {
-    
+
     private static final long serialVersionUID = -1599722990298929275L;
 
     @NoXss
+    @Length(fieldName = "title")
     private String title;
     private TenantId tenantId;
 
@@ -37,7 +39,7 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId {
     public Customer(CustomerId id) {
         super(id);
     }
-    
+
     public Customer(Customer customer) {
         super(customer);
         this.tenantId = customer.getTenantId();
@@ -51,7 +53,7 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId {
     public void setTenantId(TenantId tenantId) {
         this.tenantId = tenantId;
     }
-    
+
     public String getTitle() {
         return title;
     }

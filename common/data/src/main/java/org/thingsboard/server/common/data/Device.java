@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.ByteArrayInputStream;
@@ -39,10 +40,13 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
     private TenantId tenantId;
     private CustomerId customerId;
     @NoXss
+    @Length(fieldName = "name")
     private String name;
     @NoXss
+    @Length(fieldName = "type")
     private String type;
     @NoXss
+    @Length(fieldName = "label")
     private String label;
     private DeviceProfileId deviceProfileId;
     private transient DeviceData deviceData;

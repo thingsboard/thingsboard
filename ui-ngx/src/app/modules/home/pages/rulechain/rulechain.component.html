@@ -84,6 +84,9 @@
         <mat-error *ngIf="entityForm.get('name').hasError('required')">
           {{ 'rulechain.name-required' | translate }}
         </mat-error>
+        <mat-error *ngIf="entityForm.get('name').hasError('maxlength')">
+          {{ 'rulechain.name-max-length' | translate }}
+        </mat-error>
       </mat-form-field>
       <mat-checkbox fxFlex formControlName="debugMode" style="padding-bottom: 16px;">
         {{ 'rulechain.debug-mode' | translate }}

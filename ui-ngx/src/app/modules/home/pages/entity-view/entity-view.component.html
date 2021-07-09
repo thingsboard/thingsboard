@@ -76,6 +76,9 @@
         <mat-error *ngIf="entityForm.get('name').hasError('required')">
           {{ 'entity-view.name-required' | translate }}
         </mat-error>
+        <mat-error *ngIf="entityForm.get('name').hasError('maxlength')">
+          {{ 'entity-view.name-max-length' | translate }}
+        </mat-error>
       </mat-form-field>
       <tb-entity-subtype-autocomplete
         formControlName="type"

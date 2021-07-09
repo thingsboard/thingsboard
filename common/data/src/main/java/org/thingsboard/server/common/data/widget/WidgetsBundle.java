@@ -19,9 +19,8 @@ import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
-
-import java.util.Arrays;
 
 public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements HasTenantId {
 
@@ -31,6 +30,7 @@ public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements H
     @NoXss
     private String alias;
     @NoXss
+    @Length(fieldName = "title")
     private String title;
     private String image;
     @NoXss

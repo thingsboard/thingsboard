@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.validation.Length;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -33,7 +34,9 @@ public class RuleNode extends SearchTextBasedWithAdditionalInfo<RuleNodeId> impl
     private static final long serialVersionUID = -5656679015121235465L;
 
     private RuleChainId ruleChainId;
+    @Length(fieldName = "type")
     private String type;
+    @Length(fieldName = "name")
     private String name;
     private boolean debugMode;
     private transient JsonNode configuration;

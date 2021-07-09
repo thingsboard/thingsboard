@@ -17,40 +17,24 @@ package org.thingsboard.server.dao.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.validator.HibernateValidator;
-import org.hibernate.validator.HibernateValidatorConfiguration;
-import org.hibernate.validator.cfg.ConstraintMapping;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.common.data.validation.NoXss;
 import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.TenantEntityWithDataDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Slf4j
 public abstract class DataValidator<D extends BaseData<?>> {
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", Pattern.CASE_INSENSITIVE);
-
-    private static Validator fieldsValidator;
-
-    static {
-        initializeFieldsValidator();
-    }
 
     public void validate(D data, Function<D, TenantId> tenantIdFunction) {
         try {
@@ -58,10 +42,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
                 throw new DataValidationException("Data object can't be null!");
             }
 
-            List<String> validationErrors = validateFields(data);
-            if (!validationErrors.isEmpty()) {
-                throw new IllegalArgumentException("Validation error: " + String.join(", ", validationErrors));
-            }
+            ConstraintValidator.validateFields(data);
 
             TenantId tenantId = tenantIdFunction.apply(data);
             validateDataImpl(tenantId, data);
@@ -104,14 +85,6 @@ public abstract class DataValidator<D extends BaseData<?>> {
         return emailMatcher.matches();
     }
 
-    private List<String> validateFields(D data) {
-        Set<ConstraintViolation<D>> constraintsViolations = fieldsValidator.validate(data);
-        return constraintsViolations.stream()
-                .map(ConstraintViolation::getMessage)
-                .distinct()
-                .collect(Collectors.toList());
-    }
-
     protected void validateNumberOfEntitiesPerTenant(TenantId tenantId,
                                                      TenantEntityDao tenantEntityDao,
                                                      long maxEntities,
@@ -126,10 +99,10 @@ public abstract class DataValidator<D extends BaseData<?>> {
     }
 
     protected void validateMaxSumDataSizePerTenant(TenantId tenantId,
-                                                     TenantEntityWithDataDao dataDao,
-                                                     long maxSumDataSize,
-                                                     long currentDataSize,
-                                                     EntityType entityType) {
+                                                   TenantEntityWithDataDao dataDao,
+                                                   long maxSumDataSize,
+                                                   long currentDataSize,
+                                                   EntityType entityType) {
         if (maxSumDataSize > 0) {
             if (dataDao.sumDataSizeByTenantId(tenantId) + currentDataSize > maxSumDataSize) {
                 throw new DataValidationException(String.format("Failed to create the %s, files size limit is exhausted %d bytes!",
@@ -156,12 +129,4 @@ public abstract class DataValidator<D extends BaseData<?>> {
         }
     }
 
-    private static void initializeFieldsValidator() {
-        HibernateValidatorConfiguration validatorConfiguration = Validation.byProvider(HibernateValidator.class).configure();
-        ConstraintMapping constraintMapping = validatorConfiguration.createConstraintMapping();
-        constraintMapping.constraintDefinition(NoXss.class).validatedBy(NoXssValidator.class);
-        validatorConfiguration.addMapping(constraintMapping);
-
-        fieldsValidator = validatorConfiguration.buildValidatorFactory().getValidator();
-    }
 }

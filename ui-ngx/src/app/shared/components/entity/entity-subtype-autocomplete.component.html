@@ -40,4 +40,7 @@
   <mat-error *ngIf="subTypeFormGroup.get('subType').hasError('required')">
     {{ entitySubtypeRequiredText | translate }}
   </mat-error>
+  <mat-error *ngIf="subTypeFormGroup.get('subType').hasError('maxlength')">
+    {{ entitySubtypeMaxLength | translate }}
+  </mat-error>
 </mat-form-field>

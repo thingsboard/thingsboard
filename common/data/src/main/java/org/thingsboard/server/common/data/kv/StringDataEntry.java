@@ -21,6 +21,7 @@ import java.util.Optional;
 public class StringDataEntry extends BasicKvEntry {
 
     private static final long serialVersionUID = 1L;
+
     private final String value;
 
     public StringDataEntry(String key, String value) {

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @EqualsAndHashCode(callSuper = true)
@@ -27,8 +28,10 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
 
     private static final long serialVersionUID = 8057243243859922101L;
 
+    @Length(fieldName = "title")
     @NoXss
     private String title;
+    @Length(fieldName = "region")
     @NoXss
     private String region;
     private TenantProfileId tenantProfileId;
@@ -40,7 +43,7 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
     public Tenant(TenantId id) {
         super(id);
     }
-    
+
     public Tenant(Tenant tenant) {
         super(tenant);
         this.title = tenant.getTitle();
