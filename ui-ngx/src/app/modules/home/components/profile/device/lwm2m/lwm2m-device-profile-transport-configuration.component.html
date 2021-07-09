@@ -167,6 +167,17 @@
                 </mat-option>
               </mat-select>
             </mat-form-field>
+            <mat-form-field class="mat-block" fxFlex *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.powerMode').value === 'E_DRX'">
+              <mat-label>{{ 'device-profile.edrx-cycle' | translate }}</mat-label>
+              <input matInput type="number" min="0" formControlName="edrxCycle" required>
+              <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.edrxCycle').hasError('required')">
+                {{ 'device-profile.edrx-cycle-required' | translate }}
+              </mat-error>
+              <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.edrxCycle').hasError('pattern') ||
+                                        lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.edrxCycle').hasError('min')">
+                {{ 'device-profile.edrx-cycle-pattern' | translate }}
+              </mat-error>
+            </mat-form-field>
           </fieldset>
           <mat-slide-toggle class="mat-slider"
            formControlName="compositeOperationsSupport">{{ 'device-profile.lwm2m.composite-operations-support' | translate }}</mat-slide-toggle>
