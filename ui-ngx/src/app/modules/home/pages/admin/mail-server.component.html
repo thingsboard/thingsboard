@@ -129,7 +129,13 @@
           <mat-form-field class="mat-block">
             <mat-label translate>common.password</mat-label>
             <input matInput formControlName="password" type="password"
-                   placeholder="{{ passwordPresent ? '**********' : 'common.enter-password' | translate }}" autocomplete="new-password"/>
+                   placeholder="{{ passwordPresent ?
+                     ('common.enter-new-password' | translate) :
+                     ('common.enter-password' | translate) }}"
+                   autocomplete="new-password"/>
+            <mat-hint>
+              {{passwordPresent ? ('common.password-already-set' | translate) : ''}}
+            </mat-hint>
           </mat-form-field>
           <div fxLayout="row" fxLayoutAlign="end center" fxLayout.xs="column" fxLayoutAlign.xs="end" fxLayoutGap="16px">
             <button mat-raised-button type="button"

@@ -591,10 +591,12 @@
         "password": "Password",
         "enter-username": "Enter username",
         "enter-password": "Enter password",
+        "enter-new-password": "Enter new password",
         "enter-search": "Enter search",
         "created-time": "Created time",
         "loading": "Loading...",
-        "proceed": "Proceed"
+        "proceed": "Proceed",
+        "password-already-set": "You had set the password"
     },
     "content-type": {
         "json": "Json",
