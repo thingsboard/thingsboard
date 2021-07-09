@@ -79,7 +79,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -103,8 +102,9 @@ public final class EdgeGrpcSession implements Closeable {
     private final ObjectMapper mapper;
 
     private final Map<Integer, DownlinkMsg> pendingMsgsMap = new LinkedHashMap<>();
-    private SettableFuture<Void> pendingFuture;
-    private ScheduledFuture<?> sendSchedule;
+    // TODO: voba - global future - possible refactoring
+    private SettableFuture<Void> sendDownlinkMsgsFuture;
+    private ScheduledFuture<?> scheduledSendDownlinkTask;
 
     private EdgeContextComponent ctx;
     private Edge edge;
@@ -113,20 +113,17 @@ public final class EdgeGrpcSession implements Closeable {
     private boolean connected;
     private boolean syncCompleted;
 
-    private ExecutorService syncExecutorService;
-
-    private ScheduledExecutorService sendScheduler;
+    private ScheduledExecutorService sendDownlinkExecutorService;
 
     EdgeGrpcSession(EdgeContextComponent ctx, StreamObserver<ResponseMsg> outputStream, BiConsumer<EdgeId, EdgeGrpcSession> sessionOpenListener,
-                    Consumer<EdgeId> sessionCloseListener, ObjectMapper mapper, ExecutorService syncExecutorService, ScheduledExecutorService sendScheduler) {
+                    Consumer<EdgeId> sessionCloseListener, ObjectMapper mapper, ScheduledExecutorService sendDownlinkExecutorService) {
         this.sessionId = UUID.randomUUID();
         this.ctx = ctx;
         this.outputStream = outputStream;
         this.sessionOpenListener = sessionOpenListener;
         this.sessionCloseListener = sessionCloseListener;
         this.mapper = mapper;
-        this.syncExecutorService = syncExecutorService;
-        this.sendScheduler = sendScheduler;
+        this.sendDownlinkExecutorService = sendDownlinkExecutorService;
         initInputStream();
     }
 
@@ -194,13 +191,7 @@ public final class EdgeGrpcSession implements Closeable {
     public void startSyncProcess(TenantId tenantId, EdgeId edgeId) {
         log.trace("[{}][{}] Staring edge sync process", tenantId, edgeId);
         syncCompleted = false;
-        syncExecutorService.submit(() -> {
-            try {
-                doSync(new EdgeSyncCursor(ctx, edge));
-            } catch (Exception e) {
-                log.error("[{}][{}] Exception during sync process", edge.getTenantId(), edge.getId(), e);
-            }
-        });
+        doSync(new EdgeSyncCursor(ctx, edge));
     }
 
     private void doSync(EdgeSyncCursor cursor) {
@@ -273,10 +264,10 @@ public final class EdgeGrpcSession implements Closeable {
             }
             if (pendingMsgsMap.size() == 0) {
                 log.debug("[{}] Pending msgs map is empty. Stopping current iteration {}", edge.getRoutingKey(), msg);
-                if (sendSchedule != null) {
-                    sendSchedule.cancel(false);
+                if (scheduledSendDownlinkTask != null) {
+                    scheduledSendDownlinkTask.cancel(false);
                 }
-                pendingFuture.set(null);
+                sendDownlinkMsgsFuture.set(null);
             }
         } catch (Exception e) {
             log.error("[{}] Can't process downlink response message [{}]", this.sessionId, msg, e);
@@ -399,21 +390,20 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     private ListenableFuture<Void> sendDownlinkMsgsPack(List<DownlinkMsg> downlinkMsgsPack) {
-        SettableFuture<Void> result = SettableFuture.create();
+        sendDownlinkMsgsFuture = SettableFuture.create();
         downlinkMsgsPackLock.lock();
         try {
             pendingMsgsMap.clear();
             downlinkMsgsPack.forEach(msg -> pendingMsgsMap.put(msg.getDownlinkMsgId(), msg));
-            scheduleDownlinkMsgsPackSend(true, result);
+            scheduleDownlinkMsgsPackSend(true);
         } finally {
             downlinkMsgsPackLock.unlock();
         }
-        return result;
+        return sendDownlinkMsgsFuture;
     }
 
-    private void scheduleDownlinkMsgsPackSend(boolean firstRun, SettableFuture<Void> futureResult) {
-        pendingFuture = futureResult;
-        Runnable runnable = () -> {
+    private void scheduleDownlinkMsgsPackSend(boolean firstRun) {
+        Runnable sendDownlinkMsgsTask = () -> {
             try {
                 if (isConnected() && pendingMsgsMap.values().size() > 0) {
                     if (!firstRun) {
@@ -426,19 +416,19 @@ public final class EdgeGrpcSession implements Closeable {
                                 .setDownlinkMsg(downlinkMsg)
                                 .build());
                     }
-                    scheduleDownlinkMsgsPackSend(false, futureResult);
+                    scheduleDownlinkMsgsPackSend(false);
                 } else {
-                    futureResult.set(null);
+                    sendDownlinkMsgsFuture.set(null);
                 }
             } catch (Exception e) {
-                futureResult.setException(e);
+                sendDownlinkMsgsFuture.setException(e);
             }
         };
 
         if (firstRun) {
-            syncExecutorService.submit(runnable);
+            sendDownlinkExecutorService.submit(sendDownlinkMsgsTask);
         } else {
-            sendSchedule = sendScheduler.schedule(runnable, ctx.getEdgeEventStorageSettings().getSleepIntervalBetweenBatches(), TimeUnit.MILLISECONDS);
+            scheduledSendDownlinkTask = sendDownlinkExecutorService.schedule(sendDownlinkMsgsTask, ctx.getEdgeEventStorageSettings().getSleepIntervalBetweenBatches(), TimeUnit.MILLISECONDS);
         }
 
     }

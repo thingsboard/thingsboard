@@ -54,7 +54,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -103,11 +102,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     private Server server;
 
-    private ScheduledExecutorService scheduler;
+    private ScheduledExecutorService edgeEventProcessingExecutorService;
 
-    private ExecutorService syncExecutorService;
-
-    private ScheduledExecutorService sendScheduler;
+    private ScheduledExecutorService sendDownlinkExecutorService;
 
     @PostConstruct
     public void init() {
@@ -134,10 +131,8 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             log.error("Failed to start Edge RPC server!", e);
             throw new RuntimeException("Failed to start Edge RPC server!");
         }
-        this.scheduler = Executors.newScheduledThreadPool(schedulerPoolSize, ThingsBoardThreadFactory.forName("edge-scheduler"));
-        this.sendScheduler = Executors.newScheduledThreadPool(sendSchedulerPoolSize, ThingsBoardThreadFactory.forName("edge-send-scheduler"));
-        this.syncExecutorService = Executors.newFixedThreadPool(
-                Runtime.getRuntime().availableProcessors(), ThingsBoardThreadFactory.forName("edge-sync"));
+        this.edgeEventProcessingExecutorService = Executors.newScheduledThreadPool(schedulerPoolSize, ThingsBoardThreadFactory.forName("edge-scheduler"));
+        this.sendDownlinkExecutorService = Executors.newScheduledThreadPool(sendSchedulerPoolSize, ThingsBoardThreadFactory.forName("edge-send-scheduler"));
         log.info("Edge RPC service initialized!");
     }
 
@@ -154,20 +149,17 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 sessionEdgeEventChecks.remove(edgeId);
             }
         }
-        if (scheduler != null) {
-            scheduler.shutdownNow();
+        if (edgeEventProcessingExecutorService != null) {
+            edgeEventProcessingExecutorService.shutdownNow();
         }
-        if (sendScheduler != null) {
-            sendScheduler.shutdownNow();
-        }
-        if (syncExecutorService != null) {
-            syncExecutorService.shutdownNow();
+        if (sendDownlinkExecutorService != null) {
+            sendDownlinkExecutorService.shutdownNow();
         }
     }
 
     @Override
     public StreamObserver<RequestMsg> handleMsgs(StreamObserver<ResponseMsg> outputStream) {
-        return new EdgeGrpcSession(ctx, outputStream, this::onEdgeConnect, this::onEdgeDisconnect, mapper, syncExecutorService, sendScheduler).getInputStream();
+        return new EdgeGrpcSession(ctx, outputStream, this::onEdgeConnect, this::onEdgeDisconnect, mapper, sendDownlinkExecutorService).getInputStream();
     }
 
     @Override
@@ -245,7 +237,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         EdgeId edgeId = session.getEdge().getId();
         UUID tenantId = session.getEdge().getTenantId().getId();
         if (sessions.containsKey(edgeId)) {
-            ScheduledFuture<?> schedule = scheduler.schedule(() -> {
+            ScheduledFuture<?> edgeEventCheckTask = edgeEventProcessingExecutorService.schedule(() -> {
                 try {
                     final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
                     newEventLock.lock();
@@ -275,7 +267,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                     log.warn("[{}] Failed to process edge events for edge [{}]!", tenantId, session.getEdge().getId().getId(), e);
                 }
             }, ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval(), TimeUnit.MILLISECONDS);
-            sessionEdgeEventChecks.put(edgeId, schedule);
+            sessionEdgeEventChecks.put(edgeId, edgeEventCheckTask);
             log.trace("[{}] Check edge event scheduled for edge [{}]", tenantId, edgeId.getId());
         } else {
             log.debug("[{}] Session was removed and edge event check schedule must not be started [{}]",
