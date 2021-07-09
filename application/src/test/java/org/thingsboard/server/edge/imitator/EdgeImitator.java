@@ -216,7 +216,7 @@ public class EdgeImitator {
             for (EntityDataProto entityData : downlinkMsg.getEntityDataList()) {
                 if (randomFailuresOnTimeseriesDownlink) {
                     if (getRandomBoolean()) {
-                        result.add(Futures.immediateFailedFuture(new RuntimeException("Random failure")));
+                        result.add(Futures.immediateFailedFuture(new RuntimeException("Random failure. This is expected error for edge test")));
                     } else {
                         result.add(saveDownlinkMsg(entityData));
                     }
