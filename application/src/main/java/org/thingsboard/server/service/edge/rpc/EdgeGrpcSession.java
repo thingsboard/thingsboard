@@ -92,7 +92,6 @@ import java.util.stream.Collectors;
 public final class EdgeGrpcSession implements Closeable {
 
     private static final ReentrantLock downlinkMsgLock = new ReentrantLock();
-    private static final ReentrantLock downlinkMsgsPackLock = new ReentrantLock();
 
     private static final String QUEUE_START_TS_ATTR_KEY = "queueStartTs";
 
@@ -390,15 +389,15 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     private ListenableFuture<Void> sendDownlinkMsgsPack(List<DownlinkMsg> downlinkMsgsPack) {
-        sendDownlinkMsgsFuture = SettableFuture.create();
-        downlinkMsgsPackLock.lock();
-        try {
-            pendingMsgsMap.clear();
-            downlinkMsgsPack.forEach(msg -> pendingMsgsMap.put(msg.getDownlinkMsgId(), msg));
-            scheduleDownlinkMsgsPackSend(true);
-        } finally {
-            downlinkMsgsPackLock.unlock();
+        if (sendDownlinkMsgsFuture != null && !sendDownlinkMsgsFuture.isDone()) {
+            String erroMsg = "[" + this.sessionId + "] Previous send downdlink future was not properly completed, stopping it now";
+            log.error(erroMsg);
+            sendDownlinkMsgsFuture.setException(new RuntimeException(erroMsg));
         }
+        sendDownlinkMsgsFuture = SettableFuture.create();
+        pendingMsgsMap.clear();
+        downlinkMsgsPack.forEach(msg -> pendingMsgsMap.put(msg.getDownlinkMsgId(), msg));
+        scheduleDownlinkMsgsPackSend(true);
         return sendDownlinkMsgsFuture;
     }
 

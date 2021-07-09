@@ -32,6 +32,7 @@ import org.thingsboard.server.service.edge.rpc.fetch.TenantWidgetsBundlesEdgeEve
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 public class EdgeSyncCursor {
 
@@ -59,13 +60,12 @@ public class EdgeSyncCursor {
     }
 
     public EdgeEventFetcher getNext() {
-        if (hasNext()) {
-            EdgeEventFetcher edgeEventFetcher = fetchers.get(currentIdx);
-            currentIdx++;
-            return edgeEventFetcher;
-        } else {
-            throw new IndexOutOfBoundsException();
+        if (!hasNext()) {
+            throw new NoSuchElementException();
         }
+        EdgeEventFetcher edgeEventFetcher = fetchers.get(currentIdx);
+        currentIdx++;
+        return edgeEventFetcher;
     }
 
     public int getCurrentIdx() {
