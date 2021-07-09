@@ -55,10 +55,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.eclipse.leshan.core.attributes.Attribute.DIMENSION;
@@ -332,11 +334,25 @@ public class LwM2mTransportUtil {
     }
 
 
-    public static  void validateVersionedId(LwM2mClient client, HasVersionedId request) {
-        client.isValidObjectVersion(request.getVersionedId());
+    public static void validateVersionedId(LwM2mClient client, HasVersionedId request) {
+        Set<String> msgException = new HashSet<>();
+        msgException.add("");
         if (request.getObjectId() == null) {
-            throw new IllegalArgumentException("Specified object id is null!");
+            msgException.add("Specified object id is null!");
+        } else {
+            msgException.add(client.isValidObjectVersion(request.getVersionedId()));
         }
+        if (msgException.size() > 1) {
+            throw new IllegalArgumentException(getMsgException("", msgException));
+        }
+    }
+
+    public static String getMsgException(String keyName, Set<String> msgException) {
+        if (msgException.size() == 1) {
+            msgException.add(" is not configured in the device profile!");
+        }
+        msgException.remove("");
+        return String.format("%s %s", keyName, String.join(",", msgException)).trim();
     }
 
     public static Map convertMultiResourceValuesFromRpcBody(LinkedHashMap value, ResourceModel.Type type, String versionedId) {

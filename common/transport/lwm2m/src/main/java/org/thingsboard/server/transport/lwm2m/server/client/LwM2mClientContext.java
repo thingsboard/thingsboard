@@ -51,7 +51,7 @@ public interface LwM2mClientContext {
 
     LwM2mClient getClientByDeviceId(UUID deviceId);
 
-    String getObjectIdByKeyNameFromProfile(LwM2mClient lwM2mClient, String keyName);
+    String getObjectIdByKeyNameFromProfile(LwM2mClient lwM2mClient, String keyName, boolean isCompositeOperation);
 
     void registerClient(Registration registration, ValidateDeviceCredentialsResponse credentials);
 

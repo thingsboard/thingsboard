@@ -18,7 +18,6 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.SecurityMode;
-import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,8 +55,7 @@ import java.util.function.Predicate;
 
 import static org.eclipse.leshan.core.SecurityMode.NO_SEC;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertObjectIdToVersionedId;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.validateObjectVerFromKey;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.getMsgException;
 
 @Slf4j
 @Service
@@ -228,11 +226,13 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     @Override
-    public String getObjectIdByKeyNameFromProfile(LwM2mClient client, String keyName) {
+    public String getObjectIdByKeyNameFromProfile(LwM2mClient client, String keyName, boolean isComposiateOperation) {
         Lwm2mDeviceProfileTransportConfiguration profile = getProfile(client.getProfileId());
+        Set<String> msgException = ConcurrentHashMap.newKeySet();
+        msgException.add("");
         return profile.getObserveAttr().getKeyName().entrySet().stream()
-                .filter(e -> e.getValue().equals(keyName) && validateResourceInModel(client, e.getKey(), false)).findFirst().orElseThrow(
-                        () -> new IllegalArgumentException(keyName + " is not configured in the device profile!")
+                .filter(e -> e.getValue().equals(keyName) && (isComposiateOperation || !msgException.add(client.isValidObjectVersion(e.getKey())))).findFirst().orElseThrow(
+                        () -> new IllegalArgumentException(getMsgException (keyName, msgException))
                 ).getKey();
     }
 
@@ -345,14 +345,20 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
                 getProfile(client.getProfileId()).getClientLwM2mSettings().isCompositeOperationsSupport();
     }
 
-    private boolean validateResourceInModel(LwM2mClient lwM2mClient, String pathIdVer, boolean isWritableNotOptional) {
-        ResourceModel resourceModel = lwM2mClient.getResourceModel(pathIdVer, this.config
-                .getModelProvider());
-        Integer objectId = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer)).getObjectId();
-        String objectVer = validateObjectVerFromKey(pathIdVer);
-        return resourceModel != null && (isWritableNotOptional ?
-                objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)) && resourceModel.operations.isWritable() :
-                objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)));
-    }
 
+//    private boolean validateResourceInModel(LwM2mClient lwM2mClient, String pathIdVer) {
+//        Integer objectId = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer)).getObjectId();
+//        String objectVer = validateObjectVerFromKey(pathIdVer);
+//        if (objectId != null && objectVer != null) {
+//            if (!objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId))) {
+//                new IllegalArgumentException(keyName + " is not configured in the device profile or bad version Id!");
+//            }
+//            else {
+//                return true;
+//            }
+//        }
+//        new IllegalArgumentException(keyName + " is not configured in the device profile or bad version Id!");
+//        return false;
+//
+//    }
 }

@@ -303,18 +303,19 @@ public class LwM2mClient implements Serializable {
         return resources;
     }
 
-    public void isValidObjectVersion(String path) {
+    public String isValidObjectVersion(String path) {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(path));
         String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
         if (verSupportedObject == null) {
-            throw new IllegalArgumentException(String.format("Specified resource id %s is missing from the client!", path));
+            return String.format("Specified resource id %s is missing from the client!", path);
         } else {
             String verRez = getVerFromPathIdVerOrId(path);
             if ((verRez != null && !verRez.equals(verSupportedObject)) ||
                     (verRez == null && !LWM2M_OBJECT_VERSION_DEFAULT.equals(verSupportedObject))) {
-                throw new IllegalArgumentException(String.format("Specified resource id %s is not valid version! Must be version: %s", path, verSupportedObject));
+                return String.format("Specified resource id %s is not valid version! Must be version: %s", path, verSupportedObject);
             }
         }
+        return "";
     }
 
     /**
