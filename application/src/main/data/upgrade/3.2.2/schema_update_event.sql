@@ -64,7 +64,7 @@ DROP INDEX IF EXISTS public.idx_event_ts;
 -- Hint: add CONCURRENTLY to CREATE INDEX query in case of more then 1 million records or during live update
 -- CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_event_ts
 CREATE INDEX IF NOT EXISTS idx_event_ts
-    ON public.event USING btree
+    ON public.event
     (ts DESC NULLS LAST)
     WITH (FILLFACTOR=95);
 
@@ -78,8 +78,8 @@ DROP INDEX IF EXISTS public.idx_event_tenant_entity_type_entity_event_type_creat
 
 -- CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_event_tenant_entity_type_entity_event_type_created_time_des
 CREATE INDEX IF NOT EXISTS idx_event_tenant_entity_type_entity_event_type_created_time_des
-    ON public.event USING btree
-    (tenant_id ASC NULLS LAST, entity_type ASC NULLS LAST, entity_id ASC NULLS LAST, event_type ASC NULLS LAST, created_time DESC NULLS LAST)
+    ON public.event
+    (tenant_id ASC, entity_type ASC, entity_id ASC, event_type ASC, created_time DESC NULLS LAST)
     WITH (FILLFACTOR=95);
 
 COMMENT ON INDEX public.idx_event_tenant_entity_type_entity_event_type_created_time_des
