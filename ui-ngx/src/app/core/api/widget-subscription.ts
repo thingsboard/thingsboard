@@ -644,12 +644,12 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
   }
 
-  sendOneWayCommand(method: string, params?: any, timeout?: number, requestUUID?: string): Observable<any> {
-    return this.sendCommand(true, method, params, timeout, requestUUID);
+  sendOneWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean, requestUUID?: string): Observable<any> {
+    return this.sendCommand(true, method, params, timeout, persistent, requestUUID);
   }
 
-  sendTwoWayCommand(method: string, params?: any, timeout?: number, requestUUID?: string): Observable<any> {
-    return this.sendCommand(false, method, params, timeout, requestUUID);
+  sendTwoWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean, requestUUID?: string): Observable<any> {
+    return this.sendCommand(false, method, params, timeout, persistent, requestUUID);
   }
 
   clearRpcError(): void {
@@ -658,7 +658,8 @@ export class WidgetSubscription implements IWidgetSubscription {
     this.callbacks.onRpcErrorCleared(this);
   }
 
-  sendCommand(oneWayElseTwoWay: boolean, method: string, params?: any, timeout?: number, requestUUID?: string): Observable<any> {
+  sendCommand(oneWayElseTwoWay: boolean, method: string, params?: any,
+              timeout?: number, persistent?: boolean, requestUUID?: string): Observable<any> {
     if (!this.rpcEnabled) {
       return throwError(new Error('Rpc disabled!'));
     } else {
@@ -670,6 +671,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       const requestBody: any = {
         method,
         params,
+        persistent,
         requestUUID
       };
       if (timeout && timeout > 0) {
