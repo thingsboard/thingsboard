@@ -20,7 +20,6 @@ import org.apache.commons.io.IOUtils;
 import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.util.Hex;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -85,6 +84,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import static org.eclipse.leshan.client.object.Security.noSec;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
+import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
 
 @DaoSqlTest
 public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
@@ -264,7 +264,7 @@ public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
         executor = Executors.newScheduledThreadPool(10);
         loginTenantAdmin();
 
-        String[] resources = new String[]{"1.xml", "2.xml", "3.xml"};
+        String[] resources = new String[]{"1.xml", "2.xml", "3.xml", "5.xml", "9.xml"};
         for (String resourceName : resources) {
             TbResource lwModel = new TbResource();
             lwModel.setResourceType(ResourceType.LWM2M_MODEL);
@@ -300,7 +300,6 @@ public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
         Assert.assertNotNull(deviceProfile);
     }
 
-    @NotNull
     protected Device createDevice(LwM2MClientCredentials clientCredentials) throws Exception {
         Device device = new Device();
         device.setName("Device A");
@@ -334,6 +333,22 @@ public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
         firmwareInfo.setVersion("v1.0");
 
         OtaPackageInfo savedFirmwareInfo = doPost("/api/otaPackage", firmwareInfo, OtaPackageInfo.class);
+
+        MockMultipartFile testData = new MockMultipartFile("file", "filename.txt", "text/plain", new byte[]{1});
+
+        return savaData("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString() + "?checksum={checksum}&checksumAlgorithm={checksumAlgorithm}", testData, CHECKSUM, "SHA256");
+    }
+
+    protected OtaPackageInfo createSoftware() throws Exception {
+        String CHECKSUM = "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a";
+
+        OtaPackageInfo swInfo = new OtaPackageInfo();
+        swInfo.setDeviceProfileId(deviceProfile.getId());
+        swInfo.setType(SOFTWARE);
+        swInfo.setTitle("My sw");
+        swInfo.setVersion("v1.0");
+
+        OtaPackageInfo savedFirmwareInfo = doPost("/api/otaPackage", swInfo, OtaPackageInfo.class);
 
         MockMultipartFile testData = new MockMultipartFile("file", "filename.txt", "text/plain", new byte[]{1});
 

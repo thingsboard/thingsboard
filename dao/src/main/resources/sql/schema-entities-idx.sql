@@ -45,3 +45,19 @@ CREATE INDEX IF NOT EXISTS idx_attribute_kv_by_key_and_last_update_ts ON attribu
 CREATE INDEX IF NOT EXISTS idx_audit_log_tenant_id_and_created_time ON audit_log(tenant_id, created_time);
 
 CREATE INDEX IF NOT EXISTS idx_rpc_tenant_id_device_id ON rpc(tenant_id, device_id);
+
+CREATE INDEX IF NOT EXISTS idx_event_ts
+    ON public.event USING btree
+    (ts DESC NULLS LAST)
+    WITH (FILLFACTOR=95);
+
+COMMENT ON INDEX public.idx_event_ts
+    IS 'This index helps to delete events by TTL using timestamp';
+
+CREATE INDEX IF NOT EXISTS idx_event_tenant_entity_type_entity_event_type_created_time_des
+    ON public.event USING btree
+    (tenant_id ASC NULLS LAST, entity_type ASC NULLS LAST, entity_id ASC NULLS LAST, event_type ASC NULLS LAST, created_time DESC NULLS LAST)
+    WITH (FILLFACTOR=95);
+
+COMMENT ON INDEX public.idx_event_tenant_entity_type_entity_event_type_created_time_des
+    IS 'This index helps to open latest events on UI fast';

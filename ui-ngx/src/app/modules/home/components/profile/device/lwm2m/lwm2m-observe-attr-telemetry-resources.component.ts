@@ -105,6 +105,8 @@ export class Lwm2mObserveAttrTelemetryResourcesComponent implements ControlValue
       this.resourcesFormGroup.disable({emitEvent: false});
     } else {
       this.resourcesFormArray.controls.forEach(resource => {
+        resource.get('id').enable({emitEvent: false});
+        resource.get('name').enable({emitEvent: false});
         resource.get('keyName').enable({emitEvent: false});
         resource.get('attribute').enable({emitEvent: false});
         resource.get('telemetry').enable({onlySelf: true});
@@ -124,12 +126,12 @@ export class Lwm2mObserveAttrTelemetryResourcesComponent implements ControlValue
   }
 
   getNameResourceLwm2m(resourceLwM2M: ResourceLwM2M): string {
-    return `<${resourceLwM2M.id}> ${resourceLwM2M.name}`;
+    return `#${resourceLwM2M.id} ${resourceLwM2M.name}`;
   }
 
   private updatedResources(resources: ResourceLwM2M[]): void {
     if (resources.length === this.resourcesFormArray.length) {
-      this.resourcesFormArray.patchValue(resources, {emitEvent: false});
+      this.resourcesFormArray.patchValue(resources, {onlySelf: true});
     } else {
       if (this.valueChange$) {
         this.valueChange$.unsubscribe();
@@ -144,7 +146,7 @@ export class Lwm2mObserveAttrTelemetryResourcesComponent implements ControlValue
       if (this.disabled) {
         this.resourcesFormGroup.disable({emitEvent: false});
       }
-      this.valueChange$ = this.resourcesFormGroup.valueChanges.subscribe(value => {
+      this.valueChange$ = this.resourcesFormGroup.valueChanges.subscribe(() => {
         this.updateModel(this.resourcesFormGroup.getRawValue().resources);
       });
     }
@@ -164,12 +166,14 @@ export class Lwm2mObserveAttrTelemetryResourcesComponent implements ControlValue
       form.get('attribute').valueChanges.pipe(startWith(resource.attribute), takeUntil(this.destroy$)),
       form.get('telemetry').valueChanges.pipe(startWith(resource.telemetry), takeUntil(this.destroy$))
     ]).subscribe(([attribute, telemetry]) => {
-      if (attribute || telemetry) {
-        form.get('observe').enable({emitEvent: false});
-      } else {
-        form.get('observe').disable({emitEvent: false});
-        form.get('observe').patchValue(false, {emitEvent: false});
-        form.get('attributes').patchValue({}, {emitEvent: false});
+      if (!this.disabled) {
+        if (attribute || telemetry) {
+          form.get('observe').enable({emitEvent: false});
+        } else {
+          form.get('observe').disable({emitEvent: false});
+          form.get('observe').patchValue(false, {emitEvent: false});
+          form.get('attributes').patchValue({}, {emitEvent: false});
+        }
       }
     });
     return form;

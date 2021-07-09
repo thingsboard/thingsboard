@@ -161,6 +161,13 @@ export class Lwm2mObserveAttrTelemetryInstancesComponent implements ControlValue
     const resources = deepClone(instance.get('resources').value as ResourceLwM2M[]);
     if (value && type === 'observe') {
       resources.forEach(resource => resource[type] = resource.telemetry || resource.attribute);
+    } else if (!value && type !== 'observe') {
+      resources.forEach(resource => {
+        resource[type] = value;
+        if (resource.observe && !(resource.telemetry || resource.attribute)) {
+          resource.observe = false;
+        }
+      });
     } else {
       resources.forEach(resource => resource[type] = value);
     }
@@ -190,12 +197,21 @@ export class Lwm2mObserveAttrTelemetryInstancesComponent implements ControlValue
     return isDefinedAndNotNull(resources) && resources.every(resource => resource[type]);
   }
 
+  disableObserve(instance: AbstractControl): boolean {
+    return this.disabled || !(
+      this.getIndeterminate(instance, 'telemetry') ||
+      this.getIndeterminate(instance, 'attribute') ||
+      this.getChecked(instance, 'telemetry') ||
+      this.getChecked(instance, 'attribute')
+    );
+  }
+
   get isExpend(): boolean {
     return this.instancesFormArray.length === 1;
   }
 
   getNameInstance(instance: Instance): string {
-    return `${this.translate.instant('device-profile.lwm2m.instance')} <${instance.id}>`;
+    return `${this.translate.instant('device-profile.lwm2m.instance')} #${instance.id}`;
   }
 
   disableObserveInstance = (instance: AbstractControl): boolean => {

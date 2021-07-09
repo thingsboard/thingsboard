@@ -174,7 +174,13 @@ public class TbHttpClient {
         String endpointUrl = TbNodeUtils.processPattern(config.getRestEndpointUrlPattern(), msg);
         HttpHeaders headers = prepareHeaders(msg);
         HttpMethod method = HttpMethod.valueOf(config.getRequestMethod());
-        HttpEntity<String> entity = new HttpEntity<>(msg.getData(), headers);
+        HttpEntity<String> entity;
+        if(HttpMethod.GET.equals(method) || HttpMethod.HEAD.equals(method) ||
+            HttpMethod.OPTIONS.equals(method) || HttpMethod.TRACE.equals(method)) {
+            entity = new HttpEntity<>(headers);
+        } else {
+            entity = new HttpEntity<>(msg.getData(), headers);
+        }
 
         ListenableFuture<ResponseEntity<String>> future = httpClient.exchange(
                 endpointUrl, method, entity, String.class);

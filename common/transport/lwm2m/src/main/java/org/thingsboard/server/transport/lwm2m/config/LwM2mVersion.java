@@ -20,8 +20,8 @@ import org.eclipse.leshan.core.LwM2m.Version;
 import org.eclipse.leshan.core.request.ContentFormat;
 
 public enum LwM2mVersion {
-    VERSION_1_0(0, Version.V1_0, ContentFormat.TLV),
-    VERSION_1_1(1, Version.V1_1, ContentFormat.TEXT);
+    VERSION_1_0(0, Version.V1_0, ContentFormat.TLV, false),
+    VERSION_1_1(1, Version.V1_1, ContentFormat.TEXT, true);
 
     @Getter
     private final int code;
@@ -29,11 +29,14 @@ public enum LwM2mVersion {
     private final Version version;
     @Getter
     private final ContentFormat contentFormat;
+    @Getter
+    private final boolean composite;
 
-    LwM2mVersion(int code, Version version, ContentFormat contentFormat) {
+    LwM2mVersion(int code, Version version, ContentFormat contentFormat, boolean composite) {
         this.code = code;
         this.version = version;
         this.contentFormat = contentFormat;
+        this.composite = composite;
     }
 
     public static LwM2mVersion fromVersion(Version version) {

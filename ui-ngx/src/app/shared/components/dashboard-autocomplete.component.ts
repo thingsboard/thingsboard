@@ -19,7 +19,7 @@ import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from 
 import { Observable, of } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
-import { map, mergeMap, startWith, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, startWith, switchMap, tap } from 'rxjs/operators';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { DashboardInfo } from '@app/shared/models/dashboard.models';
 import { DashboardService } from '@core/http/dashboard.service';
@@ -107,6 +107,7 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
   ngOnInit() {
     this.filteredDashboards = this.selectDashboardFormGroup.get('dashboard').valueChanges
       .pipe(
+        debounceTime(150),
         tap(value => {
           let modelValue;
           if (typeof value === 'string' || !value) {
@@ -118,7 +119,8 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
         }),
         startWith<string | DashboardInfo>(''),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
-        mergeMap(name => this.fetchDashboards(name) )
+        distinctUntilChanged(),
+        switchMap(name => this.fetchDashboards(name) )
       );
   }
 
@@ -189,6 +191,7 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
       direction: Direction.ASC
     });
     return this.getDashboards(pageLink).pipe(
+      catchError(() => of(emptyPageData<DashboardInfo>())),
       map(pageData => {
         return pageData.data;
       })

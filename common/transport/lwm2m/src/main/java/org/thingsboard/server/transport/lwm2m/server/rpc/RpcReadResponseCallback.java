@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.rpc;
 
-import org.eclipse.leshan.core.node.LwM2mObject;
-import org.eclipse.leshan.core.node.LwM2mObjectInstance;
-import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.request.LwM2mRequest;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.thingsboard.server.common.transport.TransportService;
@@ -27,6 +24,8 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCal
 
 import java.util.Optional;
 
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.contentToString;
+
 public class RpcReadResponseCallback<R extends LwM2mRequest<T>, T extends ReadResponse> extends RpcLwM2MDownlinkCallback<R, T> {
 
     public RpcReadResponseCallback(TransportService transportService, LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, DownlinkRequestCallback<R, T> callback) {
@@ -35,14 +34,6 @@ public class RpcReadResponseCallback<R extends LwM2mRequest<T>, T extends ReadRe
 
     @Override
     protected Optional<String> serializeSuccessfulResponse(T response) {
-        Object value = null;
-        if (response.getContent() instanceof LwM2mObject) {
-            value = client.objectToString((LwM2mObject) response.getContent());
-        } else if (response.getContent() instanceof LwM2mObjectInstance) {
-            value = client.instanceToString((LwM2mObjectInstance) response.getContent());
-        } else if (response.getContent() instanceof LwM2mResource) {
-            value = client.resourceToString((LwM2mResource) response.getContent());
-        }
-        return Optional.of(String.format("%s", value));
+        return contentToString(response.getContent());
     }
 }

@@ -38,7 +38,8 @@ export class GoogleMap extends LeafletMap {
     this.loadGoogle(() => {
       const map = L.map($container, {
         attributionControl: false,
-        editable: !!options.editablePolygon
+        editable: !!options.editablePolygon,
+        tap: L.Browser.safari && L.Browser.mobile
       }).setView(options?.defaultCenterPosition, options?.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
       (L.gridLayer as any).googleMutant({
         type: options?.gmDefaultMapType || 'roadmap'

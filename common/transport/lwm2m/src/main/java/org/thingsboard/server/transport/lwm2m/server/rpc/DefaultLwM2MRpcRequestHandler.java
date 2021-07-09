@@ -52,6 +52,7 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteRespon
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteUpdateRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MReadCompositeCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MReadCompositeRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MWriteResponseCompositeCallback;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcReadCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcReadResponseCompositeCallback;
@@ -131,15 +132,20 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                             throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
                     }
                 } else if (operationType.isComposite()) {
-                    switch (operationType) {
-                        case READ_COMPOSITE:
-                            sendReadCompositeRequest(client, rpcRequst);
-                            break;
-                        case WRITE_COMPOSITE:
-                            sendWriteCompositeRequest(client, rpcRequst);
-                            break;
-                        default:
-                            throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
+                    if (clientContext.isComposite(client)) {
+                        switch (operationType) {
+                            case READ_COMPOSITE:
+                                sendReadCompositeRequest(client, rpcRequst);
+                                break;
+                            case WRITE_COMPOSITE:
+                                sendWriteCompositeRequest(client, rpcRequst);
+                                break;
+                            default:
+                                throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
+                        }
+                    } else {
+                        this.sendErrorRpcResponse(sessionInfo, rpcRequst.getRequestId(),
+                                ResponseCode.INTERNAL_SERVER_ERROR.getName(), "This device does not support Composite Operation");
                     }
                 } else {
                     switch (operationType) {
@@ -239,14 +245,19 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         downlinkHandler.sendWriteReplaceRequest(client, request, rpcCallback);
     }
 
+    /**
+     * WriteComposite {"nodes":{"/3/0/14":"+04", "/1/0/2":100, "/5/0/1":"coap://localhost:5685"}}
+     * {"result":"CHANGED"}
+     * Map<String, Object> nodes = new HashMap<>();
+     * nodes.put("/3/0/14", "+02");
+     * nodes.put("/1/0/2", 100);
+     * nodes.put("/5/0/1", "coap://localhost:5685");
+     */
     private void sendWriteCompositeRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
-        RpcWriteCompositeRequest nodes = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteCompositeRequest.class);
-//        TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionedId)
-//                .value(requestBody.getValue())
-//                .timeout(this.config.getTimeout()).build();
-//        var mainCallback = new TbLwM2MWriteResponseCallback(uplinkHandler, logService, client, versionedId);
-//        var rpcCallback = new RpcEmptyResponseCallback<>(transportService, client, requestMsg, mainCallback);
-//        downlinkHandler.sendWriteReplaceRequest(client, request, rpcCallback);
+        RpcWriteCompositeRequest rpcWriteCompositeRequest = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteCompositeRequest.class);
+        var mainCallback = new TbLwM2MWriteResponseCompositeCallback(uplinkHandler, logService, client, null);
+        var rpcCallback = new RpcEmptyResponseCallback<>(transportService, client, requestMsg, mainCallback);
+        downlinkHandler.sendWriteCompositeRequest(client, rpcWriteCompositeRequest, rpcCallback);
     }
 
     private void sendCancelObserveRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {

@@ -35,8 +35,4 @@ export class EdgeDownlinkTableHeaderComponent extends EntityTableHeaderComponent
   constructor(protected store: Store<AppState>) {
     super(store);
   }
-
-  eventTypeChanged() {
-    this.eventTableConfig.table.resetSortAndFilter(true, true);
-  }
 }
