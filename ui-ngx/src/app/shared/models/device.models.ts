@@ -30,6 +30,7 @@ import { AbstractControl, ValidationErrors } from '@angular/forms';
 import { OtaPackageId } from '@shared/models/id/ota-package-id';
 import { DashboardId } from '@shared/models/id/dashboard-id';
 import { DataType } from '@shared/models/constants';
+import { PowerMode } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
 
 export enum DeviceProfileType {
   DEFAULT = 'DEFAULT',
@@ -573,6 +574,8 @@ export interface CoapDeviceTransportConfiguration {
 }
 
 export interface Lwm2mDeviceTransportConfiguration {
+  powerMode?: PowerMode | null;
+  edrxCycle?: number;
   [key: string]: any;
 }
 

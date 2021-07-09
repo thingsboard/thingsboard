@@ -353,7 +353,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         OtherConfiguration clientLwM2mSettings = clientProfile.getClientLwM2mSettings();
         Long timeout = null;
         if (PowerMode.E_DRX.equals(clientLwM2mSettings.getPowerMode())) {
-            timeout = clientLwM2mSettings.getEDRXCycle();
+            timeout = clientLwM2mSettings.getEdrxCycle();
         }
         if (timeout == null || timeout == 0L) {
             timeout = this.config.getTimeout();
