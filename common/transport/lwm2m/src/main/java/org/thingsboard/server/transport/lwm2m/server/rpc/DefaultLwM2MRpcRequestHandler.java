@@ -177,46 +177,46 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     }
 
     private void sendReadRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
-        TbLwM2MReadRequest request = TbLwM2MReadRequest.builder().versionedId(versionedId).timeout(this.config.getTimeout()).build();
+        TbLwM2MReadRequest request = TbLwM2MReadRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MReadCallback(uplinkHandler, logService, client, versionedId);
         var rpcCallback = new RpcReadResponseCallback<>(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendReadRequest(client, request, rpcCallback);
     }
 
     private void sendReadCompositeRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
-        String[] versionedIds = getIdsFromParameters(client, requestMsg, true);
-        TbLwM2MReadCompositeRequest request = TbLwM2MReadCompositeRequest.builder().versionedIds(versionedIds).timeout(this.config.getTimeout()).build();
+        String[] versionedIds = getIdsFromParameters(client, requestMsg);
+        TbLwM2MReadCompositeRequest request = TbLwM2MReadCompositeRequest.builder().versionedIds(versionedIds).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MReadCompositeCallback(uplinkHandler, logService, client, versionedIds);
         var rpcCallback = new RpcReadResponseCompositeCallback(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendReadCompositeRequest(client, request, rpcCallback);
     }
 
     private void sendObserveRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
-        TbLwM2MObserveRequest request = TbLwM2MObserveRequest.builder().versionedId(versionedId).timeout(this.config.getTimeout()).build();
+        TbLwM2MObserveRequest request = TbLwM2MObserveRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MObserveCallback(uplinkHandler, logService, client, versionedId);
         var rpcCallback = new RpcReadResponseCallback<>(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendObserveRequest(client, request, rpcCallback);
     }
 
     private void sendObserveAllRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
-        TbLwM2MObserveAllRequest request = TbLwM2MObserveAllRequest.builder().timeout(this.config.getTimeout()).build();
+        TbLwM2MObserveAllRequest request = TbLwM2MObserveAllRequest.builder().timeout(clientContext.getRequestTimeout(client)).build();
         downlinkHandler.sendObserveAllRequest(client, request, new RpcLinkSetCallback<>(transportService, client, requestMsg, null));
     }
 
     private void sendDiscoverAllRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
-        TbLwM2MDiscoverAllRequest request = TbLwM2MDiscoverAllRequest.builder().timeout(this.config.getTimeout()).build();
+        TbLwM2MDiscoverAllRequest request = TbLwM2MDiscoverAllRequest.builder().timeout(clientContext.getRequestTimeout(client)).build();
         downlinkHandler.sendDiscoverAllRequest(client, request, new RpcLinkSetCallback<>(transportService, client, requestMsg, null));
     }
 
     private void sendDiscoverRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
-        TbLwM2MDiscoverRequest request = TbLwM2MDiscoverRequest.builder().versionedId(versionedId).timeout(this.config.getTimeout()).build();
+        TbLwM2MDiscoverRequest request = TbLwM2MDiscoverRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MDiscoverCallback(logService, client, versionedId);
         var rpcCallback = new RpcDiscoverCallback(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendDiscoverRequest(client, request, rpcCallback);
     }
 
     private void sendExecuteRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
-        TbLwM2MExecuteRequest downlink = TbLwM2MExecuteRequest.builder().versionedId(versionedId).timeout(this.config.getTimeout()).build();
+        TbLwM2MExecuteRequest downlink = TbLwM2MExecuteRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MExecuteCallback(logService, client, versionedId);
         var rpcCallback = new RpcEmptyResponseCallback<>(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendExecuteRequest(client, downlink, rpcCallback);
@@ -226,7 +226,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         RpcWriteAttributesRequest requestBody = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteAttributesRequest.class);
         TbLwM2MWriteAttributesRequest request = TbLwM2MWriteAttributesRequest.builder().versionedId(versionedId)
                 .attributes(requestBody.getAttributes())
-                .timeout(this.config.getTimeout()).build();
+                .timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MWriteAttributesCallback(logService, client, versionedId);
         var rpcCallback = new RpcEmptyResponseCallback<>(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendWriteAttributesRequest(client, request, rpcCallback);
@@ -235,7 +235,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     private void sendWriteUpdateRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
         RpcWriteUpdateRequest requestBody = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteUpdateRequest.class);
         TbLwM2MWriteUpdateRequest.TbLwM2MWriteUpdateRequestBuilder builder = TbLwM2MWriteUpdateRequest.builder().versionedId(versionedId);
-        builder.value(requestBody.getValue()).timeout(this.config.getTimeout());
+        builder.value(requestBody.getValue()).timeout(clientContext.getRequestTimeout(client));
         var mainCallback = new TbLwM2MWriteResponseCallback(uplinkHandler, logService, client, versionedId);
         var rpcCallback = new RpcEmptyResponseCallback<>(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendWriteUpdateRequest(client, builder.build(), rpcCallback);
@@ -253,7 +253,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         }
         TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionedId)
                 .value(requestBody.getValue())
-                .timeout(this.config.getTimeout()).build();
+                .timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MWriteResponseCallback(uplinkHandler, logService, client, versionedId);
         var rpcCallback = new RpcEmptyResponseCallback<>(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendWriteReplaceRequest(client, request, rpcCallback);
@@ -304,21 +304,21 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     }
 
     private void sendCancelObserveRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
-        TbLwM2MCancelObserveRequest downlink = TbLwM2MCancelObserveRequest.builder().versionedId(versionedId).timeout(this.config.getTimeout()).build();
+        TbLwM2MCancelObserveRequest downlink = TbLwM2MCancelObserveRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MCancelObserveCallback(logService, client, versionedId);
         var rpcCallback = new RpcCancelObserveCallback(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendCancelObserveRequest(client, downlink, rpcCallback);
     }
 
     private void sendDeleteRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
-        TbLwM2MDeleteRequest downlink = TbLwM2MDeleteRequest.builder().versionedId(versionedId).timeout(this.config.getTimeout()).build();
+        TbLwM2MDeleteRequest downlink = TbLwM2MDeleteRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MDeleteCallback(logService, client, versionedId);
         var rpcCallback = new RpcEmptyResponseCallback<>(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendDeleteRequest(client, downlink, rpcCallback);
     }
 
     private void sendCancelAllObserveRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
-        TbLwM2MCancelAllRequest downlink = TbLwM2MCancelAllRequest.builder().timeout(this.config.getTimeout()).build();
+        TbLwM2MCancelAllRequest downlink = TbLwM2MCancelAllRequest.builder().timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MCancelAllObserveCallback(logService, client);
         var rpcCallback = new RpcCancelAllObserveCallback(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendCancelAllRequest(client, downlink, rpcCallback);

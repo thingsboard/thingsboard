@@ -25,6 +25,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.data.PowerMode;
+import org.thingsboard.server.common.data.device.data.lwm2m.OtherConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
@@ -345,6 +346,29 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
                 getProfile(client.getProfileId()).getClientLwM2mSettings().isCompositeOperationsSupport();
     }
 
+    @Override
+    public Long getRequestTimeout(LwM2mClient client) {
+        var clientProfile = getProfile(client.getProfileId());
+        OtherConfiguration clientLwM2mSettings = clientProfile.getClientLwM2mSettings();
+        Long timeout = null;
+        if (PowerMode.E_DRX.equals(clientLwM2mSettings.getPowerMode())) {
+            timeout = clientLwM2mSettings.getEDRXCycle();
+        }
+        if (timeout == null || timeout == 0L) {
+            timeout = this.config.getTimeout();
+        }
+        return timeout;
+    }
+//
+//    private boolean validateResourceInModel(LwM2mClient lwM2mClient, String pathIdVer, boolean isWritableNotOptional) {
+//        ResourceModel resourceModel = lwM2mClient.getResourceModel(pathIdVer, this.config
+//                .getModelProvider());
+//        Integer objectId = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer)).getObjectId();
+//        String objectVer = validateObjectVerFromKey(pathIdVer);
+//        return resourceModel != null && (isWritableNotOptional ?
+//                objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)) && resourceModel.operations.isWritable() :
+//                objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)));
+//    }
 
 //    private boolean validateResourceInModel(LwM2mClient lwM2mClient, String pathIdVer) {
 //        Integer objectId = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer)).getObjectId();

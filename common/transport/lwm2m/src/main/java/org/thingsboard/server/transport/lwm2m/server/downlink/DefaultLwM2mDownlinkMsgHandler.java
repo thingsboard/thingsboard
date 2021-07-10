@@ -301,6 +301,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             ContentFormat contentFormat = ContentFormat.SENML_JSON;
             try {
                 WriteCompositeRequest downlink = new WriteCompositeRequest(contentFormat, rpcWriteCompositeRequest.getNodes());
+                //TODO: replace config.getTimeout();
                 sendWriteCompositeRequest(client, downlink, this.config.getTimeout(), callback);
             } catch (Exception e) {
                 callback.onError(JacksonUtil.toString(rpcWriteCompositeRequest), e);
@@ -310,7 +311,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         }
     }
 
-    @Override
+     @Override
     public void sendWriteUpdateRequest(LwM2mClient client, TbLwM2MWriteUpdateRequest request, DownlinkRequestCallback<WriteRequest, WriteResponse> callback) {
         try {
             validateVersionedId(client, request);

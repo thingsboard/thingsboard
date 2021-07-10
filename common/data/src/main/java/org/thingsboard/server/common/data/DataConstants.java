@@ -35,6 +35,7 @@ public class DataConstants {
     public static final String IS_CLEARED_ALARM = "isClearedAlarm";
     public static final String ALARM_CONDITION_REPEATS = "alarmConditionRepeats";
     public static final String ALARM_CONDITION_DURATION = "alarmConditionDuration";
+    public static final String PERSISTENT = "persistent";
 
     public static final String[] allScopes() {
         return new String[]{CLIENT_SCOPE, SHARED_SCOPE, SERVER_SCOPE};
