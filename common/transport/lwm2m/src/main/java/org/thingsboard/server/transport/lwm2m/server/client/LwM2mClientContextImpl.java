@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.node.LwM2mPath;
+import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -35,7 +36,6 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
-import org.thingsboard.server.transport.lwm2m.config.LwM2mVersion;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
@@ -341,9 +341,9 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     @Override
-    public boolean isComposite(LwM2mClient client) {
-        return LwM2mVersion.fromVersionStr(client.getRegistration().getLwM2mVersion().toString()).isComposite() &
-                getProfile(client.getProfileId()).getClientLwM2mSettings().isCompositeOperationsSupport();
+    public ContentFormat getContentFormatComposite(LwM2mClient client) {
+        return client.getClientSupportContentFormats().contains(ContentFormat.SENML_JSON) ? ContentFormat.SENML_JSON :
+                client.getClientSupportContentFormats().contains(ContentFormat.SENML_CBOR) ? ContentFormat.SENML_CBOR : null;
     }
 
     @Override

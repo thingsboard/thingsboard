@@ -30,6 +30,5 @@ public class OtherConfiguration {
     private Long eDRXCycle;
     private String fwUpdateResource;
     private String swUpdateResource;
-    private boolean compositeOperationsSupport;
 
 }

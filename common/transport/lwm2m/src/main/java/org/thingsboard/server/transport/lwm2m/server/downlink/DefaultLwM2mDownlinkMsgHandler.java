@@ -135,10 +135,11 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     }
 
     @Override
-    public void sendReadCompositeRequest(LwM2mClient client, TbLwM2MReadCompositeRequest request, DownlinkRequestCallback<ReadCompositeRequest, ReadCompositeResponse> callback) {
+    public void sendReadCompositeRequest(LwM2mClient client, TbLwM2MReadCompositeRequest request,
+                                         DownlinkRequestCallback<ReadCompositeRequest, ReadCompositeResponse> callback, ContentFormat contentFormatComposite) {
         try {
-            ContentFormat requestContentFormat = ContentFormat.SENML_JSON;
-            ContentFormat responseContentFormat = ContentFormat.SENML_JSON;
+            ContentFormat requestContentFormat = contentFormatComposite;
+            ContentFormat responseContentFormat = contentFormatComposite;
 
             ReadCompositeRequest downlink = new ReadCompositeRequest(requestContentFormat, responseContentFormat, request.getObjectIds());
             sendCompositeRequest(client, downlink, this.config.getTimeout(), callback);
@@ -296,9 +297,10 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     }
 
     @Override
-    public void sendWriteCompositeRequest(LwM2mClient client, RpcWriteCompositeRequest rpcWriteCompositeRequest, DownlinkRequestCallback<WriteCompositeRequest, WriteCompositeResponse> callback) {
+    public void sendWriteCompositeRequest(LwM2mClient client, RpcWriteCompositeRequest rpcWriteCompositeRequest,
+                                          DownlinkRequestCallback<WriteCompositeRequest, WriteCompositeResponse> callback, ContentFormat contentFormatComposite) {
         try {
-            ContentFormat contentFormat = ContentFormat.SENML_JSON;
+            ContentFormat contentFormat = contentFormatComposite;
             try {
                 WriteCompositeRequest downlink = new WriteCompositeRequest(contentFormat, rpcWriteCompositeRequest.getNodes());
                 //TODO: replace config.getTimeout();
