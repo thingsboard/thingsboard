@@ -359,30 +359,4 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         }
         return timeout;
     }
-//
-//    private boolean validateResourceInModel(LwM2mClient lwM2mClient, String pathIdVer, boolean isWritableNotOptional) {
-//        ResourceModel resourceModel = lwM2mClient.getResourceModel(pathIdVer, this.config
-//                .getModelProvider());
-//        Integer objectId = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer)).getObjectId();
-//        String objectVer = validateObjectVerFromKey(pathIdVer);
-//        return resourceModel != null && (isWritableNotOptional ?
-//                objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)) && resourceModel.operations.isWritable() :
-//                objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)));
-//    }
-
-//    private boolean validateResourceInModel(LwM2mClient lwM2mClient, String pathIdVer) {
-//        Integer objectId = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer)).getObjectId();
-//        String objectVer = validateObjectVerFromKey(pathIdVer);
-//        if (objectId != null && objectVer != null) {
-//            if (!objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId))) {
-//                new IllegalArgumentException(keyName + " is not configured in the device profile or bad version Id!");
-//            }
-//            else {
-//                return true;
-//            }
-//        }
-//        new IllegalArgumentException(keyName + " is not configured in the device profile or bad version Id!");
-//        return false;
-//
-//    }
 }

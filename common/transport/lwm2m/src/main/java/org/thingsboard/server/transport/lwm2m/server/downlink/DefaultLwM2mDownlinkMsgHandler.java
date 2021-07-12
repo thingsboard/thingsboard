@@ -234,6 +234,18 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         sendSimpleRequest(client, new DiscoverRequest(request.getObjectId()), request.getTimeout(), callback);
     }
 
+    /**
+     *  Example # 1:
+     *  AttributeSet attributes = new AttributeSet(new Attribute(Attribute.MINIMUM_PERIOD, 10L),
+     *  new Attribute(Attribute.MAXIMUM_PERIOD, 100L));
+     *  WriteAttributesRequest requestTest = new WriteAttributesRequest(3, 0, 14, attributes);
+     *  sendSimpleRequest(client, requestTest, request.getTimeout(), callback);
+     *
+     *  Example # 2
+     *  Dimension and Object version are read only attributes.
+     *  addAttribute(attributes, DIMENSION, params.getDim(), dim -> dim >= 0 && dim <= 255);
+     *  addAttribute(attributes, OBJECT_VERSION, params.getVer(), StringUtils::isNotEmpty, Function.identity());
+     */
     @Override
     public void sendWriteAttributesRequest(LwM2mClient client, TbLwM2MWriteAttributesRequest request, DownlinkRequestCallback<WriteAttributesRequest, WriteAttributesResponse> callback) {
         try {
@@ -243,9 +255,6 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             }
             ObjectAttributes params = request.getAttributes();
             List<Attribute> attributes = new LinkedList<>();
-//            Dimension and Object version are read only attributes.
-//            addAttribute(attributes, DIMENSION, params.getDim(), dim -> dim >= 0 && dim <= 255);
-//            addAttribute(attributes, OBJECT_VERSION, params.getVer(), StringUtils::isNotEmpty, Function.identity());
             addAttribute(attributes, MAXIMUM_PERIOD, params.getPmax());
             addAttribute(attributes, MINIMUM_PERIOD, params.getPmin());
             addAttribute(attributes, GREATER_THAN, params.getGt());
