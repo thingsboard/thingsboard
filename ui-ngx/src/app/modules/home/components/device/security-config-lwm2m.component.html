@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<mat-tab-group>
-  <mat-tab label="{{ 'device.lwm2m-security-config.client-tab' | translate }}" [formGroup]="lwm2mConfigFormGroup">
+<mat-tab-group [formGroup]="lwm2mConfigFormGroup">
+  <mat-tab label="{{ 'device.lwm2m-security-config.client-tab' | translate }}">
     <ng-container formGroupName="client">
       <mat-form-field class="mat-block">
         <mat-label translate>device.lwm2m-security-config.endpoint</mat-label>
@@ -79,7 +79,7 @@
       </mat-form-field>
     </ng-container>
   </mat-tab>
-  <mat-tab label="{{ 'device.lwm2m-security-config.bootstrap-tab' | translate }}" [formGroup]="lwm2mConfigFormGroup">
+  <mat-tab label="{{ 'device.lwm2m-security-config.bootstrap-tab' | translate }}">
     <div style="padding: 2px;" formGroupName="bootstrap">
       <mat-accordion multi="true" class="mat-body-1">
         <mat-expansion-panel>
@@ -108,16 +108,5 @@
         </mat-expansion-panel>
       </mat-accordion>
     </div>
-  </mat-tab>
-  <mat-tab label="{{ 'device.lwm2m-security-config.config-json-tab' | translate }}">
-    <ng-template matTabContent>
-      <tb-json-object-edit
-        [ngModel]="lwm2mConfigFormGroup.value"
-        label="{{ 'device.lwm2m-value' | translate }}"
-        readonly
-        [required]="true"
-        [fillHeight]="false">
-      </tb-json-object-edit>
-    </ng-template>
   </mat-tab>
 </mat-tab-group>

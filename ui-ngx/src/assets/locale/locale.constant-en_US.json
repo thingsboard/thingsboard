@@ -941,13 +941,13 @@
         "unassign-devices-title": "Are you sure you want to unassign { count, plural, 1 {1 device} other {# devices} }?",
         "unassign-devices-text": "After the confirmation all selected devices will be unassigned and won't be accessible by the customer.",
         "device-credentials": "Device Credentials",
+        "loading-device-credentials": "Loading device credentials...",
         "credentials-type": "Credentials type",
         "access-token": "Access token",
         "access-token-required": "Access token is required.",
         "access-token-invalid": "Access token length must be from 1 to 20 characters.",
         "rsa-key": "RSA public key",
         "rsa-key-required": "RSA public key is required.",
-        "lwm2m-value": "LwM2M Security config",
         "lwm2m-security-config": {
           "identity": "Client Identity",
           "identity-required": "Client Identity is required.",
@@ -971,7 +971,6 @@
           "client-secret-key-required": "Client Secret Key is required.",
           "client-secret-key-pattern": "Client Secret Key must be hexadecimal format.",
           "client-secret-key-length": "Client Secret Key must be {{ count }} characters.",
-          "config-json-tab": "Json Client Security Config",
           "client-public-key": "Client public key",
           "client-public-key-hint": "If client public key is empty, the trusted certificate will be used"
         },
