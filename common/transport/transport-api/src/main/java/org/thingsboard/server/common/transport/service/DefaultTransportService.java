@@ -443,6 +443,7 @@ public class DefaultTransportService implements TransportService {
         tdi.setDeviceType(di.getDeviceType());
         if (StringUtils.isNotEmpty(di.getPowerMode())) {
             tdi.setPowerMode(PowerMode.valueOf(di.getPowerMode()));
+            tdi.setEdrxCycle(di.getEdrxCycle());
         }
         return tdi;
     }
