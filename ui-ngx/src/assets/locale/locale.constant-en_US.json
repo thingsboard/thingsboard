@@ -1222,7 +1222,7 @@
             "drx": "Discontinuous Reception (DRX)",
             "edrx": "Extended Discontinuous Reception (eDRX)"
         },
-        "edrx-cycle": "eDRX cycle",
+        "edrx-cycle": "eDRX cycle in milliseconds",
         "edrx-cycle-required": "eDRX cycle is required.",
         "edrx-cycle-pattern": "eDRX cycle must be a positive integer.",
         "lwm2m": {

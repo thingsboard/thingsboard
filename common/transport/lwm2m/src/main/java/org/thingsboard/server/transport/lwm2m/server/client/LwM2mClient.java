@@ -136,7 +136,9 @@ public class LwM2mClient implements Serializable {
         builder.setDeviceName(device.getName());
         deviceProfileOpt.ifPresent(deviceProfile -> updateSession(deviceProfile, builder));
         this.session = builder.build();
-        this.powerMode = ((Lwm2mDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration()).getPowerMode();
+        Lwm2mDeviceTransportConfiguration transportConfiguration = (Lwm2mDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
+        this.powerMode = transportConfiguration.getPowerMode();
+        this.edrxCycle = transportConfiguration.getEdrxCycle();
     }
 
     public void onDeviceProfileUpdate(DeviceProfile deviceProfile) {
