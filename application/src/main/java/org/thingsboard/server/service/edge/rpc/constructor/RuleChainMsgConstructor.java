@@ -26,12 +26,12 @@ import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.gen.edge.NodeConnectionInfoProto;
-import org.thingsboard.server.gen.edge.RuleChainConnectionInfoProto;
-import org.thingsboard.server.gen.edge.RuleChainMetadataUpdateMsg;
-import org.thingsboard.server.gen.edge.RuleChainUpdateMsg;
-import org.thingsboard.server.gen.edge.RuleNodeProto;
-import org.thingsboard.server.gen.edge.UpdateMsgType;
+import org.thingsboard.server.gen.edge.v1.NodeConnectionInfoProto;
+import org.thingsboard.server.gen.edge.v1.RuleChainConnectionInfoProto;
+import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.RuleNodeProto;
+import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.ArrayList;

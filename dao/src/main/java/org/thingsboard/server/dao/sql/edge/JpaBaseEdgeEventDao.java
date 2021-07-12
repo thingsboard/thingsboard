@@ -35,6 +35,10 @@ import org.thingsboard.server.dao.model.sql.EdgeEventEntity;
 import org.thingsboard.server.dao.model.sql.EventEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -116,4 +120,21 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
         return Optional.of(DaoUtil.getData(edgeEventRepository.save(entity)));
     }
 
+    @Override
+    public void cleanupEvents(long ttl) {
+        log.info("Going to cleanup old edge events using ttl: {}s", ttl);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement stmt = connection.prepareStatement("call cleanup_edge_events_by_ttl(?,?)")) {
+            stmt.setLong(1, ttl);
+            stmt.setLong(2, 0);
+            stmt.execute();
+            printWarnings(stmt);
+            try (ResultSet resultSet = stmt.getResultSet()) {
+                resultSet.next();
+                log.info("Total edge events removed by TTL: [{}]", resultSet.getLong(1));
+            }
+        } catch (SQLException e) {
+            log.error("SQLException occurred during edge events TTL task execution ", e);
+        }
+    }
 }

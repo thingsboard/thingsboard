@@ -245,11 +245,11 @@ public class TenantActor extends RuleChainManagerActor {
             EdgeId edgeId = new EdgeId(msg.getEntityId().getId());
             EdgeRpcService edgeRpcService = systemContext.getEdgeRpcService();
             if (msg.getEvent() == ComponentLifecycleEvent.DELETED) {
-                edgeRpcService.deleteEdge(edgeId);
+                edgeRpcService.deleteEdge(tenantId, edgeId);
             } else {
                 Edge edge = systemContext.getEdgeService().findEdgeById(tenantId, edgeId);
                 if (msg.getEvent() == ComponentLifecycleEvent.UPDATED) {
-                    edgeRpcService.updateEdge(edge);
+                    edgeRpcService.updateEdge(tenantId, edge);
                 }
             }
         } else if (isRuleEngineForCurrentTenant) {
@@ -277,7 +277,7 @@ public class TenantActor extends RuleChainManagerActor {
 
     private void onToEdgeSessionMsg(EdgeEventUpdateMsg msg) {
         log.trace("[{}] onToEdgeSessionMsg [{}]", msg.getTenantId(), msg);
-        systemContext.getEdgeRpcService().onEdgeEvent(msg.getEdgeId());
+        systemContext.getEdgeRpcService().onEdgeEvent(tenantId, msg.getEdgeId());
     }
 
     public static class ActorCreator extends ContextBasedCreator {

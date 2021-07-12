@@ -28,4 +28,5 @@ public interface EdgeEventService {
 
     PageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink, boolean withTsUpdate);
 
+    void cleanupEvents(long ttl);
 }

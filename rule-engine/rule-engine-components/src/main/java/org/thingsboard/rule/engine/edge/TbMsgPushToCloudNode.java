@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.edge;
 
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -31,7 +30,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 @RuleNode(
         type = ComponentType.ACTION,
         name = "push to cloud",
-        configClazz = EmptyNodeConfiguration.class,
+        configClazz = TbMsgPushToCloudNodeConfiguration.class,
         nodeDescription = "Pushes messages from edge to cloud",
         nodeDetails = "Push messages from edge to cloud. " +
                 "This node used only on edge to push messages from edge to cloud. " +
@@ -60,11 +59,11 @@ import org.thingsboard.server.common.msg.TbMsg;
 )
 public class TbMsgPushToCloudNode implements TbNode {
 
-    private EmptyNodeConfiguration config;
+    private TbMsgPushToCloudNodeConfiguration config;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, EmptyNodeConfiguration.class);
+        this.config = TbNodeUtils.convert(configuration, TbMsgPushToCloudNodeConfiguration.class);
     }
 
     @Override

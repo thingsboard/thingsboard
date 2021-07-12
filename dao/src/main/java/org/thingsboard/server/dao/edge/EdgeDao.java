@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.edge;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -160,26 +161,13 @@ public interface EdgeDao extends Dao<Edge> {
     PageData<EdgeInfo> findEdgeInfosByTenantId(UUID tenantId, PageLink pageLink);
 
     /**
-     * Find edges by tenantId and ruleChainId.
+     * Find edges by tenantId and entityId.
      *
      * @param tenantId the tenantId
-     * @param ruleChainId the ruleChainId
-     * @return the list of rule chain objects
+     * @param entityId the entityId
+     * @param entityType the entityType
+     * @return the list of edge objects
      */
-    ListenableFuture<List<Edge>> findEdgesByTenantIdAndRuleChainId(UUID tenantId, UUID ruleChainId);
+    PageData<Edge> findEdgesByTenantIdAndEntityId(UUID tenantId, UUID entityId, EntityType entityType, PageLink pageLink);
 
-    /**
-     * Find edges by tenantId and dashboardId.
-     *
-     * @param tenantId the tenantId
-     * @param dashboardId the dashboardId
-     * @return the list of rule chain objects
-     */
-    ListenableFuture<List<Edge>> findEdgesByTenantIdAndDashboardId(UUID tenantId, UUID dashboardId);
-
-    /**
-     * Executes stored procedure to cleanup old edge events.
-     * @param ttl the ttl for edge events in seconds
-     */
-    void cleanupEvents(long ttl);
 }

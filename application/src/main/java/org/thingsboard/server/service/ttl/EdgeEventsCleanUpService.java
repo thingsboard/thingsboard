@@ -19,10 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.ttl.AbstractCleanUpService;
 
 @TbCoreComponent
 @Slf4j
@@ -35,17 +34,17 @@ public class EdgeEventsCleanUpService extends AbstractCleanUpService {
     @Value("${sql.ttl.edge_events.enabled}")
     private boolean ttlTaskExecutionEnabled;
 
-    private final EdgeService edgeService;
+    private final EdgeEventService edgeEventService;
 
-    public EdgeEventsCleanUpService(PartitionService partitionService, EdgeService edgeService) {
+    public EdgeEventsCleanUpService(PartitionService partitionService, EdgeEventService edgeEventService) {
         super(partitionService);
-        this.edgeService = edgeService;
+        this.edgeEventService = edgeEventService;
     }
 
     @Scheduled(initialDelayString = "${sql.ttl.edge_events.execution_interval_ms}", fixedDelayString = "${sql.ttl.edge_events.execution_interval_ms}")
     public void cleanUp() {
         if (ttlTaskExecutionEnabled && isSystemTenantPartitionMine()) {
-            edgeService.cleanupEvents(ttl);
+            edgeEventService.cleanupEvents(ttl);
         }
     }
 

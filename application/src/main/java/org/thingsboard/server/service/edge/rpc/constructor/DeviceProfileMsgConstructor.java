@@ -21,8 +21,8 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
-import org.thingsboard.server.gen.edge.DeviceProfileUpdateMsg;
-import org.thingsboard.server.gen.edge.UpdateMsgType;
+import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 @Component
@@ -41,7 +41,7 @@ public class DeviceProfileMsgConstructor {
                 .setDefault(deviceProfile.isDefault())
                 .setType(deviceProfile.getType().name())
                 .setProfileDataBytes(ByteString.copyFrom(dataDecodingEncodingService.encode(deviceProfile.getProfileData())));
-        // TODO: voba - should this be always null at the moment??
+        // TODO: @voba - add possibility to setup edge rule chain as device profile default
 //        if (deviceProfile.getDefaultRuleChainId() != null) {
 //            builder.setDefaultRuleChainIdMSB(deviceProfile.getDefaultRuleChainId().getId().getMostSignificantBits())
 //                    .setDefaultRuleChainIdLSB(deviceProfile.getDefaultRuleChainId().getId().getLeastSignificantBits());
