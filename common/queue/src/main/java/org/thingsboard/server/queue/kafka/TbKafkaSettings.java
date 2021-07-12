@@ -63,6 +63,12 @@ public class TbKafkaSettings {
     @Value("${queue.kafka.linger.ms}")
     private long lingerMs;
 
+    @Value("${queue.kafka.max.request.size}")
+    private int maxRequestSize;
+
+    @Value("${queue.kafka.max.in.flight.requests.per.connection:5}")
+    private int maxInFlightRequestsPerConnection;
+
     @Value("${queue.kafka.buffer.memory}")
     private long bufferMemory;
 
@@ -139,6 +145,8 @@ public class TbKafkaSettings {
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
         props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, compressionType);
+        props.put(ProducerConfig.MAX_REQUEST_SIZE_CONFIG, maxRequestSize);
+        props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, maxInFlightRequestsPerConnection);
         return props;
     }
 
