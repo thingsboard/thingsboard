@@ -85,6 +85,20 @@ public abstract class AbstractSqlTimeseriesDao extends BaseAbstractSqlTimeseries
         }
     }
 
+    public void cleanup(long systemTtl, List<String> exclusiveKeys) {
+        log.info("Going to cleanup old timeseries data using ttl: {}s without keys {}", systemTtl, exclusiveKeys);
+        List<Integer> keyIds = exclusiveKeys.stream().map(this::getOrSaveKeyId).collect(Collectors.toList());
+        long expirationTime = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(systemTtl);
+        try {
+            long totalRemoved = doCleanup(expirationTime, keyIds);
+            log.info("Total telemetry removed stats by TTL without keys {} for entities: [{}]", exclusiveKeys, totalRemoved);
+        } catch (Exception e) {
+            log.error("Failed to execute cleanup using ttl: {} without keys {} due to: [{}]", systemTtl, exclusiveKeys, e.getMessage());
+        }
+    }
+
+    public abstract long doCleanup(long expirationTime, List<Integer> keyIds);
+
     protected ListenableFuture<List<TsKvEntry>> processFindAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
         List<ListenableFuture<List<TsKvEntry>>> futures = queries
                 .stream()

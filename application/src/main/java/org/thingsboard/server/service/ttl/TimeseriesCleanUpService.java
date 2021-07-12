@@ -19,10 +19,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.ttl.AbstractCleanUpService;
+
+import javax.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @TbCoreComponent
 @Slf4j
@@ -35,17 +41,30 @@ public class TimeseriesCleanUpService extends AbstractCleanUpService {
     @Value("${sql.ttl.ts.enabled}")
     private boolean ttlTaskExecutionEnabled;
 
+    @Value("${sql.ttl.ts.exclusive_keys}")
+    private String exclusiveKeysStr;
+
     private final TimeseriesService timeseriesService;
+    private List<String> exclusiveKeys;
 
     public TimeseriesCleanUpService(PartitionService partitionService, TimeseriesService timeseriesService) {
         super(partitionService);
         this.timeseriesService = timeseriesService;
     }
 
+    @PostConstruct
+    public void init() {
+        exclusiveKeys = StringUtils.isEmpty(exclusiveKeysStr) ? null : new ArrayList<>(Arrays.asList(exclusiveKeysStr.trim().split("\\s*,\\s*")));
+    }
+
     @Scheduled(initialDelayString = "${sql.ttl.ts.execution_interval_ms}", fixedDelayString = "${sql.ttl.ts.execution_interval_ms}")
     public void cleanUp() {
         if (ttlTaskExecutionEnabled && isSystemTenantPartitionMine()) {
-            timeseriesService.cleanup(systemTtl);
+            if (CollectionUtils.isEmpty(exclusiveKeys)) {
+                timeseriesService.cleanup(systemTtl);
+            } else {
+                timeseriesService.cleanup(systemTtl, exclusiveKeys);
+            }
         }
     }
 

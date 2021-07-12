@@ -29,6 +29,8 @@ import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.HsqlDao;
 import org.thingsboard.server.dao.util.SqlTsDao;
 
+import java.util.List;
+
 
 @Component
 @Slf4j
@@ -57,6 +59,16 @@ public class JpaHsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDa
     @Override
     public void cleanup(long systemTtl) {
 
+    }
+
+    @Override
+    public void cleanup(long systemTtl, List<String> exclusiveKeys) {
+
+    }
+
+    @Override
+    public long doCleanup(long expirationTime, List<Integer> keyIds) {
+        return 0;
     }
 
 }

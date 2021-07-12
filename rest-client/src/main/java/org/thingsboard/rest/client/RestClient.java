@@ -325,11 +325,11 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         params.put("entityType", entityId.getEntityType().name());
         params.put("entityId", entityId.getId().toString());
         params.put("fetchOriginator", String.valueOf(fetchOriginator));
-        if(searchStatus != null) {
+        if (searchStatus != null) {
             params.put("searchStatus", searchStatus.name());
             urlSecondPart += "&searchStatus={searchStatus}";
         }
-        if(status != null) {
+        if (status != null) {
             params.put("status", status.name());
             urlSecondPart += "&status={status}";
         }
@@ -337,7 +337,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         addTimePageLinkToParam(params, pageLink);
 
         return restTemplate.exchange(
-                baseURL +  urlSecondPart + getTimeUrlParams(pageLink),
+                baseURL + urlSecondPart + getTimeUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<AlarmInfo>>() {
@@ -2034,7 +2034,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         params.put("useStrictDataTypes", Boolean.toString(useStrictDataTypes));
 
         StringBuilder urlBuilder = new StringBuilder(baseURL);
-        urlBuilder.append("/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}&interval={interval}&agg={agg}&useStrictDataTypes={useStrictDataTypes}&orderBy={orderBy}");
+        urlBuilder.append("/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}&interval={interval}&agg={agg}&useStrictDataTypes={useStrictDataTypes}&orderBy={orderBy}&limit={limit}");
 
         if (startTime != null) {
             urlBuilder.append("&startTs={startTs}");
@@ -2998,7 +2998,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         params.put("checksumAlgorithm", checksumAlgorithm.name());
         String url = "/api/otaPackage/{otaPackageId}?checksumAlgorithm={checksumAlgorithm}";
 
-        if(checkSum != null) {
+        if (checkSum != null) {
             url += "&checkSum={checkSum}";
         }
 
