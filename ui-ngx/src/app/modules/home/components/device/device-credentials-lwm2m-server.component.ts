@@ -39,24 +39,24 @@ import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
 @Component({
-  selector: 'tb-security-config-lwm2m-server',
-  templateUrl: './security-config-lwm2m-server.component.html',
+  selector: 'tb-device-credentials-lwm2m-server',
+  templateUrl: './device-credentials-lwm2m-server.component.html',
   styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => SecurityConfigLwm2mServerComponent),
+      useExisting: forwardRef(() => DeviceCredentialsLwm2mServerComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => SecurityConfigLwm2mServerComponent),
+      useExisting: forwardRef(() => DeviceCredentialsLwm2mServerComponent),
       multi: true
     }
   ]
 })
 
-export class SecurityConfigLwm2mServerComponent implements OnDestroy, ControlValueAccessor, Validator {
+export class DeviceCredentialsLwm2mServerComponent implements OnDestroy, ControlValueAccessor, Validator {
 
   serverFormGroup: FormGroup;
   securityConfigLwM2MType = Lwm2mSecurityType;

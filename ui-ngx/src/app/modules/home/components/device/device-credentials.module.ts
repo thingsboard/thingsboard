@@ -19,16 +19,16 @@ import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { CopyDeviceCredentialsComponent } from './copy-device-credentials.component';
 import { DeviceCredentialsComponent } from './device-credentials.component';
-import { SecurityConfigLwm2mComponent } from './security-config-lwm2m.component';
-import { SecurityConfigLwm2mServerComponent } from './security-config-lwm2m-server.component';
+import { DeviceCredentialsLwm2mComponent } from './device-credentials-lwm2m.component';
+import { DeviceCredentialsLwm2mServerComponent } from './device-credentials-lwm2m-server.component';
 import { DeviceCredentialsMqttBasicComponent } from './device-credentials-mqtt-basic.component';
 
 @NgModule({
   declarations: [
     CopyDeviceCredentialsComponent,
     DeviceCredentialsComponent,
-    SecurityConfigLwm2mComponent,
-    SecurityConfigLwm2mServerComponent,
+    DeviceCredentialsLwm2mComponent,
+    DeviceCredentialsLwm2mServerComponent,
     DeviceCredentialsMqttBasicComponent
   ],
   imports: [
@@ -38,8 +38,8 @@ import { DeviceCredentialsMqttBasicComponent } from './device-credentials-mqtt-b
   exports: [
     CopyDeviceCredentialsComponent,
     DeviceCredentialsComponent,
-    SecurityConfigLwm2mComponent,
-    SecurityConfigLwm2mServerComponent,
+    DeviceCredentialsLwm2mComponent,
+    DeviceCredentialsLwm2mServerComponent,
     DeviceCredentialsMqttBasicComponent
   ]
 })
