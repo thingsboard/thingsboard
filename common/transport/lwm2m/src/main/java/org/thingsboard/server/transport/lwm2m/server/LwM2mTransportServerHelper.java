@@ -30,6 +30,7 @@ package org.thingsboard.server.transport.lwm2m.server;
  * limitations under the License.
  */
 
+import com.google.gson.JsonParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.DDFFileParser;
@@ -37,10 +38,7 @@ import org.eclipse.leshan.core.model.DefaultDDFFileValidator;
 import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
-import org.eclipse.leshan.core.node.LwM2mPath;
-import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.codec.CodecException;
-import org.eclipse.leshan.core.request.ContentFormat;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
@@ -49,9 +47,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
-import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
-import org.thingsboard.server.transport.lwm2m.server.client.ResourceValue;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -61,7 +56,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.BOOLEAN_V;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
 
 @Slf4j
 @Component
@@ -193,6 +187,7 @@ public class LwM2mTransportServerHelper {
     }
 
     public static Object getValueFromKvProto(TransportProtos.KeyValueProto kv) {
+        JsonParser JSON_PARSER = new JsonParser();
         switch (kv.getType()) {
             case BOOLEAN_V:
                 return kv.getBoolV();
@@ -203,7 +198,7 @@ public class LwM2mTransportServerHelper {
             case STRING_V:
                 return kv.getStringV();
             case JSON_V:
-                return kv.getJsonV();
+                return JSON_PARSER.parse(kv.getJsonV());
         }
         return null;
     }

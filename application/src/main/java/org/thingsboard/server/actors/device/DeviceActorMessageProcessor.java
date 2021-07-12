@@ -206,13 +206,13 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             syncSessionSet.forEach(rpcSubscriptions::remove);
         }
 
-        if (persisted && !(sent || request.isOneway())) {
+        if (persisted) {
             ObjectNode response = JacksonUtil.newObjectNode();
             response.put("rpcId", request.getId().toString());
             systemContext.getTbCoreDeviceRpcService().processRpcResponseFromDeviceActor(new FromDeviceRpcResponse(msg.getMsg().getId(), JacksonUtil.toString(response), null));
         }
 
-        if (request.isOneway() && sent) {
+        if (!persisted && request.isOneway() && sent) {
             log.debug("[{}] Rpc command response sent [{}]!", deviceId, request.getId());
             systemContext.getTbCoreDeviceRpcService().processRpcResponseFromDeviceActor(new FromDeviceRpcResponse(msg.getMsg().getId(), null, null));
         } else {
@@ -298,7 +298,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             toDeviceRpcPendingMap.entrySet().stream().findFirst().ifPresent(processPendingRpc(context, sessionId, sessionInfo.getNodeId(), sentOneWayIds));
         }
 
-        sentOneWayIds.forEach(toDeviceRpcPendingMap::remove);
+        sentOneWayIds.stream().filter(id -> !toDeviceRpcPendingMap.get(id).getMsg().getMsg().isPersisted()).forEach(toDeviceRpcPendingMap::remove);
     }
 
     private Consumer<Map.Entry<Integer, ToDeviceRpcRequestMetadata>> processPendingRpc(TbActorCtx context, UUID sessionId, String nodeId, Set<Integer> sentOneWayIds) {
@@ -503,9 +503,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             }
         } else {
             log.debug("[{}] Rpc command response [{}] is stale!", deviceId, responseMsg.getRequestId());
-            if (requestMd.getMsg().getMsg().isPersisted()) {
-                systemContext.getTbRpcService().save(tenantId, new RpcId(requestMd.getMsg().getMsg().getId()), RpcStatus.FAILED, JacksonUtil.toJsonNode(responseMsg.getPayload()));
-            }
         }
     }
 

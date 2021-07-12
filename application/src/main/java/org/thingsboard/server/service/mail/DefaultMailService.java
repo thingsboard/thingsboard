@@ -31,6 +31,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.rule.engine.api.TbEmail;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ApiFeature;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
@@ -250,35 +251,35 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void send(TenantId tenantId, CustomerId customerId, String from, String to, String cc, String bcc, String subject, String body, boolean isHtml, Map<String, String> images) throws ThingsboardException {
-        sendMail(tenantId, customerId, from, to, cc, bcc, subject, body, isHtml, images, this.mailSender);
+    public void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail) throws ThingsboardException {
+        sendMail(tenantId, customerId, tbEmail, this.mailSender);
     }
 
     @Override
-    public void send(TenantId tenantId, CustomerId customerId, String from, String to, String cc, String bcc, String subject, String body, boolean isHtml, Map<String, String> images, JavaMailSender javaMailSender) throws ThingsboardException {
-        sendMail(tenantId, customerId, from, to, cc, bcc, subject, body, isHtml, images, javaMailSender);
+    public void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail, JavaMailSender javaMailSender) throws ThingsboardException {
+        sendMail(tenantId, customerId, tbEmail, javaMailSender);
     }
 
-    private void sendMail(TenantId tenantId, CustomerId customerId, String from, String to, String cc, String bcc, String subject, String body, boolean isHtml, Map<String, String> images, JavaMailSender javaMailSender) throws ThingsboardException {
+    private void sendMail(TenantId tenantId, CustomerId customerId, TbEmail tbEmail, JavaMailSender javaMailSender) throws ThingsboardException {
         if (apiUsageStateService.getApiUsageState(tenantId).isEmailSendEnabled()) {
             try {
                 MimeMessage mailMsg = javaMailSender.createMimeMessage();
-                boolean multipart = (images != null && !images.isEmpty());
+                boolean multipart = (tbEmail.getImages() != null && !tbEmail.getImages().isEmpty());
                 MimeMessageHelper helper = new MimeMessageHelper(mailMsg, multipart, "UTF-8");
-                helper.setFrom(StringUtils.isBlank(from) ? mailFrom : from);
-                helper.setTo(to.split("\\s*,\\s*"));
-                if (!StringUtils.isBlank(cc)) {
-                    helper.setCc(cc.split("\\s*,\\s*"));
+                helper.setFrom(StringUtils.isBlank(tbEmail.getFrom()) ? mailFrom : tbEmail.getFrom());
+                helper.setTo(tbEmail.getTo().split("\\s*,\\s*"));
+                if (!StringUtils.isBlank(tbEmail.getCc())) {
+                    helper.setCc(tbEmail.getCc().split("\\s*,\\s*"));
                 }
-                if (!StringUtils.isBlank(bcc)) {
-                    helper.setBcc(bcc.split("\\s*,\\s*"));
+                if (!StringUtils.isBlank(tbEmail.getBcc())) {
+                    helper.setBcc(tbEmail.getBcc().split("\\s*,\\s*"));
                 }
-                helper.setSubject(subject);
-                helper.setText(body, isHtml);
+                helper.setSubject(tbEmail.getSubject());
+                helper.setText(tbEmail.getBody(), tbEmail.isHtml());
 
                 if (multipart) {
-                    for (String imgId : images.keySet()) {
-                        String imgValue = images.get(imgId);
+                    for (String imgId : tbEmail.getImages().keySet()) {
+                        String imgValue = tbEmail.getImages().get(imgId);
                         String value = imgValue.replaceFirst("^data:image/[^;]*;base64,?", "");
                         byte[] bytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(value);
                         String contentType = helper.getFileTypeMap().getContentType(imgId);

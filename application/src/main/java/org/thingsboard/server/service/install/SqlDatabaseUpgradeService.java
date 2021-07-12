@@ -459,6 +459,10 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.2.2", "schema_update_ttl.sql");
                     loadSql(schemaUpdateFile, conn);
                     log.info("Edge TTL functions successfully loaded!");
+                    log.info("Updating indexes and TTL procedure for event table...");
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.2.2", "schema_update_event.sql");
+                    loadSql(schemaUpdateFile, conn);
+                    log.info("Updating schema settings...");
                     conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3003000;");
                     log.info("Schema updated.");
                 } catch (Exception e) {

@@ -20,8 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.elements.util.SslContextUtil;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.dtls.cipher.CipherSuite;
-import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeDecoder;
-import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeEncoder;
+import org.eclipse.leshan.core.node.codec.DefaultLwM2mDecoder;
+import org.eclipse.leshan.core.node.codec.DefaultLwM2mEncoder;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.californium.LeshanServerBuilder;
 import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
@@ -109,9 +109,9 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         LeshanServerBuilder builder = new LeshanServerBuilder();
         builder.setLocalAddress(config.getHost(), config.getPort());
         builder.setLocalSecureAddress(config.getSecureHost(), config.getSecurePort());
-        builder.setDecoder(new DefaultLwM2mNodeDecoder());
+        builder.setDecoder(new DefaultLwM2mDecoder());
         /* Use a magic converter to support bad type send by the UI. */
-        builder.setEncoder(new DefaultLwM2mNodeEncoder(LwM2mValueConverterImpl.getInstance()));
+        builder.setEncoder(new DefaultLwM2mEncoder(LwM2mValueConverterImpl.getInstance()));
 
         /* Create CoAP Config */
         builder.setCoapConfig(getCoapConfig(config.getPort(), config.getSecurePort(), config));

@@ -18,9 +18,11 @@ package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.request.BootstrapRequest;
 import org.eclipse.leshan.core.request.Identity;
+import org.eclipse.leshan.server.bootstrap.BootstrapConfigStoreTaskProvider;
 import org.eclipse.leshan.server.bootstrap.BootstrapSession;
 import org.eclipse.leshan.server.bootstrap.DefaultBootstrapSession;
 import org.eclipse.leshan.server.bootstrap.DefaultBootstrapSessionManager;
+import org.eclipse.leshan.server.model.StandardBootstrapModelProvider;
 import org.eclipse.leshan.server.security.BootstrapSecurityStore;
 import org.eclipse.leshan.server.security.SecurityChecker;
 import org.eclipse.leshan.server.security.SecurityInfo;
@@ -45,7 +47,9 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
     }
 
     public LwM2mDefaultBootstrapSessionManager(BootstrapSecurityStore bsSecurityStore, SecurityChecker securityChecker) {
-        super(bsSecurityStore);
+        super(bsSecurityStore, new SecurityChecker(), new BootstrapConfigStoreTaskProvider(null),
+                new StandardBootstrapModelProvider());
+//        super(bsSecurityStore);
         this.bsSecurityStore = bsSecurityStore;
         this.securityChecker = securityChecker;
     }

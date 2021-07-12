@@ -17,16 +17,14 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
-import org.eclipse.leshan.core.node.LwM2mResourceInstance;
 
 import java.io.Serializable;
-import java.util.Collection;
 
-public class TbLwM2MMultipleResource extends LwM2mMultipleResource implements TbLwM2MResource, Serializable {
+public class TbLwM2mMultipleResource extends LwM2mMultipleResource implements TbLwM2MResource, Serializable {
 
     private static final long serialVersionUID = 4658477128628087186L;
 
-    public TbLwM2MMultipleResource(int id, ResourceModel.Type type, TbLwM2MResourceInstance... instances) {
+    public TbLwM2mMultipleResource(int id, ResourceModel.Type type, TbLwM2MResourceInstance... instances) {
         super(id, type, instances);
     }
 }

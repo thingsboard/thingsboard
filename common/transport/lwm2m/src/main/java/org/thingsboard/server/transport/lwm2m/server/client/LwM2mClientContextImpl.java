@@ -18,14 +18,15 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.SecurityMode;
-import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mPath;
+import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.data.PowerMode;
+import org.thingsboard.server.common.data.device.data.lwm2m.OtherConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
@@ -35,7 +36,6 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
-import org.thingsboard.server.transport.lwm2m.config.LwM2mVersion;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
@@ -56,8 +56,7 @@ import java.util.function.Predicate;
 
 import static org.eclipse.leshan.core.SecurityMode.NO_SEC;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertObjectIdToVersionedId;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.validateObjectVerFromKey;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.getMsgException;
 
 @Slf4j
 @Service
@@ -228,12 +227,13 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     @Override
-    public String getObjectIdByKeyNameFromProfile(LwM2mClient client, String keyName) {
+    public String getObjectIdByKeyNameFromProfile(LwM2mClient client, String keyName, boolean isComposiateOperation) {
         Lwm2mDeviceProfileTransportConfiguration profile = getProfile(client.getProfileId());
-
+        Set<String> msgException = ConcurrentHashMap.newKeySet();
+        msgException.add("");
         return profile.getObserveAttr().getKeyName().entrySet().stream()
-                .filter(e -> e.getValue().equals(keyName) && validateResourceInModel(client, e.getKey(), false)).findFirst().orElseThrow(
-                        () -> new IllegalArgumentException(keyName + " is not configured in the device profile!")
+                .filter(e -> e.getValue().equals(keyName) && (isComposiateOperation || !msgException.add(client.isValidObjectVersion(e.getKey())))).findFirst().orElseThrow(
+                        () -> new IllegalArgumentException(getMsgException (keyName, msgException))
                 ).getKey();
     }
 
@@ -341,19 +341,22 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     @Override
-    public boolean isComposite(LwM2mClient client) {
-        return LwM2mVersion.fromVersionStr(client.getRegistration().getLwM2mVersion()).isComposite() &
-                getProfile(client.getProfileId()).getClientLwM2mSettings().isCompositeOperationsSupport();
+    public ContentFormat getContentFormatComposite(LwM2mClient client) {
+        return client.getClientSupportContentFormats().contains(ContentFormat.SENML_JSON) ? ContentFormat.SENML_JSON :
+                client.getClientSupportContentFormats().contains(ContentFormat.SENML_CBOR) ? ContentFormat.SENML_CBOR : null;
     }
 
-    private boolean validateResourceInModel(LwM2mClient lwM2mClient, String pathIdVer, boolean isWritableNotOptional) {
-        ResourceModel resourceModel = lwM2mClient.getResourceModel(pathIdVer, this.config
-                .getModelProvider());
-        Integer objectId = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer)).getObjectId();
-        String objectVer = validateObjectVerFromKey(pathIdVer);
-        return resourceModel != null && (isWritableNotOptional ?
-                objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)) && resourceModel.operations.isWritable() :
-                objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)));
+    @Override
+    public Long getRequestTimeout(LwM2mClient client) {
+        var clientProfile = getProfile(client.getProfileId());
+        OtherConfiguration clientLwM2mSettings = clientProfile.getClientLwM2mSettings();
+        Long timeout = null;
+        if (PowerMode.E_DRX.equals(clientLwM2mSettings.getPowerMode())) {
+            timeout = clientLwM2mSettings.getEDRXCycle();
+        }
+        if (timeout == null || timeout == 0L) {
+            timeout = this.config.getTimeout();
+        }
+        return timeout;
     }
-
 }

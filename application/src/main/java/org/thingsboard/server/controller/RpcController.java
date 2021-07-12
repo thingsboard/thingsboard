@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.rule.engine.api.RpcError;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -100,7 +101,7 @@ public class RpcController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/persisted/{rpcId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/persistent/{rpcId}", method = RequestMethod.GET)
     @ResponseBody
     public Rpc getPersistedRpc(@PathVariable("rpcId") String strRpc) throws ThingsboardException {
         checkParameter("RpcId", strRpc);
@@ -113,7 +114,7 @@ public class RpcController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/persisted/{deviceId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/persistent/device/{deviceId}", method = RequestMethod.GET)
     @ResponseBody
     public PageData<Rpc> getPersistedRpcByDevice(@PathVariable("deviceId") String strDeviceId,
                                                  @RequestParam int pageSize,
@@ -134,7 +135,7 @@ public class RpcController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/persisted/{rpcId}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/persistent/{rpcId}", method = RequestMethod.DELETE)
     @ResponseBody
     public void deleteResource(@PathVariable("rpcId") String strRpc) throws ThingsboardException {
         checkParameter("RpcId", strRpc);
@@ -155,7 +156,7 @@ public class RpcController extends BaseController {
             long timeout = rpcRequestBody.has("timeout") ? rpcRequestBody.get("timeout").asLong() : defaultTimeout;
             long expTime = System.currentTimeMillis() + Math.max(minTimeout, timeout);
             UUID rpcRequestUUID = rpcRequestBody.has("requestUUID") ? UUID.fromString(rpcRequestBody.get("requestUUID").asText()) : UUID.randomUUID();
-            boolean persisted = rpcRequestBody.has("persisted") && rpcRequestBody.get("persisted").asBoolean();
+            boolean persisted = rpcRequestBody.has(DataConstants.PERSISTENT) && rpcRequestBody.get(DataConstants.PERSISTENT).asBoolean();
             accessValidator.validate(currentUser, Operation.RPC_CALL, deviceId, new HttpValidationCallback(response, new FutureCallback<DeferredResult<ResponseEntity>>() {
                 @Override
                 public void onSuccess(@Nullable DeferredResult<ResponseEntity> result) {

@@ -16,6 +16,9 @@
 package org.thingsboard.server.transport.lwm2m.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.leshan.core.attributes.Attribute;
@@ -26,6 +29,7 @@ import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
+import org.eclipse.leshan.core.node.ObjectLink;
 import org.eclipse.leshan.core.node.codec.CodecException;
 import org.eclipse.leshan.core.request.SimpleDownlinkRequest;
 import org.eclipse.leshan.core.request.WriteAttributesRequest;
@@ -39,18 +43,24 @@ import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTrans
 import org.thingsboard.server.transport.lwm2m.config.LwM2mVersion;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.ResourceValue;
+import org.thingsboard.server.transport.lwm2m.server.downlink.HasVersionedId;
 import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateResult;
 import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateState;
 import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateResult;
 import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateState;
 import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.eclipse.leshan.core.attributes.Attribute.DIMENSION;
@@ -318,6 +328,65 @@ public class LwM2mTransportUtil {
                 return TIME;
             case "ObjectLink":
                 return OBJLNK;
+            default:
+                return null;
+        }
+    }
+
+
+    public static void validateVersionedId(LwM2mClient client, HasVersionedId request) {
+        Set<String> msgException = new HashSet<>();
+        msgException.add("");
+        if (request.getObjectId() == null) {
+            msgException.add("Specified object id is null!");
+        } else {
+            msgException.add(client.isValidObjectVersion(request.getVersionedId()));
+        }
+        if (msgException.size() > 1) {
+            throw new IllegalArgumentException(getMsgException("", msgException));
+        }
+    }
+
+    public static String getMsgException(String keyName, Set<String> msgException) {
+        if (msgException.size() == 1) {
+            msgException.add(" is not configured in the device profile!");
+        }
+        msgException.remove("");
+        return String.format("%s %s", keyName, String.join(",", msgException)).trim();
+    }
+
+    public static Map convertMultiResourceValuesFromRpcBody(LinkedHashMap value, ResourceModel.Type type, String versionedId) {
+        Gson gson = new Gson();
+        JsonParser JSON_PARSER = new JsonParser();
+        String json = gson.toJson(value, LinkedHashMap.class);
+        return convertMultiResourceValuesFromJson((JsonObject) JSON_PARSER.parse(json), type, versionedId);
+    }
+
+    public static Map convertMultiResourceValuesFromJson(JsonObject newValProto, ResourceModel.Type type, String versionedId) {
+        Map newValues = equalsMultiResourceValuesResourceType(type);
+        newValProto.getAsJsonObject().entrySet().forEach((obj) -> {
+            newValues.put(Integer.valueOf(obj.getKey()), LwM2mValueConverterImpl.getInstance().convertValue(obj.getValue().getAsString(),
+                    STRING, type, new LwM2mPath(fromVersionedIdToObjectId(versionedId))));
+        });
+        return newValues;
+    }
+
+    public static Map equalsMultiResourceValuesResourceType(ResourceModel.Type type) {
+        switch (type) {
+            case FLOAT:
+                return new HashMap<Integer, Float>();
+            case INTEGER:
+                return new HashMap<Integer, Integer>();
+            case STRING:
+                return new HashMap<Integer, String>();
+            case BOOLEAN:
+                return new HashMap<Integer, Boolean>();
+            case OPAQUE:
+                return new HashMap<Integer, byte[]>();
+            case TIME:
+                return new HashMap<Integer, Date>();
+            case OBJLNK:
+                return new HashMap<Integer, ObjectLink>();
             default:
                 return null;
         }
