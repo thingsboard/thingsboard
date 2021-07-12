@@ -44,6 +44,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -102,6 +103,16 @@ public class JpaPsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDa
     public void cleanup(long systemTtl) {
         cleanupPartitions(systemTtl);
         super.cleanup(systemTtl);
+    }
+
+    @Override
+    public void cleanup(long systemTtl, List<String> exclusiveKeys) {
+        super.cleanup(systemTtl, exclusiveKeys);
+    }
+
+    @Override
+    public long doCleanup(long expirationTime, List<Integer> keyIds) {
+        return tsKvRepository.cleanup(expirationTime, keyIds);
     }
 
     private void cleanupPartitions(long systemTtl) {

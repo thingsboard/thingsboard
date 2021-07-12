@@ -65,9 +65,9 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
             "'MAX') FROM TsKvEntity tskv " +
             "WHERE tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts >= :startTs AND tskv.ts < :endTs")
     CompletableFuture<TsKvEntity> findNumericMax(@Param("entityId") UUID entityId,
-                                          @Param("entityKey") int entityKey,
-                                          @Param("startTs") long startTs,
-                                          @Param("endTs") long endTs);
+                                                 @Param("entityKey") int entityKey,
+                                                 @Param("startTs") long startTs,
+                                                 @Param("endTs") long endTs);
 
 
     @Async
@@ -75,9 +75,9 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
             "WHERE tskv.strValue IS NOT NULL " +
             "AND tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts >= :startTs AND tskv.ts < :endTs")
     CompletableFuture<TsKvEntity> findStringMin(@Param("entityId") UUID entityId,
-                                          @Param("entityKey") int entityKey,
-                                          @Param("startTs") long startTs,
-                                          @Param("endTs") long endTs);
+                                                @Param("entityKey") int entityKey,
+                                                @Param("startTs") long startTs,
+                                                @Param("endTs") long endTs);
 
     @Async
     @Query("SELECT new TsKvEntity(MIN(COALESCE(tskv.longValue, 9223372036854775807)), " +
@@ -87,10 +87,10 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
             "'MIN') FROM TsKvEntity tskv " +
             "WHERE tskv.entityId = :entityId AND tskv.key = :entityKey AND tskv.ts >= :startTs AND tskv.ts < :endTs")
     CompletableFuture<TsKvEntity> findNumericMin(
-                                          @Param("entityId") UUID entityId,
-                                          @Param("entityKey") int entityKey,
-                                          @Param("startTs") long startTs,
-                                          @Param("endTs") long endTs);
+            @Param("entityId") UUID entityId,
+            @Param("entityKey") int entityKey,
+            @Param("startTs") long startTs,
+            @Param("endTs") long endTs);
 
     @Async
     @Query("SELECT new TsKvEntity(SUM(CASE WHEN tskv.booleanValue IS NULL THEN 0 ELSE 1 END), " +
@@ -128,4 +128,9 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
                                           @Param("startTs") long startTs,
                                           @Param("endTs") long endTs);
 
+    @Transactional(timeout = 3600) // 1h in sec
+    @Query(value = "WITH deleted AS (DELETE FROM ts_kv WHERE (key NOT IN :keys AND ts < :expirationTime) RETURNING *) SELECT count(*) FROM deleted",
+            nativeQuery = true)
+    Long cleanup(@Param("expirationTime") long expirationTime,
+                 @Param("keys") List<Integer> keys);
 }
