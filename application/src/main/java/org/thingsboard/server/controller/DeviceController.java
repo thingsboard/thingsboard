@@ -15,19 +15,26 @@
  */
 package org.thingsboard.server.controller;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
+import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import javax.annotation.Nullable;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -72,14 +79,10 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 
 @RestController
 @TbCoreComponent
@@ -91,8 +94,7 @@ public class DeviceController extends BaseController {
     private static final String TENANT_ID = "tenantId";
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/device/{deviceId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/device/{deviceId}")
     public Device getDeviceById(@PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
         checkParameter(DEVICE_ID, strDeviceId);
         try {
@@ -104,8 +106,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/device/info/{deviceId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/device/info/{deviceId}")
     public DeviceInfo getDeviceInfoById(@PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
         checkParameter(DEVICE_ID, strDeviceId);
         try {
@@ -117,8 +118,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/device", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/device")
     public Device saveDevice(@RequestBody Device device,
                              @RequestParam(name = "accessToken", required = false) String accessToken) throws ThingsboardException {
         boolean created = device.getId() == null;
@@ -167,7 +167,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/device/{deviceId}", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/device/{deviceId}")
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteDevice(@PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
         checkParameter(DEVICE_ID, strDeviceId);
@@ -199,8 +199,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/{customerId}/device/{deviceId}", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/customer/{customerId}/device/{deviceId}")
     public Device assignDeviceToCustomer(@PathVariable("customerId") String strCustomerId,
                                          @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
@@ -231,8 +230,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/device/{deviceId}", method = RequestMethod.DELETE)
-    @ResponseBody
+    @DeleteMapping(value = "/customer/device/{deviceId}")
     public Device unassignDeviceFromCustomer(@PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
         checkParameter(DEVICE_ID, strDeviceId);
         try {
@@ -262,8 +260,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/public/device/{deviceId}", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/customer/public/device/{deviceId}")
     public Device assignDeviceToPublicCustomer(@PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
         checkParameter(DEVICE_ID, strDeviceId);
         try {
@@ -286,8 +283,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/device/{deviceId}/credentials", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/device/{deviceId}/credentials")
     public DeviceCredentials getDeviceCredentialsByDeviceId(@PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
         checkParameter(DEVICE_ID, strDeviceId);
         try {
@@ -307,8 +303,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/device/credentials", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/device/credentials")
     public DeviceCredentials saveDeviceCredentials(@RequestBody DeviceCredentials deviceCredentials) throws ThingsboardException {
         checkNotNull(deviceCredentials);
         try {
@@ -331,8 +326,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/devices", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/devices", params = {"pageSize", "page"})
     public PageData<Device> getTenantDevices(
             @RequestParam int pageSize,
             @RequestParam int page,
@@ -354,8 +348,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/deviceInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/deviceInfos", params = {"pageSize", "page"})
     public PageData<DeviceInfo> getTenantDeviceInfos(
             @RequestParam int pageSize,
             @RequestParam int page,
@@ -381,8 +374,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/devices", params = {"deviceName"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/devices", params = {"deviceName"})
     public Device getTenantDevice(
             @RequestParam String deviceName) throws ThingsboardException {
         try {
@@ -394,8 +386,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/{customerId}/devices", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/customer/{customerId}/devices", params = {"pageSize", "page"})
     public PageData<Device> getCustomerDevices(
             @PathVariable("customerId") String strCustomerId,
             @RequestParam int pageSize,
@@ -421,8 +412,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/{customerId}/deviceInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/customer/{customerId}/deviceInfos", params = {"pageSize", "page"})
     public PageData<DeviceInfo> getCustomerDeviceInfos(
             @PathVariable("customerId") String strCustomerId,
             @RequestParam int pageSize,
@@ -452,8 +442,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/devices", params = {"deviceIds"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/devices", params = {"deviceIds"})
     public List<Device> getDevicesByIds(
             @RequestParam("deviceIds") String[] strDeviceIds) throws ThingsboardException {
         checkArrayParameter("deviceIds", strDeviceIds);
@@ -478,8 +467,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/devices", method = RequestMethod.POST)
-    @ResponseBody
+    @GetMapping(value = "/devices")
     public List<Device> findByQuery(@RequestBody DeviceSearchQuery query) throws ThingsboardException {
         checkNotNull(query);
         checkNotNull(query.getParameters());
@@ -502,8 +490,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/device/types", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/device/types")
     public List<EntitySubtype> getDeviceTypes() throws ThingsboardException {
         try {
             SecurityUser user = getCurrentUser();
@@ -516,8 +503,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/device/{deviceName}/claim", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/customer/device/{deviceName}/claim")
     public DeferredResult<ResponseEntity> claimDevice(@PathVariable(DEVICE_NAME) String deviceName,
                                                       @RequestBody(required = false) ClaimRequest claimRequest) throws ThingsboardException {
         checkParameter(DEVICE_NAME, deviceName);
@@ -570,7 +556,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/device/{deviceName}/claim", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/customer/device/{deviceName}/claim")
     @ResponseStatus(value = HttpStatus.OK)
     public DeferredResult<ResponseEntity> reClaimDevice(@PathVariable(DEVICE_NAME) String deviceName) throws ThingsboardException {
         checkParameter(DEVICE_NAME, deviceName);
@@ -621,8 +607,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/{tenantId}/device/{deviceId}", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/tenant/{tenantId}/device/{deviceId}")
     public Device assignDeviceToTenant(@PathVariable(TENANT_ID) String strTenantId,
                                        @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
         checkParameter(TENANT_ID, strTenantId);
@@ -671,8 +656,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edge/{edgeId}/device/{deviceId}", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/edge/{edgeId}/device/{deviceId}")
     public Device assignDeviceToEdge(@PathVariable(EDGE_ID) String strEdgeId,
                                      @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
@@ -705,8 +689,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edge/{edgeId}/device/{deviceId}", method = RequestMethod.DELETE)
-    @ResponseBody
+    @DeleteMapping(value = "/edge/{edgeId}/device/{deviceId}")
     public Device unassignDeviceFromEdge(@PathVariable(EDGE_ID) String strEdgeId,
                                          @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
@@ -739,8 +722,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/edge/{edgeId}/devices", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/edge/{edgeId}/devices", params = {"pageSize", "page"})
     public PageData<Device> getEdgeDevices(
             @PathVariable(EDGE_ID) String strEdgeId,
             @RequestParam int pageSize,
@@ -782,8 +764,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/devices/count/{otaPackageType}/{deviceProfileId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/devices/count/{otaPackageType}/{deviceProfileId}")
     public Long countByDeviceProfileAndEmptyOtaPackage(@PathVariable("otaPackageType") String otaPackageType,
                                                        @PathVariable("deviceProfileId") String deviceProfileId) throws ThingsboardException {
         checkParameter("OtaPackageType", otaPackageType);
