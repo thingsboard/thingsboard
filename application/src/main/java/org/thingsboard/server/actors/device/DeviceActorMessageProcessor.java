@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.ProtocolStringList;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
@@ -374,65 +375,56 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     private void handleGetAttributesRequest(TbActorCtx context, SessionInfoProto sessionInfo, GetAttributeRequestMsg request) {
         int requestId = request.getRequestId();
-        if (request.getOnlyShared()) {
-            Futures.addCallback(findAllAttributesByScope(DataConstants.SHARED_SCOPE), new FutureCallback<>() {
-                @Override
-                public void onSuccess(@Nullable List<AttributeKvEntry> result) {
-                    GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
-                            .setRequestId(requestId)
-                            .setSharedStateMsg(true)
-                            .addAllSharedAttributeList(toTsKvProtos(result))
-                            .build();
-                    sendToTransport(responseMsg, sessionInfo);
-                }
+        boolean sharedStateMsg = request.getAllShared()
+                && !request.getAllClient()
+                && CollectionUtils.isEmpty(request.getClientAttributeNamesList());
+        Futures.addCallback(getAttributesKvEntries(request, sharedStateMsg), new FutureCallback<>() {
+            @Override
+            public void onSuccess(@Nullable List<List<AttributeKvEntry>> result) {
+                GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
+                        .setRequestId(requestId)
+                        .addAllClientAttributeList(toTsKvProtos(result.get(0)))
+                        .addAllSharedAttributeList(toTsKvProtos(result.get(1)))
+                        .setSharedStateMsg(sharedStateMsg)
+                        .build();
+                sendToTransport(responseMsg, sessionInfo);
+            }
 
-                @Override
-                public void onFailure(Throwable t) {
-                    GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
-                            .setError(t.getMessage())
-                            .setSharedStateMsg(true)
-                            .build();
-                    sendToTransport(responseMsg, sessionInfo);
-                }
-            }, MoreExecutors.directExecutor());
-        } else {
-            Futures.addCallback(getAttributesKvEntries(request), new FutureCallback<>() {
-                @Override
-                public void onSuccess(@Nullable List<List<AttributeKvEntry>> result) {
-                    GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
-                            .setRequestId(requestId)
-                            .addAllClientAttributeList(toTsKvProtos(result.get(0)))
-                            .addAllSharedAttributeList(toTsKvProtos(result.get(1)))
-                            .build();
-                    sendToTransport(responseMsg, sessionInfo);
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
-                            .setError(t.getMessage())
-                            .build();
-                    sendToTransport(responseMsg, sessionInfo);
-                }
-            }, MoreExecutors.directExecutor());
-        }
+            @Override
+            public void onFailure(Throwable t) {
+                GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
+                        .setError(t.getMessage())
+                        .setSharedStateMsg(sharedStateMsg)
+                        .build();
+                sendToTransport(responseMsg, sessionInfo);
+            }
+        }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<List<List<AttributeKvEntry>>> getAttributesKvEntries(GetAttributeRequestMsg request) {
+    private ListenableFuture<List<List<AttributeKvEntry>>> getAttributesKvEntries(GetAttributeRequestMsg request, boolean getAllSharedAttributesState) {
+        if (getAllSharedAttributesState) {
+            return Futures.allAsList(Arrays.asList(Futures.immediateFuture(Collections.emptyList()),
+                    findAllAttributesByScope(DataConstants.SHARED_SCOPE)));
+        }
         ListenableFuture<List<AttributeKvEntry>> clientAttributesFuture;
         ListenableFuture<List<AttributeKvEntry>> sharedAttributesFuture;
-        if (CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
+        if (request.getAllClient() && request.getAllShared()) {
             clientAttributesFuture = findAllAttributesByScope(DataConstants.CLIENT_SCOPE);
             sharedAttributesFuture = findAllAttributesByScope(DataConstants.SHARED_SCOPE);
-        } else if (!CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && !CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
-            clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), DataConstants.CLIENT_SCOPE);
-            sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), DataConstants.SHARED_SCOPE);
-        } else if (CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && !CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
-            clientAttributesFuture = Futures.immediateFuture(Collections.emptyList());
-            sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), DataConstants.SHARED_SCOPE);
         } else {
-            sharedAttributesFuture = Futures.immediateFuture(Collections.emptyList());
-            clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), DataConstants.CLIENT_SCOPE);
+            ProtocolStringList clientAttributeNamesList = request.getClientAttributeNamesList();
+            ProtocolStringList sharedAttributeNamesList = request.getSharedAttributeNamesList();
+
+            if (!CollectionUtils.isEmpty(clientAttributeNamesList) && !CollectionUtils.isEmpty(sharedAttributeNamesList)) {
+                clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), DataConstants.CLIENT_SCOPE);
+                sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), DataConstants.SHARED_SCOPE);
+            } else if (!CollectionUtils.isEmpty(clientAttributeNamesList)) {
+                clientAttributesFuture = findAttributesByScope(toSet(clientAttributeNamesList), DataConstants.CLIENT_SCOPE);
+                sharedAttributesFuture = Futures.immediateFuture(Collections.emptyList());
+            } else {
+                clientAttributesFuture = Futures.immediateFuture(Collections.emptyList());
+                sharedAttributesFuture = findAttributesByScope(toSet(sharedAttributeNamesList), DataConstants.SHARED_SCOPE);
+            }
         }
         return Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture));
     }

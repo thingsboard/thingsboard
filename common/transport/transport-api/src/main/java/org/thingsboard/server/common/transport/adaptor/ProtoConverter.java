@@ -97,10 +97,14 @@ public class ProtoConverter {
         if (!StringUtils.isEmpty(clientKeys)) {
             List<String> clientKeysList = Arrays.asList(clientKeys.split(","));
             result.addAllClientAttributeNames(clientKeysList);
+        } else {
+            result.setAllClient(true);
         }
         if (!StringUtils.isEmpty(sharedKeys)) {
             List<String> sharedKeysList = Arrays.asList(sharedKeys.split(","));
             result.addAllSharedAttributeNames(sharedKeysList);
+        } else {
+            result.setAllShared(true);
         }
         return result.build();
     }
