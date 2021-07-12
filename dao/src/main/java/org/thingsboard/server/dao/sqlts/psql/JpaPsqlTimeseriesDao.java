@@ -47,6 +47,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Component
@@ -111,6 +112,7 @@ public class JpaPsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDa
             stmt.setString(1, partitioning);
             stmt.setLong(2, systemTtl);
             stmt.setLong(3, 0);
+            stmt.setQueryTimeout((int) TimeUnit.HOURS.toSeconds(1));
             stmt.execute();
             printWarnings(stmt);
             try (ResultSet resultSet = stmt.getResultSet()) {
