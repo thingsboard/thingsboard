@@ -148,8 +148,6 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
             Thread.sleep(5000);
 
-            doPost("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/DEVICE", new EntityKey(EntityKeyType.TIME_SERIES, "fw_state"));
-
             List<TsKvEntry> ts = toTimeseries(doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + device.getId().getId() + "/values/timeseries?keys=fw_state", new TypeReference<>() {
             }));
 
