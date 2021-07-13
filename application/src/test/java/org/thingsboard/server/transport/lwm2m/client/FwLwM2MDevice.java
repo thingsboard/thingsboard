@@ -128,10 +128,14 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
 
     private void startDownloading() {
         scheduler.schedule(() -> {
-            state.set(1);
-            fireResourcesChange(3);
-            state.set(2);
-            fireResourcesChange(3);
+            try {
+                state.set(1);
+                fireResourcesChange(3);
+                Thread.sleep(100);
+                state.set(2);
+                fireResourcesChange(3);
+            } catch (Exception e) {
+            }
         }, 100, TimeUnit.MILLISECONDS);
     }
 
@@ -144,7 +148,6 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
                 updateResult.set(1);
                 fireResourcesChange(5);
             } catch (Exception e) {
-
             }
         }, 100, TimeUnit.MILLISECONDS);
     }
