@@ -176,18 +176,25 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
         log.trace("[{}] onAttributesUpdate [{}]", lwM2MClient.getEndpoint(), tsKvProtos);
         Map <String, TransportProtos.TsKvProto> attributesUpdate =  new ConcurrentHashMap<>();
         tsKvProtos.forEach(tsKvProto -> {
-            String pathIdVer = clientContext.getObjectIdByKeyNameFromProfile(lwM2MClient, tsKvProto.getKv().getKey(), false);
-            if (pathIdVer != null) {
-                // #1.1
-                if (lwM2MClient.getSharedAttributes().containsKey(pathIdVer)) {
-                    if (tsKvProto.getTs() >= lwM2MClient.getSharedAttributes().get(pathIdVer).getTs()) {
+            try {
+                String pathIdVer = clientContext.getObjectIdByKeyNameFromProfile(lwM2MClient, tsKvProto.getKv().getKey(), false);
+                if (pathIdVer != null) {
+                    // #1.1
+                    if (lwM2MClient.getSharedAttributes().containsKey(pathIdVer)) {
+                        if (tsKvProto.getTs() >= lwM2MClient.getSharedAttributes().get(pathIdVer).getTs()) {
+                            lwM2MClient.getSharedAttributes().put(pathIdVer, tsKvProto);
+                            attributesUpdate.put(pathIdVer, tsKvProto);
+                        }
+                    } else {
                         lwM2MClient.getSharedAttributes().put(pathIdVer, tsKvProto);
                         attributesUpdate.put(pathIdVer, tsKvProto);
                     }
-                } else {
-                    lwM2MClient.getSharedAttributes().put(pathIdVer, tsKvProto);
-                    attributesUpdate.put(pathIdVer, tsKvProto);
                 }
+            } catch (IllegalArgumentException e){
+                log.error("Failed update resource [{}] onAttributesUpdate [{}]", lwM2MClient.getEndpoint(), e.getMessage());
+                String logMsg = String.format("%s: Failed update resource onAttributesUpdate %s.",
+                        LOG_LWM2M_ERROR, e.getMessage());
+                logService.log(lwM2MClient, logMsg);
             }
         });
         clientContext.update(lwM2MClient);
