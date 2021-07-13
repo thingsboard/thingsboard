@@ -135,4 +135,13 @@ export class AttributeService {
 
     return this.http.get<TimeseriesData>(url, defaultHttpOptionsFromConfig(config));
   }
+
+  public getEntityTimeseriesLatest(entityId: EntityId, keys?: Array<string>,
+                                   useStrictDataTypes = false, config?: RequestConfig): Observable<TimeseriesData> {
+    let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/values/timeseries?useStrictDataTypes=${useStrictDataTypes}`;
+    if (isDefinedAndNotNull(keys) && keys.length) {
+      url += `&keys=${keys.join(',')}`;
+    }
+    return this.http.get<TimeseriesData>(url, defaultHttpOptionsFromConfig(config));
+  }
 }
