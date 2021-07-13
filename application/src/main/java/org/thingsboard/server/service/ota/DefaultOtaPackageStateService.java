@@ -274,14 +274,18 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
             @Override
             public void onSuccess(@Nullable Void tmp) {
                 log.trace("[{}] Success save telemetry with target firmware for device!", deviceId);
+                updateAttributes(device, otaPackage, ts, tenantId, deviceId, otaPackageType);
             }
 
             @Override
             public void onFailure(Throwable t) {
                 log.error("[{}] Failed to save telemetry with target firmware for device!", deviceId, t);
+                updateAttributes(device, otaPackage, ts, tenantId, deviceId, otaPackageType);
             }
         });
+    }
 
+    private void updateAttributes(Device device, OtaPackageInfo otaPackage, long ts, TenantId tenantId, DeviceId deviceId, OtaPackageType otaPackageType) {
         List<AttributeKvEntry> attributes = new ArrayList<>();
         attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, TITLE), otaPackage.getTitle())));
         attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, VERSION), otaPackage.getVersion())));

@@ -56,11 +56,11 @@ export class OtaUpdateComponent extends EntityComponent<OtaPackage> implements O
 
   ngOnInit() {
     super.ngOnInit();
-    this.entityForm.get('resource').valueChanges.pipe(
+    this.entityForm.get('isURL').valueChanges.pipe(
       filter(() => this.isAdd),
       takeUntil(this.destroy$)
-    ).subscribe((resource) => {
-      if (resource === 'file') {
+    ).subscribe((isURL) => {
+      if (isURL === false) {
         this.entityForm.get('url').clearValidators();
         this.entityForm.get('file').setValidators(Validators.required);
         this.entityForm.get('url').updateValueAndValidity({emitEvent: false});
@@ -97,7 +97,7 @@ export class OtaUpdateComponent extends EntityComponent<OtaPackage> implements O
       checksumAlgorithm: [entity && entity.checksumAlgorithm ? entity.checksumAlgorithm : ChecksumAlgorithm.SHA256],
       checksum: [entity ? entity.checksum : '', Validators.maxLength(1020)],
       url: [entity ? entity.url : ''],
-      resource: ['file'],
+      isURL: [false],
       additionalInfo: this.fb.group(
         {
           description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],
@@ -127,7 +127,7 @@ export class OtaUpdateComponent extends EntityComponent<OtaPackage> implements O
       dataSize: entity.dataSize,
       contentType: entity.contentType,
       url: entity.url,
-      resource: isNotEmptyStr(entity.url) ? 'url' : 'file',
+      isURL: isNotEmptyStr(entity.url),
       additionalInfo: {
         description: entity.additionalInfo ? entity.additionalInfo.description : ''
       }
@@ -172,12 +172,11 @@ export class OtaUpdateComponent extends EntityComponent<OtaPackage> implements O
   }
 
   prepareFormValue(formValue: any): any {
-    if (formValue.resource === 'url') {
+    if (formValue.isURL) {
       delete formValue.file;
     } else {
       delete formValue.url;
     }
-    delete formValue.resource;
     delete formValue.generateChecksum;
     return super.prepareFormValue(formValue);
   }

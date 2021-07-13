@@ -32,12 +32,13 @@ import org.springframework.web.multipart.MultipartFile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
-import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
+import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -109,12 +110,12 @@ public class OtaPackageController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/otaPackage", method = RequestMethod.POST)
     @ResponseBody
-    public OtaPackageInfo saveOtaPackageInfo(@RequestBody OtaPackageInfo otaPackageInfo) throws ThingsboardException {
+    public OtaPackageInfo saveOtaPackageInfo(@RequestBody SaveOtaPackageInfoRequest otaPackageInfo) throws ThingsboardException {
         boolean created = otaPackageInfo.getId() == null;
         try {
             otaPackageInfo.setTenantId(getTenantId());
             checkEntity(otaPackageInfo.getId(), otaPackageInfo, Resource.OTA_PACKAGE);
-            OtaPackageInfo savedOtaPackageInfo = otaPackageService.saveOtaPackageInfo(otaPackageInfo);
+            OtaPackageInfo savedOtaPackageInfo = otaPackageService.saveOtaPackageInfo(new OtaPackageInfo(otaPackageInfo), otaPackageInfo.isUsesUrl());
             logEntityAction(savedOtaPackageInfo.getId(), savedOtaPackageInfo,
                     null, created ? ActionType.ADDED : ActionType.UPDATED, null);
             return savedOtaPackageInfo;
