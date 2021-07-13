@@ -116,6 +116,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         fwUpdateResource: [{value: '', disabled: true}, []],
         swUpdateResource: [{value: '', disabled: true}, []],
         powerMode: [PowerMode.DRX, Validators.required],
+        edrxCycle: [0],
         compositeOperationsSupport: [false]
       })
     });
@@ -149,6 +150,20 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateResource').disable({emitEvent: false});
       }
       this.otaUpdateSwStrategyValidate(true);
+    });
+    this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.powerMode').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((powerMode: PowerMode) => {
+      if (powerMode === PowerMode.E_DRX) {
+        this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.edrxCycle').enable({emitEvent: false});
+        this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.edrxCycle').patchValue(0, {emitEvent: false});
+        this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.edrxCycle')
+          .setValidators([Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]);
+      } else {
+        this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.edrxCycle').disable({emitEvent: false});
+        this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.edrxCycle').clearValidators();
+      }
+      this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.edrxCycle').updateValueAndValidity({emitEvent: false});
     });
     this.lwm2mDeviceProfileFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -256,10 +271,13 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
           fwUpdateResource: fwResource,
           swUpdateResource: swResource,
           powerMode: this.configurationValue.clientLwM2mSettings.powerMode || PowerMode.DRX,
+          edrxCycle: this.configurationValue.clientLwM2mSettings.edrxCycle || 0,
           compositeOperationsSupport: this.configurationValue.clientLwM2mSettings.compositeOperationsSupport || false
         }
       },
       {emitEvent: false});
+    this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.powerMode')
+      .patchValue(this.configurationValue.clientLwM2mSettings.powerMode || PowerMode.DRX, {emitEvent: false, onlySelf: true});
     this.configurationValue.clientLwM2mSettings.fwUpdateResource = fwResource;
     this.configurationValue.clientLwM2mSettings.swUpdateResource = swResource;
     this.isFwUpdateStrategy = this.configurationValue.clientLwM2mSettings.fwUpdateStrategy === 2;

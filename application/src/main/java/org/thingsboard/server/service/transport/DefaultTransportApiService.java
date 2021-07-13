@@ -462,9 +462,12 @@ public class DefaultTransportApiService implements TransportApiService {
 
     private DeviceInfoProto getDeviceInfoProto(Device device) throws JsonProcessingException {
         PowerMode powerMode = null;
+        Long edrxCycle = null;
         switch (device.getDeviceData().getTransportConfiguration().getType()) {
             case LWM2M:
-                powerMode = ((Lwm2mDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration()).getPowerMode();
+                Lwm2mDeviceTransportConfiguration transportConfiguration = (Lwm2mDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
+                powerMode = transportConfiguration.getPowerMode();
+                edrxCycle = transportConfiguration.getEdrxCycle();
                 break;
         }
 
@@ -482,6 +485,7 @@ public class DefaultTransportApiService implements TransportApiService {
                 .setAdditionalInfo(mapper.writeValueAsString(device.getAdditionalInfo()));
         if (powerMode != null) {
             builder.setPowerMode(powerMode.name());
+            builder.setEdrxCycle(edrxCycle);
         }
         return builder.build();
     }

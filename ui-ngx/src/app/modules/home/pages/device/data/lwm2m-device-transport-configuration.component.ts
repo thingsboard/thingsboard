@@ -14,16 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import {
-  DeviceTransportConfiguration,
-  DeviceTransportType, Lwm2mDeviceTransportConfiguration
-} from '@shared/models/device.models';
-import {PowerMode, PowerModeTranslationMap} from "@home/components/profile/device/lwm2m/lwm2m-profile-config.models";
+import { DeviceTransportConfiguration, Lwm2mDeviceTransportConfiguration } from '@shared/models/device.models';
+import { PowerMode, PowerModeTranslationMap } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
+import { takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-lwm2m-device-transport-configuration',
@@ -35,7 +35,7 @@ import {PowerMode, PowerModeTranslationMap} from "@home/components/profile/devic
     multi: true
   }]
 })
-export class Lwm2mDeviceTransportConfigurationComponent implements ControlValueAccessor, OnInit {
+export class Lwm2mDeviceTransportConfigurationComponent implements ControlValueAccessor, OnInit, OnDestroy {
 
   lwm2mDeviceTransportConfigurationFormGroup: FormGroup;
   powerMods = Object.values(PowerMode);
@@ -53,6 +53,7 @@ export class Lwm2mDeviceTransportConfigurationComponent implements ControlValueA
   @Input()
   disabled: boolean;
 
+  private destroy$ = new Subject();
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
@@ -68,11 +69,33 @@ export class Lwm2mDeviceTransportConfigurationComponent implements ControlValueA
 
   ngOnInit() {
     this.lwm2mDeviceTransportConfigurationFormGroup = this.fb.group({
-      powerMode: [null]
+      powerMode: [null],
+      edrxCycle: [0]
     });
-    this.lwm2mDeviceTransportConfigurationFormGroup.valueChanges.subscribe(() => {
+    this.lwm2mDeviceTransportConfigurationFormGroup.get('powerMode').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((powerMode: PowerMode) => {
+      if (powerMode === PowerMode.E_DRX) {
+        this.lwm2mDeviceTransportConfigurationFormGroup.get('edrxCycle').enable({emitEvent: false});
+        this.lwm2mDeviceTransportConfigurationFormGroup.get('edrxCycle').patchValue(0, {emitEvent: false});
+        this.lwm2mDeviceTransportConfigurationFormGroup.get('edrxCycle')
+          .setValidators([Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]);
+      } else {
+        this.lwm2mDeviceTransportConfigurationFormGroup.get('edrxCycle').disable({emitEvent: false});
+        this.lwm2mDeviceTransportConfigurationFormGroup.get('edrxCycle').clearValidators();
+      }
+      this.lwm2mDeviceTransportConfigurationFormGroup.get('edrxCycle').updateValueAndValidity({emitEvent: false});
+    });
+    this.lwm2mDeviceTransportConfigurationFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
       this.updateModel();
     });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -85,13 +108,18 @@ export class Lwm2mDeviceTransportConfigurationComponent implements ControlValueA
   }
 
   writeValue(value: Lwm2mDeviceTransportConfiguration | null): void {
-    this.lwm2mDeviceTransportConfigurationFormGroup.patchValue(value, {emitEvent: false});
+    if (isDefinedAndNotNull(value)) {
+      this.lwm2mDeviceTransportConfigurationFormGroup.get('powerMode').patchValue(value.powerMode, {emitEvent: false, onlySelf: true});
+      this.lwm2mDeviceTransportConfigurationFormGroup.get('edrxCycle').patchValue(value.edrxCycle || 0, {emitEvent: false});
+    } else {
+      this.lwm2mDeviceTransportConfigurationFormGroup.patchValue({powerMode: null, edrxCycle: 0}, {emitEvent: false});
+    }
   }
 
   private updateModel() {
     let configuration: DeviceTransportConfiguration = null;
     if (this.lwm2mDeviceTransportConfigurationFormGroup.valid) {
-      configuration = this.lwm2mDeviceTransportConfigurationFormGroup.getRawValue();
+      configuration = this.lwm2mDeviceTransportConfigurationFormGroup.value;
       // configuration.type = DeviceTransportType.LWM2M;
     }
     this.propagateChange(configuration);
