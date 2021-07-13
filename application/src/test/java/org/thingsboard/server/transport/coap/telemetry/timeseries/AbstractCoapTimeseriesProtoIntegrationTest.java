@@ -274,7 +274,6 @@ public abstract class AbstractCoapTimeseriesProtoIntegrationTest extends Abstrac
         assertNotNull(valuesDescriptor);
 
         DynamicMessage valuesMsg = valuesBuilder
-                .setField(valuesDescriptor.findFieldByName("key4"), 0)
                 .setField(valuesDescriptor.findFieldByName("key5"), jsonObject)
                 .build();
 
@@ -286,7 +285,7 @@ public abstract class AbstractCoapTimeseriesProtoIntegrationTest extends Abstrac
                 .setField(postTelemetryMsgDescriptor.findFieldByName("values"), valuesMsg)
                 .build();
 
-        processTestPostTelemetry(postTelemetryMsg.toByteArray(), Collections.singletonList("key5"), true, true);
+        processTestPostTelemetry(postTelemetryMsg.toByteArray(), Arrays.asList("key1", "key2", "key3", "key4", "key5"), true, true);
     }
 
 }
