@@ -191,7 +191,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
 
     private void pushUpdateToClientIfNeeded(LwM2mClient lwM2MClient, Object valueOld, Object newValue, String versionedId) {
         if (newValue != null && (valueOld == null || !newValue.toString().equals(valueOld.toString()))) {
-            TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionedId).value(newValue).timeout(this.config.getTimeout()).build();
+            TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionedId).value(newValue).timeout(clientContext.getRequestTimeout(lwM2MClient)).build();
             downlinkHandler.sendWriteReplaceRequest(lwM2MClient, request, new TbLwM2MWriteResponseCallback(uplinkHandler, logService, lwM2MClient, versionedId));
         } else {
             log.error("Failed update resource [{}] [{}]", versionedId, newValue);

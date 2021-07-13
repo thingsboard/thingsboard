@@ -29,6 +29,8 @@ public class Lwm2mDeviceTransportConfiguration implements DeviceTransportConfigu
 
     private PowerMode powerMode;
 
+    private Long edrxCycle;
+
     @JsonIgnore
     private Map<String, Object> properties = new HashMap<>();
 

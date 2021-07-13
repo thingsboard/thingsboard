@@ -81,7 +81,7 @@ public class TbSendRPCRequestNode implements TbNode {
             tmp = msg.getMetaData().getValue("oneway");
             boolean oneway = !StringUtils.isEmpty(tmp) && Boolean.parseBoolean(tmp);
 
-            tmp = msg.getMetaData().getValue("persisted");
+            tmp = msg.getMetaData().getValue(DataConstants.PERSISTENT);
             boolean persisted = !StringUtils.isEmpty(tmp) && Boolean.parseBoolean(tmp);
 
             tmp = msg.getMetaData().getValue("requestUUID");

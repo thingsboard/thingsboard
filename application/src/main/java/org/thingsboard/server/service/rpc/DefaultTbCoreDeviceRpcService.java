@@ -157,7 +157,7 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
         metaData.putValue("originServiceId", serviceId);
         metaData.putValue("expirationTime", Long.toString(msg.getExpirationTime()));
         metaData.putValue("oneway", Boolean.toString(msg.isOneway()));
-        metaData.putValue("persisted", Boolean.toString(msg.isPersisted()));
+        metaData.putValue(DataConstants.PERSISTENT, Boolean.toString(msg.isPersisted()));
 
         Device device = deviceService.findDeviceById(msg.getTenantId(), msg.getDeviceId());
         if (device != null) {
