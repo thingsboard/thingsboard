@@ -161,17 +161,12 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         }
         assertNotNull(values);
 
+        if (withTs) {
+            assertTs(values, expectedKeys, 10000, 0);
+        }
         if (presenceFieldsTest) {
-            if (withTs) {
-                assertTsForExplicitProtoFieldValues(values, expectedKeys, 10000, 0);
-                assertExplicitProtoFieldValuesWithTs(values);
-            } else {
-                assertExplicitProtoFieldValues(values);
-            }
+            assertExplicitProtoFieldValues(values);
         } else {
-            if (withTs) {
-                assertTs(values, expectedKeys, 10000, 0);
-            }
             assertValues(values, 0);
         }
     }
@@ -290,16 +285,6 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
                     break;
             }
         }
-    }
-
-    private void assertExplicitProtoFieldValuesWithTs(Map<String, List<Map<String, Object>>> deviceValues) {
-        assertEquals(1, deviceValues.size());
-        List<Map<String, Object>> tsKv = deviceValues.get("key5");
-        assertEquals("{\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}", tsKv.get(0).get("value"));
-    }
-
-    private void assertTsForExplicitProtoFieldValues(Map<String, List<Map<String, Object>>> deviceValues, List<String> expectedKeys, int ts, int arrayIndex) {
-        assertEquals(ts, deviceValues.get(expectedKeys.get(0)).get(arrayIndex).get("ts"));
     }
 
     private void assertTs(Map<String, List<Map<String, Object>>> deviceValues, List<String> expectedKeys, int ts, int arrayIndex) {

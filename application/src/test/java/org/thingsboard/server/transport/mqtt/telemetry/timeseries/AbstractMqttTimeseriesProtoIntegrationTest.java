@@ -268,7 +268,6 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
         assertNotNull(valuesDescriptor);
 
         DynamicMessage valuesMsg = valuesBuilder
-                .setField(valuesDescriptor.findFieldByName("key4"), 0)
                 .setField(valuesDescriptor.findFieldByName("key5"), jsonObject)
                 .build();
 
@@ -280,7 +279,7 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
                 .setField(postTelemetryMsgDescriptor.findFieldByName("values"), valuesMsg)
                 .build();
 
-        processTelemetryTest(POST_DATA_TELEMETRY_TOPIC, Collections.singletonList("key5"), postTelemetryMsg.toByteArray(), true, true);
+        processTelemetryTest(POST_DATA_TELEMETRY_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), postTelemetryMsg.toByteArray(), true, true);
     }
 
     @Test
