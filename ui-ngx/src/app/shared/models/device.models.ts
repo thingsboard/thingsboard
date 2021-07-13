@@ -30,6 +30,7 @@ import { AbstractControl, ValidationErrors } from '@angular/forms';
 import { OtaPackageId } from '@shared/models/id/ota-package-id';
 import { DashboardId } from '@shared/models/id/dashboard-id';
 import { DataType } from '@shared/models/constants';
+import { PowerMode } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
 
 export enum DeviceProfileType {
   DEFAULT = 'DEFAULT',
@@ -573,6 +574,8 @@ export interface CoapDeviceTransportConfiguration {
 }
 
 export interface Lwm2mDeviceTransportConfiguration {
+  powerMode?: PowerMode | null;
+  edrxCycle?: number;
   [key: string]: any;
 }
 
@@ -676,6 +679,20 @@ export const credentialTypeNames = new Map<DeviceCredentialsType, string>(
     [DeviceCredentialsType.X509_CERTIFICATE, 'X.509'],
     [DeviceCredentialsType.MQTT_BASIC, 'MQTT Basic'],
     [DeviceCredentialsType.LWM2M_CREDENTIALS, 'LwM2M Credentials']
+  ]
+);
+
+export const credentialTypesByTransportType = new Map<DeviceTransportType, DeviceCredentialsType[]>(
+  [
+    [DeviceTransportType.DEFAULT, [
+      DeviceCredentialsType.ACCESS_TOKEN, DeviceCredentialsType.X509_CERTIFICATE, DeviceCredentialsType.MQTT_BASIC
+    ]],
+    [DeviceTransportType.MQTT, [
+      DeviceCredentialsType.ACCESS_TOKEN, DeviceCredentialsType.X509_CERTIFICATE, DeviceCredentialsType.MQTT_BASIC
+    ]],
+    [DeviceTransportType.COAP, [DeviceCredentialsType.ACCESS_TOKEN, DeviceCredentialsType.X509_CERTIFICATE]],
+    [DeviceTransportType.LWM2M, [DeviceCredentialsType.LWM2M_CREDENTIALS]],
+    [DeviceTransportType.SNMP, [DeviceCredentialsType.ACCESS_TOKEN]]
   ]
 );
 

@@ -27,6 +27,7 @@ public class OtherConfiguration {
     private Integer swUpdateStrategy;
     private Integer clientOnlyObserveAfterConnect;
     private PowerMode powerMode;
+    private Long edrxCycle;
     private String fwUpdateResource;
     private String swUpdateResource;
     private boolean compositeOperationsSupport;

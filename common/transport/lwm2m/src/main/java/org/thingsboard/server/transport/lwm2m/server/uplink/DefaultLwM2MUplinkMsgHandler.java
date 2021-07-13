@@ -457,7 +457,7 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     }
 
     private void sendDiscoverRequest(LwM2mClient lwM2MClient, String targetId) {
-        TbLwM2MDiscoverRequest request = TbLwM2MDiscoverRequest.builder().versionedId(targetId).timeout(this.config.getTimeout()).build();
+        TbLwM2MDiscoverRequest request = TbLwM2MDiscoverRequest.builder().versionedId(targetId).timeout(clientContext.getRequestTimeout(lwM2MClient)).build();
         defaultLwM2MDownlinkMsgHandler.sendDiscoverRequest(lwM2MClient, request, new TbLwM2MDiscoverCallback(logService, lwM2MClient, targetId));
     }
 
@@ -466,7 +466,7 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     }
 
     private void sendReadRequest(LwM2mClient lwM2MClient, String versionedId, DownlinkRequestCallback<ReadRequest, ReadResponse> callback) {
-        TbLwM2MReadRequest request = TbLwM2MReadRequest.builder().versionedId(versionedId).timeout(this.config.getTimeout()).build();
+        TbLwM2MReadRequest request = TbLwM2MReadRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(lwM2MClient)).build();
         defaultLwM2MDownlinkMsgHandler.sendReadRequest(lwM2MClient, request, callback);
     }
 
@@ -475,17 +475,17 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     }
 
     private void sendObserveRequest(LwM2mClient lwM2MClient, String versionedId, DownlinkRequestCallback<ObserveRequest, ObserveResponse> callback) {
-        TbLwM2MObserveRequest request = TbLwM2MObserveRequest.builder().versionedId(versionedId).timeout(this.config.getTimeout()).build();
+        TbLwM2MObserveRequest request = TbLwM2MObserveRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(lwM2MClient)).build();
         defaultLwM2MDownlinkMsgHandler.sendObserveRequest(lwM2MClient, request, callback);
     }
 
     private void sendWriteAttributesRequest(LwM2mClient lwM2MClient, String targetId, ObjectAttributes params) {
-        TbLwM2MWriteAttributesRequest request = TbLwM2MWriteAttributesRequest.builder().versionedId(targetId).attributes(params).timeout(this.config.getTimeout()).build();
+        TbLwM2MWriteAttributesRequest request = TbLwM2MWriteAttributesRequest.builder().versionedId(targetId).attributes(params).timeout(clientContext.getRequestTimeout(lwM2MClient)).build();
         defaultLwM2MDownlinkMsgHandler.sendWriteAttributesRequest(lwM2MClient, request, new TbLwM2MWriteAttributesCallback(logService, lwM2MClient, targetId));
     }
 
     private void sendCancelObserveRequest(String versionedId, LwM2mClient client) {
-        TbLwM2MCancelObserveRequest request = TbLwM2MCancelObserveRequest.builder().versionedId(versionedId).timeout(this.config.getTimeout()).build();
+        TbLwM2MCancelObserveRequest request = TbLwM2MCancelObserveRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(client)).build();
         defaultLwM2MDownlinkMsgHandler.sendCancelObserveRequest(client, request, new TbLwM2MCancelObserveCallback(logService, client, versionedId));
     }
 

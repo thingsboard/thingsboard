@@ -26,6 +26,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.data.PowerMode;
+import org.thingsboard.server.common.data.device.data.lwm2m.OtherConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
@@ -344,6 +345,24 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     public boolean isComposite(LwM2mClient client) {
         return LwM2mVersion.fromVersionStr(client.getRegistration().getLwM2mVersion()).isComposite() &
                 getProfile(client.getProfileId()).getClientLwM2mSettings().isCompositeOperationsSupport();
+    }
+
+    @Override
+    public Long getRequestTimeout(LwM2mClient client) {
+        Long timeout = null;
+        if (PowerMode.E_DRX.equals(client.getPowerMode()) && client.getEdrxCycle() != null) {
+            timeout = client.getEdrxCycle();
+        } else {
+            var clientProfile = getProfile(client.getProfileId());
+            OtherConfiguration clientLwM2mSettings = clientProfile.getClientLwM2mSettings();
+            if (PowerMode.E_DRX.equals(clientLwM2mSettings.getPowerMode())) {
+                timeout = clientLwM2mSettings.getEdrxCycle();
+            }
+        }
+        if (timeout == null || timeout == 0L) {
+            timeout = this.config.getTimeout();
+        }
+        return timeout;
     }
 
     private boolean validateResourceInModel(LwM2mClient lwM2mClient, String pathIdVer, boolean isWritableNotOptional) {

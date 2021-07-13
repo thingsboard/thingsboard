@@ -35,7 +35,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.dir>${basedir}/../..</main.dir>
         <blackBoxTests.skip>true</blackBoxTests.skip>
-        <testcontainers.version>1.9.1</testcontainers.version>
+        <testcontainers.version>1.11.4</testcontainers.version>
         <zeroturnaround.version>1.10</zeroturnaround.version>
         <httpclient.version>4.5.13</httpclient.version>
     </properties>

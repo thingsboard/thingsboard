@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.msa;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.ClassRule;
 import org.junit.extensions.cpsuite.ClasspathSuite;
 import org.junit.rules.ExternalResource;
@@ -32,6 +33,7 @@ import java.util.Map;
 
 @RunWith(ClasspathSuite.class)
 @ClasspathSuite.ClassnameFilters({"org.thingsboard.server.msa.*Test"})
+@Slf4j
 public class ContainerTestSuite {
 
     private static DockerComposeContainer<?> testContainer;
@@ -43,17 +45,28 @@ public class ContainerTestSuite {
     public static DockerComposeContainer getTestContainer() {
         if (testContainer == null) {
             boolean skipTailChildContainers = Boolean.valueOf(System.getProperty("blackBoxTests.skipTailChildContainers"));
-            testContainer = new DockerComposeContainer<>(
-                    new File("./../../docker/docker-compose.yml"),
-                    new File("./../../docker/docker-compose.postgres.yml"),
-                    new File("./../../docker/docker-compose.postgres.volumes.yml"),
-                    new File("./../../docker/docker-compose.kafka.yml"))
-                    .withPull(false)
-                    .withLocalCompose(true)
-                    .withTailChildContainers(!skipTailChildContainers)
-                    .withEnv(installTb.getEnv())
-                    .withEnv("LOAD_BALANCER_NAME", "")
-                    .withExposedService("haproxy", 80, Wait.forHttp("/swagger-ui.html").withStartupTimeout(Duration.ofSeconds(400)));
+            try {
+                String logRegexp = ".*Going to recalculate partitions.*";
+
+                testContainer = new DockerComposeContainer<>(
+                        new File("./../../docker/docker-compose.yml"),
+                        new File("./../../docker/docker-compose.postgres.yml"),
+                        new File("./../../docker/docker-compose.postgres.volumes.yml"),
+                        new File("./../../docker/docker-compose.kafka.yml"))
+                        .withPull(false)
+                        .withLocalCompose(true)
+                        .withTailChildContainers(!skipTailChildContainers)
+                        .withEnv(installTb.getEnv())
+                        .withEnv("LOAD_BALANCER_NAME", "")
+                        .withExposedService("haproxy", 80, Wait.forHttp("/swagger-ui.html").withStartupTimeout(Duration.ofSeconds(400)))
+                        .waitingFor("tb-http-transport1", Wait.forLogMessage(logRegexp, 1).withStartupTimeout(Duration.ofSeconds(400)))
+                        .waitingFor("tb-http-transport2", Wait.forLogMessage(logRegexp, 1).withStartupTimeout(Duration.ofSeconds(400)))
+                        .waitingFor("tb-mqtt-transport1", Wait.forLogMessage(logRegexp, 1).withStartupTimeout(Duration.ofSeconds(400)))
+                        .waitingFor("tb-mqtt-transport2", Wait.forLogMessage(logRegexp, 1).withStartupTimeout(Duration.ofSeconds(400)));
+            } catch (Exception e) {
+                log.error("Failed to create test container", e);
+                throw e;
+            }
         }
         return testContainer;
     }
