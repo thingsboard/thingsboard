@@ -63,7 +63,7 @@ public class TbKafkaSettings {
     @Value("${queue.kafka.linger.ms}")
     private long lingerMs;
 
-    @Value("${queue.kafka.max.request.size}")
+    @Value("${queue.kafka.max.request.size:1048576}")
     private int maxRequestSize;
 
     @Value("${queue.kafka.max.in.flight.requests.per.connection:5}")
