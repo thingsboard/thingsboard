@@ -2278,7 +2278,11 @@
         "email": "Email",
         "login-with": "Login with {{name}}",
         "or": "or",
-        "error": "Login error"
+        "error": "Login error",
+        "password-required": "Password is required",
+        "password-min-length": "Password should contains at least 6 symbols",
+        "password-is-blank": "Password should not be blank",
+        "password2-required": "Repeat password please"
     },
     "ota-update": {
       "add": "Add package",

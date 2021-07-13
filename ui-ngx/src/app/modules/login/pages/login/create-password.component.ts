@@ -19,7 +19,7 @@ import { AuthService } from '@core/auth/auth.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
-import { FormBuilder } from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -36,8 +36,8 @@ export class CreatePasswordComponent extends PageComponent implements OnInit, On
   sub: Subscription;
 
   createPassword = this.fb.group({
-    password: [''],
-    password2: ['']
+    password: ['', [Validators.required, Validators.minLength(6), Validators.pattern('(.|\\s)*\\S(.|\\s)*')]],
+    password2: ['', Validators.required]
   });
 
   constructor(protected store: Store<AppState>,
