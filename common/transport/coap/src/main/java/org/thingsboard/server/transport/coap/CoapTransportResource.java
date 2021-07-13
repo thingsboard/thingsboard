@@ -309,7 +309,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                                 transportConfigurationContainer.getRpcRequestDynamicMessageBuilder(), getTokenFromRequest(request));
                         transportService.process(sessionInfo,
                                 TransportProtos.SubscribeToRPCMsg.getDefaultInstance(),
-                                new CoapOkCallback(exchange, CoAP.ResponseCode.VALID, CoAP.ResponseCode.INTERNAL_SERVER_ERROR)
+                                new CoapNoOpCallback(exchange)
                         );
                     }
                     break;
@@ -448,7 +448,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         }
     }
 
-    private static class CoapSessionListener implements SessionMsgListener {
+    private class CoapSessionListener implements SessionMsgListener {
 
         private final CoapTransportResource coapTransportResource;
         private final CoapExchange exchange;
@@ -496,18 +496,21 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         @Override
         public void onToDeviceRpcRequest(UUID sessionId, TransportProtos.ToDeviceRpcRequestMsg msg) {
             log.trace("[{}] Received RPC command to device", sessionId);
-            boolean successful = true;
             try {
-                exchange.respond(coapTransportAdaptor.convertToPublish(isConRequest(), msg, rpcRequestDynamicMessageBuilder));
+                int requestId = respond(coapTransportAdaptor.convertToPublish(isConRequest(), msg, rpcRequestDynamicMessageBuilder), exchange, sessionInfo);
+                if (msg.getPersisted()) {
+                    transportContext.getRpcAwaitingAck().put(requestId, msg);
+                    transportContext.getScheduler().schedule(() -> {
+                        TransportProtos.ToDeviceRpcRequestMsg awaitingAckMsg = transportContext.getRpcAwaitingAck().remove(requestId);
+                        if (awaitingAckMsg != null) {
+                            transportService.process(sessionInfo, msg, true, TransportServiceCallback.EMPTY);
+                        }
+                    }, Math.max(0, msg.getExpirationTime() - System.currentTimeMillis()), TimeUnit.MILLISECONDS);
+                }
             } catch (AdaptorException e) {
                 log.trace("Failed to reply due to error", e);
                 closeObserveRelationAndNotify(sessionId, CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
-                successful = false;
-            } finally {
-                coapTransportResource.transportService.process(sessionInfo, msg, !successful, TransportServiceCallback.EMPTY);
-                if (!successful) {
-                    closeAndDeregister();
-                }
+                closeAndDeregister();
             }
         }
 
