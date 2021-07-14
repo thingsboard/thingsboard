@@ -443,7 +443,7 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
             const dataPageData = subscription.dataPages[0];
             const childNodes: HierarchyNavTreeNode[] = [];
             datasourcesPageData.data.forEach((childDatasource, index) => {
-              childNodes.push(this.datasourceToNode(childDatasource as HierarchyNodeDatasource, dataPageData.data[index]));
+              childNodes.push(this.datasourceToNode(childDatasource as HierarchyNodeDatasource, dataPageData.data[index], nodeCtx));
             });
             nodeCtx.childrenNodesLoaded = true;
             childrenNodesLoadCb(this.prepareNodes(childNodes));

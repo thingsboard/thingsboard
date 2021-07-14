@@ -197,3 +197,17 @@ $$;
 ALTER TABLE api_usage_state
     ADD COLUMN IF NOT EXISTS alarm_exec VARCHAR(32);
 UPDATE api_usage_state SET alarm_exec = 'ENABLED' WHERE alarm_exec IS NULL;
+
+CREATE TABLE IF NOT EXISTS rpc (
+    id uuid NOT NULL CONSTRAINT rpc_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    device_id uuid NOT NULL,
+    expiration_time bigint NOT NULL,
+    request varchar(10000000) NOT NULL,
+    response varchar(10000000),
+    status varchar(255) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_rpc_tenant_id_device_id ON rpc(tenant_id, device_id);
+

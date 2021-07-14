@@ -35,6 +35,7 @@ public class DataConstants {
     public static final String IS_CLEARED_ALARM = "isClearedAlarm";
     public static final String ALARM_CONDITION_REPEATS = "alarmConditionRepeats";
     public static final String ALARM_CONDITION_DURATION = "alarmConditionDuration";
+    public static final String PERSISTENT = "persistent";
 
     public static final String[] allScopes() {
         return new String[]{CLIENT_SCOPE, SHARED_SCOPE, SERVER_SCOPE};
@@ -75,6 +76,12 @@ public class DataConstants {
     public static final String ENTITY_UNASSIGNED_FROM_EDGE = "ENTITY_UNASSIGNED_FROM_EDGE";
 
     public static final String RPC_CALL_FROM_SERVER_TO_DEVICE = "RPC_CALL_FROM_SERVER_TO_DEVICE";
+
+    public static final String RPC_QUEUED = "RPC_QUEUED";
+    public static final String RPC_DELIVERED = "RPC_DELIVERED";
+    public static final String RPC_SUCCESSFUL = "RPC_SUCCESSFUL";
+    public static final String RPC_TIMEOUT = "RPC_TIMEOUT";
+    public static final String RPC_FAILED = "RPC_FAILED";
 
     public static final String DEFAULT_SECRET_KEY = "";
     public static final String SECRET_KEY_FIELD_NAME = "secretKey";

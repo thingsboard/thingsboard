@@ -20,7 +20,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class PSKClientCredentials extends HasKey {
+public class PSKClientCredentials extends AbstractLwM2MClientCredentialsWithKey {
     private String identity;
 
     @Override

@@ -19,9 +19,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbEmail;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
@@ -29,7 +29,6 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import javax.mail.internet.MimeMessage;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -73,7 +72,7 @@ public class TbSendEmailNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         try {
             validateType(msg.getType());
-            EmailPojo email = getEmail(msg);
+            TbEmail email = getEmail(msg);
             withCallback(ctx.getMailExecutor().executeAsync(() -> {
                         sendEmail(ctx, msg, email);
                         return null;
@@ -85,29 +84,16 @@ public class TbSendEmailNode implements TbNode {
         }
     }
 
-    private void sendEmail(TbContext ctx, TbMsg msg, EmailPojo email) throws Exception {
+    private void sendEmail(TbContext ctx, TbMsg msg, TbEmail email) throws Exception {
         if (this.config.isUseSystemSmtpSettings()) {
-            ctx.getMailService().send(ctx.getTenantId(), msg.getCustomerId(), email.getFrom(), email.getTo(), email.getCc(),
-                    email.getBcc(), email.getSubject(), email.getBody());
+            ctx.getMailService().send(ctx.getTenantId(), msg.getCustomerId(), email);
         } else {
-            MimeMessage mailMsg = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mailMsg, "UTF-8");
-            helper.setFrom(email.getFrom());
-            helper.setTo(email.getTo().split("\\s*,\\s*"));
-            if (!StringUtils.isBlank(email.getCc())) {
-                helper.setCc(email.getCc().split("\\s*,\\s*"));
-            }
-            if (!StringUtils.isBlank(email.getBcc())) {
-                helper.setBcc(email.getBcc().split("\\s*,\\s*"));
-            }
-            helper.setSubject(email.getSubject());
-            helper.setText(email.getBody());
-            mailSender.send(helper.getMimeMessage());
+            ctx.getMailService().send(ctx.getTenantId(), msg.getCustomerId(), email, this.mailSender);
         }
     }
 
-    private EmailPojo getEmail(TbMsg msg) throws IOException {
-        EmailPojo email = MAPPER.readValue(msg.getData(), EmailPojo.class);
+    private TbEmail getEmail(TbMsg msg) throws IOException {
+        TbEmail email = MAPPER.readValue(msg.getData(), TbEmail.class);
         if (StringUtils.isBlank(email.getTo())) {
             throw new IllegalStateException("Email destination can not be blank [" + email.getTo() + "]");
         }

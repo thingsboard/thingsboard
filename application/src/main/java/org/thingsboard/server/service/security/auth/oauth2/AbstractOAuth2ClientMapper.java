@@ -177,9 +177,7 @@ public abstract class AbstractOAuth2ClientMapper {
             tenant.setTitle(tenantName);
             tenant = tenantService.saveTenant(tenant);
             installScripts.createDefaultRuleChains(tenant.getId());
-            if (edgesEnabled) {
-                installScripts.createDefaultEdgeRuleChains(tenant.getId());
-            }
+            installScripts.createDefaultEdgeRuleChains(tenant.getId());
             tenantProfileCache.evict(tenant.getId());
             tbClusterService.onTenantChange(tenant, null);
             tbClusterService.onEntityStateChange(tenant.getId(), tenant.getId(),
@@ -206,11 +204,7 @@ public abstract class AbstractOAuth2ClientMapper {
     }
 
     private Optional<DashboardId> getDashboardId(TenantId tenantId, String dashboardName) {
-        PageLink searchTextLink = new PageLink(1, 0, dashboardName);
-        PageData<DashboardInfo> dashboardsPage = dashboardService.findDashboardsByTenantId(tenantId, searchTextLink);
-        return dashboardsPage.getData().stream()
-                .findAny()
-                .map(IdBased::getId);
+        return Optional.ofNullable(dashboardService.findFirstDashboardInfoByTenantIdAndName(tenantId, dashboardName)).map(IdBased::getId);
     }
 
     private Optional<DashboardId> getDashboardId(TenantId tenantId, CustomerId customerId, String dashboardName) {

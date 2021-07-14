@@ -384,7 +384,7 @@ export class WidgetComponentService {
   }
 
   private createWidgetControllerDescriptor(widgetInfo: WidgetInfo, name: string): WidgetControllerDescriptor {
-    let widgetTypeFunctionBody = `return function ${name} (ctx) {\n` +
+    let widgetTypeFunctionBody = `return function _${name} (ctx) {\n` +
       '    var self = this;\n' +
       '    self.ctx = ctx;\n\n'; /*+
 

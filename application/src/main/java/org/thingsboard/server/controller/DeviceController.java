@@ -782,15 +782,17 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/devices/count/{otaPackageType}", method = RequestMethod.GET)
+    @RequestMapping(value = "/devices/count/{otaPackageType}/{deviceProfileId}", method = RequestMethod.GET)
     @ResponseBody
-    public Long countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(@PathVariable("otaPackageType") String otaPackageType,
-                                                                           @RequestParam String deviceProfileId) throws ThingsboardException {
+    public Long countByDeviceProfileAndEmptyOtaPackage(@PathVariable("otaPackageType") String otaPackageType,
+                                                       @PathVariable("deviceProfileId") String deviceProfileId) throws ThingsboardException {
         checkParameter("OtaPackageType", otaPackageType);
         checkParameter("DeviceProfileId", deviceProfileId);
         try {
             return deviceService.countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(
-                    getCurrentUser().getTenantId(), new DeviceProfileId(UUID.fromString(deviceProfileId)), OtaPackageType.valueOf(otaPackageType));
+                    getTenantId(),
+                    new DeviceProfileId(UUID.fromString(deviceProfileId)),
+                    OtaPackageType.valueOf(otaPackageType));
         } catch (Exception e) {
             throw handleException(e);
         }

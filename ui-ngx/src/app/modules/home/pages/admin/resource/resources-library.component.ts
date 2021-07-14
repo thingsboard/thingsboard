@@ -30,6 +30,7 @@ import {
   ResourceTypeTranslationMap
 } from '@shared/models/resource.models';
 import { pairwise, startWith, takeUntil } from 'rxjs/operators';
+import { ActionNotificationShow } from "@core/notification/notification.actions";
 
 @Component({
   selector: 'tb-resources-library',
@@ -88,26 +89,29 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
   }
 
   buildForm(entity: Resource): FormGroup {
-    return this.fb.group(
+    const form = this.fb.group(
       {
+        title: [entity ? entity.title : '', []],
         resourceType: [{
           value: entity?.resourceType ? entity.resourceType : ResourceType.LWM2M_MODEL,
-          disabled: this.isEdit
+          disabled: !this.isAdd
         }, [Validators.required]],
-        data: [entity ? entity.data : null, [Validators.required]],
         fileName: [entity ? entity.fileName : null, [Validators.required]],
-        title: [entity ? entity.title : '', []]
       }
     );
+    if (this.isAdd) {
+      form.addControl('data', this.fb.control(null, Validators.required));
+    }
+    return form
   }
 
   updateForm(entity: Resource) {
-    this.entityForm.patchValue({resourceType: entity.resourceType});
     if (this.isEdit) {
       this.entityForm.get('resourceType').disable({emitEvent: false});
+      this.entityForm.get('fileName').disable({emitEvent: false});
     }
     this.entityForm.patchValue({
-      data: entity.data,
+      resourceType: entity.resourceType,
       fileName: entity.fileName,
       title: entity.title
     });
@@ -131,5 +135,16 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
 
   convertToBase64File(data: string): string {
     return window.btoa(data);
+  }
+
+  onResourceIdCopied() {
+    this.store.dispatch(new ActionNotificationShow(
+      {
+        message: this.translate.instant('resource.idCopiedMessage'),
+        type: 'success',
+        duration: 750,
+        verticalPosition: 'bottom',
+        horizontalPosition: 'right'
+      }));
   }
 }

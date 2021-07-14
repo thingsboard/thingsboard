@@ -50,6 +50,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageDataIterableByTenant;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.DefaultRuleChainCreateRequest;
@@ -70,10 +71,12 @@ import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -85,7 +88,10 @@ public class RuleChainController extends BaseController {
     public static final String RULE_CHAIN_ID = "ruleChainId";
     public static final String RULE_NODE_ID = "ruleNodeId";
 
+    private static final int DEFAULT_PAGE_SIZE = 1000;
+
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    public static final int TIMEOUT = 20;
 
     @Autowired
     private InstallScripts installScripts;
@@ -388,25 +394,25 @@ public class RuleChainController extends BaseController {
                 TbMsg inMsg = TbMsg.newMsg(msgType, null, new TbMsgMetaData(metadata), TbMsgDataType.JSON, data);
                 switch (scriptType) {
                     case "update":
-                        output = msgToOutput(engine.executeUpdate(inMsg));
+                        output = msgToOutput(engine.executeUpdateAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS));
                         break;
                     case "generate":
-                        output = msgToOutput(engine.executeGenerate(inMsg));
+                        output = msgToOutput(engine.executeGenerateAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS));
                         break;
                     case "filter":
-                        boolean result = engine.executeFilter(inMsg);
+                        boolean result = engine.executeFilterAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
                         output = Boolean.toString(result);
                         break;
                     case "switch":
-                        Set<String> states = engine.executeSwitch(inMsg);
+                        Set<String> states = engine.executeSwitchAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
                         output = objectMapper.writeValueAsString(states);
                         break;
                     case "json":
-                        JsonNode json = engine.executeJson(inMsg);
+                        JsonNode json = engine.executeJsonAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
                         output = objectMapper.writeValueAsString(json);
                         break;
                     case "string":
-                        output = engine.executeToString(inMsg);
+                        output = engine.executeToStringAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
                         break;
                     default:
                         throw new IllegalArgumentException("Unsupported script type: " + scriptType);
@@ -477,7 +483,7 @@ public class RuleChainController extends BaseController {
         return objectMapper.writeValueAsString(resultNode);
     }
 
-    private JsonNode convertMsgToOut(TbMsg msg) throws Exception{
+    private JsonNode convertMsgToOut(TbMsg msg) throws Exception {
         ObjectNode msgData = objectMapper.createObjectNode();
         if (!StringUtils.isEmpty(msg.getData())) {
             msgData.set("msg", objectMapper.readTree(msg.getData()));
@@ -632,13 +638,20 @@ public class RuleChainController extends BaseController {
         }
     }
 
+    // TODO: @voba refactor this - add new config to edge rule chain to set it as auto-assign
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain/autoAssignToEdgeRuleChains", method = RequestMethod.GET)
     @ResponseBody
     public List<RuleChain> getAutoAssignToEdgeRuleChains() throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
-            return checkNotNull(ruleChainService.findAutoAssignToEdgeRuleChainsByTenantId(tenantId)).get();
+            List<RuleChain> result = new ArrayList<>();
+            PageDataIterableByTenant<RuleChain> autoAssignRuleChainsIterator =
+                    new PageDataIterableByTenant<>(ruleChainService::findAutoAssignToEdgeRuleChainsByTenantId, tenantId, DEFAULT_PAGE_SIZE);
+            for (RuleChain ruleChain : autoAssignRuleChainsIterator) {
+                result.add(ruleChain);
+            }
+            return checkNotNull(result);
         } catch (Exception e) {
             throw handleException(e);
         }

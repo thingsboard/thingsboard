@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 

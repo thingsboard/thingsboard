@@ -36,11 +36,11 @@ public interface SessionMsgListener {
 
     void onGetAttributesResponse(GetAttributeResponseMsg getAttributesResponse);
 
-    void onAttributeUpdate(AttributeUpdateNotificationMsg attributeUpdateNotification);
+    void onAttributeUpdate(UUID sessionId, AttributeUpdateNotificationMsg attributeUpdateNotification);
 
     void onRemoteSessionCloseCommand(UUID sessionId, SessionCloseNotificationProto sessionCloseNotification);
 
-    void onToDeviceRpcRequest(ToDeviceRpcRequestMsg toDeviceRequest);
+    void onToDeviceRpcRequest(UUID sessionId, ToDeviceRpcRequestMsg toDeviceRequest);
 
     void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse);
 

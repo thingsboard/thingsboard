@@ -46,6 +46,11 @@ public class BaseEdgeEventService implements EdgeEventService {
         return edgeEventDao.findEdgeEvents(tenantId.getId(), edgeId, pageLink, withTsUpdate);
     }
 
+    @Override
+    public void cleanupEvents(long ttl) {
+        edgeEventDao.cleanupEvents(ttl);
+    }
+
     private DataValidator<EdgeEvent> edgeEventValidator =
             new DataValidator<EdgeEvent>() {
                 @Override

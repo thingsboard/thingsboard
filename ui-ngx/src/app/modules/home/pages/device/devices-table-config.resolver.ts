@@ -112,7 +112,8 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
         ));
     };
     this.config.onEntityAction = action => this.onDeviceAction(action);
-    this.config.detailsReadonly = () => (this.config.componentsData.deviceScope === 'customer_user' || this.config.componentsData.deviceScope === 'edge_customer_user');
+    this.config.detailsReadonly = () =>
+      (this.config.componentsData.deviceScope === 'customer_user' || this.config.componentsData.deviceScope === 'edge_customer_user');
 
     this.config.headerComponent = DeviceTableHeaderComponent;
 
@@ -528,7 +529,8 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         deviceId: device.id.id,
-        isReadOnly: this.config.componentsData.deviceScope === 'customer_user'
+        deviceProfileId: device.deviceProfileId.id,
+        isReadOnly: this.config.componentsData.deviceScope === 'customer_user' || this.config.componentsData.deviceScope === 'edge_customer_user'
       }
     }).afterClosed().subscribe(deviceCredentials => {
       if (isDefinedAndNotNull(deviceCredentials)) {
