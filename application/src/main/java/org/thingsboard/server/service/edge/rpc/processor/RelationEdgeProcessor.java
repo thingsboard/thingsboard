@@ -15,35 +15,50 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.gen.edge.RelationUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
+import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
 @Slf4j
 @TbCoreComponent
-public class RelationProcessor extends BaseProcessor {
+public class RelationEdgeProcessor extends BaseEdgeProcessor {
 
-    public ListenableFuture<Void> onRelationUpdate(TenantId tenantId, RelationUpdateMsg relationUpdateMsg) {
+    public ListenableFuture<Void> processRelationFromEdge(TenantId tenantId, RelationUpdateMsg relationUpdateMsg) {
         log.trace("[{}] onRelationUpdate [{}]", tenantId, relationUpdateMsg);
         try {
             EntityRelation entityRelation = new EntityRelation();
@@ -100,5 +115,48 @@ public class RelationProcessor extends BaseProcessor {
         }
     }
 
+    public DownlinkMsg processRelationToEdge(EdgeEvent edgeEvent, UpdateMsgType msgType) {
+        EntityRelation entityRelation = mapper.convertValue(edgeEvent.getBody(), EntityRelation.class);
+        RelationUpdateMsg relationUpdateMsg = relationMsgConstructor.constructRelationUpdatedMsg(msgType, entityRelation);
+        return DownlinkMsg.newBuilder()
+                .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
+                .addRelationUpdateMsg(relationUpdateMsg)
+                .build();
+    }
 
+    public void processRelationNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) throws JsonProcessingException {
+        EntityRelation relation = mapper.readValue(edgeNotificationMsg.getBody(), EntityRelation.class);
+        if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
+                !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
+            Set<EdgeId> uniqueEdgeIds = new HashSet<>();
+            uniqueEdgeIds.addAll(findRelatedEdgeIds(tenantId, relation.getTo()));
+            uniqueEdgeIds.addAll(findRelatedEdgeIds(tenantId, relation.getFrom()));
+            if (!uniqueEdgeIds.isEmpty()) {
+                for (EdgeId edgeId : uniqueEdgeIds) {
+                    saveEdgeEvent(tenantId,
+                            edgeId,
+                            EdgeEventType.RELATION,
+                            EdgeEventActionType.valueOf(edgeNotificationMsg.getAction()),
+                            null,
+                            mapper.valueToTree(relation));
+                }
+            }
+        }
+    }
+
+    private List<EdgeId> findRelatedEdgeIds(TenantId tenantId, EntityId entityId) {
+        List<EdgeId> result = new ArrayList<>();
+        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
+        PageData<EdgeId> pageData;
+        do {
+            pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId, pageLink);
+            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                result.addAll(pageData.getData());
+                if (pageData.hasNext()) {
+                    pageLink = pageLink.nextPageLink();
+                }
+            }
+        } while (pageData != null && pageData.hasNext());
+        return result;
+    }
 }

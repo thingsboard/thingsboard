@@ -15,7 +15,7 @@
  */
 syntax = "proto3";
 
-option java_package = "org.thingsboard.server.gen.edge";
+option java_package = "org.thingsboard.server.gen.edge.v1";
 option java_multiple_files = true;
 option java_outer_classname = "EdgeProtos";
 
@@ -38,6 +38,7 @@ message RequestMsg {
   ConnectRequestMsg connectRequestMsg = 2;
   UplinkMsg uplinkMsg = 3;
   DownlinkResponseMsg downlinkResponseMsg = 4;
+  SyncRequestMsg syncRequestMsg = 5;
 }
 
 message ResponseMsg {
@@ -72,6 +73,13 @@ message ConnectResponseMsg {
   ConnectResponseCode responseCode = 1;
   string errorMsg = 2;
   EdgeConfiguration configuration = 3;
+}
+
+message SyncRequestMsg {
+  bool syncRequired = 1;
+}
+
+message SyncCompletedMsg {
 }
 
 message EdgeConfiguration {
@@ -358,6 +366,22 @@ message DeviceCredentialsRequestMsg {
   int64 deviceIdLSB = 2;
 }
 
+message DeviceProfileDevicesRequestMsg {
+  int64 deviceProfileIdMSB = 1;
+  int64 deviceProfileIdLSB = 2;
+}
+
+message WidgetBundleTypesRequestMsg {
+  int64 widgetBundleIdMSB = 1;
+  int64 widgetBundleIdLSB = 2;
+}
+
+message EntityViewsRequestMsg {
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  string entityType = 3;
+}
+
 message DeviceRpcCallMsg {
   int64 deviceIdMSB = 1;
   int64 deviceIdLSB = 2;
@@ -402,38 +426,44 @@ message UplinkMsg {
   repeated UserCredentialsRequestMsg userCredentialsRequestMsg = 10;
   repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 11;
   repeated DeviceRpcCallMsg deviceRpcCallMsg = 12;
+  repeated DeviceProfileDevicesRequestMsg deviceProfileDevicesRequestMsg = 13;
+  repeated WidgetBundleTypesRequestMsg widgetBundleTypesRequestMsg = 14;
+  repeated EntityViewsRequestMsg entityViewsRequestMsg = 15;
 }
 
 message UplinkResponseMsg {
   bool success = 1;
   string errorMsg = 2;
+  int32 uplinkMsgId = 3;
 }
 
 message DownlinkResponseMsg {
   bool success = 1;
   string errorMsg = 2;
+  int32 downlinkMsgId = 3;
 }
 
 message DownlinkMsg {
   int32 downlinkMsgId = 1;
-  repeated EntityDataProto entityData = 2;
-  repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 3;
-  repeated DeviceUpdateMsg deviceUpdateMsg = 4;
-  repeated DeviceProfileUpdateMsg deviceProfileUpdateMsg = 5;
-  repeated DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg = 6;
-  repeated RuleChainUpdateMsg ruleChainUpdateMsg = 7;
-  repeated RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 8;
-  repeated DashboardUpdateMsg dashboardUpdateMsg = 9;
-  repeated AssetUpdateMsg assetUpdateMsg = 10;
-  repeated EntityViewUpdateMsg entityViewUpdateMsg = 11;
-  repeated AlarmUpdateMsg alarmUpdateMsg = 12;
-  repeated UserUpdateMsg userUpdateMsg = 13;
-  repeated UserCredentialsUpdateMsg userCredentialsUpdateMsg = 14;
-  repeated CustomerUpdateMsg customerUpdateMsg = 15;
-  repeated RelationUpdateMsg relationUpdateMsg = 16;
-  repeated WidgetsBundleUpdateMsg widgetsBundleUpdateMsg = 17;
-  repeated WidgetTypeUpdateMsg widgetTypeUpdateMsg = 18;
-  repeated AdminSettingsUpdateMsg adminSettingsUpdateMsg = 19;
-  repeated DeviceRpcCallMsg deviceRpcCallMsg = 20;
+  SyncCompletedMsg syncCompletedMsg = 2;
+  repeated EntityDataProto entityData = 3;
+  repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 4;
+  repeated DeviceUpdateMsg deviceUpdateMsg = 5;
+  repeated DeviceProfileUpdateMsg deviceProfileUpdateMsg = 6;
+  repeated DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg = 7;
+  repeated RuleChainUpdateMsg ruleChainUpdateMsg = 8;
+  repeated RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 9;
+  repeated DashboardUpdateMsg dashboardUpdateMsg = 10;
+  repeated AssetUpdateMsg assetUpdateMsg = 11;
+  repeated EntityViewUpdateMsg entityViewUpdateMsg = 12;
+  repeated AlarmUpdateMsg alarmUpdateMsg = 13;
+  repeated UserUpdateMsg userUpdateMsg = 14;
+  repeated UserCredentialsUpdateMsg userCredentialsUpdateMsg = 15;
+  repeated CustomerUpdateMsg customerUpdateMsg = 16;
+  repeated RelationUpdateMsg relationUpdateMsg = 17;
+  repeated WidgetsBundleUpdateMsg widgetsBundleUpdateMsg = 18;
+  repeated WidgetTypeUpdateMsg widgetTypeUpdateMsg = 19;
+  repeated AdminSettingsUpdateMsg adminSettingsUpdateMsg = 20;
+  repeated DeviceRpcCallMsg deviceRpcCallMsg = 21;
 }
 
