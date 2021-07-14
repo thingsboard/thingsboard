@@ -115,6 +115,8 @@ message DeviceInfoProto {
   int64 deviceProfileIdLSB = 9;
   int64 customerIdMSB = 10;
   int64 customerIdLSB = 11;
+  string powerMode = 12;
+  int64 edrxCycle = 13;
 }
 
 /**
@@ -318,6 +320,9 @@ message SubscribeToRPCMsg {
   SessionType sessionType = 2;
 }
 
+message SendPendingRPCMsg {
+}
+
 message ToDeviceRpcRequestMsg {
   int32 requestId = 1;
   string methodName = 2;
@@ -325,11 +330,20 @@ message ToDeviceRpcRequestMsg {
   int64 expirationTime = 4;
   int64 requestIdMSB = 5;
   int64 requestIdLSB = 6;
+  bool oneway = 7;
+  bool persisted = 8;
 }
 
 message ToDeviceRpcResponseMsg {
   int32 requestId = 1;
   string payload = 2;
+}
+
+message ToDevicePersistedRpcResponseMsg {
+  int32 requestId = 1;
+  int64 requestIdMSB = 2;
+  int64 requestIdLSB = 3;
+  string status = 4;
 }
 
 message ToServerRpcRequestMsg {
@@ -435,6 +449,8 @@ message TransportToDeviceActorMsg {
   SubscriptionInfoProto subscriptionInfo = 7;
   ClaimDeviceMsg claimDevice = 8;
   ProvisionDeviceRequestMsg provisionDevice = 9;
+  ToDevicePersistedRpcResponseMsg persistedRpcResponseMsg = 10;
+  SendPendingRPCMsg sendPendingRPC = 11;
 }
 
 message TransportToRuleEngineMsg {

@@ -87,12 +87,6 @@ public class DefaultCoapServerService implements CoapServerService {
     }
 
     private CoapServer createCoapServer() throws UnknownHostException {
-        server = new CoapServer();
-
-        CoapEndpoint.Builder noSecCoapEndpointBuilder = new CoapEndpoint.Builder();
-        InetAddress addr = InetAddress.getByName(coapServerContext.getHost());
-        InetSocketAddress sockAddr = new InetSocketAddress(addr, coapServerContext.getPort());
-        noSecCoapEndpointBuilder.setInetSocketAddress(sockAddr);
         NetworkConfig networkConfig = new NetworkConfig();
         networkConfig.setBoolean(NetworkConfig.Keys.BLOCKWISE_STRICT_BLOCK2_OPTION, true);
         networkConfig.setBoolean(NetworkConfig.Keys.BLOCKWISE_ENTITY_TOO_LARGE_AUTO_FAILOVER, true);
@@ -102,23 +96,30 @@ public class DefaultCoapServerService implements CoapServerService {
         networkConfig.setInt(NetworkConfig.Keys.PREFERRED_BLOCK_SIZE, 1024);
         networkConfig.setInt(NetworkConfig.Keys.MAX_MESSAGE_SIZE, 1024);
         networkConfig.setInt(NetworkConfig.Keys.MAX_RETRANSMIT, 4);
+        networkConfig.setInt(NetworkConfig.Keys.COAP_PORT, coapServerContext.getPort());
+        server = new CoapServer(networkConfig);
+
+        CoapEndpoint.Builder noSecCoapEndpointBuilder = new CoapEndpoint.Builder();
+        InetAddress addr = InetAddress.getByName(coapServerContext.getHost());
+        InetSocketAddress sockAddr = new InetSocketAddress(addr, coapServerContext.getPort());
+        noSecCoapEndpointBuilder.setInetSocketAddress(sockAddr);
+
         noSecCoapEndpointBuilder.setNetworkConfig(networkConfig);
         CoapEndpoint noSecCoapEndpoint = noSecCoapEndpointBuilder.build();
         server.addEndpoint(noSecCoapEndpoint);
-
         if (isDtlsEnabled()) {
             CoapEndpoint.Builder dtlsCoapEndpointBuilder = new CoapEndpoint.Builder();
             TbCoapDtlsSettings dtlsSettings = coapServerContext.getDtlsSettings();
             DtlsConnectorConfig dtlsConnectorConfig = dtlsSettings.dtlsConnectorConfig();
+            networkConfig.setInt(NetworkConfig.Keys.COAP_SECURE_PORT, dtlsConnectorConfig.getAddress().getPort());
+            dtlsCoapEndpointBuilder.setNetworkConfig(networkConfig);
             DTLSConnector connector = new DTLSConnector(dtlsConnectorConfig);
             dtlsCoapEndpointBuilder.setConnector(connector);
             CoapEndpoint dtlsCoapEndpoint = dtlsCoapEndpointBuilder.build();
             server.addEndpoint(dtlsCoapEndpoint);
-            if (dtlsConnectorConfig.isClientAuthenticationRequired()) {
-                tbDtlsCertificateVerifier = (TbCoapDtlsCertificateVerifier) dtlsConnectorConfig.getAdvancedCertificateVerifier();
-                dtlsSessionsExecutor = Executors.newSingleThreadScheduledExecutor();
-                dtlsSessionsExecutor.scheduleAtFixedRate(this::evictTimeoutSessions, new Random().nextInt((int) getDtlsSessionReportTimeout()), getDtlsSessionReportTimeout(), TimeUnit.MILLISECONDS);
-            }
+            tbDtlsCertificateVerifier = (TbCoapDtlsCertificateVerifier) dtlsConnectorConfig.getAdvancedCertificateVerifier();
+            dtlsSessionsExecutor = Executors.newSingleThreadScheduledExecutor();
+            dtlsSessionsExecutor.scheduleAtFixedRate(this::evictTimeoutSessions, new Random().nextInt((int) getDtlsSessionReportTimeout()), getDtlsSessionReportTimeout(), TimeUnit.MILLISECONDS);
         }
         Resource root = server.getRoot();
         TbCoapServerMessageDeliverer messageDeliverer = new TbCoapServerMessageDeliverer(root);

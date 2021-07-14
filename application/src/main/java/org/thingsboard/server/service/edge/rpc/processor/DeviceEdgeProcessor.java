@@ -189,8 +189,8 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
 
     private Device createDevice(TenantId tenantId, Edge edge, DeviceUpdateMsg deviceUpdateMsg, String deviceName) {
         Device device;
+        deviceCreationLock.lock();
         try {
-            deviceCreationLock.lock();
             log.debug("[{}] Creating device entity [{}] from edge [{}]", tenantId, deviceUpdateMsg, edge.getName());
             DeviceId deviceId = new DeviceId(new UUID(deviceUpdateMsg.getIdMSB(), deviceUpdateMsg.getIdLSB()));
             device = deviceService.findDeviceById(tenantId, deviceId);

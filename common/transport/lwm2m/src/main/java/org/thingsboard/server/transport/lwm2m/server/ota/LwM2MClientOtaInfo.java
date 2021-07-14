@@ -15,61 +15,56 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.ota;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
-import org.thingsboard.server.transport.lwm2m.server.LwM2MFirmwareUpdateStrategy;
-import org.thingsboard.server.transport.lwm2m.server.UpdateStateFw;
-import org.thingsboard.server.transport.lwm2m.server.UpdateResultFw;
 
 import java.util.Optional;
 
 @Data
-public class LwM2MClientOtaInfo {
+@NoArgsConstructor
+public abstract class LwM2MClientOtaInfo<Strategy, State, Result> {
 
-    private final String endpoint;
-    private final OtaPackageType type;
-
+    private String endpoint;
     private String baseUrl;
 
-    private boolean targetFetchFailure;
-    private String targetName;
-    private String targetVersion;
-    private String targetUrl;
-
-    private boolean currentFetchFailure;
-    private String currentName;
-    private String currentVersion3;
-    private String currentVersion5;
-    private Integer deliveryMethod;
+    protected String targetName;
+    protected String targetVersion;
+    protected String targetUrl;
 
     //TODO: use value from device if applicable;
-    private LwM2MFirmwareUpdateStrategy strategy;
-    private UpdateStateFw updateState;
-    private UpdateResultFw updateResult;
+    protected Strategy strategy;
+    protected State updateState;
+    protected Result result;
 
-    private String failedPackageId;
-    private int retryAttempts;
+    protected String failedPackageId;
+    protected int retryAttempts;
 
-    public LwM2MClientOtaInfo(String endpoint, OtaPackageType type, Integer strategyCode, String baseUrl) {
+    protected String currentName;
+    protected String currentVersion3;
+    protected String currentVersion;
+
+    public LwM2MClientOtaInfo(String endpoint, String baseUrl, Strategy strategy) {
         this.endpoint = endpoint;
-        this.type = type;
-        this.strategy = LwM2MFirmwareUpdateStrategy.fromStrategyFwByCode(strategyCode);
         this.baseUrl = baseUrl;
+        this.strategy = strategy;
     }
 
-    public void updateTarget(String targetName, String targetVersion, Optional<String> newFirmwareUrl) {
+    public void updateTarget(String targetName, String targetVersion, Optional<String> newTargetUrl) {
         this.targetName = targetName;
         this.targetVersion = targetVersion;
-        this.targetUrl = newFirmwareUrl.orElse(null);
+        this.targetUrl = newTargetUrl.orElse(null);
     }
 
+    @JsonIgnore
     public boolean isUpdateRequired() {
         if (StringUtils.isEmpty(targetName) || StringUtils.isEmpty(targetVersion) || !isSupported()) {
             return false;
         } else {
             String targetPackageId = getPackageId(targetName, targetVersion);
-            String currentPackageIdUsingObject5 = getPackageId(currentName, currentVersion5);
+            String currentPackageIdUsingObject5 = getPackageId(currentName, currentVersion);
             if (StringUtils.isNotEmpty(failedPackageId) && failedPackageId.equals(targetPackageId)) {
                 return false;
             } else {
@@ -84,26 +79,17 @@ public class LwM2MClientOtaInfo {
         }
     }
 
+    @JsonIgnore
     public boolean isSupported() {
-        return StringUtils.isNotEmpty(currentName) || StringUtils.isNotEmpty(currentVersion5) || StringUtils.isNotEmpty(currentVersion3);
+        return StringUtils.isNotEmpty(currentName) || StringUtils.isNotEmpty(currentVersion) || StringUtils.isNotEmpty(currentVersion3);
     }
 
-    public void setUpdateResult(UpdateResultFw updateResult) {
-        this.updateResult = updateResult;
-        switch (updateResult) {
-            case INITIAL:
-                break;
-            case UPDATE_SUCCESSFULLY:
-                retryAttempts = 0;
-                break;
-            default:
-                failedPackageId = getPackageId(targetName, targetVersion);
-                break;
-        }
-    }
+    public abstract void update(Result result);
 
-    private static String getPackageId(String name, String version) {
+    protected static String getPackageId(String name, String version) {
         return (StringUtils.isNotEmpty(name) ? name : "") + (StringUtils.isNotEmpty(version) ? version : "");
     }
+
+    public abstract OtaPackageType getType();
 
 }

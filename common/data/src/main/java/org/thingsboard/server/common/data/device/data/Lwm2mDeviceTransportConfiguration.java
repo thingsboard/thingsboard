@@ -20,15 +20,16 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.device.data.lwm2m.BootstrapConfiguration;
-import org.thingsboard.server.common.data.device.data.lwm2m.OtherConfiguration;
-import org.thingsboard.server.common.data.device.data.lwm2m.TelemetryMappingConfiguration;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Data
 public class Lwm2mDeviceTransportConfiguration implements DeviceTransportConfiguration {
+
+    private PowerMode powerMode;
+
+    private Long edrxCycle;
 
     @JsonIgnore
     private Map<String, Object> properties = new HashMap<>();

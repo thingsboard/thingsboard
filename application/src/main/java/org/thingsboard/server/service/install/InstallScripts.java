@@ -228,14 +228,14 @@ public class InstallScripts {
         }
     }
 
-    public void loadDemoRuleChains(TenantId tenantId) throws Exception {
+    public void loadDemoRuleChains(TenantId tenantId) {
         try {
             createDefaultRuleChains(tenantId);
             createDefaultRuleChain(tenantId, "Thermostat");
             createDefaultEdgeRuleChains(tenantId);
         } catch (Exception e) {
-            log.error("Unable to load dashboard from json", e);
-            throw new RuntimeException("Unable to load dashboard from json", e);
+            log.error("Unable to load rule chain from json", e);
+            throw new RuntimeException("Unable to load rule chain from json", e);
         }
     }
 

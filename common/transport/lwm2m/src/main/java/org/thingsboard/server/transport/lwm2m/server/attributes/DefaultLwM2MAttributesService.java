@@ -23,9 +23,6 @@ import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.ota.OtaPackageKey;
-import org.thingsboard.server.common.data.ota.OtaPackageType;
-import org.thingsboard.server.common.data.ota.OtaPackageUtil;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -126,6 +123,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
             String newFirmwareUrl = null;
             String newSoftwareTitle = null;
             String newSoftwareVersion = null;
+            String newSoftwareUrl = null;
             List<TransportProtos.TsKvProto> otherAttributes = new ArrayList<>();
             for (TransportProtos.TsKvProto tsKvProto : msg.getSharedUpdatedList()) {
                 String attrName = tsKvProto.getKv().getKey();
@@ -139,7 +137,9 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
                     newSoftwareTitle = getStrValue(tsKvProto);
                 } else if (DefaultLwM2MOtaUpdateService.SOFTWARE_VERSION.equals(attrName)) {
                     newSoftwareVersion = getStrValue(tsKvProto);
-                } else {
+                } else if (DefaultLwM2MOtaUpdateService.SOFTWARE_URL.equals(attrName)) {
+                    newSoftwareUrl = getStrValue(tsKvProto);
+                }else {
                     otherAttributes.add(tsKvProto);
                 }
             }
@@ -147,7 +147,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
                 otaUpdateService.onTargetFirmwareUpdate(lwM2MClient, newFirmwareTitle, newFirmwareVersion, Optional.ofNullable(newFirmwareUrl));
             }
             if (newSoftwareTitle != null || newSoftwareVersion != null) {
-                otaUpdateService.onTargetSoftwareUpdate(lwM2MClient, newSoftwareTitle, newSoftwareVersion);
+                otaUpdateService.onTargetSoftwareUpdate(lwM2MClient, newSoftwareTitle, newSoftwareVersion, Optional.ofNullable(newSoftwareUrl));
             }
             if (!otherAttributes.isEmpty()) {
                 onAttributesUpdate(lwM2MClient, otherAttributes);
@@ -181,6 +181,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
                 }
             }
         });
+        clientContext.update(lwM2MClient);
         // #2.1
         lwM2MClient.getSharedAttributes().forEach((pathIdVer, tsKvProto) -> {
             this.pushUpdateToClientIfNeeded(lwM2MClient, this.getResourceValueFormatKv(lwM2MClient, pathIdVer),
@@ -190,7 +191,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
 
     private void pushUpdateToClientIfNeeded(LwM2mClient lwM2MClient, Object valueOld, Object newValue, String versionedId) {
         if (newValue != null && (valueOld == null || !newValue.toString().equals(valueOld.toString()))) {
-            TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionedId).value(newValue).timeout(this.config.getTimeout()).build();
+            TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionedId).value(newValue).timeout(clientContext.getRequestTimeout(lwM2MClient)).build();
             downlinkHandler.sendWriteReplaceRequest(lwM2MClient, request, new TbLwM2MWriteResponseCallback(uplinkHandler, logService, lwM2MClient, versionedId));
         } else {
             log.error("Failed update resource [{}] [{}]", versionedId, newValue);

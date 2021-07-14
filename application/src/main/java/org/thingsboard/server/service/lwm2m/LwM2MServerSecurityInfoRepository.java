@@ -30,8 +30,12 @@ import java.math.BigInteger;
 import java.security.AlgorithmParameters;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
+import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.security.spec.ECGenParameterSpec;
@@ -62,49 +66,23 @@ public class LwM2MServerSecurityInfoRepository {
         bsServ.setPort(serverConfig.getPort());
         bsServ.setSecurityHost(serverConfig.getSecureHost());
         bsServ.setSecurityPort(serverConfig.getSecurePort());
-        bsServ.setServerPublicKey(getPublicKey(serverConfig.getCertificateAlias(), this.serverConfig.getPublicX(), this.serverConfig.getPublicY()));
+        bsServ.setServerPublicKey(getPublicKey(serverConfig));
         return bsServ;
     }
 
-    private String getPublicKey(String alias, String publicServerX, String publicServerY) {
-        String publicKey = getServerPublicKeyX509(alias);
-        return publicKey != null ? publicKey : getRPKPublicKey(publicServerX, publicServerY);
-    }
-
-    private String getServerPublicKeyX509(String alias) {
+    private String getPublicKey(LwM2MSecureServerConfig config) {
         try {
-            X509Certificate serverCertificate = (X509Certificate) serverConfig.getKeyStoreValue().getCertificate(alias);
-            return Hex.encodeHexString(serverCertificate.getEncoded());
-        } catch (CertificateEncodingException | KeyStoreException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    private String getRPKPublicKey(String publicServerX, String publicServerY) {
-        try {
-            /** Get Elliptic Curve Parameter spec for secp256r1 */
-            AlgorithmParameters algoParameters = AlgorithmParameters.getInstance("EC");
-            algoParameters.init(new ECGenParameterSpec("secp256r1"));
-            ECParameterSpec parameterSpec = algoParameters.getParameterSpec(ECParameterSpec.class);
-            if (publicServerX != null && !publicServerX.isEmpty() && publicServerY != null && !publicServerY.isEmpty()) {
-                /** Get point values */
-                byte[] publicX = Hex.decodeHex(publicServerX.toCharArray());
-                byte[] publicY = Hex.decodeHex(publicServerY.toCharArray());
-                /** Create key specs */
-                KeySpec publicKeySpec = new ECPublicKeySpec(new ECPoint(new BigInteger(publicX), new BigInteger(publicY)),
-                        parameterSpec);
-                /** Get keys */
-                PublicKey publicKey = KeyFactory.getInstance("EC").generatePublic(publicKeySpec);
-                if (publicKey != null && publicKey.getEncoded().length > 0) {
-                    return Hex.encodeHexString(publicKey.getEncoded());
-                }
+            KeyStore keyStore = serverConfig.getKeyStoreValue();
+            if (keyStore != null) {
+                X509Certificate serverCertificate = (X509Certificate) serverConfig.getKeyStoreValue().getCertificate(config.getCertificateAlias());
+                return Hex.encodeHexString(serverCertificate.getPublicKey().getEncoded());
             }
-        } catch (GeneralSecurityException | IllegalArgumentException e) {
-            log.error("[{}] Failed generate Server RPK for profile", e.getMessage());
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            log.trace("Failed to fetch public key from key store!", e);
+
         }
-        return null;
+        return "";
     }
+
 }
 

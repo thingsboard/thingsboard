@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.edge;
 
 import lombok.Data;
-import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -49,121 +48,98 @@ import org.thingsboard.server.service.edge.rpc.processor.WidgetBundleEdgeProcess
 import org.thingsboard.server.service.edge.rpc.processor.WidgetTypeEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.sync.EdgeRequestsService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.executors.GrpcCallbackExecutorService;
 
 @Component
 @TbCoreComponent
 @Data
+@Lazy
 public class EdgeContextComponent {
 
-    @Lazy
     @Autowired
     private EdgeService edgeService;
 
-    @Lazy
     @Autowired
     private EdgeEventService edgeEventService;
 
-    @Lazy
     @Autowired
     private AdminSettingsService adminSettingsService;
 
-    @Lazy
     @Autowired
     private AssetService assetService;
 
-    @Lazy
     @Autowired
     private DeviceProfileService deviceProfileService;
 
-    @Lazy
     @Autowired
     private AttributesService attributesService;
 
-    @Lazy
     @Autowired
     private DashboardService dashboardService;
 
-    @Lazy
     @Autowired
     private RuleChainService ruleChainService;
 
-    @Lazy
     @Autowired
     private UserService userService;
 
-    @Lazy
     @Autowired
     private WidgetsBundleService widgetsBundleService;
 
-    @Lazy
     @Autowired
     private EdgeRequestsService edgeRequestsService;
 
-    @Lazy
     @Autowired
     private AlarmEdgeProcessor alarmProcessor;
 
-    @Lazy
     @Autowired
     private DeviceProfileEdgeProcessor deviceProfileProcessor;
 
-    @Lazy
     @Autowired
     private DeviceEdgeProcessor deviceProcessor;
 
-    @Lazy
     @Autowired
     private EntityEdgeProcessor entityProcessor;
 
-    @Lazy
     @Autowired
     private AssetEdgeProcessor assetProcessor;
 
-    @Lazy
     @Autowired
     private EntityViewEdgeProcessor entityViewProcessor;
 
-    @Lazy
     @Autowired
     private UserEdgeProcessor userProcessor;
 
-    @Lazy
     @Autowired
     private RelationEdgeProcessor relationProcessor;
 
-    @Lazy
     @Autowired
     private TelemetryEdgeProcessor telemetryProcessor;
 
-    @Lazy
     @Autowired
     private DashboardEdgeProcessor dashboardProcessor;
 
-    @Lazy
     @Autowired
     private RuleChainEdgeProcessor ruleChainProcessor;
 
-    @Lazy
     @Autowired
     private CustomerEdgeProcessor customerProcessor;
 
-    @Lazy
     @Autowired
     private WidgetBundleEdgeProcessor widgetBundleProcessor;
 
-    @Lazy
     @Autowired
     private WidgetTypeEdgeProcessor widgetTypeProcessor;
 
-    @Lazy
     @Autowired
     private AdminSettingsEdgeProcessor adminSettingsProcessor;
 
-    @Lazy
     @Autowired
     private EdgeEventStorageSettings edgeEventStorageSettings;
 
     @Autowired
-    @Getter
     private DbCallbackExecutorService dbCallbackExecutor;
+
+    @Autowired
+    private GrpcCallbackExecutorService grpcCallbackExecutorService;
 }

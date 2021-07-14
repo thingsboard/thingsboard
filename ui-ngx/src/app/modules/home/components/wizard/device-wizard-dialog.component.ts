@@ -25,6 +25,7 @@ import {
   createDeviceProfileConfiguration,
   createDeviceProfileTransportConfiguration,
   DeviceProfile,
+  DeviceProfileInfo,
   DeviceProfileType,
   DeviceProvisionConfiguration,
   DeviceProvisionType,
@@ -91,6 +92,7 @@ export class DeviceWizardDialogComponent extends
   serviceType = ServiceType.TB_RULE_ENGINE;
 
   private subscriptions: Subscription[] = [];
+  private currentDeviceProfileTransportType = DeviceTransportType.DEFAULT;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -262,6 +264,20 @@ export class DeviceWizardDialogComponent extends
           this.dialogRef.close(created);
         }
       );
+    }
+  }
+
+  get deviceTransportType(): DeviceTransportType {
+    if (this.deviceWizardFormGroup.get('addProfileType').value) {
+      return this.transportConfigFormGroup.get('transportType').value;
+    } else {
+      return this.currentDeviceProfileTransportType;
+    }
+  }
+
+  deviceProfileChanged(deviceProfile: DeviceProfileInfo) {
+    if (deviceProfile) {
+      this.currentDeviceProfileTransportType = deviceProfile.transportType;
     }
   }
 

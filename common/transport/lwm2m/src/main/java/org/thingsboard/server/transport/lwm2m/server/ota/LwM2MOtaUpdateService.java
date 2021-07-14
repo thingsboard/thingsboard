@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.ota;
 
+import org.thingsboard.server.common.data.device.data.lwm2m.OtherConfiguration;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
 import java.util.Optional;
@@ -25,19 +26,33 @@ public interface LwM2MOtaUpdateService {
 
     void forceFirmwareUpdate(LwM2mClient client);
 
-    void onTargetFirmwareUpdate(LwM2mClient client, String newFirmwareTitle, String newFirmwareVersion, Optional<String> newFirmwareUrl);
+    void onTargetFirmwareUpdate(LwM2mClient client, String newFwTitle, String newFwVersion, Optional<String> newFwUrl);
 
-    void onTargetSoftwareUpdate(LwM2mClient client, String newSoftwareTitle, String newSoftwareVersion);
+    void onTargetSoftwareUpdate(LwM2mClient client, String newSwTitle, String newSwVersion, Optional<String> newSwUrl);
 
     void onCurrentFirmwareNameUpdate(LwM2mClient client, String name);
 
+    void onFirmwareStrategyUpdate(LwM2mClient client, OtherConfiguration configuration);
+
+    void onCurrentSoftwareStrategyUpdate(LwM2mClient client, OtherConfiguration configuration);
+
     void onCurrentFirmwareVersion3Update(LwM2mClient client, String version);
 
-    void onCurrentFirmwareVersion5Update(LwM2mClient client, String version);
+    void onCurrentFirmwareVersionUpdate(LwM2mClient client, String version);
 
     void onCurrentFirmwareStateUpdate(LwM2mClient client, Long state);
 
     void onCurrentFirmwareResultUpdate(LwM2mClient client, Long result);
 
     void onCurrentFirmwareDeliveryMethodUpdate(LwM2mClient lwM2MClient, Long value);
+
+    void onCurrentSoftwareNameUpdate(LwM2mClient lwM2MClient, String name);
+
+    void onCurrentSoftwareVersion3Update(LwM2mClient lwM2MClient, String version);
+
+    void onCurrentSoftwareVersionUpdate(LwM2mClient client, String version);
+
+    void onCurrentSoftwareStateUpdate(LwM2mClient lwM2MClient, Long value);
+
+    void onCurrentSoftwareResultUpdate(LwM2mClient client, Long result);
 }

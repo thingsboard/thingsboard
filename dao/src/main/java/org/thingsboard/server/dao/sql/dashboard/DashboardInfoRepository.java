@@ -29,6 +29,8 @@ import java.util.UUID;
  */
 public interface DashboardInfoRepository extends PagingAndSortingRepository<DashboardInfoEntity, UUID> {
 
+    DashboardInfoEntity findFirstByTenantIdAndTitle(UUID tenantId, String title);
+
     @Query("SELECT di FROM DashboardInfoEntity di WHERE di.tenantId = :tenantId " +
             "AND LOWER(di.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
     Page<DashboardInfoEntity> findByTenantId(@Param("tenantId") UUID tenantId,

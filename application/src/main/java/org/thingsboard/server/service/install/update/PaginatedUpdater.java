@@ -22,7 +22,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
 @Slf4j
-public abstract class PaginatedUpdater<I, D extends SearchTextBased<? extends UUIDBased>> {
+public abstract class PaginatedUpdater<I, D> {
 
     private static final int DEFAULT_LIMIT = 100;
     private int updated = 0;

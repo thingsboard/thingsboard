@@ -17,6 +17,7 @@ package org.thingsboard.server.service.edge.rpc.fetch;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,9 +48,16 @@ import java.util.regex.Pattern;
 
 @AllArgsConstructor
 @Slf4j
-public class AdminSettingsEdgeEventFetcher extends BasePageableEdgeEventFetcher {
+public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
+
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private final AdminSettingsService adminSettingsService;
+
+    @Override
+    public PageLink getPageLink(int pageSize) {
+        return null;
+    }
 
     @Override
     public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, Edge edge, PageLink pageLink) throws Exception {

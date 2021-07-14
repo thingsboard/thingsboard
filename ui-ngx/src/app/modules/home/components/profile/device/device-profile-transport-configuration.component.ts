@@ -91,7 +91,7 @@ export class DeviceProfileTransportConfigurationComponent implements ControlValu
     }
     setTimeout(() => {
       this.deviceProfileTransportConfigurationFormGroup.patchValue({configuration}, {emitEvent: false});
-    });
+    }, 0);
   }
 
   private updateModel() {

@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.edge.exception.EdgeConnectionException;
+import org.thingsboard.server.common.data.ResourceUtils;
 import org.thingsboard.server.gen.edge.v1.ConnectRequestMsg;
 import org.thingsboard.server.gen.edge.v1.ConnectResponseCode;
 import org.thingsboard.server.gen.edge.v1.ConnectResponseMsg;
@@ -80,8 +81,8 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                 .keepAliveTime(keepAliveTimeSec, TimeUnit.SECONDS);
         if (sslEnabled) {
             try {
-                builder.sslContext(GrpcSslContexts.forClient().trustManager(new File(Resources.getResource(certResource).toURI())).build());
-            } catch (URISyntaxException | SSLException e) {
+                builder.sslContext(GrpcSslContexts.forClient().trustManager(ResourceUtils.getInputStream(this, certResource)).build());
+            } catch (SSLException e) {
                 log.error("Failed to initialize channel!", e);
                 throw new RuntimeException(e);
             }
@@ -184,8 +185,8 @@ public class EdgeGrpcClient implements EdgeRpcClient {
 
     @Override
     public void sendUplinkMsg(UplinkMsg msg) {
+        uplinkMsgLock.lock();
         try {
-            uplinkMsgLock.lock();
             this.inputStream.onNext(RequestMsg.newBuilder()
                     .setMsgType(RequestMsgType.UPLINK_RPC_MESSAGE)
                     .setUplinkMsg(msg)
@@ -197,8 +198,8 @@ public class EdgeGrpcClient implements EdgeRpcClient {
 
     @Override
     public void sendSyncRequestMsg(boolean syncRequired) {
+        uplinkMsgLock.lock();
         try {
-            uplinkMsgLock.lock();
             SyncRequestMsg syncRequestMsg = SyncRequestMsg.newBuilder().setSyncRequired(syncRequired).build();
             this.inputStream.onNext(RequestMsg.newBuilder()
                     .setMsgType(RequestMsgType.SYNC_REQUEST_RPC_MESSAGE)
@@ -211,8 +212,8 @@ public class EdgeGrpcClient implements EdgeRpcClient {
 
     @Override
     public void sendDownlinkResponseMsg(DownlinkResponseMsg downlinkResponseMsg) {
+        uplinkMsgLock.lock();
         try {
-            uplinkMsgLock.lock();
             this.inputStream.onNext(RequestMsg.newBuilder()
                     .setMsgType(RequestMsgType.UPLINK_RPC_MESSAGE)
                     .setDownlinkResponseMsg(downlinkResponseMsg)
