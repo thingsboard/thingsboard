@@ -248,8 +248,8 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         log.trace("Executing findOrCreateDefaultDeviceProfile");
         DeviceProfile deviceProfile = findDeviceProfileByName(tenantId, name);
         if (deviceProfile == null) {
+            findOrCreateLock.lock();
             try {
-                findOrCreateLock.lock();
                 deviceProfile = findDeviceProfileByName(tenantId, name);
                 if (deviceProfile == null) {
                     deviceProfile = this.doCreateDefaultDeviceProfile(tenantId, name, name.equals("default"));

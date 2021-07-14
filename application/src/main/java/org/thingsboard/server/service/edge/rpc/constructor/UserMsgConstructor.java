@@ -21,9 +21,9 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.gen.edge.UpdateMsgType;
-import org.thingsboard.server.gen.edge.UserCredentialsUpdateMsg;
-import org.thingsboard.server.gen.edge.UserUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 @Component

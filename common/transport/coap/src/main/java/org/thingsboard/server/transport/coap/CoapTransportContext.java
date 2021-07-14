@@ -22,9 +22,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportContext;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.adaptors.JsonCoapAdaptor;
 import org.thingsboard.server.transport.coap.adaptors.ProtoCoapAdaptor;
 import org.thingsboard.server.transport.coap.efento.adaptor.EfentoCoapAdaptor;
+
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 
 /**
@@ -33,22 +37,21 @@ import org.thingsboard.server.transport.coap.efento.adaptor.EfentoCoapAdaptor;
 @Slf4j
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.coap.enabled}'=='true')")
 @Component
+@Getter
 public class CoapTransportContext extends TransportContext {
 
-    @Getter
     @Value("${transport.sessions.report_timeout}")
     private long sessionReportTimeout;
 
-    @Getter
     @Autowired
     private JsonCoapAdaptor jsonCoapAdaptor;
 
-    @Getter
     @Autowired
     private ProtoCoapAdaptor protoCoapAdaptor;
 
-    @Getter
     @Autowired
     private EfentoCoapAdaptor efentoCoapAdaptor;
+
+    private final ConcurrentMap<Integer, TransportProtos.ToDeviceRpcRequestMsg> rpcAwaitingAck = new ConcurrentHashMap<>();
 
 }

@@ -122,7 +122,7 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
     @Override
     public Response convertToPublish(boolean isConfirmable, TransportProtos.ToServerRpcResponseMsg msg) throws AdaptorException {
         Response response = new Response(CoAP.ResponseCode.CONTENT);
-        response.setAcknowledged(isConfirmable);
+        response.setConfirmable(isConfirmable);
         response.setPayload(msg.toByteArray());
         return response;
     }
