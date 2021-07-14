@@ -25,8 +25,8 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
-import org.thingsboard.server.gen.edge.AttributeDeleteMsg;
-import org.thingsboard.server.gen.edge.EntityDataProto;
+import org.thingsboard.server.gen.edge.v1.AttributeDeleteMsg;
+import org.thingsboard.server.gen.edge.v1.EntityDataProto;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
