@@ -682,7 +682,7 @@ public class DeviceController extends BaseController {
             Edge edge = checkEdgeId(edgeId, Operation.READ);
 
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-            checkDeviceId(deviceId, Operation.ASSIGN_TO_EDGE);
+            checkDeviceId(deviceId, Operation.READ);
 
             Device savedDevice = checkNotNull(deviceService.assignDeviceToEdge(getCurrentUser().getTenantId(), deviceId, edgeId));
 
@@ -716,7 +716,7 @@ public class DeviceController extends BaseController {
             Edge edge = checkEdgeId(edgeId, Operation.READ);
 
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-            Device device = checkDeviceId(deviceId, Operation.UNASSIGN_FROM_EDGE);
+            Device device = checkDeviceId(deviceId, Operation.READ);
 
             Device savedDevice = checkNotNull(deviceService.unassignDeviceFromEdge(getCurrentUser().getTenantId(), deviceId, edgeId));
 
