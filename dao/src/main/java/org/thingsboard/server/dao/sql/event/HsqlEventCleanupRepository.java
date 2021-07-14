@@ -37,10 +37,6 @@ public class HsqlEventCleanupRepository extends JpaAbstractDaoListeningExecutorS
              PreparedStatement stmt = connection.prepareStatement("DELETE FROM event WHERE ts < ? AND event_type != 'DEBUG_RULE_NODE' AND event_type != 'DEBUG_RULE_CHAIN'")) {
             stmt.setLong(1, otherExpirationTime);
             stmt.execute();
-            try (ResultSet resultSet = stmt.getResultSet()){
-                resultSet.next();
-                log.info("Events removed by ttl: [{}]", resultSet.getLong(1));
-            }
         } catch (SQLException e) {
             log.error("SQLException occurred during events TTL task execution ", e);
         }
@@ -49,10 +45,6 @@ public class HsqlEventCleanupRepository extends JpaAbstractDaoListeningExecutorS
              PreparedStatement stmt = connection.prepareStatement("DELETE FROM event WHERE ts < ? AND (event_type = 'DEBUG_RULE_NODE' OR event_type = 'DEBUG_RULE_CHAIN')")) {
             stmt.setLong(1, debugExpirationTime);
             stmt.execute();
-            try (ResultSet resultSet = stmt.getResultSet()){
-                resultSet.next();
-                log.info("Debug Events removed by ttl: [{}]", resultSet.getLong(1));
-            }
         } catch (SQLException e) {
             log.error("SQLException occurred during events TTL task execution ", e);
         }
