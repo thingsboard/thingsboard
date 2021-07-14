@@ -825,8 +825,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         try {
             deviceSessionCtx.getPayloadAdaptor().convertToPublish(deviceSessionCtx, rpcRequest).ifPresent(payload -> {
                 int msgId = ((MqttPublishMessage) payload).variableHeader().packetId();
-                if (isAckExpected(payload)) {
-                    if (rpcRequest.getPersisted()) {
+                if (rpcRequest.getPersisted()) {
+                    if (isAckExpected(payload)) {
                         rpcAwaitingAck.put(msgId, rpcRequest);
                         context.getScheduler().schedule(() -> {
                             TransportProtos.ToDeviceRpcRequestMsg awaitingAckMsg = rpcAwaitingAck.remove(msgId);
@@ -834,9 +834,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                                 transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, true, TransportServiceCallback.EMPTY);
                             }
                         }, Math.max(0, rpcRequest.getExpirationTime() - System.currentTimeMillis()), TimeUnit.MILLISECONDS);
+                    } else {
+                        transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, false, TransportServiceCallback.EMPTY);
                     }
-                } else if (rpcRequest.getPersisted()) {
-                    transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, false, TransportServiceCallback.EMPTY);
                 }
                 publish(payload, deviceSessionCtx);
             });

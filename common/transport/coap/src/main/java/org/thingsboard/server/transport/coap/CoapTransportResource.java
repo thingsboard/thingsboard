@@ -497,8 +497,8 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                 int requestId = getNextMsgId();
                 response.setMID(requestId);
 
-                if (isConRequest()) {
-                    if (msg.getPersisted()) {
+                if (msg.getPersisted()) {
+                    if (isConRequest()) {
                         transportContext.getRpcAwaitingAck().put(requestId, msg);
                         transportContext.getScheduler().schedule(() -> {
                             TransportProtos.ToDeviceRpcRequestMsg awaitingAckMsg = transportContext.getRpcAwaitingAck().remove(requestId);
@@ -506,15 +506,15 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                                 transportService.process(sessionInfo, msg, true, TransportServiceCallback.EMPTY);
                             }
                         }, Math.max(0, msg.getExpirationTime() - System.currentTimeMillis()), TimeUnit.MILLISECONDS);
+                        response.addMessageObserver(new TbCoapMessageObserver(requestId, id -> {
+                            TransportProtos.ToDeviceRpcRequestMsg rpcRequestMsg = transportContext.getRpcAwaitingAck().remove(id);
+                            if (rpcRequestMsg != null) {
+                                transportService.process(sessionInfo, rpcRequestMsg, false, TransportServiceCallback.EMPTY);
+                            }
+                        }));
+                    } else {
+                        transportService.process(sessionInfo, msg, false, TransportServiceCallback.EMPTY);
                     }
-                    response.addMessageObserver(new TbCoapMessageObserver(requestId, id -> {
-                        TransportProtos.ToDeviceRpcRequestMsg rpcRequestMsg = transportContext.getRpcAwaitingAck().remove(id);
-                        if (rpcRequestMsg != null) {
-                            transportService.process(sessionInfo, rpcRequestMsg, false, TransportServiceCallback.EMPTY);
-                        }
-                    }));
-                } else if (msg.getPersisted()) {
-                    transportService.process(sessionInfo, msg, false, TransportServiceCallback.EMPTY);
                 }
 
                 exchange.respond(response);
