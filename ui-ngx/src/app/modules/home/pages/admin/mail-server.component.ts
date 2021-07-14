@@ -116,6 +116,9 @@ export class MailServerComponent extends PageComponent implements OnInit, HasCon
     this.adminSettings.jsonValue = {...this.adminSettings.jsonValue, ...this.mailSettings.value};
     this.adminService.saveAdminSettings(this.adminSettings).subscribe(
       (adminSettings) => {
+        if (!adminSettings.jsonValue.password) {
+          adminSettings.jsonValue.password = this.mailSettings.value.password;
+        }
         this.adminSettings = adminSettings;
         this.mailSettings.reset(this.adminSettings.jsonValue);
       }
