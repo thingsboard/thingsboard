@@ -969,24 +969,56 @@
                 <groupId>org.thingsboard.msa</groupId>
                 <artifactId>js-executor</artifactId>
                 <version>${project.version}</version>
+                <type>docker-info</type>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.thingsboard.msa</groupId>
                 <artifactId>web-ui</artifactId>
                 <version>${project.version}</version>
+                <type>docker-info</type>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.thingsboard.msa</groupId>
                 <artifactId>tb-node</artifactId>
                 <version>${project.version}</version>
+                <type>docker-info</type>
                 <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>org.thingsboard.msa</groupId>
-                <artifactId>transport</artifactId>
+                <groupId>org.thingsboard.msa.transport</groupId>
+                <artifactId>coap</artifactId>
                 <version>${project.version}</version>
+                <type>docker-info</type>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.msa.transport</groupId>
+                <artifactId>http</artifactId>
+                <version>${project.version}</version>
+                <type>docker-info</type>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.msa.transport</groupId>
+                <artifactId>mqtt</artifactId>
+                <version>${project.version}</version>
+                <type>docker-info</type>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.msa.transport</groupId>
+                <artifactId>lwm2m</artifactId>
+                <version>${project.version}</version>
+                <type>docker-info</type>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.msa.transport</groupId>
+                <artifactId>snmp</artifactId>
+                <version>${project.version}</version>
+                <type>docker-info</type>
                 <scope>test</scope>
             </dependency>
             <dependency>
