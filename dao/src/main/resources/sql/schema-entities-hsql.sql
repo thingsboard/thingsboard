@@ -14,6 +14,9 @@
 -- limitations under the License.
 --
 
+SET DATABASE SQL SYNTAX PGS TRUE;
+SET DATABASE TRANSACTION CONTROL MVCC;
+
 CREATE TABLE IF NOT EXISTS admin_settings (
     id uuid NOT NULL CONSTRAINT admin_settings_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
