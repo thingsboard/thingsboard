@@ -1499,7 +1499,7 @@
         "type-device": "Device",
         "type-device-profile": "Device Profile",
         "type-entity-view": "Entity View",
-        "type-alarm": "Alar",
+        "type-alarm": "Alarm",
         "type-rule-chain": "Rule Chain",
         "type-rule-chain-metadata": "Rule Chain Metadata",
         "type-edge": "Edge",
