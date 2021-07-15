@@ -89,9 +89,9 @@ public class LwM2MTestClient {
         initializer.setInstancesForObject(FIRMWARE, new FwLwM2MDevice());
         initializer.setInstancesForObject(SOFTWARE_MANAGEMENT, new SwLwM2MDevice());
         initializer.setClassForObject(LwM2mId.ACCESS_CONTROL, DummyInstanceEnabler.class);
-        initializer.setClassForObject(TEST_OBJECT_SINGLE_WITH_RESOURCE_RW_ID, DummyInstanceEnabler.class);
-        initializer.setClassForObject(TEST_OBJECT_SINGLE_WITH_RESOURCE_R_ID, DummyInstanceEnabler.class);
-        initializer.setClassForObject(TEST_OBJECT_MULTI_WITH_RESOURCE_RW_ID, DummyInstanceEnabler.class);
+        initializer.setInstancesForObject(TEST_OBJECT_SINGLE_WITH_RESOURCE_RW_ID, new DummyInstanceEnabler());
+        initializer.setClassForObject(TEST_OBJECT_SINGLE_WITH_RESOURCE_R_ID, TestDummyInstanceEnabler.class);
+        initializer.setClassForObject(TEST_OBJECT_MULTI_WITH_RESOURCE_RW_ID, TestDummyInstanceEnabler.class);
         initializer.setInstancesForObject(TEST_OBJECT_MULTI_WITH_RESOURCE_RW_ID, new LwM2mInstanceEnabler[] {new TestDummyInstanceEnabler(executor, 0),
                 new TestDummyInstanceEnabler(executor, 1)});
         initializer.setClassForObject(TEST_OBJECT_MULTI_WITH_RESOURCE_R_ID, DummyInstanceEnabler.class);
