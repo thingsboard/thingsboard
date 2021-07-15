@@ -1167,6 +1167,7 @@
         "make-private-edge-text": "Después de la confirmación, el borde y todos sus datos se harán privados y otros no podrán acceder a ellos",
         "import": "Importar borde",
         "label": "Etiqueta",
+        "load-entity-error": "Entidad no encontrada. No se pudo cargar la información",
         "assign-new-edge": "Asignar nuevo borde",
         "unassign-from-edge": "Anular asignación de borde",
         "edge-key": "Clave de borde",

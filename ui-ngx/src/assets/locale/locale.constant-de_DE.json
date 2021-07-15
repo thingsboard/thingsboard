@@ -781,6 +781,7 @@
     "make-private-edge-text": "Nach der Bestätigung werden der Rand und dessen Daten privat und sind für andere nicht mehr zugänglich.",
     "import": "Rand importieren",
     "label": "Bezeichnung",
+    "load-entity-error": "Entität nicht gefunden. Fehler beim Laden der Informationen",
     "assign-new-edge": "Neue Rand zuordnen",
     "unassign-from-edge": "Rand zuweisen",
     "edge-key": "Rand Schlüssel",

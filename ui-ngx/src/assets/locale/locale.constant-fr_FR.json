@@ -799,6 +799,7 @@
         "make-private-edge-text": "Après la confirmation, la bordure et toutes ses données seront rendues privées et ne seront pas accessibles par d'autres",
         "import": "Importer bordure",
         "label": "Etiquette",
+        "load-entity-error": "Entité introuvable. Échec du chargement des informations",
         "assign-new-edge": "Attribuer un nouvel bordure",
         "unassign-from-edge": "Retirer de la bordure",
         "edge-key": "Clé de la bordure",
