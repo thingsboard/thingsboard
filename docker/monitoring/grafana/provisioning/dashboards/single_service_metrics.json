@@ -949,16 +949,6 @@
             "selected": false,
             "text": "tb-coap-transport",
             "value": "tb-coap-transport"
-          },
-          {
-            "selected": false,
-            "text": "tb-lwm2m-transport",
-            "value": "tb-lwm2m-transport"
-          },
-          {
-            "selected": false,
-            "text": "tb-snmp-transport",
-            "value": "tb-snmp-transport"
           }
         ],
         "query": "tb-core1,tb-core2,tb-rule-engine1,tb-rule-engine2,tb-mqtt-transport1,tb-mqtt-transport2,tb-http-transport1,tb-http-transport2,tb-coap-transport,tb-lwm2m-transport,tb-snmp-transport",
