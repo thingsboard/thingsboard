@@ -92,6 +92,22 @@
             <groupId>org.thingsboard</groupId>
             <artifactId>rest-client</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.thingsboard.msa</groupId>
+            <artifactId>js-executor</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.msa</groupId>
+            <artifactId>web-ui</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.msa</groupId>
+            <artifactId>tb-node</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.msa</groupId>
+            <artifactId>transport</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

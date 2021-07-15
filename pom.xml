@@ -966,6 +966,30 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>org.thingsboard.msa</groupId>
+                <artifactId>js-executor</artifactId>
+                <version>${project.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.msa</groupId>
+                <artifactId>web-ui</artifactId>
+                <version>${project.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.msa</groupId>
+                <artifactId>tb-node</artifactId>
+                <version>${project.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.msa</groupId>
+                <artifactId>transport</artifactId>
+                <version>${project.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.thingsboard</groupId>
                 <artifactId>dao</artifactId>
                 <version>${project.version}</version>
