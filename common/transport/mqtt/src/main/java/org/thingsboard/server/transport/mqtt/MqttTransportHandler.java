@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.mqtt;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.JsonParseException;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
@@ -39,7 +40,6 @@ import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.DataConstants;
@@ -825,19 +825,19 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         log.trace("[{}] Received RPC command to device", sessionId);
         try {
             deviceSessionCtx.getPayloadAdaptor().convertToPublish(deviceSessionCtx, rpcRequest).ifPresent(payload -> {
-                RequestInfo requestInfo = publish(payload, deviceSessionCtx);
-                int msgId = requestInfo.getMsgId();
-
-                if (isAckExpected(payload)) {
-                    if (rpcRequest.getPersisted()) {
-                        rpcAwaitingAck.put(msgId, rpcRequest);
-                        context.getScheduler().schedule(() -> {
-                            TransportProtos.ToDeviceRpcRequestMsg awaitingAckMsg = rpcAwaitingAck.remove(msgId);
-                            if (awaitingAckMsg != null) {
-                                transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, true, TransportServiceCallback.EMPTY);
-                            }
-                        }, Math.max(0, rpcRequest.getExpirationTime() - System.currentTimeMillis()), TimeUnit.MILLISECONDS);
-                    }
+                int msgId = ((MqttPublishMessage) payload).variableHeader().packetId();
+                if (rpcRequest.getPersisted() && isAckExpected(payload)) {
+                    rpcAwaitingAck.put(msgId, rpcRequest);
+                    context.getScheduler().schedule(() -> {
+                        TransportProtos.ToDeviceRpcRequestMsg awaitingAckMsg = rpcAwaitingAck.remove(msgId);
+                        if (awaitingAckMsg != null) {
+                            transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, true, TransportServiceCallback.EMPTY);
+                        }
+                    }, Math.max(0, rpcRequest.getExpirationTime() - System.currentTimeMillis()), TimeUnit.MILLISECONDS);
+                }
+                var cf = publish(payload, deviceSessionCtx);
+                if (rpcRequest.getPersisted() && !isAckExpected(payload)) {
+                    cf.addListener(result -> transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, result.cause() != null, TransportServiceCallback.EMPTY));
                 }
             });
         } catch (Exception e) {
@@ -855,13 +855,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private RequestInfo publish(MqttMessage message, DeviceSessionCtx deviceSessionCtx) {
-        deviceSessionCtx.getChannel().writeAndFlush(message);
-
-        int msgId = ((MqttPublishMessage) message).variableHeader().packetId();
-        RequestInfo requestInfo = new RequestInfo(msgId, System.currentTimeMillis(), deviceSessionCtx.getSessionInfo());
-
-        return requestInfo;
+    private ChannelFuture publish(MqttMessage message, DeviceSessionCtx deviceSessionCtx) {
+        return deviceSessionCtx.getChannel().writeAndFlush(message);
     }
 
     private boolean isAckExpected(MqttMessage message) {
@@ -876,12 +871,5 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     @Override
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
         deviceSessionCtx.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
-    }
-
-    @Data
-    public static class RequestInfo {
-        private final int msgId;
-        private final long requestTime;
-        private final TransportProtos.SessionInfoProto sessionInfo;
     }
 }

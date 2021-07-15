@@ -23,11 +23,11 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.gen.edge.DeviceCredentialsUpdateMsg;
-import org.thingsboard.server.gen.edge.DeviceRpcCallMsg;
-import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
-import org.thingsboard.server.gen.edge.RpcRequestMsg;
-import org.thingsboard.server.gen.edge.UpdateMsgType;
+import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.DeviceRpcCallMsg;
+import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.RpcRequestMsg;
+import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.UUID;

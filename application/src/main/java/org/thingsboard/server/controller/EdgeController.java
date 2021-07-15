@@ -49,7 +49,6 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.edge.rpc.EdgeGrpcSession;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -81,7 +80,7 @@ public class EdgeController extends BaseController {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
             Edge edge = checkEdgeId(edgeId, Operation.READ);
             if (Authority.CUSTOMER_USER.equals(getCurrentUser().getAuthority())) {
-                cleanUpSensitiveData(edge);
+                cleanUpLicenseKey(edge);
             }
             return edge;
         } catch (Exception e) {
@@ -98,7 +97,7 @@ public class EdgeController extends BaseController {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
             EdgeInfo edgeInfo = checkEdgeInfoId(edgeId, Operation.READ);
             if (Authority.CUSTOMER_USER.equals(getCurrentUser().getAuthority())) {
-                cleanUpSensitiveData(edgeInfo);
+                cleanUpLicenseKey(edgeInfo);
             }
             return edgeInfo;
         } catch (Exception e) {
@@ -128,7 +127,7 @@ public class EdgeController extends BaseController {
             accessControlService.checkPermission(getCurrentUser(), Resource.EDGE, operation,
                     edge.getId(), edge);
 
-            Edge savedEdge = checkNotNull(edgeService.saveEdge(edge));
+            Edge savedEdge = checkNotNull(edgeService.saveEdge(edge, true));
 
             if (created) {
                 ruleChainService.assignRuleChainToEdge(tenantId, edgeTemplateRootRuleChain.getId(), savedEdge.getId());
@@ -405,7 +404,7 @@ public class EdgeController extends BaseController {
             }
             if (Authority.CUSTOMER_USER.equals(user.getAuthority())) {
                 for (Edge edge : result.getData()) {
-                    cleanUpSensitiveData(edge);
+                    cleanUpLicenseKey(edge);
                 }
             }
             return checkNotNull(result);
@@ -440,7 +439,7 @@ public class EdgeController extends BaseController {
             }
             if (Authority.CUSTOMER_USER.equals(user.getAuthority())) {
                 for (Edge edge : result.getData()) {
-                    cleanUpSensitiveData(edge);
+                    cleanUpLicenseKey(edge);
                 }
             }
             return checkNotNull(result);
@@ -472,7 +471,7 @@ public class EdgeController extends BaseController {
             List<Edge> edges = edgesFuture.get();
             if (Authority.CUSTOMER_USER.equals(user.getAuthority())) {
                 for (Edge edge : edges) {
-                    cleanUpSensitiveData(edge);
+                    cleanUpLicenseKey(edge);
                 }
             }
             return checkNotNull(edges);
@@ -503,7 +502,7 @@ public class EdgeController extends BaseController {
             }).collect(Collectors.toList());
             if (Authority.CUSTOMER_USER.equals(user.getAuthority())) {
                 for (Edge edge : edges) {
-                    cleanUpSensitiveData(edge);
+                    cleanUpLicenseKey(edge);
                 }
             }
             return edges;
@@ -536,9 +535,7 @@ public class EdgeController extends BaseController {
                 edgeId = checkNotNull(edgeId);
                 SecurityUser user = getCurrentUser();
                 TenantId tenantId = user.getTenantId();
-                EdgeGrpcSession session = edgeGrpcService.getEdgeGrpcSessionById(tenantId, edgeId);
-                Edge edge = session.getEdge();
-                syncEdgeService.sync(tenantId, edge);
+                edgeGrpcService.startSyncProcess(tenantId, edgeId);
             } else {
                 throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
             }
@@ -583,11 +580,7 @@ public class EdgeController extends BaseController {
         }
     }
 
-    private void cleanUpSensitiveData(Edge edge) {
+    private void cleanUpLicenseKey(Edge edge) {
         edge.setEdgeLicenseKey(null);
-        edge.setRoutingKey(null);
-        edge.setSecret(null);
-        edge.setCloudEndpoint(null);
-        edge.setRootRuleChainId(null);
     }
 }
