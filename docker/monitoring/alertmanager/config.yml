@@ -1,10 +1,12 @@
-route:
-  receiver: 'slack'
-
-receivers:
-  - name: 'slack'
-#       slack_configs:
-#           - send_resolved: true
-#             username: '<username>'
-#             channel: '#<channel-name>'
-#             api_url: '<incomming-webhook-url>'
+--- 
+receivers: 
+  - 
+    name: slack
+    slack_configs: 
+      - 
+        api_url: "https://hooks.slack.com/services/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"
+        channel: "#awx"
+        send_resolved: true
+        username: grafana
+route: 
+  receiver: slack
