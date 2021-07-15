@@ -36,3 +36,4 @@ rebuild-docker.sh
 */.run/**
 .run/**
 .run
+docker/monitoring/alertmanager/config.yml
