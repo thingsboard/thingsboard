@@ -13,12 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.permission;
+package org.thingsboard.server.service.edge.rpc;
 
-public enum Operation {
+import com.google.common.util.concurrent.SettableFuture;
+import lombok.Data;
+import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 
-    ALL, CREATE, READ, WRITE, DELETE, ASSIGN_TO_CUSTOMER, UNASSIGN_FROM_CUSTOMER, RPC_CALL,
-    READ_CREDENTIALS, WRITE_CREDENTIALS, READ_ATTRIBUTES, WRITE_ATTRIBUTES, READ_TELEMETRY, WRITE_TELEMETRY, CLAIM_DEVICES,
-    ASSIGN_TO_TENANT
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
 
+@Data
+public class EdgeSessionState {
+
+    private final Map<Integer, DownlinkMsg> pendingMsgsMap = new LinkedHashMap<>();
+    private SettableFuture<Void> sendDownlinkMsgsFuture;
+    private ScheduledFuture<?> scheduledSendDownlinkTask;
 }
