@@ -29,6 +29,7 @@ import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.client.object.Server;
 import org.eclipse.leshan.client.observer.LwM2mClientObserver;
 import org.eclipse.leshan.client.resource.DummyInstanceEnabler;
+import org.eclipse.leshan.client.resource.LwM2mInstanceEnabler;
 import org.eclipse.leshan.client.resource.ObjectsInitializer;
 import org.eclipse.leshan.client.servers.ServerIdentity;
 import org.eclipse.leshan.core.LwM2mId;
@@ -45,6 +46,8 @@ import org.eclipse.leshan.core.request.BootstrapRequest;
 import org.eclipse.leshan.core.request.DeregisterRequest;
 import org.eclipse.leshan.core.request.RegisterRequest;
 import org.eclipse.leshan.core.request.UpdateRequest;
+import org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper;
+import org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.TestDummyInstanceEnabler;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -57,6 +60,10 @@ import static org.eclipse.leshan.core.LwM2mId.FIRMWARE;
 import static org.eclipse.leshan.core.LwM2mId.SECURITY;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.core.LwM2mId.SOFTWARE_MANAGEMENT;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.TEST_OBJECT_MULTI_WITH_RESOURCE_RW_ID;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.TEST_OBJECT_MULTI_WITH_RESOURCE_R_ID;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.TEST_OBJECT_SINGLE_WITH_RESOURCE_RW_ID;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.TEST_OBJECT_SINGLE_WITH_RESOURCE_R_ID;
 
 @Slf4j
 @Data
@@ -66,12 +73,14 @@ public class LwM2MTestClient {
     private final String endpoint;
     private LeshanClient client;
 
-    public void init(Security security, NetworkConfig coapConfig) throws InvalidDDFFileException, IOException {
+    public void init(Security security, NetworkConfig coapConfig, int port) throws InvalidDDFFileException, IOException {
         String[] resources = new String[]{"0.xml", "1.xml", "2.xml", "3.xml", "5.xml", "9.xml"};
         List<ObjectModel> models = new ArrayList<>();
         for (String resourceName : resources) {
             models.addAll(ObjectLoader.loadDdfFile(LwM2MTestClient.class.getClassLoader().getResourceAsStream("lwm2m/" + resourceName), resourceName));
         }
+        RpcModelsTestHelper testHelper = new RpcModelsTestHelper();
+        models.addAll(testHelper.createObjectModels());
         LwM2mModel model = new StaticModel(models);
         ObjectsInitializer initializer = new ObjectsInitializer(model);
         initializer.setInstancesForObject(SECURITY, security);
@@ -80,6 +89,14 @@ public class LwM2MTestClient {
         initializer.setInstancesForObject(FIRMWARE, new FwLwM2MDevice());
         initializer.setInstancesForObject(SOFTWARE_MANAGEMENT, new SwLwM2MDevice());
         initializer.setClassForObject(LwM2mId.ACCESS_CONTROL, DummyInstanceEnabler.class);
+        initializer.setClassForObject(TEST_OBJECT_SINGLE_WITH_RESOURCE_RW_ID, DummyInstanceEnabler.class);
+        initializer.setClassForObject(TEST_OBJECT_SINGLE_WITH_RESOURCE_R_ID, DummyInstanceEnabler.class);
+        initializer.setClassForObject(TEST_OBJECT_MULTI_WITH_RESOURCE_RW_ID, DummyInstanceEnabler.class);
+        initializer.setInstancesForObject(TEST_OBJECT_MULTI_WITH_RESOURCE_RW_ID, new LwM2mInstanceEnabler[] {new TestDummyInstanceEnabler(executor, 0),
+                new TestDummyInstanceEnabler(executor, 1)});
+        initializer.setClassForObject(TEST_OBJECT_MULTI_WITH_RESOURCE_R_ID, DummyInstanceEnabler.class);
+        initializer.setInstancesForObject(TEST_OBJECT_MULTI_WITH_RESOURCE_R_ID, new LwM2mInstanceEnabler [] {new TestDummyInstanceEnabler(executor, 0),
+                new TestDummyInstanceEnabler(executor, 1)});
 
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
         dtlsConfig.setRecommendedCipherSuitesOnly(true);
@@ -123,7 +140,7 @@ public class LwM2MTestClient {
 
 
         LeshanClientBuilder builder = new LeshanClientBuilder(endpoint);
-        builder.setLocalAddress("0.0.0.0", 11000);
+        builder.setLocalAddress("0.0.0.0", port);
         builder.setObjects(initializer.createAll());
         builder.setCoapConfig(coapConfig);
         builder.setDtlsConfig(dtlsConfig);
