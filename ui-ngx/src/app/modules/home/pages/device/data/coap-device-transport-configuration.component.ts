@@ -112,6 +112,7 @@ export class CoapDeviceTransportConfigurationComponent implements ControlValueAc
       this.coapDeviceTransportForm.disable({emitEvent: false});
     } else {
       this.coapDeviceTransportForm.enable({emitEvent: false});
+      this.coapDeviceTransportForm.get('powerMode').updateValueAndValidity({onlySelf: true});
     }
   }
 
@@ -119,12 +120,7 @@ export class CoapDeviceTransportConfigurationComponent implements ControlValueAc
     if (isDefinedAndNotNull(value)) {
       this.coapDeviceTransportForm.patchValue(value, {emitEvent: false});
     } else {
-      this.coapDeviceTransportForm.patchValue({
-        powerMode: null,
-        edrxCycle: 0,
-        psmActivityTimer: 0,
-        pagingTransmissionWindow: 0
-      }, {emitEvent: false});
+      this.coapDeviceTransportForm.get('powerMode').patchValue(null, {emitEvent: false});
     }
     if (!this.disabled) {
       this.coapDeviceTransportForm.get('powerMode').updateValueAndValidity({onlySelf: true});

@@ -244,6 +244,13 @@ export interface MqttDeviceProfileTransportConfiguration {
   [key: string]: any;
 }
 
+export interface CoapClientSetting {
+  powerMode?: PowerMode | null;
+  edrxCycle?: number;
+  pagingTransmissionWindow?: number;
+  psmActivityTimer?: number;
+}
+
 export interface CoapDeviceProfileTransportConfiguration {
   coapDeviceTypeConfiguration?: {
     coapDeviceType?: CoapTransportDeviceType;
@@ -252,6 +259,7 @@ export interface CoapDeviceProfileTransportConfiguration {
       [key: string]: any;
     };
   };
+  clientSettings?: CoapClientSetting;
 }
 
 export interface Lwm2mDeviceProfileTransportConfiguration {
