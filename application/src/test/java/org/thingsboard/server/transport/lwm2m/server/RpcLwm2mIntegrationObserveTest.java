@@ -26,6 +26,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 public class RpcLwm2mIntegrationObserveTest extends RpcAbstractLwM2MIntegrationTest {
 
+    private final  String method = "Observe";
+
     /**
      * ObserveReadAll
      * @throws Exception
@@ -162,7 +164,7 @@ public class RpcLwm2mIntegrationObserveTest extends RpcAbstractLwM2MIntegrationT
     }
 
     private String sendObserve(String path) throws Exception {
-        String setRpcRequest = "{\"method\": \"Observe\", \"params\": {\"id\": \"" + path + "\"}}";
+        String setRpcRequest = "{\"method\": \"" + this.method + "\", \"params\": {\"id\": \"" + path + "\"}}";
         return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
     }
 }
