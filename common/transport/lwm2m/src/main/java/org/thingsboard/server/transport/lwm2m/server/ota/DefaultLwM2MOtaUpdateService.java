@@ -552,7 +552,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
             if (info == null) {
                 var profile = clientContext.getProfile(client.getProfileId());
                 info = new LwM2MClientSwOtaInfo(endpoint, profile.getClientLwM2mSettings().getSwUpdateResource(),
-                        LwM2MSoftwareUpdateStrategy.fromStrategySwByCode(profile.getClientLwM2mSettings().getFwUpdateStrategy()));
+                        LwM2MSoftwareUpdateStrategy.fromStrategySwByCode(profile.getClientLwM2mSettings().getSwUpdateStrategy()));
                 update(info);
             }
             return info;
