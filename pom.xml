@@ -636,6 +636,11 @@
                     <version>1.0.10</version>
                 </plugin>
                 <plugin>
+                    <groupId>com.github.eirslett</groupId>
+                    <artifactId>frontend-maven-plugin</artifactId>
+                    <version>1.12.0</version>
+                </plugin>
+                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.0.0-M1</version>
@@ -958,6 +963,62 @@
                 <groupId>org.thingsboard</groupId>
                 <artifactId>rest-client</artifactId>
                 <version>${project.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.msa</groupId>
+                <artifactId>js-executor</artifactId>
+                <version>${project.version}</version>
+                <type>docker-info</type>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.msa</groupId>
+                <artifactId>web-ui</artifactId>
+                <version>${project.version}</version>
+                <type>docker-info</type>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.msa</groupId>
+                <artifactId>tb-node</artifactId>
+                <version>${project.version}</version>
+                <type>docker-info</type>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.msa.transport</groupId>
+                <artifactId>coap</artifactId>
+                <version>${project.version}</version>
+                <type>docker-info</type>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.msa.transport</groupId>
+                <artifactId>http</artifactId>
+                <version>${project.version}</version>
+                <type>docker-info</type>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.msa.transport</groupId>
+                <artifactId>mqtt</artifactId>
+                <version>${project.version}</version>
+                <type>docker-info</type>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.msa.transport</groupId>
+                <artifactId>lwm2m</artifactId>
+                <version>${project.version}</version>
+                <type>docker-info</type>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.msa.transport</groupId>
+                <artifactId>snmp</artifactId>
+                <version>${project.version}</version>
+                <type>docker-info</type>
                 <scope>test</scope>
             </dependency>
             <dependency>

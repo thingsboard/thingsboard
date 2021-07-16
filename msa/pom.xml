@@ -45,6 +45,13 @@
     </modules>
 
     <build>
+        <extensions>
+            <extension>
+                <groupId>com.spotify</groupId>
+                <artifactId>dockerfile-maven-extension</artifactId>
+                <version>1.4.13</version>
+            </extension>
+        </extensions>
         <pluginManagement>
             <plugins>
                 <plugin>
