@@ -1232,6 +1232,12 @@
         "edrx-cycle": "eDRX cycle in milliseconds",
         "edrx-cycle-required": "eDRX cycle is required.",
         "edrx-cycle-pattern": "eDRX cycle must be a positive integer.",
+        "paging-transmission-window": "Paging Transmission Window in milliseconds",
+        "paging-transmission-window-required": "Paging transmission window is required.",
+        "paging-transmission-window-pattern": "Paging transmission window must be a positive integer.",
+        "psm-activity-timer": "PSM Activity Timer in milliseconds",
+        "psm-activity-timer-required": "PSM activity timer is required.",
+        "psm-activity-timer-pattern": "PSM activity timer must be a positive integer.",
         "lwm2m": {
             "object-list": "Object list",
             "object-list-empty": "No objects selected.",
