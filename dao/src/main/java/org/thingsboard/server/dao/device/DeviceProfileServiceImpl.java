@@ -373,7 +373,9 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                             throw new DataValidationException("Another default device profile is present in scope of current tenant!");
                         }
                     }
-
+                    if (deviceProfile.getProvisionType() == null) {
+                        deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
+                    }
                     DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
                     transportConfiguration.validate();
                     if (transportConfiguration instanceof MqttDeviceProfileTransportConfiguration) {
