@@ -23,6 +23,7 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
+import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.coap.Response;
 import org.springframework.stereotype.Component;
@@ -108,6 +109,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
         JsonElement result = JsonConverter.toJson(msg);
         response.setPayload(result.toString());
         response.setAcknowledged(isConfirmable);
+        response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_JSON);
         return response;
     }
 
@@ -130,6 +132,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
                 TransportProtos.AttributeUpdateNotificationMsg notificationMsg = TransportProtos.AttributeUpdateNotificationMsg.newBuilder().addAllSharedUpdated(msg.getSharedAttributeListList()).build();
                 JsonObject result = JsonConverter.toJson(notificationMsg);
                 response.setPayload(result.toString());
+                response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_JSON);
                 return response;
             } else {
                 return new Response(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
@@ -142,6 +145,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
                 response.setAcknowledged(isConfirmable);
                 JsonObject result = JsonConverter.toJson(msg);
                 response.setPayload(result.toString());
+                response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_JSON);
                 return response;
             }
         }
@@ -151,6 +155,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
         Response response = new Response(CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
         response.setPayload(json.toString());
         response.setConfirmable(confirmable);
+        response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_JSON);
         return response;
     }
 

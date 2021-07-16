@@ -23,6 +23,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
+import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.coap.Response;
 import org.springframework.stereotype.Component;
@@ -123,6 +124,7 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
         Response response = new Response(CoAP.ResponseCode.CONTENT);
         response.setConfirmable(isConfirmable);
         response.setPayload(msg.toByteArray());
+        response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_OCTET_STREAM);
         return response;
     }
 
@@ -134,6 +136,7 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
                 response.setAcknowledged(isConfirmable);
                 TransportProtos.AttributeUpdateNotificationMsg notificationMsg = TransportProtos.AttributeUpdateNotificationMsg.newBuilder().addAllSharedUpdated(msg.getSharedAttributeListList()).build();
                 response.setPayload(notificationMsg.toByteArray());
+                response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_OCTET_STREAM);
                 return response;
             } else {
                 return new Response(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
@@ -145,6 +148,7 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
                 Response response = new Response(CoAP.ResponseCode.CONTENT);
                 response.setAcknowledged(isConfirmable);
                 response.setPayload(msg.toByteArray());
+                response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_OCTET_STREAM);
                 return response;
             }
         }
@@ -154,6 +158,7 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
         Response response = new Response(CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
         response.setPayload(notification);
         response.setAcknowledged(confirmable);
+        response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_OCTET_STREAM);
         return response;
     }
 
