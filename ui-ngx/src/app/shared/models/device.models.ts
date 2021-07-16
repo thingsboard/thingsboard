@@ -709,6 +709,14 @@ export interface DeviceCredentialMQTTBasic {
   password: string;
 }
 
+export function getDeviceCredentialMQTTDefault(): DeviceCredentialMQTTBasic {
+  return {
+    clientId: '',
+    userName: '',
+    password: ''
+  };
+}
+
 export interface DeviceSearchQuery extends EntitySearchQuery {
   deviceTypes: Array<string>;
 }

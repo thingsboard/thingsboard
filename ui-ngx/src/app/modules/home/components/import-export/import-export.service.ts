@@ -21,7 +21,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { Dashboard, DashboardLayoutId } from '@shared/models/dashboard.models';
-import { deepClone, isDefined, isObject, isUndefined } from '@core/utils';
+import { deepClone, isDefined, isObject, isString, isUndefined } from '@core/utils';
 import { WINDOW } from '@core/services/window.service';
 import { DOCUMENT } from '@angular/common';
 import {
@@ -563,6 +563,8 @@ export class ImportExportService {
       if (isObject(obj2[key])) {
         obj1[key] = obj1[key] || {};
         obj1[key] = {...obj1[key], ...this.sumObject(obj1[key], obj2[key])};
+      } else if (isString(obj2[key])) {
+        obj1[key] = (obj1[key] || '') + `${obj2[key]}\n`;
       } else {
         obj1[key] = (obj1[key] || 0) + obj2[key];
       }
