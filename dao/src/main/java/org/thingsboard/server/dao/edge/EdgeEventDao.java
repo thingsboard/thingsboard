@@ -48,4 +48,10 @@ public interface EdgeEventDao extends Dao<EdgeEvent> {
      */
     PageData<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, TimePageLink pageLink, boolean withTsUpdate);
 
+    /**
+     * Executes stored procedure to cleanup old edge events.
+     * @param ttl the ttl for edge events in seconds
+     */
+    void cleanupEvents(long ttl);
+
 }

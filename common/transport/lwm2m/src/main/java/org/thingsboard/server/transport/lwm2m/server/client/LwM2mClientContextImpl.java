@@ -348,11 +348,15 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public Long getRequestTimeout(LwM2mClient client) {
-        var clientProfile = getProfile(client.getProfileId());
-        OtherConfiguration clientLwM2mSettings = clientProfile.getClientLwM2mSettings();
         Long timeout = null;
-        if (PowerMode.E_DRX.equals(clientLwM2mSettings.getPowerMode())) {
-            timeout = clientLwM2mSettings.getEDRXCycle();
+        if (PowerMode.E_DRX.equals(client.getPowerMode()) && client.getEdrxCycle() != null) {
+            timeout = client.getEdrxCycle();
+        } else {
+            var clientProfile = getProfile(client.getProfileId());
+            OtherConfiguration clientLwM2mSettings = clientProfile.getClientLwM2mSettings();
+            if (PowerMode.E_DRX.equals(clientLwM2mSettings.getPowerMode())) {
+                timeout = clientLwM2mSettings.getEdrxCycle();
+            }
         }
         if (timeout == null || timeout == 0L) {
             timeout = this.config.getTimeout();

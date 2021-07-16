@@ -150,7 +150,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     private Response getObserveNotification(boolean confirmable, JsonElement json) {
         Response response = new Response(CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
         response.setPayload(json.toString());
-        response.setAcknowledged(confirmable);
+        response.setConfirmable(confirmable);
         return response;
     }
 
