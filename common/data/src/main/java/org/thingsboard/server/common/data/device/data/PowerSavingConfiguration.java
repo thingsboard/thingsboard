@@ -13,21 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.data.lwm2m;
+package org.thingsboard.server.common.data.device.data;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
-import org.thingsboard.server.common.data.device.data.PowerSavingConfiguration;
 
 @Data
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class OtherConfiguration extends PowerSavingConfiguration {
-
-    private Integer fwUpdateStrategy;
-    private Integer swUpdateStrategy;
-    private Integer clientOnlyObserveAfterConnect;
-    private String fwUpdateResource;
-    private String swUpdateResource;
-    private boolean compositeOperationsSupport;
-
+public class PowerSavingConfiguration {
+    private PowerMode powerMode;
+    private Long psmActivityTimer;
+    private Long edrxCycle;
+    private Long pagingTransmissionWindow;
 }
