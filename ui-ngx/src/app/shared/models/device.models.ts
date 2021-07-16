@@ -208,7 +208,7 @@ export const deviceTransportTypeConfigurationInfoMap = new Map<DeviceTransportTy
       DeviceTransportType.COAP,
       {
         hasProfileConfiguration: true,
-        hasDeviceConfiguration: false,
+        hasDeviceConfiguration: true,
       }
     ],
     [
@@ -570,6 +570,10 @@ export interface MqttDeviceTransportConfiguration {
 }
 
 export interface CoapDeviceTransportConfiguration {
+  powerMode?: PowerMode | null;
+  edrxCycle?: number;
+  pagingTransmissionWindow?: number;
+  psmActivityTimer?: number;
   [key: string]: any;
 }
 
