@@ -199,6 +199,11 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
                 }
             }, executor);
         }
+
+        var clientSettings = clientContext.getProfile(client.getProfileId()).getClientLwM2mSettings();
+
+        onFirmwareStrategyUpdate(client, clientSettings);
+        onCurrentSoftwareStrategyUpdate(client, clientSettings);
     }
 
     @Override
