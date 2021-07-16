@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form [formGroup]="coapDeviceProfileTransportConfigurationFormGroup" style="padding-bottom: 16px;">
+<form [formGroup]="coapTransportConfigurationFormGroup" style="padding-bottom: 16px;">
   <section formGroupName="coapDeviceTypeConfiguration">
     <fieldset class="fields-group">
       <legend class="group-title" translate>device-profile.coap-device-type</legend>
@@ -23,10 +23,10 @@
         <mat-form-field class="mat-block">
           <mat-select formControlName="coapDeviceType" required>
             <mat-option *ngFor="let type of coapTransportDeviceTypes" [value]="type">
-              {{coapTransportDeviceTypeTranslations.get(type) | translate}}
+              {{ coapTransportDeviceTypeTranslations.get(type) | translate}}
             </mat-option>
           </mat-select>
-          <mat-error *ngIf="coapDeviceProfileTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.coapDeviceType').hasError('required')">
+          <mat-error *ngIf="coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.coapDeviceType').hasError('required')">
             {{ 'device-profile.coap-device-type-required' | translate }}
           </mat-error>
         </mat-form-field>
@@ -39,10 +39,10 @@
           <mat-form-field class="mat-block">
             <mat-select formControlName="transportPayloadType" required>
               <mat-option *ngFor="let type of transportPayloadTypes" [value]="type">
-                {{transportPayloadTypeTranslations.get(type) | translate}}
+                {{ transportPayloadTypeTranslations.get(type) | translate}}
               </mat-option>
             </mat-select>
-            <mat-error *ngIf="coapDeviceProfileTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.transportPayloadType').hasError('required')">
+            <mat-error *ngIf="coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.transportPayloadType').hasError('required')">
               {{ 'device-profile.mqtt-payload-type-required' | translate }}
             </mat-error>
           </mat-form-field>
@@ -50,21 +50,21 @@
             <mat-form-field fxFlex>
               <mat-label translate>device-profile.telemetry-proto-schema</mat-label>
               <textarea matInput required formControlName="deviceTelemetryProtoSchema" rows="5"></textarea>
-              <mat-error *ngIf="coapDeviceProfileTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceTelemetryProtoSchema').hasError('required')">
+              <mat-error *ngIf="coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceTelemetryProtoSchema').hasError('required')">
                 {{ 'device-profile.telemetry-proto-schema-required' | translate}}
               </mat-error>
             </mat-form-field>
             <mat-form-field fxFlex>
               <mat-label translate>device-profile.attributes-proto-schema</mat-label>
               <textarea matInput required formControlName="deviceAttributesProtoSchema" rows="5"></textarea>
-              <mat-error *ngIf="coapDeviceProfileTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceAttributesProtoSchema').hasError('required')">
+              <mat-error *ngIf="coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceAttributesProtoSchema').hasError('required')">
                 {{ 'device-profile.attributes-proto-schema-required' | translate}}
               </mat-error>
             </mat-form-field>
             <mat-form-field style="padding-bottom: 20px" fxFlex>
               <mat-label translate>device-profile.rpc-request-proto-schema</mat-label>
               <textarea matInput required formControlName="deviceRpcRequestProtoSchema" rows="5"></textarea>
-              <mat-error *ngIf="coapDeviceProfileTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceRpcRequestProtoSchema').hasError('required')">
+              <mat-error *ngIf="coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceRpcRequestProtoSchema').hasError('required')">
                 {{ 'device-profile.rpc-request-proto-schema-required' | translate}}
               </mat-error>
               <mat-hint class="tb-hint" translate>device-profile.rpc-request-proto-schema-hint</mat-hint>
@@ -72,7 +72,7 @@
             <mat-form-field fxFlex>
               <mat-label translate>device-profile.rpc-response-proto-schema</mat-label>
               <textarea matInput required formControlName="deviceRpcResponseProtoSchema" rows="5"></textarea>
-              <mat-error *ngIf="coapDeviceProfileTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceRpcResponseProtoSchema').hasError('required')">
+              <mat-error *ngIf="coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceRpcResponseProtoSchema').hasError('required')">
                 {{ 'device-profile.rpc-response-proto-schema-required' | translate}}
               </mat-error>
             </mat-form-field>
@@ -80,5 +80,53 @@
         </div>
       </fieldset>
     </div>
+  </section>
+  <section formGroupName="clientSettings">
+    <fieldset class="fields-group">
+      <legend class="group-title" translate>device-profile.power-saving-mode</legend>
+      <mat-form-field class="mat-block" fxFlex>
+        <mat-label> </mat-label>
+        <mat-select formControlName="powerMode">
+          <mat-option *ngFor="let powerMod of powerMods" [value]="powerMod">
+            {{ powerModeTranslationMap.get(powerMod) | translate}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <section class="mat-block" fxFlex *ngIf="coapTransportConfigurationFormGroup.get('clientSettings.powerMode').value === 'E_DRX'">
+        <mat-form-field class="mat-block" fxFlex>
+          <mat-label>{{ 'device-profile.edrx-cycle' | translate }}</mat-label>
+          <input matInput type="number" min="0" formControlName="edrxCycle" required>
+          <mat-error *ngIf="coapTransportConfigurationFormGroup.get('clientSettings.edrxCycle').hasError('required')">
+            {{ 'device-profile.edrx-cycle-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="coapTransportConfigurationFormGroup.get('clientSettings.edrxCycle').hasError('pattern') ||
+                                        coapTransportConfigurationFormGroup.get('clientSettings.edrxCycle').hasError('min')">
+            {{ 'device-profile.edrx-cycle-pattern' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="mat-block" fxFlex>
+          <mat-label>{{ 'device-profile.paging-transmission-window' | translate }}</mat-label>
+          <input matInput type="number" min="0" formControlName="pagingTransmissionWindow" required>
+          <mat-error *ngIf="coapTransportConfigurationFormGroup.get('clientSettings.pagingTransmissionWindow').hasError('required')">
+            {{ 'device-profile.paging-transmission-window-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="coapTransportConfigurationFormGroup.get('clientSettings.pagingTransmissionWindow').hasError('pattern') ||
+                                        coapTransportConfigurationFormGroup.get('clientSettings.pagingTransmissionWindow').hasError('min')">
+            {{ 'device-profile.paging-transmission-window-pattern' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </section>
+      <mat-form-field class="mat-block" fxFlex *ngIf="coapTransportConfigurationFormGroup.get('clientSettings.powerMode').value === 'PSM'">
+        <mat-label>{{ 'device-profile.psm-activity-timer' | translate }}</mat-label>
+        <input matInput type="number" min="0" formControlName="psmActivityTimer" required>
+        <mat-error *ngIf="coapTransportConfigurationFormGroup.get('clientSettings.psmActivityTimer').hasError('required')">
+          {{ 'device-profile.psm-activity-timer-required' | translate }}
+        </mat-error>
+        <mat-error *ngIf="coapTransportConfigurationFormGroup.get('clientSettings.psmActivityTimer').hasError('pattern') ||
+                                        coapTransportConfigurationFormGroup.get('clientSettings.psmActivityTimer').hasError('min')">
+          {{ 'device-profile.psm-activity-timer-pattern' | translate }}
+        </mat-error>
+      </mat-form-field>
+    </fieldset>
   </section>
 </form>
