@@ -7,6 +7,8 @@ global:
   fullnameOverride: ""
 
 postgres:
+  ## NOTE if postgres.enabled is true, helm will install local postgres database
+  ## using local postgres installation is recommended ONLY for development environments
   enabled: true
 
   image:
@@ -18,10 +20,36 @@ postgres:
     type: ClusterIP
     port: 5432
 
-  dbPassword: "postgres"
+  username: "postgres"
+  password: "postgres"
+
+  ## Existing secrets can be provided, this provides a convenient way providing secrets from tools like Vault Injector, ExternalSecrets etc.
+  ## Provide secrets name to use, If existing secrets provided, above db values will get ignored
+  ## Secret MUST contain these keys:
+  ##  * SPRING_DATASOURCE_URL
+  ##  * SPRING_DATASOURCE_USERNAME
+  ##  * SPRING_DATASOURCE_PASSWORD
+  existingSecretName: ""
+
+externalPostgres:
+  ## NOTE external postgres database will be used only when postgres.enabled is false
+  ## this set up is strongly recommended for production
+
+  ## url must be fqdn to database, for example jdbc:postgresql://postgres.example.com:5432/database_name
+  postgresUrl: "jdbc:postgresql://localhost:5432/database_name"
+  username: "postgres"
+  password: "postgres"
+
+  ## Existing secrets can be provided, this provides a convenient way providing secrets from tools like Vault Injector, ExternalSecrets etc.
+  ## Provide secrets name to use, If existing secrets provided, above db values will get ignored
+  ## Secret MUST contain these keys:
+  ##  * SPRING_DATASOURCE_URL
+  ##  * SPRING_DATASOURCE_USERNAME
+  ##  * SPRING_DATASOURCE_PASSWORD
+  existingSecretName: ""
 
 cassandra:
-  enabled: true
+  enabled: false
 
   image:
     repository: cassandra
@@ -117,6 +145,8 @@ thingsboard:
   tolerations: []
 
   affinity: {}
+
+  previousVersionHack: ""
 
   nodeConfigmap:
     ## by adding key: value with multiline string, will add to node-config map

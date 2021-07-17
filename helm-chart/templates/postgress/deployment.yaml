@@ -29,8 +29,10 @@ spec:
           env:
             - name: POSTGRES_DB
               value: "thingsboard"
+            - name: POSTGRES_USER
+              value: {{ .Values.postgres.username }}
             - name: POSTGRES_PASSWORD
-              value: {{ .Values.postgres.dbPassword }}
+              value: {{ .Values.postgres.password }}
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
           volumeMounts:

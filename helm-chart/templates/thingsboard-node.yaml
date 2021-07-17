@@ -62,7 +62,7 @@ spec:
             - name: HTTP_LOG_CONTROLLER_ERROR_STACK_TRACE
               value: "false"
 
-            # Cache
+            # cache - redis
             - name: CACHE_TYPE
               value: "redis"
             {{- if eq .Values.global.deploymentType "basic" }}
@@ -75,6 +75,20 @@ spec:
               value: "tb-redis:6379"
             {{- end }}
           envFrom:
+            ## db - postgres
+            {{- if and .Values.postgres.enabled .Values.postgres.existingSecretName }}
+            # in case local postgres db used and existingSecretName configured
+            - secretRef:
+                name: {{ .Values.postgres.existingSecretName }}
+            {{- else if and (not .Values.postgres.enabled ) .Values.externalPostgres.existingSecretName }}
+            # in case external postgres db used and existingSecretName configured
+            - secretRef:
+                name: {{ .Values.externalPostgres.existingSecretName }}
+            {{- else }}
+            # existingSecretName is not set, use internal configs
+            - secretRef:
+                name: {{ include "thingsboard.fullname" . }}-node-db-secret
+            {{- end }}
             - configMapRef:
                 name: {{ include "thingsboard.fullname" . }}-node-db-config
           volumeMounts:
