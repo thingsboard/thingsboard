@@ -65,7 +65,7 @@ cassandra:
       memory: 2Gi
 
 thingsboard:
-  replicaCount: 2
+  replicaCount: 1
 
   image:
     repository: thingsboard/tb-node

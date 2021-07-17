@@ -10,7 +10,7 @@ data:
 
   {{- if .Values.cassandra.enabled }}
   DATABASE_TS_TYPE: cassandra
-  CASSANDRA_URL: {{ include "thingsboard.fullname" . }}-cassandra:9042
+  CASSANDRA_URL: {{ include "thingsboard.fullname" . }}-cassandra.thingsboard.svc.cluster.local:9042
   CASSANDRA_SOCKET_READ_TIMEOUT: "60000"
   {{- else }}
   DATABASE_TS_TYPE: sql

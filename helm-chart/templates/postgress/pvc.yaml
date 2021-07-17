@@ -5,6 +5,8 @@ metadata:
   name: {{ include "thingsboard.fullname" . }}-postgres
   labels:
     {{- include "postgres.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook-weight": "-4"
 spec:
   accessModes:
     - ReadWriteOnce
