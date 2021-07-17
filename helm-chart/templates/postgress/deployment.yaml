@@ -4,11 +4,11 @@ kind: Deployment
 metadata:
   name: {{ include "thingsboard.fullname" . }}-postgres
   labels:
-    {{- include "thingsboard.labels" . | nindent 4 }}
+    {{- include "postgres.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:
-      {{- include "postgres.selectorLabels" . | nindent 8 }}
+      {{- include "postgres.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
@@ -20,7 +20,7 @@ spec:
             claimName: {{ include "thingsboard.fullname" . }}-postgres
       containers:
         - name: postgres
-          imagePullPolicy: Always
+          imagePullPolicy: {{ .Values.postgres.image.pullPolicy }}
           image: {{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}
           ports:
             - containerPort: 5432

@@ -1,10 +1,10 @@
-{{- if and .Values.postgres.enabled .Values.postgres.service.enabled }}
+{{- if .Values.postgres.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "thingsboard.fullname" . }}-postgres
   labels:
-    {{- include "thingsboard.labels" . | nindent 4 }}
+    {{- include "postgres.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.postgres.service.type }}
   ports:
@@ -13,5 +13,5 @@ spec:
       protocol: TCP
       name: postgres
   selector:
-    {{- include "postgres.selectorLabels" . | nindent 8 }}
+    {{- include "postgres.selectorLabels" . | nindent 4 }}
 {{- end }}

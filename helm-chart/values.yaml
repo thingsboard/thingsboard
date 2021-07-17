@@ -1,17 +1,37 @@
 
+global:
+  nameOverride: ""
+  fullnameOverride: ""
+
 postgres:
   enabled: true
 
   image:
     repository: postgres
+    pullPolicy: IfNotPresent
     tag: 12
 
   service:
-    enabled: true
     type: ClusterIP
     port: 5432
 
   dbPassword: "postgres"
+
+cassandra:
+  enabled: true
+
+  image:
+    repository: cassandra
+    pullPolicy: IfNotPresent
+    tag: 3.11.3
+
+  resources:
+    limits:
+      cpu: "1000m"
+      memory: 2Gi
+    requests:
+      cpu: "1000m"
+      memory: 2Gi
 
 thingsboard:
   replicaCount: 1
@@ -23,14 +43,12 @@ thingsboard:
     tag: ""
 
   imagePullSecrets: []
-  nameOverride: ""
-  fullnameOverride: ""
 
   serviceAccount:
     # Specifies whether a service account should be created
     create: true
     # Annotations to add to the service account
-    annotations: { }
+    annotations: {}
     # The name of the service account to use.
     # If not set and create is true, a name is generated using the fullname template
     name: ""
@@ -44,7 +62,7 @@ thingsboard:
 
   ingress:
     enabled: false
-    annotations: { }
+    annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
     hosts:
@@ -54,12 +72,12 @@ thingsboard:
             backend:
               serviceName: thingsboard
               servicePort: 80
-    tls: [ ]
+    tls: []
     #  - secretName: thingsboard-tls
     #    hosts:
     #      - thingsboard.localhost
 
-  resources: { }
+  resources: {}
     # We usually recommend not to specify default resources and to leave this as a conscious
     # choice for the user. This also increases chances charts run on environments with little
     # resources, such as Minikube. If you do want to specify resources, uncomment the following
@@ -78,11 +96,11 @@ thingsboard:
     targetCPUUtilizationPercentage: 80
     # targetMemoryUtilizationPercentage: 80
 
-  nodeSelector: { }
+  nodeSelector: {}
 
-  tolerations: [ ]
+  tolerations: []
 
-  affinity: { }
+  affinity: {}
 
   nodeConfigmap:
     ## by adding key: value with multiline string, will add to node-config map

@@ -1,0 +1,17 @@
+{{- if .Values.cassandra.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "thingsboard.fullname" . }}-cassandra
+  labels:
+  {{- include "cassandra.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  ports:
+    - port: 9042
+      targetPort: cql
+      protocol: TCP
+      name: cassandra
+  selector:
+  {{- include "cassandra.selectorLabels" . | nindent 4 }}
+{{- end }}

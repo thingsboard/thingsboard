@@ -4,7 +4,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: {{ include "thingsboard.fullname" . }}-postgres
   labels:
-    {{- include "thingsboard.labels" . | nindent 4 }}
+    {{- include "postgres.labels" . | nindent 4 }}
 spec:
   accessModes:
     - ReadWriteOnce
