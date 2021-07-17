@@ -1,5 +1,8 @@
 
 global:
+  ## must be one of two choices: ["basic", "ha"]
+  deploymentType: "basic"
+
   nameOverride: ""
   fullnameOverride: ""
 
@@ -34,13 +37,13 @@ cassandra:
       memory: 2Gi
 
 thingsboard:
-  replicaCount: 1
+  replicaCount: 2
 
   image:
-    repository: nginx
+    repository: thingsboard/tb-node
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: ""
+    tag: "latest"
 
   imagePullSecrets: []
 
@@ -88,6 +91,19 @@ thingsboard:
     # requests:
   #   cpu: 100m
   #   memory: 128Mi
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+  # fsGroup: 2000
+
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
 
   autoscaling:
     enabled: false

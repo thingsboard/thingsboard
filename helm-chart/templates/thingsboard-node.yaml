@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "thingsboard.fullname" . }}-node
+  labels:
+    {{- include "thingsboard.labels" . | nindent 4 }}-node
+spec:
+  {{- if not .Values.thingsboard.autoscaling.enabled }}
+  replicas: {{ .Values.thingsboard.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "thingsboard.selectorLabels" . | nindent 6 }}-node
+  template:
+    metadata:
+      {{- with .Values.thingsboard.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "thingsboard.selectorLabels" . | nindent 8 }}-node
+    spec:
+      {{- with .Values.thingsboard.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "thingsboard.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.thingsboard.podSecurityContext | nindent 8 }}
+      containers:
+        - name: server
+          securityContext:
+            {{- toYaml .Values.thingsboard.securityContext | nindent 12 }}
+          image: "{{ .Values.thingsboard.image.repository }}:{{ .Values.thingsboard.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.thingsboard.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+            - containerPort: 9001
+              name: rpc
+              protocol: TCP
+          env:
+            - name: TB_SERVICE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: TB_SERVICE_TYPE
+              value: "monolith"
+            - name: TB_QUEUE_TYPE
+              value: "kafka"
+            - name: ZOOKEEPER_ENABLED
+              value: "true"
+            - name: ZOOKEEPER_URL
+              value: "zookeeper:2181"
+            - name: TB_KAFKA_SERVERS
+              value: "tb-kafka:9092"
+            - name: JS_EVALUATOR
+              value: "remote"
+            - name: TRANSPORT_TYPE
+              value: "remote"
+            - name: HTTP_LOG_CONTROLLER_ERROR_STACK_TRACE
+              value: "false"
+
+            # Cache
+            - name: CACHE_TYPE
+              value: "redis"
+            {{- if eq .Values.global.deploymentType "basic" }}
+            - name: REDIS_HOST
+              value: "redis"
+            {{- else if eq .Values.global.deploymentType "ha" }}
+            - name: REDIS_CONNECTION_TYPE
+              value: "cluster"
+            - name: REDIS_NODES
+              value: "tb-redis:6379"
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "thingsboard.fullname" . }}-node-db-config
+          volumeMounts:
+            - mountPath: /config
+              name: tb-node-config
+          livenessProbe:
+            httpGet:
+              path: /login
+              port: http
+            initialDelaySeconds: 300
+            timeoutSeconds: 10
+          resources:
+            {{- toYaml .Values.thingsboard.resources | nindent 12 }}
+      volumes:
+        - name: tb-node-config
+          configMap:
+            name: {{ include "thingsboard.fullname" . }}-node-config
+            items:
+              - key: conf
+                path:  thingsboard.conf
+              - key: logback
+                path:  logback.xml
+      restartPolicy: Always
+      {{- with .Values.thingsboard.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.thingsboard.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.thingsboard.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

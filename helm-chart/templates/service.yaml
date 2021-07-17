@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "thingsboard.fullname" . }}-node
+  labels:
+    {{- include "thingsboard.labels" . | nindent 4 }}-node
+spec:
+  type: {{ .Values.thingsboard.service.type }}
+  ports:
+    - port: {{ .Values.thingsboard.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "thingsboard.selectorLabels" . | nindent 6 }}-node
