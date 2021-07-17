@@ -1,0 +1,135 @@
+
+postgres:
+  enabled: true
+
+  image:
+    repository: postgres
+    tag: 12
+
+  service:
+    enabled: true
+    type: ClusterIP
+    port: 5432
+
+  dbPassword: "postgres"
+
+thingsboard:
+  replicaCount: 1
+
+  image:
+    repository: nginx
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+
+  imagePullSecrets: []
+  nameOverride: ""
+  fullnameOverride: ""
+
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: true
+    # Annotations to add to the service account
+    annotations: { }
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
+
+  ## If true then additional demo data will be loaded on installation.
+  loadDemoData: true
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  ingress:
+    enabled: false
+    annotations: { }
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+    hosts:
+      - host: thingsboard.localhost
+        paths:
+          - path: /
+            backend:
+              serviceName: thingsboard
+              servicePort: 80
+    tls: [ ]
+    #  - secretName: thingsboard-tls
+    #    hosts:
+    #      - thingsboard.localhost
+
+  resources: { }
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+
+  nodeSelector: { }
+
+  tolerations: [ ]
+
+  affinity: { }
+
+  nodeConfigmap:
+    ## by adding key: value with multiline string, will add to node-config map
+    ## for example:
+    # server: |-
+    #   some multiline data
+    #   should be set here
+    conf: |-
+      export JAVA_OPTS="$JAVA_OPTS -Dplatform=deb -Dinstall.data_dir=/usr/share/thingsboard/data"
+      export JAVA_OPTS="$JAVA_OPTS -Xlog:gc*,heap*,age*,safepoint=debug:file=/var/log/thingsboard/${TB_SERVICE_ID}-gc.log:time,uptime,level,tags:filecount=10,filesize=10M"
+      export JAVA_OPTS="$JAVA_OPTS -XX:+IgnoreUnrecognizedVMOptions -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/thingsboard/${TB_SERVICE_ID}-heapdump.bin"
+      export JAVA_OPTS="$JAVA_OPTS -XX:-UseBiasedLocking -XX:+UseTLAB -XX:+ResizeTLAB -XX:+PerfDisableSharedMem -XX:+UseCondCardMark"
+      export JAVA_OPTS="$JAVA_OPTS -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:+UseStringDeduplication -XX:+ParallelRefProcEnabled -XX:MaxTenuringThreshold=10"
+      export JAVA_OPTS="$JAVA_OPTS -XX:+ExitOnOutOfMemoryError"
+      export LOG_FILENAME=thingsboard.out
+      export LOADER_PATH=/usr/share/thingsboard/conf,/usr/share/thingsboard/extensions
+    logback: |-
+      <!DOCTYPE configuration>
+      <configuration scan="true" scanPeriod="10 seconds">
+
+          <appender name="fileLogAppender"
+                    class="ch.qos.logback.core.rolling.RollingFileAppender">
+              <file>/var/log/thingsboard/${TB_SERVICE_ID}/thingsboard.log</file>
+              <rollingPolicy
+                      class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                  <fileNamePattern>/var/log/thingsboard/${TB_SERVICE_ID}/thingsboard.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+                  <maxFileSize>100MB</maxFileSize>
+                  <maxHistory>30</maxHistory>
+                  <totalSizeCap>3GB</totalSizeCap>
+              </rollingPolicy>
+              <encoder>
+                  <pattern>%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n</pattern>
+              </encoder>
+          </appender>
+
+          <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+              <encoder>
+                  <pattern>%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n</pattern>
+              </encoder>
+          </appender>
+
+          <logger name="org.thingsboard.server" level="INFO" />
+          <logger name="com.google.common.util.concurrent.AggregateFuture" level="OFF" />
+
+          <root level="INFO">
+              <appender-ref ref="fileLogAppender"/>
+              <appender-ref ref="STDOUT"/>
+          </root>
+
+      </configuration>

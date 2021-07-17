@@ -1,0 +1,60 @@
+{{- if .Values.postgres.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "thingsboard.fullname" . }}-postgres
+  labels:
+    {{- include "thingsboard.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "postgres.selectorLabels" . | nindent 8 }}
+  template:
+    metadata:
+      labels:
+        {{- include "postgres.selectorLabels" . | nindent 8 }}
+    spec:
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: {{ include "thingsboard.fullname" . }}-postgres
+      containers:
+        - name: postgres
+          imagePullPolicy: Always
+          image: {{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}
+          ports:
+            - containerPort: 5432
+              name: postgres
+              protocol: TCP
+          env:
+            - name: POSTGRES_DB
+              value: "thingsboard"
+            - name: POSTGRES_PASSWORD
+              value: {{ .Values.postgres.dbPassword }}
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgres-data
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -h
+                - localhost
+                - -U
+                - postgres
+            initialDelaySeconds: 60
+            timeoutSeconds: 30
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -h
+                - localhost
+                - -U
+                - postgres
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+      restartPolicy: Always
+{{- end }}
