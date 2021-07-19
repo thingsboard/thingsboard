@@ -361,6 +361,9 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
           coapDeviceTypeConfiguration: {
             coapDeviceType: CoapTransportDeviceType.DEFAULT,
             transportPayloadTypeConfiguration: {transportPayloadType: TransportPayloadType.JSON}
+          },
+          clientSettings: {
+            powerMode: PowerMode.DRX
           }
         };
         transportConfiguration = {...coapTransportConfiguration, type: DeviceTransportType.COAP};
@@ -395,7 +398,9 @@ export function createDeviceTransportConfiguration(type: DeviceTransportType): D
         transportConfiguration = {...mqttTransportConfiguration, type: DeviceTransportType.MQTT};
         break;
       case DeviceTransportType.COAP:
-        const coapTransportConfiguration: CoapDeviceTransportConfiguration = {};
+        const coapTransportConfiguration: CoapDeviceTransportConfiguration = {
+          powerMode: null
+        };
         transportConfiguration = {...coapTransportConfiguration, type: DeviceTransportType.COAP};
         break;
       case DeviceTransportType.LWM2M:
@@ -582,7 +587,6 @@ export interface CoapDeviceTransportConfiguration {
   edrxCycle?: number;
   pagingTransmissionWindow?: number;
   psmActivityTimer?: number;
-  [key: string]: any;
 }
 
 export interface Lwm2mDeviceTransportConfiguration {
