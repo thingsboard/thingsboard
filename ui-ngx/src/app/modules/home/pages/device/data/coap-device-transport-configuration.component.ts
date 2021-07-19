@@ -24,7 +24,6 @@ import {
   DeviceTransportConfiguration,
   DeviceTransportType
 } from '@shared/models/device.models';
-import { PowerMode, PowerModeTranslationMap } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { isDefinedAndNotNull } from '@core/utils';
@@ -42,9 +41,6 @@ import { isDefinedAndNotNull } from '@core/utils';
 export class CoapDeviceTransportConfigurationComponent implements ControlValueAccessor, OnInit, OnDestroy {
 
   coapDeviceTransportForm: FormGroup;
-
-  powerMods = Object.values(PowerMode);
-  powerModeTranslationMap = PowerModeTranslationMap;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -79,21 +75,6 @@ export class CoapDeviceTransportConfigurationComponent implements ControlValueAc
       psmActivityTimer: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
       pagingTransmissionWindow: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]]
     });
-    this.coapDeviceTransportForm.get('powerMode').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((powerMode: PowerMode) => {
-      if (powerMode === PowerMode.E_DRX) {
-        this.coapDeviceTransportForm.get('edrxCycle').enable({emitEvent: false});
-        this.coapDeviceTransportForm.get('pagingTransmissionWindow').enable({emitEvent: false});
-        this.disablePSKMode();
-      } else if (powerMode === PowerMode.PSM) {
-        this.coapDeviceTransportForm.get('psmActivityTimer').enable({emitEvent: false});
-        this.disableEdrxMode();
-      } else {
-        this.disableEdrxMode();
-        this.disablePSKMode();
-      }
-    });
     this.coapDeviceTransportForm.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(() => {
@@ -112,6 +93,7 @@ export class CoapDeviceTransportConfigurationComponent implements ControlValueAc
       this.coapDeviceTransportForm.disable({emitEvent: false});
     } else {
       this.coapDeviceTransportForm.enable({emitEvent: false});
+      this.coapDeviceTransportForm.get('powerMode').updateValueAndValidity({onlySelf: true});
     }
   }
 
@@ -119,12 +101,7 @@ export class CoapDeviceTransportConfigurationComponent implements ControlValueAc
     if (isDefinedAndNotNull(value)) {
       this.coapDeviceTransportForm.patchValue(value, {emitEvent: false});
     } else {
-      this.coapDeviceTransportForm.patchValue({
-        powerMode: null,
-        edrxCycle: 0,
-        psmActivityTimer: 0,
-        pagingTransmissionWindow: 0
-      }, {emitEvent: false});
+      this.coapDeviceTransportForm.get('powerMode').patchValue(null, {emitEvent: false});
     }
     if (!this.disabled) {
       this.coapDeviceTransportForm.get('powerMode').updateValueAndValidity({onlySelf: true});
@@ -138,17 +115,5 @@ export class CoapDeviceTransportConfigurationComponent implements ControlValueAc
       configuration.type = DeviceTransportType.COAP;
     }
     this.propagateChange(configuration);
-  }
-
-  private disablePSKMode() {
-    this.coapDeviceTransportForm.get('psmActivityTimer').disable({emitEvent: false});
-    this.coapDeviceTransportForm.get('psmActivityTimer').reset(0, {emitEvent: false});
-  }
-
-  private disableEdrxMode() {
-    this.coapDeviceTransportForm.get('edrxCycle').disable({emitEvent: false});
-    this.coapDeviceTransportForm.get('edrxCycle').reset(0, {emitEvent: false});
-    this.coapDeviceTransportForm.get('pagingTransmissionWindow').disable({emitEvent: false});
-    this.coapDeviceTransportForm.get('pagingTransmissionWindow').reset(0, {emitEvent: false});
   }
 }

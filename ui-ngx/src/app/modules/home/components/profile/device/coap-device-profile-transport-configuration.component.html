@@ -84,49 +84,8 @@
   <section formGroupName="clientSettings">
     <fieldset class="fields-group">
       <legend class="group-title" translate>device-profile.power-saving-mode</legend>
-      <mat-form-field class="mat-block" fxFlex>
-        <mat-label> </mat-label>
-        <mat-select formControlName="powerMode">
-          <mat-option *ngFor="let powerMod of powerMods" [value]="powerMod">
-            {{ powerModeTranslationMap.get(powerMod) | translate}}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-      <section class="mat-block" fxFlex *ngIf="coapTransportConfigurationFormGroup.get('clientSettings.powerMode').value === 'E_DRX'">
-        <mat-form-field class="mat-block" fxFlex>
-          <mat-label>{{ 'device-profile.edrx-cycle' | translate }}</mat-label>
-          <input matInput type="number" min="0" formControlName="edrxCycle" required>
-          <mat-error *ngIf="coapTransportConfigurationFormGroup.get('clientSettings.edrxCycle').hasError('required')">
-            {{ 'device-profile.edrx-cycle-required' | translate }}
-          </mat-error>
-          <mat-error *ngIf="coapTransportConfigurationFormGroup.get('clientSettings.edrxCycle').hasError('pattern') ||
-                                        coapTransportConfigurationFormGroup.get('clientSettings.edrxCycle').hasError('min')">
-            {{ 'device-profile.edrx-cycle-pattern' | translate }}
-          </mat-error>
-        </mat-form-field>
-        <mat-form-field class="mat-block" fxFlex>
-          <mat-label>{{ 'device-profile.paging-transmission-window' | translate }}</mat-label>
-          <input matInput type="number" min="0" formControlName="pagingTransmissionWindow" required>
-          <mat-error *ngIf="coapTransportConfigurationFormGroup.get('clientSettings.pagingTransmissionWindow').hasError('required')">
-            {{ 'device-profile.paging-transmission-window-required' | translate }}
-          </mat-error>
-          <mat-error *ngIf="coapTransportConfigurationFormGroup.get('clientSettings.pagingTransmissionWindow').hasError('pattern') ||
-                                        coapTransportConfigurationFormGroup.get('clientSettings.pagingTransmissionWindow').hasError('min')">
-            {{ 'device-profile.paging-transmission-window-pattern' | translate }}
-          </mat-error>
-        </mat-form-field>
-      </section>
-      <mat-form-field class="mat-block" fxFlex *ngIf="coapTransportConfigurationFormGroup.get('clientSettings.powerMode').value === 'PSM'">
-        <mat-label>{{ 'device-profile.psm-activity-timer' | translate }}</mat-label>
-        <input matInput type="number" min="0" formControlName="psmActivityTimer" required>
-        <mat-error *ngIf="coapTransportConfigurationFormGroup.get('clientSettings.psmActivityTimer').hasError('required')">
-          {{ 'device-profile.psm-activity-timer-required' | translate }}
-        </mat-error>
-        <mat-error *ngIf="coapTransportConfigurationFormGroup.get('clientSettings.psmActivityTimer').hasError('pattern') ||
-                                        coapTransportConfigurationFormGroup.get('clientSettings.psmActivityTimer').hasError('min')">
-          {{ 'device-profile.psm-activity-timer-pattern' | translate }}
-        </mat-error>
-      </mat-form-field>
+      <tb-power-mode-settings [parentForm]="clientSettingsFormGroup">
+      </tb-power-mode-settings>
     </fieldset>
   </section>
 </form>

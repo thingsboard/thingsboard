@@ -1,0 +1,63 @@
+<!--
+
+    Copyright © 2016-2021 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="parentForm">
+  <mat-form-field class="mat-block" fxFlex>
+    <mat-label>{{ isDeviceSetting ? ("device-profile.power-saving-mode" | translate) : " "}}</mat-label>
+    <mat-select formControlName="powerMode">
+      <mat-option [value]="null" *ngIf="isDeviceSetting">{{ "device-profile.power-saving-mode-type.default" | translate }}</mat-option>
+      <mat-option *ngFor="let powerMod of powerMods" [value]="powerMod">
+        {{ powerModeTranslationMap.get(powerMod) | translate}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <section class="mat-block" fxFlex *ngIf="parentForm.get('powerMode').value === 'E_DRX'">
+    <mat-form-field class="mat-block" fxFlex>
+      <mat-label>{{ 'device-profile.edrx-cycle' | translate }}</mat-label>
+      <input matInput type="number" min="0" formControlName="edrxCycle" required>
+      <mat-error *ngIf="parentForm.get('edrxCycle').hasError('required')">
+        {{ 'device-profile.edrx-cycle-required' | translate }}
+      </mat-error>
+      <mat-error *ngIf="parentForm.get('edrxCycle').hasError('pattern') ||
+                                        parentForm.get('edrxCycle').hasError('min')">
+        {{ 'device-profile.edrx-cycle-pattern' | translate }}
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field class="mat-block" fxFlex>
+      <mat-label>{{ 'device-profile.paging-transmission-window' | translate }}</mat-label>
+      <input matInput type="number" min="0" formControlName="pagingTransmissionWindow" required>
+      <mat-error *ngIf="parentForm.get('pagingTransmissionWindow').hasError('required')">
+        {{ 'device-profile.paging-transmission-window-required' | translate }}
+      </mat-error>
+      <mat-error *ngIf="parentForm.get('pagingTransmissionWindow').hasError('pattern') ||
+                                        parentForm.get('pagingTransmissionWindow').hasError('min')">
+        {{ 'device-profile.paging-transmission-window-pattern' | translate }}
+      </mat-error>
+    </mat-form-field>
+  </section>
+  <mat-form-field class="mat-block" fxFlex *ngIf="parentForm.get('powerMode').value === 'PSM'">
+    <mat-label>{{ 'device-profile.psm-activity-timer' | translate }}</mat-label>
+    <input matInput type="number" min="0" formControlName="psmActivityTimer" required>
+    <mat-error *ngIf="parentForm.get('psmActivityTimer').hasError('required')">
+      {{ 'device-profile.psm-activity-timer-required' | translate }}
+    </mat-error>
+    <mat-error *ngIf="parentForm.get('psmActivityTimer').hasError('pattern') ||
+                                        parentForm.get('psmActivityTimer').hasError('min')">
+      {{ 'device-profile.psm-activity-timer-pattern' | translate }}
+    </mat-error>
+  </mat-form-field>
+</section>

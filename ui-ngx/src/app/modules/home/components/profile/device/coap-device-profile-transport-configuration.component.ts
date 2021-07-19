@@ -35,7 +35,7 @@ import {
 import { isDefinedAndNotNull } from '@core/utils';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { PowerMode, PowerModeTranslationMap } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
+import { PowerMode } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
 
 @Component({
   selector: 'tb-coap-device-profile-transport-configuration',
@@ -54,9 +54,6 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
 
   transportPayloadTypes = Object.values(TransportPayloadType);
   transportPayloadTypeTranslations = transportPayloadTypeTranslationMap;
-
-  powerMods = Object.values(PowerMode);
-  powerModeTranslationMap = PowerModeTranslationMap;
 
   coapTransportConfigurationFormGroup: FormGroup;
 
@@ -104,39 +101,15 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
       }),
       clientSettings: this.fb.group({
         powerMode: [PowerMode.DRX, Validators.required],
-        edrxCycle: [{disabled: true, value: 0}],
-        psmActivityTimer: [{disabled: true, value: 0}],
-        pagingTransmissionWindow: [{disabled: true, value: 0}]
+        edrxCycle: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
+        psmActivityTimer: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
+        pagingTransmissionWindow: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]]
       })}
     );
     this.coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.coapDeviceType').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(coapDeviceType => {
       this.updateCoapDeviceTypeBasedControls(coapDeviceType, true);
-    });
-    this.coapTransportConfigurationFormGroup.get('clientSettings.powerMode').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((powerMode: PowerMode) => {
-      if (powerMode === PowerMode.E_DRX) {
-        this.coapTransportConfigurationFormGroup.get('clientSettings.edrxCycle').enable({emitEvent: false});
-        this.coapTransportConfigurationFormGroup.get('clientSettings.pagingTransmissionWindow').enable({emitEvent: false});
-        this.coapTransportConfigurationFormGroup.get('clientSettings.edrxCycle')
-          .setValidators([Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]);
-        this.coapTransportConfigurationFormGroup.get('clientSettings.pagingTransmissionWindow')
-          .setValidators([Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]);
-        this.clearValidatorsPSKMode();
-      } else if (powerMode === PowerMode.PSM) {
-        this.coapTransportConfigurationFormGroup.get('clientSettings.psmActivityTimer').enable({emitEvent: false});
-        this.coapTransportConfigurationFormGroup.get('clientSettings.psmActivityTimer')
-          .setValidators([Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]);
-        this.clearValidatorsEdrxMode();
-      } else {
-        this.clearValidatorsEdrxMode();
-        this.clearValidatorsPSKMode();
-      }
-      this.coapTransportConfigurationFormGroup.get('clientSettings.edrxCycle').updateValueAndValidity({emitEvent: false});
-      this.coapTransportConfigurationFormGroup.get('clientSettings.pagingTransmissionWindow').updateValueAndValidity({emitEvent: false});
-      this.coapTransportConfigurationFormGroup.get('clientSettings.psmActivityTimer').updateValueAndValidity({emitEvent: false});
     });
     this.coapTransportConfigurationFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -161,6 +134,9 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
     return transportPayloadType === TransportPayloadType.PROTOBUF;
   }
 
+  get clientSettingsFormGroup(): FormGroup {
+    return this.coapTransportConfigurationFormGroup.get('clientSettings') as FormGroup;
+  }
 
   private updateCoapDeviceTypeBasedControls(type: CoapTransportDeviceType, forceUpdated = false) {
     const coapDeviceTypeConfigurationFormGroup = this.coapTransportConfigurationFormGroup
@@ -189,7 +165,15 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
 
   writeValue(value: CoapDeviceProfileTransportConfiguration | null): void {
     if (isDefinedAndNotNull(value)) {
+      if (!value.clientSettings) {
+        value.clientSettings = {
+          powerMode: PowerMode.DRX
+        };
+      }
       this.coapTransportConfigurationFormGroup.patchValue(value, {emitEvent: false});
+      if (!this.disabled) {
+        this.coapTransportConfigurationFormGroup.get('clientSettings.powerMode').updateValueAndValidity({onlySelf: true});
+      }
       this.updateCoapDeviceTypeBasedControls(value.coapDeviceTypeConfiguration?.coapDeviceType);
     }
   }
@@ -201,20 +185,5 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
       configuration.type = DeviceTransportType.COAP;
     }
     this.propagateChange(configuration);
-  }
-
-  private clearValidatorsPSKMode() {
-    this.coapTransportConfigurationFormGroup.get('clientSettings.psmActivityTimer').disable({emitEvent: false});
-    this.coapTransportConfigurationFormGroup.get('clientSettings.psmActivityTimer').reset(0, {emitEvent: false});
-    this.coapTransportConfigurationFormGroup.get('clientSettings.psmActivityTimer').clearValidators();
-  }
-
-  private clearValidatorsEdrxMode() {
-    this.coapTransportConfigurationFormGroup.get('clientSettings.edrxCycle').disable({emitEvent: false});
-    this.coapTransportConfigurationFormGroup.get('clientSettings.edrxCycle').reset(0, {emitEvent: false});
-    this.coapTransportConfigurationFormGroup.get('clientSettings.edrxCycle').clearValidators();
-    this.coapTransportConfigurationFormGroup.get('clientSettings.pagingTransmissionWindow').disable({emitEvent: false});
-    this.coapTransportConfigurationFormGroup.get('clientSettings.pagingTransmissionWindow').reset(0, {emitEvent: false});
-    this.coapTransportConfigurationFormGroup.get('clientSettings.pagingTransmissionWindow').clearValidators();
   }
 }
