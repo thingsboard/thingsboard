@@ -31,12 +31,10 @@ import java.util.function.BiConsumer;
 
 @Slf4j
 public class CoapDeviceAuthCallback implements TransportServiceCallback<ValidateDeviceCredentialsResponse> {
-    private final TransportContext transportContext;
     private final CoapExchange exchange;
-    private final BiConsumer<TransportProtos.SessionInfoProto, DeviceProfile> onSuccess;
+    private final BiConsumer<ValidateDeviceCredentialsResponse, DeviceProfile> onSuccess;
 
-    public CoapDeviceAuthCallback(TransportContext transportContext, CoapExchange exchange, BiConsumer<TransportProtos.SessionInfoProto, DeviceProfile> onSuccess) {
-        this.transportContext = transportContext;
+    public CoapDeviceAuthCallback(CoapExchange exchange, BiConsumer<ValidateDeviceCredentialsResponse, DeviceProfile> onSuccess) {
         this.exchange = exchange;
         this.onSuccess = onSuccess;
     }
@@ -45,8 +43,7 @@ public class CoapDeviceAuthCallback implements TransportServiceCallback<Validate
     public void onSuccess(ValidateDeviceCredentialsResponse msg) {
         DeviceProfile deviceProfile = msg.getDeviceProfile();
         if (msg.hasDeviceInfo() && deviceProfile != null) {
-            TransportProtos.SessionInfoProto sessionInfoProto = SessionInfoCreator.create(msg, transportContext, UUID.randomUUID());
-            onSuccess.accept(sessionInfoProto, deviceProfile);
+            onSuccess.accept(msg, deviceProfile);
         } else {
             exchange.respond(CoAP.ResponseCode.UNAUTHORIZED);
         }

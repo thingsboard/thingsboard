@@ -161,6 +161,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         //TODO: check that the client supports FW and SW by checking the supported objects in the model.
         List<String> attributesToFetch = new ArrayList<>();
         LwM2MClientFwOtaInfo fwInfo = getOrInitFwInfo(client);
+
         if (fwInfo.isSupported()) {
             attributesToFetch.add(FIRMWARE_TITLE);
             attributesToFetch.add(FIRMWARE_VERSION);
